@@ -103,7 +103,7 @@ export const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(functi
         onClick={(e) => e.stopPropagation()}
         animate={{ scale: isZoomed ? 1.5 : 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg shadow-2xl cursor-zoom-in"
+        className="max-w-[58.5vw] max-h-[55.25vh] object-contain rounded-lg shadow-2xl cursor-zoom-in"
         style={{ cursor: isZoomed ? 'zoom-out' : 'zoom-in' }}
       />
     </motion.div>,

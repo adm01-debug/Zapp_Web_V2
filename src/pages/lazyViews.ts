@@ -9,7 +9,6 @@ export const AgentsView = lazyWithRetry(() => import('@/components/agents/Agents
 export const QueuesView = lazyWithRetry(() => import('@/components/queues/QueuesView').then(m => ({ default: m.QueuesView })));
 export const ContactsView = lazyWithRetry(() => import('@/components/contacts/ContactsView').then(m => ({ default: m.ContactsView })));
 export const ConnectionsView = lazyWithRetry(() => import('@/components/connections/ConnectionsView').then(m => ({ default: m.ConnectionsView })));
-export const TagsView = lazyWithRetry(() => import('@/components/tags/TagsView').then(m => ({ default: m.TagsView })));
 export const SettingsView = lazyWithRetry(() => import('@/components/settings/SettingsView').then(m => ({ default: m.SettingsView })));
 export const ClientWalletView = lazyWithRetry(() => import('@/components/wallet/ClientWalletView').then(m => ({ default: m.ClientWalletView })));
 export const AdminView = lazyWithRetry(() => import('@/components/admin/AdminView').then(m => ({ default: m.AdminView })));
@@ -57,6 +56,7 @@ export const SicoobBridgeDashboard = lazyWithRetry(() => import('@/components/ad
 export const CRM360ExplorerView = lazyWithRetry(() => import('@/components/crm360/CRM360ExplorerView').then(m => ({ default: m.CRM360ExplorerView })));
 export const AIUsageDashboard = lazyWithRetry(() => import('@/components/admin/AIUsageDashboard').then(m => ({ default: m.AIUsageDashboard })));
 export const TalkXView = lazyWithRetry(() => import('@/components/talkx/TalkXView'));
+export const MultiplixView = lazyWithRetry(() => import('@/components/multiplix/MultiplixView'));
 export const EvolutionMonitoringDashboard = lazyWithRetry(() => import('@/components/monitoring/EvolutionMonitoringDashboard').then(m => ({ default: m.EvolutionMonitoringDashboard })));
 export const AchievementsSystemLazy = lazyWithRetry(async () => {
   const m = await import('@/components/gamification/AchievementsSystem');

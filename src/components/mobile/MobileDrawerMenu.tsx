@@ -195,6 +195,14 @@ export function MobileDrawerMenu({
                 onClick={onClose}
                 aria-label="Fechar menu"
                 className="rounded-xl"
+                // TooltipContent passou a usar Portal (fix de tooltip cortado
+                // na lista de conversas) e monta no body com z-50 — abaixo do
+                // z-[101] deste drawer, então o tooltip ficava atrás dele e
+                // invisível ao passar o mouse/Tab no X (achado na auditoria
+                // de 5 agentes, 2026-09-26, 5a rodada). O aria-label já
+                // identifica o botão pra leitor de tela; não precisa de
+                // tooltip visual aqui.
+                showTooltip={false}
               >
                 <X className="w-5 h-5" />
               </IconButton>

@@ -31,8 +31,18 @@ async function main() {
   await writeFile(args.output, `${JSON.stringify(evidence, null, 2)}\n`, { mode: 0o600, flag: 'wx' });
   console.log(args.snapshot ? 'Pre-deploy structural snapshot captured.' : `Stable deployment observed: ${evidence.function_count} functions; not a binary source/bundle equivalence proof.`);
 }
-main().catch(() => {
-  // Arguments, parser errors and API bodies can contain sensitive data.
-  console.error('Edge inventory collection failed; no successful attestation emitted. Check identity, API access, versions and stabilization.');
+main().catch((error) => {
+  // E07 (auditoria de GitHub Actions, 2026-09-26): antes, todo erro caia na
+  // mesma frase generica e o operador nao conseguia distinguir "nao
+  // estabilizou" de "401 na Management API" de "argumento invalido" sem
+  // abrir o log passo a passo (runs 36265304769/36265426245). Todo throw
+  // deste modulo e de stable-inventory.mjs/manifest-lib.mjs usa texto
+  // estatico ou interpola so nome de funcao/path/status HTTP — nunca token
+  // ou corpo de resposta da API (auditado; ver os proprios comentarios
+  // "(details omitted)" nos throws que tocam a resposta da API).
+  const motivo = error && typeof error.message === 'string' && error.message
+    ? error.message
+    : 'erro sem mensagem (verifique o log completo do passo)';
+  console.error(`Edge inventory collection failed: ${motivo}. No successful attestation emitted.`);
   process.exitCode = 1;
 });

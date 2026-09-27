@@ -121,6 +121,37 @@ describe('ContactRegionMap', () => {
     await waitFor(() => expect(FakeMap.instances).toHaveLength(1));
   });
 
+  it('contato com endereço confirmado vira ponto próprio sem esconder quem só tem DDD, e a legenda distingue as duas fontes', async () => {
+    const preciseContacts = [{ id: 'c1', name: 'Fulano de Tal', lat: -23.55, lng: -46.63 }];
+    render(
+      <ContactRegionMap
+        regions={regions}
+        preciseContacts={preciseContacts}
+        selectedRegion={null}
+        onSelectRegion={vi.fn()}
+      />
+    );
+    await waitFor(() => expect(FakeMap.instances).toHaveLength(1));
+    act(() => FakeMap.instances[0].emit('load'));
+
+    // 2 bolhas de DDD (São Paulo, Curitiba — "Internacional" não tem coordenada) + 1 pino preciso.
+    expect(FakeMarker.instances).toHaveLength(3);
+    const preciseMarker = FakeMarker.instances.find((m) => m.getElement().title === 'Fulano de Tal · endereço confirmado');
+    expect(preciseMarker).toBeDefined();
+    expect(preciseMarker!.lngLat).toEqual([-46.63, -23.55]);
+
+    expect(screen.getByText('Endereço confirmado (1)')).toBeInTheDocument();
+    expect(screen.getByText('Aproximado pelo DDD')).toBeInTheDocument();
+    // Contato sem coordenada (todo o resto de `regions`) não some: as bolhas de DDD continuam lá.
+    expect(FakeMarker.instances.some((m) => m.getElement().textContent === '40')).toBe(true);
+    expect(FakeMarker.instances.some((m) => m.getElement().textContent === '10')).toBe(true);
+  });
+
+  it('sem contato com endereço confirmado, a legenda de duas fontes não aparece', () => {
+    render(<ContactRegionMap regions={regions} selectedRegion={null} onSelectRegion={vi.fn()} />);
+    expect(screen.queryByText(/Endereço confirmado/)).not.toBeInTheDocument();
+  });
+
   it('todo DDD brasileiro conhecido tem coordenada no mapa', () => {
     const ddds = Object.keys(REGION_COORDINATES).length;
     expect(ddds).toBeGreaterThan(60);

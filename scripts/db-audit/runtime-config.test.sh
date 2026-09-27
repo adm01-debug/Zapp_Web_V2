@@ -30,8 +30,11 @@ CREATE TABLE public.email_messages(LIKE public.messages INCLUDING ALL) WITH (aut
 CREATE TABLE public.email_threads(LIKE public.messages INCLUDING ALL) WITH (autovacuum_vacuum_scale_factor=0.05, autovacuum_analyze_scale_factor=0.05);
 CREATE TABLE public.agent_presence(id int);
 CREATE TABLE public.agent_stats(id int);
+CREATE TABLE public.calls(id int);
 CREATE TABLE public.conversation_sla(id int);
 CREATE TABLE public.message_reactions(id int);
+CREATE TABLE public.multiplix_dispatches(id int);
+CREATE TABLE public.multiplix_recipients(id int);
 CREATE TABLE public.notifications(id int);
 CREATE TABLE public.payment_links(id int);
 CREATE TABLE public.queue_goals(id int);
@@ -46,9 +49,10 @@ CREATE TABLE public.warroom_alerts(id int);
 CREATE TABLE public.whatsapp_connections(id int);
 CREATE TABLE public.whisper_messages(id int);
 CREATE PUBLICATION supabase_realtime FOR TABLE
-  public.agent_presence, public.agent_stats, public.contacts, public.conversation_sla,
+  public.agent_presence, public.agent_stats, public.calls, public.contacts, public.conversation_sla,
   public.email_messages, public.email_threads, public.message_reactions,
-  public.messages, public.notifications, public.payment_links,
+  public.messages, public.multiplix_dispatches, public.multiplix_recipients,
+  public.notifications, public.payment_links,
   public.queue_goals, public.queue_members, public.queues, public.sales_deals,
   public.talkx_campaigns, public.talkx_recipients,
   public.team_message_reactions, public.team_messages, public.warroom_alerts,

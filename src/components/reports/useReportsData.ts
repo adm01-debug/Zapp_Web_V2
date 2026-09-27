@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAgents } from '@/hooks/crm/useAgents';
-import { useTags } from '@/hooks/crm/useTags';
 import { format, subDays, startOfDay, endOfDay, eachDayOfInterval, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -13,7 +12,6 @@ export function useReportsData() {
   const [compareEnabled, setCompareEnabled] = useState(false);
 
   const { agents } = useAgents();
-  const { tags } = useTags();
 
   const dateRange = useMemo(() => {
     const days = parseInt(period);
@@ -93,6 +91,13 @@ export function useReportsData() {
     },
     enabled: compareEnabled,
   });
+
+  const tags = useMemo(() => {
+    if (!contactsData) return [];
+    const tagSet = new Set<string>();
+    contactsData.forEach(c => (c.tags || []).forEach((t: string) => tagSet.add(t)));
+    return [...tagSet].sort().map(name => ({ id: name, name }));
+  }, [contactsData]);
 
   // Process data for charts
   const chartData = useMemo(() => {

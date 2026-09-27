@@ -72,6 +72,38 @@
 
 O Postgres do `evolution-go-rxj2` é interno da Evolution GO (estado de sessões WhatsApp). **Não confundir com o banco do projeto** (seção 1) e não aplicar migrations do repo nele.
 
+### Runbook: QR Code não aparece / trava no spinner (sessão órfã na GO)
+
+Sintoma: dialog "Escanear QR Code" fica só com o loader girando; a conexão nunca pareia.
+Causa comum: a instância na Evolution GO tem **JID persistido mas está deslogada**
+(`status` → `LoggedIn:false`/`Connected:false` com `jid` presente). Nesse estado o
+`/instance/connect` reusa a sessão salva e **não emite QR novo**; `/instance/qr` volta
+vazio. Diagnóstico rápido (edge `evolution-api`): `connect` responde `success` com `jid`
+mas sem `qrcode`; `disconnect` (logout GO) → 400; `restart-instance` (reconnect GO) → 500
+`no active session found`.
+
+Diagnóstico ao vivo (2026-09-27, via `list-instances`): o registro da instância na GO vem
+com `jid` preenchido, `connected:false` e **`disconnect_reason:"Reconnecting"`**. É a
+assinatura exata: o device foi desvinculado no celular, mas o whatsmeow ainda tem
+`Store.ID` setado e fica em loop tentando retomar a sessão salva — `Connect()` com
+`Store.ID != nil` **não abre o canal de QR**. Por isso `/instance/qr` volta vazio e
+`logout`/`reconnect` respondem 400/500 (`no active session found`): `Logout()` precisa de
+conexão ativa para mandar o IQ ao WhatsApp.
+
+Desde o fix de 2026-09-27 a edge `connect` resolve isso sozinha, em três camadas:
+1. poll do `/instance/qr` (3× / 1,5s), porque o QR na GO é assíncrono;
+2. sem QR + não logado + registro na GO com `jid` → **recria a instância na GO**
+   (`DELETE /instance/delete/{id}` + `POST /instance/create` com o **mesmo**
+   `EVOLUTION_INSTANCE_TOKEN` e o mesmo nome `PRINCIPAL`), o que zera o device store;
+   em seguida reconecta e faz novo poll do QR, devolvendo `recovered:true`;
+3. se ainda assim não sair QR, devolve `error:true`/409 em vez de `qrcode:undefined` —
+   o front mostra erro com "Gerar novo código" (nada de spinner infinito).
+
+`whatsapp_connections` **não** é tocado nesse fluxo (só o estado interno da GO), e o token
+não muda — então nenhum secret precisa ser regerado. Não há mais passo manual no Postgres
+da GO: o MCP `HOSTINGER` não expõe docker-exec e o Portainer não enxerga esses containers,
+então esse caminho nunca foi executável por agente de qualquer forma.
+
 ---
 
 ## 3. Repo e escrita
@@ -84,7 +116,7 @@ O Postgres do `evolution-go-rxj2` é interno da Evolution GO (estado de sessões
 
 ---
 
-*Atualizado em 2026-09-25. Se algo aqui divergir do banco/infra real, corrija ESTE arquivo no mesmo commit do fix.*
+*Atualizado em 2026-09-27. Se algo aqui divergir do banco/infra real, corrija ESTE arquivo no mesmo commit do fix.*
 
 ## Auditoria e plano de correções (2026-09-16)
 
@@ -101,7 +133,7 @@ Estado dos achados após re-auditoria de 2026-09-17:
   cabeçalho do workflow), logo o check nunca reportaria no SHA de PR e torná-lo required
   congelaria todos os merges. O contrato vivo roda pós-merge (push na `main`), agendado (segunda
   06:00 UTC) e via `workflow_dispatch`; os required checks de PR seguem sendo os offline.
-  Complemento E43 verificado em 2026-09-17: force-push e deleção da `main` bloqueados, strict
+  Complemento E43 verificado em 2026-09-17: force-push e delеção da `main` bloqueados, strict
   mode ligado.
 
   **Correção de 2026-09-25:** a linha original afirmava "review obrigatório". A API não retorna
@@ -110,10 +142,10 @@ Estado dos achados após re-auditoria de 2026-09-17:
   vários agentes abrindo PR e usando auto-merge, exigir aprovação humana pararia o fluxo inteiro.
   `required_conversation_resolution` segue desligado pelo mesmo motivo (bots de review deixam
   threads abertas). O perímetro real da `main` hoje é: `enforce_admins`, sem force-push, sem
-  deleção, e os 7 required checks da seção abaixo.
+  deleção, e os 6 required checks da seção abaixo.
 
   **Correção de 2026-09-25 (auditoria de 5 agentes, achado do agente de cruzamento de PRs):**
-  `required_status_checks.strict` está **`false`** ao vivo (confirmado via
+  `required_status_checks.strict` estava **`false`** ao vivo naquele momento (confirmado via
   `github_get_branch_protection` em `main`), não `true` como as linhas acima e a seção "Fila de
   merge" abaixo afirmavam. Não determinado quando/por quem foi desligado — possivelmente mitigação
   manual do próprio ciclo de `BEHIND` descrito na seção "Fila de merge". Com `strict=false`, uma PR
@@ -122,15 +154,34 @@ Estado dos achados após re-auditoria de 2026-09-17:
   não se aplica mais do jeito descrito abaixo. Confirmar o estado ao vivo antes de assumir qualquer
   um dos dois lados.
 
+  **Correção de 2026-09-27:** `strict` regrediu para `true` entre 25/09 e 27/09 — causa não
+  identificada (busca no repo confirma: nenhum workflow toca branch protection; foi uma sessão
+  manual que chamou `github_update_branch_protection` sem preservar o campo). Descoberto ao
+  tentar mergear PR #958: todos os 6 required checks verdes no HEAD SHA, mas o merge retornava
+  405 "6 of 6 required status checks are expected". Restaurado para `false` com
+  `github_update_branch_protection` (PUT completo; 6 contexts + `enforce_admins: true`
+  preservados; merge bem-sucedido em seguida). **Sintoma inconfundível de `strict=true`:**
+  merge retorna 405 "N of N expected" com CI totalmente verde — o diagnóstico correto é
+  verificar `strict` ao vivo com `github_get_branch_protection`, não retentar o merge.
+
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
 Auditoria dos 12 workflows, da branch protection, dos secrets e dos environments. O que passou a
 valer (confira antes de propor mudança de CI, para não refazer o que já existe):
 
-**Required checks da `main`** (7; `strict` está `false` ao vivo — ver correção em 25/09 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
-`🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline`, `🔬 CodeQL (javascript-typescript)` e
+**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions):** são 13 arquivos em
+`.github/workflows/` (`auto-update-pr-branch.yml`, `branch-hygiene-audit.yml`, `ci.yml`,
+`codeql.yml`, `crm-sync-worker.yml`, `db-guard.yml`, `db-live-guard.yml`, `db-migrate.yml`,
+`deploy-functions.yml`, `e2e-logado.yml`, `supabase-sync.yml`, `targeted-ledger-evidence.yml`,
+`types-sync.yml`), mais 3 workflows dinâmicos que não têm arquivo próprio no repo (Dependabot
+Updates, Dependency Graph, Copilot reviewer) — 16 no total. Plano completo em
+`docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-26.md`.
+
+**Required checks da `main`** (6; `strict` está `false` ao vivo — ver correções em 25/09 e 27/09 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
+`🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline` e
 `🎭 E2E Tests (Playwright)` — este último passou a ser obrigatório em 25/09; antes rodava em PR
-sem bloquear merge.
+sem bloquear merge. `🔬 CodeQL (javascript-typescript)` roda em CI mas **não** é required check
+(não bloqueia merge).
 
 **Environments com aprovação humana** (`required_reviewers`, branch policy restrita a branches
 protegidas) — os quatro já criados no repo; os dois primeiros passam a ser exigidos pelos
@@ -177,7 +228,7 @@ primeiros rodavam ambos às 06:00 e disputavam o banco no mesmo minuto.
 **Repo:** `sha_pinning_required` ligado no GitHub (além do `check-workflow-pins.mjs`).
 
 **Fila de merge (merge queue) é IMPOSSÍVEL neste repo — não tente de novo.** Em 25/09, com `strict`
-ligado (hoje está `false` ao vivo — ver correção acima, seção "Branch protection sem `Contrato DB
+ligado (hoje está `false` ao vivo — ver correções em 25/09 e 27/09 acima, seção "Branch protection sem `Contrato DB
 vivo`"), e várias sessões mergeando, toda PR que não entra primeiro volta para `BEHIND`, o
 `auto-update-pr-branch` recria o head e o CI (~6 min) recomeça; em 25/09 três PRs verdes ficaram
 ~40 min nesse ciclo. A fila do GitHub resolveria isso, e os gatilhos `merge_group` já foram
@@ -254,14 +305,50 @@ deixou de ser necessário: não crie o secret.** Se o Job Summary algum dia list
 pelo GITHUB_TOKEN", é regressão de permissão — investigar, não contornar com PAT.
 
 **Não mexer nestes, que parecem bugs e não são:**
-- `chromium-authenticated` fora do CI: `conversation.spec.ts` e `messaging.spec.ts` estão
-  inteiramente em `test.skip` (sem dados semeados) e o único spec ativo é o do Talk X, que o
-  usuário de teste (agente) não enxerga. Habilitar hoje = zero cobertura e `main` vermelha.
+- `talkx.spec.ts` fora do CI: é o único spec do `chromium-authenticated` que continua de fora —
+  o usuário de teste (agente) não enxerga "Campanhas". Habilitar hoje = zero cobertura e `main`
+  vermelha. **Correção de 2026-09-26:** `conversation.spec.ts`/`messaging.spec.ts` NÃO estão mais
+  nesta lista — havia um contato fixo já seedado em produção desde 24/09
+  (`04dff4dc-c6b1-4283-ac22-bd8639804759`, "[E2E] Contato de teste - nao apagar", atribuído ao
+  usuário de teste) que ninguém tinha ligado ao código; os dois specs tinham `test.skip` e
+  seletores que nunca bateram com a UI real (`data-testid="message-input"`/`"message-bubble"`
+  não existem no código; o fluxo de "resolver" real é `ChatPanelHeader` → "Mais ações" → "Marcar
+  como resolvido" → `CloseConversationDialog`, não um botão simples). Reescritos e habilitados no
+  `e2e-logado.yml` (ver `e2e/README.md` e `e2e/fixtures/e2e-contact.ts`).
 - `vars.CRM_SYNC_WORKER_ENABLED` no crm-sync-worker: o schedule está comentado e a condição é
   preparação deliberada para a reativação, não código morto.
 - `secret_scanning_non_provider_patterns` desligado: a API aceita o PATCH e ignora — exige GitHub
   Secret Protection (pago). Enquanto estiver off, um vazamento acidental da `DESTINO_URL` (que não
   casa com padrão de provider) não dispara alerta neste repo público.
+
+## Incidente de 2026-09-26 — DDL do E40 direto no banco, sem PR (issue #724)
+
+Às 11:38 outra sessão aplicou a mudança do E40 (decisão de Joaquim: `scheduled_report_configs`
+vira owner-only) direto em produção via MCP, sem passar pelo fluxo arquivo→PR→merge da seção 3 —
+nenhum arquivo em `supabase/migrations/`. Isso é exatamente o padrão dos drifts de setembro que a
+seção 1/regra 6 já documenta, e voltou a acontecer apesar do aviso. `db-live-guard` pegou (version
+`20260926113806` "DDL fora do Git"), reconciliado na PR #824 com o SQL exato lido do ledger — sem
+aplicar nada novo, só documentando o que já estava em produção.
+
+**Efeito cascata que isso disparou** (nenhum sozinho seria óbvio, juntos formam uma cadeia de 4 PRs
+numa hora): (1) reconciliar o arquivo do E40 (#824) não bastou — o `types-sync` automático (#823)
+ainda precisava rodar e mergear para o catálogo/`types.ts`/manifesto pegarem as novas policies,
+porque o DDL aplicado fora do fluxo nunca passou pelo passo que regenera esses artefatos; (2) uma
+auditoria de segurança (5 agentes, a pedido do Joaquim) sobre a migration reconciliada achou que a
+policy de INSERT só validava `is_admin_or_supervisor()`, sem restringir `created_by` — um
+supervisor podia plantar um registro "possuído" por outra pessoa (corrigido em #833); (3) o
+`db-live-guard` disparado após o merge de #833 falhou de novo, mas por causa **não relacionada**:
+3 exceções `pinned-replay` antigas (`20260904320000`, `20260904370000`, `20260909130000`) ficaram
+obsoletas porque uma sessão paralela corrigiu essas linhas do ledger (que só tinham resumo em
+prosa) para conter o SQL completo — coincidência de timing com sessões mergeando em paralelo,
+removidas em #842.
+
+**Lição:** um DDL fora do fluxo nunca é "só aquele objeto" — quebra o catálogo até o próximo
+`types-sync`, e qualquer lacuna de segurança na migration reconciliada só aparece se alguém
+auditar de propósito (a auditoria de 5 agentes achou o INSERT; um reconciliamento só de "faz o
+guard passar" não teria achado). Se você é a sessão que vai aplicar DDL: pare, abra o arquivo,
+espere o PR mergear — a regra 6 da seção 1 existe por isto, escrita depois dos drifts de
+02/09 e 04/09, e ainda assim isso se repetiu em 26/09.
 
 ## Lição de UI (2026-09-25) — fundo de painel preto sem escopo de tema
 
@@ -274,6 +361,32 @@ por tema em `src/styles/tokens.css`, classe Tailwind `bg-inbox-panel`) — usa-l
 `bg-black`/`dark:bg-black` literal sempre que escurecer um painel novo do inbox, para não repetir
 o bug. Referência: `docs/audits/` não tem entrada dedicada; a auditoria completa (5 agentes,
 cálculo de contraste WCAG) ficou só na sessão que corrigiu.
+
+## Decisões de 2026-09-26 — como DDL entra em produção, e por que merge ≠ deploy
+
+**DDL em produção vai por MCP (`db_query`) + registro no ledger no mesmo turno, não pelo
+`db-migrate.yml`.** O workflow existe, funciona e é mais seguro no papel (dry-run + hash), mas
+pausa em `Waiting` no environment `producao-ddl` até alguém aprovar na aba Actions. Com várias
+sessões trabalhando e o Joaquim fora do teclado, o DDL fica parado e o arquivo já mergeado passa a
+ser drift — exatamente o que o guarda vivo acusa. Regra prática, nesta ordem:
+
+1. arquivo em `supabase/migrations/` → PR → merge em `main` (regra 6 da seção 1 continua valendo);
+2. `node scripts/db-audit/register-migration.mjs <arquivo.sql>` para gerar o SQL exato (nunca
+   transcrever à mão — é isso que garante a regra 7 do `statements`);
+3. o DDL e o `INSERT` no ledger na **mesma** chamada de `db_query` (1 transação), com
+   `RETURNING` não-vazio como guarda;
+4. fechar com `supabase-usage-guard.mjs` (`novas: 0`) e paridade arquivos↔ledger.
+
+Aplicado assim hoje: `20260926120600` (`DROP INDEX idx_talkx_template_versions_template_version`,
+índice duplicado da unique `(template_id, version_number)`; 0 linhas e 0 `idx_scan` na tabela
+antes do drop). O arquivo estava em `main` desde a manhã sem nunca ter sido aplicado.
+
+**Merge em `main` NÃO deploya edge function.** O front é Vercel e sobe sozinho; as edge functions
+sobem **só** por `workflow_dispatch` do `deploy-functions.yml` (é deliberado — ver cabeçalho do
+workflow), e o job ainda pausa em `Waiting` no environment `producao-edge-functions`. Ou seja:
+uma correção de edge function mergeada continua **fora do ar** até alguém disparar o workflow E
+aprovar. Quem mergear fix de edge function e disser "está em produção" sem esse par de passos está
+reportando errado — aconteceu nesta sessão com o fix do `trash-thread` do Gmail (PR #840).
 
 ## graphify
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

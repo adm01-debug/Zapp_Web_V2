@@ -50,7 +50,8 @@ Estado real conferido no banco oficial e no repo em 26/09 (delta desde 20/09):
 - **E14** — FKs sem índice de suporte: **0** (eram 3). Fechado, checkbox marcado abaixo.
 - **E16** — índices duplicados exatos: **1 acionável** (`idx_talkx_template_versions_template_version`,
   redundante com a unique `..._template_id_version_number_key`). O outro par é do schema `auth`
-  do Supabase (gerenciado — não tocar). DROP = DDL em produção ⇒ regra 8 (aguarda decisão).
+  do Supabase (gerenciado — não tocar). **Aplicado em produção em 26/09** (ver seção abaixo) —
+  não é mais decisão pendente.
 - **E15** — índices com `idx_scan=0`: **472/675** (o total cresceu: 503→675). `pg_stat_database.stats_reset`
   = **null** ⇒ não há 30 dias de estatística confiável; dropar em massa segue proibido pelo próprio
   critério da etapa. Sem ação autônoma.
@@ -68,10 +69,59 @@ Estado real conferido no banco oficial e no repo em 26/09 (delta desde 20/09):
   (webhook HMAC, cron secret, lockout, rate-limit, ou endpoint desativado). Inventário de secrets
   commitado; achado real: secrets sensíveis (`EVOLUTION_API_KEY` etc.) não estão no GH Actions —
   sem rastro de rotação em lugar nenhum. Ver `docs/audits/edges-secrets-2026-09-26.md`.
+- **E01** — os 2 remotos `claude/*` mergeados (`claude/audit-database-references-m1xp3p`,
+  `claude/nice-pasteur-3h1emj`) já não existem (`git branch -r` = 0 matches). Fechado sem ação.
+- **E16** — PR #826 mergeada (`97ff94d`) e **aplicado em produção em 26/09** via MCP direto +
+  registro no ledger no mesmo turno (nova convenção da seção "Decisões de 2026-09-26" do
+  CLAUDE.md, que substituiu a espera pelo `db-migrate.yml`) — `idx_talkx_template_versions_template_version`
+  confirmado removido ao vivo (`pg_indexes` só lista pkey + unique + `idx_..._saved_by`).
+  Fechado de ponta a ponta.
+- **E17** — PR #855 mergeada e **aplicado em produção em 26/09** pela mesma via — as 13 FKs
+  confirmadas ao vivo em `pg_constraint`. `supabase-usage-guard.mjs` segue verde (`novas: 0`)
+  após o apply. Fechado de ponta a ponta.
+- **E23/E25 — achado real, corrigido**: a varredura anti-prosa achou 17 candidatos; 10 eram
+  falso-positivo do regex (`...` dentro de comentário/hash abreviado, ou `resumo` como nome de
+  campo JSON — SQL completo e real). **7 eram violação genuína da regra 7** (`statements` do
+  ledger resumido/truncado em vez do SQL real e completo): `20260827130500`
+  (vacuum_autovacuum_threshold_reset_m05 — ledger tinha os 5 `SET` do workaround + 1 resumo do
+  `cron.schedule`, faltavam os 5 `RESET` reais do arquivo), `20260829060000`
+  (reconcile_ledger_drift — 2 UPDATEs resumidos), `20260901100001`
+  (add_last_sender_to_email_threads — 3 statements, todos parafraseados/truncados),
+  `20260902100003` (lid_audit_snapshot — 8 statements reais colapsados em 1 string truncada),
+  `20260904320000` (fix_critical_security_functions — 2 funções truncadas com `(add admin guard)`
+  / `(remove SECURITY DEFINER)` no lugar do corpo real), `20260904370000`
+  (fix_record_failed_login_race_and_revoke_grants — 1 de 4 statements truncado),
+  `20260909130000` (talkx_template_versions_custom_variables — `CREATE TABLE ... (...)` sem
+  colunas). Verificado ao vivo ANTES de escrever: schema real bate com os 4 arquivos em disco
+  (`pg_get_functiondef`, `information_schema.columns`, `pg_constraint`), nenhum tocava
+  função/tabela já registrada sob outra version. Corrigido via `UPDATE ...
+  schema_migrations SET statements = <SQL real do arquivo, gerado por
+  parseMigrationFile/splitStatements do register-migration.mjs> WHERE version=X AND <estado atual
+  conhecido> RETURNING`, guardado contra concorrência — as 2 primeiras tentativas de guard usaram
+  suposição de cardinalidade errada e corretamente deram 0 linhas afetadas (sem corrupção) antes
+  de eu conferir o estado real e ajustar. `supabase-usage-guard.mjs` seguiu verde durante todo o
+  processo. **0 exceções pinned-replay necessárias** — não sobrou prosa real; `migration-evidence.json`
+  não existe porque nunca foi preciso. Fechado, checkboxes marcados abaixo.
+- **E26** — projeção forward-only atual: **0 relações, 4 funções** (`grant_agent_achievement`,
+  `dashboard_leaderboard`, `set_scheduled_report_config_owner`,
+  `count_searchbox_sessions_this_month`) — todas de migrations datadas de hoje (26/09, mesmo dia
+  da geração do `schema-catalog.json`), por design do guard (snapshot só guarda `YYYY-MM-DD`, não
+  a hora exata). Sem dono/prazo necessário: resolve sozinho no próximo `graphify`/regeneração do
+  catálogo. Fechado.
+- **E33** — `performance-budget.json` já apertado: `initial-js=340`, `largest-chunk=550`,
+  `total-assets=4100` (nota interna do arquivo documenta o `+100KB` de 25/09 para o tile do padrão
+  de brindes do chat, estático/cacheável). Meta da etapa cumprida. Fechado.
+- **E47** — `CLAUDE.md` já usa a grafia canônica `Zapp_Web_V2` (linha "Repo:"); as ocorrências
+  lowercase restantes em `docs/` são domínio real do Vercel (`zapp-web-v2.vercel.app`, correto
+  como está) ou planos históricos já arquivados (grandfathered pela própria regra do CLAUDE.md:
+  "referências novas usam a grafia canônica"). Nada para corrigir. Fechado.
 
-Conclusão: o núcleo 🔴 remanescente (E15/E16/E17/E18 banco, E09–E11 governança/CI, E21 backup,
-rotação de secrets sensíveis) é **decisão de negócio** (custo/destrutivo/produção — regra 8 do
-fluxo Git), não trabalho autônomo. Os 🟢 autônomos ou já fecharam ou são falso-positivo.
+Conclusão: **E16, E17 e E18 fecharam** (os dois primeiros com DDL já aplicado em produção em
+26/09 — ver seção "Decisões de 2026-09-26" do CLAUDE.md; o terceiro sem nada a migrar). O núcleo
+🔴 remanescente é E15 (índices sem uso — bloqueado por `stats_reset=null`), E09–E11
+(governança/CI), E21 (backup) e a rotação de secrets sensíveis — **decisão de negócio**
+(custo/destrutivo/produção — regra 8 do fluxo Git), não trabalho autônomo. Os 🟢 autônomos ou já
+fecharam ou são falso-positivo.
 
 ## Regras de execução (herdadas e obrigatórias)
 
@@ -92,7 +142,7 @@ Ação humana (o classificador de permissões nega à IA):
 git push origin --delete claude/audit-database-references-m1xp3p claude/nice-pasteur-3h1emj
 git fetch --prune && git branch -r | grep -c claude/   # esperado: 0
 ```
-- [ ] 0 remotos `claude/*`
+- [x] 0 remotos `claude/*` — verificado 26/09, ambos já não existem
 
 ### E02 🟡 CRM Sync Worker: ligar de verdade ou desligar o cron (herda E42/16-09)
 Hoje: run agendado a cada ~8min, 100% `skipped` — poluição de histórico e minutos de Actions.
@@ -201,19 +251,51 @@ constraint / realmente mortos.
 ```sh
 # via MCP oficial: db_duplicate_indexes
 ```
-- [ ] 0 duplicados exatos (drop do redundante com migration)
+- [x] 0 duplicados exatos — migration criada e mergeada (PR #826, `97ff94d`); **aplicada em
+      produção em 26/09** via MCP direto — índice confirmado removido ao vivo
 
 ### E17 🔴 Integridade referencial não declarada (herda E34/16-09)
 Colunas `*_id` em `public.*` sem FK correspondente: inventário, verificação de órfãos
 por consulta, e criação de FKs `NOT VALID` → `VALIDATE CONSTRAINT` (não bloqueia).
-- [ ] Inventário completo com decisão por coluna (FK criada × justificativa por escrito)
-- [ ] 0 órfãos nas relações declaradas nesta rodada
+- [x] Inventário completo com decisão por coluna: 13 FK criadas (11 → `auth.users`, 1 →
+      `profiles`, 1 → `vault.secrets`), 38 justificadas por escrito (externas/polimórficas) —
+      ver `docs/audits/referential-integrity-2026-09-26.md`. Migration
+      `20260926200000_e17_referential_integrity_fks.sql` (re-versionada de `20260926160000` por
+      colisão, PR #872) **aplicada em produção em 26/09** via MCP direto — as 13 FKs confirmadas
+      ao vivo em `pg_constraint`
+- [x] 0 órfãos verificados ao vivo nas 13 relações antes de escrever a migration
 
 ### E18 🟡 Autovacuum por tabela quente (herda E30/16-09)
 O incidente de `messages` (>75% dead em 16/09) se resolveu sozinho, mas tarde. Fixar
 `autovacuum_vacuum_scale_factor=0.05` e `autovacuum_analyze_scale_factor=0.05` em
 `messages`, `email_messages` e `talkx_*` de escrita intensa.
-- [ ] `ALTER TABLE ... SET (...)` via migration · `pg_stat_user_tables` sem tabela >20% dead por 14 dias
+- [x] Verificado ao vivo em 26/09 (e revalidado por agente independente na mesma tarde):
+      `messages` e `email_messages` **já têm** `autovacuum_vacuum_scale_factor=0.05` /
+      `autovacuum_analyze_scale_factor=0.05` (aplicado por outra sessão, sem migration
+      correspondente localizada — reloptions confirma via `pg_class`). Das 12 tabelas
+      `talkx_*`, **10 seguem genuinamente vazias**; `talkx_templates` (5 linhas) e
+      `talkx_settings` (6 linhas) têm dados reais (seed/config), mas volume irrisório —
+      "de escrita intensa" não se aplica a nenhuma hoje; revisitar quando Talk X sair de
+      desenvolvimento. **Causa-raiz real do "94,5% dead"**: `pg_postmaster_start_time` mostra
+      restart do Postgres em 2026-09-25 12:28:28 UTC — isso zera os contadores incrementais
+      por relação (`n_live_tup`/`n_dead_tup`/`autovacuum_count`) mas não `pg_class.reltuples`
+      (persistido), que o autovacuum de fato usa para calcular o limiar; `email_messages` já
+      cruzou o limiar e rodou autovacuum desde o restart (prova que o mecanismo funciona),
+      `messages` ainda não. **Correção (Codex Review, achado real):** o `n_dead_tup=953`
+      calculado logo após o restart só contava tuplas mortas desde então — subestimava bloat
+      físico anterior ao restart. Rodado `ANALYZE public.messages` (não é DDL) para forçar
+      reamostragem real: `n_dead_tup` subiu para **2.502** (5,2% de 47.878 linhas) — acima do
+      limiar configurado (0,05 × reltuples ≈ 2.444), o que explica por que o autovacuum ainda
+      não disparou (está prestes a disparar, não travado) e não é mais o falso "saudável ~2%"
+      da primeira leitura. Ainda longe dos 94,5% originais e do limite de alerta da etapa
+      (>20% por 14 dias), mas o número correto é 5,2%, não 2%. `email_messages` seguiu
+      confirmado saudável (~1,8-1,9%, já vacuumada desde o restart). Varredura ampla no banco
+      não achou
+      nenhuma outra tabela fora do escopo original com bloat real (as de 100% "dead" no
+      `pg_stat_user_tables` são só tabelas pequenas/ociosas sem autovacuum desde o mesmo
+      restart, não bloat; `whatsapp_connections`/`agent_presence` são tabelas de
+      presença/heartbeat com autovacuum ativo e frequente, comportamento esperado). Nada para
+      migrar; etapa fecha sem PR de DDL.
 
 ### E19 🟡 Baseline de queries lentas (herda E29/16-09)
 ```sql
@@ -221,7 +303,7 @@ SELECT query, calls, round(total_exec_time) ms, round(mean_exec_time,1) media
 FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 20;
 ```
 - [x] Snapshot commitado em `docs/audits/slow-queries-2026-09.md` — extensão já estava instalada em `extensions.pg_stat_statements` (schema não-default; era isso que faltava saber)
-- [x] Top-3 com plano de ação — causa raiz real encontrada: `messages` está com `REPLICA IDENTITY FULL` (não falta de índice), decisão de arquitetura registrada no doc, não aplicada sozinha
+- [x] Top-3 com plano de ação — causa raiz real encontrada: `messages` está com `REPLICA IDENTITY FULL` (não falta de índice). Decisão fechada em 26/09: **manter FULL** — `useMessages.ts` depende de `payload.old.contact_id` em DELETE (não é a PK), trocar quebraria o Realtime de deleção de mensagens no Inbox aberto. Evidência de código em `docs/audits/slow-queries-2026-09.md`
 
 ### E20 🟢 Conexões e pooling (herda E32/16-09)
 - [ ] Modo do pooler (transaction/session), limites e timeouts das edges documentados
@@ -244,14 +326,16 @@ Eram 36 em 16/09 — cresceu sem decisão. Incluir `prokind='f'` retorno `trigge
 SELECT version FROM supabase_migrations.schema_migrations
 WHERE EXISTS (SELECT 1 FROM unnest(statements) s WHERE s ~ '\.\.\.' OR s ~* '\(add |resumo');
 ```
-- [x] 0 statements-prosa fora das exceções `pinned-replay` — 11 hits do regex, 10 são falso positivo (campo SQL `resumo`); `20260827120100` já documentado em `scripts/db-audit/migration-evidence.json` como `pinned-replay/ledger-summary` (verificado 27/09)
+- [x] 0 statements-prosa reais — 7 violações genuínas encontradas e corrigidas em 26/09 (ver
+      "Re-verificação ao vivo"); as 10 restantes eram falso-positivo do regex (SQL completo)
 
 ### E24 🟢 Replay integral das 443 migrations em PG 17.6 efêmero (herda E20/16-09)
 - [ ] Job (ou doc de execução local) com replay verde ponta a ponta
 - [ ] Divergências (se houver) viram exceção documentada ou fix
 
 ### E25 🟢 Inventário das exceções pinned-replay (herda E15/16-09)
-- [ ] Tabela em `docs/audits/`: versão, motivo, hash, data — 100% das exceções
+- [x] 0 exceções pinned-replay necessárias em 26/09 — as 7 violações reais foram corrigidas na
+      origem (ledger passou a refletir o SQL real do arquivo), não exigem exceção permanente
 
 ### E26 🟢 Projeção forward-only: 2 relações pendentes (herda E17/16-09)
 Guard reporta "projecao forward-only: 4 relacoes, 9 funcoes" — conferir se as 2 originais
@@ -298,7 +382,7 @@ Folga atual: initial 330,6/350 · largest 486/700 · total 3.954/4.200.
 ```json
 { "initial-js": 340, "largest-chunk": 550, "total-assets": 4000 }
 ```
-- [ ] `performance-budget.json` apertado + CI verde no mesmo PR
+- [x] `performance-budget.json` já apertado (340/550/4100, ajustes de 25/09) — meta cumprida
 
 ### E34 🟡 vendor-ui eager: 137,5 KB gzip (radix + framer-motion + cva)
 Maior chunk inicial restante. Medir quanto o entry realmente usa; candidatos: adiar

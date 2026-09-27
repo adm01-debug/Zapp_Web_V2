@@ -49,6 +49,20 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
+      # E09 (auditoria de GitHub Actions, 2026-09-26) — considerado e
+      # descartado: um passo dentro do job para detectar outro run
+      # waiting/queued (mesma ideia do E47 em db-migrate.yml) NUNCA
+      # executaria de fato aqui. A concurrency (group: deploy-edge-functions,
+      # cancel-in-progress: false) ja impede um 2o job do mesmo grupo de
+      # iniciar qualquer step enquanto o 1o estiver waiting/in_progress — o
+      # 2o dispatch fica preso em "queued" pelo proprio GitHub Actions ANTES
+      # de rodar qualquer coisa, inclusive um passo de deteccao. Os runs
+      # 36265179129/36265412081 (cancelled) em 26/09 foram exatamente isso:
+      # a concorrencia funcionou, alguem so cancelou por impaciencia com a
+      # fila. Mitigacao real: checar a aba Actions antes de um novo dispatch
+      # (nenhum outro run deste workflow em waiting/queued/in_progress); se
+      # um "Waiting" antigo nao for mais necessario, cancele-o em vez de
+      # empilhar outro por cima.
       - name: Exigir ref confiavel da main
         run: |
           if [ "$GITHUB_REF" != "refs/heads/main" ]; then
@@ -92,7 +106,7 @@ jobs:
           node scripts/edge-deploy/generate-manifest.mjs --check
 
       - name: Setup Supabase CLI ${{ env.SUPABASE_CLI_VERSION }}
-        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
 

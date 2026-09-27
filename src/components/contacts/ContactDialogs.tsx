@@ -27,6 +27,8 @@ interface ContactFormValues {
   neighborhood?: string | null;
   city?: string | null;
   state?: string | null;
+  latitude?: string | null;
+  longitude?: string | null;
 }
 
 interface ContactDialogsProps {
@@ -67,8 +69,8 @@ export function ContactDialogs({
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogTrigger asChild>
           <motion.div whileTap={tapAnimation} className="inline-block">
-            <Button className="h-12 px-5 rounded-xl bg-success hover:bg-success/90 text-white font-semibold text-base gap-2 shadow-[0_8px_24px_-10px_hsl(var(--success)/.7)]">
-              <Plus className="w-[18px] h-[18px]" strokeWidth={2.5} />
+            <Button className="h-9 px-4 rounded-xl bg-success hover:bg-success/90 text-white font-semibold text-sm gap-1.5 shadow-[0_8px_24px_-10px_hsl(var(--success)/.7)]">
+              <Plus className="w-4 h-4" strokeWidth={2.5} />
               Novo Contato
             </Button>
           </motion.div>
@@ -102,6 +104,7 @@ export function ContactDialogs({
               onCancel={handleCancelForm}
               submitLabel="Salvar"
               isSubmitting={isSubmitting}
+              excludeContactId={editingContact.id}
             />
           )}
         </DialogContent>

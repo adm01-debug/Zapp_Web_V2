@@ -2,13 +2,13 @@ import type { AppRole } from './role.service';
 import type { LucideIcon } from 'lucide-react';
 import { 
   MessageSquare, MessagesSquare, Mail, User, BarChart3, Kanban, Sparkles, Settings,
-  Building2, Wallet, Package, CreditCard, Tag, LayoutDashboard, CalendarClock, UsersRound,
+  Building2, Wallet, Package, CreditCard, LayoutDashboard, CalendarClock, UsersRound,
   Bot, RefreshCw, Workflow, Brain, TrendingDown, Tags, Megaphone, FileText,
   FileBarChart, AlertTriangle, HeartPulse, Gauge, Target, Trophy,
   Link2, Plug, Inbox, PhoneCall, Activity, Calendar,
   Phone, Shield, ShieldCheck, UserCog, Palette, BookOpen, Lock,
   ScrollText, ClipboardList, Mic, Compass, Cpu, BarChartHorizontal, BrainCircuit,
-  Webhook, HardDrive, Landmark, FlaskConical, ListChecks,
+  Webhook, HardDrive, Landmark, FlaskConical, ListChecks, Send,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -41,6 +41,7 @@ export class NavigationService {
       { id: 'team-chat', icon: MessagesSquare, label: 'Teams', layout: 'full', shortcut: 'Alt+M' },
       { id: 'email-chat', icon: Mail, label: 'Email', layout: 'full', shortcut: 'Alt+L' },
       { id: 'contacts', icon: User, label: 'Contatos', shortcut: 'Alt+O' },
+      { id: 'multiplix', icon: Send, label: 'Multiplix', roles: STAFF_ROLES },
       { id: 'catalog', icon: Package, label: 'Catálogo', shortcut: 'Alt+A' },
       { id: 'voip', icon: PhoneCall, label: 'Telefonia', shortcut: 'Alt+T' },
       { id: 'pipeline', icon: Kanban, label: 'Pipeline', layout: 'full', shortcut: 'Alt+P' },
@@ -58,8 +59,7 @@ export class NavigationService {
         items: [
           { id: 'crm360', icon: Building2, label: 'CRM 360°', roles: ADMIN_ONLY },
           { id: 'wallet', icon: Wallet, label: 'Carteira', roles: STAFF_ROLES },
-          { id: 'tags', icon: Tag, label: 'Etiquetas', roles: STAFF_ROLES },
-          { id: 'queues', icon: LayoutDashboard, label: 'Filas', roles: STAFF_ROLES },
+{ id: 'queues', icon: LayoutDashboard, label: 'Filas', roles: STAFF_ROLES },
           { id: 'schedule', icon: CalendarClock, label: 'Agendamentos', roles: STAFF_ROLES },
           { id: 'groups', icon: UsersRound, label: 'Grupos', roles: STAFF_ROLES },
         ],

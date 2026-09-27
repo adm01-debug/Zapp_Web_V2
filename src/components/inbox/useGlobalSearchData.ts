@@ -5,6 +5,7 @@ import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnable
 import { callCRMIntegration } from '@/lib/crmIntegration';
 import { useSearchHistory } from '@/hooks/system/useSearchHistory';
 import { useUserRole } from '@/hooks/system/useUserRole';
+import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 import { subDays, subMonths, startOfDay } from 'date-fns';
 
 export interface SearchResult {
@@ -57,8 +58,12 @@ export function useGlobalSearchData(open: boolean) {
 
   useEffect(() => {
     if (open) {
-      supabase.from('tags').select('id, name, color').order('name').then(({ data }) => {
-        if (data) setAllTags(data);
+      supabase.from('contacts').select('tags').not('tags', 'is', null).then(({ data }) => {
+        if (data) {
+          const tagSet = new Set<string>();
+          data.forEach(c => (c.tags || []).forEach((t: string) => tagSet.add(t)));
+          setAllTags([...tagSet].sort().map(name => ({ id: name, name, color: '#6366f1' })));
+        }
       });
     }
   }, [open]);
@@ -159,14 +164,16 @@ export function useGlobalSearchData(open: boolean) {
 
       if (types.has('contact')) {
         let contactQuery = supabase.from('contacts').select('id, name, surname, phone, email, created_at, tags').eq('is_lid_legacy', false);
-        if (cleanQuery.length >= 2) contactQuery = contactQuery.or(`name.ilike.%${cleanQuery}%,surname.ilike.%${cleanQuery}%,phone.ilike.%${cleanQuery}%,email.ilike.%${cleanQuery}%`);
+        if (cleanQuery.length >= 2) {
+          const q = escapeOrFilterValue(`%${cleanQuery}%`);
+          contactQuery = contactQuery.or(`name.ilike.${q},surname.ilike.${q},phone.ilike.${q},email.ilike.${q}`);
+        }
 
         const { data: contacts } = await contactQuery.order('name', { ascending: true }).limit(10);
         if (contacts) {
           let filtered = contacts;
           if (tags.length > 0) {
-            const tagNames = allTags.filter(t => tags.includes(t.id)).map(t => t.name);
-            filtered = contacts.filter(c => c.tags && c.tags.some((tag: string) => tagNames.includes(tag)));
+            filtered = contacts.filter(c => c.tags && c.tags.some((tag: string) => tags.includes(tag)));
           }
           filtered.forEach((contact) => {
             searchResults.push({
@@ -223,7 +230,7 @@ export function useGlobalSearchData(open: boolean) {
     } finally {
       if (requestId === searchRequestId.current) setIsLoading(false);
     }
-  }, [addToHistory, allTags, crmIntegrationEnabled, isSupervisor]);
+  }, [addToHistory, crmIntegrationEnabled, isSupervisor]);
 
   const handleSearch = useCallback((query: string) => {
     searchRequestId.current += 1;

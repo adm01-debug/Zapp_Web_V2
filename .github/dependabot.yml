@@ -12,15 +12,28 @@ updates:
       time: "09:00"
       timezone: "America/Sao_Paulo"
     open-pull-requests-limit: 10
-    reviewers:
+    # E76 (auditoria de GitHub Actions, 2026-09-26): "reviewers" nao aparece
+    # em nenhuma PR aberta do Dependabot nem em logs — a chave foi deprecada
+    # pelo GitHub (Settings -> Code security -> Dependabot -> auto-assign
+    # substitui). "assignees" e o campo ativo equivalente.
+    assignees:
       - "adm01-debug"
     labels:
       - "dependencies"
       - "automated"
     commit-message:
       prefix: "⬆️ deps:"
-    # Keep updates independent so failures map to one dependency/changelog.
-    # The open PR limit bounds review load without hiding regressions in a batch.
+    # 2026-09-27: bumps de minor/patch agrupados em 1 PR semanal. Isolados, os
+    # 10 PRs de segunda caiam juntos e disparavam ~80 jobs de uma vez (CI +
+    # CodeQL + DB Guard por PR), enfileirando todos os outros repos da conta.
+    # Um bump quebrar continua rastreavel: o CI do PR agrupado aponta o pacote.
+    groups:
+      deps-semanal:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
     # Major upgrades require a dedicated compatibility plan and full gates.
     # This restriction applies only to version updates; security updates remain eligible.
     ignore:
@@ -40,7 +53,7 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "America/Sao_Paulo"
-    reviewers:
+    assignees:
       - "adm01-debug"
     labels:
       - "dependencies"
@@ -49,7 +62,40 @@ updates:
       prefix: "⬆️ ci:"
     # init e analyze do codeql-action precisam da mesma versao: isolados, cada PR
     # falha no CodeQL ("Loaded a configuration file for version X, but running Y").
+    # E77: demais actions (checkout, setup-node, setup-bun, upload-artifact,
+    # github-script, setup-go, setup-deno, supabase/setup-cli) agrupadas —
+    # cada bump isolado abria 1 PR e rodava os 7 required checks (~8 min) so
+    # pra atualizar 1 SHA de action de terceiro/GitHub sem risco de conflito
+    # de versao entre si (ao contrario do par init/analyze do codeql-action).
     groups:
       codeql-action:
         patterns:
           - "github/codeql-action*"
+      actions-misc:
+        patterns:
+          - "actions/*"
+          - "oven-sh/setup-bun*"
+          - "denoland/setup-deno*"
+          - "supabase/setup-cli*"
+          - "peter-evans/create-pull-request*"
+          - "gitleaks/gitleaks-action*"
+
+  # E73 (auditoria de GitHub Actions, 2026-09-26): infrastructure/preview-egress-proxy
+  # tem go.mod e roda `go test ./...` no job Lint & TypeCheck do ci.yml, mas
+  # nenhum ecosystem do Dependabot cobria modulos Go — dependencias do proxy
+  # de egress (usado por fetch-link-preview) nunca recebiam atualizacao
+  # automatica de seguranca.
+  - package-ecosystem: "gomod"
+    directory: "/infrastructure/preview-egress-proxy"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Sao_Paulo"
+    assignees:
+      - "adm01-debug"
+    labels:
+      - "dependencies"
+      - "go"
+    commit-message:
+      prefix: "⬆️ go:"

@@ -2,22 +2,38 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 
-const mockFrom = vi.fn();
-const mockRemoveChannel = vi.fn();
-const realtimeHandlers: Record<string, (payload: any) => void> = {};
-
-const mockChannelInstance = {
-  on: vi.fn((_: string, filter: { event: string }, handler: (payload: any) => void) => {
-    realtimeHandlers[filter.event] = handler;
-    return mockChannelInstance;
-  }),
-  subscribe: vi.fn((callback?: (status: string) => void) => {
-    callback?.('SUBSCRIBED');
-    return mockChannelInstance;
-  }),
+type MockRealtimePayload = {
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+  new: Record<string, unknown> | null;
+  old: Record<string, unknown> | null;
 };
 
-const mockChannel = vi.fn(() => mockChannelInstance);
+const mockFrom = vi.fn();
+const mockRemoveChannel = vi.fn();
+// Um canal real por topico fisico (mensagens x contatos usam topicos
+// distintos) — indexar so por `filter.event` (sempre '*') misturava os dois
+// handlers num unico slot e o mais recente sobrescrevia o anterior.
+const realtimeHandlersByTopic: Record<string, (payload: MockRealtimePayload) => void> = {};
+
+const mockChannel = vi.fn((topic: string) => {
+  const instance = {
+    on: vi.fn((_: string, __: { event: string }, handler: (payload: MockRealtimePayload) => void) => {
+      realtimeHandlersByTopic[topic] = handler;
+      return instance;
+    }),
+    subscribe: vi.fn((callback?: (status: string) => void) => {
+      callback?.('SUBSCRIBED');
+      return instance;
+    }),
+  };
+  return instance;
+});
+
+function emitRealtimeEvent(tableSuffix: string, payload: MockRealtimePayload) {
+  const topic = Object.keys(realtimeHandlersByTopic).find((t) => t.includes(`:${tableSuffix}:`));
+  if (!topic) throw new Error(`Nenhum canal realtime assinado para a tabela "${tableSuffix}"`);
+  realtimeHandlersByTopic[topic](payload);
+}
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -154,7 +170,13 @@ describe('useRealtimeMessages', () => {
     seededContacts = [];
     recentMessages = [];
     contactsById = {};
-    Object.keys(realtimeHandlers).forEach((key) => delete realtimeHandlers[key]);
+    // NAO limpar realtimeHandlersByTopic aqui: o canal mockado (como o real
+    // acquireSharedChannel) e cacheado no modulo entre testes — supabase.channel()
+    // so e chamado de novo quando NENHUM listener restou por >250ms (timer real,
+    // nao adiantado nos testes). O dispatcher capturado em .on() sempre lê os
+    // listeners atuais em `entry.listeners` no momento da chamada, entao segue
+    // valido entre testes; apagar o dicionario so perderia a referencia sem
+    // nunca ser re-populado.
 
     mockFrom.mockImplementation((table: string) => {
       if (table === 'contacts') return makeContactsQuery();
@@ -268,5 +290,127 @@ describe('useRealtimeMessages', () => {
     expect(result.current.conversations).toEqual([]);
     expect(typeof result.current.sendMessage).toBe('function');
     expect(typeof result.current.refetch).toBe('function');
+  });
+
+  it('patches the contact in-memory when a realtime UPDATE arrives on contacts (ex: apelido/cargo editados)', async () => {
+    const contact = makeContact({ id: 'contact-1', name: 'João Silva', nickname: null, job_title: null });
+    seededContacts = [contact];
+
+    const { result } = renderHook(() => useRealtimeMessages());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.conversations).toHaveLength(1);
+    expect(result.current.conversations[0].contact.nickname).toBeNull();
+
+    const updatedContact = { ...contact, nickname: 'Zé', job_title: 'Gerente de Compras' };
+    act(() => {
+      emitRealtimeEvent('contacts', { eventType: 'UPDATE', new: updatedContact, old: contact });
+    });
+
+    await waitFor(() => {
+      expect(result.current.conversations[0].contact.nickname).toBe('Zé');
+    });
+    expect(result.current.conversations[0].contact.job_title).toBe('Gerente de Compras');
+  });
+
+  it('preserva um UPDATE realtime recebido durante um refetch em voo (ex: refetch disparado por handleSendMessage)', async () => {
+    // Regressão: handleContactUpdate não incrementava liveRevisionRef, então
+    // fetchConversations achava que nenhum evento ao vivo tinha chegado durante
+    // o voo e sobrescrevia com o snapshot desatualizado — o apelido editado
+    // voltava ao valor antigo na lista até o próximo evento realtime.
+    const contact = makeContact({ id: 'contact-1', name: 'João Silva', nickname: null });
+    seededContacts = [contact];
+
+    const { result } = renderHook(() => useRealtimeMessages());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.conversations[0].contact.nickname).toBeNull();
+
+    let resolvePending: (() => void) | undefined;
+    const pending = new Promise<void>((resolve) => { resolvePending = resolve; });
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'contacts') {
+        return {
+          select: vi.fn(() => ({
+            order: vi.fn(() => ({
+              // Snapshot deliberadamente lento e desatualizado (nickname antigo).
+              limit: vi.fn(() => pending.then(() => ({ data: seededContacts, error: null }))),
+            })),
+            in: vi.fn(() => Promise.resolve({ data: [], error: null })),
+            eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) })),
+          })),
+        };
+      }
+      if (table === 'messages') return makeMessagesQuery();
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          }),
+          order: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue({ data: [], error: null }) }),
+        }),
+        insert: vi.fn().mockResolvedValue({ data: null, error: null }),
+      };
+    });
+
+    let refetchPromise: Promise<void>;
+    act(() => {
+      refetchPromise = result.current.refetch();
+    });
+
+    // Chega um UPDATE real-time enquanto o refetch (snapshot antigo) ainda está em voo.
+    act(() => {
+      emitRealtimeEvent('contacts', { eventType: 'UPDATE', new: { ...contact, nickname: 'Zé' }, old: contact });
+    });
+    expect(result.current.conversations[0].contact.nickname).toBe('Zé');
+
+    // O snapshot desatualizado finalmente resolve.
+    resolvePending!();
+    await act(async () => { await refetchPromise; });
+
+    expect(result.current.conversations[0].contact.nickname).toBe('Zé');
+  });
+
+  it('preserva conversation_sla (embed do join) ao aplicar um UPDATE realtime que so traz colunas de contacts', async () => {
+    // Regressão: o payload de UPDATE do Realtime só tem as colunas da tabela
+    // contacts, nunca o embed conversation_sla (join feito em
+    // fetchInitialConversations). Um merge que substituísse o objeto inteiro
+    // apagava o SLA em memória a cada UPDATE, mesmo um sem relação com o SLA.
+    const slaEmbed = { first_response_at: null, first_message_at: '2026-01-01T10:00:00Z', first_response_breached: false };
+    const contact = makeContact({ id: 'contact-1', name: 'João Silva' }) as Record<string, unknown>;
+    contact.conversation_sla = [slaEmbed];
+    seededContacts = [contact];
+
+    const { result } = renderHook(() => useRealtimeMessages());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect((result.current.conversations[0].contact as Record<string, unknown>).conversation_sla).toEqual([slaEmbed]);
+
+    const updatedContact = makeContact({ id: 'contact-1', name: 'João Silva', nickname: 'Zé' });
+    act(() => {
+      emitRealtimeEvent('contacts', { eventType: 'UPDATE', new: updatedContact, old: contact });
+    });
+
+    await waitFor(() => {
+      expect(result.current.conversations[0].contact.nickname).toBe('Zé');
+    });
+    expect((result.current.conversations[0].contact as Record<string, unknown>).conversation_sla).toEqual([slaEmbed]);
+  });
+
+  it('ignora UPDATE de contato que nao esta na lista carregada (sem crash, sem entrada fantasma)', async () => {
+    seededContacts = [makeContact({ id: 'contact-1' })];
+
+    const { result } = renderHook(() => useRealtimeMessages());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    const before = result.current.conversations;
+
+    act(() => {
+      emitRealtimeEvent('contacts', {
+        eventType: 'UPDATE',
+        new: makeContact({ id: 'contact-nao-listado', nickname: 'Fantasma' }),
+        old: makeContact({ id: 'contact-nao-listado' }),
+      });
+    });
+
+    expect(result.current.conversations).toBe(before);
+    expect(result.current.conversations).toHaveLength(1);
   });
 });

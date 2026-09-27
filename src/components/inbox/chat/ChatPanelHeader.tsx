@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { VisionIcon } from '../ai-tools/VisionIcon';
 import { openChatPopup } from '@/lib/popupManager';
+import { PinnedConversationsStack, PinnedChatItem } from './PinnedConversationsStack';
 import { toast } from '@/hooks/ui/use-toast';
 
 interface ChatMessage { id: string; content: string; sender: string; timestamp: string; }
@@ -54,19 +55,24 @@ interface ChatPanelHeaderProps {
   onSelectSuggestion?: (text: string) => void;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  /** Conversas fixadas — exibidas no canto direito do header quando os detalhes estão fechados. */
+  pinnedConversations?: PinnedChatItem[];
+  onSelectPinned?: (contactId: string) => void;
 }
 
 function ChatPanelHeaderBase({
   conversation, isContactTyping, showAIAssistant, showDetails, showSummaryPanel,
   onToggleAIAssistant, onToggleDetails, onStartCall, onOpenSearch, onOpenTransfer, onOpenSchedule,
   onBack, onGenerateSummary, isSummaryLoading, onCloseConversation, onArchive, activeTool, onSetActiveTool,
-  isFavorite, onToggleFavorite,
+  isFavorite, onToggleFavorite, pinnedConversations, onSelectPinned,
 }: ChatPanelHeaderProps) {
   const isMobile = useIsMobile();
   const [participantsOpen, setParticipantsOpen] = useState(false);
   const typeConfig = conversation.contact.contact_type ? CONTACT_TYPE_CONFIG[conversation.contact.contact_type] : null;
   const isVip = (conversation.tags ?? []).some(t => t.toLowerCase() === 'vip');
   const isHighPriority = conversation.priority === 'high';
+  const showPinnedStack = !showDetails && !isMobile
+    && !!pinnedConversations && pinnedConversations.length > 0 && !!onSelectPinned;
 
   return (
     <div className="flex items-center justify-between px-3 md:px-5 h-[72px] border-b border-border bg-inbox-panel shrink-0">
@@ -132,7 +138,7 @@ function ChatPanelHeaderBase({
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className={cn('flex items-center gap-2', showPinnedStack && 'lg:flex-1 lg:justify-center lg:px-4')}>
         <Tooltip><TooltipTrigger asChild>
           <Button variant="ghost" size="icon" className="h-10 w-10 rounded-[10px] border border-border text-muted-foreground hover:text-foreground hover:bg-muted" onClick={onStartCall} aria-label="Ligar">
             <Phone className="w-[18px] h-[18px]" />
@@ -161,7 +167,7 @@ function ChatPanelHeaderBase({
         <DropdownMenu>
           <Tooltip><TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-10 w-10 rounded-[10px] border border-border text-muted-foreground hover:text-foreground hover:bg-muted" aria-label="Mais ações">
+              <Button variant="ghost" size="icon" data-testid="chat-header-more-actions" className="h-10 w-10 rounded-[10px] border border-border text-muted-foreground hover:text-foreground hover:bg-muted" aria-label="Mais ações">
                 <MoreVertical className="w-[18px] h-[18px]" />
               </Button>
             </DropdownMenuTrigger>
@@ -197,6 +203,16 @@ function ChatPanelHeaderBase({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {showPinnedStack && (
+        <div className="hidden lg:flex items-center shrink-0">
+          <PinnedConversationsStack
+            items={pinnedConversations}
+            activeId={conversation.contact.id}
+            onSelect={onSelectPinned}
+          />
+        </div>
+      )}
     </div>
   );
 }

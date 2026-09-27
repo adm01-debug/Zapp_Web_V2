@@ -130,6 +130,38 @@ export function useRealtimeMessages() {
     [commitConversations, hydrateConversationForMessage, notifyAboutIncomingMessage]
   );
 
+  // Sem isso, editar apelido/cargo/empresa etc. (EditContactDialog) so
+  // aparece na lista apos reload — o contato em memoria so era atualizado
+  // via hidratacao de mensagem nova, nunca por UPDATE direto na tabela.
+  // Postgres manda a linha completa no payload de UPDATE (nao e merge
+  // parcial), entao substituir c.contact inteiro e seguro.
+  const handleContactUpdate = useCallback(
+    (payload: RealtimePostgresChangesPayload<ConversationContact>) => {
+      const updatedContact = payload.new as ConversationContact;
+      if (!updatedContact?.id) return;
+      // Sem isso, um fetchConversations em voo (disparado por handleSendMessage,
+      // por exemplo) sobrescrevia esse UPDATE ao resolver: fetchConversations só
+      // preserva eventos ao vivo quando liveRevisionRef mudou durante o request
+      // (linha ~166), e este handler nunca incrementava a revision — apelido/
+      // cargo/empresa editados voltavam ao valor antigo na lista até o próximo
+      // evento realtime.
+      liveRevisionRef.current += 1;
+      commitConversations((prev) => {
+        const idx = prev.findIndex((c) => c.contact.id === updatedContact.id);
+        if (idx < 0) return prev;
+        const updated = [...prev];
+        // Merge, não substitui: o payload de UPDATE do Realtime só traz colunas
+        // de contacts, nunca o embed conversation_sla (join feito em
+        // fetchInitialConversations/fetchContactsByIds). Substituir o objeto
+        // inteiro apagava o SLA em memória a cada UPDATE — o badge passava a
+        // contar desde created_at do contato em vez do atendimento aberto.
+        updated[idx] = { ...updated[idx], contact: { ...updated[idx].contact, ...updatedContact } };
+        return updated;
+      });
+    },
+    [commitConversations]
+  );
+
   const fetchConversations = useCallback(async () => {
     const generation = ++fetchGenerationRef.current;
     const startingLiveRevision = liveRevisionRef.current;
@@ -179,6 +211,13 @@ export function useRealtimeMessages() {
     table: 'messages',
     onInsert: handleNewMessage,
     onUpdate: handleMessageUpdate,
+    enabled: true
+  });
+
+  useSupabaseRealtime<ConversationContact>({
+    channelName: 'global-contacts-realtime',
+    table: 'contacts',
+    onUpdate: handleContactUpdate,
     enabled: true
   });
 

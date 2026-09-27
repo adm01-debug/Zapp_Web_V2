@@ -1,24 +1,21 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { calculateLevel } from './levelUtils';
 import type { AgentStats } from './types';
 
-export function useGamificationMutations(profileId: string | undefined, currentStats: AgentStats | null | undefined) {
+export function useGamificationMutations(profileId: string | undefined, _currentStats?: AgentStats | null) {
   const queryClient = useQueryClient();
 
   const addXpMutation = useMutation({
     mutationFn: async ({ xp }: { xp: number; reason: string }) => {
       if (!profileId) throw new Error('No profile ID');
-      const newXp = (currentStats?.xp || 0) + xp;
-      const newLevel = calculateLevel(newXp);
-      const leveledUp = newLevel > (currentStats?.level || 1);
-
-      const { error } = await supabase
-        .from('agent_stats')
-        .update({ xp: newXp, level: newLevel, updated_at: new Date().toISOString() })
-        .eq('profile_id', profileId);
+      const { data, error } = await supabase.rpc('add_agent_xp', {
+        p_profile_id: profileId,
+        p_xp: xp,
+      });
       if (error) throw error;
-      return { newXp, newLevel, leveledUp, previousLevel: currentStats?.level || 1 };
+      if (!data) throw new Error('No stats found');
+      const d = data as { newXp: number; newLevel: number; previousLevel: number; leveledUp: boolean };
+      return { newXp: d.newXp, newLevel: d.newLevel, leveledUp: d.leveledUp, previousLevel: d.previousLevel };
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['agent-stats', profileId] }),
   });
@@ -26,33 +23,18 @@ export function useGamificationMutations(profileId: string | undefined, currentS
   const grantAchievementMutation = useMutation({
     mutationFn: async ({ type, name, description, xpReward }: { type: string; name: string; description?: string; xpReward: number }) => {
       if (!profileId) throw new Error('No profile ID');
-
-      const { data: existing } = await supabase
-        .from('agent_achievements')
-        .select('id')
-        .eq('profile_id', profileId)
-        .eq('achievement_type', type)
-        .maybeSingle();
-
-      const allowDuplicates = ['daily_goal', 'streak', 'message_milestone'];
-      if (existing && !allowDuplicates.includes(type)) return { alreadyHad: true };
-
-      const { error: achievementError } = await supabase
-        .from('agent_achievements')
-        .insert({ profile_id: profileId, achievement_type: type, achievement_name: name, achievement_description: description, xp_earned: xpReward });
-      if (achievementError) throw achievementError;
-
-      const newXp = (currentStats?.xp || 0) + xpReward;
-      const newLevel = calculateLevel(newXp);
-      const newAchievementsCount = (currentStats?.achievements_count || 0) + 1;
-
-      const { error: statsError } = await supabase
-        .from('agent_stats')
-        .update({ xp: newXp, level: newLevel, achievements_count: newAchievementsCount, updated_at: new Date().toISOString() })
-        .eq('profile_id', profileId);
-      if (statsError) throw statsError;
-
-      return { alreadyHad: false, newXp, newLevel, leveledUp: newLevel > (currentStats?.level || 1) };
+      const { data, error } = await supabase.rpc('grant_agent_achievement', {
+        p_profile_id: profileId,
+        p_type: type,
+        p_name: name,
+        p_description: description ?? undefined,
+        p_xp_reward: xpReward,
+      });
+      if (error) throw error;
+      if (!data) return { alreadyHad: false as const };
+      const d = data as { alreadyHad: boolean; newXp?: number; newLevel?: number; leveledUp?: boolean };
+      if (d.alreadyHad) return { alreadyHad: true as const };
+      return { alreadyHad: false as const, newXp: d.newXp!, newLevel: d.newLevel!, leveledUp: d.leveledUp! };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['agent-stats', profileId] });
@@ -63,22 +45,14 @@ export function useGamificationMutations(profileId: string | undefined, currentS
   const updateStreakMutation = useMutation({
     mutationFn: async (increment: boolean) => {
       if (!profileId) throw new Error('No profile ID');
-      let newStreak: number;
-      let newBestStreak = currentStats?.best_streak || 0;
-
-      if (increment) {
-        newStreak = (currentStats?.current_streak || 0) + 1;
-        if (newStreak > newBestStreak) newBestStreak = newStreak;
-      } else {
-        newStreak = 0;
-      }
-
-      const { error } = await supabase
-        .from('agent_stats')
-        .update({ current_streak: newStreak, best_streak: newBestStreak, updated_at: new Date().toISOString() })
-        .eq('profile_id', profileId);
+      const { data, error } = await supabase.rpc('update_agent_streak', {
+        p_profile_id: profileId,
+        p_increment: increment,
+      });
       if (error) throw error;
-      return { newStreak, newBestStreak };
+      if (!data) throw new Error('No stats found');
+      const d = data as { newStreak: number; newBestStreak: number };
+      return { newStreak: d.newStreak, newBestStreak: d.newBestStreak };
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['agent-stats', profileId] }),
   });
@@ -86,15 +60,14 @@ export function useGamificationMutations(profileId: string | undefined, currentS
   const incrementMessagesMutation = useMutation({
     mutationFn: async (type: 'sent' | 'received') => {
       if (!profileId) throw new Error('No profile ID');
-      const newSent = type === 'sent' ? (currentStats?.messages_sent || 0) + 1 : currentStats?.messages_sent || 0;
-      const newReceived = type === 'received' ? (currentStats?.messages_received || 0) + 1 : currentStats?.messages_received || 0;
-
-      const { error } = await supabase
-        .from('agent_stats')
-        .update({ messages_sent: newSent, messages_received: newReceived, updated_at: new Date().toISOString() })
-        .eq('profile_id', profileId);
+      const { data, error } = await supabase.rpc('increment_agent_messages', {
+        p_profile_id: profileId,
+        p_type: type,
+      });
       if (error) throw error;
-      return { newSent, newReceived };
+      if (!data) throw new Error('No stats found');
+      const d = data as { newSent: number; newReceived: number };
+      return { newSent: d.newSent, newReceived: d.newReceived };
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['agent-stats', profileId] }),
   });
@@ -102,14 +75,13 @@ export function useGamificationMutations(profileId: string | undefined, currentS
   const incrementResolutionsMutation = useMutation({
     mutationFn: async () => {
       if (!profileId) throw new Error('No profile ID');
-      const newResolutions = (currentStats?.conversations_resolved || 0) + 1;
-
-      const { error } = await supabase
-        .from('agent_stats')
-        .update({ conversations_resolved: newResolutions, updated_at: new Date().toISOString() })
-        .eq('profile_id', profileId);
+      const { data, error } = await supabase.rpc('increment_agent_resolutions', {
+        p_profile_id: profileId,
+      });
       if (error) throw error;
-      return { newResolutions };
+      if (!data) throw new Error('No stats found');
+      const d = data as { newResolutions: number };
+      return { newResolutions: d.newResolutions };
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['agent-stats', profileId] }),
   });

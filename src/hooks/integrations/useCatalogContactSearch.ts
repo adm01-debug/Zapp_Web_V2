@@ -6,6 +6,7 @@
  */
 import { supabase } from '@/integrations/supabase/client';
 import { getLogger } from '@/lib/logger';
+import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 
 const log = getLogger('CatalogSendEvents');
 import type { ContactResult } from '@/components/catalog/useSendProduct';
@@ -17,7 +18,7 @@ export async function fetchCatalogContactResults(query: string): Promise<Contact
     ? supabase
         .from('contacts')
         .select('id, name, phone, avatar_url')
-        .or(`name.ilike.%${trimmed}%,phone.ilike.%${trimmed}%`)
+        .or(`name.ilike.${escapeOrFilterValue(`%${trimmed}%`)},phone.ilike.${escapeOrFilterValue(`%${trimmed}%`)}`)
         .limit(15)
     : supabase
         .from('contacts')

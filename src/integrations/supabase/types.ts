@@ -828,50 +828,77 @@ export type Database = {
       calls: {
         Row: {
           agent_id: string | null
+          agent_notes: string | null
           answered_at: string | null
+          answered_by: string | null
+          channel: string | null
           contact_id: string | null
           created_at: string
           direction: string
           duration_seconds: number | null
+          end_reason: string | null
           ended_at: string | null
           id: string
           notes: string | null
+          peer_name: string | null
+          peer_number: string | null
+          provider_call_id: string | null
           provider_event_id: string | null
+          recording_status: string
           recording_url: string | null
           started_at: string
           status: string
+          talk_seconds: number | null
           whatsapp_connection_id: string | null
         }
         Insert: {
           agent_id?: string | null
+          agent_notes?: string | null
           answered_at?: string | null
+          answered_by?: string | null
+          channel?: string | null
           contact_id?: string | null
           created_at?: string
           direction: string
           duration_seconds?: number | null
+          end_reason?: string | null
           ended_at?: string | null
           id?: string
           notes?: string | null
+          peer_name?: string | null
+          peer_number?: string | null
+          provider_call_id?: string | null
           provider_event_id?: string | null
+          recording_status?: string
           recording_url?: string | null
           started_at?: string
           status?: string
+          talk_seconds?: number | null
           whatsapp_connection_id?: string | null
         }
         Update: {
           agent_id?: string | null
+          agent_notes?: string | null
           answered_at?: string | null
+          answered_by?: string | null
+          channel?: string | null
           contact_id?: string | null
           created_at?: string
           direction?: string
           duration_seconds?: number | null
+          end_reason?: string | null
           ended_at?: string | null
           id?: string
           notes?: string | null
+          peer_name?: string | null
+          peer_number?: string | null
+          provider_call_id?: string | null
           provider_event_id?: string | null
+          recording_status?: string
           recording_url?: string | null
           started_at?: string
           status?: string
+          talk_seconds?: number | null
           whatsapp_connection_id?: string | null
         }
         Relationships: [
@@ -885,6 +912,20 @@ export type Database = {
           {
             foreignKeyName: "calls_agent_id_fkey"
             columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calls_answered_by_fkey"
+            columns: ["answered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calls_answered_by_fkey"
+            columns: ["answered_by"]
             isOneToOne: false
             referencedRelation: "profiles_public"
             referencedColumns: ["id"]
@@ -1930,8 +1971,10 @@ export type Database = {
           id: string
           is_lid_legacy: boolean
           job_title: string | null
+          latitude: number | null
           lead_origin: string | null
           lead_score: number | null
+          longitude: number | null
           name: string
           neighborhood: string | null
           nickname: string | null
@@ -1968,8 +2011,10 @@ export type Database = {
           id?: string
           is_lid_legacy?: boolean
           job_title?: string | null
+          latitude?: number | null
           lead_origin?: string | null
           lead_score?: number | null
+          longitude?: number | null
           name: string
           neighborhood?: string | null
           nickname?: string | null
@@ -2006,8 +2051,10 @@ export type Database = {
           id?: string
           is_lid_legacy?: boolean
           job_title?: string | null
+          latitude?: number | null
           lead_origin?: string | null
           lead_score?: number | null
+          longitude?: number | null
           name?: string
           neighborhood?: string | null
           nickname?: string | null
@@ -2995,6 +3042,55 @@ export type Database = {
           },
         ]
       }
+      department_audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          department_id: string
+          details: Json
+          id: string
+          profile_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          department_id: string
+          details?: Json
+          id?: string
+          profile_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          department_id?: string
+          details?: Json
+          id?: string
+          profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_audit_logs_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_audit_logs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_audit_logs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       department_invitations: {
         Row: {
           code: string
@@ -3032,6 +3128,55 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "department_invitations_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      department_invites: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          department_id: string
+          expires_at: string
+          id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          department_id: string
+          expires_at: string
+          id?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          department_id?: string
+          expires_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_invites_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_invites_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_invites_department_id_fkey"
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "departments"
@@ -4381,6 +4526,238 @@ export type Database = {
         }
         Relationships: []
       }
+      multiplix_blocks: {
+        Row: {
+          block_order: number
+          block_type: string
+          created_at: string
+          dispatch_id: string
+          id: string
+          media_caption: string | null
+          media_url: string | null
+          template_text: string | null
+          updated_at: string
+          voice_id: string | null
+          voice_script: string | null
+        }
+        Insert: {
+          block_order?: number
+          block_type: string
+          created_at?: string
+          dispatch_id: string
+          id?: string
+          media_caption?: string | null
+          media_url?: string | null
+          template_text?: string | null
+          updated_at?: string
+          voice_id?: string | null
+          voice_script?: string | null
+        }
+        Update: {
+          block_order?: number
+          block_type?: string
+          created_at?: string
+          dispatch_id?: string
+          id?: string
+          media_caption?: string | null
+          media_url?: string | null
+          template_text?: string | null
+          updated_at?: string
+          voice_id?: string | null
+          voice_script?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "multiplix_blocks_dispatch_id_fkey"
+            columns: ["dispatch_id"]
+            isOneToOne: false
+            referencedRelation: "multiplix_dispatches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      multiplix_dispatches: {
+        Row: {
+          audience_filters: Json
+          business_hours_only: boolean
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          delivered_count: number
+          failed_count: number
+          id: string
+          media_type: string | null
+          media_url: string | null
+          message_template: string
+          name: string
+          outcome_unknown_count: number
+          pause_reason: string | null
+          paused_at: string | null
+          schedule_timezone: string
+          scheduled_at: string | null
+          send_interval_max: number
+          send_interval_min: number
+          send_window_end: string | null
+          send_window_start: string | null
+          sent_count: number
+          speed_profile: string
+          started_at: string | null
+          status: string
+          total_recipients: number
+          typing_delay_max: number
+          typing_delay_min: number
+          updated_at: string
+          whatsapp_connection_id: string | null
+        }
+        Insert: {
+          audience_filters?: Json
+          business_hours_only?: boolean
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          delivered_count?: number
+          failed_count?: number
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          message_template: string
+          name: string
+          outcome_unknown_count?: number
+          pause_reason?: string | null
+          paused_at?: string | null
+          schedule_timezone?: string
+          scheduled_at?: string | null
+          send_interval_max?: number
+          send_interval_min?: number
+          send_window_end?: string | null
+          send_window_start?: string | null
+          sent_count?: number
+          speed_profile?: string
+          started_at?: string | null
+          status?: string
+          total_recipients?: number
+          typing_delay_max?: number
+          typing_delay_min?: number
+          updated_at?: string
+          whatsapp_connection_id?: string | null
+        }
+        Update: {
+          audience_filters?: Json
+          business_hours_only?: boolean
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          delivered_count?: number
+          failed_count?: number
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          message_template?: string
+          name?: string
+          outcome_unknown_count?: number
+          pause_reason?: string | null
+          paused_at?: string | null
+          schedule_timezone?: string
+          scheduled_at?: string | null
+          send_interval_max?: number
+          send_interval_min?: number
+          send_window_end?: string | null
+          send_window_start?: string | null
+          sent_count?: number
+          speed_profile?: string
+          started_at?: string | null
+          status?: string
+          total_recipients?: number
+          typing_delay_max?: number
+          typing_delay_min?: number
+          updated_at?: string
+          whatsapp_connection_id?: string | null
+        }
+        Relationships: []
+      }
+      multiplix_recipients: {
+        Row: {
+          attempt_count: number
+          company_id: string
+          company_name_snapshot: string | null
+          created_at: string
+          delivered_at: string | null
+          delivery_attempt_count: number
+          delivery_claim_expires_at: string | null
+          delivery_claim_token: string | null
+          delivery_claimed_at: string | null
+          delivery_claimed_by: string | null
+          destino_e164: string | null
+          destino_origem: string | null
+          dispatch_id: string
+          error_message: string | null
+          external_id: string | null
+          id: string
+          personalized_message: string | null
+          provider_dispatch_started_at: string | null
+          retry_after: string | null
+          sent_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          company_id: string
+          company_name_snapshot?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          delivery_attempt_count?: number
+          delivery_claim_expires_at?: string | null
+          delivery_claim_token?: string | null
+          delivery_claimed_at?: string | null
+          delivery_claimed_by?: string | null
+          destino_e164?: string | null
+          destino_origem?: string | null
+          dispatch_id: string
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          personalized_message?: string | null
+          provider_dispatch_started_at?: string | null
+          retry_after?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          company_id?: string
+          company_name_snapshot?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          delivery_attempt_count?: number
+          delivery_claim_expires_at?: string | null
+          delivery_claim_token?: string | null
+          delivery_claimed_at?: string | null
+          delivery_claimed_by?: string | null
+          destino_e164?: string | null
+          destino_origem?: string | null
+          dispatch_id?: string
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          personalized_message?: string | null
+          provider_dispatch_started_at?: string | null
+          retry_after?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "multiplix_recipients_dispatch_id_fkey"
+            columns: ["dispatch_id"]
+            isOneToOne: false
+            referencedRelation: "multiplix_dispatches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
@@ -4768,7 +5145,22 @@ export type Database = {
           ttfb?: number | null
           user_agent?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "performance_snapshots_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_snapshots_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       permissions: {
         Row: {
@@ -7065,25 +7457,34 @@ export type Database = {
         Row: {
           conversation_id: string
           id: string
+          is_archived: boolean
           is_muted: boolean | null
+          is_pinned: boolean
           joined_at: string
           last_read_at: string | null
+          member_role: string
           profile_id: string
         }
         Insert: {
           conversation_id: string
           id?: string
+          is_archived?: boolean
           is_muted?: boolean | null
+          is_pinned?: boolean
           joined_at?: string
           last_read_at?: string | null
+          member_role?: string
           profile_id: string
         }
         Update: {
           conversation_id?: string
           id?: string
+          is_archived?: boolean
           is_muted?: boolean | null
+          is_pinned?: boolean
           joined_at?: string
           last_read_at?: string | null
+          member_role?: string
           profile_id?: string
         }
         Relationships: [
@@ -7116,6 +7517,8 @@ export type Database = {
           created_at: string
           created_by: string | null
           department_id: string | null
+          direct_member_a: string | null
+          direct_member_b: string | null
           id: string
           metadata: Json
           name: string | null
@@ -7127,6 +7530,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           department_id?: string | null
+          direct_member_a?: string | null
+          direct_member_b?: string | null
           id?: string
           metadata?: Json
           name?: string | null
@@ -7138,6 +7543,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           department_id?: string | null
+          direct_member_a?: string | null
+          direct_member_b?: string | null
           id?: string
           metadata?: Json
           name?: string | null
@@ -7166,10 +7573,39 @@ export type Database = {
             referencedRelation: "departments"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "team_conversations_direct_member_a_fkey"
+            columns: ["direct_member_a"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_conversations_direct_member_a_fkey"
+            columns: ["direct_member_a"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_conversations_direct_member_b_fkey"
+            columns: ["direct_member_b"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_conversations_direct_member_b_fkey"
+            columns: ["direct_member_b"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       team_message_reactions: {
         Row: {
+          conversation_id: string
           created_at: string
           emoji: string
           id: string
@@ -7177,6 +7613,7 @@ export type Database = {
           profile_id: string
         }
         Insert: {
+          conversation_id: string
           created_at?: string
           emoji: string
           id?: string
@@ -7184,6 +7621,7 @@ export type Database = {
           profile_id: string
         }
         Update: {
+          conversation_id?: string
           created_at?: string
           emoji?: string
           id?: string
@@ -7191,6 +7629,13 @@ export type Database = {
           profile_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "team_message_reactions_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "team_conversations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "team_message_reactions_message_id_fkey"
             columns: ["message_id"]
@@ -7214,6 +7659,55 @@ export type Database = {
           },
         ]
       }
+      team_message_receipts: {
+        Row: {
+          delivered_at: string | null
+          id: string
+          message_id: string
+          profile_id: string
+          read_at: string | null
+          status: string
+        }
+        Insert: {
+          delivered_at?: string | null
+          id?: string
+          message_id: string
+          profile_id: string
+          read_at?: string | null
+          status?: string
+        }
+        Update: {
+          delivered_at?: string | null
+          id?: string
+          message_id?: string
+          profile_id?: string
+          read_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_message_receipts_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_message_receipts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_message_receipts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_messages: {
         Row: {
           content: string
@@ -7221,6 +7715,8 @@ export type Database = {
           created_at: string
           id: string
           is_edited: boolean | null
+          media_bucket: string | null
+          media_path: string | null
           media_type: string | null
           media_url: string | null
           message_type: string
@@ -7235,6 +7731,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_edited?: boolean | null
+          media_bucket?: string | null
+          media_path?: string | null
           media_type?: string | null
           media_url?: string | null
           message_type?: string
@@ -7249,6 +7747,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_edited?: boolean | null
+          media_bucket?: string | null
+          media_path?: string | null
           media_type?: string | null
           media_url?: string | null
           message_type?: string
@@ -8638,6 +9138,15 @@ export type Database = {
       }
     }
     Functions: {
+      accept_department_invite: { Args: { p_code: string }; Returns: Json }
+      add_agent_xp: {
+        Args: { p_profile_id: string; p_xp: number }
+        Returns: Json
+      }
+      add_wa_tag_if_not_exists: {
+        Args: { p_contact_id: string; p_prefix: string; p_tag: string }
+        Returns: undefined
+      }
       admin_set_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -8711,6 +9220,21 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      claim_multiplix_recipient: {
+        Args: {
+          p_dispatch_id: string
+          p_lease_seconds?: number
+          p_recipient_id: string
+          p_worker: string
+        }
+        Returns: {
+          claim_expires_at: string
+          claim_token: string
+          company_id: string
+          delivery_attempt_count: number
+          recipient_id: string
+        }[]
       }
       claim_outbound_message: {
         Args: {
@@ -8801,6 +9325,19 @@ export type Database = {
         }
         Returns: undefined
       }
+      complete_multiplix_dispatch_if_drained: {
+        Args: { p_dispatch_id: string }
+        Returns: boolean
+      }
+      complete_multiplix_recipient: {
+        Args: {
+          p_claim_token: string
+          p_error_message?: string
+          p_recipient_id: string
+          p_status: string
+        }
+        Returns: undefined
+      }
       complete_outbound_message: {
         Args: {
           p_claim_token: string
@@ -8881,6 +9418,7 @@ export type Database = {
           count: number
         }[]
       }
+      count_searchbox_sessions_this_month: { Args: never; Returns: number }
       dashboard_contact_counts: {
         Args: {
           p_agent?: string
@@ -8899,7 +9437,11 @@ export type Database = {
         }[]
       }
       dashboard_kpi: {
-        Args: { p_agent?: string; p_queue?: string; p_since: string }
+        Args: { p_agent?: string; p_queue?: string; p_since?: string }
+        Returns: Json
+      }
+      dashboard_leaderboard: {
+        Args: { p_limit?: number; p_period?: string }
         Returns: Json
       }
       dashboard_sentiment_alerts: {
@@ -9087,6 +9629,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      find_or_create_direct_conversation: {
+        Args: { other_profile_id: string }
+        Returns: string
+      }
       fn_list_audio_meme_categories: {
         Args: never
         Returns: {
@@ -9196,6 +9742,7 @@ export type Database = {
           last_message_at: string
         }[]
       }
+      get_multiplix_cron_secret: { Args: never; Returns: string }
       get_own_gmail_accounts: {
         Args: never
         Returns: {
@@ -9227,6 +9774,17 @@ export type Database = {
           role: string
         }[]
       }
+      get_team_conversation_previews: {
+        Args: never
+        Returns: {
+          conversation_id: string
+          last_message_content: string
+          last_message_created_at: string
+          last_message_id: string
+          last_message_sender_id: string
+          last_message_type: string
+        }[]
+      }
       get_team_profiles: {
         Args: never
         Returns: {
@@ -9244,16 +9802,23 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_team_unread_counts: {
+        Args: never
+        Returns: {
+          conversation_id: string
+          unread_count: number
+        }[]
+      }
       get_visible_agent_ids: { Args: { _user_id: string }; Returns: string[] }
       grant_agent_achievement: {
         Args: {
-          p_description: string
+          p_description?: string
           p_name: string
           p_profile_id: string
           p_type: string
-          p_xp_reward: number
+          p_xp_reward?: number
         }
-        Returns: undefined
+        Returns: Json
       }
       has_role: {
         Args: {
@@ -9261,6 +9826,14 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_agent_messages: {
+        Args: { p_profile_id: string; p_type: string }
+        Returns: Json
+      }
+      increment_agent_resolutions: {
+        Args: { p_profile_id: string }
+        Returns: Json
       }
       increment_talkx_template_use: {
         Args: { p_template_id: string }
@@ -9337,6 +9910,10 @@ export type Database = {
         Args: { p_contact_id: string }
         Returns: undefined
       }
+      mark_multiplix_recipient_dispatch_started: {
+        Args: { p_claim_token: string; p_recipient_id: string }
+        Returns: undefined
+      }
       mark_talkx_recipient_dispatch_started: {
         Args: { p_claim_token: string; p_recipient_id: string }
         Returns: undefined
@@ -9354,7 +9931,31 @@ export type Database = {
         }
         Returns: Json
       }
+      my_calls_kpi: {
+        Args: {
+          p_channel?: string
+          p_from?: string
+          p_scope?: string
+          p_to?: string
+        }
+        Returns: {
+          answered: number
+          avg_talk_seconds: number
+          inbound: number
+          missed_inbound: number
+          outbound: number
+          total: number
+        }[]
+      }
       notify_due_reminders: { Args: never; Returns: number }
+      persist_multiplix_recipient_message_snapshot: {
+        Args: {
+          p_claim_token: string
+          p_personalized_message: string
+          p_recipient_id: string
+        }
+        Returns: string
+      }
       persist_sentiment_alert: {
         Args: {
           p_analysis_id: string
@@ -9416,6 +10017,18 @@ export type Database = {
           notification_id: string
         }[]
       }
+      record_multiplix_recipient_delivered: {
+        Args: { p_connection_id: string; p_external_id: string }
+        Returns: boolean
+      }
+      record_multiplix_recipient_sent: {
+        Args: {
+          p_claim_token: string
+          p_external_id: string
+          p_recipient_id: string
+        }
+        Returns: undefined
+      }
       record_talkx_link_click: {
         Args: {
           p_ip_hash?: string
@@ -9445,13 +10058,38 @@ export type Database = {
         }
         Returns: undefined
       }
+      release_multiplix_recipient_claim: {
+        Args: { p_claim_token: string; p_recipient_id: string }
+        Returns: boolean
+      }
       release_talkx_recipient_claim: {
         Args: { p_claim_token: string; p_recipient_id: string }
         Returns: boolean
       }
+      remove_wa_label_from_all_contacts: {
+        Args: { p_label_prefix: string }
+        Returns: undefined
+      }
+      remove_wa_tag_by_prefix: {
+        Args: { p_contact_id: string; p_prefix: string }
+        Returns: undefined
+      }
+      rename_wa_label_on_all_contacts: {
+        Args: { p_label_prefix: string; p_new_tag: string }
+        Returns: undefined
+      }
       replace_talkx_draft_recipients: {
         Args: { p_campaign_id: string; p_contact_ids: string[] }
         Returns: number
+      }
+      reschedule_multiplix_recipient: {
+        Args: {
+          p_claim_token: string
+          p_error_message?: string
+          p_recipient_id: string
+          p_retry_after: string
+        }
+        Returns: Json
       }
       reschedule_talkx_recipient: {
         Args: {
@@ -9496,6 +10134,8 @@ export type Database = {
           email: string
           id: string
           job_title: string
+          latitude: number
+          longitude: number
           name: string
           nickname: string
           notes: string
@@ -9517,6 +10157,46 @@ export type Database = {
           title: string
         }[]
       }
+      search_my_calls: {
+        Args: {
+          p_channel?: string
+          p_direction?: string
+          p_from?: string
+          p_limit?: number
+          p_offset?: number
+          p_q?: string
+          p_result?: string
+          p_scope?: string
+          p_to?: string
+        }
+        Returns: {
+          agent_id: string
+          agent_notes: string
+          answered_at: string
+          answered_by: string
+          channel: string
+          contact_avatar_url: string
+          contact_id: string
+          contact_name: string
+          contact_phone: string
+          direction: string
+          end_reason: string
+          ended_at: string
+          id: string
+          notes: string
+          peer_name: string
+          peer_number: string
+          recording_status: string
+          started_at: string
+          status: string
+          talk_seconds: number
+          total_count: number
+        }[]
+      }
+      set_call_agent_notes: {
+        Args: { p_call_id: string; p_notes: string }
+        Returns: undefined
+      }
       set_conversation_status: {
         Args: { p_contact_id: string; p_next: string; p_reason?: string }
         Returns: undefined
@@ -9524,6 +10204,14 @@ export type Database = {
       set_instance_token: {
         Args: { p_connection_id: string; p_token: string }
         Returns: string
+      }
+      set_team_member_role: {
+        Args: {
+          p_conversation_id: string
+          p_new_role: string
+          p_profile_id: string
+        }
+        Returns: undefined
       }
       skill_based_assign: { Args: { p_queue_id: string }; Returns: string }
       store_gmail_tokens: {
@@ -9549,6 +10237,18 @@ export type Database = {
         Returns: boolean
       }
       talkx_segment_tags: { Args: { p_segment: string }; Returns: Json }
+      transition_multiplix_dispatch: {
+        Args: {
+          p_action: string
+          p_dispatch_id: string
+          p_pause_reason?: string
+        }
+        Returns: {
+          current_status: string
+          dispatch_id: string
+          previous_status: string
+        }[]
+      }
       transition_talkx_campaign:
         | {
             Args: { p_action: string; p_campaign_id: string }
@@ -9570,6 +10270,11 @@ export type Database = {
               previous_status: string
             }[]
           }
+      trigger_pending_multiplix_dispatches: { Args: never; Returns: undefined }
+      update_agent_streak: {
+        Args: { p_increment: boolean; p_profile_id: string }
+        Returns: Json
+      }
       update_own_profile: {
         Args: {
           p_avatar_url?: string
@@ -9609,6 +10314,23 @@ export type Database = {
           p_zapp_contact_id: string
         }
         Returns: undefined
+      }
+      upsert_my_call: {
+        Args: {
+          p_answered_at?: string
+          p_channel?: string
+          p_contact_id?: string
+          p_direction: string
+          p_end_reason?: string
+          p_ended_at?: string
+          p_id: string
+          p_peer_name?: string
+          p_peer_number?: string
+          p_provider_call_id?: string
+          p_status?: string
+          p_talk_seconds?: number
+        }
+        Returns: string
       }
       user_has_permission: {
         Args: { _permission_name: string; _user_id: string }

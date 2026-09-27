@@ -1,5 +1,5 @@
 import {
-  Phone, PhoneCall, Headphones, MessageCircle, Mail, ArrowLeftRight,
+  Phone, PhoneCall, Headphones, Mail, ArrowLeftRight,
   Star, Archive, Ban, Briefcase, MoreHorizontal, ChevronsDownUp, RefreshCw,
 } from 'lucide-react';
 import * as React from 'react';
@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { useSyncToCRM } from '@/hooks/integrations/useSyncToCRM';
@@ -53,27 +54,51 @@ function CrmSyncMenuItem({ conversation }: { conversation: Conversation }) {
 }
 
 type TileProps = React.ComponentPropsWithoutRef<'button'> & {
-  icon: React.ReactNode; label: string; testId?: string;
+  icon: React.ReactNode; label: string; testId?: string; hoverColorClass?: string;
 };
 
 const Tile = React.forwardRef<HTMLButtonElement, TileProps>(function Tile(
-  { icon, label, testId, className, ...rest }, ref,
+  // `_title` é descartado de propósito (nunca vai para o DOM): o `title` nativo
+  // do browser e o TooltipContent abaixo mostravam textos diferentes ao mesmo
+  // tempo (achado na auditoria de 5 agentes, 2026-09-26, rodada 4).
+  // `_` prefix: evita no-unused-vars do ESLint (achado na auditoria de 27/09).
+  { icon, label, testId, hoverColorClass = 'hover:text-primary', className, title: _title, disabled, ...rest }, ref,
 ) {
-  return (
+  const button = (
     <button
       ref={ref}
       type="button"
+      aria-label={label}
       data-testid={testId ?? 'contact-action-tile'}
+      disabled={disabled}
       {...rest}
       className={cn(
-        'w-14 h-14 rounded-xl bg-muted/40 border border-border flex flex-col items-center justify-center gap-1',
-        'hover:bg-muted/70 transition-colors disabled:opacity-40 disabled:pointer-events-none',
+        'h-10 w-10 rounded-lg flex items-center justify-center text-muted-foreground',
+        'hover:bg-muted/50 transition-colors disabled:opacity-40 disabled:pointer-events-none',
+        hoverColorClass,
         className,
       )}
     >
       {icon}
-      <span className="text-2xs font-medium text-muted-foreground leading-none">{label}</span>
     </button>
+  );
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {disabled ? (
+            // <button disabled> nunca recebe foco nem dispara hover — sem este
+            // wrapper focável, o tooltip nunca aparecia no estado desabilitado
+            // (achado na auditoria de 5 agentes, 2026-09-26, rodada 4).
+            // role/aria-disabled/aria-label: acessibilidade WCAG 4.1.2 para
+            // leitores de tela (achado na auditoria de 5 agentes, 27/09).
+            <span tabIndex={0} role="button" aria-disabled="true" aria-label={label} className="inline-flex cursor-not-allowed">{button}</span>
+          ) : button}
+        </TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 });
 
@@ -86,10 +111,10 @@ export function ContactActionButtons({
   };
 
   return (
-    <div className="grid grid-cols-5 gap-2 justify-items-center mt-3">
+    <div className="grid grid-cols-4 gap-2 justify-items-center mt-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Tile icon={<Phone className="w-[18px] h-[18px] text-primary" />} label="Ligar" title="Opções de chamada" />
+            <Tile icon={<Phone className="w-[18px] h-[18px]" />} label="Ligar" title="Opções de chamada" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="center" className="min-w-[160px]">
             <DropdownMenuItem onClick={() => onStartCall('whatsapp')} className="gap-2 text-xs">
@@ -105,14 +130,7 @@ export function ContactActionButtons({
         </DropdownMenu>
 
         <Tile
-          icon={<MessageCircle className="w-[18px] h-[18px] text-success" />}
-          label="WhatsApp"
-          title="Abrir WhatsApp"
-          onClick={() => window.open(`https://wa.me/${contact.phone.replace(/\D/g, '')}`, '_blank', 'noopener,noreferrer')}
-        />
-
-        <Tile
-          icon={<Mail className="w-[18px] h-[18px] text-primary" />}
+          icon={<Mail className="w-[18px] h-[18px]" />}
           label="E-mail"
           title={contact.email ? 'Abrir email' : 'Sem email'}
           disabled={!contact.email}
@@ -120,15 +138,22 @@ export function ContactActionButtons({
         />
 
         <Tile
-          icon={<ArrowLeftRight className="w-[18px] h-[18px] text-foreground" />}
+          icon={<ArrowLeftRight className="w-[18px] h-[18px]" />}
           label="Transferir"
           title="Transferir conversa"
           onClick={handleTransfer}
+          // --success (160 70% 42%) sobre bg-inbox-panel branco dá 2.60:1 —
+          // abaixo do mínimo WCAG 1.4.11 (3:1) para ícones. L reduzido pra
+          // 35% (mesmo tom/saturação) só neste hover, sem tocar o token
+          // global (achado na auditoria de 5 agentes, 2026-09-26, rodada 4).
+          // group-hover: → hover: direto: group-hover num elemento sem ancestral
+          // com .group nunca dispara — CSS descendant combinator (27/09, rodada 5).
+          hoverColorClass="hover:text-[hsl(160_70%_35%)]"
         />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Tile icon={<MoreHorizontal className="w-[18px] h-[18px] text-foreground" />} label="Mais" title="Mais ações" />
+            <Tile icon={<MoreHorizontal className="w-[18px] h-[18px]" />} label="Mais" title="Mais ações" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="center" className="min-w-[160px]">
             <DropdownMenuItem onClick={() => onQuickAction?.('edit')} className="gap-2 text-xs">

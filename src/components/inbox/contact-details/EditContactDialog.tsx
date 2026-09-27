@@ -11,8 +11,11 @@ import {
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { ContactForm } from '@/components/contacts/ContactForm';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+
+type ContactUpdate = Database['public']['Tables']['contacts']['Update'];
 
 interface EditContactDialogProps {
   open: boolean;
@@ -34,13 +37,13 @@ interface EditContactDialogProps {
     neighborhood?: string | null;
     city?: string | null;
     state?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
   };
 }
 
-export function EditContactDialog({ open, onOpenChange, contact }: EditContactDialogProps) {
-  const queryClient = useQueryClient();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formValues, setFormValues] = useState({
+function contactToFormValues(contact: EditContactDialogProps['contact']) {
+  return {
     name: contact.name || '',
     nickname: contact.nickname || '',
     surname: contact.surname || '',
@@ -55,7 +58,44 @@ export function EditContactDialog({ open, onOpenChange, contact }: EditContactDi
     neighborhood: contact.neighborhood || '',
     city: contact.city || '',
     state: contact.state || '',
-  });
+    latitude: contact.latitude != null ? String(contact.latitude) : '',
+    longitude: contact.longitude != null ? String(contact.longitude) : '',
+  };
+}
+
+const FIELD_NORMALIZERS: Record<string, (raw: string) => string | number | null> = {
+  name: (v) => v,
+  nickname: (v) => v || null,
+  surname: (v) => v || null,
+  job_title: (v) => v || null,
+  company: (v) => v || null,
+  phone: (v) => v || null,
+  email: (v) => v || null,
+  contact_type: (v) => v || null,
+  postal_code: (v) => v || null,
+  address: (v) => v || null,
+  address_number: (v) => v || null,
+  neighborhood: (v) => v || null,
+  city: (v) => v || null,
+  state: (v) => v || null,
+  latitude: (v) => (v.trim() && Number.isFinite(Number(v)) ? Number(v) : null),
+  longitude: (v) => (v.trim() && Number.isFinite(Number(v)) ? Number(v) : null),
+};
+
+export function EditContactDialog({ open, onOpenChange, contact }: EditContactDialogProps) {
+  const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formValues, setFormValues] = useState(() => contactToFormValues(contact));
+  const [initialValues, setInitialValues] = useState(formValues);
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
+      const next = contactToFormValues(contact);
+      setFormValues(next);
+      setInitialValues(next);
+    }
+  }
 
   const handleChange = useCallback((field: string, value: string) => {
     setFormValues(prev => ({ ...prev, [field]: value }));
@@ -64,21 +104,18 @@ export function EditContactDialog({ open, onOpenChange, contact }: EditContactDi
   const handleSubmit = async () => {
     setIsSubmitting(true);
 
-    const updatePayload = {
-      name: formValues.name,
-      nickname: formValues.nickname || null,
-      surname: formValues.surname || null,
-      job_title: formValues.job_title || null,
-      company: formValues.company || null,
-      email: formValues.email || null,
-      contact_type: formValues.contact_type || null,
-      postal_code: formValues.postal_code || null,
-      address: formValues.address || null,
-      address_number: formValues.address_number || null,
-      neighborhood: formValues.neighborhood || null,
-      city: formValues.city || null,
-      state: formValues.state || null,
-    };
+    const updatePayload: Record<string, string | number | null> = {};
+    for (const field of Object.keys(FIELD_NORMALIZERS)) {
+      const key = field as keyof typeof formValues;
+      if (formValues[key] === initialValues[key]) continue;
+      updatePayload[field] = FIELD_NORMALIZERS[field](formValues[key]);
+    }
+
+    if (Object.keys(updatePayload).length === 0) {
+      setIsSubmitting(false);
+      onOpenChange(false);
+      return;
+    }
 
     // Optimistic update: update cache immediately for instant UI feedback
     const enrichedKey = ['contact-enriched', contact.id];
@@ -91,7 +128,7 @@ export function EditContactDialog({ open, onOpenChange, contact }: EditContactDi
     try {
       const { error } = await supabase
         .from('contacts')
-        .update(updatePayload)
+        .update(updatePayload as ContactUpdate)
         .eq('id', contact.id);
 
       if (error) throw error;
@@ -125,6 +162,7 @@ export function EditContactDialog({ open, onOpenChange, contact }: EditContactDi
           onCancel={() => onOpenChange(false)}
           submitLabel="Salvar"
           isSubmitting={isSubmitting}
+          excludeContactId={contact.id}
         />
       </DialogContent>
     </Dialog>

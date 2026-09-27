@@ -1,6 +1,4 @@
 import { useMemo, useCallback, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useUrlFilters } from '@/hooks/system/useUrlFilters';
 import { InboxFiltersState } from '@/components/inbox/InboxFilters';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
@@ -46,24 +44,6 @@ export function useInboxFilters({ conversations, profileId }: UseInboxFiltersPro
     }
     window.history.replaceState(null, '', params.toString() ? `?${params}` : window.location.pathname + window.location.hash);
   }, []);
-
-  // Load contact_tags mapping
-  const { data: contactTagsMap = {} } = useQuery({
-    queryKey: ['contact-tags-map'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('contact_tags')
-        .select('contact_id, tag_id');
-      if (error) throw error;
-      const map: Record<string, string[]> = {};
-      (data || []).forEach(ct => {
-        if (!map[ct.contact_id]) map[ct.contact_id] = [];
-        map[ct.contact_id].push(ct.tag_id);
-      });
-      return map;
-    },
-    staleTime: 30_000,
-  });
 
   // Convert URL filters to InboxFiltersState
   const filters = useMemo<InboxFiltersState>(() => ({
@@ -158,8 +138,8 @@ export function useInboxFilters({ conversations, profileId }: UseInboxFiltersPro
     // Tags filter
     if (filters.tags.length > 0) {
       result = result.filter((c) => {
-        const tagIds = contactTagsMap[c.contact.id] || [];
-        return filters.tags.some(filterTagId => tagIds.includes(filterTagId));
+        const ctags = (c.contact as { tags?: string[] }).tags || [];
+        return filters.tags.some(name => ctags.includes(name));
       });
     }
 
@@ -193,7 +173,7 @@ export function useInboxFilters({ conversations, profileId }: UseInboxFiltersPro
     });
 
     return result;
-  }, [conversations, search, filters, mainTab, subTab, chipTab, showAll, selectedQueueId, selectedContactType, profileId, contactTagsMap, fsmEnabled]);
+  }, [conversations, search, filters, mainTab, subTab, chipTab, showAll, selectedQueueId, selectedContactType, profileId, fsmEnabled]);
 
   return {
     chipTab, setChipTab,

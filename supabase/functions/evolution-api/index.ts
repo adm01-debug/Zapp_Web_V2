@@ -125,6 +125,22 @@ serve(async (req) => {
       return null;
     };
 
+    // Definido aqui (escopo de módulo) para que connect/status/disconnect/delete-instance
+    // possam usar sem depender de criar-connection ter rodado antes.
+    const TOKEN_KEYS = ['token', 'Token', 'apikey', 'apiKey'];
+    const TOKEN_CONTAINER_KEYS = ['data', 'hash', 'instance'];
+    const stripInstanceToken = (value: unknown): unknown => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+      const clone: Record<string, unknown> = { ...(value as Record<string, unknown>) };
+      for (const key of TOKEN_KEYS) delete clone[key];
+      for (const key of TOKEN_CONTAINER_KEYS) {
+        if (clone[key] && typeof clone[key] === 'object' && !Array.isArray(clone[key])) {
+          clone[key] = stripInstanceToken(clone[key]);
+        }
+      }
+      return clone;
+    };
+
     // ─── E10: backfill do token da PRINCIPAL (secret global → Vault) ───
     // Idempotente (set_instance_token faz update quando já existe secret_id).
     // Nunca ecoa o token na resposta nem em log.
@@ -244,7 +260,11 @@ serve(async (req) => {
               log.error('create-connection: delete de compensação respondeu erro — instância pode ter ficado órfã na GO', { instance, detalhe: deleteData?.message });
             }
           } else {
-            await proxy(`/instance/delete/${instance}`, 'DELETE');
+            const deleteRes = await proxy(`/instance/delete/${instance}`, 'DELETE');
+            const deleteData: Record<string, unknown> = await deleteRes.json().catch(() => ({}));
+            if (deleteData?.error) {
+              log.error('create-connection: delete de compensação (v2) respondeu erro — instância pode ter ficado órfã', { instance, detalhe: deleteData?.message });
+            }
           }
         } catch (err: unknown) {
           log.error('create-connection: compensação (delete na GO) lançou exceção — instância pode ter ficado órfã', {
@@ -254,28 +274,18 @@ serve(async (req) => {
       };
 
       // A GO ecoa o token da instância no corpo de /instance/create (mesmo
-      // motivo por que create-instance legado o devolvia ao operador) — aqui
-      // o token já está no Vault, então devolvê-lo de novo só reabriria o
-      // vazamento que E08-E11 existem para fechar. Nunca confiar num shape
-      // único: além de achatado no topo, forks do Evolution API costumam
-      // aninhar sob "data", "hash" (padrão do Node.js v1/v2 original, de onde
-      // este projeto migrou — docs/migration/GO_GAPS.md) ou "instance" —
-      // remove recursivamente em qualquer um desses contêineres, nos dois
-      // branches (sucesso e erro).
-      const TOKEN_KEYS = ['token', 'Token', 'apikey', 'apiKey'];
-      const TOKEN_CONTAINER_KEYS = ['data', 'hash', 'instance'];
-      const stripInstanceToken = (value: unknown): unknown => {
-        if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
-        const clone: Record<string, unknown> = { ...(value as Record<string, unknown>) };
-        for (const key of TOKEN_KEYS) delete clone[key];
-        for (const key of TOKEN_CONTAINER_KEYS) {
-          if (clone[key] && typeof clone[key] === 'object' && !Array.isArray(clone[key])) {
-            clone[key] = stripInstanceToken(clone[key]);
-          }
-        }
-        return clone;
-      };
-
+      // motivo por que create-instance legado o devolvia ao operador). No
+      // branch de sucesso o token já está no Vault, então devolvê-lo de novo
+      // só reabriria o vazamento que E08-E11 existem para fechar. No branch
+      // de erro (createData?.error) nada foi persistido — mas a GO recebeu o
+      // token no payload do /instance/create e pode ecoá-lo de volta mesmo
+      // numa resposta de erro (ex.: nome já em uso), então remover continua
+      // sendo a coisa certa nos dois branches, só por motivos diferentes.
+      // Nunca confiar num shape único: além de achatado no topo, forks do
+      // Evolution API costumam aninhar sob "data", "hash" (padrão do Node.js
+      // v1/v2 original, de onde este projeto migrou —
+      // docs/migration/GO_GAPS.md) ou "instance" — remove recursivamente em
+      // qualquer um desses contêineres, nos dois branches.
       // Libera a reserva quando algo falhar depois dela. Só existe uma linha
       // com este instance_id (o INSERT acima é quem garante isso), então esta
       // requisição é a única que pode legitimamente apagá-la.
@@ -305,6 +315,11 @@ serve(async (req) => {
         // isIdempotent em evolution-api-proxy.ts). compensateGoCreate() só
         // age se resolveGoInstanceId achar algo com este nome — é no-op
         // seguro quando de fato nada foi criado, e fecha o caso em que foi.
+        // Custo aceito: resolveGoInstanceId faz fetch cru (não passa pelo
+        // circuit breaker do proxy) com até 8s de timeout — todo erro de
+        // /instance/create paga essa checagem extra agora, não só o branch
+        // de tokenError como antes. Mitigado pelo rate-limit da function e
+        // por cada tentativa usar nome com timestamp (chave de breaker nova).
         await compensateGoCreate();
         await rollbackRow();
         return new Response(JSON.stringify(stripInstanceToken(createData)), {
@@ -332,8 +347,12 @@ serve(async (req) => {
       }
 
       // Webhook na criação (best-effort): falhar aqui não desfaz a conexão já
-      // criada e com token guardado — o front sempre pode chamar 'connect'
-      // (usa o token da instância via E16, quando existir) para reparar.
+      // criada e com token guardado. A action 'connect' NÃO resolve token
+      // por instância ainda (usa só EVOLUTION_INSTANCE_TOKEN/o global — E16
+      // e E23 seguem pendentes no plano multi-conexão), então hoje ela não é
+      // um reparo funcional para uma instância não-default; o reparo real
+      // por ora é repetir este create-connection ou reconectar manualmente
+      // pela GO com o instanceToken salvo no Vault desta conexão.
       try {
         await fetch(`${evolutionApiUrl}/instance/connect`, {
           method: 'POST',
@@ -365,35 +384,196 @@ serve(async (req) => {
         webhookUrl: `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/evolution-webhook`,
       });
       const response = await fetch(`${evolutionApiUrl}/instance/connect`, { method: 'POST', headers: { 'apikey': instToken, 'Content-Type': 'application/json' }, body: connectBody });
-      const data = await response.json();
-      const qrRes = await fetch(`${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken } });
-      const qrData = await qrRes.json();
+      if (!response.ok) {
+        // deno-lint-ignore no-explicit-any
+        let errData: any = {};
+        try { const _t = await response.text(); errData = JSON.parse(_t); } catch { /* non-JSON */ }
+        return new Response(JSON.stringify({ error: true, status: response.status, message: errData?.message ?? 'Falha ao conectar instância na Evolution GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      // deno-lint-ignore no-explicit-any
+      let data: any = {};
+      try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
+      // A GO emite o QR de forma ASSÍNCRONA depois do connect: ler /instance/qr
+      // uma única vez logo após o connect pega o payload ainda vazio (corrida) e
+      // devolvia qrcode:undefined, o que travava o front no spinner. Poll curto até
+      // o payload cru "2@..." aparecer.
       // A GO devolve o PNG do QR codificando 'https://wa.me/settings/linked_devices#2@...'.
       // O leitor de "Conectar aparelho" do WhatsApp so aceita o payload cru "2@...": com a URL
       // ele recusa o QR e o pareamento pela tela do app nunca fecha. Alem disso o campo vem
       // como "<dataURI>|<url>", o que quebra o <img src>. Re-renderiza a partir do payload cru.
-      const rawQrCode = String(qrData?.data?.code ?? '').split('#').pop() ?? '';
-      let qrcode = String(qrData?.data?.qrcode ?? '').split('|')[0] || undefined;
-      if (rawQrCode.startsWith('2@')) {
-        try {
-          const { default: QRCode } = await import('https://esm.sh/qrcode@1.5.3');
-          const svg = await QRCode.toString(rawQrCode, { type: 'svg', margin: 2, width: 512 });
-          qrcode = `data:image/svg+xml;base64,${btoa(svg)}`;
-        } catch (err: unknown) {
-          new Logger('evolution-api').error('Falha ao re-renderizar QR; usando o da GO', { error: err instanceof Error ? err.message : String(err) });
+      const fetchQr = async (): Promise<{ base64?: string; code?: string }> => {
+        const qrRes = await fetch(`${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken } });
+        // deno-lint-ignore no-explicit-any
+        let qrData: any = {};
+        try { const _t = await qrRes.text(); qrData = JSON.parse(_t); } catch { /* non-JSON from GO */ }
+        const rawQrCode = String(qrData?.data?.code ?? '').split('#').pop() ?? '';
+        let base64 = String(qrData?.data?.qrcode ?? '').split('|')[0] || undefined;
+        if (rawQrCode.startsWith('2@')) {
+          try {
+            // deno-lint-ignore no-explicit-any
+            const qrMod: any = await import('https://esm.sh/qrcode@1.5.3');
+            const svg = await (qrMod.default ?? qrMod).toString(rawQrCode, { type: 'svg', margin: 2, width: 512 });
+            base64 = `data:image/svg+xml;base64,${btoa(svg)}`;
+          } catch (err: unknown) {
+            new Logger('evolution-api').error('Falha ao re-renderizar QR; usando o da GO', { error: err instanceof Error ? err.message : String(err) });
+          }
+          return { base64, code: rawQrCode };
         }
+        return { base64, code: rawQrCode || qrData?.data?.code };
+      };
+      let qr = await fetchQr();
+      for (let i = 0; i < 3 && !qr.base64; i++) {
+        await new Promise((r) => setTimeout(r, 1500));
+        qr = await fetchQr();
       }
-      if (qrcode) await supabase.from('whatsapp_connections').update({ qr_code: qrcode, status: 'qr_pending', instance_id: instance }).eq('instance_id', instance);
-      return new Response(JSON.stringify({ ...data, qrcode: qrcode ? { base64: qrcode, code: rawQrCode || qrData?.data?.code } : undefined }), { status: response.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      if (qr.base64) {
+        await supabase.from('whatsapp_connections').update({ qr_code: qr.base64, status: 'qr_pending', instance_id: instance }).eq('instance_id', instance);
+        return new Response(JSON.stringify({ ...data, qrcode: { base64: qr.base64, code: qr.code } }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      // Sem QR após o poll: a instância ou já está logada (reconectou sozinha a
+      // partir da sessão salva) ou tem uma sessão órfã na GO que não emite QR novo
+      // (JID persistido + LoggedIn:false; logout/reconnect da GO respondem 400/500).
+      // Distingue pelo status para NUNCA devolver qrcode:undefined silencioso — era
+      // isso que deixava o front em 'loading' eterno.
+      const stRes = await fetch(`${evolutionApiUrl}/instance/status`, { method: 'GET', headers: { 'apikey': instToken } });
+      let stData: { data?: Record<string, unknown>; state?: string } = {};
+      try { const _t = await stRes.text(); stData = JSON.parse(_t); } catch { /* non-JSON from GO */ }
+      // status !ok (token inválido, GO 500) NÃO é "sessão órfã": não mandar o
+      // operador para logout/reset quando o problema é auth/disponibilidade.
+      if (!stRes.ok) {
+        return new Response(JSON.stringify({ error: true, status: stRes.status, message: 'Não foi possível verificar o status da instância na Evolution GO (token inválido ou serviço indisponível). Tente novamente em instantes.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const stInner = stData.data ?? {};
+      // Exige Connected=true E LoggedIn=true para considerar aberta: {Connected:false,
+      // LoggedIn:true} é estado "reconnecting" (socket indisponível) — devolver
+      // connected nesse caso fecha o dialog sem QR quando o WhatsApp não chegou a parear.
+      const isConnected = Boolean(stInner.Connected ?? stInner.connected);
+      const isLoggedIn = Boolean(stInner.loggedIn ?? stInner.LoggedIn);
+      // state==='open' é fallback para respostas da GO sem inner flags; quando os flags
+      // estão presentes eles têm precedência — evita state:'open'+Connected:false = connected.
+      const hasInnerFlags = 'Connected' in stInner || 'connected' in stInner ||
+        'loggedIn' in stInner || 'LoggedIn' in stInner;
+      // 2xx com corpo vazio/não-JSON deixa stData={} e passaria por "não logado",
+      // disparando a recriação da instância lá embaixo — resposta malformada não pode
+      // destruir sessão. Sem flags E sem state é falha de protocolo, não sessão órfã.
+      if (!hasInnerFlags && typeof stData.state !== 'string') {
+        new Logger('evolution-api').error('connect: /instance/status respondeu 2xx sem flags nem state', { instance });
+        return new Response(JSON.stringify({ error: true, status: 502, message: 'A Evolution GO respondeu de forma inesperada ao consultar o status da instância. Tente novamente em instantes.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const loggedIn = (isConnected && isLoggedIn) || (!hasInnerFlags && stData.state === 'open');
+      if (loggedIn) {
+        await supabase.from('whatsapp_connections').update({ status: 'connected', qr_code: null }).eq('instance_id', instance);
+        return new Response(JSON.stringify({ status: 'connected' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      // Sessão órfã: a GO guarda o JID de um device que o celular já desvinculou
+      // (o registro fica com disconnect_reason "Reconnecting") e entra em loop de
+      // resume da sessão salva — nunca cai para o pareamento por QR. logout e
+      // reconnect respondem 400/500 nesse estado ("no active session found"), então
+      // a única saída é recriar a instância na GO com o MESMO token: isso zera o
+      // device store e faz o connect seguinte emitir QR novo.
+      // Só !LoggedIn é sessão morta. {Connected:false, LoggedIn:true} é 'connecting'
+      // — socket caindo com credenciais VÁLIDAS — e apagar isso destrói uma sessão boa
+      // por causa de um soluço de rede. Contrato E25 em
+      // docs/audits/PLANO_MULTI_CONEXAO_EVOLUTION_GO_50_ETAPAS_2026-09-25.md:
+      // LoggedIn && Connected → open; LoggedIn && !Connected → connecting; !LoggedIn → close.
+      // BUG 1: quando stInner tem Connected mas não LoggedIn, Boolean(undefined)=false
+      // tornaria sessionIsDead=true mesmo sem evidência de sessão morta. Diferenciar
+      // "sem LoggedIn" de "LoggedIn:false" para não disparar recriação destrutiva.
+      const hasLoggedInFlag = 'loggedIn' in stInner || 'LoggedIn' in stInner;
+      const sessionIsDead = hasLoggedInFlag ? !isLoggedIn : hasInnerFlags ? false : stData.state === 'close';
+      // GAP 1: {C:false, L:true} é "reconnecting" — socket instável com credenciais válidas.
+      // Devolver um status intermediário em vez do 409 "não logada" (factualmente errado).
+      if (!loggedIn && !sessionIsDead) {
+        return new Response(JSON.stringify({ error: false, status: 'connecting', message: 'A instância está reconectando. Aguarde alguns segundos e tente novamente.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      let goOrphan: { id: string; jid: string } | null = null;
+      if (isGoFlavor && sessionIsDead) {
+        // Security: verificar admin ANTES de chamar /instance/all para evitar
+        // exposição de metadados de instâncias a usuários não-admin.
+        const adminError = await requireAdmin();
+        if (adminError) {
+          new Logger('evolution-api').warn('connect: sessão morta detectada mas quem chamou não é admin', { instance });
+          return new Response(JSON.stringify({ error: true, status: 409, message: 'A sessão do WhatsApp está com credenciais inconsistentes na Evolution GO e precisa ser recriada. Peça a um administrador para reconectar.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        try {
+          const allRes = await fetch(`${evolutionApiUrl}/instance/all`, { headers: { 'apikey': evolutionApiKey }, signal: AbortSignal.timeout(8000) });
+          if (allRes.ok) {
+            const allJson = await allRes.json();
+            const records: Record<string, unknown>[] = Array.isArray(allJson?.data) ? allJson.data : [];
+            const rec = records.find((r) => r?.name === instance || r?.Name === instance);
+            const recId = String(rec?.id ?? rec?.ID ?? '');
+            const recJid = String(rec?.jid ?? rec?.JID ?? '');
+            if (recId && recJid) goOrphan = { id: recId, jid: recJid };
+          }
+        } catch { /* GO indisponível: cai no 409 abaixo */ }
+      }
+      if (goOrphan) {
+        if (!Deno.env.get('EVOLUTION_INSTANCE_TOKEN')) {
+          new Logger('evolution-api').error('connect: EVOLUTION_INSTANCE_TOKEN não configurado — recriação de instância órfã abortada', { instance });
+          return new Response(JSON.stringify({ error: true, status: 503, message: 'A recriação automática da instância exige que o secret EVOLUTION_INSTANCE_TOKEN esteja configurado na Edge Function. Configure o secret e tente novamente.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        new Logger('evolution-api').warn('connect: sessão órfã na GO — recriando instância para forçar QR novo', { instance, goId: goOrphan.id });
+        // Security: sanitizar o id para evitar path traversal — só alfanumérico e hífen.
+        const safeGoId = goOrphan.id.replace(/[^a-zA-Z0-9\-_]/g, '');
+        const delRes = await fetch(`${evolutionApiUrl}/instance/delete/${safeGoId}`, { method: 'DELETE', headers: { 'apikey': evolutionApiKey } });
+        if (!delRes.ok) {
+          new Logger('evolution-api').error('connect: falha ao deletar instância órfã na GO', { instance, goId: goOrphan.id, httpStatus: delRes.status });
+        }
+        if (delRes.ok) {
+          let createRes = await fetch(`${evolutionApiUrl}/instance/create`, {
+            method: 'POST',
+            headers: { 'apikey': evolutionApiKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: instance, token: instToken }),
+          });
+          if (!createRes.ok) {
+            // GO pode levar um momento para liberar o nome após o DELETE — retry único após 2s
+            await new Promise((r) => setTimeout(r, 2000));
+            createRes = await fetch(`${evolutionApiUrl}/instance/create`, {
+              method: 'POST',
+              headers: { 'apikey': evolutionApiKey, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: instance, token: instToken }),
+            });
+          }
+          if (!createRes.ok) {
+            new Logger('evolution-api').error('connect: instância deletada da GO mas recriação falhou após retry', { instance, goId: goOrphan.id });
+            return new Response(JSON.stringify({ error: true, status: 503, message: 'A instância do WhatsApp foi removida da Evolution GO mas não pôde ser recriada automaticamente. É necessário recriar a instância manualmente no painel da Evolution GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          }
+          // Mesmo body do connect normal: o GO PERSISTE webhook/subscribe daqui.
+          await fetch(`${evolutionApiUrl}/instance/connect`, {
+            method: 'POST',
+            headers: { 'apikey': instToken, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subscribe: ['ALL'], immediate: true, webhookUrl: `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/evolution-webhook` }),
+          });
+          let healed = await fetchQr();
+          for (let i = 0; i < 4 && !healed.base64; i++) {
+            await new Promise((r) => setTimeout(r, 1500));
+            healed = await fetchQr();
+          }
+          if (healed.base64) {
+            await supabase.from('whatsapp_connections').update({ qr_code: healed.base64, status: 'qr_pending' }).eq('instance_id', instance);
+            return new Response(JSON.stringify({ qrcode: { base64: healed.base64, code: healed.code }, recovered: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          }
+        }
+        new Logger('evolution-api').error('connect: recriação da instância na GO não gerou QR', { instance, goId: goOrphan.id });
+      }
+      new Logger('evolution-api').warn('connect: nenhum QR gerado e instância não logada — sessão pendente na GO', { instance });
+      return new Response(JSON.stringify({ error: true, status: 409, message: 'A instância não gerou um QR Code novo e a recriação automática da sessão na Evolution GO não resolveu. Verifique se o serviço da Evolution GO está no ar e tente novamente.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (action === 'status') {
       const instToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey;
       const response = await fetch(`${evolutionApiUrl}/instance/status`, { method: 'GET', headers: { 'apikey': instToken } });
-      const data = await response.json();
-      // '||' e nao '??': loggedIn:false explicito nao pode curto-circuitar o
-      // fallback por State — a GO manda os dois e nem sempre concordam.
-      if (data?.data && data.state === undefined) data.state = ((data.data.loggedIn ?? data.data.LoggedIn) || data.data.State === 'open') ? 'open' : 'close';
+      // deno-lint-ignore no-explicit-any
+      let data: any = {};
+      try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
+      // connected explícito é autoritativo: quando presente, requer loggedIn E connected.
+      // State/loggedIn apenas como fallback quando connected ausente (resposta legacy sem o campo).
+      // Evita falso positivo em Reconnecting: loggedIn:true, connected:false, State:'open' stale.
+      if (data?.data && data.state === undefined) {
+        const _li = data.data.loggedIn ?? data.data.LoggedIn;
+        const _co = data.data.connected ?? data.data.Connected;
+        data.state = (_co !== undefined ? (_co === true && _li === true) : (data.data.State === 'open' || _li === true)) ? 'open' : 'close';
+      }
       if (response.ok) {
         const status = data.state === 'open' ? 'connected' : 'disconnected';
         // So zera o QR quando conecta de fato. O polling de status roda a cada 3s
@@ -407,7 +587,8 @@ serve(async (req) => {
         }
       }
       const status = data.state === 'open' ? 'connected' : 'disconnected';
-      return new Response(JSON.stringify({ ...data, status }), { status: response.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      if (!response.ok) return new Response(JSON.stringify({ error: true, status: response.status, message: data?.message ?? 'Falha ao verificar status da instância.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ ...data, status }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (action === 'instance-info') {
@@ -422,18 +603,31 @@ serve(async (req) => {
 
     if (action === 'disconnect') {
       const response = await fetch(`${evolutionApiUrl}/instance/logout`, { method: 'DELETE', headers: { 'apikey': Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey } });
-      const data = await response.json();
+      // deno-lint-ignore no-explicit-any
+      let data: any = {};
+      try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
+      if (!response.ok) return new Response(JSON.stringify({ error: true, status: response.status, message: data?.message ?? 'Falha ao desconectar instância.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       await supabase.from('whatsapp_connections').update({ status: 'disconnected' }).eq('instance_id', instance);
-      return new Response(JSON.stringify(data), { status: response.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (action === 'delete-instance') {
+      const adminError = await requireAdmin();
+      if (adminError) return adminError;
+      let deleteRes: Response;
       if (isGoFlavor) {
         const goId = await resolveGoInstanceId(instance);
         if (!goId) return new Response(JSON.stringify({ error: true, status: 404, message: 'Instância não encontrada na Evolution GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-        return await proxy(`/instance/delete/${goId}`, 'DELETE');
+        deleteRes = await proxy(`/instance/delete/${goId}`, 'DELETE');
+      } else {
+        deleteRes = await proxy(`/instance/delete/${instance}`, 'DELETE', body);
       }
-      return await proxy(`/instance/delete/${instance}`, 'DELETE', body);
+      // deno-lint-ignore no-explicit-any
+      const deleteBody: any = await deleteRes.json().catch(() => ({}));
+      if (!deleteBody?.error) {
+        await supabase.from('whatsapp_connections').delete().eq('instance_id', instance);
+      }
+      return new Response(JSON.stringify(deleteBody), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     if (action === 'set-presence') return await proxy(`/instance/setPresence/${instance}`, 'POST', { presence: body.presence });
 

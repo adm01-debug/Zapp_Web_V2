@@ -35,9 +35,9 @@ describe('NavigationService integration maturity', () => {
 });
 
 describe('NavigationService role gating', () => {
-  const PRIMARY_IDS = ['inbox', 'team-chat', 'email-chat', 'contacts', 'catalog', 'voip', 'pipeline', 'tasks', 'achievements', 'dashboard'];
+  const PRIMARY_IDS = ['inbox', 'team-chat', 'email-chat', 'contacts', 'multiplix', 'catalog', 'voip', 'pipeline', 'tasks', 'achievements', 'dashboard'];
 
-  it('exposes exactly the 10 agreed items, in order, on the primary nav', () => {
+  it('exposes exactly the 11 agreed items, in order, on the primary nav', () => {
     expect(NavigationService.getPrimaryNav().map(({ id }) => id)).toEqual(PRIMARY_IDS);
   });
 
@@ -46,10 +46,12 @@ describe('NavigationService role gating', () => {
     expect(NavigationService.canAccess('nonexistent-view', [])).toBe(false);
   });
 
-  it('lets a plain agent access every primary nav item and nothing staff-only', () => {
-    for (const id of PRIMARY_IDS) {
+  it('lets a plain agent access every primary nav item except the staff-only Multiplix', () => {
+    for (const id of PRIMARY_IDS.filter((id) => id !== 'multiplix')) {
       expect(NavigationService.canAccess(id, ['agent'])).toBe(true);
     }
+    expect(NavigationService.canAccess('multiplix', ['agent'])).toBe(false);
+    expect(NavigationService.canAccess('multiplix', ['supervisor'])).toBe(true);
     expect(NavigationService.canAccess('security', ['agent'])).toBe(false);
     expect(NavigationService.canAccess('admin', ['agent'])).toBe(false);
     expect(NavigationService.canAccess('audit-logs', ['agent'])).toBe(false);
