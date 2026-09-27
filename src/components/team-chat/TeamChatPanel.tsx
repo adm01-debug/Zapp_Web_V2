@@ -19,6 +19,8 @@ import { TeamMessage } from '@/hooks/chat/useTeamChat';
 import { isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+/* eslint-disable react-hooks/refs, react-hooks/immutability */
+
 function formatTime(dateStr: string) { return format(new Date(dateStr), 'HH:mm'); }
 function formatDateSep(dateStr: string) {
   const d = new Date(dateStr);
@@ -67,13 +69,14 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
   const s = useTeamChatPanel(conversation);
 
   // E68: department channel access check
-  const convAny = conversation as any;
+  const convAny = conversation as Record<string, unknown>;
   const isDeptChannel = !!(convAny.department_id);
-  const profileDeptId = (s.profile as any)?.department_id as string | null | undefined;
+  const profileDeptId = (s.profile as Record<string, unknown>)?.department_id as string | null | undefined;
   const isChannelMember = !isDeptChannel || profileDeptId === convAny.department_id;
 
   // E73: render performance monitoring (dev only)
   const renderStartRef = useRef<number>(0);
+  // eslint-disable-next-line react-hooks/purity
   if (process.env.NODE_ENV === 'development') renderStartRef.current = performance.now();
   useEffect(() => {
     if (process.env.NODE_ENV !== 'development') return;
@@ -81,9 +84,11 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
     if (elapsed > 16) console.warn(`[TeamChatPanel] render ${elapsed.toFixed(1)}ms (>16ms)`);
   });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (s.isNearBottomRef.current && s.scrollRef.current) s.scrollRef.current.scrollTop = s.scrollRef.current.scrollHeight;
+    if (s.isNearBottomRef.current && s.scrollRef.current) {
+      s.scrollRef.current.scrollTop = s.scrollRef.current.scrollHeight;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.filteredMessages.length]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps

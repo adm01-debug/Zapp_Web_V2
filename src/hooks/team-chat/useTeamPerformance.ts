@@ -19,13 +19,13 @@ export function useTeamPerformance(conversationId: string) {
         .gte('created_at', since);
       if (error) throw error;
       const msgs = data ?? [];
-      const activeParticipants = new Set(msgs.map((m: any) => m.sender_id)).size;
+      const activeParticipants = new Set(msgs.map(m => m.sender_id)).size;
       let avgResponseTimeMs: number | null = null;
       if (msgs.length >= 2) {
-        const sorted = [...msgs].sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        const sorted = [...msgs].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
         const gaps: number[] = [];
         for (let i = 1; i < sorted.length; i++) {
-          gaps.push(new Date((sorted[i] as any).created_at).getTime() - new Date((sorted[i - 1] as any).created_at).getTime());
+          gaps.push(new Date(sorted[i].created_at).getTime() - new Date(sorted[i - 1].created_at).getTime());
         }
         avgResponseTimeMs = gaps.reduce((a, b) => a + b, 0) / gaps.length;
       }

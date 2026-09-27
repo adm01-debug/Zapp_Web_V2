@@ -21,13 +21,14 @@ export function useParticipantStats(conversationId: string) {
         .limit(500);
       if (error) throw error;
       const map = new Map<string, ParticipantStat>();
-      for (const row of (data ?? [])) {
-        const sid = (row as any).sender_id as string;
-        const name = ((row as any).profiles as { name?: string } | null)?.name ?? sid.slice(0, 8);
+      type Row = { sender_id: string; status: string | null; profiles: { name?: string } | null };
+      for (const row of (data ?? []) as Row[]) {
+        const sid = row.sender_id;
+        const name = (row.profiles as { name?: string } | null)?.name ?? sid.slice(0, 8);
         if (!map.has(sid)) map.set(sid, { senderId: sid, senderName: name, sent: 0, delivered: 0, read: 0 });
         const s = map.get(sid)!;
         s.sent++;
-        const status = (row as any).status as string | null;
+        const status = row.status;
         if (status === 'delivered' || status === 'read') s.delivered++;
         if (status === 'read') s.read++;
       }

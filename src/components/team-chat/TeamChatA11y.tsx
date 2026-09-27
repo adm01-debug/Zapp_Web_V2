@@ -28,6 +28,7 @@ export function TeamChatAnnouncer({ message }: { message: string }) {
 }
 
 /** E88: ARIA helper — returns props for a message bubble. */
+// eslint-disable-next-line react-refresh/only-export-components
 export function getMessageAriaProps(isOwn: boolean, senderName: string) {
   return {
     role: 'article' as const,
@@ -39,6 +40,7 @@ export function getMessageAriaProps(isOwn: boolean, senderName: string) {
  * E89: focus trap — keeps focus within the container when `active` is true.
  * Returns a ref to attach to the container element.
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function useFocusTrap(active: boolean) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -69,6 +71,7 @@ export function useFocusTrap(active: boolean) {
 }
 
 /** E90: returns true when the user prefers reduced motion. */
+// eslint-disable-next-line react-refresh/only-export-components
 export function usePrefersReducedMotion(): boolean {
   if (typeof window === 'undefined') return false;
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;

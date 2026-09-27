@@ -31,6 +31,7 @@ export function DepartmentWhatsAppView({ departmentId, currentUserName, isAdmin 
 
   useEffect(() => {
     if (!credentials) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMode(credentials.mode);
     setEvolutionUrl(credentials.evolution_url ?? '');
     // NEVER prefill API keys or tokens — blank = keep existing

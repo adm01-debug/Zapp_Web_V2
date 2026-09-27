@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+// eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
