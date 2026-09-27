@@ -453,6 +453,13 @@ serve(async (req) => {
       // estão presentes eles têm precedência — evita state:'open'+Connected:false = connected.
       const hasInnerFlags = 'Connected' in stInner || 'connected' in stInner ||
         'loggedIn' in stInner || 'LoggedIn' in stInner;
+      // 2xx com corpo vazio/não-JSON deixa stData={} e passaria por "não logado",
+      // disparando a recriação da instância lá embaixo — resposta malformada não pode
+      // destruir sessão. Sem flags E sem state é falha de protocolo, não sessão órfã.
+      if (!hasInnerFlags && typeof stData.state !== 'string') {
+        new Logger('evolution-api').error('connect: /instance/status respondeu 2xx sem flags nem state', { instance });
+        return new Response(JSON.stringify({ error: true, status: 502, message: 'A Evolution GO respondeu de forma inesperada ao consultar o status da instância. Tente novamente em instantes.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
       const loggedIn = (isConnected && isLoggedIn) || (!hasInnerFlags && stData.state === 'open');
       if (loggedIn) {
         await supabase.from('whatsapp_connections').update({ status: 'connected', qr_code: null }).eq('instance_id', instance);
