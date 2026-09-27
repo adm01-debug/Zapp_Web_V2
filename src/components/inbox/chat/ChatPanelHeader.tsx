@@ -55,7 +55,7 @@ interface ChatPanelHeaderProps {
   onSelectSuggestion?: (text: string) => void;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
-  /** Conversas fixadas — exibidas no centro do header quando os detalhes estão fechados. */
+  /** Conversas fixadas — exibidas no canto direito do header quando os detalhes estão fechados. */
   pinnedConversations?: PinnedChatItem[];
   onSelectPinned?: (contactId: string) => void;
 }
@@ -71,6 +71,8 @@ function ChatPanelHeaderBase({
   const typeConfig = conversation.contact.contact_type ? CONTACT_TYPE_CONFIG[conversation.contact.contact_type] : null;
   const isVip = (conversation.tags ?? []).some(t => t.toLowerCase() === 'vip');
   const isHighPriority = conversation.priority === 'high';
+  const showPinnedStack = !showDetails && !isMobile
+    && !!pinnedConversations && pinnedConversations.length > 0 && !!onSelectPinned;
 
   return (
     <div className="flex items-center justify-between px-3 md:px-5 h-[72px] border-b border-border bg-inbox-panel shrink-0">
@@ -136,17 +138,7 @@ function ChatPanelHeaderBase({
         </div>
       </div>
 
-      {!showDetails && !isMobile && pinnedConversations && pinnedConversations.length > 0 && onSelectPinned && (
-        <div className="hidden lg:flex flex-1 items-center justify-center px-4 min-w-0">
-          <PinnedConversationsStack
-            items={pinnedConversations}
-            activeId={conversation.contact.id}
-            onSelect={onSelectPinned}
-          />
-        </div>
-      )}
-
-      <div className="flex items-center gap-2">
+      <div className={cn('flex items-center gap-2', showPinnedStack && 'lg:flex-1 lg:justify-center lg:px-4')}>
         <Tooltip><TooltipTrigger asChild>
           <Button variant="ghost" size="icon" className="h-10 w-10 rounded-[10px] border border-border text-muted-foreground hover:text-foreground hover:bg-muted" onClick={onStartCall} aria-label="Ligar">
             <Phone className="w-[18px] h-[18px]" />
@@ -211,6 +203,16 @@ function ChatPanelHeaderBase({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {showPinnedStack && (
+        <div className="hidden lg:flex items-center shrink-0">
+          <PinnedConversationsStack
+            items={pinnedConversations}
+            activeId={conversation.contact.id}
+            onSelect={onSelectPinned}
+          />
+        </div>
+      )}
     </div>
   );
 }
