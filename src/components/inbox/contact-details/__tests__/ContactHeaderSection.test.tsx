@@ -18,6 +18,14 @@ vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
+vi.mock('@/hooks/chat/useConversationActions', () => ({
+  useConversationActions: () => ({
+    isFavorite: () => false,
+    favoriteContact: vi.fn(),
+    unfavoriteContact: vi.fn(),
+  }),
+}));
+
 const baseContact = {
   id: 'c1',
   name: 'Maria Silva',
@@ -320,6 +328,18 @@ describe('ContactHeaderSection', () => {
 
   // ========== BADGE CONTRASTE WCAG 1.4.3 ==========
   // Tokens brutos falham 4.5:1 com texto branco; getScoreBadgeBg usa L reduzido.
+  // Ratios verificados matematicamente (HSL→RGB→luminância IEC 61966-2-1):
+  //   hsl(160 70% 28%) → L≈0.1461 → 5.35:1 ✅
+  //   hsl(38 90% 32%)  → L≈0.1634 → 4.92:1 ✅
+  //   hsl(0 84% 48%)   → L≈0.1660 → 4.86:1 ✅
+
+  // Smoke: garante que toHaveStyle rejeita cor errada (jsdom/cssstyle não está aceitando tudo).
+  it('smoke: toHaveStyle detecta cor errada (proteção contra false-positive da infra)', () => {
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
+    const badge = screen.getByText('100');
+    expect(badge).not.toHaveStyle('background-color: red');
+  });
+
   it('badge de alto engajamento usa cor acessível (hsl 160 70% 28%, ~5.35:1 com branco)', () => {
     // baseEnriched: positive+high+company+customer = 100
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
@@ -327,31 +347,49 @@ describe('ContactHeaderSection', () => {
     expect(badge).toHaveStyle('background-color: hsl(160 70% 28%)');
   });
 
-  it('badge de médio engajamento usa cor acessível (hsl 38 90% 32%, ~4.5:1 com branco)', () => {
+  it('badge de alto engajamento usa texto branco (necessário para ratio WCAG)', () => {
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
+    const badge = screen.getByText('100');
+    expect(badge).toHaveStyle('color: rgb(255, 255, 255)');
+  });
+
+  it('badge usa cor de alto engajamento na fronteira exata score=80', () => {
+    // positive(+25) + low(nada) + company(+5) + no type(nada) = 50+25+5 = 80
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={{ ...baseEnriched, ai_priority: 'low', contact_type: null }}
+      />
+    );
+    const badge = screen.getByText('80');
+    expect(badge).toHaveStyle('background-color: hsl(160 70% 28%)');
+  });
+
+  it('badge de médio engajamento usa cor acessível (hsl 38 90% 32%, ~4.92:1 com branco)', () => {
     render(
       <ContactHeaderSection
         contact={baseContact}
         enrichedData={{ ...baseEnriched, ai_sentiment: 'neutral', ai_priority: 'low', company: null, contact_type: null }}
       />
     );
-    // score = 50 (base sem bônus)
+    // score = 50 (base sem bônus — mínimo alcançável pela fórmula atual)
     const badge = screen.getByText('50');
     expect(badge).toHaveStyle('background-color: hsl(38 90% 32%)');
   });
 
-  it('badge de baixo engajamento usa cor acessível (hsl 0 84% 48%, ~4.7:1 com branco)', () => {
+  it('score mínimo é 50 — ramo s<50 em getScoreBadgeBg é código defensivo não alcançável', () => {
+    // A fórmula só faz adições (base 50 + bônus). Sentiment negativo não subtrai.
+    // Logo hsl(0 84% 48%) nunca é ativado com a implementação atual.
+    // Este teste documenta esse invariante: qualquer enrichedData produz score >= 50.
     render(
       <ContactHeaderSection
         contact={baseContact}
         enrichedData={{ ...baseEnriched, ai_sentiment: 'negative', ai_priority: 'low', company: null, contact_type: null }}
       />
     );
-    // score = 50 - 25 = 25 (negative perde 25 do base; na realidade o cálculo não subtrai)
-    // Veja: base 50, sentiment negativo não adiciona, priority low não adiciona → score = 50
-    // Preciso forçar score < 50. Sem dados = 50, não há como ir abaixo do baseScore.
-    // O badge de score < 50 só ocorre se o base + bônus < 50 — não é possível com os dados
-    // atuais pois o base começa em 50. Testamos em vez disso que o score mínimo é 50.
     const badge = screen.getByText('50');
     expect(badge).toBeInTheDocument();
+    // Confirma que a cor de baixo engajamento NÃO é usada (score está em 50, range médio)
+    expect(badge).not.toHaveStyle('background-color: hsl(0 84% 48%)');
   });
 });
