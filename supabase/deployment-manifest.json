@@ -318,8 +318,8 @@
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "bytes": 66449,
-      "sha256": "45e42ebd0da7bf49d99bf8c0342e1facc4a4a605bead5addfb2310e724ab795c"
+      "bytes": 66547,
+      "sha256": "eae7d771f39617e7a9642710abd9f5d14529bf4b176532b83abbafd62df002f0"
     },
     {
       "path": "supabase/functions/evolution-sync/index.ts",
@@ -398,8 +398,8 @@
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "bytes": 22724,
-      "sha256": "874498587ed7914c36191cec91a17daf9b2c90e45bbfb5a5562ddb26e4a63579"
+      "bytes": 23084,
+      "sha256": "8fb0575c51a823c8213c8dcab4ab76a952bbff2ea92ca84dbbaecf547c401fe7"
     },
     {
       "path": "supabase/functions/promogifts-catalog/index.ts",
@@ -915,7 +915,7 @@
       "name": "evolution-api",
       "entrypoint": "supabase/functions/evolution-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "de5a09704215b4335bf989fc01dfdbc71f9da9a29857cf4368fada42d413b072",
+      "source_sha256": "42e0afe1269ab92c99d4fb677cf78b2e01f7d95f27acde5f02ffbe0691d978dc",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1122,7 +1122,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "cef65b035135f8d330661dbdd50ee987a57c5eecb7eb2f98bc6720b07d8e8fe3",
+      "source_sha256": "a2ecdd8e46028fd147aad3d3d5f1d8ef3b552daab7a1e42ed579efa77db2f36f",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1366,5 +1366,5 @@
       ]
     }
   ],
-  "manifest_sha256": "d2b7019d3235ffac490c7114679d783cff348aa9c0b85c4b962eb658563290e2"
+  "manifest_sha256": "0d1237a706951af0e1b154385b4b6cc5700f389218be4f112889c2f8157805be"
 }
