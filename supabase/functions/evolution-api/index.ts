@@ -614,7 +614,9 @@ serve(async (req) => {
       let data: any = {};
       try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
       if (!response.ok) return new Response(JSON.stringify({ error: true, status: response.status, message: data?.message ?? 'Falha ao desconectar instância.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      await supabase.from('whatsapp_connections').update({ status: 'disconnected' }).eq('instance_id', instance);
+      // Guard: não sobrescrever qr_pending com disconnected — usuário pode ter iniciado
+      // novo pareamento enquanto o logout era processado (race entre telas distintas).
+      await supabase.from('whatsapp_connections').update({ status: 'disconnected' }).eq('instance_id', instance).neq('status', 'qr_pending');
       return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
