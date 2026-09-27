@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Users, Truck, UserCheck, Wrench, Star, Handshake, MoreHorizontal, Gift, Package,
+  Users, Truck, UserCheck, Wrench, Handshake, Package,
 } from 'lucide-react';
 
 interface TypeConfig {
@@ -50,14 +50,6 @@ export const CONTACT_TYPE_CONFIG: Record<string, TypeConfig> = {
     dotBg: 'bg-[hsl(38_92%_50%)]',
     badgeClass: 'border-[rgba(245,159,10,0.6)] text-[hsl(38_92%_80%)] bg-[rgba(245,159,10,0.15)]',
   },
-  lead: {
-    label: 'Lead',
-    icon: '⭐',
-    iconNode: <Star className="w-3 h-3" />,
-    gradient: 'bg-gradient-to-r from-[hsl(48_96%_53%)] to-[hsl(48_96%_40%)]',
-    dotBg: 'bg-[hsl(48_96%_53%)]',
-    badgeClass: 'border-[rgba(250,204,20,0.6)] text-[hsl(48_96%_80%)] bg-[rgba(250,204,20,0.15)]',
-  },
   parceiro: {
     label: 'Parceiro',
     icon: '🤝',
@@ -66,28 +58,12 @@ export const CONTACT_TYPE_CONFIG: Record<string, TypeConfig> = {
     dotBg: 'bg-[hsl(0_72%_51%)]',
     badgeClass: 'border-[rgba(220,40,40,0.6)] text-[hsl(0_72%_80%)] bg-[rgba(220,40,40,0.15)]',
   },
-  sicoob_gifts: {
-    label: 'Sicoob Gifts',
-    icon: '🎁',
-    iconNode: <Gift className="w-3 h-3" />,
-    gradient: 'bg-gradient-to-r from-[hsl(199_89%_48%)] to-[hsl(199_89%_38%)]',
-    dotBg: 'bg-[hsl(199_89%_48%)]',
-    badgeClass: 'border-[rgba(13,162,232,0.6)] text-[hsl(199_89%_80%)] bg-[rgba(13,162,232,0.15)]',
-  },
   transportadora: {
     label: 'Transportadora',
     icon: '📦',
     iconNode: <Package className="w-3 h-3" />,
-    gradient: 'bg-gradient-to-r from-[hsl(199_89%_48%)] to-[hsl(199_89%_38%)]',
-    dotBg: 'bg-[hsl(199_89%_48%)]',
-    badgeClass: 'border-[rgba(13,162,232,0.6)] text-[hsl(199_89%_80%)] bg-[rgba(13,162,232,0.15)]',
-  },
-  outros: {
-    label: 'Outros',
-    icon: '…',
-    iconNode: <MoreHorizontal className="w-3 h-3" />,
-    gradient: 'bg-gradient-to-r from-[hsl(0_0%_45%)] to-[hsl(0_0%_35%)]',
-    dotBg: 'bg-[hsl(0_0%_45%)]',
-    badgeClass: 'border-[rgba(115,115,115,0.6)] text-[hsl(0_0%_80%)] bg-[rgba(115,115,115,0.15)]',
+    gradient: 'bg-gradient-to-r from-[hsl(25_90%_50%)] to-[hsl(25_90%_38%)]',
+    dotBg: 'bg-[hsl(25_90%_50%)]',
+    badgeClass: 'border-[rgba(230,120,20,0.6)] text-[hsl(25_90%_80%)] bg-[rgba(230,120,20,0.15)]',
   },
 };

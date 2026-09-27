@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  Clock, Download, MessageSquare, FileText, ArrowLeftRight, UserPlus, Paperclip, CheckSquare,
+  Clock, MessageSquare, FileText, ArrowLeftRight, UserPlus, Paperclip, CheckSquare,
   DollarSign, XCircle, RotateCcw, Activity, CalendarClock, CheckCircle2, type LucideIcon,
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -71,22 +71,6 @@ function dayLabel(dateStr: string): string {
   return isToday ? `Hoje, ${formatted}` : formatted;
 }
 
-function exportTimeline(events: TimelineEvent[]) {
-  const header = 'data;hora;tipo;titulo;subtitulo';
-  const rows = events.map((e) => {
-    const d = new Date(e.at);
-    return [format(d, 'dd/MM/yyyy'), format(d, 'HH:mm'), e.kind, e.title, e.subtitle ?? ''].join(';');
-  });
-  const csv = [header, ...rows].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `historico-conversa-${format(new Date(), 'yyyy-MM-dd')}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 /** Aba Histórico (2.10) — cabeçalho + filtros + KPIs + timeline agrupada por dia. */
 export function HistoryTab({ contactId }: HistoryTabProps) {
   const [period, setPeriod] = useState<'7' | '30' | '90' | '0'>('30');
@@ -99,8 +83,6 @@ export function HistoryTab({ contactId }: HistoryTabProps) {
   const days = useMemo(() => data?.days ?? [], [data?.days]);
   const metrics = data?.metrics;
   const hasMore = data?.hasMore ?? false;
-  const allEvents = useMemo(() => days.flatMap((d) => d.events), [days]);
-
   return (
     <div className="flex flex-col gap-4" data-testid="history-tab">
       <div className="flex items-center gap-3">
@@ -109,15 +91,6 @@ export function HistoryTab({ contactId }: HistoryTabProps) {
           <h2 className="text-xl font-bold text-foreground">Histórico da Conversa</h2>
           <p className="text-sm text-muted-foreground">Acompanhe toda a jornada de relacionamento com este contato.</p>
         </div>
-        <button
-          type="button"
-          onClick={() => exportTimeline(allEvents)}
-          disabled={allEvents.length === 0}
-          className="h-9 px-3 rounded-lg border border-border bg-card text-xs font-semibold inline-flex items-center gap-1.5 shrink-0 disabled:opacity-50"
-        >
-          <Download className="w-3.5 h-3.5" />
-          Exportar histórico
-        </button>
       </div>
 
       <div className="flex items-center gap-4">

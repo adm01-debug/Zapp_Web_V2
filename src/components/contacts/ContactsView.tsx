@@ -7,7 +7,7 @@ import { useLayoutScroll } from '@/contexts/LayoutScrollContext';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import {
-  Sparkles, RefreshCw, Upload, Download,
+  Sparkles, RefreshCw,
 } from 'lucide-react';
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { BulkActionsBar } from '@/components/contacts/BulkActionsBar';
@@ -22,18 +22,17 @@ import { ContactDetailPanel } from './ContactDetailPanel';
 import { ContactContentArea } from './ContactContentArea';
 import { ContactResultsSummary } from './ContactResultsSummary';
 import { ContactCRMDialog } from './ContactCRMDialog';
-import { ContactImportDialog } from './ContactImportDialog';
 import { useContactsViewState } from './useContactsViewState';
 
 export function ContactsView() {
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
   const {
     crud, viewMode, setViewMode, gridColumns, setGridColumns,
-    isImportOpen, setIsImportOpen, isMergeOpen, setIsMergeOpen,
+    isMergeOpen, setIsMergeOpen,
     isCompareOpen, setIsCompareOpen, groupByCompany, setGroupByCompany,
     isBulkTagOpen, setIsBulkTagOpen, detailContact, setDetailContact,
     handleApplyPreset, handleToggleSelect, handleSelectAll,
-    handleContactClick, handleExportCSV,
+    handleContactClick,
   } = useContactsViewState();
 
   const {
@@ -89,35 +88,19 @@ export function ContactsView() {
               <motion.div whileTap={tapAnimation}>
                 <Button
                   onClick={() => setIsCRMSearchOpen(true)}
-                  className="h-12 px-5 rounded-xl bg-primary/20 border border-primary/50 text-primary-glow hover:bg-primary/30 font-semibold text-base gap-2"
+                  className="h-9 px-4 rounded-lg bg-primary/20 border border-primary/50 text-primary-glow hover:bg-primary/30 font-semibold text-sm gap-1.5"
                 >
-                  <Sparkles className="w-[18px] h-[18px]" />CRM 360°
+                  <Sparkles className="w-4 h-4" />CRM 360°
                 </Button>
               </motion.div>
             )}
             <motion.div whileTap={tapAnimation}>
               <Button
-                onClick={() => setIsImportOpen(true)}
-                className="h-12 px-5 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-base gap-2"
-              >
-                <Upload className="w-[18px] h-[18px]" />Importar CSV
-              </Button>
-            </motion.div>
-            <motion.div whileTap={tapAnimation}>
-              <Button
-                onClick={handleExportCSV}
-                className="h-12 px-5 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-base gap-2"
-              >
-                <Download className="w-[18px] h-[18px]" />Exportar CSV
-              </Button>
-            </motion.div>
-            <motion.div whileTap={tapAnimation}>
-              <Button
                 onClick={handleSync}
                 disabled={loading}
-                className="h-12 px-5 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-base gap-2"
+                className="h-9 px-4 rounded-lg bg-card border border-border text-foreground hover:bg-muted font-semibold text-sm gap-1.5"
               >
-                <RefreshCw className={`w-[18px] h-[18px] ${loading ? 'animate-spin' : ''}`} />Sincronizar
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />Sincronizar
               </Button>
             </motion.div>
             <ContactDialogs
@@ -150,10 +133,6 @@ export function ContactsView() {
         open={isBulkTagOpen} onOpenChange={setIsBulkTagOpen}
         contactIds={selectedIds} allTags={uniqueTags}
         onComplete={() => { setSelectedIds([]); refetch(); }}
-      />
-      <ContactImportDialog
-        open={isImportOpen} onOpenChange={setIsImportOpen}
-        onImportComplete={handleSync}
       />
 
       <ContactStatsCards totalAll={contactCountByType['all'] ?? 0} fornecedoresAll={contactCountByType['fornecedor'] ?? 0} />

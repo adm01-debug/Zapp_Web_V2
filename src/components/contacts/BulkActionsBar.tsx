@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,10 +8,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
 } from '@/components/ui/dropdown-menu';
 import { Tag, Trash2, UserCheck, Star, X, CheckSquare, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -183,7 +184,7 @@ export function BulkActionsBar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            {['cliente', 'lead', 'fornecedor', 'colaborador', 'parceiro'].map(type => (
+            {CONTACT_TYPES.map(type => (
               <DropdownMenuItem key={type} onClick={() => handleBulkType(type)}>
                 {type.charAt(0).toUpperCase() + type.slice(1)}
               </DropdownMenuItem>
