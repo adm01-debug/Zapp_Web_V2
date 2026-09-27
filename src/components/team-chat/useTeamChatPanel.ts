@@ -252,7 +252,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     await sendMutation.mutateAsync({
       conversationId: conversation.id,
       content: '🎤 Mensagem de áudio',
-      mediaPath: data.path,
+      mediaPath: data?.path ?? undefined,
       mediaBucket: 'team-chat-files',
       mediaType: 'audio',
     });

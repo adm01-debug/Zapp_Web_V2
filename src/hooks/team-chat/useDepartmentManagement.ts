@@ -221,8 +221,8 @@ export function useSaveDepartmentWhatsApp(departmentId: string) {
       } else if (mode === 'official') {
         if (config.official_token) payload.official_token = config.official_token;
       }
-      // @ts-expect-error table not yet in generated types
       const { error } = await supabase
+        // @ts-expect-error table not yet in generated types
         .from('department_whatsapp_configs')
         .upsert(payload, { onConflict: 'department_id' });
       if (error) throw error;
