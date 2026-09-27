@@ -233,6 +233,19 @@ describe('useContactFormValidation — checkDuplicate (phone)', () => {
     expect(mockOr).toHaveBeenCalledWith('phone.ilike.%87654321%');
   });
 
+  it('consecutive changes within 500 ms fire only one query (last value wins)', async () => {
+    setupPhoneChain([]);
+    const { result } = renderHook(() =>
+      useContactFormValidation({ name: 'Test', phone: '', email: '' }, noop, noop),
+    );
+    act(() => { result.current.handlePhoneChange('11987654321'); });
+    act(() => { result.current.handlePhoneChange('11999888777'); });
+    await act(async () => { vi.advanceTimersByTime(500); });
+    expect(mockFrom).toHaveBeenCalledTimes(1);
+    // "11999888777" → cleaned → last 8 = "99888777"
+    expect(mockOr).toHaveBeenCalledWith('phone.ilike.%99888777%');
+  });
+
   it('sets duplicateWarning when a duplicate phone is found', async () => {
     setupPhoneChain([{ name: 'João', phone: '11987654321' }]);
     const { result } = renderHook(() =>
