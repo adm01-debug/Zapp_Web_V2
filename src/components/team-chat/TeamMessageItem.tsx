@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,8 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator,
 import { MarkdownPreview } from '@/components/inbox/chat/MarkdownPreview';
 import { TeamMessage } from '@/hooks/team-chat/teamChatTypes';
 import { formatTime, formatDateSep, MediaContent, MediaTypeIcon } from './teamChatParts';
+import { TeamReactionBar, TeamQuickReactionBarWrapper } from './TeamMessageReactionsWrapper';
+import type { ReactionGroup } from '@/components/ui/message-reactions';
 
 interface Props {
   msg: TeamMessage;
@@ -19,6 +21,7 @@ interface Props {
   editText: string;
   ttsIsPlaying: boolean;
   ttsIsLoading: boolean;
+  reactions?: ReactionGroup[];
   onReply: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -27,16 +30,19 @@ interface Props {
   onSaveEdit: () => void;
   onCancelEdit: () => void;
   setEditText: (v: string) => void;
+  onToggleReaction?: (emoji: string) => void;
 }
 
 export const TeamMessageItem = memo(function TeamMessageItem({
   msg, isMine, showDate, conversationType, repliedMsg,
   isEditing, editText, ttsIsPlaying, ttsIsLoading,
-  onReply, onEdit, onDelete, onCopy, onTtsToggle, onSaveEdit, onCancelEdit, setEditText,
+  reactions = [], onReply, onEdit, onDelete, onCopy, onTtsToggle,
+  onSaveEdit, onCancelEdit, setEditText, onToggleReaction,
 }: Props) {
   const hasMedia = !!(msg.media_url || (msg.media_bucket && msg.media_path));
   const cleanText = msg.content?.replace(/\[.*?\]/g, '').replace(/https?:\/\/\S+/g, '').trim();
   const DEFAULT_CAPTIONS = ['🎨 Figurinha', '🎵 Áudio meme', '😀 Emoji', '🎤 Mensagem de áudio'];
+  const hasReactions = reactions.length > 0;
 
   return (
     <ContextMenu>
@@ -49,7 +55,10 @@ export const TeamMessageItem = memo(function TeamMessageItem({
               </span>
             </div>
           )}
-          <div className={cn('flex gap-3 py-1 group', isMine ? 'flex-row-reverse' : 'flex-row')} aria-label={`Mensagem de ${msg.sender?.name || 'usuário'} às ${formatTime(msg.created_at)}`}>
+          <div
+            className={cn('flex gap-3 py-1 group/msg relative', isMine ? 'flex-row-reverse' : 'flex-row')}
+            aria-label={`Mensagem de ${msg.sender?.name || 'usuário'} às ${formatTime(msg.created_at)}`}
+          >
             {!isMine && (
               <Avatar className="w-8 h-8 mt-1 shrink-0 border border-border/10 shadow-sm">
                 <AvatarImage src={msg.sender?.avatar_url || undefined} alt={msg.sender?.name || 'Remetente'} />
@@ -58,12 +67,20 @@ export const TeamMessageItem = memo(function TeamMessageItem({
                 </AvatarFallback>
               </Avatar>
             )}
-            <div className={cn(
-              'max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm relative transition-all duration-300',
-              isMine
-                ? 'bg-primary text-primary-foreground rounded-tr-none border border-primary/20'
-                : 'bg-card border border-border/50 text-foreground rounded-tl-none',
-            )}>
+            <div
+              className={cn(
+                'max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm relative transition-all duration-300',
+                hasReactions && 'pb-5',
+                isMine
+                  ? 'bg-primary text-primary-foreground rounded-tr-none border border-primary/20'
+                  : 'bg-card border border-border/50 text-foreground rounded-tl-none',
+              )}
+            >
+              {/* Quick reaction strip on hover */}
+              {onToggleReaction && (
+                <TeamQuickReactionBarWrapper onToggle={onToggleReaction} isMine={isMine} />
+              )}
+
               {!isMine && conversationType === 'group' && (
                 <p className="text-3xs font-bold mb-1 text-primary/80 uppercase tracking-tighter">{msg.sender?.name}</p>
               )}
@@ -131,7 +148,7 @@ export const TeamMessageItem = memo(function TeamMessageItem({
                       <button
                         onClick={onTtsToggle}
                         className={cn(
-                          'opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full',
+                          'opacity-0 group-hover/msg:opacity-100 transition-opacity p-1 rounded-full',
                           isMine
                             ? 'text-primary-foreground/80 hover:bg-white/10'
                             : 'text-muted-foreground hover:text-foreground hover:bg-black/5',
@@ -150,6 +167,13 @@ export const TeamMessageItem = memo(function TeamMessageItem({
                       {formatTime(msg.created_at)}{msg.is_edited && ' · editado'}
                     </span>
                   </div>
+
+                  {/* Reaction bar below message */}
+                  {onToggleReaction && (
+                    <div className={cn('absolute -bottom-3 left-2 right-2 flex', isMine ? 'justify-end' : 'justify-start')}>
+                      <TeamReactionBar reactions={reactions} onToggle={onToggleReaction} isMine={isMine} />
+                    </div>
+                  )}
                 </>
               )}
             </div>

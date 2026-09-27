@@ -95,6 +95,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
             const isEditing = s.editingId === msg.id;
             const ttsIsPlaying = s.tts.isPlaying && s.tts.currentMessageId === msg.id;
             const ttsIsLoading = s.tts.isLoading && s.tts.currentMessageId === msg.id;
+            const msgReactions = s.reactions.aggregate(msg.id);
 
             return (
               <TeamMessageItem
@@ -108,6 +109,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
                 editText={s.editText}
                 ttsIsPlaying={ttsIsPlaying}
                 ttsIsLoading={ttsIsLoading}
+                reactions={msgReactions}
                 onReply={() => s.setReplyTo(msg)}
                 onEdit={() => s.handleStartEdit(msg)}
                 onDelete={() => s.handleDelete(msg.id)}
@@ -116,6 +118,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
                 onSaveEdit={s.handleSaveEdit}
                 onCancelEdit={s.handleCancelEdit}
                 setEditText={s.setEditText}
+                onToggleReaction={(emoji) => s.reactions.toggle({ messageId: msg.id, emoji })}
               />
             );
           })
