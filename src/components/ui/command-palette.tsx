@@ -54,6 +54,7 @@ export function CommandPalette({
     const result: CommandGroup[] = [];
     if (groups.action?.length) result.push({ title: 'Ações', items: groups.action });
     if (groups.navigation?.length) result.push({ title: 'Navegação', items: groups.navigation });
+    if (groups.talkx?.length) result.push({ title: 'Talk X', items: groups.talkx.slice(0, 8) });
     if (groups.search?.length) result.push({ title: 'Resultados', items: groups.search });
     return result;
   }, [query, filteredCommands, searchResults]);
