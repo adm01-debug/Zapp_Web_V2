@@ -48,6 +48,7 @@ export function useContactFormValidation(
   const [duplicateEmailWarning, setDuplicateEmailWarning] = useState<string | null>(null);
   const dupCheckTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const emailDupCheckTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const emailCheckSeqRef = useRef(0);
 
   const checkDuplicate = useCallback(async (phone: string) => {
     const cleaned = phone.replace(/\D/g, '');
@@ -64,12 +65,15 @@ export function useContactFormValidation(
   const checkEmailDuplicate = useCallback(async (email: string) => {
     const trimmed = email.trim();
     if (!trimmed || !validateEmail(trimmed)) { setDuplicateEmailWarning(null); return; }
+    const seq = ++emailCheckSeqRef.current;
+    const escapedEmail = trimmed.replace(/%/g, '\\%').replace(/_/g, '\\_');
     let query = supabase
       .from('contacts')
       .select('name, email')
-      .ilike('email', trimmed);
+      .ilike('email', escapedEmail);
     if (excludeContactId) query = query.neq('id', excludeContactId);
     const { data } = await query.limit(1);
+    if (seq !== emailCheckSeqRef.current) return;
     setDuplicateEmailWarning(data && data.length > 0 ? `Email já cadastrado: "${data[0].name}"` : null);
   }, [excludeContactId]);
 
