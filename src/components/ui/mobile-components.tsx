@@ -81,6 +81,7 @@ export const MobileDrawer = React.forwardRef<HTMLDivElement, MobileDrawerProps>(
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
+                showTooltip={false}
               >
                 <X className="w-5 h-5" />
               </IconButton>
