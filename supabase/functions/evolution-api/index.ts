@@ -402,7 +402,7 @@ serve(async (req) => {
       // ele recusa o QR e o pareamento pela tela do app nunca fecha. Alem disso o campo vem
       // como "<dataURI>|<url>", o que quebra o <img src>. Re-renderiza a partir do payload cru.
       const fetchQr = async (): Promise<{ base64?: string; code?: string }> => {
-        const qrRes = await fetch(`${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken } });
+        const qrRes = await fetch(`${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken }, signal: AbortSignal.timeout(5000) });
         // deno-lint-ignore no-explicit-any
         let qrData: any = {};
         try { const _t = await qrRes.text(); qrData = JSON.parse(_t); } catch { /* non-JSON from GO */ }
@@ -515,7 +515,7 @@ serve(async (req) => {
         new Logger('evolution-api').warn('connect: sessão órfã na GO — recriando instância para forçar QR novo', { instance, goId: goOrphan.id });
         // Security: sanitizar o id para evitar path traversal — só alfanumérico e hífen.
         const safeGoId = goOrphan.id.replace(/[^a-zA-Z0-9\-_]/g, '');
-        const delRes = await fetch(`${evolutionApiUrl}/instance/delete/${safeGoId}`, { method: 'DELETE', headers: { 'apikey': evolutionApiKey } });
+        const delRes = await fetch(`${evolutionApiUrl}/instance/delete/${safeGoId}`, { method: 'DELETE', headers: { 'apikey': evolutionApiKey }, signal: AbortSignal.timeout(8000) });
         if (!delRes.ok) {
           new Logger('evolution-api').error('connect: falha ao deletar instância órfã na GO', { instance, goId: goOrphan.id, httpStatus: delRes.status });
         }
@@ -524,6 +524,7 @@ serve(async (req) => {
             method: 'POST',
             headers: { 'apikey': evolutionApiKey, 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: instance, token: instToken }),
+            signal: AbortSignal.timeout(10000),
           });
           if (!createRes.ok) {
             // GO pode levar um momento para liberar o nome após o DELETE — retry único após 2s
@@ -532,6 +533,7 @@ serve(async (req) => {
               method: 'POST',
               headers: { 'apikey': evolutionApiKey, 'Content-Type': 'application/json' },
               body: JSON.stringify({ name: instance, token: instToken }),
+              signal: AbortSignal.timeout(10000),
             });
           }
           if (!createRes.ok) {
@@ -543,6 +545,7 @@ serve(async (req) => {
             method: 'POST',
             headers: { 'apikey': instToken, 'Content-Type': 'application/json' },
             body: JSON.stringify({ subscribe: ['ALL'], immediate: true, webhookUrl: `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/evolution-webhook` }),
+            signal: AbortSignal.timeout(8000),
           });
           let healed = await fetchQr();
           for (let i = 0; i < 4 && !healed.base64; i++) {
@@ -570,7 +573,14 @@ serve(async (req) => {
       // loggedIn:false nao pode curto-circuitar o fallback por State (a GO
       // manda os dois e nem sempre concordam). Estado 'Reconnecting' tem
       // loggedIn:true mas connected:false — mapear 'open' aqui era falso positivo.
-      if (data?.data && data.state === undefined) data.state = (((data.data.loggedIn ?? data.data.LoggedIn) && (data.data.connected ?? data.data.Connected)) || data.data.State === 'open') ? 'open' : 'close';
+      // == null captura tanto undefined quanto null; 'in' distingue campo ausente de presente-null
+      // null explícito = presente mas desconectado — não deve cair no fallback State==='open'
+      if (data?.data && data.state == null) {
+        const _li = data.data.loggedIn ?? data.data.LoggedIn;
+        const hasCo = 'connected' in data.data || 'Connected' in data.data;
+        const _co = hasCo ? (data.data.connected ?? data.data.Connected) : undefined;
+        data.state = (_co !== undefined ? (_co === true && _li === true) : (data.data.State === 'open' || _li === true)) ? 'open' : 'close';
+      }
       if (response.ok) {
         const status = data.state === 'open' ? 'connected' : 'disconnected';
         // So zera o QR quando conecta de fato. O polling de status roda a cada 3s

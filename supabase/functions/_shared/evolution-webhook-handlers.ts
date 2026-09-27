@@ -31,8 +31,14 @@ export async function handleConnectionUpdate(supabase: any, instance: string, ba
   // 'connecting' e transitorio: gravar por cima de 'connected' faz o proximo
   // 'close' comparar com 'connecting' e o alerta critico de queda nao dispara
   // (connection-health-check tambem pula estados transitorios).
+  // 'connecting' transitório: não sobrescrever 'connected' (próximo 'close' perderia alerta).
+  // 'disconnected' durante QR ativo: GO emite close por soluço de rede; QR ainda é válido.
+  // Expiração real do QR chega via qrcode.updated com qrCode=null → W11 transiciona corretamente.
   const status = incoming === 'connecting' && prevConn?.status === 'connected'
-    ? 'connected' : incoming;
+    ? 'connected'
+    : incoming === 'disconnected' && prevConn?.status === 'qr_pending'
+      ? 'qr_pending'
+      : incoming;
 
   // Evolution GO envia jid/pushName no Connected — aproveita para preencher
   // o número quando ainda não temos (paridade com o que o v2 preenchia).
@@ -40,7 +46,10 @@ export async function handleConnectionUpdate(supabase: any, instance: string, ba
     ? normalizePhone(baseData.jid) : null;
   await supabase.from('whatsapp_connections')
     .update({
-      status, qr_code: null, updated_at: new Date().toISOString(),
+      status,
+      // Não zera o QR enquanto status permanece qr_pending (QR ativo protegido)
+      ...(status !== 'qr_pending' ? { qr_code: null } : {}),
+      updated_at: new Date().toISOString(),
       ...(connectedPhone && !prevConn?.phone_number ? { phone_number: connectedPhone } : {}),
     })
     .eq('instance_id', instance);
