@@ -168,8 +168,17 @@ Para esconder só "Campanhas" na interface:
 >    ```
 >    Ou: Supabase Dashboard → Database → Cron Jobs → desabilitar `talkx-scheduler-1min`.
 >
-> 3. Para **reativar**, reaplique o `SELECT cron.schedule(...)` da migration
->    original via `db_query` no MCP `SUPABASE - ZAPP WEB V2 - MCP`.
+> 3. Para **reativar**:
+>    - Se o cron foi **desativado via Dashboard** (`active = false`): reative com
+>      ```sql
+>      UPDATE cron.job SET active = true WHERE jobname = 'talkx-scheduler-1min';
+>      ```
+>      via `db_query` no MCP `SUPABASE - ZAPP WEB V2 - MCP`.
+>    - Se o cron foi **desagendado** com `cron.unschedule()`: reaplique o
+>      `SELECT cron.schedule(...)` da migration `20260909000000_talkx_scheduler_cron.sql`
+>      via `db_query` no MCP `SUPABASE - ZAPP WEB V2 - MCP`.
+>
+>    Confirmar estado atual: `SELECT jobname, active FROM cron.job WHERE jobname = 'talkx-scheduler-1min';`
 
 ### 8.3 Rollback de migration de Talk X
 
