@@ -1,10 +1,7 @@
 {
   "schema_version": 1,
   "project_ref": "tnnnlkbymytvtqngbbqh",
-  "legacy_unmanaged_functions": [
-    "check-account-lock",
-    "record-failed-login"
-  ],
+  "legacy_unmanaged_functions": [],
   "config": {
     "path": "supabase/config.toml",
     "sha256": "f62d75e9c4817bc26d5ffae7e53f1b8f187f6dc95a857b597a01be7ea0acf791"
@@ -299,7 +296,7 @@
     {
       "path": "supabase/functions/elevenlabs-tts-stream/index.ts",
       "bytes": 2860,
-      "sha256": "9be28f78792260c363d8794479dcafaa6c73659236dbbe3854707a46d220e806"
+      "sha256": "c1fca4eeef44f87bbc8add3798e8bc3ee842a5dbc8e26fd0873491c483e2874f"
     },
     {
       "path": "supabase/functions/elevenlabs-tts/index.ts",
@@ -1366,5 +1363,5 @@
       ]
     }
   ],
-  "manifest_sha256": "0a4f8b91b9fb628cac8dcb9b479a410d9ba9c7a77977949f823508521af7e02f"
+  "manifest_sha256": "083d7b089775fa6614d5b53779e1f9ba44b72c0a50a2429d8993578a63100cde"
 }
