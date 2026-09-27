@@ -3,10 +3,17 @@
 -- Padrao identico ao gmail-cron-sync: vault secret + x-cron-secret header.
 -- pg_cron 1.6.4 e pg_net 0.20.4 ja instalados em producao.
 
--- 1. Vault secret (idempotente)
-INSERT INTO vault.secrets (name, secret)
-SELECT 'multiplix_cron_secret', encode(gen_random_bytes(32), 'hex')
-WHERE NOT EXISTS (SELECT 1 FROM vault.secrets WHERE name = 'multiplix_cron_secret');
+-- 1. Vault secret (idempotente via vault.create_secret, nao INSERT direto)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM vault.secrets WHERE name = 'multiplix_cron_secret') THEN
+    PERFORM vault.create_secret(
+      md5(random()::text) || md5(random()::text),
+      'multiplix_cron_secret'
+    );
+  END IF;
+END;
+$$;
 
 -- 2. RPC para a edge function ler o secret (SECURITY DEFINER, somente service_role)
 CREATE OR REPLACE FUNCTION public.get_multiplix_cron_secret()
@@ -68,7 +75,7 @@ $$;
 REVOKE ALL ON FUNCTION public.trigger_pending_multiplix_dispatches() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.trigger_pending_multiplix_dispatches() TO service_role;
 
--- 4. Agendar cron a cada 2 minutos
+-- 4. Agendar cron a cada 2 minutos (idempotente)
 SELECT cron.schedule(
   'multiplix-send-trigger',
   '*/2 * * * *',
