@@ -5,6 +5,7 @@ import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnable
 import { callCRMIntegration } from '@/lib/crmIntegration';
 import { useSearchHistory } from '@/hooks/system/useSearchHistory';
 import { useUserRole } from '@/hooks/system/useUserRole';
+import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 import { subDays, subMonths, startOfDay } from 'date-fns';
 
 export interface SearchResult {
@@ -159,7 +160,10 @@ export function useGlobalSearchData(open: boolean) {
 
       if (types.has('contact')) {
         let contactQuery = supabase.from('contacts').select('id, name, surname, phone, email, created_at, tags').eq('is_lid_legacy', false);
-        if (cleanQuery.length >= 2) contactQuery = contactQuery.or(`name.ilike.%${cleanQuery}%,surname.ilike.%${cleanQuery}%,phone.ilike.%${cleanQuery}%,email.ilike.%${cleanQuery}%`);
+        if (cleanQuery.length >= 2) {
+          const q = escapeOrFilterValue(`%${cleanQuery}%`);
+          contactQuery = contactQuery.or(`name.ilike.${q},surname.ilike.${q},phone.ilike.${q},email.ilike.${q}`);
+        }
 
         const { data: contacts } = await contactQuery.order('name', { ascending: true }).limit(10);
         if (contacts) {

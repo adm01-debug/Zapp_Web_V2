@@ -2,7 +2,9 @@
 
 > ⚠️ **Agentes (Claude & afins): leiam [`CLAUDE.md`](./CLAUDE.md) antes de qualquer ação** — define o banco oficial do projeto e a Evolution GO (Hostinger).
 
-![CI](https://github.com/adm01-debug/zapp-web/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/adm01-debug/Zapp_Web_V2/actions/workflows/ci.yml/badge.svg)
+![DB Live Guard](https://github.com/adm01-debug/Zapp_Web_V2/actions/workflows/db-live-guard.yml/badge.svg)
+![E2E logado](https://github.com/adm01-debug/Zapp_Web_V2/actions/workflows/e2e-logado.yml/badge.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)
 ![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react)
 ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase)
