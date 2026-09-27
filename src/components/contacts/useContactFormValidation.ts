@@ -45,7 +45,10 @@ export function useContactFormValidation(
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<FieldError>({});
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
+  const [duplicateEmailWarning, setDuplicateEmailWarning] = useState<string | null>(null);
   const dupCheckTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const emailDupCheckTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const emailCheckSeqRef = useRef(0);
 
   const checkDuplicate = useCallback(async (phone: string) => {
     const cleaned = phone.replace(/\D/g, '');
@@ -57,6 +60,21 @@ export function useContactFormValidation(
     if (excludeContactId) query = query.neq('id', excludeContactId);
     const { data } = await query.limit(1);
     setDuplicateWarning(data && data.length > 0 ? `Possível duplicata: "${data[0].name}" (${data[0].phone})` : null);
+  }, [excludeContactId]);
+
+  const checkEmailDuplicate = useCallback(async (email: string) => {
+    const trimmed = email.trim();
+    const seq = ++emailCheckSeqRef.current;
+    if (!trimmed || !validateEmail(trimmed)) { setDuplicateEmailWarning(null); return; }
+    const escapedEmail = trimmed.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+    let query = supabase
+      .from('contacts')
+      .select('name, email')
+      .ilike('email', escapedEmail);
+    if (excludeContactId) query = query.neq('id', excludeContactId);
+    const { data } = await query.limit(1);
+    if (seq !== emailCheckSeqRef.current) return;
+    setDuplicateEmailWarning(data && data.length > 0 ? `Email já cadastrado: "${data[0].name}"` : null);
   }, [excludeContactId]);
 
   const validate = useCallback((field: string, value: string): string | null => {
@@ -83,7 +101,11 @@ export function useContactFormValidation(
   const handleChange = useCallback((field: string, value: string) => {
     onChange(field, value);
     if (touched[field]) setErrors(prev => ({ ...prev, [field]: validate(field, value) }));
-  }, [onChange, touched, validate]);
+    if (field === 'email') {
+      clearTimeout(emailDupCheckTimer.current);
+      emailDupCheckTimer.current = setTimeout(() => checkEmailDuplicate(value), 500);
+    }
+  }, [onChange, touched, validate, checkEmailDuplicate]);
 
   const handleBlur = useCallback((field: string, value: string) => {
     setTouched(prev => ({ ...prev, [field]: true }));
@@ -115,7 +137,7 @@ export function useContactFormValidation(
   }, [values.name, values.phone, values.email]);
 
   return {
-    touched, errors, duplicateWarning, isValid,
+    touched, errors, duplicateWarning, duplicateEmailWarning, isValid,
     handleChange, handleBlur, handlePhoneChange, handleSubmit,
   };
 }
