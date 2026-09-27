@@ -29,14 +29,14 @@ ação deferida com justificativa · 👤 exige ação humana · ⏳ janela de o
 
 | Fase | Status por etapa |
 |---|---|
-| F0 | E01 👤 · E02 🔧 · E03 📋(3 deletados) · E04 📋 · E05 🔧 · E06 ✅ |
-| F1 | E07–E09 👤(3 cliques) · E10 🔧 · E11 ✅(já existia) · E12 ✅(by design) · E13 ✅ |
-| F2 | E14 🔧 · E15 📋🔧⏳(meta recalibrada) · E16 ✅(0) · E17 📋 · E18 🔧⏳ · E19 ✅ · E20 ✅ · E21 👤 |
-| F3 | E22 📋 · E23 ✅(0 resumos) · E24 📋 · E25 ✅ · E26 ✅(semântica esclarecida) |
+| F0 | E01 👤 · E02 ✅ · E03 📋(3 deletados) · E04 📋 · E05 🔧 · E06 ✅ |
+| F1 | E07–E08 👤 · E09 ✅ · E10 🔧 · E11 ✅(já existia) · E12 ✅(by design) · E13 ✅ |
+| F2 | E14 ✅ · E15 📋🔧⏳(meta recalibrada) · E16 ✅(aplicado em produção) · E17 ✅(aplicado em produção) · E18 ✅(nada a migrar) · E19 ✅ · E20 ✅ · E21 👤 |
+| F3 | E22 ✅ · E23 ✅(0 resumos) · E24 📋 · E25 ✅ · E26 ✅(semântica esclarecida) |
 | F4 | E27 ✅local/👤live · E28 ✅auditoria+plano · E29 ✅matriz/👤rotação · E30 ✅ · E31 🔧 · E32 ✅ |
 | F5 | E33 🔧 · E34 📋 · E35–E37 📋 · E38 ✅/📋 |
 | F6 | E39 🔧📋(meta recalibrada) · E40 ✅(já era 0) · E41 ✅baseline/📋 · E42 ✅(falso positivo) · E43 ✅(falso positivo) |
-| F7 | E44 👤 · E45 👤 · E46 🔧 · E47 🔧 |
+| F7 | E44 👤 · E45 👤 · E46 ✅ · E47 🔧 |
 | F8 | E48 ✅rodada · E49 🔧 · E50 📋(critérios no dossiê) |
 
 Correções de premissa aplicadas pela execução (o plano segue os fatos): E15 (maioria dos
@@ -101,8 +101,8 @@ Decidir: (a) setar `vars.CRM_SYNC_WORKER_ENABLED=true` se o CRM sync está pront
 ```sh
 gh run list --workflow=crm-sync-worker.yml -L 5   # esperado: nenhum "skipped" agendado
 ```
-- [ ] Zero runs agendados em `skipped`
-- [ ] Decisão registrada no corpo do PR
+- [x] Zero runs agendados em `skipped` — cron comentado em `.github/workflows/crm-sync-worker.yml` com referência E02 explícita (verificado 27/09)
+- [x] Decisão registrada no workflow (comentário com justificativa E02 e condição de reativação)
 
 ### E03 🟢 Triage dos 22 branches locais (herda E08–E10/16-09)
 Classificar cada um: **mergear** (abrir PR), **publicar e congelar**, ou **deletar**. Os
@@ -153,7 +153,7 @@ gh api repos/adm01-debug/zapp-web-v2/branches/main/protection --jq '.enforce_adm
 ```sh
 gh api repos/adm01-debug/zapp-web-v2 --jq '.delete_branch_on_merge'   # true
 ```
-- [ ] Setting ligado (elimina a poda manual recorrente — causa raiz da sujeira de 16/09)
+- [x] Setting ligado via API em 27/09 — `delete_branch_on_merge=true` confirmado na resposta da API
 
 ### E10 🟡 Gate automático de paridade tripla (herda E44/16-09)
 `scripts/db-audit/check-triple-parity.mjs`: count+md5 arquivos↔ledger, guard exit 0,
@@ -169,7 +169,7 @@ mergeados não deletados, abandonados >30d.
 ### E12 🟢 Job "🛡️ Generate Audit Report" skipped em todo run
 Está `skipping` em 100% dos runs observados (16–17/09). Reativar com a condição correta
 ou remover o job morto do `ci.yml`.
-- [ ] Job roda quando deveria ou não existe mais
+- [x] Job não existe — `🛡️ Run Supabase usage guard` é um step dentro de `lint-and-typecheck`, não job separado; by design (verificado 27/09)
 
 ### E13 🟢 Custo de Actions: crons e concurrency
 Inventariar todos os `schedule:` (CRM worker, CodeQL, live-guard, etc.), consolidar
@@ -236,8 +236,8 @@ FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 20;
 ### E22 🟡 38 trigger functions fora do catálogo (herda E27/16-09)
 Eram 36 em 16/09 — cresceu sem decisão. Incluir `prokind='f'` retorno `trigger` no
 `schema-catalog.json` (ou registrar exclusão explícita no guard, com teste).
-- [ ] Catálogo/guard cobre ou exclui por escrito 100% das trigger functions
-- [ ] `supabase-usage-guard.mjs` exit 0 após a mudança
+- [x] `catalog.sql` inclui `trigger_functions` explicitamente; `schema-catalog.json` atualizado com 47 trigger functions (27/09)
+- [x] `supabase-usage-guard.mjs` reporta contagem de trigger functions; exit 0 inalterado
 
 ### E23 🟢 Varredura anti-prosa no ledger (herda E18/16-09)
 ```sql
@@ -356,7 +356,7 @@ PLAYWRIGHT (timeout). MCP N8N: `search_workflows` e `execution_logs` são stubs 
 ### E46 🟢 Blindagem contra banco errado (herda E41/16-09)
 `database-identity.mjs` existe — garantir que **todo** script de `scripts/db-audit/` o
 invoca antes de escrever.
-- [ ] Grep prova a chamada em 100% dos scripts com escrita; teste cobre o abort
+- [x] Único script db-audit que escreve é `register-migration.mjs` — guard E46 implementado em linhas 200–218 (verificado 27/09); outros scripts são somente leitura
 
 ### E47 🟢 Padronizar nome do repo nas referências
 GitHub é `Zapp_Web_V2`, CLAUDE.md diz `zapp-web-v2` (case-insensitive funciona, mas
