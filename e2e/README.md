@@ -11,7 +11,7 @@ sessão em `e2e/.auth/user.json`. Esse arquivo **nunca** é commitado (está no
 Os projects `chromium-authenticated` e `chromium-e2e-core` declaram
 `dependsOn: ['setup']`, então `auth.setup.ts` só roda (e só exige as
 variáveis abaixo) quando algum teste de um desses projects é executado, e
-consume o `storageState` resultante.
+consome o `storageState` resultante.
 
 O project `chromium` (usado só por `auth.spec.ts`, que testa a própria tela
 de login deslogada) **não** depende de `setup` — continua funcionando sem
@@ -92,7 +92,7 @@ próprio efeito colateral a cada execução; o FSM em
 depois clica no chip "Todas" — o chip padrão ("Em atendimento") depende do
 feature flag `inbox.status-fsm` e de `assigned_to` bater com o profile
 logado, enquanto "Todas" não filtra por isso. `messaging.spec.ts` (que não
-meche no status da conversa) faz só a navegação + clique em "Todas" no
+mexe no status da conversa) faz só a navegação + clique em "Todas" no
 `beforeEach`. O contato ("[E2E] Contato de teste - nao apagar", atribuído ao
 usuário de teste, sem fila) é o único item visível no inbox desse usuário —
 nunca apagar essa linha do banco.
