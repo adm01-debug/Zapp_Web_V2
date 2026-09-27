@@ -3686,7 +3686,7 @@
         "f:clear_qr_on_connect()": "cbde3e2677224e3e710760f6fb899797",
         "f:get_crm_sync_health()": "9cf5b336671de1c553a00669a6ca9bd7",
         "f:get_identity_matrix()": "ee1c634bf89c268c0e3c5d3b5c1209bd",
-        "f:handle_new_user_role()": "b85b0750cb57afd0d4cc50102bf55630",
+        "f:handle_new_user_role()": "370b0b17f24b54194f804b7b31a7e9f7",
         "f:notify_due_reminders()": "5b982bbca6351d3726057e6f513e208c",
         "f:is_admin(_user_id uuid)": "0d4e496f12c313702dd3b00644c3b9ac",
         "f:log_assignment_change()": "b4cc721f1e9bf299cd5f4965f12b8cf1",
