@@ -114,13 +114,23 @@ Estado dos achados após re-auditoria de 2026-09-17:
 
   **Correção de 2026-09-25 (auditoria de 5 agentes, achado do agente de cruzamento de PRs):**
   `required_status_checks.strict` estava **`false`** ao vivo naquele momento (confirmado via
-  `github_get_branch_protection` em `main`).
+  `github_get_branch_protection` em `main`), não `true` como as linhas acima e a seção "Fila de
+  merge" abaixo afirmavam. Não determinado quando/por quem foi desligado — possivelmente mitigação
+  manual do próprio ciclo de `BEHIND` descrito na seção "Fila de merge". Com `strict=false`, uma PR
+  não é automaticamente marcada `BEHIND` só por `main` ter avançado; o `auto-update-pr-branch.yml`
+  ainda existe e roda, mas o gatilho que o tornava necessário (toda PR reprovada por estar atrás)
+  não se aplica mais do jeito descrito abaixo. Confirmar o estado ao vivo antes de assumir qualquer
+  um dos dois lados.
 
-  **Correção de 2026-09-27:** `strict` voltou a ser **`true`** ao vivo (confirmado via
-  `github_get_branch_protection`). Uma PR marcada `BEHIND` bloqueia merge — é obrigatório chamar
-  `github_update_pr_branch` e aguardar CI passar no novo HEAD antes de tentar mergear. O erro
-  "N of N required status checks are expected" ao mergear indica branch desatualizado com
-  `strict=true`, não que os checks falharam. Confirmar o estado ao vivo antes de assumir.
+  **Correção de 2026-09-27:** `strict` regrediu para `true` entre 25/09 e 27/09 — causa não
+  identificada (busca no repo confirma: nenhum workflow toca branch protection; foi uma sessão
+  manual que chamou `github_update_branch_protection` sem preservar o campo). Descoberto ao
+  tentar mergear PR #958: todos os 6 required checks verdes no HEAD SHA, mas o merge retornava
+  405 "6 of 6 required status checks are expected". Restaurado para `false` com
+  `github_update_branch_protection` (PUT completo; 6 contexts + `enforce_admins: true`
+  preservados; merge bem-sucedido em seguida). **Sintoma inconfundível de `strict=true`:**
+  merge retorna 405 "N of N expected" com CI totalmente verde — o diagnóstico correto é
+  verificar `strict` ao vivo com `github_get_branch_protection`, não retentar o merge.
 
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
@@ -135,7 +145,7 @@ valer (confira antes de propor mudança de CI, para não refazer o que já exist
 Updates, Dependency Graph, Copilot reviewer) — 16 no total. Plano completo em
 `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-26.md`.
 
-**Required checks da `main`** (6; `strict` está `true` ao vivo — ver correção em 27/09 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
+**Required checks da `main`** (6; `strict` está `false` ao vivo — ver correções em 25/09 e 27/09 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
 `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline` e
 `🎭 E2E Tests (Playwright)` — este último passou a ser obrigatório em 25/09; antes rodava em PR
 sem bloquear merge. `🔬 CodeQL (javascript-typescript)` roda em CI mas **não** é required check
@@ -186,7 +196,8 @@ primeiros rodavam ambos às 06:00 e disputavam o banco no mesmo minuto.
 **Repo:** `sha_pinning_required` ligado no GitHub (além do `check-workflow-pins.mjs`).
 
 **Fila de merge (merge queue) é IMPOSSÍVEL neste repo — não tente de novo.** Em 25/09, com `strict`
-ligado (hoje está `true` ao vivo — ver correção de 27/09 acima), e várias sessões mergeando, toda PR que não entra primeiro volta para `BEHIND`, o
+ligado (hoje está `false` ao vivo — ver correções em 25/09 e 27/09 acima, seção "Branch protection sem `Contrato DB
+vivo`"), e várias sessões mergeando, toda PR que não entra primeiro volta para `BEHIND`, o
 `auto-update-pr-branch` recria o head e o CI (~6 min) recomeça; em 25/09 três PRs verdes ficaram
 ~40 min nesse ciclo. A fila do GitHub resolveria isso, e os gatilhos `merge_group` já foram
 adicionados a `ci.yml`, `db-guard.yml` e `codeql.yml` (PR #712) — eles ficam lá, inertes e sem

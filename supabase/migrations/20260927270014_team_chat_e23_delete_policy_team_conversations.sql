@@ -1,0 +1,1 @@
+CREATE POLICY "Conversation creator or admin can delete" ON public.team_conversations FOR DELETE USING (created_by = (SELECT id FROM public.profiles WHERE user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid()));
