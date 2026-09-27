@@ -2066,6 +2066,7 @@
     "update_own_profile(p_display_name text, p_avatar_url text, p_phone text, p_email text, p_signature text, p_birthday text)->boolean|kind=f",
     "update_talkx_template_with_snapshot(p_template_id uuid, p_expected_updated_at timestamp with time zone, p_name text, p_description text, p_category text, p_content text, p_media_url text, p_media_type text, p_tags text[], p_status text, p_custom_variables text[])->TABLE(template_id uuid, updated_at timestamp with time zone, version_number integer)|kind=f",
     "upsert_crm_contact_link_guarded(p_zapp_contact_id uuid, p_external_contact_id text, p_external_company_id text, p_normalized_phone text)->void|kind=f",
-    "upsert_my_call(p_id uuid, p_direction text, p_status text, p_channel text, p_peer_number text, p_peer_name text, p_contact_id uuid, p_provider_call_id text, p_answered_at timestamp with time zone, p_ended_at timestamp with time zone, p_end_reason text, p_talk_seconds integer)->uuid|kind=f"
+    "upsert_my_call(p_id uuid, p_direction text, p_status text, p_channel text, p_peer_number text, p_peer_name text, p_contact_id uuid, p_provider_call_id text, p_answered_at timestamp with time zone, p_ended_at timestamp with time zone, p_end_reason text, p_talk_seconds integer)->uuid|kind=f",
+    "user_has_permission(_user_id uuid, _permission_name text)->boolean|kind=f"
   ]
 }
