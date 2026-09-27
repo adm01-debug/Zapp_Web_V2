@@ -121,26 +121,35 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   }, [dispatchId, statusFilter, qc]);
 
   const handleExportCsv = async () => {
-    // P2 fix (Codex, review da PR #958): com statusFilter != 'all', keyset cursor
-    // (.gt('id', lastId)) perdia registros que transitavam sending->sent enquanto
-    // o loop rodava -- se o id deles fosse menor que lastId, nunca seriam
-    // revisitados. Fix: snapshot dos IDs em T0 via .select('id').eq('status',
-    // statusFilter).limit(100000) e paginar com .in('id', ids), que nao depende
-    // do status atual. 'all' continua com keyset simples (sem filtro de status,
-    // o problema nao existe).
+    // P2 fix v2 (Codex, review da PR #958 em e3f4e10c): snapshot de IDs com
+    // .limit(100000) ainda batia no cap do PostgREST (1.000 rows por request)
+    // -- rows alem desse cap nunca entravam em snap. Fix: paginar o proprio
+    // snapshot com keyset (.gt('id', lastSnapId)) ate esgotar, antes de buscar
+    // os dados completos. 'all' continua com keyset simples (sem filtro de
+    // status, a membership nao muda durante o loop).
     const PAGE = 1000;
     const allRows: Parameters<typeof exportRecipientsCsv>[0] = [];
     if (statusFilter !== 'all') {
-      const { data: snap, error: snapErr } = await fromTable('multiplix_recipients')
-        .select('id')
-        .eq('dispatch_id', dispatchId)
-        .eq('status', statusFilter)
-        .order('id')
-        .limit(100000);
-      if (snapErr) { toast.error(`Erro ao exportar CSV: ${snapErr.message}`); return; }
-      if (!snap?.length) return;
-      for (let i = 0; i < snap.length; i += PAGE) {
-        const ids = snap.slice(i, i + PAGE).map((r) => (r as { id: string }).id);
+      const snapIds: string[] = [];
+      let lastSnapId: string | null = null;
+      for (;;) {
+        let q = fromTable('multiplix_recipients')
+          .select('id')
+          .eq('dispatch_id', dispatchId)
+          .eq('status', statusFilter)
+          .order('id')
+          .limit(PAGE);
+        if (lastSnapId !== null) q = q.gt('id', lastSnapId);
+        const { data: snap, error: snapErr } = await q;
+        if (snapErr) { toast.error(`Erro ao exportar CSV: ${snapErr.message}`); return; }
+        if (!snap?.length) break;
+        snapIds.push(...snap.map((r) => (r as { id: string }).id));
+        if (snap.length < PAGE) break;
+        lastSnapId = (snap[snap.length - 1] as { id: string }).id;
+      }
+      if (!snapIds.length) return;
+      for (let i = 0; i < snapIds.length; i += PAGE) {
+        const ids = snapIds.slice(i, i + PAGE);
         const { data, error } = await fromTable('multiplix_recipients')
           .select('id, company_name_snapshot, destino_e164, status, sent_at, error_message')
           .in('id', ids)
