@@ -566,11 +566,14 @@ serve(async (req) => {
       // deno-lint-ignore no-explicit-any
       let data: any = {};
       try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
-      // Requer loggedIn E connected para mapear 'open'; '||' nao '??' porque
-      // loggedIn:false nao pode curto-circuitar o fallback por State (a GO
-      // manda os dois e nem sempre concordam). Estado 'Reconnecting' tem
-      // loggedIn:true mas connected:false — mapear 'open' aqui era falso positivo.
-      if (data?.data && data.state === undefined) data.state = (((data.data.loggedIn ?? data.data.LoggedIn) && (data.data.connected ?? data.data.Connected)) || data.data.State === 'open') ? 'open' : 'close';
+      // connected explícito é autoritativo: quando presente, requer loggedIn E connected.
+      // State/loggedIn apenas como fallback quando connected ausente (resposta legacy sem o campo).
+      // Evita falso positivo em Reconnecting: loggedIn:true, connected:false, State:'open' stale.
+      if (data?.data && data.state === undefined) {
+        const _li = data.data.loggedIn ?? data.data.LoggedIn;
+        const _co = data.data.connected ?? data.data.Connected;
+        data.state = (_co !== undefined ? (_co === true && _li === true) : (data.data.State === 'open' || _li === true)) ? 'open' : 'close';
+      }
       if (response.ok) {
         const status = data.state === 'open' ? 'connected' : 'disconnected';
         // So zera o QR quando conecta de fato. O polling de status roda a cada 3s
