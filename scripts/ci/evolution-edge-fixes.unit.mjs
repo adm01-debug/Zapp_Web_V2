@@ -99,8 +99,10 @@ test("bootstrap-instance-token e create-connection nunca logam ou ecoam o token"
   // stripInstanceToken precisa continuar cobrindo token/Token/apikey/apiKey em
   // mais de um nome de contêiner (nao só "data" — forks do Evolution API
   // costumam aninhar sob "hash"/"instance", padrão do Node.js v1/v2 original).
-  assert.match(createConnBlock, /TOKEN_KEYS = \[.*'token'.*'Token'.*'apikey'.*'apiKey'.*\]/);
-  assert.match(createConnBlock, /TOKEN_CONTAINER_KEYS = \[.*'data'.*'hash'.*'instance'.*\]/);
+  // TOKEN_KEYS/TOKEN_CONTAINER_KEYS estão em escopo de módulo — o teste de escopo fica em
+  // "stripInstanceToken declarado em escopo de módulo"; aqui verificamos apenas que existem.
+  assert.match(apiSrc, /TOKEN_KEYS = \[.*'token'.*'Token'.*'apikey'.*'apiKey'.*\]/);
+  assert.match(apiSrc, /TOKEN_CONTAINER_KEYS = \[.*'data'.*'hash'.*'instance'.*\]/);
 });
 
 test("create-connection: compensacao e rollback nunca afirmam sucesso sem confirmar", () => {
@@ -215,8 +217,62 @@ test("create-connection: mensagem de 23505 distingue instance_id de is_default (
   // real, não só os nomes soltos no bloco.
   assert.match(
     block,
-    /isDefaultCollision\s*=\s*isUniqueViolation\s*&&\s*!!insertError\?\.message\?\.includes\(['"]whatsapp_connections_one_default['"]\)/,
+    /isDefaultCollision\s*=\s*isUniqueViolation\s*&&\s*!!insertError\?\.message\?\.includes\(['"\]whatsapp_connections_one_default['"]\)/,
     "isDefaultCollision precisa checar de fato insertError?.message?.includes('whatsapp_connections_one_default') — não pode ser hardcoded/morto",
+  );
+});
+
+test("stripInstanceToken declarado em escopo de módulo, não dentro de create-connection", () => {
+  const createConnAt = apiSrc.indexOf("if (action === 'create-connection')");
+  const listAt = apiSrc.indexOf("if (action === 'list-instances')");
+  const createConnBlock = apiSrc.slice(createConnAt, listAt);
+
+  // TOKEN_KEYS/TOKEN_CONTAINER_KEYS/stripInstanceToken não podem estar no bloco de create-connection
+  assert.doesNotMatch(createConnBlock, /const TOKEN_KEYS\s*=/, "TOKEN_KEYS não pode estar dentro de create-connection — precisa ser de módulo");
+  assert.doesNotMatch(createConnBlock, /const stripInstanceToken\s*=/, "stripInstanceToken não pode estar dentro de create-connection");
+
+  // Precisam existir ANTES de create-connection (escopo de módulo dentro do try{})
+  const beforeCreateConn = apiSrc.slice(0, createConnAt);
+  assert.match(beforeCreateConn, /const TOKEN_KEYS\s*=/, "TOKEN_KEYS precisa ser declarado antes de create-connection");
+  assert.match(beforeCreateConn, /const stripInstanceToken\s*=/, "stripInstanceToken precisa ser declarado antes de create-connection");
+  assert.match(beforeCreateConn, /const TOKEN_CONTAINER_KEYS\s*=/, "TOKEN_CONTAINER_KEYS precisa ser declarado antes de create-connection");
+});
+
+test("delete-instance: requer admin e limpa a linha em whatsapp_connections após sucesso", () => {
+  const deleteAt = apiSrc.indexOf("if (action === 'delete-instance')");
+  assert.notEqual(deleteAt, -1);
+  const block = apiSrc.slice(deleteAt, deleteAt + 1200);
+
+  assert.match(block, /await requireAdmin\(\)/, "delete-instance precisa checar requireAdmin()");
+  assert.match(block, /whatsapp_connections'\)\.delete\(\)\.eq\('instance_id'/, "delete-instance precisa deletar a linha em whatsapp_connections");
+  // A limpeza só roda quando não há erro — precisa estar dentro de um guard de !error
+  assert.match(block, /if \(!deleteBody\?\.error\)/, "delete-instance: limpeza do banco só pode rodar quando a GO não retornou erro");
+});
+
+test("connect/status/disconnect: sempre retornam HTTP 200 (sem response.ok ? 200 : 400)", () => {
+  const connectAt = apiSrc.indexOf("if (action === 'connect')");
+  const statusAt = apiSrc.indexOf("if (action === 'status')");
+  const instanceInfoAt = apiSrc.indexOf("if (action === 'instance-info')");
+  const disconnectAt = apiSrc.indexOf("if (action === 'disconnect')");
+  const deleteAt = apiSrc.indexOf("if (action === 'delete-instance')");
+
+  for (const [act, start, end] of [
+    ["connect", connectAt, statusAt],
+    ["status", statusAt, instanceInfoAt],
+    ["disconnect", disconnectAt, deleteAt],
+  ]) {
+    const block = apiSrc.slice(start, end);
+    assert.doesNotMatch(
+      block, /response\.ok \? 200 : 400/,
+      `${act}: não pode usar "response.ok ? 200 : 400" — todos os erros vão no corpo com HTTP 200`,
+    );
+  }
+});
+
+test("proxyToEvolution: erro não expõe corpo bruto da GO via campo 'details'", () => {
+  assert.doesNotMatch(
+    proxySrc, /details:\s*data\b/,
+    "proxyToEvolution não pode expor o corpo raw da GO no campo 'details' — pode vazar tokens de integrações (chatwoot, openai, etc.)",
   );
 });
 
@@ -231,5 +287,5 @@ test("rotas de historico sem equivalente na GO tem guarda de flavor", () => {
     assert.ok(guard < call, `a guarda de ${action} tem que vir antes de chamar /chat/findMessages`);
     assert.match(block.slice(0, guard), /if \(isGoFlavor\)/);
   }
-  assert.match(apiSrc, /import \{ goHistoryNotSupported \} from "\.\.\/_shared\/evolution-sync-actions\.ts";/);
+  assert.match(apiSrc, /import \{ goHistoryNotSupported \} from "\.\.\/\_shared\/evolution-sync-actions\.ts";/);
 });
