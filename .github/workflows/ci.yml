@@ -14,6 +14,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
   # Fila de merge: sem este gatilho os required checks nunca reportariam no
   # merge group e a fila travaria todos os merges do repo.
   merge_group:
