@@ -64,7 +64,8 @@ export function useContactFormValidation(
 
   const checkEmailDuplicate = useCallback(async (email: string) => {
     const trimmed = email.trim();
-    const seq = ++emailCheckSeqRef.current;
+    // Capture seq without incrementing — handleChange already incremented synchronously
+    const seq = emailCheckSeqRef.current;
     if (!trimmed || !validateEmail(trimmed)) { setDuplicateEmailWarning(null); return; }
     const escapedEmail = trimmed.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
     let query = supabase
@@ -102,6 +103,9 @@ export function useContactFormValidation(
     onChange(field, value);
     if (touched[field]) setErrors(prev => ({ ...prev, [field]: validate(field, value) }));
     if (field === 'email') {
+      // Increment synchronously so any in-flight query is immediately invalidated,
+      // even if it resolves before the 500 ms debounce fires.
+      ++emailCheckSeqRef.current;
       clearTimeout(emailDupCheckTimer.current);
       emailDupCheckTimer.current = setTimeout(() => checkEmailDuplicate(value), 500);
     }
