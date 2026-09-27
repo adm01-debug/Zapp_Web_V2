@@ -494,6 +494,33 @@
             "ledger_name": "fix_audit_role_changes_function_name_mismatch",
             "kind": "ledger-only/name-and-file-pinned",
             "justification": "O ledger de producao guarda so um comentario factual (\"-- aplicado via MCP, ver PR #569\"), sem SQL historico recuperado: o DDL foi aplicado via MCP antes de ser versionado. O arquivo replay preserva o CREATE OR REPLACE FUNCTION audit_role_changes() completo (campos forenses actor_kind/actor_db_role/actor_app_name/actor_addr) mais o DROP FUNCTION audit_user_role_changes() (funcao orfa criada pela migration 20260924120000/PR #562, nunca chamada pelo trigger). Bytes do arquivo fixados pelo manifesto."
+        },
+        {
+            "version": "20260927410000",
+            "filename": "20260927410000_fix_dashboard_kpi_distinct_contacts.sql",
+            "file_sha256": "0b7fdcce3683f42f886120f275cbc4360088a32afd9da4ef7de20124683cb505",
+            "ledger_name": "fix_dashboard_kpi_distinct_contacts",
+            "ledger_statements_sha256": "d7ef3d0885ea0340390e9672b1495efaa71a1036f5a429e5a1a17942bbf4d2ca",
+            "kind": "ledger-only/comment-only",
+            "justification": "Registro aplicado por sessão paralela via MCP sem arquivo de migration no Git; SQL histórico não recuperado. Arquivo mantém somente o comentário factual registrado no ledger."
+        },
+        {
+            "version": "20260927421000",
+            "filename": "20260927421000_add_sync_contact_status_on_closure_trigger.sql",
+            "file_sha256": "6825606e7ac2a09e59abf93d0a1b7b99f55be2555e195a6927d758e239848724",
+            "ledger_name": "add_sync_contact_status_on_closure_trigger",
+            "ledger_statements_sha256": "46e213cde83608504e1cae67a101bac5434219521e335dacb25106ea7a9ca230",
+            "kind": "ledger-only/comment-only",
+            "justification": "Registro aplicado por sessão paralela via MCP sem arquivo de migration no Git; SQL histórico não recuperado. Arquivo mantém somente o comentário factual registrado no ledger."
+        },
+        {
+            "version": "20260927430000",
+            "filename": "20260927430000_fix_gamification_trigger_insert_or_update_agent_id.sql",
+            "file_sha256": "dcd6278b05521803baf8e660178045bc4702fd59d4d572ae8a34b59b8a98dfa5",
+            "ledger_name": "fix_gamification_trigger_insert_or_update_agent_id",
+            "ledger_statements_sha256": "ba1e7d0430b32fb69717600d46ad5fe8c614ea887e73be01d674912c310cc152",
+            "kind": "ledger-only/comment-only",
+            "justification": "Registro aplicado por sessão paralela via MCP sem arquivo de migration no Git; SQL histórico não recuperado. Arquivo mantém somente os comentários factuais registrados no ledger."
         }
     ]
 }
