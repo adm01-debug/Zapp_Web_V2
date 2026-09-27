@@ -72,6 +72,24 @@
 
 O Postgres do `evolution-go-rxj2` é interno da Evolution GO (estado de sessões WhatsApp). **Não confundir com o banco do projeto** (seção 1) e não aplicar migrations do repo nele.
 
+### Runbook: QR Code não aparece / trava no spinner (sessão órfã na GO)
+
+Sintoma: dialog "Escanear QR Code" fica só com o loader girando; a conexão nunca pareia.
+Causa comum: a instância na Evolution GO tem **JID persistido mas está deslogada**
+(`status` → `LoggedIn:false`/`Connected:false` com `jid` presente). Nesse estado o
+`/instance/connect` reusa a sessão salva e **não emite QR novo**; `/instance/qr` volta
+vazio. Diagnóstico rápido (edge `evolution-api`): `connect` responde `success` com `jid`
+mas sem `qrcode`; `disconnect` (logout GO) → 400; `restart-instance` (reconnect GO) → 500
+`no active session found`.
+
+Desde o fix de 2026-09-27 a edge `connect` faz poll do `/instance/qr` (o QR é assíncrono)
+e, quando nenhum QR sai, devolve `error:true`/409 em vez de `qrcode:undefined` — o front
+mostra erro com "Gerar novo código" (nada mais de spinner infinito). Para **destravar de
+fato** e voltar a gerar QR é preciso limpar as credenciais órfãs no Postgres interno da GO
+(`evolution-go-rxj2-postgres-1`, via MCP `HOSTINGER`), forçando registro novo — sem trocar
+o `EVOLUTION_INSTANCE_TOKEN` nem o nome `PRINCIPAL`. `logout`/`restart` pela API não
+resolvem esse estado.
+
 ---
 
 ## 3. Repo e escrita

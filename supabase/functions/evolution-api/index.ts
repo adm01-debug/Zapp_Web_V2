@@ -393,28 +393,59 @@ serve(async (req) => {
       // deno-lint-ignore no-explicit-any
       let data: any = {};
       try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
-      const qrRes = await fetch(`${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken } });
-      // deno-lint-ignore no-explicit-any
-      let qrData: any = {};
-      try { const _t = await qrRes.text(); qrData = JSON.parse(_t); } catch { /* non-JSON from GO */ }
+      // A GO emite o QR de forma ASSÍNCRONA depois do connect: ler /instance/qr
+      // uma única vez logo após o connect pega o payload ainda vazio (corrida) e
+      // devolvia qrcode:undefined, o que travava o front no spinner. Poll curto até
+      // o payload cru "2@..." aparecer.
       // A GO devolve o PNG do QR codificando 'https://wa.me/settings/linked_devices#2@...'.
       // O leitor de "Conectar aparelho" do WhatsApp so aceita o payload cru "2@...": com a URL
       // ele recusa o QR e o pareamento pela tela do app nunca fecha. Alem disso o campo vem
       // como "<dataURI>|<url>", o que quebra o <img src>. Re-renderiza a partir do payload cru.
-      const rawQrCode = String(qrData?.data?.code ?? '').split('#').pop() ?? '';
-      let qrcode = String(qrData?.data?.qrcode ?? '').split('|')[0] || undefined;
-      if (rawQrCode.startsWith('2@')) {
-        try {
-          // deno-lint-ignore no-explicit-any
-          const qrMod: any = await import('https://esm.sh/qrcode@1.5.3');
-          const svg = await (qrMod.default ?? qrMod).toString(rawQrCode, { type: 'svg', margin: 2, width: 512 });
-          qrcode = `data:image/svg+xml;base64,${btoa(svg)}`;
-        } catch (err: unknown) {
-          new Logger('evolution-api').error('Falha ao re-renderizar QR; usando o da GO', { error: err instanceof Error ? err.message : String(err) });
+      const fetchQr = async (): Promise<{ base64?: string; code?: string }> => {
+        const qrRes = await fetch(`${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken } });
+        // deno-lint-ignore no-explicit-any
+        let qrData: any = {};
+        try { const _t = await qrRes.text(); qrData = JSON.parse(_t); } catch { /* non-JSON from GO */ }
+        const rawQrCode = String(qrData?.data?.code ?? '').split('#').pop() ?? '';
+        let base64 = String(qrData?.data?.qrcode ?? '').split('|')[0] || undefined;
+        if (rawQrCode.startsWith('2@')) {
+          try {
+            // deno-lint-ignore no-explicit-any
+            const qrMod: any = await import('https://esm.sh/qrcode@1.5.3');
+            const svg = await (qrMod.default ?? qrMod).toString(rawQrCode, { type: 'svg', margin: 2, width: 512 });
+            base64 = `data:image/svg+xml;base64,${btoa(svg)}`;
+          } catch (err: unknown) {
+            new Logger('evolution-api').error('Falha ao re-renderizar QR; usando o da GO', { error: err instanceof Error ? err.message : String(err) });
+          }
+          return { base64, code: rawQrCode };
         }
+        return { base64, code: rawQrCode || qrData?.data?.code };
+      };
+      let qr = await fetchQr();
+      for (let i = 0; i < 3 && !qr.base64; i++) {
+        await new Promise((r) => setTimeout(r, 1500));
+        qr = await fetchQr();
       }
-      if (qrcode) await supabase.from('whatsapp_connections').update({ qr_code: qrcode, status: 'qr_pending', instance_id: instance }).eq('instance_id', instance);
-      return new Response(JSON.stringify({ ...data, qrcode: qrcode ? { base64: qrcode, code: rawQrCode || qrData?.data?.code } : undefined }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      if (qr.base64) {
+        await supabase.from('whatsapp_connections').update({ qr_code: qr.base64, status: 'qr_pending', instance_id: instance }).eq('instance_id', instance);
+        return new Response(JSON.stringify({ ...data, qrcode: { base64: qr.base64, code: qr.code } }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      // Sem QR após o poll: a instância ou já está logada (reconectou sozinha a
+      // partir da sessão salva) ou tem uma sessão órfã na GO que não emite QR novo
+      // (JID persistido + LoggedIn:false; logout/reconnect da GO respondem 400/500).
+      // Distingue pelo status para NUNCA devolver qrcode:undefined silencioso — era
+      // isso que deixava o front em 'loading' eterno.
+      const stRes = await fetch(`${evolutionApiUrl}/instance/status`, { method: 'GET', headers: { 'apikey': instToken } });
+      let stData: { data?: Record<string, unknown>; state?: string } = {};
+      try { const _t = await stRes.text(); stData = JSON.parse(_t); } catch { /* non-JSON from GO */ }
+      const stInner = stData.data ?? {};
+      const loggedIn = (stInner.loggedIn ?? stInner.LoggedIn) || stInner.Connected || stData.state === 'open';
+      if (loggedIn) {
+        await supabase.from('whatsapp_connections').update({ status: 'connected', qr_code: null }).eq('instance_id', instance);
+        return new Response(JSON.stringify({ ...data, status: 'connected' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      new Logger('evolution-api').warn('connect: nenhum QR gerado e instância não logada — sessão pendente na GO', { instance });
+      return new Response(JSON.stringify({ error: true, status: 409, message: 'A instância não gerou um QR Code novo. A sessão anterior ainda está pendente na Evolution GO — reinicie a instância (logout/reset) e tente de novo.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (action === 'status') {

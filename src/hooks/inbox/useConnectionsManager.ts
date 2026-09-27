@@ -48,12 +48,28 @@ export function useConnectionsManager() {
   const [isCreating, setIsCreating] = useState(false);
   const [syncingHistory, setSyncingHistory] = useState<string | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const qrTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
   // Espelhado em useLayoutEffect, nao no corpo do render: escrever em ref
   // durante o render quebra em StrictMode/concurrent, onde o render pode ser
   // descartado. Mesma convencao de useNavigationHistory.ts.
   const qrCodeDialogRef = useRef<QrCodeDialogState>(INITIAL_QR_STATE);
   useLayoutEffect(() => { qrCodeDialogRef.current = qrCodeDialog; }, [qrCodeDialog]);
+
+  // Rede de seguranca: se o dialog ficar em 'loading' (ex.: connect trava/demora,
+  // ou o backend nao devolve QR) ele nunca mais sairia do spinner — nao ha else no
+  // caminho feliz. Apos 30s sem QR nem conexao, cai para 'error' com o botao de
+  // "Gerar novo codigo" disponivel. Re-arma a cada volta para 'loading' (refresh).
+  useEffect(() => {
+    if (qrCodeDialog.open && qrCodeDialog.status === 'loading') {
+      qrTimeoutRef.current = setTimeout(() => {
+        setQrCodeDialog((prev) => prev.status === 'loading'
+          ? { ...prev, status: 'error', errorMessage: 'Não foi possível gerar o QR Code (a sessão pode estar pendente na Evolution GO). Tente "Gerar novo código".' }
+          : prev);
+      }, 30000);
+    }
+    return () => { if (qrTimeoutRef.current) { clearTimeout(qrTimeoutRef.current); qrTimeoutRef.current = null; } };
+  }, [qrCodeDialog.open, qrCodeDialog.status]);
 
   const {
     isLoading: evolutionLoading,
