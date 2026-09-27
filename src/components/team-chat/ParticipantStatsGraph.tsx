@@ -43,10 +43,10 @@ export function ParticipantStatsGraph({ conversationId, simulationMode = false }
         ) : (
           <ResponsiveContainer width="100%" height={120}>
             <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-              <XAxis dataKey="name" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ fontSize: 11 }} />
-              <Legend wrapperStyle={{ fontSize: 9 }} />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} />
+              <YAxis axisLine={false} tickLine={false} />
+              <Tooltip />
+              <Legend />
               <Bar dataKey="sent" name="Enviadas" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
               <Bar dataKey="delivered" name="Entregues" fill="hsl(var(--primary) / 0.6)" radius={[2, 2, 0, 0]} />
               <Bar dataKey="read" name="Lidas" fill="hsl(var(--primary) / 0.3)" radius={[2, 2, 0, 0]} />

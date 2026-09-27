@@ -61,9 +61,9 @@ export function TeamPerformancePanel({ conversationId }: Props) {
         </div>
         <ResponsiveContainer width="100%" height={80}>
           <LineChart data={chartData}>
-            <XAxis dataKey="name" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="name" axisLine={false} tickLine={false} />
             <YAxis hide />
-            <Tooltip contentStyle={{ fontSize: 11 }} />
+            <Tooltip />
             <Line type="monotone" dataKey="value" stroke="hsl(var(--primary))" dot={false} strokeWidth={2} />
           </LineChart>
         </ResponsiveContainer>

@@ -127,13 +127,13 @@ export function GroupManagementDialog({
                       >
                         <Avatar className="w-7 h-7 shrink-0">
                           <AvatarImage src={member.avatar_url ?? undefined} alt={displayName} />
-                          <AvatarFallback className="text-[10px]">
+                          <AvatarFallback className="text-3xs">
                             {displayName.slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <span className="flex-1 text-sm truncate">{displayName}</span>
                         {isMe && (
-                          <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                          <span className="text-3xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                             você
                           </span>
                         )}
