@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Command, ArrowRight, Clock, Star, X, Loader2, Zap } from 'lucide-react';
+import { Search, Command, ArrowRight, Clock, Star, X, Loader2, Zap, Megaphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogTitle } from './dialog';
 import { Badge } from './badge';
@@ -89,13 +89,14 @@ export function CommandPalette({
   }, [open, allItems, selectedIndex]);
 
   React.useEffect(() => {
-    if (!open) { setQuery(''); setSearchResults([]); setSelectedIndex(0); }
+    if (!open) { setTimeout(() => { setQuery(''); setSearchResults([]); setSelectedIndex(0); }, 0); }
     else setTimeout(() => inputRef.current?.focus(), 0);
   }, [open]);
 
   const categoryIcons: Record<CommandCategory, React.ReactNode> = {
     navigation: <ArrowRight className="h-3 w-3" />, action: <Zap className="h-3 w-3" />,
     search: <Search className="h-3 w-3" />, recent: <Clock className="h-3 w-3" />,
+    talkx: <Megaphone className="h-3 w-3" />,
   };
 
   return (
