@@ -1,13 +1,16 @@
 -- =====================================================================
 -- Telefonia v2 — contrato de dados (ADITIVO)
 -- Plano: docs/design/PLANO_MELHORIAS_TELEFONIA_100_ETAPAS.md (Apêndice A/B)
--- Fase 2, etapas 19–25. Versão 20260926300000 — reversionada pela SEGUNDA vez:
+-- Fase 2, etapas 19–25. Versão 20260926800000 — reversionada pela TERCEIRA vez:
 -- 20260926190000 -> 20260926210000 (PR #885, colisão com E17/#872) -> 20260926300000
--- (colisão com outra migration concorrente registrada sob 20260926210000,
--- "restrict_gmail_accounts_cascade", sem relação com Telefonia — 20260926210000
--- ficou legitimamente ocupada por ela). max(version) conferido ao vivo antes
--- desta versão: 20260926220000 — 300000 dá margem pra concorrência atual.
--- Conteúdo abaixo idêntico ao original — só o cabeçalho mudou (rename puro).
+-- (PR #897, colisão com restrict_gmail_accounts_cascade) -> 20260926800000
+-- (colisão #3: max(version) avançou para 20260926420000 enquanto a correção de
+-- segurança #3 — 20260926900000_fix_set_call_agent_notes_null_profile.sql — era
+-- preparada; 300000 ficaria atrás do que já está no banco). max(version)
+-- conferido ao vivo antes desta versão: 20260926420000 — 800000 dá margem grande
+-- de propósito, e ainda fica ABAIXO de 900000 (a correção de segurança #3, que
+-- deve aplicar depois desta). Conteúdo abaixo idêntico ao original — só o
+-- cabeçalho mudou (rename puro).
 --
 -- Regras respeitadas: só aditivo; nenhum DROP de coluna/tabela; nenhum UPDATE
 -- em massa de histórico; backfill com contagem registrada no ledger.

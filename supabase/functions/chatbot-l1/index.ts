@@ -221,6 +221,10 @@ Responda em JSON:
     }, 200, req);
   } catch (error: unknown) {
     log.error("Error in chatbot-l1", { error: error instanceof Error ? error.message : String(error) });
-    return jsonResponse({ handled: false, error: error instanceof Error ? error.message : "Unknown error" }, 500, req);
+    // errorResponse (nao jsonResponse) para status 500: sanitiza a mensagem
+    // antes de expor ao cliente — mesmo padrao das demais edges (ai-proxy,
+    // ai-auto-tag, etc). O jsonResponse direto vazava error.message
+    // (js/stack-trace-exposure).
+    return errorResponse(error instanceof Error ? error.message : "Unknown error", 500, req);
   }
 });
