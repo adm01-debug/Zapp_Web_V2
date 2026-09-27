@@ -48,7 +48,11 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
       // escuta Escape em fase de capture e chama preventDefault() ao fechar —
       // sem este check, Escape fechava o dropdown de ações E o painel junto
       // (achado na auditoria de 5 agentes, 2026-09-26, rodada 4).
-      if (e.key === 'Escape' && !e.defaultPrevented && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
+      // SELECT: fechar o dropdown nativo não chama preventDefault(), então sem
+      // a exclusão abaixo o Escape colapsa o painel junto com o <select>.
+      // isContentEditable: mesma situação em divs/spans editáveis — Esc deve
+      // cancelar a edição, não fechar o painel (auditoria 2026-09-27).
+      if (e.key === 'Escape' && !e.defaultPrevented && !['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName) && !(e.target as HTMLElement)?.isContentEditable) {
         e.preventDefault(); onClose();
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 't' && panelRef.current) {
