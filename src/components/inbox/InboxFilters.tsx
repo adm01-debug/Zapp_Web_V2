@@ -20,8 +20,9 @@ import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useAgents } from '@/hooks/crm/useAgents';
-import { useTags } from '@/hooks/crm/useTags';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { useQueues } from '@/hooks/business/useQueues';
 import { FILTER_OPTIONS } from './ContactTypeFilter';
@@ -72,7 +73,16 @@ export function InboxFilters({
 }: InboxFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { agents } = useAgents();
-  const { tags } = useTags();
+  const { data: tags = [] } = useQuery({
+    queryKey: ['inbox-filter-tags'],
+    queryFn: async () => {
+      const { data } = await supabase.from('contacts').select('tags').not('tags', 'is', null);
+      const tagSet = new Set<string>();
+      (data || []).forEach(c => (c.tags || []).forEach((t: string) => tagSet.add(t)));
+      return [...tagSet].sort().map(name => ({ id: name, name, color: '#6366f1' }));
+    },
+    staleTime: 60_000,
+  });
   const { isAdmin, isSupervisor } = useUserRole();
   const { queues } = useQueues();
   const canShowAll = isAdmin || isSupervisor;

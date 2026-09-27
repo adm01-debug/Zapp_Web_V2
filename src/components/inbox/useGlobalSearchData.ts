@@ -58,8 +58,12 @@ export function useGlobalSearchData(open: boolean) {
 
   useEffect(() => {
     if (open) {
-      supabase.from('tags').select('id, name, color').order('name').then(({ data }) => {
-        if (data) setAllTags(data);
+      supabase.from('contacts').select('tags').not('tags', 'is', null).then(({ data }) => {
+        if (data) {
+          const tagSet = new Set<string>();
+          data.forEach(c => (c.tags || []).forEach((t: string) => tagSet.add(t)));
+          setAllTags([...tagSet].sort().map(name => ({ id: name, name, color: '#6366f1' })));
+        }
       });
     }
   }, [open]);
@@ -169,8 +173,7 @@ export function useGlobalSearchData(open: boolean) {
         if (contacts) {
           let filtered = contacts;
           if (tags.length > 0) {
-            const tagNames = allTags.filter(t => tags.includes(t.id)).map(t => t.name);
-            filtered = contacts.filter(c => c.tags && c.tags.some((tag: string) => tagNames.includes(tag)));
+            filtered = contacts.filter(c => c.tags && c.tags.some((tag: string) => tags.includes(tag)));
           }
           filtered.forEach((contact) => {
             searchResults.push({
