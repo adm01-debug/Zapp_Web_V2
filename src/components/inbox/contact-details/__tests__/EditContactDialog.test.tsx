@@ -26,6 +26,16 @@ vi.mock('@/integrations/supabase/client', () => ({
           },
         };
       },
+      // checkDuplicate em useContactFormValidation dispara debounce 500ms ao mudar
+      // o phone — chama .select().or().neq().limit() quando excludeContactId está
+      // presente (EditContactDialog sempre passa contact.id). Sem neq no mock,
+      // o timer lança TypeError: query.neq is not a function.
+      select: () => ({
+        or: () => ({
+          neq: () => ({ limit: () => Promise.resolve({ data: [] }) }),
+          limit: () => Promise.resolve({ data: [] }),
+        }),
+      }),
     }),
   },
 }));
@@ -182,7 +192,7 @@ describe('EditContactDialog', () => {
     fireEvent.click(screen.getByText('Salvar'));
 
     await waitFor(() => {
-      expect(mockUpdate).toHaveBeenCalled();
+      expect(mockUpdate).toHaveBeenCalledWith({ name: 'John Doe Jr' });
     });
   });
 
@@ -193,6 +203,22 @@ describe('EditContactDialog', () => {
 
     await waitFor(() => {
       expect(mockEq).toHaveBeenCalledWith('id', 'c1');
+    });
+  });
+
+  // P0 — detecta remoção de 'phone' de FIELD_NORMALIZERS (mutation blind identificada
+  // pela auditoria de mutation testing, Agent 2, 2026-09-27, 7a rodada): sem esta
+  // entrada no normalizer, editar o telefone descarta a mudança silenciosamente.
+  it('inclui phone no payload quando o campo telefone é alterado', async () => {
+    renderDialog();
+    const phoneInput = screen.getByDisplayValue('+5511999999999');
+    fireEvent.change(phoneInput, { target: { value: '+5521888888888' } });
+    fireEvent.click(screen.getByText('Salvar'));
+
+    await waitFor(() => {
+      const updatePayload = mockUpdate.mock.calls[0][0];
+      expect(updatePayload).toHaveProperty('phone');
+      expect(updatePayload.phone).toBeTruthy();
     });
   });
 
@@ -318,6 +344,32 @@ describe('EditContactDialog', () => {
     expect(screen.getByDisplayValue('Doe')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Acme')).toBeInTheDocument();
     expect(screen.getByText('Dev')).toBeInTheDocument();
+  });
+
+  // Mutation blind detectada pela auditoria (Agent 4, 2026-09-27): remover
+  // setInitialValues(next) do bloco de resync faz setFormValues correto mas
+  // deixa initialValues com os valores vazios da 1a montagem — qualquer Save
+  // sem edição enviaria TODOS os campos ao banco (sobrescrevendo com null).
+  it('não chama update quando o diálogo ressincroniza e o usuário salva sem editar', async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const onOpenChange = vi.fn();
+    const emptyContact = { id: 'c1', name: 'John Doe', phone: '+5511999999999' };
+    const { rerender } = render(
+      <QueryClientProvider client={qc}>
+        <EditContactDialog open={false} onOpenChange={onOpenChange} contact={emptyContact} />
+      </QueryClientProvider>
+    );
+
+    rerender(
+      <QueryClientProvider client={qc}>
+        <EditContactDialog open={true} onOpenChange={onOpenChange} contact={baseContact} />
+      </QueryClientProvider>
+    );
+
+    fireEvent.click(screen.getByText('Salvar'));
+
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 
   // ========== CANCEL ==========
