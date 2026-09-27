@@ -494,6 +494,32 @@
             "ledger_name": "fix_audit_role_changes_function_name_mismatch",
             "kind": "ledger-only/name-and-file-pinned",
             "justification": "O ledger de producao guarda so um comentario factual (\"-- aplicado via MCP, ver PR #569\"), sem SQL historico recuperado: o DDL foi aplicado via MCP antes de ser versionado. O arquivo replay preserva o CREATE OR REPLACE FUNCTION audit_role_changes() completo (campos forenses actor_kind/actor_db_role/actor_app_name/actor_addr) mais o DROP FUNCTION audit_user_role_changes() (funcao orfa criada pela migration 20260924120000/PR #562, nunca chamada pelo trigger). Bytes do arquivo fixados pelo manifesto."
+        },
+        {
+            "version": "20260927410000",
+            "filename": "20260927410000_drop_legacy_tags_tables.sql",
+            "file_sha256": "06e2394fef2a2ab773f68e6e0b303c134e2bfe80bc8f97600bc40697ca847c18",
+            "ledger_name": "fix_dashboard_kpi_distinct_contacts",
+            "kind": "ledger-only/name-and-file-pinned",
+            "justification": "Versao 20260927410000 foi registrada no ledger como fix_dashboard_kpi_distinct_contacts (comment-only, sem SQL canonico) por sessao paralela antes do arquivo drop_legacy_tags_tables.sql ser commitado com a mesma versao. O arquivo tem DDL real (DROP TABLE IF EXISTS contact_tags/tags); o ledger preserva apenas o registro de nome sem conteudo SQL historico. Bytes do arquivo fixados pelo manifesto."
+        },
+        {
+            "version": "20260927421000",
+            "filename": "20260927421000_add_sync_contact_status_on_closure_trigger.sql",
+            "file_sha256": "6825606e7ac2a09e59abf93d0a1b7b99f55be2555e195a6927d758e239848724",
+            "ledger_name": "add_sync_contact_status_on_closure_trigger",
+            "ledger_statements_sha256": "b63201e84a1074118dee013a1d8f4965ae068e20429248d0f3f51d5fa2aa94a0",
+            "kind": "ledger-only/comment-only",
+            "justification": "Registro existia no ledger apenas como comment placeholder sem SQL executavel. O SQL real nao foi implementado nesta versao; o arquivo stub factual e fixado pelo manifesto."
+        },
+        {
+            "version": "20260927430000",
+            "filename": "20260927430000_fix_gamification_trigger_insert_or_update_agent_id.sql",
+            "file_sha256": "dcd6278b05521803baf8e660178045bc4702fd59d4d572ae8a34b59b8a98dfa5",
+            "ledger_name": "fix_gamification_trigger_insert_or_update_agent_id",
+            "ledger_statements_sha256": "0da871af87fca18599f9d51da9bbd2f6b9f6ac70c2b43ee8d9f17c4a5d153dd0",
+            "kind": "ledger-only/comment-only",
+            "justification": "Registro existia no ledger apenas como comment placeholder sem SQL executavel. O SQL real nao foi implementado nesta versao; o arquivo stub factual e fixado pelo manifesto."
         }
     ]
 }

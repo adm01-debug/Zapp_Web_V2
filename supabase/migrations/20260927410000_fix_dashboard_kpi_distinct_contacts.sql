@@ -1,1 +1,0 @@
--- fix resolvedToday/resolvedYesterday to use COUNT(DISTINCT contact_id)
