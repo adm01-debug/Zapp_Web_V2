@@ -494,6 +494,15 @@
             "ledger_name": "fix_audit_role_changes_function_name_mismatch",
             "kind": "ledger-only/name-and-file-pinned",
             "justification": "O ledger de producao guarda so um comentario factual (\"-- aplicado via MCP, ver PR #569\"), sem SQL historico recuperado: o DDL foi aplicado via MCP antes de ser versionado. O arquivo replay preserva o CREATE OR REPLACE FUNCTION audit_role_changes() completo (campos forenses actor_kind/actor_db_role/actor_app_name/actor_addr) mais o DROP FUNCTION audit_user_role_changes() (funcao orfa criada pela migration 20260924120000/PR #562, nunca chamada pelo trigger). Bytes do arquivo fixados pelo manifesto."
+        },
+        {
+            "version": "20260927421000",
+            "filename": "20260927421000_add_sync_contact_status_on_closure_trigger.sql",
+            "file_sha256": "6825606e7ac2a09e59abf93d0a1b7b99f55be2555e195a6927d758e239848724",
+            "ledger_name": "add_sync_contact_status_on_closure_trigger",
+            "ledger_statements_sha256": "b63201e84a1074118dee013a1d8f4965ae068e20429248d0f3f51d5fa2aa94a0",
+            "kind": "ledger-only/comment-only",
+            "justification": "Registro existia no ledger apenas como comment placeholder sem SQL executavel. O SQL real nao foi implementado nesta versao; o arquivo stub factual e fixado pelo manifesto."
         }
     ]
 }
