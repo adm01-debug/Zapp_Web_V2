@@ -917,6 +917,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "calls_answered_by_fkey"
+            columns: ["answered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calls_answered_by_fkey"
+            columns: ["answered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "calls_contact_id_fkey"
             columns: ["contact_id"]
             isOneToOne: false
@@ -9622,7 +9636,12 @@ export type Database = {
         Returns: Json
       }
       my_calls_kpi: {
-        Args: { p_channel?: string; p_from?: string; p_scope?: string; p_to?: string }
+        Args: {
+          p_channel?: string
+          p_from?: string
+          p_scope?: string
+          p_to?: string
+        }
         Returns: {
           answered: number
           avg_talk_seconds: number
@@ -9701,6 +9720,10 @@ export type Database = {
           notification_created: boolean
           notification_id: string
         }[]
+      }
+      record_multiplix_recipient_delivered: {
+        Args: { p_connection_id: string; p_external_id: string }
+        Returns: boolean
       }
       record_multiplix_recipient_sent: {
         Args: {
@@ -9962,6 +9985,15 @@ export type Database = {
           version_number: number
         }[]
       }
+      upsert_crm_contact_link_guarded: {
+        Args: {
+          p_external_company_id: string
+          p_external_contact_id: string
+          p_normalized_phone: string
+          p_zapp_contact_id: string
+        }
+        Returns: undefined
+      }
       upsert_my_call: {
         Args: {
           p_answered_at?: string
@@ -9978,15 +10010,6 @@ export type Database = {
           p_talk_seconds?: number
         }
         Returns: string
-      }
-      upsert_crm_contact_link_guarded: {
-        Args: {
-          p_external_company_id: string
-          p_external_contact_id: string
-          p_normalized_phone: string
-          p_zapp_contact_id: string
-        }
-        Returns: undefined
       }
       user_has_permission: {
         Args: { _permission_name: string; _user_id: string }
