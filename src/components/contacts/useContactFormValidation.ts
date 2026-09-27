@@ -40,6 +40,7 @@ export function useContactFormValidation(
   values: ContactFormValues,
   onChange: (field: string, value: string) => void,
   onSubmit: () => void,
+  excludeContactId?: string,
 ) {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<FieldError>({});
@@ -49,13 +50,14 @@ export function useContactFormValidation(
   const checkDuplicate = useCallback(async (phone: string) => {
     const cleaned = phone.replace(/\D/g, '');
     if (cleaned.length < 10) { setDuplicateWarning(null); return; }
-    const { data } = await supabase
+    let query = supabase
       .from('contacts')
       .select('name, phone')
-      .or(`phone.ilike.%${cleaned.slice(-8)}%`)
-      .limit(1);
+      .or(`phone.ilike.%${cleaned.slice(-8)}%`);
+    if (excludeContactId) query = query.neq('id', excludeContactId);
+    const { data } = await query.limit(1);
     setDuplicateWarning(data && data.length > 0 ? `Possível duplicata: "${data[0].name}" (${data[0].phone})` : null);
-  }, []);
+  }, [excludeContactId]);
 
   const validate = useCallback((field: string, value: string): string | null => {
     switch (field) {
