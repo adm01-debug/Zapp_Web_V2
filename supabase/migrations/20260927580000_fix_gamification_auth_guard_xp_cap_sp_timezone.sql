@@ -1,48 +1,14 @@
--- Melhoria 1: colunas xp, messages_sent, messages_received int4 → bigint
---   Trigger on_agent_stats_update_level referencia OF xp (bloqueio de ALTER)
---   Policy "Users can insert own stats" referencia xp = 0 (bloqueio de ALTER)
---   calculate_level precisa de overload bigint; update_agent_level recompilada
--- Melhoria 2: grant_agent_achievement — rate-limit diario para tipo daily_goal
---   FOR UPDATE antes do check de data serializa concorrencia (race-safe)
-
-DROP POLICY "Users can insert own stats" ON public.agent_stats;
-
-DROP TRIGGER on_agent_stats_update_level ON public.agent_stats;
-
-ALTER TABLE public.agent_stats
-  ALTER COLUMN xp               TYPE bigint,
-  ALTER COLUMN messages_sent    TYPE bigint,
-  ALTER COLUMN messages_received TYPE bigint;
-
-CREATE OR REPLACE FUNCTION public.calculate_level(xp_amount bigint)
-RETURNS integer LANGUAGE plpgsql IMMUTABLE SET search_path = public AS $$
-BEGIN
-  RETURN GREATEST(1, FLOOR(SQRT(GREATEST(0, xp_amount) / 50.0))::integer + 1);
-END;
-$$;
-
-CREATE OR REPLACE FUNCTION public.update_agent_level()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-BEGIN
-  NEW.level := calculate_level(NEW.xp);
-  RETURN NEW;
-END;
-$$;
-
-CREATE TRIGGER on_agent_stats_update_level
-BEFORE UPDATE OF xp ON public.agent_stats
-FOR EACH ROW EXECUTE FUNCTION update_agent_level();
-
-CREATE POLICY "Users can insert own stats" ON public.agent_stats
-  FOR INSERT TO authenticated
-  WITH CHECK (
-    (profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
-     OR is_admin_or_supervisor(auth.uid()))
-    AND (
-      is_admin_or_supervisor(auth.uid())
-      OR (xp = 0 AND level = 1 AND achievements_count = 0)
-    )
-  );
+-- fix: auth guard anon + cap XP 500 + timezone SP nas funções de gamificação
+-- Corrige regressões introduzidas em 20260927500000 (bigint migration):
+--   add_agent_xp:            guard invertido para anon (uid IS NOT NULL invertia lógica);
+--                             sem cap de 500 XP por chamada
+--   grant_agent_achievement: guard invertido para anon;
+--                             daily_goal usava earned_at::date=CURRENT_DATE (UTC midnight,
+--                             não SP midnight — janela 21h–00h SP permitia dupla concessão)
+--   increment_agent_messages: guard invertido para anon
+-- Pattern correto: auth.role()='anon' OR (uid IS NOT NULL AND NOT (...))
+--   distingue anon (role=anon) de service_role (uid=null, role=service_role):
+--   service_role passa (webhooks/triggers); anon é bloqueado.
 
 CREATE OR REPLACE FUNCTION public.add_agent_xp(p_profile_id uuid, p_xp integer)
 RETURNS json LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
@@ -51,15 +17,21 @@ DECLARE
   v_new_xp    bigint;
   v_new_level int;
 BEGIN
-  IF auth.uid() IS NOT NULL AND NOT (
-    p_profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
-    OR is_admin_or_supervisor(auth.uid())
+  IF auth.role() = 'anon' OR (
+    auth.uid() IS NOT NULL AND NOT (
+      p_profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
+      OR is_admin_or_supervisor(auth.uid())
+    )
   ) THEN
     RAISE EXCEPTION 'permission denied';
   END IF;
 
   IF p_xp <= 0 THEN
     RAISE EXCEPTION 'p_xp must be a positive integer, got %', p_xp;
+  END IF;
+
+  IF p_xp > 500 THEN
+    RAISE EXCEPTION 'p_xp exceeds single-call maximum of 500, got %', p_xp;
   END IF;
 
   SELECT * INTO v_row FROM agent_stats WHERE profile_id = p_profile_id FOR UPDATE;
@@ -89,9 +61,11 @@ DECLARE
   v_new_xp      bigint;
   v_new_level   int;
 BEGIN
-  IF auth.uid() IS NOT NULL AND NOT (
-    p_profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
-    OR is_admin_or_supervisor(auth.uid())
+  IF auth.role() = 'anon' OR (
+    auth.uid() IS NOT NULL AND NOT (
+      p_profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
+      OR is_admin_or_supervisor(auth.uid())
+    )
   ) THEN
     RAISE EXCEPTION 'permission denied';
   END IF;
@@ -103,15 +77,14 @@ BEGIN
   SELECT * INTO v_row FROM agent_stats WHERE profile_id = p_profile_id FOR UPDATE;
   IF NOT FOUND THEN RETURN json_build_object('alreadyHad', false); END IF;
 
-  IF p_type = 'daily_goal' THEN
-    IF EXISTS (
-      SELECT 1 FROM agent_achievements
-      WHERE profile_id    = p_profile_id
-        AND achievement_type = 'daily_goal'
-        AND earned_at::date  = CURRENT_DATE
-    ) THEN
-      RETURN json_build_object('alreadyHad', true);
-    END IF;
+  IF p_type = 'daily_goal' AND EXISTS (
+    SELECT 1 FROM agent_achievements
+    WHERE profile_id = p_profile_id
+      AND achievement_type = 'daily_goal'
+      AND (earned_at AT TIME ZONE 'America/Sao_Paulo')::date
+          >= (now() AT TIME ZONE 'America/Sao_Paulo')::date
+  ) THEN
+    RETURN json_build_object('alreadyHad', true);
   END IF;
 
   INSERT INTO agent_achievements (profile_id, achievement_type, achievement_name, achievement_description, xp_earned)
@@ -151,9 +124,11 @@ DECLARE
   v_new_sent    bigint;
   v_new_recv    bigint;
 BEGIN
-  IF auth.uid() IS NOT NULL AND NOT (
-    p_profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
-    OR is_admin_or_supervisor(auth.uid())
+  IF auth.role() = 'anon' OR (
+    auth.uid() IS NOT NULL AND NOT (
+      p_profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
+      OR is_admin_or_supervisor(auth.uid())
+    )
   ) THEN
     RAISE EXCEPTION 'permission denied';
   END IF;
