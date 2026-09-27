@@ -503,6 +503,24 @@
             "ledger_statements_sha256": "b63201e84a1074118dee013a1d8f4965ae068e20429248d0f3f51d5fa2aa94a0",
             "kind": "ledger-only/comment-only",
             "justification": "Registro existia no ledger apenas como comment placeholder sem SQL executavel. O SQL real nao foi implementado nesta versao; o arquivo stub factual e fixado pelo manifesto."
+        },
+        {
+            "version": "20260927540000",
+            "filename": "20260927540000_security_gamification_guards_e2e_cleanup_avg_null.sql",
+            "file_sha256": "20c0fc1a7fb175de0d4f9c86997cad82b3e80e7a56df44ac66dfd61f2773fef6",
+            "ledger_name": "security_gamification_guards_e2e_cleanup_avg_null",
+            "ledger_statements_sha256": "f287574e6b57a217fd5e3187d5f84769688b9b0297be1798113aa078e7de9627",
+            "kind": "ledger-only/comment-only",
+            "justification": "Ledger registrado como comentario descritivo (drift de sessao paralela que aplicou DDL via MCP sem gravar SQL canonico); guard auth.role() nas 3 funcoes de gamificacao foi confirmado ao vivo via pg_get_functiondef, mas o DELETE/UPDATE citados nao se aplicam a conversation_closures (sem coluna avg_response_time_seconds) e nao foram reproduzidos aqui."
+        },
+        {
+            "version": "20260927550000",
+            "filename": "20260927550000_perf_fk_indexes_domain_checks_drop_orphans.sql",
+            "file_sha256": "2c662930d2ee8c38148b7fa083487181647fb22406b85ae58b87eeec1102650f",
+            "ledger_name": "perf_fk_indexes_domain_checks_drop_orphans",
+            "ledger_statements_sha256": "3529812e7a5d99c3eda2de3a010c502d8999511edc89ddc3e463a6f2bb6ee4c2",
+            "kind": "ledger-only/comment-only",
+            "justification": "Ledger registrado como comentario descritivo (mesmo padrao de drift); indices idx_dept_audit_logs_profile_id/idx_dept_invites_created_by e constraints chk_xp_non_negative/chk_level_min_one confirmados ao vivo via pg_indexes/pg_constraint; chk_conversation_status nao localizada por esse nome no catalogo atual."
         }
     ]
 }

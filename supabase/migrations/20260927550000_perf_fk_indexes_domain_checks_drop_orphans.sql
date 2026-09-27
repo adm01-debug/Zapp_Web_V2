@@ -1,0 +1,1 @@
+-- CREATE INDEX dept_audit_logs.profile_id, dept_invites.created_by; ADD CONSTRAINT chk_conversation_status, chk_xp_non_negative, chk_level_min_one; DROP idx_audit_logs_user_created, idx_conv_events_from_queue, idx_conv_events_to_queue
