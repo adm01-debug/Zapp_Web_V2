@@ -43,7 +43,15 @@ export function useTeamTyping(
     });
     if (isTyping) {
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-      typingTimeoutRef.current = setTimeout(() => sendTyping(false), 3000);
+      typingTimeoutRef.current = setTimeout(() => {
+        if (channelRef.current) {
+          void channelRef.current.send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: { userId: currentUserId, name: currentUserName ?? '', typing: false },
+          });
+        }
+      }, 3000);
     }
   }, [currentUserId, currentUserName]);
 

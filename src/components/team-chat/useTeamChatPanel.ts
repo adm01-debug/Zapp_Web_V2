@@ -70,7 +70,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
 
   const isGroupCreator = useMemo(() => {
     return !!(profile?.id && conversation.created_by === profile.id);
-  }, [profile?.id, conversation.created_by]);
+  }, [profile, conversation.created_by]);
 
   const ttsOptions = useMemo(() => ({
     initialVoiceId: settingsLoading ? undefined : settings.tts_voice_id,
@@ -79,7 +79,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
 
   const tts = useTextToSpeech(ttsOptions);
 
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const handleVoiceChange = useCallback((newVoiceId: string) => {
     tts.setVoiceId(newVoiceId);
     if (!profile?.id) return;
@@ -87,9 +86,8 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       { user_id: profile.id, tts_voice_id: newVoiceId },
       { onConflict: 'user_id' },
     );
-  }, [tts.setVoiceId, profile]);
+  }, [tts, profile]);
 
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const handleSpeedChange = useCallback((newSpeed: number) => {
     tts.setSpeed(newSpeed);
     if (!profile?.id) return;
@@ -97,7 +95,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       { user_id: profile.id, tts_speed: newSpeed },
       { onConflict: 'user_id' },
     );
-  }, [tts.setSpeed, profile]);
+  }, [tts, profile]);
 
   const messages = useMemo(() => {
     const ids = new Set<string>();
@@ -118,15 +116,10 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setOlderMessages([]);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOldestCursor(null);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHasOlderMessages(true);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShowStats(false);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShowTransferDialog(false);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShowGroupManagement(false);
   }, [conversation.id]);
 
@@ -194,7 +187,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     }
   }, []);
 
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const handleSend = useCallback(async () => {
     const content = text.trim();
     if (!content || !profile?.id) return;
@@ -249,7 +241,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     void navigator.clipboard.writeText(content).then(() => toast.success('Copiado!'));
   }, []);
 
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const handleAudioSend = useCallback(async (blob: Blob) => {
     if (!profile?.id) return;
     const fileName = `audio-${Date.now()}.webm`;
@@ -269,7 +260,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     });
   }, [profile, conversation.id, sendMutation]);
 
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const handleFileSent = useCallback(async ({ path, bucket, type, name }: { path: string; bucket: string; type: string; name: string }) => {
     if (!profile?.id) return;
     await sendMutation.mutateAsync({
@@ -282,7 +272,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     });
   }, [profile, conversation.id, sendMutation]);
 
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const handleSendSticker = useCallback(async (url: string) => {
     if (!profile?.id) return;
     await sendMutation.mutateAsync({
@@ -294,7 +283,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     });
   }, [profile, conversation.id, sendMutation]);
 
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const handleSendAudioMeme = useCallback(async (url: string) => {
     if (!profile?.id) return;
     await sendMutation.mutateAsync({
@@ -306,7 +294,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     });
   }, [profile, conversation.id, sendMutation]);
 
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const handleSendCustomEmoji = useCallback(async (url: string) => {
     if (!profile?.id) return;
     await sendMutation.mutateAsync({

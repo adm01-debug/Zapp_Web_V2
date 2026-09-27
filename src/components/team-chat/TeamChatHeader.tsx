@@ -189,7 +189,7 @@ export function TeamChatHeader({
                 {showDetails ? <PanelRightClose className="w-[18px] h-[18px]" /> : <PanelRightOpen className="w-[18px] h-[18px]" />}
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom"}>{showDetails ? 'Fechar detalhes' : 'Ver detalhes'}</TooltipContent>
+            <TooltipContent side="bottom">{showDetails ? 'Fechar detalhes' : 'Ver detalhes'}</TooltipContent>
           </Tooltip>
         )}
 

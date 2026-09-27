@@ -1,53 +1,5 @@
--- E16: direct_member_a/b columns + partial unique index + find_or_create_direct_conversation RPC
-ALTER TABLE public.team_conversations
-  ADD COLUMN IF NOT EXISTS direct_member_a uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
-  ADD COLUMN IF NOT EXISTS direct_member_b uuid REFERENCES public.profiles(id) ON DELETE SET NULL;
+ALTER TABLE public.team_conversations ADD COLUMN IF NOT EXISTS direct_member_a uuid REFERENCES public.profiles(id) ON DELETE SET NULL, ADD COLUMN IF NOT EXISTS direct_member_b uuid REFERENCES public.profiles(id) ON DELETE SET NULL;
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_team_conversations_direct_pair
-  ON public.team_conversations (direct_member_a, direct_member_b)
-  WHERE type = 'direct';
+CREATE UNIQUE INDEX IF NOT EXISTS idx_team_conversations_direct_pair ON public.team_conversations (direct_member_a, direct_member_b) WHERE type = 'direct';
 
-CREATE OR REPLACE FUNCTION public.find_or_create_direct_conversation(other_profile_id uuid)
-RETURNS uuid
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  my_profile_id uuid;
-  p_a uuid;
-  p_b uuid;
-  conv_id uuid;
-BEGIN
-  SELECT id INTO my_profile_id FROM public.profiles WHERE user_id = auth.uid();
-  IF my_profile_id IS NULL THEN
-    RAISE EXCEPTION 'profile not found for current user';
-  END IF;
-  IF my_profile_id = other_profile_id THEN
-    RAISE EXCEPTION 'cannot create direct conversation with yourself';
-  END IF;
-
-  IF my_profile_id < other_profile_id THEN
-    p_a := my_profile_id; p_b := other_profile_id;
-  ELSE
-    p_a := other_profile_id; p_b := my_profile_id;
-  END IF;
-
-  SELECT id INTO conv_id
-  FROM public.team_conversations
-  WHERE type = 'direct' AND direct_member_a = p_a AND direct_member_b = p_b;
-
-  IF conv_id IS NOT NULL THEN
-    RETURN conv_id;
-  END IF;
-
-  INSERT INTO public.team_conversations (type, created_by, direct_member_a, direct_member_b)
-  VALUES ('direct', my_profile_id, p_a, p_b)
-  RETURNING id INTO conv_id;
-
-  INSERT INTO public.team_conversation_members (conversation_id, profile_id, member_role)
-  VALUES (conv_id, my_profile_id, 'owner'), (conv_id, other_profile_id, 'member');
-
-  RETURN conv_id;
-END;
-$$;
+CREATE OR REPLACE FUNCTION public.find_or_create_direct_conversation(other_profile_id uuid) RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $func$ DECLARE my_profile_id uuid; p_a uuid; p_b uuid; conv_id uuid; BEGIN SELECT id INTO my_profile_id FROM public.profiles WHERE user_id = auth.uid(); IF my_profile_id IS NULL THEN RAISE EXCEPTION 'profile not found for current user'; END IF; IF my_profile_id = other_profile_id THEN RAISE EXCEPTION 'cannot create direct conversation with yourself'; END IF; IF my_profile_id < other_profile_id THEN p_a := my_profile_id; p_b := other_profile_id; ELSE p_a := other_profile_id; p_b := my_profile_id; END IF; SELECT id INTO conv_id FROM public.team_conversations WHERE type = 'direct' AND direct_member_a = p_a AND direct_member_b = p_b; IF conv_id IS NOT NULL THEN RETURN conv_id; END IF; INSERT INTO public.team_conversations (type, created_by, direct_member_a, direct_member_b) VALUES ('direct', my_profile_id, p_a, p_b) RETURNING id INTO conv_id; INSERT INTO public.team_conversation_members (conversation_id, profile_id, member_role) VALUES (conv_id, my_profile_id, 'owner'), (conv_id, other_profile_id, 'member'); RETURN conv_id; END; $func$;
