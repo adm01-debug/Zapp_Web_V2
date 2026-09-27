@@ -61,5 +61,10 @@ SELECT jsonb_pretty(jsonb_build_object(
                        ), '[]'::jsonb)
                FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
                WHERE n.nspname = 'public' AND p.prokind = 'f'
-                 AND pg_get_function_result(p.oid) <> 'trigger')
+                 AND pg_get_function_result(p.oid) <> 'trigger'),
+  'trigger_functions',
+              (SELECT coalesce(jsonb_agg(DISTINCT p.proname ORDER BY p.proname), '[]'::jsonb)
+               FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+               WHERE n.nspname = 'public' AND p.prokind = 'f'
+                 AND pg_get_function_result(p.oid) = 'trigger')
 ));

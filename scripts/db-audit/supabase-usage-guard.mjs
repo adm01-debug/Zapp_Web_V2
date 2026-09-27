@@ -121,7 +121,9 @@ function main() {
 
   console.log(
     'Catalogo: ' + cat.tables.length + ' tabelas, ' + cat.views.length +
-    ' views, ' + cat.functions.length + ' funcoes (gerado em ' + cat.generated_at +
+    ' views, ' + cat.functions.length + ' funcoes, ' +
+    (cat.trigger_functions || []).length + ' trigger functions (excluidas do guard .rpc())' +
+    ' (gerado em ' + cat.generated_at +
     '); projecao forward-only: ' + projected.relations.size + ' relacoes, ' +
     projected.functions.size + ' funcoes',
   );

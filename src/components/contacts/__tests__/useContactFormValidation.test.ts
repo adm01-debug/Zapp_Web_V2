@@ -286,4 +286,63 @@ describe('useContactFormValidation — checkDuplicate (phone)', () => {
     await act(async () => { vi.advanceTimersByTime(500); });
     expect(mockNeq).not.toHaveBeenCalled();
   });
+
+  it('stale-response guard: slow first call is ignored when second call resolves first', async () => {
+    let resolveSlow!: (v: unknown) => void;
+    const slowPromise = new Promise(r => { resolveSlow = r; });
+
+    mockLimit
+      .mockReturnValueOnce(slowPromise)
+      .mockResolvedValue({ data: [] });
+    mockNeq.mockReturnValue({ limit: mockLimit });
+    mockOr.mockReturnValue({ neq: mockNeq, limit: mockLimit });
+    mockSelect.mockReturnValue({ or: mockOr });
+    mockFrom.mockReturnValue({ select: mockSelect });
+
+    const { result } = renderHook(() =>
+      useContactFormValidation({ name: 'Test', phone: '', email: '' }, noop, noop),
+    );
+
+    act(() => { result.current.handlePhoneChange('11987654321'); });
+    await act(async () => { vi.advanceTimersByTime(500); });
+
+    act(() => { result.current.handlePhoneChange('11999888777'); });
+    await act(async () => { vi.advanceTimersByTime(500); });
+
+    await act(async () => {
+      resolveSlow({ data: [{ name: 'Stale Dup', phone: '11987654321' }] });
+    });
+
+    expect(result.current.duplicateWarning).toBeNull();
+  });
+
+  it('seq incremented before early return: short phone invalidates prior in-flight query', async () => {
+    let resolveSlow!: (v: unknown) => void;
+    const slowPromise = new Promise(r => { resolveSlow = r; });
+
+    mockLimit.mockReturnValueOnce(slowPromise);
+    mockNeq.mockReturnValue({ limit: mockLimit });
+    mockOr.mockReturnValue({ neq: mockNeq, limit: mockLimit });
+    mockSelect.mockReturnValue({ or: mockOr });
+    mockFrom.mockReturnValue({ select: mockSelect });
+
+    const { result } = renderHook(() =>
+      useContactFormValidation({ name: 'Test', phone: '', email: '' }, noop, noop),
+    );
+
+    // First call: valid phone → fires slow query
+    act(() => { result.current.handlePhoneChange('11987654321'); });
+    await act(async () => { vi.advanceTimersByTime(500); });
+
+    // Second call: phone becomes short (< 10 digits) → increments seq, early return in checkDuplicate
+    act(() => { result.current.handlePhoneChange('12345678'); });
+    await act(async () => { vi.advanceTimersByTime(500); });
+
+    // First slow query resolves with duplicate data — must be discarded
+    await act(async () => {
+      resolveSlow({ data: [{ name: 'Dup User', phone: '11987654321' }] });
+    });
+
+    expect(result.current.duplicateWarning).toBeNull();
+  });
 });
