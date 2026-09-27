@@ -402,7 +402,7 @@ serve(async (req) => {
       // ele recusa o QR e o pareamento pela tela do app nunca fecha. Alem disso o campo vem
       // como "<dataURI>|<url>", o que quebra o <img src>. Re-renderiza a partir do payload cru.
       const fetchQr = async (): Promise<{ base64?: string; code?: string }> => {
-        const qrRes = await fetch(`${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken } });
+        const qrRes = await fetch(`${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken }, signal: AbortSignal.timeout(5000) });
         // deno-lint-ignore no-explicit-any
         let qrData: any = {};
         try { const _t = await qrRes.text(); qrData = JSON.parse(_t); } catch { /* non-JSON from GO */ }
@@ -428,7 +428,7 @@ serve(async (req) => {
       }
       if (qr.base64) {
         await supabase.from('whatsapp_connections').update({ qr_code: qr.base64, status: 'qr_pending', instance_id: instance }).eq('instance_id', instance);
-        return new Response(JSON.stringify({ ...data, qrcode: { base64: qr.base64, code: qr.code } }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ ...data, status: 'qr_pending', qrcode: { base64: qr.base64, code: qr.code } }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       // Sem QR após o poll: a instância ou já está logada (reconectou sozinha a
       // partir da sessão salva) ou tem uma sessão órfã na GO que não emite QR novo
@@ -515,7 +515,7 @@ serve(async (req) => {
         new Logger('evolution-api').warn('connect: sessão órfã na GO — recriando instância para forçar QR novo', { instance, goId: goOrphan.id });
         // Security: sanitizar o id para evitar path traversal — só alfanumérico e hífen.
         const safeGoId = goOrphan.id.replace(/[^a-zA-Z0-9\-_]/g, '');
-        const delRes = await fetch(`${evolutionApiUrl}/instance/delete/${safeGoId}`, { method: 'DELETE', headers: { 'apikey': evolutionApiKey } });
+        const delRes = await fetch(`${evolutionApiUrl}/instance/delete/${safeGoId}`, { method: 'DELETE', headers: { 'apikey': evolutionApiKey }, signal: AbortSignal.timeout(8000) });
         if (!delRes.ok) {
           new Logger('evolution-api').error('connect: falha ao deletar instância órfã na GO', { instance, goId: goOrphan.id, httpStatus: delRes.status });
         }
@@ -524,6 +524,7 @@ serve(async (req) => {
             method: 'POST',
             headers: { 'apikey': evolutionApiKey, 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: instance, token: instToken }),
+            signal: AbortSignal.timeout(10000),
           });
           if (!createRes.ok) {
             // GO pode levar um momento para liberar o nome após o DELETE — retry único após 2s
@@ -532,6 +533,7 @@ serve(async (req) => {
               method: 'POST',
               headers: { 'apikey': evolutionApiKey, 'Content-Type': 'application/json' },
               body: JSON.stringify({ name: instance, token: instToken }),
+              signal: AbortSignal.timeout(10000),
             });
           }
           if (!createRes.ok) {
@@ -543,6 +545,7 @@ serve(async (req) => {
             method: 'POST',
             headers: { 'apikey': instToken, 'Content-Type': 'application/json' },
             body: JSON.stringify({ subscribe: ['ALL'], immediate: true, webhookUrl: `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/evolution-webhook` }),
+            signal: AbortSignal.timeout(8000),
           });
           let healed = await fetchQr();
           for (let i = 0; i < 4 && !healed.base64; i++) {
@@ -551,7 +554,7 @@ serve(async (req) => {
           }
           if (healed.base64) {
             await supabase.from('whatsapp_connections').update({ qr_code: healed.base64, status: 'qr_pending' }).eq('instance_id', instance);
-            return new Response(JSON.stringify({ qrcode: { base64: healed.base64, code: healed.code }, recovered: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+            return new Response(JSON.stringify({ status: 'qr_pending', qrcode: { base64: healed.base64, code: healed.code }, recovered: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
           }
         }
         new Logger('evolution-api').error('connect: recriação da instância na GO não gerou QR', { instance, goId: goOrphan.id });
@@ -566,13 +569,17 @@ serve(async (req) => {
       // deno-lint-ignore no-explicit-any
       let data: any = {};
       try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
-      // connected explícito é autoritativo: quando presente, requer loggedIn E connected.
-      // State/loggedIn apenas como fallback quando connected ausente (resposta legacy sem o campo).
-      // Evita falso positivo em Reconnecting: loggedIn:true, connected:false, State:'open' stale.
-      if (data?.data && data.state === undefined) {
+      // Requer loggedIn E connected para mapear 'open'; '||' nao '??' porque
+      // loggedIn:false nao pode curto-circuitar o fallback por State (a GO
+      // manda os dois e nem sempre concordam). Estado 'Reconnecting' tem
+      // loggedIn:true mas connected:false — mapear 'open' aqui era falso positivo.
+      // == null captura tanto undefined quanto null; 'in' distingue campo ausente de presente-null
+      // null explícito = presente mas desconectado — não deve cair no fallback State==='open'
+      if (data?.data && data.state == null) {
         const _li = data.data.loggedIn ?? data.data.LoggedIn;
-        const _co = data.data.connected ?? data.data.Connected;
-        data.state = (_co !== undefined ? (_co === true && _li === true) : (data.data.State === 'open' || _li === true)) ? 'open' : 'close';
+        const hasCo = 'connected' in data.data || 'Connected' in data.data;
+        const _co = hasCo ? (data.data.connected ?? data.data.Connected) : undefined;
+        data.state = (hasCo ? (_co === true && _li === true) : (data.data.State === 'open' || _li === true)) ? 'open' : 'close';
       }
       if (response.ok) {
         const status = data.state === 'open' ? 'connected' : 'disconnected';
@@ -607,7 +614,9 @@ serve(async (req) => {
       let data: any = {};
       try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
       if (!response.ok) return new Response(JSON.stringify({ error: true, status: response.status, message: data?.message ?? 'Falha ao desconectar instância.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      await supabase.from('whatsapp_connections').update({ status: 'disconnected' }).eq('instance_id', instance);
+      // Guard: não sobrescrever qr_pending com disconnected — usuário pode ter iniciado
+      // novo pareamento enquanto o logout era processado (race entre telas distintas).
+      await supabase.from('whatsapp_connections').update({ status: 'disconnected' }).eq('instance_id', instance).neq('status', 'qr_pending');
       return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
