@@ -90,7 +90,7 @@ export async function handleMultiplixSend(req: Request): Promise<Response> {
         return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
       }
       const token = authHeader.slice(7);
-      const isServiceKey = token === serviceKey;
+      const isServiceKey = timingSafeStringEqual(token, serviceKey);
       if (!isServiceKey) {
         const { data: { user }, error: authError } = await supabase.auth.getUser(token);
         if (authError || !user) {
@@ -468,7 +468,7 @@ export async function handleMultiplixSend(req: Request): Promise<Response> {
   } catch (err) {
     log.error("Multiplix send error", { error: err instanceof Error ? err.message : String(err) });
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers },
     );
   }
