@@ -1,0 +1,1 @@
+-- Novo guard auth.role() em add_agent_xp/grant_agent_achievement/increment_agent_messages; DELETE 102 E2E rows conversation_closures; UPDATE avg_response_time_seconds=0→NULL
