@@ -1,8 +1,10 @@
 -- 20260927600000_fix_multiplix_dispatch_start_sending
 -- Corrige deadlock: pg_cron dispara transition_multiplix_dispatch(start)
--- a cada 2min em dispatches com status 'sending'. A versão anterior rejeitava
--- 'sending' com 55000, causando loop infinito de 409. Agora 'sending → start'
--- é no-op seguro: status permanece 'sending', updated_at atualizado.
+-- a cada 2min em dispatches com status 'sending'. Versão anterior rejeitava
+-- 'sending' com 55000, causando loop infinito de 409.
+-- Fix: permite 'sending → start' somente quando updated_at > 3 min atrás
+-- (worker estagnado). Se worker ativo (< 3 min), levanta 55001
+-- 'multiplix_dispatch_already_running' — edge function trata como skip gracioso.
 
 CREATE OR REPLACE FUNCTION public.transition_multiplix_dispatch(p_dispatch_id uuid, p_action text, p_pause_reason text DEFAULT NULL::text)
  RETURNS TABLE(dispatch_id uuid, previous_status text, current_status text)
@@ -32,6 +34,9 @@ BEGIN
 
   CASE p_action
     WHEN 'start' THEN
+      IF v_dispatch.status = 'sending' AND v_dispatch.updated_at > now() - interval '3 minutes' THEN
+        RAISE EXCEPTION 'multiplix_dispatch_already_running' USING ERRCODE = '55001';
+      END IF;
       IF v_dispatch.status NOT IN ('draft', 'scheduled', 'paused', 'sending') THEN
         RAISE EXCEPTION 'multiplix_dispatch_start_denied_from_%', v_dispatch.status USING ERRCODE = '55000';
       END IF;
