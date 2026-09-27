@@ -503,15 +503,6 @@
             "ledger_statements_sha256": "b63201e84a1074118dee013a1d8f4965ae068e20429248d0f3f51d5fa2aa94a0",
             "kind": "ledger-only/comment-only",
             "justification": "Registro existia no ledger apenas como comment placeholder sem SQL executavel. O SQL real nao foi implementado nesta versao; o arquivo stub factual e fixado pelo manifesto."
-        },
-        {
-            "version": "20260927430000",
-            "filename": "20260927430000_fix_gamification_trigger_insert_or_update_agent_id.sql",
-            "file_sha256": "dcd6278b05521803baf8e660178045bc4702fd59d4d572ae8a34b59b8a98dfa5",
-            "ledger_name": "fix_gamification_trigger_insert_or_update_agent_id",
-            "ledger_statements_sha256": "0da871af87fca18599f9d51da9bbd2f6b9f6ac70c2b43ee8d9f17c4a5d153dd0",
-            "kind": "ledger-only/comment-only",
-            "justification": "Registro existia no ledger apenas como comment placeholder sem SQL executavel. O SQL real nao foi implementado nesta versao; o arquivo stub factual e fixado pelo manifesto."
         }
     ]
 }
