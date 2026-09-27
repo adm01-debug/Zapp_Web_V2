@@ -48,9 +48,12 @@ function calculateEngagement(messageCount: number, lastMessageAt?: string | null
 
   const total = Math.min(100, recencyScore + frequencyScore + volumeScore);
 
-  if (total >= 70) return { score: total, level: 'hot', label: 'Muito Ativo', color: 'text-[hsl(25_95%_53%)]', bgColor: 'bg-[hsl(25_95%_53%)]' };
-  if (total >= 40) return { score: total, level: 'warm', label: 'Ativo', color: 'text-[hsl(45_93%_47%)]', bgColor: 'bg-[hsl(45_93%_47%)]' };
-  if (total >= 15) return { score: total, level: 'cold', label: 'Baixo', color: 'text-[hsl(210_40%_60%)]', bgColor: 'bg-[hsl(210_40%_60%)]' };
+  // WCAG 1.4.3: cores de texto calculadas com ratio ≥ 4.5:1 contra bg-card (light e dark).
+  // Light mode: L reduzido para passar com fundo claro (~4.5–5.5:1 com branco).
+  // Dark mode (dark:): L original mantido para fundo escuro (bg-card ≈ preto/cinza-escuro).
+  if (total >= 70) return { score: total, level: 'hot', label: 'Muito Ativo', color: 'text-[hsl(25_95%_35%)] dark:text-[hsl(25_95%_53%)]', bgColor: 'bg-[hsl(25_95%_53%)]' };
+  if (total >= 40) return { score: total, level: 'warm', label: 'Ativo', color: 'text-[hsl(45_93%_28%)] dark:text-[hsl(45_93%_47%)]', bgColor: 'bg-[hsl(45_93%_47%)]' };
+  if (total >= 15) return { score: total, level: 'cold', label: 'Baixo', color: 'text-[hsl(210_40%_42%)] dark:text-[hsl(210_40%_60%)]', bgColor: 'bg-[hsl(210_40%_60%)]' };
   return { score: total, level: 'frozen', label: 'Inativo', color: 'text-muted-foreground/50', bgColor: 'bg-muted-foreground/30' };
 }
 
