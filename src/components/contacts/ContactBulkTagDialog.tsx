@@ -32,7 +32,9 @@ export function ContactBulkTagDialog({
   const [saving, setSaving] = useState(false);
 
   const filteredTags = useMemo(() => {
-    const all = [...new Set([...allTags.filter(t => !isWhatsAppTag(t)), ...(newTag.trim() ? [newTag.trim()] : [])])];
+    const trimmed = newTag.trim();
+    const custom = trimmed && !isWhatsAppTag(trimmed) ? [trimmed] : [];
+    const all = [...new Set([...allTags.filter(t => !isWhatsAppTag(t)), ...custom])];
     if (!search) return all;
     return all.filter(t => t.toLowerCase().includes(search.toLowerCase()));
   }, [allTags, newTag, search]);
