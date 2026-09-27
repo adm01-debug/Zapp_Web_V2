@@ -89,6 +89,11 @@ export default function MultiplixView() {
     // resultado, e esse id fantasma podia ir parar num disparo real via
     // MultiplixComposerDialog. Limpa 'rows' de imediato, antes do mutate.
     setRows([]);
+    // P2 fix (Codex, 2a review da PR #958): sem este reset, lastPageFull=true
+    // de uma busca anterior persiste durante o voo da nova page 0 -- se a
+    // nova busca falhar, o botao Carregar mais aparece com rows=[] e o
+    // clique pede page 1 pulando page 0 para sempre.
+    setLastPageFull(false);
     count.mutate(filters);
     search.mutate({ ...filters, page: 0, page_size: PAGE_SIZE }, { onSuccess: (data) => { setRows(data); setHasSearched(true); setLastPageFull(data.length === PAGE_SIZE); } });
   };
@@ -298,7 +303,11 @@ export default function MultiplixView() {
               )}
             </TableBody>
           </Table>
-          {(count.data !== undefined ? rows.length < count.data : lastPageFull) && (
+          {/* P2 fix (Codex, 2a review da PR #958): !search.isError impede que o
+              botao apareca quando search falhou -- sem este guard, se count
+              sucedeu mas search falhou, rows.length(0) < count.data mostra
+              o botao e o clique pede page 1 pulando page 0 permanentemente. */}
+          {!search.isError && (count.data !== undefined ? rows.length < count.data : lastPageFull) && (
             <div className="flex justify-center border-t border-[--zapp-border] p-3">
               <Button variant="outline" size="sm" onClick={loadMore} disabled={search.isPending}>
                 {search.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
