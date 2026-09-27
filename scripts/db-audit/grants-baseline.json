@@ -3,7 +3,6 @@
     "anon_execute": [
         "enforce_conversation_status_transition()",
         "enqueue_crm_sync_from_closure()",
-        "grant_agent_achievement(p_profile_id uuid, p_type text, p_name text, p_description text, p_xp_reward integer)",
         "handle_conversation_closure_gamification()",
         "handle_message_gamification()",
         "prevent_contact_assignee_hijack()",
@@ -11,13 +10,10 @@
         "prevent_conversation_task_field_forgery()",
         "seed_default_goals_for_profile()",
         "set_scheduled_report_config_owner()",
-        "talkx_campaign_report(p_campaign uuid)",
-        "talkx_overview_stats(p_from timestamp with time zone, p_to timestamp with time zone)",
-        "talkx_segment_tags(p_segment uuid)",
         "trg_talkx_increment_replied_count()",
         "trg_talkx_increment_template_use_count()"
     ],
-    "generated_at": "2026-09-26",
+    "generated_at": "2026-09-27",
     "anon_table_select": [
         "agent_achievements",
         "agent_presence",
@@ -163,6 +159,6 @@
         "whisper_messages"
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 152,
-    "authenticated_execute_count": 92
+    "service_role_execute_count": 157,
+    "authenticated_execute_count": 95
 }
