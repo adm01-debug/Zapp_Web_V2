@@ -158,7 +158,7 @@ Para esconder só "Campanhas" na interface:
 >    ```sql
 >    UPDATE talkx_campaigns
 >    SET status = 'cancelled'
->    WHERE status IN ('sending', 'scheduled');
+>    WHERE status IN ('sending', 'scheduled', 'paused');
 >    ```
 >    Executar via `db_query` no MCP `SUPABASE - ZAPP WEB V2 - MCP`.
 >
@@ -168,9 +168,8 @@ Para esconder só "Campanhas" na interface:
 >    ```
 >    Ou: Supabase Dashboard → Database → Cron Jobs → desabilitar `talkx-scheduler-1min`.
 >
-> 3. Para **reativar**, use `workflow_dispatch` no `deploy-functions.yml` (que
->    recria o cron via migration) ou reaplique o `SELECT cron.schedule(...)` da
->    migration original.
+> 3. Para **reativar**, reaplique o `SELECT cron.schedule(...)` da migration
+>    original via `db_query` no MCP `SUPABASE - ZAPP WEB V2 - MCP`.
 
 ### 8.3 Rollback de migration de Talk X
 
