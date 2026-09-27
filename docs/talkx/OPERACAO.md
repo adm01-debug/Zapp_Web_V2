@@ -66,7 +66,7 @@ RLS ativa em todas as tabelas. Acesso depende do `profile.role` do usuário aute
 |---|---|---|
 | `talkx-send` | Manual / agendado | Disparo de mensagens via Evolution GO |
 | `talkx-scheduler` | Cron | Agenda e controla o ciclo de vida de campanhas |
-| `talkx-report` | Pós-envio | Consolida métricas de entrega por campanha |
+| `talkx-report` | Manual / UI | Consolida métricas de entrega por campanha |
 | `talkx-link` | Webhook | Rastreia cliques em links das mensagens enviadas |
 
 Deploy via: **Actions → `deploy-functions.yml` → `workflow_dispatch`** (requer
