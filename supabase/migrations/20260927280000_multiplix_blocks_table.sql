@@ -15,6 +15,7 @@ CREATE TABLE public.multiplix_blocks (
   media_url text,
   media_caption text,
   created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT multiplix_blocks_dispatch_order UNIQUE (dispatch_id, block_order)
 );
 
