@@ -105,10 +105,12 @@ tabelas. O bloqueio é 100% de **ordem de execução**, não de dependência:
 1. **Condição 1 — o webhook primeiro.** Os 2 handlers de labels precisam parar de escrever nas
    tabelas ANTES do `DROP` (redirecionar para `contacts.tags` com prefixo `wa:`, ou descontinuar o
    espelhamento — decisão de negócio: "quero ver os labels do WhatsApp dentro do Zapp?"). Se o
-   `DROP` vier antes do deploy da edge, `labels.edit` passa a estourar erro no webhook — que hoje
-   processa TODOS os eventos da instância no mesmo endpoint. Erro num handler é contido por
-   try/catch? **Verificado: os handlers são `await` diretos no dispatch (index.ts:270-271); erro ali
-   responde 500 para a Evolution e pode causar retry/reentrega dos eventos.** Risco real.
+   `DROP` vier antes do deploy da edge, os handlers de labels passam a operar contra tabelas
+   inexistentes. **Verificado no código**: o dispatch (index.ts:270-271) tem try/catch global que
+   devolve 500, mas os handlers usam supabase-js sem `throwOnError` — erro de SQL volta no objeto
+   `{error}` ignorado, não vira exceção. Efeito real de um DROP antecipado: **falha silenciosa**,
+   não derrubada do webhook. Ainda assim a condição fica: handler órfão escrevendo no vazio é
+   exatamente o tipo de sujeira que esta auditoria está removendo, e a ordem certa custa zero.
 2. **Condição 2 — o filtro do Inbox junto.** Remover `useTags` sem migrar `InboxFilters`/
    `useInboxFilters`/`useGlobalSearchData`/`useReportsData`/`useContactCrm360` quebra o build. É
    1 PR de front com os 5 pontos migrados para o array (+ índice GIN em `contacts.tags`, que não existe).
