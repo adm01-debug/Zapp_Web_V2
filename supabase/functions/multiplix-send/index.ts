@@ -72,7 +72,14 @@ export async function handleMultiplixSend(req: Request): Promise<Response> {
     }
     const token = authHeader.slice(7);
     const isServiceKey = token === serviceKey;
-    if (!isServiceKey) {
+    // x-cron-secret: pg_cron usa este header em vez do service key
+    const cronSecretHeader = req.headers.get("x-cron-secret");
+    let isCronAuth = false;
+    if (!isServiceKey && cronSecretHeader) {
+      const { data: vaultSecret } = await supabase.rpc("get_multiplix_cron_secret");
+      isCronAuth = typeof vaultSecret === "string" && cronSecretHeader === vaultSecret;
+    }
+    if (!isServiceKey && !isCronAuth) {
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);
       if (authError || !user) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
