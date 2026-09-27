@@ -82,6 +82,13 @@ export default function MultiplixView() {
     setSelected(new Set());
     setPage(0);
     setSubmittedFilters(filters);
+    // P1 fix (Codex, review da PR #958): 'rows' antigo (de outro filtro)
+    // ficava na tela e continuava clicavel enquanto a nova busca (page 0)
+    // ainda estava em voo -- selecionar uma linha nesse intervalo mantinha
+    // o company_id em 'selected' mesmo depois de 'rows' trocar para o novo
+    // resultado, e esse id fantasma podia ir parar num disparo real via
+    // MultiplixComposerDialog. Limpa 'rows' de imediato, antes do mutate.
+    setRows([]);
     count.mutate(filters);
     search.mutate({ ...filters, page: 0, page_size: PAGE_SIZE }, { onSuccess: (data) => { setRows(data); setHasSearched(true); setLastPageFull(data.length === PAGE_SIZE); } });
   };
