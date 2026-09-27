@@ -56,7 +56,7 @@ function calculateEngagement(messageCount: number, lastMessageAt?: string | null
   if (total >= 15) return { score: total, level: 'cold', label: 'Baixo', color: 'text-[hsl(210_40%_42%)] dark:text-[hsl(210_40%_60%)]', bgColor: 'bg-[hsl(210_40%_60%)]' };
   // frozen: text-muted-foreground/50 falha WCAG (~2:1 light). HSL explícito garante ≥4.5:1.
   // hsl(215 15% 38%) → L≈0.111 → ~6.5:1 vs branco; hsl(215 15% 63%) → L≈0.339 → ~6.8:1 vs dark.
-  return { score: total, level: 'frozen', label: 'Inativo', color: 'text-[hsl(215_15%_38%)] dark:text-[hsl(215_15%_63%)]', bgColor: 'bg-muted-foreground/30' };
+  return { score: total, level: 'frozen', label: 'Inativo', color: 'text-[hsl(215_15%_38%)] dark:text-[hsl(215_15%_63%)]', bgColor: 'bg-muted/30' };
 }
 
 export function ContactEngagementScore({

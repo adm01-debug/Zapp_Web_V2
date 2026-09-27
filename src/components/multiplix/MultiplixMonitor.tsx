@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Pause, Play, Square, Send, XCircle, AlertTriangle, Clock, BarChart3, Download, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -94,13 +94,88 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
     refetchInterval: 5_000,
   });
 
+  const dispatchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const recipientsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
+    // Debounce 500ms nos dois handlers: durante envio ativo cada destinatario
+    // processado gera 1 UPDATE em multiplix_dispatches (contadores) + 1 em
+    // multiplix_recipients -- sem debounce, um disparo de centenas de
+    // destinatarios dispara uma invalidateQueries por linha (mesmo padrao de
+    // rajada ja tratado em useTalkX.ts).
     const ch = supabase.channel(`multiplix-mon-${dispatchId}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'multiplix_dispatches', filter: `id=eq.${dispatchId}` }, () => qc.invalidateQueries({ queryKey: ['multiplix-dispatch', dispatchId] }))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'multiplix_recipients', filter: `dispatch_id=eq.${dispatchId}` }, () => qc.invalidateQueries({ queryKey: ['multiplix-recipients', dispatchId, statusFilter] }))
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'multiplix_dispatches', filter: `id=eq.${dispatchId}` }, () => {
+        if (dispatchDebounceRef.current) clearTimeout(dispatchDebounceRef.current);
+        dispatchDebounceRef.current = setTimeout(() => qc.invalidateQueries({ queryKey: ['multiplix-dispatch', dispatchId] }), 500);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'multiplix_recipients', filter: `dispatch_id=eq.${dispatchId}` }, () => {
+        if (recipientsDebounceRef.current) clearTimeout(recipientsDebounceRef.current);
+        recipientsDebounceRef.current = setTimeout(() => qc.invalidateQueries({ queryKey: ['multiplix-recipients', dispatchId, statusFilter] }), 500);
+      })
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => {
+      if (dispatchDebounceRef.current) clearTimeout(dispatchDebounceRef.current);
+      if (recipientsDebounceRef.current) clearTimeout(recipientsDebounceRef.current);
+      supabase.removeChannel(ch);
+    };
   }, [dispatchId, statusFilter, qc]);
+
+  const handleExportCsv = async () => {
+    // P2 fix v3 (Codex, review da PR #958): .in('id', ids) com PAGE=1000 UUIDs
+    // produz URL GET >36KB -- rejeitado pelo proxy/PostgREST. DETAIL_CHUNK=200
+    // (mesmo limite de TalkXAnalytics.tsx:243-249). PAGE=1000 so para o
+    // snapshot keyset (nao usa .in(), nao afetado).
+    const PAGE = 1000;
+    const DETAIL_CHUNK = 200;
+    const allRows: Parameters<typeof exportRecipientsCsv>[0] = [];
+    if (statusFilter !== 'all') {
+      const snapIds: string[] = [];
+      let lastSnapId: string | null = null;
+      for (;;) {
+        let q = fromTable('multiplix_recipients')
+          .select('id')
+          .eq('dispatch_id', dispatchId)
+          .eq('status', statusFilter)
+          .order('id')
+          .limit(PAGE);
+        if (lastSnapId !== null) q = q.gt('id', lastSnapId);
+        const { data: snap, error: snapErr } = await q;
+        if (snapErr) { toast.error(`Erro ao exportar CSV: ${snapErr.message}`); return; }
+        if (!snap?.length) break;
+        snapIds.push(...snap.map((r: { id: string }) => r.id));
+        if (snap.length < PAGE) break;
+        lastSnapId = (snap[snap.length - 1] as { id: string }).id;
+      }
+      if (!snapIds.length) return;
+      for (let i = 0; i < snapIds.length; i += DETAIL_CHUNK) {
+        const ids = snapIds.slice(i, i + DETAIL_CHUNK);
+        const { data, error } = await fromTable('multiplix_recipients')
+          .select('id, company_name_snapshot, destino_e164, status, sent_at, error_message')
+          .in('id', ids)
+          .order('id');
+        if (error) { toast.error(`Erro ao exportar CSV: ${error.message}`); return; }
+        if (data?.length) allRows.push(...(data as typeof allRows));
+      }
+    } else {
+      let lastId: string | null = null;
+      for (;;) {
+        let q = fromTable('multiplix_recipients')
+          .select('id, company_name_snapshot, destino_e164, status, sent_at, error_message')
+          .eq('dispatch_id', dispatchId)
+          .order('id')
+          .limit(PAGE);
+        if (lastId !== null) q = q.gt('id', lastId);
+        const { data, error } = await q;
+        if (error) { toast.error(`Erro ao exportar CSV: ${error.message}`); return; }
+        if (!data?.length) break;
+        allRows.push(...(data as typeof allRows));
+        if (data.length < PAGE) break;
+        lastId = (data[data.length - 1] as { id: string }).id;
+      }
+    }
+    if (allRows.length === 0) return;
+    exportRecipientsCsv(allRows, dispatch?.name ?? 'disparo');
+  };
 
   const runAction = async (a: 'start' | 'pause' | 'cancel') => {
     try {
@@ -146,7 +221,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
               {canStart && <button type="button" onClick={() => setConfirmResume(true)} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4" />{isPaused ? 'Retomar' : 'Iniciar'}</button>}
               <button type="button" onClick={() => setConfirmCancel(true)} className="h-9 px-3.5 rounded-lg border border-dash-red/40 bg-dash-red/10 text-dash-red text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-red/20"><Square className="w-4 h-4" />Cancelar</button>
             </>)}
-            <button type="button" onClick={() => exportRecipientsCsv(recipients, dispatch.name)} className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium flex items-center gap-1.5 hover:bg-muted/50"><Download className="w-4 h-4" />CSV</button>
+            <button type="button" onClick={handleExportCsv} className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium flex items-center gap-1.5 hover:bg-muted/50"><Download className="w-4 h-4" />CSV</button>
           </div>
         </div>
         <Progress value={progress} className="h-3 mb-1.5" />
@@ -190,8 +265,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-medium text-foreground truncate">{r.company_name_snapshot || 'Empresa'}</p>
                   <p className="text-2xs text-foreground-secondary truncate">{r.destino_e164 ?? 'sem WhatsApp'}</p>
-                  {r.error_message && <p className="text-2xs text-dash-red truncate">{r.error_message}</p>}
-                </div>
+                  {r.error_message && <p className="text-2xs text-dash-red truncate">{r.error_message}</p>}</div>
                 <StatusPill status={r.status} map={RECIPIENT_STATUS} />
                 {r.sent_at && <span className="text-3xs text-muted-foreground shrink-0">{fmtDateTime(r.sent_at)}</span>}
               </div>
