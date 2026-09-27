@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { ContactHeaderSection } from '../ContactHeaderSection';
 import type { Conversation } from '@/types/chat';
 
@@ -24,6 +24,10 @@ vi.mock('@/hooks/chat/useConversationActions', () => ({
     favoriteContact: vi.fn(),
     unfavoriteContact: vi.fn(),
   }),
+}));
+
+vi.mock('@/hooks/integrations/useSyncToCRM', () => ({
+  useSyncToCRM: () => ({ syncConversation: vi.fn(), syncConversationAsync: vi.fn(), isSyncing: false, isConfigured: false }),
 }));
 
 const baseContact = {
@@ -83,7 +87,7 @@ describe('ContactHeaderSection', () => {
   });
 
   // ========== EDIT ACTION ==========
-  it('calls onQuickAction with edit when triggered', () => {
+  it('aceita prop onQuickAction sem crash', () => {
     const mockAction = vi.fn();
     render(
       <ContactHeaderSection
@@ -92,9 +96,7 @@ describe('ContactHeaderSection', () => {
         onQuickAction={mockAction}
       />
     );
-    // Verify onQuickAction prop is accepted without crash
-    // The dropdown interaction requires Radix portal which is complex in jsdom
-    // We verify the function is wired by checking the component renders
+    // Verifica que o componente renderiza com o prop — o dispatch real requer Radix portal
     expect(screen.getByText('Maria')).toBeInTheDocument();
   });
 
@@ -155,7 +157,7 @@ describe('ContactHeaderSection', () => {
   });
 
   // ========== COLLAPSE ALL ==========
-  it('shows collapse button when hasExpandedSections', () => {
+  it('shows collapse button when hasExpandedSections', async () => {
     const mockCollapse = vi.fn();
     render(
       <ContactHeaderSection
@@ -165,9 +167,22 @@ describe('ContactHeaderSection', () => {
         onCollapseAll={mockCollapse}
       />
     );
-    // The collapse button should be visible
-    const buttons = screen.getAllByRole('button');
-    expect(buttons.length).toBeGreaterThan(0);
+    // Radix DropdownMenu abre com pointerDown (não click) no trigger
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Mais' }), { button: 0, ctrlKey: false });
+    expect(await screen.findByText('Recolher seções')).toBeInTheDocument();
+  });
+
+  it('does not show collapse button when hasExpandedSections is false', () => {
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={null}
+        hasExpandedSections={false}
+      />
+    );
+    // Sem hasExpandedSections, o item não existe no dropdown
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Mais' }), { button: 0, ctrlKey: false });
+    expect(screen.queryByText('Recolher seções')).not.toBeInTheDocument();
   });
 
   // ========== NO EMAIL ==========
@@ -333,11 +348,14 @@ describe('ContactHeaderSection', () => {
   //   hsl(38 90% 32%)  → L≈0.1634 → 4.92:1 ✅
   //   hsl(0 84% 48%)   → L≈0.1660 → 4.86:1 ✅
 
-  // Smoke: garante que toHaveStyle rejeita cor errada (jsdom/cssstyle não está aceitando tudo).
-  it('smoke: toHaveStyle detecta cor errada (proteção contra false-positive da infra)', () => {
+  // Smoke: prova que jsdom/cssstyle processa inline styles corretamente.
+  it('smoke: inline styles são processadas pelo jsdom (assertion positiva + negativa)', () => {
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
     const badge = screen.getByText('100');
-    expect(badge).not.toHaveStyle('background-color: red');
+    // Positiva: badge tem a cor correta para score=100 (hot)
+    expect(badge).toHaveStyle('background-color: hsl(160 70% 28%)');
+    // Negativa: toHaveStyle distingue valores distintos
+    expect(badge).not.toHaveStyle('background-color: hsl(38 90% 32%)');
   });
 
   it('badge de alto engajamento usa cor acessível (hsl 160 70% 28%, ~5.35:1 com branco)', () => {
@@ -391,5 +409,18 @@ describe('ContactHeaderSection', () => {
     expect(badge).toBeInTheDocument();
     // Confirma que a cor de baixo engajamento NÃO é usada (score está em 50, range médio)
     expect(badge).not.toHaveStyle('background-color: hsl(0 84% 48%)');
+  });
+
+  it('badge usa cor de médio engajamento na fronteira score=75 (abaixo do limiar hot 80)', () => {
+    // positive(+25) + low(0) + no company(0) + no type(0) = 50+25 = 75; 75 < 80 → warm
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={{ ...baseEnriched, ai_priority: 'low', company: null, contact_type: null }}
+      />
+    );
+    const badge = screen.getByText('75');
+    expect(badge).toHaveStyle('background-color: hsl(38 90% 32%)');
+    expect(badge).not.toHaveStyle('background-color: hsl(160 70% 28%)');
   });
 });
