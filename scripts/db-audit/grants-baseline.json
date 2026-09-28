@@ -4,7 +4,7 @@
         "calculate_level(xp_amount bigint)",
         "conversation_closure_day(p_created_at timestamp with time zone)"
     ],
-    "generated_at": "2026-09-27",
+    "generated_at": "2026-09-28",
     "anon_table_select": [
         "agent_achievements",
         "agent_presence",
@@ -40,7 +40,6 @@
         "contact_custom_fields",
         "contact_identity_map",
         "contact_purchases",
-        "contact_tags",
         "contacts",
         "conversation_analyses",
         "conversation_closures",
@@ -119,7 +118,6 @@
         "sla_configurations",
         "sla_rules",
         "stickers",
-        "tags",
         "talkx_blacklist",
         "talkx_campaign_events",
         "talkx_campaign_metrics",
