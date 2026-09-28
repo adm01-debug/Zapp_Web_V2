@@ -3,6 +3,7 @@ import { useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
+import { teamChatKeys } from './queryKeys';
 import type { ReactionGroup } from '@/components/ui/message-reactions';
 
 interface RawReaction {
@@ -43,7 +44,12 @@ function aggregateReactions(rows: RawReaction[], myProfileId: string | undefined
 export function useTeamMessageReactions(conversationId: string) {
   const { profile } = useAuth();
   const qc = useQueryClient();
-  const qKey = useMemo(() => ['team-reactions', conversationId], [conversationId]);
+  const qKey = teamChatKeys.reactions(conversationId);
+  const channelName = useMemo(
+    () => `team:reactions:${conversationId}:${crypto.randomUUID().slice(0, 8)}`,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [conversationId],
+  );
 
   const { data: rows = [] } = useQuery<RawReaction[]>({
     queryKey: qKey,
@@ -60,7 +66,7 @@ export function useTeamMessageReactions(conversationId: string) {
 
   useEffect(() => {
     const channel = supabase
-      .channel(`team-reactions-${conversationId}`)
+      .channel(channelName)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .on('postgres_changes' as any, {
           event: '*',
@@ -72,7 +78,7 @@ export function useTeamMessageReactions(conversationId: string) {
       )
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
-  }, [conversationId, qc, qKey]);
+  }, [conversationId, qc, qKey, channelName]);
 
   const aggregated = aggregateReactions(rows, profile?.id);
 
@@ -84,19 +90,12 @@ export function useTeamMessageReactions(conversationId: string) {
   const toggleMutation = useMutation({
     mutationFn: async ({ messageId, emoji }: { messageId: string; emoji: string }) => {
       if (!profile?.id) throw new Error('Não autenticado');
-      const existing = rows.find(r => r.message_id === messageId && r.emoji === emoji && r.profile_id === profile.id);
-      if (existing) {
-        const { error } = await supabase.from('team_message_reactions').delete().eq('id', existing.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from('team_message_reactions').insert({
-          message_id: messageId,
-          profile_id: profile.id,
-          emoji,
-          conversation_id: conversationId,
-        });
-        if (error) throw error;
-      }
+      const { data, error } = await supabase.rpc('toggle_team_message_reaction', {
+        p_message_id: messageId,
+        p_emoji: emoji,
+      });
+      if (error) throw error;
+      return data as { success: boolean; action: 'added' | 'removed' };
     },
     onMutate: async ({ messageId, emoji }) => {
       await qc.cancelQueries({ queryKey: qKey });
