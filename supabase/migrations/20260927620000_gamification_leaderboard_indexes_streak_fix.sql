@@ -1,0 +1,4 @@
+-- ledger-only/comment-only: migration aplicada via MCP em 2026-09-27 sem arquivo versionado no momento.
+-- ledger_name: gamification_leaderboard_indexes_streak_fix
+-- SQL histórico preservado no ledger (sem código executável recuperável sem acesso ao banco).
+-- Ver migration-evidence.json para esta versão.
