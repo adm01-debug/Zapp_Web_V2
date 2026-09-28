@@ -52,7 +52,7 @@ const TEST_SERVICE_KEY = "eyJtest.servicekey.forauth";
 function makePost(opts: {
   cronSecret?: string;
   bearer?: string;
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body?: any;
 }): Request {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -68,9 +68,9 @@ function makePost(opts: {
 // Chainable query builder — select/eq/in/limit/is/update retornam self;
 // single() retorna "not found" por padrão; maybeSingle() retorna null.
 // Passar `overrides` substitui métodos terminais específicos.
-// deno-lint-ignore no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function qb(overrides: Record<string, () => unknown> = {}): any {
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const b: Record<string, any> = {};
   const chain = () => b;
   b.select = chain; b.eq = chain; b.in = chain; b.limit = chain;
@@ -89,7 +89,7 @@ interface MockOpts {
   roleData?: { role: string } | null;
 }
 
-// deno-lint-ignore no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mockDeps(opts: MockOpts): any {
   return {
     serviceKey: TEST_SERVICE_KEY,

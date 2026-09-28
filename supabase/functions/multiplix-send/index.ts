@@ -61,7 +61,7 @@ function getMediaEndpoint(mediaType: string): string {
 
 export async function handleMultiplixSend(
   req: Request,
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   _injected?: { supabase?: any; serviceKey?: string },
 ): Promise<Response> {
   const corsResponse = handleCors(req);
