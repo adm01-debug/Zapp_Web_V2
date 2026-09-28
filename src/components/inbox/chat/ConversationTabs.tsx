@@ -60,7 +60,7 @@ export function ConversationTabs({ activeTab, onTabChange, counts, extraCounts }
               data-testid={`conversation-tab-${tab.id}`}
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                'relative isolate h-9 px-3 rounded-lg text-sm font-medium flex items-center gap-2 shrink-0',
+                'relative isolate h-9 px-2 2xl:px-3 rounded-lg text-sm font-medium flex items-center gap-1.5 2xl:gap-2 shrink-0',
                 'transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
                 active
                   ? 'text-foreground font-semibold'
@@ -79,7 +79,7 @@ export function ConversationTabs({ activeTab, onTabChange, counts, extraCounts }
                 )
               )}
               <Icon className="w-4 h-4 shrink-0" />
-              <span className="whitespace-nowrap">{tab.label}</span>
+              <span className="whitespace-nowrap hidden 2xl:inline">{tab.label}</span>
               {count > 0 && (
                 <span
                   data-testid={`conversation-tab-count-${tab.id}`}
