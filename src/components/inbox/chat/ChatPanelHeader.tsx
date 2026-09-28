@@ -1,14 +1,12 @@
 import { cn } from '@/lib/utils';
-import { memo, useState } from 'react';
+import { memo } from 'react';
 import { Conversation } from '@/types/chat';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TypingIndicatorCompact } from '../TypingIndicator';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { SLAIndicator } from '../SLAIndicator';
-import { RealtimeCollaboration } from '../RealtimeCollaboration';
 import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -16,12 +14,11 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   MoreVertical, Tag, Archive, CheckCircle, Clock, ArrowRight, ArrowLeft, ExternalLink, XCircle,
-  Phone, Video, UserPlus, Star, Search, Radar, GraduationCap, FileText, Info, Loader2,
+  Star, Search, Radar, GraduationCap, FileText, Info, Loader2,
 } from 'lucide-react';
 import { VisionIcon } from '../ai-tools/VisionIcon';
 import { openChatPopup } from '@/lib/popupManager';
 import { PinnedConversationsStack, PinnedChatItem } from './PinnedConversationsStack';
-import { toast } from '@/hooks/ui/use-toast';
 
 interface ChatMessage { id: string; content: string; sender: string; timestamp: string; }
 type ActiveTool = 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null;
@@ -62,12 +59,11 @@ interface ChatPanelHeaderProps {
 
 function ChatPanelHeaderBase({
   conversation, isContactTyping, showAIAssistant, showDetails, showSummaryPanel,
-  onToggleAIAssistant, onToggleDetails, onStartCall, onOpenSearch, onOpenTransfer, onOpenSchedule,
+  onToggleAIAssistant, onToggleDetails, onOpenSearch, onOpenTransfer, onOpenSchedule,
   onBack, onGenerateSummary, isSummaryLoading, onCloseConversation, onArchive, activeTool, onSetActiveTool,
   isFavorite, onToggleFavorite, pinnedConversations, onSelectPinned,
 }: ChatPanelHeaderProps) {
   const isMobile = useIsMobile();
-  const [participantsOpen, setParticipantsOpen] = useState(false);
   const typeConfig = conversation.contact.contact_type ? CONTACT_TYPE_CONFIG[conversation.contact.contact_type] : null;
   const isVip = (conversation.tags ?? []).some(t => t.toLowerCase() === 'vip');
   const isHighPriority = conversation.priority === 'high';
@@ -139,31 +135,6 @@ function ChatPanelHeaderBase({
       </div>
 
       <div className={cn('flex items-center gap-2', showPinnedStack && 'lg:flex-1 lg:justify-center lg:px-4')}>
-        <Tooltip><TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-[10px] border border-border text-muted-foreground hover:text-foreground hover:bg-muted" onClick={onStartCall} aria-label="Ligar">
-            <Phone className="w-[18px] h-[18px]" />
-          </Button>
-        </TooltipTrigger><TooltipContent side="bottom">Ligar</TooltipContent></Tooltip>
-
-        <Tooltip><TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-[10px] border border-border text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => toast({ title: 'Em breve', description: 'Videochamada estará disponível em breve.' })} aria-label="Videochamada">
-            <Video className="w-[18px] h-[18px]" />
-          </Button>
-        </TooltipTrigger><TooltipContent side="bottom">Videochamada</TooltipContent></Tooltip>
-
-        <Popover open={participantsOpen} onOpenChange={setParticipantsOpen}>
-          <Tooltip><TooltipTrigger asChild>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-10 w-10 rounded-[10px] border border-border text-muted-foreground hover:text-foreground hover:bg-muted" aria-label="Adicionar participante">
-                <UserPlus className="w-[18px] h-[18px]" />
-              </Button>
-            </PopoverTrigger>
-          </TooltipTrigger><TooltipContent side="bottom">Adicionar participante</TooltipContent></Tooltip>
-          <PopoverContent align="end" className="w-80">
-            <RealtimeCollaboration contactId={conversation.contact.id} />
-          </PopoverContent>
-        </Popover>
-
         <DropdownMenu>
           <Tooltip><TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>

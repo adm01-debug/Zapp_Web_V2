@@ -1,5 +1,5 @@
 import {
-  Phone, PhoneCall, Headphones, Mail, ArrowLeftRight,
+  Phone, PhoneCall, Headphones, Mail, ArrowLeftRight, Video, UserPlus,
   Star, Archive, Ban, Briefcase, MoreHorizontal, ChevronsDownUp, RefreshCw,
 } from 'lucide-react';
 import * as React from 'react';
@@ -7,11 +7,13 @@ import { toast } from 'sonner';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { useSyncToCRM } from '@/hooks/integrations/useSyncToCRM';
 import type { Conversation } from '@/types/chat';
+import { RealtimeCollaboration } from '../RealtimeCollaboration';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 
 interface ContactActionButtonsProps {
@@ -111,7 +113,7 @@ export function ContactActionButtons({
   };
 
   return (
-    <div className="grid grid-cols-4 gap-2 justify-items-center mt-3">
+    <div className="grid grid-cols-6 gap-2 justify-items-center mt-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Tile icon={<Phone className="w-[18px] h-[18px]" />} label="Ligar" title="Opções de chamada" />
@@ -128,6 +130,13 @@ export function ContactActionButtons({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <Tile
+          icon={<Video className="w-[18px] h-[18px]" />}
+          label="Vídeo"
+          title="Videochamada"
+          onClick={() => toast.info('Em breve', { description: 'Videochamada estará disponível em breve.' })}
+        />
 
         <Tile
           icon={<Mail className="w-[18px] h-[18px]" />}
@@ -150,6 +159,15 @@ export function ContactActionButtons({
           // com .group nunca dispara — CSS descendant combinator (27/09, rodada 5).
           hoverColorClass="hover:text-[hsl(160_70%_35%)]"
         />
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Tile icon={<UserPlus className="w-[18px] h-[18px]" />} label="Adicionar participante" title="Adicionar participante" />
+          </PopoverTrigger>
+          <PopoverContent align="center" className="w-80">
+            <RealtimeCollaboration contactId={contact.id} />
+          </PopoverContent>
+        </Popover>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
