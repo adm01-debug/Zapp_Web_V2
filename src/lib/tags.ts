@@ -4,6 +4,7 @@ export function parseWhatsAppTag(tag: string): { labelId: string; displayName: s
   if (!isWhatsAppTag(tag)) return null;
   const parts = tag.split(':');
   if (parts.length < 3) return null;
+  if (!parts[1]) return null;
   return { labelId: parts[1], displayName: parts.slice(2).join(':') };
 }
 
