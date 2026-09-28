@@ -168,6 +168,6 @@ WHERE conversation_id IN (
   SELECT id FROM public.conversations WHERE contact_id = '04dff4dc-c6b1-4283-ac22-bd8639804759'
 );
 
-UPDATE public.conversations
+UPDATE public.agent_stats
 SET avg_response_time_seconds = NULL
 WHERE avg_response_time_seconds = 0;
