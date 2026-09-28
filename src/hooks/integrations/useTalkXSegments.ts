@@ -150,7 +150,9 @@ function applyRules<T extends { or: (f: string) => T }>(q: T, rules: SegmentRule
 
 /** Estimativa (count exato) do público de um conjunto de regras. */
 export async function countAudience(rules: SegmentRules | null | undefined): Promise<number> {
-  let q = supabase.from('contacts').select('id', { count: 'exact', head: true }).not('phone', 'is', null);
+  let q = supabase.from('contacts').select('id', { count: 'exact', head: true })
+    .not('phone', 'is', null)
+    .not('phone', 'ilike', 'sicoob-%');
   q = applyRules(q, rules);
   const { count, error } = await q;
   if (error) throw error;
@@ -164,6 +166,7 @@ export async function resolveAudience(rules: SegmentRules | null | undefined, li
   let q = supabase.from('contacts')
     .select('id, name, nickname, phone, company, avatar_url, tags')
     .not('phone', 'is', null)
+    .not('phone', 'ilike', 'sicoob-%')
     .order('name')
     .limit(limit);
   q = applyRules(q, rules);
