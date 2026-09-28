@@ -134,7 +134,7 @@ export const sections: FeatureSection[] = [
     id: 11, title: "Relatórios e Exportação", icon: Download, color: "text-info",
     items: [
       "Relatórios avançados", "Exportação avançada (wizard 3 passos)",
-      "Exportar para PDF", "Exportar para Excel", "Exportar para CSV",
+      "Exportar para PDF", "Exportar para Excel",
       "Botão de exportação rápida", "Relatórios agendados por email",
       "Edge function para envio de relatórios"
     ]
