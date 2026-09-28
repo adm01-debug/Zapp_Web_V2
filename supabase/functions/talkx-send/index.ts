@@ -309,7 +309,7 @@ export async function handleTalkxSend(
     // única em lote para todos os contact_id da leva atual, não por
     // destinatário.
     const recipientContactIds = Array.from(
-      new Set((recipients || []).map((r) => r.contact_id).filter((id): id is string => typeof id === "string")),
+      new Set((recipients || []).map((r: { contact_id?: string | null }) => r.contact_id).filter((id: unknown): id is string => typeof id === "string")),
     );
     const customFieldsByContact = new Map<string, Record<string, string>>();
     if (recipientContactIds.length > 0) {

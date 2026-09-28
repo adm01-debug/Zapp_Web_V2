@@ -463,8 +463,8 @@
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
-      "bytes": 41096,
-      "sha256": "d83ebc540f805f64ed429f7eca8947cfc6abf91bcb6f6ca2dc047be96b075dd9"
+      "bytes": 41137,
+      "sha256": "540b5b10143c59aaaf5a99ad3c97da2e3b496a19c08b7a0b6a20a5a89eb63fa0"
     },
     {
       "path": "supabase/functions/voice-agent/index.ts",
@@ -1283,7 +1283,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "730fc7d0835dc1540e5da6dbb9a91a40482821d63dcc6953ca2ed837f368068c",
+      "source_sha256": "928a5653c51167dab32f0a8b50441ba63c45911f7cd7bb3abf078866b6b5e9af",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1366,5 +1366,5 @@
       ]
     }
   ],
-  "manifest_sha256": "b3648c45c38c8036db7e08b6d3892cdf34fdb4cafab9695e40bdc37e64aa17a1"
+  "manifest_sha256": "32c55715760c880bda37fba337ea42cebafb46ca63fc611d8039ab7f8c45b88d"
 }
