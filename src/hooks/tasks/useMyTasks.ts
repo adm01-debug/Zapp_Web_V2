@@ -58,16 +58,19 @@ export function useMyTasks() {
 
   // contact_id opcional: a policy de INSERT aceita is_contact_visible_to_user(contact_id, ...)
   // OU (contact_id IS NULL AND created_by = próprio usuário) — tarefa pessoal solta.
+  // Campos created_by e assigned_to sao NOT NULL no banco (DEFAULT auth.uid()).
+  // Omitir do payload quando null/undefined para que o banco use o DEFAULT.
   const createMutation = useMutation({
     mutationFn: async (input: { title: string; contactId?: string | null; priority?: string; dueDate?: string | null; assignedTo?: string | null; createdBy?: string | null; description?: string | null }) => {
+      const assignedTo = input.assignedTo ?? input.createdBy;
       const { error } = await supabase.from('conversation_tasks').insert({
         contact_id: input.contactId ?? null,
         title: input.title,
         priority: input.priority ?? 'medium',
         due_date: input.dueDate ?? null,
-        assigned_to: input.assignedTo ?? input.createdBy ?? undefined,
-        created_by: input.createdBy ?? undefined,
         description: input.description ?? null,
+        ...(assignedTo != null ? { assigned_to: assignedTo } : {}),
+        ...(input.createdBy != null ? { created_by: input.createdBy } : {}),
       });
       if (error) throw error;
     },
