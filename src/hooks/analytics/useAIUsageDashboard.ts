@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subHours, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { toast } from 'sonner';
 
 export type TimeFilter = '1h' | '6h' | '24h' | '7d' | '30d';
 
@@ -138,35 +137,9 @@ export function useAIUsageDashboard() {
       }));
   }, [logs, timeFilter]);
 
-  const handleExportCSV = () => {
-    if (logs.length === 0) { toast.warning('Nenhum dado para exportar'); return; }
-    const escapeCsvField = (value: string | number | null | undefined): string => {
-      const str = String(value ?? '-');
-      if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) return `"${str.replace(/"/g, '""')}"`;
-      return str;
-    };
-    const headers = ['Data', 'Usuário', 'Função', 'Modelo', 'Tokens Entrada', 'Tokens Saída', 'Total Tokens', 'Duração (ms)', 'Status'];
-    const rows = logs.map(l => {
-      const profile = l.user_id ? profileMap.get(l.user_id) : null;
-      return [
-        escapeCsvField(format(new Date(l.created_at), 'dd/MM/yyyy HH:mm:ss')),
-        escapeCsvField(profile?.name || profile?.email || l.user_id || '-'),
-        escapeCsvField(FUNCTION_LABELS[l.function_name] || l.function_name),
-        escapeCsvField(l.model || '-'), l.input_tokens, l.output_tokens, l.total_tokens, l.duration_ms || '-', l.status,
-      ].join(',');
-    });
-    const csv = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `consumo-ia-${format(new Date(), 'yyyy-MM-dd')}.csv`; a.click();
-    URL.revokeObjectURL(url);
-    toast.success('CSV exportado com sucesso!');
-  };
-
   return {
     logs, isLoading, refetch, timeFilter, setTimeFilter,
     logsPage, setLogsPage, profileMap, stats,
-    userUsage, functionUsage, timelineData, handleExportCSV,
+    userUsage, functionUsage, timelineData,
   };
 }

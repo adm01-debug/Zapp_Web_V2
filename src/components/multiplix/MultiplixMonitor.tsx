@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Pause, Play, Square, Send, XCircle, AlertTriangle, Clock, BarChart3, Download, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Pause, Play, Square, Send, XCircle, AlertTriangle, Clock, BarChart3, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
@@ -38,30 +38,6 @@ const RECIPIENT_STATUS: Record<string, { label: string; tone: 'success' | 'dange
   skipped: { label: 'Sem WhatsApp', tone: 'muted' },
 };
 
-const CSV_FORMULA_PREFIX = /^[=+\-@\t\r\n＝＋－＠]/u;
-
-function exportRecipientsCsv(rows: { company_name_snapshot: string | null; destino_e164: string | null; status: string; sent_at: string | null; error_message: string | null }[], dispatchName: string) {
-  if (rows.length === 0) return;
-  const esc = (v: string) => {
-    const safe = CSV_FORMULA_PREFIX.test(v) ? `'${v}` : v;
-    return /[,"\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
-  };
-  const cols: Array<[string, (r: (typeof rows)[number]) => string]> = [
-    ['Empresa', (r) => r.company_name_snapshot ?? ''],
-    ['Telefone', (r) => r.destino_e164 ?? ''],
-    ['Status', (r) => r.status],
-    ['Enviada em', (r) => r.sent_at ?? ''],
-    ['Erro', (r) => r.error_message ?? ''],
-  ];
-  const lines = [cols.map(([h]) => h).join(','), ...rows.map((r) => cols.map(([, f]) => esc(f(r))).join(','))].join('\n');
-  const blob = new Blob(['﻿' + lines], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `multiplix-${dispatchName.replace(/[^\w\s-]/g, '').slice(0, 40)}-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 interface Props { dispatchId: string; onBack: () => void }
 
@@ -120,63 +96,6 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
     };
   }, [dispatchId, statusFilter, qc]);
 
-  const handleExportCsv = async () => {
-    // P2 fix v3 (Codex, review da PR #958): .in('id', ids) com PAGE=1000 UUIDs
-    // produz URL GET >36KB -- rejeitado pelo proxy/PostgREST. DETAIL_CHUNK=200
-    // (mesmo limite de TalkXAnalytics.tsx:243-249). PAGE=1000 so para o
-    // snapshot keyset (nao usa .in(), nao afetado).
-    const PAGE = 1000;
-    const DETAIL_CHUNK = 200;
-    const allRows: Parameters<typeof exportRecipientsCsv>[0] = [];
-    if (statusFilter !== 'all') {
-      const snapIds: string[] = [];
-      let lastSnapId: string | null = null;
-      for (;;) {
-        let q = fromTable('multiplix_recipients')
-          .select('id')
-          .eq('dispatch_id', dispatchId)
-          .eq('status', statusFilter)
-          .order('id')
-          .limit(PAGE);
-        if (lastSnapId !== null) q = q.gt('id', lastSnapId);
-        const { data: snap, error: snapErr } = await q;
-        if (snapErr) { toast.error(`Erro ao exportar CSV: ${snapErr.message}`); return; }
-        if (!snap?.length) break;
-        snapIds.push(...snap.map((r: { id: string }) => r.id));
-        if (snap.length < PAGE) break;
-        lastSnapId = (snap[snap.length - 1] as { id: string }).id;
-      }
-      if (!snapIds.length) return;
-      for (let i = 0; i < snapIds.length; i += DETAIL_CHUNK) {
-        const ids = snapIds.slice(i, i + DETAIL_CHUNK);
-        const { data, error } = await fromTable('multiplix_recipients')
-          .select('id, company_name_snapshot, destino_e164, status, sent_at, error_message')
-          .in('id', ids)
-          .order('id');
-        if (error) { toast.error(`Erro ao exportar CSV: ${error.message}`); return; }
-        if (data?.length) allRows.push(...(data as typeof allRows));
-      }
-    } else {
-      let lastId: string | null = null;
-      for (;;) {
-        let q = fromTable('multiplix_recipients')
-          .select('id, company_name_snapshot, destino_e164, status, sent_at, error_message')
-          .eq('dispatch_id', dispatchId)
-          .order('id')
-          .limit(PAGE);
-        if (lastId !== null) q = q.gt('id', lastId);
-        const { data, error } = await q;
-        if (error) { toast.error(`Erro ao exportar CSV: ${error.message}`); return; }
-        if (!data?.length) break;
-        allRows.push(...(data as typeof allRows));
-        if (data.length < PAGE) break;
-        lastId = (data[data.length - 1] as { id: string }).id;
-      }
-    }
-    if (allRows.length === 0) return;
-    exportRecipientsCsv(allRows, dispatch?.name ?? 'disparo');
-  };
-
   const runAction = async (a: 'start' | 'pause' | 'cancel') => {
     try {
       await action.mutateAsync({ dispatchId, action: a });
@@ -221,7 +140,6 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
               {canStart && <button type="button" onClick={() => setConfirmResume(true)} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4" />{isPaused ? 'Retomar' : 'Iniciar'}</button>}
               <button type="button" onClick={() => setConfirmCancel(true)} className="h-9 px-3.5 rounded-lg border border-dash-red/40 bg-dash-red/10 text-dash-red text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-red/20"><Square className="w-4 h-4" />Cancelar</button>
             </>)}
-            <button type="button" onClick={handleExportCsv} className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium flex items-center gap-1.5 hover:bg-muted/50"><Download className="w-4 h-4" />CSV</button>
           </div>
         </div>
         <Progress value={progress} className="h-3 mb-1.5" />

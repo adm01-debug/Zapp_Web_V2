@@ -46,16 +46,16 @@ describe('aggregateKpi', () => {
     expect(kpi.empresasDistinct).toBe(2);
   });
 
-  it('separa leads do total e calcula leads30/deltaLeadsPct', () => {
+  it('separa fornecedores do total e calcula fornecedores30/deltaFornecedoresPct', () => {
     const rows = [
-      row(5, 'lead'), row(10, 'lead'), // 2 leads recentes
-      row(40, 'lead'), // 1 lead período anterior
-      row(5, 'cliente'), // não é lead
+      row(5, 'fornecedor'), row(10, 'fornecedor'), // 2 fornecedores recentes
+      row(40, 'fornecedor'), // 1 fornecedor período anterior
+      row(5, 'cliente'), // não é fornecedor
     ];
     const kpi = aggregateKpi(rows, NOW);
-    expect(kpi.leadsTotal).toBe(3);
-    expect(kpi.leads30).toBe(2);
-    expect(kpi.deltaLeadsPct).toBeNull(); // prev=1 < MIN_PREV 50 → null
+    expect(kpi.fornecedoresTotal).toBe(3);
+    expect(kpi.fornecedores30).toBe(2);
+    expect(kpi.deltaFornecedoresPct).toBeNull(); // prev=1 < MIN_PREV 50 → null
   });
 
   it('sparkline diária (7 buckets) soma 30 pontos sem perder registros', () => {
@@ -100,9 +100,9 @@ describe('aggregateKpi', () => {
     const kpi = aggregateKpi([], NOW);
     expect(kpi.novos30).toBe(0);
     expect(kpi.empresasDistinct).toBe(0);
-    expect(kpi.leadsTotal).toBe(0);
+    expect(kpi.fornecedoresTotal).toBe(0);
     expect(kpi.seriesEmpresasWeekly12.every(v => v === 0)).toBe(true);
-    expect(kpi.seriesLeadsWeekly12.every(v => v === 0)).toBe(true);
+    expect(kpi.seriesFornecedoresWeekly12.every(v => v === 0)).toBe(true);
   });
 
 

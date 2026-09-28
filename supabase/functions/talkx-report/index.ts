@@ -8,16 +8,6 @@ import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
 import { EMAIL_FONT_STACK } from "../_shared/email-font-stack.ts";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────────────────
-export function escCsv(v: string): string {
-  const FORMULA_PREFIX = /^[=+\-@\t\r\n]/;
-  let safe = v;
-  if (FORMULA_PREFIX.test(safe)) safe = "'" + safe;
-  if (safe.includes(',') || safe.includes('"') || safe.includes('\r') || safe.includes('\n')) {
-    return '"' + safe.replace(/"/g, '""') + '"';
-  }
-  return safe;
-}
-
 export function escHtml(v: string): string {
   return v
     .replace(/&/g, '&amp;')
@@ -25,16 +15,6 @@ export function escHtml(v: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
-}
-
-export function buildCsv(rows: Record<string, string | null>[]): string {
-  if (rows.length === 0) return '';
-  const hdrs = Object.keys(rows[0]);
-  const lines = [
-    hdrs.map(escCsv).join(','),
-    ...rows.map((r) => hdrs.map((h) => escCsv(r[h] ?? '')).join(','))
-  ];
-  return '\uFEFF' + lines.join('\r\n');
 }
 
 function jsonErr(req: Request, body: Record<string, unknown>, status: number): Response {
@@ -114,7 +94,7 @@ if (import.meta.main) {
     // ── 3. Recipients (máx 2000) ────────────────────────────────────────────────
     const { data: recipients, error: recipientsErr } = await supabase
       .from('talkx_recipients')
-      .select('status, sent_at, delivered_at, error_message, contacts:contact_id(name, phone)')
+      .select('status')
       .eq('campaign_id', campaignId)
       .order('updated_at', { ascending: false })
       .limit(2000);
@@ -122,21 +102,6 @@ if (import.meta.main) {
       log.error('Recipients query failed', { campaignId, error: recipientsErr.message });
       return jsonErr(req, { ok: false, reason: 'recipients_query_failed' }, 502);
     }
-
-    type Recip = { status: string; sent_at: string | null; delivered_at: string | null; error_message: string | null; contacts: { name: string; phone: string } | null };
-    const csvRows = (recipients ?? []).map((r: unknown) => {
-      const row = r as Recip;
-      return {
-        'Nome': row.contacts?.name ?? '',
-        'Telefone': row.contacts?.phone ?? '',
-        'Status': row.status,
-        'Enviada em': row.sent_at ? new Date(row.sent_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '',
-        'Entregue em': row.delivered_at ? new Date(row.delivered_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '',
-        'Erro': row.error_message ?? '',
-      };
-    });
-    const csvContent = buildCsv(csvRows);
-    const csvBase64 = btoa(unescape(encodeURIComponent(csvContent)));
 
     // ── 4. KPIs ────────────────────────────────────────────────────────────────────────
     const total = campaign.total_recipients ?? 0;
@@ -176,7 +141,6 @@ if (import.meta.main) {
       <tr style="background:#f9fafb"><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Iniciada em</td><td style="padding:10px 14px;font-size:14px;color:#111827;border-bottom:1px solid #e5e7eb">${fmtDate(campaign.started_at)}</td></tr>
       <tr><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600">Concluída em</td><td style="padding:10px 14px;font-size:14px;color:#111827">${fmtDate(campaign.completed_at)}</td></tr>
     </table>
-    <p style="margin:0;color:#6b7280;font-size:13px">O CSV completo de destinatários está em anexo (máx 2.000 registros).</p>
   </div>
   <div style="background:#f9fafb;padding:16px 32px;border-top:1px solid #e5e7eb">
     <p style="margin:0;color:#9ca3af;font-size:12px">E-mail gerado automaticamente pelo módulo Talk X · Pronto Talk Suite</p>
@@ -199,11 +163,6 @@ if (import.meta.main) {
         to: [recipientEmail],
         subject: `📊 Relatório: ${safeCampaignName}`,
         html: htmlBody,
-        attachments: csvRows.length > 0 ? [{
-          filename: `campanha-${campaign.name.replace(/\s+/g, '-').toLowerCase()}-recipients.csv`,
-          content: csvBase64,
-          content_type: 'text/csv; charset=utf-8',
-        }] : undefined,
       }),
     });
 
@@ -213,9 +172,9 @@ if (import.meta.main) {
       return jsonErr(req, { ok: false, reason: 'resend_error', detail: body }, 502);
     }
 
-    log.info('Report sent', { campaignId, to: recipientEmail, rows: csvRows.length });
+    log.info('Report sent', { campaignId, to: recipientEmail });
     return new Response(
-      JSON.stringify({ ok: true, to: recipientEmail, rows: csvRows.length }),
+      JSON.stringify({ ok: true, to: recipientEmail }),
       { status: 200, headers: { 'Content-Type': 'application/json', ...getCorsHeaders(req) } }
     );
 
