@@ -64,26 +64,17 @@ export class Logger {
 }
 
 // Dominios exatos permitidos no CORS.
-// IMPORTANTE: ao adicionar um dominio de producao novo, adicionar aqui tambem
-// e redeployar todas as edges (supabase functions deploy --project-ref <ref>).
 const EXACT_ALLOWED_ORIGINS = new Set([
-  // Producao Vercel (projeto `zapp_web_v2` -> aliases `zappwebv2-*`; o dominio
-  // principal `zapp-web-v2.vercel.app` e custom)
   'https://zapp-web-v2.vercel.app',
   'https://zappwebv2-juca1.vercel.app',
   'https://zappwebv2-git-main-juca1.vercel.app',
-  // Dominios Lovable legados (manter durante transicao)
   'https://pronto-talk-suite.lovable.app',
   'https://id-preview--1d419c34-35ac-4a71-96a5-146ca1b3ebf2.lovable.app',
   'https://1d419c34-35ac-4a71-96a5-146ca1b3ebf2.lovableproject.com',
 ]);
 
 const ORIGIN_PATTERNS = [
-  // Previews na Vercel: zappwebv2-<hash>-juca1.vercel.app (deploy) e
-  // zappwebv2-git-<branch>-juca1.vercel.app (alias de branch). Verificado na API
-  // da Vercel em 2026-09-05 — o padrao antigo `zapp-web-v2-<hash>` nunca casava.
   /^https:\/\/zappwebv2-[a-z0-9-]+-juca1\.vercel\.app$/,
-  // Localhost para desenvolvimento
   /^http:\/\/localhost(?::\d{1,5})?$/,
   /^http:\/\/127\.0\.0\.1(?::\d{1,5})?$/,
 ];
@@ -124,14 +115,10 @@ export function getCorsHeaders(req?: Request): Record<string, string> {
   };
 }
 
-/** @deprecated Use getCorsHeaders(req) for origin-validated CORS. Kept for backward compat — do NOT use in new code. */
+/** @deprecated Use getCorsHeaders(req) for origin-validated CORS. Kept for backward compat. */
 export const corsHeaders = getCorsHeaders();
 
-/** Standard JSON error response (with origin-validated CORS).
- * Em 5xx a mensagem original (frequentemente `err.message`, com nome de env
- * var, host ou stack) fica so no log do servidor; o cliente recebe texto
- * generico (CodeQL js/stack-trace-exposure). 4xx segue como esta: e a
- * mensagem de validacao que o front exibe. */
+/** Standard JSON error response (with origin-validated CORS). */
 export function errorResponse(message: string, status = 400, req?: Request) {
   const headers = req ? getCorsHeaders(req) : corsHeaders;
   let body = message;
@@ -142,6 +129,19 @@ export function errorResponse(message: string, status = 400, req?: Request) {
   return new Response(
     JSON.stringify({ error: body }),
     { status, headers: { ...headers, 'Content-Type': 'application/json' } }
+  );
+}
+
+/** Standard JSON 500 error response. Logs the real error server-side; nunca expõe
+ * stack trace ou detalhes internos ao client (fecha CodeQL js/stack-trace-exposure).
+ * Use no lugar de errorResponse(err.message, 500, req) em todos os catch de 5xx. */
+export function internalErrorResponse(err: unknown, req?: Request): Response {
+  const headers = req ? getCorsHeaders(req) : corsHeaders;
+  const message = err instanceof Error ? err.message : String(err);
+  console.error(JSON.stringify({ level: 'error', source: 'edge', status: 500, msg: message }));
+  return new Response(
+    JSON.stringify({ error: 'Internal server error' }),
+    { status: 500, headers: { ...headers, 'Content-Type': 'application/json' } }
   );
 }
 
@@ -166,6 +166,7 @@ export function handleCors(req: Request): Response | null {
 export function sanitizeString(input: unknown, maxLength = 10000): string | null {
   if (typeof input !== 'string') return null;
   // Remove control characters except newlines/tabs
+  // eslint-disable-next-line no-control-regex
   const cleaned = input.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim();
   return cleaned.length > 0 ? cleaned.slice(0, maxLength) : null;
 }
@@ -182,7 +183,7 @@ let lastCleanup = Date.now();
 
 function cleanupRateLimitMap() {
   const now = Date.now();
-  if (now - lastCleanup < 60_000) return; // Cleanup at most once per minute
+  if (now - lastCleanup < 60_000) return;
   lastCleanup = now;
   for (const [key, entry] of rateLimitMap) {
     if (now > entry.resetAt) rateLimitMap.delete(key);
@@ -208,7 +209,6 @@ export function checkRateLimit(
   return { allowed: entry.count <= maxRequests, remaining };
 }
 
-// Cliente service_role compartilhado pelo isolate (so para o limiter persistente).
 interface RateLimitRpcClient {
   rpc: (
     fn: string,
@@ -230,13 +230,6 @@ function getServiceClient(): Promise<RateLimitRpcClient> {
   return serviceClientPromise;
 }
 
-/**
- * Rate limit persistente (tabela edge_rate_limits + RPC consume_rate_limit,
- * migration 20260905020000). O contador em memoria de checkRateLimit e so um
- * pre-filtro: ele nao sobrevive a cold start nem e compartilhado entre
- * isolates. Se o banco falhar, cai para o contador local (fail-open com log)
- * em vez de derrubar a funcao.
- */
 export async function enforceRateLimit(
   key: string,
   maxRequests = 30,
@@ -265,9 +258,7 @@ export async function enforceRateLimit(
   }
 }
 
-/** Extract client IP from request for rate limiting.
- * Uses the RIGHTMOST XFF value (set by the trusted Supabase edge proxy) to
- * prevent attackers from spoofing the IP by prepending fake XFF entries. */
+/** Extract client IP from request for rate limiting. */
 export function getClientIP(req: Request): string {
   const xff = req.headers.get('x-forwarded-for');
   if (xff) {
@@ -287,10 +278,6 @@ export function requireEnv(name: string): string {
   return value;
 }
 
-/**
- * Require a valid Supabase JWT in the Authorization header.
- * Returns the authenticated user id, or a Response (401) to short-circuit.
- */
 export async function requireAuth(req: Request): Promise<{ userId: string } | Response> {
   const authHeader = req.headers.get("Authorization") || req.headers.get("authorization");
   if (!authHeader || !authHeader.toLowerCase().startsWith("bearer ")) {
@@ -314,12 +301,6 @@ export async function requireAuth(req: Request): Promise<{ userId: string } | Re
   }
 }
 
-/**
- * Cliente Supabase autenticado como o caller (anon key + o Authorization
- * header original da request), para que a RLS filtre por auth.uid() real
- * em vez de service_role. Assume que requireAuth(req) ja validou o token
- * antes desta chamada.
- */
 export async function createAuthedClient(req: Request) {
   const authHeader = req.headers.get("Authorization") || req.headers.get("authorization") || "";
   const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.87.1");
