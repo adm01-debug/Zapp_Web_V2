@@ -212,10 +212,10 @@ Deno.test("auth: Bearer com JWT válido e role supervisor → passa auth, chega 
 const CAMPAIGN_ID = "campaign-dispatch-001";
 const CONNECTION_ID = "conn-dispatch-001";
 
-// deno-lint-ignore no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function thenableQB(result: { data: unknown; error: unknown }): any {
   const p = Promise.resolve(result);
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const self: any = {
     then: (res: (v: unknown) => unknown, rej?: (e: unknown) => unknown) => p.then(res, rej),
     catch: (fn: (e: unknown) => unknown) => p.catch(fn),
@@ -223,7 +223,7 @@ function thenableQB(result: { data: unknown; error: unknown }): any {
     maybeSingle: () => p,
   };
   for (const m of ["select","eq","neq","in","or","order","range","limit","is","not","update","insert","upsert","delete"]) {
-    // deno-lint-ignore no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (self as any)[m] = () => self;
   }
   return self;
@@ -254,12 +254,13 @@ function makeRecipient(): Record<string, unknown> {
   };
 }
 
-// deno-lint-ignore no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeDispatchDeps(opts: {
   campaign?: Record<string, unknown> | null;
   connection?: Record<string, unknown> | null;
   recipients?: Record<string, unknown>[];
   suppressAll?: boolean;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 } = {}): any {
   const campaign = opts.campaign === undefined ? makeCampaign() : opts.campaign;
   const connection = opts.connection === undefined ? makeConnection() : opts.connection;
@@ -297,7 +298,7 @@ function makeDispatchDeps(opts: {
   };
 }
 
-// deno-lint-ignore no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeTestActionDeps(connection: Record<string, unknown> | null): any {
   return {
     serviceKey: TEST_SERVICE_KEY,
@@ -320,13 +321,13 @@ function setDispatchEnv(): void {
   Deno.env.set("EVOLUTION_INSTANCE_TOKEN", "test-instance-token");
 }
 
-// deno-lint-ignore no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyFetch = (url: any, opts?: any) => Promise<Response>;
 
 function mockGlobalFetch(failUrlFragment?: string): () => void {
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const orig = (globalThis as any).fetch as AnyFetch;
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (globalThis as any).fetch = (url: unknown, _opts?: unknown): Promise<Response> => {
     const urlStr = String(url);
     if (failUrlFragment && urlStr.includes(failUrlFragment)) {
@@ -334,7 +335,7 @@ function mockGlobalFetch(failUrlFragment?: string): () => void {
     }
     return Promise.resolve(new Response(JSON.stringify({ key: { id: "provider-msg-test-001" } }), { status: 200 }));
   };
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return () => { (globalThis as any).fetch = orig; };
 }
 
