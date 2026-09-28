@@ -519,6 +519,19 @@
             "ledger_name": "perf_fk_indexes_domain_checks_drop_orphans",
             "kind": "ledger-only/name-and-file-pinned",
             "justification": "Ledger registra apenas descricao em prosa; DDL aplicado via MCP em 2026-09-27. Arquivo documenta criacao dos 4 indices de FK em falta (direct_member_b, profile_id em receipts/audit_logs/invites), ADD CONSTRAINT CHECK NOT VALID em agent_stats (xp>=0, level>=1) com VALIDATE, e DROP dos 3 indices orfaos confirmados (idx_audit_logs_user_created, idx_conversation_events_from_queue_id, idx_conversation_events_to_queue_id)."
+        },
+        {
+            "version": "20260927580000",
+            "filename": "20260927580000_grant_agent_achievement_xp_reward_cap.sql",
+            "file_sha256": "318f31a961a9b41296c8a866743ab2f86ddaeb275f8aa2d03f989928b78d42ee",
+            "file_sql_sha256": "97da3094b6d5d541d4f7ce16d931725fb8907187363c118566b0c8b38a1403b2",
+            "ledger_name": "grant_agent_achievement_xp_reward_cap",
+            "ledger_statements_sha256": "1764f120e37b6bd8961741b1b7802412604f9b965886686c8ba145053083b9b4",
+            "ledger_sql_sha256": "c1c248374fb1ae6f7e7aefcf657fbb3cb95b59e86ba7125363e5fb8f3ba5042d",
+            "kind": "ledger-divergence/pinned-replay",
+            "reason": "ledger-summary",
+            "related_migration": null,
+            "justification": "Versoes 580000 e 590000 aplicadas via MCP em 2026-09-27 com names e conteudos trocados entre si. O ledger de 580000 contem o SQL de grant_agent_achievement_xp_reward_cap (o que foi efetivamente executado nessa versao); o arquivo preserva o SQL da correcao de auth guard + cap XP + timezone SP (conteudo pretendido). Arquivo renomeado para corresponder ao ledger_name, resolvendo a restricao do version-collision cujo related_migration (590000) passou a conter outro conteudo. Ambos ficam fixados por hashes independentes."
         }
     ]
 }
