@@ -5,7 +5,6 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ExportButton } from './ExportButton';
 import { ConversationHeatmap } from './ConversationHeatmap';
 import { PeriodComparison } from './PeriodComparison';
 import { DemandForecast } from './DemandForecast';
@@ -84,7 +83,6 @@ export function AdvancedReportsView() {
               {agents.map(agent => <SelectItem key={agent.id} value={agent.id}>{agent.name}</SelectItem>)}
             </SelectContent>
           </Select>
-          <ExportButton getData={getExportData} disabled={isLoading} />
         </div>
       </div>
 

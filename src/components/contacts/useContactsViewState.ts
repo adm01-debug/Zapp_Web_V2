@@ -1,7 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { useContactsCRUD } from './useContactsCRUD';
 import type { ContactViewMode } from './ContactViewSwitcher';
 import type { FilterPreset } from './FilterPresets';
@@ -16,7 +14,6 @@ export function useContactsViewState() {
 
   const [viewMode, setViewMode] = useState<ContactViewMode>('grid');
   const [gridColumns, setGridColumns] = useState(4);
-  const [isImportOpen, setIsImportOpen] = useState(false);
   const [isMergeOpen, setIsMergeOpen] = useState(false);
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [groupByCompany, setGroupByCompany] = useState(false);
@@ -47,24 +44,6 @@ export function useContactsViewState() {
     if (contact) setDetailContact(contact);
   }, [filteredContacts]);
 
-  const handleExportCSV = useCallback(() => {
-    const esc = (v: string) => (v.includes(',') || v.includes('"') || v.includes('\n')) ? `"${v.replace(/"/g, '""')}"` : v;
-    const headers = ['Nome','Sobrenome','Apelido','Telefone','Email','Empresa','Cargo','Tipo','Tags','Criado em'];
-    const csvRows = filteredContacts.map(c => [
-      esc(c.name), esc(c.surname||''), esc(c.nickname||''), esc(c.phone),
-      esc(c.email||''), esc(c.company||''), esc(c.job_title||''),
-      esc(c.contact_type||'cliente'), esc((c.tags||[]).join('; ')),
-      esc(format(new Date(c.created_at), 'dd/MM/yyyy', { locale: ptBR })),
-    ].join(','));
-    const csv = '\uFEFF' + [headers.join(','), ...csvRows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url;
-    a.download = `contatos_${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    a.click(); URL.revokeObjectURL(url);
-    toast.success(`${filteredContacts.length} contatos exportados!`);
-  }, [filteredContacts]);
-
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -86,13 +65,12 @@ export function useContactsViewState() {
     crud,
     viewMode, setViewMode,
     gridColumns, setGridColumns,
-    isImportOpen, setIsImportOpen,
     isMergeOpen, setIsMergeOpen,
     isCompareOpen, setIsCompareOpen,
     groupByCompany, setGroupByCompany,
     isBulkTagOpen, setIsBulkTagOpen,
     detailContact, setDetailContact,
     handleApplyPreset, handleToggleSelect, handleSelectAll,
-    handleContactClick, handleExportCSV,
+    handleContactClick,
   };
 }

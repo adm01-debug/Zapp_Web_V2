@@ -1,13 +1,12 @@
 import { toast } from 'sonner';
 import React, { useEffect, useState, useMemo } from 'react';
 import {
-  Pause, Square, Play, Download, Timer, Send, CheckCircle2, XCircle, Clock, Loader2,
+  Pause, Square, Play, Timer, Send, CheckCircle2, XCircle, Clock, Loader2,
   SkipForward, BarChart3, Activity, RefreshCw, Zap, AlertTriangle,
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
-import { fromTable } from '@/lib/supabaseHelpers';
 import { useTalkXMonitor } from '@/hooks/integrations/useTalkXMonitor';
 import { motion } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
@@ -24,8 +23,6 @@ import type { TalkXCampaign, TalkXRecipient } from '@/hooks/integrations/useTalk
 import { useTalkX } from '@/hooks/integrations/useTalkX';
 import { useTalkXEvents } from '@/hooks/integrations/useTalkXEvents';
 import { IconTile, RailCard, MetaRow, StatusPill, CAMPAIGN_STATUS, RECIPIENT_STATUS, fmtInt, pct, fmtDateTime, fmtAgo } from './talkxShared';
-import { exportRecipientsCsv, type RecipientRow } from '@/lib/talkxExport';
-
 interface Props { campaignId: string; onBack?: () => void }
 type MonitorTab = 'overview' | 'recipients' | 'timeline';
 const REFETCH = 4000;
@@ -96,33 +93,6 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   // Real rate data from hook (E02) — replaced Math.random with actual DB data
   const { rateByMinute: chartData } = useTalkXMonitor(campaignId, statusFilter);
 
-  const handleExport = async () => {
-    // P1 fix: pagina em lotes de 1000 ate esgotar os destinatarios
-    const PAGE = 1000;
-    let offset = 0;
-    const allRows: RecipientRow[] = [];
-    for (;;) {
-      const { data, error } = await fromTable('talkx_recipients')
-        .select('status, sent_at, delivered_at, error_message, personalized_message, contacts:contact_id(name, phone)')
-        .eq('campaign_id', campaignId).order('created_at').order('id').range(offset, offset + PAGE - 1);
-      if (error) { console.warn('[export] page error:', error.message); return; } // aborta: nao exporta parcial
-      if (!data?.length) break;
-      allRows.push(...(data as Record<string, unknown>[]).map((r) => ({
-        name: (r.contacts as { name: string } | null)?.name ?? null,
-        phone: (r.contacts as { phone: string } | null)?.phone ?? null,
-        status: String(r.status ?? ''),
-        sent_at: r.sent_at ? String(r.sent_at) : null,
-        delivered_at: r.delivered_at ? String(r.delivered_at) : null,
-        error_message: r.error_message ? String(r.error_message) : null,
-        personalized_message: r.personalized_message ? String(r.personalized_message) : null,
-      }) as RecipientRow));
-      if (data.length < PAGE) break; // ultima pagina
-      offset += PAGE;
-    }
-    if (allRows.length === 0) return;
-    exportRecipientsCsv(allRows, campaign?.name ?? 'campanha');
-  };
-
   if (!campaign) return <div className="space-y-4 animate-pulse">{Array.from({length:3}).map((_,i) => <div key={i} className="h-24 bg-muted rounded-2xl"/>)}</div>;
 
   const isRunning = campaign.status === 'sending';
@@ -149,7 +119,6 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
               {isPaused && <button type="button" onClick={()=>setConfirmResume(true)} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4"/>Retomar</button>}
               <button type="button" onClick={()=>setConfirmCancel(true)} className="h-9 px-3.5 rounded-lg border border-dash-red/40 bg-dash-red/10 text-dash-red text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-red/20"><Square className="w-4 h-4"/>Cancelar</button>
             </>)}
-            <button type="button" onClick={handleExport} className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium flex items-center gap-1.5 hover:bg-muted/50"><Download className="w-4 h-4"/>CSV</button>
           </div>
         </div>
         <Progress value={progress} className="h-3 mb-1.5"/>

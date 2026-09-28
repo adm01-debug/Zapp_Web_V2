@@ -69,7 +69,7 @@ export function ContactDialogs({
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogTrigger asChild>
           <motion.div whileTap={tapAnimation} className="inline-block">
-            <Button className="h-9 px-4 rounded-xl bg-success hover:bg-success/90 text-white font-semibold text-sm gap-1.5 shadow-[0_8px_24px_-10px_hsl(var(--success)/.7)]">
+            <Button className="h-9 px-4 rounded-lg bg-success hover:bg-success/90 text-white font-semibold text-sm gap-1.5 shadow-[0_8px_24px_-10px_hsl(var(--success)/.7)]">
               <Plus className="w-4 h-4" strokeWidth={2.5} />
               Novo Contato
             </Button>

@@ -1,16 +1,15 @@
-import { Clock, Filter, Download, RefreshCw } from 'lucide-react';
+import { Clock, Filter, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface DashboardToolbarProps {
   onRefresh?: () => void;
-  onExport?: () => void;
   onFilter?: () => void;
   isLoading?: boolean;
   lastUpdated?: Date;
 }
 
-export function DashboardToolbar({ onRefresh, onExport, onFilter, isLoading, lastUpdated }: DashboardToolbarProps) {
+export function DashboardToolbar({ onRefresh, onFilter, isLoading, lastUpdated }: DashboardToolbarProps) {
   return (
     <div className="flex items-center justify-between mb-6">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -25,12 +24,6 @@ export function DashboardToolbar({ onRefresh, onExport, onFilter, isLoading, las
           <Button variant="outline" size="sm" onClick={onFilter} className="gap-2">
             <Filter className="w-4 h-4" />
             <span className="hidden sm:inline">Filtrar</span>
-          </Button>
-        )}
-        {onExport && (
-          <Button variant="outline" size="sm" onClick={onExport} className="gap-2">
-            <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">Exportar</span>
           </Button>
         )}
         {onRefresh && (

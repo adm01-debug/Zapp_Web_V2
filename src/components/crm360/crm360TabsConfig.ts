@@ -49,26 +49,6 @@ export function formatCellValue(value: unknown, format?: string): string {
   return String(value);
 }
 
-// ─── CSV Export ──────────────────────────────────────────────
-export function exportToCSV(data: Record<string, unknown>[], columns: TabConfig['columns'], filename: string) {
-  if (!data.length) return;
-  const header = columns.map(c => c.label).join(',');
-  const rows = data.map(row =>
-    columns.map(c => {
-      const val = row[c.key];
-      const str = val === null || val === undefined ? '' : String(val);
-      return `"${str.replace(/"/g, '""')}"`;
-    }).join(',')
-  );
-  const csv = [header, ...rows].join('\n');
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${filename}_${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 // ─── RFM Segment colors ─────────────────────────────────────
 export const RFM_SEGMENT_COLORS: Record<string, string> = {
