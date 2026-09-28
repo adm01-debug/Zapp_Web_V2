@@ -496,13 +496,20 @@
             "justification": "O ledger de producao guarda so um comentario factual (\"-- aplicado via MCP, ver PR #569\"), sem SQL historico recuperado: o DDL foi aplicado via MCP antes de ser versionado. O arquivo replay preserva o CREATE OR REPLACE FUNCTION audit_role_changes() completo (campos forenses actor_kind/actor_db_role/actor_app_name/actor_addr) mais o DROP FUNCTION audit_user_role_changes() (funcao orfa criada pela migration 20260924120000/PR #562, nunca chamada pelo trigger). Bytes do arquivo fixados pelo manifesto."
         },
         {
-            "version": "20260927421000",
-            "filename": "20260927421000_add_sync_contact_status_on_closure_trigger.sql",
-            "file_sha256": "6825606e7ac2a09e59abf93d0a1b7b99f55be2555e195a6927d758e239848724",
-            "ledger_name": "add_sync_contact_status_on_closure_trigger",
-            "ledger_statements_sha256": "b63201e84a1074118dee013a1d8f4965ae068e20429248d0f3f51d5fa2aa94a0",
-            "kind": "ledger-only/comment-only",
-            "justification": "Registro existia no ledger apenas como comment placeholder sem SQL executavel. O SQL real nao foi implementado nesta versao; o arquivo stub factual e fixado pelo manifesto."
+            "version": "20260927540000",
+            "filename": "20260927540000_security_gamification_guards_e2e_cleanup_avg_null.sql",
+            "file_sha256": "ca19c1002a5e68a149ec9d744c0a5d756d449ff1b0a54b52c738538d4874df43",
+            "ledger_name": "security_gamification_guards_e2e_cleanup_avg_null",
+            "kind": "ledger-only/name-and-file-pinned",
+            "justification": "Ledger registra apenas descricao em prosa; DDL aplicado via MCP em 2026-09-27 sem SQL executavel no ledger. Arquivo documenta as funcoes add_agent_xp/grant_agent_achievement/increment_agent_messages com guard auth.role()='anon', cap XP 500, dedup daily_goal com fuso America/Sao_Paulo, mais DELETE de closures do contato E2E 04dff4dc e UPDATE avg_response_time_seconds=NULL onde era 0."
+        },
+        {
+            "version": "20260927550000",
+            "filename": "20260927550000_perf_fk_indexes_domain_checks_drop_orphans.sql",
+            "file_sha256": "6782cdc3cf848f47495e1fb479b25b50484ee2f8205b1f2f5d1a1584f549b5e6",
+            "ledger_name": "perf_fk_indexes_domain_checks_drop_orphans",
+            "kind": "ledger-only/name-and-file-pinned",
+            "justification": "Ledger registra apenas descricao em prosa; DDL aplicado via MCP em 2026-09-27. Arquivo documenta criacao dos 4 indices de FK em falta (direct_member_b, profile_id em receipts/audit_logs/invites), ADD CONSTRAINT CHECK NOT VALID em agent_stats (xp>=0, level>=1) com VALIDATE, e DROP dos 3 indices orfaos confirmados (idx_audit_logs_user_created, idx_conversation_events_from_queue_id, idx_conversation_events_to_queue_id)."
         }
     ]
 }
