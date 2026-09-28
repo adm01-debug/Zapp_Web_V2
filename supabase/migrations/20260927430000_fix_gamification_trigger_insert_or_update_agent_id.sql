@@ -1,7 +1,7 @@
 -- fix(db): corrigir guard lógico + cap XP + dedup daily_goal nas funções de gamificação
 -- Auditoria de 5 agentes (2026-09-27):
 -- Vector 2: guard 'IS NOT NULL AND NOT (...)' estava invertido para anon (auth.uid() IS NULL).
---            Corrigido para 'auth.role() = ''anon'' OR (auth.uid() IS NOT NULL AND NOT (...))'.
+--            Corrigido para 'auth.role() = ''anon'' OR (auth.uid() IS NOT NULL AND NOT (...))'.  
 --            Distingue anon (role=anon) de service_role (uid=null mas role=service_role):
 --            service_role passa (triggers, evolution-webhook); anon é bloqueado.
 --            Afeta: add_agent_xp, grant_agent_achievement, increment_agent_messages.
