@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { AiClassifyTicketsSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
@@ -32,11 +32,6 @@ Deno.serve(async (req) => {
 
     const { limit } = parsed.data;
 
-    // callerClient roda com RLS real (anon key + Authorization do chamador).
-    // A tabela ai_conversation_tags carrega contact_id (PII indireta) e a
-    // policy real dela já restringe por fila/atribuição — usar o client
-    // service_role aqui devolveria tags de TODA a base pra qualquer agente
-    // autenticado, ignorando essa restrição.
     const { data: tags } = await callerClient
       .from("ai_conversation_tags")
       .select("id, contact_id, tag_name, confidence, source")
@@ -103,6 +98,6 @@ Deno.serve(async (req) => {
     return jsonResponse({ classified: results.length, results, summary }, 200, req);
   } catch (err: unknown) {
     log.error("Error", { error: err instanceof Error ? err.message : String(err) });
-    return errorResponse(err instanceof Error ? err.message : "Erro interno", 500, req);
+    return internalErrorResponse(err, req);
   }
 });

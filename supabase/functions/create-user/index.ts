@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, sanitizeString, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger, sanitizeString, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -16,7 +16,6 @@ Deno.serve(async (req) => {
     const supabaseUrl = requireEnv("SUPABASE_URL");
     const serviceRoleKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
 
-    // Verify the caller is authenticated and is admin
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       log.warn("Missing auth header");
@@ -33,7 +32,6 @@ Deno.serve(async (req) => {
       return errorResponse("Não autorizado", 401, req);
     }
 
-    // Check if caller is admin
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: roleData } = await adminClient
       .from("user_roles")
@@ -69,7 +67,6 @@ Deno.serve(async (req) => {
     const { email, password, name, nickname, signature, job_title, avatar_url, role, gmail_email, google_services, dropbox_email } = parsed.data;
     const sanitizedName = sanitizeString(name) || name;
 
-    // Create user via admin API
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email,
       password,
@@ -82,7 +79,6 @@ Deno.serve(async (req) => {
       return errorResponse(createError.message, 400, req);
     }
 
-    // If a specific role was provided (not default 'agent'), update it
     if (role && role !== "agent" && newUser.user) {
       await adminClient
         .from("user_roles")
@@ -90,7 +86,6 @@ Deno.serve(async (req) => {
         .eq("user_id", newUser.user.id);
     }
 
-    // Update profile with additional fields
     if (newUser.user) {
       const profileUpdate: Record<string, unknown> = {};
       if (nickname) profileUpdate.nickname = nickname;
@@ -106,7 +101,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // If a Gmail email was provided, create the gmail_accounts record
     if (gmail_email && newUser.user) {
       const { error: gmailError } = await adminClient
         .from("gmail_accounts")
@@ -121,7 +115,6 @@ Deno.serve(async (req) => {
         log.error("Gmail account creation failed", { error: gmailError.message });
       }
 
-      // Create Google service accounts linked to same email
       if (google_services && google_services.length > 0) {
         const serviceRows = google_services.map((svc: string) => ({
           user_id: newUser.user!.id,
@@ -140,7 +133,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // If a Dropbox email was provided, create the service account
     if (dropbox_email && newUser.user) {
       const { error: dropboxError } = await adminClient
         .from("user_service_accounts")
@@ -160,6 +152,6 @@ Deno.serve(async (req) => {
     return jsonResponse({ success: true, user_id: newUser.user?.id }, 200, req);
   } catch (err: unknown) {
     log.error("Unhandled error", { error: err instanceof Error ? err.message : String(err) });
-    return errorResponse(err instanceof Error ? err.message : "Erro interno", 500, req);
+    return internalErrorResponse(err, req);
   }
 });
