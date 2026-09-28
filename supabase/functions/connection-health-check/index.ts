@@ -17,7 +17,8 @@ Deno.serve(async (req) => {
     const baseUrl = evolutionUrl.replace(/\/+$/, '');
 
     const { data: connections, error: connError } = await supabase
-      .from('whatsapp_connections').select('id, instance_id, status, phone_number');
+      .from('whatsapp_connections').select('id, instance_id, status, phone_number')
+      .neq('instance_id', 'E2E_FIXTURE'); // Pular fixture E2E — status seeded nao deve ser sobrescrito pelo health check
 
     if (connError || !connections) return errorResponse('Failed to fetch connections', 500, req);
 
@@ -88,12 +89,12 @@ Deno.serve(async (req) => {
 
     for (const alert of alertsToCreate) {
       // Schema real de warroom_alerts: alert_type/title/message/source
-      // (severity/description/metadata não existem — o insert antigo falhava
-      // com PGRST204 e o alerta crítico nunca era gravado).
+      // (severity/description/metadata nao existem — o insert antigo falhava
+      // com PGRST204 e o alerta critico nunca era gravado).
       await supabase.from('warroom_alerts').insert({
         alert_type: 'critical',
-        title: `🔴 Conexão ${alert.instance_id} desconectada`,
-        message: `A instância ${alert.instance_id}${alert.phone ? ` (${alert.phone})` : ''} perdeu conexão com o WhatsApp. Reconecte para evitar perda de mensagens.`,
+        title: `\uD83D\uDD34 Conexao ${alert.instance_id} desconectada`,
+        message: `A instancia ${alert.instance_id}${alert.phone ? ` (${alert.phone})` : ''} perdeu conexao com o WhatsApp. Reconecte para evitar perda de mensagens.`,
         source: 'connection-health-check',
       }).then(({ error }) => { if (error) log.warn("Failed to create warroom alert", { error: error.message }); });
     }
@@ -117,14 +118,14 @@ Deno.serve(async (req) => {
               body: JSON.stringify({
                 from: 'ZAPP Alertas <alertas@promobrindes.com.br>',
                 to,
-                subject: `🔴 WhatsApp ${alert.instance_id} desconectado — ZAPP`,
+                subject: `\uD83D\uDD34 WhatsApp ${alert.instance_id} desconectado \u2014 ZAPP`,
                 html: `<div style="font-family:${EMAIL_FONT_STACK};max-width:600px;margin:0 auto">
-                  <h2 style="color:#dc2626">🔴 A conexão do WhatsApp caiu</h2>
+                  <h2 style="color:#dc2626">\uD83D\uDD34 A conexao do WhatsApp caiu</h2>
                   <div style="background:#fef2f2;border-left:4px solid #dc2626;padding:16px;margin:16px 0">
-                    <p style="margin:0;font-size:16px">A instância <strong>${label}</strong> perdeu a conexão. Enquanto ela estiver fora, nenhuma mensagem entra nem sai.</p>
+                    <p style="margin:0;font-size:16px">A instancia <strong>${label}</strong> perdeu a conexao. Enquanto ela estiver fora, nenhuma mensagem entra nem sai.</p>
                   </div>
-                  <p style="font-size:15px">Abra <strong>Conexões</strong> no ZAPP e escaneie o QR Code para reconectar.</p>
-                  <p style="color:#9ca3af;font-size:12px;margin-top:24px">Detectado em ${new Date().toISOString()} pelo monitor automático (connection-health-check).</p>
+                  <p style="font-size:15px">Abra <strong>Conexoes</strong> no ZAPP e escaneie o QR Code para reconectar.</p>
+                  <p style="color:#9ca3af;font-size:12px;margin-top:24px">Detectado em ${new Date().toISOString()} pelo monitor automatico (connection-health-check).</p>
                 </div>`,
               }),
             });
