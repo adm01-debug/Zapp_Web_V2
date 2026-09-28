@@ -6,7 +6,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { ConversationTabCounts } from '@/hooks/chat/useConversationTabCounts';
 
-export type ConversationTab = 'chat' | 'ia' | 'crm' | 'orders' | 'tasks' | 'notes' | 'files' | 'history' | 'reminders';
+export type ConversationTab = 'chat' | 'ia' | 'crm' | 'orders' | 'tasks' | 'notes' | 'files' | 'history';
 
 interface TabDef {
   id: ConversationTab;
@@ -24,9 +24,7 @@ const TABS: TabDef[] = [
   { id: 'tasks', label: 'Tarefas', icon: CheckSquare, count: (c) => c.tasksOpen },
   { id: 'notes', label: 'Notas', icon: FileText, count: (c) => c.notesTotal },
   { id: 'files', label: 'Arquivos', icon: Paperclip, count: (c) => c.filesTotal },
-  { id: 'history', label: 'Histórico', icon: History },
-  { id: 'reminders', label: 'Lembretes', icon: Bell, count: (c) => c.remindersPending },
-];
+  { id: 'history', label: 'Histórico', icon: History },];
 
 interface ConversationTabsProps {
   activeTab: ConversationTab;
