@@ -120,6 +120,24 @@ jobs:
         run: echo "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin || true
         continue-on-error: true
 
+      # Supabase CLI 2.116.0 usa public.ecr.aws/supabase/postgres-meta:v0.98.0
+      # internamente. O ECR public tem rate-limit anonimo compartilhado entre
+      # os runners do GitHub Actions ("toomanyrequests"/"Data limit exceeded").
+      # Pre-puxa via ghcr.io (autenticado com GITHUB_TOKEN, sem esse limite) e
+      # retaga como a imagem ECR: Docker encontra em cache e nao vai ao ECR
+      # quando o CLI disparar o pull.
+      - name: Pre-pull postgres-meta via ghcr.io (evita rate-limit do ECR public)
+        continue-on-error: true
+        run: |
+          GHCR_IMG="ghcr.io/supabase/postgres-meta:v0.98.0"
+          ECR_IMG="public.ecr.aws/supabase/postgres-meta:v0.98.0"
+          if docker pull "$GHCR_IMG" 2>&1; then
+            docker tag "$GHCR_IMG" "$ECR_IMG"
+            echo "Pre-pull concluido: $ECR_IMG em cache local."
+          else
+            echo "::warning::Pre-pull de $GHCR_IMG falhou; CLI tentara ECR diretamente."
+          fi
+
       - name: Gerar candidatos em diretorio temporario
         run: |
           umask 077
