@@ -101,15 +101,15 @@ describe('ChatPanelHeader', () => {
     expect(screen.getByText('Online')).toBeInTheDocument();
   });
 
-  it('renders exactly 4 header action buttons (Ligar · Vídeo · Adicionar participante · Mais)', () => {
+  it('renders only the Mais ações button in the header (Ligar/Vídeo/Adicionar participante moved to contact sidebar)', () => {
     render(
       <Wrapper>
         <ChatPanelHeader {...baseProps} />
       </Wrapper>
     );
-    expect(screen.getByLabelText('Ligar')).toBeInTheDocument();
-    expect(screen.getByLabelText('Videochamada')).toBeInTheDocument();
-    expect(screen.getByLabelText('Adicionar participante')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Ligar')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Videochamada')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Adicionar participante')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Mais ações')).toBeInTheDocument();
   });
 
