@@ -88,9 +88,9 @@ export function ContactsView() {
               <motion.div whileTap={tapAnimation}>
                 <Button
                   onClick={() => setIsCRMSearchOpen(true)}
-                  className="h-9 px-4 rounded-lg bg-primary/20 border border-primary/50 text-primary-glow hover:bg-primary/30 font-semibold text-sm gap-1.5"
+                  className="h-12 px-5 rounded-xl bg-primary/20 border border-primary/50 text-primary-glow hover:bg-primary/30 font-semibold text-base gap-2"
                 >
-                  <Sparkles className="w-4 h-4" />CRM 360°
+                  <Sparkles className="w-[18px] h-[18px]" />CRM 360°
                 </Button>
               </motion.div>
             )}
@@ -98,9 +98,9 @@ export function ContactsView() {
               <Button
                 onClick={handleSync}
                 disabled={loading}
-                className="h-9 px-4 rounded-lg bg-card border border-border text-foreground hover:bg-muted font-semibold text-sm gap-1.5"
+                className="h-12 px-5 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-base gap-2"
               >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />Sincronizar
+                <RefreshCw className={`w-[18px] h-[18px] ${loading ? 'animate-spin' : ''}`} />Sincronizar
               </Button>
             </motion.div>
             <ContactDialogs
