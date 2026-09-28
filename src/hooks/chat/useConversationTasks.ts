@@ -79,17 +79,18 @@ export function useConversationTasks(contactId: string | null | undefined) {
 
   const createMutation = useMutation({
     mutationFn: async (input: { title: string; priority?: string; dueDate?: string | null; assignedTo?: string | null; createdBy?: string | null; description?: string | null }) => {
-      // Campos created_by e assigned_to sao NOT NULL no banco (DEFAULT auth.uid()).
-      // Omitir do payload quando null/undefined para que o banco use o DEFAULT.
-      const assignedTo = input.assignedTo ?? input.createdBy;
+      // created_by é NOT NULL sem DEFAULT — precisamos do UID do usuário atual.
+      const { data: { session } } = await supabase.auth.getSession();
+      const createdBy = input.createdBy ?? session?.user.id ?? '';
+      const assignedTo = input.assignedTo ?? createdBy;
       const { error } = await supabase.from('conversation_tasks').insert({
         contact_id: contactId,
         title: input.title,
         priority: input.priority ?? 'medium',
         due_date: input.dueDate ?? null,
         description: input.description ?? null,
-        ...(assignedTo != null ? { assigned_to: assignedTo } : {}),
-        ...(input.createdBy != null ? { created_by: input.createdBy } : {}),
+        created_by: createdBy,
+        ...(assignedTo ? { assigned_to: assignedTo } : {}),
       });
       if (error) throw error;
     },
