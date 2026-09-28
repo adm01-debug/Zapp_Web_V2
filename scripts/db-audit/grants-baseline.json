@@ -2,7 +2,8 @@
     "note": "Regenerar apos qualquer GRANT/REVOKE e revisar o diff antes de commitar.",
     "anon_execute": [
         "calculate_level(xp_amount bigint)",
-        "conversation_closure_day(p_created_at timestamp with time zone)"
+        "conversation_closure_day(p_created_at timestamp with time zone)",
+        "grant_agent_achievement(p_profile_id uuid, p_type text, p_name text, p_description text, p_xp_reward integer)"
     ],
     "generated_at": "2026-09-28",
     "anon_table_select": [
