@@ -72,6 +72,7 @@ export const MessageBubble = memo(function MessageBubble({
       <SwipeableMessage onSwipeRight={() => onReply(message)} onSwipeLeft={() => onForward(message)}>
         <div
           ref={registerRef}
+          data-testid="message-group"
           data-search-highlight={highlightedMessageIds?.has(message.id) ? 'true' : undefined}
           className={cn(
             'flex group gap-2.5 transition-all duration-300',

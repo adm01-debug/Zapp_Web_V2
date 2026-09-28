@@ -84,12 +84,14 @@ export function MessageReactions({
   };
 
   return (
-    <div className={cn('flex items-center gap-1 flex-wrap', isSent ? 'justify-end' : 'justify-start')}>
+    <div data-testid="message-reactions" className={cn('flex items-center gap-1 flex-wrap', isSent ? 'justify-end' : 'justify-start')}>
       <TooltipProvider>
         {reactionsList.map((reaction) => (
           <Tooltip key={reaction.emoji}>
             <TooltipTrigger asChild>
               <button
+                data-testid="reaction-badge"
+                data-emoji={reaction.emoji}
                 onClick={() => handleReact(reaction.emoji)}
                 className={cn(
                   'flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs',
@@ -123,6 +125,7 @@ export function MessageReactions({
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <button
+            data-testid="reaction-add-button"
             className={cn(
               'p-1 rounded-full transition-all hover:scale-110 active:scale-90',
               'hover:bg-muted/80 text-muted-foreground hover:text-foreground',
@@ -217,11 +220,14 @@ export function QuickReactionBar({
   };
 
   return (
-    <div className={cn(
-      'absolute -top-9 flex items-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-20',
-      showPicker && 'opacity-100',
-      isSent ? 'right-0' : 'left-0'
-    )}>
+    <div
+      data-testid="quick-reaction-bar"
+      className={cn(
+        'absolute -top-9 flex items-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-20',
+        showPicker && 'opacity-100',
+        isSent ? 'right-0' : 'left-0'
+      )}
+    >
       <motion.div
         initial={{ opacity: 0, y: 4, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -231,6 +237,8 @@ export function QuickReactionBar({
         {WHATSAPP_REACTIONS.map((emoji) => (
           <button
             key={emoji}
+            data-testid="quick-reaction-emoji"
+            data-emoji={emoji}
             onClick={() => handleReact(emoji)}
             className={cn(
               'w-7 h-7 flex items-center justify-center rounded-full hover:bg-muted/80 hover:scale-125 transition-all text-base',
@@ -243,7 +251,10 @@ export function QuickReactionBar({
 
         <Popover open={showPicker} onOpenChange={setShowPicker}>
           <PopoverTrigger asChild>
-            <button className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-muted/80 transition-all text-muted-foreground hover:text-foreground">
+            <button
+              data-testid="quick-reaction-more"
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-muted/80 transition-all text-muted-foreground hover:text-foreground"
+            >
               <SmilePlus className="w-4 h-4" />
             </button>
           </PopoverTrigger>
