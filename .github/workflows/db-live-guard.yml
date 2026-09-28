@@ -171,11 +171,12 @@ jobs:
           test -s /tmp/fresh-manifest.json
           node scripts/db-audit/check-manifest-fresh.mjs /tmp/fresh-manifest.json
 
-      - name: Docker Hub login (previne rate-limit anonimo no gen-types)
+      # gen-types.sh puxa ghcr.io/supabase/postgres-meta (GitHub Container
+      # Registry, nao Docker Hub). GITHUB_TOKEN le pacotes publicos sem secret extra.
+      - name: ghcr.io login (previne rate-limit no gen-types)
         env:
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-          DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
-        run: echo "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USER" --password-stdin || true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin || true
         continue-on-error: true
 
       - name: Verificar frescor do types.ts

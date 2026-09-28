@@ -66,7 +66,7 @@ export function ConversationTabContent({
       */}
       <div className={activeTab === 'chat' ? 'flex-1 flex flex-col min-h-0' : 'hidden'}>
         {activeTab === 'chat' && (
-          <div className="px-4 pt-3">
+          <div className="px-4 pt-3 empty:hidden">
             <TabBanner
               icon={Sparkles}
               title="Assistente IA"
