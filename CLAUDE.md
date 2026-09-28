@@ -392,6 +392,24 @@ uma correção de edge function mergeada continua **fora do ar** até alguém di
 aprovar. Quem mergear fix de edge function e disser "está em produção" sem esse par de passos está
 reportando errado — aconteceu nesta sessão com o fix do `trash-thread` do Gmail (PR #840).
 
+## Alocação de versão de migration (2026-09-28) — evita colisão entre sessões paralelas
+
+Várias sessões `claude -p` aplicam DDL ao mesmo tempo; em 27/09 isso gerou 4 PRs concorrentes
+(#1038, #1042, #1045, #1077) renomeando o mesmo arquivo para versões diferentes, cada uma colidindo
+com outra migration real. Regras:
+
+1. **Antes de criar arquivo ou aplicar DDL**, no mesmo turno: `SELECT max(version) FROM
+   supabase_migrations.schema_migrations`, `ls supabase/migrations | tail` e busca de PRs abertas
+   tocando `supabase/migrations/`. Versão nova = maior dos três + `10000`. Para reservar de forma atômica (sem colisão entre sessões), chame `SELECT supabase_migrations.reserve_migration_version('<sessao>', '<motivo>')` via `db_query`: ela pega o maior entre ledger e reservas, soma `10000`, grava a reserva e devolve a versão (confira ainda o `ls` e as PRs abertas, pois arquivos ainda sem ledger não entram no cálculo). Se existir PR aberta com o
+   mesmo objetivo, pare e avise — não abra a segunda.
+2. **O ledger ao vivo é a verdade.** Nunca renomeie um arquivo para outra versão "para resolver"
+   colisão: se o slot está ocupado no ledger, o arquivo espera o SQL real dele e a versão que ele já
+   tem no ledger; só o que nunca foi registrado pode ganhar versão nova.
+3. **Rename = delete e create em commits separados.** O git detecta rename por similaridade e o guard
+   "Rejeitar edicao de migration ja existente" (db-guard.yml) reprova o PR.
+4. **Ledger só com comentário** (`ledger-only/comment-only`) não descreve o que rodou; confirme o
+   estado real por `pg_get_functiondef`/`pg_indexes`/`pg_constraint` antes de citar a migration.
+
 ## graphify
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
 - For codebase questions: `graphify query "<question>"` when graph.json exists.

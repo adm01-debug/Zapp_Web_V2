@@ -3,7 +3,7 @@ import { EditContactDialog } from './contact-details/EditContactDialog';
 import { Conversation } from '@/types/chat';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { X, PanelRightClose } from 'lucide-react';
+import { PanelRightClose } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ContactHeaderSection } from './contact-details/ContactHeaderSection';
 import { ContactAccordionSections } from './contact-details/ContactAccordionSections';
@@ -102,20 +102,18 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
           <div className="w-1 h-5 rounded-full bg-primary" />
           <h3 className="font-semibold text-foreground text-sm">Detalhes do Contato</h3>
         </div>
-        <div className="flex items-center gap-1">
+        {/* mr-[68px]: o botão Zen (AppShell) é absoluto no canto superior direito e cobria os botões do header */}
+        <div className="flex items-center gap-1 mr-[68px]">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={onClose} aria-label="Recolher painel de detalhes" className="w-7 h-7 hover:bg-muted transition-colors">
-                  <PanelRightClose className="w-3.5 h-3.5" />
+                <Button variant="ghost" size="icon" onClick={onClose} aria-label="Recolher painel de detalhes" className="w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                  <PanelRightClose className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Recolher painel</TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar painel de detalhes" className="w-7 h-7 hover:bg-destructive/10 hover:text-destructive transition-colors">
-            <X className="w-3.5 h-3.5" />
-          </Button>
         </div>
       </div>
 

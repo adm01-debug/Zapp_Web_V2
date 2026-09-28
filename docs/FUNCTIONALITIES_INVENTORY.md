@@ -1,8 +1,8 @@
 # Inventário Completo de Funcionalidades e Ferramentas
 
 > **Projeto:** WhatsApp CRM  
-> **Última Atualização:** 2025-01-24  
-> **Versão:** 1.0.0
+> **Última Atualização:** 2026-09-28  
+> **Versão:** 2.0.0
 
 ---
 
@@ -28,6 +28,7 @@
 18. [Edge Functions](#18-edge-functions)
 19. [Estrutura de Pastas](#19-estrutura-de-pastas)
 20. [Secrets Configurados](#20-secrets-configurados)
+21. [Talk X / Campanhas WhatsApp](#21-talk-x--campanhas-whatsapp)
 
 ---
 
@@ -351,7 +352,9 @@ logDelete(entityType, entityId, details)
 
 ## 17. Banco de Dados
 
-### Tabelas (24 total)
+### Tabelas principais do core (29 listadas) + módulo Talk X (12) = 41 documentadas
+
+#### Core do sistema
 
 | Tabela | Função | Campos Principais |
 |--------|--------|-------------------|
@@ -385,11 +388,40 @@ logDelete(entityType, entityId, details)
 | `audit_logs` | Auditoria | action, entity_type, entity_id, details |
 | `notifications` | Notificações | title, message, type, is_read |
 
+#### Módulo Talk X / Campanhas
+
+| Tabela | Função | Campos Principais |
+|--------|--------|-------------------|
+| `talkx_campaigns` | Campanhas WA | name, status, template_id, segment_id, schedule_at, sent_count, delivered_count |
+| `talkx_recipients` | Destinatários | campaign_id, contact_id, phone, status, sent_at, delivered_at, replied_at, external_id |
+| `talkx_segments` | Segmentos | name, filters (JSONB), contact_count, owner_id |
+| `talkx_templates` | Templates de msg | name, body, variables (JSONB), category, use_count |
+| `talkx_template_versions` | Versões de template | template_id, version_number, body, created_at |
+| `talkx_blacklist` | Lista de supressão/bloqueio | phone, contact_id, reason, blocked_by, origin, reason_code, expires_at |
+| `talkx_links` | Links rastreáveis | campaign_id, original_url, slug (case-insensitive), click_count |
+| `talkx_link_clicks` | Cliques em links | link_id, recipient_id, clicked_at, user_agent |
+| `talkx_conversions` | Conversões | link_id, recipient_id, converted_at, value |
+| `talkx_settings` | Config do módulo | owner_id, daily_limit, rate_per_minute, window_start, window_end |
+| `talkx_campaign_events` | Eventos de campanha (log de estado) | campaign_id, event_type, message, actor_id, created_at |
+| `talkx_template_variants` | Variantes A/B de template | template_id, label, content, media_url, media_type, weight |
+
+#### Views e RPCs Talk X
+
+| Objeto | Tipo | Propósito |
+|--------|------|----------|
+| `talkx_campaign_metrics` | View | Métricas agregadas por campanha (RLS bypass corrigido) |
+| `talkx_overview_stats` | RPC | Stats gerais: campanhas ativas, enviados, taxa de entrega |
+| `talkx_campaign_report` | RPC | Relatório detalhado de uma campanha específica |
+| `talkx_segment_tags` | RPC | Tags dos segmentos (para filtros) |
+| `talkx_benchmarks` | RPC | Benchmarks de 90 dias para insights heurísticos |
+| `talkx_increment_delivered` | RPC | Incrementa contador de entregues via webhook DELIVERY_ACK |
+| `record_talkx_link_click` | RPC | Registra clique em link rastreável |
+
 ---
 
 ## 18. Edge Functions
 
-### Funções Disponíveis (12 total)
+### Funções documentadas (16 de 69 registradas no deployment-manifest)
 
 | Função | Serviço | Propósito |
 |--------|---------|----------|
@@ -405,6 +437,10 @@ logDelete(entityType, entityId, details)
 | `get-mapbox-token` | Mapbox | Token para mapas |
 | `sentiment-alert` | Lovable AI | Alertas de sentimento |
 | `whatsapp-webhook` | WhatsApp Cloud | Receber eventos Cloud API |
+| `talkx-send` | Evolution GO | Enviar mensagens de campanha (retry + backoff, timeout 20s) |
+| `talkx-scheduler` | pg_cron (1 min) | Disparar envios agendados de campanhas |
+| `talkx-link` | Supabase Edge Function | Redirecionar link rastreável e registrar clique |
+| `talkx-report` | Supabase | Gerar relatório consolidado de campanha |
 
 ---
 
@@ -466,19 +502,94 @@ projeto/
 
 ---
 
+## 21. Talk X / Campanhas WhatsApp
+
+> Módulo de campanhas em massa via WhatsApp implementado em 9 fases (E01–E97+), totalmente
+> mergeado em `main` a partir de 2026-09-08. Documentação detalhada: `docs/talkx/`.
+
+### Visão Geral
+
+| Aspecto | Detalhe |
+|---------|---------|
+| Rota | `/talkx` (via `TalkXView.tsx`) |
+| Banco | 12 tabelas próprias + 8 views/RPCs (prefixo `talkx_`) |
+| Edge Functions | 4 funções dedicadas |
+| Componentes | 15 componentes `TalkX*.tsx` |
+| Hooks | 9 hooks `useTalkX*.ts` |
+| Agendamento | pg_cron job ID=11 a cada 1 min (`talkx-scheduler`) |
+| Status | Produção — Fases 0–9 mergeadas |
+
+### Fases Implementadas
+
+| Fase | Etapas | O que entregou |
+|------|--------|----------------|
+| 0 | E01–E10 | Saneamento: fix imports, monitor real, remoção de legados, lint zero, pg_cron, testes |
+| 1 | E11–E20 | Design system: primitivos visuais (DashboardCard, talkxShared) |
+| 2 | E21–E30 | Tela Overview com métricas reais (campanhas ativas, taxa de entrega) |
+| 3 | E31–E40 | Biblioteca de segmentos com filtros dinâmicos |
+| 4 | E41–E50 | Galeria e editor de templates com variáveis `{{nome}}` |
+| 5 | E51–E60 | Lista de supressão (opt-outs) com gestão via UI |
+| 6 | E61–E70 | Wizard de nova campanha (4 etapas): segmento→template→entrega→revisão |
+| 7 | E71–E85 | Ciclo de vida completo: agendada→rodando→pausada→relatório |
+| 8 | E86–E93 | Backend: RPCs de agregação, rastreio de entrega/leitura/resposta, links rastreáveis, retry+auto-pausa, insights heurísticos, `talkx_settings` |
+| 9 | E94–E97 | Importação CSV de contatos, badge CRM 360 nos destinatários, auditoria de estados e modais |
+
+### Componentes
+
+| Componente | Função |
+|------------|---------|
+| `TalkXView.tsx` | Container principal / roteador de abas |
+| `TalkXOverview.tsx` | Painel de visão geral com métricas |
+| `TalkXSegments.tsx` | Biblioteca de segmentos de contatos |
+| `TalkXTemplates.tsx` | Galeria de templates |
+| `TalkXTemplateEditor.tsx` | Editor de template com preview |
+| `TalkXSuppression.tsx` | Gestão da lista de supressão |
+| `TalkXCampaignWizard.tsx` | Wizard de criação (4 etapas) |
+| `TalkXWizardDelivery.tsx` | Etapa de configuração de entrega |
+| `TalkXContactSelector.tsx` | Seletor de destinatários com badge CRM 360 |
+| `TalkXCampaignScheduled.tsx` | Gerenciar campanha agendada |
+| `TalkXCampaignRunning.tsx` | Monitor de campanha em execução |
+| `TalkXLiveMonitor.tsx` | Monitor ao vivo de taxa de envio por minuto |
+| `TalkXAnalytics.tsx` | Analytics de campanha com insights |
+| `TalkXSettings.tsx` | Configurações do módulo |
+| `TalkXHelp.tsx` | Ajuda e documentação inline |
+
+### Hooks
+
+| Hook | Função |
+|------|--------|
+| `useTalkX.ts` | CRUD de campanhas, máquina de estados, lista paginada |
+| `useTalkXSegments.ts` | CRUD de segmentos, contagem de audiência |
+| `useTalkXTemplates.ts` | CRUD de templates, versões |
+| `useTalkXMonitor.ts` | Taxa de envio em tempo real (bucketiza `sent_at` por minuto) |
+| `useTalkXInsights.ts` | 4 regras heurísticas (sem IA): horário, segmento, template, taxa |
+| `useTalkXSuppression.ts` | Leitura/escrita da lista de supressão |
+| `useTalkXSettings.ts` | Leitura/escrita de `talkx_settings` |
+| `useTalkXEvents.ts` | Subscription Realtime para eventos de campanha |
+| `useTalkXCommandItems.ts` | Itens da command palette para Talk X |
+
+### Segurança
+
+- Filtro `.not('phone', 'ilike', 'sicoob-%')` em `countAudience`/`resolveAudience` — exclui contatos Sicoob de campanhas
+- RLS em todas as tabelas `talkx_*`; `REVOKE EXECUTE` de `anon`/`authenticated` nas RPCs sensíveis
+- `{{link}}` nunca fica sem substituição no `talkx-send` (proteção contra envio de URL bruta)
+- Rate limit e proteção contra IDOR no encurtador de links; slug case-insensitive
+
+---
+
 ## 📊 Estatísticas do Projeto
 
 | Métrica | Quantidade |
 |---------|------------|
-| Arquivos Totais | 250+ |
-| Componentes React | 155+ |
-| Custom Hooks | 50 |
+| Arquivos Totais | 400+ |
+| Componentes React | 170+ |
+| Custom Hooks | 59 |
 | Páginas | 7 |
-| Edge Functions | 12 |
-| Migrações SQL | 35 |
-| Tabelas no Banco | 24 |
+| Edge Functions | 16 documentadas (69 no deployment-manifest) |
+| Migrações SQL | 477+ |
+| Tabelas no Banco | 41 documentadas (29 core + 12 talkx_) |
 | Componentes UI | 60 |
-| Linhas de Documentação | 4500+ |
+| Última atualização | 2026-09-28 |
 
 ---
 
