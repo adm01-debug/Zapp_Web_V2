@@ -76,11 +76,36 @@ jobs:
             // Mas um 'renamed' com additions/deletions > 0 e o MESMO gap por
             // outra porta: o conteudo mudou junto com o nome, disfarcado de
             // rename puro (achado da auditoria de 5 agentes de 2026-09-27).
-            const violacoes = arquivos.filter(
+            const candidatas = arquivos.filter(
               (f) => /^supabase\/migrations\/\d{14}_.*\.sql$/.test(f.filename)
                 && (f.status === 'modified'
                   || (f.status === 'renamed' && ((f.additions || 0) > 0 || (f.deletions || 0) > 0))),
             );
+            // Excecao: promocao de stub comment-only para SQL real e permitida.
+            // Ocorre quando uma migration foi aplicada via MCP diretamente (sem
+            // passar pelo fluxo arquivo->PR), criando um stub em main com apenas
+            // comentarios. O db-live-guard exige que o arquivo corresponda ao
+            // ledger, entao o stub precisa ser promovido. Um arquivo e
+            // comment-only quando cada linha nao-vazia comeca com '--'.
+            const baseSha = context.payload.pull_request.base.sha;
+            const violacoes = [];
+            for (const f of candidatas) {
+              if (f.status === 'modified') {
+                try {
+                  const resp = await github.rest.repos.getContent({
+                    owner, repo, path: f.filename, ref: baseSha,
+                  });
+                  const text = Buffer.from(resp.data.content, 'base64').toString('utf-8');
+                  const isCommentOnly = text.split('\n').every(
+                    (l) => l.trim() === '' || l.trim().startsWith('--'),
+                  );
+                  if (isCommentOnly) continue;
+                } catch (_) {
+                  // Se nao conseguir buscar o base, trata como violacao (safe default).
+                }
+              }
+              violacoes.push(f);
+            }
             if (violacoes.length > 0) {
               const lista = violacoes.map((f) => f.filename).join('\n  - ');
               core.setFailed(
