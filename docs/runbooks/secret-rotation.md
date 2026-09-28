@@ -91,14 +91,15 @@ Usado por `deploy-functions.yml` para fazer deploy de edge functions.
 
 2. **Verificar o novo token (antes de instalar no Actions)**
    - Confirmar acesso ao projeto com chamada não-mutante à Management API — enquanto o secret antigo ainda está intacto no Actions.
-     Use `read -s` para evitar que o token apareça no histórico do shell:
+     Use `read -s` para evitar que o token apareça no histórico do shell; passe-o como variável de
+     ambiente para o CLI do Supabase (que não o expõe em `argv`):
      ```bash
      read -s TOKEN
-     curl -sf -H "Authorization: Bearer $TOKEN" \
-       https://api.supabase.com/v1/projects | grep tnnnlkbymytvtqngbbqh
+     SUPABASE_ACCESS_TOKEN="$TOKEN" supabase projects list 2>/dev/null \
+       | grep tnnnlkbymytvtqngbbqh
      unset TOKEN
      ```
-   - Esperado: saída contém `"tnnnlkbymytvtqngbbqh"` — token válido e com acesso ao projeto
+   - Esperado: saída contém `tnnnlkbymytvtqngbbqh` — token válido e com acesso ao projeto
    - Se o `grep` falhar (token inválido ou sem permissão), **não continue**: gere outro token antes de sobrescrever o secret no Actions
    - **Não** disparar `deploy-functions.yml` para verificar: o job está vinculado a
      `producao-edge-functions` e um `function_name` vazio deploya **todas** as funções
@@ -120,7 +121,43 @@ Usado por `deploy-functions.yml` para fazer deploy de edge functions.
 ## Secrets de terceiros (PROMOGIFTS, EXTERNAL\_SUPABASE, PREVIEW\_EGRESS)
 
 Não têm procedure de rotação automática aqui — dependem de processo externo ao repo.
-Ao rotar, propague o novo valor às edge functions via **Supabase Dashboard → Edge Functions → Manage secrets** (ou `supabase secrets set KEY=valor --project-ref tnnnlkbymytvtqngbbqh`). Essa abordagem atualiza apenas as variáveis de ambiente das funções, sem acionar deploy de código. Só dispare `deploy-functions.yml` (com `function_name` preenchido: `promogifts-catalog`, `crm-integration` ou `fetch-link-preview`) se houver mudança de código a publicar junto com a rotação.
+
+### Procedimento geral
+
+1. **Atualizar o GitHub Actions secret correspondente**
+   - Settings → Secrets and variables → Actions → `<NOME_DO_SECRET>` → Update
+   - **Este passo é obrigatório antes de atualizar a Edge.** O step "Configurar secrets nas edges"
+     de `deploy-functions.yml` (linhas 138–233) reescreve as variáveis de ambiente das edges a
+     partir dos secrets do Actions durante qualquer deploy. Se o Actions tiver o valor antigo e
+     um deploy for disparado após a rotação, ele sobrescreve o valor recém-rotacionado na Edge e
+     pode derrubar `crm-integration`, `promogifts-catalog` ou `fetch-link-preview`.
+
+2. **Atualizar o secret na Edge**
+   - Supabase Dashboard → `tnnnlkbymytvtqngbbqh` → Edge Functions → Manage secrets
+   - Prefira sempre o Dashboard a `supabase secrets set KEY=valor` (o comando expõe o valor em
+     `argv` durante a execução; se precisar do CLI, use `supabase secrets set --env-file <arquivo>`
+     com o arquivo protegido por `chmod 600`)
+   - Esta abordagem atualiza apenas as variáveis de ambiente das funções, sem acionar deploy de código.
+
+3. **Só dispare `deploy-functions.yml`** (com `function_name` preenchido: `promogifts-catalog`,
+   `crm-integration` ou `fetch-link-preview`) se houver mudança de código a publicar junto com a
+   rotação.
+
+### ⚠️ PREVIEW\_EGRESS\_SHARED\_SECRET — procedimento coordenado (VPS + Edge)
+
+Este secret vive em **dois lugares** (ver `docs/runbooks/preview-egress-proxy.md` linhas 28–30):
+o proxy na VPS Hostinger e as edge functions. Rotacionar apenas a Edge quebra imediatamente a
+autenticação HMAC de todas as preview requests.
+
+Procedimento:
+
+1. Gerar novo valor (string aleatória, ex.: `openssl rand -hex 32`)
+2. Atualizar o Actions secret `PREVIEW_EGRESS_SHARED_SECRET` (passo 1 acima)
+3. Atualizar o proxy na VPS (via MCP `HOSTINGER` → container `evolution-go-rxj2` ou serviço
+   dedicado ao proxy, conforme `preview-egress-proxy.md`)
+4. Atualizar a Edge (passo 2 acima)
+5. Validar: fazer uma preview request e confirmar resposta HTTP 200 (HMAC ok)
+6. Registrar data, operador e confirmação de validação
 
 ---
 
@@ -130,4 +167,4 @@ Ao rotar, propague o novo valor às edge functions via **Supabase Dashboard → 
 - [ ] `SUPABASE_ACCESS_TOKEN` — token ainda válido? (não-expirável por padrão, revogar manualmente)
 - [ ] `DEPLOY_FUNCTIONS_TOKEN` — se criado, ainda tem escopo mínimo (`contents:write` apenas)?
 - [ ] `DOCKERHUB_TOKEN` / `DOCKERHUB_USER` — token ativo no Docker Hub?
-- [ ] Secrets listados em `github_list_actions_secrets` vs. secrets referenciados nos workflows — há orfãos?
+- [ ] Secrets listados em `github_list_actions_secrets` vs. secrets referenciados nos workflows — há órfãos?
