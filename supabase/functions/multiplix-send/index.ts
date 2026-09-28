@@ -59,7 +59,10 @@ function getMediaEndpoint(mediaType: string): string {
   }
 }
 
-export async function handleMultiplixSend(req: Request): Promise<Response> {
+export async function handleMultiplixSend(
+  req: Request,
+  _injected?: { supabase?: ReturnType<typeof createClient>; serviceKey?: string },
+): Promise<Response> {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
@@ -68,11 +71,11 @@ export async function handleMultiplixSend(req: Request): Promise<Response> {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const serviceKey = _injected?.serviceKey ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const evolutionUrl = Deno.env.get("EVOLUTION_API_URL")!;
     const evolutionKey = Deno.env.get("EVOLUTION_API_KEY")!;
 
-    const supabase = createClient(supabaseUrl, serviceKey);
+    const supabase = _injected?.supabase ?? createClient(supabaseUrl, serviceKey);
 
     // Auth: x-cron-secret (pg_cron, sem Bearer) OU service-role key OU JWT admin/supervisor.
     // x-cron-secret é verificado ANTES do guard de Bearer para que pg_cron chegue aqui.
@@ -188,9 +191,6 @@ export async function handleMultiplixSend(req: Request): Promise<Response> {
       p_action: "start",
     });
     if (transitionError) {
-      if (transitionError.message === 'multiplix_dispatch_already_running') {
-        return new Response(JSON.stringify({ skipped: true, reason: 'already_running' }), { headers });
-      }
       return new Response(JSON.stringify({ error: transitionError.message }), { status: 409, headers });
     }
 
