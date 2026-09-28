@@ -1,3 +1,12 @@
+-- 20260927290000_fix_handle_new_user_role_null_email
+-- NULL bypass: NEW.email pode ser NULL em signup por telefone (auth sem email).
+-- split_part(NULL, '@', 2) => NULL; NULL = ANY(...) => NULL;
+-- IF NOT NULL => condicao NULL => ramo "negado" NAO executa =>
+-- usuario sem email recebia role 'agent' ignorando trusted_domains.
+-- Mesmo padrao corrigido em set_call_agent_notes (20260927100000).
+-- Fix: coalesce(..., false) garante que email NULL seja tratado como dominio
+-- nao confiavel.
+
 CREATE OR REPLACE FUNCTION public.handle_new_user_role()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -10,11 +19,14 @@ DECLARE
   v_allowed         boolean := false;
 BEGIN
   v_email_domain := split_part(NEW.email, '@', 2);
+
   v_trusted_domains := coalesce(
     nullif(current_setting('app.settings.trusted_domains', true), ''),
     'promobrindes.com.br'
   );
+
   v_allowed := coalesce(v_email_domain = ANY (string_to_array(v_trusted_domains, ',')), false);
+
   IF NOT v_allowed THEN
     INSERT INTO public.audit_logs(user_id, action, entity_type, entity_id, details)
     VALUES (
@@ -30,9 +42,11 @@ BEGIN
     );
     RETURN NEW;
   END IF;
+
   INSERT INTO public.user_roles (user_id, role)
   VALUES (NEW.id, 'agent')
   ON CONFLICT (user_id, role) DO NOTHING;
+
   INSERT INTO public.audit_logs(user_id, action, entity_type, entity_id, details)
   VALUES (
     NEW.id,
@@ -45,7 +59,13 @@ BEGIN
       'role',   'agent'
     )
   );
+
   RETURN NEW;
 END;
 $function$;
-COMMENT ON FUNCTION public.handle_new_user_role IS 'Trigger on auth.users INSERT: provisiona role agent para o dominio da empresa (fail-closed). Historico de correcoes: 20260830130000 (auditoria + dominio configuravel), 20260925140000 (fail-closed: v_allowed := false por padrao), 20260927110000 (NULL bypass: email NULL => coalesce garante false, nao agent).'
+
+COMMENT ON FUNCTION public.handle_new_user_role IS
+  'Trigger on auth.users INSERT: provisiona role agent para o dominio da empresa (fail-closed). '
+  'Historico de correcoes: 20260830130000 (auditoria + dominio configuravel), '
+  '20260925140000 (fail-closed: v_allowed := false por padrao), '
+  '20260927110000 (NULL bypass: email NULL => coalesce garante false, nao agent).';
