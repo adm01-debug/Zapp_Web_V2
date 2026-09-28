@@ -79,7 +79,7 @@ export function useConversationTasks(contactId: string | null | undefined) {
         priority: input.priority ?? 'medium',
         due_date: input.dueDate ?? null,
         assigned_to: input.assignedTo ?? input.createdBy ?? null,
-        created_by: input.createdBy ?? null,
+        created_by: input.createdBy ?? undefined,
         description: input.description ?? null,
       });
       if (error) throw error;
@@ -90,7 +90,12 @@ export function useConversationTasks(contactId: string | null | undefined) {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<ConversationTask> }) => {
-      const { error } = await supabase.from('conversation_tasks').update(updates).eq('id', id);
+      // created_by é NOT NULL no tipo Update; null vira ausência de campo (não altera o valor)
+      const { created_by, ...rest } = updates;
+      const { error } = await supabase
+        .from('conversation_tasks')
+        .update({ ...rest, ...(created_by != null ? { created_by } : {}) })
+        .eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => invalidate(),
