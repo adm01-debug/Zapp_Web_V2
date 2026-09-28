@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { Search, Loader2, Bell, FileText } from 'lucide-react';
 import { CONTACT_TYPES, SCOPE_LABELS } from './sla-utils';
+import { CONTACT_TYPES as CANONICAL_TYPES } from '@/utils/whatsappFileTypes';
 import { cn } from '@/lib/utils';
 import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 
@@ -164,7 +165,7 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
     }
 
     const options = scope === 'contact_type'
-      ? CONTACT_TYPES.map(t => ({ id: t, label: t }))
+      ? CANONICAL_TYPES.map(ct => ({ id: ct.value, label: ct.label }))
       : scope === 'company'
       ? companies.map(c => ({ id: c, label: c }))
       : scope === 'job_title'

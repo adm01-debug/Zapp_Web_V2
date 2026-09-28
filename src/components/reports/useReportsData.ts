@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAgents } from '@/hooks/crm/useAgents';
 import { format, subDays, startOfDay, endOfDay, eachDayOfInterval, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { CONTACT_TYPES as CANONICAL_TYPES } from '@/utils/whatsappFileTypes';
 
 export function useReportsData() {
   const [period, setPeriod] = useState('30');
@@ -162,8 +163,13 @@ export function useReportsData() {
   const contactsChartData = useMemo(() => {
     if (!contactsData) return { byType: [], byTag: [], daily: [] };
     const typeCounts: Record<string, number> = {};
-    contactsData.forEach(c => { const type = c.contact_type || 'outros'; typeCounts[type] = (typeCounts[type] || 0) + 1; });
-    const byType = Object.entries(typeCounts).map(([type, count]) => ({ name: type.charAt(0).toUpperCase() + type.slice(1), value: count }));
+    contactsData.forEach(c => {
+      if (!c.contact_type) return; // omite contatos sem tipo definido
+      const canonical = CANONICAL_TYPES.find(ct => ct.value === c.contact_type);
+      const label = canonical ? canonical.label : c.contact_type; // fallback ao valor raw se tipo desconhecido
+      typeCounts[label] = (typeCounts[label] || 0) + 1;
+    });
+    const byType = Object.entries(typeCounts).map(([type, count]) => ({ name: type, value: count }));
     const tagCounts: Record<string, number> = {};
     contactsData.forEach(c => { (c.tags || []).forEach((tag: string) => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; }); });
     const byTag = Object.entries(tagCounts).map(([tag, count]) => ({ name: tag, contatos: count })).sort((a, b) => b.contatos - a.contatos).slice(0, 10);
