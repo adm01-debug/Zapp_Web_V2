@@ -42,7 +42,9 @@ export async function handleConnectionUpdate(supabase: any, instance: string, ba
   ]);
   const disconnectReason = typeof baseData.disconnect_reason === 'string'
     ? baseData.disconnect_reason
-    : typeof baseData.reason === 'string' ? baseData.reason : '';
+    : typeof baseData.reason === 'string' ? baseData.reason
+    : (typeof baseData.statusReason === 'number' || typeof baseData.statusReason === 'string')
+      ? String(baseData.statusReason) : '';
   const preserveQrPending = incoming === 'disconnected'
     && prevConn?.status === 'qr_pending'
     && !TERMINAL_DISCONNECT_REASONS.has(disconnectReason);
