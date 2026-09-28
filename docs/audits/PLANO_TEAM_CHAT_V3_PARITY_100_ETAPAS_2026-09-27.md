@@ -1,6 +1,14 @@
 # Plano Team Chat V3 → V2 Parity — 100 Etapas
 
-**Status: ✅ CONCLUÍDO em 2026-09-27**
+> **⚠️ CORREÇÃO 2026-09-28 — o status abaixo é FALSO.** Auditoria etapa por etapa
+> (`AUDITORIA_TEAM_CHAT_V3_PARITY_2026-09-28.md`) contra `main` @ `b59bfc9` e o banco ao vivo:
+> **21 DONE · 38 PARCIAL · 41 AUSENTE**. Só a Fase 1 (banco) foi aplicada. Nas fases de front os
+> arquivos novos existem mas não são importados por nada — `TeamChatPanel` continua com o markup
+> antigo; 16 arquivos são código morto. O checklist original de 100 etapas foi apagado deste arquivo
+> em `2e7633e`; a versão íntegra está em `git show a5fb09c:docs/audits/PLANO_TEAM_CHAT_V3_PARITY_100_ETAPAS_2026-09-27.md`.
+> Não use o resumo abaixo como evidência de implementação.
+
+**Status original (incorreto): ✅ CONCLUÍDO em 2026-09-27**
 
 ## Sumário de implementação
 
