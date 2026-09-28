@@ -185,7 +185,21 @@ export function translateGoPayload(payload: Record<string, unknown>): Record<str
 
   if (v2Event === 'connection.update') {
     const mappedState = GO_STATE_MAP[rawEvent] ?? 'connecting';
-    out.data = { ...data, state: mappedState, status: mappedState };
+    // Mapeia o evento GO para o campo disconnect_reason que os handlers v2 já entendem.
+    // Só emite quando o motivo é terminal — eventos transientes (disconnected = Reconnecting)
+    // ficam sem o campo, o que preserva qr_pending na camada do handler.
+    const GO_TERMINAL_REASON_MAP: Record<string, string> = {
+      loggedout:      'loggedOut',
+      temporaryban:   'TempBanned',
+      connectfailure: 'connectFailure',
+    };
+    const goDisconnectReason = GO_TERMINAL_REASON_MAP[rawEvent];
+    out.data = {
+      ...data,
+      state: mappedState,
+      status: mappedState,
+      ...(goDisconnectReason ? { disconnect_reason: goDisconnectReason } : {}),
+    };
   }
 
   if (v2Event === 'qrcode.updated') {
