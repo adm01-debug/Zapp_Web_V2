@@ -130,3 +130,30 @@ export async function cleanupFixtureMessages(page: Page): Promise<void> {
     { headers }
   );
 }
+
+// Profile ID do usuario de teste E2E — escopo de limpeza de reacoes.
+// Valor fixo: profiles.id onde profiles.user_id = auth.users.id (e2e.zapp@promobrindes.com.br).
+export const E2E_FIXTURE_PROFILE_ID = '2264678e-17f4-4b4e-b89b-5fc4852bfa86';
+
+// Remove todas as reacoes do usuario E2E em qualquer mensagem.
+// Chamar em beforeEach E afterAll de reactions.spec.ts.
+// Sem limpeza: hasReacted de emoji retorna true em runs seguintes → clique REMOVE
+// em vez de ADICIONAR → badge desaparece → toBeVisible falha (root cause das falhas :41 :65).
+// RLS: policy 'Users can delete their own reactions' cobre user_id = profile.id do caller.
+export async function cleanupE2EReactions(page: Page): Promise<void> {
+  const accessToken = await getAccessToken(page);
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
+  };
+  const resp = await page.request.delete(
+    `${SUPABASE_URL}/rest/v1/message_reactions?user_id=eq.${E2E_FIXTURE_PROFILE_ID}`,
+    { headers }
+  );
+  if (!resp.ok() && resp.status() !== 404) {
+    console.warn(
+      `[e2e-contact] cleanupE2EReactions: HTTP ${resp.status()} ${await resp.text().catch(() => '')}`
+    );
+  }
+}
