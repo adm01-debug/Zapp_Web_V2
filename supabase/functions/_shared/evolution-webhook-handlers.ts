@@ -20,7 +20,7 @@ export {
 
 // deno-lint-ignore no-explicit-any
 export async function handleConnectionUpdate(supabase: any, instance: string, baseData: Record<string, unknown>) {
-  const rawState = baseData.status as string;
+  const rawState = (baseData.status ?? baseData.state) as string;
   const incoming = rawState === 'open' ? 'connected' :
     rawState === 'close' ? 'disconnected' :
     rawState === 'connecting' ? 'connecting' : 'qr_pending';
