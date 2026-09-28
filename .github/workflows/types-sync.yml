@@ -112,14 +112,6 @@ jobs:
       # DESTINO_URL (ja endurecido com TLS) e PGSSLMODE vem do GITHUB_ENV
       # gravado pelo passo anterior — sem env: proprio aqui, que sobrescreveria
       # com o secret cru sem TLS.
-      # gen-types.sh puxa ghcr.io/supabase/postgres-meta (GitHub Container
-      # Registry, nao Docker Hub). GITHUB_TOKEN le pacotes publicos sem secret extra.
-      - name: ghcr.io login (previne rate-limit no gen-types)
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: echo "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin || true
-        continue-on-error: true
-
       - name: Gerar candidatos em diretorio temporario
         run: |
           umask 077
