@@ -71,9 +71,31 @@ Usado por `deploy-functions.yml` para fazer deploy de edge functions.
 
 ### Procedimento
 
-1. Supabase Dashboard → Account → Access Tokens → Generate new token
-2. GitHub → Settings → Secrets → `SUPABASE_ACCESS_TOKEN` → Update
-3. Verificar: `deploy-functions.yml` → Run workflow com `function_name` vazio em ambiente de staging (ou qualquer função não-crítica)
+1. **Gerar novo token no Supabase**
+   - Dashboard → Account → Access Tokens → Generate new token
+   - Copiar o novo token (visível apenas uma vez)
+
+2. **Atualizar o secret no GitHub Actions**
+   - Settings → Secrets and variables → Actions → `SUPABASE_ACCESS_TOKEN` → Update
+   - Colar o novo token
+
+3. **Verificar o novo token (sem mutação em produção)**
+   - Confirmar acesso ao projeto com chamada não-mutante à Management API:
+     ```bash
+     curl -sf -H "Authorization: Bearer <NOVO_TOKEN>" \
+       https://api.supabase.com/v1/projects | grep tnnnlkbymytvtqngbbqh
+     ```
+   - Esperado: saída contém `"tnnnlkbymytvtqngbbqh"` — token válido e com acesso ao projeto
+   - **Não** disparar `deploy-functions.yml` para verificar: o job está vinculado a
+     `producao-edge-functions` e um `function_name` vazio deploya **todas** as funções
+     em produção — não há opção de staging nesse workflow
+
+4. **Revogar o token antigo no Supabase**
+   - Dashboard → Account → Access Tokens → localizar o token anterior → Revoke
+   - Tokens Supabase **não expiram automaticamente** — esta etapa é obrigatória quando
+     a rotação ocorre por comprometimento ou saída de membro da equipe
+
+5. **Registrar** data, operador e motivo (comentário em issue de segurança ou nova issue)
 
 ---
 
