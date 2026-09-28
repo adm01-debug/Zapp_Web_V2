@@ -9,10 +9,15 @@ import {
 test.describe('Reactions flow', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    // Limpar reacoes residuais de runs anteriores: hasReacted seria true no 2o run,
-    // fazendo o clique no emoji REMOVER em vez de ADICIONAR — root cause de :41 e :65.
-    await cleanupE2EReactions(page);
+    // ensureFixtureConversationOpen valida o token do Supabase explicitamente
+    // (lanca erro se nao encontrado). Chamar ANTES do cleanupE2EReactions garante
+    // que o localStorage esta carregado quando o cleanup precisa do access_token.
+    // Root cause de :70: goto('/') pode terminar antes de o SPA hidratar o
+    // localStorage; se o token nao estava disponivel, cleanupE2EReactions falhava
+    // silenciosamente (console.warn), deixando a reacao do :65 no banco — o clique
+    // subsequente em :70 REMOVIA a reacao em vez de adicionar, e o badge nunca aparecia.
     await ensureFixtureConversationOpen(page);
+    await cleanupE2EReactions(page);
     await page.reload();
     await page.getByTestId('status-chip-all').click();
   });

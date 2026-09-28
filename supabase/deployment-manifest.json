@@ -248,8 +248,8 @@
     },
     {
       "path": "supabase/functions/connection-health-check/index.ts",
-      "bytes": 8115,
-      "sha256": "0ee9862691d79318e75a9f563d0c41e2edb8f763b59b282b8f275df69ed75026"
+      "bytes": 8255,
+      "sha256": "ec7a6beb3bd0bbd5a682ec02f0ac3484fcc5b865bbaa5842b1343e24d5b3dd04"
     },
     {
       "path": "supabase/functions/create-user/index.ts",
@@ -747,7 +747,7 @@
       "name": "connection-health-check",
       "entrypoint": "supabase/functions/connection-health-check/index.ts",
       "verify_jwt": true,
-      "source_sha256": "a78b3c3209c0f5ed5e93fe741ca345c3422c8779bc78c1e63bc2df55476cdb93",
+      "source_sha256": "4ebabd51599407d67cb251c307ce733f88d012a045fd99281a29bb47897c2896",
       "source_files": [
         "supabase/functions/_shared/email-font-stack.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1366,5 +1366,5 @@
       ]
     }
   ],
-  "manifest_sha256": "59444c711c5a832aa541e2b82938d79c2cff3f8f3be13205e1b6b25be2eebcde"
+  "manifest_sha256": "5be89b80311db539b28605d7a96ad7656b03b6c0ee101f825ee13ce2cc63348f"
 }
