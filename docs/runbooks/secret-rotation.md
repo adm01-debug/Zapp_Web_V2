@@ -173,6 +173,7 @@ Procedimento:
 - [ ] `DESTINO_URL` — última rotação registrada?
 - [ ] `SUPABASE_ACCESS_TOKEN` — token ainda válido? (não-expirável por padrão, revogar manualmente)
 - [ ] `SUPABASE_SERVICE_ROLE_KEY` — ainda com acesso mínimo necessário? rotacionar se membro saiu ou comprometimento suspeito
+- [ ] `CRON_SECRET` — três cópias ainda sincronizadas? última rotação registrada? (procedimento: `cron-secret-rotation.md`)
 - [ ] `DEPLOY_FUNCTIONS_TOKEN` — se criado, ainda tem escopo mínimo (`contents:write` apenas)?
 - [ ] `DOCKERHUB_TOKEN` / `DOCKERHUB_USER` — token ativo no Docker Hub?
 - [ ] Secrets listados em `github_list_actions_secrets` vs. secrets referenciados nos workflows — há orfãos?
