@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ContactService, Contact } from '@/services/contact.service';
+import { filterCustomTags } from '@/lib/tags';
 
 const PAGE_SIZE = 50;
 
@@ -147,7 +148,7 @@ export function useContactsSearch() {
 
   const uniqueCompanies = useMemo(() => [...new Set(contacts.map(c => c.company).filter(Boolean))] as string[], [contacts]);
   const uniqueJobTitles = useMemo(() => [...new Set(contacts.map(c => c.job_title).filter(Boolean))] as string[], [contacts]);
-  const uniqueTags = useMemo(() => [...new Set(contacts.flatMap(c => c.tags || []))] as string[], [contacts]);
+  const uniqueTags = useMemo(() => filterCustomTags([...new Set(contacts.flatMap(c => c.tags || []))]), [contacts]);
 
   const activeFiltersCount = [filterCompany, filterJobTitle, filterTag, filterDateRange !== 'all' ? filterDateRange : ''].filter(Boolean).length;
 
