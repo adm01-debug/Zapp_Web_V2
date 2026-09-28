@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMyWorkItems } from '@/hooks/tasks/useMyWorkItems';
+import type { WorkItem } from '@/hooks/tasks/workItem.types';
 import { WorkItemCard }   from '@/components/tasks/shared/WorkItemCard';
 import { QuickAdd }       from '@/components/tasks/shared/QuickAdd';
 import { WorkItemCardSkeleton } from '@/components/tasks/shared/WorkItemCardSkeleton';

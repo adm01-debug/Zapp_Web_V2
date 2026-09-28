@@ -128,7 +128,7 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
         due_date: input.dueDate ?? null,
         remind_at: input.remindAt ?? null,
         waiting_reason: input.waitingReason ?? null,
-      });
+      } as TaskInsert);
       if (error) throw error;
     },
     onSuccess: () => { invalidate(); toast.success('Tarefa criada'); },
@@ -145,7 +145,7 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
         ...(patch.dueDate !== undefined     && { due_date: patch.dueDate }),
         ...(patch.remindAt !== undefined    && { remind_at: patch.remindAt }),
         ...(patch.waitingReason !== undefined && { waiting_reason: patch.waitingReason }),
-      }).eq('id', id);
+      } as TaskUpdate).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => invalidate(),
@@ -178,7 +178,7 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
       if (to === 'doing' && !item.started_at) patch.started_at = new Date().toISOString();
       if (item.status === 'done' && to === 'todo')  patch.completed_at = null;
 
-      const { error } = await supabase.from('conversation_tasks').update(patch).eq('id', item.id);
+      const { error } = await supabase.from('conversation_tasks').update(patch as TaskUpdate).eq('id', item.id);
       if (error) throw error;
     },
     onSuccess: () => invalidate(),
@@ -196,7 +196,7 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
   const reorderMutation = useMutation({
     mutationFn: async (positions: Array<{ id: string; position: number }>) => {
       for (const p of positions) {
-        await supabase.from('conversation_tasks').update({ position: p.position }).eq('id', p.id);
+        await supabase.from('conversation_tasks').update({ position: p.position } as TaskUpdate).eq('id', p.id);
       }
     },
     onSuccess: () => invalidate(),
