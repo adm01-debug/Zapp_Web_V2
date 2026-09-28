@@ -17,7 +17,6 @@ export const GroupsView = lazyWithRetry(() => import('@/components/groups/Groups
 export const TranscriptionsHistoryView = lazyWithRetry(() => import('@/components/transcriptions/TranscriptionsHistoryView').then(m => ({ default: m.TranscriptionsHistoryView })));
 export const AdvancedReportsView = lazyWithRetry(() => import('@/components/reports/AdvancedReportsView').then(m => ({ default: m.AdvancedReportsView })));
 export const SecurityView = lazyWithRetry(() => import('@/components/security/SecurityView').then(m => ({ default: m.SecurityView })));
-export const TasksView = lazyWithRetry(() => import('@/components/tasks/TasksView').then(m => ({ default: m.TasksView })));
 export const TasksModule = lazyWithRetry(() => import('@/components/tasks/TasksModule').then(m => ({ default: m.TasksModule })));
 export const SystemFeaturesView = lazyWithRetry(() => import('@/components/docs/SystemFeaturesView').then(m => ({ default: m.SystemFeaturesView })));
 export const CampaignsView = lazyWithRetry(() => import('@/components/campaigns/CampaignsView').then(m => ({ default: m.CampaignsView })));
@@ -25,7 +24,6 @@ export const ChatbotFlowsView = lazyWithRetry(() => import('@/components/chatbot
 export const AutomationsManager = lazyWithRetry(() => import('@/components/automations/AutomationsManager').then(m => ({ default: m.AutomationsManager })));
 export const IntegrationsHub = lazyWithRetry(() => import('@/components/integrations/IntegrationsHub').then(m => ({ default: m.IntegrationsHub })));
 export const LGPDComplianceView = lazyWithRetry(() => import('@/components/compliance/LGPDComplianceView').then(m => ({ default: m.LGPDComplianceView })));
-export const SalesPipelineView = lazyWithRetry(() => import('@/components/pipeline/SalesPipelineView').then(m => ({ default: m.SalesPipelineView })));
 export const KnowledgeBaseView = lazyWithRetry(() => import('@/components/knowledge/KnowledgeBaseView').then(m => ({ default: m.KnowledgeBaseView })));
 export const PaymentLinksView = lazyWithRetry(() => import('@/components/payments/PaymentLinksView').then(m => ({ default: m.PaymentLinksView })));
 export const WhatsAppFlowsBuilder = lazyWithRetry(() => import('@/components/whatsapp-flows/WhatsAppFlowsBuilder').then(m => ({ default: m.WhatsAppFlowsBuilder })));

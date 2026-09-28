@@ -21,8 +21,8 @@ vi.mock('@/hooks/chat/useNextBestAction', () => ({
   useNextBestAction: () => ({ actions: [], loading: false }),
 }));
 
-vi.mock('@/hooks/chat/useConversationTasks', () => ({
-  useConversationTasks: () => ({ createTask: mockCreateTask }),
+vi.mock('@/hooks/tasks/useMyWorkItems', () => ({
+  useMyWorkItems: () => ({ create: mockCreateTask, byDue: { overdue:[], today:[], tomorrow:[], upcoming:[], noDue:[], done7d:[] }, isLoading: false }),
 }));
 
 vi.mock('@/hooks/system/useNavigationHistory', () => ({

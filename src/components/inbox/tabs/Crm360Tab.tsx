@@ -10,7 +10,7 @@ import { formatBRL, formatRelativeTime } from '@/lib/formatters';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { useContactCrm360, useContactLeadScore, useAdvanceDealStage } from '@/hooks/crm/useContactCrm360';
 import { useNextBestAction } from '@/hooks/chat/useNextBestAction';
-import { useConversationTasks } from '@/hooks/chat/useConversationTasks';
+import { useMyWorkItems } from '@/hooks/tasks/useMyWorkItems';
 import type { Conversation, Message } from '@/types/chat';
 import type { ConversationTab } from '../chat/ConversationTabs';
 import { KpiStrip } from './KpiStrip';
@@ -45,7 +45,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
 
   const { data: crm360 } = useContactCrm360(contactId);
   const { actions: nextActions } = useNextBestAction(contactId, contactName);
-  const { createTask } = useConversationTasks(contactId);
+  const { create: createTask } = useMyWorkItems({ contactId });
   const { data: extra } = useContactLeadScore(contactId);
   const advanceStage = useAdvanceDealStage(contactId);
 
@@ -234,7 +234,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
               <button
                 type="button"
                 className="text-xs font-semibold text-primary hover:underline shrink-0"
-                onClick={() => createTask({ title: nextActions[0].label })}
+                onClick={() => void createTask({ title: nextActions[0].label , contactId })}
               >
                 Criar tarefa →
               </button>

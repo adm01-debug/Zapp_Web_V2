@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useContactNotes, type ContactNote, type ContactNoteCategory } from '@/hooks/crm/useContactNotes';
-import { useConversationTasks } from '@/hooks/chat/useConversationTasks';
+import { useMyWorkItems } from '@/hooks/tasks/useMyWorkItems';
 import { useContactSummaryNote } from '@/hooks/crm/useContactSummaryNote';
 import { SectionCard } from './SectionCard';
 import type { KpiTone } from './KpiStrip';
@@ -167,7 +167,8 @@ function isTaskDueSoon(dueDate: string) {
 /** Aba Notas (2.8) — 6 cards de CRUD por categoria + pendências (tarefas) + resumo comercial (contacts.notes). */
 export function NotesTab({ contactId }: NotesTabProps) {
   const { allNotes, addNote, deleteNote, toggleNoteDone, currentProfileId } = useContactNotes(contactId);
-  const { open: openTasks, createTask } = useConversationTasks(contactId);
+  const { byDue, create: createTask } = useMyWorkItems({ contactId });
+  const openTasks = [...byDue.overdue, ...byDue.today, ...byDue.tomorrow, ...byDue.upcoming, ...byDue.noDue];
   const summaryNote = useContactSummaryNote(contactId);
   const [editingSummary, setEditingSummary] = useState(false);
   const [summaryDraft, setSummaryDraft] = useState('');
@@ -219,7 +220,7 @@ export function NotesTab({ contactId }: NotesTabProps) {
           action={!addingTask ? { label: '+ Adicionar', onClick: () => setAddingTask(true), variant: 'pill' } : undefined}
         >
           {addingTask && (
-            <AddInline placeholder="Nova pendência..." onCancel={() => setAddingTask(false)} onSave={(content) => { createTask({ title: content }); setAddingTask(false); }} />
+            <AddInline placeholder="Nova pendência..." onCancel={() => setAddingTask(false)} onSave={(content) => { createTask({ title: content, contactId }); setAddingTask(false); }} />
           )}
           <ul className="space-y-2 max-h-[240px] overflow-y-auto scrollbar-thin">
             {openTasks.length === 0 && !addingTask && <p className="text-sm text-muted-foreground py-2">Nenhuma pendência</p>}
