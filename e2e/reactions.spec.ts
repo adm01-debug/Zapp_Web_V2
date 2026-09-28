@@ -3,11 +3,15 @@ import {
   E2E_FIXTURE_CONTACT_DISPLAY_NAME,
   ensureFixtureConversationOpen,
   cleanupFixtureMessages,
+  cleanupE2EReactions,
 } from './fixtures/e2e-contact';
 
 test.describe('Reactions flow', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    // Limpar reacoes residuais de runs anteriores: hasReacted seria true no 2o run,
+    // fazendo o clique no emoji REMOVER em vez de ADICIONAR — root cause de :41 e :65.
+    await cleanupE2EReactions(page);
     await ensureFixtureConversationOpen(page);
     await page.reload();
     await page.getByTestId('status-chip-all').click();
@@ -17,6 +21,7 @@ test.describe('Reactions flow', () => {
     const context = await browser.newContext({ storageState: 'e2e/.auth/user.json' });
     const page = await context.newPage();
     await page.goto('/');
+    await cleanupE2EReactions(page);
     await cleanupFixtureMessages(page);
     await context.close();
   });
