@@ -32,7 +32,11 @@ Formato: `postgresql://postgres.tnnnlkbymytvtqngbbqh:SENHA@aws-0-sa-east-1.poole
 1. **Gerar nova senha no Supabase**
    - Dashboard → `tnnnlkbymytvtqngbbqh` → Settings → Database → Reset database password
    - Copiar a nova senha (visível apenas uma vez)
-   - Montar a nova URL: `postgresql://postgres.tnnnlkbymytvtqngbbqh:<NOVA_SENHA>@aws-0-sa-east-1.pooler.supabase.com:6543/postgres`
+   - **Preferível: copiar a URL completa do dashboard** (Settings → Database → Connection string → URI)
+     — a senha já vem URL-encodada pelo dashboard
+   - Se montar manualmente: `postgresql://postgres.tnnnlkbymytvtqngbbqh:<NOVA_SENHA>@aws-0-sa-east-1.pooler.supabase.com:6543/postgres`
+     — se a senha contiver caracteres especiais URI (`/`, `?`, `#`, `@`, `%`), percent-encode-os antes de inserir
+     (ex.: `@` → `%40`, `%` → `%25`); de outra forma a URL será parseada incorretamente
 
 2. **Atualizar o secret no GitHub Actions**
    - Settings → Secrets and variables → Actions → `DESTINO_URL` → Update secret
@@ -80,10 +84,13 @@ Usado por `deploy-functions.yml` para fazer deploy de edge functions.
    - Colar o novo token
 
 3. **Verificar o novo token (sem mutação em produção)**
-   - Confirmar acesso ao projeto com chamada não-mutante à Management API:
+   - Confirmar acesso ao projeto com chamada não-mutante à Management API.
+     Use `read -s` para evitar que o token apareça no histórico do shell:
      ```bash
-     curl -sf -H "Authorization: Bearer <NOVO_TOKEN>" \
+     read -s TOKEN
+     curl -sf -H "Authorization: Bearer $TOKEN" \
        https://api.supabase.com/v1/projects | grep tnnnlkbymytvtqngbbqh
+     unset TOKEN
      ```
    - Esperado: saída contém `"tnnnlkbymytvtqngbbqh"` — token válido e com acesso ao projeto
    - **Não** disparar `deploy-functions.yml` para verificar: o job está vinculado a
