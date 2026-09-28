@@ -46,6 +46,9 @@
   html.dark body {
     font-weight: 450;
     letter-spacing: 0.01em;
+    background-image: var(--page-glow);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
   }
 
   html.dark p,

@@ -24,7 +24,7 @@ export const CONTACT_TYPE_CONFIG: Record<string, TypeConfig> = {
     iconNode: <Users className="w-3 h-3" />,
     gradient: 'bg-gradient-to-r from-[hsl(217_100%_54%)] to-[hsl(217_100%_40%)]',
     dotBg: 'bg-[hsl(217_100%_54%)]',
-    badgeClass: 'border-[rgba(20,110,255,0.6)] text-[hsl(217_100%_80%)] bg-[rgba(5,35,87,0.9)]',
+    badgeClass: 'border-[rgba(20,110,255,0.6)] text-[hsl(217_100%_80%)] bg-[rgba(20,110,255,0.15)]',
   },
   fornecedor: {
     label: 'Fornecedor',
