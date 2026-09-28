@@ -13,8 +13,14 @@
 
 Usada em:
 - `db-live-guard.yml` (guarda vivo pós-merge e agendado)
+- `db-migrate.yml` (apply de migrations — **abre conexões de escrita**)
+- `types-sync.yml` (regeneração de tipos TypeScript)
+- `supabase-sync.yml` (import legado — **executa escrita destrutiva se ativado**)
+- `targeted-ledger-evidence.yml` (evidência de ledger)
 - `scripts/db-audit/check-migration-drift.mjs`
 - `scripts/db-audit/register-migration.mjs`
+
+**Antes de rotar:** confirme que nenhum run de `db-migrate.yml` ou `supabase-sync.yml` está em execução (Actions → em andamento). Esses workflows abrem conexões de escrita e podem falhar no meio da operação se a senha for invalidada durante o run.
 
 Formato: `postgresql://postgres.tnnnlkbymytvtqngbbqh:SENHA@aws-0-sa-east-1.pooler.supabase.com:6543/postgres`
 
@@ -59,8 +65,12 @@ Formato: `postgresql://postgres.tnnnlkbymytvtqngbbqh:SENHA@aws-0-sa-east-1.poole
 
 Se o `db-live-guard` falhar após a troca:
 
+- **Diagnosticar antes de resetar novamente:** o `db-live-guard` verifica drift de migrations,
+  paridade de catálogo, manifesto, tipos gerados e configuração de runtime — não apenas autenticação.
+  Abra o log do run que falhou e identifique o job/step exato:
+  - Falha em `psql` com `password authentication failed` ou `FATAL: password` → é falha de credencial; gerar nova senha e voltar ao passo 1.
+  - Falha em outro step (drift, catalog, tipos) → **não resetar a senha** — o problema é independente da rotação.
 - O banco de produção não é afetado (o script é read-mostly)
-- Voltar ao passo 1 e gerar outra senha; atualizar o secret novamente
 
 ---
 
@@ -79,12 +89,8 @@ Usado por `deploy-functions.yml` para fazer deploy de edge functions.
    - Dashboard → Account → Access Tokens → Generate new token
    - Copiar o novo token (visível apenas uma vez)
 
-2. **Atualizar o secret no GitHub Actions**
-   - Settings → Secrets and variables → Actions → `SUPABASE_ACCESS_TOKEN` → Update
-   - Colar o novo token
-
-3. **Verificar o novo token (sem mutação em produção)**
-   - Confirmar acesso ao projeto com chamada não-mutante à Management API.
+2. **Verificar o novo token (antes de instalar no Actions)**
+   - Confirmar acesso ao projeto com chamada não-mutante à Management API — enquanto o secret antigo ainda está intacto no Actions.
      Use `read -s` para evitar que o token apareça no histórico do shell:
      ```bash
      read -s TOKEN
@@ -93,9 +99,14 @@ Usado por `deploy-functions.yml` para fazer deploy de edge functions.
      unset TOKEN
      ```
    - Esperado: saída contém `"tnnnlkbymytvtqngbbqh"` — token válido e com acesso ao projeto
+   - Se o `grep` falhar (token inválido ou sem permissão), **não continue**: gere outro token antes de sobrescrever o secret no Actions
    - **Não** disparar `deploy-functions.yml` para verificar: o job está vinculado a
      `producao-edge-functions` e um `function_name` vazio deploya **todas** as funções
      em produção — não há opção de staging nesse workflow
+
+3. **Atualizar o secret no GitHub Actions**
+   - Settings → Secrets and variables → Actions → `SUPABASE_ACCESS_TOKEN` → Update
+   - Colar o novo token
 
 4. **Revogar o token antigo no Supabase**
    - Dashboard → Account → Access Tokens → localizar o token anterior → Revoke
@@ -109,7 +120,7 @@ Usado por `deploy-functions.yml` para fazer deploy de edge functions.
 ## Secrets de terceiros (PROMOGIFTS, EXTERNAL\_SUPABASE, PREVIEW\_EGRESS)
 
 Não têm procedure de rotação automática aqui — dependem de processo externo ao repo.
-Ao rotar, atualizar os secrets correspondentes em GitHub Actions e re-executar `deploy-functions.yml` para repassá-los às edge functions.
+Ao rotar, propague o novo valor às edge functions via **Supabase Dashboard → Edge Functions → Manage secrets** (ou `supabase secrets set KEY=valor --project-ref tnnnlkbymytvtqngbbqh`). Essa abordagem atualiza apenas as variáveis de ambiente das funções, sem acionar deploy de código. Só dispare `deploy-functions.yml` (com `function_name` preenchido: `promogifts-catalog`, `crm-integration` ou `fetch-link-preview`) se houver mudança de código a publicar junto com a rotação.
 
 ---
 
