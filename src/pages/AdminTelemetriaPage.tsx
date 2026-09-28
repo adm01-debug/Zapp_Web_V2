@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Activity, RefreshCw, Trash2, Download, FileText, CalendarIcon } from "lucide-react";
+import { Activity, RefreshCw, Trash2, CalendarIcon } from "lucide-react";
 import { TelemetryCharts } from "@/components/admin/telemetry/TelemetryCharts";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -69,47 +69,7 @@ export default function AdminTelemetriaPage() {
     else { toast.success("Dados com mais de 7 dias removidos"); refetch(); }
   };
 
-  const handleExportCSV = () => {
-    if (rows.length === 0) return toast.error("Nenhum dado para exportar");
-    const headers = ["Data/Hora", "Operação", "Tabela/RPC", "Duração (ms)", "Severidade", "Registros", "Limit", "Offset", "Count Mode", "Erro"];
-    const csvRows = rows.map(r => [
-      new Date(r.created_at).toLocaleString("pt-BR"), r.operation,
-      r.table_name || r.rpc_name || "-", r.duration_ms, r.severity,
-      r.record_count ?? "-", r.query_limit ?? "-", r.query_offset ?? "-",
-      r.count_mode ?? "-", `"${(r.error_message || "").replace(/"/g, '""')}"`,
-    ]);
-    const csvContent = [headers.join(";"), ...csvRows.map(r => r.join(";"))].join("\n");
-    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = `telemetria_${format(new Date(), "yyyy-MM-dd")}_${timeFilter}.csv`; a.click();
-    URL.revokeObjectURL(url);
-    toast.success("CSV exportado com sucesso");
-  };
 
-  const handleExportPDF = async () => {
-    if (rows.length === 0) return toast.error("Nenhum dado para exportar");
-    try {
-      const { default: jsPDF } = await import("jspdf");
-      const { default: autoTable } = await import("jspdf-autotable");
-      const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-      const now = new Date();
-      const periodLabels: Record<string, string> = { "1h": "Última hora", "6h": "Últimas 6h", "24h": "Últimas 24h", "7d": "Últimos 7 dias", custom: "Período personalizado" };
-      doc.setFontSize(16); doc.text("Telemetria de Queries", 14, 15);
-      doc.setFontSize(9); doc.setTextColor(100);
-      doc.text(`Exportado em ${now.toLocaleString("pt-BR")} · Período: ${periodLabels[timeFilter]} · ${rows.length} registros`, 14, 22);
-      const headers = ["Data/Hora", "Operação", "Tabela/RPC", "Duração", "Severidade", "Records", "Limit", "Offset", "Count", "Erro"];
-      const body = rows.map(r => [
-        new Date(r.created_at).toLocaleString("pt-BR"), r.operation, r.rpc_name || r.table_name || "-",
-        `${r.duration_ms}ms`, r.severity === "very_slow" ? "Muito Lenta" : r.severity === "slow" ? "Lenta" : r.severity === "error" ? "Erro" : r.severity,
-        String(r.record_count ?? "-"), String(r.query_limit ?? "-"), String(r.query_offset ?? "-"),
-        r.count_mode || "-", (r.error_message || "-").substring(0, 60),
-      ]);
-      autoTable(doc, { head: [headers], body, startY: 28, styles: { fontSize: 7, cellPadding: 1.5 }, headStyles: { fillColor: [41, 37, 36], textColor: 255 }, alternateRowStyles: { fillColor: [245, 245, 244] } });
-      doc.save(`telemetria_${format(now, "yyyy-MM-dd")}_${timeFilter}.pdf`);
-      toast.success("PDF exportado com sucesso");
-    } catch { toast.error("Erro ao gerar PDF"); }
-  };
 
   const verySlow = rows.filter(r => r.severity === "very_slow").length;
   const slow = rows.filter(r => r.severity === "slow").length;
@@ -129,8 +89,7 @@ export default function AdminTelemetriaPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={rows.length === 0}><Download className="h-3.5 w-3.5 mr-1.5" />CSV</Button>
-          <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={rows.length === 0}><FileText className="h-3.5 w-3.5 mr-1.5" />PDF</Button>
+
           <Button variant="outline" size="sm" onClick={handleCleanup}><Trash2 className="h-3.5 w-3.5 mr-1.5" />Limpar +7d</Button>
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isRefetching}>
             <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isRefetching ? "animate-spin" : ""}`} />Atualizar

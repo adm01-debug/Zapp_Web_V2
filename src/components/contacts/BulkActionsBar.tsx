@@ -15,6 +15,7 @@ import {
 import { Tag, Trash2, UserCheck, Star, X, CheckSquare, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
 import { isWhatsAppTag, filterCustomTags, getTagDisplayName } from '@/lib/tags';
 
 interface BulkActionsBarProps {
@@ -185,9 +186,9 @@ export function BulkActionsBar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            {['cliente', 'lead', 'fornecedor', 'colaborador', 'parceiro'].map(type => (
-              <DropdownMenuItem key={type} onClick={() => handleBulkType(type)}>
-                {type.charAt(0).toUpperCase() + type.slice(1)}
+            {CONTACT_TYPES.map(({ value, label }) => (
+              <DropdownMenuItem key={value} onClick={() => handleBulkType(value)}>
+                {label}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
