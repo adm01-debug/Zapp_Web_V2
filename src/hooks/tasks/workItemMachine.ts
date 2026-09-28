@@ -1,7 +1,7 @@
 // Máquina de estados pura — sem efeito colateral, sem dependência de React/Supabase.
 // Importado tanto pelo frontend (validação otimista) quanto pelos testes unitários.
 
-import { WIP_LIMITS, type WorkItem, type WorkItemStatus, type TransitionBlockReason } from './workItem.types';
+import { WIP_LIMITS, type WorkItem, type WorkItemStatus, type TransitionBlockReason, type TransitionResult } from './workItem.types';
 
 interface TransitionCtx {
   doingCount: number;     // quantos itens estão em 'doing' ANTES desta transição
