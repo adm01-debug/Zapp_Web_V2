@@ -43,7 +43,7 @@ export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'arr
   { value: 'email', label: 'E-mail', kind: 'text', category: 'basico' },
   { value: 'channel_type', label: 'Canal de origem', kind: 'text', category: 'basico' },
   { value: 'lead_origin', label: 'Origem do lead', kind: 'text', category: 'basico' },
-  { value: 'contact_type', label: 'Tipo do contato', kind: 'enum', category: 'comercial', options: ['cliente', 'lead', 'fornecedor', 'parceiro'] },
+  { value: 'contact_type', label: 'Tipo do contato', kind: 'enum', category: 'comercial', options: ['cliente', 'lead', 'fornecedor', 'parceiro', 'sicoob_gifts'] },
   { value: 'conversation_status', label: 'Status da conversa', kind: 'enum', category: 'comportamento', options: ['open', 'pending', 'resolved', 'waiting'] },
   { value: 'lead_score', label: 'Lead score', kind: 'number', category: 'comercial' },
   { value: 'risk_score', label: 'Risco de churn', kind: 'number', category: 'comportamento' },
@@ -80,7 +80,7 @@ export const newRule = (): SegmentRule => ({ id: crypto.randomUUID(), field: 'ta
 // como separador de filtros — escapa-la geraria uma barra invertida espuria
 // no valor buscado (achado do Codex na PR #896: "Acme, Inc" deixava de bater
 // porque o escape da virgula, ao passar por esta funcao, dobrava a barra).
-const quoted = (v: string) => `"${v.replace(/[\\"]/g, (c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
+const quoted = (v: string) => `"${v.replace(/[\\"]/, (c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
 
 function ruleToFilter(r: SegmentRule): string | null {
   const def = RULE_FIELDS.find((f) => f.value === r.field);
@@ -137,7 +137,7 @@ export function rulesToPostgrest(rules: SegmentRules | null | undefined): string
     })
     .filter((g) => g.filters.length > 0);
   if (groups.length === 0) return null;
-  const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})`));
+  const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})` ));
   return parts.length === 1 ? (groups[0].filters.length === 1 ? parts[0] : parts[0]) : parts.join(',');
 }
 
