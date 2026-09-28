@@ -503,6 +503,32 @@
             "ledger_statements_sha256": "b63201e84a1074118dee013a1d8f4965ae068e20429248d0f3f51d5fa2aa94a0",
             "kind": "ledger-only/comment-only",
             "justification": "Registro existia no ledger apenas como comment placeholder sem SQL executavel. O SQL real nao foi implementado nesta versao; o arquivo stub factual e fixado pelo manifesto."
+        },
+        {
+            "version": "20260927580000",
+            "filename": "20260927580000_fix_gamification_auth_guard_xp_cap_sp_timezone.sql",
+            "file_sha256": "318f31a961a9b41296c8a866743ab2f86ddaeb275f8aa2d03f989928b78d42ee",
+            "file_sql_sha256": "97da3094b6d5d541d4f7ce16d931725fb8907187363c118566b0c8b38a1403b2",
+            "ledger_name": "grant_agent_achievement_xp_reward_cap",
+            "ledger_statements_sha256": "1764f120e37b6bd8961741b1b7802412604f9b965886686c8ba145053083b9b4",
+            "ledger_sql_sha256": "c1c248374fb1ae6f7e7aefcf657fbb3cb95b59e86ba7125363e5fb8f3ba5042d",
+            "kind": "ledger-divergence/pinned-replay",
+            "reason": "file-content-mismatch",
+            "related_migration": "20260927590000",
+            "justification": "Migration aplicada via MCP em 2026-09-27 com conteudo diferente do arquivo no repo. O ledger registra name=grant_agent_achievement_xp_reward_cap (2 stmts: CREATE OR REPLACE FUNCTION grant_agent_achievement + GRANT EXECUTE) enquanto o arquivo no repo contem o SQL de fix_gamification_auth_guard_xp_cap_sp_timezone. As versoes 580000 e 590000 foram aplicadas com names e conteudos trocados entre si no ledger. Conteudo aplicado em producao e o que esta no ledger; hashes do arquivo e do ledger fixados independentemente."
+        },
+        {
+            "version": "20260927590000",
+            "filename": "20260927590000_grant_agent_achievement_xp_reward_cap.sql",
+            "file_sha256": "573557b6c9a687031e4ed2856154e0a8d3f3971d27df022b1486ef0fc2e1e249",
+            "file_sql_sha256": "bb15af3bf8ee1f8282838f701020b6853d7c46e6fcbd1c8080e5cc304645429b",
+            "ledger_name": "conversation_closures_dedupe_and_unique_per_day",
+            "ledger_statements_sha256": "487e77d98331ee815730d07c76aa93541082b667dbb3c30b0e463ce0910a1ce6",
+            "ledger_sql_sha256": "edf98efb4a85e91c0f35e775a9c65a0f85a9664cfcfccd78196b513bf9c3f132",
+            "kind": "ledger-divergence/pinned-replay",
+            "reason": "file-content-mismatch",
+            "related_migration": "20260927580000",
+            "justification": "Migration aplicada via MCP em 2026-09-27 com conteudo diferente do arquivo no repo. O ledger registra name=conversation_closures_dedupe_and_unique_per_day (3 stmts: CREATE FUNCTION conversation_closure_day + DELETE dedup + CREATE UNIQUE INDEX) enquanto o arquivo no repo contem o SQL de grant_agent_achievement_xp_reward_cap. As versoes 580000 e 590000 foram aplicadas com names e conteudos trocados entre si no ledger. Conteudo aplicado em producao e o que esta no ledger; hashes do arquivo e do ledger fixados independentemente."
         }
     ]
 }
