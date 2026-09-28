@@ -19,12 +19,6 @@ export interface ConversationTask {
   updated_at: string;
 }
 
-// Tipo para payload de UPDATE: schema do banco nao aceita null em created_by/assigned_to
-type ConversationTaskUpdate = Omit<Partial<ConversationTask>, 'created_by' | 'assigned_to'> & {
-  created_by?: string;
-  assigned_to?: string;
-};
-
 export const conversationTasksKey = (contactId: string) => ['conversation-tasks', contactId] as const;
 
 function isToday(dateIso: string) {
@@ -79,17 +73,18 @@ export function useConversationTasks(contactId: string | null | undefined) {
 
   const createMutation = useMutation({
     mutationFn: async (input: { title: string; priority?: string; dueDate?: string | null; assignedTo?: string | null; createdBy?: string | null; description?: string | null }) => {
-      // Campos created_by e assigned_to sao NOT NULL no banco (DEFAULT auth.uid()).
-      // Omitir do payload quando null/undefined para que o banco use o DEFAULT.
-      const assignedTo = input.assignedTo ?? input.createdBy;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+      const assignedTo = input.assignedTo ?? input.createdBy ?? user.id;
+      const createdBy = input.createdBy ?? user.id;
       const { error } = await supabase.from('conversation_tasks').insert({
         contact_id: contactId,
         title: input.title,
         priority: input.priority ?? 'medium',
         due_date: input.dueDate ?? null,
+        assigned_to: assignedTo,
+        created_by: createdBy,
         description: input.description ?? null,
-        ...(assignedTo != null ? { assigned_to: assignedTo } : {}),
-        ...(input.createdBy != null ? { created_by: input.createdBy } : {}),
       });
       if (error) throw error;
     },
@@ -99,12 +94,7 @@ export function useConversationTasks(contactId: string | null | undefined) {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<ConversationTask> }) => {
-      // O schema do banco nao aceita null em created_by/assigned_to no UPDATE.
-      // Cast para ConversationTaskUpdate que remove null desses dois campos.
-      const { error } = await supabase
-        .from('conversation_tasks')
-        .update(updates as ConversationTaskUpdate)
-        .eq('id', id);
+      const { error } = await supabase.from('conversation_tasks').update(updates).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => invalidate(),
