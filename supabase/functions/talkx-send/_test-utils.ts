@@ -150,6 +150,21 @@ export function mockGlobalFetch(failUrlFragment?: string): () => void {
   return () => { (globalThis as any).fetch = orig; };
 }
 
+export function mockGlobalFetchGo(failUrlFragment?: string): () => void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const orig = (globalThis as any).fetch as AnyFetch;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).fetch = (url: unknown, _opts?: unknown): Promise<Response> => {
+    const urlStr = String(url);
+    if (failUrlFragment && urlStr.includes(failUrlFragment)) {
+      return Promise.resolve(new Response(JSON.stringify({ error: "mock server error" }), { status: 500 }));
+    }
+    return Promise.resolve(new Response(JSON.stringify({ data: { Info: { ID: "go-msg-001" } } }), { status: 200 }));
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return () => { (globalThis as any).fetch = orig; };
+}
+
 export function makeDispatchPost(opts: { action?: string; campaignId?: string; extra?: Record<string, unknown> } = {}): Request {
   return makePost({
     bearer: TEST_SERVICE_KEY,

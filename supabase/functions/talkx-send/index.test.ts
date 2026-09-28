@@ -4,7 +4,7 @@ import {
   makeCampaign, makeConnection,
   makeDispatchDeps, makeTestActionDeps,
   setDispatchEnv, setDispatchEnvGo,
-  mockGlobalFetch, makeDispatchPost,
+  mockGlobalFetch, mockGlobalFetchGo, makeDispatchPost,
 } from './_test-utils.ts';
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -372,7 +372,7 @@ Deno.test("dispatch/resume: ação não implementada → 400 Invalid campaign ac
 
 Deno.test("dispatch/start (GO flavor): happy path — URL traduzida /send/text → sent=1", async () => {
   setDispatchEnvGo();
-  const restore = mockGlobalFetch();
+  const restore = mockGlobalFetchGo();
   try {
     const req = makeDispatchPost();
     const res = await handleTalkxSend(req, makeDispatchDeps());
@@ -387,7 +387,7 @@ Deno.test("dispatch/start (GO flavor): happy path — URL traduzida /send/text �
 
 Deno.test("dispatch/start (GO flavor): Evolution GO retorna 5xx em /send/text → outcome_unknown=1", async () => {
   setDispatchEnvGo();
-  const restore = mockGlobalFetch("/send/text");
+  const restore = mockGlobalFetchGo("/send/text");
   try {
     const req = makeDispatchPost();
     const res = await handleTalkxSend(req, makeDispatchDeps());
