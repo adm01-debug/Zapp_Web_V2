@@ -1,4 +1,5 @@
 import { SLARuleScope } from '@/hooks/sla/useSLARules';
+import { CONTACT_TYPES as CANONICAL_TYPES } from '@/utils/whatsappFileTypes';
 import { User, Building2, Briefcase, Tag, LayoutGrid, UserCog } from 'lucide-react';
 
 export const SCOPE_TABS: { value: SLARuleScope; label: string; icon: React.ElementType }[] = [
@@ -10,7 +11,8 @@ export const SCOPE_TABS: { value: SLARuleScope; label: string; icon: React.Eleme
   { value: 'agent', label: 'Por Agente', icon: UserCog },
 ];
 
-export const CONTACT_TYPES = ['cliente', 'lead', 'fornecedor', 'parceiro', 'vip'] as const;
+// Tipos canônicos — sincronizados com @/utils/whatsappFileTypes (6 tipos reais, sem lead/vip/sicoob_gifts)
+export const CONTACT_TYPES = CANONICAL_TYPES.map(ct => ct.value) as unknown as readonly string[];
 
 export const SCOPE_LABELS: Record<SLARuleScope, string> = {
   contact: 'Cliente',
