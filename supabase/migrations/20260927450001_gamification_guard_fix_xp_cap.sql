@@ -1,6 +1,3 @@
--- ledger-divergence/version-collision: ancora para excecao de 20260927450000.
--- O SQL abaixo e idempotente e replica o conteudo do ledger de 20260927450000
--- (gamification_guard_fix_xp_cap). Ja aplicado em producao via MCP em 2026-09-27.
 CREATE OR REPLACE FUNCTION public.add_agent_xp(p_profile_id uuid, p_xp integer)
 RETURNS json LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public' AS $$
 DECLARE

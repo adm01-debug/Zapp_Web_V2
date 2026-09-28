@@ -1,16 +1,3 @@
--- Fix: ON CONFLICT em grant_agent_achievement nao batia com ux_agent_achievements_one_time
---
--- Indice ux_agent_achievements_one_time exclui 5 tipos:
---   ('daily_goal', 'streak', 'message_milestone', 'resolution', 'resolution_milestone')
--- Funcao excluia apenas 4 (sem 'resolution_milestone').
--- O planner levantava 42P10 ao planejar o INSERT com ON CONFLICT.
--- Efeito: qualquer INSERT em messages quando messages_received atingia multiplo de
--- 10/50/100/500/1000 falhava com HTTP 400 (handle_message_gamification -> grant_agent_achievement).
--- Quebrou o E2E quando o fixture atingiu 500 mensagens recebidas (499+1).
---
--- Fix: DROP + CREATE com 'resolution_milestone' adicionado ao NOT IN.
--- DROP necessario pois CREATE OR REPLACE nao pode remover parameter defaults (42P13).
-
 DROP FUNCTION IF EXISTS public.grant_agent_achievement(uuid, text, text, text, integer);
 
 CREATE FUNCTION public.grant_agent_achievement(
