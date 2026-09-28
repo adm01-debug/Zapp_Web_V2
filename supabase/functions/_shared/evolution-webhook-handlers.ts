@@ -28,15 +28,27 @@ export async function handleConnectionUpdate(supabase: any, instance: string, ba
   const { data: prevConn } = await supabase.from('whatsapp_connections')
     .select('status, phone_number').eq('instance_id', instance).single();
 
-  // 'connecting' e transitorio: gravar por cima de 'connected' faz o proximo
-  // 'close' comparar com 'connecting' e o alerta critico de queda nao dispara
-  // (connection-health-check tambem pula estados transitorios).
   // 'connecting' transitório: não sobrescrever 'connected' (próximo 'close' perderia alerta).
   // 'disconnected' durante QR ativo: GO emite close por soluço de rede; QR ainda é válido.
   // Expiração real do QR chega via qrcode.updated com qrCode=null → W11 transiciona corretamente.
+  // P2: apenas eventos transientes preservam qr_pending — motivos terminais (logout, ban,
+  // falha de auth) devem transicionar para disconnected. O campo disconnect_reason é injetado
+  // pelo evolution-go-adapter (GO) ou enviado nativamente pelo Evolution API v2.
+  const TERMINAL_DISCONNECT_REASONS: ReadonlySet<string> = new Set([
+    'loggedOut', 'Banned', 'TempBanned', 'connectFailure',
+    'unauthorized_403', 'replaced', 'Replaced',
+    'streamReplaced', 'StreamReplaced',
+    '401', '403', '405',
+  ]);
+  const disconnectReason = typeof baseData.disconnect_reason === 'string'
+    ? baseData.disconnect_reason
+    : typeof baseData.reason === 'string' ? baseData.reason : '';
+  const preserveQrPending = incoming === 'disconnected'
+    && prevConn?.status === 'qr_pending'
+    && !TERMINAL_DISCONNECT_REASONS.has(disconnectReason);
   const status = incoming === 'connecting' && prevConn?.status === 'connected'
     ? 'connected'
-    : incoming === 'disconnected' && prevConn?.status === 'qr_pending'
+    : preserveQrPending
       ? 'qr_pending'
       : incoming;
 
