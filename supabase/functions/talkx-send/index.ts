@@ -98,7 +98,11 @@ function getMediaEndpoint(mediaType: string): string {
   }
 }
 
-export async function handleTalkxSend(req: Request): Promise<Response> {
+export async function handleTalkxSend(
+  req: Request,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _injected?: { supabase?: any; serviceKey?: string },
+): Promise<Response> {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
@@ -107,11 +111,11 @@ export async function handleTalkxSend(req: Request): Promise<Response> {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const serviceKey = _injected?.serviceKey ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const evolutionUrl = Deno.env.get("EVOLUTION_API_URL")!;
     const evolutionKey = Deno.env.get("EVOLUTION_API_KEY")!;
 
-    const supabase = createClient(supabaseUrl, serviceKey);
+    const supabase = _injected?.supabase ?? createClient(supabaseUrl, serviceKey);
 
     // Auth: service-role key (scheduler/server-side) OR user JWT with admin/manager role.
     const authHeader = req.headers.get("Authorization");
@@ -797,5 +801,5 @@ export async function handleTalkxSend(req: Request): Promise<Response> {
 }
 
 if (import.meta.main) {
-  Deno.serve(handleTalkxSend);
+  Deno.serve((req) => handleTalkxSend(req));
 }

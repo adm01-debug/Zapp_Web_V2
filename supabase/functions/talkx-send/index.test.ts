@@ -1,4 +1,4 @@
-import { personalize } from './index.ts';
+import { handleTalkxSend, personalize } from './index.ts';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -83,4 +83,124 @@ Deno.test('personalize does not leak an inherited Object.prototype property for 
   // vez de cair no fallback "[variavel]".
   const result = personalize('X: {{constructor}}', contact, {});
   assert(result === 'X: [constructor]', `unexpected result: ${result}`);
+});
+
+// ---------------------------------------------------------------------------
+// handleTalkxSend — cobertura dos caminhos de autenticação
+// ---------------------------------------------------------------------------
+
+const TEST_SERVICE_KEY = "eyJtest.servicekey.forauth";
+
+function makePost(opts: {
+  bearer?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  body?: any;
+}): Request {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (opts.bearer !== undefined) headers["Authorization"] = `Bearer ${opts.bearer}`;
+  return new Request("https://edge.test/talkx-send", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(opts.body ?? {}),
+  });
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function qb(overrides: Record<string, () => unknown> = {}): any {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const b: Record<string, any> = {};
+  const chain = () => b;
+  b.select = chain; b.eq = chain; b.in = chain; b.limit = chain;
+  b.is = chain; b.update = chain;
+  b.single = () => Promise.resolve({ data: null, error: { message: "not found" } });
+  b.maybeSingle = () => Promise.resolve({ data: null, error: null });
+  Object.assign(b, overrides);
+  return b;
+}
+
+interface MockOpts {
+  authUser?: { id: string } | null;
+  authUserError?: boolean;
+  roleData?: { role: string } | null;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mockDeps(opts: MockOpts): any {
+  return {
+    serviceKey: TEST_SERVICE_KEY,
+    supabase: {
+      auth: {
+        getUser(_token: string) {
+          if (opts.authUserError) {
+            return Promise.resolve({ data: { user: null }, error: new Error("invalid token") });
+          }
+          const user = opts.authUser ?? null;
+          return Promise.resolve({ data: { user }, error: user ? null : new Error("no user") });
+        },
+      },
+      from(table: string) {
+        if (table === "user_roles") {
+          return qb({ maybeSingle: () => Promise.resolve({ data: opts.roleData ?? null, error: null }) });
+        }
+        return qb();
+      },
+    },
+  };
+}
+
+Deno.test("auth: sem Authorization header → 401", async () => {
+  const req = makePost({});
+  const res = await handleTalkxSend(req, mockDeps({}));
+  assert(res.status === 401, `esperado 401, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.error === "Unauthorized", `body inesperado: ${JSON.stringify(body)}`);
+});
+
+Deno.test("auth: Bearer com service-role key correta → passa auth, chega no 400 de campaignId ausente", async () => {
+  const req = makePost({ bearer: TEST_SERVICE_KEY });
+  const res = await handleTalkxSend(req, mockDeps({}));
+  assert(res.status === 400, `esperado 400 (auth ok via service key), recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.error === "campaignId required", `body inesperado: ${JSON.stringify(body)}`);
+});
+
+Deno.test("auth: Bearer com JWT inválido (getUser retorna error) → 401", async () => {
+  const req = makePost({ bearer: "eyJinvalid.jwt.token" });
+  const res = await handleTalkxSend(req, mockDeps({ authUserError: true }));
+  assert(res.status === 401, `esperado 401, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.error === "Unauthorized", `body inesperado: ${JSON.stringify(body)}`);
+});
+
+Deno.test("auth: Bearer com JWT válido mas sem role admin/supervisor → 403", async () => {
+  const req = makePost({ bearer: "eyJvalid.user.token.xx" });
+  const res = await handleTalkxSend(req, mockDeps({
+    authUser: { id: "user-001" },
+    roleData: null,
+  }));
+  assert(res.status === 403, `esperado 403, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.error === "Forbidden", `body inesperado: ${JSON.stringify(body)}`);
+});
+
+Deno.test("auth: Bearer com JWT válido e role admin → passa auth, chega no 400 de campaignId ausente", async () => {
+  const req = makePost({ bearer: "eyJvalid.admin.token.xx" });
+  const res = await handleTalkxSend(req, mockDeps({
+    authUser: { id: "user-admin-001" },
+    roleData: { role: "admin" },
+  }));
+  assert(res.status === 400, `esperado 400 (auth ok via JWT admin), recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.error === "campaignId required", `body inesperado: ${JSON.stringify(body)}`);
+});
+
+Deno.test("auth: Bearer com JWT válido e role supervisor → passa auth, chega no 400 de campaignId ausente", async () => {
+  const req = makePost({ bearer: "eyJvalid.supervisor.token.xx" });
+  const res = await handleTalkxSend(req, mockDeps({
+    authUser: { id: "user-supervisor-001" },
+    roleData: { role: "supervisor" },
+  }));
+  assert(res.status === 400, `esperado 400 (auth ok via JWT supervisor), recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.error === "campaignId required", `body inesperado: ${JSON.stringify(body)}`);
 });
