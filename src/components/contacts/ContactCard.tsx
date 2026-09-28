@@ -97,7 +97,7 @@ export function ContactCard({
           <HighlightText
             text={displayName}
             highlight={searchQuery}
-            className="text-base font-semibold text-foreground leading-tight block truncate pr-8"
+            className="text-sm font-semibold text-foreground leading-tight block truncate pr-8"
           />
           <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
             <Badge

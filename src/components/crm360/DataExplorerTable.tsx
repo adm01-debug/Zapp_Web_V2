@@ -8,10 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   Search, RefreshCw, ChevronLeft, ChevronRight, X,
-  Download, ArrowUpDown, Plus,
+  ArrowUpDown, Plus,
 } from 'lucide-react';
 import { useExternalTableBrowser } from '@/hooks/integrations/useExternalDB';
-import { formatCellValue, exportToCSV, RFM_SEGMENT_COLORS } from './crm360TabsConfig';
+import { formatCellValue, RFM_SEGMENT_COLORS } from './crm360TabsConfig';
 import type { TabConfig } from './crm360TabsConfig';
 import type { ExternalTableName } from '@/types/externalDB';
 
@@ -91,9 +91,6 @@ export function DataExplorerTable({ tabConfig, onRowClick, onCreateClick }: Data
         </Select>
         <Button variant="outline" size="sm" onClick={() => browser.refetch()} className="h-9">
           <RefreshCw className="h-3.5 w-3.5" />
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => exportToCSV(browser.data as Record<string, unknown>[], tabConfig.columns, tabConfig.id)} disabled={browser.data.length === 0} className="h-9">
-          <Download className="h-3.5 w-3.5 mr-1" /> CSV
         </Button>
         {onCreateClick && (
           <Button size="sm" onClick={onCreateClick} className="h-9">

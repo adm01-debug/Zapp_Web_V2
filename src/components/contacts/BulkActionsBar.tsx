@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -185,9 +186,9 @@ export function BulkActionsBar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            {['cliente', 'lead', 'fornecedor', 'colaborador', 'parceiro'].map(type => (
-              <DropdownMenuItem key={type} onClick={() => handleBulkType(type)}>
-                {type.charAt(0).toUpperCase() + type.slice(1)}
+            {CONTACT_TYPES.map(ct => (
+              <DropdownMenuItem key={ct.value} onClick={() => handleBulkType(ct.value)}>
+                {ct.label}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
