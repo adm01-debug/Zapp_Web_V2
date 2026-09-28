@@ -153,10 +153,17 @@ Procedimento:
 
 1. Gerar novo valor (string aleatória, ex.: `openssl rand -hex 32`)
 2. Atualizar o Actions secret `PREVIEW_EGRESS_SHARED_SECRET` (passo 1 acima)
-3. Atualizar o proxy na VPS (via MCP `HOSTINGER` → container `evolution-go-rxj2` ou serviço
-   dedicado ao proxy, conforme `preview-egress-proxy.md`)
+3. Atualizar o proxy na VPS: via MCP `HOSTINGER`, serviço `preview-egress-proxy`
+   (stack em `infrastructure/preview-egress-proxy/`); atualizar o valor no gerenciador de
+   secrets da VPS e reiniciar o container. **Não** usar o container `evolution-go-rxj2` da
+   Evolution GO — ver `docs/runbooks/preview-egress-proxy.md` passo 2.
+   ⚠️ **Janela de indisponibilidade:** nenhuma das implementações suporta dual-key; entre os
+   passos 3 e 4 todo request HMAC será rejeitado. Execute os dois passos sem pausa para
+   minimizar a janela.
 4. Atualizar a Edge (passo 2 acima)
-5. Validar: fazer uma preview request e confirmar resposta HTTP 200 (HMAC ok)
+5. Validar: chamar `fetch-link-preview` com uma URL pública fresca (sem cache) e confirmar
+   que a resposta contém `preview` não nulo. HTTP 200 com `{"preview":null}` indica falha
+   HMAC — o handler devolve 200 mesmo quando o proxy retorna não-2xx.
 6. Registrar data, operador e confirmação de validação
 
 ---
@@ -165,6 +172,7 @@ Procedimento:
 
 - [ ] `DESTINO_URL` — última rotação registrada?
 - [ ] `SUPABASE_ACCESS_TOKEN` — token ainda válido? (não-expirável por padrão, revogar manualmente)
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` — ainda com acesso mínimo necessário? rotacionar se membro saiu ou comprometimento suspeito
 - [ ] `DEPLOY_FUNCTIONS_TOKEN` — se criado, ainda tem escopo mínimo (`contents:write` apenas)?
 - [ ] `DOCKERHUB_TOKEN` / `DOCKERHUB_USER` — token ativo no Docker Hub?
-- [ ] Secrets listados em `github_list_actions_secrets` vs. secrets referenciados nos workflows — há órfãos?
+- [ ] Secrets listados em `github_list_actions_secrets` vs. secrets referenciados nos workflows — há orfãos?
