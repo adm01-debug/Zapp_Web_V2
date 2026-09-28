@@ -352,7 +352,7 @@ logDelete(entityType, entityId, details)
 
 ## 17. Banco de Dados
 
-### Tabelas principais do core (24) + módulo Talk X (10) = 34 total
+### Tabelas principais do core (29 listadas) + módulo Talk X (12) = 41 documentadas
 
 #### Core do sistema
 
@@ -397,16 +397,18 @@ logDelete(entityType, entityId, details)
 | `talkx_segments` | Segmentos | name, filters (JSONB), contact_count, owner_id |
 | `talkx_templates` | Templates de msg | name, body, variables (JSONB), category, use_count |
 | `talkx_template_versions` | Versões de template | template_id, version_number, body, created_at |
-| `talkx_suppression` | Lista de supressão | phone, reason, created_at, owner_id |
+| `talkx_blacklist` | Lista de supressão/bloqueio | phone, contact_id, reason, blocked_by, origin, reason_code, expires_at |
 | `talkx_links` | Links rastreáveis | campaign_id, original_url, slug (case-insensitive), click_count |
 | `talkx_link_clicks` | Cliques em links | link_id, recipient_id, clicked_at, user_agent |
 | `talkx_conversions` | Conversões | link_id, recipient_id, converted_at, value |
 | `talkx_settings` | Config do módulo | owner_id, daily_limit, rate_per_minute, window_start, window_end |
+| `talkx_campaign_events` | Eventos de campanha (log de estado) | campaign_id, event_type, message, actor_id, created_at |
+| `talkx_template_variants` | Variantes A/B de template | template_id, label, content, media_url, media_type, weight |
 
 #### Views e RPCs Talk X
 
 | Objeto | Tipo | Propósito |
-|--------|------|-----------|
+|--------|------|----------|
 | `talkx_campaign_metrics` | View | Métricas agregadas por campanha (RLS bypass corrigido) |
 | `talkx_overview_stats` | RPC | Stats gerais: campanhas ativas, enviados, taxa de entrega |
 | `talkx_campaign_report` | RPC | Relatório detalhado de uma campanha específica |
@@ -414,13 +416,12 @@ logDelete(entityType, entityId, details)
 | `talkx_benchmarks` | RPC | Benchmarks de 90 dias para insights heurísticos |
 | `talkx_increment_delivered` | RPC | Incrementa contador de entregues via webhook DELIVERY_ACK |
 | `record_talkx_link_click` | RPC | Registra clique em link rastreável |
-| `attributeTalkXReply` | RPC | Atribui resposta à campanha (janela 72h) |
 
 ---
 
 ## 18. Edge Functions
 
-### Funções Disponíveis (16 total)
+### Funções documentadas (16 de 69 registradas no deployment-manifest)
 
 | Função | Serviço | Propósito |
 |--------|---------|----------|
@@ -438,7 +439,7 @@ logDelete(entityType, entityId, details)
 | `whatsapp-webhook` | WhatsApp Cloud | Receber eventos Cloud API |
 | `talkx-send` | Evolution GO | Enviar mensagens de campanha (retry + backoff, timeout 20s) |
 | `talkx-scheduler` | pg_cron (1 min) | Disparar envios agendados de campanhas |
-| `talkx-link` | Cloudflare Worker | Redirecionar link rastreável e registrar clique |
+| `talkx-link` | Supabase Edge Function | Redirecionar link rastreável e registrar clique |
 | `talkx-report` | Supabase | Gerar relatório consolidado de campanha |
 
 ---
@@ -511,7 +512,7 @@ projeto/
 | Aspecto | Detalhe |
 |---------|---------|
 | Rota | `/talkx` (via `TalkXView.tsx`) |
-| Banco | 10 tabelas próprias + 8 views/RPCs (prefixo `talkx_`) |
+| Banco | 12 tabelas próprias + 8 views/RPCs (prefixo `talkx_`) |
 | Edge Functions | 4 funções dedicadas |
 | Componentes | 15 componentes `TalkX*.tsx` |
 | Hooks | 9 hooks `useTalkX*.ts` |
@@ -536,7 +537,7 @@ projeto/
 ### Componentes
 
 | Componente | Função |
-|------------|--------|
+|------------|---------|
 | `TalkXView.tsx` | Container principal / roteador de abas |
 | `TalkXOverview.tsx` | Painel de visão geral com métricas |
 | `TalkXSegments.tsx` | Biblioteca de segmentos de contatos |
@@ -584,9 +585,9 @@ projeto/
 | Componentes React | 170+ |
 | Custom Hooks | 59 |
 | Páginas | 7 |
-| Edge Functions | 16 |
+| Edge Functions | 16 documentadas (69 no deployment-manifest) |
 | Migrações SQL | 477+ |
-| Tabelas no Banco | 34 |
+| Tabelas no Banco | 41 documentadas (29 core + 12 talkx_) |
 | Componentes UI | 60 |
 | Última atualização | 2026-09-28 |
 
