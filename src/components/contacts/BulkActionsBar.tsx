@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +15,7 @@ import {
 import { Tag, Trash2, UserCheck, Star, X, CheckSquare, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { isWhatsAppTag } from '@/lib/tags';
+import { isWhatsAppTag, filterCustomTags, getTagDisplayName } from '@/lib/tags';
 
 interface BulkActionsBarProps {
   selectedIds: string[];
@@ -144,10 +143,10 @@ export function BulkActionsBar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            {availableTags.filter(t => !isWhatsAppTag(t)).length > 0 ? (
-              availableTags.filter(t => !isWhatsAppTag(t)).slice(0, 10).map(tag => (
+            {availableTags.length > 0 ? (
+              filterCustomTags(availableTags).slice(0, 10).map(tag => (
                 <DropdownMenuItem key={tag} onClick={() => handleBulkTag(tag)}>
-                  {tag}
+                  {getTagDisplayName(tag)}
                 </DropdownMenuItem>
               ))
             ) : (
@@ -186,9 +185,9 @@ export function BulkActionsBar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            {CONTACT_TYPES.map(ct => (
-              <DropdownMenuItem key={ct.value} onClick={() => handleBulkType(ct.value)}>
-                {ct.label}
+            {['cliente', 'lead', 'fornecedor', 'colaborador', 'parceiro'].map(type => (
+              <DropdownMenuItem key={type} onClick={() => handleBulkType(type)}>
+                {type.charAt(0).toUpperCase() + type.slice(1)}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
