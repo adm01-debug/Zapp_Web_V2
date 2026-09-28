@@ -53,8 +53,9 @@ CREATE TABLE public.team_messages(id int);
 CREATE TABLE public.warroom_alerts(id int);
 CREATE TABLE public.whatsapp_connections(id int);
 CREATE TABLE public.whisper_messages(id int);
+CREATE TABLE public.conversation_tasks(id int);
 CREATE PUBLICATION supabase_realtime FOR TABLE
-  public.agent_presence, public.agent_stats, public.calls, public.contacts, public.conversation_sla,
+  public.agent_presence, public.agent_stats, public.calls, public.contacts, public.conversation_sla, public.conversation_tasks,
   public.email_messages, public.email_threads, public.message_reactions,
   public.messages, public.multiplix_dispatches, public.multiplix_recipients,
   public.notifications, public.payment_links,
