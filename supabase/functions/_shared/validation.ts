@@ -165,6 +165,8 @@ export function handleCors(req: Request): Response | null {
 /** Sanitize string input — strip control chars, trim, enforce max length */
 export function sanitizeString(input: unknown, maxLength = 10000): string | null {
   if (typeof input !== 'string') return null;
+  // Remove control characters except newlines/tabs
+  // eslint-disable-next-line no-control-regex
   const cleaned = input.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim();
   return cleaned.length > 0 ? cleaned.slice(0, maxLength) : null;
 }
