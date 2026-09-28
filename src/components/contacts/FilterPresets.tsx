@@ -27,9 +27,21 @@ interface FilterPresetsProps {
 
 const STORAGE_KEY = 'contact-filter-presets';
 
+function isValidPreset(p: unknown): p is FilterPreset {
+  if (!p || typeof p !== 'object' || Array.isArray(p)) return false;
+  const o = p as Record<string, unknown>;
+  if (typeof o.id !== 'string' || typeof o.name !== 'string') return false;
+  if (!o.filters || typeof o.filters !== 'object' || Array.isArray(o.filters)) return false;
+  const f = o.filters as Record<string, unknown>;
+  const filterKeys = ['type', 'company', 'jobTitle', 'tag', 'dateRange'] as const;
+  return filterKeys.every(k => f[k] === undefined || typeof f[k] === 'string');
+}
+
 function getPresets(): FilterPreset[] {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isValidPreset);
   } catch { return []; }
 }
 
