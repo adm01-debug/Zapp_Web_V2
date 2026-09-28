@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   MessageSquare, Users, UserCheck, Truck, Wrench,
-  Star, Handshake, GripVertical,
+  Handshake, GripVertical, Package,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
@@ -32,9 +32,9 @@ interface ContactKanbanViewProps {
 }
 
 const KANBAN_COLUMNS = [
-  { type: 'lead', label: 'Leads', color: 'hsl(38, 92%, 50%)', icon: Star },
   { type: 'cliente', label: 'Clientes', color: 'hsl(217, 91%, 60%)', icon: Users },
   { type: 'fornecedor', label: 'Fornecedores', color: 'hsl(270, 60%, 60%)', icon: Truck },
+  { type: 'transportadora', label: 'Transportadoras', color: 'hsl(25, 90%, 50%)', icon: Package },
   { type: 'parceiro', label: 'Parceiros', color: 'hsl(142, 71%, 45%)', icon: Handshake },
   { type: 'colaborador', label: 'Colaboradores', color: 'hsl(190, 70%, 50%)', icon: UserCheck },
   { type: 'prestador_servico', label: 'Prestadores', color: 'hsl(340, 65%, 55%)', icon: Wrench },

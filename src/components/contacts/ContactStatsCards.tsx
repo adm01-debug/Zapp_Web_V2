@@ -1,13 +1,13 @@
-import { Users, UserPlus, Building2, Zap } from 'lucide-react';
+import { Users, UserPlus, Building2, Truck } from 'lucide-react';
 import { useContactsKpi } from '@/hooks/crm/useContactsKpi';
 import { ContactKpiCard } from './ContactKpiCard';
 
 interface ContactStatsCardsProps {
   totalAll: number;
-  leadsAll: number;
+  fornecedoresAll: number;
 }
 
-export function ContactStatsCards({ totalAll, leadsAll }: ContactStatsCardsProps) {
+export function ContactStatsCards({ totalAll, fornecedoresAll }: ContactStatsCardsProps) {
   const { data: kpi, isLoading } = useContactsKpi(false);
 
   if (isLoading || !kpi) {
@@ -50,12 +50,12 @@ export function ContactStatsCards({ totalAll, leadsAll }: ContactStatsCardsProps
         chart="line"
       />
       <ContactKpiCard
-        label="Leads"
-        value={leadsAll}
-        deltaPct={kpi.deltaLeadsPct}
-        tile="yellow"
-        icon={Zap}
-        series={kpi.seriesLeadsWeekly12}
+        label="Fornecedores"
+        value={fornecedoresAll}
+        deltaPct={kpi.deltaFornecedoresPct}
+        tile="purple"
+        icon={Truck}
+        series={kpi.seriesFornecedoresWeekly12}
         chart="line"
       />
     </div>

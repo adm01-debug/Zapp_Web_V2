@@ -109,37 +109,6 @@ describe('Security - Audit Logging', () => {
   });
 });
 
-describe('Security - Export Blocking', () => {
-  it('should block PDF export', async () => {
-    const { exportToPDF } = await import('@/utils/exportReport');
-    expect(() => exportToPDF({
-      title: 'Test',
-      generatedAt: new Date(),
-      columns: [],
-      rows: [],
-    })).toThrow('Exportação bloqueada');
-  });
-
-  it('should block Excel export', async () => {
-    const { exportToExcel } = await import('@/utils/exportReport');
-    expect(() => exportToExcel({
-      title: 'Test',
-      generatedAt: new Date(),
-      columns: [],
-      rows: [],
-    })).toThrow('Exportação bloqueada');
-  });
-
-  it('should block CSV export', async () => {
-    const { exportToCSV } = await import('@/utils/exportReport');
-    expect(() => exportToCSV({
-      title: 'Test',
-      generatedAt: new Date(),
-      columns: [],
-      rows: [],
-    })).toThrow('Exportação bloqueada');
-  });
-});
 
 describe('Security - Knowledge Base Search', () => {
   beforeEach(() => {

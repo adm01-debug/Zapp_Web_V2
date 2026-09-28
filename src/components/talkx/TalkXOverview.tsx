@@ -1,15 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import {
   Users, Play, CheckCircle2, Target, Send, MoreVertical, Eye, Pencil, Copy, Pause, Square, Trash2, Zap, Plus,
-  FileText, Bookmark, Upload, MessageSquare, BarChart3, Filter, Download,
+  FileText, Bookmark, MessageSquare, BarChart3, Filter,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ProgressBar, VerTodasButton } from '@/components/dashboard/overview/DashboardCard';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { TalkXSegment } from '@/hooks/integrations/useTalkXSegments';
-import { fromTable } from '@/lib/supabaseHelpers';
-import { exportCampaignsCsv, exportRecipientsCsv, type RecipientRow } from '@/lib/talkxExport';
 import {
   CAMPAIGN_STATUS, FilterBarV2, TalkXPagination, Th, Td, StatusPill, RailCard, RailAction, IconTile,
   TalkXEmptyState, TalkXSkeletonRows, KpiCard, KpiCardSkeleton, HeroCard, RecentList, TipCard, TalkXConfirmDialog,
@@ -135,18 +133,6 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
           filters={filterDefs} values={filterValues} onFilter={handleFilter}
           hasActive={hasActive} onClear={clear}
           view={layout} onView={setLayout}
-          rightSlot={
-            <button
-              type="button"
-              onClick={() => exportCampaignsCsv(selected.size > 0 ? filtered.filter((c) => selected.has(c.id)) : filtered)}
-              disabled={filtered.length === 0}
-              title={selected.size > 0 ? `Exportar ${selected.size} selecionadas` : `Exportar ${filtered.length} campanhas`}
-              className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              aria-label="Exportar CSV"
-            >
-              <Download className="w-4 h-4 text-muted-foreground" />
-            </button>
-          }
         />
 
         {/* E68: Rascunhos pendentes */}
@@ -278,7 +264,6 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
                                 : <DropdownMenuItem onClick={() => onView(c)}><Eye className="w-4 h-4 mr-2" />{c.status === 'completed' ? 'Ver relatório' : 'Monitorar'}</DropdownMenuItem>}
                               {(c.status === 'draft' || c.status === 'scheduled') && <DropdownMenuItem onClick={() => onEdit(c)}><Pencil className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>}
                               {(c.status === 'draft' || c.status === 'scheduled') && c.total_recipients > 0 && <DropdownMenuItem onClick={() => setConfirm({ kind: 'start', c })}><Play className="w-4 h-4 mr-2" />Iniciar agora</DropdownMenuItem>}
-                              {c.status === 'completed' && <DropdownMenuItem onClick={async () => { const PAGE = 1000; let offset = 0; const all: RecipientRow[] = []; for (;;) { const { data, error } = await fromTable('talkx_recipients').select('status, sent_at, delivered_at, error_message, personalized_message, contacts:contact_id(name, phone)').eq('campaign_id', c.id).order('created_at').order('id').range(offset, offset + PAGE - 1); if (error) { return; } if (!data?.length) break; all.push(...(data as Record<string, unknown>[]).map((r) => ({ name: (r.contacts as { name: string } | null)?.name ?? null, phone: (r.contacts as { phone: string } | null)?.phone ?? null, status: String(r.status ?? ''), sent_at: r.sent_at ? String(r.sent_at) : null, delivered_at: r.delivered_at ? String(r.delivered_at) : null, error_message: r.error_message ? String(r.error_message) : null, personalized_message: r.personalized_message ? String(r.personalized_message) : null }) as RecipientRow)); if (data.length < PAGE) break; offset += PAGE; } if (all.length === 0) return; exportRecipientsCsv(all, c.name); }}><Download className="w-4 h-4 mr-2" />Exportar destinatários</DropdownMenuItem>}
                               {c.status === 'sending' && <DropdownMenuItem onClick={() => onPause(c.id)}><Pause className="w-4 h-4 mr-2" />Pausar</DropdownMenuItem>}
                               {c.status === 'paused' && <DropdownMenuItem onClick={() => onStart(c.id)}><Play className="w-4 h-4 mr-2" />Retomar</DropdownMenuItem>}
                               <DropdownMenuItem onClick={() => onDuplicate(c)}><Copy className="w-4 h-4 mr-2" />Duplicar</DropdownMenuItem>
@@ -315,7 +300,6 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
             <RailAction icon={Plus}     color="blue"   title="Nova campanha"      subtitle="Criar do zero"          onClick={onNew} />
             <RailAction icon={FileText} color="violet" title="Usar template"      subtitle="Escolher da biblioteca" onClick={() => onGoTab('templates')} />
             <RailAction icon={Bookmark} color="green"  title="Criar segmento"     subtitle="Definir público-alvo"   onClick={() => onGoTab('segments')} />
-            <RailAction icon={Upload}   color="amber"  title="Importar contatos"  subtitle="Adicionar novos"        onClick={() => onGoTab('import')} />
           </div>
         </RailCard>
         <RailCard icon={BarChart3} title="Últimas campanhas" right={<VerTodasButton onClick={clear} />}>

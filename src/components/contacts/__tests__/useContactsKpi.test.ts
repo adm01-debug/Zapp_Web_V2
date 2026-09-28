@@ -63,13 +63,13 @@ describe('aggregateKpi — novos30 e bucket7', () => {
 });
 
 // ── leads ────────────────────────────────────────────────────────────────────
-describe('aggregateKpi — leads', () => {
-  it('conta só contact_type=lead', () => {
+describe('aggregateKpi — fornecedores', () => {
+  it('conta só contact_type=fornecedor', () => {
     const kpi = aggregateKpi([
-      row(1, 'lead'), row(2, 'cliente'), row(3, 'fornecedor'),
-      row(4, 'lead'), row(5, null as unknown as string),
+      row(1, 'fornecedor'), row(2, 'cliente'), row(3, 'lead'),
+      row(4, 'fornecedor'), row(5, null as unknown as string),
     ], NOW);
-    expect(kpi.leadsTotal).toBe(2);
+    expect(kpi.fornecedoresTotal).toBe(2);
   });
 });
 
