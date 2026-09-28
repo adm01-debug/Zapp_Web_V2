@@ -61,7 +61,8 @@ function getMediaEndpoint(mediaType: string): string {
 
 export async function handleMultiplixSend(
   req: Request,
-  _injected?: { supabase?: ReturnType<typeof createClient>; serviceKey?: string },
+  // deno-lint-ignore no-explicit-any
+  _injected?: { supabase?: any; serviceKey?: string },
 ): Promise<Response> {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
@@ -478,5 +479,5 @@ export async function handleMultiplixSend(
 }
 
 if (import.meta.main) {
-  Deno.serve(handleMultiplixSend);
+  Deno.serve((req) => handleMultiplixSend(req));
 }
