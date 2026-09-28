@@ -1,6 +1,6 @@
 {
   "geradoEm": "2026-09-27T14:30:00.000Z",
-  "commit": null,
+  "commit": "876bd002",
   "escala": {
     "3xs": {
       "fontSizePx": 10,
@@ -129,6 +129,13 @@
       "usos": 28,
       "equivalenteNaEscala": null
     },
+    "38": {
+      "fontSizePx": 38,
+      "lineHeightPx": 57,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 1,
+      "equivalenteNaEscala": null
+    },
     "120": {
       "fontSizePx": 120,
       "lineHeightPx": 180,
@@ -144,7 +151,7 @@
   },
   "violacoes": {
     "meiaMedida": 0,
-    "acima16px": 1,
+    "acima16px": 2,
     "comEquivalenteExato": 0,
     "cssMeiaMedida": 0,
     "cssFontFamilyLiteral": 0,
@@ -158,6 +165,10 @@
       {
         "where": "src/pages/NotFound.tsx:27",
         "px": 120
+      },
+      {
+        "where": "src/components/layout/PageHeader.tsx:147",
+        "px": 38
       }
     ],
     "hasExactEquivalent": [],

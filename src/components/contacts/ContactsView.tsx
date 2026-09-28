@@ -80,7 +80,7 @@ export function ContactsView() {
       <PageHeader
         variant="plain"
         title="Contatos"
-        subtitle={`Base de contatos (${totalCount.toLocaleString('pt-BR')} contatos)`}
+        subtitle={`Base de clientes e leads (${totalCount.toLocaleString('pt-BR')} contatos)`}
         breadcrumbs={[{ label: 'Início' }, { label: 'Gestão' }, { label: 'Contatos' }]}
         actions={
           <div className="flex items-center gap-3 flex-wrap">
