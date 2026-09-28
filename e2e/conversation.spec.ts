@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import {
   E2E_FIXTURE_CONTACT_DISPLAY_NAME,
   ensureFixtureConversationOpen,
+  cleanupFixtureMessages,
 } from './fixtures/e2e-contact';
 
 // beforeEach navega para "/" (raiz) e clica no chip "Todas" ANTES de reabrir
@@ -44,6 +45,14 @@ test.describe('Conversation state transitions', () => {
     await ensureFixtureConversationOpen(page);
     await page.reload();
     await page.getByTestId('status-chip-all').click();
+  });
+
+  test.afterAll(async ({ browser }) => {
+    const context = await browser.newContext({ storageState: 'e2e/.auth/user.json' });
+    const page = await context.newPage();
+    await page.goto('/');
+    await cleanupFixtureMessages(page);
+    await context.close();
   });
 
   test('resolving conversation via CloseConversationDialog succeeds', async ({ page }) => {

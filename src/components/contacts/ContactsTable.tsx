@@ -58,7 +58,7 @@ function SortableHeader({ label, field, sortField, sortDir, onSort }: {
   const isActive = sortField === field;
   return (
     <th
-      className="text-left p-3 text-[13px] font-semibold tracking-normal text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors group"
+      className="text-left p-3 text-xs font-semibold tracking-normal text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors group"
       onClick={() => onSort(field)}
     >
       <div className="flex items-center gap-1">
@@ -124,8 +124,8 @@ export function ContactsTable({
             <SortableHeader label="Email" field="email" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
             <SortableHeader label="Empresa" field="company" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
             <SortableHeader label="Cargo" field="job_title" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
-            <th className="text-left p-3 text-[13px] font-semibold tracking-normal text-muted-foreground">Etiquetas</th>
-            <th className="text-right p-3 text-[13px] font-semibold tracking-normal text-muted-foreground">Ações</th>
+            <th className="text-left p-3 text-xs font-semibold tracking-normal text-muted-foreground">Etiquetas</th>
+            <th className="text-right p-3 text-xs font-semibold tracking-normal text-muted-foreground">Ações</th>
           </tr>
         </thead>
         <tbody>

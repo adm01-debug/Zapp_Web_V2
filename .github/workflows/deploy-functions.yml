@@ -47,7 +47,7 @@ jobs:
     # functions para producao sem nenhum gate alem de estar na main.
     environment: producao-edge-functions
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       # E09 (auditoria de GitHub Actions, 2026-09-26) — considerado e
       # descartado: um passo dentro do job para detectar outro run
@@ -106,7 +106,7 @@ jobs:
           node scripts/edge-deploy/generate-manifest.mjs --check
 
       - name: Setup Supabase CLI ${{ env.SUPABASE_CLI_VERSION }}
-        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
 
@@ -250,6 +250,10 @@ jobs:
           PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           FN: ${{ inputs.function_name }}
         run: |
+          # F-02 (auditoria 2026-09-27): sem pipefail, falha do CLI do supabase
+          # era mascarada pelo tee (exit 0) e só aparecia ~12 min depois quando
+          # a verificação pós-deploy não encontrava o deploy esperado.
+          set -o pipefail
           EVIDENCE_DIR="$RUNNER_TEMP/edge-deployment-evidence"
           mkdir -p "$EVIDENCE_DIR"
           DEPLOY_LOG="$EVIDENCE_DIR/deploy-output.log"

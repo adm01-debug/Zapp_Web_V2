@@ -1,10 +1,10 @@
 import React from 'react';
 import {
-  Inbox, LayoutDashboard, Users, Phone, Zap, Tag, BarChart3, Shield, Settings,
+  Inbox, LayoutDashboard, Users, Phone, Zap, BarChart3, Shield, Settings,
   Plus, Keyboard,
 } from 'lucide-react';
 
-export type CommandCategory = 'navigation' | 'action' | 'search' | 'recent';
+export type CommandCategory = 'navigation' | 'action' | 'search' | 'recent' | 'talkx';
 
 export interface CommandItem {
   id: string;
@@ -31,8 +31,7 @@ export const defaultNavigationCommands: CommandItem[] = [
   { id: 'nav-contacts', title: 'Contatos', description: 'Gerenciar contatos', icon: <Users className="h-4 w-4" />, category: 'navigation', keywords: ['clientes', 'pessoas', 'leads'], shortcut: ['g', 'c'] },
   { id: 'nav-agents', title: 'Atendentes', description: 'Ver equipe de atendimento', icon: <Phone className="h-4 w-4" />, category: 'navigation', keywords: ['equipe', 'time', 'operadores'], shortcut: ['g', 'a'] },
   { id: 'nav-queues', title: 'Filas', description: 'Gerenciar filas de atendimento', icon: <Zap className="h-4 w-4" />, category: 'navigation', keywords: ['queue', 'fila', 'distribuição'], shortcut: ['g', 'q'] },
-  { id: 'nav-tags', title: 'Etiquetas', description: 'Gerenciar tags', icon: <Tag className="h-4 w-4" />, category: 'navigation', keywords: ['labels', 'categorias'] },
-  { id: 'nav-reports', title: 'Relatórios', description: 'Ver relatórios avançados', icon: <BarChart3 className="h-4 w-4" />, category: 'navigation', keywords: ['analytics', 'dados', 'exportar'], shortcut: ['g', 'r'] },
+{ id: 'nav-reports', title: 'Relatórios', description: 'Ver relatórios avançados', icon: <BarChart3 className="h-4 w-4" />, category: 'navigation', keywords: ['analytics', 'dados', 'exportar'], shortcut: ['g', 'r'] },
   { id: 'nav-security', title: 'Segurança', description: 'Configurações de segurança', icon: <Shield className="h-4 w-4" />, category: 'navigation', keywords: ['senha', 'mfa', '2fa', 'proteção'] },
   { id: 'nav-settings', title: 'Configurações', description: 'Ajustar preferências', icon: <Settings className="h-4 w-4" />, category: 'navigation', keywords: ['preferências', 'ajustes', 'config'], shortcut: ['g', 's'] },
 ];

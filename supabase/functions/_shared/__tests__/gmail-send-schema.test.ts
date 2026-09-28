@@ -1,4 +1,4 @@
-import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
+import { assertEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
 import { GmailSendActionSchema } from "../schemas.ts";
 
 // thread_id/message_id/message_ids sao interpolados direto na URL da API do
@@ -45,4 +45,19 @@ Deno.test('GmailSendActionSchema aceita message_ids todos válidos', () => {
     message_ids: ['abc123', 'def_456-XYZ'],
   }));
   assertEquals(result.success, true);
+});
+
+Deno.test('GmailSendActionSchema rejeita thread_id vazio', () => {
+  const result = GmailSendActionSchema.safeParse(baseBody({ thread_id: '' }));
+  assertEquals(result.success, false);
+});
+
+Deno.test('GmailSendActionSchema rejeita thread_id com mais de 100 caracteres', () => {
+  const result = GmailSendActionSchema.safeParse(baseBody({ thread_id: 'a'.repeat(101) }));
+  assertEquals(result.success, false);
+});
+
+Deno.test('GmailSendActionSchema rejeita thread_id com percent-encoding (%2F = /)', () => {
+  const result = GmailSendActionSchema.safeParse(baseBody({ thread_id: 'abc%2Fadmin' }));
+  assertEquals(result.success, false);
 });

@@ -23,8 +23,17 @@ updates:
       - "automated"
     commit-message:
       prefix: "⬆️ deps:"
-    # Keep updates independent so failures map to one dependency/changelog.
-    # The open PR limit bounds review load without hiding regressions in a batch.
+    # 2026-09-27: bumps de minor/patch agrupados em 1 PR semanal. Isolados, os
+    # 10 PRs de segunda caiam juntos e disparavam ~80 jobs de uma vez (CI +
+    # CodeQL + DB Guard por PR), enfileirando todos os outros repos da conta.
+    # Um bump quebrar continua rastreavel: o CI do PR agrupado aponta o pacote.
+    groups:
+      deps-semanal:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
     # Major upgrades require a dedicated compatibility plan and full gates.
     # This restriction applies only to version updates; security updates remain eligible.
     ignore:

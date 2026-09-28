@@ -34,6 +34,16 @@ export function personalizeMultiplix(template: string, company: { name?: string 
   return result;
 }
 
+function timingSafeStringEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const ab = enc.encode(a);
+  const bb = enc.encode(b);
+  if (ab.length !== bb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
+  return diff === 0;
+}
+
 function randomBetween(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -64,27 +74,37 @@ export async function handleMultiplixSend(req: Request): Promise<Response> {
 
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Auth: service-role key (scheduler) OU JWT de usuario admin/supervisor —
-    // mesmo modelo de talkx-send (bulk messaging e gated para staff).
+    // Auth: x-cron-secret (pg_cron, sem Bearer) OU service-role key OU JWT admin/supervisor.
+    // x-cron-secret é verificado ANTES do guard de Bearer para que pg_cron chegue aqui.
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
+    const cronSecretHeader = req.headers.get("x-cron-secret");
+    let isCronAuth = false;
+    if (cronSecretHeader) {
+      const { data: vaultSecret, error: rpcError } = await supabase.rpc("get_multiplix_cron_secret");
+      if (!rpcError && typeof vaultSecret === "string") {
+        isCronAuth = timingSafeStringEqual(cronSecretHeader, vaultSecret);
+      }
     }
-    const token = authHeader.slice(7);
-    const isServiceKey = token === serviceKey;
-    if (!isServiceKey) {
-      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-      if (authError || !user) {
+    if (!isCronAuth) {
+      if (!authHeader?.startsWith("Bearer ")) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
       }
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .in("role", ["admin", "supervisor"])
-        .maybeSingle();
-      if (!roleData) {
-        return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
+      const token = authHeader.slice(7);
+      const isServiceKey = timingSafeStringEqual(token, serviceKey);
+      if (!isServiceKey) {
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        if (authError || !user) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
+        }
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .in("role", ["admin", "supervisor"])
+          .maybeSingle();
+        if (!roleData) {
+          return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
+        }
       }
     }
 
@@ -168,6 +188,9 @@ export async function handleMultiplixSend(req: Request): Promise<Response> {
       p_action: "start",
     });
     if (transitionError) {
+      if (transitionError.message === 'multiplix_dispatch_already_running') {
+        return new Response(JSON.stringify({ skipped: true, reason: 'already_running' }), { headers });
+      }
       return new Response(JSON.stringify({ error: transitionError.message }), { status: 409, headers });
     }
 
@@ -448,7 +471,7 @@ export async function handleMultiplixSend(req: Request): Promise<Response> {
   } catch (err) {
     log.error("Multiplix send error", { error: err instanceof Error ? err.message : String(err) });
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers },
     );
   }

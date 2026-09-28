@@ -31,8 +31,14 @@ export async function handleConnectionUpdate(supabase: any, instance: string, ba
   // 'connecting' e transitorio: gravar por cima de 'connected' faz o proximo
   // 'close' comparar com 'connecting' e o alerta critico de queda nao dispara
   // (connection-health-check tambem pula estados transitorios).
+  // 'connecting' transitório: não sobrescrever 'connected' (próximo 'close' perderia alerta).
+  // 'disconnected' durante QR ativo: GO emite close por soluço de rede; QR ainda é válido.
+  // Expiração real do QR chega via qrcode.updated com qrCode=null → W11 transiciona corretamente.
   const status = incoming === 'connecting' && prevConn?.status === 'connected'
-    ? 'connected' : incoming;
+    ? 'connected'
+    : incoming === 'disconnected' && prevConn?.status === 'qr_pending'
+      ? 'qr_pending'
+      : incoming;
 
   // Evolution GO envia jid/pushName no Connected — aproveita para preencher
   // o número quando ainda não temos (paridade com o que o v2 preenchia).
@@ -40,7 +46,10 @@ export async function handleConnectionUpdate(supabase: any, instance: string, ba
     ? normalizePhone(baseData.jid) : null;
   await supabase.from('whatsapp_connections')
     .update({
-      status, qr_code: null, updated_at: new Date().toISOString(),
+      status,
+      // Não zera o QR enquanto status permanece qr_pending (QR ativo protegido)
+      ...(status !== 'qr_pending' ? { qr_code: null } : {}),
+      updated_at: new Date().toISOString(),
       ...(connectedPhone && !prevConn?.phone_number ? { phone_number: connectedPhone } : {}),
     })
     .eq('instance_id', instance);
@@ -177,29 +186,19 @@ export async function handleChatsUpdate(supabase: any, instance: string, data: u
   }
 }
 
-// deno-lint-ignore no-explicit-any
-export async function handleLabelsEdit(supabase: any, instance: string, data: unknown) {
+export async function handleLabelsEdit(supabase: any, _instance: string, data: unknown) { // eslint-disable-line @typescript-eslint/no-explicit-any
   const labelData = isRecord(data) ? data : {};
   const labelId = labelData.id as string;
   const labelName = labelData.name as string;
-  const labelColor = labelData.color as string;
   const deleted = labelData.deleted as boolean;
   if (!labelId) return;
 
-  const connection = await getConnectionByInstance(supabase, instance);
-  if (!connection) return;
-
+  const prefix = `wa:${labelId}:`;
   if (deleted) {
-    // GO pode mandar delete sem name; casa pelo prefixo estável wa:{id}:
-    await supabase.from('tags').delete().ilike('name', `wa:${labelId}:%`);
+    await supabase.rpc('remove_wa_label_from_all_contacts', { p_label_prefix: prefix });
   } else {
-    const tagName = labelName || `Label ${labelId}`;
-    const { data: existingTag } = await supabase.from('tags').select('id').ilike('name', `wa:${labelId}:%`).maybeSingle();
-    if (existingTag) {
-      await supabase.from('tags').update({ name: `wa:${labelId}:${tagName}`, color: labelColor || '#3B82F6' }).eq('id', existingTag.id);
-    } else {
-      await supabase.from('tags').insert({ name: `wa:${labelId}:${tagName}`, color: labelColor || '#3B82F6' });
-    }
+    const tagName = `wa:${labelId}:${labelName || `Label ${labelId}`}`;
+    await supabase.rpc('rename_wa_label_on_all_contacts', { p_label_prefix: prefix, p_new_tag: tagName });
   }
 }
 
@@ -216,18 +215,15 @@ export async function handleLabelsAssociation(supabase: any, instance: string, d
   if (!connection) return;
 
   const contact = await getContactByPhone(supabase, phone, connection.id);
-  const { data: tag } = await supabase.from('tags').select('id').ilike('name', `wa:${labelId}:%`).maybeSingle();
+  if (!contact) return;
 
-  if (contact && tag) {
-    if (type === 'remove') {
-      await supabase.from('contact_tags').delete().eq('contact_id', contact.id).eq('tag_id', tag.id);
-    } else {
-      const { data: existing } = await supabase.from('contact_tags').select('id')
-        .eq('contact_id', contact.id).eq('tag_id', tag.id).maybeSingle();
-      if (!existing) {
-        await supabase.from('contact_tags').insert({ contact_id: contact.id, tag_id: tag.id });
-      }
-    }
+  const prefix = `wa:${labelId}:`;
+  if (type === 'remove') {
+    await supabase.rpc('remove_wa_tag_by_prefix', { p_contact_id: contact.id, p_prefix: prefix });
+  } else {
+    const labelName = (assocData.label as Record<string, unknown>)?.name as string || `Label ${labelId}`;
+    const tagValue = `wa:${labelId}:${labelName}`;
+    await supabase.rpc('add_wa_tag_if_not_exists', { p_contact_id: contact.id, p_prefix: prefix, p_tag: tagValue });
   }
 }
 

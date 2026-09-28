@@ -1,17 +1,8 @@
 {
     "note": "Regenerar apos qualquer GRANT/REVOKE e revisar o diff antes de commitar.",
     "anon_execute": [
-        "enforce_conversation_status_transition()",
-        "enqueue_crm_sync_from_closure()",
-        "handle_conversation_closure_gamification()",
-        "handle_message_gamification()",
-        "prevent_contact_assignee_hijack()",
-        "prevent_contact_queue_hijack()",
-        "prevent_conversation_task_field_forgery()",
-        "seed_default_goals_for_profile()",
-        "set_scheduled_report_config_owner()",
-        "trg_talkx_increment_replied_count()",
-        "trg_talkx_increment_template_use_count()"
+        "calculate_level(xp_amount bigint)",
+        "conversation_closure_day(p_created_at timestamp with time zone)"
     ],
     "generated_at": "2026-09-27",
     "anon_table_select": [
@@ -63,7 +54,9 @@
         "csat_surveys",
         "custom_emojis",
         "deal_activities",
+        "department_audit_logs",
         "department_invitations",
+        "department_invites",
         "email_attachments",
         "email_labels",
         "email_messages",
@@ -88,6 +81,7 @@
         "messages",
         "meta_capi_events",
         "mfa_sessions",
+        "multiplix_blocks",
         "multiplix_dispatches",
         "multiplix_recipients",
         "notifications",
@@ -137,6 +131,7 @@
         "team_conversation_members",
         "team_conversations",
         "team_message_reactions",
+        "team_message_receipts",
         "team_messages",
         "training_sessions",
         "user_devices",
@@ -159,6 +154,6 @@
         "whisper_messages"
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 157,
-    "authenticated_execute_count": 95
+    "service_role_execute_count": 176,
+    "authenticated_execute_count": 112
 }

@@ -16,6 +16,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
   # Fila de merge: sem este gatilho o check required nunca reportaria no merge
   # group e a fila travaria todos os merges do repo.
   merge_group:
@@ -72,15 +73,19 @@ jobs:
             // (ex.: PRs #856/#860, renomear para a version real do ledger
             // antes de qualquer aplicacao); 'removed' tambem fica de fora
             // (mudanca para _foreign/_superseded, arquivo morto).
+            // Mas um 'renamed' com additions/deletions > 0 e o MESMO gap por
+            // outra porta: o conteudo mudou junto com o nome, disfarcado de
+            // rename puro (achado da auditoria de 5 agentes de 2026-09-27).
             const violacoes = arquivos.filter(
-              (f) => f.status === 'modified'
-                && /^supabase\/migrations\/\d{14}_.*\.sql$/.test(f.filename),
+              (f) => /^supabase\/migrations\/\d{14}_.*\.sql$/.test(f.filename)
+                && (f.status === 'modified'
+                  || (f.status === 'renamed' && ((f.additions || 0) > 0 || (f.deletions || 0) > 0))),
             );
             if (violacoes.length > 0) {
               const lista = violacoes.map((f) => f.filename).join('\n  - ');
               core.setFailed(
-                'Este PR edita o CONTEUDO de uma migration que ja existe, mantendo '
-                + 'o mesmo nome de arquivo (regra 7 da secao 1 do CLAUDE.md — '
+                'Este PR edita o CONTEUDO de uma migration que ja existe, com o '
+                + 'mesmo nome ou renomeada (regra 7 da secao 1 do CLAUDE.md — '
                 + 'statements no ledger e o SQL real e completo; um arquivo ja '
                 + 'aplicado nao pode mudar depois):\n  - '
                 + lista

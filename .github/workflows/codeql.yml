@@ -9,13 +9,17 @@
 name: CodeQL
 
 on:
-  push:
-    branches: [main]
+  # F-09 (auditoria 2026-09-27): removido gatilho push/main. A action
+  # github/codeql-action/init cria uma entrada de cache com {run_id} na chave
+  # (~231 MB cada), que nunca e reusada entre runs diferentes. Com 46+ pushes
+  # num dia, o limite de 10 GB era atingido em <3 h, ativando evicção dos
+  # outros workflows. pull_request cobre cada PR contra main sem cache churn
+  # dos merge commits; schedule cobre a varredura semanal completa.
+  # NOTA: merge_group e inerte neste repo (conta User, nao Organization) —
+  # ver CLAUDE.md:230-241. Os gatilhos merge_group ja existentes em ci.yml,
+  # db-guard.yml e codeql.yml ficam presentes mas nao disparam (sem custo).
   pull_request:
     branches: [main]
-  # Fila de merge: sem este gatilho o check required nunca reportaria no merge
-  # group e a fila travaria todos os merges do repo.
-  merge_group:
   schedule:
     - cron: '30 9 * * 1' # segunda 06:30 BRT
 
@@ -46,13 +50,13 @@ jobs:
           persist-credentials: false
 
       - name: 🧬 Initialize CodeQL
-        uses: github/codeql-action/init@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           languages: javascript-typescript
           build-mode: none
 
       - name: 🔬 Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           category: '/language:javascript-typescript'
 
@@ -76,12 +80,12 @@ jobs:
           persist-credentials: false
 
       - name: 🧬 Initialize CodeQL
-        uses: github/codeql-action/init@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           languages: actions
           build-mode: none
 
       - name: 🔬 Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           category: '/language:actions'

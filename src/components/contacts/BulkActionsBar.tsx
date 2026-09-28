@@ -16,6 +16,7 @@ import {
 import { Tag, Trash2, UserCheck, Star, X, CheckSquare, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { isWhatsAppTag } from '@/lib/tags';
 
 interface BulkActionsBarProps {
   selectedIds: string[];
@@ -36,6 +37,7 @@ export function BulkActionsBar({
   const count = selectedIds.length;
 
   const handleBulkTag = useCallback(async (tag: string) => {
+    if (isWhatsAppTag(tag)) return;
     setIsProcessing(true);
     try {
       // Add tag to each selected contact
@@ -142,8 +144,8 @@ export function BulkActionsBar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            {availableTags.length > 0 ? (
-              availableTags.slice(0, 10).map(tag => (
+            {availableTags.filter(t => !isWhatsAppTag(t)).length > 0 ? (
+              availableTags.filter(t => !isWhatsAppTag(t)).slice(0, 10).map(tag => (
                 <DropdownMenuItem key={tag} onClick={() => handleBulkTag(tag)}>
                   {tag}
                 </DropdownMenuItem>

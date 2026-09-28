@@ -181,7 +181,7 @@ export function useContactCrm360(contactId: string | null | undefined) {
         supabase.from('contact_purchases').select('id, title, amount, purchased_at, status').eq('contact_id', cid),
         supabase.from('sales_deals').select('id, title, value, status, stage_id, expected_close_date, updated_at').eq('contact_id', cid),
         supabase.from('sales_pipeline_stages').select('id, name, position, is_active').order('position'),
-        supabase.from('contact_tags').select('tags(name)').eq('contact_id', cid),
+        supabase.from('contacts').select('tags').eq('id', cid).maybeSingle(),
       ]);
       if (purchasesRes.error) throw purchasesRes.error;
       if (dealsRes.error) throw dealsRes.error;
@@ -204,10 +204,7 @@ export function useContactCrm360(contactId: string | null | undefined) {
         .limit(20);
       if (eventsRes.error) throw eventsRes.error;
 
-      const tagNames = ((tagsRes.data ?? []) as Array<{ tags: { name: string } | { name: string }[] | null }>)
-        .flatMap((row) => (Array.isArray(row.tags) ? row.tags : row.tags ? [row.tags] : []))
-        .map((t) => t.name)
-        .filter(Boolean);
+      const tagNames = ((tagsRes.data?.tags || []) as string[]).filter(Boolean);
 
       return aggregateCrm360({
         purchases: (purchasesRes.data ?? []) as Crm360Purchase[],

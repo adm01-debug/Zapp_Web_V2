@@ -1,4 +1,4 @@
-import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
+import { assertEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
 import { escapeOrFilterValue } from "../postgrest-filters.ts";
 
 // voice-copilot-action/search_contacts só removia % _ \, sem tocar em

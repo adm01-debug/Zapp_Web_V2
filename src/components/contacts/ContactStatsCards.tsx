@@ -14,7 +14,7 @@ export function ContactStatsCards({ totalAll, fornecedoresAll }: ContactStatsCar
     return (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {Array.from({ length: 4 }, (_, i) => (
-          <div key={i} className="h-[108px] rounded-[14px] border border-border/70 bg-card animate-shimmer" />
+          <div key={i} className="h-[96px] rounded-[14px] border border-border/70 bg-card animate-shimmer" />
         ))}
       </div>
     );
