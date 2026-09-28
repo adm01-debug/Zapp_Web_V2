@@ -335,6 +335,26 @@ jobs:
           appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join('\n')}\n`);
           NODE
 
+      - name: Registrar tag de deploy (requer DEPLOY_FUNCTIONS_TOKEN)
+        # Opcional: cria tag leve de rastreabilidade no commit deployado.
+        # Sem DEPLOY_FUNCTIONS_TOKEN o passo e pulado sem falhar.
+        # PAT necessario: contents:write no repo.
+        if: success()
+        env:
+          DEPLOY_FUNCTIONS_TOKEN: ${{ secrets.DEPLOY_FUNCTIONS_TOKEN }}
+        run: |
+          if [ -z "$DEPLOY_FUNCTIONS_TOKEN" ]; then
+            echo "DEPLOY_FUNCTIONS_TOKEN ausente — tag de rastreabilidade nao criada."
+            exit 0
+          fi
+          TAG="edge-deploy/$(date -u +%Y%m%d-%H%M%S)-${DEPLOYED_GIT_SHA:0:8}"
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              tag -a "$TAG" "$DEPLOYED_GIT_SHA" \
+              -m "Deploy de edge functions em producao — run $GITHUB_RUN_ID"
+          git push "https://x-access-token:${DEPLOY_FUNCTIONS_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$TAG"
+          echo "::notice::Tag de rastreabilidade criada: $TAG"
+
       - name: Arquivar manifesto, atestado e smokes
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
