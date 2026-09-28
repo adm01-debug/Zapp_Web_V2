@@ -12,8 +12,6 @@ import { motion } from 'framer-motion';
 import { Clock, AlertTriangle, Target, History, Settings2 } from 'lucide-react';
 import { useSLAMetrics, PeriodFilter } from '@/hooks/sla/useSLAMetrics';
 import { useSLAHistory } from '@/hooks/sla/useSLAHistory';
-import { ExportButton } from '@/components/reports/ExportButton';
-import { ReportData } from '@/utils/exportReport';
 import { cn } from '@/lib/utils';
 import { SLAMetricCards } from './SLAMetricCards';
 import { SLAAgentTable } from './SLAAgentTable';
@@ -113,27 +111,6 @@ export const SLADashboard = () => {
     );
   }
 
-  const getExportData = (): ReportData => ({
-    title: 'Dashboard de SLA',
-    subtitle: `Período: ${periodLabels[period]}`,
-    generatedAt: new Date(),
-    columns: [
-      { header: 'Agente', key: 'agentName', width: 20 },
-      { header: 'Taxa SLA (%)', key: 'overallRate', width: 12 },
-      { header: '1ª Resp. (%)', key: 'firstResponseRate', width: 12 },
-    ],
-    rows: data.byAgent.map(a => ({
-      agentName: a.agentName,
-      overallRate: a.overallRate.toFixed(1),
-      firstResponseRate: a.firstResponse.rate.toFixed(1),
-    })),
-    summary: [
-      { label: 'Taxa SLA Geral', value: `${data.overall.overallRate.toFixed(1)}%` },
-      { label: 'Total Conversas', value: data.overall.totalConversations },
-      { label: '1ª Resposta no Prazo', value: data.overall.firstResponse.onTime },
-    ],
-  });
-
   return (
     <div className="space-y-6 w-full min-w-0">
       {/* Header */}
@@ -145,8 +122,7 @@ export const SLADashboard = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <ExportButton getData={getExportData} />
-          <Button 
+          <Button
             variant="outline" 
             onClick={() => navigate('/sla/history')}
             className="gap-2"

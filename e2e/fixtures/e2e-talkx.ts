@@ -4,10 +4,14 @@ const SUPABASE_URL = 'https://tnnnlkbymytvtqngbbqh.supabase.co';
 const SUPABASE_ANON_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRubm5sa2J5bXl0dnRxbmdiYnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MjU0MDEsImV4cCI6MjEwMzMwMTQwMX0.4kDVowXzo3yBVboLOFn1bsij-vBKncJXVoPot3iknC0';
 
-// Conexão WhatsApp existente em produção, visível ao usuário de teste (supervisor).
-// Pode estar disconnected — o wizard só exige selecionar, não que esteja conectada.
-export const E2E_TALKX_CONNECTION_ID = '3b0f7f2e-887a-4c00-97de-012313649f9b';
-export const E2E_TALKX_CONNECTION_LABEL = 'Promo Brindes WhatsApp (551146375517)';
+// Conexão WhatsApp dedicada para E2E, semeada em produção (2026-09-28).
+// DEVE ter status='connected' e instance_id preenchido — useCampaignEditor filtra
+// por .eq('status','connected') e !instance_id; conexão disconnected não aparece no dropdown
+// e o 7º spec (wizard avança para step 2) falharia com "Continuar" desabilitado.
+// Ver supabase/migrations/_foreign/seed-talkx-connection.sql para reproduzir.
+// NUNCA apagar esta linha do banco.
+export const E2E_TALKX_CONNECTION_ID = 'e2e0e2e0-0000-4000-a000-e2e000000001';
+export const E2E_TALKX_CONNECTION_LABEL = '[E2E] Conexão WhatsApp Teste (00000000000)';
 
 // Segmento fixo semeado em produção para o usuário de teste E2E (supervisor).
 // Criado via db_query: INSERT INTO talkx_segments ... (2026-09-27).

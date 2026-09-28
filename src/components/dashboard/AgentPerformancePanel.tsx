@@ -1,11 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Trophy, Medal, Star, MessageSquare, Clock, Heart, User, Users, PieChart as PieIcon, Target, Download, Quote } from 'lucide-react';
+import { Trophy, Medal, Star, MessageSquare, Clock, Heart, User, Users, PieChart as PieIcon, Target, Quote } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { cn } from '@/lib/utils';
 import { useLeaderboard, type LeaderboardAgent } from '@/hooks/gamification/useLeaderboard';
 import { useSLAMetrics } from '@/hooks/sla/useSLAMetrics';
-import { useExportData } from '@/hooks/system/useExportData';
-import { DashboardCard, SectionHeader, VerTodasButton, CardSelect, InitialsAvatar, Pill, GhostButton, ProgressBar, PrimaryButton } from './overview/DashboardCard';
+import { DashboardCard, SectionHeader, VerTodasButton, CardSelect, InitialsAvatar, Pill, ProgressBar, PrimaryButton } from './overview/DashboardCard';
 import { DashboardKpiCard } from './overview/DashboardKpiCard';
 import { formatShortDuration } from './overview/formatShortDuration';
 import { getSLARateTone } from './sla/slaRate';
@@ -75,23 +74,6 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
     return list.sort(by[sortKey]);
   }, [agents, sortKey]);
 
-  const { exportCSV } = useExportData<Record<string, unknown>>({
-    fileName: 'ranking-equipe',
-    columns: [
-      { key: 'name', header: 'Agente' },
-      { key: 'conversationsResolved', header: 'Resolvidas' },
-      { key: 'messagesHandled', header: 'Mensagens' },
-      { key: 'avgResponseTime', header: 'Tempo de resposta (s)' },
-      { key: 'sla', header: 'SLA (%)' },
-      { key: 'xp', header: 'XP' },
-      { key: 'level', header: 'Nível' },
-    ],
-  });
-  const handleExport = () => exportCSV(sorted.map((a) => ({
-    name: a.name, conversationsResolved: a.conversationsResolved, messagesHandled: a.messagesHandled,
-    avgResponseTime: Math.round(a.avgResponseTime), sla: slaByAgent(a) !== null ? Math.round(slaByAgent(a)!) : '', xp: a.xp, level: a.level,
-  })));
-
   const onlineCount = agents.filter((a) => a.isOnline).length;
   const offlineCount = agents.length - onlineCount;
   const totalResolved = agents.reduce((s, a) => s + a.conversationsResolved, 0);
@@ -129,7 +111,6 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
                   <span className="mr-1">Ordenar por</span>
                   <CardSelect value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)} options={SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label }))} />
                 </div>
-                <GhostButton icon={Download} onClick={handleExport}>Exportar</GhostButton>
               </div>
             )}
           />
@@ -232,7 +213,7 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
               </div>
               <div className="mt-4 rounded-xl bg-primary/10 border border-primary/25 p-3.5 flex items-start gap-3">
                 <Quote className="w-5 h-5 text-primary-glow shrink-0" />
-                <p className="text-[13px] text-foreground leading-snug">“Trabalho em equipe transforma atendimento em resultados.”</p>
+                <p className="text-[13px] text-foreground leading-snug">"Trabalho em equipe transforma atendimento em resultados."</p>
               </div>
             </DashboardCard>
           )}

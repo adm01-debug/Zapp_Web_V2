@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Users, Download, ChevronsUpDown, ChevronLeft, ChevronRight, Search } from 'lucide-react';
-import { DashboardCard, SectionHeader, CardSelect, InitialsAvatar, Pill, GhostButton } from '../overview/DashboardCard';
-import { useExportData } from '@/hooks/system/useExportData';
+import { Users, ChevronsUpDown, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { DashboardCard, SectionHeader, CardSelect, InitialsAvatar, Pill } from '../overview/DashboardCard';
 import { getSLARateTone, getSLARateLabel, SLA_RATE_TEXT_CLASS, SLA_RATE_BG_CLASS } from './slaRate';
 
 interface AgentSLARow {
@@ -28,16 +27,6 @@ export function SLAAgentTable({ agents }: SLAAgentTableProps) {
   const [sort, setSort] = useState('sla-desc');
   const [page, setPage] = useState(0);
 
-  const { exportCSV } = useExportData<Record<string, unknown>>({
-    fileName: 'sla-por-agente',
-    columns: [
-      { key: 'agentName', header: 'Agente' },
-      { key: 'overallRate', header: 'SLA (%)', format: (v) => `${Math.round(Number(v))}` },
-      { key: 'onTime', header: 'No Prazo' },
-      { key: 'breached', header: 'Violações' },
-    ],
-  });
-
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     const rows = term ? agents.filter((a) => a.agentName.toLowerCase().includes(term)) : agents;
@@ -51,13 +40,6 @@ export function SLAAgentTable({ agents }: SLAAgentTableProps) {
   const totalPages = Math.max(Math.ceil(filtered.length / PAGE_SIZE), 1);
   const currentPage = Math.min(page, totalPages - 1);
   const pageRows = filtered.slice(currentPage * PAGE_SIZE, currentPage * PAGE_SIZE + PAGE_SIZE);
-
-  const handleExport = () => {
-    exportCSV(filtered.map((a) => ({
-      agentName: a.agentName, overallRate: a.overallRate,
-      onTime: a.firstResponse.onTime, breached: a.firstResponse.breached,
-    })));
-  };
 
   return (
     <DashboardCard testid="sla-agent-table-card" variant="comfortable">
@@ -79,7 +61,6 @@ export function SLAAgentTable({ agents }: SLAAgentTableProps) {
               />
             </div>
             <CardSelect value={sort} onValueChange={(v) => { setSort(v); setPage(0); }} options={SORT_OPTIONS} testid="sla-sort-select" />
-            <GhostButton icon={Download} onClick={handleExport} title="Exportar CSV" />
           </div>
         )}
       />

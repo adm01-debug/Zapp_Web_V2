@@ -39,9 +39,9 @@ export function aggregateKpi(rows: Row[], now = new Date()) {
     arr.reduce<number[]>((acc, v) => [...acc, (acc.length ? acc[acc.length - 1] : base) + v], []);
 
   const olderThan12w = rows.filter(r => !inLast(r, 84)).length;
-  const leads = rows.filter(r => r.contact_type === 'lead');
-  const leads30 = leads.filter(r => inLast(r, 30)).length;
-  const leadsPrev30 = leads.filter(r => between(r, 30, 60)).length;
+  const fornecedores = rows.filter(r => r.contact_type === 'fornecedor');
+  const fornecedores30 = fornecedores.filter(r => inLast(r, 30)).length;
+  const fornecedoresPrev30 = fornecedores.filter(r => between(r, 30, 60)).length;
   const empresasDistinct = new Set(rows.map(r => r.company?.toLowerCase().trim()).filter(Boolean)).size;
 
   const prevTotal = Math.max(rows.length - novos30, 1);
@@ -52,13 +52,13 @@ export function aggregateKpi(rows: Row[], now = new Date()) {
     deltaNovosPct: pctOrNull(novos30, novosPrev30),
     deltaTotalPct: pctOrNull(rows.length, prevTotal),
     empresasDistinct,
-    leadsTotal: leads.length,
-    leads30,
-    deltaLeadsPct: pctOrNull(leads30, leadsPrev30),
+    fornecedoresTotal: fornecedores.length,
+    fornecedores30,
+    deltaFornecedoresPct: pctOrNull(fornecedores30, fornecedoresPrev30),
     seriesTotalCumulative12w: cumulative(weekly(() => true), olderThan12w),
     seriesNovosDaily30: bucket7,
     seriesEmpresasWeekly12: weekly(r => !!r.company),
-    seriesLeadsWeekly12: weekly(r => r.contact_type === 'lead'),
+    seriesFornecedoresWeekly12: weekly(r => r.contact_type === 'fornecedor'),
   };
 }
 

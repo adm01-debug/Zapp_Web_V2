@@ -29,11 +29,10 @@ interface EnhancedProps {
   sections: WidgetSection[];
   renderWidget: (widget: DashboardWidget) => React.ReactNode;
   onRefresh?: () => void;
-  onExport?: () => void;
   isLoading?: boolean;
 }
 
-export function EnhancedProgressiveDisclosure({ sections, renderWidget, onRefresh, onExport, isLoading }: EnhancedProps) {
+export function EnhancedProgressiveDisclosure({ sections, renderWidget, onRefresh, isLoading }: EnhancedProps) {
   const [openSections, setOpenSections] = useState<Set<string>>(() => {
     const initial = new Set<string>();
     sections.forEach(s => { if (s.defaultOpen !== false) initial.add(s.id); });
@@ -53,7 +52,7 @@ export function EnhancedProgressiveDisclosure({ sections, renderWidget, onRefres
 
   return (
     <div className="space-y-6">
-      <DashboardToolbar onRefresh={onRefresh} onExport={onExport} isLoading={isLoading} lastUpdated={new Date()} />
+      <DashboardToolbar onRefresh={onRefresh} isLoading={isLoading} lastUpdated={new Date()} />
 
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">

@@ -3,7 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Brain, TrendingUp, Users, Zap, Clock, Download, RefreshCw } from 'lucide-react';
+import { Brain, TrendingUp, Users, Zap, Clock, RefreshCw } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useAIUsageDashboard, FUNCTION_COLORS, FUNCTION_LABELS } from '@/hooks/analytics/useAIUsageDashboard';
 import type { TimeFilter } from '@/hooks/analytics/useAIUsageDashboard';
@@ -14,7 +14,7 @@ export function AIUsageDashboard() {
   const {
     logs, isLoading, refetch, timeFilter, setTimeFilter,
     logsPage, setLogsPage, profileMap, stats,
-    userUsage, functionUsage, timelineData, handleExportCSV,
+    userUsage, functionUsage, timelineData,
   } = useAIUsageDashboard();
 
   const functionNames = Object.keys(FUNCTION_COLORS);
@@ -35,7 +35,6 @@ export function AIUsageDashboard() {
             </SelectContent>
           </Select>
           <Button variant="outline" size="icon" onClick={() => refetch()}><RefreshCw className="w-4 h-4" /></Button>
-          <Button variant="outline" size="sm" onClick={handleExportCSV}><Download className="w-4 h-4 mr-1" /> CSV</Button>
         </div>
       </div>
 

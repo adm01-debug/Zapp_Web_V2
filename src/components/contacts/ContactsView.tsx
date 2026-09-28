@@ -7,7 +7,7 @@ import { useLayoutScroll } from '@/contexts/LayoutScrollContext';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import {
-  Sparkles, RefreshCw, Upload, Download,
+  Sparkles, RefreshCw,
 } from 'lucide-react';
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { BulkActionsBar } from '@/components/contacts/BulkActionsBar';
@@ -22,18 +22,17 @@ import { ContactDetailPanel } from './ContactDetailPanel';
 import { ContactContentArea } from './ContactContentArea';
 import { ContactResultsSummary } from './ContactResultsSummary';
 import { ContactCRMDialog } from './ContactCRMDialog';
-import { ContactImportDialog } from './ContactImportDialog';
 import { useContactsViewState } from './useContactsViewState';
 
 export function ContactsView() {
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
   const {
     crud, viewMode, setViewMode, gridColumns, setGridColumns,
-    isImportOpen, setIsImportOpen, isMergeOpen, setIsMergeOpen,
+    isMergeOpen, setIsMergeOpen,
     isCompareOpen, setIsCompareOpen, groupByCompany, setGroupByCompany,
     isBulkTagOpen, setIsBulkTagOpen, detailContact, setDetailContact,
     handleApplyPreset, handleToggleSelect, handleSelectAll,
-    handleContactClick, handleExportCSV,
+    handleContactClick,
   } = useContactsViewState();
 
   const {
@@ -89,7 +88,7 @@ export function ContactsView() {
               <motion.div whileTap={tapAnimation}>
                 <Button
                   onClick={() => setIsCRMSearchOpen(true)}
-                  className="h-9 px-4 rounded-xl bg-primary/20 border border-primary/50 text-primary-glow hover:bg-primary/30 font-semibold text-sm gap-1.5"
+                  className="h-9 px-4 rounded-lg bg-primary/20 border border-primary/50 text-primary-glow hover:bg-primary/30 font-semibold text-sm gap-1.5"
                 >
                   <Sparkles className="w-4 h-4" />CRM 360°
                 </Button>
@@ -97,25 +96,9 @@ export function ContactsView() {
             )}
             <motion.div whileTap={tapAnimation}>
               <Button
-                onClick={() => setIsImportOpen(true)}
-                className="h-9 px-4 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-sm gap-1.5"
-              >
-                <Upload className="w-4 h-4" />Importar CSV
-              </Button>
-            </motion.div>
-            <motion.div whileTap={tapAnimation}>
-              <Button
-                onClick={handleExportCSV}
-                className="h-9 px-4 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-sm gap-1.5"
-              >
-                <Download className="w-4 h-4" />Exportar CSV
-              </Button>
-            </motion.div>
-            <motion.div whileTap={tapAnimation}>
-              <Button
                 onClick={handleSync}
                 disabled={loading}
-                className="h-9 px-4 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-sm gap-1.5"
+                className="h-9 px-4 rounded-lg bg-card border border-border text-foreground hover:bg-muted font-semibold text-sm gap-1.5"
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />Sincronizar
               </Button>
@@ -151,12 +134,8 @@ export function ContactsView() {
         contactIds={selectedIds} allTags={uniqueTags}
         onComplete={() => { setSelectedIds([]); refetch(); }}
       />
-      <ContactImportDialog
-        open={isImportOpen} onOpenChange={setIsImportOpen}
-        onImportComplete={handleSync}
-      />
 
-      <ContactStatsCards totalAll={contactCountByType['all'] ?? 0} leadsAll={contactCountByType['lead'] ?? 0} />
+      <ContactStatsCards totalAll={contactCountByType['all'] ?? 0} fornecedoresAll={contactCountByType['fornecedor'] ?? 0} />
 
       <ContactTypeTabs activeTab={activeTab} setActiveTab={setActiveTab} contactCountByType={contactCountByType} />
 

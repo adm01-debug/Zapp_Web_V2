@@ -1,12 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { exportRecipientsCsv, type RecipientRow } from '@/lib/talkxExport';
 import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
-import { BarChart3, TrendingUp, Users, CheckCircle2, XCircle, Target, Calendar, Zap, Sparkles, Download } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, CheckCircle2, XCircle, Target, Calendar, Zap, Sparkles } from 'lucide-react';
 import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
@@ -235,37 +234,6 @@ export function TalkXAnalytics({ campaigns }: Props) {
               <p className="text-xs text-foreground-secondary">dentro de 24h de uma mensagem da campanha</p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={async () => {
-              // E75: buscar dados dos contatos que responderam e exportar CSV
-              const ids = replyData.repliedIds ?? [];
-              // Pagina em lotes de 200 para evitar limite do IN filter
-              const CHUNK = 200;
-              const contactPages: Record<string, unknown>[][] = [];
-              for (let i = 0; i < ids.length; i += CHUNK) {
-                const { data: page, error: cErr } = await supabase
-                  .from('contacts').select('id, name, phone, company')
-                  .in('id', ids.slice(i, i + CHUNK));
-                if (cErr) { console.warn('[E75] contacts page error:', cErr.message); break; }
-                if (page?.length) contactPages.push(page as Record<string, unknown>[]);
-              }
-              const contacts = contactPages.flat();
-              const rows: RecipientRow[] = (contacts ?? []).map((c: Record<string, unknown>) => ({
-                name: String(c.name ?? ''),
-                phone: String(c.phone ?? ''),
-                status: 'respondeu',
-                sent_at: null,
-                delivered_at: null,
-                error_message: null,
-                personalized_message: String(c.company ?? ''),
-              }));
-              exportRecipientsCsv(rows, `respondentes-${period}`);
-            }}
-            className="h-9 px-4 rounded-lg border border-dash-violet/40 bg-dash-violet/10 text-dash-violet text-xs font-semibold flex items-center gap-2 hover:bg-dash-violet/20 shrink-0"
-          >
-            <Download className="w-4 h-4" />Exportar CSV
-          </button>
         </section>
       )}
 
@@ -489,7 +457,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
                   })}
                 </tbody>
               </table>
-              {(panelRecipients?.length ?? 0) >= 200 && <p className="text-2xs text-muted-foreground text-center mt-2">Exibindo primeiros 200 registros. Use CSV para o conjunto completo.</p>}
+              {(panelRecipients?.length ?? 0) >= 200 && <p className="text-2xs text-muted-foreground text-center mt-2">Exibindo primeiros 200 registros.</p>}
             </div>
           )}
         </section>

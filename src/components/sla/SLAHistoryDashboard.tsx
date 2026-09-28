@@ -5,8 +5,6 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Minus, AlertTriangle, Target, Clock, Calendar } from 'lucide-react';
 import { useSLAHistory, HistoryPeriod } from '@/hooks/sla/useSLAHistory';
-import { ExportButton } from '@/components/reports/ExportButton';
-import { ReportData } from '@/utils/exportReport';
 import { cn } from '@/lib/utils';
 import { SLARateChart, SLAViolationsChart, SLABestWorstDays } from './SLACharts';
 
@@ -55,26 +53,6 @@ export const SLAHistoryDashboard = () => {
     );
   }
 
-  const getExportData = (): ReportData => ({
-    title: 'Histórico de Violações SLA',
-    subtitle: `Período: ${periodLabels[period]}`,
-    generatedAt: new Date(),
-    columns: [
-      { header: 'Data', key: 'dateLabel', width: 15 },
-      { header: 'Conversas', key: 'totalConversations', width: 12 },
-      { header: 'Violações 1ª Resp.', key: 'firstResponseBreaches', width: 18 },
-      { header: 'Total Violações', key: 'totalBreaches', width: 15 },
-      { header: 'Taxa SLA (%)', key: 'slaRate', width: 12 },
-    ],
-    rows: data.dailyData.map(d => ({ ...d, slaRate: d.slaRate.toFixed(1) })),
-    summary: [
-      { label: 'Taxa SLA Geral', value: `${data.totals.overallSLARate.toFixed(1)}%` },
-      { label: 'Total de Conversas', value: data.totals.totalConversations },
-      { label: 'Violações 1ª Resposta', value: data.totals.firstResponseBreaches },
-      { label: 'Total de Violações', value: data.totals.totalBreaches },
-    ],
-  });
-
   const summaryCards = [
     { icon: Target, color: 'primary', label: 'Taxa SLA Geral', value: `${data.totals.overallSLARate.toFixed(1)}%`, extra: <TrendIndicator trend={data.trends.overall} label="vs período anterior" /> },
     { icon: Clock, color: 'warning', label: 'Violações 1ª Resposta', value: data.totals.firstResponseBreaches, extra: <TrendIndicator trend={data.trends.firstResponse} inverse label="vs período anterior" /> },
@@ -89,7 +67,6 @@ export const SLAHistoryDashboard = () => {
           <p className="text-muted-foreground">Análise de tendências e padrões de violações</p>
         </div>
         <div className="flex items-center gap-3">
-          <ExportButton getData={getExportData} />
           <ToggleGroup type="single" value={period} onValueChange={(v) => v && setPeriod(v as HistoryPeriod)} className="bg-muted/50 rounded-lg p-1">
             {Object.entries(periodLabels).map(([key, label]) => (
               <ToggleGroupItem key={key} value={key} className="data-[state=on]:bg-background data-[state=on]:shadow-sm px-4">{label}</ToggleGroupItem>

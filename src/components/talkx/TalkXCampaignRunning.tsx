@@ -210,7 +210,7 @@ function TabRecipients({ campaignId }: { campaignId: string }) {
               ))}
             </tbody>
           </table>
-          {(recips?.length ?? 0) >= 200 && <p className="text-2xs text-muted-foreground text-center p-3">Mostrando 200 mais recentes. Use Exportar CSV no Monitor para o conjunto completo.</p>}
+          {(recips?.length ?? 0) >= 200 && <p className="text-2xs text-muted-foreground text-center p-3">Mostrando 200 mais recentes.</p>}
         </div>
       )}
     </div>

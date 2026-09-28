@@ -7,7 +7,6 @@ export * from './useDebounce';
 export * from './useDiagnosticsData';
 export * from './useDownloadPermission';
 export * from './useDuplicate';
-export * from './useExportData';
 export * from './useGeoBlocking';
 export * from './useGlobalSettings';
 export * from './useIdleCallback';
