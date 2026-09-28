@@ -101,9 +101,6 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
         <div className="flex items-center gap-2">
           <div className="w-1 h-5 rounded-full bg-primary" />
           <h3 className="font-semibold text-foreground text-sm">Detalhes do Contato</h3>
-        </div>
-        {/* mr-[68px]: o botão Zen (AppShell) é absoluto no canto superior direito e cobria os botões do header */}
-        <div className="flex items-center gap-1 mr-[68px]">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
