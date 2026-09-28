@@ -76,10 +76,25 @@ jobs:
             // Mas um 'renamed' com additions/deletions > 0 e o MESMO gap por
             // outra porta: o conteudo mudou junto com o nome, disfarcado de
             // rename puro (achado da auditoria de 5 agentes de 2026-09-27).
+            // Excecao: quando o arquivo original foi arquivado em _superseded/
+            // no MESMO PR (basename identico), o 'renamed' e artefato do
+            // algoritmo do GitHub — o arquivo antigo virou arquivo morto e um
+            // arquivo novo foi adicionado para corrigir o ledger drift; nao e
+            // edicao de migration ja aplicada (achado de 2026-09-28).
+            const supersededArquivados = new Set(
+              arquivos
+                .filter(f =>
+                  f.status === 'added' &&
+                  /^supabase\/migrations\/_superseded\/\d{14}_.*\.sql$/.test(f.filename),
+                )
+                .map(f => f.filename.split('/').pop()),
+            );
             const violacoes = arquivos.filter(
               (f) => /^supabase\/migrations\/\d{14}_.*\.sql$/.test(f.filename)
                 && (f.status === 'modified'
-                  || (f.status === 'renamed' && ((f.additions || 0) > 0 || (f.deletions || 0) > 0))),
+                  || (f.status === 'renamed'
+                      && ((f.additions || 0) > 0 || (f.deletions || 0) > 0)
+                      && !supersededArquivados.has((f.previous_filename || '').split('/').pop()))),
             );
             if (violacoes.length > 0) {
               const lista = violacoes.map((f) => f.filename).join('\n  - ');
@@ -92,7 +107,9 @@ jobs:
                 + '\n\nSe o objetivo e corrigir algo ja aplicado, crie um NOVO '
                 + 'arquivo com version maior contendo a correcao (nunca edite o '
                 + 'antigo). Renomear um arquivo que nunca foi registrado/aplicado '
-                + 'continua permitido.',
+                + 'continua permitido. Para substituir um arquivo arquivado em '
+                + '_superseded/ no mesmo PR: o guard reconhece esse padrao e '
+                + 'permite.',
               );
             }
 
