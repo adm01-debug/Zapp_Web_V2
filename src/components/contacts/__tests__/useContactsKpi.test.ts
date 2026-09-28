@@ -62,7 +62,7 @@ describe('aggregateKpi — novos30 e bucket7', () => {
   });
 });
 
-// ── leads ────────────────────────────────────────────────────────────────────
+// ── fornecedores ─────────────────────────────────────────────────────────────
 describe('aggregateKpi — fornecedores', () => {
   it('conta só contact_type=fornecedor', () => {
     const kpi = aggregateKpi([

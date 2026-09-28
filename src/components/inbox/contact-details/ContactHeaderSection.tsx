@@ -30,7 +30,6 @@ const contactTypeColor: Record<string, string> = {
   supplier: 'bg-warning/15 text-warning border-warning/40',
   colaborador: 'bg-success/15 text-success border-success/40',
   employee: 'bg-success/15 text-success border-success/40',
-  lead: 'bg-info/15 text-info border-info/40',
 };
 const contactTypeLabel: Record<string, string> = { customer: 'Cliente', employee: 'Colaborador', supplier: 'Fornecedor' };
 const getContactTypeBadge = (type: string) => ({

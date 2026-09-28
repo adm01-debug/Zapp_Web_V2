@@ -28,7 +28,6 @@ export const contextConfigs: Record<string, ContextConfig> = {
     title: 'Nenhuma conversa ainda',
     description: 'Conecte seu WhatsApp ou importe contatos para começar a atender.',
     primaryAction: { label: 'Conectar WhatsApp', icon: <Link2 className="w-4 h-4 mr-2" /> },
-    secondaryAction: { label: 'Importar contatos', icon: <Upload className="w-4 h-4 mr-2" /> },
     tertiaryAction: { label: 'Ver como funciona', icon: <HelpCircle className="w-4 h-4 mr-2" /> },
     helpText: 'Após conectar, as mensagens aparecerão automaticamente aqui.',
   },
@@ -37,7 +36,6 @@ export const contextConfigs: Record<string, ContextConfig> = {
     title: 'Nenhum contato cadastrado',
     description: 'Adicione contatos manualmente ou importe de uma planilha.',
     primaryAction: { label: 'Adicionar contato', icon: <UserPlus className="w-4 h-4 mr-2" /> },
-    secondaryAction: { label: 'Importar planilha', icon: <Upload className="w-4 h-4 mr-2" /> },
     helpText: 'Contatos também são criados automaticamente ao receber mensagens.',
   },
   queues: {
