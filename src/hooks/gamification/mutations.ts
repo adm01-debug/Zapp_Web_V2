@@ -27,7 +27,7 @@ export function useGamificationMutations(profileId: string | undefined, _current
         p_profile_id: profileId,
         p_type: type,
         p_name: name,
-        p_description: description ?? undefined,
+        p_description: description ?? '',
         p_xp_reward: xpReward,
       });
       if (error) throw error;
