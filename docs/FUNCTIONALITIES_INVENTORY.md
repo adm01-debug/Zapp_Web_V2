@@ -183,7 +183,6 @@ VirtualizedMessageList, VirtualizedRealtimeList, VoiceSelector
 | Relatórios Avançados | Custom | `src/components/reports/AdvancedReportsView.tsx` |
 | Exportar PDF | jsPDF + jspdf-autotable | ^3.0.4 / ^5.0.2 |
 | Exportar Excel | xlsx | ^0.18.5 |
-| Exportar CSV | Custom Utility | `src/utils/exportReport.ts` |
 | Indicador de Tendência | Custom | `src/components/dashboard/TrendIndicator.tsx` |
 
 ---
@@ -393,7 +392,7 @@ logDelete(entityType, entityId, details)
 ### Funções Disponíveis (12 total)
 
 | Função | Serviço | Propósito |
-|--------|---------|-----------|
+|--------|---------|----------|
 | `ai-conversation-analysis` | Lovable AI | Análise completa de conversa |
 | `ai-conversation-summary` | Lovable AI | Resumo de conversa |
 | `ai-suggest-reply` | Lovable AI | Sugestão de respostas |

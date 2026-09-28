@@ -1,0 +1,89 @@
+import { test, expect } from '@playwright/test';
+import {
+  E2E_FIXTURE_CONTACT_DISPLAY_NAME,
+  ensureFixtureConversationOpen,
+  cleanupFixtureMessages,
+} from './fixtures/e2e-contact';
+
+test.describe('Reactions flow', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await ensureFixtureConversationOpen(page);
+    await page.reload();
+    await page.getByTestId('status-chip-all').click();
+  });
+
+  test.afterAll(async ({ browser }) => {
+    const context = await browser.newContext({ storageState: 'e2e/.auth/user.json' });
+    const page = await context.newPage();
+    await page.goto('/');
+    await cleanupFixtureMessages(page);
+    await context.close();
+  });
+
+  test('quick reaction bar is present in message DOM', async ({ page }) => {
+    // Open the fixture contact conversation
+    const conversation = page
+      .locator('[data-testid="conversation-item"]')
+      .filter({ hasText: E2E_FIXTURE_CONTACT_DISPLAY_NAME })
+      .first();
+    await conversation.click();
+
+    // Wait for messages to load
+    await page.waitForSelector('[data-testid="message-group"]', { timeout: 10_000 });
+
+    // QuickReactionBar is always in the DOM (opacity-0 until hover) — check attachment
+    await expect(
+      page.getByTestId('quick-reaction-bar').first()
+    ).toBeAttached();
+  });
+
+  test('clicking emoji in quick reaction bar adds a reaction badge', async ({ page }) => {
+    const conversation = page
+      .locator('[data-testid="conversation-item"]')
+      .filter({ hasText: E2E_FIXTURE_CONTACT_DISPLAY_NAME })
+      .first();
+    await conversation.click();
+    await page.waitForSelector('[data-testid="message-group"]', { timeout: 10_000 });
+
+    // Hover over the first message to reveal the quick reaction bar
+    const firstMessage = page.locator('[data-testid="message-group"]').first();
+    await firstMessage.hover();
+
+    // Force-click 👍 (bar may still be opacity-0 in Playwright's rendering context)
+    await page
+      .locator('[data-testid="quick-reaction-emoji"][data-emoji="👍"]')
+      .first()
+      .click({ force: true });
+
+    // Reaction badge should appear below the message
+    await expect(
+      page.locator('[data-testid="reaction-badge"][data-emoji="👍"]').first()
+    ).toBeVisible({ timeout: 8_000 });
+  });
+
+  test('clicking a reaction badge toggles it off', async ({ page }) => {
+    const conversation = page
+      .locator('[data-testid="conversation-item"]')
+      .filter({ hasText: E2E_FIXTURE_CONTACT_DISPLAY_NAME })
+      .first();
+    await conversation.click();
+    await page.waitForSelector('[data-testid="message-group"]', { timeout: 10_000 });
+
+    const firstMessage = page.locator('[data-testid="message-group"]').first();
+    await firstMessage.hover();
+
+    // Add the reaction
+    await page
+      .locator('[data-testid="quick-reaction-emoji"][data-emoji="👍"]')
+      .first()
+      .click({ force: true });
+
+    const badge = page.locator('[data-testid="reaction-badge"][data-emoji="👍"]').first();
+    await expect(badge).toBeVisible({ timeout: 8_000 });
+
+    // Toggle it off
+    await badge.click();
+    await expect(badge).not.toBeVisible({ timeout: 8_000 });
+  });
+});
