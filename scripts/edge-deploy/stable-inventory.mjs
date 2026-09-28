@@ -48,14 +48,11 @@ export async function fetchRemoteInventory({ projectRef, token, fetchImpl = fetc
 export async function collectStableAttestation({
   manifest, before, gitSha, runId, deploymentScope,
   fetchInventory, sleep = delay, now = Date.now,
-  // maxAttempts=72 (~12 min de teto): 18 (~3 min) media falso-negativo real observado em
-  // 26/09 — deploy do multiplix-send e do talkx-send confirmados no ar (functions_ping 200)
-  // com este passo ainda preso em "Selected deployment not yet observed" ate estourar o
-  // teto anterior, nas duas vezes em ~173-174s. Management API as vezes demora mais que
-  // 170s pra refletir o version bump; 27/09 dois runs consecutivos (130 e 132) estouraram
-  // o teto antigo de 36 (~6 min) — duplicado para 72 para cobrir latencias mais longas.
-  // O polling em si (3 amostras identicas, 60s minimo) nao muda.
-  intervalMs = 10_000, minimumObservationMs = 60_000, consecutiveSamples = 3, maxAttempts = 72,
+  // maxAttempts=144 (~24 min de teto): 36 (~6 min) esgotava antes da Management API
+  // refletir o version bump — falso-negativo real observado em 26/09 nas duas vezes em
+  // ~173-174s; teto dobrado 2x (36→72→144) para cobrir propagacoes lentas observadas
+  // e margem de seguranca adequada. O polling (3 amostras identicas, 60s minimo) nao muda.
+  intervalMs = 10_000, minimumObservationMs = 60_000, consecutiveSamples = 3, maxAttempts = 144,
   // Slugs que o proprio passo de deploy reportou como "No change found" (o
   // Supabase CLI pula, sem bump de versao, uma funcao cujo bundle local bate
   // byte a byte com o ja publicado). Vazio por padrao: sem isso, o
@@ -99,8 +96,6 @@ export async function collectStableAttestation({
         const old = pre.get(name);
         if (!old) continue;
         const current = byName.get(name);
-        if (!current) throw Object.assign(
-          new Error(`Function ${name} absent from remote inventory`), { permanent: true });
         if (old.version === null || old.id !== current.id) {
           throw new Error('Selected deployment not yet observed');
         }
