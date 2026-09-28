@@ -65,8 +65,8 @@ export function useMyTasks() {
         title: input.title,
         priority: input.priority ?? 'medium',
         due_date: input.dueDate ?? null,
-        assigned_to: input.assignedTo ?? input.createdBy ?? null,
-        created_by: input.createdBy ?? null,
+        assigned_to: input.assignedTo ?? input.createdBy ?? undefined,
+        created_by: input.createdBy ?? undefined,
         description: input.description ?? null,
       });
       if (error) throw error;
