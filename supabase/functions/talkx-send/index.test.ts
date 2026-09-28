@@ -254,7 +254,6 @@ function makeRecipient(): Record<string, unknown> {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeDispatchDeps(opts: {
   campaign?: Record<string, unknown> | null;
   connection?: Record<string, unknown> | null;
@@ -501,4 +500,17 @@ Deno.test("dispatch/cancel: transição bem-sucedida → success:true com curren
   const body = await res.json();
   assert(body.success === true, `esperado success:true, recebido: ${JSON.stringify(body)}`);
   assert(typeof body.status === "string", `status ausente: ${JSON.stringify(body)}`);
+});
+
+// ---------------------------------------------------------------------------
+// Testes de integração — ação não implementada
+// ---------------------------------------------------------------------------
+
+Deno.test("dispatch/resume: ação não implementada → 400 Invalid campaign action", async () => {
+  setDispatchEnv();
+  const req = makePost({ bearer: TEST_SERVICE_KEY, body: { action: "resume", campaignId: CAMPAIGN_ID } });
+  const res = await handleTalkxSend(req, makeDispatchDeps());
+  assert(res.status === 400, `esperado 400, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.error === "Invalid campaign action", `body inesperado: ${JSON.stringify(body)}`);
 });
