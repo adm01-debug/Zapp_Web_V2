@@ -73,7 +73,7 @@ export function ContactsView() {
 
   return (
     <MotionConfig reducedMotion="user">
-    <div className="relative bg-background w-full min-w-0">
+    <div className="relative bg-background dark:bg-inbox-panel w-full min-w-0">
       <ScrollToTopButton scrollRef={layoutScrollRef} />
 
       <div className="space-y-4">
