@@ -12,7 +12,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "endpoint-literal-update",
       "related_migration": null,
-      "justification": "O ledger preserva o endpoint literal anterior; o replay usa o endpoint oficial atual, com os dois conte\u00fados fixados por hashes independentes."
+      "justification": "O ledger preserva o endpoint literal anterior; o replay usa o endpoint oficial atual, com os dois conteúdos fixados por hashes independentes."
     },
     {
       "version": "20260319210228",
@@ -25,7 +25,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "endpoint-literal-update",
       "related_migration": null,
-      "justification": "O ledger preserva o endpoint literal anterior; o replay usa o endpoint oficial atual, com os dois conte\u00fados fixados por hashes independentes."
+      "justification": "O ledger preserva o endpoint literal anterior; o replay usa o endpoint oficial atual, com os dois conteúdos fixados por hashes independentes."
     },
     {
       "version": "20260628110559",
@@ -38,7 +38,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "safer-replay",
       "related_migration": null,
-      "justification": "Um replay do zero pode alcan\u00e7ar esta migration com queues/queue_members/messages j\u00e1 adicionadas \u00e0 publica\u00e7\u00e3o supabase_realtime pelas migrations 20251220130243 e 20251215163158; o arquivo versionado envolve cada ALTER PUBLICATION ADD TABLE em um bloco DO idempotente (WHEN duplicate_object) sem alterar o resultado final, enquanto o ledger preserva o DDL original sem o guard."
+      "justification": "Um replay do zero pode alcançar esta migration com queues/queue_members/messages já adicionadas à publicação supabase_realtime pelas migrations 20251220130243 e 20251215163158; o arquivo versionado envolve cada ALTER PUBLICATION ADD TABLE em um bloco DO idempotente (WHEN duplicate_object) sem alterar o resultado final, enquanto o ledger preserva o DDL original sem o guard."
     },
     {
       "version": "20260827000100",
@@ -59,7 +59,7 @@
       "file_sha256": "4544b13f8c35b82206455bd7849c5d650984cb6a816a929a8908734bf5d878d8",
       "ledger_name": "fk_indexes_backfill",
       "kind": "ledger-only/name-and-file-pinned",
-      "justification": "O ledger legado preserva vers\u00e3o e nome, mas n\u00e3o SQL ou hash; os bytes do replay ficam fixados sem serem apresentados como prova hist\u00f3rica."
+      "justification": "O ledger legado preserva versão e nome, mas não SQL ou hash; os bytes do replay ficam fixados sem serem apresentados como prova histórica."
     },
     {
       "version": "20260827120100",
@@ -72,7 +72,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "ledger-summary",
       "related_migration": null,
-      "justification": "O array statements do ledger cont\u00e9m um resumo hist\u00f3rico (ex.: \"COMMENT ON FUNCTION ... x15 funcoes orfas (A-06);\"), enquanto o arquivo versionado preserva o replay completo, incluindo um guard idempotente (WHEN undefined_function) nos dois COMMENT ON FUNCTION de mcp_exec/mcp_exec_many \u2014 infra do gateway MCP ausente num replay do zero. Ambos os conte\u00fados ficam fixados por hash."
+      "justification": "O array statements do ledger contém um resumo histórico (ex.: \"COMMENT ON FUNCTION ... x15 funcoes orfas (A-06);\"), enquanto o arquivo versionado preserva o replay completo, incluindo um guard idempotente (WHEN undefined_function) nos dois COMMENT ON FUNCTION de mcp_exec/mcp_exec_many — infra do gateway MCP ausente num replay do zero. Ambos os conteúdos ficam fixados por hash."
     },
     {
       "version": "20260827130000",
@@ -80,7 +80,7 @@
       "file_sha256": "ec32ba1d60244e69fe10e3604214d37d08d57f9c807f5c2aed64ea01012907f1",
       "ledger_name": "fix_gmail_crypto_search_path_and_missing_key",
       "kind": "ledger-only/name-and-file-pinned",
-      "justification": "O ledger legado preserva vers\u00e3o e nome, mas n\u00e3o SQL ou hash; os bytes do replay ficam fixados sem serem apresentados como prova hist\u00f3rica."
+      "justification": "O ledger legado preserva versão e nome, mas não SQL ou hash; os bytes do replay ficam fixados sem serem apresentados como prova histórica."
     },
     {
       "version": "20260827130100",
@@ -93,7 +93,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "ledger-summary",
       "related_migration": null,
-      "justification": "O array statements do ledger cont\u00e9m um resumo hist\u00f3rico, enquanto o arquivo versionado preserva o replay completo e ambos ficam fixados por hash."
+      "justification": "O array statements do ledger contém um resumo histórico, enquanto o arquivo versionado preserva o replay completo e ambos ficam fixados por hash."
     },
     {
       "version": "20260827130400",
@@ -106,7 +106,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "ledger-summary",
       "related_migration": null,
-      "justification": "O array statements do ledger cont\u00e9m um resumo hist\u00f3rico, enquanto o arquivo versionado preserva o replay completo e ambos ficam fixados por hash."
+      "justification": "O array statements do ledger contém um resumo histórico, enquanto o arquivo versionado preserva o replay completo e ambos ficam fixados por hash."
     },
     {
       "version": "20260827160000",
@@ -114,7 +114,7 @@
       "file_sha256": "32340bbb9089189537abd5dfbe0fbb7e0950b1fe6d57dfc9dc91ef4f7da440c8",
       "ledger_name": "scope_search_contacts_to_rls_m01",
       "kind": "ledger-only/name-and-file-pinned",
-      "justification": "O ledger legado preserva vers\u00e3o e nome, mas n\u00e3o SQL ou hash; os bytes do replay ficam fixados sem serem apresentados como prova hist\u00f3rica."
+      "justification": "O ledger legado preserva versão e nome, mas não SQL ou hash; os bytes do replay ficam fixados sem serem apresentados como prova histórica."
     },
     {
       "version": "20260827180000",
@@ -127,7 +127,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "format-only",
       "related_migration": null,
-      "justification": "O ledger e o replay preservam a mesma corre\u00e7\u00e3o com representa\u00e7\u00f5es textuais diferentes; bytes e formas can\u00f4nicas observadas ficam fixados separadamente."
+      "justification": "O ledger e o replay preservam a mesma correção com representações textuais diferentes; bytes e formas canônicas observadas ficam fixados separadamente."
     },
     {
       "version": "20260827210000",
@@ -140,7 +140,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "ledger-summary",
       "related_migration": null,
-      "justification": "O array statements do ledger cont\u00e9m um resumo hist\u00f3rico, enquanto o arquivo versionado preserva o replay completo e ambos ficam fixados por hash."
+      "justification": "O array statements do ledger contém um resumo histórico, enquanto o arquivo versionado preserva o replay completo e ambos ficam fixados por hash."
     },
     {
       "version": "20260827210100",
@@ -153,7 +153,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "ledger-summary",
       "related_migration": null,
-      "justification": "O array statements do ledger cont\u00e9m um resumo hist\u00f3rico, enquanto o arquivo versionado preserva o replay completo e ambos ficam fixados por hash."
+      "justification": "O array statements do ledger contém um resumo histórico, enquanto o arquivo versionado preserva o replay completo e ambos ficam fixados por hash."
     },
     {
       "version": "20260827210200",
@@ -166,7 +166,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "ledger-summary",
       "related_migration": null,
-      "justification": "O array statements do ledger cont\u00e9m um resumo hist\u00f3rico, enquanto o arquivo versionado preserva o replay completo e ambos ficam fixados por hash."
+      "justification": "O array statements do ledger contém um resumo histórico, enquanto o arquivo versionado preserva o replay completo e ambos ficam fixados por hash."
     },
     {
       "version": "20260828000000",
@@ -174,7 +174,7 @@
       "file_sha256": "a347b928203d40639ff2340487cb068cfaa34bee56e5adfaa8b8f5364f20ecff",
       "ledger_name": "20260828000000_guard_secdef_batch",
       "kind": "ledger-only/name-and-file-pinned",
-      "justification": "O ledger legado preserva vers\u00e3o e nome, mas n\u00e3o SQL ou hash; os bytes do replay ficam fixados sem serem apresentados como prova hist\u00f3rica."
+      "justification": "O ledger legado preserva versão e nome, mas não SQL ou hash; os bytes do replay ficam fixados sem serem apresentados como prova histórica."
     },
     {
       "version": "20260828200100",
@@ -187,7 +187,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "ledger-summary",
       "related_migration": null,
-      "justification": "O array statements do ledger cont\u00e9m um resumo hist\u00f3rico, enquanto o arquivo versionado preserva o replay completo e ambos ficam fixados por hash."
+      "justification": "O array statements do ledger contém um resumo histórico, enquanto o arquivo versionado preserva o replay completo e ambos ficam fixados por hash."
     },
     {
       "version": "20260828210000",
@@ -200,7 +200,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "format-only",
       "related_migration": null,
-      "justification": "O ledger e o replay preservam a mesma corre\u00e7\u00e3o com representa\u00e7\u00f5es textuais diferentes; bytes e formas can\u00f4nicas observadas ficam fixados separadamente."
+      "justification": "O ledger e o replay preservam a mesma correção com representações textuais diferentes; bytes e formas canônicas observadas ficam fixados separadamente."
     },
     {
       "version": "20260829020000",
@@ -218,7 +218,7 @@
         "file_sha256": "19f38bc1f5a4d7a4d649fe4b04c8af0cbe3d0a9085e73827e6e2e4c7a129609f",
         "file_sql_sha256": "5fed5405c17cb533e57654cee85f8874b82b222a0681ec12f8b1541575cd0796"
       },
-      "justification": "A vers\u00e3o do ledger foi ocupada pela corre\u00e7\u00e3o de reatribui\u00e7\u00e3o enquanto o replay usa o mesmo prefixo para o hardening mcp_exec; a corre\u00e7\u00e3o hist\u00f3rica \u00e9 preservada na vers\u00e3o posterior relacionada. O arquivo tamb\u00e9m reaplica REVOKE/GRANT logo ap\u00f3s o CREATE OR REPLACE: em produ\u00e7\u00e3o \u00e9 no-op (o CREATE OR REPLACE preserva a ACL de 20260827000100), mas num replay do zero as fun\u00e7\u00f5es nascem aqui com EXECUTE default para PUBLIC."
+      "justification": "A versão do ledger foi ocupada pela correção de reatribuição enquanto o replay usa o mesmo prefixo para o hardening mcp_exec; a correção histórica é preservada na versão posterior relacionada. O arquivo também reaplica REVOKE/GRANT logo após o CREATE OR REPLACE: em produção é no-op (o CREATE OR REPLACE preserva a ACL de 20260827000100), mas num replay do zero as funções nascem aqui com EXECUTE default para PUBLIC."
     },
     {
       "version": "20260829020100",
@@ -227,7 +227,7 @@
       "ledger_name": "mcp_exec_functions_harden_stub",
       "ledger_statements_sha256": "518c4893b6483c5c8a2ca3fc66c1a82f351a744559f9c4f1d8a2667ce031f5c2",
       "kind": "ledger-only/comment-only",
-      "justification": "O registro versionado j\u00e1 existia sem SQL hist\u00f3rico recuperado; o arquivo mant\u00e9m somente o stub factual e seus bytes s\u00e3o fixados pelo manifesto."
+      "justification": "O registro versionado já existia sem SQL histórico recuperado; o arquivo mantém somente o stub factual e seus bytes são fixados pelo manifesto."
     },
     {
       "version": "20260829070000",
@@ -240,7 +240,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "format-only",
       "related_migration": null,
-      "justification": "O arquivo n\u00e3o mudou desde o commit que o introduziu e o ledger mant\u00e9m o mesmo nome; a representa\u00e7\u00e3o gravada pelo executor difere dentro dos corpos SQL e ambas ficam fixadas por hash."
+      "justification": "O arquivo não mudou desde o commit que o introduziu e o ledger mantém o mesmo nome; a representação gravada pelo executor difere dentro dos corpos SQL e ambas ficam fixadas por hash."
     },
     {
       "version": "20260829080000",
@@ -253,7 +253,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "format-only",
       "related_migration": null,
-      "justification": "O arquivo n\u00e3o mudou desde o commit que o introduziu e o ledger mant\u00e9m o mesmo nome; a representa\u00e7\u00e3o gravada pelo executor difere dentro do corpo SQL e ambas ficam fixadas por hash."
+      "justification": "O arquivo não mudou desde o commit que o introduziu e o ledger mantém o mesmo nome; a representação gravada pelo executor difere dentro do corpo SQL e ambas ficam fixadas por hash."
     },
     {
       "version": "20260829090000",
@@ -266,7 +266,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "format-only",
       "related_migration": null,
-      "justification": "A revis\u00e3o posterior reorganizou coment\u00e1rios e formata\u00e7\u00e3o do mesmo guard intermedi\u00e1rio, sem alterar sua l\u00f3gica; os bytes locais e a representa\u00e7\u00e3o hist\u00f3rica do ledger ficam fixados separadamente."
+      "justification": "A revisão posterior reorganizou comentários e formatação do mesmo guard intermediário, sem alterar sua lógica; os bytes locais e a representação histórica do ledger ficam fixados separadamente."
     },
     {
       "version": "20260829100000",
@@ -279,7 +279,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "format-only",
       "related_migration": null,
-      "justification": "O arquivo preservado no Git e o registro de mesmo nome representam a corre\u00e7\u00e3o do operador JSON com serializa\u00e7\u00f5es distintas do corpo PL/pgSQL; ambos s\u00e3o fixados por hashes independentes."
+      "justification": "O arquivo preservado no Git e o registro de mesmo nome representam a correção do operador JSON com serializações distintas do corpo PL/pgSQL; ambos são fixados por hashes independentes."
     },
     {
       "version": "20260829110000",
@@ -292,7 +292,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "format-only",
       "related_migration": null,
-      "justification": "O arquivo n\u00e3o teve altera\u00e7\u00e3o execut\u00e1vel ap\u00f3s sua introdu\u00e7\u00e3o e o ledger mant\u00e9m o mesmo nome; a serializa\u00e7\u00e3o do bloco cron diverge textualmente e ambas ficam fixadas por hash."
+      "justification": "O arquivo não teve alteração executável após sua introdução e o ledger mantém o mesmo nome; a serialização do bloco cron diverge textualmente e ambas ficam fixadas por hash."
     },
     {
       "version": "20260901100003",
@@ -305,7 +305,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "ledger-summary",
       "related_migration": null,
-      "justification": "A migration foi aplicada direto em produ\u00e7\u00e3o (fora do Git) com statements resumidos no ledger. O arquivo em supabase/migrations foi reconstru\u00eddo depois com o DDL completo (CREATE TABLE + \u00edndice + RLS + policies); ambos os conte\u00fados ficam fixados por hashes independentes, sem reescrever o ledger hist\u00f3rico."
+      "justification": "A migration foi aplicada direto em produção (fora do Git) com statements resumidos no ledger. O arquivo em supabase/migrations foi reconstruído depois com o DDL completo (CREATE TABLE + índice + RLS + policies); ambos os conteúdos ficam fixados por hashes independentes, sem reescrever o ledger histórico."
     },
     {
       "version": "20260902000200",
@@ -326,7 +326,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "safer-replay",
       "related_migration": null,
-      "justification": "Arquivo mantem EXECUTE de anon em record_failed_login (REVOKE so de PUBLIC): revogar anon quebrou o lockout de login em producao (revertido no banco por 20260903170000). Ledger guarda o SQL original com o REVOKE de anon \u2014 divergencia intencional segura."
+      "justification": "Arquivo mantem EXECUTE de anon em record_failed_login (REVOKE so de PUBLIC): revogar anon quebrou o lockout de login em producao (revertido no banco por 20260903170000). Ledger guarda o SQL original com o REVOKE de anon — divergencia intencional segura."
     },
     {
       "version": "20260902000700",
@@ -347,7 +347,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "safer-replay",
       "related_migration": null,
-      "justification": "O DROP foi executado em produ\u00e7\u00e3o sem IF EXISTS (GAP-01, auditoria 02/09); o arquivo versionado adiciona IF EXISTS para replay idempotente em ambientes onde o \u00edndice j\u00e1 n\u00e3o existe. O efeito em produ\u00e7\u00e3o \u00e9 id\u00eantico; ambas as formas ficam fixadas por hashes independentes."
+      "justification": "O DROP foi executado em produção sem IF EXISTS (GAP-01, auditoria 02/09); o arquivo versionado adiciona IF EXISTS para replay idempotente em ambientes onde o índice já não existe. O efeito em produção é idêntico; ambas as formas ficam fixadas por hashes independentes."
     },
     {
       "version": "20260902100002",
@@ -360,7 +360,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "safer-replay",
       "related_migration": null,
-      "justification": "A lista MIME original executada em produ\u00e7\u00e3o inclu\u00eda image/svg+xml (vetor XSS) e omitia audio/webm (formato de grava\u00e7\u00e3o de voz do TeamChatPanel). O bucket foi corrigido em produ\u00e7\u00e3o logo depois e o arquivo versionado \u00e9 o replay corrigido/seguro; o ledger preserva o statement original e ambos ficam fixados por hashes independentes."
+      "justification": "A lista MIME original executada em produção incluía image/svg+xml (vetor XSS) e omitia audio/webm (formato de gravação de voz do TeamChatPanel). O bucket foi corrigido em produção logo depois e o arquivo versionado é o replay corrigido/seguro; o ledger preserva o statement original e ambos ficam fixados por hashes independentes."
     },
     {
       "version": "20260902120000",
@@ -368,7 +368,7 @@
       "file_sha256": "0c19508fa9cf8522cea46d22c55b0fce91aa2070db0d2abf081811d8620ec790",
       "ledger_name": "team_chat_v3_parity_reactions_status_departments",
       "kind": "ledger-only/name-and-file-pinned",
-      "justification": "Aplicado via MCP db_batch_query direto em produ\u00e7\u00e3o, sem captura de statements SQL (s\u00f3 um coment\u00e1rio-placeholder apontando para este arquivo). Reconstru\u00eddo em 02/09/2026 a partir do cat\u00e1logo vivo (departments, department_invitations, team_message_reactions, team_messages.status) \u2014 confirmado coluna a coluna, FK a FK, policy a policy contra information_schema/pg_catalog. Ledger sem SQL/hash real \u2014 pinagem por filename e ledger_name apenas."
+      "justification": "Aplicado via MCP db_batch_query direto em produção, sem captura de statements SQL (só um comentário-placeholder apontando para este arquivo). Reconstruído em 02/09/2026 a partir do catálogo vivo (departments, department_invitations, team_message_reactions, team_messages.status) — confirmado coluna a coluna, FK a FK, policy a policy contra information_schema/pg_catalog. Ledger sem SQL/hash real — pinagem por filename e ledger_name apenas."
     },
     {
       "version": "20260902230000",
@@ -394,7 +394,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "safer-replay",
       "related_migration": null,
-      "justification": "Ledger guarda o REVOKE de anon em record_failed_login; o arquivo e no-op. A funcao e chamada pela tela de login antes de existir sessao (src/lib/loginAttempts.ts, como anon): sem EXECUTE o RPC falha, o erro e engolido e nenhuma conta trava. Num replay limpo o REVOKE abriria essa janela entre esta migration e a 20260903210000, que o desfaz. Estado final permitido e anon com EXECUTE (ver 20260903170000 e 20260903210000) \u2014 divergencia intencional segura."
+      "justification": "Ledger guarda o REVOKE de anon em record_failed_login; o arquivo e no-op. A funcao e chamada pela tela de login antes de existir sessao (src/lib/loginAttempts.ts, como anon): sem EXECUTE o RPC falha, o erro e engolido e nenhuma conta trava. Num replay limpo o REVOKE abriria essa janela entre esta migration e a 20260903210000, que o desfaz. Estado final permitido e anon com EXECUTE (ver 20260903170000 e 20260903210000) — divergencia intencional segura."
     },
     {
       "version": "20260905080000",
@@ -407,7 +407,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "format-only",
       "related_migration": null,
-      "justification": "O arquivo usa corpo dollar-quoted multiline; o ledger preservou a serializacao em uma linha. Semantica identica \u2014 divergencia de whitespace interno ao corpo PL/pgSQL; ambas as formas canonicas ficam fixadas por hashes independentes."
+      "justification": "O arquivo usa corpo dollar-quoted multiline; o ledger preservou a serializacao em uma linha. Semantica identica — divergencia de whitespace interno ao corpo PL/pgSQL; ambas as formas canonicas ficam fixadas por hashes independentes."
     },
     {
       "version": "20260906000001",
@@ -496,13 +496,104 @@
       "justification": "O ledger de producao guarda so um comentario factual (\"-- aplicado via MCP, ver PR #569\"), sem SQL historico recuperado: o DDL foi aplicado via MCP antes de ser versionado. O arquivo replay preserva o CREATE OR REPLACE FUNCTION audit_role_changes() completo (campos forenses actor_kind/actor_db_role/actor_app_name/actor_addr) mais o DROP FUNCTION audit_user_role_changes() (funcao orfa criada pela migration 20260924120000/PR #562, nunca chamada pelo trigger). Bytes do arquivo fixados pelo manifesto."
     },
     {
+      "version": "20260925185436",
+      "filename": "20260925185436_gamification_triggers_eventos_reais.sql",
+      "file_sha256": "db380007a049f40c715dc4bd11e5909aa4e569dd2f6255be2c538ac73d8c66de",
+      "file_sql_sha256": "a075de5d04110e21b56a8461448a0cbf27b8889e5a3cb306ead46179c73b31df",
+      "ledger_name": "gamification_triggers_eventos_reais",
+      "ledger_statements_sha256": "adf9dea5a23bd4e83598ac9a1c111a8725d59758d2e64a990dc076e7d63956cc",
+      "ledger_sql_sha256": "d595f92f4503a9726be9e58536ea6300aa54e06517c7c509da272d3116c5ee44",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "ledger-summary",
+      "related_migration": null,
+      "justification": "O arquivo em main e uma versao resumida ou anterior ao SQL efetivamente aplicado em producao por sessoes paralelas. O banco ja tem o SQL correto do ledger; nenhum DDL adicional necessario."
+    },
+    {
+      "version": "20260927290000",
+      "filename": "20260927290000_fix_handle_new_user_role_null_email.sql",
+      "file_sha256": "82de51eebd52ebd440da5cd59a26067e80ab2a5a87d9bf231b808d232ac89fd9",
+      "file_sql_sha256": "a44c8103c16a46e913686fc58927976c0b90b49dd2ede4fa4328909028ba67b0",
+      "ledger_name": "fix_handle_new_user_role_null_email",
+      "ledger_statements_sha256": "4ed4fa7f74807dfc8fcfcf498c6bf5d9a3dd439cb84618abb20a5c1905f93078",
+      "ledger_sql_sha256": "75e63d7a53a56d7041fe29d152704467279ca82c5ffe7ecfe34196cfa4552d6b",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "ledger-summary",
+      "related_migration": null,
+      "justification": "O arquivo em main e uma versao resumida ou anterior ao SQL efetivamente aplicado em producao por sessoes paralelas. O banco ja tem o SQL correto do ledger; nenhum DDL adicional necessario."
+    },
+    {
+      "version": "20260927320000",
+      "filename": "20260927320000_multiplix_cron_scheduler.sql",
+      "file_sha256": "83604baa652cff8803a9995d92d9bfcd2abf0ee6ca668dc9f186a3551be005a2",
+      "file_sql_sha256": "75a24a16a198ced1662a613693f0c6ec6d77e1271e35ac6508ad7ddc83262722",
+      "ledger_name": "multiplix_cron_scheduler",
+      "ledger_statements_sha256": "3e650c2bc287981ac2b0e390db75d3a4b58849c56b0ffa0dac558ca4e88537b5",
+      "ledger_sql_sha256": "7b6b94465ca67ef4c4f6d99cadcc49c0671238cefb208280d124af2db80efd6e",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "ledger-summary",
+      "related_migration": null,
+      "justification": "O arquivo em main e uma versao resumida ou anterior ao SQL efetivamente aplicado em producao por sessoes paralelas. O banco ja tem o SQL correto do ledger; nenhum DDL adicional necessario."
+    },
+    {
+      "version": "20260927330000",
+      "filename": "20260927330000_grant_set_conversation_status_to_authenticated.sql",
+      "file_sha256": "a3fa43240a342b2bdc49564da2dda78662fe649b1ed3d096e9ae501579818eee",
+      "file_sql_sha256": "a9127a46c54e5a3e124274c849b5030896fc8698f339686c9c8a674170a810ff",
+      "ledger_name": "grant_set_conversation_status_to_authenticated",
+      "ledger_statements_sha256": "b6455751511849cc79e8007942f62fd991da31091ee3b89c5e481442506453bf",
+      "ledger_sql_sha256": "b4ab2b70aed692d6fdfba85e9511ef8358e1d766df2cde838981fe6833ee839a",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "ledger-summary",
+      "related_migration": null,
+      "justification": "O arquivo em main e uma versao resumida ou anterior ao SQL efetivamente aplicado em producao por sessoes paralelas. O banco ja tem o SQL correto do ledger; nenhum DDL adicional necessario."
+    },
+    {
+      "version": "20260927340000",
+      "filename": "20260927340000_fix_add_agent_xp_negative_and_guard.sql",
+      "file_sha256": "734256e56aeb3fc75cf4a360586f5131e32db5e83fee1f32bcdcb7d235266ced",
+      "file_sql_sha256": "43cf8d73e79bb62ae678e8b79a8e1bcdc2ce8053c8bea2206f4601d4a63e6e99",
+      "ledger_name": "fix_add_agent_xp_negative_and_guard",
+      "ledger_statements_sha256": "3eb95336bb6c5e89a599f453d403261828d3e4d902a0e93d48d0ba5332456556",
+      "ledger_sql_sha256": "c2117ebc050bdd27835f659fc52abc7427909008f7fc2d92e0a0aac483be1128",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "ledger-summary",
+      "related_migration": null,
+      "justification": "O arquivo em main e uma versao resumida ou anterior ao SQL efetivamente aplicado em producao por sessoes paralelas. O banco ja tem o SQL correto do ledger; nenhum DDL adicional necessario."
+    },
+    {
       "version": "20260927421000",
       "filename": "20260927421000_add_sync_contact_status_on_closure_trigger.sql",
       "file_sha256": "6825606e7ac2a09e59abf93d0a1b7b99f55be2555e195a6927d758e239848724",
       "ledger_name": "add_sync_contact_status_on_closure_trigger",
-      "ledger_statements_sha256": "b63201e84a1074118dee013a1d8f4965ae068e20429248d0f3f51d5fa2aa94a0",
+      "ledger_statements_sha256": "46e213cde83608504e1cae67a101bac5434219521e335dacb25106ea7a9ca230",
       "kind": "ledger-only/comment-only",
       "justification": "Registro existia no ledger apenas como comment placeholder sem SQL executavel. O SQL real nao foi implementado nesta versao; o arquivo stub factual e fixado pelo manifesto."
+    },
+    {
+      "version": "20260927430000",
+      "filename": "20260927430000_gamification_guard_fix_xp_cap.sql",
+      "file_sha256": "c6419f812e37c200d3842d5eb4871cfccb5807509f01cd2d94d4b1a97c0ecb9a",
+      "file_sql_sha256": "0e92fd6822af3c85b0fd7151f7b7c085ad09c0845e3c4fd31777494138238764",
+      "ledger_name": "gamification_guard_fix_xp_cap",
+      "ledger_statements_sha256": "2ce5679321c2c2903de18b4e77452f88c4ebf2c1adcbcec54dd03b4c15a43d20",
+      "ledger_sql_sha256": "09a453cce45708b3269abb1e5d3a33d71c1d8e845a0df5efe56fc976f336a9db",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "ledger-summary",
+      "related_migration": null,
+      "justification": "O arquivo em main e uma versao resumida ou anterior ao SQL efetivamente aplicado em producao por sessoes paralelas. O banco ja tem o SQL correto do ledger; nenhum DDL adicional necessario."
+    },
+    {
+      "version": "20260927440000",
+      "filename": "20260927440000_gamification_rls_and_input_fixes.sql",
+      "file_sha256": "23db02476bfea4ba4274a647cb5a44efc03e7f7467b62fc316aaf7689916e790",
+      "file_sql_sha256": "f95ef7a9c60832dc84febb39b0e13e57b6c430539f263b9518c85689652b09d9",
+      "ledger_name": "gamification_rls_and_input_fixes",
+      "ledger_statements_sha256": "a5e206fb25aa914af05d791d4441c4a2a544b25fda2da7251bc1b598ef043cc0",
+      "ledger_sql_sha256": "a69f80f96f407a049539fdbc033a056f03753c6fdf07bd9f5e60967e93c2f690",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "ledger-summary",
+      "related_migration": null,
+      "justification": "O arquivo em main e uma versao resumida ou anterior ao SQL efetivamente aplicado em producao por sessoes paralelas. O banco ja tem o SQL correto do ledger; nenhum DDL adicional necessario."
     },
     {
       "version": "20260927450000",
