@@ -2001,7 +2001,6 @@
         "add_wa_tag_if_not_exists(p_contact_id uuid, p_prefix text, p_tag text)->void|kind=f",
         "admin_set_role(_user_id uuid, _role app_role)->TABLE(out_user_id uuid, out_old_role app_role, out_new_role app_role)|kind=f",
         "calculate_level(xp_amount bigint)->integer|kind=f",
-        "calculate_level(xp_amount integer)->integer|kind=f",
         "claim_crm_sync_outbox(p_worker text, p_limit integer)->SETOF crm_sync_outbox|kind=f",
         "claim_crm_sync_outbox_by_id(p_id uuid, p_worker text)->SETOF crm_sync_outbox|kind=f",
         "claim_multiplix_recipient(p_dispatch_id uuid, p_recipient_id uuid, p_worker text, p_lease_seconds integer)->TABLE(recipient_id uuid, company_id uuid, claim_token uuid, claim_expires_at timestamp with time zone, delivery_attempt_count integer)|kind=f",

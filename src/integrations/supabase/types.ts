@@ -9158,19 +9158,12 @@ export type Database = {
           out_user_id: string
         }[]
       }
-      calculate_level:
-        | {
-            Args: { xp_amount: number }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.calculate_level(xp_amount => int8), public.calculate_level(xp_amount => int4). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
-          }
-        | {
-            Args: { xp_amount: number }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.calculate_level(xp_amount => int8), public.calculate_level(xp_amount => int4). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
-          }
+      calculate_level: {
+        Args: {
+          xp_amount: number
+        }
+        Returns: number
+      }
       claim_crm_sync_outbox: {
         Args: { p_limit?: number; p_worker: string }
         Returns: {
