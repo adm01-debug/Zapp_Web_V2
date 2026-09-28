@@ -305,9 +305,13 @@ deixou de ser necessário: não crie o secret.** Se o Job Summary algum dia list
 pelo GITHUB_TOKEN", é regressão de permissão — investigar, não contornar com PAT.
 
 **Não mexer nestes, que parecem bugs e não são:**
-- `talkx.spec.ts` fora do CI: é o único spec do `chromium-authenticated` que continua de fora —
-  o usuário de teste (agente) não enxerga "Campanhas". Habilitar hoje = zero cobertura e `main`
-  vermelha. **Correção de 2026-09-26:** `conversation.spec.ts`/`messaging.spec.ts` NÃO estão mais
+- ~~`talkx.spec.ts` fora do CI~~ **Correção de 2026-09-28:** `talkx.spec.ts` roda nos 3 projetos
+  de browser (`chromium`, `firefox`, `webkit`) incluindo `chromium-authenticated`. O spec foi
+  habilitado depois de semear a conexão E2E (`e2e0e2e0-0000-4000-a000-e2e000000001`, status
+  `connected`) e o segmento E2E (`621521f3-e9c9-49c2-834e-cea07545d476`) em produção — sem esses
+  fixtures o 7º spec falha porque `useCampaignEditor` filtra `.eq('status','connected')` e o
+  único connection real estava `disconnected`. **Não remover os fixtures do banco.**
+  **Correção de 2026-09-26:** `conversation.spec.ts`/`messaging.spec.ts` NÃO estão mais
   nesta lista — havia um contato fixo já seedado em produção desde 24/09
   (`04dff4dc-c6b1-4283-ac22-bd8639804759`, "[E2E] Contato de teste - nao apagar", atribuído ao
   usuário de teste) que ninguém tinha ligado ao código; os dois specs tinham `test.skip` e
