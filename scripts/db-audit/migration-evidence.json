@@ -507,10 +507,10 @@
         {
             "version": "20260927540000",
             "filename": "20260927540000_security_gamification_guards_e2e_cleanup_avg_null.sql",
-            "file_sha256": "ca19c1002a5e68a149ec9d744c0a5d756d449ff1b0a54b52c738538d4874df43",
+            "file_sha256": "324f24c01f3cde3593befc86317206f8e4544c18cbbcbdb151fc248e614f19f2",
             "ledger_name": "security_gamification_guards_e2e_cleanup_avg_null",
             "kind": "ledger-only/name-and-file-pinned",
-            "justification": "Ledger registra apenas descricao em prosa; DDL aplicado via MCP em 2026-09-27 sem SQL executavel no ledger. Arquivo documenta as funcoes add_agent_xp/grant_agent_achievement/increment_agent_messages com guard auth.role()='anon', cap XP 500, dedup daily_goal com fuso America/Sao_Paulo, mais DELETE de closures do contato E2E 04dff4dc e UPDATE avg_response_time_seconds=NULL onde era 0."
+            "justification": "Ledger registra apenas descricao em prosa; DDL aplicado via MCP em 2026-09-27 sem SQL executavel no ledger. Arquivo documenta as funcoes add_agent_xp/grant_agent_achievement/increment_agent_messages com guard auth.role()='anon', cap XP 500, dedup daily_goal com fuso America/Sao_Paulo, mais DELETE de closures do contato E2E 04dff4dc e UPDATE avg_response_time_seconds=NULL onde era 0 (tabela agent_stats, nao conversations)."
         },
         {
             "version": "20260927550000",
