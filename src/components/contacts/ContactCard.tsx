@@ -145,22 +145,6 @@ export function ContactCard({
         )}
       </div>
 
-      {/* Tags */}
-      {contact.tags && contact.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-2">
-          {contact.tags.slice(0, 2).map(tag => (
-            <Badge key={tag} variant="secondary" className="text-3xs h-4 px-1.5 rounded">
-              {tag}
-            </Badge>
-          ))}
-          {contact.tags.length > 2 && (
-            <Badge variant="secondary" className="text-3xs h-4 px-1.5 rounded">
-              +{contact.tags.length - 2}
-            </Badge>
-          )}
-        </div>
-      )}
-
       {/* Footer — pt-2 fecha o gap final */}
       <div className="mt-auto pt-2 flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground/80 min-w-0">
