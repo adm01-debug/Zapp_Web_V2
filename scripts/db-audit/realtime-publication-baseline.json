@@ -8,6 +8,7 @@
     "public.calls",
     "public.contacts",
     "public.conversation_sla",
+    "public.conversation_tasks",
     "public.email_messages",
     "public.email_threads",
     "public.message_reactions",
