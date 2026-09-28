@@ -400,7 +400,7 @@ com outra migration real. Regras:
 
 1. **Antes de criar arquivo ou aplicar DDL**, no mesmo turno: `SELECT max(version) FROM
    supabase_migrations.schema_migrations`, `ls supabase/migrations | tail` e busca de PRs abertas
-   tocando `supabase/migrations/`. Versão nova = maior dos três + `10000`. Se existir PR aberta com o
+   tocando `supabase/migrations/`. Versão nova = maior dos três + `10000`. Para reservar de forma atômica (sem colisão entre sessões), chame `SELECT supabase_migrations.reserve_migration_version('<sessao>', '<motivo>')` via `db_query`: ela pega o maior entre ledger e reservas, soma `10000`, grava a reserva e devolve a versão (confira ainda o `ls` e as PRs abertas, pois arquivos ainda sem ledger não entram no cálculo). Se existir PR aberta com o
    mesmo objetivo, pare e avise — não abra a segunda.
 2. **O ledger ao vivo é a verdade.** Nunca renomeie um arquivo para outra versão "para resolver"
    colisão: se o slot está ocupado no ledger, o arquivo espera o SQL real dele e a versão que ele já
