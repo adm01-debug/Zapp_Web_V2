@@ -19,6 +19,12 @@ export interface ConversationTask {
   updated_at: string;
 }
 
+// Tipo para payload de UPDATE: schema do banco nao aceita null em created_by/assigned_to
+type ConversationTaskUpdate = Omit<Partial<ConversationTask>, 'created_by' | 'assigned_to'> & {
+  created_by?: string;
+  assigned_to?: string;
+};
+
 export const conversationTasksKey = (contactId: string) => ['conversation-tasks', contactId] as const;
 
 function isToday(dateIso: string) {
@@ -90,9 +96,12 @@ export function useConversationTasks(contactId: string | null | undefined) {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<ConversationTask> }) => {
-      // Cast necessario: Partial<ConversationTask> inclui string|null mas os tipos gerados
-      // exigem string|undefined apos ajuste de schema no banco.
-      const { error } = await supabase.from('conversation_tasks').update(updates as Record<string, unknown>).eq('id', id);
+      // O schema do banco nao aceita null em created_by/assigned_to no UPDATE.
+      // Cast para ConversationTaskUpdate que remove null desses dois campos.
+      const { error } = await supabase
+        .from('conversation_tasks')
+        .update(updates as ConversationTaskUpdate)
+        .eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => invalidate(),
