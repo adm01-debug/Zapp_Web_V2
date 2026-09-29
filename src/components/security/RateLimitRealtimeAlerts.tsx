@@ -32,6 +32,7 @@ const SEVERITY_COLORS: Record<string, string> = {
 };
 
 function playAlertSound() {
+  // Alerta de segurança, não mídia de conversa: fora do `mediaVolumeStore` de propósito.
   try {
     const audio = new Audio('/notification.mp3');
     audio.volume = 0.5;

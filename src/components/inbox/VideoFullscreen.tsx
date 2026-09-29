@@ -1,9 +1,12 @@
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
-import { X, Download, Volume2, VolumeX } from 'lucide-react';
+import { X, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { detectVideoAudioTrack } from '@/lib/mediaVolumeElement';
+import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
+import { MediaVolumeControl } from './MediaVolumeControl';
 
 interface VideoFullscreenProps {
   url: string;
@@ -11,9 +14,13 @@ interface VideoFullscreenProps {
 }
 
 export function VideoFullscreen({ url, onClose }: VideoFullscreenProps) {
-  const [isMuted, setIsMuted] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1.0);
+  const [hasAudio, setHasAudio] = useState<boolean | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  // E21 — abre no volume global (não mais em `muted` fixo): aqui o mute e o volume são
+  // os MESMOS do resto do app (D2). O botão de mute local que existia nesta barra foi
+  // substituído pelo `MediaVolumeControl` (E22) para não haver dois controles do mesmo.
+  const { muted } = useMediaElementVolume(videoRef);
 
   const cycleSpeed = () => {
     const speeds = [1, 1.25, 1.5, 1.75, 2, 0.5, 0.75];
@@ -22,6 +29,23 @@ export function VideoFullscreen({ url, onClose }: VideoFullscreenProps) {
     setPlaybackRate(newRate);
     if (videoRef.current) videoRef.current.playbackRate = newRate;
   };
+
+  // E26 — vídeo sem faixa de áudio fica com o controle desabilitado (e a razão no
+  // tooltip). A sondagem só responde quando o agente expõe API confiável.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const probe = () => setHasAudio(detectVideoAudioTrack(video));
+    probe();
+    video.addEventListener('loadedmetadata', probe);
+    video.addEventListener('loadeddata', probe);
+    return () => {
+      video.removeEventListener('loadedmetadata', probe);
+      video.removeEventListener('loadeddata', probe);
+    };
+  }, [url]);
+
+  const hasNoAudio = hasAudio === false;
 
   // Portal para document.body: ancestrais com transform (framer-motion whileHover/scale
   // nos bubbles) viram containing block de position:fixed e o fullscreen renderiza
@@ -36,9 +60,11 @@ export function VideoFullscreen({ url, onClose }: VideoFullscreenProps) {
     >
       <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Button variant="secondary" size="icon" onClick={(e) => { e.stopPropagation(); setIsMuted(!isMuted); }}>
-            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-          </Button>
+          <MediaVolumeControl
+            variant="overlay"
+            disabled={hasNoAudio}
+            disabledReason="Vídeo sem áudio"
+          />
         </motion.div>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
@@ -65,7 +91,7 @@ export function VideoFullscreen({ url, onClose }: VideoFullscreenProps) {
       </div>
 
       <video
-        ref={videoRef} src={url} controls controlsList="nodownload" autoPlay muted={isMuted}
+        ref={videoRef} src={url} controls controlsList="nodownload" autoPlay muted={muted}
         onContextMenu={(e) => e.preventDefault()}
         onClick={(e) => e.stopPropagation()}
         onLoadedMetadata={() => { if (videoRef.current) videoRef.current.playbackRate = playbackRate; }}

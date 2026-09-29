@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { AudioLines, Loader2, Play, Square, Send, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ELEVENLABS_VOICES, type ElevenLabsVoice } from './VoiceSelector';
+import { attachMediaVolume } from '@/lib/mediaVolumeElement';
 
 interface TextToAudioButtonProps {
   inputValue: string;
@@ -84,8 +85,11 @@ export function TextToAudioButton({ inputValue, onAudioReady, disabled }: TextTo
       // Auto-play preview
       const audio = new Audio(url);
       audioRef.current = audio;
-      audio.onended = () => setIsPlaying(false);
+      // E36 — prévia de TTS é mídia de conversa: respeita o volume global.
+      const detachMediaVolume = attachMediaVolume(audio);
+      audio.onended = () => { detachMediaVolume(); setIsPlaying(false); };
       audio.onerror = () => {
+        detachMediaVolume();
         setIsPlaying(false);
         toast.error('Erro ao reproduzir preview');
       };

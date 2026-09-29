@@ -106,6 +106,11 @@ describe('useAudioPlayer private URL renewal', () => {
       load: vi.fn(),
       play: vi.fn().mockResolvedValue(undefined),
       pause: vi.fn(),
+      // O player agora assina `loadedmetadata` para reaplicar o volume das mídias
+      // quando a URL assinada renova (E07/E44) — um HTMLAudioElement real sempre
+      // implementa EventTarget, então o duplo também precisa implementar.
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
     };
     result.current.audioRef.current = audio as unknown as HTMLAudioElement;
     now.mockReturnValue(1_000_000 + 51 * 60 * 1000);

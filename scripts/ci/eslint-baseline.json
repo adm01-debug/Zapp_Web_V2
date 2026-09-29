@@ -14,7 +14,7 @@
     },
     {
       "path": "src/components/admin/AIUsageDashboard.tsx",
-      "sha256": "3a724fed23e2b25dc05bfe3b8c9ae974091390f26dc68c90b8933f58e695f61d"
+      "sha256": "c861f9f29773c60e20fe6db35147c59f72c492ad3d916a51f95761ab784cc4a3"
     },
     {
       "path": "src/components/admin/AIUsageUsersTab.tsx",
@@ -154,7 +154,7 @@
     },
     {
       "path": "src/components/connections/ConnectionsView.tsx",
-      "sha256": "ad735c7ada04831a0d69d72a007614cb199c4c83e84170734e47f4287d77ad04"
+      "sha256": "94fe1937bab7ae54f1141567533c51b0f014db963325c8f8e1d81349092ed4da"
     },
     {
       "path": "src/components/connections/NumberReputationMonitor.tsx",
@@ -162,7 +162,7 @@
     },
     {
       "path": "src/components/contacts/BulkActionsBar.tsx",
-      "sha256": "9022912f3b3753fdfad22553e837db42fd1ca4039525ca8945dab7f931d517d1"
+      "sha256": "1c01bfd59ea9ba01cadb40221e3c8b6523aac2cca2a39d47a393dbd3f246e62b"
     },
     {
       "path": "src/components/contacts/ContactActivityTimeline.tsx",
@@ -170,7 +170,7 @@
     },
     {
       "path": "src/components/contacts/ContactBulkTagDialog.tsx",
-      "sha256": "6e0496dd6d404ee5548667a43988a9aa4684938fab980cff7a36bcc1135114aa"
+      "sha256": "0944941dfa31e25b3db22db43af55808c882fe17ae46a6215bb9e3a13cc0a917"
     },
     {
       "path": "src/components/contacts/ContactCRMDialog.tsx",
@@ -178,15 +178,11 @@
     },
     {
       "path": "src/components/contacts/ContactEngagementScore.tsx",
-      "sha256": "1c5b3e5b11eac4dec8d78f51a549c20f3f75838c11354770d59a818915ba7c18"
-    },
-    {
-      "path": "src/components/contacts/ContactImportDialog.tsx",
-      "sha256": "a20fe93c8c464504964d39fd099672eaf093b45cbd1380c63ea7ce107aa97169"
+      "sha256": "7bca35216c775b1ffe26c96c2075b8cc8316a097728db946aa384a5946688f45"
     },
     {
       "path": "src/components/contacts/ContactKanbanView.tsx",
-      "sha256": "7a39dca38e7ced310724d5253e1593d93c81307b8084abbc43fb79b7f6bd3d4d"
+      "sha256": "02b34baa32a9d2895ead8d87b698fce5146c1890e60294acd1fd727bcfaa5f80"
     },
     {
       "path": "src/components/contacts/ContactMergePanel.tsx",
@@ -206,7 +202,7 @@
     },
     {
       "path": "src/components/contacts/ContactsTable.tsx",
-      "sha256": "f5332bb7ba7a96b9d391f3fce3f5150a31c315b3b7d708a047475cdfaafee7c4"
+      "sha256": "c27d8a9b08dc28eef356810359ba181443a702482f1cf94f65e4926a022ffc79"
     },
     {
       "path": "src/components/contacts/InlineEditCell.tsx",
@@ -214,7 +210,7 @@
     },
     {
       "path": "src/components/contacts/useContactFormValidation.ts",
-      "sha256": "9ffe372b684da39ffc4d0152e94732feb8d70e029508737730a5080b66c97f2b"
+      "sha256": "165a1c872c4f9c58fe8ad321e48fefdefe5479b2d4adec432b0b624923db4e47"
     },
     {
       "path": "src/components/contacts/useContactsCRUD.ts",
@@ -258,7 +254,7 @@
     },
     {
       "path": "src/components/dashboard/ProgressiveDisclosureDashboard.tsx",
-      "sha256": "0b2294c8b9646b1965010f944fa11a0b59cba228b716a9bd7bc5164574be5cf7"
+      "sha256": "f7b29337500caec861c542c54c4a3e6b60596350b85d93f23a7ad9a1d536bd63"
     },
     {
       "path": "src/components/dashboard/SentimentHelpers.tsx",
@@ -314,7 +310,7 @@
     },
     {
       "path": "src/components/gamification/GamificationProvider.tsx",
-      "sha256": "8c4b0125a35621545d1fa46b23d50817debcf83f00cdb8c1ad6bdcd72c3e61e8"
+      "sha256": "c5ef861ac442f7093ab6c89eb0709cc922fa783cf9e83da257f870239c7d27c4"
     },
     {
       "path": "src/components/gamification/MiniGameDialogs.tsx",
@@ -362,11 +358,11 @@
     },
     {
       "path": "src/components/inbox/AudioMessagePlayer.tsx",
-      "sha256": "ab83c1470c4574c480785150a8453bbf9d60e9ab8911236cb51521e58e466c2c"
+      "sha256": "b8330f62352bbcf13fa0c50d213853db0a2b9e7331135e7149871101b120621e"
     },
     {
       "path": "src/components/inbox/AudioRecorder.tsx",
-      "sha256": "679ba5481268deb0d45683a9b7112f1e35ec71cb27d82ce52dc4b8192add4a2a"
+      "sha256": "abf47756b3c4edb7029ddda529a9f05107220715a5d55e4e26772a9a2e44aad5"
     },
     {
       "path": "src/components/inbox/chat/__tests__/ChatSearchBar.test.tsx",
@@ -390,7 +386,7 @@
     },
     {
       "path": "src/components/inbox/chat/MessageBubble.tsx",
-      "sha256": "7d7601c0acc21725d7925f553e17bfad47625bd93ac7d3c5bd946dc626be49c7"
+      "sha256": "36a6d92d027703add8af782b8ff10032e29e6276e0c3ccec334cbcd1502ef7a1"
     },
     {
       "path": "src/components/inbox/chat/MessageHoverToolbar.tsx",
@@ -410,7 +406,7 @@
     },
     {
       "path": "src/components/inbox/ChatPanel.tsx",
-      "sha256": "051e7a3028164aaf363a77336890b7f10faa7e009f9f9b21917007768341e4e5"
+      "sha256": "ef1830c94120c11fcc36bacd366db2d264c02a6bbf30f186990e5da4635bada2"
     },
     {
       "path": "src/components/inbox/CloseConversationDialog.tsx",
@@ -442,11 +438,11 @@
     },
     {
       "path": "src/components/inbox/contact-details/EditContactDialog.tsx",
-      "sha256": "a841212d4308eb4713af4e6d32b463741b79dce176d7de37880413ba431d643e"
+      "sha256": "db68d34e8bd6f585b092cd91a5edc6636f635142b69c718c814f7a97d57d4a15"
     },
     {
       "path": "src/components/inbox/contact-details/StoryViewer.tsx",
-      "sha256": "c7401a0d992c284d6227087543bb5ebb88ae972895968bce14632ff7354ea128"
+      "sha256": "e957b351a7a83868d7fa4325194853e72fbe944da6f7d1c92e2068aa20d71eac"
     },
     {
       "path": "src/components/inbox/ContactPurchasesPanel.tsx",
@@ -534,7 +530,7 @@
     },
     {
       "path": "src/components/inbox/TextToAudioButton.tsx",
-      "sha256": "7acad8c5e5a91b58eea62f6c6d59757cf47a2e9ae3ca13aadddd503d789ffc21"
+      "sha256": "4840d471d90f5d2f1a202b44c0ae7fca581b4240b713c6eb4502092ede9bba31"
     },
     {
       "path": "src/components/inbox/TransferDialog.tsx",
@@ -550,19 +546,19 @@
     },
     {
       "path": "src/components/inbox/useGlobalSearchData.ts",
-      "sha256": "c9af54d051aa07d09b38519eadcfd63383845ddce76fa739671d75db61013462"
+      "sha256": "50b70ba30d09d4d0cfc8da11adf143c31beb762f63d4f56fc173167fb555ccb6"
     },
     {
       "path": "src/components/inbox/VoiceChanger.tsx",
-      "sha256": "655c84153cce37a713cc48667e69d4b2ca9e236fb2b068ad3e3434f571274443"
+      "sha256": "8368eeb6da02597021520a9325a4aaad298204b1a0a18974640589463c1a60be"
     },
     {
       "path": "src/components/inbox/VoiceChangerPicker.tsx",
-      "sha256": "c2f6e07fb33d4b56beb59d7e78467776928d9816af897641bf1c1f26897ded68"
+      "sha256": "4b73ead72b7b1827faf0aa691a461b62a0deb46d849208adc9debcda5ff32721"
     },
     {
       "path": "src/components/inbox/VoiceSelector.tsx",
-      "sha256": "920831cd8945868de75b660b501c3bfd524599843ee81a0ce15155c652d91f74"
+      "sha256": "fac4d8f548228b9926ba9ae140158b1f1a601bfe0f8938b034cf37b188d96675"
     },
     {
       "path": "src/components/inbox/WhisperMode.tsx",
@@ -574,7 +570,7 @@
     },
     {
       "path": "src/components/keyboard/GlobalKeyboardProvider.tsx",
-      "sha256": "f6fcd5eb640b7aebd5c5c5ef59cf4abd4329b3d464f765e6512f8829ee99b82e"
+      "sha256": "0a3a46dd0f135d04d311a35c7592d0a58e760349abda34c4c3f4898cf95a567e"
     },
     {
       "path": "src/components/leaderboard/LeaderboardHelpers.tsx",
@@ -682,7 +678,7 @@
     },
     {
       "path": "src/components/performance/LazyRoutes.tsx",
-      "sha256": "090035f5d6ecd69767169f3567117bbeeff545314780dfae45f261fd67b4cefd"
+      "sha256": "98b6ff89eeeddee4df1348269d096837b2f0382110c77a41835e1a88b27cec89"
     },
     {
       "path": "src/components/performance/PerformanceMonitor.tsx",
@@ -714,7 +710,7 @@
     },
     {
       "path": "src/components/queues/SLADashboard.tsx",
-      "sha256": "15921208ac8fdc8328eb8a10e549d4c60aa5cf93ae4e5a19ea880add410760aa"
+      "sha256": "884549b26ecff8d6da233a0c624733f3ac5d10bf521ca822734ab3fcc3fcd8cd"
     },
     {
       "path": "src/components/reports/AbandonmentRate.tsx",
@@ -738,7 +734,7 @@
     },
     {
       "path": "src/components/reports/useReportsData.ts",
-      "sha256": "d03656d9ef0fb184a1957eef5523b3e0db12b151fd9236a475efa429141fe6d4"
+      "sha256": "1a098c60e63dbdb3c54552848b5412fc22846ff43a71060e294934677f265a27"
     },
     {
       "path": "src/components/SearchInput.tsx",
@@ -778,7 +774,7 @@
     },
     {
       "path": "src/components/security/RateLimitRealtimeAlerts.tsx",
-      "sha256": "30eff88270779aed74f28426461f7ad4e4e8359a3d4aff162ad1c9f44e9f2c27"
+      "sha256": "4b527c85ad01c422df6616c381cd3d198bbe6ce2c2adc78c02f03616c47a0325"
     },
     {
       "path": "src/components/security/SecurityOverview.tsx",
@@ -858,7 +854,7 @@
     },
     {
       "path": "src/components/settings/sla/SLARuleFormDialog.tsx",
-      "sha256": "8f9a35cc8d72d9590e52818223f1733cc56a74a2a3ba9adadf6b2da2d22c46e5"
+      "sha256": "36fd2b445244493a6f95ad4964110cdd6b058b12b72ba4fcdcbe6fa9179c628c"
     },
     {
       "path": "src/components/settings/SLARulesManager.tsx",
@@ -877,32 +873,16 @@
       "sha256": "eac0707c1ed1111bfa01984ca2d69a8b60a3a144ed9ca2318e5b55d6cf327070"
     },
     {
-      "path": "src/components/team-chat/AddMembersDialog.tsx",
-      "sha256": "61429da3e5f63299cfffb5b96b5d6e84756a7a1e442f09199bd2389124905f62"
-    },
-    {
       "path": "src/components/team-chat/TeamChatInputArea.tsx",
       "sha256": "4f6ad4f1ed547bc1eb66777d93d0f0497a9706534916f9e990df472027cdef21"
-    },
-    {
-      "path": "src/components/team-chat/TeamChatPanel.tsx",
-      "sha256": "20830ab8644162bfd9f82e2d09f636b26061fe9a37c1b6f7f1e75355b51ad294"
     },
     {
       "path": "src/components/team-chat/TeamFileUploader.tsx",
       "sha256": "f8166b394ac3d7d83b8b1c1d29355ac33febc87d9daaafb357af862149bcf76b"
     },
     {
-      "path": "src/components/team-chat/TeamMemberDetails.tsx",
-      "sha256": "e0fe00bdf6747a52a936531e46ca3cca0e81c674a07ef6872e64b3c34461c8ee"
-    },
-    {
       "path": "src/components/team-chat/TeamMemberProfileHeader.tsx",
-      "sha256": "b49faa97a5c84a99d44f3034e229b1494c3a580ae50f41ff8629e1e4927761ec"
-    },
-    {
-      "path": "src/components/team-chat/useTeamChatPanel.ts",
-      "sha256": "68b8ef74a821953529b23d986d93c3f0e4ddcdc4599cf047dd976794a9f11466"
+      "sha256": "be52fe3c105d4c3406b18a2e66710ceea147a86f6046e7499fd01191a9bcc579"
     },
     {
       "path": "src/components/theme/HighContrastToggle.tsx",
@@ -938,7 +918,7 @@
     },
     {
       "path": "src/components/ui/command-palette.tsx",
-      "sha256": "b9bd0d62d708a42b3285f6ce1aa5b17d5d9272210f66525f4aff74344d53c7eb"
+      "sha256": "cc46e105039b75d50a41f784b83287453b7165c616b6b9d0b3ec9987e6f3fa7c"
     },
     {
       "path": "src/components/ui/dialog.tsx",
@@ -1221,10 +1201,6 @@
       "sha256": "572179b4b760ac3be39b13e8a3af766237a83410cb6807d96e24235b5fb92571"
     },
     {
-      "path": "src/hooks/__tests__/useTags.test.tsx",
-      "sha256": "e105386ade522992708c062c736c72087147df4c88c01aaad5f1adabcab02901"
-    },
-    {
       "path": "src/hooks/__tests__/useTranscriptionNotifications.test.ts",
       "sha256": "cc78180acd15c2ab2c8d80861a6248323eae084dd8f54bd2f7e134f49b6b4338"
     },
@@ -1310,7 +1286,7 @@
     },
     {
       "path": "src/hooks/communication/useTextToSpeech.ts",
-      "sha256": "0b19e7d8ddf841f728629a0d2fc3d32fe2fd6025175a463cb564f034df5e98b3"
+      "sha256": "ea2cd5224406876c8068fd8071cfee441d01ba609abe5950877a0a3f8f13cf9b"
     },
     {
       "path": "src/hooks/crm/useContactCustomFields.ts",
@@ -1498,7 +1474,7 @@
     },
     {
       "path": "src/pages/AdminTelemetriaPage.tsx",
-      "sha256": "598d0d290518879c36c84e82dbf1b9b05e80d3d8b796a3afdd534ef72a014754"
+      "sha256": "e571ed57008a8a3dfcbdfdbd4804613277330d22d04c3b30a6e2a354072aa39f"
     },
     {
       "path": "src/pages/Auth.tsx",
@@ -1594,11 +1570,11 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-sync-actions.ts",
-      "sha256": "fd8b582b55116307186478c6f7fc03f47656cf20af7dec14bdc7346b2b21b478"
+      "sha256": "e58a46de78d1945b892ca2ea78ea2da6e563a772046b70c18b3d05b033f324cb"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "sha256": "240ea935f92a666d165a15e3767cd391d4691ac087f01fab1eb2b9bb619efef2"
+      "sha256": "7ee4602e062001d3a6e33eac386ae2a840a2b288bd24a66b703ff2ba515e3ec0"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
@@ -1606,7 +1582,7 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "sha256": "af9ca1392f0c55dc38ec9f024a361dad6763c7070eeb1961419e4c9fd98f5c63"
+      "sha256": "3c23f691bcf08d4d3a301cbed5ee9361b486bb73c46657137c41c8ab6e8d24a3"
     },
     {
       "path": "supabase/functions/_shared/gmail-helpers.ts",
@@ -1622,7 +1598,7 @@
     },
     {
       "path": "supabase/functions/_shared/validation.ts",
-      "sha256": "01b0fbabed88caa0964116ff2197518605a5263d5b59351f61547d9fe358168a"
+      "sha256": "5b61ce7b48ee93c5c0e940ebf042557f83a94b5413fe2dfac9a8ee6932d92599"
     },
     {
       "path": "supabase/functions/ai-proxy/index.ts",
@@ -1634,7 +1610,7 @@
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "sha256": "740e55b3460e89144f7c09b075deea29bfe6129e2b82cd1b7790842dcff0f0c6"
+      "sha256": "ac54e607dfa65780d638ed2a952850c9ca25f002e7cb687df62452b9875857e5"
     },
     {
       "path": "supabase/functions/evolution-webhook/index.ts",
@@ -1658,11 +1634,11 @@
     },
     {
       "path": "supabase/functions/migrate-media-storage/index.ts",
-      "sha256": "cfbb3b827ae7e05687f2dfc5b7fe3082cde0631769dcf6044a98d7caa2af65ec"
+      "sha256": "b0cc79888645b4bced95ed5890d90ab04daf4282598a963b7e20a3ba38bd9644"
     },
     {
       "path": "tailwind.config.ts",
-      "sha256": "32f6cba905c15cf2fee23e61717697af305a9d852d88717cb9850346303debcc"
+      "sha256": "18c1b02e4a8cf79fa9f0b5c0b187eb81271b9a7fd8f51340c3e36eb89c08f1b8"
     }
   ],
   "issues": [
@@ -1752,9 +1728,9 @@
     },
     {
       "file": "src/components/admin/AIUsageDashboard.tsx",
-      "line": 86,
+      "line": 85,
       "column": 275,
-      "endLine": 86,
+      "endLine": 85,
       "endColumn": 278,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -2732,9 +2708,9 @@
     },
     {
       "file": "src/components/contacts/ContactEngagementScore.tsx",
-      "line": 131,
+      "line": 136,
       "column": 10,
-      "endLine": 131,
+      "endLine": 136,
       "endColumn": 29,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -2743,20 +2719,6 @@
       "spanHash": "7cb698cb28ddbd09dccae4dd740e494017661f5621dc2f881b5281698fe7d0be",
       "lineHash": "5f7d60237bfd5b5e946d737f449ee7739f88d98f275194ad2ebf952e80834fe0",
       "contextHash": "2f1a73f335b415f4d58fdc21afa13273daf36b6600e483357f2ca5e7555aae51"
-    },
-    {
-      "file": "src/components/contacts/ContactImportDialog.tsx",
-      "line": 10,
-      "column": 1,
-      "endLine": 10,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "b25f47e6b45b3b17c74e6e2213e8c120806e6f8b61354371e1bd060928cae67a"
     },
     {
       "file": "src/components/contacts/ContactKanbanView.tsx",
@@ -2830,9 +2792,9 @@
     },
     {
       "file": "src/components/contacts/ContactsTable.tsx",
-      "line": 37,
+      "line": 38,
       "column": 10,
-      "endLine": 37,
+      "endLine": 38,
       "endColumn": 28,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -2868,7 +2830,7 @@
       "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "e15c8583d7ec4b50a819644957dc075dce8e3a058394a8fae4f5b5dcfa5e3f53"
+      "contextHash": "61ba16acf04a00ba9831d44b17480a6cef18d47ad100c6b615d5b06c6b560577"
     },
     {
       "file": "src/components/contacts/useContactsCRUD.ts",
@@ -3040,9 +3002,9 @@
     },
     {
       "file": "src/components/dashboard/ProgressiveDisclosureDashboard.tsx",
-      "line": 46,
+      "line": 45,
       "column": 7,
-      "endLine": 46,
+      "endLine": 45,
       "endColumn": 53,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-unused-expressions",
@@ -3376,23 +3338,9 @@
     },
     {
       "file": "src/components/gamification/GamificationProvider.tsx",
-      "line": 186,
-      "column": 43,
-      "endLine": 186,
-      "endColumn": 57,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/gamification/GamificationProvider.tsx:186:43 184 | const currentLevel = dbStats.level; 185 | const calculatedLevel = calculateLevel(dbStats.xp); > 186 | if (calculatedLevel > currentLevel) triggerLevelUp(calculatedLevel); | ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 187 | } 188 | }, [dbStats?.xp]); 189 |",
-      "spanHash": "60fd0086366bd9db9bff4fb6db7035dee4be7a4205e958d8fe6679ca1f7127c0",
-      "lineHash": "114aad7ab453f987d1e505415a1e9b4549c9de2e128e7f1b9e8a274eb9c2b041",
-      "contextHash": "c248a55b2eaab99f7964e358ee87526cd14e84341787b17079c0257199e51b57"
-    },
-    {
-      "file": "src/components/gamification/GamificationProvider.tsx",
-      "line": 188,
+      "line": 193,
       "column": 6,
-      "endLine": 188,
+      "endLine": 193,
       "endColumn": 19,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -3404,9 +3352,9 @@
     },
     {
       "file": "src/components/gamification/GamificationProvider.tsx",
-      "line": 215,
+      "line": 220,
       "column": 17,
-      "endLine": 215,
+      "endLine": 220,
       "endColumn": 32,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -3880,23 +3828,23 @@
     },
     {
       "file": "src/components/inbox/AudioRecorder.tsx",
-      "line": 170,
+      "line": 173,
       "column": 35,
-      "endLine": 170,
+      "endLine": 173,
       "endColumn": 48,
       "severity": 2,
       "ruleId": "react-hooks/purity",
       "messageId": null,
-      "message": "Error: Cannot call impure function during render `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/components/inbox/AudioRecorder.tsx:170:35 168 | key={i} 169 | animate={{ > 170 | height: [4, Math.random() * 24 + 4, 4], | ^^^^^^^^^^^^^ Cannot call impure function 171 | }} 172 | transition={{ 173 | duration: 0.5,",
+      "message": "Error: Cannot call impure function during render `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/components/inbox/AudioRecorder.tsx:173:35 171 | key={i} 172 | animate={{ > 173 | height: [4, Math.random() * 24 + 4, 4], | ^^^^^^^^^^^^^ Cannot call impure function 174 | }} 175 | transition={{ 176 | duration: 0.5,",
       "spanHash": "70e9d248688717df77bfb739b2384e84959ac43eb35ff5df19415eb1ca72c7be",
       "lineHash": "d86ed123682e45a037f4e5698d04fbf7870be25b958ac83480c585634d6fc55c",
       "contextHash": "27f2da6bc8c22e216652a312890dc27fb09a9b3d67b96e1a2cd0ad8a74df1a38"
     },
     {
       "file": "src/components/inbox/AudioRecorder.tsx",
-      "line": 44,
+      "line": 47,
       "column": 6,
-      "endLine": 44,
+      "endLine": 47,
       "endColumn": 8,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -4356,37 +4304,9 @@
     },
     {
       "file": "src/components/inbox/contact-details/StoryViewer.tsx",
-      "line": 68,
-      "column": 31,
-      "endLine": 68,
-      "endColumn": 39,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/inbox/contact-details/StoryViewer.tsx:68:31 66 | const [mediaError, setMediaError] = useState<string | null>(null); 67 | > 68 | useEffect(() => { if (open) setIndex(initialIndex); }, [open, initialIndex]); | ^^^^^^^^ Avoid calling setState() directly within an effect 69 | 70 | const goNext = useCallback(() => setIndex((i) => Math.min(i + 1, messages.length - 1)), [messages.length]); 71 | const goPrev = useCallback(() => setIndex((i) => Math.max(i - 1, 0)), []);",
-      "spanHash": "99be8c8e1400bc2691ef8d97fbba78023b949444b8425c0ff282da1b65377889",
-      "lineHash": "e105b1d42732e5e516cff464f9b57a77de386e409cf7c648bfccc8a438203f15",
-      "contextHash": "9ef102b2c1837241e2018b473fd4e0ae9bca39fac610eff88280cf555fd20e4d"
-    },
-    {
-      "file": "src/components/inbox/contact-details/StoryViewer.tsx",
-      "line": 88,
-      "column": 5,
-      "endLine": 88,
-      "endColumn": 21,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/inbox/contact-details/StoryViewer.tsx:88:5 86 | const current = messages[index]; 87 | const mediaType = getMediaType(current); > 88 | setResolvedMedia({ src: null, mimetype: null }); | ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 89 | setMediaError(null); 90 | if (mediaType === 'text') { setMediaLoading(false); return; } 91 |",
-      "spanHash": "ac86e4d5f31f867b4cba6d9aef1781c81ff5c8734b1811b30499a16cfa96abe6",
-      "lineHash": "caf4397322b2fe866e6e84aced3e65804c2c83212bb88b34e301a2abeea59f6a",
-      "contextHash": "46eeff66c4428bf3ca60b792419eab00acaeb4451cc3ad96ab28bdb794f2e82d"
-    },
-    {
-      "file": "src/components/inbox/contact-details/StoryViewer.tsx",
-      "line": 96,
+      "line": 101,
       "column": 75,
-      "endLine": 96,
+      "endLine": 101,
       "endColumn": 78,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -4395,6 +4315,34 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "c89ac1a9e2ffecec1b33edd6d04b863c772144f101570c71aaf36727aacb2d6e",
       "contextHash": "6309f4ceb3e5bf8d65f0fa9c65a8488814dc2ee6cd19ef5096c52da8b3e3a1f7"
+    },
+    {
+      "file": "src/components/inbox/contact-details/StoryViewer.tsx",
+      "line": 73,
+      "column": 31,
+      "endLine": 73,
+      "endColumn": 39,
+      "severity": 2,
+      "ruleId": "react-hooks/set-state-in-effect",
+      "messageId": null,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/inbox/contact-details/StoryViewer.tsx:73:31 71 | useMediaElementVolume(videoRef); 72 | > 73 | useEffect(() => { if (open) setIndex(initialIndex); }, [open, initialIndex]); | ^^^^^^^^ Avoid calling setState() directly within an effect 74 | 75 | const goNext = useCallback(() => setIndex((i) => Math.min(i + 1, messages.length - 1)), [messages.length]); 76 | const goPrev = useCallback(() => setIndex((i) => Math.max(i - 1, 0)), []);",
+      "spanHash": "99be8c8e1400bc2691ef8d97fbba78023b949444b8425c0ff282da1b65377889",
+      "lineHash": "e105b1d42732e5e516cff464f9b57a77de386e409cf7c648bfccc8a438203f15",
+      "contextHash": "fd95d1fa29dfddafd5cf4b44d7bcc26d37d9e3b391a793881aee792e3ab56935"
+    },
+    {
+      "file": "src/components/inbox/contact-details/StoryViewer.tsx",
+      "line": 93,
+      "column": 5,
+      "endLine": 93,
+      "endColumn": 21,
+      "severity": 2,
+      "ruleId": "react-hooks/set-state-in-effect",
+      "messageId": null,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/inbox/contact-details/StoryViewer.tsx:93:5 91 | const current = messages[index]; 92 | const mediaType = getMediaType(current); > 93 | setResolvedMedia({ src: null, mimetype: null }); | ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 94 | setMediaError(null); 95 | if (mediaType === 'text') { setMediaLoading(false); return; } 96 |",
+      "spanHash": "ac86e4d5f31f867b4cba6d9aef1781c81ff5c8734b1811b30499a16cfa96abe6",
+      "lineHash": "caf4397322b2fe866e6e84aced3e65804c2c83212bb88b34e301a2abeea59f6a",
+      "contextHash": "46eeff66c4428bf3ca60b792419eab00acaeb4451cc3ad96ab28bdb794f2e82d"
     },
     {
       "file": "src/components/inbox/ContactPurchasesPanel.tsx",
@@ -5976,7 +5924,7 @@
       "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
       "spanHash": "84c2edb4d39c948c22a010cdd1f5e0354e2306b0ef6f2b88e45db7b2cac9e506",
       "lineHash": "84c2edb4d39c948c22a010cdd1f5e0354e2306b0ef6f2b88e45db7b2cac9e506",
-      "contextHash": "fe9950eccebe13aadbe47f7b39071859d007e2a830050c442ee63d3c2b4705d4"
+      "contextHash": "8ef5809f9d43174d3860a7d2ec2410bee2398b63cef8a55820569ebdf4da3409"
     },
     {
       "file": "src/components/inbox/VoiceSelector.tsx",
@@ -5994,9 +5942,9 @@
     },
     {
       "file": "src/components/inbox/VoiceSelector.tsx",
-      "line": 28,
+      "line": 29,
       "column": 14,
-      "endLine": 28,
+      "endLine": 29,
       "endColumn": 50,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -6036,9 +5984,9 @@
     },
     {
       "file": "src/components/keyboard/GlobalKeyboardProvider.tsx",
-      "line": 16,
+      "line": 17,
       "column": 14,
-      "endLine": 16,
+      "endLine": 17,
       "endColumn": 31,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -6960,9 +6908,9 @@
     },
     {
       "file": "src/components/performance/LazyRoutes.tsx",
-      "line": 149,
+      "line": 148,
       "column": 17,
-      "endLine": 149,
+      "endLine": 148,
       "endColumn": 32,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -7170,9 +7118,9 @@
     },
     {
       "file": "src/components/queues/SLADashboard.tsx",
-      "line": 50,
+      "line": 48,
       "column": 6,
-      "endLine": 50,
+      "endLine": 48,
       "endColumn": 16,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -8275,20 +8223,6 @@
       "contextHash": "fe1831044ca01bb6938ab6881bdb09e3cfba0cde0ac9adeec94a1c9ed87988b7"
     },
     {
-      "file": "src/components/team-chat/AddMembersDialog.tsx",
-      "line": 9,
-      "column": 1,
-      "endLine": 9,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "7bd091b2ec48c930938d25284c2b528fdd4c39f2ce8be2a4d7b730ec347df358"
-    },
-    {
       "file": "src/components/team-chat/TeamChatInputArea.tsx",
       "line": 74,
       "column": 6,
@@ -8301,496 +8235,6 @@
       "spanHash": "a7691a4f8077397d7a7dd2a1ad1caad8cbfde6525251fe0b3776f3ad600a4cad",
       "lineHash": "7115c04e59ea4e643d51edef3480c89572e11fafc964bdd0b20f28bb3569ba99",
       "contextHash": "a7e8a8f2ce0a6549873ea66c900fd3b9c82e7ea18b04a5b9f0791e976b824e38"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 102,
-      "column": 27,
-      "endLine": 102,
-      "endColumn": 43,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:102:27 100 | <div className=\"flex items-center gap-2\"> 101 | <Search className=\"w-4 h-4 text-muted-foreground shrink-0\" /> > 102 | <Input ref={s.searchInputRef} value={s.searchQuery} onChange={e => s.setSearchQuery(e.target.value)} | ^^^^^^^^^^^^^^^^ Cannot access ref value during render 103 | onKeyDown={e => { if (e.key === 'Escape') { s.setShowSearch(false); s.setSearchQuery(''); } }} 104 | placeholder=\"Buscar nas mensagens...\" className=\"h-8 text-sm\" /> 105 | {s.searchQuery && <span className=\"text-xs text-muted-foreground whitespace-nowrap\">{s.filteredMessages.length} resultado{s.filteredMessages.length !== 1 ? 's' : ''}</span>}",
-      "spanHash": "d4a817576075e7863ed45e4999ddc3f1379fdc80c441f676819a1fe5da6b3367",
-      "lineHash": "364768429dba66a7601a9e2637e648db36bca024b47d16751e386e49069b59a2",
-      "contextHash": "4ab1e328a6beaebf4d79760aff6bc1a677b0e46ac36db625f0538f6f49a9f7b0"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 102,
-      "column": 52,
-      "endLine": 102,
-      "endColumn": 65,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:102:52 100 | <div className=\"flex items-center gap-2\"> 101 | <Search className=\"w-4 h-4 text-muted-foreground shrink-0\" /> > 102 | <Input ref={s.searchInputRef} value={s.searchQuery} onChange={e => s.setSearchQuery(e.target.value)} | ^^^^^^^^^^^^^ Cannot access ref value during render 103 | onKeyDown={e => { if (e.key === 'Escape') { s.setShowSearch(false); s.setSearchQuery(''); } }} 104 | placeholder=\"Buscar nas mensagens...\" className=\"h-8 text-sm\" /> 105 | {s.searchQuery && <span className=\"text-xs text-muted-foreground whitespace-nowrap\">{s.filteredMessages.length} resultado{s.filteredMessages.length !== 1 ? 's' : ''}</span>}",
-      "spanHash": "675d27f9bdf9abfddb81fb797c8d7845f8f022d4651f7d64634e9d1cac10e2d2",
-      "lineHash": "364768429dba66a7601a9e2637e648db36bca024b47d16751e386e49069b59a2",
-      "contextHash": "4ab1e328a6beaebf4d79760aff6bc1a677b0e46ac36db625f0538f6f49a9f7b0"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 105,
-      "column": 100,
-      "endLine": 105,
-      "endColumn": 125,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:105:100 103 | onKeyDown={e => { if (e.key === 'Escape') { s.setShowSearch(false); s.setSearchQuery(''); } }} 104 | placeholder=\"Buscar nas mensagens...\" className=\"h-8 text-sm\" /> > 105 | {s.searchQuery && <span className=\"text-xs text-muted-foreground whitespace-nowrap\">{s.filteredMessages.length} resultado{s.filteredMessages.length !== 1 ? 's' : ''}</span>} | ^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 106 | <Button size=\"icon\" variant=\"ghost\" className=\"h-7 w-7 shrink-0\" onClick={() => { s.setShowSearch(false); s.setSearchQuery(''); }}><X className=\"w-3.5 h-3.5\" /></Button> 107 | </div> 108 | </motion.div>",
-      "spanHash": "83277c192f0e54e85eb0f6da9f2f2fd8015eaba9c323aeac2aee8e0daec10c5f",
-      "lineHash": "089b182007897a428f8fd97f7c1ea593e960019ae574173de0682d494c6efa71",
-      "contextHash": "f3240e79aae57105fb4409c412f70068d1b9ac824e1594b7d286977c2fe1c8ac"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 105,
-      "column": 137,
-      "endLine": 105,
-      "endColumn": 162,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:105:137 103 | onKeyDown={e => { if (e.key === 'Escape') { s.setShowSearch(false); s.setSearchQuery(''); } }} 104 | placeholder=\"Buscar nas mensagens...\" className=\"h-8 text-sm\" /> > 105 | {s.searchQuery && <span className=\"text-xs text-muted-foreground whitespace-nowrap\">{s.filteredMessages.length} resultado{s.filteredMessages.length !== 1 ? 's' : ''}</span>} | ^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 106 | <Button size=\"icon\" variant=\"ghost\" className=\"h-7 w-7 shrink-0\" onClick={() => { s.setShowSearch(false); s.setSearchQuery(''); }}><X className=\"w-3.5 h-3.5\" /></Button> 107 | </div> 108 | </motion.div>",
-      "spanHash": "83277c192f0e54e85eb0f6da9f2f2fd8015eaba9c323aeac2aee8e0daec10c5f",
-      "lineHash": "089b182007897a428f8fd97f7c1ea593e960019ae574173de0682d494c6efa71",
-      "contextHash": "f3240e79aae57105fb4409c412f70068d1b9ac824e1594b7d286977c2fe1c8ac"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 105,
-      "column": 16,
-      "endLine": 105,
-      "endColumn": 187,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:105:16 103 | onKeyDown={e => { if (e.key === 'Escape') { s.setShowSearch(false); s.setSearchQuery(''); } }} 104 | placeholder=\"Buscar nas mensagens...\" className=\"h-8 text-sm\" /> > 105 | {s.searchQuery && <span className=\"text-xs text-muted-foreground whitespace-nowrap\">{s.filteredMessages.length} resultado{s.filteredMessages.length !== 1 ? 's' : ''}</span>} | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 106 | <Button size=\"icon\" variant=\"ghost\" className=\"h-7 w-7 shrink-0\" onClick={() => { s.setShowSearch(false); s.setSearchQuery(''); }}><X className=\"w-3.5 h-3.5\" /></Button> 107 | </div> 108 | </motion.div>",
-      "spanHash": "467159e52ed1d2e5887d047f7f3b89e80efc1c86130211ce6e96323a8cc1782b",
-      "lineHash": "089b182007897a428f8fd97f7c1ea593e960019ae574173de0682d494c6efa71",
-      "contextHash": "f3240e79aae57105fb4409c412f70068d1b9ac824e1594b7d286977c2fe1c8ac"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 105,
-      "column": 16,
-      "endLine": 105,
-      "endColumn": 29,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:105:16 103 | onKeyDown={e => { if (e.key === 'Escape') { s.setShowSearch(false); s.setSearchQuery(''); } }} 104 | placeholder=\"Buscar nas mensagens...\" className=\"h-8 text-sm\" /> > 105 | {s.searchQuery && <span className=\"text-xs text-muted-foreground whitespace-nowrap\">{s.filteredMessages.length} resultado{s.filteredMessages.length !== 1 ? 's' : ''}</span>} | ^^^^^^^^^^^^^ Cannot access ref value during render 106 | <Button size=\"icon\" variant=\"ghost\" className=\"h-7 w-7 shrink-0\" onClick={() => { s.setShowSearch(false); s.setSearchQuery(''); }}><X className=\"w-3.5 h-3.5\" /></Button> 107 | </div> 108 | </motion.div>",
-      "spanHash": "675d27f9bdf9abfddb81fb797c8d7845f8f022d4651f7d64634e9d1cac10e2d2",
-      "lineHash": "089b182007897a428f8fd97f7c1ea593e960019ae574173de0682d494c6efa71",
-      "contextHash": "f3240e79aae57105fb4409c412f70068d1b9ac824e1594b7d286977c2fe1c8ac"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 112,
-      "column": 17,
-      "endLine": 112,
-      "endColumn": 28,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:112:17 110 | </AnimatePresence> 111 | > 112 | <div ref={s.scrollRef} className=\"flex-1 overflow-auto p-4 space-y-1 bg-muted/5\" onScroll={s.checkNearBottom} role=\"log\" aria-label=\"Mensagens da conversa\" aria-live=\"polite\"> | ^^^^^^^^^^^ Cannot access ref value during render 113 | {s.isLoading ? ( 114 | <div className=\"space-y-3\">{Array.from({ length: 4 }).map((_, i) => <div key={i} className={cn(\"flex\", i % 2 === 0 ? \"justify-start\" : \"justify-end\")}><Skeleton className=\"h-10 rounded-2xl\" style={{ width: 120 + (i % 3) * 60 }} /></div>)}</div> 115 | ) : s.filteredMessages.length === 0 ? (",
-      "spanHash": "6282c7e3b2223b7d04d16ec6ad77a4ce72faf96b1bb5ebf673ccdfbb70f01ea6",
-      "lineHash": "5944669a86c11c0109e8945e8a6c09b74266e9a855ceca80a05ee7636fbd0c14",
-      "contextHash": "50b0340b42723bc857e17a95ea3a511648833e6a0c2ed0aa7213d733faeee078"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 112,
-      "column": 98,
-      "endLine": 112,
-      "endColumn": 115,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:112:98 110 | </AnimatePresence> 111 | > 112 | <div ref={s.scrollRef} className=\"flex-1 overflow-auto p-4 space-y-1 bg-muted/5\" onScroll={s.checkNearBottom} role=\"log\" aria-label=\"Mensagens da conversa\" aria-live=\"polite\"> | ^^^^^^^^^^^^^^^^^ Cannot access ref value during render 113 | {s.isLoading ? ( 114 | <div className=\"space-y-3\">{Array.from({ length: 4 }).map((_, i) => <div key={i} className={cn(\"flex\", i % 2 === 0 ? \"justify-start\" : \"justify-end\")}><Skeleton className=\"h-10 rounded-2xl\" style={{ width: 120 + (i % 3) * 60 }} /></div>)}</div> 115 | ) : s.filteredMessages.length === 0 ? (",
-      "spanHash": "2cf3c2e63082a9a49653f04342cec4b4db32afdd4a9837ad40f5b208317a96db",
-      "lineHash": "5944669a86c11c0109e8945e8a6c09b74266e9a855ceca80a05ee7636fbd0c14",
-      "contextHash": "50b0340b42723bc857e17a95ea3a511648833e6a0c2ed0aa7213d733faeee078"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 113,
-      "column": 10,
-      "endLine": 113,
-      "endColumn": 21,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:113:10 111 | 112 | <div ref={s.scrollRef} className=\"flex-1 overflow-auto p-4 space-y-1 bg-muted/5\" onScroll={s.checkNearBottom} role=\"log\" aria-label=\"Mensagens da conversa\" aria-live=\"polite\"> > 113 | {s.isLoading ? ( | ^^^^^^^^^^^ Cannot access ref value during render 114 | <div className=\"space-y-3\">{Array.from({ length: 4 }).map((_, i) => <div key={i} className={cn(\"flex\", i % 2 === 0 ? \"justify-start\" : \"justify-end\")}><Skeleton className=\"h-10 rounded-2xl\" style={{ width: 120 + (i % 3) * 60 }} /></div>)}</div> 115 | ) : s.filteredMessages.length === 0 ? ( 116 | <div className=\"text-center text-muted-foreground text-sm py-12\">{s.searchQuery ? 'Nenhuma mensagem encontrada' : 'Envie a primeira mensagem!'}</div>",
-      "spanHash": "4453eca2996ba60f04d6f8b73b93bd4a17d689208ddab9033fdd494d7587c3ca",
-      "lineHash": "2ae71359cf84fb2f219a4e22bc5f4047ac86547e696b8129871a54cff8aae8ea",
-      "contextHash": "76c33ad855865b5c35870c596897b0113fb0c604f6dacf42efa72f0754ff51b0"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 115,
-      "column": 13,
-      "endLine": 115,
-      "endColumn": 38,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:115:13 113 | {s.isLoading ? ( 114 | <div className=\"space-y-3\">{Array.from({ length: 4 }).map((_, i) => <div key={i} className={cn(\"flex\", i % 2 === 0 ? \"justify-start\" : \"justify-end\")}><Skeleton className=\"h-10 rounded-2xl\" style={{ width: 120 + (i % 3) * 60 }} /></div>)}</div> > 115 | ) : s.filteredMessages.length === 0 ? ( | ^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 116 | <div className=\"text-center text-muted-foreground text-sm py-12\">{s.searchQuery ? 'Nenhuma mensagem encontrada' : 'Envie a primeira mensagem!'}</div> 117 | ) : ( 118 | s.filteredMessages.map((msg, idx) => {",
-      "spanHash": "83277c192f0e54e85eb0f6da9f2f2fd8015eaba9c323aeac2aee8e0daec10c5f",
-      "lineHash": "d4e6c91768a542da2fdde72b5ef8efe869a43c9c861146686921536627e5364d",
-      "contextHash": "d8916c161a8b1c79310e1ff8697fbb10213a90d695c18231b7308f833c128575"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 116,
-      "column": 77,
-      "endLine": 116,
-      "endColumn": 90,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:116:77 114 | <div className=\"space-y-3\">{Array.from({ length: 4 }).map((_, i) => <div key={i} className={cn(\"flex\", i % 2 === 0 ? \"justify-start\" : \"justify-end\")}><Skeleton className=\"h-10 rounded-2xl\" style={{ width: 120 + (i % 3) * 60 }} /></div>)}</div> 115 | ) : s.filteredMessages.length === 0 ? ( > 116 | <div className=\"text-center text-muted-foreground text-sm py-12\">{s.searchQuery ? 'Nenhuma mensagem encontrada' : 'Envie a primeira mensagem!'}</div> | ^^^^^^^^^^^^^ Cannot access ref value during render 117 | ) : ( 118 | s.filteredMessages.map((msg, idx) => { 119 | const showDate = dateFirstIndexes.has(idx);",
-      "spanHash": "675d27f9bdf9abfddb81fb797c8d7845f8f022d4651f7d64634e9d1cac10e2d2",
-      "lineHash": "de97ea89a5fe33de84067f6eb8e81fe56f9e7c5cdd3f5a9897d1741595f143dd",
-      "contextHash": "674778266af08d85e0376b94c58106101bb24b410f1f3d9a09fa3cf5990292e4"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 118,
-      "column": 11,
-      "endLine": 118,
-      "endColumn": 29,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:118:11 116 | <div className=\"text-center text-muted-foreground text-sm py-12\">{s.searchQuery ? 'Nenhuma mensagem encontrada' : 'Envie a primeira mensagem!'}</div> 117 | ) : ( > 118 | s.filteredMessages.map((msg, idx) => { | ^^^^^^^^^^^^^^^^^^ Passing a ref to a function may read its value during render 119 | const showDate = dateFirstIndexes.has(idx); 120 | const isMine = msg.sender_id === s.profile?.id; 121 | const isEditing = s.editingId === msg.id;",
-      "spanHash": "fd18788ced55d0b205da9806bad3791e8b186798837045368e6247a5bb0877c2",
-      "lineHash": "b85eef9b5e1e36bcc9717f9223caefe1cc124bd78a249dc833c1e9f819a6407e",
-      "contextHash": "5a365893f01d9b3fb54e19ddca4b749b71478fe13db0296b3ff3811ac7ae71b6"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 118,
-      "column": 11,
-      "endLine": 118,
-      "endColumn": 33,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:118:11 116 | <div className=\"text-center text-muted-foreground text-sm py-12\">{s.searchQuery ? 'Nenhuma mensagem encontrada' : 'Envie a primeira mensagem!'}</div> 117 | ) : ( > 118 | s.filteredMessages.map((msg, idx) => { | ^^^^^^^^^^^^^^^^^^^^^^ Passing a ref to a function may read its value during render 119 | const showDate = dateFirstIndexes.has(idx); 120 | const isMine = msg.sender_id === s.profile?.id; 121 | const isEditing = s.editingId === msg.id;",
-      "spanHash": "7f28e2806e46e96b5877f3c9165f65f16f736eed6f37e726dd43bc3cdbf0507c",
-      "lineHash": "b85eef9b5e1e36bcc9717f9223caefe1cc124bd78a249dc833c1e9f819a6407e",
-      "contextHash": "5a365893f01d9b3fb54e19ddca4b749b71478fe13db0296b3ff3811ac7ae71b6"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 217,
-      "column": 187,
-      "endLine": 217,
-      "endColumn": 203,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:217:187 215 | </div> 216 | > 217 | {s.showScrollDown && <div className=\"absolute bottom-24 left-1/2 -translate-x-1/2 z-10\"><Button size=\"icon\" variant=\"secondary\" className=\"rounded-full shadow-lg h-8 w-8\" onClick={s.scrollToBottom}><ArrowDown className=\"w-4 h-4\" /></Button></div>} | ^^^^^^^^^^^^^^^^ Cannot access ref value during render 218 | 219 | <TeamChatInputArea conversationId={conversation.id} text={s.text} setText={s.setText} replyTo={s.replyTo} 220 | isRecordingAudio={s.isRecordingAudio} isPending={s.sendMutation.isPending} onSend={s.handleSend}",
-      "spanHash": "c5d32639b24378184119754a7a1596be976f8792d921b9c8eb4995111230d2aa",
-      "lineHash": "3fb7437e684b605af30846c69e7e8ed30f72497168732d1c4965e3933ad21107",
-      "contextHash": "91947c02b2a8fb70d0c7eb73a8ac25ac665a1311077092322ab6cb528f1d138d"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 217,
-      "column": 8,
-      "endLine": 217,
-      "endColumn": 24,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:217:8 215 | </div> 216 | > 217 | {s.showScrollDown && <div className=\"absolute bottom-24 left-1/2 -translate-x-1/2 z-10\"><Button size=\"icon\" variant=\"secondary\" className=\"rounded-full shadow-lg h-8 w-8\" onClick={s.scrollToBottom}><ArrowDown className=\"w-4 h-4\" /></Button></div>} | ^^^^^^^^^^^^^^^^ Cannot access ref value during render 218 | 219 | <TeamChatInputArea conversationId={conversation.id} text={s.text} setText={s.setText} replyTo={s.replyTo} 220 | isRecordingAudio={s.isRecordingAudio} isPending={s.sendMutation.isPending} onSend={s.handleSend}",
-      "spanHash": "73f2c0a24252346d503c8b0274c1951ff3dd3d3546d8f266d1d45a8ae3d9e900",
-      "lineHash": "3fb7437e684b605af30846c69e7e8ed30f72497168732d1c4965e3933ad21107",
-      "contextHash": "91947c02b2a8fb70d0c7eb73a8ac25ac665a1311077092322ab6cb528f1d138d"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 217,
-      "column": 8,
-      "endLine": 217,
-      "endColumn": 253,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:217:8 215 | </div> 216 | > 217 | {s.showScrollDown && <div className=\"absolute bottom-24 left-1/2 -translate-x-1/2 z-10\"><Button size=\"icon\" variant=\"secondary\" className=\"rounded-full shadow-lg h-8 w-8\" onClick={s.scrollToBottom}><ArrowDown className=\"w-4 h-4\" /></Button></div>} | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 218 | 219 | <TeamChatInputArea conversationId={conversation.id} text={s.text} setText={s.setText} replyTo={s.replyTo} 220 | isRecordingAudio={s.isRecordingAudio} isPending={s.sendMutation.isPending} onSend={s.handleSend}",
-      "spanHash": "0b92c20c5a7db5e42f2a9645ac769ec36649678b784d357686e75f03802ac7d0",
-      "lineHash": "3fb7437e684b605af30846c69e7e8ed30f72497168732d1c4965e3933ad21107",
-      "contextHash": "91947c02b2a8fb70d0c7eb73a8ac25ac665a1311077092322ab6cb528f1d138d"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 219,
-      "column": 102,
-      "endLine": 219,
-      "endColumn": 111,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:219:102 217 | {s.showScrollDown && <div className=\"absolute bottom-24 left-1/2 -translate-x-1/2 z-10\"><Button size=\"icon\" variant=\"secondary\" className=\"rounded-full shadow-lg h-8 w-8\" onClick={s.scrollToBottom}><ArrowDown className=\"w-4 h-4\" /></Button></div>} 218 | > 219 | <TeamChatInputArea conversationId={conversation.id} text={s.text} setText={s.setText} replyTo={s.replyTo} | ^^^^^^^^^ Cannot access ref value during render 220 | isRecordingAudio={s.isRecordingAudio} isPending={s.sendMutation.isPending} onSend={s.handleSend} 221 | onCancelReply={() => s.setReplyTo(null)} onRecordToggle={() => s.setIsRecordingAudio(!s.isRecordingAudio)} 222 | onAudioSend={s.handleAudioSend} onSendSticker={s.handleSendSticker} onSendAudioMeme={s.handleSendAudioMeme}",
-      "spanHash": "e4ae8d4574baed38fb7587429440d2690d87d457085b3ad4844156829fce0dde",
-      "lineHash": "b70a21f4d49aa742c7e690464932f492cc3fca76cc3f02416ab721631b394d8f",
-      "contextHash": "64f7acdc1017a203bcf5dabb8c08274f665230be4a62a533b8d59767894c37da"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 219,
-      "column": 65,
-      "endLine": 219,
-      "endColumn": 71,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:219:65 217 | {s.showScrollDown && <div className=\"absolute bottom-24 left-1/2 -translate-x-1/2 z-10\"><Button size=\"icon\" variant=\"secondary\" className=\"rounded-full shadow-lg h-8 w-8\" onClick={s.scrollToBottom}><ArrowDown className=\"w-4 h-4\" /></Button></div>} 218 | > 219 | <TeamChatInputArea conversationId={conversation.id} text={s.text} setText={s.setText} replyTo={s.replyTo} | ^^^^^^ Cannot access ref value during render 220 | isRecordingAudio={s.isRecordingAudio} isPending={s.sendMutation.isPending} onSend={s.handleSend} 221 | onCancelReply={() => s.setReplyTo(null)} onRecordToggle={() => s.setIsRecordingAudio(!s.isRecordingAudio)} 222 | onAudioSend={s.handleAudioSend} onSendSticker={s.handleSendSticker} onSendAudioMeme={s.handleSendAudioMeme}",
-      "spanHash": "66e4b80cfe7b403afae8bc1c07ea2ce86120b24ba7fe6c5a4714174ff77c528c",
-      "lineHash": "b70a21f4d49aa742c7e690464932f492cc3fca76cc3f02416ab721631b394d8f",
-      "contextHash": "64f7acdc1017a203bcf5dabb8c08274f665230be4a62a533b8d59767894c37da"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 219,
-      "column": 82,
-      "endLine": 219,
-      "endColumn": 91,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:219:82 217 | {s.showScrollDown && <div className=\"absolute bottom-24 left-1/2 -translate-x-1/2 z-10\"><Button size=\"icon\" variant=\"secondary\" className=\"rounded-full shadow-lg h-8 w-8\" onClick={s.scrollToBottom}><ArrowDown className=\"w-4 h-4\" /></Button></div>} 218 | > 219 | <TeamChatInputArea conversationId={conversation.id} text={s.text} setText={s.setText} replyTo={s.replyTo} | ^^^^^^^^^ Cannot access ref value during render 220 | isRecordingAudio={s.isRecordingAudio} isPending={s.sendMutation.isPending} onSend={s.handleSend} 221 | onCancelReply={() => s.setReplyTo(null)} onRecordToggle={() => s.setIsRecordingAudio(!s.isRecordingAudio)} 222 | onAudioSend={s.handleAudioSend} onSendSticker={s.handleSendSticker} onSendAudioMeme={s.handleSendAudioMeme}",
-      "spanHash": "4673f3836b33647691bd26ba579de9fe6c234e5b04649fb63861f89ed3781dd5",
-      "lineHash": "b70a21f4d49aa742c7e690464932f492cc3fca76cc3f02416ab721631b394d8f",
-      "contextHash": "64f7acdc1017a203bcf5dabb8c08274f665230be4a62a533b8d59767894c37da"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 220,
-      "column": 27,
-      "endLine": 220,
-      "endColumn": 45,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:220:27 218 | 219 | <TeamChatInputArea conversationId={conversation.id} text={s.text} setText={s.setText} replyTo={s.replyTo} > 220 | isRecordingAudio={s.isRecordingAudio} isPending={s.sendMutation.isPending} onSend={s.handleSend} | ^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 221 | onCancelReply={() => s.setReplyTo(null)} onRecordToggle={() => s.setIsRecordingAudio(!s.isRecordingAudio)} 222 | onAudioSend={s.handleAudioSend} onSendSticker={s.handleSendSticker} onSendAudioMeme={s.handleSendAudioMeme} 223 | onSendCustomEmoji={s.handleSendCustomEmoji} onFileSent={s.handleFileSent} />",
-      "spanHash": "3b7154ba1cb7cc57be4c56e2466fe81f0a8dd577707da5553f68d5693ede58ee",
-      "lineHash": "abd9a52b77549ef3df59492191b5bbd12369453957ca5c400971fccb0d972e7a",
-      "contextHash": "dbb8e5aa38f0f992367bca4dbc39a60042555c2362a13675a41470dbade341a3"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 220,
-      "column": 58,
-      "endLine": 220,
-      "endColumn": 82,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:220:58 218 | 219 | <TeamChatInputArea conversationId={conversation.id} text={s.text} setText={s.setText} replyTo={s.replyTo} > 220 | isRecordingAudio={s.isRecordingAudio} isPending={s.sendMutation.isPending} onSend={s.handleSend} | ^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 221 | onCancelReply={() => s.setReplyTo(null)} onRecordToggle={() => s.setIsRecordingAudio(!s.isRecordingAudio)} 222 | onAudioSend={s.handleAudioSend} onSendSticker={s.handleSendSticker} onSendAudioMeme={s.handleSendAudioMeme} 223 | onSendCustomEmoji={s.handleSendCustomEmoji} onFileSent={s.handleFileSent} />",
-      "spanHash": "91d29f83fbcbbf11029b9e8bc30890c974de3f2a880adc34137c59f5a18f869c",
-      "lineHash": "abd9a52b77549ef3df59492191b5bbd12369453957ca5c400971fccb0d972e7a",
-      "contextHash": "dbb8e5aa38f0f992367bca4dbc39a60042555c2362a13675a41470dbade341a3"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 220,
-      "column": 92,
-      "endLine": 220,
-      "endColumn": 104,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:220:92 218 | 219 | <TeamChatInputArea conversationId={conversation.id} text={s.text} setText={s.setText} replyTo={s.replyTo} > 220 | isRecordingAudio={s.isRecordingAudio} isPending={s.sendMutation.isPending} onSend={s.handleSend} | ^^^^^^^^^^^^ Cannot access ref value during render 221 | onCancelReply={() => s.setReplyTo(null)} onRecordToggle={() => s.setIsRecordingAudio(!s.isRecordingAudio)} 222 | onAudioSend={s.handleAudioSend} onSendSticker={s.handleSendSticker} onSendAudioMeme={s.handleSendAudioMeme} 223 | onSendCustomEmoji={s.handleSendCustomEmoji} onFileSent={s.handleFileSent} />",
-      "spanHash": "af5b5513bf6585da539a10396bbfcf07864ce9f0e21390cc7fc1fc889d0733bc",
-      "lineHash": "abd9a52b77549ef3df59492191b5bbd12369453957ca5c400971fccb0d972e7a",
-      "contextHash": "dbb8e5aa38f0f992367bca4dbc39a60042555c2362a13675a41470dbade341a3"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 222,
-      "column": 22,
-      "endLine": 222,
-      "endColumn": 39,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:222:22 220 | isRecordingAudio={s.isRecordingAudio} isPending={s.sendMutation.isPending} onSend={s.handleSend} 221 | onCancelReply={() => s.setReplyTo(null)} onRecordToggle={() => s.setIsRecordingAudio(!s.isRecordingAudio)} > 222 | onAudioSend={s.handleAudioSend} onSendSticker={s.handleSendSticker} onSendAudioMeme={s.handleSendAudioMeme} | ^^^^^^^^^^^^^^^^^ Cannot access ref value during render 223 | onSendCustomEmoji={s.handleSendCustomEmoji} onFileSent={s.handleFileSent} /> 224 | 225 | <AddMembersDialog open={s.showAddMembers} onOpenChange={s.setShowAddMembers} conversation={conversation} />",
-      "spanHash": "2c1a847c476b89d0da2f698a89b0d84b5d94a47747b6941bca44b850458ff411",
-      "lineHash": "cd678f118a70fae6eb84886c1b5c990d1763773b611b99c4404d108f1828521d",
-      "contextHash": "01b8b91429f40ff67d4773b03bf71f0f73488d5878ede853b305d50d1a1723a5"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 222,
-      "column": 56,
-      "endLine": 222,
-      "endColumn": 75,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:222:56 220 | isRecordingAudio={s.isRecordingAudio} isPending={s.sendMutation.isPending} onSend={s.handleSend} 221 | onCancelReply={() => s.setReplyTo(null)} onRecordToggle={() => s.setIsRecordingAudio(!s.isRecordingAudio)} > 222 | onAudioSend={s.handleAudioSend} onSendSticker={s.handleSendSticker} onSendAudioMeme={s.handleSendAudioMeme} | ^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 223 | onSendCustomEmoji={s.handleSendCustomEmoji} onFileSent={s.handleFileSent} /> 224 | 225 | <AddMembersDialog open={s.showAddMembers} onOpenChange={s.setShowAddMembers} conversation={conversation} />",
-      "spanHash": "ce0cb8b790dfacdb0cafa8c0fa3d6ffd1a69fcb4685bd6a7615666cfcf574df3",
-      "lineHash": "cd678f118a70fae6eb84886c1b5c990d1763773b611b99c4404d108f1828521d",
-      "contextHash": "01b8b91429f40ff67d4773b03bf71f0f73488d5878ede853b305d50d1a1723a5"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 222,
-      "column": 94,
-      "endLine": 222,
-      "endColumn": 115,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:222:94 220 | isRecordingAudio={s.isRecordingAudio} isPending={s.sendMutation.isPending} onSend={s.handleSend} 221 | onCancelReply={() => s.setReplyTo(null)} onRecordToggle={() => s.setIsRecordingAudio(!s.isRecordingAudio)} > 222 | onAudioSend={s.handleAudioSend} onSendSticker={s.handleSendSticker} onSendAudioMeme={s.handleSendAudioMeme} | ^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 223 | onSendCustomEmoji={s.handleSendCustomEmoji} onFileSent={s.handleFileSent} /> 224 | 225 | <AddMembersDialog open={s.showAddMembers} onOpenChange={s.setShowAddMembers} conversation={conversation} />",
-      "spanHash": "a3f02954c8244032108b697d19213c3030ed210a9edf7fc32dbc7fee165b31b1",
-      "lineHash": "cd678f118a70fae6eb84886c1b5c990d1763773b611b99c4404d108f1828521d",
-      "contextHash": "01b8b91429f40ff67d4773b03bf71f0f73488d5878ede853b305d50d1a1723a5"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 223,
-      "column": 28,
-      "endLine": 223,
-      "endColumn": 51,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:223:28 221 | onCancelReply={() => s.setReplyTo(null)} onRecordToggle={() => s.setIsRecordingAudio(!s.isRecordingAudio)} 222 | onAudioSend={s.handleAudioSend} onSendSticker={s.handleSendSticker} onSendAudioMeme={s.handleSendAudioMeme} > 223 | onSendCustomEmoji={s.handleSendCustomEmoji} onFileSent={s.handleFileSent} /> | ^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 224 | 225 | <AddMembersDialog open={s.showAddMembers} onOpenChange={s.setShowAddMembers} conversation={conversation} /> 226 | </div>",
-      "spanHash": "8e56f4cf7406d44881cd53f5c670ea1b4a3c3cfa95aecf65d68ec671f50ea218",
-      "lineHash": "67cef359769dc82e7df90326b72f973a37d87244009d4805b77e840c55b3cccc",
-      "contextHash": "3a98e484d951871852d71dad49a285ba1100e4b33fc5ccb2f59c5037ccbf95ca"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 223,
-      "column": 65,
-      "endLine": 223,
-      "endColumn": 81,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:223:65 221 | onCancelReply={() => s.setReplyTo(null)} onRecordToggle={() => s.setIsRecordingAudio(!s.isRecordingAudio)} 222 | onAudioSend={s.handleAudioSend} onSendSticker={s.handleSendSticker} onSendAudioMeme={s.handleSendAudioMeme} > 223 | onSendCustomEmoji={s.handleSendCustomEmoji} onFileSent={s.handleFileSent} /> | ^^^^^^^^^^^^^^^^ Cannot access ref value during render 224 | 225 | <AddMembersDialog open={s.showAddMembers} onOpenChange={s.setShowAddMembers} conversation={conversation} /> 226 | </div>",
-      "spanHash": "c60498362ac66ba0cd30c0e8fcf93b7b342fc0386907e7f238c116987899696c",
-      "lineHash": "67cef359769dc82e7df90326b72f973a37d87244009d4805b77e840c55b3cccc",
-      "contextHash": "3a98e484d951871852d71dad49a285ba1100e4b33fc5ccb2f59c5037ccbf95ca"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 225,
-      "column": 31,
-      "endLine": 225,
-      "endColumn": 47,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:225:31 223 | onSendCustomEmoji={s.handleSendCustomEmoji} onFileSent={s.handleFileSent} /> 224 | > 225 | <AddMembersDialog open={s.showAddMembers} onOpenChange={s.setShowAddMembers} conversation={conversation} /> | ^^^^^^^^^^^^^^^^ Cannot access ref value during render 226 | </div> 227 | ); 228 | }",
-      "spanHash": "86d283e1f8bc4225c59a643c3ae320490fa1348dbd2e8858a4d8dfb16e66e401",
-      "lineHash": "48e2ab15b05dd297bbdb4121177e5938c39e8a688626a8a0e26eec721bd42e9a",
-      "contextHash": "e80b69e5533ebc12f1edab211106dc46b1c37d52bf5449a20561cf0024e90f06"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 225,
-      "column": 63,
-      "endLine": 225,
-      "endColumn": 82,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:225:63 223 | onSendCustomEmoji={s.handleSendCustomEmoji} onFileSent={s.handleFileSent} /> 224 | > 225 | <AddMembersDialog open={s.showAddMembers} onOpenChange={s.setShowAddMembers} conversation={conversation} /> | ^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 226 | </div> 227 | ); 228 | }",
-      "spanHash": "fc4ac8b145b7192bad28d25541451e5b75e8793252d4a7ca3b831af5fa98868d",
-      "lineHash": "48e2ab15b05dd297bbdb4121177e5938c39e8a688626a8a0e26eec721bd42e9a",
-      "contextHash": "e80b69e5533ebc12f1edab211106dc46b1c37d52bf5449a20561cf0024e90f06"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 70,
-      "column": 59,
-      "endLine": 70,
-      "endColumn": 78,
-      "severity": 2,
-      "ruleId": "react-hooks/immutability",
-      "messageId": null,
-      "message": "Error: This value cannot be modified Modifying a value returned from a hook is not allowed. Consider moving the modification into the hook where the value is constructed. <ROOT>/src/components/team-chat/TeamChatPanel.tsx:70:59 68 | 69 | useEffect(() => { > 70 | if (s.isNearBottomRef.current && s.scrollRef.current) s.scrollRef.current.scrollTop = s.scrollRef.current.scrollHeight; | ^^^^^^^^^^^^^^^^^^^ `s` cannot be modified 71 | }, [s.filteredMessages.length]); 72 | 73 | useEffect(() => { if (s.scrollRef.current) s.scrollRef.current.scrollTop = s.scrollRef.current.scrollHeight; }, [conversation.id]);",
-      "spanHash": "af5072e3d2d9b8bb339824b6845342ed76687de8d92a5adc78a3fb1b20e4356d",
-      "lineHash": "e53782729767c4584e384545f11dfe723c322da3f6c59c5cbb8c0cf1bdc77d72",
-      "contextHash": "6b3ea7006c9db4b66db355071be0e592c6c2e05c7ab2b6b95d653d850acf7cc8"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 71,
-      "column": 6,
-      "endLine": 71,
-      "endColumn": 33,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has missing dependencies: 's.isNearBottomRef' and 's.scrollRef'. Either include them or remove the dependency array.",
-      "spanHash": "e2f98a08c78c5b7cbf1c04c2b9cec781e4494de149383f8e56782eaa81e4e139",
-      "lineHash": "f6a436c5c8f872a23fc896d87bfc00964ab98510bfcdf56fc15951f2ede4ea5e",
-      "contextHash": "a52d457ba8064ac08644d4a7c278f026af18241ca34c00b98a5b481182e65a81"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 73,
-      "column": 115,
-      "endLine": 73,
-      "endColumn": 132,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has a missing dependency: 's.scrollRef'. Either include it or remove the dependency array.",
-      "spanHash": "e2dbc1c1407330cc5290b5609a8f13746450082db825e07d7b55c4f6b23e3fcf",
-      "lineHash": "abb70866cc1c57c9ab392b15494f8db7b2c6417c5b7fbecd1c7157b8717525f1",
-      "contextHash": "43177c6d6376d44f7492b766b32d7c3075b29812e198809dd93d233e29792a3f"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 73,
-      "column": 46,
-      "endLine": 73,
-      "endColumn": 65,
-      "severity": 2,
-      "ruleId": "react-hooks/immutability",
-      "messageId": null,
-      "message": "Error: This value cannot be modified Modifying a value returned from a hook is not allowed. Consider moving the modification into the hook where the value is constructed. <ROOT>/src/components/team-chat/TeamChatPanel.tsx:73:46 71 | }, [s.filteredMessages.length]); 72 | > 73 | useEffect(() => { if (s.scrollRef.current) s.scrollRef.current.scrollTop = s.scrollRef.current.scrollHeight; }, [conversation.id]); | ^^^^^^^^^^^^^^^^^^^ `s` cannot be modified 74 | useEffect(() => { if (s.showSearch) s.searchInputRef.current?.focus(); }, [s.showSearch]); 75 | 76 | const dateFirstIndexes = useMemo(() => {",
-      "spanHash": "af5072e3d2d9b8bb339824b6845342ed76687de8d92a5adc78a3fb1b20e4356d",
-      "lineHash": "abb70866cc1c57c9ab392b15494f8db7b2c6417c5b7fbecd1c7157b8717525f1",
-      "contextHash": "43177c6d6376d44f7492b766b32d7c3075b29812e198809dd93d233e29792a3f"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 74,
-      "column": 77,
-      "endLine": 74,
-      "endColumn": 91,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has a missing dependency: 's.searchInputRef'. Either include it or remove the dependency array.",
-      "spanHash": "a58ce0986cc5230e34831093600df23811ef3d301fb4baed002bd4a80445cc04",
-      "lineHash": "cb4a22951bdc636b07ca63b6ccf3da752a6ac5825f880098e1a9943accb74ef9",
-      "contextHash": "9e4b0c3b754b5113f7bbe834432dbb74e93c3953d78a9dfaaa4f3f4dfa6d6e78"
-    },
-    {
-      "file": "src/components/team-chat/TeamChatPanel.tsx",
-      "line": 98,
-      "column": 10,
-      "endLine": 109,
-      "endColumn": 10,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/team-chat/TeamChatPanel.tsx:98:10 96 | 97 | <AnimatePresence> > 98 | {s.showSearch && ( | ^^^^^^^^^^^^^^^^^ > 99 | <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className=\"px-3 py-2 border-b border-border bg-card\"> | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 100 | <div className=\"flex items-center gap-2\"> … | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 108 | </motion.div> | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 109 | )} | ^^^^^^^^^^ Cannot access ref value during render 110 | </AnimatePresence> 111 | 112 | <div ref={s.scrollRef} className=\"flex-1 overflow-auto p-4 space-y-1 bg-muted/5\" onScroll={s.checkNearBottom} role=\"log\" aria-label=\"Mensagens da conversa\" aria-live=\"polite\">",
-      "spanHash": "5acb77cee9c0a9ed92a37c422bfbe772fd266cb4b18609935864a9e434155870",
-      "lineHash": "9cd6d3223a3d0c02ebcc9af35e92c5ae9cc0596fb55cdc9930e03b6da629e2c0",
-      "contextHash": "0e4898f03a892802f3ee3cb4fad57c4125e5d100c5ca29997d5879b3bc488973"
     },
     {
       "file": "src/components/team-chat/TeamFileUploader.tsx",
@@ -8807,24 +8251,10 @@
       "contextHash": "34ea3557e1372d82c1082cc495f91b9e52cde6caa664e19bdd8553dd2191c3b0"
     },
     {
-      "file": "src/components/team-chat/TeamMemberDetails.tsx",
-      "line": 4,
-      "column": 1,
-      "endLine": 4,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "1b4172b81fb898d96a2f543526732570aeac724ffc9c7e8ea2b383adf898fa07"
-    },
-    {
       "file": "src/components/team-chat/TeamMemberProfileHeader.tsx",
-      "line": 26,
+      "line": 13,
       "column": 17,
-      "endLine": 26,
+      "endLine": 13,
       "endColumn": 32,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -8836,9 +8266,9 @@
     },
     {
       "file": "src/components/team-chat/TeamMemberProfileHeader.tsx",
-      "line": 38,
+      "line": 25,
       "column": 17,
-      "endLine": 38,
+      "endLine": 25,
       "endColumn": 29,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -8847,76 +8277,6 @@
       "spanHash": "5e5bd5db98611b0b74785eb900c0a3b3e9f46627a1ab0b7cda8ef577c12bdd5d",
       "lineHash": "e137d85d52171b0c3411c67b12da646b838d0f04f54eb056b06e65203786cefc",
       "contextHash": "690b50742c86b238c7d9cae848e6aace280791ff192da9fded4cd15dde00a893"
-    },
-    {
-      "file": "src/components/team-chat/useTeamChatPanel.ts",
-      "line": 100,
-      "column": 6,
-      "endLine": 100,
-      "endColumn": 58,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useCallback has a missing dependency: 'handleCancelEdit'. Either include it or remove the dependency array.",
-      "spanHash": "2f273fa4332429f56198317bee1864698c9e024bbbcdcd9e28a08b5152d93321",
-      "lineHash": "8b2bad2d08acece79f2abc67a746868366df60caebd6f52c0ac16855e2adfcb0",
-      "contextHash": "b09460be1f94fa7fc2dbf68a6c7f38297ea83e3169a1d70a59ac8e0913c0bfab"
-    },
-    {
-      "file": "src/components/team-chat/useTeamChatPanel.ts",
-      "line": 102,
-      "column": 40,
-      "endLine": 102,
-      "endColumn": 86,
-      "severity": 2,
-      "ruleId": "react-hooks/preserve-manual-memoization",
-      "messageId": null,
-      "message": "Compilation Skipped: Existing memoization could not be preserved React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output. <ROOT>/src/components/team-chat/useTeamChatPanel.ts:102:40 100 | }, [editingId, editText, editMutation, conversation.id]); 101 | > 102 | const handleCancelEdit = useCallback(() => { setEditingId(null); setEditText(''); }, []); | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Could not preserve existing memoization 103 | const handleCopyMessage = useCallback((content: string | null) => { 104 | if (!content) return; 105 | navigator.clipboard.writeText(content).then(() => toast.success('Copiado!')).catch(() => toast.error('Erro ao copiar'));",
-      "spanHash": "4055ce1cb0aef992525bf3268a0d7ef4140192d68269bf229b212acc1e8b841f",
-      "lineHash": "dae360eb67414cb28336b908a3ac9cb35226179809c7ae21cdd5f54cd4e96031",
-      "contextHash": "01408bd9ffce43f8b4c06340190e4ed7cc2e8bfe8b88ae1f86462343c975c401"
-    },
-    {
-      "file": "src/components/team-chat/useTeamChatPanel.ts",
-      "line": 7,
-      "column": 1,
-      "endLine": 7,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "18085e88b96caab3998f8470cad96d85315302b58b7ac6e4ee5a9005b08bc34b"
-    },
-    {
-      "file": "src/components/team-chat/useTeamChatPanel.ts",
-      "line": 77,
-      "column": 39,
-      "endLine": 86,
-      "endColumn": 4,
-      "severity": 2,
-      "ruleId": "react-hooks/preserve-manual-memoization",
-      "messageId": null,
-      "message": "Compilation Skipped: Existing memoization could not be preserved React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `profile`, but the source dependencies were [profile?.id, conversation.id, handleSendMedia]. Inferred less specific property than source. <ROOT>/src/components/team-chat/useTeamChatPanel.ts:77:39 75 | const handleFileSent = useCallback((mediaUrl: string, mediaType: string, fileName: string) => handleSendMedia(mediaUrl, mediaType, fileName), [handleSendMedia]); 76 | > 77 | const handleAudioSend = useCallback(async (blob: Blob) => { | ^^^^^^^^^^^^^^^^^^^^^^^ > 78 | setIsRecordingAudio(false); | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 79 | try { | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 80 | const path = `${profile?.id}/${conversation.id}/${Date.now()}.webm`; | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 81 | const { error } = await supabase.storage.from('team-chat-files').upload(path, blob, { contentType: 'audio/webm' }); | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 82 | if (error) throw error; | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 83 | const { data: urlData } = supabase.storage.from('team-chat-files').getPublicUrl(path); | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 84 | handleSendMedia(urlData.publicUrl, 'audio', '🎤 Mensagem de áudio'); | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 85 | } catch (err) { toast.error('Erro ao enviar áudio'); log.error('Audio upload error:', err); } | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 86 | }, [profile?.id, conversation.id, handleSendMedia]); | ^^^^ Could not preserve existing manual memoization 87 | 88 | const handleDelete = useCallback((msgId: string) => { 89 | deleteMutation.mutate({ messageId: msgId, conversationId: conversation.id },",
-      "spanHash": "d702a455486a47d0e374e2e011ba96da3868e9ffc8a564ef1a76de158a941a4c",
-      "lineHash": "20d20fde121e318a8e6f06b3e5de9c2d0bb5f9ab47e15b0a3811b379ab6725f0",
-      "contextHash": "477affbe668fc232f9f5e43f2cb77b647180835f9d87d4298f3db96c3f6b54ef"
-    },
-    {
-      "file": "src/components/team-chat/useTeamChatPanel.ts",
-      "line": 96,
-      "column": 35,
-      "endLine": 96,
-      "endColumn": 51,
-      "severity": 2,
-      "ruleId": "react-hooks/immutability",
-      "messageId": null,
-      "message": "Error: Cannot access variable before it is declared `handleCancelEdit` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time. <ROOT>/src/components/team-chat/useTeamChatPanel.ts:96:35 94 | const handleSaveEdit = useCallback(() => { 95 | const trimmed = editText.trim(); > 96 | if (!editingId || !trimmed) { handleCancelEdit(); return; } | ^^^^^^^^^^^^^^^^ `handleCancelEdit` accessed before it is declared 97 | editMutation.mutate({ messageId: editingId, content: trimmed, conversationId: conversation.id }, 98 | { onError: (err) => { log.error('Failed to edit:', err); toast.error('Falha ao editar.'); } }); 99 | setEditingId(null); setEditText(''); <ROOT>/src/components/team-chat/useTeamChatPanel.ts:102:3 100 | }, [editingId, editText, editMutation, conversation.id]); 101 | > 102 | const handleCancelEdit = useCallback(() => { setEditingId(null); setEditText(''); }, []); | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `handleCancelEdit` is declared here 103 | const handleCopyMessage = useCallback((content: string | null) => { 104 | if (!content) return; 105 | navigator.clipboard.writeText(content).then(() => toast.success('Copiado!')).catch(() => toast.error('Erro ao copiar'));",
-      "spanHash": "2374a807f8eab0e190b61cc04b4dd0a958925f9cc445ae308a5544cd986f3f3a",
-      "lineHash": "6976619faed155c7839f2ef042c2d1fa34107128cfd827d952e4124ef254d0b4",
-      "contextHash": "25c661d2f20834aa539c164d8cf64d17310a5fbf0d1a4d061fe4900cb8a0e123"
     },
     {
       "file": "src/components/theme/HighContrastToggle.tsx",
@@ -9200,9 +8560,9 @@
     },
     {
       "file": "src/components/ui/command-palette.tsx",
-      "line": 198,
+      "line": 200,
       "column": 17,
-      "endLine": 198,
+      "endLine": 200,
       "endColumn": 34,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -9214,9 +8574,9 @@
     },
     {
       "file": "src/components/ui/command-palette.tsx",
-      "line": 88,
+      "line": 89,
       "column": 6,
-      "endLine": 88,
+      "endLine": 89,
       "endColumn": 37,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -9225,20 +8585,6 @@
       "spanHash": "6ca16c41927635b301d7c6da652be299690403a4c982df16dde75c0b4dfaad37",
       "lineHash": "a2cb34c38fad0ea3ca9be4f8af781aadf7624872582ec1af50a5ac0ada434d49",
       "contextHash": "cf650bf61d5423b43c15cd9fb4b5e2b7f5df57a30e4a464bbe16bf83482ba062"
-    },
-    {
-      "file": "src/components/ui/command-palette.tsx",
-      "line": 91,
-      "column": 18,
-      "endLine": 91,
-      "endColumn": 26,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/ui/command-palette.tsx:91:18 89 | 90 | React.useEffect(() => { > 91 | if (!open) { setQuery(''); setSearchResults([]); setSelectedIndex(0); } | ^^^^^^^^ Avoid calling setState() directly within an effect 92 | else setTimeout(() => inputRef.current?.focus(), 0); 93 | }, [open]); 94 |",
-      "spanHash": "dbd4b3f8e5d36ed48e6a8d700c9250e4ba7d0305f10ad1e44820266b0c12dc92",
-      "lineHash": "8ba4f83d136859df68ec0c6f2a49ec6af05a3305d8ee4e888d616257479e9b74",
-      "contextHash": "8805292930b7c29bab85df6c9872b2e60998664c18d22efeaf96c3b37bcc1fc1"
     },
     {
       "file": "src/components/ui/dialog.tsx",
@@ -11845,48 +11191,6 @@
       "contextHash": "9ebb6796eeed88bc960e3056f045dacf6b18ff4401b44da90008636b95d7327f"
     },
     {
-      "file": "src/hooks/__tests__/useTags.test.tsx",
-      "line": 1,
-      "column": 1,
-      "endLine": 1,
-      "endColumn": 15,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/ban-ts-comment",
-      "messageId": "tsDirectiveComment",
-      "message": "Do not use \"@ts-nocheck\" because it alters compilation errors.",
-      "spanHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "lineHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "contextHash": "4a50b3839012b6d9063836bf70d7b6675c5a6091bb26fe8e8236eb327b36b57a"
-    },
-    {
-      "file": "src/hooks/__tests__/useTags.test.tsx",
-      "line": 11,
-      "column": 21,
-      "endLine": 11,
-      "endColumn": 24,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "d1ee0acb77d7b50a85aadba7ca0ac3026ef1f9cad4454df200cd77a5834b1533",
-      "contextHash": "d0f7329e14ddb4d7903866ab146fde0e3dca311d3c75d9ba1080bf0030010fb8"
-    },
-    {
-      "file": "src/hooks/__tests__/useTags.test.tsx",
-      "line": 21,
-      "column": 32,
-      "endLine": 21,
-      "endColumn": 35,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "d7f21de64f2d755e08912f2200d04fd3edf03985a0978ad5b295563cde525479",
-      "contextHash": "be92b1b960f007de38e9d91c609ffe240d0f7bb07b1629feef56eb2eabe8100d"
-    },
-    {
       "file": "src/hooks/__tests__/useTranscriptionNotifications.test.ts",
       "line": 8,
       "column": 24,
@@ -12588,9 +11892,9 @@
     },
     {
       "file": "src/hooks/communication/useTextToSpeech.ts",
-      "line": 156,
+      "line": 161,
       "column": 6,
-      "endLine": 156,
+      "endLine": 161,
       "endColumn": 28,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -12602,37 +11906,37 @@
     },
     {
       "file": "src/hooks/communication/useTextToSpeech.ts",
-      "line": 29,
+      "line": 30,
       "column": 7,
-      "endLine": 29,
+      "endLine": 30,
       "endColumn": 22,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/communication/useTextToSpeech.ts:29:7 27 | useEffect(() => { 28 | if (options.initialVoiceId && options.initialVoiceId !== voiceId) { > 29 | setVoiceIdState(options.initialVoiceId); | ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 30 | } 31 | // eslint-disable-next-line react-hooks/exhaustive-deps 32 | }, [options.initialVoiceId]);",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/communication/useTextToSpeech.ts:30:7 28 | useEffect(() => { 29 | if (options.initialVoiceId && options.initialVoiceId !== voiceId) { > 30 | setVoiceIdState(options.initialVoiceId); | ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 31 | } 32 | // eslint-disable-next-line react-hooks/exhaustive-deps 33 | }, [options.initialVoiceId]);",
       "spanHash": "c788195b41b639bca9117fbacd721c54e03ac9a4785a7d78c478920e50372251",
       "lineHash": "2e19699cdadff373fa44f2ab9a868fb22cfdbae6e3fb76ad784262660eed89a2",
       "contextHash": "60ea13844a0a90e3ffcb3d452eadbcb3fa503e489af7237b75f338d5be4f9753"
     },
     {
       "file": "src/hooks/communication/useTextToSpeech.ts",
-      "line": 37,
+      "line": 38,
       "column": 7,
-      "endLine": 37,
+      "endLine": 38,
       "endColumn": 20,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/communication/useTextToSpeech.ts:37:7 35 | useEffect(() => { 36 | if (options.initialSpeed !== undefined && options.initialSpeed !== speed) { > 37 | setSpeedState(options.initialSpeed); | ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 38 | // Update current audio playback rate if playing 39 | if (audioRef.current) { 40 | audioRef.current.playbackRate = options.initialSpeed;",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/communication/useTextToSpeech.ts:38:7 36 | useEffect(() => { 37 | if (options.initialSpeed !== undefined && options.initialSpeed !== speed) { > 38 | setSpeedState(options.initialSpeed); | ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 39 | // Update current audio playback rate if playing 40 | if (audioRef.current) { 41 | audioRef.current.playbackRate = options.initialSpeed;",
       "spanHash": "1c14fb937085084e48d0a4e0d36f99e72e802308ec62714d2b6b3242cdfe8da9",
       "lineHash": "8ac785309b635e0c7c62c849508e44df904b252ca6cc1f74aaab05518a83eab9",
       "contextHash": "c72206ae687892bb2d2a74f02196a8d44fd28b715057ee94518ad1b89fb023e7"
     },
     {
       "file": "src/hooks/communication/useTextToSpeech.ts",
-      "line": 49,
+      "line": 50,
       "column": 6,
-      "endLine": 49,
+      "endLine": 50,
       "endColumn": 29,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -12644,9 +11948,9 @@
     },
     {
       "file": "src/hooks/communication/useTextToSpeech.ts",
-      "line": 60,
+      "line": 61,
       "column": 6,
-      "endLine": 60,
+      "endLine": 61,
       "endColumn": 29,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -13592,7 +12896,7 @@
       "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
       "spanHash": "bac178e57a0ddf54ee55ca6fb75b09d55cc1674d0fb3c9dd08de85829f0ab870",
       "lineHash": "bac178e57a0ddf54ee55ca6fb75b09d55cc1674d0fb3c9dd08de85829f0ab870",
-      "contextHash": "9a57d6b91f6b0de059be4bcfbc6f122472179c818f91f50bc49990ff26da354d"
+      "contextHash": "6184b27b92280507e5e292c272772a0a4140b66e2d813d27ffa9bd7fa8ce33d8"
     },
     {
       "file": "src/pages/Auth.tsx",
@@ -14702,9 +14006,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-sync-actions.ts",
-      "line": 234,
+      "line": 233,
       "column": 13,
-      "endLine": 234,
+      "endLine": 233,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -14716,9 +14020,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-sync-actions.ts",
-      "line": 310,
+      "line": 308,
       "column": 44,
-      "endLine": 310,
+      "endLine": 308,
       "endColumn": 47,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -14786,9 +14090,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 125,
+      "line": 148,
       "column": 54,
-      "endLine": 125,
+      "endLine": 148,
       "endColumn": 57,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -14800,9 +14104,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 157,
+      "line": 180,
       "column": 51,
-      "endLine": 157,
+      "endLine": 180,
       "endColumn": 54,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -14811,34 +14115,6 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "e6480227f5b7c97987d4092dd572b858c1f4ec367f1d30859ef3907bce870187",
       "contextHash": "89a69767871ddb78d7c6ed9854d945eb73410c2b7c77cdf8faacf995cd53409f"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 181,
-      "column": 50,
-      "endLine": 181,
-      "endColumn": 53,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "e42fab22a40564204a68db9c75d2e26a20265c4fb94fab1dff534e339dd8718d",
-      "contextHash": "6534018f8da9dbd4cc4cb314d40cd32aa3f03bf90122e371b610035c12c0633f"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 207,
-      "column": 57,
-      "endLine": 207,
-      "endColumn": 60,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "b75927729f34f58109eaecbaa5d82c92a4815768e378414270325e61b966b5c5",
-      "contextHash": "56a3e71fa4711a58688579a05ecc1f58575b0ff7c398545a94d54ef0c54c4ed0"
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
@@ -14852,13 +14128,27 @@
       "message": "Unexpected any. Specify a different type.",
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "4537d6a5010039958a697992bcf07332e5f17eba88dd1c892a4a124d40f46e0d",
-      "contextHash": "5d94d0ed17925e4b71292de53d5732f2d58efe85f5fa61fe721b53b9f07509a7"
+      "contextHash": "4dc08644a85aab693a8449f48f1a8728aaa4dc67a41e3b3bbe4012d79241deac"
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 235,
+      "line": 220,
+      "column": 57,
+      "endLine": 220,
+      "endColumn": 60,
+      "severity": 2,
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "messageId": "unexpectedAny",
+      "message": "Unexpected any. Specify a different type.",
+      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
+      "lineHash": "b75927729f34f58109eaecbaa5d82c92a4815768e378414270325e61b966b5c5",
+      "contextHash": "56a3e71fa4711a58688579a05ecc1f58575b0ff7c398545a94d54ef0c54c4ed0"
+    },
+    {
+      "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
+      "line": 245,
       "column": 49,
-      "endLine": 235,
+      "endLine": 245,
       "endColumn": 52,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -14870,9 +14160,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 288,
+      "line": 298,
       "column": 51,
-      "endLine": 288,
+      "endLine": 298,
       "endColumn": 54,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -14884,9 +14174,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 309,
+      "line": 319,
       "column": 58,
-      "endLine": 309,
+      "endLine": 319,
       "endColumn": 61,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -14898,9 +14188,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 310,
+      "line": 320,
       "column": 3,
-      "endLine": 310,
+      "endLine": 320,
       "endColumn": 14,
       "severity": 1,
       "ruleId": "no-console",
@@ -14912,9 +14202,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 322,
+      "line": 332,
       "column": 51,
-      "endLine": 322,
+      "endLine": 332,
       "endColumn": 54,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -14926,9 +14216,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 345,
+      "line": 355,
       "column": 3,
-      "endLine": 345,
+      "endLine": 355,
       "endColumn": 14,
       "severity": 1,
       "ruleId": "no-console",
@@ -14940,9 +14230,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 349,
+      "line": 359,
       "column": 48,
-      "endLine": 349,
+      "endLine": 359,
       "endColumn": 51,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -14954,9 +14244,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 370,
+      "line": 380,
       "column": 3,
-      "endLine": 370,
+      "endLine": 380,
       "endColumn": 14,
       "severity": 1,
       "ruleId": "no-console",
@@ -14968,9 +14258,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 52,
+      "line": 75,
       "column": 3,
-      "endLine": 52,
+      "endLine": 75,
       "endColumn": 14,
       "severity": 1,
       "ruleId": "no-console",
@@ -14982,9 +14272,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 75,
+      "line": 98,
       "column": 54,
-      "endLine": 75,
+      "endLine": 98,
       "endColumn": 57,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15122,9 +14412,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 166,
+      "line": 183,
       "column": 54,
-      "endLine": 166,
+      "endLine": 183,
       "endColumn": 57,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15136,9 +14426,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 209,
+      "line": 226,
       "column": 5,
-      "endLine": 209,
+      "endLine": 226,
       "endColumn": 16,
       "severity": 1,
       "ruleId": "no-console",
@@ -15150,9 +14440,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 214,
+      "line": 231,
       "column": 51,
-      "endLine": 214,
+      "endLine": 231,
       "endColumn": 54,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15164,9 +14454,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 265,
+      "line": 282,
       "column": 3,
-      "endLine": 265,
+      "endLine": 282,
       "endColumn": 14,
       "severity": 1,
       "ruleId": "no-console",
@@ -15178,9 +14468,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 269,
+      "line": 286,
       "column": 54,
-      "endLine": 269,
+      "endLine": 286,
       "endColumn": 57,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15192,9 +14482,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 287,
+      "line": 304,
       "column": 7,
-      "endLine": 287,
+      "endLine": 304,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
@@ -15402,20 +14692,6 @@
     },
     {
       "file": "supabase/functions/_shared/validation.ts",
-      "line": 169,
-      "column": 33,
-      "endLine": 169,
-      "endColumn": 68,
-      "severity": 2,
-      "ruleId": "no-control-regex",
-      "messageId": "unexpected",
-      "message": "Unexpected control character(s) in regular expression: \\x00, \\x08, \\x0b, \\x0c, \\x0e, \\x1f.",
-      "spanHash": "3a2c04c54842511970292d16231f19178e1133e5d874b3d70dbd888293bd4554",
-      "lineHash": "eb49f6718e453e1f6d6dc0777b3b5e8399111fb462f3123e0c61073b9a2ea4b7",
-      "contextHash": "9840df05715ce88b04a3b271cc02558d2d666dcb3e900d39f1a3318428fd4a79"
-    },
-    {
-      "file": "supabase/functions/_shared/validation.ts",
       "line": 48,
       "column": 10,
       "endLine": 48,
@@ -15458,9 +14734,9 @@
     },
     {
       "file": "supabase/functions/evolution-api/index.ts",
-      "line": 389,
+      "line": 397,
       "column": 22,
-      "endLine": 389,
+      "endLine": 397,
       "endColumn": 25,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15472,9 +14748,9 @@
     },
     {
       "file": "supabase/functions/evolution-api/index.ts",
-      "line": 394,
+      "line": 402,
       "column": 17,
-      "endLine": 394,
+      "endLine": 402,
       "endColumn": 20,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15486,10 +14762,10 @@
     },
     {
       "file": "supabase/functions/evolution-api/index.ts",
-      "line": 398,
-      "column": 19,
-      "endLine": 398,
-      "endColumn": 22,
+      "line": 415,
+      "column": 21,
+      "endLine": 415,
+      "endColumn": 24,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
       "messageId": "unexpectedAny",
@@ -15500,10 +14776,10 @@
     },
     {
       "file": "supabase/functions/evolution-api/index.ts",
-      "line": 409,
-      "column": 24,
-      "endLine": 409,
-      "endColumn": 27,
+      "line": 422,
+      "column": 26,
+      "endLine": 422,
+      "endColumn": 29,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
       "messageId": "unexpectedAny",
@@ -15514,9 +14790,9 @@
     },
     {
       "file": "supabase/functions/evolution-api/index.ts",
-      "line": 424,
+      "line": 578,
       "column": 17,
-      "endLine": 424,
+      "endLine": 578,
       "endColumn": 20,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15528,9 +14804,9 @@
     },
     {
       "file": "supabase/functions/evolution-api/index.ts",
-      "line": 459,
+      "line": 622,
       "column": 17,
-      "endLine": 459,
+      "endLine": 622,
       "endColumn": 20,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15542,9 +14818,9 @@
     },
     {
       "file": "supabase/functions/evolution-api/index.ts",
-      "line": 478,
+      "line": 643,
       "column": 25,
-      "endLine": 478,
+      "endLine": 643,
       "endColumn": 28,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15892,9 +15168,9 @@
     },
     {
       "file": "supabase/functions/migrate-media-storage/index.ts",
-      "line": 129,
+      "line": 124,
       "column": 13,
-      "endLine": 129,
+      "endLine": 124,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15906,9 +15182,9 @@
     },
     {
       "file": "supabase/functions/migrate-media-storage/index.ts",
-      "line": 160,
+      "line": 155,
       "column": 13,
-      "endLine": 160,
+      "endLine": 155,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15920,9 +15196,9 @@
     },
     {
       "file": "supabase/functions/migrate-media-storage/index.ts",
-      "line": 218,
+      "line": 211,
       "column": 13,
-      "endLine": 218,
+      "endLine": 211,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15934,9 +15210,9 @@
     },
     {
       "file": "supabase/functions/migrate-media-storage/index.ts",
-      "line": 244,
+      "line": 237,
       "column": 13,
-      "endLine": 244,
+      "endLine": 237,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15948,9 +15224,9 @@
     },
     {
       "file": "tailwind.config.ts",
-      "line": 428,
+      "line": 429,
       "column": 13,
-      "endLine": 428,
+      "endLine": 429,
       "endColumn": 43,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-require-imports",

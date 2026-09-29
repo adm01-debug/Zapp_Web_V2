@@ -14,6 +14,8 @@ export function useTeamChatNotifications({ conversationId, currentUserId, muted 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    // Alerta, não mídia de conversa: fica fora do controle de volume das mídias
+    // (`mediaVolumeStore`) — o atendente não pode silenciar alerta sem querer.
     audioRef.current = new Audio(SOUND_URL);
     audioRef.current.volume = 0.4;
   }, []);

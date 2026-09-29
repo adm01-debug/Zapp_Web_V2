@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import { ChevronDown, Calendar, Clock, FileText, Play, Volume2 } from 'lucide-re
 import { format, formatDistanceToNow, startOfDay, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
+import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
 
 interface TranscriptionRecord {
   id: string;
@@ -32,8 +33,12 @@ interface TranscriptionContactGroupProps {
 
 function TranscriptionAudio({ source, onEnded }: { source: string; onEnded: () => void }) {
   const { url, isLoading, refresh } = useResolvedStorageUrl(source);
+  // E34 — era um `autoPlay` a 100% do sistema (o pior caso de susto em open space):
+  // agora nasce no volume global.
+  const audioRef = useRef<HTMLAudioElement>(null);
+  useMediaElementVolume(audioRef);
   if (isLoading || !url) return null;
-  return <audio src={url} autoPlay onError={() => { void refresh(); }} onEnded={onEnded} className="hidden" />;
+  return <audio ref={audioRef} src={url} autoPlay onError={() => { void refresh(); }} onEnded={onEnded} className="hidden" />;
 }
 
 function groupByDate(items: TranscriptionRecord[]) {

@@ -1,11 +1,12 @@
 /* eslint-disable react-refresh/only-export-components */
-import { memo } from 'react';
+import { memo, useRef } from 'react';
 import { format, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { FileText, Image as ImageIcon, Music, Video, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TeamMessage } from '@/hooks/team-chat/teamChatTypes';
 import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
+import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
 
 export function formatTime(dateStr: string): string {
   return format(new Date(dateStr), 'HH:mm');
@@ -40,6 +41,11 @@ export const MediaContent = memo(function MediaContent({ msg }: { msg: TeamMessa
     ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/${msg.media_bucket}/${msg.media_path}`
     : (msg.media_url || '');
   const { url: resolvedUrl, isLoading, refresh } = useResolvedStorageUrl(source);
+  // E33/E37 — áudio e vídeo do chat interno da equipe são mídia de conversa.
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  useMediaElementVolume(videoRef);
+  useMediaElementVolume(audioRef);
 
   if (!source) return null;
   if (isLoading || !resolvedUrl) {
@@ -80,6 +86,7 @@ export const MediaContent = memo(function MediaContent({ msg }: { msg: TeamMessa
     case 'video':
       return (
         <video
+          ref={videoRef}
           src={resolvedUrl}
           controls
           onError={() => { void refresh(); }}
@@ -92,7 +99,7 @@ export const MediaContent = memo(function MediaContent({ msg }: { msg: TeamMessa
       const isWebm = source.split(/[?#]/, 1)[0].endsWith('.webm');
       return (
         <div className="flex flex-col gap-1 w-full max-w-[240px]">
-          <audio src={resolvedUrl} controls onError={() => { void refresh(); }} className="w-full" aria-label="Áudio enviado" />
+          <audio ref={audioRef} src={resolvedUrl} controls onError={() => { void refresh(); }} className="w-full" aria-label="Áudio enviado" />
           {isWebm && (
             <p className="text-[9px] opacity-60 italic px-1">
               Nota: Áudio WebM pode não ser compatível com Safari/iOS.

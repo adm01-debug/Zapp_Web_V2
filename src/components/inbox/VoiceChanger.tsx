@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { Wand2, Loader2, Play, Square, Check, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ELEVENLABS_VOICES, type ElevenLabsVoice } from './VoiceSelector';
+import { attachMediaVolume } from '@/lib/mediaVolumeElement';
 
 interface VoiceChangerProps {
   audioBlob: Blob;
@@ -70,8 +71,11 @@ export function VoiceChanger({ audioBlob, onVoiceChanged, disabled }: VoiceChang
       // Auto-play preview
       const audio = new Audio(url);
       audioRef.current = audio;
-      audio.onended = () => setIsPlaying(false);
+      // E36 — prévia de voz convertida é mídia de conversa: respeita o volume global.
+      const detachMediaVolume = attachMediaVolume(audio);
+      audio.onended = () => { detachMediaVolume(); setIsPlaying(false); };
       audio.onerror = () => {
+        detachMediaVolume();
         setIsPlaying(false);
         toast.error('Erro ao reproduzir áudio convertido');
       };

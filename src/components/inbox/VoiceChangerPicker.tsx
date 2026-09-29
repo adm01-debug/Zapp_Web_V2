@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, MicOff, Loader2, Play, Pause, Send, X, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
+import { attachMediaVolume } from '@/lib/mediaVolumeElement';
 
 const VOICE_PRESETS = [
   // Masculinas
@@ -150,7 +151,9 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
       return;
     }
     const audio = new Audio(transformedUrl);
-    audio.onended = () => setIsPlaying(false);
+    // E36 — prévia de voice changer é mídia de conversa: respeita o volume global.
+    const detachMediaVolume = attachMediaVolume(audio);
+    audio.onended = () => { detachMediaVolume(); setIsPlaying(false); };
     audio.play();
     audioRef.current = audio;
     setIsPlaying(true);

@@ -2,6 +2,12 @@ import { log } from '@/lib/logger';
 import { SOUND_CONFIGS } from './soundConfigs';
 import type { SoundType, NotificationType } from './soundConfigs';
 
+// ÂNCORA (não unificar): ALERTAS do sistema = WebAudio (oscilador → gain → destination),
+// com ganho vindo exclusivamente de `settings.soundVolume`. MÍDIA de conversa (áudio e
+// vídeo das mensagens) = `HTMLMediaElement`, controlada por `@/lib/mediaVolumeStore`.
+// São canais fisicamente independentes: `element.volume` não tem efeito sobre osciladores.
+// Não "consolide" os dois num controle só.
+
 // Re-export types
 export type { SoundType, NotificationType } from './soundConfigs';
 
