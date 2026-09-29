@@ -326,6 +326,37 @@ function stubProviderSuccess(id = "WAMID-TESTE-1") {
   };
 }
 
+/** Opcoes de um disparo em 'sending' com a fila toda suprimida: cada item vira
+ * 'skipped' sem POST, o que deixa a drenagem do lote observavel sem provedor. */
+function batchSendingOpts(phonePrefix: string, length = 25): MockOpts {
+  const recipients = Array.from({ length }, (_, i) => recipientRow(i, `${phonePrefix}${String(i).padStart(4, "0")}`));
+  return {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: length }),
+    recipients,
+    suppressedPhones: recipients.map((r) => String(r.destino_e164)),
+  };
+}
+
+/** Opcoes base de um disparo em 'draft' visto por um JWT (fluxo de start). */
+function startRequestOpts(overrides: Partial<MockOpts> = {}): MockOpts {
+  return {
+    authUser: { id: "user-000" },
+    isAdminOrSupervisor: false,
+    manageAll: false,
+    ownProfileId: "profile-me",
+    dispatch: dispatchRow({ status: "draft", created_by: "profile-me" }),
+    ...overrides,
+  };
+}
+
+/** Roda o handler com um POST autenticado por JWT (start/gestao) e devolve ctx + status. */
+async function runWithJwt(opts: MockOpts): Promise<{ ctx: MockCtx; status: number }> {
+  const ctx = newCtx(opts);
+  const res = await handleMultiplixSend(makePost({ bearer: TEST_JWT }), mockDeps(opts, ctx));
+  return { ctx, status: res.status };
+}
+
 // ---------------------------------------------------------------- autenticação
 
 Deno.test("auth: x-cron-secret correto → passa auth, chega no 404 de dispatch ausente", async () => {
@@ -427,31 +458,19 @@ Deno.test("F06: admin pausa/cancela disparo de OUTRO dono → 403 (sem manage_al
 });
 
 Deno.test("F06: dono do disparo inicia o proprio disparo → permitido", async () => {
-  const opts: MockOpts = {
-    authUser: { id: "user-004" },
-    isAdminOrSupervisor: true,
-    manageAll: false,
-    ownProfileId: "profile-me",
-    dispatch: dispatchRow({ status: "draft", created_by: "profile-me" }),
-  };
-  const ctx = newCtx(opts);
-  const res = await handleMultiplixSend(makePost({ bearer: TEST_JWT }), mockDeps(opts, ctx));
-  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  const { ctx, status } = await runWithJwt(startRequestOpts({ authUser: { id: "user-004" }, isAdminOrSupervisor: true }));
+  assert(status === 200, `esperado 200, recebido ${status}`);
   const start = rpcs(ctx, "transition_multiplix_dispatch").find((call) => call.args.p_action === "start");
   assert(start, "esperava a transicao de start do proprio disparo");
 });
 
 Deno.test("F06: manage_all inicia disparo de outro dono → permitido", async () => {
-  const opts: MockOpts = {
+  const { ctx, status } = await runWithJwt(startRequestOpts({
     authUser: { id: "user-005" },
-    isAdminOrSupervisor: false,
     manageAll: true,
-    ownProfileId: "profile-me",
     dispatch: dispatchRow({ status: "draft", created_by: "profile-outro" }),
-  };
-  const ctx = newCtx(opts);
-  const res = await handleMultiplixSend(makePost({ bearer: TEST_JWT }), mockDeps(opts, ctx));
-  assert(res.status === 200, `esperado 200 (manage_all), recebido ${res.status}`);
+  }));
+  assert(status === 200, `esperado 200 (manage_all), recebido ${status}`);
   const start = rpcs(ctx, "transition_multiplix_dispatch").find((call) => call.args.p_action === "start");
   assert(start, "esperava a transicao de start com manage_all");
 });
@@ -479,15 +498,7 @@ Deno.test("F09: destinatário na lista negra vira 'skipped' com motivo, sem POST
 // ------------------------------------------------------------------- F11a (lote)
 
 Deno.test("F11a: fila maior que o lote drena em passadas de MULTIPLIX_BATCH_SIZE", async () => {
-  const recipients = Array.from({ length: 25 }, (_, i) => recipientRow(i, `551190000${String(i).padStart(4, "0")}`));
-  const opts: MockOpts = {
-    cronVaultResult: TEST_CRON_SECRET,
-    dispatch: dispatchRow({ status: "sending", total_recipients: 25 }),
-    recipients,
-    // todos suprimidos: cada item e concluido como 'skipped' sem POST, o que
-    // deixa a drenagem observavel sem depender do provedor.
-    suppressedPhones: recipients.map((r) => String(r.destino_e164)),
-  };
+  const opts = batchSendingOpts("551190000");
   const ctx = newCtx(opts);
   const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
   const body = await res.json();
@@ -500,13 +511,7 @@ Deno.test("F11a: fila maior que o lote drena em passadas de MULTIPLIX_BATCH_SIZE
 });
 
 Deno.test("F11a: MULTIPLIX_BATCH_SIZE muda o tamanho do lote", async () => {
-  const recipients = Array.from({ length: 25 }, (_, i) => recipientRow(i, `551191111${String(i).padStart(4, "0")}`));
-  const opts: MockOpts = {
-    cronVaultResult: TEST_CRON_SECRET,
-    dispatch: dispatchRow({ status: "sending", total_recipients: 25 }),
-    recipients,
-    suppressedPhones: recipients.map((r) => String(r.destino_e164)),
-  };
+  const opts = batchSendingOpts("551191111");
   const ctx = newCtx(opts);
   Deno.env.set("MULTIPLIX_BATCH_SIZE", "5");
   try {
@@ -668,16 +673,12 @@ Deno.test("F11a: passada sem reivindicação encerra o laço (não gira contra a
 // --------------------------------------------------- F06 (start) e F09 (janela)
 
 Deno.test("F06: admin sem manage_all inicia disparo de OUTRO dono → 403", async () => {
-  const opts: MockOpts = {
+  const { ctx, status } = await runWithJwt(startRequestOpts({
     authUser: { id: "user-006" },
     isAdminOrSupervisor: true,
-    manageAll: false,
-    ownProfileId: "profile-me",
     dispatch: dispatchRow({ status: "draft", created_by: "profile-outro" }),
-  };
-  const ctx = newCtx(opts);
-  const res = await handleMultiplixSend(makePost({ bearer: TEST_JWT }), mockDeps(opts, ctx));
-  assert(res.status === 403, `esperado 403 (start de disparo de outro dono), recebido ${res.status}`);
+  }));
+  assert(status === 403, `esperado 403 (start de disparo de outro dono), recebido ${status}`);
   assert(rpcs(ctx, "transition_multiplix_dispatch").length === 0, "nao pode iniciar disparo de outro dono");
 });
 
