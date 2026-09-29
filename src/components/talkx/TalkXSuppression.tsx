@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
 import { ShieldBan, Plus, Trash2, Search, UserX, ShieldCheck, Settings, X, AlertTriangle } from 'lucide-react';
 import {
@@ -96,11 +97,17 @@ export function TalkXSuppression() {
     bars: barsByDay(blacklist.map((b) => b.created_at)),
   }), [blacklist]);
 
+  // Autoria sai do perfil ativo (profiles.id), como em useTalkXSegments: as
+  // colunas blocked_by/removed_by referenciam profiles(id) e o id do
+  // auth.users nao e o mesmo id — 0 dos 6 perfis tem id = user_id (conferido
+  // no banco canonico), entao gravar auth.uid() violava a FK e o "Adicionar
+  // contato" da supressao falhava em producao (P1-4 da auditoria).
+  const { profile } = useAuth();
+
   const addMutation = useMutation({
     mutationFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const finalReason = addReason === 'Outro' ? addCustomReason || 'Outro' : addReason;
-      const { error } = await fromTable('talkx_blacklist').insert({ contact_id: addContactId, reason: finalReason, blocked_by: user?.id ?? null, origin: addOrigin });
+      const { error } = await fromTable('talkx_blacklist').insert({ contact_id: addContactId, reason: finalReason, blocked_by: profile?.id ?? null, origin: addOrigin });
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['talkx-blacklist'] }); toast.success('Contato adicionado à lista de supressão'); setShowAdd(false); setAddContactId(''); setAddReason(REASONS[0]); },
@@ -109,10 +116,8 @@ export function TalkXSuppression() {
 
   const removeMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: profileRow } = await supabase.from('profiles').select('id').eq('user_id', user?.id ?? '').maybeSingle();
       const { error } = await supabase.from('talkx_blacklist')
-        .update({ removed_by: profileRow?.id ?? null, removed_at: new Date().toISOString() })
+        .update({ removed_by: profile?.id ?? null, removed_at: new Date().toISOString() })
         .eq('id', id);
       if (error) throw error;
     },
