@@ -1,0 +1,23 @@
+### 1) aplicando supabase/migrations/20260929150000_contact_address_audit_trigger.sql
+NOTICE:  trigger "trg_audit_contact_address_change" for relation "public.contacts" does not exist, skipping
+aplicada (exit 0)
+### 2) proacl cru da funcao
+audit_contact_address_change|{=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres,anon=X/postgres}
+### 3) has_function_privilege
+anon: t
+authenticated: t
+service_role: t
+PUBLIC(via public_): t
+### 4) da para CHAMAR a funcao de trigger por RPC (PostgREST usa SELECT ...)?
+--- como anon ---
+    ERROR:  trigger functions can only be called as triggers
+    CONTEXT:  compilation of PL/pgSQL function "audit_contact_address_change" near line 1
+--- como authenticated ---
+    ERROR:  trigger functions can only be called as triggers
+    CONTEXT:  compilation of PL/pgSQL function "audit_contact_address_change" near line 1
+### 5) o trigger funciona normalmente (o EXECUTE do anon nao e o que o dispara)
+linhas em audit_logs apos a troca de endereco: 1
+### 6) contraste: com a remediacao do proprio repo (REVOKE ... FROM PUBLIC, anon)
+anon depois do REVOKE: f
+authenticated depois do REVOKE: t
+o trigger continua funcionando depois do REVOKE: 2
