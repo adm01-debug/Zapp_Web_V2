@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
+import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
+import { CONVERSATION_STATUSES } from '@/types/chat';
 
 /* ------------------------------------------------------------------ */
 /* Modelo de regras                                                   */
@@ -43,8 +45,11 @@ export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'arr
   { value: 'email', label: 'E-mail', kind: 'text', category: 'basico' },
   { value: 'channel_type', label: 'Canal de origem', kind: 'text', category: 'basico' },
   { value: 'lead_origin', label: 'Origem do lead', kind: 'text', category: 'basico' },
-  { value: 'contact_type', label: 'Tipo do contato', kind: 'enum', category: 'comercial', options: ['cliente', 'lead', 'fornecedor', 'parceiro', 'sicoob_gifts'] },
-  { value: 'conversation_status', label: 'Status da conversa', kind: 'enum', category: 'comportamento', options: ['open', 'pending', 'resolved', 'waiting'] },
+  // Tipos de contato e status de conversa vem das fontes canonicas: uma regra de segmento
+  // nunca pode oferecer valor que o banco rejeita (a lista local tinha 'lead'/'sicoob_gifts',
+  // extintos, e omitia 3 dos 6 tipos reais).
+  { value: 'contact_type', label: 'Tipo do contato', kind: 'enum', category: 'comercial', options: CONTACT_TYPES.map((t) => t.value) },
+  { value: 'conversation_status', label: 'Status da conversa', kind: 'enum', category: 'comportamento', options: [...CONVERSATION_STATUSES] },
   { value: 'lead_score', label: 'Lead score', kind: 'number', category: 'comercial' },
   { value: 'risk_score', label: 'Risco de churn', kind: 'number', category: 'comportamento' },
   { value: 'ai_priority', label: 'Prioridade (IA)', kind: 'enum', category: 'comportamento', options: ['high', 'urgent', 'medium', 'low'] },
@@ -151,8 +156,7 @@ function applyRules<T extends { or: (f: string) => T }>(q: T, rules: SegmentRule
 /** Estimativa (count exato) do público de um conjunto de regras. */
 export async function countAudience(rules: SegmentRules | null | undefined): Promise<number> {
   let q = supabase.from('contacts').select('id', { count: 'exact', head: true })
-    .not('phone', 'is', null)
-    .not('phone', 'ilike', 'sicoob-%');
+    .not('phone', 'is', null);
   q = applyRules(q, rules);
   const { count, error } = await q;
   if (error) throw error;
@@ -166,7 +170,6 @@ export async function resolveAudience(rules: SegmentRules | null | undefined, li
   let q = supabase.from('contacts')
     .select('id, name, nickname, phone, company, avatar_url, tags')
     .not('phone', 'is', null)
-    .not('phone', 'ilike', 'sicoob-%')
     .order('name')
     .limit(limit);
   q = applyRules(q, rules);

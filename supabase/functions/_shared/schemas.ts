@@ -184,34 +184,6 @@ export const ScheduledReportSchema = z.object({
   reportId: z.string().uuid("reportId must be a valid UUID"),
 });
 
-// ─── Sicoob Bridge ───────────────────────────────────────────
-export const SicoobBridgeNewMessageSchema = z.object({
-  action: z.literal('new_message'),
-  message_id: z.string().min(1).max(500),
-  sender_name: z.string().min(1).max(500),
-  sender_email: z.string().email().optional().nullable(),
-  sender_phone: z.string().max(50).optional().nullable(),
-  sender_id: z.string().max(500).optional(),
-  singular_name: z.string().max(500).optional(),
-  singular_id: z.string().min(1).max(500),
-  content: z.string().min(1).max(10000),
-  vendedor_user_id: z.string().min(1).max(500),
-  created_at: z.string().optional(),
-});
-
-export const SicoobBridgeMarkReadSchema = z.object({
-  action: z.literal('mark_read'),
-  external_ids: z.array(z.string()).min(1).max(500),
-});
-
-export const SicoobBridgeReplySchema = z.object({
-  contact_id: z.string().uuid("contact_id must be a valid UUID"),
-  content: z.string().min(1, "Content is required").max(10000),
-  message_id: z.string().optional(),
-  agent_id: z.string().uuid().optional().nullable(),
-  created_at: z.string().optional(),
-});
-
 // ─── Gmail Send ──────────────────────────────────────────────
 // IDs reais do Gmail (message/thread) sao strings opacas alfanumericas
 // (hex/base64url), sempre curtas. Restringe o charset a algo que nao permite
