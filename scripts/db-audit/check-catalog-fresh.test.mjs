@@ -32,6 +32,10 @@ const base = {
     'get_gmail_tokens(uuid)->jsonb|kind=f',
     'store_gmail_tokens(uuid, text)->void|kind=f',
   ],
+  check_constraints: [
+    "contacts.contacts_email_nonempty:CHECK ((email <> ''::text))",
+    'gmail_accounts.gmail_accounts_status_check:CHECK ((status = ANY (ARRAY[\'active\'::text, \'revoked\'::text])))',
+  ],
 };
 
 function executar(commitado, fresco, opcoes = {}) {

@@ -60,15 +60,24 @@ test.describe('Reactions flow', () => {
     const firstMessage = page.locator('[data-testid="message-group"]').first();
     await firstMessage.hover();
 
+    // Wait for profile query to resolve before clicking -- addMutation throws when
+    // profileId is null (profile React Query not yet settled), causing the badge to
+    // never appear. data-profile-ready is set by QuickReactionBar once currentProfileId
+    // is non-null.
+    await page
+      .locator('[data-testid="quick-reaction-bar"][data-profile-ready="true"]')
+      .first()
+      .waitFor({ timeout: 10_000 });
+
     // Force-click thumbsup (bar may still be opacity-0 in Playwright rendering context)
     await page
-      .locator('[data-testid="quick-reaction-emoji"][data-emoji="\uD83D\uDC4D"]')
+      .locator('[data-testid="quick-reaction-emoji"][data-emoji="👍"]')
       .first()
       .click({ force: true });
 
     // Reaction badge should appear below the message
     await expect(
-      page.locator('[data-testid="reaction-badge"][data-emoji="\uD83D\uDC4D"]').first()
+      page.locator('[data-testid="reaction-badge"][data-emoji="👍"]').first()
     ).toBeVisible({ timeout: 8_000 });
   });
 
@@ -83,13 +92,21 @@ test.describe('Reactions flow', () => {
     const firstMessage = page.locator('[data-testid="message-group"]').first();
     await firstMessage.hover();
 
+    // Wait for profile query to resolve before clicking -- addMutation throws when
+    // profileId is null (profile React Query not yet settled), causing the badge to
+    // never appear.
+    await page
+      .locator('[data-testid="quick-reaction-bar"][data-profile-ready="true"]')
+      .first()
+      .waitFor({ timeout: 10_000 });
+
     // Add the reaction
     await page
-      .locator('[data-testid="quick-reaction-emoji"][data-emoji="\uD83D\uDC4D"]')
+      .locator('[data-testid="quick-reaction-emoji"][data-emoji="👍"]')
       .first()
       .click({ force: true });
 
-    const badge = page.locator('[data-testid="reaction-badge"][data-emoji="\uD83D\uDC4D"]').first();
+    const badge = page.locator('[data-testid="reaction-badge"][data-emoji="👍"]').first();
     await expect(badge).toBeVisible({ timeout: 8_000 });
 
     // Toggle it off -- move mouse away first to dismiss the quick-reaction-bar overlay.
