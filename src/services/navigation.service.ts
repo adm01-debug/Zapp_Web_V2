@@ -8,7 +8,7 @@ import {
   Link2, Plug, Inbox, PhoneCall, Activity, Calendar,
   Phone, Shield, ShieldCheck, UserCog, Palette, BookOpen, Lock,
   ScrollText, ClipboardList, Mic, Compass, Cpu, BarChartHorizontal, BrainCircuit,
-  Webhook, HardDrive, Landmark, FlaskConical, ListChecks, Send,
+  Webhook, HardDrive, FlaskConical, ListChecks, Send,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -140,7 +140,6 @@ export class NavigationService {
       { id: 'ai-usage', icon: BrainCircuit, label: 'Consumo IA', roles: ADMIN_ONLY },
       { id: 'gmail-webhook', icon: Webhook, label: 'Gmail Webhook', roles: ADMIN_ONLY },
       { id: 'media-migration', icon: HardDrive, label: 'Migração Mídia', roles: ADMIN_ONLY },
-      { id: 'sicoob-bridge', icon: Landmark, label: 'Sicoob Bridge', roles: ADMIN_ONLY },
       { id: 'evolution-monitor', icon: Activity, label: 'Monitor Evolution', roles: ADMIN_ONLY },
     ];
   }
