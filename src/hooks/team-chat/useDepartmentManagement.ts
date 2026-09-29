@@ -224,6 +224,61 @@ export function useRemoveDepartmentMember(departmentId: string) {
   });
 }
 
+export function useRedeemDepartmentInvite() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ code }: { code: string }) => {
+      const profileId = await getCurrentProfileId();
+      if (!profileId) throw new Error('Não autenticado');
+
+      const { data: invite, error: lookupError } = await supabase
+        .from('department_invitations')
+        .select('id, department_id, status, expires_at, use_count, max_uses')
+        .eq('code', code.trim().toUpperCase())
+        .maybeSingle();
+
+      if (lookupError) throw lookupError;
+      if (!invite) throw new Error('Código inválido ou não encontrado');
+      if (invite.status !== 'active') throw new Error('Este convite não está mais ativo');
+      if (new Date(invite.expires_at) < new Date()) throw new Error('Este convite expirou');
+      if (invite.use_count >= invite.max_uses) throw new Error('Limite de usos atingido');
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ department_id: invite.department_id })
+        .eq('id', profileId);
+      if (profileError) throw profileError;
+
+      const newCount = invite.use_count + 1;
+      await supabase
+        .from('department_invitations')
+        .update({
+          use_count: newCount,
+          status: newCount >= invite.max_uses ? 'used' : 'active',
+          used_at: new Date().toISOString(),
+          used_by: profileId,
+        })
+        .eq('id', invite.id);
+
+      await supabase.from('department_audit_logs').insert({
+        department_id: invite.department_id,
+        action: 'invite_used',
+        profile_id: profileId,
+        details: { invite_id: invite.id, code },
+      });
+
+      return { departmentId: invite.department_id };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['departmentChat', 'profiles'] });
+      toast.success('Você entrou no canal do departamento!');
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
+    },
+  });
+}
+
 export function useSaveDepartmentWhatsApp(departmentId: string) {
   const qc = useQueryClient();
   return useMutation({
