@@ -16,49 +16,54 @@ interface UseTextToSpeechOptions {
 }
 
 export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
+  // Desestruturado: e o que faz a regra de dependencias do `useCallback` enxergar valores
+  // nomeados em vez de `options` (o objeto literal que o chamador recria a cada render).
+  const { initialVoiceId, initialSpeed, useStreaming, onVoiceChange, onSpeedChange } = options;
   const [isLoading, setIsLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
-  const [voiceId, setVoiceIdState] = useState(options.initialVoiceId || DEFAULT_VOICE_ID);
-  const [speed, setSpeedState] = useState(options.initialSpeed || 1.0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
 
-  // Sync with external voice ID changes
-  useEffect(() => {
-    if (options.initialVoiceId && options.initialVoiceId !== voiceId) {
-      setVoiceIdState(options.initialVoiceId);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options.initialVoiceId]);
+  // E — os dois effects que existiam aqui sincronizavam prop -> estado com `setState` sincrono
+  // dentro do effect (regra react-hooks/set-state-in-effect: cascata de renders). Agora o valor
+  // efetivo e derivado no render: a escolha local so vale enquanto a prop que a originou nao mudar,
+  // entao uma prop nova volta a vencer o valor local — o mesmo comportamento que os effects davam,
+  // sem estado espelhado e sem effect.
+  const [voiceOverride, setVoiceOverride] = useState<{ valor: string; base?: string } | null>(null);
+  const [speedOverride, setSpeedOverride] = useState<{ valor: number; base?: number } | null>(null);
+  const voiceId =
+    voiceOverride && voiceOverride.base === initialVoiceId
+      ? voiceOverride.valor
+      : initialVoiceId || DEFAULT_VOICE_ID;
+  const speed =
+    speedOverride && speedOverride.base === initialSpeed
+      ? speedOverride.valor
+      : initialSpeed || 1.0;
 
-  // Sync with external speed changes
+  // A taxa do elemento de audio e efeito externo (nao e estado do React): fica em effect, agora sem
+  // `setState` dentro dele.
   useEffect(() => {
-    if (options.initialSpeed !== undefined && options.initialSpeed !== speed) {
-      setSpeedState(options.initialSpeed);
-      // Update current audio playback rate if playing
-      if (audioRef.current) {
-        audioRef.current.playbackRate = options.initialSpeed;
-      }
+    if (audioRef.current && initialSpeed !== undefined) {
+      audioRef.current.playbackRate = initialSpeed;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options.initialSpeed]);
+  }, [initialSpeed]);
 
   const setVoiceId = useCallback((newVoiceId: string) => {
-    setVoiceIdState(newVoiceId);
-    options.onVoiceChange?.(newVoiceId);
-  }, [options.onVoiceChange]);
+    setVoiceOverride({ valor: newVoiceId, base: initialVoiceId });
+    onVoiceChange?.(newVoiceId);
+  }, [initialVoiceId, onVoiceChange]);
 
   const setSpeed = useCallback((newSpeed: number) => {
     // Clamp speed between 0.5 and 2.0
     const clampedSpeed = Math.max(0.5, Math.min(2.0, newSpeed));
-    setSpeedState(clampedSpeed);
+    setSpeedOverride({ valor: clampedSpeed, base: initialSpeed });
     // Update current audio playback rate if playing
     if (audioRef.current) {
       audioRef.current.playbackRate = clampedSpeed;
     }
-    options.onSpeedChange?.(clampedSpeed);
-  }, [options.onSpeedChange]);
+    onSpeedChange?.(clampedSpeed);
+  }, [initialSpeed, onSpeedChange]);
 
   const stop = useCallback(() => {
     if (audioRef.current) {
@@ -97,7 +102,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     setCurrentMessageId(messageId || null);
 
     try {
-      const endpoint = options.useStreaming
+      const endpoint = useStreaming
         ? 'elevenlabs-tts-stream'
         : 'elevenlabs-tts';
       const response = await fetch(
@@ -158,7 +163,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     } finally {
       setIsLoading(false);
     }
-  }, [voiceId, speed, stop]);
+  }, [voiceId, speed, useStreaming, stop]);
 
   return {
     speak,
