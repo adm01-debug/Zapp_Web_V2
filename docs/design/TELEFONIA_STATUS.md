@@ -5,6 +5,10 @@
 > O plano foi escrito para o container `claude-code` da VPS; aqui o worktree/branch são os do fluxo
 > Hermes (`hermes-tarefa-iniciar`), e toda evidência vive neste arquivo.
 
+> **Superado em 2026-09-29.** O plano vivo passa a ser
+> `docs/design/PLANO_TELEFONIA_FINALIZACAO_100_ETAPAS_2026-09-29.md` (T01–T100), escrito a partir de
+> `AUDITORIA_TELEFONIA_ESTADO_REAL_2026-09-29.md`. O histórico abaixo fica como registro das fases 0–2 (CP0–CP2).
+
 Branch: `hermes/telefonia-contrato-dados-26092615475e51` · Base: `001fd463b026a635d67848e326bb4cffe6641452` (`origin/main`)
 Workspace: `~/hermes-workspaces/zapp-web-v2-main/telefonia-contrato-dados-26092615475e51`
 Rota de banco usada: gateway MCP `supabase-zapp-web-v2-mcp.adm01.workers.dev` (projeto Cloud `tnnnlkbymytvtqngbbqh`), cliente `~/projetos/mcp-clone-bwwbey/zapp_db.py`
@@ -101,7 +105,7 @@ atendida que cai. Consolidado num único dono:
 | `INVITE_RECEIVED` com sessão ocupada → mesma referência, **sem** `warn` | aceito | é linha da tabela, não transição inválida (`busyHereOutcome()` = `{missed, busy}`) |
 | `zapp:start-call` em `document`, legado `start-voip-call` em `window` | aceito | o emissor real (`ContactActionButtons.tsx:100`) usa `window.dispatchEvent`; os dois são removidos no cleanup |
 
-## CP2 Banco (gate)    [x] PR-A=**#875** · schema efetivo medido · backfill: wa=10 voip=11 (+ 0 talk_seconds) · rls_test=PASS 61/61 · **APLICADO EM PRODUÇÃO (26/09)**
+## CP2 Banco (gate)    [x] PR-A=**#875** — **fechada sem merge**; o conteúdo entrou na `main` por **#930 + #945** · schema efetivo medido · backfill: wa=10 voip=11 (+ 0 talk_seconds) · rls_test=PASS 61/61 · **APLICADO EM PRODUÇÃO (26/09)**
 
 **Aplicado no projeto Cloud `tnnnlkbymytvtqngbbqh` em 26/09** via `db_query` + registro no ledger (mesma
 transação, PR #930 mergeada antes): `20260926800000_calls_telefonia_v2.sql` (`rows_affected: 1`) seguida
