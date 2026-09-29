@@ -1,5 +1,8 @@
 # ADR-007 — Multiplix: ponte de acesso ao Singu e decisões de Fase 0
 
+**Status:** Superseded by [ADR-007-multiplix-ponte-singu-canal-e-aptidao.md](./ADR-007-multiplix-ponte-singu-canal-e-aptidao.md) (2026-09-29).
+**Por quê:** este ADR curto foi escrito no Portão F0 e divergiu do que o código passou a fazer em três pontos — nome do secret do Singu (`SINGU_SERVICE_KEY` × `EXTERNAL_SUPABASE_*`), "nenhum parâmetro novo de risco" (× teto de 200 destinatários por envio + pausa automática por "conexão em risco") e telefone da empresa sem restrição de papel (× só `is_supplier`/`is_carrier`). O ADR longo registra as três decisões finais e é o único vigente (ver `docs/adr/README.md`). O histórico abaixo fica preservado como registro do que se decidiu em 26/09.
+
 Decisões do Joaquim, Portão F0 do plano de 200 etapas do Multiplix (26/09/2026).
 
 ## E003 — Caminho de acesso ao banco Singu

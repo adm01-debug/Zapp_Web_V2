@@ -252,6 +252,15 @@ jobs:
           TALKX_MESSAGE_SNAPSHOT_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-message-snapshot.test.sh
 
+      # F20 do plano do Multiplix: replay limpo das 10 migrations do modulo +
+      # as desta tarefa, e assercao negativa do contrato de acesso (anon fora,
+      # FORCE RLS, policies TO authenticated, guarda de mutabilidade, criacao
+      # transacional idempotente com teto, fila e scheduler).
+      - name: Simular contrato de acesso e fila do Multiplix
+        env:
+          MULTIPLIX_RLS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/multiplix-rls.test.sh
+
       - name: Simular estados e audiencia canônicos do Talk X
         env:
           TALKX_CAMPAIGN_STATE_TEST_POSTGRES_IMAGE: postgres:17-alpine
