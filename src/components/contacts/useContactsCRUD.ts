@@ -203,8 +203,18 @@ export function useContactsCRUD() {
   const handleDeleteContact = async (id: string) => {
     await feedback.withFeedback(
       async () => {
-        const { error } = await supabase.from('contacts').delete().eq('id', id);
-        if (error) throw new Error(error.code === "23503" ? "Não é possível excluir: este contato está vinculado a conversas ou registros relacionados." : "Erro ao excluir contato. Tente novamente.");
+        // Exclusao por RPC (soft-delete auditado, decisao D1). O `.delete()` direto
+        // devolvia 0 linhas SEM erro — `contacts` tem RLS ligada e nao tinha nenhuma
+        // policy de DELETE — enquanto a UI anunciava "Contato excluido com sucesso!"
+        // com o contato intacto (auditoria de 29/09, §3.1). Agora `null`/erro sao falha.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC de 20260929370000; types.ts sincroniza no types-sync
+        const { data, error } = await (supabase as any).rpc('delete_contact', { p_id: id });
+        if (error) {
+          throw new Error(error.message || 'Erro ao excluir contato. Tente novamente.');
+        }
+        if (data === null || data === undefined) {
+          throw new Error('Nenhum contato foi excluído. Verifique se você tem permissão.');
+        }
       },
       {
         loadingMessage: 'Excluindo contato...',

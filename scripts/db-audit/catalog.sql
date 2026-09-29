@@ -66,5 +66,22 @@ SELECT jsonb_pretty(jsonb_build_object(
               (SELECT coalesce(jsonb_agg(DISTINCT p.proname ORDER BY p.proname), '[]'::jsonb)
                FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
                WHERE n.nspname = 'public' AND p.prokind = 'f'
-                 AND pg_get_function_result(p.oid) = 'trigger')
+                 AND pg_get_function_result(p.oid) = 'trigger'),
+  -- CHECK constraints de tabelas public. Sem esta secao o guard offline nao enxerga drift
+  -- no conjunto de valores aceitos (foi assim que `chk_contact_type` passou a rejeitar
+  -- 'sicoob_gifts' sem nenhum gate reclamar — auditoria de 29/09, §3.7).
+  'check_constraints',
+              (SELECT coalesce(jsonb_agg(
+                         format(
+                           '%s.%s:%s',
+                           c.relname,
+                           con.conname,
+                           pg_get_constraintdef(con.oid)
+                         )
+                         ORDER BY c.relname, con.conname
+                       ), '[]'::jsonb)
+               FROM pg_constraint con
+               JOIN pg_class c ON c.oid = con.conrelid
+               JOIN pg_namespace n ON n.oid = c.relnamespace
+               WHERE n.nspname = 'public' AND con.contype = 'c')
 ));

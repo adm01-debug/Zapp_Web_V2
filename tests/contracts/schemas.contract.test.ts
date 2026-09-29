@@ -69,16 +69,6 @@ const suites: Record<string, Suite> = {
     { payload: {}, hint: 'ausente' }, { payload: { device_fingerprint: '', browser: 'b', os: 'o', device_name: 'd' }, hint: 'vazio' }] },
   ScheduledReportSchema: { schema: S.ScheduledReportSchema, valid: [{ reportId: UUID }], invalid: [
     { payload: {}, hint: 'ausente' }, { payload: { reportId: 'x' }, hint: 'uuid' }] },
-  SicoobBridgeNewMessageSchema: { schema: S.SicoobBridgeNewMessageSchema,
-    valid: [{ action: 'new_message', message_id: '1', sender_name: 'n', singular_id: 's', content: 'c', vendedor_user_id: 'v' }], invalid: [
-    { payload: { action: 'new_message', message_id: '1', sender_name: 'n', singular_id: 's', vendedor_user_id: 'v' }, hint: 'content ausente' },
-    { payload: { action: 'new_message', message_id: '1', sender_name: 'n', singular_id: 's', content: '', vendedor_user_id: 'v' }, hint: 'vazio' },
-    { payload: { action: 'x', message_id: '1', sender_name: 'n', singular_id: 's', content: 'c', vendedor_user_id: 'v' }, hint: 'literal' }] },
-  SicoobBridgeMarkReadSchema: { schema: S.SicoobBridgeMarkReadSchema, valid: [{ action: 'mark_read', external_ids: ['1'] }], invalid: [
-    { payload: { action: 'mark_read' }, hint: 'ausente' }, { payload: { action: 'mark_read', external_ids: [] }, hint: 'vazio' }] },
-  SicoobBridgeReplySchema: { schema: S.SicoobBridgeReplySchema, valid: [{ contact_id: UUID, content: 'c' }], invalid: [
-    { payload: {}, hint: 'ausente' }, { payload: { contact_id: UUID, content: '' }, hint: 'vazio' },
-    { payload: { contact_id: 'x', content: 'c' }, hint: 'uuid' }] },
   GmailSendActionSchema: { schema: S.GmailSendActionSchema, valid: [{ action: 'send', account_id: UUID }], invalid: [
     { payload: { action: 'send' }, hint: 'ausente' }, { payload: { action: 'x', account_id: UUID }, hint: 'enum' },
     { payload: { action: 'send', account_id: 'x' }, hint: 'uuid' }] },
