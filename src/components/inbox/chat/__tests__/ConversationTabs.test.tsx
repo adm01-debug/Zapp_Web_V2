@@ -12,11 +12,16 @@ function setup(counts: ConversationTabCounts = ZERO, activeTab = 'chat' as const
 }
 
 describe('ConversationTabs', () => {
-  it('renderiza as 9 abas do painel central', () => {
+  it('renderiza as 8 abas do painel central', () => {
     setup();
-    ['chat', 'ia', 'crm', 'orders', 'tasks', 'notes', 'files', 'history', 'reminders'].forEach((id) => {
+    ['chat', 'ia', 'crm', 'orders', 'tasks', 'notes', 'files', 'history'].forEach((id) => {
       expect(screen.getByTestId(`conversation-tab-${id}`)).toBeInTheDocument();
     });
+  });
+
+  it('não tem mais aba Lembretes (fundida em Tarefas)', () => {
+    setup();
+    expect(screen.queryByTestId('conversation-tab-reminders')).not.toBeInTheDocument();
   });
 
   it('exibe o badge de Pedidos via extraCounts (client-side, fora da RPC)', () => {
@@ -47,7 +52,6 @@ describe('ConversationTabs', () => {
     expect(screen.getByTestId('conversation-tab-count-tasks')).toHaveTextContent('2');
     expect(screen.getByTestId('conversation-tab-count-notes')).toHaveTextContent('1');
     expect(screen.getByTestId('conversation-tab-count-files')).toHaveTextContent('5');
-    expect(screen.getByTestId('conversation-tab-count-reminders')).toHaveTextContent('4');
   });
 
   it('omite o badge quando o count é zero', () => {
@@ -55,7 +59,6 @@ describe('ConversationTabs', () => {
     expect(screen.queryByTestId('conversation-tab-count-tasks')).not.toBeInTheDocument();
     expect(screen.queryByTestId('conversation-tab-count-notes')).not.toBeInTheDocument();
     expect(screen.queryByTestId('conversation-tab-count-files')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('conversation-tab-count-reminders')).not.toBeInTheDocument();
   });
 
   it('Chat, IA, CRM e Histórico nunca renderizam badge', () => {

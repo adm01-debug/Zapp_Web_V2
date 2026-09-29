@@ -5,7 +5,7 @@ import { NotesTab } from '../NotesTab';
 import type { ContactNote } from '@/hooks/crm/useContactNotes';
 
 const mockUseContactNotes = vi.fn();
-const mockUseConversationTasks = vi.fn();
+const mockUseMyWorkItems = vi.fn();
 const mockUseContactSummaryNote = vi.fn();
 const mockAddNote = vi.fn();
 const mockDeleteNote = vi.fn();
@@ -16,8 +16,11 @@ vi.mock('@/hooks/crm/useContactNotes', async () => {
   const actual = await vi.importActual<typeof import('@/hooks/crm/useContactNotes')>('@/hooks/crm/useContactNotes');
   return { ...actual, useContactNotes: (...args: unknown[]) => mockUseContactNotes(...args) };
 });
-vi.mock('@/hooks/chat/useConversationTasks', () => ({
-  useConversationTasks: (...args: unknown[]) => mockUseConversationTasks(...args),
+// A aba Notas lê tarefas de useMyWorkItems (hook unificado). Mockar o hook antigo
+// (@/hooks/chat/useConversationTasks) não tem efeito: o hook real rodava e estourava
+// "useAuth must be used within an AuthProvider" nos 6 testes.
+vi.mock('@/hooks/tasks/useMyWorkItems', () => ({
+  useMyWorkItems: (...args: unknown[]) => mockUseMyWorkItems(...args),
 }));
 vi.mock('@/hooks/crm/useContactSummaryNote', () => ({
   useContactSummaryNote: (...args: unknown[]) => mockUseContactSummaryNote(...args),
@@ -32,7 +35,11 @@ function renderTab(notes: ContactNote[] = NOTES, openTasks: Array<{ id: string; 
   mockUseContactNotes.mockReturnValue({
     allNotes: notes, addNote: mockAddNote, deleteNote: mockDeleteNote, toggleNoteDone: mockToggleNoteDone, currentProfileId: 'me',
   });
-  mockUseConversationTasks.mockReturnValue({ open: openTasks, createTask: mockCreateTask });
+  mockUseMyWorkItems.mockReturnValue({
+    byDue: { overdue: openTasks, today: [], tomorrow: [], upcoming: [], noDue: [], done7d: [] },
+    create: mockCreateTask,
+    isLoading: false,
+  });
   mockUseContactSummaryNote.mockReturnValue({ summary: '', isLoading: false, save: vi.fn(), isSaving: false });
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -77,12 +84,17 @@ describe('NotesTab', () => {
     expect(screen.getByText('Nenhuma pendência')).toBeInTheDocument();
   });
 
-  it('adicionar uma pendência chama createTask', () => {
+  it('adicionar uma pendência chama createTask com o contato', () => {
     renderTab([], []);
     const pendCard = screen.getByText('Pendências').closest('section') as HTMLElement;
     fireEvent.click(within(pendCard).getByText('+ Adicionar'));
     fireEvent.change(within(pendCard).getByPlaceholderText('Nova pendência...'), { target: { value: 'Ligar amanhã' } });
     fireEvent.click(within(pendCard).getByText('Salvar'));
-    expect(mockCreateTask).toHaveBeenCalledWith({ title: 'Ligar amanhã' });
+    expect(mockCreateTask).toHaveBeenCalledWith({ title: 'Ligar amanhã', contactId: 'c1' });
+  });
+
+  it('lista as pendências que o hook devolve', () => {
+    renderTab([], [{ id: 't1', title: 'Ligar amanhã', due_date: null }]);
+    expect(screen.getByText('Ligar amanhã')).toBeInTheDocument();
   });
 });
