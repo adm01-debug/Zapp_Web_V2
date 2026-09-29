@@ -291,6 +291,20 @@ function rpcs(ctx: MockCtx, name: string) {
   return ctx.rpcCalls.filter((call) => call.name === name);
 }
 
+/** Roda o handler com o provedor BLOQUEADO (qualquer POST derruba o teste) e
+ * devolve o contexto do mock — evita repetir o mesmo try/finally em cada caso. */
+async function runWithProviderBlocked(opts: MockOpts): Promise<{ ctx: MockCtx; providerPosts: number }> {
+  const ctx = newCtx(opts);
+  const provider = stubProviderFetch();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    return { ctx, providerPosts: provider.messagePosts() };
+  } finally {
+    provider.restore();
+  }
+}
+
 /** Provedor respondendo com sucesso (v2 devolve key.id): permite exercitar o
  * caminho de envio concluido sem rede — e o unico jeito de a cota diaria ser
  * consumida, ja que ela so cai no envio que conclui. */
@@ -452,15 +466,8 @@ Deno.test("F09: destinatário na lista negra vira 'skipped' com motivo, sem POST
     recipients: [recipientRow(1, phone)],
     suppressedPhones: [phone],
   };
-  const ctx = newCtx(opts);
-  const provider = stubProviderFetch();
-  try {
-    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
-    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-  } finally {
-    provider.restore();
-  }
-  assert(provider.messagePosts() === 0, `nenhum POST ao provedor era esperado, houve ${provider.messagePosts()}`);
+  const { ctx, providerPosts } = await runWithProviderBlocked(opts);
+  assert(providerPosts === 0, `nenhum POST ao provedor era esperado, houve ${providerPosts}`);
   assert(ctx.completions.length === 1, `esperava 1 conclusao, recebeu ${ctx.completions.length}`);
   assert(ctx.completions[0].p_status === "skipped", `status esperado 'skipped', veio ${ctx.completions[0].p_status}`);
   assert(
@@ -525,19 +532,12 @@ Deno.test("F17: sem cota diária sobrando o disparo é pausado com motivo 'daily
     suppressedPhones: [],
     dailyRemaining: 0,
   };
-  const ctx = newCtx(opts);
-  const provider = stubProviderFetch();
-  try {
-    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
-    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-  } finally {
-    provider.restore();
-  }
+  const { ctx, providerPosts } = await runWithProviderBlocked(opts);
   const pause = rpcs(ctx, "transition_multiplix_dispatch").find((call) => call.args.p_action === "pause");
   assert(pause, "esperava a pausa automatica do disparo");
   assert(pause.args.p_pause_reason === "daily_limit", `motivo esperado 'daily_limit', veio ${pause.args.p_pause_reason}`);
   assert(rpcs(ctx, "claim_multiplix_recipient").length === 0, "nao deveria reivindicar destinatario sem cota");
-  assert(provider.messagePosts() === 0, `nenhum POST ao provedor era esperado, houve ${provider.messagePosts()}`);
+  assert(providerPosts === 0, `nenhum POST ao provedor era esperado, houve ${providerPosts}`);
 });
 
 Deno.test("F17: com cota sobrando o disparo segue (não pausa por cota)", async () => {
@@ -633,19 +633,12 @@ Deno.test("F10: janela que fecha no meio do disparo pausa com motivo 'outside_wi
     suppressedPhones: [],
     windowClosesAfterStart: true,
   };
-  const ctx = newCtx(opts);
-  const provider = stubProviderFetch();
-  try {
-    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
-    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-  } finally {
-    provider.restore();
-  }
+  const { ctx, providerPosts } = await runWithProviderBlocked(opts);
   const pause = rpcs(ctx, "transition_multiplix_dispatch").find((call) => call.args.p_action === "pause");
   assert(pause, "esperava pausa quando a janela fecha no meio do disparo");
   assert(pause.args.p_pause_reason === "outside_window", `motivo esperado 'outside_window', veio ${pause.args.p_pause_reason}`);
   assert(rpcs(ctx, "claim_multiplix_recipient").length === 0, "nao pode reivindicar com a janela fechada");
-  assert(provider.messagePosts() === 0, "nao pode enviar com a janela fechada");
+  assert(providerPosts === 0, "nao pode enviar com a janela fechada");
 });
 
 // ------------------------------------------------------------------- F11a (laco)
@@ -699,16 +692,9 @@ Deno.test("F09: opt-out que chega ENTRE o claim e o POST também barra o envio",
     suppressedPhones: [],
     suppressAfterFirstCheck: true,
   };
-  const ctx = newCtx(opts);
-  const provider = stubProviderFetch();
-  try {
-    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
-    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-  } finally {
-    provider.restore();
-  }
+  const { ctx, providerPosts } = await runWithProviderBlocked(opts);
   assert(ctx.suppressionChecks >= 2, `esperava 2 checagens de supressao, houve ${ctx.suppressionChecks}`);
-  assert(provider.messagePosts() === 0, `nenhum POST /message/ era esperado, houve ${provider.messagePosts()}`);
+  assert(providerPosts === 0, `nenhum POST /message/ era esperado, houve ${providerPosts}`);
   assert(ctx.completions.length === 1, `esperava 1 conclusao, recebeu ${ctx.completions.length}`);
   assert(ctx.completions[0].p_status === "skipped", `status esperado 'skipped', veio ${ctx.completions[0].p_status}`);
   assert(
