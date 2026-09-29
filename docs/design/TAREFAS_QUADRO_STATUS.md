@@ -31,11 +31,21 @@ Relatório completo: docs/design/RELATORIO_AUDITORIA_TAREFAS_FUSAO.md · 62 feit
 ## CP7 Avisos       [ ] cron ok · NENHUMA UI (toast/popover/badge/título) · /remind é fake (B10)
 ## CP8 Chat         [~] 8 abas · TasksTab reescrita · NotesTab ainda duplica lista · NotesTab.test com shape antigo (B11)
 ## CP9 A11y/mobile  [~] N/1/2/3 + foco no card · sem aria-live · reduced-motion parcial · mobile/light/zen não validados
-## CP10 QA          [ ] CI da PR #1133 vermelho no typecheck-ratchet (B14, causa não identificada) · E.2/E.3/E.5/isolamento não rodados
-## CP11 Entrega     [~] legado removido (12 arquivos) · PR #1133 ABERTA · produção NÃO verificada · docs não atualizados · remindersPending ainda no tipo
+## CP10 QA          [x] B14 identificado e corrigido (ver CP-A) · CI da PR #1133 100% verde no HEAD · E.2/E.3/E.5/isolamento seguem para as fases seguintes
+## CP11 Entrega     [~] legado removido (12 arquivos) · PR #1133 MERGEADA em 74f409bb · produção verificada no nivel do artefato (chunk servido) · docs: ledger fechado, textos de produto ficam para a etapa 98 · remindersPending ainda no tipo (etapa 97)
 
 ## Novo plano (v2) — checkpoints
-## CP-A Desbloqueio [ ] prod atual= · causa B14= · PR #1133 merge= · deploy READY= · shots A-09=
+## CP-A Desbloqueio [x] fechado 29/09/2026 — Fase A, etapas 1–10 (executor: Hermes; PR #1133 assumida do claude-code)
+  prod antes=e433589f (ref main) · P1 CONFIRMADO: o banco ja esta no vocabulario novo (CHECK status in backlog/todo/doing/waiting/done/cancelled) e o front antigo gravava 'completed'/'pending' -> concluir/reabrir tarefa falhava em producao (1 tarefa real em status 'todo')
+  causa B14 (escrita)=src/hooks/tasks/useMyWorkItems.ts — `type TaskUpdate = Record<string, any>` e rejeitado pelo .update() do supabase-js (TS2345 nas linhas 146, 186 e 204); o typecheck-baseline.json esta vazio, entao qualquer erro reprova o step. Reproduzido local: exit 1 com os mesmos 3 erros.
+  B15=mesmo bug, outra face: a branch nasceu de main de 28/09 16:54, anterior a regeneracao do types.ts (18 colunas de conversation_tasks). Resolvido ao integrar a branch ao main atual — nao precisou regenerar nada.
+  PR #1133 merge=74f409bbd55d5ad0c665be91641c282eb0b321f8 (squash · 29/09/2026 15:41:33Z · branch remoto apagado)
+  commits empilhados=24475a27 (merge origin/main) · 8acd0936 (B14/B15) · 6dbbc194 (B9/B12) · 121526e3 (B11) · 6497681d (tipografia)
+  gates no HEAD da PR (todos verdes)=Lint & TypeCheck · Unit Tests · Build · Security Audit · Contrato DB offline (rerun apos "toomanyrequests" do registry) · E2E Tests (Playwright)
+  deploy READY=https://zapp-web-v2.vercel.app/ -> bundle /assets/index-ljreATgI.js (o anterior, index-B44wcD6i.js, passou a 404)
+  prova do P1 no que a producao serve=chunk /assets/TasksModule-C51BlYUp.js contem waiting_reason · Aguardando · Fazendo · Quadro · backlog · doing, e ZERO ocorrencias de "completed"/"pending"
+  E2E autenticado da main no commit de merge (e2e-logado.yml)=35 passed · 1 flaky · 2 skipped · 1 failed=e2e/reactions.spec.ts:84:3, PRE-EXISTENTE (o mesmo teste falhou nos runs 36589866502, 36592046165 e 36589996922, de outros PRs) — fora do escopo
+  shots A-09=NAO produzidos: o ambiente do Hermes nao tem credencial de QA e o cofre nao tem login salvo para zapp-web-v2.vercel.app. Substituidos por (a) o E2E autenticado acima e (b) a prova no chunk servido. Refazer quando houver login de QA.
 ## CP-B Hook        [ ] types.ts regenerado= · 0 Record<string,any>= · join contacts= · otimista= · snooze= · badge fix= · testes hook=
 ## CP-C Sheet       [ ] WorkItemSheet= · ?task= · Aguardando por DnD/kebab/menu= · kebab 5 grupos= · RemindChip popover= · ContactChip=
 ## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
@@ -62,3 +72,9 @@ Relatório completo: docs/design/RELATORIO_AUDITORIA_TAREFAS_FUSAO.md · 62 feit
 - Agenda sem arrastar entre dias: v2
 - Delegação / recorrência / subtarefas / colunas personalizáveis / anexos / comentários: v2
 - Migration de drop de reminders_pending: aguarda APROVADO (etapa 97)
+- e2e/reactions.spec.ts (reacoes do inbox) falha de forma cronica no e2e-logado da main desde antes desta entrega — nao e regressao das Tarefas; vira tarefa separada
+- Guarda git do Hermes trava durante rebase: com HEAD destacado `git branch --show-current` devolve vazio e a checagem nega TODO comando git, inclusive `git rebase --abort/--continue` (deadlock). Contorno usado: integrar com `git merge origin/main`. Sugestao de correcao registrada no corpo do PR #1133
+- `bun run lint` (eslint cru, que NAO e gate do CI) falha com 967 problemas legados; o gate real e o lint-ratchet, que passa (0 novas)
+- Fase A, divergencia do plano: a etapa 3 lista hipoteses erradas para o B14 (NotesTab.test / vi.importMock / cast do ViewRouter); a causa era o tipo frouxo do proprio hook
+- Fase A, divergencia do plano: a regra 8 ("logs do CI devolvem 403") esta desatualizada — `gh run view --log-failed` funciona e foi o que localizou o B14
+- Fase A, divergencia do plano: integracao da branch ao main feita por MERGE (rebase e inviavel sob a guarda — ver acima); a PR passou a ter um commit de merge
