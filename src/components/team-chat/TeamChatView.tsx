@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useTeamConversations } from '@/hooks/chat/useTeamChat';
+import { useAuth } from '@/hooks/auth/useAuth';
 import type { TeamConversation, TeamInboxRow, ConversationType } from '@/hooks/team-chat/teamChatTypes';
 import { TeamConversationList } from './TeamConversationList';
 import { TeamChatPanel } from './TeamChatPanel';
@@ -12,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 
 function inboxRowToConversation(row: TeamInboxRow): TeamConversation {
+  const msgType = row.last_message_type;
   return {
     id: row.conversation_id,
     type: row.type as ConversationType,
@@ -27,10 +29,10 @@ function inboxRowToConversation(row: TeamInboxRow): TeamConversation {
       conversation_id: row.conversation_id,
       sender_id: row.last_message_sender_id ?? '',
       content: row.last_message_content ?? '',
-      message_type: row.last_message_type ?? 'text',
+      message_type: msgType ?? 'text',
       status: null,
       media_url: null,
-      media_type: null,
+      media_type: (msgType && msgType !== 'text') ? msgType : null,
       media_bucket: null,
       media_path: null,
       reply_to_id: null,
@@ -43,13 +45,15 @@ function inboxRowToConversation(row: TeamInboxRow): TeamConversation {
 }
 
 export function TeamChatView() {
-  const { data: inboxRows = [] } = useTeamConversations();
+  const { data: inboxRows = [], isLoading } = useTeamConversations();
+  const { profile } = useAuth();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
-  // Enable differentiated notifications for team chat
   useTeamChatNotifications(selectedId);
+
+  const canManageDepartments = profile?.role === 'admin' || profile?.role === 'supervisor';
 
   const conversations = useMemo<TeamConversation[]>(
     () => inboxRows.map(inboxRowToConversation),
@@ -70,6 +74,10 @@ export function TeamChatView() {
           selectedId={selectedId}
           onSelect={(id) => { setSelectedId(id); setShowDetails(false); }}
           onNewConversation={() => setShowNewDialog(true)}
+          currentUserId={profile?.id}
+          canManageDepartments={canManageDepartments}
+          currentUserName={profile?.name ?? ''}
+          isLoading={isLoading}
         />
       </div>
 
