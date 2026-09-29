@@ -119,7 +119,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   }, [contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef]);
 
   const handleReplyToMessage = useCallback((message: Message) => { setReplyToMessage(message); inputRef.current?.focus(); }, []);
-  const handleCopyMessage = useCallback((content: string) => { navigator.clipboard.writeText(content); toast({ title: 'Copiado!', description: 'Mensagem copiada para a área de transferência.' }); }, []);
+  const handleCopyMessage = useCallback((content: string) => { void navigator.clipboard.writeText(content); toast({ title: 'Copiado!', description: 'Mensagem copiada para a área de transferência.' }); }, []);
   const handleForwardMessage = useCallback((message: Message) => { setForwardMessage(message); openDialog('forwardDialog'); }, [openDialog]);
   const handleForwardToTargets = useCallback((targetIds: string[], targetType: 'contact' | 'group') => { log.debug('Forwarding to:', { targetIds, targetType, message: forwardMessageRef.current }); }, [forwardMessageRef]);
 
@@ -150,7 +150,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       case 'priority': {
         if (!subCommand) break;
         const labels: Record<string, string> = { high: 'Alta', medium: 'Média', low: 'Baixa' };
-        (async () => {
+        void (async () => {
           const { error } = await supabase.from('contacts').update({ ai_priority: subCommand }).eq('id', contactId);
           if (error) {
             log.error('Failed to set priority:', error);
@@ -167,7 +167,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       // useConversationActions já grava em favorite_contacts e mostra o toast.
       case 'star': (isFavorite(contactId) ? unfavoriteContact : favoriteContact)(contactId); break;
       case 'archive': {
-        (async () => {
+        void (async () => {
           const { error } = await supabase.from('contacts').update({ assigned_to: null }).eq('id', contactId);
           if (error) {
             log.error('Failed to archive contact:', error);

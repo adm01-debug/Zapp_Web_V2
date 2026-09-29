@@ -31,9 +31,9 @@ const NextBestActionEngine = lazy(() => import('./NextBestActionEngine').then(m 
 
 if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
   (window as Window).requestIdleCallback(() => {
-    import('./TransferDialog');
-    import('./AIConversationAssistant');
-    import('./CloseConversationDialog');
+    void import('./TransferDialog');
+    void import('./AIConversationAssistant');
+    void import('./CloseConversationDialog');
   });
 }
 
