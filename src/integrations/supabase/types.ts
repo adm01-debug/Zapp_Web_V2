@@ -9794,6 +9794,47 @@ export type Database = {
           last_message_type: string
         }[]
       }
+      get_team_inbox: {
+        Args: never
+        Returns: {
+          avatar_url: string | null
+          conversation_id: string
+          created_at: string
+          last_message_content: string | null
+          last_message_created_at: string | null
+          last_message_sender_id: string | null
+          last_message_type: string | null
+          member_role: string
+          name: string | null
+          type: string
+          unread_count: number
+        }[]
+      }
+      get_team_messages_page: {
+        Args: {
+          p_before_id?: string
+          p_conversation_id: string
+          p_limit?: number
+        }
+        Returns: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          is_edited: boolean
+          media_bucket: string | null
+          media_path: string | null
+          media_type: string | null
+          media_url: string | null
+          message_type: string
+          reply_to_id: string | null
+          sender_avatar_url: string | null
+          sender_id: string
+          sender_name: string
+          status: string | null
+          updated_at: string
+        }[]
+      }
       get_team_profiles: {
         Args: never
         Returns: {
@@ -9905,6 +9946,10 @@ export type Database = {
         Args: { connection_id: string }
         Returns: boolean
       }
+      leave_team_group: {
+        Args: { p_conversation_id: string }
+        Returns: Json
+      }
       log_audit_event: {
         Args: {
           p_action: string
@@ -9925,6 +9970,10 @@ export type Database = {
       }
       mark_talkx_recipient_dispatch_started: {
         Args: { p_claim_token: string; p_recipient_id: string }
+        Returns: undefined
+      }
+      mark_team_conversation_read: {
+        Args: { p_conversation_id: string }
         Returns: undefined
       }
       mcp_exec: { Args: { max_rows?: number; sql: string }; Returns: Json }
@@ -10075,6 +10124,10 @@ export type Database = {
         Args: { p_claim_token: string; p_recipient_id: string }
         Returns: boolean
       }
+      remove_team_member: {
+        Args: { p_conversation_id: string; p_profile_id: string }
+        Returns: Json
+      }
       remove_wa_label_from_all_contacts: {
         Args: { p_label_prefix: string }
         Returns: undefined
@@ -10202,6 +10255,32 @@ export type Database = {
           total_count: number
         }[]
       }
+      search_team_messages: {
+        Args: {
+          p_conversation_id: string
+          p_limit?: number
+          p_query: string
+        }
+        Returns: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          sender_id: string
+          sender_name: string
+        }[]
+      }
+      send_team_message: {
+        Args: {
+          p_content: string
+          p_conversation_id: string
+          p_media_bucket?: string
+          p_media_path?: string
+          p_media_type?: string
+          p_reply_to_id?: string
+        }
+        Returns: Json
+      }
       set_call_agent_notes: {
         Args: { p_call_id: string; p_notes: string }
         Returns: undefined
@@ -10213,6 +10292,10 @@ export type Database = {
       set_instance_token: {
         Args: { p_connection_id: string; p_token: string }
         Returns: string
+      }
+      set_team_member_pref: {
+        Args: { p_conversation_id: string; p_is_muted: boolean }
+        Returns: undefined
       }
       set_team_member_role: {
         Args: {
@@ -10257,6 +10340,14 @@ export type Database = {
           dispatch_id: string
           previous_status: string
         }[]
+      }
+      toggle_team_reaction: {
+        Args: { p_emoji: string; p_message_id: string }
+        Returns: Json
+      }
+      transfer_team_conversation_department: {
+        Args: { p_conversation_id: string; p_to_department_id: string }
+        Returns: Json
       }
       transition_talkx_campaign:
         | {
