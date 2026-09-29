@@ -1,5 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
+import { ContactService } from '@/services/contact.service';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useActionFeedback } from '@/hooks/ui/useActionFeedback';
@@ -52,10 +54,32 @@ export interface Contact {
   longitude?: string | null;
 }
 
-/** `latitude`/`longitude` chegam como string (mesmo padrão dos demais campos de endereço). */
-function toCoordinate(value: string): number | null {
-  const parsed = Number(value);
-  return value.trim() && Number.isFinite(parsed) ? parsed : null;
+/** `latitude`/`longitude` chegam como string (campo do form) ou number (linha do banco). */
+function toCoordinate(value: string | number | null | undefined): number | null {
+  if (value === null || value === undefined) return null;
+  const text = String(value).trim();
+  const parsed = Number(text);
+  return text && Number.isFinite(parsed) ? parsed : null;
+}
+
+function coordinateToForm(value: number | null): string | null {
+  return value === null || value === undefined ? null : String(value);
+}
+
+/** Campos de endereço que só entram no UPDATE quando a linha carregada os trouxe (C1/E04). */
+const ADDRESS_FIELDS = ['postal_code', 'address', 'address_number', 'neighborhood', 'city', 'state'] as const;
+
+/**
+ * Fallback do E05: quando o `getById` não devolve a linha completa, o form abre com a
+ * linha resumida da lista. Remover as chaves de endereço faz o guarda do E04 não gravá-las,
+ * em vez de sobrescrever o banco com `null` ou com um valor velho.
+ */
+function withoutAddressFields(contact: Contact): Contact {
+  const copy: Record<string, unknown> = { ...contact };
+  for (const field of ADDRESS_FIELDS) delete copy[field];
+  delete copy.latitude;
+  delete copy.longitude;
+  return copy as unknown as Contact;
 }
 
 export function useContactsCRUD() {
@@ -154,30 +178,32 @@ export function useContactsCRUD() {
 
   const handleEditContact = async () => {
     if (!editingContact) return;
+    const contact = editingContact;
     setIsSubmitting(true);
     await feedback.withFeedback(
       async () => {
+        const payload: Database['public']['Tables']['contacts']['Update'] = {
+          name: contact.name,
+          nickname: contact.nickname,
+          surname: contact.surname,
+          job_title: contact.job_title,
+          company: contact.company,
+          phone: contact.phone.replace(/\D/g, ''),
+          email: contact.email?.trim() || null,
+          contact_type: contact.contact_type,
+        };
+        // C1/E04: campo que não veio na linha carregada não entra no UPDATE
+        // (ausente = coluna intocada; string vazia digitada pelo operador continua virando null).
+        for (const field of ADDRESS_FIELDS) {
+          if (field in contact) (payload as Record<string, unknown>)[field] = contact[field] || null;
+        }
+        if ('latitude' in contact) payload.latitude = toCoordinate(contact.latitude);
+        if ('longitude' in contact) payload.longitude = toCoordinate(contact.longitude);
+
         const { error } = await supabase
           .from('contacts')
-          .update({
-            name: editingContact.name,
-            nickname: editingContact.nickname,
-            surname: editingContact.surname,
-            job_title: editingContact.job_title,
-            company: editingContact.company,
-            phone: editingContact.phone.replace(/\D/g, ''),
-            email: editingContact.email?.trim() || null,
-            contact_type: editingContact.contact_type,
-            postal_code: editingContact.postal_code || null,
-            address: editingContact.address || null,
-            address_number: editingContact.address_number || null,
-            neighborhood: editingContact.neighborhood || null,
-            city: editingContact.city || null,
-            state: editingContact.state || null,
-            latitude: toCoordinate(editingContact.latitude || ''),
-            longitude: toCoordinate(editingContact.longitude || ''),
-          })
-          .eq('id', editingContact.id);
+          .update(payload)
+          .eq('id', contact.id);
         if (error) {
           if (error.code === '23505' && error.message?.includes('contacts_phone_unique')) {
             throw new Error('Já existe outro contato com este número de telefone.');
@@ -203,8 +229,18 @@ export function useContactsCRUD() {
   const handleDeleteContact = async (id: string) => {
     await feedback.withFeedback(
       async () => {
-        const { error } = await supabase.from('contacts').delete().eq('id', id);
-        if (error) throw new Error(error.code === "23503" ? "Não é possível excluir: este contato está vinculado a conversas ou registros relacionados." : "Erro ao excluir contato. Tente novamente.");
+        // Exclusao por RPC (soft-delete auditado, decisao D1). O `.delete()` direto
+        // devolvia 0 linhas SEM erro — `contacts` tem RLS ligada e nao tinha nenhuma
+        // policy de DELETE — enquanto a UI anunciava "Contato excluido com sucesso!"
+        // com o contato intacto (auditoria de 29/09, §3.1). Agora `null`/erro sao falha.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC de 20260929370000; types.ts sincroniza no types-sync
+        const { data, error } = await (supabase as any).rpc('delete_contact', { p_id: id });
+        if (error) {
+          throw new Error(error.message || 'Erro ao excluir contato. Tente novamente.');
+        }
+        if (data === null || data === undefined) {
+          throw new Error('Nenhum contato foi excluído. Verifique se você tem permissão.');
+        }
       },
       {
         loadingMessage: 'Excluindo contato...',
@@ -219,10 +255,35 @@ export function useContactsCRUD() {
     );
   };
 
-  const openEditDialog = (contact: Contact) => {
-    setEditingContact(contact);
-    setIsEditDialogOpen(true);
-  };
+  /**
+   * E05/C1: abre a edição com a LINHA COMPLETA (`select('*')`), não com a linha
+   * resumida da lista — que não traz os campos de endereço. Se o `getById` falhar
+   * (RLS), abre com a linha da lista avisando o operador; nesse caso o E04 impede
+   * que os campos de endereço sejam gravados.
+   */
+  const openEditDialog = useCallback(async (contact: Contact) => {
+    setIsSubmitting(true);
+    try {
+      const { data, error } = await ContactService.getById(contact.id);
+      if (error) throw error;
+      if (data) {
+        setEditingContact({
+          ...data,
+          latitude: coordinateToForm(data.latitude),
+          longitude: coordinateToForm(data.longitude),
+        } as Contact);
+      } else {
+        setEditingContact(withoutAddressFields(contact));
+        feedback.warning('Endereço não carregado — os campos de endereço não serão alterados.');
+      }
+    } catch {
+      setEditingContact(withoutAddressFields(contact));
+      feedback.warning('Endereço não carregado — os campos de endereço não serão alterados.');
+    } finally {
+      setIsSubmitting(false);
+      setIsEditDialogOpen(true);
+    }
+  }, [feedback]);
 
   const handleCancelForm = useCallback(() => {
     setIsAddDialogOpen(false);

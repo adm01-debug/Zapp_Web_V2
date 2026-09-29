@@ -1,5 +1,9 @@
 # Busca de endereço no padrão do playground da Mapbox — Plano em 50 etapas
 
+> **Histórico (2026-09-29).** Os checkboxes abaixo não refletem o estado real: auditoria em
+> `AUDITORIA_PLANO_50_ETAPAS_2026-09-29.md` (33 DONE / 17 PARCIAL / 8 defeitos críticos + 1 perda de
+> dados) e continuação em `PLANO_FINALIZACAO_100_ETAPAS_2026-09-29.md`.
+
 **Repo:** `adm01-debug/Zapp_Web_V2` · **Módulo:** Inbox › Compartilhar Localização (e, na Fase 6, o cadastro de contato)
 **Criado:** 2026-09-25 · **Origem:** Joaquim buscou `XBZ BRINDES` no playground `docs.mapbox.com/playground/search-box/suggest-retrieve` e a empresa apareceu; no ZAPP a mesma busca ia parar no Espírito Santo.
 

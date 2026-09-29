@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Pin, Gift, CheckCircle2, UserCheck, Star, AlarmClock, Archive, Instagram, Facebook, Send, Mail, Globe, Linkedin, type LucideIcon } from 'lucide-react';
+import { Pin, CheckCircle2, UserCheck, Star, AlarmClock, Archive, Instagram, Facebook, Send, Mail, Globe, Linkedin, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
 import { ConversationGroupHeader } from './conversation-list/ConversationGroupHeader';
@@ -451,9 +451,6 @@ const ConversationRow = memo(({
                     return company ? `${displayName} · ${company}` : displayName;
                   })()}
                 </span>
-                {conversation.contact.contact_type === 'sicoob_gifts' && (
-                  <Gift className="w-3.5 h-3.5 text-info flex-shrink-0" />
-                )}
               </div>
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 {conversation.lastMessage && (
@@ -481,9 +478,7 @@ const ConversationRow = memo(({
             )}
             <div className="flex items-center justify-between gap-2">
               <p className="text-[13px] text-muted-foreground truncate pr-2">
-                {conversation.contact.contact_type === 'sicoob_gifts' && conversation.contact.company
-                  ? `${conversation.contact.company} · ${conversation.lastMessage?.content || 'Sem mensagens'}`
-                  : conversation.lastMessage?.content || 'Sem mensagens'}
+                {conversation.lastMessage?.content || 'Sem mensagens'}
               </p>
               {conversation.unreadCount > 0 && (
                 <span className="flex-shrink-0 min-w-[22px] h-[22px] px-1.5 rounded-full flex items-center justify-center text-2xs font-bold bg-primary text-primary-foreground">

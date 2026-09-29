@@ -75,6 +75,14 @@ Sem telefone de empresa, Compras alcança 1 em cada 9 fornecedores.
 
 ---
 
+## Reconciliação com o ADR-007 curto (F19, 2026-09-29)
+
+O `ADR-007-multiplix-ponte-singu.md` (escrito no Portão F0) divergia deste em três pontos. Ele passa a **Superseded by** este arquivo, e as três decisões finais são, para não sobrar dúvida na leitura de quem chega agora:
+
+1. **Secret do Singu = `EXTERNAL_SUPABASE_URL` / `EXTERNAL_SUPABASE_SERVICE_ROLE_KEY`** — os mesmos já usados pelo `crm-integration` para o Singu, declarados em `deploy-functions.yml`. O nome `SINGU_SERVICE_KEY` cogitado no ADR curto não existe em nenhum lugar do projeto.
+2. **Teto de 200 destinatários por envio e "conexão em risco" valem** — `talkx_settings.multiplix_max_recipients_default = 200` (acima disso só com confirmação explícita, gravada na criação) e a pausa automática de todos os dispatches da conexão após 3 falhas permanentes consecutivas ou evento `TemporaryBan`/`ConnectFailure` (D2.2 e D2.4 acima). O "nenhum parâmetro novo de risco" do ADR curto não corresponde ao que foi implementado.
+3. **Telefone de empresa como destino só para B2B** — `is_supplier`/`is_carrier`; cliente nunca recebe por telefone genérico da empresa (D4 acima).
+
 ## Consequências
 
 - Fase 1 do plano (Ponte Singu) começa com D1 aceito; DDL no Singu continua 🔒 PARA por PR aberta.

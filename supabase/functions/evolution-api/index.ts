@@ -37,6 +37,14 @@ serve(async (req) => {
     global: { headers: { Authorization: req.headers.get('Authorization') || '' } },
   });
 
+  // E25: toda ação requer JWT válido — evolution-api não tem endpoints públicos.
+  const { data: { user: _callerUser }, error: _callerAuthError } = await callerClient.auth.getUser();
+  if (_callerAuthError || !_callerUser) {
+    return new Response(JSON.stringify({ error: true, message: 'Não autenticado.' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   const url = new URL(req.url);
   const pathParts = url.pathname.split('/').filter(Boolean);
   const pathAction = pathParts[pathParts.length - 1];

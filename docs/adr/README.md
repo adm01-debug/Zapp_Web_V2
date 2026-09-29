@@ -22,6 +22,8 @@ An ADR is a short document (typically 1-3 pages) that records:
 | 004 | [ADR-004-branch-protection-solo-maintainer.md](./ADR-004-branch-protection-solo-maintainer.md) | Proteção da `main` com mantenedor único (approvals = 0) | Accepted | 2026-09-05 |
 | 005 | [ADR-005-conversation-state-machine.md](./ADR-005-conversation-state-machine.md) | Máquina de estados explícita para conversas | Proposed | 2026-09-05 |
 | 006 | [ADR-006-login-lockout-server-side.md](./ADR-006-login-lockout-server-side.md) | Lockout de login assistido pelo cliente — risco aceito e caminho server-side | Proposed | 2026-09-05 |
+| 007 | [ADR-007-multiplix-ponte-singu-canal-e-aptidao.md](./ADR-007-multiplix-ponte-singu-canal-e-aptidao.md) | Multiplix: ponte Singu, canal não oficial, aptidão sem consentimento e destino de empresa | Accepted | 2026-09-26 |
+| 007 | [ADR-007-multiplix-ponte-singu.md](./ADR-007-multiplix-ponte-singu.md) | Multiplix: ponte de acesso ao Singu e decisões de Fase 0 | Superseded | 2026-09-26 |
 
 ## Guidelines
 

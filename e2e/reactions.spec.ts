@@ -14,7 +14,7 @@ test.describe('Reactions flow', () => {
     // que o localStorage esta carregado quando o cleanup precisa do access_token.
     // Root cause de :70: goto('/') pode terminar antes de o SPA hidratar o
     // localStorage; se o token nao estava disponivel, cleanupE2EReactions falhava
-    // silenciosamente (console.warn), deixando a reacao do :65 no banco — o clique
+    // silenciosamente (console.warn), deixando a reacao do :65 no banco -- o clique
     // subsequente em :70 REMOVIA a reacao em vez de adicionar, e o badge nunca aparecia.
     await ensureFixtureConversationOpen(page);
     await cleanupE2EReactions(page);
@@ -42,7 +42,7 @@ test.describe('Reactions flow', () => {
     // Wait for messages to load
     await page.waitForSelector('[data-testid="message-group"]', { timeout: 10_000 });
 
-    // QuickReactionBar is always in the DOM (opacity-0 until hover) — check attachment
+    // QuickReactionBar is always in the DOM (opacity-0 until hover) -- check attachment
     await expect(
       page.getByTestId('quick-reaction-bar').first()
     ).toBeAttached();
@@ -60,7 +60,16 @@ test.describe('Reactions flow', () => {
     const firstMessage = page.locator('[data-testid="message-group"]').first();
     await firstMessage.hover();
 
-    // Force-click 👍 (bar may still be opacity-0 in Playwright's rendering context)
+    // Wait for profile query to resolve before clicking -- addMutation throws when
+    // profileId is null (profile React Query not yet settled), causing the badge to
+    // never appear. data-profile-ready is set by QuickReactionBar once currentProfileId
+    // is non-null.
+    await page
+      .locator('[data-testid="quick-reaction-bar"][data-profile-ready="true"]')
+      .first()
+      .waitFor({ timeout: 10_000 });
+
+    // Force-click thumbsup (bar may still be opacity-0 in Playwright rendering context)
     await page
       .locator('[data-testid="quick-reaction-emoji"][data-emoji="👍"]')
       .first()
@@ -83,6 +92,14 @@ test.describe('Reactions flow', () => {
     const firstMessage = page.locator('[data-testid="message-group"]').first();
     await firstMessage.hover();
 
+    // Wait for profile query to resolve before clicking -- addMutation throws when
+    // profileId is null (profile React Query not yet settled), causing the badge to
+    // never appear.
+    await page
+      .locator('[data-testid="quick-reaction-bar"][data-profile-ready="true"]')
+      .first()
+      .waitFor({ timeout: 10_000 });
+
     // Add the reaction
     await page
       .locator('[data-testid="quick-reaction-emoji"][data-emoji="👍"]')
@@ -92,7 +109,12 @@ test.describe('Reactions flow', () => {
     const badge = page.locator('[data-testid="reaction-badge"][data-emoji="👍"]').first();
     await expect(badge).toBeVisible({ timeout: 8_000 });
 
-    // Toggle it off
+    // Toggle it off -- move mouse away first to dismiss the quick-reaction-bar overlay.
+    // firstMessage.hover() earlier activated the bar (CSS opacity transition); the
+    // quick-reaction-emoji (data-index virtualised row) intercepts pointer events
+    // and blocks badge.click(). Moving mouse to (0,0) removes the hover, collapsing
+    // the bar before we click the badge.
+    await page.mouse.move(0, 0);
     await badge.click();
     await expect(badge).not.toBeVisible({ timeout: 8_000 });
   });

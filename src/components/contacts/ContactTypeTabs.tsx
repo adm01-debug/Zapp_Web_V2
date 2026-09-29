@@ -51,7 +51,7 @@ export function ContactTypeTabs({ activeTab, setActiveTab, contactCountByType }:
           <TabsList className="flex h-10 items-center gap-1 bg-transparent border-none p-0 flex-1 justify-start overflow-x-auto flex-nowrap scrollbar-thin snap-x min-w-0">
             <TabsTrigger
               value="all"
-              className="relative isolate h-10 px-4 rounded-[10px] text-sm font-medium text-muted-foreground gap-2 data-[state=active]:text-foreground data-[state=active]:font-semibold shrink-0 snap-start"
+              className="relative isolate h-10 px-4 rounded-[10px] text-sm font-medium text-muted-foreground gap-2 data-[state=active]:text-foreground data-[state=active]:font-semibold data-[state=active]:bg-transparent data-[state=active]:shadow-none shrink-0 snap-start"
             >
               {activeTab === 'all' && <Pill reduceMotion={reduceMotion} />}
               <Users className="w-[18px] h-[18px]" />
@@ -66,7 +66,7 @@ export function ContactTypeTabs({ activeTab, setActiveTab, contactCountByType }:
                 <TabsTrigger
                   key={type.value}
                   value={type.value}
-                  className="relative isolate h-10 px-4 rounded-[10px] text-sm font-medium text-muted-foreground gap-2 data-[state=active]:text-foreground data-[state=active]:font-semibold shrink-0 snap-start"
+                  className="relative isolate h-10 px-4 rounded-[10px] text-sm font-medium text-muted-foreground gap-2 data-[state=active]:text-foreground data-[state=active]:font-semibold data-[state=active]:bg-transparent data-[state=active]:shadow-none shrink-0 snap-start"
                 >
                   {active && <Pill reduceMotion={reduceMotion} />}
                   {resizeIcon(CONTACT_TYPE_ICONS[type.value])}

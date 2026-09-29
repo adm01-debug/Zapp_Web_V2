@@ -152,6 +152,14 @@ jobs:
       - name: Instalar dependencias do guard AST
         run: bun install --frozen-lockfile
 
+      # O teste de integracao da V02 fala com um PostgREST real e e escrito em
+      # Deno, como os testes da edge. Mesma action e mesmo SHA pinado do ci.yml
+      # (o guard nao instala Deno em nenhum outro passo).
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: '2.9.5'
+
       - name: Validar .from() e .rpc() contra o catalogo
         run: node scripts/db-audit/supabase-usage-guard.mjs
 
@@ -199,6 +207,11 @@ jobs:
           INBOX_AUTHZ_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/inbox-contact-authorization.test.sh
 
+      - name: Simular exclusão, status e grants canônicos de Contatos
+        env:
+          CONTACTS_F1_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/contacts-soft-delete-and-status.test.sh
+
       - name: Simular histórico atômico de templates Talk X
         env:
           TALKX_HISTORY_TEST_POSTGRES_IMAGE: postgres:17-alpine
@@ -222,6 +235,11 @@ jobs:
           TALKX_BLACKLIST_POLICY_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-blacklist-policy-forward-only.test.sh
 
+      - name: Simular vazamento e correção da view de métricas Talk X
+        env:
+          TALKX_METRICS_INVOKER_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-metrics-view-invoker.test.sh
+
       - name: Simular snapshot atômico de destinatários Talk X
         env:
           TALKX_DRAFT_RECIPIENTS_TEST_POSTGRES_IMAGE: postgres:17-alpine
@@ -242,6 +260,15 @@ jobs:
           TALKX_MESSAGE_SNAPSHOT_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-message-snapshot.test.sh
 
+      # F20 do plano do Multiplix: replay limpo das 10 migrations do modulo +
+      # as desta tarefa, e assercao negativa do contrato de acesso (anon fora,
+      # FORCE RLS, policies TO authenticated, guarda de mutabilidade, criacao
+      # transacional idempotente com teto, fila e scheduler).
+      - name: Simular contrato de acesso e fila do Multiplix
+        env:
+          MULTIPLIX_RLS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/multiplix-rls.test.sh
+
       - name: Simular estados e audiencia canônicos do Talk X
         env:
           TALKX_CAMPAIGN_STATE_TEST_POSTGRES_IMAGE: postgres:17-alpine
@@ -251,6 +278,18 @@ jobs:
         env:
           TALKX_CAMPAIGN_TRANSITIONS_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-campaign-transitions.test.sh
+
+      # O teste existente acima monta o fixture aplicando SO a migration de
+      # 20260911150000 (um overload), e por isso nunca viu a ambiguidade que
+      # existe em producao quando a versao de 3 args de 20260916210000 tambem
+      # esta viva. Este passo sobe PostgREST de verdade e chama a RPC por HTTP,
+      # sem mock: HTTP 300 PGRST203 antes da migration, 200 e o ciclo completo
+      # depois.
+      - name: Provar ambiguidade do overload de transition_talkx_campaign no PostgREST
+        env:
+          TALKX_TRANSITION_POSTGREST_PG_IMAGE: postgres:17-alpine
+          TALKX_TRANSITION_POSTGREST_IMAGE: public.ecr.aws/supabase/postgrest:v14.5
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-transition-overload-postgrest.test.sh
 
       - name: Simular primitivas atômicas de mensagens e encerramento
         env:

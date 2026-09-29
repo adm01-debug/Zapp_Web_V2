@@ -48,6 +48,7 @@ export default {
         "7xl": ["4.5rem", { lineHeight: "1" }],
         "8xl": ["6rem", { lineHeight: "1" }],
         "9xl": ["8rem", { lineHeight: "1" }],
+        "kpi-value": ["2.125rem", { lineHeight: "1", fontVariantNumeric: "tabular-nums" }], // 34px — KPI card value
       },
       colors: {
         border: "hsl(var(--border))",

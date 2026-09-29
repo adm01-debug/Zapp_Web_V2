@@ -69,6 +69,46 @@ order by created_at desc;
 A flag `mapa.searchbox-autocomplete` foi ligada em `2026-09-26T13:20:15Z` (E48). O Apêndice B
 do plano tem o histórico completo.
 
+## C1 — perda de endereço no cadastro de contato (Fase 1 / E07)
+
+**Medido em 2026-09-29, antes do deploy da Fase 1** (`select count(*) from public.contacts`):
+
+| Métrica | Valor |
+|---|---|
+| Contatos no total | **3.104** |
+| Contatos com `address` | **0** |
+| Contatos com `city` | **0** |
+| Contatos com `postal_code` | **0** |
+| Contatos com `latitude` | **0** |
+| Contatos atualizados desde o rollout da flag (26/09 13:20 UTC) | **24** |
+| Sessões de autocomplete em `contact-form` | **6** |
+
+Leitura: o autocomplete do cadastro rodou 6 vezes e **nenhum** endereço sobreviveu. A causa é o C1 —
+a lista de contatos vem de `search_contacts`, que não devolvia as colunas de endereço, e o
+`UPDATE` da edição gravava `null` em todas elas. Como as 24 edições de contato do período passaram
+por esse caminho, o endereço digitado no cadastro era apagado na primeira edição.
+
+**Limitação, sem maquiagem:** não existe backup lógico da linha anterior no repo e o trigger de
+auditoria de endereço (`trg_audit_contact_address_change`) só passa a existir a partir da Fase 1 —
+antes disso não havia trilha. Portanto os endereços digitados entre 26/09 e o deploy da Fase 1 **não
+são recuperáveis**: o que sobrou é apenas a contagem acima (0). O que a Fase 1 garante é que a
+próxima digitação sobrevive, e que uma nova regressão vira evento no `audit_logs`.
+
+## Detecção de regressão do C1 (E96)
+
+```sql
+-- Esperado: 0 fora de apagamento intencional do endereço pelo operador.
+select count(*)
+from audit_logs
+where action = 'contact_address_changed'
+  and (details->>'cleared')::boolean
+  and created_at > now() - interval '7 days';
+```
+
+Um número > 0 aqui significa que uma edição de contato esvaziou endereço e coordenada sem o
+operador pedir — é o sintoma do C1 voltando. Rodar 1× depois de cada deploy que toque o módulo de
+Contatos (o detalhe do evento é só `{contact_id, cleared}`, sem PII).
+
 ## Privacidade (E39)
 
 - O termo digitado no picker vai para a Mapbox (`/suggest` e `/retrieve`, params `q`/`mapbox_id`) —

@@ -51,7 +51,6 @@ export const EmailChatView = lazyWithRetry(() => import('@/components/email/Emai
 export const PublicApiDashboard = lazyWithRetry(() => import('@/components/admin/PublicApiDashboard').then(m => ({ default: m.PublicApiDashboard })));
 export const GmailWebhookMonitor = lazyWithRetry(() => import('@/components/admin/GmailWebhookMonitor').then(m => ({ default: m.GmailWebhookMonitor })));
 export const MediaMigrationTool = lazyWithRetry(() => import('@/components/admin/MediaMigrationTool').then(m => ({ default: m.MediaMigrationTool })));
-export const SicoobBridgeDashboard = lazyWithRetry(() => import('@/components/admin/SicoobBridgeDashboard').then(m => ({ default: m.SicoobBridgeDashboard })));
 export const CRM360ExplorerView = lazyWithRetry(() => import('@/components/crm360/CRM360ExplorerView').then(m => ({ default: m.CRM360ExplorerView })));
 export const AIUsageDashboard = lazyWithRetry(() => import('@/components/admin/AIUsageDashboard').then(m => ({ default: m.AIUsageDashboard })));
 export const TalkXView = lazyWithRetry(() => import('@/components/talkx/TalkXView'));
