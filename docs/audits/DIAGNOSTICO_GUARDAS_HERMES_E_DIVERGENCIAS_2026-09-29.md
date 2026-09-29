@@ -29,8 +29,12 @@ vigor. Não há ação pendente para o executor.
 
 ## 2. `search_contacts`: arquivo de 17 colunas × SQL vivo de 23 colunas
 
-**Rastro (confirmado pelo Joaquim em 29/09/2026):** o arquivo foi **renomeado dentro do próprio PR
-#1172**, depois de já estar aplicado, para evitar colisão de versão. Isso se soma à causa do
+**Rastro (conferido no histórico em 29/09/2026, `git log --all --name-status`):** o próprio arquivo
+`20260929370000` **nunca foi renomeado** — foi **adicionado já com o nome final** no commit `41f66910`
+(PR #1172, status `A`). Quem foi renomeada dentro daquele PR foi a migration **vizinha**
+`20260929390000_contacts_conversation_status_and_grants.sql` → `20260929560000_...` (commit `b1d38824`,
+`+0 -0`), para liberar a versão. A versão desta entrada foi mencionada por engano como se ela mesma
+tivesse sido renomeada; o texto da entrada de evidência foi corrigido no PR #1214. Isso se soma à causa do
 conteúdo divergente: o SQL corrigido (23 colunas) foi aplicado direto no banco depois de o gateway
 recusar `42P13` na primeira tentativa, e o arquivo ficou com o replay anterior — porque migration
 aplicada é imutável (regra 7). A entrada de evidência registra as duas coisas.
