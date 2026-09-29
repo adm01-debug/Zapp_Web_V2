@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useTeamMemberDetails } from '@/hooks/team-chat/useTeamMemberDetails';
+import { useAgentPresenceMap } from '@/hooks/team-chat/useAgentPresenceMap';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,12 @@ export function TeamMemberDetails({ conversation, onClose, isGroupOwner, onManag
   const toggleAll = () => { const allClosed = !sections.info && !sections.team && !sections.activity; setSections({ info: allClosed, team: allClosed, activity: allClosed }); };
 
   const { memberProfile, isLoading, groupMembers } = useTeamMemberDetails(conversation, profile?.id ?? null);
+  const presenceMap = useAgentPresenceMap();
+
+  const otherMemberId = conversation.type === 'direct'
+    ? (conversation.members?.find(m => m.profile_id !== profile?.id)?.profile_id ?? null)
+    : null;
+  const isDirectOnline = otherMemberId ? (presenceMap.has(otherMemberId)) : false;
 
   return (
     <div className="w-[300px] border-l border-border flex flex-col bg-inbox-panel h-full" role="complementary" aria-label="Detalhes da conversa">
@@ -49,7 +56,9 @@ export function TeamMemberDetails({ conversation, onClose, isGroupOwner, onManag
         </div>
       </div>
       <ScrollArea className="flex-1">
-        {conversation.type === 'direct' ? <DirectProfileHeader memberProfile={memberProfile ?? null} isLoading={isLoading} /> : <GroupProfileHeader conversation={conversation} />}
+        {conversation.type === 'direct'
+          ? <DirectProfileHeader memberProfile={memberProfile ?? null} isLoading={isLoading} isOnline={isDirectOnline} />
+          : <GroupProfileHeader conversation={conversation} />}
 
         {conversation.type === 'group' && isGroupOwner && onManageGroup && (
           <div className="px-4 py-2 border-b border-border">
@@ -89,11 +98,12 @@ export function TeamMemberDetails({ conversation, onClose, isGroupOwner, onManag
                 {groupMembers.map(member => {
                   const mBirthday = getBirthdayInfo(member.birthday);
                   const mRole = getRoleBadge(member.role);
+                  const memberOnline = presenceMap.has(member.id);
                   return (
                     <div key={member.id} className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-muted/50 transition-colors">
                       <div className="relative">
                         <Avatar className="h-9 w-9"><AvatarImage src={member.avatar_url || undefined} alt={member.name || 'Membro'} /><AvatarFallback className="text-xs bg-muted">{member.name?.charAt(0) || '?'}</AvatarFallback></Avatar>
-                        {member.is_active && <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-success border-2 border-card" />}
+                        {memberOnline && <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-success border-2 border-card" />}
                         {mBirthday?.isToday && <div className="absolute -top-1 -right-1 text-xs">🎂</div>}
                       </div>
                       <div className="flex-1 min-w-0">

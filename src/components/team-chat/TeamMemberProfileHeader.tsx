@@ -47,9 +47,10 @@ export function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType;
 interface DirectProfileHeaderProps {
   memberProfile: MemberProfile | null;
   isLoading: boolean;
+  isOnline?: boolean;
 }
 
-export function DirectProfileHeader({ memberProfile, isLoading }: DirectProfileHeaderProps) {
+export function DirectProfileHeader({ memberProfile, isLoading, isOnline = false }: DirectProfileHeaderProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center py-6 px-4">
@@ -71,15 +72,15 @@ export function DirectProfileHeader({ memberProfile, isLoading }: DirectProfileH
           <AvatarImage src={memberProfile.avatar_url || undefined} alt={memberProfile.name || 'Membro'} />
           <AvatarFallback className="text-xl bg-primary/10 text-primary">{memberProfile.name?.charAt(0) || '?'}</AvatarFallback>
         </Avatar>
-        {memberProfile.is_active && <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-success border-2 border-card" />}
+        {isOnline && <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-success border-2 border-card" />}
         {birthdayInfo?.isToday && <div className="absolute -top-1 -right-1 text-lg" title="Aniversário hoje!">🎂</div>}
       </div>
       <h3 className="text-base font-bold text-foreground">{memberProfile.name}</h3>
       {memberProfile.job_title && <p className="text-xs text-muted-foreground mt-0.5">{memberProfile.job_title}</p>}
       <div className="flex items-center gap-2 mt-2">
         <Badge variant="outline" className={cn('text-3xs px-2', roleBadge.className)}><Shield className="w-2.5 h-2.5 mr-1" />{roleBadge.label}</Badge>
-        <Badge variant="outline" className={cn('text-3xs px-2', memberProfile.is_active ? 'bg-success/10 text-success border-success/20' : '')}>
-          {memberProfile.is_active ? 'Online' : 'Offline'}
+        <Badge variant="outline" className={cn('text-3xs px-2', isOnline ? 'bg-success/10 text-success border-success/20' : '')}>
+          {isOnline ? 'Online' : 'Offline'}
         </Badge>
       </div>
       {birthdayInfo && (
