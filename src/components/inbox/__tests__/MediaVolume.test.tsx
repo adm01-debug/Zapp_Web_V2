@@ -283,6 +283,22 @@ describe('volume das mídias — controle, aplicação e separação dos alertas
     expect(novo.volume).toBeCloseTo(toGain(40), 5);
   });
 
+  it('E07/E44: o mesmo elemento que recarrega (loadedmetadata, sem re-render) volta ao volume do store', () => {
+    setVolume(40);
+    const { container } = render(<AudioComUrl url="https://test.com/assinada.webm" />);
+    const audio = container.querySelector('audio') as HTMLAudioElement;
+    expect(audio.volume).toBeCloseTo(toGain(40), 5);
+
+    // O navegador recarrega o recurso (URL renovada) e o volume nativo volta a 1 —
+    // sem re-render do React, o layout effect não roda: quem reaplica é o listener.
+    audio.volume = 1;
+    act(() => {
+      audio.dispatchEvent(new Event('loadedmetadata'));
+    });
+
+    expect(audio.volume).toBeCloseTo(toGain(40), 5);
+  });
+
   // ─── E14: integração no player do balão ─────────────────────────────────
 
   it('E14: o player de áudio do balão traz o controle de volume (recebido e enviado)', async () => {
