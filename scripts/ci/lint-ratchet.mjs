@@ -277,6 +277,21 @@ function uniqueRenameAliases(baseline, current) {
   return aliases;
 }
 
+// A mensagem de varias regras (as `react-hooks/*`, por exemplo) embute um recorte de codigo COM os
+// numeros de linha e o `:linha:coluna` do arquivo. Como a chave do ratchet inclui a mensagem, isso
+// amarrava a ocorrencia a posicao ABSOLUTA: inserir uma linha acima de uma ocorrencia antiga a fazia
+// parecer nova, mesmo com codigo e contexto identicos — e o pre-commit (`--staged`) e o pre-push
+// (repo inteiro) bloqueiam o commit por causa disso. A posicao continua sendo exigida pelas fases de
+// localizacao e de ancora (line/column/spanHash/lineHash/contextHash); aqui sai apenas o ruido de
+// posicao que vive dentro do TEXTO da mensagem.
+const CODE_FRAME_LINE_NUMBER = /(^|\s)>?\s*\d{1,7}\s*\|(?=\s)/g;
+const MESSAGE_FILE_LOCATION = /(?<=[A-Za-z_./\\-]):\d{1,7}:\d{1,7}(?=\s|$)/g;
+
+export function stripVolatilePosition(message) {
+  if (typeof message !== "string") return message;
+  return message.replace(CODE_FRAME_LINE_NUMBER, "$1|").replace(MESSAGE_FILE_LOCATION, "");
+}
+
 function locationKey(issue, canonicalFile) {
   return JSON.stringify([
     canonicalFile,
@@ -287,7 +302,7 @@ function locationKey(issue, canonicalFile) {
     issue.severity,
     issue.ruleId,
     issue.messageId,
-    issue.message,
+    stripVolatilePosition(issue.message),
     issue.spanHash,
     issue.lineHash,
   ]);
@@ -301,7 +316,7 @@ function anchoredKey(issue, canonicalFile, anchorField) {
     issue.severity,
     issue.ruleId,
     issue.messageId,
-    issue.message,
+    stripVolatilePosition(issue.message),
     issue[anchorField],
   ]);
 }
