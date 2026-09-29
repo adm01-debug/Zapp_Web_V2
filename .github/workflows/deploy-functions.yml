@@ -276,8 +276,12 @@ jobs:
           node --input-type=module <<'NODE'
           import { readFileSync, writeFileSync } from 'node:fs';
           const evidenceDir = `${process.env.RUNNER_TEMP}/edge-deployment-evidence`;
-          const log = readFileSync(`${evidenceDir}/deploy-output.log`, 'utf8');
-          const unchanged = [...log.matchAll(/^No change found in Function: (\S+)$/gm)].map((m) => m[1]);
+          const rawLog = readFileSync(`${evidenceDir}/deploy-output.log`, 'utf8');
+          // F-03 (run 36583351162, 2026-09-29): supabase CLI emite ANSI mesmo piped para tee;
+          // strip de ANSI + padrao sem ancoras ^/$ evita falso-negativo que esvaziava unchangedSet
+          // e fazia a attestacao esgotar 144 tentativas esperando version bumps que nunca viriam.
+          const log = rawLog.replace(/\x1b\[[0-9;]*[mGKHF]/g, '');
+          const unchanged = [...log.matchAll(/No change found in Function: (\S+)/g)].map((m) => m[1]);
           writeFileSync(`${evidenceDir}/unchanged-functions.json`, JSON.stringify(unchanged));
           console.log(`Funcoes sem mudanca de bundle: ${unchanged.length ? unchanged.join(', ') : 'nenhuma'}`);
           NODE
