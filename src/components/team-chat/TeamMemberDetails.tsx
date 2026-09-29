@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { X, Phone, Mail, Briefcase, Building2, Cake, Calendar, ChevronDown, User, Users, ChevronsDownUp } from 'lucide-react';
+import { X, Phone, Mail, Briefcase, Building2, Cake, Calendar, ChevronDown, User, Users, ChevronsDownUp, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -25,9 +25,14 @@ function SectionHeader({ icon: Icon, label, open, onToggle }: { icon: React.Elem
   );
 }
 
-interface TeamMemberDetailsProps { conversation: TeamConversation; onClose: () => void; }
+interface TeamMemberDetailsProps {
+  conversation: TeamConversation;
+  onClose: () => void;
+  isGroupOwner?: boolean;
+  onManageGroup?: () => void;
+}
 
-export function TeamMemberDetails({ conversation, onClose }: TeamMemberDetailsProps) {
+export function TeamMemberDetails({ conversation, onClose, isGroupOwner, onManageGroup }: TeamMemberDetailsProps) {
   const { profile } = useAuth();
   const [sections, setSections] = useState({ info: true, team: false, activity: false });
   const toggleAll = () => { const allClosed = !sections.info && !sections.team && !sections.activity; setSections({ info: allClosed, team: allClosed, activity: allClosed }); };
@@ -45,6 +50,20 @@ export function TeamMemberDetails({ conversation, onClose }: TeamMemberDetailsPr
       </div>
       <ScrollArea className="flex-1">
         {conversation.type === 'direct' ? <DirectProfileHeader memberProfile={memberProfile ?? null} isLoading={isLoading} /> : <GroupProfileHeader conversation={conversation} />}
+
+        {conversation.type === 'group' && isGroupOwner && onManageGroup && (
+          <div className="px-4 py-2 border-b border-border">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-2"
+              onClick={onManageGroup}
+            >
+              <Settings className="w-3.5 h-3.5" />
+              Gerenciar grupo
+            </Button>
+          </div>
+        )}
 
         {conversation.type === 'direct' && memberProfile && (
           <Collapsible open={sections.info} onOpenChange={(o) => setSections(s => ({ ...s, info: o }))}>

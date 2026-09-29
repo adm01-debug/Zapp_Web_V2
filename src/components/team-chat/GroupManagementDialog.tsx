@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserMinus, LogOut, Users, Trash2 } from 'lucide-react';
+import { UserMinus, LogOut, Users, Trash2, Camera, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+// eslint-disable-next-line no-restricted-imports
+import { supabase } from '@/integrations/supabase/client';
 import type { TeamConversation } from '@/hooks/team-chat/teamChatTypes';
 
 interface MemberItem {
@@ -45,6 +48,7 @@ interface Props {
   onRemoveMember: (profileId: string) => void;
   onLeave: () => void;
   onDelete?: () => void;
+  onAvatarUpdated?: (url: string) => void;
 }
 
 export function GroupManagementDialog({
@@ -54,14 +58,21 @@ export function GroupManagementDialog({
   isGroupCreator,
   currentUserId,
   isRenamePending,
+  isRemovePending,
   isLeavePending,
   isDeletePending,
   onRename,
   onRemoveMember,
   onLeave,
   onDelete,
+  onAvatarUpdated,
 }: Props) {
   const [name, setName] = useState(conversation.name ?? '');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync name when conversation changes
+  useEffect(() => { setName(conversation.name ?? ''); }, [conversation.name]);
 
   const members = (conversation.members ?? []) as unknown as MemberItem[];
 
@@ -69,6 +80,32 @@ export function GroupManagementDialog({
     const trimmed = name.trim();
     if (!trimmed || trimmed === conversation.name) return;
     onRename(trimmed);
+  };
+
+  const handleAvatarUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) { toast.error('Selecione uma imagem'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error('Imagem deve ter no máximo 5 MB'); return; }
+    setIsUploadingAvatar(true);
+    try {
+      const ext = file.name.split('.').pop() ?? 'jpg';
+      const path = `team-conversations/${conversation.id}/avatar.${ext}`;
+      const { data, error } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(data.path);
+      const { error: updErr } = await supabase
+        .from('team_conversations')
+        .update({ avatar_url: publicUrl })
+        .eq('id', conversation.id);
+      if (updErr) throw updErr;
+      toast.success('Foto do grupo atualizada');
+      onAvatarUpdated?.(publicUrl);
+    } catch {
+      toast.error('Erro ao atualizar foto do grupo');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
   };
 
   return (
@@ -82,6 +119,43 @@ export function GroupManagementDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-1">
+          {/* Avatar section (creator only) */}
+          {isGroupCreator && (
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Avatar className="w-16 h-16">
+                  <AvatarImage src={conversation.avatar_url ?? undefined} alt={conversation.name ?? 'Grupo'} />
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    <Users className="w-6 h-6" />
+                  </AvatarFallback>
+                </Avatar>
+                <button
+                  type="button"
+                  disabled={isUploadingAvatar}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:bg-primary/90 transition-colors disabled:opacity-60"
+                  aria-label="Alterar foto do grupo"
+                >
+                  {isUploadingAvatar
+                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    : <Camera className="w-3.5 h-3.5" />}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  aria-hidden
+                  onChange={e => { const f = e.target.files?.[0]; if (f) void handleAvatarUpload(f); e.target.value = ''; }}
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{conversation.name ?? 'Grupo sem nome'}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Clique na foto para alterar</p>
+              </div>
+            </div>
+          )}
+
           {isGroupCreator && (
             <div className="space-y-2">
               <Label htmlFor="group-name-input">Nome do grupo</Label>
@@ -146,8 +220,11 @@ export function GroupManagementDialog({
                                 size="icon"
                                 className="w-7 h-7 text-destructive/60 hover:text-destructive hover:bg-destructive/10"
                                 aria-label={`Remover ${displayName}`}
+                                disabled={isRemovePending}
                               >
-                                <UserMinus className="w-3.5 h-3.5" />
+                                {isRemovePending
+                                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  : <UserMinus className="w-3.5 h-3.5" />}
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
@@ -205,7 +282,7 @@ export function GroupManagementDialog({
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
                     <AlertDialogAction
                       className="bg-destructive hover:bg-destructive/90"
-                      onClick={onLeave}
+                      onClick={() => { onLeave(); onOpenChange(false); }}
                     >
                       Sair
                     </AlertDialogAction>
@@ -241,7 +318,7 @@ export function GroupManagementDialog({
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
                     <AlertDialogAction
                       className="bg-destructive hover:bg-destructive/90"
-                      onClick={onDelete}
+                      onClick={() => { onDelete(); onOpenChange(false); }}
                     >
                       Excluir permanentemente
                     </AlertDialogAction>

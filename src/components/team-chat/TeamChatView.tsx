@@ -1,19 +1,25 @@
 import { useState, useMemo } from 'react';
-import { useTeamConversations } from '@/hooks/chat/useTeamChat';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useTeamConversations } from '@/hooks/chat/useTeamChat';
 import type { TeamConversation, TeamInboxRow, ConversationType } from '@/hooks/team-chat/teamChatTypes';
 import { TeamConversationList } from './TeamConversationList';
 import { TeamChatPanel } from './TeamChatPanel';
 import { TeamMemberDetails } from './TeamMemberDetails';
+import { GroupManagementDialog } from './GroupManagementDialog';
 import { NewConversationDialog } from './NewConversationDialog';
 import { MessageSquare, Users, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTeamChatNotifications } from '@/hooks/chat/useTeamChatNotifications';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
+import {
+  useRenameConversation,
+  useRemoveConversationMember,
+  useLeaveConversation,
+  useDeleteConversation,
+} from '@/hooks/team-chat/useTeamChatMutations';
 
 function inboxRowToConversation(row: TeamInboxRow): TeamConversation {
-  const msgType = row.last_message_type;
   return {
     id: row.conversation_id,
     type: row.type as ConversationType,
@@ -29,10 +35,10 @@ function inboxRowToConversation(row: TeamInboxRow): TeamConversation {
       conversation_id: row.conversation_id,
       sender_id: row.last_message_sender_id ?? '',
       content: row.last_message_content ?? '',
-      message_type: msgType ?? 'text',
+      message_type: row.last_message_type ?? 'text',
       status: null,
       media_url: null,
-      media_type: (msgType && msgType !== 'text') ? msgType : null,
+      media_type: null,
       media_bucket: null,
       media_path: null,
       reply_to_id: null,
@@ -45,15 +51,20 @@ function inboxRowToConversation(row: TeamInboxRow): TeamConversation {
 }
 
 export function TeamChatView() {
-  const { data: inboxRows = [], isLoading } = useTeamConversations();
   const { profile } = useAuth();
+  const { data: inboxRows = [] } = useTeamConversations();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [showGroupManagement, setShowGroupManagement] = useState(false);
 
+  const renameConvMutation = useRenameConversation();
+  const removeMemberMutation = useRemoveConversationMember();
+  const leaveMutation = useLeaveConversation();
+  const deleteConvMutation = useDeleteConversation();
+
+  // Enable differentiated notifications for team chat
   useTeamChatNotifications(selectedId);
-
-  const canManageDepartments = profile?.role === 'admin' || profile?.role === 'supervisor';
 
   const conversations = useMemo<TeamConversation[]>(
     () => inboxRows.map(inboxRowToConversation),
@@ -61,6 +72,7 @@ export function TeamChatView() {
   );
 
   const selectedConversation = conversations.find(c => c.id === selectedId) || null;
+  const isGroupCreator = !!(profile?.id && selectedConversation?.created_by === profile.id);
 
   return (
     <div className="flex h-full w-full bg-inbox-panel">
@@ -74,10 +86,6 @@ export function TeamChatView() {
           selectedId={selectedId}
           onSelect={(id) => { setSelectedId(id); setShowDetails(false); }}
           onNewConversation={() => setShowNewDialog(true)}
-          currentUserId={profile?.id}
-          canManageDepartments={canManageDepartments}
-          currentUserName={profile?.name ?? ''}
-          isLoading={isLoading}
         />
       </div>
 
@@ -135,6 +143,8 @@ export function TeamChatView() {
         <TeamMemberDetails
           conversation={selectedConversation}
           onClose={() => setShowDetails(false)}
+          isGroupOwner={isGroupCreator}
+          onManageGroup={() => setShowGroupManagement(true)}
         />
       )}
 
@@ -146,6 +156,24 @@ export function TeamChatView() {
           setShowNewDialog(false);
         }}
       />
+
+      {profile?.id && selectedConversation && (
+        <GroupManagementDialog
+          open={showGroupManagement}
+          onOpenChange={setShowGroupManagement}
+          conversation={selectedConversation}
+          isGroupCreator={isGroupCreator}
+          currentUserId={profile.id}
+          isRenamePending={renameConvMutation.isPending}
+          isRemovePending={removeMemberMutation.isPending}
+          isLeavePending={leaveMutation.isPending}
+          isDeletePending={deleteConvMutation.isPending}
+          onRename={name => renameConvMutation.mutate({ conversationId: selectedConversation.id, name })}
+          onRemoveMember={profileId => removeMemberMutation.mutate({ conversationId: selectedConversation.id, profileId })}
+          onLeave={() => leaveMutation.mutate({ conversationId: selectedConversation.id })}
+          onDelete={() => deleteConvMutation.mutate({ conversationId: selectedConversation.id })}
+        />
+      )}
     </div>
   );
 }
