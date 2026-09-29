@@ -9,3 +9,808 @@ import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
 import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talkx-window.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
+
+// Constant-time string comparison — prevents timing attacks on bearer token checks.
+function timingSafeStringEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const ab = enc.encode(a);
+  const bb = enc.encode(b);
+  if (ab.length !== bb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
+  return diff === 0;
+}
+
+function getGreeting(timeZone = DEFAULT_SCHEDULE_TIMEZONE): string {
+  const hour = new Date().toLocaleString("pt-BR", { timeZone, hour: "numeric", hour12: false });
+  const h = parseInt(hour, 10);
+  if (h >= 5 && h < 12) return "Bom dia";
+  if (h >= 12 && h < 18) return "Boa tarde";
+  return "Boa noite";
+}
+
+// Nomes reservados aos built-ins — um campo customizado do CRM com um desses
+// nomes (ex.: contato com campo "link") nunca pode sequestrar o placeholder
+// built-in correspondente (achado do review: "link" comeria {{link}} antes do
+// passe de tracking).
+const RESERVED_PLACEHOLDER_KEYS = new Set(["saudacao", "link", "nome", "nome_completo", "apelido", "empresa"]);
+
+export function personalize(
+  template: string,
+  contact: { name?: string | null; nickname?: string | null; company?: string | null },
+  customValues: Record<string, string> = {},
+  timeZone = DEFAULT_SCHEDULE_TIMEZONE,
+  trackingUrl?: string,
+): string {
+  const firstName = (contact.name || '').split(' ')[0] || '';
+  const contactValues: Record<string, string> = {
+    nome: firstName,
+    nome_completo: contact.name || '',
+    apelido: contact.nickname || firstName,
+    empresa: contact.company || '',
+  };
+  // Nome do campo customizado vem do CRM (case livre, ex.: "CPF"); o editor de
+  // template força minúsculo no placeholder — casar por chave normalizada.
+  const normalizedCustomValues = new Map<string, string>();
+  for (const [key, value] of Object.entries(customValues)) {
+    const normalizedKey = key.toLowerCase();
+    if (RESERVED_PLACEHOLDER_KEYS.has(normalizedKey)) continue;
+    normalizedCustomValues.set(normalizedKey, value);
+  }
+  // Passe único sobre o template original: um valor inserido (campo customizado
+  // ou dado de contato) nunca é rescaneado como se fosse sintaxe de placeholder
+  // (achado do review: {{cargo}} com valor literal "{{empresa}}" não pode virar
+  // o nome da empresa).
+  return template.replace(/\{\{([^}]+)\}\}/g, (fullMatch, rawKey: string) => {
+    const key = rawKey.toLowerCase();
+    if (key === "saudacao") return getGreeting(timeZone);
+    // E90: {{link}} -> URL de rastreamento por destinatário
+    if (key === "link") return trackingUrl ?? `[${rawKey}]`;
+    // hasOwnProperty (não "in"): "in" também acha propriedades herdadas de
+    // Object.prototype — um placeholder {{constructor}}/{{__proto__}} vazaria
+    // texto de função/objeto em vez de cair no fallback (achado do review).
+    if (Object.prototype.hasOwnProperty.call(contactValues, key)) return contactValues[key];
+    if (normalizedCustomValues.has(key)) return normalizedCustomValues.get(key)!;
+    // Uma variável sem valor (nome digitado errado, campanha sem template com
+    // placeholder solto, ou contato sem aquele campo customizado preenchido)
+    // antes derrubava o envio inteiro para o destinatário (unknown_placeholder).
+    // Mostrar "[variavel]" é sempre melhor que vazar "{{variavel}}" cru ou
+    // bloquear o disparo.
+    return `[${rawKey}]`;
+  });
+}
+
+/** E49: sorteia variante A/B pelo peso. Retorna null se nao houver variantes. */
+async function pickVariant(supabase: SupabaseClient, templateId: string): Promise<{ id: string; content: string; media_url: string | null; media_type: string | null } | null> {
+  const { data: variants, error: varErr } = await supabase
+    .from('talkx_template_variants')
+    .select('id,content,media_url,media_type,weight')
+    .eq('template_id', templateId);
+  if (varErr) throw new Error(`variant_lookup_failed: ${varErr.message}`);
+  if (!variants || variants.length === 0) return null;
+  const total = variants.reduce((s: number, v: { weight: number }) => s + v.weight, 0);
+  let roll = Math.random() * total;
+  for (const v of variants) { roll -= v.weight; if (roll <= 0) return v; }
+  return variants[variants.length - 1];
+}
+
+function randomBetween(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getMediaEndpoint(mediaType: string): string {
+  switch (mediaType) {
+    case "audio": return "sendWhatsAppAudio";
+    default: return "sendMedia";
+  }
+}
+
+export async function handleTalkxSend(
+  req: Request,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _injected?: { supabase?: any; serviceKey?: string },
+): Promise<Response> {
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const headers = { ...getCorsHeaders(req), "Content-Type": "application/json" };
+  const log = new Logger("talkx-send");
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = _injected?.serviceKey ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const evolutionUrl = Deno.env.get("EVOLUTION_API_URL")!;
+    const evolutionKey = Deno.env.get("EVOLUTION_API_KEY")!;
+
+    const supabase = _injected?.supabase ?? createClient(supabaseUrl, serviceKey);
+
+    // Auth: service-role key (scheduler/server-side) OR user JWT with admin/manager role.
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
+    }
+    const token = authHeader.slice(7);
+    const isServiceKey = timingSafeStringEqual(token, serviceKey);
+    if (!isServiceKey) {
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
+      }
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .in("role", ["admin", "supervisor"])
+        .maybeSingle();
+      if (!roleData) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
+      }
+    }
+
+    const body = await req.json();
+    const { campaignId, action } = body;
+
+    // E47: action test --- envia template de teste para um numero
+    if (action === "test") {
+      // customVariables (nomes) e aceito no corpo por retrocompatibilidade com o
+      // frontend, mas nao e mais necessario: qualquer placeholder sem valor real
+      // vira "[nome]" automaticamente (ver personalize()).
+      const { templateContent, mediaUrl, mediaType, phone } = body as {
+        templateContent: string;
+        mediaUrl?: string | null;
+        mediaType?: string | null;
+        phone: string;
+        customVariables?: string[];
+      };
+      if (!templateContent || !phone) {
+        return new Response(JSON.stringify({ error: "templateContent e phone obrigatorios" }), { status: 400, headers });
+      }
+      // Buscar conexao WhatsApp padrao (primeira ativa)
+      const { data: conn } = await supabase
+        .from("whatsapp_connections").select("status, instance_id").eq("status", "connected").limit(1).single();
+      const testInstanceId = liveTalkXInstanceId(conn);
+      if (!testInstanceId) {
+        return new Response(JSON.stringify({ error: "Nenhuma conexao WhatsApp ativa" }), { status: 400, headers });
+      }
+      // Personalizar com dados ficticios para preview
+      const dummyContact = { name: "Joao Silva", nickname: "Joao", company: "Empresa Teste" };
+      let personalizedText: string;
+      try {
+        personalizedText = personalize(templateContent, dummyContact);
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Placeholder invalido" }), { status: 400, headers });
+      }
+      const cleanPhone = phone.replace(/\D/g, "");
+      try {
+        let sendRes: Response;
+        if (mediaUrl && mediaType) {
+          const isAudio = mediaType === "audio";
+          sendRes = await evoFetch(
+            evolutionUrl,
+            evolutionKey,
+            `/message/${isAudio ? "sendWhatsAppAudio" : "sendMedia"}/${testInstanceId}`,
+            isAudio
+              ? { number: cleanPhone, audio: mediaUrl }
+              : { number: cleanPhone, mediatype: mediaType, media: mediaUrl, caption: personalizedText },
+          );
+        } else {
+          sendRes = await evoFetch(evolutionUrl, evolutionKey, `/message/sendText/${testInstanceId}`, {
+            number: cleanPhone, text: personalizedText,
+          });
+        }
+        if (!sendRes.ok) {
+          const body = await sendRes.text().catch(() => '');
+          return new Response(JSON.stringify({ error: `Evolution retornou ${sendRes.status}: ${body}` }), { status: 502, headers });
+        }
+        const providerResult = await sendRes.json().catch(() => null);
+        const providerMessageId = extractMessageId(providerResult);
+        if (!providerMessageId || providerMessageId.length > 512) {
+          return new Response(JSON.stringify({ error: "Evolution não confirmou um identificador de entrega" }), { status: 502, headers });
+        }
+        return new Response(JSON.stringify({ success: true, provider_message_id: providerMessageId }), { headers });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro ao enviar" }), { status: 500, headers });
+      }
+    }
+
+    if (!campaignId) {
+      return new Response(JSON.stringify({ error: "campaignId required" }), { status: 400, headers });
+    }
+
+    const campaignAction = action ?? "start";
+
+    // Pause/cancel share the same locked database transition used by start.
+    // An update without this lock could resurrect a campaign cancelled by a
+    // concurrent request between its read and write.
+    if (campaignAction === "pause" || campaignAction === "cancel") {
+      const { data, error } = await supabase.rpc("transition_talkx_campaign", {
+        p_campaign_id: campaignId,
+        p_action: campaignAction,
+      });
+      if (error) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 409, headers });
+      }
+      const transition = Array.isArray(data) ? data[0] : data;
+      return new Response(JSON.stringify({ success: true, status: transition?.current_status }), { headers });
+    }
+
+    if (campaignAction !== "start") {
+      return new Response(JSON.stringify({ error: "Invalid campaign action" }), { status: 400, headers });
+    }
+
+    // Get campaign
+    const { data: initialCampaign, error: campErr } = await supabase
+      .from("talkx_campaigns").select("*").eq("id", campaignId).single();
+
+    if (campErr || !initialCampaign) {
+      return new Response(JSON.stringify({ error: "Campaign not found" }), { status: 404, headers });
+    }
+    let campaign = initialCampaign;
+    // Get WhatsApp connection instance
+    const { data: connection } = await supabase
+      .from("whatsapp_connections").select("status, instance_id")
+      .eq("id", campaign.whatsapp_connection_id).eq("status", "connected").single();
+
+    const initialInstanceId = liveTalkXInstanceId(connection);
+    if (!initialInstanceId) {
+      // E91: conexão perdida — pausa automática da campanha
+      try {
+        await supabase.rpc("transition_talkx_campaign", {
+          p_campaign_id: campaignId,
+          p_action: "pause",
+          p_pause_reason: "connection_lost",
+        });
+      } catch { /* já pausada ou outro estado — ignora */ }
+      return new Response(JSON.stringify({ error: "WhatsApp connection lost: campaign paused" }), { status: 409, headers });
+    }
+
+    // Enforce delivery limits in the selected IANA timezone before the locked
+    // transition. An invalid legacy timezone fails closed instead of falling
+    // back to Brasília and sending at an unintended local hour.
+    const windowStatus = deliveryWindowStatus(campaign);
+    if (!windowStatus.allowed) {
+      return new Response(JSON.stringify({ ok: false, reason: windowStatus.reason, next_window: windowStatus.next_window }), { headers });
+    }
+
+    // The transition RPC locks the campaign row and revalidates the state and
+    // minimum launch invariants immediately before any recipient can be claimed.
+    const { error: transitionError } = await supabase.rpc("transition_talkx_campaign", {
+      p_campaign_id: campaignId,
+      p_action: "start",
+    });
+    if (transitionError) {
+      return new Response(JSON.stringify({ error: transitionError.message }), { status: 409, headers });
+    }
+
+    // Get pending recipients with contact info
+    const { data: recipients, error: recipientsError } = await supabase
+      .from("talkx_recipients")
+      .select("*, contacts:contact_id(name, nickname, phone, company)")
+      .eq("campaign_id", campaignId)
+      .in("status", ["pending", "sending"])
+      // E91: exclui recipients cujo retry_after ainda não venceu
+      .or("retry_after.is.null,retry_after.lte." + new Date().toISOString())
+      .order("created_at");
+    if (recipientsError) throw new Error(`talkx_recipients_lookup_failed: ${recipientsError.message}`);
+
+    // E90: link rastreável referenciado por {{link}} no template. Uma campanha
+    // pode ter mais de um link cadastrado; o placeholder é único, então usamos
+    // o mais antigo como canônico em vez de deixar o {{link}} sem substituição.
+    const { data: trackingLink } = await supabase
+      .from("talkx_links")
+      .select("slug")
+      .eq("campaign_id", campaignId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    const trackingUrlFor = (recipientId: string) =>
+      trackingLink?.slug
+        ? `${supabaseUrl}/functions/v1/talkx-link?s=${encodeURIComponent(trackingLink.slug)}&r=${encodeURIComponent(recipientId)}`
+        : undefined;
+
+    // Valor real de variável customizada (ex.: {{cargo}}) vem de
+    // contact_custom_fields, por contato — nunca do template. Antes, o valor
+    // "resolvido" era sempre o nome da variável entre colchetes (`[cargo]`),
+    // nunca o dado de verdade; e campanha sem template salvo (template_id
+    // null) derrubava 100% dos destinatários com unknown_placeholder. Busca
+    // única em lote para todos os contact_id da leva atual, não por
+    // destinatário.
+    const recipientContactIds = Array.from(
+      new Set((recipients || []).map((r: { contact_id?: string | null }) => r.contact_id).filter((id: unknown): id is string => typeof id === "string")),
+    );
+    const customFieldsByContact = new Map<string, Record<string, string>>();
+    if (recipientContactIds.length > 0) {
+      // .in() serializa cada contact_id (UUID) na URL da requisição — uma leva
+      // grande (ex.: 1000 destinatários) geraria ~37KB só de filtro, arriscando
+      // rejeição por tamanho de URL no gateway antes mesmo de paginar o
+      // resultado (achado do review). Delimita por lote de IDs.
+      const CUSTOM_FIELDS_ID_CHUNK_SIZE = 200;
+      // PostgREST limita a 1000 linhas por chamada — leva com muitos contatos x
+      // campos customizados perderia linhas em silêncio sem paginar (achado do
+      // review).
+      const CUSTOM_FIELDS_PAGE_SIZE = 1000;
+      for (let idOffset = 0; idOffset < recipientContactIds.length; idOffset += CUSTOM_FIELDS_ID_CHUNK_SIZE) {
+        const idChunk = recipientContactIds.slice(idOffset, idOffset + CUSTOM_FIELDS_ID_CHUNK_SIZE);
+        for (let offset = 0; ; offset += CUSTOM_FIELDS_PAGE_SIZE) {
+          // .range() sem .order() não garante ordenação estável entre chamadas —
+          // páginas poderiam se sobrepor ou pular linhas (achado do review).
+          // Ordena por "field_name" (não só "id"): o índice único de
+          // (contact_id, field_name) é case-sensitive, então um contato com
+          // "CPF" e "cpf" tem duas linhas reais — o "last write wins" do bucket
+          // abaixo precisa escolher a mesma linha que o preview do wizard
+          // (useContactCustomFields -> ContactService.fetchCustomFields, que
+          // também ordena por field_name), senão o preview mostraria um valor
+          // e o envio real mandaria outro (achado do review). "id" entra só
+          // como desempate determinístico entre páginas.
+          const { data: customFieldRows, error: customFieldsError } = await supabase
+            .from("contact_custom_fields")
+            .select("contact_id, field_name, field_value")
+            .in("contact_id", idChunk)
+            .order("field_name", { ascending: true })
+            .order("id", { ascending: true })
+            .range(offset, offset + CUSTOM_FIELDS_PAGE_SIZE - 1);
+          if (customFieldsError) throw new Error(`contact_custom_fields_lookup_failed: ${customFieldsError.message}`);
+          for (const row of customFieldRows ?? []) {
+            // Campo customizado sem valor preenchido (field_value null) deve cair
+            // no fallback "[variavel]" do personalize(), não virar string vazia
+            // silenciosa (achado do review).
+            if (row.field_value == null) continue;
+            // Object.create(null) (não {}): um campo chamado "__proto__" num
+            // objeto comum invoca o setter de protótipo em vez de virar
+            // propriedade enumerável — o valor real nunca apareceria em
+            // Object.entries() (achado do review).
+            const bucket = customFieldsByContact.get(row.contact_id) ?? (Object.create(null) as Record<string, string>);
+            bucket[row.field_name] = row.field_value;
+            customFieldsByContact.set(row.contact_id, bucket);
+          }
+          if (!customFieldRows || customFieldRows.length < CUSTOM_FIELDS_PAGE_SIZE) break;
+        }
+      }
+    }
+
+    // Check against the source of truth for every recipient. This makes a
+    // phone-only, formatted legacy opt-out equivalent to the contact phone
+    // and lets us repeat the check immediately before a provider POST.
+    const isRecipientSuppressed = async (contactId: string | null, phone: string | null) => {
+      const { data, error } = await supabase.rpc("talkx_recipient_is_suppressed", {
+        p_contact_id: contactId,
+        p_phone: phone,
+      });
+      if (error || typeof data !== "boolean") {
+        throw new Error(`talkx_suppression_check_failed: ${error?.message ?? "invalid_response"}`);
+      }
+      return data;
+    };
+
+    let sentCount = campaign.sent_count || 0;
+    let failedCount = campaign.failed_count || 0;
+    let blacklistedCount = 0;
+    let outcomeUnknownCount = 0;
+    let processedCount = 0; // E78: reler parametros a cada RELOAD_EVERY envios
+    const RELOAD_EVERY = 20;
+    // Cada invocação só pode enviar depois de reivindicar o destinatário no
+    // Postgres. O lease impede que dois workers concorrentes disparem para o
+    // mesmo contato; uma execução morta expira e pode ser recuperada.
+    const workerId = `talkx-send:${crypto.randomUUID()}`;
+    // whatsapp-media e bucket privado: a GO so baixa via signed URL (TTL 300s). Uma
+    // assinatura serve varios destinatarios; reassina depois de 240s porque campanhas
+    // com typingDelay por envio passam do TTL.
+    let signedMedia: { url: string; at: number } | null = null;
+    const mediaForSend = async () => {
+      if (!signedMedia || Date.now() - signedMedia.at > 240_000) {
+        signedMedia = { url: await resolvePrivateBucketUrl(supabase, campaign.media_url, undefined, supabaseUrl), at: Date.now() };
+      }
+      return signedMedia.url;
+    };
+
+    for (const recipient of recipients || []) {
+      // Re-read the state and send limits before each claim. A single initial
+      // check is not enough when a campaign crosses a local-time boundary.
+      const { data: currentCampaign, error: currentCampaignError } = await supabase
+        .from("talkx_campaigns")
+        .select("status, send_interval_min, send_interval_max, typing_delay_min, typing_delay_max, send_window_start, send_window_end, business_hours_only, speed_profile, schedule_timezone")
+        .eq("id", campaignId).single();
+      if (currentCampaignError) throw new Error(`talkx_campaign_state_lookup_failed: ${currentCampaignError.message}`);
+      if (currentCampaign?.status !== "sending") break;
+      campaign = { ...campaign, ...currentCampaign };
+      const currentWindowStatus = deliveryWindowStatus(campaign);
+      if (!currentWindowStatus.allowed) {
+        const { error: pauseError } = await supabase.rpc("transition_talkx_campaign", {
+          p_campaign_id: campaignId,
+          p_action: "pause",
+        });
+        if (pauseError) throw new Error(`talkx_campaign_auto_pause_failed: ${pauseError.message}`);
+        break;
+      }
+
+      const { data: claimRows, error: claimError } = await supabase.rpc("claim_talkx_recipient", {
+        p_campaign_id: campaignId,
+        p_recipient_id: recipient.id,
+        p_worker: workerId,
+        p_lease_seconds: 90,
+      });
+      if (claimError) throw new Error(`talkx_recipient_claim_failed: ${claimError.message}`);
+      const claim = Array.isArray(claimRows) ? claimRows[0] : null;
+      // Outro worker já concluiu ou ainda possui o lease deste destinatário.
+      if (!claim?.claim_token) continue;
+
+      const contact = recipient.contacts as Record<string, unknown>;
+      const recipientPhone = (contact?.phone as string | undefined)?.replace(/\D/g, '');
+      if (await isRecipientSuppressed(recipient.contact_id as string | null, recipientPhone ?? null)) {
+        const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
+          p_recipient_id: recipient.id,
+          p_claim_token: claim.claim_token,
+          p_status: "skipped",
+          p_error_message: "Contato na lista negra (opt-out)",
+        });
+        if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
+        blacklistedCount++;
+        continue;
+      }
+      if (!contact?.phone) {
+        const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
+          p_recipient_id: recipient.id,
+          p_claim_token: claim.claim_token,
+          p_status: "skipped",
+          p_error_message: "Sem número de telefone",
+        });
+        if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
+        continue;
+      }
+
+      // Persist the actual message selected for this recipient before a
+      // provider call. A mutable template variant must never change what a
+      // retry, audit export, or delayed worker would send later.
+      const recipientRecord = recipient as Record<string, unknown>;
+      const hasSnapshot = typeof recipientRecord.message_snapshot_at === "string"
+        && typeof recipientRecord.personalized_message === "string"
+        && recipientRecord.personalized_message.trim().length > 0;
+      let personalizedMsg: string;
+      let effectiveMediaUrl: string | null;
+      let effectiveMediaType: string | null;
+
+      if (hasSnapshot) {
+        personalizedMsg = recipientRecord.personalized_message as string;
+        effectiveMediaUrl = typeof recipientRecord.media_url_snapshot === "string"
+          ? recipientRecord.media_url_snapshot
+          : null;
+        effectiveMediaType = typeof recipientRecord.media_type_snapshot === "string"
+          ? recipientRecord.media_type_snapshot
+          : null;
+      } else {
+        const existingVid = typeof recipientRecord.variant_id === "string" ? recipientRecord.variant_id : null;
+        const legacyPersonalizedMessage = typeof recipientRecord.personalized_message === "string"
+          && recipientRecord.personalized_message.trim().length > 0
+          ? recipientRecord.personalized_message
+          : null;
+        let variant: { id: string; content: string; media_url: string | null; media_type: string | null; weight?: number } | null = null;
+        if (existingVid) {
+          const { data: vData, error: vErr } = await supabase
+            .from('talkx_template_variants').select('id,content,media_url,media_type,weight')
+            .eq('id', existingVid).single();
+          if (vErr || !vData) {
+            // A legacy worker may already have persisted the exact text. In
+            // that case retain it; otherwise fail closed rather than silently
+            // fall back to a changed campaign template.
+            if (!legacyPersonalizedMessage) {
+              throw new Error(`talkx_variant_snapshot_source_unavailable: ${vErr?.message ?? "variant_not_found"}`);
+            }
+          } else {
+            variant = vData;
+          }
+        } else if (campaign.template_id) {
+          variant = await pickVariant(supabase, campaign.template_id);
+        }
+
+        const contentToSend = legacyPersonalizedMessage ?? variant?.content ?? campaign.message_template;
+        const candidateMediaUrl = variant?.media_url ?? campaign.media_url ?? null;
+        const candidateMediaType = variant?.media_type ?? campaign.media_type ?? null;
+        if ((candidateMediaUrl === null) !== (candidateMediaType === null)) {
+          throw new Error("talkx_invalid_media_snapshot_source");
+        }
+        let calculatedMessage: string;
+        const customValues = customFieldsByContact.get(recipient.contact_id as string) ?? {};
+        try {
+          calculatedMessage = legacyPersonalizedMessage ?? personalize(
+            contentToSend,
+            contact as { name: string; nickname?: string; company?: string },
+            customValues,
+            typeof campaign.schedule_timezone === "string" ? campaign.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
+            trackingUrlFor(recipient.id as string),
+          );
+        } catch (e) {
+          // Placeholder desconhecido no roteiro: falha permanente deste destinatário (não do
+          // provedor, nenhum POST foi feito). Não pode derrubar o lote inteiro nem deixar
+          // "{{...}}" vazar para a mensagem real dos demais destinatários já processados.
+          const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
+            p_recipient_id: recipient.id,
+            p_claim_token: claim.claim_token,
+            p_status: "failed",
+            p_error_message: e instanceof Error ? e.message : "Erro ao montar mensagem",
+          });
+          if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
+          failedCount++;
+          processedCount++;
+          continue;
+        }
+        const { data: snapshotRows, error: snapshotError } = await supabase.rpc("persist_talkx_recipient_message_snapshot", {
+          p_recipient_id: recipient.id,
+          p_claim_token: claim.claim_token,
+          p_personalized_message: calculatedMessage,
+          p_media_url: candidateMediaUrl,
+          p_media_type: candidateMediaType,
+          p_variant_id: variant?.id ?? existingVid,
+        });
+        if (snapshotError) throw new Error(`talkx_message_snapshot_failed: ${snapshotError.message}`);
+        const snapshot = Array.isArray(snapshotRows) ? snapshotRows[0] as Record<string, unknown> | undefined : undefined;
+        if (!snapshot || typeof snapshot.personalized_message !== "string") {
+          throw new Error("talkx_message_snapshot_invalid_response");
+        }
+        personalizedMsg = snapshot.personalized_message;
+        effectiveMediaUrl = typeof snapshot.media_url_snapshot === "string" ? snapshot.media_url_snapshot : null;
+        effectiveMediaType = typeof snapshot.media_type_snapshot === "string" ? snapshot.media_type_snapshot : null;
+      }
+      if ((effectiveMediaUrl === null) !== (effectiveMediaType === null)) {
+        throw new Error("talkx_invalid_persisted_media_snapshot");
+      }
+      const recipientHasMedia = effectiveMediaUrl !== null && effectiveMediaType !== null;
+
+      let providerPostAttempted = false;
+      // Precisa viver fora do try: o catch chama clearTimeout(sendTimeout) para
+      // qualquer erro dentro do try, inclusive os lançados antes da linha que
+      // cria o timeout — declarado como `const` dentro do try, essa variável
+      // não existia no escopo do catch (ReferenceError em runtime a cada erro
+      // pré-dispatch, mascarando o erro original em vez de acionar o backoff).
+      let sendTimeout: ReturnType<typeof setTimeout> | undefined;
+      try {
+        const phone = (contact.phone as string).replace(/\D/g, "");
+        const typingDelay = randomBetween(campaign.typing_delay_min, campaign.typing_delay_max);
+
+        try {
+          await evoFetch(evolutionUrl, evolutionKey,
+            `/chat/updatePresence/${initialInstanceId}`,
+            { number: phone, presence: "composing" });
+        } catch { /* Presence update is best-effort */ }
+
+        await sleep(typingDelay);
+
+        // Pause/cancel can race with the presence update or typing delay. Do
+        // not begin a provider POST after the campaign has left `sending`.
+        const { data: beforeSend, error: beforeSendError } = await supabase
+          .from("talkx_campaigns")
+          .select("status, send_window_start, send_window_end, business_hours_only, schedule_timezone")
+          .eq("id", campaignId).single();
+        if (beforeSendError) throw new Error(`talkx_campaign_state_lookup_failed: ${beforeSendError.message}`);
+        const beforeSendWindowStatus = beforeSend ? deliveryWindowStatus(beforeSend) : { allowed: false as const, reason: "campaign_not_found" };
+        const { data: beforeSendConnection, error: beforeSendConnectionError } = await supabase
+          .from("whatsapp_connections")
+          .select("status, instance_id")
+          .eq("id", campaign.whatsapp_connection_id)
+          .maybeSingle();
+        if (beforeSendConnectionError) throw new Error(`talkx_connection_state_lookup_failed: ${beforeSendConnectionError.message}`);
+        const beforeSendInstanceId = liveTalkXInstanceId(beforeSendConnection);
+        if (beforeSend?.status !== "sending" || !beforeSendWindowStatus.allowed || !beforeSendInstanceId) {
+          if (beforeSend?.status === "sending") {
+            const { error: pauseError } = await supabase.rpc("transition_talkx_campaign", {
+              p_campaign_id: campaignId,
+              p_action: "pause",
+            });
+            if (pauseError) throw new Error(`talkx_campaign_auto_pause_failed: ${pauseError.message}`);
+          }
+          if (!beforeSendInstanceId) {
+            log.warn("Campanha pausada: conexão WhatsApp indisponível antes do envio", { campaignId });
+          }
+          const { data: released, error: releaseError } = await supabase.rpc("release_talkx_recipient_claim", {
+            p_recipient_id: recipient.id,
+            p_claim_token: claim.claim_token,
+          });
+          if (releaseError || released !== true) {
+            throw new Error(`talkx_recipient_claim_release_failed: ${releaseError?.message ?? "claim_not_owned"}`);
+          }
+          break;
+        }
+
+        // A contact may opt out after this worker claimed its lease, while it
+        // was waiting for the humanized typing delay. Recheck the normalized,
+        // server-side predicate immediately before a provider request.
+        if (await isRecipientSuppressed(recipient.contact_id as string | null, recipientPhone ?? null)) {
+          const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
+            p_recipient_id: recipient.id,
+            p_claim_token: claim.claim_token,
+            p_status: "skipped",
+            p_error_message: "Contato na lista negra (opt-out)",
+          });
+          if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
+          blacklistedCount++;
+          continue;
+        }
+
+        let sendResponse: Response;
+        const markProviderDispatch = async () => {
+          const { error } = await supabase.rpc("mark_talkx_recipient_dispatch_started", {
+            p_recipient_id: recipient.id,
+            p_claim_token: claim.claim_token,
+          });
+          if (error) throw new Error(`talkx_provider_dispatch_mark_failed: ${error.message}`);
+        };
+
+        // E91: timeout de segurança por envio
+        const abortCtrl = new AbortController();
+        sendTimeout = setTimeout(() => abortCtrl.abort(), 20_000);
+
+        if (recipientHasMedia) {
+          const mediaEndpoint = getMediaEndpoint(effectiveMediaType!);
+          const mediaSource = (effectiveMediaUrl !== campaign.media_url)
+            ? await resolvePrivateBucketUrl(supabase, effectiveMediaUrl!, undefined, supabaseUrl)
+            : await mediaForSend();
+          await markProviderDispatch();
+          providerPostAttempted = true;
+          sendResponse = await evoFetch(evolutionUrl, evolutionKey,
+            `/message/${mediaEndpoint}/${beforeSendInstanceId}`,
+            effectiveMediaType === "audio"
+              ? { number: phone, audio: mediaSource, delay: 0 }
+              : { number: phone, mediatype: effectiveMediaType!, media: mediaSource, caption: personalizedMsg, delay: 0 },
+            undefined, undefined, abortCtrl.signal,
+          );
+        } else {
+          await markProviderDispatch();
+          providerPostAttempted = true;
+          sendResponse = await evoFetch(evolutionUrl, evolutionKey,
+            `/message/sendText/${beforeSendInstanceId}`,
+            { number: phone, text: personalizedMsg, delay: 0 },
+            undefined, undefined, abortCtrl.signal,
+          );
+        }
+        clearTimeout(sendTimeout);
+
+        // POST retries are unsafe without a provider idempotency contract. A
+        // 5xx/connection/parser ambiguity keeps the lease for reconciliation
+        // instead of classifying or resending a message blindly.
+        if (sendResponse.status >= 500) {
+          throw new Error(`talkx_provider_outcome_unknown: HTTP ${sendResponse.status}`);
+        }
+        let sendResult: Record<string, unknown>;
+        try {
+          sendResult = await sendResponse.json();
+        } catch {
+          throw new Error("talkx_provider_outcome_unknown: invalid_response_body");
+        }
+
+        const providerMessageId = extractMessageId(sendResult);
+        if (sendResponse.ok && !sendResult.error && providerMessageId && providerMessageId.length <= 512) {
+          sentCount++;
+          const { error: completionError } = await supabase.rpc("record_talkx_recipient_sent", {
+            p_recipient_id: recipient.id,
+            p_claim_token: claim.claim_token,
+            p_external_id: providerMessageId,
+          });
+          if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
+        } else if (sendResponse.ok && !sendResult.error) {
+          throw new Error("talkx_provider_outcome_unknown: missing_provider_message_id");
+        } else {
+          failedCount++;
+          const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
+            p_recipient_id: recipient.id,
+            p_claim_token: claim.claim_token,
+            p_status: "failed",
+            p_error_message: String(sendResult?.message || sendResult?.error || "Erro ao enviar"),
+          });
+          if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
+        }
+      } catch (err) {
+        clearTimeout(sendTimeout);
+        // E91: erro antes do POST ao provedor — pode reagendar com backoff
+        if (!providerPostAttempted) {
+          const backoffMs = [30_000, 120_000, 600_000];
+          const attemptSoFar = typeof (recipient as Record<string, unknown>).attempt_count === 'number'
+            ? (recipient as Record<string, unknown>).attempt_count as number
+            : 0;
+          const delayMs = backoffMs[Math.min(attemptSoFar, backoffMs.length - 1)];
+          const retryAfter = new Date(Date.now() + delayMs).toISOString();
+          const reason = err instanceof Error ? err.message : "pre_dispatch_error";
+          const { data: schedResult } = await supabase.rpc("reschedule_talkx_recipient", {
+            p_recipient_id: recipient.id,
+            p_claim_token: claim.claim_token,
+            p_retry_after: retryAfter,
+            p_error_message: reason.slice(0, 500),
+          });
+          if (schedResult?.action === 'dead_lettered') failedCount++;
+          processedCount++;
+          const interval = randomBetween(campaign.send_interval_min, campaign.send_interval_max);
+          await sleep(interval);
+          continue;
+        }
+        // A chamada ao provedor pode ter sido aceita quando a confirmação no
+        // banco falhou. Ela nunca pode voltar automaticamente para `pending`:
+        // ao expirar o lease, isso permitiria um segundo POST ao mesmo número.
+        if (providerPostAttempted) {
+          const reason = err instanceof Error ? err.message : "request_failed";
+          const { error: quarantineError } = await supabase.rpc("complete_talkx_recipient", {
+            p_recipient_id: recipient.id,
+            p_claim_token: claim.claim_token,
+            p_status: "outcome_unknown",
+            p_error_message: `Provider outcome unknown: ${reason}`.slice(0, 1000),
+          });
+          if (quarantineError) {
+            // Do not lie about the outcome. A failed quarantine keeps the
+            // lease intact, so it remains visible instead of being retried in
+            // the same invocation.
+            throw new Error(`talkx_recipient_quarantine_failed: ${quarantineError.message}`);
+          }
+          outcomeUnknownCount++;
+          processedCount++;
+          const interval = randomBetween(campaign.send_interval_min, campaign.send_interval_max);
+          await sleep(interval);
+          continue;
+        }
+        failedCount++;
+        const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
+          p_recipient_id: recipient.id,
+          p_claim_token: claim.claim_token,
+          p_status: "failed",
+          p_error_message: err instanceof Error ? err.message : "Erro desconhecido",
+        });
+        if (completionError) throw new Error(`talkx_recipient_failure_completion_failed: ${completionError.message}`);
+      }
+
+      processedCount++;
+      // E78: reler parametros de campanha a cada RELOAD_EVERY envios
+      if (processedCount % RELOAD_EVERY === 0) {
+        const { data: fresh } = await supabase
+          .from("talkx_campaigns")
+          .select("send_interval_min, send_interval_max, typing_delay_min, typing_delay_max, send_window_start, send_window_end, business_hours_only, speed_profile, schedule_timezone")
+          .eq("id", campaignId).single();
+        if (fresh) {
+          campaign = { ...campaign, ...fresh };
+          // Recheck the campaign's own IANA window after configuration reload.
+          // The locked transition preserves a concurrent manual pause/cancel.
+          const refreshedWindowStatus = deliveryWindowStatus(campaign);
+          if (!refreshedWindowStatus.allowed) {
+            log.warn('Campanha pausada automaticamente: fora da janela de envio', { campaignId });
+            const { error: pauseError } = await supabase.rpc("transition_talkx_campaign", {
+              p_campaign_id: campaignId,
+              p_action: "pause",
+            });
+            if (pauseError) throw new Error(`talkx_campaign_auto_pause_failed: ${pauseError.message}`);
+            break;
+          }
+        }
+      }
+      const sendInterval = randomBetween(campaign.send_interval_min, campaign.send_interval_max);
+      await sleep(sendInterval);
+    }
+
+    const { data: completed, error: completionError } = await supabase.rpc(
+      "complete_talkx_campaign_if_drained",
+      { p_campaign_id: campaignId },
+    );
+    if (completionError) throw new Error(`talkx_campaign_completion_failed: ${completionError.message}`);
+
+    log.done(200, { sent: sentCount, failed: failedCount, outcomeUnknown: outcomeUnknownCount });
+
+    return new Response(
+      JSON.stringify({
+        success: true, sent: sentCount, failed: failedCount,
+        total: (recipients || []).length,
+        blacklisted: blacklistedCount,
+        outcome_unknown: outcomeUnknownCount,
+        completed: completed === true,
+      }),
+      { headers }
+    );
+  } catch (err) {
+    log.error("Talk X error", { error: err instanceof Error ? err.message : String(err) });
+    return new Response(
+      JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }),
+      { status: 500, headers }
+    );
+  }
+}
+
+if (import.meta.main) {
+  Deno.serve((req) => handleTalkxSend(req));
+}
