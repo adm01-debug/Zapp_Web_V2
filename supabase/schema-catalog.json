@@ -2086,7 +2086,8 @@
         "profiles.profiles_role_check:CHECK ((role = ANY (ARRAY['admin'::text, 'supervisor'::text, 'agent'::text, 'special_agent'::text])))",
         "talkx_blacklist.talkx_blacklist_origin_check:CHECK ((origin = ANY (ARRAY['manual'::text, 'optout'::text, 'system'::text, 'lgpd'::text, 'list'::text, 'auto_optout'::text])))",
         "talkx_blacklist.talkx_blacklist_phone_or_contact:CHECK (((phone IS NOT NULL) OR (contact_id IS NOT NULL)))",
-        "talkx_campaign_events.talkx_campaign_events_target_check:CHECK (((campaign_id IS NOT NULL) OR ((entity_type IS NOT NULL) AND (entity_id IS NOT NULL))))",
+        "talkx_campaign_events.talkx_campaign_events_entity_type_format_check:CHECK (((entity_type IS NULL) OR (entity_type ~ '^[a-z][a-z0-9_.]{1,40}$'::text)))",
+        "talkx_campaign_events.talkx_campaign_events_target_check:CHECK (((campaign_id IS NOT NULL) <> ((entity_type IS NOT NULL) AND (entity_id IS NOT NULL))))",
         "talkx_campaign_events.talkx_campaign_events_type_check:CHECK ((event_type = ANY (ARRAY['created'::text, 'updated'::text, 'scheduled'::text, 'started'::text, 'paused'::text, 'resumed'::text, 'cancelled'::text, 'completed'::text, 'note'::text, 'scheduled_updated'::text, 'limits_updated'::text, 'connection_failed'::text, 'resumed_auto'::text, 'skipped_suppressed'::text, 'suppression_add'::text, 'suppression_remove'::text, 'suppression_update'::text, 'segments_reviewed'::text, 'checklist'::text])))",
         "talkx_campaigns.talkx_campaigns_audience_source_check:CHECK ((audience_source = ANY (ARRAY['contacts'::text, 'segment'::text, 'crm360'::text])))",
         "talkx_campaigns.talkx_campaigns_revision_positive:CHECK ((revision > 0))",
@@ -2125,6 +2126,7 @@
         "team_messages.team_messages_no_self_reply:CHECK (((reply_to_id IS NULL) OR (reply_to_id <> id)))",
         "team_messages.team_messages_status_check:CHECK ((status = ANY (ARRAY['sent'::text, 'delivered'::text, 'read'::text, 'failed'::text])))",
         "team_messages.team_messages_type_media_check:CHECK (((message_type = ANY (ARRAY['text'::text, 'image'::text, 'audio'::text, 'video'::text, 'file'::text, 'sticker'::text, 'system'::text])) OR (media_url IS NULL)))",
+        "user_settings.user_settings_sound_volume_range:CHECK (((sound_volume >= 10) AND (sound_volume <= 100)))",
         "webauthn_challenges.webauthn_challenges_type_check:CHECK ((type = ANY (ARRAY['registration'::text, 'authentication'::text])))",
         "whatsapp_connections.whatsapp_connections_status_check:CHECK ((status = ANY (ARRAY['connected'::text, 'disconnected'::text, 'connecting'::text, 'qr_pending'::text])))"
     ],
