@@ -9170,10 +9170,21 @@ export type Database = {
           contact_id: string
         }[]
       }
-      can_edit_contact: {
-        Args: { p_assigned_to: string; p_queue_id: string }
-        Returns: boolean
-      }
+      can_edit_contact:
+        | {
+            Args: { p_assigned_to: string; p_queue_id: string }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_assigned_to: string
+              p_is_admin: boolean
+              p_profile_id: string
+              p_queue_id: string
+              p_visible_agent_ids: string[]
+            }
+            Returns: boolean
+          }
       claim_crm_sync_outbox: {
         Args: { p_limit?: number; p_worker: string }
         Returns: {

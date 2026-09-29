@@ -2202,6 +2202,7 @@
         "calculate_level(xp_amount bigint)->integer|kind=f",
         "can_delete_contacts(p_ids uuid[])->TABLE(contact_id uuid, can_delete boolean)|kind=f",
         "can_edit_contact(p_assigned_to uuid, p_queue_id uuid)->boolean|kind=f",
+        "can_edit_contact(p_assigned_to uuid, p_queue_id uuid, p_visible_agent_ids uuid[], p_profile_id uuid, p_is_admin boolean)->boolean|kind=f",
         "claim_crm_sync_outbox(p_worker text, p_limit integer)->SETOF crm_sync_outbox|kind=f",
         "claim_crm_sync_outbox_by_id(p_id uuid, p_worker text)->SETOF crm_sync_outbox|kind=f",
         "claim_multiplix_recipient(p_dispatch_id uuid, p_recipient_id uuid, p_worker text, p_lease_seconds integer)->TABLE(recipient_id uuid, company_id uuid, claim_token uuid, claim_expires_at timestamp with time zone, delivery_attempt_count integer)|kind=f",
