@@ -42,7 +42,7 @@
     "animations": "Framer Motion"
   },
   "backend": {
-    "platform": "Supabase (Lovable Cloud)",
+    "platform": "Supabase Cloud",
     "database": "PostgreSQL",
     "auth": "Supabase Auth",
     "realtime": "Supabase Realtime",
@@ -3373,7 +3373,7 @@ export const auditTransfer = (contactId: string, fromAgent: string, toAgent: str
 ## 🔐 Variáveis de Ambiente Necessárias
 
 ```env
-# Supabase (automático via Lovable Cloud)
+# Supabase Cloud (projeto tnnnlkbymytvtqngbbqh)
 VITE_SUPABASE_URL=
 VITE_SUPABASE_PUBLISHABLE_KEY=
 

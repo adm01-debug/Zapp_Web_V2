@@ -63,10 +63,12 @@ export class Logger {
   }
 }
 
-// Endereco canonico de producao no CORS (ver docs/runbooks/deploy.md).
-// Os hosts que ja serviram o app fora do fluxo GitHub -> Vercel ficam de fora:
-// publicavam a parte e entregavam build velho. Aqui so entra o canonico; os
-// aliases do proprio projeto Vercel (preview/branch) sao cobertos por padrao.
+// Endereco canonico de producao no CORS (ver docs/runbooks/deploy.md). So ele
+// entra na lista exata: os hosts que ja serviram o app fora do fluxo
+// GitHub -> Vercel entregavam build velho. URLs de deployment/preview deste
+// projeto (zappwebv2-<hash|branch>-juca1.vercel.app) continuam em
+// ORIGIN_PATTERNS; o alias padrao do projeto (zappwebv2-juca1.vercel.app)
+// deixa de ser aceito de proposito, para existir UM endereco canonico.
 const EXACT_ALLOWED_ORIGINS = new Set([
   'https://zapp-web-v2.vercel.app',
 ]);

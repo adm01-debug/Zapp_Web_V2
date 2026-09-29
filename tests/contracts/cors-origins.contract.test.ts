@@ -43,4 +43,32 @@ describe('CORS das edge functions — um único endereço canônico', () => {
     const getCors = source.slice(source.indexOf('export function getCorsHeaders'));
     expect(getCors).toContain(`'${CANONICO}'`);
   });
+
+  it('os padrões de origem seguem restritos a este projeto e ao local', () => {
+    const bloco = source.slice(
+      source.indexOf('const ORIGIN_PATTERNS'),
+      source.indexOf('function isAllowedOrigin'),
+    );
+    const padroes = bloco
+      .split('\n')
+      .map((linha) => linha.trim().replace(/,$/, ''))
+      .filter((linha) => linha.startsWith('/^'));
+    expect(padroes).toEqual([
+      '/^https:\\/\\/zappwebv2-[a-z0-9-]+-juca1\\.vercel\\.app$/',
+      '/^http:\\/\\/localhost(?::\\d{1,5})?$/',
+      '/^http:\\/\\/127\\.0\\.0\\.1(?::\\d{1,5})?$/',
+    ]);
+  });
+
+  it('a segunda superfície de CORS (schemas.ts) aponta só para o canônico', () => {
+    const linhas = read('supabase/functions/_shared/schemas.ts')
+      .split('\n')
+      .filter((linha) => /Access-Control-Allow-Origin/i.test(linha));
+    expect(linhas.length).toBeGreaterThan(0);
+    for (const linha of linhas) {
+      expect(linha).not.toMatch(/lovable/i);
+      expect(linha).not.toContain('zappweb.app.br');
+      expect(linha).toContain(CANONICO);
+    }
+  });
 });

@@ -780,7 +780,7 @@ CREATE POLICY "Usuários podem criar logs"
 
 ### Fase 1: Setup Inicial
 - [ ] Criar projeto Lovable
-- [ ] Habilitar Lovable Cloud (Supabase)
+- [ ] Habilitar Supabase Cloud
 - [ ] Configurar autenticação (auto-confirm email)
 - [ ] Criar tabela profiles com trigger
 - [ ] Implementar página de Auth
