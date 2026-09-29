@@ -31,6 +31,11 @@ on:
     # nao ser lido no meio da geracao dos artefatos.
     - cron: '49 5 * * 1'
   workflow_dispatch:
+    inputs:
+      force_gate3:
+        description: 'Ignorar Gate 3 (remocoes destrutivas) — aprovacao humana confirmada'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -314,10 +319,14 @@ jobs:
         run: |
           REMOVED=$(diff /tmp/types.old.stripped /tmp/types.new.stripped | grep -c '^<' || true)
           echo "Linhas removidas do types.ts: ${REMOVED}"
-          if [ "$REMOVED" -gt 10 ]; then
+          FORCE_GATE3="${{ github.event.inputs.force_gate3 }}"
+          if [ "$REMOVED" -gt 10 ] && [ "$FORCE_GATE3" != "true" ]; then
             echo "passed=false" >> "$GITHUB_OUTPUT"
             echo "::warning::Gate 3 requer revisao humana: ${REMOVED} linhas removidas."
           else
+            if [ "$REMOVED" -gt 10 ]; then
+              echo "::notice::Gate 3 ignorado por force_gate3=true: ${REMOVED} linhas removidas."
+            fi
             echo "passed=true" >> "$GITHUB_OUTPUT"
           fi
 
