@@ -43,11 +43,12 @@ test('db-live-guard runs psql without the connection string in argv (same regres
   // via psql-safe.mjs/withPsqlEnvironment(). Escopo deixado de fora do PR #534
   // por ser workflow de guarda viva contra producao; fechado separadamente.
   assert.doesNotMatch(workflow, /psql ["']?\$\{?DESTINO_URL\}?["']?/);
-  // 5 desde a V01 do plano Talk X V3 (2026-09-29): o passo que verifica
-  // security_invoker em talkx_campaign_metrics entrou pelo mesmo wrapper.
+  // 6 desde a V02 do plano Talk X V3 (2026-09-29): o passo que verifica o
+  // contrato de transicao de campanha entrou pelo mesmo wrapper. Antes eram 5
+  // (V01, security_invoker da view de metricas).
   // A contagem e exata de proposito -- uma invocacao nova de psql que nao
   // passe pelo wrapper quebra este teste em vez de vazar a senha.
-  assert.equal((workflow.match(/node scripts\/db-audit\/psql-safe\.mjs/g) || []).length, 5);
+  assert.equal((workflow.match(/node scripts\/db-audit\/psql-safe\.mjs/g) || []).length, 6);
   assert.ok(fs.existsSync(new URL('../db-audit/psql-safe.mjs', import.meta.url)));
   assert.ok(fs.existsSync(new URL('../db-audit/psql-safe.test.mjs', import.meta.url)));
 });
