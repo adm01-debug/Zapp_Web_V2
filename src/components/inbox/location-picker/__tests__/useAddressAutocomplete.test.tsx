@@ -517,4 +517,89 @@ describe('useAddressAutocomplete', () => {
     expect(abortSpy).toHaveBeenCalled();
     abortSpy.mockRestore();
   });
+
+  // ─── Onda 2 (auditoria adversarial): as corridas que sobraram no picker ──────────────────
+  // Todas foram reproduzidas no bundle real de produção (W5) antes destes testes.
+
+  it('A3-03: resposta do termo ANTIGO é descartada na janela do debounce (antes de o novo termo disparar)', async () => {
+    let resolveOld: (v: { ok: true; suggestions: GeoSuggestion[] }) => void = () => {};
+    const oldPromise = new Promise<{ ok: true; suggestions: GeoSuggestion[] }>((r) => { resolveOld = r; });
+    h.suggestPlaces.mockImplementationOnce(() => oldPromise);
+
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua a'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    // Tecla nova: o debounce do termo novo ainda NÃO disparou — é a janela em que a resposta
+    // do termo antigo chegava e pintava a lista de um endereço que o operador já trocou.
+    act(() => { result.current.setQuery('rua ab'); });
+
+    await act(async () => { resolveOld({ ok: true, suggestions: [suggestionA] }); });
+    expect(result.current.suggestions).toEqual([]);
+    expect(result.current.status).not.toBe('ok');
+  });
+
+  it('A3-05: clear() (Esc/Cancelar) invalida o /retrieve em voo — nada é aplicado depois', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
+    let resolveRetrieve: (v: { ok: true; place: GeoSearchPlace }) => void = () => {};
+    h.retrievePlaceResult.mockImplementationOnce(() => new Promise((r) => { resolveRetrieve = r; }));
+
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua a'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+
+    const escolhido: Array<GeoSearchPlace | null> = [];
+    const emVoo = (async () => {
+      await act(async () => { escolhido.push(await result.current.select(0)); });
+    })();
+    act(() => { result.current.clear(); });
+    await act(async () => { resolveRetrieve({ ok: true, place: forwardA }); });
+    await emVoo;
+
+    expect(escolhido).toEqual([null]);
+    expect(result.current.retrievingId).toBeNull();
+    expect(result.current.retrieveError).toBeNull();
+  });
+
+  it('A3-02: enabled=false (troca de aba) aborta o /suggest em voo e descarta a resposta', async () => {
+    let resolveSuggest: (v: { ok: true; suggestions: GeoSuggestion[] }) => void = () => {};
+    h.suggestPlaces.mockImplementationOnce(() => new Promise((r) => { resolveSuggest = r; }));
+    const abortSpy = vi.spyOn(AbortController.prototype, 'abort');
+
+    const { result, rerender } = renderHook(
+      ({ enabled }: { enabled: boolean }) => useAddressAutocomplete({ token: 'tok', enabled }),
+      { initialProps: { enabled: true } },
+    );
+    act(() => { result.current.setQuery('rua a'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    expect(h.suggestPlaces).toHaveBeenCalledTimes(1);
+
+    rerender({ enabled: false });   // aba 'map' deixa de estar ativa
+    expect(abortSpy).toHaveBeenCalled();
+
+    await act(async () => { resolveSuggest({ ok: true, suggestions: [suggestionA] }); });
+    expect(result.current.suggestions).toEqual([]);
+    abortSpy.mockRestore();
+  });
+
+  it('A3-02: enabled=false também invalida o /retrieve em voo', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
+    let resolveRetrieve: (v: { ok: true; place: GeoSearchPlace }) => void = () => {};
+    h.retrievePlaceResult.mockImplementationOnce(() => new Promise((r) => { resolveRetrieve = r; }));
+
+    const { result, rerender } = renderHook(
+      ({ enabled }: { enabled: boolean }) => useAddressAutocomplete({ token: 'tok', enabled }),
+      { initialProps: { enabled: true } },
+    );
+    act(() => { result.current.setQuery('rua a'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+
+    // A seleção tem de estar em voo ANTES da troca de aba — é essa a corrida que o teste mede.
+    let selecao: Promise<GeoSearchPlace | null> = Promise.resolve(null);
+    act(() => { selecao = result.current.select(0); });
+    expect(h.retrievePlaceResult).toHaveBeenCalledTimes(1);
+
+    rerender({ enabled: false });
+    await act(async () => { resolveRetrieve({ ok: true, place: forwardA }); });
+    expect(await selecao).toBeNull();
+  });
 });

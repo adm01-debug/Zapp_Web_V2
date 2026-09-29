@@ -343,6 +343,51 @@ describe('LocationPicker', () => {
       expect(screen.getByText('Sem conexão com o serviço de mapas.')).toBeInTheDocument();
     });
 
+    // ─── Onda 2 (auditoria adversarial): A3-01, reproduzido no bundle real ──────────────────
+
+    it('A3-01: clique duplo no MESMO item não dispara um segundo /retrieve (antes: N−1 requests e sessões)', async () => {
+      const state = hookState(null);
+      const place = { name: 'XBZ Brindes', address: 'SP', lat: -23.5, lng: -46.6 };
+      let resolveSelect: (v: typeof place) => void = () => {};
+      const ac = autocompleteState({
+        status: 'ok',
+        query: 'xbz',
+        suggestions: [{ id: 'a', name: 'XBZ Brindes', address: 'SP', kind: 'poi' }],
+      });
+      ac.select = vi.fn().mockImplementation(() => {
+        ac.retrievingId = 'a';   // é o que o hook marca enquanto o /retrieve está em voo
+        return new Promise((r) => { resolveSelect = r; });
+      });
+      await renderOnMapTab(state, ac);
+
+      fireEvent.click(screen.getByRole('option', { name: /XBZ/ }));
+      expect(ac.select).toHaveBeenCalledTimes(1);
+      fireEvent.click(screen.getByRole('option', { name: /XBZ/ }));   // clique duplo humano
+      expect(ac.select).toHaveBeenCalledTimes(1);                     // ← nada de 2º /retrieve/sessão
+
+      resolveSelect(place);
+      await waitFor(() => expect(state.chooseSearchResult).toHaveBeenCalledWith(place));
+    });
+
+    it('A3-01: seleção superada não produz toast destrutivo falso (o erro é de outro item)', async () => {
+      const state = hookState(null);
+      const ac = autocompleteState({
+        status: 'ok',
+        query: 'xbz',
+        suggestions: [{ id: 'a', name: 'XBZ Brindes', address: 'R. da Independência, São Paulo', kind: 'poi' }],
+        select: vi.fn().mockResolvedValue(null),
+        retrieveError: { id: 'b', kind: 'network' },   // erro de uma seleção/termo que não é este
+      });
+      h.toast.mockClear();
+      await renderOnMapTab(state, ac);
+
+      fireEvent.click(screen.getByRole('option', { name: /XBZ/ }));
+
+      await waitFor(() => expect(ac.select).toHaveBeenCalledWith(0));
+      expect(state.chooseSearchResult).not.toHaveBeenCalled();
+      expect(h.toast).not.toHaveBeenCalled();
+    });
+
     it('E29: clique no mapa limpa o termo mesmo com a lista fechada', async () => {
       const ac = autocompleteState({ query: 'avenida paulista' });
       h.hook.mockReturnValue(hookState(null));
