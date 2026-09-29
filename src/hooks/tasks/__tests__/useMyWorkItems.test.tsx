@@ -18,6 +18,7 @@ import {
   resetSupabaseMock,
   setSelectResult,
   setWriteResult,
+  getUltimaLeitura,
 } from '@/test/mocks/tarefas';
 
 import {
@@ -26,6 +27,7 @@ import {
   workItemsKey,
   workItemsBadgeKey,
   tomorrowAtNine,
+  DONE_WINDOW_DAYS,
 } from '@/hooks/tasks/useMyWorkItems';
 import type { WorkItem } from '@/hooks/tasks/workItem.types';
 
@@ -215,7 +217,16 @@ describe('useMyWorkItems — Fase B', () => {
     const updaters = patchOtimista.mock.calls.map(([, u]) => u as (o: unknown) => unknown);
     const antes = [dbRow() as unknown as WorkItem];
     expect(updaters.some((u) => JSON.stringify(u(antes)).includes('Titulo novo'))).toBe(true);
-    expect(restauracao).toHaveBeenCalled();
+    // A restauracao tem que devolver o snapshot ORIGINAL para o cache. So
+    // `toHaveBeenCalled()` era vacuoso: `setQueriesData` chama `setQueryData`
+    // internamente (queryClient.js), entao o proprio patch otimista satisfazia
+    // o espiao — e o refetch do `onSettled` repunha o valor. Sem esta checagem
+    // de valor, anular o rollback deixava a suite inteira verde.
+    const restaurouValorOriginal = restauracao.mock.calls.some((args) => {
+      const valor = args[1] as Array<{ title?: string }> | undefined;
+      return Array.isArray(valor) && valor[0]?.title === 'Ligar para o cliente';
+    });
+    expect(restaurouValorOriginal).toBe(true);
 
     // rollback: voltou exatamente ao que estava
     const cache = qc.getQueryData<WorkItem[]>(KEY);
@@ -283,5 +294,31 @@ describe('useMyWorkItems — Fase B', () => {
     spy.mockClear();
     await act(async () => { await result.current.complete(result.current.items[0]); });
     expect(spy).toHaveBeenCalledWith({ queryKey: ['work-items-badge', 'u1'] });
+  });
+
+  it('a query limita done a 30 dias, inclui done sem carimbo e exclui cancelled (B13)', async () => {
+    const { result } = setup();
+    await ready({ result });
+
+    const leitura = getUltimaLeitura();
+    expect(leitura).not.toBeNull();
+
+    const filtros = (leitura?.or.mock.calls ?? []).map((c) => String(c[0]));
+    const or = filtros.find((f) => f.includes('status.neq.done')) ?? '';
+
+    // done so entra nos ultimos DONE_WINDOW_DAYS dias...
+    expect(or).toContain('status.neq.done');
+    const corteIso = or.split('completed_at.gte.')[1]?.split(',')[0] ?? '';
+    expect(corteIso).not.toBe('');
+    const dias = (Date.now() - new Date(corteIso).getTime()) / 86_400_000;
+    expect(dias).toBeGreaterThan(DONE_WINDOW_DAYS - 0.01);
+    expect(dias).toBeLessThan(DONE_WINDOW_DAYS + 0.01);
+
+    // ...mas `done` legado sem carimbo de conclusao continua visivel (o trigger
+    // de estado so grava completed_at em UPDATE);
+    expect(or).toContain('completed_at.is.null');
+
+    // cancelled fica de fora por padrao.
+    expect(leitura?.not).toHaveBeenCalledWith('status', 'eq', 'cancelled');
   });
 });
