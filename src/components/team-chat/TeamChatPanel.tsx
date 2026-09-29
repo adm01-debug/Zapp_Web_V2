@@ -8,6 +8,8 @@ import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AddMembersDialog } from './AddMembersDialog';
+import { TransferConversationDialog } from './TransferConversationDialog';
+import { GroupManagementDialog } from './GroupManagementDialog';
 import { TeamChatHeader } from './TeamChatHeader';
 import { TeamChatInputArea } from './TeamChatInputArea';
 import { useTeamChatPanel } from './useTeamChatPanel';
@@ -36,6 +38,10 @@ interface Props { conversation: TeamConversation; onBack: () => void; onToggleDe
 export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetails }: Props) {
   const {
     profile, messages, filteredMessages, isLoading, isMuted,
+    canTransfer, isGroupCreator,
+    showStats, setShowStats,
+    showTransferDialog, setShowTransferDialog,
+    showGroupManagement, setShowGroupManagement,
     text, setText, replyTo, setReplyTo, editingId, editText, setEditText,
     showSearch, setShowSearch, searchQuery, setSearchQuery,
     showAddMembers, setShowAddMembers, isRecordingAudio, setIsRecordingAudio,
@@ -43,7 +49,9 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
     checkNearBottom, scrollToBottom,
     handleSend, handleDelete, handleStartEdit, handleSaveEdit, handleCancelEdit, handleCopyMessage,
     handleAudioSend, handleFileSent, handleSendSticker, handleSendAudioMeme, handleSendCustomEmoji,
-    handleVoiceChange, handleSpeedChange, sendMutation, muteMutation, tts, reactions,
+    handlePin, handleArchive,
+    handleVoiceChange, handleSpeedChange, sendMutation, muteMutation,
+    leaveMutation, renameConvMutation, removeMemberMutation, deleteConvMutation, tts, reactions,
   } = useTeamChatPanel(conversation);
 
   const convAny = conversation as unknown as Record<string, unknown>;
@@ -98,10 +106,18 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
   return (
     <div className="flex flex-col h-full w-full relative">
       <TeamChatHeader conversation={conversation} showDetails={showDetails} voiceId={tts.voiceId} speed={tts.speed}
-        showSearch={showSearch} isMuted={isMuted} onBack={onBack} onToggleDetails={onToggleDetails}
+        showSearch={showSearch} showStats={showStats} isMuted={isMuted}
+        canTransfer={canTransfer} isGroupCreator={isGroupCreator}
+        onBack={onBack} onToggleDetails={onToggleDetails}
         onToggleSearch={() => { setShowSearch(!showSearch); if (showSearch) setSearchQuery(''); }}
+        onToggleStats={() => setShowStats(!showStats)}
         onAddMembers={() => setShowAddMembers(true)} onVoiceChange={handleVoiceChange} onSpeedChange={handleSpeedChange}
-        onToggleMute={() => muteMutation.mutate({ conversationId: conversation.id, muted: !isMuted })} />
+        onToggleMute={() => muteMutation.mutate({ conversationId: conversation.id, muted: !isMuted })}
+        onTransfer={canTransfer ? () => setShowTransferDialog(true) : undefined}
+        onRenameGroup={isGroupCreator ? () => setShowGroupManagement(true) : undefined}
+        onLeaveGroup={!isGroupCreator && conversation.type === 'group' ? () => leaveMutation.mutate({ conversationId: conversation.id }) : undefined}
+        onPin={handlePin}
+        onArchive={handleArchive} />
 
       <AnimatePresence>
         {showSearch && (
@@ -166,6 +182,33 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
         onSendCustomEmoji={handleSendCustomEmoji} onFileSent={handleFileSent} />
 
       <AddMembersDialog open={showAddMembers} onOpenChange={setShowAddMembers} conversation={conversation} />
+
+      {profile?.id && (
+        <TransferConversationDialog
+          open={showTransferDialog}
+          onOpenChange={setShowTransferDialog}
+          conversation={conversation}
+          currentUserId={profile.id}
+        />
+      )}
+
+      {profile?.id && (
+        <GroupManagementDialog
+          open={showGroupManagement}
+          onOpenChange={setShowGroupManagement}
+          conversation={conversation}
+          isGroupCreator={isGroupCreator}
+          currentUserId={profile.id}
+          isRenamePending={renameConvMutation.isPending}
+          isRemovePending={removeMemberMutation.isPending}
+          isLeavePending={leaveMutation.isPending}
+          isDeletePending={deleteConvMutation.isPending}
+          onRename={name => renameConvMutation.mutate({ conversationId: conversation.id, name })}
+          onRemoveMember={profileId => removeMemberMutation.mutate({ conversationId: conversation.id, profileId })}
+          onLeave={() => leaveMutation.mutate({ conversationId: conversation.id })}
+          onDelete={() => deleteConvMutation.mutate({ conversationId: conversation.id })}
+        />
+      )}
     </div>
   );
 }

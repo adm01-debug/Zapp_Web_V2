@@ -26,7 +26,6 @@ import {
   BellOff,
   Pin,
   BarChart2,
-  Activity,
   Volume2,
   Pencil,
   LogOut,
@@ -55,6 +54,8 @@ interface TeamChatHeaderProps {
   onTransfer?: () => void;
   onRenameGroup?: () => void;
   onLeaveGroup?: () => void;
+  onPin?: () => void;
+  onArchive?: () => void;
 }
 
 export function TeamChatHeader({
@@ -78,6 +79,8 @@ export function TeamChatHeader({
   onTransfer,
   onRenameGroup,
   onLeaveGroup,
+  onPin,
+  onArchive,
 }: TeamChatHeaderProps) {
   const isGroup = conversation.type === 'group';
 
@@ -139,22 +142,6 @@ export function TeamChatHeader({
             <TooltipContent side="bottom">Estatísticas</TooltipContent>
           </Tooltip>
         )}
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="w-9 h-9 text-muted-foreground/40 cursor-not-allowed"
-              disabled
-              aria-label="Performance (em breve)"
-            >
-              <Activity className="w-[18px] h-[18px]" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Performance (em breve)</TooltipContent>
-        </Tooltip>
 
         {isGroup && (
           <Tooltip>
@@ -263,14 +250,18 @@ export function TeamChatHeader({
               ))}
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem disabled className="opacity-50">
-              <Pin className="w-4 h-4 mr-2" />
-              Fixar conversa
-            </DropdownMenuItem>
-            <DropdownMenuItem disabled className="opacity-50">
-              <Archive className="w-4 h-4 mr-2" />
-              Arquivar
-            </DropdownMenuItem>
+            {onPin && (
+              <DropdownMenuItem onClick={onPin}>
+                <Pin className="w-4 h-4 mr-2" />
+                Fixar conversa
+              </DropdownMenuItem>
+            )}
+            {onArchive && (
+              <DropdownMenuItem onClick={onArchive}>
+                <Archive className="w-4 h-4 mr-2" />
+                Arquivar
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -289,6 +289,42 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     });
   }, [profile, conversation.id, sendMutation]);
 
+  const handlePin = useCallback(async () => {
+    if (!profile?.id) return;
+    const { data: membership } = await supabase
+      .from('team_conversation_members')
+      .select('is_pinned')
+      .eq('conversation_id', conversation.id)
+      .eq('profile_id', profile.id)
+      .single();
+    const current = (membership as { is_pinned: boolean } | null)?.is_pinned ?? false;
+    const { error } = await supabase
+      .from('team_conversation_members')
+      .update({ is_pinned: !current })
+      .eq('conversation_id', conversation.id)
+      .eq('profile_id', profile.id);
+    if (error) { toast.error('Erro ao fixar conversa'); return; }
+    toast.success(current ? 'Conversa desafixada' : 'Conversa fixada');
+  }, [profile, conversation.id]);
+
+  const handleArchive = useCallback(async () => {
+    if (!profile?.id) return;
+    const { data: membership } = await supabase
+      .from('team_conversation_members')
+      .select('is_archived')
+      .eq('conversation_id', conversation.id)
+      .eq('profile_id', profile.id)
+      .single();
+    const current = (membership as { is_archived: boolean } | null)?.is_archived ?? false;
+    const { error } = await supabase
+      .from('team_conversation_members')
+      .update({ is_archived: !current })
+      .eq('conversation_id', conversation.id)
+      .eq('profile_id', profile.id);
+    if (error) { toast.error('Erro ao arquivar conversa'); return; }
+    toast.success(current ? 'Conversa desarquivada' : 'Conversa arquivada');
+  }, [profile, conversation.id]);
+
   const handleSendCustomEmoji = useCallback(async (url: string) => {
     if (!profile?.id) return;
     await sendMutation.mutateAsync({
@@ -348,6 +384,8 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     handleSendSticker,
     handleSendAudioMeme,
     handleSendCustomEmoji,
+    handlePin,
+    handleArchive,
     handleVoiceChange,
     handleSpeedChange,
     sendMutation,
