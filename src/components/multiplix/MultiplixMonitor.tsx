@@ -24,6 +24,7 @@ const DISPATCH_STATUS: Record<string, { label: string; tone: 'success' | 'danger
   sending: { label: 'Enviando', tone: 'info' },
   paused: { label: 'Pausado', tone: 'warning' },
   completed: { label: 'Concluído', tone: 'success' },
+  completed_with_failures: { label: 'Concluído com falhas', tone: 'warning' },
   failed: { label: 'Falhou', tone: 'danger' },
   cancelled: { label: 'Cancelado', tone: 'danger' },
 };
@@ -114,9 +115,12 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   const successRate = processed > 0 ? pct(dispatch.sent_count, processed) : 0;
   const isRunning = dispatch.status === 'sending';
   const isPaused = dispatch.status === 'paused';
-  const isDraft = dispatch.status === 'draft' || dispatch.status === 'scheduled';
+  // F10: 'scheduled' nao mostra "Iniciar" — quem inicia e o cron quando o
+  // horario chega; antes disso o operador so cancela.
+  const isDraft = dispatch.status === 'draft';
   const canStart = isPaused || isDraft;
-  const isDone = dispatch.status === 'completed' || dispatch.status === 'cancelled' || dispatch.status === 'failed';
+  const isDone = dispatch.status === 'completed' || dispatch.status === 'completed_with_failures'
+    || dispatch.status === 'cancelled' || dispatch.status === 'failed';
 
   return (
     <div className="space-y-4 min-w-0">
@@ -148,6 +152,21 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
           {isRunning && <span className="text-primary-glow font-medium animate-pulse">Enviando agora…</span>}
           {dispatch.completed_at && <span>Concluído em {fmtDateTime(dispatch.completed_at)}</span>}
         </div>
+        {/* F10c: o worker grava o motivo da pausa automatica — sem isto o
+            operador ve "Pausado" sem saber se pode retomar (cota/window) ou se
+            precisa religar a conexao. */}
+        {isPaused && dispatch.pause_reason && (
+          <p className="text-2xs text-dash-amber flex items-center gap-1.5 mt-2">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+            {dispatch.pause_reason === 'daily_limit'
+              ? 'Pausado automaticamente: limite diário da conexão atingido'
+              : dispatch.pause_reason === 'connection_lost'
+                ? 'Pausado automaticamente: conexão do WhatsApp caiu'
+                : dispatch.pause_reason === 'outside_window'
+                  ? 'Pausado automaticamente: fora da janela de envio'
+                  : `Pausado automaticamente: ${dispatch.pause_reason}`}
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">

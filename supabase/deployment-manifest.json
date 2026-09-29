@@ -318,13 +318,13 @@
     },
     {
       "path": "supabase/functions/elevenlabs-tts-stream/index.ts",
-      "bytes": 2860,
-      "sha256": "c1fca4eeef44f87bbc8add3798e8bc3ee842a5dbc8e26fd0873491c483e2874f"
+      "bytes": 2977,
+      "sha256": "c11b1b1dd330d856ec781d1053e31b3616acb493383b00e2be8c351df8826bcd"
     },
     {
       "path": "supabase/functions/elevenlabs-tts/index.ts",
-      "bytes": 2797,
-      "sha256": "21bdd0d7d8c94aae2ffdc10239aebed0d3a9ed0aa8ed25a3db48433f096e93ca"
+      "bytes": 2929,
+      "sha256": "bb4d1b0ffb106398ddef8198b316b3b684da459fbb1bce1709c2efea67f8eac3"
     },
     {
       "path": "supabase/functions/elevenlabs-voice-design/index.ts",
@@ -413,13 +413,13 @@
     },
     {
       "path": "supabase/functions/multiplix-audience/index.ts",
-      "bytes": 9181,
-      "sha256": "ecf35f261bd9783ea35f668e1bf220ceba7695734dddd8db322105cf19d59907"
+      "bytes": 14634,
+      "sha256": "bcd0e7fe0fd0b0f9c40aa8ebd6140380484e1fc1651a6ea9d32f35dd2549b612"
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "bytes": 23271,
-      "sha256": "38363c9e7709442dba681a4200556b76af32afc0787dbedc6c149c3be148accd"
+      "bytes": 31351,
+      "sha256": "fe59be633a548c05344c17a389fbf5e58396739f33199fc2d112bdc35e2758db"
     },
     {
       "path": "supabase/functions/promogifts-catalog/index.ts",
@@ -884,7 +884,7 @@
       "name": "elevenlabs-tts",
       "entrypoint": "supabase/functions/elevenlabs-tts/index.ts",
       "verify_jwt": true,
-      "source_sha256": "fc0a901a33fb70604772b495ab0d5907e7d702ec28d8aece40891d6aa1e50fb9",
+      "source_sha256": "8f487cf87ee7022e52d339e30fcc530c4bcd83c60eb2123fc1059b8aa7f92808",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -896,7 +896,7 @@
       "name": "elevenlabs-tts-stream",
       "entrypoint": "supabase/functions/elevenlabs-tts-stream/index.ts",
       "verify_jwt": true,
-      "source_sha256": "77fddd04a459d9506f364be7f2636d34ec3ac5b34a42c88baa37dc1a597311cc",
+      "source_sha256": "70019af7223d0a3eb5f3b66ff7c66d192fc0fb7c6e5f15b5596f80ff67e627a8",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1129,7 +1129,7 @@
       "name": "multiplix-audience",
       "entrypoint": "supabase/functions/multiplix-audience/index.ts",
       "verify_jwt": true,
-      "source_sha256": "3507ab5e80c481cfb39715eb60e0fa7a120ab7432ae469bd46c01dc1ce4dd0b4",
+      "source_sha256": "2c9ed3c20e003152ebba168587b31d16c223b2c46d7926b72227e5964cce4e55",
       "source_files": [
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1141,7 +1141,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "a8ad58fed93c5963e23b27c5f6727666ba60a0033050796ef0a19cc793556e56",
+      "source_sha256": "a50a111de920db96179b6ab3dd27e5957561c2f2fddb10104952c38089dd9597",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1365,5 +1365,5 @@
       ]
     }
   ],
-  "manifest_sha256": "99917cb1aedbd8e1fdee90bbaecf794aed0ee1dd688423e27471b49fa4fe9427"
+  "manifest_sha256": "1144e108f23c74ef8496e7f3beb3a48a4907a8f37e6a1e093d6c969e47c15f86"
 }
