@@ -3,14 +3,14 @@ import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import { toast } from 'sonner';
 import { BoardColumn }      from './BoardColumn';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
-import type { WorkItemInput } from '@/hooks/tasks/useMyWorkItems';
+import type { WorkItemInput, MoveOpts } from '@/hooks/tasks/useMyWorkItems';
 import { WIP_LIMITS, KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
 import { canTransition, countDoing } from '@/hooks/tasks/workItemMachine';
 
 interface Props {
   byStatus: Record<WorkItemStatus, WorkItem[]>;
   isLoading: boolean;
-  onMove: (item: WorkItem, to: WorkItemStatus, waitingReason?: string) => void;
+  onMove: (item: WorkItem, to: WorkItemStatus, opts?: MoveOpts) => void;
   onReorder: (positions: Array<{ id: string; position: number }>) => void;
   onOpen: (item: WorkItem) => void;
   onDelete: (item: WorkItem) => void;
@@ -49,7 +49,8 @@ export function TasksBoardMode({ byStatus, isLoading, onMove, onReorder, onOpen,
         toast.error('Escreva o motivo antes de mover para Aguardando.');
       return;
     }
-    onMove(item, toStatus);
+    // etapa 15: leva o indice de destino para persistir a ordem das duas colunas
+    onMove(item, toStatus, { index: destination.index });
   }, [byStatus, doingCount, onMove, onReorder]);
 
   return (
