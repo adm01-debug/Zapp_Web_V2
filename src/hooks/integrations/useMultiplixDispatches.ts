@@ -2,12 +2,13 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
+import { createMultiplixDraft } from './useMultiplixAudience';
 
 export interface MultiplixDispatch {
   id: string;
   name: string;
   message_template: string;
-  status: 'draft' | 'scheduled' | 'sending' | 'paused' | 'completed' | 'failed' | 'cancelled';
+  status: 'draft' | 'scheduled' | 'sending' | 'paused' | 'completed' | 'completed_with_failures' | 'failed' | 'cancelled';
   total_recipients: number;
   sent_count: number;
   failed_count: number;
@@ -80,18 +81,16 @@ export function useMultiplixRecipients(dispatchId: string | null, statusFilter =
   });
 }
 
-export interface MultiplixDispatchRecipientInput {
-  company_id: string;
-  company_name: string | null;
-  destino_e164: string | null;
-  destino_origem: string | null;
-}
-
 export interface CreateMultiplixDispatchInput {
   name: string;
   messageTemplate: string;
-  recipients: MultiplixDispatchRecipientInput[];
+  /** F08: o publico e por referencia — a edge re-resolve no Singu com o escopo do JWT. */
+  companyIds: string[];
+  contactIds?: string[];
+  scheduledAt?: string | null;
   startNow: boolean;
+  /** F17: confirmacao explicita quando o total passa do teto de destinatarios. */
+  confirmOverLimit?: boolean;
 }
 
 async function invokeMultiplixSend(dispatchId: string, action: 'start' | 'pause' | 'cancel') {
@@ -115,37 +114,29 @@ async function invokeMultiplixSend(dispatchId: string, action: 'start' | 'pause'
 
 export interface CreateMultiplixDispatchResult {
   id: string;
+  recipientCount: number;
+  created: boolean;
 }
 
 export function useCreateMultiplixDispatch() {
   return useMutation({
     mutationFn: async (input: CreateMultiplixDispatchInput): Promise<CreateMultiplixDispatchResult> => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles').select('id').eq('user_id', user.id).single();
-      if (profileError || !profile) throw new Error('Perfil não encontrado');
-
-      const { data: dispatch, error: dispatchError } = await fromTable('multiplix_dispatches')
-        .insert({
-          name: input.name,
-          message_template: input.messageTemplate,
-          total_recipients: input.recipients.length,
-          created_by: profile.id,
-        })
-        .select('id')
-        .single();
-      if (dispatchError) throw new Error(dispatchError.message);
-
-      const recipientRows = input.recipients.map((r) => ({
-        dispatch_id: dispatch.id,
-        company_id: r.company_id,
-        company_name_snapshot: r.company_name,
-        destino_e164: r.destino_e164,
-        destino_origem: r.destino_origem,
-      }));
-      const { error: recipientsError } = await fromTable('multiplix_recipients').insert(recipientRows);
-      if (recipientsError) throw new Error(recipientsError.message);
+      // F08: a criacao vive no servidor. A edge multiplix-audience re-resolve o
+      // publico no Singu com o escopo do JWT e chama a RPC transacional
+      // multiplix_create_draft (dispatch + destinatarios numa transacao,
+      // idempotente por client_request_id). O navegador nao decide mais quem
+      // recebe nem escreve direto em multiplix_dispatches/multiplix_recipients.
+      const draft = await createMultiplixDraft({
+        name: input.name,
+        message_template: input.messageTemplate,
+        company_ids: input.companyIds,
+        contact_ids: input.contactIds ?? [],
+        client_request_id: crypto.randomUUID(),
+        scheduled_at: input.scheduledAt ?? null,
+        confirm_over_limit: input.confirmOverLimit ?? false,
+      });
+      if (!draft.dispatch_id) throw new Error('Disparo criado sem identificador');
+      const dispatchId = draft.dispatch_id;
 
       if (input.startNow) {
         // Nao aguarda: multiplix-send processa o loop de envio inteiro dentro
@@ -156,7 +147,7 @@ export function useCreateMultiplixDispatch() {
         // o progresso via realtime/polling; se a janela de envio recusar o
         // start, o dispatch fica em 'draft' e o botao "Iniciar" do monitor
         // permite tentar de novo (com o erro real, via toast do runAction).
-        invokeMultiplixSend(dispatch.id, 'start').catch((startError) => {
+        invokeMultiplixSend(dispatchId, 'start').catch((startError) => {
           // Nao e so o caso esperado (fora da janela): auth/409/500/rede
           // tambem caem aqui, e sem avisar o usuario o disparo fica parado
           // (draft) ou preso em 'sending' sem ninguem saber o motivo.
@@ -166,7 +157,7 @@ export function useCreateMultiplixDispatch() {
         });
       }
 
-      return { id: dispatch.id as string };
+      return { id: dispatchId, recipientCount: draft.recipient_count, created: draft.created };
     },
   });
 }

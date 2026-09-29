@@ -11,7 +11,7 @@ import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription,
   AlertDialogFooter, AlertDialogAction, AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
-import { useMultiplixResolve } from '@/hooks/integrations/useMultiplixAudience';
+import { MultiplixOverLimitError } from '@/hooks/integrations/useMultiplixAudience';
 import { useCreateMultiplixDispatch } from '@/hooks/integrations/useMultiplixDispatches';
 
 const PLACEHOLDER_CHIPS = [
@@ -30,32 +30,43 @@ export function MultiplixComposerDialog({ open, onOpenChange, selectedCompanyIds
   const [name, setName] = useState('');
   const [messageTemplate, setMessageTemplate] = useState('');
   const [confirmStartOpen, setConfirmStartOpen] = useState(false);
-  const resolve = useMultiplixResolve();
+  const [overLimit, setOverLimit] = useState<{ count: number; limit: number | null; startNow: boolean } | null>(null);
   const createDispatch = useCreateMultiplixDispatch();
 
-  const busy = resolve.isPending || createDispatch.isPending;
+  const busy = createDispatch.isPending;
 
   const reset = () => {
     setName('');
     setMessageTemplate('');
   };
 
-  const submit = async (startNow: boolean) => {
+  // F08: o composer nao resolve o publico nem insere destinatarios — manda os
+  // company_ids e a edge re-resolve com o escopo do JWT e cria na transacao.
+  const submit = async (startNow: boolean, confirmOverLimit = false) => {
     if (!name.trim() || !messageTemplate.trim() || selectedCompanyIds.length === 0) return;
     try {
-      const resolved = await resolve.mutateAsync(selectedCompanyIds);
-      const recipients = resolved.map((r) => ({
-        company_id: r.company_id,
-        company_name: r.company_name,
-        destino_e164: r.destino_e164,
-        destino_origem: r.destino_origem,
-      }));
-      const result = await createDispatch.mutateAsync({ name: name.trim(), messageTemplate: messageTemplate.trim(), recipients, startNow });
-      toast.success(startNow ? 'Disparo criado. Envio iniciando…' : 'Disparo salvo como rascunho.');
+      const result = await createDispatch.mutateAsync({
+        name: name.trim(),
+        messageTemplate: messageTemplate.trim(),
+        companyIds: selectedCompanyIds,
+        startNow,
+        confirmOverLimit,
+      });
+      toast.success(
+        startNow
+          ? `Disparo criado para ${result.recipientCount} contato(s). Envio iniciando…`
+          : `Disparo salvo como rascunho (${result.recipientCount} contato(s)).`,
+      );
       reset();
       onOpenChange(false);
       onCreated(result.id);
     } catch (e) {
+      // F17: acima do teto de destinatarios o servidor recusa e devolve o
+      // numero real; a confirmacao explicita reenvia com confirm_over_limit.
+      if (e instanceof MultiplixOverLimitError) {
+        setOverLimit({ count: e.count, limit: e.limit, startNow });
+        return;
+      }
       toast.error(e instanceof Error ? e.message : 'Erro ao criar disparo');
     }
   };
@@ -129,6 +140,30 @@ export function MultiplixComposerDialog({ open, onOpenChange, selectedCompanyIds
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={() => { setConfirmStartOpen(false); submit(true); }}>
               Iniciar agora
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={overLimit !== null} onOpenChange={(next) => { if (!next) setOverLimit(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Disparo acima do teto de contatos</AlertDialogTitle>
+            <AlertDialogDescription>
+              A seleção gerou {overLimit?.count ?? 0} contato(s) elegível(is)
+              {overLimit?.limit ? `, acima do teto de ${overLimit.limit}` : ''}. Confirma criar o disparo com todos?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const pending = overLimit;
+                setOverLimit(null);
+                if (pending) submit(pending.startNow, true);
+              }}
+            >
+              Confirmar e criar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

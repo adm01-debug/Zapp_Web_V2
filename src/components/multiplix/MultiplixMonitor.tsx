@@ -24,6 +24,7 @@ const DISPATCH_STATUS: Record<string, { label: string; tone: 'success' | 'danger
   sending: { label: 'Enviando', tone: 'info' },
   paused: { label: 'Pausado', tone: 'warning' },
   completed: { label: 'Concluído', tone: 'success' },
+  completed_with_failures: { label: 'Concluído com falhas', tone: 'warning' },
   failed: { label: 'Falhou', tone: 'danger' },
   cancelled: { label: 'Cancelado', tone: 'danger' },
 };
@@ -114,9 +115,12 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   const successRate = processed > 0 ? pct(dispatch.sent_count, processed) : 0;
   const isRunning = dispatch.status === 'sending';
   const isPaused = dispatch.status === 'paused';
-  const isDraft = dispatch.status === 'draft' || dispatch.status === 'scheduled';
+  // F10: 'scheduled' nao mostra "Iniciar" — quem inicia e o cron quando o
+  // horario chega; antes disso o operador so cancela.
+  const isDraft = dispatch.status === 'draft';
   const canStart = isPaused || isDraft;
-  const isDone = dispatch.status === 'completed' || dispatch.status === 'cancelled' || dispatch.status === 'failed';
+  const isDone = dispatch.status === 'completed' || dispatch.status === 'completed_with_failures'
+    || dispatch.status === 'cancelled' || dispatch.status === 'failed';
 
   return (
     <div className="space-y-4 min-w-0">
