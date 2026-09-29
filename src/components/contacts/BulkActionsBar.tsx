@@ -124,7 +124,16 @@ export function BulkActionsBar({
         throw new Error('Nenhum contato foi excluído. Verifique se você tem permissão.');
       }
 
-      toast.success(`${data} contato${data > 1 ? 's' : ''} removido${data > 1 ? 's' : ''}`);
+      // O lote devolve quantos foram excluídos de fato. Quando é menos que o
+      // selecionado, o resto foi recusado pelo banco e o aviso precisa dizer isso
+      // -- antes o toast anunciava só o que saiu e parecia sucesso total.
+      if (data < count) {
+        toast.warning(`${data} de ${count} contatos removidos`, {
+          description: 'Os demais nao puderam ser excluidos (sem permissao para esses contatos).',
+        });
+      } else {
+        toast.success(`${data} contato${data > 1 ? 's' : ''} removido${data > 1 ? 's' : ''}`);
+      }
       onClearSelection();
       onActionComplete();
     } catch (err) {
@@ -132,7 +141,7 @@ export function BulkActionsBar({
     } finally {
       setIsProcessing(false);
     }
-  }, [selectedIds, onClearSelection, onActionComplete]);
+  }, [selectedIds, count, onClearSelection, onActionComplete]);
 
   if (count === 0) return null;
 
