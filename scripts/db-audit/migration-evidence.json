@@ -741,7 +741,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "safer-replay",
       "related_migration": null,
-      "justification": "Migration aplicada no banco com o SQL corrigido (search_contacts com as 23 colunas de retorno) depois de o gateway recusar 42P13 na primeira tentativa; o arquivo no repo preserva o replay anterior, de 20 colunas, porque migration ja aplicada e imutavel (guarda do db-guard). O conteudo correto e o do ledger; o replay fica fixado por hash proprio."
+      "justification": "Migration aplicada no banco com o SQL corrigido (search_contacts com as 23 colunas de retorno) depois de o gateway recusar 42P13 na primeira tentativa; o arquivo no repo preserva o replay anterior, de 17 colunas, porque migration ja aplicada e imutavel (guarda do db-guard). A versao 20260929370000 foi adicionada ja com o nome final (commit 41f66910, PR #1172); quem foi renomeada dentro daquele PR, de 20260929390000 para 20260929560000, foi a migration vizinha de conversation_status/grants (commit b1d38824), para liberar a versao. Conferido com git log --all --name-status em 29/09/2026 -- rastro tambem em docs/audits/DIAGNOSTICO_GUARDAS_HERMES_E_DIVERGENCIAS_2026-09-29.md. O conteudo correto e o do ledger; o replay fica fixado por hash proprio."
     }
   ]
 }
