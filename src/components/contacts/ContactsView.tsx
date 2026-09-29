@@ -23,6 +23,7 @@ import { ContactContentArea } from './ContactContentArea';
 import { ContactResultsSummary } from './ContactResultsSummary';
 import { ContactCRMDialog } from './ContactCRMDialog';
 import { useContactsViewState } from './useContactsViewState';
+import { canDeleteContact } from './contactPermissions';
 
 export function ContactsView() {
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
@@ -224,6 +225,7 @@ export function ContactsView() {
         onClearSelection={() => setSelectedIds([])}
         onActionComplete={() => { setSelectedIds([]); refetch(); }}
         availableTags={uniqueTags}
+        canDeleteSelection={filteredContacts.some(c => selectedIds.includes(c.id) && canDeleteContact(c))}
       />
     </div>
     </MotionConfig>

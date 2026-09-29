@@ -9342,6 +9342,13 @@ export type Database = {
         Args: { p_campaign_id: string }
         Returns: boolean
       }
+      can_delete_contacts: {
+        Args: { p_ids: string[] }
+        Returns: {
+          can_delete: boolean
+          contact_id: string
+        }[]
+      }
       complete_talkx_recipient: {
         Args: {
           p_claim_token: string

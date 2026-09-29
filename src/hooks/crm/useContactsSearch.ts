@@ -137,12 +137,36 @@ export function useContactsSearch() {
     staleTime: 30_000,
   });
 
+  // ────────────────────────────────────────────────────────────────────────
+
+  // ─── Permissão de exclusão por linha (RPC can_delete_contacts) ───────────
+  // Mesma RPC-por-página do "último contato": o servidor responde com o MESMO
+  // predicado que a exclusão usa (`can_edit_contact`), então a lista nunca
+  // oferece "Excluir" em contato que o banco vai recusar. Enquanto a resposta
+  // não chega (ou se a RPC falhar), `can_delete` fica indefinido e o item
+  // continua aparecendo -- o comportamento anterior.
+  const { data: canDeleteMap } = useQuery({
+    queryKey: ['contacts-can-delete', contactIds],
+    queryFn: async () => {
+      const { data, error } = await ContactService.getDeletableContacts(contactIds);
+      if (error) throw error;
+      const map: Record<string, boolean> = {};
+      (data ?? []).forEach((row) => {
+        map[row.contact_id] = row.can_delete;
+      });
+      return map;
+    },
+    enabled: contactIds.length > 0,
+    staleTime: 30_000,
+  });
+
   const contactsEnriched = useMemo(() =>
     contacts.map(c => ({
       ...c,
       ...(lastMsgSuccess && { last_message_at: lastMsgMap?.[c.id] ?? null }),
+      can_delete: canDeleteMap?.[c.id],
     })),
-    [contacts, lastMsgMap, lastMsgSuccess]
+    [contacts, lastMsgMap, lastMsgSuccess, canDeleteMap]
   );
   // ────────────────────────────────────────────────────────────────────────
 
