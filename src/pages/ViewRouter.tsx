@@ -12,6 +12,7 @@ import { useUserRole } from '@/hooks/system/useUserRole';
 import { ShieldAlert } from 'lucide-react';
 
 import * as Views from './lazyViews';
+import { TASKS_ROUTE_PROPS } from './viewRouteProps';
 
 interface ViewRouterProps {
   currentView: string;
@@ -63,7 +64,6 @@ const VIEW_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<Rec
   'automations': Views.AutomationsManager,
   'integrations': Views.IntegrationsHub,
   'privacy': Views.LGPDComplianceView,
-  'pipeline': Views.TasksModule as unknown as React.LazyExoticComponent<React.ComponentType<Record<string, never>>>,
   'tasks': Views.TasksModule as unknown as React.LazyExoticComponent<React.ComponentType<Record<string, never>>>,
   'knowledge': Views.KnowledgeBaseView,
   'payments': Views.PaymentLinksView,
@@ -101,6 +101,11 @@ const VIEW_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<Rec
 
 // Views that need custom props
 const SPECIAL_VIEWS: Record<string, (props: ViewRouterProps) => React.ReactNode> = {
+  'pipeline': () => (
+    <ErrorBoundaryView viewId="pipeline">
+      <Views.TasksModule {...TASKS_ROUTE_PROPS.pipeline} />
+    </ErrorBoundaryView>
+  ),
   'achievements': (props) => (
     <ErrorBoundaryView viewId="achievements">
       <Views.AchievementsSystemLazy userId={props.userId} />
