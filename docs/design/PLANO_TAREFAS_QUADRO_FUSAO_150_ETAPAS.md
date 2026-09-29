@@ -1,5 +1,7 @@
 # PROMPT DE EXECUÇÃO — FUSÃO TAREFAS + LEMBRETES E QUADRO KANBAN PESSOAL | ZAPP WEB V2 — 150 ETAPAS
 
+> ⚠️ **SUBSTITUÍDO em 29/09/2026** por `PLANO_TAREFAS_FINALIZACAO_100_ETAPAS.md` após a auditoria `RELATORIO_AUDITORIA_TAREFAS_FUSAO.md`. Este arquivo fica como referência da especificação de produto (seções 2–6); as etapas 1–150 não devem mais ser executadas daqui.
+
 > **Executor:** Claude Code (container `claude-code`, VPS AtomicaBR) — em **três sessões** `claude -p` (ver seção 7)
 > **Repo:** `adm01-debug/Zapp_Web_V2` (branch base `main` @ `577a213a` ou posterior)
 > **Deploy:** Vercel `zapp_web_v2` (team `juca1`) — preview automático por branch; merge em `main` = produção
