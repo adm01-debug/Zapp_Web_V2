@@ -134,6 +134,10 @@ interface MockOpts {
   suppressAfterFirstCheck?: boolean;
   /** cota diaria restante da conexao (F17); null desliga a checagem */
   dailyRemaining?: number | null;
+  /** F11a: reivindicacao que nao devolve token (lease de outro worker) */
+  claimReturnsNothing?: boolean;
+  /** F10: a janela de envio fecha logo depois do start (disparo em andamento) */
+  windowClosesAfterStart?: boolean;
 }
 
 interface MockCtx {
@@ -157,6 +161,11 @@ function tableBuilder(table: string, opts: MockOpts, ctx: MockCtx): any {
     if (table === "multiplix_dispatches") return { data: ctx.dispatch, error: null };
     if (table === "multiplix_recipients") {
       ctx.recipientSelects++;
+      // Rede de seguranca do teste: sem o "passada sem reivindicacao encerra o
+      // laco" o worker re-seleciona a mesma fila para sempre e o teste ficaria
+      // pendurado (o laco vive de promessas ja resolvidas, sem ceder ao timer).
+      // Estourar aqui faz o teste FALHAR em vez de travar o CI.
+      if (ctx.recipientSelects > 12) throw new Error("laco do worker nao encerrou (selecoes repetidas)");
       return { data: ctx.remaining.slice(0, limit ?? 1000), error: null };
     }
     if (table === "whatsapp_connections") return { data: opts.connection ?? null, error: null };
@@ -197,10 +206,17 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             // Espelha o efeito no estado do mock para o motor enxergar a
             // transicao seguinte (ex.: pause -> 'paused').
             if (ctx.dispatch && args.p_action === "pause") ctx.dispatch = { ...ctx.dispatch, status: "paused" };
-            if (ctx.dispatch && args.p_action === "start") ctx.dispatch = { ...ctx.dispatch, status: "sending" };
+            if (ctx.dispatch && args.p_action === "start") {
+              ctx.dispatch = { ...ctx.dispatch, status: "sending" };
+              if (opts.windowClosesAfterStart) {
+                // Janela malformada = recusa garantida em qualquer horario.
+                ctx.dispatch = { ...ctx.dispatch, send_window_start: "8h", send_window_end: "18h" };
+              }
+            }
             return Promise.resolve({ data: [{ current_status: ctx.dispatch?.status ?? null }], error: null });
           }
           case "claim_multiplix_recipient":
+            if (opts.claimReturnsNothing) return Promise.resolve({ data: [], error: null });
             return Promise.resolve({ data: [{ claim_token: `claim-${String(args.p_recipient_id)}` }], error: null });
           case "complete_multiplix_recipient": {
             ctx.completions.push(args);
@@ -273,6 +289,27 @@ function stubProviderFetch() {
 
 function rpcs(ctx: MockCtx, name: string) {
   return ctx.rpcCalls.filter((call) => call.name === name);
+}
+
+/** Provedor respondendo com sucesso (v2 devolve key.id): permite exercitar o
+ * caminho de envio concluido sem rede — e o unico jeito de a cota diaria ser
+ * consumida, ja que ela so cai no envio que conclui. */
+function stubProviderSuccess(id = "WAMID-TESTE-1") {
+  const urls: string[] = [];
+  const original = globalThis.fetch;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  globalThis.fetch = ((input: any) => {
+    urls.push(typeof input === "string" ? input : String(input?.url ?? input));
+    return Promise.resolve({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ key: { id } }),
+    });
+  }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  return {
+    urls,
+    restore: () => { globalThis.fetch = original; },
+  };
 }
 
 // ---------------------------------------------------------------- autenticação
@@ -416,17 +453,14 @@ Deno.test("F09: destinatário na lista negra vira 'skipped' com motivo, sem POST
     suppressedPhones: [phone],
   };
   const ctx = newCtx(opts);
-  const originalFetch = globalThis.fetch;
-  let providerCalls = 0;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  globalThis.fetch = (() => { providerCalls++; return Promise.reject(new Error("provider nao pode ser chamado")); }) as any;
+  const provider = stubProviderFetch();
   try {
     const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
     assert(res.status === 200, `esperado 200, recebido ${res.status}`);
   } finally {
-    globalThis.fetch = originalFetch;
+    provider.restore();
   }
-  assert(providerCalls === 0, `nenhum POST ao provedor era esperado, houve ${providerCalls}`);
+  assert(provider.messagePosts() === 0, `nenhum POST ao provedor era esperado, houve ${provider.messagePosts()}`);
   assert(ctx.completions.length === 1, `esperava 1 conclusao, recebeu ${ctx.completions.length}`);
   assert(ctx.completions[0].p_status === "skipped", `status esperado 'skipped', veio ${ctx.completions[0].p_status}`);
   assert(
@@ -492,21 +526,18 @@ Deno.test("F17: sem cota diária sobrando o disparo é pausado com motivo 'daily
     dailyRemaining: 0,
   };
   const ctx = newCtx(opts);
-  const originalFetch = globalThis.fetch;
-  let providerCalls = 0;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  globalThis.fetch = (() => { providerCalls++; return Promise.reject(new Error("provider nao pode ser chamado")); }) as any;
+  const provider = stubProviderFetch();
   try {
     const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
     assert(res.status === 200, `esperado 200, recebido ${res.status}`);
   } finally {
-    globalThis.fetch = originalFetch;
+    provider.restore();
   }
   const pause = rpcs(ctx, "transition_multiplix_dispatch").find((call) => call.args.p_action === "pause");
   assert(pause, "esperava a pausa automatica do disparo");
   assert(pause.args.p_pause_reason === "daily_limit", `motivo esperado 'daily_limit', veio ${pause.args.p_pause_reason}`);
   assert(rpcs(ctx, "claim_multiplix_recipient").length === 0, "nao deveria reivindicar destinatario sem cota");
-  assert(providerCalls === 0, `nenhum POST ao provedor era esperado, houve ${providerCalls}`);
+  assert(provider.messagePosts() === 0, `nenhum POST ao provedor era esperado, houve ${provider.messagePosts()}`);
 });
 
 Deno.test("F17: com cota sobrando o disparo segue (não pausa por cota)", async () => {
@@ -525,6 +556,120 @@ Deno.test("F17: com cota sobrando o disparo segue (não pausa por cota)", async 
     .find((call) => call.args.p_action === "pause" && call.args.p_pause_reason === "daily_limit");
   assert(!quotaPause, "nao deveria pausar por cota diaria com espaco disponivel");
   assert(rpcs(ctx, "claim_multiplix_recipient").length === 1, "esperava reivindicar o destinatario");
+});
+
+Deno.test("F17: a cota da conexão é consumida por envio concluído (1 enviado, depois pausa o lote)", async () => {
+  // Cota de 1 e dois destinatarios na mesma passada: o primeiro envio conclui e
+  // consome a cota; o segundo tem de encontrar dailyRoom <= 0 e virar pausa por
+  // daily_limit — sem reivindicar (nao queima destinatario).
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 2 }),
+    recipients: [recipientRow(1, "5511944443333"), recipientRow(2, "5511944442222")],
+    suppressedPhones: [],
+    dailyRemaining: 1,
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderSuccess();
+  // O default do shared e o flavor "go", que troca a rota e exige token de
+  // instancia (o worker chama evoFetch sem instanceToken). Em "v2" o path passa
+  // direto para o fetch e o caminho de envio concluido fica observavel.
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  } finally {
+    Deno.env.delete("EVOLUTION_API_FLAVOR");
+    provider.restore();
+  }
+  assert(
+    rpcs(ctx, "record_multiplix_recipient_sent").length === 1,
+    `esperava 1 envio concluido, houve ${rpcs(ctx, "record_multiplix_recipient_sent").length}`,
+  );
+  const pause = rpcs(ctx, "transition_multiplix_dispatch").find((call) => call.args.p_action === "pause");
+  assert(pause, "esperava pausa por cota depois de consumir o unico envio do dia");
+  assert(pause.args.p_pause_reason === "daily_limit", `motivo esperado 'daily_limit', veio ${pause.args.p_pause_reason}`);
+  assert(
+    rpcs(ctx, "claim_multiplix_recipient").length === 1,
+    `esperava 1 reivindicacao (a cota acaba depois dela), houve ${rpcs(ctx, "claim_multiplix_recipient").length}`,
+  );
+});
+
+// ------------------------------------------------------------------- F10 (janela)
+
+Deno.test("F10: start fora da janela não dispara nada (ok:false, sem pausa e sem claim)", async () => {
+  // "8h" nao e HH:MM: o helper falha FECHADO (recusa). Antes do laco o worker
+  // devolve ok:false com o motivo — o disparo nem sai de 'draft'/'scheduled'.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", send_window_start: "8h", send_window_end: "18h" }),
+    recipients: [recipientRow(1, "5511922221111")],
+    suppressedPhones: [],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderFetch();
+  let body: { ok?: boolean; reason?: string } = {};
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    body = await res.json();
+  } finally {
+    provider.restore();
+  }
+  assert(body.ok === false, `esperava ok:false, veio ${JSON.stringify(body)}`);
+  assert(body.reason === "outside_send_window", `motivo esperado 'outside_send_window', veio ${body.reason}`);
+  assert(rpcs(ctx, "claim_multiplix_recipient").length === 0, "nao pode reivindicar fora da janela");
+  assert(provider.messagePosts() === 0, "nao pode enviar fora da janela");
+});
+
+Deno.test("F10: janela que fecha no meio do disparo pausa com motivo 'outside_window'", async () => {
+  // O laco refaz a checagem de janela a cada destinatario: se ela fecha durante
+  // o disparo, o worker pausa com o motivo que o cron sabe retomar (sem isso o
+  // disparo ficava pausado para sempre sem ninguem saber por que).
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending" }),
+    recipients: [recipientRow(1, "5511922222222")],
+    suppressedPhones: [],
+    windowClosesAfterStart: true,
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderFetch();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  } finally {
+    provider.restore();
+  }
+  const pause = rpcs(ctx, "transition_multiplix_dispatch").find((call) => call.args.p_action === "pause");
+  assert(pause, "esperava pausa quando a janela fecha no meio do disparo");
+  assert(pause.args.p_pause_reason === "outside_window", `motivo esperado 'outside_window', veio ${pause.args.p_pause_reason}`);
+  assert(rpcs(ctx, "claim_multiplix_recipient").length === 0, "nao pode reivindicar com a janela fechada");
+  assert(provider.messagePosts() === 0, "nao pode enviar com a janela fechada");
+});
+
+// ------------------------------------------------------------------- F11a (laco)
+
+Deno.test("F11a: passada sem reivindicação encerra o laço (não gira contra a fila)", async () => {
+  // Reivindicacao vazia (lease de outro worker) tem de terminar a passada: sem
+  // isso o worker re-seleciona a mesma fila indefinidamente contra o banco.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511911110000")],
+    claimReturnsNothing: true,
+  };
+  const ctx = newCtx(opts);
+  const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(
+    rpcs(ctx, "claim_multiplix_recipient").length === 1,
+    `esperava 1 tentativa de reivindicacao, houve ${rpcs(ctx, "claim_multiplix_recipient").length}`,
+  );
+  assert(
+    ctx.recipientSelects === 1,
+    `a passada sem reivindicacao deveria encerrar o laco na 1a selecao, houve ${ctx.recipientSelects}`,
+  );
 });
 
 // --------------------------------------------------- F06 (start) e F09 (janela)

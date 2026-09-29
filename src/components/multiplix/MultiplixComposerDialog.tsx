@@ -160,7 +160,7 @@ export function MultiplixComposerDialog({ open, onOpenChange, selectedCompanyIds
               onClick={() => {
                 const pending = overLimit;
                 setOverLimit(null);
-                if (pending) submit(pending.startNow, true);
+                if (pending) void submit(pending.startNow, true);
               }}
             >
               Confirmar e criar

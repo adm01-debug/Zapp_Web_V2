@@ -308,8 +308,8 @@
     },
     {
       "path": "supabase/functions/elevenlabs-tts/index.ts",
-      "bytes": 2797,
-      "sha256": "21bdd0d7d8c94aae2ffdc10239aebed0d3a9ed0aa8ed25a3db48433f096e93ca"
+      "bytes": 2929,
+      "sha256": "bb4d1b0ffb106398ddef8198b316b3b684da459fbb1bce1709c2efea67f8eac3"
     },
     {
       "path": "supabase/functions/elevenlabs-voice-design/index.ts",
@@ -398,13 +398,13 @@
     },
     {
       "path": "supabase/functions/multiplix-audience/index.ts",
-      "bytes": 9181,
-      "sha256": "ecf35f261bd9783ea35f668e1bf220ceba7695734dddd8db322105cf19d59907"
+      "bytes": 14634,
+      "sha256": "bcd0e7fe0fd0b0f9c40aa8ebd6140380484e1fc1651a6ea9d32f35dd2549b612"
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "bytes": 23271,
-      "sha256": "38363c9e7709442dba681a4200556b76af32afc0787dbedc6c149c3be148accd"
+      "bytes": 31351,
+      "sha256": "fe59be633a548c05344c17a389fbf5e58396739f33199fc2d112bdc35e2758db"
     },
     {
       "path": "supabase/functions/promogifts-catalog/index.ts",
@@ -861,7 +861,7 @@
       "name": "elevenlabs-tts",
       "entrypoint": "supabase/functions/elevenlabs-tts/index.ts",
       "verify_jwt": true,
-      "source_sha256": "9e1e8ecc42f0ab286700ddcbb1328969088be10ea2e4c3b474e9c3c86153fde5",
+      "source_sha256": "c94a8a9ca2f6e761f8fe0f26a6a57c14d51523a13a7e148e9dea7c67ed30ebc6",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1105,7 +1105,7 @@
       "name": "multiplix-audience",
       "entrypoint": "supabase/functions/multiplix-audience/index.ts",
       "verify_jwt": true,
-      "source_sha256": "e907258b6a5ed114fcff7d3ad73dad3541a00bf101acdbdca490a667a9d31bf7",
+      "source_sha256": "61468c254af10304b04b5604ccb951a2a658eb4ddeeca705d1b003d8167b6af8",
       "source_files": [
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1117,7 +1117,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "7bf42c5419095878af44953fdd7f38eedf376879620646775800903cccf5b6ad",
+      "source_sha256": "674430edcd4a616054716cab5d546824c4c0e0314a23f9fa307f87c1699b7e48",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1339,5 +1339,5 @@
       ]
     }
   ],
-  "manifest_sha256": "4a2886ba8bc79b60f17ea478ae33f521e735315291b66684f333908272b30e73"
+  "manifest_sha256": "ba1a88f61f0639b7ac57a6e5cdb83b2ca59f7f879da611b9f98f2f1dfee210dd"
 }
