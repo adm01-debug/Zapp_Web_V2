@@ -185,7 +185,10 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
         .select('*, contact:contacts!conversation_tasks_contact_id_fkey(id,name,phone,avatar_url)')
         .eq('created_by', profileId)   // RLS tambem filtra, mas explicito e mais rapido
         // B13: done so dos ultimos 30 dias; cancelled tratado logo abaixo.
-        .or(`status.neq.done,completed_at.gte.${cutoff}`)
+        // `completed_at.is.null` cobre linhas `done` legadas sem carimbo de
+        // conclusao (o trigger de estado so grava em UPDATE e o backfill de
+        // reminders inseriu `done` direto); sem isso ficariam invisiveis.
+        .or(`status.neq.done,completed_at.is.null,completed_at.gte.${cutoff}`)
         .order('position', { ascending: true })
         .order('created_at', { ascending: false });
 
@@ -271,7 +274,7 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
         due_date: input.dueDate ?? null,
         remind_at: input.remindAt ?? null,
         waiting_reason: input.waitingReason ?? null,
-      } as TaskInsert);
+      });
       if (error) throw error;
     },
     onSettled: () => invalidate(),
