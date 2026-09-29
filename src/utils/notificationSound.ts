@@ -1,6 +1,10 @@
 // Notification sound utilities
 import { log } from '@/lib/logger';
 
+// ÂNCORA (não unificar): ALERTA = WebAudio (oscilador → gain → destination), ganho próprio.
+// MÍDIA de conversa (áudio/vídeo das mensagens) = `HTMLMediaElement`, controlada por
+// `@/lib/mediaVolumeStore`. `element.volume` não afeta osciladores — não junte os dois.
+
 let audioContext: AudioContext | null = null;
 
 const getAudioContext = () => {

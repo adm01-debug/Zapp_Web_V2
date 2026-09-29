@@ -7,6 +7,7 @@ import { toast } from '@/hooks/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { log } from '@/lib/logger';
 import { useAudioPlayer } from '@/hooks/communication/useAudioPlayer';
+import { MediaVolumeControl } from './MediaVolumeControl';
 
 interface AudioMessagePlayerProps {
   audioUrl: string;
@@ -132,6 +133,14 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
         </div>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <button onClick={cycleSpeed} className={cn('h-6 px-1.5 rounded-full text-3xs font-semibold transition-colors', playbackRate < 1 ? 'bg-destructive/20 hover:bg-destructive/30 text-destructive' : isSent ? 'bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground' : 'bg-primary/10 hover:bg-primary/20 text-primary')} title="Velocidade">{playbackRate}x</button>
+        </motion.div>
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          {/* E14 — volume das mídias entre a velocidade e a transcrição; as cores seguem
+              as variantes do balão (enviado usa primary-foreground, recebido usa primary). */}
+          <MediaVolumeControl
+            variant="bubble"
+            className={isSent ? 'text-primary-foreground/70 hover:text-primary-foreground' : 'text-muted-foreground hover:text-primary'}
+          />
         </motion.div>
         <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
           <Button variant="ghost" size="icon" className={cn('w-8 h-8 relative', showTranscription && transcription ? (isSent ? 'text-primary-foreground' : 'text-primary') : (isSent ? 'text-primary-foreground/50' : 'text-muted-foreground'))}

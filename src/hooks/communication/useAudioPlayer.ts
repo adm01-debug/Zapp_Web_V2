@@ -3,6 +3,7 @@ import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { SUPABASE_URL } from '@/config/supabase';
 import { toast } from '@/hooks/ui/use-toast';
+import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
 import {
   parseSupabaseStorageObjectUrl,
   PRIVATE_MEDIA_BUCKETS,
@@ -71,6 +72,10 @@ export function useAudioPlayer({ audioUrl, messageId }: UseAudioPlayerOptions) {
   const [playbackRate, setPlaybackRate] = useState(1.0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const resolvedAtRef = useRef({ source: '', timestamp: 0 });
+
+  // E11 — volume é global (D2/E12): não entra no `playbackState` da mensagem, então
+  // trocar de áudio no balão não zera nem recria o valor escolhido pelo atendente.
+  const mediaVolume = useMediaElementVolume(audioRef);
 
   // Deriving the initial state for a new prop makes a previous message's URL
   // and playback flags impossible to leak during the transition render.
@@ -283,5 +288,12 @@ export function useAudioPlayer({ audioUrl, messageId }: UseAudioPlayerOptions) {
     audioRef, resolvedUrl, isPlaying, isLoading, hasError,
     playbackRate, progress, duration, currentTime, waveformHeights,
     togglePlay, handleSeek, cycleSpeed, formatTime, resolveAudioUrl,
+    volume: mediaVolume.volume,
+    muted: mediaVolume.muted,
+    gain: mediaVolume.gain,
+    setVolume: mediaVolume.setVolume,
+    setMuted: mediaVolume.setMuted,
+    toggleMuted: mediaVolume.toggleMuted,
+    isMediaVolumeSupported: mediaVolume.isSupported,
   };
 }

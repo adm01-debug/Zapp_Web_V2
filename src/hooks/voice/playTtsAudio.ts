@@ -1,5 +1,6 @@
 import { log } from '@/lib/logger';
 import { edgeAuthHeaders } from '@/lib/edgeAuthHeaders';
+import { attachMediaVolume } from '@/lib/mediaVolumeElement';
 
 export interface TtsPlayback {
   promise: Promise<void>;
@@ -99,8 +100,11 @@ export function playTtsAudio(
   // This is critical for browser autoplay policy compliance
   const audioElement = new Audio();
   audioElement.preload = 'auto';
+  // E36 — fala do TTS é mídia de conversa: toca no volume global do atendente.
+  const detachMediaVolume = attachMediaVolume(audioElement);
 
   const cleanup = () => {
+    detachMediaVolume();
     audioElement.onended = null;
     audioElement.onerror = null;
     audioElement.pause();

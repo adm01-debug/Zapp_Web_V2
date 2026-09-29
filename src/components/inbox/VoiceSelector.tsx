@@ -14,6 +14,7 @@ import {
 import { Volume2, Check, Play, Square, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { attachMediaVolume } from '@/lib/mediaVolumeElement';
 
 export interface ElevenLabsVoice {
   id: string;
@@ -104,9 +105,12 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
 
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
+      // E36 — prévia da voz (TTS) é mídia de conversa: respeita o volume global.
+      const detachMediaVolume = attachMediaVolume(audio);
 
       audio.onplay = () => setPreviewingVoiceId(voice.id);
       audio.onended = () => {
+        detachMediaVolume();
         setPreviewingVoiceId(null);
         if (audioUrlRef.current) {
           URL.revokeObjectURL(audioUrlRef.current);
@@ -114,6 +118,7 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
         }
       };
       audio.onerror = () => {
+        detachMediaVolume();
         setPreviewingVoiceId(null);
         toast.error('Erro ao reproduzir preview');
       };

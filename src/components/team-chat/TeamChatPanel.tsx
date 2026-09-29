@@ -15,6 +15,7 @@ import { TeamChatHeader } from './TeamChatHeader';
 import { TeamChatInputArea } from './TeamChatInputArea';
 import { useTeamChatPanel } from './useTeamChatPanel';
 import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
+import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
 import { TeamMessage } from '@/hooks/chat/useTeamChat';
 import { isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -32,17 +33,22 @@ function formatDateSep(dateStr: string) {
 const MediaContent = memo(function MediaContent({ msg }: { msg: TeamMessage }) {
   const source = msg.media_url || '';
   const { url: resolvedUrl, isLoading, refresh } = useResolvedStorageUrl(source);
+  // E33 — áudio e vídeo do chat interno da equipe passam pelo volume global.
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  useMediaElementVolume(videoRef);
+  useMediaElementVolume(audioRef);
   if (!msg.media_url) return null;
   if (isLoading || !resolvedUrl) return isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span className="text-xs text-destructive">Mídia indisponível</span>;
   switch (msg.media_type) {
     case 'image': case 'sticker': case 'emoji':
       return <img src={resolvedUrl} alt="media" className={cn("rounded-lg max-h-48 object-contain cursor-pointer", msg.media_type === 'sticker' || msg.media_type === 'emoji' ? 'w-24 h-24' : 'max-w-full')} onError={() => { void refresh(); }} onClick={() => window.open(resolvedUrl, '_blank')} />;
-    case 'video': return <video src={resolvedUrl} controls onError={() => { void refresh(); }} className="rounded-lg max-h-48 max-w-full" />;
+    case 'video': return <video ref={videoRef} src={resolvedUrl} controls onError={() => { void refresh(); }} className="rounded-lg max-h-48 max-w-full" />;
     case 'audio': case 'audio_meme': {
       const isWebm = source.split(/[?#]/, 1)[0].endsWith('.webm');
       return (
         <div className="flex flex-col gap-1 w-full max-w-[240px]">
-          <audio src={resolvedUrl} controls onError={() => { void refresh(); }} className="w-full" />
+          <audio ref={audioRef} src={resolvedUrl} controls onError={() => { void refresh(); }} className="w-full" />
           {isWebm && (
             <p className="text-[9px] opacity-60 italic px-1">Nota: Áudio WebM pode não ser compatível com Safari/iOS.</p>
           )}

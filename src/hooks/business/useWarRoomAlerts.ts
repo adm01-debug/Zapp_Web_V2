@@ -19,6 +19,8 @@ export function useWarRoomAlerts(soundEnabled = true) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Initialize alert sound
+  // Fora do controle de volume de MÍDIA por definição: é ALERTA (WebAudio/HTMLMedia
+  // fora do inbox) e tem volume próprio. Não integrar ao `mediaVolumeStore`.
   useEffect(() => {
     audioRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgip6LbUg3WX2OgGtLPE51g3lgSkRHZXVzYFRDSWBwaV5WTFFcaGReW1haYmhkYl9eYGVpZ2VkZGRnamlnZmZnaGlpaGdnaGhpaWhoaGhpaWhoaGlpaGlpaGhpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaQ==');
     audioRef.current.volume = 0.5;

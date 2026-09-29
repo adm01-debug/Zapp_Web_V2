@@ -13,23 +13,32 @@ interface SliderProps extends React.ComponentPropsWithoutRef<typeof SliderPrimit
 }
 
 const Slider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, SliderProps>(
-  ({ className, thumbLabel, value, defaultValue, ...props }, ref) => {
+  ({ className, thumbLabel, value, defaultValue, orientation, ...props }, ref) => {
     // E36 — antes só um <Thumb> era renderizado, então um Slider de faixa
     // (value=[min, max], 2 valores) ficava com o 2º thumb "invisível"
     // (Radix não desenha thumb sem elemento correspondente). Mapear sobre
     // value/defaultValue.length renderiza 1 thumb por valor, preservando o
     // caso de 1 valor (uso single-thumb já existente em outras telas).
     const thumbCount = (value ?? defaultValue ?? [0]).length;
+    // Volume de mídia (fase 2 do plano de volume) usa o slider na vertical: o Radix
+    // não define direção/tamanho de eixo, então a trilha precisa acompanhar —
+    // sem isso ela continua 8px de altura no meio de um slider de 112px.
+    const isVertical = orientation === 'vertical';
     return (
       <SliderPrimitive.Root
         ref={ref}
         value={value}
         defaultValue={defaultValue}
-        className={cn("relative flex w-full touch-none select-none items-center", className)}
+        orientation={orientation}
+        className={cn(
+          "relative flex touch-none select-none items-center",
+          isVertical ? "h-full w-4 flex-col" : "w-full",
+          className,
+        )}
         {...props}
       >
-        <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
-          <SliderPrimitive.Range className="absolute h-full bg-primary" />
+        <SliderPrimitive.Track className={cn("relative grow overflow-hidden rounded-full bg-secondary", isVertical ? "h-full w-2" : "h-2 w-full")}>
+          <SliderPrimitive.Range className={cn("absolute rounded-full bg-primary", isVertical ? "w-full" : "h-full")} />
         </SliderPrimitive.Track>
         {Array.from({ length: thumbCount }).map((_, i) => (
           <SliderPrimitive.Thumb

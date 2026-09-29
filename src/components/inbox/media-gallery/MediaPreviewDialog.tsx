@@ -1,8 +1,10 @@
+import { useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, Download, File } from 'lucide-react';
 import { MediaItem, notifyDownloadBlocked } from './mediaUtils';
 import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
+import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
 
 interface MediaPreviewDialogProps {
   item: MediaItem | null;
@@ -17,6 +19,11 @@ export function MediaPreviewDialog({ item, open, onOpenChange }: MediaPreviewDia
   const displayItem = item;
 
   const { url: resolvedUrl, isLoading, error, refresh } = useResolvedStorageUrl(displayItem?.url || '');
+  // E23 — a galeria toca áudio e vídeo da conversa: ambos no volume global.
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  useMediaElementVolume(videoRef);
+  useMediaElementVolume(audioRef);
 
   if (!displayItem) return null;
 
@@ -38,8 +45,8 @@ export function MediaPreviewDialog({ item, open, onOpenChange }: MediaPreviewDia
           {isLoading && <span className="text-sm text-muted-foreground">Carregando mídia…</span>}
           {error && <Button variant="outline" onClick={() => { void refresh(); }}>Tentar novamente</Button>}
           {displayItem.type === 'image' && resolvedUrl && <img src={resolvedUrl} alt={displayItem.filename} onError={() => { void refresh(); }} className="max-w-full max-h-[70vh] object-contain" />}
-          {displayItem.type === 'video' && resolvedUrl && <video src={resolvedUrl} controls controlsList="nodownload" onError={() => { void refresh(); }} onContextMenu={(e) => e.preventDefault()} className="max-w-full max-h-[70vh]" />}
-          {displayItem.type === 'audio' && resolvedUrl && <div className="p-8"><audio src={resolvedUrl} controls onError={() => { void refresh(); }} className="w-full" /></div>}
+          {displayItem.type === 'video' && resolvedUrl && <video ref={videoRef} src={resolvedUrl} controls controlsList="nodownload" onError={() => { void refresh(); }} onContextMenu={(e) => e.preventDefault()} className="max-w-full max-h-[70vh]" />}
+          {displayItem.type === 'audio' && resolvedUrl && <div className="p-8"><audio ref={audioRef} src={resolvedUrl} controls onError={() => { void refresh(); }} className="w-full" /></div>}
           {displayItem.type === 'document' && (
             <div className="text-center p-8">
               <File className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
 import type { WhatsAppStatusMessage } from '@/hooks/integrations/useWhatsAppStatus';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Loader2, Image as ImageIcon, Video, ChevronLeft, ChevronRight, X } from
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatRelativeTime } from '@/lib/formatters';
+import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
 
 // DEFAULT_INSTANCE_NAME removido: stories off (EVENT_IGNORE_STATUS=true).
 
@@ -64,6 +65,10 @@ export function StoryViewer({ messages, initialIndex, open, onClose, pushName }:
   const [resolvedMedia, setResolvedMedia] = useState<ResolvedMedia>({ src: null, mimetype: null });
   const [mediaLoading, setMediaLoading] = useState(false);
   const [mediaError, setMediaError] = useState<string | null>(null);
+  // E24 — status de vídeo abre com `autoPlay` no volume do sistema; passa a abrir no
+  // volume escolhido pelo atendente (o pior caso hoje é um autoplay a 100% no open space).
+  const videoRef = useRef<HTMLVideoElement>(null);
+  useMediaElementVolume(videoRef);
 
   useEffect(() => { if (open) setIndex(initialIndex); }, [open, initialIndex]);
 
@@ -171,7 +176,7 @@ export function StoryViewer({ messages, initialIndex, open, onClose, pushName }:
                 mediaLoading ? (
                   <div className="flex flex-col items-center gap-3 text-white/70"><Loader2 className="w-6 h-6 animate-spin" /><p className="text-sm">Carregando vídeo...</p></div>
                 ) : resolvedMedia.src ? (
-                  <video src={resolvedMedia.src} controls autoPlay className="max-w-full max-h-[65vh] object-contain rounded-lg" />
+                  <video ref={videoRef} src={resolvedMedia.src} controls autoPlay className="max-w-full max-h-[65vh] object-contain rounded-lg" />
                 ) : (
                   <div className="text-center text-white/70 space-y-2"><Video className="w-8 h-8 mx-auto" /><p className="text-sm">{mediaError || 'Vídeo indisponível'}</p></div>
                 )

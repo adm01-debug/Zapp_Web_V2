@@ -4,6 +4,7 @@ import { getLogger } from '@/lib/logger';
 import { toast } from 'sonner';
 import { getFileExtensionWithDefault } from '@/utils/fileExtensions';
 import { convertAudioToMp3 } from '@/utils/audioToMp3';
+import { attachMediaVolume } from '@/lib/mediaVolumeElement';
 
 const log = getLogger('useAudioMemes');
 
@@ -71,7 +72,9 @@ export function useAudioMemes(open: boolean) {
     }
     if (audioRef.current) audioRef.current.pause();
     const audio = new Audio(meme.audio_url);
-    audio.onended = () => setPlayingId(null);
+    // E36 — prévia do áudio meme é mídia de conversa: respeita o volume global.
+    const detachMediaVolume = attachMediaVolume(audio);
+    audio.onended = () => { detachMediaVolume(); setPlayingId(null); };
     audio.play();
     audioRef.current = audio;
     setPlayingId(meme.id);
@@ -118,6 +121,8 @@ export function useAudioMemes(open: boolean) {
       let duration: number | null = converted.ok ? converted.durationSeconds : null;
       if (duration === null) {
         try {
+          // Probe de metadados (nunca é reproduzido): fora do `mediaVolumeStore` —
+          // não há áudio saindo daqui, só a leitura da duração.
           const tempAudio = new Audio(urlData.publicUrl);
           await new Promise<void>((resolve) => {
             tempAudio.onloadedmetadata = () => {

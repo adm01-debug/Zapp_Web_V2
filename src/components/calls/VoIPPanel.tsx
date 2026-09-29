@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import { useCallSession } from '@/providers/CallSessionProvider';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useCalls } from '@/hooks/communication/useCalls';
 import { useCallHistory, type CallHistoryRow as Call, type CallHistoryFilters, type CallResultFilter } from '@/hooks/communication/useCallHistory';
+import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
 
 const DIRECTION_OPTIONS: { value: 'all' | 'inbound' | 'outbound'; label: string }[] = [
   { value: 'all', label: 'Todas' },
@@ -52,6 +53,9 @@ export function VoIPPanel() {
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState('');
   const [noteSaving, setNoteSaving] = useState(false);
+  // E35 — gravação de chamada é mídia de conversa (não alerta): entra no volume global.
+  const recordingAudioRef = useRef<HTMLAudioElement>(null);
+  useMediaElementVolume(recordingAudioRef);
 
   useEffect(() => {
     const t = setTimeout(() => setSearchDebounced(search.trim()), 300);
@@ -307,7 +311,7 @@ export function VoIPPanel() {
                   {selectedCall.recording_url && (
                     <div>
                       <p className="text-xs font-medium text-foreground mb-1">Gravação</p>
-                      <audio controls src={selectedCall.recording_url} className="w-full h-9" />
+                      <audio ref={recordingAudioRef} controls src={selectedCall.recording_url} className="w-full h-9" />
                     </div>
                   )}
 

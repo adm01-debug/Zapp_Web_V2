@@ -1,4 +1,4 @@
-import { useState, forwardRef } from 'react';
+import { useState, forwardRef, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { log } from '@/lib/logger';
 import {
@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { getFileCategory, formatFileSize, getFileExtension, WHATSAPP_FILE_TYPES } from '@/utils/whatsappFileTypes';
 import { VideoFullscreen } from './VideoFullscreen';
 import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
+import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
 
 function getFileIcon(fileName: string, mimeType?: string) {
   const extension = getFileExtension(fileName).toLowerCase();
@@ -111,6 +112,11 @@ export const VideoPreview = forwardRef<HTMLDivElement, VideoPreviewProps>(
     const [showFullscreen, setShowFullscreen] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
     const { url: resolvedUrl, isLoading, refresh } = useResolvedStorageUrl(url);
+    const videoRef = useRef<HTMLVideoElement>(null);
+    // E20 — o hover continua mudo (deliberado), mas o elemento passa a carregar o volume
+    // global e o mute global: `manageMuted: false` deixa o mute do preview com o
+    // componente, e o `muted={isMuted || muted}` garante que mídia muda continue muda.
+    const { muted: globalMuted } = useMediaElementVolume(videoRef, { manageMuted: false });
 
     return (
       <div ref={ref}>
@@ -122,8 +128,9 @@ export const VideoPreview = forwardRef<HTMLDivElement, VideoPreviewProps>(
               </div>
             )}
             {resolvedUrl && <video
+              ref={videoRef}
               key={resolvedUrl}
-              src={resolvedUrl} className="w-full max-h-[200px] object-cover rounded-lg" muted={isMuted} loop playsInline
+              src={resolvedUrl} className="w-full max-h-[200px] object-cover rounded-lg" muted={isMuted || globalMuted} loop playsInline
               onLoadedData={() => setIsLoaded(true)}
               onError={() => { setIsLoaded(false); void refresh(); }}
               onMouseEnter={(e) => { e.currentTarget.play(); setIsPlaying(true); }}

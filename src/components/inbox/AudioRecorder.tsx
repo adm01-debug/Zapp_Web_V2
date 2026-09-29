@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Mic, Square, X, Send, Pause, Play, Lock, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioRecorder } from '@/hooks/communication/useAudioRecorder';
+import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
 import { VoiceChanger } from './VoiceChanger';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
 
@@ -19,6 +20,8 @@ export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
   const [isLocked, setIsLocked] = useState(false);
   const [playbackProgress, setPlaybackProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // E36 — a prévia do áudio gravado é "áudio enviado" (mídia de conversa).
+  useMediaElementVolume(audioRef);
   const isMobile = useIsMobile();
   
   // Swipe-to-cancel

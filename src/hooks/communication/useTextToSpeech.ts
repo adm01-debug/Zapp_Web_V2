@@ -3,6 +3,7 @@ import { edgeAuthHeaders } from '@/lib/edgeAuthHeaders';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { log } from '@/lib/logger';
+import { attachMediaVolume } from '@/lib/mediaVolumeElement';
 // Default voice: Custom voice from Voice Library
 const DEFAULT_VOICE_ID = 'TY3h8ANhQUsJaa0Bga5F';
 
@@ -125,12 +126,15 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
 
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
+      // E36 — o TTS toca no volume global, não no volume do sistema.
+      const detachMediaVolume = attachMediaVolume(audio);
       
       // Set playback rate
       audio.playbackRate = speed;
 
       audio.onplay = () => setIsPlaying(true);
       audio.onended = () => {
+        detachMediaVolume();
         setIsPlaying(false);
         setCurrentMessageId(null);
         if (audioUrlRef.current) {
@@ -139,6 +143,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
         }
       };
       audio.onerror = () => {
+        detachMediaVolume();
         setIsPlaying(false);
         setCurrentMessageId(null);
         toast.error('Erro ao reproduzir áudio');

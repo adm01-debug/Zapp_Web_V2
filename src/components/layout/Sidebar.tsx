@@ -8,6 +8,7 @@ import { useSidebarFavorites } from '@/hooks/ui/useSidebarFavorites';
 import { PushNotificationToggle } from '@/components/notifications/PushNotificationToggle';
 import { ScreenProtectionToggle } from '@/components/notifications/ScreenProtectionToggle';
 import { SoundMuteToggle } from '@/components/notifications/SoundMuteToggle';
+import { MediaVolumeToggle } from './MediaVolumeToggle';
 import { SidebarNavItem } from './SidebarNavItem';
 import { SidebarNavGroup } from './SidebarNavGroup';
 import { SidebarUserPill } from './SidebarUserPill';
@@ -218,6 +219,9 @@ export const Sidebar = React.memo(function Sidebar({
             <ScreenProtectionToggle className="w-[36px] h-[36px]" />
             <PushNotificationToggle className="w-[36px] h-[36px]" />
             <SoundMuteToggle className="w-[36px] h-[36px]" />
+            {/* E28 — volume das mídias de conversa, logo depois do mute dos ALERTAS.
+                5 × 36px + 4 gaps = 196px, dentro dos 228px úteis da sidebar (256px). */}
+            <MediaVolumeToggle className="w-[36px] h-[36px]" />
             <Tooltip delayDuration={200}><TooltipTrigger asChild>
               <button onClick={() => setTheme(isDark ? 'light' : 'dark')} className={cn("w-[36px] h-[36px] rounded-lg flex items-center justify-center transition-all duration-200 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none", isDark && "text-primary")} aria-label={isDark ? 'Modo claro' : 'Modo escuro'}>
                 {isDark ? <Sun className="w-[16px] h-[16px]" /> : <Moon className="w-[16px] h-[16px]" />}
