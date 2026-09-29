@@ -1930,6 +1930,7 @@ export type Database = {
           conversation_status: string
           conversation_status_changed_at: string | null
           created_at: string
+          deleted_at: string | null
           email: string | null
           group_category: string | null
           id: string
@@ -1970,6 +1971,7 @@ export type Database = {
           conversation_status?: string
           conversation_status_changed_at?: string | null
           created_at?: string
+          deleted_at?: string | null
           email?: string | null
           group_category?: string | null
           id?: string
@@ -2010,6 +2012,7 @@ export type Database = {
           conversation_status?: string
           conversation_status_changed_at?: string | null
           created_at?: string
+          deleted_at?: string | null
           email?: string | null
           group_category?: string | null
           id?: string
@@ -3032,6 +3035,7 @@ export type Database = {
           details: Json
           id: string
           profile_id: string | null
+          profile_name: string | null
         }
         Insert: {
           action: string
@@ -3040,6 +3044,7 @@ export type Database = {
           details?: Json
           id?: string
           profile_id?: string | null
+          profile_name?: string | null
         }
         Update: {
           action?: string
@@ -3048,6 +3053,7 @@ export type Database = {
           details?: Json
           id?: string
           profile_id?: string | null
+          profile_name?: string | null
         }
         Relationships: [
           {
@@ -3082,8 +3088,12 @@ export type Database = {
           email: string
           expires_at: string
           id: string
+          max_uses: number
           role: string
           status: string
+          use_count: number
+          used_at: string | null
+          used_by: string | null
         }
         Insert: {
           code: string
@@ -3093,8 +3103,12 @@ export type Database = {
           email?: string
           expires_at: string
           id?: string
+          max_uses?: number
           role?: string
           status?: string
+          use_count?: number
+          used_at?: string | null
+          used_by?: string | null
         }
         Update: {
           code?: string
@@ -3104,8 +3118,12 @@ export type Database = {
           email?: string
           expires_at?: string
           id?: string
+          max_uses?: number
           role?: string
           status?: string
+          use_count?: number
+          used_at?: string | null
+          used_by?: string | null
         }
         Relationships: [
           {
@@ -3113,6 +3131,20 @@ export type Database = {
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_invitations_used_by_fkey"
+            columns: ["used_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_invitations_used_by_fkey"
+            columns: ["used_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -4562,6 +4594,7 @@ export type Database = {
         Row: {
           audience_filters: Json
           business_hours_only: boolean
+          client_request_id: string | null
           completed_at: string | null
           created_at: string
           created_by: string | null
@@ -4594,6 +4627,7 @@ export type Database = {
         Insert: {
           audience_filters?: Json
           business_hours_only?: boolean
+          client_request_id?: string | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
@@ -4626,6 +4660,7 @@ export type Database = {
         Update: {
           audience_filters?: Json
           business_hours_only?: boolean
+          client_request_id?: string | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
@@ -6600,24 +6635,30 @@ export type Database = {
       talkx_campaign_events: {
         Row: {
           actor_id: string | null
-          campaign_id: string
+          campaign_id: string | null
           created_at: string
+          entity_id: string | null
+          entity_type: string | null
           event_type: string
           id: string
           message: string | null
         }
         Insert: {
           actor_id?: string | null
-          campaign_id: string
+          campaign_id?: string | null
           created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
           event_type: string
           id?: string
           message?: string | null
         }
         Update: {
           actor_id?: string | null
-          campaign_id?: string
+          campaign_id?: string | null
           created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
           event_type?: string
           id?: string
           message?: string | null
@@ -7608,6 +7649,7 @@ export type Database = {
       }
       team_message_receipts: {
         Row: {
+          conversation_id: string
           delivered_at: string | null
           id: string
           message_id: string
@@ -7616,6 +7658,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          conversation_id: string
           delivered_at?: string | null
           id?: string
           message_id: string
@@ -7624,6 +7667,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          conversation_id?: string
           delivered_at?: string | null
           id?: string
           message_id?: string
@@ -7632,6 +7676,13 @@ export type Database = {
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "team_message_receipts_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "team_conversations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "team_message_receipts_message_id_fkey"
             columns: ["message_id"]
@@ -7661,12 +7712,13 @@ export type Database = {
           conversation_id: string
           created_at: string
           id: string
-          is_edited: boolean | null
+          is_edited: boolean
           media_bucket: string | null
           media_path: string | null
           media_type: string | null
           media_url: string | null
           message_type: string
+          metadata: Json | null
           reply_to_id: string | null
           sender_id: string
           status: string
@@ -7677,12 +7729,13 @@ export type Database = {
           conversation_id: string
           created_at?: string
           id?: string
-          is_edited?: boolean | null
+          is_edited?: boolean
           media_bucket?: string | null
           media_path?: string | null
           media_type?: string | null
           media_url?: string | null
           message_type?: string
+          metadata?: Json | null
           reply_to_id?: string | null
           sender_id: string
           status?: string
@@ -7693,12 +7746,13 @@ export type Database = {
           conversation_id?: string
           created_at?: string
           id?: string
-          is_edited?: boolean | null
+          is_edited?: boolean
           media_bucket?: string | null
           media_path?: string | null
           media_type?: string | null
           media_url?: string | null
           message_type?: string
+          metadata?: Json | null
           reply_to_id?: string | null
           sender_id?: string
           status?: string
@@ -7965,6 +8019,7 @@ export type Database = {
           sentiment_consecutive_count: number | null
           sla_sound_type: string | null
           sound_enabled: boolean | null
+          sound_volume: number | null
           theme: string | null
           transcription_notification_enabled: boolean | null
           transcription_sound_type: string | null
@@ -8001,6 +8056,7 @@ export type Database = {
           sentiment_consecutive_count?: number | null
           sla_sound_type?: string | null
           sound_enabled?: boolean | null
+          sound_volume?: number | null
           theme?: string | null
           transcription_notification_enabled?: boolean | null
           transcription_sound_type?: string | null
@@ -8037,6 +8093,7 @@ export type Database = {
           sentiment_consecutive_count?: number | null
           sla_sound_type?: string | null
           sound_enabled?: boolean | null
+          sound_volume?: number | null
           theme?: string | null
           transcription_notification_enabled?: boolean | null
           transcription_sound_type?: string | null
@@ -9106,6 +9163,17 @@ export type Database = {
         }[]
       }
       calculate_level: { Args: { xp_amount: number }; Returns: number }
+      can_delete_contacts: {
+        Args: { p_ids: string[] }
+        Returns: {
+          can_delete: boolean
+          contact_id: string
+        }[]
+      }
+      can_edit_contact: {
+        Args: { p_assigned_to: string; p_queue_id: string }
+        Returns: boolean
+      }
       claim_crm_sync_outbox: {
         Args: { p_limit?: number; p_worker: string }
         Returns: {
@@ -9342,13 +9410,6 @@ export type Database = {
         Args: { p_campaign_id: string }
         Returns: boolean
       }
-      can_delete_contacts: {
-        Args: { p_ids: string[] }
-        Returns: {
-          can_delete: boolean
-          contact_id: string
-        }[]
-      }
       complete_talkx_recipient: {
         Args: {
           p_claim_token: string
@@ -9377,6 +9438,14 @@ export type Database = {
         Returns: string
       }
       count_searchbox_sessions_this_month: { Args: never; Returns: number }
+      create_department_invite: {
+        Args: {
+          p_department_id: string
+          p_expires_hours?: number
+          p_max_uses?: number
+        }
+        Returns: Json
+      }
       current_profile_id: { Args: never; Returns: string }
       dashboard_contact_counts: {
         Args: {
@@ -9413,6 +9482,8 @@ export type Database = {
         }[]
       }
       decrypt_gmail_token: { Args: { p_encrypted: string }; Returns: string }
+      delete_contact: { Args: { p_id: string }; Returns: string }
+      delete_contacts: { Args: { p_ids: string[] }; Returns: number }
       effective_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -9662,12 +9733,13 @@ export type Database = {
         }[]
       }
       get_crm_sync_health: { Args: never; Returns: Json }
+      get_department_whatsapp_api_key: {
+        Args: { p_department_id: string }
+        Returns: string
+      }
       get_department_whatsapp_credentials: {
-        Args: { _department_id: string }
-        Returns: {
-          whatsapp_api_key: string
-          whatsapp_instance_id: string
-        }[]
+        Args: { p_department_id: string }
+        Returns: Json
       }
       get_gmail_tokens: {
         Args: { p_account_id: string }
@@ -9742,6 +9814,45 @@ export type Database = {
           last_message_id: string
           last_message_sender_id: string
           last_message_type: string
+        }[]
+      }
+      get_team_inbox: {
+        Args: never
+        Returns: {
+          conversation_id: string
+          conversation_name: string
+          conversation_type: string
+          department_id: string
+          is_muted: boolean
+          last_message_at: string
+          last_message_text: string
+          last_sender_id: string
+          member_count: number
+          unread_count: number
+        }[]
+      }
+      get_team_messages_page: {
+        Args: {
+          p_before_id?: string
+          p_conversation_id: string
+          p_limit?: number
+        }
+        Returns: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          is_edited: boolean
+          media_bucket: string
+          media_path: string
+          media_type: string
+          media_url: string
+          message_type: string
+          reply_to_id: string
+          sender_avatar: string
+          sender_id: string
+          sender_name: string
+          updated_at: string
         }[]
       }
       get_team_profiles: {
@@ -9855,6 +9966,7 @@ export type Database = {
         Args: { connection_id: string }
         Returns: boolean
       }
+      leave_team_group: { Args: { p_conversation_id: string }; Returns: Json }
       log_audit_event: {
         Args: {
           p_action: string
@@ -9877,6 +9989,10 @@ export type Database = {
         Args: { p_claim_token: string; p_recipient_id: string }
         Returns: undefined
       }
+      mark_team_conversation_read: {
+        Args: { p_conversation_id: string }
+        Returns: undefined
+      }
       mcp_exec: { Args: { max_rows?: number; sql: string }; Returns: Json }
       mcp_exec_many: {
         Args: { max_rows?: number; statements: string[] }
@@ -9889,6 +10005,31 @@ export type Database = {
           p_secondary_ids: string[]
         }
         Returns: Json
+      }
+      multiplix_connection_daily_usage: {
+        Args: { p_connection_id: string }
+        Returns: Json
+      }
+      multiplix_create_draft: {
+        Args: {
+          p_client_request_id: string
+          p_confirm_over_limit?: boolean
+          p_created_by: string
+          p_name: string
+          p_recipients: Json
+          p_scheduled_at?: string
+          p_template: string
+          p_whatsapp_connection_id?: string
+        }
+        Returns: {
+          created: boolean
+          dispatch_id: string
+          recipient_count: number
+        }[]
+      }
+      multiplix_dispatch_window_is_open: {
+        Args: { p_dispatch_id: string }
+        Returns: boolean
       }
       my_calls_kpi: {
         Args: {
@@ -10026,6 +10167,10 @@ export type Database = {
         Args: { p_claim_token: string; p_recipient_id: string }
         Returns: boolean
       }
+      remove_team_member: {
+        Args: { p_conversation_id: string; p_profile_id: string }
+        Returns: Json
+      }
       remove_wa_label_from_all_contacts: {
         Args: { p_label_prefix: string }
         Returns: undefined
@@ -10087,7 +10232,10 @@ export type Database = {
           tag_filter?: string
         }
         Returns: {
+          address: string
+          address_number: string
           avatar_url: string
+          city: string
           company: string
           contact_type: string
           created_at: string
@@ -10097,9 +10245,12 @@ export type Database = {
           latitude: number
           longitude: number
           name: string
+          neighborhood: string
           nickname: string
           notes: string
           phone: string
+          postal_code: string
+          state: string
           surname: string
           tags: string[]
           total_count: number
@@ -10153,6 +10304,16 @@ export type Database = {
           total_count: number
         }[]
       }
+      search_team_messages: {
+        Args: { p_conversation_id: string; p_limit?: number; p_query: string }
+        Returns: {
+          content: string
+          created_at: string
+          id: string
+          sender_id: string
+          sender_name: string
+        }[]
+      }
       set_call_agent_notes: {
         Args: { p_call_id: string; p_notes: string }
         Returns: undefined
@@ -10161,9 +10322,22 @@ export type Database = {
         Args: { p_contact_id: string; p_next: string; p_reason?: string }
         Returns: undefined
       }
+      set_department_whatsapp_config: {
+        Args: {
+          p_api_key?: string
+          p_department_id: string
+          p_instance_id?: string
+          p_whatsapp_mode: string
+        }
+        Returns: Json
+      }
       set_instance_token: {
         Args: { p_connection_id: string; p_token: string }
         Returns: string
+      }
+      set_team_member_pref: {
+        Args: { p_conversation_id: string; p_is_muted?: boolean }
+        Returns: undefined
       }
       set_team_member_role: {
         Args: {
@@ -10182,6 +10356,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      sweep_multiplix_stuck_recipients: {
+        Args: { p_limit?: number }
+        Returns: number
+      }
       talkx_benchmarks: { Args: never; Returns: Json }
       talkx_campaign_report: { Args: { p_campaign: string }; Returns: Json }
       talkx_increment_delivered: {
@@ -10197,6 +10375,14 @@ export type Database = {
         Returns: boolean
       }
       talkx_segment_tags: { Args: { p_segment: string }; Returns: Json }
+      toggle_team_reaction: {
+        Args: { p_emoji: string; p_message_id: string }
+        Returns: Json
+      }
+      transfer_team_conversation_department: {
+        Args: { p_conversation_id: string; p_to_department_id: string }
+        Returns: Json
+      }
       transition_multiplix_dispatch: {
         Args: {
           p_action: string
@@ -10209,27 +10395,18 @@ export type Database = {
           previous_status: string
         }[]
       }
-      transition_talkx_campaign:
-        | {
-            Args: { p_action: string; p_campaign_id: string }
-            Returns: {
-              campaign_id: string
-              current_status: string
-              previous_status: string
-            }[]
-          }
-        | {
-            Args: {
-              p_action: string
-              p_campaign_id: string
-              p_pause_reason?: string
-            }
-            Returns: {
-              campaign_id: string
-              current_status: string
-              previous_status: string
-            }[]
-          }
+      transition_talkx_campaign: {
+        Args: {
+          p_action: string
+          p_campaign_id: string
+          p_pause_reason?: string
+        }
+        Returns: {
+          campaign_id: string
+          current_status: string
+          previous_status: string
+        }[]
+      }
       trigger_pending_multiplix_dispatches: { Args: never; Returns: undefined }
       update_agent_streak: {
         Args: { p_increment: boolean; p_profile_id: string }
