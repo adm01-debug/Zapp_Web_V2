@@ -1,5 +1,12 @@
 # PARIDADE.md — Talk X / Campanhas
 
+> **⚠️ DESATUALIZADO (auditoria de 2026-09-29).** Dezenas de ✅ abaixo foram refutados no código: E29 (`talkxExport.ts`
+> apagado), 10 itens da Fase 4, quase toda a Fase 5 (view, unique, `reason_code` na UI, card Motivos, toggle
+> Ativas/Histórico não existem; `auto_optout` "na migration" é drift de banco) e a Fase 6 inteira marcada ✅ com
+> itens parciais. Não usar como evidência. Estado real em
+> [`AUDITORIA_PLANO_TALKX_2026-09-29.md`](./AUDITORIA_PLANO_TALKX_2026-09-29.md) §3 e §6; este arquivo será
+> **regenerado a partir de prints e testes** na etapa V96 do plano V3.
+
 Criado em 2026-09-09 | Sessão 10
 
 ---

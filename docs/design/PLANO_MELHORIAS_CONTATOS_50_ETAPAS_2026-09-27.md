@@ -1,5 +1,12 @@
 # PLANO — Redesign Contatos + remoção de import/export CSV (50 etapas)
 
+> ⚠️ **PLANO ENCERRADO (2026-09-29) — SOMENTE LEITURA.** Auditado etapa a etapa em
+> [`../audits/AUDITORIA_MODULO_CONTATOS_2026-09-29.md`](../audits/AUDITORIA_MODULO_CONTATOS_2026-09-29.md)
+> (26 ✅ · 7 parciais · 9 revertidas/substituídas · 4 não feitas · 4 sem evidência). As etapas 8, 9, 10,
+> 14, 45 e 46 foram **revertidas** por #1131/#1134/`e14ddeab` seguindo o plano Navy — decisão D3 pendente.
+> Tudo o que restou vive em [`../audits/PLANO_CONTATOS_100_ETAPAS_2026-09-29.md`](../audits/PLANO_CONTATOS_100_ETAPAS_2026-09-29.md).
+> Não registrar checkboxes aqui.
+
 > Criado em 2026-09-27 a pedido do Joaquim, a partir de auditoria real do código
 > (commit base `e6f9378`). Escopo: (1) auditoria de tipografia do módulo Contatos,
 > (2) remoção dos botões e da funcionalidade de importar/exportar CSV do sistema

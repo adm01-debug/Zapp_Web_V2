@@ -455,7 +455,7 @@
       "file_sql_sha256": "e65ff795bf5ae194438473866a867b88000ea4845a4fe02322d4f0d2d363e0de",
       "ledger_name": "contact_notes_category_done_due",
       "ledger_statements_sha256": "1555edad3399e5f19f0fe6597f9b88d49ca007bd38010ab05013cfac71e8b7f7",
-      "ledger_sql_sha256": "b25588cd1628b1e472d0e269e5bc3fbe6bd666e00f591eb8169bb3404c349b05",
+      "ledger_sql_sha256": "b25588cd1628b1e472d0e269e5bc3fbe6bd666e04a999e03450f3af8619de75c",
       "kind": "ledger-divergence/pinned-replay",
       "reason": "safer-replay",
       "related_migration": null,
@@ -504,7 +504,7 @@
       "ledger_statements_sha256": "adf9dea5a23bd4e83598ac9a1c111a8725d59758d2e64a990dc076e7d63956cc",
       "ledger_sql_sha256": "d595f92f4503a9726be9e58536ea6300aa54e06517c7c509da272d3116c5ee44",
       "kind": "ledger-divergence/pinned-replay",
-      "reason": "ledger-summary",
+      "reason": "safer-replay",
       "related_migration": null,
       "justification": "O arquivo em main e uma versao resumida ou anterior ao SQL efetivamente aplicado em producao por sessoes paralelas. O banco ja tem o SQL correto do ledger; nenhum DDL adicional necessario."
     },
@@ -517,7 +517,7 @@
       "ledger_statements_sha256": "4ed4fa7f74807dfc8fcfcf498c6bf5d9a3dd439cb84618abb20a5c1905f93078",
       "ledger_sql_sha256": "75e63d7a53a56d7041fe29d152704467279ca82c5ffe7ecfe34196cfa4552d6b",
       "kind": "ledger-divergence/pinned-replay",
-      "reason": "ledger-summary",
+      "reason": "safer-replay",
       "related_migration": null,
       "justification": "O arquivo em main e uma versao resumida ou anterior ao SQL efetivamente aplicado em producao por sessoes paralelas. O banco ja tem o SQL correto do ledger; nenhum DDL adicional necessario."
     },
@@ -530,7 +530,7 @@
       "ledger_statements_sha256": "3e650c2bc287981ac2b0e390db75d3a4b58849c56b0ffa0dac558ca4e88537b5",
       "ledger_sql_sha256": "7b6b94465ca67ef4c4f6d99cadcc49c0671238cefb208280d124af2db80efd6e",
       "kind": "ledger-divergence/pinned-replay",
-      "reason": "ledger-summary",
+      "reason": "safer-replay",
       "related_migration": null,
       "justification": "O arquivo em main e uma versao resumida ou anterior ao SQL efetivamente aplicado em producao por sessoes paralelas. O banco ja tem o SQL correto do ledger; nenhum DDL adicional necessario."
     },
@@ -543,7 +543,7 @@
       "ledger_statements_sha256": "b6455751511849cc79e8007942f62fd991da31091ee3b89c5e481442506453bf",
       "ledger_sql_sha256": "b4ab2b70aed692d6fdfba85e9511ef8358e1d766df2cde838981fe6833ee839a",
       "kind": "ledger-divergence/pinned-replay",
-      "reason": "ledger-summary",
+      "reason": "safer-replay",
       "related_migration": null,
       "justification": "O arquivo em main e uma versao resumida ou anterior ao SQL efetivamente aplicado em producao por sessoes paralelas. O banco ja tem o SQL correto do ledger; nenhum DDL adicional necessario."
     },
@@ -556,7 +556,7 @@
       "ledger_statements_sha256": "3eb95336bb6c5e89a599f453d403261828d3e4d902a0e93d48d0ba5332456556",
       "ledger_sql_sha256": "c2117ebc050bdd27835f659fc52abc7427909008f7fc2d92e0a0aac483be1128",
       "kind": "ledger-divergence/pinned-replay",
-      "reason": "ledger-summary",
+      "reason": "safer-replay",
       "related_migration": null,
       "justification": "O arquivo em main e uma versao resumida ou anterior ao SQL efetivamente aplicado em producao por sessoes paralelas. O banco ja tem o SQL correto do ledger; nenhum DDL adicional necessario."
     },
@@ -578,7 +578,7 @@
       "ledger_statements_sha256": "2ce5679321c2c2903de18b4e77452f88c4ebf2c1adcbcec54dd03b4c15a43d20",
       "ledger_sql_sha256": "09a453cce45708b3269abb1e5d3a33d71c1d8e845a0df5efe56fc976f336a9db",
       "kind": "ledger-divergence/pinned-replay",
-      "reason": "ledger-summary",
+      "reason": "safer-replay",
       "related_migration": null,
       "justification": "O arquivo em main e uma versao resumida ou anterior ao SQL efetivamente aplicado em producao por sessoes paralelas. O banco ja tem o SQL correto do ledger; nenhum DDL adicional necessario."
     },
@@ -591,7 +591,7 @@
       "ledger_statements_sha256": "a5e206fb25aa914af05d791d4441c4a2a544b25fda2da7251bc1b598ef043cc0",
       "ledger_sql_sha256": "a69f80f96f407a049539fdbc033a056f03753c6fdf07bd9f5e60967e93c2f690",
       "kind": "ledger-divergence/pinned-replay",
-      "reason": "ledger-summary",
+      "reason": "safer-replay",
       "related_migration": null,
       "justification": "O arquivo em main e uma versao resumida ou anterior ao SQL efetivamente aplicado em producao por sessoes paralelas. O banco ja tem o SQL correto do ledger; nenhum DDL adicional necessario."
     },
