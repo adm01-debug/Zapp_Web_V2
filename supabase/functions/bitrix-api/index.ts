@@ -200,7 +200,7 @@ Deno.serve(async (req) => {
               NAME: data?.contactName,
               PHONE: data?.phone ? [{ VALUE: data.phone, VALUE_TYPE: 'WORK' }] : [],
               SOURCE_ID: 'WEB',
-              SOURCE_DESCRIPTION: 'WhatsApp via Lovable',
+              SOURCE_DESCRIPTION: 'WhatsApp via ZAPP Web',
               COMMENTS: data?.conversationSummary,
               UF_CRM_WHATSAPP_CONTACT_ID: data?.contactId,
             },

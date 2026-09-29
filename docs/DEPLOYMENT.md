@@ -47,7 +47,7 @@ Este documento descreve o processo de deploy e configuração do ZAPP-WEB.
 
 O deploy é **automático** via Vercel (projeto `zapp_web_v2`):
 
-1. **Commit na main** → Rebuild automático
+1. **Merge de PR na `main`** → Rebuild automático (push direto na `main` é proibido)
 2. **Edge Functions** → Deployadas automaticamente
 3. **Assets** → CDN global
 
@@ -231,14 +231,17 @@ CNAME: app.seudominio.com.br → cname.vercel-dns.com
 
 ### Via Git
 ```bash
-# Reverter para commit anterior
+# Reverter para commit anterior: revert + PR (o merge dispara o deploy)
 git revert HEAD
-git push origin main
+git push origin hermes/<sua-tarefa>     # abra o PR e mergeie pelo fluxo normal
 
-# Ou forçar para commit específico
-git reset --hard <commit-sha>
-git push origin main --force
+# Para voltar a um commit específico, reverta aquele commit (nunca reescreva a main)
+git revert <commit-sha>
 ```
+
+> ❌ **Não use `git reset --hard` + `git push --force` na `main`.** Reescreve histórico de
+> produção, apaga trabalho de outros agentes e quebra os PRs abertos. Rollback de
+> emergência = **Instant Rollback da Vercel** (seção acima), que não toca no git.
 
 ### Migration Rollback
 ```bash
