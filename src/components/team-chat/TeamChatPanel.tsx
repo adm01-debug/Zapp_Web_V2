@@ -2,7 +2,7 @@ import { useEffect, useMemo, Component, type ReactNode } from 'react';
 import { TeamConversation } from '@/hooks/chat/useTeamChat';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowDown, X, Search, Lock } from 'lucide-react';
+import { ArrowDown, X, Search, Lock, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -45,6 +45,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
     text, setText, replyTo, setReplyTo, editingId, editText, setEditText,
     showSearch, setShowSearch, searchQuery, setSearchQuery,
     showAddMembers, setShowAddMembers, isRecordingAudio, setIsRecordingAudio,
+    isFetchingOlder, hasOlderMessages,
     showScrollDown, scrollRef, searchInputRef, isNearBottomRef,
     checkNearBottom, scrollToBottom,
     handleSend, handleDelete, handleStartEdit, handleSaveEdit, handleCancelEdit, handleCopyMessage,
@@ -136,6 +137,14 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
 
       <ChatErrorBoundary>
         <div ref={scrollRef} className="flex-1 overflow-auto p-4 space-y-1 bg-inbox-panel" onScroll={checkNearBottom} role="log" aria-label="Mensagens da conversa" aria-live="polite">
+          {isFetchingOlder && (
+            <div className="flex justify-center py-2" aria-label="Carregando mensagens anteriores">
+              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+            </div>
+          )}
+          {!isFetchingOlder && !hasOlderMessages && !isLoading && filteredMessages.length > 0 && (
+            <p className="text-center text-xs text-muted-foreground py-2 select-none">Início da conversa</p>
+          )}
           {isLoading ? (
             <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <div key={i} className={cn('flex', i % 2 === 0 ? 'justify-start' : 'justify-end')}><Skeleton className="h-10 rounded-2xl" style={{ width: 120 + (i % 3) * 60 }} /></div>)}</div>
           ) : filteredMessages.length === 0 ? (
@@ -171,7 +180,10 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
 
       {showScrollDown && (
         <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10">
-          <Button size="icon" variant="secondary" className="rounded-full shadow-lg h-8 w-8" onClick={scrollToBottom}><ArrowDown className="w-4 h-4" /></Button>
+          <Button variant="secondary" className="rounded-full shadow-lg h-8 px-3 gap-1.5 text-xs" onClick={scrollToBottom}>
+            <ArrowDown className="w-3.5 h-3.5" />
+            Novas mensagens
+          </Button>
         </div>
       )}
 

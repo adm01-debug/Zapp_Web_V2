@@ -178,7 +178,10 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
     isNearBottomRef.current = nearBottom;
     setShowScrollDown(!nearBottom);
-  }, []);
+    if (el.scrollTop < 100) {
+      void fetchOlderMessages();
+    }
+  }, [fetchOlderMessages]);
 
   const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
