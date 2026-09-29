@@ -14,6 +14,8 @@ import { TeamChatHeader } from './TeamChatHeader';
 import { TeamChatInputArea } from './TeamChatInputArea';
 import { useTeamChatPanel } from './useTeamChatPanel';
 import { TeamMessageItem } from './TeamMessageItem';
+import { TeamPerformancePanel } from './TeamPerformancePanel';
+import { ParticipantStatsGraph } from './ParticipantStatsGraph';
 
 class ChatErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   constructor(props: { children: ReactNode }) {
@@ -48,7 +50,6 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
     isFetchingOlder, hasOlderMessages,
     showScrollDown, scrollRef, searchInputRef, isNearBottomRef,
     checkNearBottom, scrollToBottom,
-    handleScrollToMessage,
     handleSend, handleDelete, handleStartEdit, handleSaveEdit, handleCancelEdit, handleCopyMessage,
     handleAudioSend, handleFileSent, handleSendSticker, handleSendAudioMeme, handleSendCustomEmoji,
     handlePin, handleArchive,
@@ -72,18 +73,6 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [conversation.id]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (showSearch) searchInputRef.current?.focus(); }, [showSearch]);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        if (showSearch) { setShowSearch(false); setSearchQuery(''); }
-        else { setShowSearch(true); }
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [showSearch, setShowSearch, setSearchQuery]);
 
   const dateFirstIndexes = useMemo(() => {
     const seen = new Set<string>();
@@ -148,6 +137,15 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {showStats && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="border-b border-border bg-inbox-panel overflow-y-auto max-h-72">
+            <TeamPerformancePanel conversationId={conversation.id} />
+            <ParticipantStatsGraph conversationId={conversation.id} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <ChatErrorBoundary>
         <div ref={scrollRef} className="flex-1 overflow-auto p-4 space-y-1 bg-inbox-panel" onScroll={checkNearBottom} role="log" aria-label="Mensagens da conversa" aria-live="polite">
           {isFetchingOlder && (
@@ -164,34 +162,28 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
             <div className="text-center text-muted-foreground text-sm py-12">{searchQuery ? 'Nenhuma mensagem encontrada' : 'Envie a primeira mensagem!'}</div>
           ) : (
             filteredMessages.map((msg, idx) => (
-              <div
+              <TeamMessageItem
                 key={msg.id}
-                data-message-id={msg.id}
-                onClick={showSearch ? () => handleScrollToMessage(msg.id) : undefined}
-                className={showSearch ? 'cursor-pointer rounded-lg transition-colors hover:bg-muted/30' : undefined}
-              >
-                <TeamMessageItem
-                  msg={msg}
-                  isMine={msg.sender_id === profile?.id}
-                  showDate={dateFirstIndexes.has(idx)}
-                  conversationType={conversation.type as 'direct' | 'group'}
-                  repliedMsg={msg.reply_to_id ? (messages.find(m => m.id === msg.reply_to_id) ?? null) : null}
-                  isEditing={editingId === msg.id}
-                  editText={editText}
-                  ttsIsPlaying={tts.isPlaying && tts.currentMessageId === msg.id}
-                  ttsIsLoading={tts.isLoading && tts.currentMessageId === msg.id}
-                  reactions={reactions.aggregate(msg.id)}
-                  onReply={() => setReplyTo(msg)}
-                  onEdit={() => handleStartEdit(msg)}
-                  onDelete={() => handleDelete(msg.id)}
-                  onCopy={() => handleCopyMessage(msg.content ?? '')}
-                  onTtsToggle={() => { if (tts.isPlaying && tts.currentMessageId === msg.id) tts.stop(); else tts.speak(msg.content ?? '', msg.id); }}
-                  onSaveEdit={handleSaveEdit}
-                  onCancelEdit={handleCancelEdit}
-                  setEditText={setEditText}
-                  onToggleReaction={emoji => reactions.toggle({ messageId: msg.id, emoji })}
-                />
-              </div>
+                msg={msg}
+                isMine={msg.sender_id === profile?.id}
+                showDate={dateFirstIndexes.has(idx)}
+                conversationType={conversation.type as 'direct' | 'group'}
+                repliedMsg={msg.reply_to_id ? (messages.find(m => m.id === msg.reply_to_id) ?? null) : null}
+                isEditing={editingId === msg.id}
+                editText={editText}
+                ttsIsPlaying={tts.isPlaying && tts.currentMessageId === msg.id}
+                ttsIsLoading={tts.isLoading && tts.currentMessageId === msg.id}
+                reactions={reactions.aggregate(msg.id)}
+                onReply={() => setReplyTo(msg)}
+                onEdit={() => handleStartEdit(msg)}
+                onDelete={() => handleDelete(msg.id)}
+                onCopy={() => handleCopyMessage(msg.content ?? '')}
+                onTtsToggle={() => { if (tts.isPlaying && tts.currentMessageId === msg.id) tts.stop(); else tts.speak(msg.content ?? '', msg.id); }}
+                onSaveEdit={handleSaveEdit}
+                onCancelEdit={handleCancelEdit}
+                setEditText={setEditText}
+                onToggleReaction={emoji => reactions.toggle({ messageId: msg.id, emoji })}
+              />
             ))
           )}
         </div>
