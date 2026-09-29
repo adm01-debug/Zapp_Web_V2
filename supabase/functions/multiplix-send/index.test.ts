@@ -132,6 +132,12 @@ interface MockOpts {
   suppressedPhones?: string[];
   /** F09: simula opt-out que chega ENTRE o claim e o POST (1a checagem false, 2a true) */
   suppressAfterFirstCheck?: boolean;
+  /** Auditoria adversarial 29/09: supressao detectada SOMENTE na 1a checagem
+   * (o 1o ponto tem de barrar sozinho) — mata o mutante M08. */
+  suppressOnlyFirstCheck?: boolean;
+  /** Auditoria adversarial 29/09: a RPC de supressao responde ERRO — o envio
+   * tem de seguir fail-closed (mata o fail-open do mutante M25). */
+  suppressionRpcError?: boolean;
   /** cota diaria restante da conexao (F17); null desliga a checagem */
   dailyRemaining?: number | null;
   /** F11a: reivindicacao que nao devolve token (lease de outro worker) */
@@ -223,10 +229,24 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             ctx.remaining = ctx.remaining.filter((r) => r.id !== args.p_recipient_id);
             return Promise.resolve({ data: true, error: null });
           }
+          case "record_multiplix_recipient_sent": {
+            // Espelha o efeito no banco: quem foi enviado sai da fila de
+            // 'pending' (sem isso o worker re-seleciona o mesmo destinatario e a
+            // rede de seguranca do mock derruba o teste por laco infinito).
+            ctx.remaining = ctx.remaining.filter((r) => r.id !== args.p_recipient_id);
+            return Promise.resolve({ data: true, error: null });
+          }
           case "talkx_recipient_is_suppressed": {
             ctx.suppressionChecks++;
+            if (opts.suppressionRpcError) {
+              // Auditoria adversarial: erro/invalidacao da RPC de supressao — o
+              // worker precisa falhar fechado (nao enviar), nunca liberar envio.
+              return Promise.resolve({ data: null, error: new Error("suppression rpc failed") });
+            }
             const listed = (opts.suppressedPhones ?? []).includes(String(args.p_phone ?? ""));
-            const suppress = opts.suppressAfterFirstCheck ? ctx.suppressionChecks > 1 || listed : listed;
+            const suppress = opts.suppressOnlyFirstCheck
+              ? ctx.suppressionChecks === 1
+              : opts.suppressAfterFirstCheck ? ctx.suppressionChecks > 1 || listed : listed;
             return Promise.resolve({ data: suppress, error: null });
           }
           case "multiplix_connection_daily_usage": {
@@ -702,4 +722,184 @@ Deno.test("F09: opt-out que chega ENTRE o claim e o POST também barra o envio",
     ctx.completions[0].p_error_message === "Contato na lista negra (opt-out)",
     `motivo inesperado: ${ctx.completions[0].p_error_message}`,
   );
+});
+
+// ---------------------------------------------------------------------------
+// Gaps fechados na auditoria adversarial de 29/09/2026.
+// Cada teste abaixo FALHA se o mutante correspondente voltar ao worker — eram
+// exatamente os pontos em que a suite ficava verde com o comportamento quebrado
+// (27 de 40 mutantes sobreviviam). O id do mutante vive no nome do teste; o
+// criterio de morte e por ASSERCAO (ver scripts/db-audit/multiplix-send-mutation.py).
+// ---------------------------------------------------------------------------
+
+Deno.test("gap M08: o 1o ponto de supressao barra sozinho (nao basta contar checagens)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550001")],
+    suppressOnlyFirstCheck: true,
+  };
+  const { ctx, providerPosts } = await runWithProviderBlocked(opts);
+  assert(providerPosts === 0, `supressao do 1o ponto nao pode gerar POST /message/, houve ${providerPosts}`);
+  assert(ctx.completions.length === 1, `esperava 1 conclusao, recebeu ${ctx.completions.length}`);
+  assert(
+    ctx.completions[0].p_status === "skipped",
+    `status esperado 'skipped' (barrado no 1o ponto), veio ${ctx.completions[0].p_status}`,
+  );
+});
+
+Deno.test("gap M13: a cota diaria e consultada com o connection_id da conexao do dispatch", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", whatsapp_connection_id: "conn-0001", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550002")],
+  };
+  const { ctx } = await runWithProviderBlocked(opts);
+  const calls = rpcs(ctx, "multiplix_connection_daily_usage");
+  assert(calls.length >= 1, "o worker nao consultou a cota diaria da conexao");
+  assert(
+    calls[0].args.p_connection_id === "conn-0001",
+    `cota consultada com connection_id '${String(calls[0].args.p_connection_id)}' em vez do dispatch`,
+  );
+});
+
+Deno.test("gap M16/M18: MULTIPLIX_BATCH_SIZE hostil nao fura o teto de 200 nem o default 20", async () => {
+  const anterior = Deno.env.get("MULTIPLIX_BATCH_SIZE");
+  try {
+    Deno.env.set("MULTIPLIX_BATCH_SIZE", "999999999");
+    const { ctx: ctxAlto } = await runWithProviderBlocked(batchSendingOpts("551195556"));
+    assert(ctxAlto.limits.length >= 1, "o worker nao selecionou lote (nenhum .limit() observado)");
+    assert(
+      Math.max(...ctxAlto.limits) === 200,
+      `teto esperado 200 com MULTIPLIX_BATCH_SIZE=999999999, veio ${Math.max(...ctxAlto.limits)}`,
+    );
+
+    Deno.env.set("MULTIPLIX_BATCH_SIZE", "abc");
+    const { ctx: ctxHostil } = await runWithProviderBlocked(batchSendingOpts("551195557"));
+    assert(
+      Math.max(...ctxHostil.limits) === 20,
+      `default esperado 20 com MULTIPLIX_BATCH_SIZE invalido, veio ${Math.max(...ctxHostil.limits)}`,
+    );
+  } finally {
+    if (anterior === undefined) Deno.env.delete("MULTIPLIX_BATCH_SIZE");
+    else Deno.env.set("MULTIPLIX_BATCH_SIZE", anterior);
+  }
+});
+
+Deno.test("gap M25: erro na RPC de supressao nao libera envio (fail-closed)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550003")],
+    suppressionRpcError: true,
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderFetch();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    // Fail-closed: supressao ilegivel aborta a passada (500 observavel) em vez de
+    // enviar para quem pode ter pedido opt-out.
+    assert(res.status === 500, `esperado 500 (fail-closed), recebido ${res.status}`);
+    assert(provider.messagePosts() === 0, `supressao ilegivel nao pode gerar POST, houve ${provider.messagePosts()}`);
+    const enviados = ctx.completions.filter((c) => c.p_status === "sent");
+    assert(enviados.length === 0, "nenhum destinatario pode ser marcado 'sent' com a supressao ilegivel");
+  } finally {
+    provider.restore();
+  }
+});
+
+Deno.test("gap M32: dispatch com midia usa o endpoint de midia (nao sendText)", async () => {
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  // Sem flavor explicito o evoFetch traduz para EVOLUTION GO e, sem token de
+  // instancia, devolve 400 sem chamar o provedor — o POST so e observavel em v2.
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({
+      status: "sending",
+      media_type: "image",
+      media_url: "https://exemplo.test/foto.png",
+      total_recipients: 1,
+    }),
+    recipients: [recipientRow(1, "5511955550004")],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderSuccess();
+  try {
+    await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    const posts = provider.urls.filter((url) => url.includes("/message/"));
+    assert(posts.length >= 1, `esperava POST ao provedor, urls observadas: ${JSON.stringify(provider.urls)}`);
+    assert(
+      posts.some((url) => url.includes("sendMedia")),
+      `endpoint de midia esperado no POST, veio: ${JSON.stringify(posts)}`,
+    );
+    assert(
+      posts.every((url) => !url.includes("sendText")),
+      `dispatch com midia nao pode usar sendText, veio: ${JSON.stringify(posts)}`,
+    );
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
+Deno.test("envio bem-sucedido: WAMID do provedor vira 'sent' com external_id registrado", async () => {
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550005")],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderSuccess("WAMID-TESTE-1");
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const posts = provider.urls.filter((url) => url.includes("/message/sendText/"));
+    assert(posts.length === 1, `esperava 1 POST sendText, urls: ${JSON.stringify(provider.urls)}`);
+    const registrados = rpcs(ctx, "record_multiplix_recipient_sent");
+    assert(registrados.length === 1, `esperava 1 registro de envio, houve ${registrados.length}`);
+    assert(
+      registrados[0].args.p_external_id === "WAMID-TESTE-1",
+      `external_id inesperado: ${String(registrados[0].args.p_external_id)}`,
+    );
+    const corpo = await res.json();
+    assert(corpo?.sent === 1, `resposta deveria reportar sent=1, veio ${JSON.stringify(corpo)}`);
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
+Deno.test("gap M12/F17: a cota diaria e consumida por envio (remaining=1 -> 1 envio e pausa)", async () => {
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 2 }),
+    recipients: [recipientRow(1, "5511955550006"), recipientRow(2, "5511955550007")],
+    dailyRemaining: 1,
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderSuccess();
+  try {
+    await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    const envios = rpcs(ctx, "record_multiplix_recipient_sent");
+    assert(envios.length === 1, `cota de 1 deveria permitir 1 envio, houve ${envios.length}`);
+    const posts = provider.urls.filter((url) => url.includes("/message/"));
+    assert(posts.length === 1, `esperava 1 POST ao provedor, houve ${posts.length}`);
+    const pausas = rpcs(ctx, "transition_multiplix_dispatch").filter((c) => c.args.p_action === "pause");
+    assert(pausas.length === 1, `esperava 1 pausa por cota esgotada, houve ${pausas.length}`);
+    assert(
+      pausas[0].args.p_pause_reason === "daily_limit",
+      `motivo da pausa esperado 'daily_limit', veio '${String(pausas[0].args.p_pause_reason)}'`,
+    );
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
 });

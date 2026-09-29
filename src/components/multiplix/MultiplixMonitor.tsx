@@ -152,6 +152,21 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
           {isRunning && <span className="text-primary-glow font-medium animate-pulse">Enviando agora…</span>}
           {dispatch.completed_at && <span>Concluído em {fmtDateTime(dispatch.completed_at)}</span>}
         </div>
+        {/* F10c: o worker grava o motivo da pausa automatica — sem isto o
+            operador ve "Pausado" sem saber se pode retomar (cota/window) ou se
+            precisa religar a conexao. */}
+        {isPaused && dispatch.pause_reason && (
+          <p className="text-2xs text-dash-amber flex items-center gap-1.5 mt-2">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+            {dispatch.pause_reason === 'daily_limit'
+              ? 'Pausado automaticamente: limite diário da conexão atingido'
+              : dispatch.pause_reason === 'connection_lost'
+                ? 'Pausado automaticamente: conexão do WhatsApp caiu'
+                : dispatch.pause_reason === 'outside_window'
+                  ? 'Pausado automaticamente: fora da janela de envio'
+                  : `Pausado automaticamente: ${dispatch.pause_reason}`}
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">

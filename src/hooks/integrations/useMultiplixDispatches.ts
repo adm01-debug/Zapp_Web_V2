@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -119,8 +120,14 @@ export interface CreateMultiplixDispatchResult {
 }
 
 export function useCreateMultiplixDispatch() {
+  // A chave de idempotencia tem de sobreviver ao duplo clique: a RPC e
+  // idempotente por client_request_id, nao por conteudo — duas chaves geram dois
+  // disparos. Fica viva enquanto a tentativa esta em voo e e liberada no fim.
+  const clientRequestIdRef = useRef<string | null>(null);
   return useMutation({
     mutationFn: async (input: CreateMultiplixDispatchInput): Promise<CreateMultiplixDispatchResult> => {
+      if (!clientRequestIdRef.current) clientRequestIdRef.current = crypto.randomUUID();
+      const clientRequestId = clientRequestIdRef.current;
       // F08: a criacao vive no servidor. A edge multiplix-audience re-resolve o
       // publico no Singu com o escopo do JWT e chama a RPC transacional
       // multiplix_create_draft (dispatch + destinatarios numa transacao,
@@ -131,7 +138,7 @@ export function useCreateMultiplixDispatch() {
         message_template: input.messageTemplate,
         company_ids: input.companyIds,
         contact_ids: input.contactIds ?? [],
-        client_request_id: crypto.randomUUID(),
+        client_request_id: clientRequestId,
         scheduled_at: input.scheduledAt ?? null,
         confirm_over_limit: input.confirmOverLimit ?? false,
       });
@@ -159,6 +166,10 @@ export function useCreateMultiplixDispatch() {
 
       return { id: dispatchId, recipientCount: draft.recipient_count, created: draft.created };
     },
+    // Libera a chave so DEPOIS que a criacao terminou: duas chamadas simultaneas
+    // (duplo clique) compartilham a chave e viram UM disparo; um novo disparo
+    // depois disso recebe chave nova.
+    onSettled: () => { clientRequestIdRef.current = null; },
   });
 }
 
