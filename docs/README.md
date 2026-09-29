@@ -64,7 +64,7 @@
 ## 🔗 Links Rápidos
 
 - **Repositório:** [github.com/adm01-debug/zapp-web](https://github.com/adm01-debug/zapp-web)
-- **Produção:** [pronto-talk-suite.lovable.app](https://pronto-talk-suite.lovable.app)
+- **Produção (canônica):** [zapp-web-v2.vercel.app](https://zapp-web-v2.vercel.app)
 - **Supabase Dashboard:** [supabase.com/dashboard](https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh)
 
 ---
