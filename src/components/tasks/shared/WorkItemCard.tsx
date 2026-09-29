@@ -33,7 +33,7 @@ export const WorkItemCard = React.memo(function WorkItemCard({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') onOpen?.();
     if (e.key === 'x' || e.key === 'X') onToggleDone?.();
-    if (e.key === 'Delete' || e.key === 'Backspace') onDelete?.();
+    if (e.key === 'Delete') onDelete?.();
   };
 
   return (
