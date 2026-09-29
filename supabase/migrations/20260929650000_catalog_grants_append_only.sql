@@ -49,4 +49,4 @@ COMMENT ON TABLE public.catalog_favorites IS
 COMMENT ON TABLE public.catalog_send_events IS
   'Log append-only de envios de produto do catálogo (E28). Uma linha por envio, com status '
   'sent/partial/failed e message_ids. Depois do CT-02 o cliente authenticated tem só '
-  'SELECT/INSERT; UPDATE/DELETE/TRUNCATE exigem service_role.';
+  'SELECT e INSERT; mexer no log depois de gravado exige service_role.';
