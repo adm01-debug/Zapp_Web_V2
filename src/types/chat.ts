@@ -1,6 +1,22 @@
 import type { Database } from '@/integrations/supabase/types';
 
-export type ConversationStatus = 'open' | 'waiting' | 'resolved' | 'archived';
+/**
+ * Estados canonicos de `contacts.conversation_status` — fonte unica para o front.
+ * Espelha o CHECK `chk_conversation_status_values` e o FSM
+ * `enforce_conversation_status_transition` (migration 20260929560000: um unico conjunto,
+ * com `pending` e `closed` incluidos; antes havia dois CHECKs conflitantes e so
+ * `open`/`resolved` passavam).
+ */
+export const CONVERSATION_STATUSES = [
+  'open',
+  'pending',
+  'waiting',
+  'resolved',
+  'closed',
+  'archived',
+] as const;
+
+export type ConversationStatus = typeof CONVERSATION_STATUSES[number];
 
 export type MessageRow = Database['public']['Tables']['messages']['Row'];
 export type MessageInsert = Database['public']['Tables']['messages']['Insert'];
