@@ -150,7 +150,17 @@ describe('phoneQueryVariants (T14)', () => {
     // grafia idêntica casava: uma chamada de `01199992048` não achava o
     // contato salvo como `01199992048`.
     expect(variants).toContain('01199992048');
-    expect(variants).toHaveLength(6);
+    // `55` + DDD + SEM o nono dígito: 44% do banco real está nesta grafia
+    // (1367 de 3104 contatos medidos).
+    expect(variants).toContain('551199992048');
+    expect(variants).toHaveLength(7);
+  });
+
+  it('cobre a grafia real do banco: 55 + DDD sem o nono dígito (12 dígitos)', () => {
+    const variants = phoneQueryVariants('11999992048');
+    expect(variants).toContain('551199992048');
+    // a decisão final continua sendo a forma E.164 completa
+    expect(phonesMatchExact('551199992048', '+5511999992048')).toBe(true);
   });
 
   it('cobre a grafia com tronco 0 e sem nono dígito (regressão do T14)', () => {

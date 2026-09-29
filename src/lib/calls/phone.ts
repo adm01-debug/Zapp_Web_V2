@@ -106,11 +106,21 @@ export function phoneQueryVariants(raw: string | null | undefined): string[] {
   const local = e164.slice(3); // DDD + assinante
   const withoutNine = local.length === 11 ? `${local.slice(0, 2)}${local.slice(3)}` : local;
 
-  // As duas grafias com tronco `0` precisam estar aqui: o banco guarda números
-  // legados como `0`+DDD+assinante e a variante só com o nono dígito não casa
-  // com eles — nem quando a grafia do banco é igual à da chamada.
+  // As grafias com `55`/tronco `0` precisam estar aqui: o banco real (3104
+  // contatos medidos) guarda 44% em `55`+DDD+**sem** o nono dígito (12 dígitos)
+  // e a variante só com o nono dígito não casa com eles. Um `eq` casaria
+  // string formatada e um `ilike` casaria sufixo — a decisão continua em
+  // `phonesMatchExact` (E.164 completo).
   return Array.from(
-    new Set([e164, e164.slice(1), local, withoutNine, `0${local}`, `0${withoutNine}`]),
+    new Set([
+      e164, // +55DDD9XXXXXXXX
+      e164.slice(1), // 55DDD9XXXXXXXX
+      local, // DDD9XXXXXXXX
+      withoutNine, // DDDXXXXXXXX
+      `0${local}`, // 0DDD9XXXXXXXX
+      `0${withoutNine}`, // 0DDDXXXXXXXX
+      `55${withoutNine}`, // 55DDDXXXXXXXX  ← 44% da base real
+    ]),
   );
 }
 
