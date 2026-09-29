@@ -11,11 +11,13 @@ import {
 } from './workItemMachine';
 import { bucketByDue, bucketByStatus, kpis } from './workItemAggregates';
 import type { WorkItem, WorkItemStatus, Priority } from './workItem.types';
+import type { Database } from '@/integrations/supabase/types';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type TaskInsert = Record<string, any>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type TaskUpdate = Record<string, any>;
+// Tipos gerados do banco: as colunas de conversation_tasks vivem em
+// src/integrations/supabase/types.ts. Nada de tipo frouxo — era o que
+// quebrava o typecheck-ratchet (B14/B15).
+type TaskInsert = Database['public']['Tables']['conversation_tasks']['Insert'];
+type TaskUpdate = Database['public']['Tables']['conversation_tasks']['Update'];
 
 // ---------------------------------------------------------------------------
 // Query key factory
@@ -133,7 +135,7 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
         due_date: input.dueDate ?? null,
         remind_at: input.remindAt ?? null,
         waiting_reason: input.waitingReason ?? null,
-      } as TaskInsert);
+      });
       if (error) throw error;
     },
     onSuccess: () => { invalidate(); toast.success('Tarefa criada'); },
@@ -150,7 +152,7 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
         ...(patch.dueDate !== undefined     && { due_date: patch.dueDate }),
         ...(patch.remindAt !== undefined    && { remind_at: patch.remindAt }),
         ...(patch.waitingReason !== undefined && { waiting_reason: patch.waitingReason }),
-      } as TaskUpdate).eq('id', id);
+      }).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => invalidate(),
@@ -172,7 +174,7 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
       const result = canTransition(item.status, to, { doingCount, waitingReason });
       if (!result.ok) throw Object.assign(new Error(result.reason), { blocked: result.reason });
 
-      const patch: Partial<WorkItem> = { status: to };
+      const patch: TaskUpdate = { status: to };
       if (to === 'waiting' && waitingReason) patch.waiting_reason = waitingReason;
       if (to !== 'waiting') patch.waiting_reason = null;
       if (to === 'done' || to === 'cancelled') {
@@ -183,7 +185,7 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
       if (to === 'doing' && !item.started_at) patch.started_at = new Date().toISOString();
       if (item.status === 'done' && to === 'todo')  patch.completed_at = null;
 
-      const { error } = await supabase.from('conversation_tasks').update(patch as TaskUpdate).eq('id', item.id);
+      const { error } = await supabase.from('conversation_tasks').update(patch).eq('id', item.id);
       if (error) throw error;
     },
     onSuccess: () => invalidate(),
@@ -201,7 +203,7 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
   const reorderMutation = useMutation({
     mutationFn: async (positions: Array<{ id: string; position: number }>) => {
       for (const p of positions) {
-        await supabase.from('conversation_tasks').update({ position: p.position } as TaskUpdate).eq('id', p.id);
+        await supabase.from('conversation_tasks').update({ position: p.position }).eq('id', p.id);
       }
     },
     onSuccess: () => invalidate(),
