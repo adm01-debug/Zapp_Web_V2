@@ -112,6 +112,10 @@ export function useReactionMutations(
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['message-reactions', messageId] });
     },
+    onError: (error) => {
+      log.error('Failed to remove reaction', error);
+      toast({ title: 'Erro ao remover reação', variant: 'destructive' });
+    },
   });
 
   return { addMutation, removeMutation };
