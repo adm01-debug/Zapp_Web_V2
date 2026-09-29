@@ -3236,10 +3236,10 @@
         "contacts.\"Users can insert contacts\"": "cc416dccab34fef7d4dfef48cb07303d",
         "messages.\"Users can insert messages\"": "8ace521b74643bdac255440c023a11e8",
         "sales_deals.\"Users can insert deals\"": "c5dbd3c4d83edca053ee9c02120966b9",
-        "talkx_segments.talkx_segments_delete": "88e95fd44b16f434b29507b2b496f36f",
-        "talkx_segments.talkx_segments_insert": "4cf2049629620810910734e7b18037bc",
-        "talkx_segments.talkx_segments_select": "4ef575554f6758ebc0eae9bb8c494545",
-        "talkx_segments.talkx_segments_update": "7b8526af65e0a053c61fc74678e9400f",
+        "talkx_segments.talkx_segments_delete": "32a935877b29503daea98bb45de0b288",
+        "talkx_segments.talkx_segments_insert": "7894806c280e31bf572e28f67ce6a3e7",
+        "talkx_segments.talkx_segments_select": "f7a35a1be099ef1b4cddad71779ff9b8",
+        "talkx_segments.talkx_segments_update": "2f61dce95dbf2e4fed87fe0165e9ff2a",
         "products.\"Admins can insert products\"": "2515c287f9fdae60342e6acf20c9c2c7",
         "products.\"Admins can manage products\"": "04f5b11e1ea6bda9d5b313ad3b3582db",
         "profiles.\"Users can view own profile\"": "470bc2814adff3685100e3939c1f432e",
@@ -4484,7 +4484,7 @@
         "e:public.talkx_blacklist_reason|PUBLIC|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.talkx_blacklist_reason|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-09-29T00:37:25Z",
+    "generated_at": "2026-09-29T11:59:43Z",
     "column_grants": {
         "r:public.departments.id|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.departments.name|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
