@@ -51,11 +51,20 @@
 - `docs/talkx/ARQUITETURA.md`: diagrama Mermaid, métrica→fonte, tela→componente→etapa, máquina de estados
 - `docs/talkx/README.md`, `CHANGELOG_TALKX.md` criados
 
-> **Nota:** as etapas E11–E85 (Fases 1–7: design system, telas de visão geral/segmentos/templates,
-> supressão, wizard, ciclo de vida da campanha) foram implementadas e mergeadas em `main`, mas não
-> foram registradas neste changelog — ver `docs/talkx/PARIDADE.md` e
-> `docs/talkx/PLANO_IMPLEMENTACAO_TALKX_100.md` para o detalhamento etapa a etapa. As entradas abaixo
-> retomam o registro a partir da Fase 8 (backend/observabilidade).
+> **Nota (corrigida em 2026-09-29):** a versão anterior desta nota afirmava que E11–E85 estavam
+> "implementadas e mergeadas". A auditoria de 29/09 mostrou que isso é falso: E29, E37–E39, E48, E54, E56,
+> E75, E79 e E82–E85 não existem e o restante está parcial. Ver
+> `docs/talkx/AUDITORIA_PLANO_TALKX_2026-09-29.md` §3. As entradas abaixo registram o que foi feito nas
+> Fases 8–9, sem implicar conclusão das fases anteriores.
+
+## Auditoria e plano V3 (2026-09-29)
+
+- `AUDITORIA_PLANO_TALKX_2026-09-29.md` — revisão exaustiva E01–E100 contra código, banco ao vivo e CI:
+  6 completas · 74 parciais · 20 ausentes; 9 bugs de produção (P0: `talkx_campaign_metrics` sem
+  `security_invoker`); 2 drifts de banco (`auto_optout` no CHECK, índice `phone_active_unique`) sem migration;
+  4 RPCs sem consumidor; CSV removido do sistema apagou E29/E48/E54/E85/E94; 40+ afirmações falsas em docs.
+- `PLANO_TALKX_V3_100_ETAPAS_2026-09-29.md` — novo plano de execução (V01–V100), Fase 0 = correções de produção.
+- README/PARIDADE/ARQUITETURA/CHANGELOG receberam banners de correção; reescrita completa fica para V96.
 
 ## Fase 8 — Backend, Rastreio & Observabilidade (2026-09-16)
 
