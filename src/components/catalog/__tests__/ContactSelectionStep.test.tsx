@@ -57,4 +57,23 @@ describe('ContactSelectionStep', () => {
     render(<Dialog open><ContactSelectionStep {...baseProps} selectedContact={contact} isSending /></Dialog>);
     expect(screen.getByText('Enviando...').closest('button')).toBeDisabled();
   });
+
+  it('com bloqueio pré-envio, explica o motivo e desabilita o Enviar (CT-08)', () => {
+    render(
+      <Dialog open>
+        <ContactSelectionStep
+          {...baseProps}
+          selectedContact={contact}
+          sendBlockedReason="Nenhuma conexão de WhatsApp ativa. Reconecte a instância em Conexões para poder enviar."
+        />
+      </Dialog>
+    );
+    expect(screen.getByText(/Nenhuma conexão de WhatsApp ativa/)).toBeInTheDocument();
+    expect(screen.getByText('Enviar para Tomaz').closest('button')).toBeDisabled();
+  });
+
+  it('enquanto a checagem pré-envio roda, o Enviar fica desabilitado (CT-08)', () => {
+    render(<Dialog open><ContactSelectionStep {...baseProps} selectedContact={contact} checkingSendReadiness /></Dialog>);
+    expect(screen.getByText('Enviar para Tomaz').closest('button')).toBeDisabled();
+  });
 });

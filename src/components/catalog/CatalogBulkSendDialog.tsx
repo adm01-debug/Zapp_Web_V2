@@ -21,7 +21,7 @@ import { useContactSearch, type ContactResult } from './useSendProduct';
 import { ContactSelectionStep } from './ContactSelectionStep';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { formatPrice, ProductThumb } from './catalogShared';
-import { toast } from '@/hooks/ui/use-toast';
+import { toast } from 'sonner';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
 import { logCatalogSendEvent } from '@/hooks/integrations/useCatalogContactSearch';
 import { cn } from '@/lib/utils';
@@ -120,12 +120,10 @@ export function CatalogBulkSendDialog({ products, open, onOpenChange, onSent }: 
     setFailCount(fail);
     setIsSendingFlag(false);
     if (fail === 0) {
-      toast({ title: `✅ ${ok} produto${ok !== 1 ? 's' : ''} enviado${ok !== 1 ? 's' : ''}!`, description: `Para ${selectedContact.name}` });
+      toast.success(`✅ ${ok} produto${ok !== 1 ? 's' : ''} enviado${ok !== 1 ? 's' : ''}!`, { description: `Para ${selectedContact.name}` });
     } else {
-      toast({
-        title: `Envio concluído com falhas`,
+      toast.warning('Envio concluído com falhas', {
         description: `${ok} ok, ${fail} falha${fail !== 1 ? 's' : ''} — para ${selectedContact.name}`,
-        variant: 'destructive',
       });
     }
     onSent?.();

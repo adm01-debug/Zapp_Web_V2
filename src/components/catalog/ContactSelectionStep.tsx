@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertCard } from '@/components/talkx/talkxShared';
 import { cn } from '@/lib/utils';
 import type { ContactResult } from './useSendProduct';
 import type { MessageTemplate } from './sendProductUtils';
@@ -24,6 +25,10 @@ interface ContactSelectionStepProps {
   isSending: boolean;
   onBack: () => void;
   onSend: () => void;
+  /** CT-08 — motivo do bloqueio pré-envio (conexão WhatsApp ou supressão). */
+  sendBlockedReason?: string | null;
+  /** CT-08 — checagem pré-envio em andamento: não dispara envio antes de saber. */
+  checkingSendReadiness?: boolean;
 }
 
 export function ContactSelectionStep({
@@ -33,6 +38,7 @@ export function ContactSelectionStep({
   contactResults, searchingContacts,
   selectedContact, onSelectContact,
   isSending, onBack, onSend,
+  sendBlockedReason = null, checkingSendReadiness = false,
 }: ContactSelectionStepProps) {
   return (
     <>
@@ -108,14 +114,23 @@ export function ContactSelectionStep({
         )}
       </ScrollArea>
 
-      <div className="p-4 border-t flex items-center gap-2">
-        <Button variant="outline" className="gap-1.5" onClick={onBack}>
-          <ArrowLeft className="w-4 h-4" />Voltar
-        </Button>
-        <Button className="flex-1 gap-2" disabled={!selectedContact || isSending} onClick={onSend}>
-          {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-          {isSending ? 'Enviando...' : selectedContact ? `Enviar para ${selectedContact.name}` : 'Selecione um contato'}
-        </Button>
+      <div className="p-4 border-t space-y-2">
+        {sendBlockedReason && (
+          <AlertCard tone="warning">{sendBlockedReason}</AlertCard>
+        )}
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="gap-1.5" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4" />Voltar
+          </Button>
+          <Button
+            className="flex-1 gap-2"
+            disabled={!selectedContact || isSending || checkingSendReadiness || !!sendBlockedReason}
+            onClick={onSend}
+          >
+            {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            {isSending ? 'Enviando...' : selectedContact ? `Enviar para ${selectedContact.name}` : 'Selecione um contato'}
+          </Button>
+        </div>
       </div>
     </>
   );
