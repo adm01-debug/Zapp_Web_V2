@@ -2,51 +2,23 @@
  * Testes do hook unificado de tarefas (Fase B, etapa 21).
  * Cobre: create, remind_in_past, complete + undo, WIP cheio, waiting sem motivo,
  * move com indice (upsert em lote), snooze (minutos e amanha 9h), setReminder,
- * rollback do update otimista e o badge do B6.
+ * rollback do update otimista, badge do B6 e o mapeamento do contato.
  *
- * Sem `any` e sem `@ts-nocheck`: o lint-ratchet nao aceita divida nova, entao as
- * implementacoes dos mocks usam parametros contextuais (o `vi.fn()` sem generico
- * ja tipa os argumentos) e as linhas do banco sao `Record<string, unknown>`.
+ * Sem `any` e sem `@ts-nocheck`: o lint-ratchet nao aceita divida nova. O mock do
+ * cliente Supabase vive em `@/test/mocks/tarefas`, compartilhado com o teste do
+ * `TasksModule` (mesmo harness, sem duplicacao).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
-import React from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-
-type Row = Record<string, unknown>;
-type SupabaseResult = { data?: Row[]; error?: unknown };
-/** Builder encadeavel e "awaitable" — aceita qualquer ordem de encadeamento. */
-type Chainable = Record<string, (...args: unknown[]) => Chainable> & {
-  then: (onOk: (v: unknown) => unknown, onErr?: (e: unknown) => unknown) => Promise<unknown>;
-};
-
-// `vi.hoisted`: os factories do vi.mock rodam antes das consts do modulo.
-const h = vi.hoisted(() => ({
-  toast: { success: vi.fn(), error: vi.fn() },
-  undoToast: vi.fn(),
-  auth: vi.fn(),
-  from: vi.fn(),
-  select: vi.fn(),
-  insert: vi.fn(),
-  update: vi.fn(),
-  upsert: vi.fn(),
-  channel: vi.fn(),
-  removeChannel: vi.fn(),
-}));
-
-vi.mock('sonner', () => ({ toast: h.toast }));
-vi.mock('@/lib/undoToast', () => ({ undoToast: h.undoToast }));
-vi.mock('@/hooks/auth/useAuth', () => ({
-  useAuth: () => h.auth(),
-  AuthProvider: ({ children }: { children: React.ReactNode }) => children,
-}));
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    from: (table: string) => h.from(table),
-    channel: (name: string) => h.channel(name),
-    removeChannel: (ch: unknown) => h.removeChannel(ch),
-  },
-}));
+import {
+  supabaseMock as h,
+  makeQueryClient,
+  makeTaskRow,
+  makeWrapper,
+  resetSupabaseMock,
+  setSelectResult,
+  setWriteResult,
+} from '@/test/mocks/tarefas';
 
 import {
   useMyWorkItems,
@@ -58,72 +30,11 @@ import {
 import type { WorkItem } from '@/hooks/tasks/workItem.types';
 
 const KEY = workItemsKey('u1');
+const dbRow = makeTaskRow;
 
-function makeBuilder(result: unknown): Chainable {
-  const q = {
-    then: (onOk: (v: unknown) => unknown, onErr?: (e: unknown) => unknown) =>
-      Promise.resolve(result).then(onOk, onErr),
-  } as Chainable;
-  for (const m of ['eq', 'neq', 'or', 'not', 'order', 'limit', 'is', 'in']) {
-    q[m] = () => q;
-  }
-  return q;
-}
-
-let selectResult: unknown = { data: [], error: null };
-let writeResult: unknown = { error: null };
-
-function resetMocks() {
-  vi.clearAllMocks();
-  selectResult = { data: [], error: null };
-  writeResult = { error: null };
-  h.auth.mockReturnValue({ profile: { id: 'u1' } });
-  h.channel.mockReturnValue({
-    on: vi.fn().mockReturnThis(),
-    subscribe: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }),
-  });
-  h.from.mockImplementation(() => ({
-    select: (cols: string) => { h.select(cols); return makeBuilder(selectResult); },
-    insert: (row: unknown) => { h.insert(row); return makeBuilder(writeResult); },
-    update: (patch: unknown) => { h.update(patch); return makeBuilder(writeResult); },
-    upsert: (rows: unknown, opts: unknown) => { h.upsert(rows, opts); return makeBuilder(writeResult); },
-  }));
-}
-
-function dbRow(over: Row = {}): Row {
-  return {
-    id: 't1',
-    title: 'Ligar para o cliente',
-    description: null,
-    status: 'todo',
-    priority: 'medium',
-    due_date: null,
-    remind_at: null,
-    notified_at: null,
-    waiting_reason: null,
-    position: 0,
-    started_at: null,
-    status_changed_at: '2026-09-29T10:00:00.000Z',
-    completed_at: null,
-    contact_id: null,
-    created_by: 'u1',
-    assigned_to: 'u1',
-    created_at: '2026-09-29T10:00:00.000Z',
-    updated_at: '2026-09-29T10:00:00.000Z',
-    contact: null,
-    ...over,
-  };
-}
-
-function makeWrapper(qc: QueryClient) {
-  return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={qc}>{children}</QueryClientProvider>
-  );
-}
-
-function setup(items: Row[] = []) {
-  selectResult = { data: items, error: null };
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+function setup(items: Record<string, unknown>[] = []) {
+  setSelectResult({ data: items, error: null });
+  const qc = makeQueryClient();
   const view = renderHook(() => useMyWorkItems(), { wrapper: makeWrapper(qc) });
   return { ...view, qc };
 }
@@ -133,7 +44,7 @@ async function ready(view: { result: { current: { isLoading: boolean } } }) {
 }
 
 describe('useMyWorkItems — Fase B', () => {
-  beforeEach(resetMocks);
+  beforeEach(resetSupabaseMock);
 
   it('create envia created_by e assigned_to do perfil autenticado', async () => {
     const { result } = setup();
@@ -173,7 +84,7 @@ describe('useMyWorkItems — Fase B', () => {
     await act(async () => { await result.current.complete(result.current.items[0]); });
 
     expect(h.update.mock.calls[0][0]).toMatchObject({ status: 'done' });
-    expect((h.update.mock.calls[0][0] as Row).completed_at).toEqual(expect.any(String));
+    expect((h.update.mock.calls[0][0] as Record<string, unknown>).completed_at).toEqual(expect.any(String));
     expect(h.undoToast).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'Tarefa concluida' })
     );
@@ -228,7 +139,7 @@ describe('useMyWorkItems — Fase B', () => {
 
     expect(h.update.mock.calls[0][0]).toMatchObject({ status: 'doing' });
     expect(h.upsert).toHaveBeenCalledTimes(1);
-    const upsertRows = h.upsert.mock.calls[0][0] as Row[];
+    const upsertRows = h.upsert.mock.calls[0][0] as Record<string, unknown>[];
     expect(h.upsert.mock.calls[0][1]).toEqual({ onConflict: 'id' });
     // destino (doing) renumerado com o item movido na frente
     expect(upsertRows[0]).toMatchObject({ id: 'm', position: 0 });
@@ -249,7 +160,7 @@ describe('useMyWorkItems — Fase B', () => {
     const antes = Date.now();
     await act(async () => { await result.current.snooze(result.current.items[0], 30); });
 
-    const patch = h.update.mock.calls[0][0] as Row;
+    const patch = h.update.mock.calls[0][0] as Record<string, unknown>;
     expect(patch.notified_at).toBeNull();
     const alvo = new Date(String(patch.remind_at)).getTime();
     expect(alvo).toBeGreaterThanOrEqual(antes + 29 * 60_000);
@@ -263,7 +174,7 @@ describe('useMyWorkItems — Fase B', () => {
 
     await act(async () => { await result.current.snooze(result.current.items[0], 'tomorrow9'); });
 
-    const patch = h.update.mock.calls[0][0] as Row;
+    const patch = h.update.mock.calls[0][0] as Record<string, unknown>;
     const alvo = new Date(String(patch.remind_at));
     const esperado = tomorrowAtNine();
     expect(alvo.getHours()).toBe(9);
@@ -287,7 +198,7 @@ describe('useMyWorkItems — Fase B', () => {
 
   it('update otimista aplica no cache e volta ao anterior quando o banco falha', async () => {
     let falhar: (v: unknown) => void = () => {};
-    writeResult = new Promise((resolve) => { falhar = resolve; });
+    setWriteResult(new Promise((resolve) => { falhar = resolve; }));
 
     const { result, qc } = setup([dbRow()]);
     await ready({ result });
@@ -315,15 +226,15 @@ describe('useMyWorkItems — Fase B', () => {
 
   it('badge soma atrasadas e avisos ja disparados e nao tratados (uma query)', async () => {
     const agora = Date.now();
-    selectResult = {
+    setSelectResult({
       data: [
         { id: 'a', due_date: new Date(agora - 86_400_000).toISOString(), remind_at: null, notified_at: null, status: 'todo' },
         { id: 'b', due_date: new Date(agora + 86_400_000).toISOString(), remind_at: new Date(agora - 60_000).toISOString(), notified_at: '2026-09-29T09:00:00.000Z', status: 'todo' },
         { id: 'c', due_date: null, remind_at: new Date(agora - 60_000).toISOString(), notified_at: null, status: 'todo' },
       ],
       error: null,
-    };
-    const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+    });
+    const qc = makeQueryClient();
     const { result } = renderHook(() => useMyWorkItemsBadge(), { wrapper: makeWrapper(qc) });
 
     await waitFor(() => expect(result.current).toBe(2));
