@@ -72,9 +72,7 @@ export function MessageReactions({
   const availableReactions = showExtended ? EXTENDED_REACTIONS : WHATSAPP_REACTIONS;
 
   const handleReact = async (emoji: string) => {
-    const existingReaction = groupedReactions[emoji];
-
-    if (existingReaction?.hasCurrentUser) {
+    if (hasReacted(emoji)) {
       await removeReaction(emoji);
     } else {
       await addReaction(emoji);
@@ -201,7 +199,7 @@ export function QuickReactionBar({
   disableRealtime,
 }: QuickReactionBarProps) {
   const [showPicker, setShowPicker] = useState(false);
-  const { addReaction, removeReaction, hasReacted } = useMessageReactions(messageId, {
+  const { addReaction, removeReaction, hasReacted, currentProfileId } = useMessageReactions(messageId, {
     instanceName,
     contactJid,
     externalId,
@@ -222,6 +220,7 @@ export function QuickReactionBar({
   return (
     <div
       data-testid="quick-reaction-bar"
+      data-profile-ready={currentProfileId ? 'true' : 'false'}
       className={cn(
         'absolute -top-9 flex items-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-20',
         showPicker && 'opacity-100',
