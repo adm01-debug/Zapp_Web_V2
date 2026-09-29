@@ -19,7 +19,7 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Send, ChevronDown, Package, Copy, Download, Palette, Check,
-  Pencil, User, Link2, History,
+  Pencil, User, Link2, History, Loader2,
 } from 'lucide-react';
 import { ExternalProduct, useExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 import { toast } from 'sonner';
@@ -28,7 +28,9 @@ import { cn } from '@/lib/utils';
 import {
   type MessageTemplate, type SendMode, buildMessage, collectAllImages,
 } from './sendProductUtils';
-import { useContactSearch, useSendToContact } from './useSendProduct';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { AlertCard } from '@/components/talkx/talkxShared';
+import { useContactSearch, useSendToContact, type ContactResult } from './useSendProduct';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { ContactSelectionStep } from './ContactSelectionStep';
 
@@ -38,6 +40,12 @@ interface SendProductDialogProps {
   onOpenChange: (open: boolean) => void;
   onConfirmSend?: (text: string, images: string[]) => void;
   initialVariantColor?: string;
+  /**
+   * CT-14/CT-17 — contato da conversa aberta. Com ele preenchido o dialog
+   * mostra o card-resumo do contato no passo de configuração, envia direto
+   * (pula o passo "Selecionar contato") e continua permitindo trocar.
+   */
+  presetContact?: ContactResult | null;
 }
 
 const TEMPLATE_LABELS: Record<MessageTemplate, string> = {
@@ -123,7 +131,7 @@ const WhatsAppPreview: React.FC<{ message: string; images: { url: string; label:
 };
 
 export const SendProductDialog: React.FC<SendProductDialogProps> = ({
-  product, open, onOpenChange, onConfirmSend, initialVariantColor,
+  product, open, onOpenChange, onConfirmSend, initialVariantColor, presetContact = null,
 }) => {
   const needsFullProduct = !product.variants || product.variants.length === 0;
   const { data: fetchedProduct, isFetching: loadingVariants } = useExternalProduct(product.id, {
@@ -172,7 +180,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
     contactResults, searchingContacts,
     selectedContact, setSelectedContact,
     resetContactSelection,
-  } = useContactSearch(step);
+  } = useContactSearch(step, presetContact);
 
   const { profile } = useAuth();
   // CT-06 — "Tentar de novo" reabre o dialog no passo de contato (o envio pode
@@ -190,7 +198,9 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
 
   // CT-08 — conexão de WhatsApp ativa e contato fora da lista de supressão são
   // pré-requisitos do envio; sem eles o botão fica desabilitado com explicação.
-  const sendReadiness = useCatalogSendReadiness(step === 'selectContact' ? selectedContact : null);
+  const sendReadiness = useCatalogSendReadiness(
+    step === 'selectContact' || presetContact ? selectedContact : null
+  );
 
   const variantGroups = useMemo(
     () => groupVariantsByColor(fullProduct.variants || []),
@@ -496,10 +506,46 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
               </div>
             </ScrollArea>
 
-            <div className="p-4 border-t flex items-center gap-2">
+            <div className="p-4 border-t space-y-2">
+              {presetContact && selectedContact && (
+                <div className="flex items-center gap-2.5 rounded-lg border border-border/50 bg-muted/40 px-2.5 py-2">
+                  <Avatar className="w-8 h-8 shrink-0">
+                    <AvatarImage src={selectedContact.avatar_url || undefined} alt={selectedContact.name} />
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs">{selectedContact.name?.[0] || '?'}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-medium truncate">{selectedContact.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{selectedContact.phone}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs shrink-0"
+                    onClick={() => setStep('selectContact')}
+                  >
+                    Trocar
+                  </Button>
+                </div>
+              )}
+              {presetContact && sendReadiness.reason && <AlertCard tone="warning">{sendReadiness.reason}</AlertCard>}
+              <div className="flex items-center gap-2">
               <Button variant="outline" className="flex-1" onClick={requestClose}>Cancelar</Button>
               <div className="flex flex-1">
-                <Button className="flex-1 rounded-r-none gap-2" onClick={handleSend} disabled={messageTooLong}><User className="w-4 h-4" />Selecionar Contato</Button>
+                <Button
+                  className="flex-1 rounded-r-none gap-2"
+                  onClick={presetContact ? handleSendToContact : handleSend}
+                  disabled={
+                    messageTooLong ||
+                    (!!presetContact && (!selectedContact || isSending || sendReadiness.checking || !!sendReadiness.reason))
+                  }
+                >
+                  {presetContact
+                    ? (isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />)
+                    : <User className="w-4 h-4" />}
+                  {presetContact
+                    ? (isSending ? 'Enviando...' : `Enviar para ${selectedContact?.name ?? 'contato'}`)
+                    : 'Selecionar Contato'}
+                </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild><Button className="rounded-l-none border-l border-primary-foreground/20 px-2"><ChevronDown className="w-4 h-4" /></Button></DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-52">
@@ -508,6 +554,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
                     <DropdownMenuItem onClick={handleCopyLink}><Link2 className="w-4 h-4 mr-2" />Copiar link do produto</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+              </div>
               </div>
             </div>
           </>

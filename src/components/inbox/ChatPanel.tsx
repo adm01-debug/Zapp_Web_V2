@@ -31,9 +31,9 @@ const NextBestActionEngine = lazy(() => import('./NextBestActionEngine').then(m 
 
 if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
   (window as Window).requestIdleCallback(() => {
-    import('./TransferDialog');
-    import('./AIConversationAssistant');
-    import('./CloseConversationDialog');
+    void import('./TransferDialog');
+    void import('./AIConversationAssistant');
+    void import('./CloseConversationDialog');
   });
 }
 
@@ -294,7 +294,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           onCloseSlashCommands={() => closeDialog('slashCommands')} onQuickReply={handleQuickReply}
           onRecordToggle={() => handlers.setIsRecordingAudio(!handlers.isRecordingAudio)} onAudioSend={(blob) => handlers.handleAudioSend(blob, onSendAudio)} onAudioCancel={() => handlers.setIsRecordingAudio(false)}
           onOpenInteractiveBuilder={() => openDialog('interactiveBuilder')} onOpenSchedule={() => openDialog('scheduleDialog')}
-          onOpenLocationPicker={() => openDialog('locationPicker')} onSendProduct={handlers.handleSendProduct} onSendSticker={handleSendSticker}
+          onOpenLocationPicker={() => openDialog('locationPicker')} onSendSticker={handleSendSticker}
           onSendAudioMeme={handleSendAudioMeme} onSendCustomEmoji={handleSendCustomEmoji}
           signatureEnabled={signatureEnabled} signatureName={agentName} onToggleSignature={toggleSignature}
           onOpenCatalog={() => openDialog('catalogDirect')} onSelectSuggestion={(text) => handlers.setInputValue(text)} onSelectTemplate={(text) => handlers.setInputValue(text)}
@@ -307,7 +307,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           contactId={conversation.contact.id} onTransfer={handleTransfer}
           onScheduleMessage={handleScheduleMessage} onSendInteractiveMessage={handlers.handleSendInteractiveMessage}
           onForwardToTargets={handlers.handleForwardToTargets} onSendLocation={handlers.handleSendLocation}
-          onSendProduct={handlers.handleSendProduct} onSetInputValue={handlers.setInputValue}
+          onSetInputValue={handlers.setInputValue}
         />
       </div>
 

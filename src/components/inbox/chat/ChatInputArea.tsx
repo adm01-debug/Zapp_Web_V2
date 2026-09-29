@@ -12,7 +12,6 @@ import { MarkdownPreview } from './MarkdownPreview';
 import { SlashCommands, SlashCommand } from '../SlashCommands';
 import { AudioRecorder } from '../AudioRecorder';
 import { FileUploaderRef } from '../FileUploader';
-import { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 import { SecondaryToolbar, TertiaryToolsMenu } from './ChatInputToolbars';
 import { StickerPicker } from '../StickerPicker';
 import { CustomEmojiPicker } from '../CustomEmojiPicker';
@@ -62,7 +61,6 @@ interface ChatInputAreaProps {
   onOpenInteractiveBuilder: () => void;
   onOpenSchedule: () => void;
   onOpenLocationPicker: () => void;
-  onSendProduct: (product: ExternalProduct) => void;
   onSendSticker: (stickerUrl: string) => void;
   onSendAudioMeme: (audioUrl: string) => void;
   onSendCustomEmoji: (emojiUrl: string) => void;
@@ -88,7 +86,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
     onInputChange, onKeyDown, onBlur, onSend, onCancelReply, onCancelEdit,
     onSlashCommand, onCloseSlashCommands, onQuickReply, onRecordToggle,
     onAudioSend, onAudioCancel, onOpenInteractiveBuilder, onOpenSchedule,
-    onOpenLocationPicker, onSendProduct, onSendSticker, onSendAudioMeme,
+    onOpenLocationPicker, onSendSticker, onSendAudioMeme,
     onSendCustomEmoji, onOpenCatalog, onSelectSuggestion, onSelectTemplate,
     onPasteFiles, signatureEnabled, signatureName, onToggleSignature,
     fileUploaderRef, inputRef, onOpenAiAssistant, onOpenTransfer,
@@ -116,13 +114,13 @@ export function ChatInputArea(props: ChatInputAreaProps) {
       contactId={contactId} instanceName={instanceName} contactPhone={contactPhone} contactName={contactName}
       messages={messages} quickReplies={quickReplies}
       onOpenInteractiveBuilder={onOpenInteractiveBuilder} onOpenLocationPicker={onOpenLocationPicker}
-      onOpenSchedule={onOpenSchedule} onSendProduct={onSendProduct}
+      onOpenSchedule={onOpenSchedule}
       onSelectSuggestion={onSelectSuggestion} onSelectTemplate={onSelectTemplate}
       onQuickReply={onQuickReply} signatureEnabled={signatureEnabled}
       signatureName={signatureName} onToggleSignature={onToggleSignature}
       onPollSent={onPollSent} onContactSent={onContactSent}
     />
-  ), [contactId, instanceName, contactPhone, contactName, messages, quickReplies, onOpenInteractiveBuilder, onOpenLocationPicker, onOpenSchedule, onSendProduct, onSelectSuggestion, onSelectTemplate, onQuickReply, onPollSent, onContactSent, signatureEnabled, signatureName, onToggleSignature]);
+  ), [contactId, instanceName, contactPhone, contactName, messages, quickReplies, onOpenInteractiveBuilder, onOpenLocationPicker, onOpenSchedule, onSelectSuggestion, onSelectTemplate, onQuickReply, onPollSent, onContactSent, signatureEnabled, signatureName, onToggleSignature]);
 
   return (
     <>

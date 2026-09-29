@@ -9,45 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useCatalogFavorites, type CatalogFavorite } from '@/hooks/integrations/useExternalCatalog';
+import { favoriteToProduct } from './catalogShared';
 import { SendProductDialog } from './SendProductDialog';
 import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
-
-/** Constrói um ExternalProduct mínimo a partir do CatalogFavorite.
- * useExternalProduct irá buscar o produto completo quando o dialog abrir. */
-function favoriteToProduct(fav: CatalogFavorite): ExternalProduct {
-  return {
-    id: fav.product_id,
-    name: fav.product_name,
-    sku: fav.product_sku,
-    sale_price: 0,
-    stock_quantity: 0,
-    is_stockout: false,
-    primary_image_url: fav.primary_image_url,
-    primary_image_fallback_url: null,
-    is_featured: false,
-    is_new: false,
-    is_bestseller: false,
-    is_on_sale: false,
-    is_kit: false,
-    allows_personalization: false,
-    categories: null,
-    suppliers: null,
-    brand: null,
-    colors: null,
-    color_swatches: null,
-    images: null,
-    variants: null,
-    description: null,
-    short_description: null,
-    dimensions_display: null,
-    weight_g: null,
-    origin_country: null,
-    lead_time_days: null,
-    min_quantity: null,
-    ncm_code: null,
-    suggested_price: null,
-  } as unknown as ExternalProduct;
-}
 
 function FavoriteCard({ fav, onRemove, onSend }: {
   fav: CatalogFavorite;

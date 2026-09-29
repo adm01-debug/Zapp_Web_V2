@@ -367,3 +367,50 @@ describe('SendProductDialog — CT-08/CT-09 (checagem pré-envio e teclado)', ()
     expect((mockSendOutboundMessage.mock.calls[0][0] as { caption: string }).caption).toContain('Olha esse produto');
   });
 });
+
+describe('SendProductDialog — CT-17 (contato da conversa pré-selecionado)', () => {
+  const CONTACT = { id: 'c9', name: 'Cliente da Conversa', phone: '5541999990000', avatar_url: null };
+
+  beforeEach(() => {
+    setupDialogMocks();
+    sessionStorage.clear();
+  });
+
+  it('mostra o card-resumo do contato e troca "Selecionar Contato" por "Enviar para <nome>" (CT-17)', () => {
+    renderDialog({ presetContact: CONTACT });
+
+    expect(screen.getByText('Cliente da Conversa')).toBeInTheDocument();
+    expect(screen.getByText('5541999990000')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Enviar para Cliente da Conversa/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Selecionar Contato/i })).not.toBeInTheDocument();
+  });
+
+  it('envia direto para o contato pré-selecionado, sem passar pelo passo de contato (CT-14)', async () => {
+    renderDialog({ presetContact: CONTACT });
+
+    fireEvent.click(screen.getByRole('button', { name: /Enviar para Cliente da Conversa/i }));
+
+    await waitFor(() => expect(mockSendOutboundMessage).toHaveBeenCalled());
+    expect(mockSendOutboundMessage.mock.calls[0][0]).toMatchObject({ contactId: 'c9', messageType: 'image' });
+  });
+
+  it('"Trocar" continua permitindo escolher outro contato (CT-17)', () => {
+    renderDialog({ presetContact: CONTACT });
+
+    fireEvent.click(screen.getByRole('button', { name: /^Trocar$/i }));
+
+    expect(screen.getByText('Selecionar Contato')).toBeInTheDocument();
+  });
+
+  it('com a prontidão bloqueada, o botão fica desabilitado com explicação (CT-08 com preset)', () => {
+    mockReadiness.mockReturnValue({
+      blocked: true,
+      reason: 'Nenhuma conexão de WhatsApp ativa. Reconecte a instância em Conexões para poder enviar.',
+      checking: false,
+    });
+    renderDialog({ presetContact: CONTACT });
+
+    expect(screen.getByText(/Nenhuma conexão de WhatsApp ativa/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Enviar para Cliente da Conversa/i })).toBeDisabled();
+  });
+});

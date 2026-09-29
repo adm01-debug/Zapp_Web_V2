@@ -9,7 +9,6 @@ import { ReplyPreview } from '../ReplyQuote';
 import { SlashCommands, SlashCommand } from '../SlashCommands';
 import { AudioRecorder } from '../AudioRecorder';
 import { FileUploader, FileUploaderRef } from '../FileUploader';
-import { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Send, Smile, Plus } from 'lucide-react';
 import { AIEnhanceButton } from './AIEnhanceButton';
@@ -47,7 +46,6 @@ interface ChatMessageInputProps {
   onOpenInteractiveBuilder: () => void;
   onOpenSchedule: () => void;
   onOpenLocationPicker: () => void;
-  onSendProduct: (product: ExternalProduct) => void;
   onTypingStart: () => void;
   onTypingStop: () => void;
   onExternalFiles?: (files: File[]) => void;
@@ -64,7 +62,7 @@ export const ChatMessageInput = forwardRef<ChatMessageInputRef, ChatMessageInput
   onInputChange, onSend, onCancelReply, onSlashCommand, onCloseSlashCommands,
   onQuickReply, onRecordToggle, onAudioSend, onAudioCancel,
   onOpenInteractiveBuilder, onOpenSchedule, onOpenLocationPicker,
-  onSendProduct, onTypingStart, onTypingStop,
+  onTypingStart, onTypingStop,
 }, ref) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileUploaderRef = useRef<FileUploaderRef>(null);
@@ -98,6 +96,8 @@ export const ChatMessageInput = forwardRef<ChatMessageInputRef, ChatMessageInput
     <InputExtraTools
       isRecordingAudio={isRecordingAudio}
       messages={messages}
+      contactId={contactId}
+      contactPhone={contactPhone}
       contactName={contactName}
       quickReplies={quickReplies}
       onInputChange={onInputChange}
@@ -106,7 +106,6 @@ export const ChatMessageInput = forwardRef<ChatMessageInputRef, ChatMessageInput
       onOpenInteractiveBuilder={onOpenInteractiveBuilder}
       onOpenSchedule={onOpenSchedule}
       onOpenLocationPicker={onOpenLocationPicker}
-      onSendProduct={onSendProduct}
     />
   );
 

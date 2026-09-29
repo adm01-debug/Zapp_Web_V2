@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { undoToast } from '@/lib/undoToast';
 import { Message, InteractiveMessage, InteractiveButton, LocationMessage } from '@/types/chat';
 import { SlashCommand } from '../SlashCommands';
-import { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 import { toast } from '@/hooks/ui/use-toast';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
@@ -120,7 +119,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   }, [contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef]);
 
   const handleReplyToMessage = useCallback((message: Message) => { setReplyToMessage(message); inputRef.current?.focus(); }, []);
-  const handleCopyMessage = useCallback((content: string) => { navigator.clipboard.writeText(content); toast({ title: 'Copiado!', description: 'Mensagem copiada para a área de transferência.' }); }, []);
+  const handleCopyMessage = useCallback((content: string) => { void navigator.clipboard.writeText(content); toast({ title: 'Copiado!', description: 'Mensagem copiada para a área de transferência.' }); }, []);
   const handleForwardMessage = useCallback((message: Message) => { setForwardMessage(message); openDialog('forwardDialog'); }, [openDialog]);
   const handleForwardToTargets = useCallback((targetIds: string[], targetType: 'contact' | 'group') => { log.debug('Forwarding to:', { targetIds, targetType, message: forwardMessageRef.current }); }, [forwardMessageRef]);
 
@@ -151,7 +150,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       case 'priority': {
         if (!subCommand) break;
         const labels: Record<string, string> = { high: 'Alta', medium: 'Média', low: 'Baixa' };
-        (async () => {
+        void (async () => {
           const { error } = await supabase.from('contacts').update({ ai_priority: subCommand }).eq('id', contactId);
           if (error) {
             log.error('Failed to set priority:', error);
@@ -168,7 +167,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       // useConversationActions já grava em favorite_contacts e mostra o toast.
       case 'star': (isFavorite(contactId) ? unfavoriteContact : favoriteContact)(contactId); break;
       case 'archive': {
-        (async () => {
+        void (async () => {
           const { error } = await supabase.from('contacts').update({ assigned_to: null }).eq('id', contactId);
           if (error) {
             log.error('Failed to archive contact:', error);
@@ -187,28 +186,6 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       default: toast({ title: `Comando: ${command.label}`, description: command.description }); break;
     }
   }, [closeDialog, openDialog, handleSetActiveTool, contactId, isFavorite, favoriteContact, unfavoriteContact, snoozeConversation]);
-
-  const handleSendProduct = useCallback(async (product: ExternalProduct) => {
-    const price = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.sale_price);
-    const lines = [
-      `📦 *${product.name}*`, product.brand ? `🏷️ Marca: ${product.brand}` : '', `💰 Preço: ${price}`,
-      product.min_quantity ? `📋 Qtd. mínima: ${product.min_quantity} un.` : '',
-      product.colors?.length ? `🎨 Cores: ${product.colors.join(', ')}` : '',
-      product.dimensions_display ? `📏 Dimensões: ${product.dimensions_display}` : '',
-      product.allows_personalization ? '✅ Permite personalização' : '',
-      product.lead_time_days ? `⏱️ Prazo: ${product.lead_time_days} dias úteis` : '',
-      product.is_stockout ? '⚠️ *Sem estoque no momento*' : `✅ Em estoque: ${product.stock_quantity} un.`,
-      (product.short_description || product.description) ? `\n${(product.short_description || product.description || '').slice(0, 300)}` : '',
-      product.primary_image_url ? `\n🔗 ${product.primary_image_url}` : '',
-    ].filter(Boolean).join('\n');
-    try {
-      await onSendMessage(lines);
-      toast({ title: 'Produto enviado!', description: `${product.name} - ${price}` });
-    } catch (err) {
-      log.error('Failed to send product:', err);
-      toast({ title: 'Erro ao enviar', description: 'Não foi possível enviar o produto.', variant: 'destructive' });
-    }
-  }, [onSendMessage]);
 
   const handleSendInteractiveMessage = useCallback((interactive: InteractiveMessage) => {
     toast({ title: 'Mensagem interativa enviada!', description: `Mensagem com ${interactive.buttons?.length || 0} botões enviada.` });
@@ -252,7 +229,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     handleEditStart, handleCancelEdit, handleSend,
     handleReplyToMessage, handleCopyMessage, handleForwardMessage, handleForwardToTargets,
     handleInputChange, handleKeyDown, handleSlashCommand,
-    handleSendProduct, handleSendInteractiveMessage, handleInteractiveButtonClick,
+    handleSendInteractiveMessage, handleInteractiveButtonClick,
     handleSendLocation, handleAudioSend,
   };
 }

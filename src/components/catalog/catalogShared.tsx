@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { Package, type LucideIcon, X } from 'lucide-react';
 // CatalogStats vem de useExternalCatalog.ts (E24 — formato exato de
 // public.zapp_catalog_stats()); reimportado aqui para não duplicar.
-import type { CatalogStats } from '@/hooks/integrations/useExternalCatalog';
+import type { CatalogStats, CatalogFavorite } from '@/hooks/integrations/useExternalCatalog';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -746,4 +746,49 @@ export function TagMultiSelectChips({ options, selected, onChange }: TagMultiSel
       ))}
     </div>
   );
+}
+
+// ─── favoriteToProduct (CT-16) ───────────────────────────────────────────────
+/**
+ * Constrói um `ExternalProduct` mínimo a partir de um `CatalogFavorite`
+ * (a snapshot de catalog_favorites não guarda preço/estoque/variantes).
+ * O `SendProductDialog` busca o produto completo pelo id quando precisar
+ * (useExternalProduct com `needsFullProduct`).
+ *
+ * Ficava duplicado em CatalogFavoritesTab; subiu para cá no CT-16, quando o
+ * dialog do chat passou a listar favoritos também.
+ */
+export function favoriteToProduct(fav: CatalogFavorite): ExternalProduct {
+  return {
+    id: fav.product_id,
+    name: fav.product_name,
+    sku: fav.product_sku,
+    sale_price: 0,
+    stock_quantity: 0,
+    is_stockout: false,
+    primary_image_url: fav.primary_image_url,
+    primary_image_fallback_url: null,
+    is_featured: false,
+    is_new: false,
+    is_bestseller: false,
+    is_on_sale: false,
+    is_kit: false,
+    allows_personalization: false,
+    categories: null,
+    suppliers: null,
+    brand: null,
+    colors: null,
+    color_swatches: null,
+    images: null,
+    variants: null,
+    description: null,
+    short_description: null,
+    dimensions_display: null,
+    weight_g: null,
+    origin_country: null,
+    lead_time_days: null,
+    min_quantity: null,
+    ncm_code: null,
+    suggested_price: null,
+  } as unknown as ExternalProduct;
 }
