@@ -164,7 +164,9 @@ describe('useAddressAutocomplete', () => {
     await act(async () => { await result.current.select(0); });
 
     expect(result.current.suggestions).toEqual([suggestionA]);
-    expect(result.current.error).toBe('not_found');
+    // F3/E26: a falha do `/retrieve` não é erro da lista — ela fica presa ao item escolhido.
+    expect(result.current.error).toBeNull();
+    expect(result.current.retrieveError).toEqual({ id: 'a', kind: 'not_found' });
     expect(result.current.retrievingId).toBeNull();
   });
 
@@ -377,7 +379,9 @@ describe('useAddressAutocomplete', () => {
     await act(async () => { await result.current.select(0); });
 
     expect(h.reportMapboxFailure).not.toHaveBeenCalled();
-    expect(result.current.error).toBe('not_found');
+    // E26: sem coordenada e sem causa de rota, o que sobra é a falha do item — não um erro da lista.
+    expect(result.current.error).toBeNull();
+    expect(result.current.retrieveError).toEqual({ id: 'a', kind: 'not_found' });
   });
 
   // ── F2 · retry real (E13/E14) ───────────────────────────────────────────────────────────────
@@ -428,5 +432,89 @@ describe('useAddressAutocomplete', () => {
     expect(h.suggestPlaces).toHaveBeenCalledTimes(1);
     expect(result.current.blocked).toBe('rate_limited');
     expect(result.current.error).toBeNull();
+  });
+
+  // ── F3 · estados explícitos (E23, E25, E26, E27, E28) ───────────────────────────────────────
+
+  it('E23: status percorre typing → loading → ok (e a lista vem com o estado junto)', async () => {
+    let resolver: (v: { ok: true; suggestions: GeoSuggestion[] }) => void = () => {};
+    h.suggestPlaces.mockImplementation(() => new Promise((resolve) => { resolver = resolve; }));
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua a'); });
+    expect(result.current.status).toBe('typing');
+    await act(async () => { vi.advanceTimersByTime(300); });
+    expect(result.current.status).toBe('loading');
+    await act(async () => { resolver({ ok: true, suggestions: [suggestionA] }); });
+    expect(result.current.status).toBe('ok');
+    expect(result.current.error).toBeNull();
+  });
+
+  it('E25: `empty` só depois de resposta vazia de verdade — durante o debounce é `typing`', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [] });
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua sem nada'); });
+    // Antes, `suggestions.length === 0` já valia aqui: a tela dizia "Nada encontrado" antes de
+    // qualquer resposta chegar (C6).
+    expect(result.current.status).toBe('typing');
+    await act(async () => { vi.advanceTimersByTime(300); });
+    expect(result.current.status).toBe('empty');
+  });
+
+  it('E23: falha de rota é `error` (não `empty`) e o executável fica pronto para o retry', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'http' });
+    h.searchPlaces.mockResolvedValue({ ok: false, kind: 'http' });
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua a'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    expect(result.current.status).toBe('error');
+    expect(result.current.error).toBe('http');
+  });
+
+  it('E26: falha do /retrieve fica presa ao item escolhido, não vira erro da lista', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
+    h.retrievePlaceResult.mockResolvedValue({ ok: false, kind: 'network' });
+    h.searchPlaces.mockResolvedValue({ ok: false, kind: 'network' });
+
+    const { result, place } = await typeAndSelectFirst('rua a');
+
+    expect(place).toBeNull();
+    expect(result.current.status).toBe('ok');
+    expect(result.current.error).toBeNull();
+    expect(result.current.suggestions).toEqual([suggestionA]);
+    expect(result.current.retrieveError).toEqual({ id: 'a', kind: 'network' });
+  });
+
+  it('E27: pausado (429) mantém o aviso ao digitar de novo — e não dispara request', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'rate_limited' });
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua a'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    expect(h.suggestPlaces).toHaveBeenCalledTimes(1);
+
+    await act(async () => { result.current.retrySuggest(); });
+    expect(result.current.status).toBe('paused');
+    expect(result.current.blocked).toBe('rate_limited');
+
+    act(() => { result.current.setQuery('rua ab'); });
+    // E27: a tecla não transforma a pausa em "digitando" (esqueleto que nunca sai) nem em vazio.
+    expect(result.current.status).toBe('paused');
+    await act(async () => { vi.advanceTimersByTime(300); });
+    expect(h.suggestPlaces).toHaveBeenCalledTimes(1);
+  });
+
+  it('E28: apagar até menos de 3 caracteres limpa a lista, volta para `idle` e aborta a consulta em voo', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    expect(result.current.suggestions).toEqual([suggestionA]);
+
+    const abortSpy = vi.spyOn(AbortController.prototype, 'abort');
+    act(() => { result.current.setQuery('ru'); });
+
+    expect(result.current.suggestions).toEqual([]);
+    expect(result.current.status).toBe('idle');
+    expect(abortSpy).toHaveBeenCalled();
+    abortSpy.mockRestore();
   });
 });

@@ -13,6 +13,16 @@ interface AudioRecorderProps {
   onCancel: () => void;
 }
 
+// Alturas do waveform de gravacao. Antes eram sorteadas com `Math.random()` dentro do render
+// (regra react-hooks/purity): alem de impuro, o sorteio acontecia a cada re-render — e o timer da
+// gravacao re-renderiza a cada segundo — entao as barras trocavam de tamanho no meio da gravacao.
+// Os valores sao fixos por barra: o pulso (4 -> altura -> 4) continua, sem jitter e sem render impuro.
+const ALTURAS_WAVEFORM = [
+  8, 14, 22, 10, 26, 16, 6, 20, 12, 24,
+  18, 9, 15, 27, 11, 19, 7, 23, 13, 21,
+  17, 10, 25, 14, 8, 22, 16, 12, 20, 9,
+];
+
 export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -166,11 +176,11 @@ export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
             <div className="flex-1 flex items-center gap-2">
               {/* Waveform visualization */}
               <div className="h-8 flex-1 flex items-center gap-0.5">
-                {Array.from({ length: 30 }).map((_, i) => (
+                {Array.from({ length: ALTURAS_WAVEFORM.length }).map((_, i) => (
                   <motion.div
                     key={i}
                     animate={{
-                      height: [4, Math.random() * 24 + 4, 4],
+                      height: [4, ALTURAS_WAVEFORM[i], 4],
                     }}
                     transition={{
                       duration: 0.5,

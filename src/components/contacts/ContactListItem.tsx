@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
 import { HighlightText } from './HighlightText';
+import { canDeleteContact } from './contactPermissions';
 import type { ContactItemProps } from './types';
 
 export function ContactListItem({
@@ -157,10 +158,17 @@ export function ContactListItem({
             <DropdownMenuItem onClick={() => onEdit(contact)}>
               <Edit className="w-3.5 h-3.5 mr-2" />Editar
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive" onClick={() => onDelete(contact)}>
-              <Trash2 className="w-3.5 h-3.5 mr-2" />Excluir
-            </DropdownMenuItem>
+            {/* Item só aparece quando o usuário pode excluir ESTE contato (a permissão vem
+                do banco em `contact.can_delete`). Antes aparecia sempre e o erro só surgia
+                no clique -- débito do #1187. */}
+            {canDeleteContact(contact) && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive" onClick={() => onDelete(contact)}>
+                  <Trash2 className="w-3.5 h-3.5 mr-2" />Excluir
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

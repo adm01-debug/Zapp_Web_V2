@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
@@ -9,70 +9,73 @@ import { toast } from 'sonner';
 
 type CallbackStatus = 'loading' | 'success' | 'error';
 
+// PKCE flow returns error params in the query string, not the hash fragment
+function getUrlError(): string | null {
+  const p = new URLSearchParams(window.location.search);
+  return p.get('error_description') || p.get('error');
+}
+
 export default function SSOCallback() {
   const navigate = useNavigate();
-  const [status, setStatus] = useState<CallbackStatus>('loading');
-  const [errorMessage, setErrorMessage] = useState('');
+  const urlError = getUrlError();
+  const [status, setStatus] = useState<CallbackStatus>(urlError ? 'error' : 'loading');
+  const [errorMessage, setErrorMessage] = useState(urlError ?? '');
+  // ref tracks live status to avoid stale closure in the timeout callback
+  const statusRef = useRef<CallbackStatus>(urlError ? 'error' : 'loading');
 
   useEffect(() => {
-    const handleCallback = async () => {
-      try {
-        // Get the session from URL hash (for OAuth callbacks)
-        const { data, error } = await supabase.auth.getSession();
+    // If Google returned an error in the redirect URL, show it and stop
+    const errorParam = getUrlError();
+    if (errorParam) {
+      toast.error('Erro no login SSO');
+      return;
+    }
 
-        if (error) {
-          throw error;
-        }
-
-        if (data.session) {
-          setStatus('success');
-          toast.success('Login realizado com sucesso!');
-          
-          // Redirect after a brief delay
-          setTimeout(() => {
-            navigate('/');
-          }, 1500);
-        } else {
-          // Check for error in URL params
-          const hashParams = new URLSearchParams(window.location.hash.substring(1));
-          const errorParam = hashParams.get('error_description') || hashParams.get('error');
-          
-          if (errorParam) {
-            throw new Error(errorParam);
-          }
-          
-          // Wait for auth state change
-          const { data: authData } = supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' && session) {
-              setStatus('success');
-              toast.success('Login realizado com sucesso!');
-              setTimeout(() => navigate('/'), 1500);
-            } else if (event === 'SIGNED_OUT') {
-              setStatus('error');
-              setErrorMessage('Sessão não encontrada');
-            }
-          });
-
-          // Timeout fallback
-          setTimeout(() => {
-            if (status === 'loading') {
-              setStatus('error');
-              setErrorMessage('Tempo esgotado. Tente novamente.');
-            }
-          }, 10000);
-
-          return () => {
-            authData.subscription.unsubscribe();
-          };
-        }
-      } catch (err: unknown) {
+    // Subscribe to auth state changes — cleanup returned directly to React (not inside async fn)
+    const { data: authData } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        statusRef.current = 'success';
+        setStatus('success');
+        toast.success('Login realizado com sucesso!');
+        setTimeout(() => navigate('/'), 1500);
+      } else if (event === 'SIGNED_OUT') {
+        statusRef.current = 'error';
         setStatus('error');
-        setErrorMessage(err instanceof Error ? err.message : 'Erro durante autenticação');
+        setErrorMessage('Sessão não encontrada');
+      }
+    });
+
+    // Check if a session already exists (fast redirect case)
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (error) {
+        statusRef.current = 'error';
+        setStatus('error');
+        setErrorMessage(error.message);
+        toast.error('Erro no login SSO');
+        return;
+      }
+      if (data.session) {
+        statusRef.current = 'success';
+        setStatus('success');
+        toast.success('Login realizado com sucesso!');
+        setTimeout(() => navigate('/'), 1500);
+      }
+    });
+
+    // Timeout fallback — use ref to avoid stale closure on `status` state
+    const timer = setTimeout(() => {
+      if (statusRef.current === 'loading') {
+        statusRef.current = 'error';
+        setStatus('error');
+        setErrorMessage('Tempo esgotado. Tente novamente.');
         toast.error('Erro no login SSO');
       }
-    };
+    }, 10000);
 
-    handleCallback();
+    return () => {
+      clearTimeout(timer);
+      authData.subscription.unsubscribe();
+    };
   }, [navigate]);
 
   return (

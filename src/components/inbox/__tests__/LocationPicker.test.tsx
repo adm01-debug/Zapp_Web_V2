@@ -1,18 +1,21 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 
 const h = vi.hoisted(() => ({
   hook: vi.fn(),
   flag: vi.fn(),
   autocomplete: vi.fn(),
+  // F3/E26: o aviso da falha de `/retrieve` sai por toast — precisa ser observável no teste.
+  toast: vi.fn(),
 }));
 
 vi.mock('../location-picker/useLocationPicker', () => ({ useLocationPicker: (...args: unknown[]) => h.hook(...args) }));
-vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
+vi.mock('@/hooks/ui/use-toast', () => ({ toast: (...args: unknown[]) => h.toast(...args) }));
 vi.mock('@/hooks/system/useFeatureFlag', () => ({ useFeatureFlag: (...args: unknown[]) => h.flag(...args) }));
 vi.mock('../location-picker/useAddressAutocomplete', () => ({ useAddressAutocomplete: (...args: unknown[]) => h.autocomplete(...args) }));
 
 import { LocationPicker } from '../LocationPicker';
+import type { SearchStatus } from '../location-picker/useAddressAutocomplete';
 
 interface Selected { lat: number; lng: number; name?: string; address?: string }
 
@@ -40,7 +43,18 @@ function hookState(selectedLocation: Selected | null) {
 // Fase 3 (flag desligada é o caminho desses testes, então o hook nem chega a ser consultado
 // pela UI, mas precisa existir porque o componente sempre o chama, feature flag ligada ou não).
 function autocompleteState(overrides: Partial<ReturnType<typeof baseAutocomplete>> = {}) {
-  return { ...baseAutocomplete(), ...overrides };
+  const merged = { ...baseAutocomplete(), ...overrides };
+  // E23: a lista agora rende por `status`, não por `suggestions.length`. Nos testes de componente
+  // o status segue os dados do mock (a não ser que o teste peça um status explícito), reproduzindo
+  // o que o hook real faria com aquela combinação.
+  if (!overrides.status) {
+    if (overrides.blocked) merged.status = 'paused';
+    else if (overrides.error) merged.status = 'error';
+    else if (merged.suggestions.length > 0) merged.status = 'ok';
+    else if (merged.query.trim().length >= 3) merged.status = 'empty';
+    else merged.status = 'idle';
+  }
+  return merged;
 }
 function baseAutocomplete() {
   return {
@@ -57,6 +71,10 @@ function baseAutocomplete() {
     // F2/E13: retry real do botão "Tentar novamente" + bloqueio vigente (429 / teto de custo).
     retrySuggest: vi.fn(),
     blocked: null as 'rate_limited' | 'cost_guard' | null,
+    // F3/E23: estado explícito da busca + as duas informações novas que a lista usa.
+    status: 'idle' as SearchStatus,
+    pausedUntil: null as number | null,
+    retrieveError: null as { id: string; kind: string } | null,
   };
 }
 
@@ -256,6 +274,129 @@ describe('LocationPicker', () => {
 
       expect(ac.retrySuggest).toHaveBeenCalledTimes(1);
       expect(ac.setQuery).not.toHaveBeenCalled();
+    });
+
+    // ── Fase 3: estados verdadeiros na tela (E25, E26, E27, E29, E30, E31) ─────────────────────
+
+    it('E25: durante o debounce mostra esqueleto — "Nada encontrado" só depois de resposta vazia', async () => {
+      const ac = autocompleteState({ status: 'typing', query: 'avenida paulista' });
+      h.hook.mockReturnValue(hookState(null));
+      h.flag.mockReturnValue(true);
+      h.autocomplete.mockReturnValue(ac);
+      const view = render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
+      const mapTab = screen.getByRole('tab', { name: /Escolher no Mapa/ });
+      fireEvent.click(mapTab);
+      fireEvent.focus(mapTab);
+      const input = await screen.findByRole('combobox');
+      fireEvent.focusIn(input);
+
+      expect(screen.queryByText(/Nada encontrado/)).not.toBeInTheDocument();
+      expect(document.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0);
+
+      // A resposta vazia de verdade chega → agora sim "Nada encontrado".
+      ac.status = 'empty';
+      view.rerender(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
+
+      expect(screen.getByText(/Nada encontrado para/)).toBeInTheDocument();
+    });
+
+    it('E27: pausado mostra o aviso com contagem e lembra que o Enter continua — nunca "Nada encontrado"', async () => {
+      const ac = autocompleteState({
+        status: 'paused',
+        blocked: 'rate_limited',
+        pausedUntil: Date.now() + 45_000,
+        query: 'avenida paulista',
+      });
+      await renderOnMapTab(hookState(null), ac);
+
+      expect(screen.getByText(/Sugestões pausadas por \d+ s/)).toBeInTheDocument();
+      expect(screen.queryByText(/Nada encontrado/)).not.toBeInTheDocument();
+      expect(screen.queryByText('Tentar novamente')).not.toBeInTheDocument();
+    });
+
+    it('E24: a falha mostra a causa em texto, não um "Falha ao buscar sugestões" genérico', async () => {
+      const ac = autocompleteState({ status: 'error', error: 'rate_limited', query: 'avenida' });
+      await renderOnMapTab(hookState(null), ac);
+      expect(screen.getByText('Limite de buscas atingido — aguarde 1 min.')).toBeInTheDocument();
+    });
+
+    it('E26: falha do /retrieve mantém a lista aberta, mostra a causa no item e avisa uma vez', async () => {
+      const state = hookState(null);
+      const ac = autocompleteState({
+        status: 'ok',
+        query: 'xbz',
+        suggestions: [{ id: 'a', name: 'XBZ Brindes', address: 'R. da Independência, São Paulo', kind: 'poi' }],
+        retrieveError: { id: 'a', kind: 'network' },
+      });
+      ac.select.mockResolvedValue(null);
+      h.toast.mockClear();
+      await renderOnMapTab(state, ac);
+
+      fireEvent.click(screen.getByRole('option', { name: /XBZ/ }));
+
+      await waitFor(() => expect(ac.select).toHaveBeenCalledWith(0));
+      // A lista continua de pé e a escolha não foi aplicada…
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
+      expect(state.chooseSearchResult).not.toHaveBeenCalled();
+      // …mas o operador é avisado, com a causa (E24), uma vez.
+      expect(h.toast).toHaveBeenCalledTimes(1);
+      expect(screen.getByText('Sem conexão com o serviço de mapas.')).toBeInTheDocument();
+    });
+
+    it('E29: clique no mapa limpa o termo mesmo com a lista fechada', async () => {
+      const ac = autocompleteState({ query: 'avenida paulista' });
+      h.hook.mockReturnValue(hookState(null));
+      h.flag.mockReturnValue(true);
+      h.autocomplete.mockReturnValue(ac);
+      const view = render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
+      const mapTab = screen.getByRole('tab', { name: /Escolher no Mapa/ });
+      fireEvent.click(mapTab);
+      fireEvent.focus(mapTab);
+      const input = await screen.findByRole('combobox');
+      fireEvent.focusIn(input);
+      // Fecha a lista sem apagar o termo: é exatamente o estado em que o bug do M2 acontecia.
+      fireEvent.keyDown(input, { key: 'Escape' });
+      ac.clear.mockClear();
+
+      h.hook.mockReturnValue(hookState({ lat: -23.5, lng: -46.6 }));
+      view.rerender(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
+
+      expect(ac.clear).toHaveBeenCalled();
+    });
+
+    it('E30: sair do campo com Tab fecha a lista', async () => {
+      const ac = autocompleteState({
+        status: 'ok',
+        query: 'xbz',
+        suggestions: [{ id: 'a', name: 'XBZ Brindes', address: 'SP', kind: 'poi' }],
+      });
+      const input = await renderOnMapTab(hookState(null), ac);
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
+
+      // Foco real e Tab real: `input.focus()`/`input.blur()` do jsdom disparam `focusin`/`focusout`,
+      // que é como o navegador entrega o Tab — sem `relatedTarget` (o foco foi para fora da árvore).
+      act(() => input.focus());
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
+
+      act(() => input.blur());
+
+      await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument());
+      expect(input).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('E31: o destaque do trecho digitado aparece nas duas linhas, com negrito', async () => {
+      const ac = autocompleteState({
+        status: 'ok',
+        query: 'independencia',
+        suggestions: [{ id: 'a', name: 'XBZ Brindes', address: 'R. da Independência, São Paulo', kind: 'poi' }],
+      });
+      await renderOnMapTab(hookState(null), ac);
+
+      const marcas = document.querySelectorAll('mark');
+      // Uma no nome (nada casa) e uma no endereço — o termo sem acento casa "Independência".
+      expect(marcas.length).toBe(1);
+      expect(marcas[0].textContent).toBe('Independência');
+      expect(marcas[0].className).toContain('font-semibold');
     });
   });
 });

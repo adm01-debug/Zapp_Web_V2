@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 
 // Chainable query builder mock
-function createQueryBuilder(resolvedData: any = [], resolvedError: any = null) {
+export function createQueryBuilder(resolvedData: unknown = [], resolvedError: unknown = null) {
   const result = { data: resolvedData, error: resolvedError };
   
   const builder: any = {

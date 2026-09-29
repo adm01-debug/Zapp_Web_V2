@@ -108,7 +108,28 @@ Deno.test("pausa sem motivo (anterior à V03) e motivo desconhecido nunca retoma
   for (const decision of decisions) {
     assert(decision.resume === false, `${decision.id} não pode retomar sozinha (motivo: ${decision.pauseReason})`);
   }
-  assert(decisions[1].pauseReason === null, "motivo só com espaço é tratado como ausente");
+  assert(decisions[1].resume === false, "motivo só com espaço não pode autorizar retomada");
+});
+
+Deno.test("connection_lost sem whatsapp_connection_id conhecido NÃO retoma", () => {
+  // Cobertura nascida da auditoria de 2026-09-29: uma mutação que trocava a
+  // guarda por `if (campaign.whatsapp_connection_id && status !== "connected")`
+  // SOBREVIVIA à suíte (6/6 verdes), porque todos os casos usavam 'conn-1'.
+  // Sem saber QUAL conexão está de pé, retomar é chutar — então não retoma, e
+  // este teste passa a derrubar aquela mutação.
+  const rows: PausedCampaignRow[] = [
+    { id: "conexao-orfa", name: "Pausa por conexão sem id", pause_reason: "connection_lost", ...JANELA },
+  ];
+  const [semId] = selectResumableCampaigns(rows, () => null, DENTRO_DA_JANELA);
+  assert(semId.resume === false, "campanha sem connection_id não pode ser retomada automaticamente");
+  assert(semId.because.includes("conexão"), `motivo precisa citar a conexão: ${semId.because}`);
+
+  // O mesmo caso, mas com o id presente e a conexão respondendo 'connected'.
+  const comId: PausedCampaignRow[] = [
+    { id: "conexao-ok", name: "Pausa por conexão com id", pause_reason: "connection_lost", ...JANELA, whatsapp_connection_id: "conn-1" },
+  ];
+  const [ok] = selectResumableCampaigns(comId, () => "connected", DENTRO_DA_JANELA);
+  assert(ok.resume === true, "com a conexão identificada e de pé, retoma");
 });
 
 Deno.test("business_hours retoma só dentro do horário comercial", () => {

@@ -71,6 +71,12 @@ export interface UseAddressAutocompleteResult {
   retrySuggest: () => void;
   /** Por que a busca está pausada agora: `rate_limited` (429), `cost_guard` (teto do mês) ou `null`. */
   blocked: 'rate_limited' | 'cost_guard' | null;
+  /** E23: estado explícito da busca (`idle | typing | loading | ok | empty | error | paused`). */
+  status: SearchStatus;
+  /** E27: até quando a busca fica pausada (usado no aviso com contagem regressiva). */
+  pausedUntil: number | null;
+  /** E26: falha do `/retrieve` amarrada ao item que o operador escolheu. */
+  retrieveError: { id: string; kind: GeoFailureKind } | null;
 }
 
 interface State {
@@ -86,6 +92,10 @@ interface State {
   attempt: number;
   /** E13/E27: bloqueio vigente (429 ou guarda de custo), separado de "nenhum resultado". */
   blocked: 'rate_limited' | 'cost_guard' | null;
+  /** E23: estado explícito da busca — quem renderiza não infere nada por `suggestions.length`. */
+  status: SearchStatus;
+  /** E26: causa da falha do `/retrieve` amarrada ao item escolhido (não é erro da lista). */
+  retrieveError: { id: string; kind: GeoFailureKind } | null;
 }
 
 const initialState: State = {
@@ -98,6 +108,8 @@ const initialState: State = {
   rateLimitedUntil: null,
   attempt: 0,
   blocked: null,
+  status: 'idle',
+  retrieveError: null,
 };
 
 type Action =
@@ -109,18 +121,51 @@ type Action =
   | { type: 'RETRY' }
   | { type: 'RETRIEVE_START'; id: string }
   | { type: 'RETRIEVE_END' }
-  | { type: 'RETRIEVE_ERROR'; kind: GeoFailureKind }
+  | { type: 'RETRIEVE_ERROR'; id: string; kind: GeoFailureKind }
   | { type: 'HIGHLIGHT'; index: number }
   | { type: 'CLEAR' };
 
+/**
+ * E23: estado da busca como uma coisa só, em vez de "quem chama adivinha pela lista".
+ * `empty` só existe depois de uma resposta 200 sem resultado; `typing` é o debounce; `paused`
+ * é limite de uso (429 / teto do mês). Com isso a UI nunca mais escreve "Nada encontrado" em
+ * cima de uma falha ou de uma pausa (C6/E25).
+ */
+export type SearchStatus = 'idle' | 'typing' | 'loading' | 'ok' | 'empty' | 'error' | 'paused';
+
 function reducer(state: State, action: Action): State {
   switch (action.type) {
-    case 'SET_QUERY':
-      return { ...state, query: action.query, error: null };
+    case 'SET_QUERY': {
+      const belowMin = action.query.trim().length < MIN_QUERY_LENGTH;
+      return {
+        ...state,
+        query: action.query,
+        // E27 (item 2): enquanto a busca está pausada, digitar não apaga o aviso — é justamente
+        // ele que explica por que não há sugestões. Fora da pausa, a tecla nova limpa o erro.
+        error: state.blocked ? state.error : null,
+        retrieveError: null,
+        ...(belowMin
+          ? { suggestions: [], isLoading: false, highlightedIndex: -1 }
+          : {}),
+        // E27: pausado continua pausado enquanto o bloqueio vale — seja apagando o termo, seja
+        // digitando mais. Sem isso a tela cairia num esqueleto que nunca sai (a busca nem vai
+        // disparar) ou num "Nada encontrado" que não é verdade.
+        status: state.blocked ? ('paused' as const) : belowMin ? ('idle' as const) : ('typing' as const),
+      };
+    }
     case 'SUGGEST_START':
-      return { ...state, isLoading: true, error: null, blocked: null };
+      return { ...state, isLoading: true, error: null, blocked: null, status: 'loading' };
     case 'SUGGEST_SUCCESS':
-      return { ...state, isLoading: false, error: null, blocked: null, suggestions: action.suggestions, highlightedIndex: -1 };
+      return {
+        ...state,
+        isLoading: false,
+        error: null,
+        blocked: null,
+        suggestions: action.suggestions,
+        highlightedIndex: -1,
+        // E23/E25: lista vazia vinda de resposta boa é `empty`; com itens é `ok`.
+        status: action.suggestions.length > 0 ? 'ok' : 'empty',
+      };
     case 'SUGGEST_ERROR':
       return {
         ...state,
@@ -128,6 +173,7 @@ function reducer(state: State, action: Action): State {
         error: action.kind,
         suggestions: [],
         blocked: null,
+        status: 'error',
         rateLimitedUntil: action.rateLimitedUntil ?? null,
       };
     case 'SUGGEST_BLOCKED':
@@ -137,19 +183,22 @@ function reducer(state: State, action: Action): State {
         error: null,
         suggestions: [],
         blocked: action.reason,
+        status: 'paused',
         rateLimitedUntil: action.rateLimitedUntil ?? state.rateLimitedUntil,
       };
     case 'RETRY':
-      return { ...state, attempt: state.attempt + 1, error: null };
+      return { ...state, attempt: state.attempt + 1, error: null, retrieveError: null };
     case 'RETRIEVE_START':
       // Falha de retrieve não fecha a lista: só o item some do estado de carregamento
       // (RETRIEVE_END), as sugestões continuam de pé.
-      return { ...state, retrievingId: action.id, error: null };
+      return { ...state, retrievingId: action.id, retrieveError: null };
     case 'RETRIEVE_END':
       return { ...state, retrievingId: null };
     case 'RETRIEVE_ERROR':
-      // Falha do /retrieve nunca fecha a lista — só marca a causa; as sugestões continuam de pé.
-      return { ...state, retrievingId: null, error: action.kind };
+      // E26: a falha do `/retrieve` fica presa ao ITEM que o operador escolheu (antes ela virava
+      // o erro da lista inteira, e o aviso "Falha ao buscar sugestões" aparecia em cima de uma
+      // lista que estava certa) e não fecha a lista.
+      return { ...state, retrievingId: null, retrieveError: { id: action.id, kind: action.kind } };
     case 'HIGHLIGHT':
       return { ...state, highlightedIndex: action.index };
     case 'CLEAR':
@@ -261,6 +310,9 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
   useEffect(() => () => abortRef.current?.abort(), []);
 
   const setQuery = useCallback((query: string) => {
+    // E28: apagar até menos de 3 caracteres também mata a consulta em voo — sem isso, a resposta
+    // do termo antigo chegava depois e repovoava a lista sobre um campo que já está vazio.
+    if (query.trim().length < MIN_QUERY_LENGTH) abortRef.current?.abort();
     dispatch({ type: 'SET_QUERY', query });
   }, []);
 
@@ -313,7 +365,7 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     // E17/E51: telemetria só na dupla falha — e `not_found`/`aborted` não são falha de rota.
     const reported = MAPBOX_FAILURE_KIND[result.kind];
     if (reported) reportMapboxFailure(reported, 'retrieve');
-    dispatch({ type: 'RETRIEVE_ERROR', kind: result.kind });
+    dispatch({ type: 'RETRIEVE_ERROR', id: suggestion.id, kind: result.kind });
     return null;
   }, [state.suggestions, token, sessionSource, proximity]);
 
@@ -393,5 +445,8 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     clear,
     retrySuggest,
     blocked: state.blocked,
+    status: state.status,
+    pausedUntil: state.rateLimitedUntil,
+    retrieveError: state.retrieveError,
   };
 }

@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { WhatsAppStatusSection } from '../WhatsAppStatusSection';
 
+const TELEFONE = '+5511999999999';
+
 // Mock useWhatsAppStatus
 const mockRefresh = vi.fn();
 let mockData = {
@@ -250,8 +252,33 @@ describe('WhatsAppStatusSection', () => {
       message: { conversation: `Status ${i}` },
       messageTimestamp: Math.floor(Date.now() / 1000) - i * 60,
     }));
-    render(<WhatsAppStatusSection phone="+5511999999999" />);
+    render(<WhatsAppStatusSection phone={TELEFONE} />);
     // Badge shows "50" not "50 status"
     expect(screen.getByText('50')).toBeInTheDocument();
+  });
+
+  // ========== REABRIR O VISUALIZADOR ==========
+  // O reset do indice ao abrir era `setState` em effect (dívida de react-hooks/set-state-in-effect);
+  // agora vem do `key` que o pai troca a cada abertura — este teste cobre a integracao de verdade.
+  it('reabrir o visualizador volta ao primeiro status', () => {
+    mockData.statusMessages = [
+      { key: { id: 're1' }, message: { conversation: 'Primeiro' }, messageTimestamp: Math.floor(Date.now() / 1000) },
+      { key: { id: 're2' }, message: { conversation: 'Segundo' }, messageTimestamp: Math.floor(Date.now() / 1000) },
+      { key: { id: 're3' }, message: { conversation: 'Terceiro' }, messageTimestamp: Math.floor(Date.now() / 1000) },
+    ];
+    render(<WhatsAppStatusSection phone={TELEFONE} />);
+
+    fireEvent.click(screen.getByText('Ver Status'));
+    expect(screen.getByText('1/3')).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(screen.getByText('2/3')).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByText('2/3')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Ver Status'));
+    expect(screen.queryByText('2/3')).not.toBeInTheDocument();
+    expect(screen.getAllByText('1/3').length).toBeGreaterThan(0);
   });
 });

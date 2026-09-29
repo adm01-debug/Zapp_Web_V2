@@ -1,14 +1,17 @@
 {
     "note": "Regenerar apos qualquer GRANT/REVOKE e revisar o diff antes de commitar.",
     "anon_execute": [
+        "audit_contact_address_change()",
         "calculate_level(xp_amount bigint)",
         "conversation_closure_day(p_created_at timestamp with time zone)",
         "conversation_task_set_assignee()",
         "conversation_task_state_trigger()",
-        "current_profile_id()",
-        "grant_agent_achievement(p_profile_id uuid, p_type text, p_name text, p_description text, p_xp_reward integer)"
+        "enforce_multiplix_dispatch_mutability()",
+        "enforce_multiplix_recipient_mutability()",
+        "grant_agent_achievement(p_profile_id uuid, p_type text, p_name text, p_description text, p_xp_reward integer)",
+        "team_receipts_fill_conversation_id()"
     ],
-    "generated_at": "2026-09-28",
+    "generated_at": "2026-09-29",
     "anon_table_select": [
         "agent_achievements",
         "agent_presence",
@@ -32,8 +35,6 @@
         "campaign_ab_variants",
         "campaign_contacts",
         "campaigns",
-        "catalog_favorites",
-        "catalog_send_events",
         "channel_connections",
         "channel_connections_safe",
         "channel_routing_rules",
@@ -44,7 +45,6 @@
         "contact_custom_fields",
         "contact_identity_map",
         "contact_purchases",
-        "contacts",
         "conversation_analyses",
         "conversation_closures",
         "conversation_events",
@@ -57,9 +57,6 @@
         "csat_surveys",
         "custom_emojis",
         "deal_activities",
-        "department_audit_logs",
-        "department_invitations",
-        "department_invites",
         "email_attachments",
         "email_labels",
         "email_messages",
@@ -84,9 +81,6 @@
         "messages",
         "meta_capi_events",
         "mfa_sessions",
-        "multiplix_blocks",
-        "multiplix_dispatches",
-        "multiplix_recipients",
         "notifications",
         "nps_surveys",
         "number_reputation",
@@ -130,11 +124,6 @@
         "talkx_segments",
         "talkx_settings",
         "talkx_templates",
-        "team_conversation_members",
-        "team_conversations",
-        "team_message_reactions",
-        "team_message_receipts",
-        "team_messages",
         "training_sessions",
         "user_devices",
         "user_roles",
@@ -156,6 +145,6 @@
         "whisper_messages"
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 179,
-    "authenticated_execute_count": 116
+    "service_role_execute_count": 208,
+    "authenticated_execute_count": 140
 }

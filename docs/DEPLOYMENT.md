@@ -6,7 +6,7 @@ Este documento descreve o processo de deploy e configuração do ZAPP-WEB.
 
 - [Ambientes](#ambientes)
 - [Pré-requisitos](#pré-requisitos)
-- [Deploy Automático (Lovable)](#deploy-automático-lovable)
+- [Deploy Automático (Vercel)](#deploy-automático-vercel)
 - [Deploy Manual](#deploy-manual)
 - [Configuração do Supabase](#configuração-do-supabase)
 - [Edge Functions](#edge-functions)
@@ -21,7 +21,7 @@ Este documento descreve o processo de deploy e configuração do ZAPP-WEB.
 
 | Ambiente | URL | Branch |
 |----------|-----|--------|
-| **Produção** | pronto-talk-suite.lovable.app | `main` |
+| **Produção (canônica)** | https://zapp-web-v2.vercel.app | `main` |
 | **Staging** | (interno) | `develop` |
 | **Local** | localhost:5173 | qualquer |
 
@@ -38,14 +38,14 @@ Este documento descreve o processo de deploy e configuração do ZAPP-WEB.
 ### Acessos necessários
 - GitHub (repo privado)
 - Supabase Dashboard
-- Lovable Dashboard
+- Vercel Dashboard
 - Evolution API (WhatsApp)
 
 ---
 
-## Deploy Automático (Lovable)
+## Deploy Automático (Vercel)
 
-O deploy é **automático** via Lovable:
+O deploy é **automático** via Vercel (projeto `zapp_web_v2`):
 
 1. **Commit na main** → Rebuild automático
 2. **Edge Functions** → Deployadas automaticamente
@@ -209,25 +209,25 @@ GMAIL_CLIENT_SECRET=xxx
 
 ## Domínio Customizado
 
-### Via Lovable
-1. Dashboard > Settings > Domains
+### Via Vercel
+1. Dashboard do team `juca1` > projeto `zapp_web_v2` > Settings > Domains
 2. Adicionar domínio customizado
 3. Configurar DNS (CNAME ou A record)
 4. Aguardar propagação e SSL
 
 ### DNS Records
 ```
-CNAME: app.seudominio.com.br → pronto-talk-suite.lovable.app
+CNAME: app.seudominio.com.br → cname.vercel-dns.com
 ```
 
 ---
 
 ## Rollback
 
-### Via Lovable
-1. Dashboard > Deployments
-2. Selecionar deploy anterior
-3. Clicar em "Rollback"
+### Via Vercel
+1. Dashboard do team `juca1` > projeto `zapp_web_v2` > Deployments
+2. Selecionar o último deploy de produção saudável
+3. Menu `⋯` > **Instant Rollback**
 
 ### Via Git
 ```bash

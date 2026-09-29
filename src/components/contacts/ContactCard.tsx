@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
 import { HighlightText } from './HighlightText';
+import { canDeleteContact } from './contactPermissions';
 import type { ContactItemProps } from './types';
 
 export function ContactCard({
@@ -76,10 +77,16 @@ export function ContactCard({
             <DropdownMenuItem onClick={() => onEdit(contact)}>
               <Pencil className="w-3.5 h-3.5 mr-2" />Editar
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive" onClick={() => onDelete(contact)}>
-              <Trash2 className="w-3.5 h-3.5 mr-2" />Excluir
-            </DropdownMenuItem>
+            {/* Mesmo gate do ContactListItem: o item só aparece quando o banco confirma
+                que o usuário pode excluir este contato (`contact.can_delete`). */}
+            {canDeleteContact(contact) && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive" onClick={() => onDelete(contact)}>
+                  <Trash2 className="w-3.5 h-3.5 mr-2" />Excluir
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

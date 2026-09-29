@@ -1,3 +1,4 @@
+import { requireAiIdentity } from "../_shared/ai-auth.ts";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
@@ -84,6 +85,10 @@ function sanitizeResult(raw: Record<string, unknown>): Record<string, unknown> {
 Deno.serve(async (req) => {
   const cors = handleCors(req);
   if (cors) return cors;
+
+  // IA-011: identidade de usuário verificada + cota antes de gastar provedor.
+  const identity = await requireAiIdentity(req, "voice-agent");
+  if (identity instanceof Response) return identity;
 
   const log = new Logger("voice-agent");
 

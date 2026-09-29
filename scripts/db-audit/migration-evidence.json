@@ -455,11 +455,11 @@
       "file_sql_sha256": "e65ff795bf5ae194438473866a867b88000ea4845a4fe02322d4f0d2d363e0de",
       "ledger_name": "contact_notes_category_done_due",
       "ledger_statements_sha256": "1555edad3399e5f19f0fe6597f9b88d49ca007bd38010ab05013cfac71e8b7f7",
-      "ledger_sql_sha256": "b25588cd1628b1e472d0e269e5bc3fbe6bd666e04a999e03450f3af8619de75c",
+      "ledger_sql_sha256": "b25588cd1628b1e472d0e269e5bc3fbe6bd666e00f591eb8169bb3404c349b05",
       "kind": "ledger-divergence/pinned-replay",
       "reason": "safer-replay",
       "related_migration": null,
-      "justification": "Migration aplicada via MCP em 2026-09-07 com SQL sem DROP CONSTRAINT; arquivo criado retroativamente com SQL idempotente adicional (DROP CONSTRAINT IF EXISTS antes do ADD). Hashes do arquivo e do ledger fixados independentemente."
+      "justification": "Migration aplicada via MCP em 2026-09-07 com SQL sem DROP CONSTRAINT; arquivo criado retroativamente com SQL idempotente adicional (DROP CONSTRAINT IF EXISTS antes do ADD). Hashes do arquivo e do ledger fixados independentemente. ledger_sql_sha256 re-fixado em 2026-09-29: os statements do ledger nao mudaram (ledger_statements_sha256 segue identico ao pin original) — mudou apenas a forma canonica derivada pelo guard, entao o conteudo historico permanece o mesmo."
     },
     {
       "version": "20260909150000",

@@ -67,6 +67,29 @@ export class ContactService {
     };
   }
 
+  /**
+   * Para os ids de uma página da lista, quem o usuário PODE excluir (mesmo
+   * predicado do banco: `can_edit_contact`, ver 20260929770000).
+   *
+   * Existe para a UI não oferecer "Excluir" em contato fora do alcance do
+   * usuário -- antes o item aparecia sempre e o erro só surgia no clique
+   * (débito levantado no PR #1187).
+   */
+  static async getDeletableContacts(
+    contactIds: string[],
+  ): Promise<{ data: { contact_id: string; can_delete: boolean }[] | null; error: unknown }> {
+    if (!contactIds.length) return { data: [], error: null };
+
+    const { data, error } = await supabase.rpc('can_delete_contacts', {
+      p_ids: contactIds,
+    });
+
+    return {
+      data: (data ?? null) as { contact_id: string; can_delete: boolean }[] | null,
+      error,
+    };
+  }
+
   static async fetchNotes(contactId: string) {
     const { data, error } = await supabase
       .from('contact_notes')
