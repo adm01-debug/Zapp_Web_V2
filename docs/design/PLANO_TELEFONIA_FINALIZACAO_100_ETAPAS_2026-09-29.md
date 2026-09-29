@@ -204,7 +204,7 @@
 | Fase | Etapas | Tipo | Gate | PR | Merge/apply |
 |---|---|---|---|---|---|
 | 0 | T01–T08 | docs + script + DML (T03) | CI verde; T03 com `RETURNING` | **#1181** | merge pelo `hermes-tarefa-mergear` (sem DDL pendente) |
-| 1 | T09–T22 | motor (toca `AppProviders`, Edge) | **Aguarda Joaquim** | — | — |
+| 1 | T09–T22 | motor (toca `AppProviders`, Edge) | **Aguarda Joaquim** | **#1193** (T09 + T14; T10–T22 pendentes) | não mergear com a fase pela metade |
 | 2 | T23–T32 | canais + webhook + inbox | **Aguarda Joaquim** (Edge) | — | — |
 | 3 | T33–T42 | shell/header/KPIs | CI verde | — | — |
 | 4 | T43–T54 | histórico | CI verde | — | — |
