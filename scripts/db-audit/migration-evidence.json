@@ -729,6 +729,19 @@
       "reason": "ledger-summary",
       "related_migration": null,
       "justification": "O arquivo em main e uma versao resumida ou anterior ao SQL efetivamente aplicado em producao por sessoes paralelas. O banco ja tem o SQL correto do ledger; nenhum DDL adicional necessario."
+    },
+    {
+      "version": "20260929370000",
+      "filename": "20260929370000_contacts_soft_delete_and_search_filters.sql",
+      "file_sha256": "1ca3e6799503259a51612da9d06d761313e35acb2d5aa11160b583544287cef8",
+      "file_sql_sha256": "6da4f311b07de4f26fcea832200e8794ae338e0d7fd58e97efdd9c837680df13",
+      "ledger_name": "contacts_soft_delete_and_search_filters",
+      "ledger_statements_sha256": "9f2ebf5ba36d53928efbb5c093b352ae7cff09ca22d739720f3da21b3ce33a98",
+      "ledger_sql_sha256": "a9fd6ff288841742083d6461f790e695f7176ca6a236b8d41ae414c9866c3434",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "Migration aplicada no banco com o SQL corrigido (search_contacts com as 23 colunas de retorno) depois de o gateway recusar 42P13 na primeira tentativa; o arquivo no repo preserva o replay anterior, de 20 colunas, porque migration ja aplicada e imutavel (guarda do db-guard). O conteudo correto e o do ledger; o replay fica fixado por hash proprio."
     }
   ]
 }
