@@ -238,8 +238,8 @@
     },
     {
       "path": "supabase/functions/bitrix-api/index.ts",
-      "bytes": 9798,
-      "sha256": "0529fc14f6ab29d5aaf0ba1ac1c08d2727bff8d69d6fe799f8fcafb718f51696"
+      "bytes": 9799,
+      "sha256": "7f699943d5e2155e0deff5f93499e801ec6b16614e38d7d36ac235943f0b39dc"
     },
     {
       "path": "supabase/functions/chatbot-l1/index.ts",
@@ -687,7 +687,7 @@
       "name": "bitrix-api",
       "entrypoint": "supabase/functions/bitrix-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "22a45ff2c5751ff99ed963097f93ed0de8d4632267be9aac10d7c9101c75f986",
+      "source_sha256": "b69574127547c23c46b842e76733543684b787e38238a98dcfde2da4ebef6eb5",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1365,5 +1365,5 @@
       ]
     }
   ],
-  "manifest_sha256": "37125a3138c64d05ae5ba041a653ef84fb143c2e63f408fcccd0de43536f954d"
+  "manifest_sha256": "1144e108f23c74ef8496e7f3beb3a48a4907a8f37e6a1e093d6c969e47c15f86"
 }

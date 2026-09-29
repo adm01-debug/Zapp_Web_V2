@@ -1,10 +1,15 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 import { calculateEngagement } from '../ContactEngagementScore';
 
-// ─── Parâmetros de tempo fixos para testes determinísticos ───
+// ─── Relógio congelado ──────────────────────────────────────────────────────
+// O fixture calculava as datas com `Date.now()` e o componente chamava `Date.now()`
+// de novo: duas leituras, dois instantes. Em `daysAgo(1)` a diferença de 1 ms cruza a
+// fronteira do balde de recência (<=1 dia vale 40, acima vale 30) e o teste falhava
+// de forma intermitente. Com o relógio fixo, as duas leituras são o mesmo instante.
+const AGORA = new Date('2026-09-29T12:00:00.000Z');
 const daysAgo = (n: number) =>
-  new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString();
+  new Date(AGORA.getTime() - n * 24 * 60 * 60 * 1000).toISOString();
 
 // Combinações de parâmetros verificadas:
 //   hot:    200 msgs, hoje, 30d atrás → freq=40 + recency=40 + vol=20 = 100
@@ -13,6 +18,15 @@ const daysAgo = (n: number) =>
 //   frozen:   0 msgs, sem msg, 365d   → 0 + 0 + 0 = 0
 
 describe('calculateEngagement', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(AGORA);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   // ========== NÍVEIS ==========
 
   it('retorna level=hot quando recência + frequência + volume >= 70', () => {
