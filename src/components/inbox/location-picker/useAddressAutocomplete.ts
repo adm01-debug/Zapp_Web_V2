@@ -217,7 +217,7 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
         const forward = await searchPlaces(term, token, controller.signal, proximity);
         if (controller.signal.aborted) return;
         if (forward.ok && forward.places.length > 0) {
-          dispatch({ type: 'SUGGEST_SUCCESS', suggestions: forward.places.map(toForwardSuggestion) });
+          dispatch({ type: 'SUGGEST_SUCCESS', suggestions: forward.places.map((place, index) => toForwardSuggestion(place, index)) });
           return;
         }
       }

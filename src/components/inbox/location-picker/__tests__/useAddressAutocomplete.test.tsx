@@ -44,6 +44,11 @@ import { useAddressAutocomplete } from '../useAddressAutocomplete';
 const suggestionA: GeoSuggestion = { id: 'a', name: 'Rua A', address: 'Rua A, São Paulo', kind: 'street' };
 const suggestionB: GeoSuggestion = { id: 'b', name: 'Rua B', address: 'Rua B, São Paulo', kind: 'street' };
 const suggestionC: GeoSuggestion = { id: 'c', name: 'Rua C', address: 'Rua C, São Paulo', kind: 'street' };
+// Coordenadas que o `/forward` devolveria nos casos de cascata (F2/E15/E16/E17).
+const forwardPaulista: GeoSearchPlace = { name: 'Avenida Paulista', address: 'Av. Paulista, 1000 - Bela Vista, São Paulo', lat: -23.5613, lng: -46.6565 };
+const forwardA: GeoSearchPlace = { name: 'Rua A', address: 'Rua A, 1, São Paulo', lat: -23.5, lng: -46.6 };
+const forwardB: GeoSearchPlace = { name: 'Rua B', address: 'Rua B, 200, São Paulo', lat: -23.5, lng: -46.6 };
+const forwardC: GeoSearchPlace = { name: 'Rua C', address: 'Rua C, 3', lat: -23.5, lng: -46.6 };
 
 type KeyDownEvent = Parameters<ReturnType<typeof useAddressAutocomplete>['onKeyDown']>[0];
 
@@ -73,6 +78,17 @@ describe('useAddressAutocomplete', () => {
 
   const setup = (overrides?: Partial<Parameters<typeof useAddressAutocomplete>[0]>) =>
     renderHook(() => useAddressAutocomplete({ token: 'tok', enabled: true, ...overrides }));
+
+  // F2: digita o termo, deixa o debounce correr e seleciona o 1º item — o fluxo que todos os
+  // casos de cascata repetem (digitar → esperar → selecionar) fica num lugar só.
+  async function typeAndSelectFirst(term: string) {
+    const { result } = setup();
+    act(() => { result.current.setQuery(term); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    const places: Array<GeoSearchPlace | null> = [];
+    await act(async () => { places.push(await result.current.select(0)); });
+    return { result, place: places[0] ?? null };
+  }
 
   it('não faz nenhuma chamada enquanto enabled=false', async () => {
     const { result } = setup({ enabled: false });
@@ -288,10 +304,7 @@ describe('useAddressAutocomplete', () => {
 
   it('E15: /suggest cai por rota (http) — o /forward assume e as sugestões já vêm com coordenada', async () => {
     h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'http' });
-    h.searchPlaces.mockResolvedValue({
-      ok: true,
-      places: [{ name: 'Avenida Paulista', address: 'Av. Paulista, 1000 - Bela Vista, São Paulo', lat: -23.5613, lng: -46.6565 }],
-    });
+    h.searchPlaces.mockResolvedValue({ ok: true, places: [forwardPaulista] });
     const { result } = setup();
     act(() => { result.current.setQuery('avenida paulista'); });
     await act(async () => { vi.advanceTimersByTime(300); });
@@ -311,19 +324,12 @@ describe('useAddressAutocomplete', () => {
 
   it('E15: selecionar sugestão do /forward não chama /retrieve — a coordenada já veio junto', async () => {
     h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'timeout' });
-    h.searchPlaces.mockResolvedValue({
-      ok: true,
-      places: [{ name: 'Rua B', address: 'Rua B, 200, São Paulo', lat: -23.5, lng: -46.6 }],
-    });
-    const { result } = setup();
-    act(() => { result.current.setQuery('rua b'); });
-    await act(async () => { vi.advanceTimersByTime(300); });
+    h.searchPlaces.mockResolvedValue({ ok: true, places: [forwardB] });
 
-    let place: GeoSearchPlace | null = null;
-    await act(async () => { place = await result.current.select(0); });
+    const { place } = await typeAndSelectFirst('rua b');
 
     expect(h.retrievePlaceResult).not.toHaveBeenCalled();
-    expect(place).toEqual({ name: 'Rua B', address: 'Rua B, 200, São Paulo', lat: -23.5, lng: -46.6 });
+    expect(place).toEqual(forwardB);
     // Sessão fechada de todo jeito — sessão fantasma é o defeito que o E46 fechou.
     expect(h.endSearchSession).toHaveBeenCalled();
   });
@@ -331,30 +337,20 @@ describe('useAddressAutocomplete', () => {
   it('E16: /retrieve sem coordenada — repete a busca com o texto da sugestão no /forward', async () => {
     h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
     h.retrievePlaceResult.mockResolvedValue({ ok: false, kind: 'not_found' });
-    h.searchPlaces.mockResolvedValue({
-      ok: true,
-      places: [{ name: 'Rua A', address: 'Rua A, 1, São Paulo', lat: -23.5, lng: -46.6 }],
-    });
-    const { result } = setup();
-    act(() => { result.current.setQuery('rua a'); });
-    await act(async () => { vi.advanceTimersByTime(300); });
+    h.searchPlaces.mockResolvedValue({ ok: true, places: [forwardA] });
 
-    let place: GeoSearchPlace | null = null;
-    await act(async () => { place = await result.current.select(0); });
+    const { result, place } = await typeAndSelectFirst('rua a');
 
     // O termo do fallback é o nome + endereço da própria sugestão — o corte de relevância do
     // /forward é aplicado dentro de searchPlaces (MIN_V5_RELEVANCE).
     expect(h.searchPlaces).toHaveBeenCalledWith('Rua A Rua A, São Paulo', 'tok', undefined, undefined);
-    expect(place).toEqual({ name: 'Rua A', address: 'Rua A, 1, São Paulo', lat: -23.5, lng: -46.6 });
+    expect(place).toEqual(forwardA);
     expect(result.current.error).toBeNull();
   });
 
   it('E17: telemetria só quando as DUAS rotas falham na mesma busca', async () => {
     h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'http' });
-    h.searchPlaces.mockResolvedValue({
-      ok: true,
-      places: [{ name: 'Rua C', address: 'Rua C, 3', lat: -23.5, lng: -46.6 }],
-    });
+    h.searchPlaces.mockResolvedValue({ ok: true, places: [forwardC] });
     const { result } = setup();
     act(() => { result.current.setQuery('rua c'); });
     await act(async () => { vi.advanceTimersByTime(300); });
