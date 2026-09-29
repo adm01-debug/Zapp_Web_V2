@@ -12,13 +12,18 @@ import { TasksAgendaMode }  from './agenda/TasksAgendaMode';
 
 interface Props {
   defaultMode?: TaskMode;
+  /** B7 (etapa 47): a rota `?view=pipeline` manda o Quadro e ignora o modo salvo. */
+  forceMode?: boolean;
 }
 
 const STORAGE_KEY = 'tasks-mode';
 
-export function TasksModule({ defaultMode = 'list' }: Props) {
+export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) {
   const savedMode = (typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_KEY) as TaskMode) || defaultMode;
-  const [mode, setModeState] = useState<TaskMode>(savedMode);
+  // B7 (etapa 47): com `forceMode` o modo da rota (`?view=pipeline`) vence o
+  // modo salvo. A gravacao continua so em `setMode`, que e o trocar de modo
+  // pelo usuario — visitar a rota nao reescreve a preferencia dele.
+  const [mode, setModeState] = useState<TaskMode>(forceMode ? defaultMode : savedMode);
   const [search, setSearch]  = useState('');
   const [selectedItem, setSelectedItem] = useState<WorkItem | null>(null);
   const quickAddRef = useRef<HTMLInputElement>(null);
