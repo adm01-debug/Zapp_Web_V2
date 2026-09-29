@@ -122,6 +122,8 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 **Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · `build` ✓ · bundle 315,5/340 KB inicial e 492,3/550 KB gzip ✓ · `db:guard` ✓ · suíte 4260 passed / 0 failed (311 arquivos, 40 todo) ✓
 
+**Entrega:** PR #1230 mergeada em `1b23980d358aac2525c960168664ce43a9346d0b` (squash; commits de fix/test/docs) · deploy de produção: success · prova em produção: dos 376 chunks servidos por `zapp-web-v2.vercel.app`, exatamente 2 trazem `forceMode` — o do roteador (`{pipeline:{defaultMode:"board",forceMode:!0}}`) e o do módulo (`{defaultMode:e="list",forceMode:t=!1}`) — trechos idênticos ao build local.
+
 **Achado fora do escopo (não corrigido):** `src/components/inbox/tabs/Crm360Tab.tsx:120/167/245` manda "Ver funil →" / "Ver pipeline →" para `navigateToView('pipeline')`; depois desta etapa esses botões abrem o Quadro de TAREFAS (antes caíam na mesma tela no modo salvo). Rótulo e destino são decisão de produto.
 
 ## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
