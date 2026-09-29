@@ -70,9 +70,18 @@ test('Talk X scheduler resume reuses deliveryWindowStatus (fails closed, respect
   // existir. O que ela protege é o mesmo: a janela não pode ser reimplementada
   // em elo nenhum (a política decide por deliveryWindowStatus, não por conta
   // própria, e nenhum dos dois elos calcula hora local à mão).
-  assert.match(scheduler, /import \{ AUTO_RESUME_REASONS, selectResumableCampaigns \} from "\.\.\/_shared\/talkx-resume-policy\.ts"/);
+  assert.match(scheduler, /import \{ AUTO_RESUME_REASONS, connectionStatusResolver, selectResumableCampaigns \} from "\.\.\/_shared\/talkx-resume-policy\.ts"/);
   assert.match(scheduler, /schedule_timezone, send_window_start/);
   assert.match(scheduler, /selectResumableCampaigns\(/);
+  // V03.2: a fiação do status da conexão NÃO pode voltar a morar inline no
+  // scheduler. Foi exatamente ali que a mutação "campanha sem id vira
+  // connected" escapou de todas as camadas de teste (auditoria de 2026-09-29).
+  // Agora ela vem de connectionStatusResolver — que tem teste na política — e a
+  // consulta ao mapa não pode reaparecer no scheduler.
+  assert.match(scheduler, /connectionStatusResolver\(connectionStatusById\)/);
+  assert.doesNotMatch(scheduler, /connectionStatusById\.get\(/);
+  assert.match(resumePolicy, /export function connectionStatusResolver\(/);
+  assert.match(resumePolicy, /if \(typeof connectionId !== "string"\) return null;/);
   assert.match(resumePolicy, /import \{ deliveryWindowStatus, type ScheduleGuardCampaign \} from "\.\/talkx-window\.ts"/);
   assert.match(resumePolicy, /deliveryWindowStatus\(campaign, now\)\.allowed/);
   assert.doesNotMatch(resumePolicy, /nowBR|hmBR|isWithinSendWindow|Intl\.DateTimeFormat/);
