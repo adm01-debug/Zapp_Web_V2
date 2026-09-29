@@ -249,23 +249,21 @@ export function useDeleteConversation() {
   });
 }
 
-export function useTransferConversation() {
+export function useTransferDepartment() {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ conversationId, newOwnerId }: { conversationId: string; newOwnerId: string }) => {
-      const { error } = await supabase.rpc('set_team_member_role', {
+    mutationFn: async ({ conversationId, toDepartmentId }: { conversationId: string; toDepartmentId: string }) => {
+      const { error } = await supabase.rpc('transfer_team_conversation_department', {
         p_conversation_id: conversationId,
-        p_profile_id: newOwnerId,
-        p_new_role: 'owner',
+        p_to_department_id: toDepartmentId,
       });
       if (error) throw error;
     },
-    onSuccess: (_, vars) => {
-      void queryClient.invalidateQueries({ queryKey: TEAM_KEYS.members(vars.conversationId) });
+    onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: TEAM_KEYS.inbox(profile?.id) });
-      toast.success('Propriedade transferida com sucesso');
+      toast.success('Canal transferido com sucesso');
     },
-    onError: () => { toast.error('Erro ao transferir propriedade'); },
+    onError: () => { toast.error('Erro ao transferir canal'); },
   });
 }
