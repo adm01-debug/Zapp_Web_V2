@@ -291,6 +291,16 @@ jobs:
           TALKX_TRANSITION_POSTGREST_IMAGE: public.ecr.aws/supabase/postgrest:v14.5
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-transition-overload-postgrest.test.sh
 
+      # V11: o contrato de eventos recusava os tipos que o servidor e a trilha
+      # de supressão precisam gravar, e campaign_id era NOT NULL (evento de
+      # entidade não tinha como existir). O fixture espelha a definição viva,
+      # inclusive as policies — que tiveram de ser recriadas, porque o EXISTS em
+      # talkx_campaigns nunca é verdadeiro com campaign_id nulo.
+      - name: Provar o contrato de eventos do Talk X
+        env:
+          TALKX_EVENTS_CONTRACT_PG_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-events-contract.test.sh
+
       - name: Simular primitivas atômicas de mensagens e encerramento
         env:
           MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE: postgres:17-alpine
