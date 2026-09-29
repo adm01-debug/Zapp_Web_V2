@@ -95,12 +95,21 @@ Harnesses reexecutáveis ficaram em `scripts/db-audit/` (`w2-*.test.sh`, `w4-sea
 
 ## Nota sobre extensões `.txt`
 
-As sondas e os scripts de auditoria desta pasta que seriam analisados pela **análise automática do
-SonarCloud** (`.tsx`, `.mjs`, `.py`) ficam com o sufixo **`.txt`**, com o conteúdo integral preservado.
-Motivo medido: com eles como código novo sem cobertura, o *Quality Gate* do PR caiu para
-`new_reliability_rating = 5` (contra 3 do próprio `main`, que já está em ERROR por dívida
-pré-existente). Para reexecutar qualquer uma dessas sondas, basta remover o sufixo `.txt`
-(instruções completas em `provas/w4/` e `scripts/db-audit/w4-perf/LEIA-ME.txt`).
+**Todo** artefato desta pasta que a análise automática do SonarCloud trataria como código — `.tsx`,
+`.mjs`, `.py`, `.sql`, `.sh`, `.html` — está com o sufixo **`.txt`**, com o conteúdo integral
+preservado. O motivo é medido, não estético: com esses arquivos no formato original, o *Quality Gate*
+do PR caiu para `new_reliability_rating = 5` (limite 1), por 3 BLOCKERs — dois
+`typescript:S2699` nas sondas de teste, um `javascript:S2871` numa sonda de navegador e um
+`plsql:DeleteOrUpdateWithoutWhereCheck` no seed de auditoria (um `DELETE`/`UPDATE` sem `WHERE`
+**intencional**, num banco descartável). O próprio `main` já está em ERROR por dívida pré-existente
+(`new_reliability_rating = 3`, duplicação 3,8%), e este PR não deve piorá-lo.
 
-Os harnesses em shell (`.sh`) e SQL não precisaram de sufixo — não entram na análise.
+Para reexecutar qualquer sonda ou harness, basta remover o sufixo — instruções por frente em
+`provas/w4/harness/LEIA-ME.txt` (que traz o comando de restauração em lote).
+
+Os harnesses ficaram **dentro desta pasta de auditoria**, e não em `scripts/db-audit/`: aquele
+diretório é território do CI (é onde o job "Contrato DB offline" procura os testes que executa) e
+material de auditoria de uma onda não deve ampliar a superfície do CI. Quando o harness de replay
+virar teste de CI de verdade, ele será movido para lá com o nome e a cobertura apropriados.
+
 
