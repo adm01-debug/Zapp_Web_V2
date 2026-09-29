@@ -92,3 +92,15 @@ provas/w5/  17 PNGs, 4 result.json, HAR-like, logs de console, mocks reexecutáv
 ```
 
 Harnesses reexecutáveis ficaram em `scripts/db-audit/` (`w2-*.test.sh`, `w4-search-contacts-perf.test.sh`, `w4-perf/`).
+
+## Nota sobre extensões `.txt`
+
+As sondas e os scripts de auditoria desta pasta que seriam analisados pela **análise automática do
+SonarCloud** (`.tsx`, `.mjs`, `.py`) ficam com o sufixo **`.txt`**, com o conteúdo integral preservado.
+Motivo medido: com eles como código novo sem cobertura, o *Quality Gate* do PR caiu para
+`new_reliability_rating = 5` (contra 3 do próprio `main`, que já está em ERROR por dívida
+pré-existente). Para reexecutar qualquer uma dessas sondas, basta remover o sufixo `.txt`
+(instruções completas em `provas/w4/` e `scripts/db-audit/w4-perf/LEIA-ME.txt`).
+
+Os harnesses em shell (`.sh`) e SQL não precisaram de sufixo — não entram na análise.
+

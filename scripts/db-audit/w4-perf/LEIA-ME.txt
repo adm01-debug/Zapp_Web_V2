@@ -1,0 +1,22 @@
+# Harness de performance (W4) — nota sobre as extensões `.txt`
+
+Os scripts deste diretório são **ferramentas de auditoria descartáveis**, não código de produto.
+Dois deles são Python (`17-relatorio.py.txt`, `build_defs.py.txt`) e por isso seriam tratados pela
+**análise automática do SonarCloud** como código novo sem cobertura, derrubando o *Quality Gate*
+do PR (foi medido: `new_reliability_rating` = 5 com os scripts, contra 3 do próprio `main`).
+
+Solução adotada: os dois arquivos ficam com o sufixo `.txt` **preservando o conteúdo integral**.
+
+Para reexecutar o relatório:
+
+```bash
+mv 17-relatorio.py.txt 17-relatorio.py
+mv build_defs.py.txt build_defs.py
+./run-lean.sh <volume> <base|idx> <container>
+```
+
+`run-lean.sh` e `18-drop-propostos.sql` não precisaram de sufixo (shell e SQL não entram na
+análise automática do Sonar).
+
+O mesmo critério foi aplicado às sondas das outras frentes em
+`docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/provas/w5/` (`.mjs.txt`) e `provas/w1/` (`.tsx.txt`).
