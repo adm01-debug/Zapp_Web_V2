@@ -72,7 +72,7 @@ export function DepartmentMembersView({ departmentId, currentUserName, isAdmin }
                     variant="ghost"
                     className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
                     disabled={removeMutation.isPending}
-                    onClick={() => removeMutation.mutate({ profileId: p.id, profileName: p.name, actorName: currentUserName })}
+                    onClick={() => removeMutation.mutate({ profileId: p.id, profileName: p.name })}
                     aria-label={`Remover ${p.name} do departamento`}
                   >
                     <UserMinus className="w-4 h-4" />
@@ -117,7 +117,7 @@ export function DepartmentMembersView({ departmentId, currentUserName, isAdmin }
                       variant="ghost"
                       className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/10"
                       disabled={addMutation.isPending}
-                      onClick={() => addMutation.mutate({ profileId: p.id, profileName: p.name, actorName: currentUserName })}
+                      onClick={() => addMutation.mutate({ profileId: p.id, profileName: p.name })}
                       aria-label={`Adicionar ${p.name} ao departamento`}
                     >
                       <UserPlus className="w-4 h-4" />

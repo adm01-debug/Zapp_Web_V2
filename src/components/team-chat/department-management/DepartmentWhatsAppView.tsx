@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { Save } from 'lucide-react';
-import { useDepartmentWhatsAppCredentials, useSaveDepartmentWhatsApp } from '@/hooks/team-chat/useDepartmentManagement';
+import { useDepartmentWhatsAppConfig, useSaveDepartmentWhatsApp } from '@/hooks/team-chat/useDepartmentManagement';
 
 type Mode = 'none' | 'evolution' | 'official';
 
@@ -20,32 +20,26 @@ const MODE_CARDS: { mode: Mode; label: string; description: string }[] = [
   { mode: 'official', label: 'Oficial', description: 'API Oficial Meta' },
 ];
 
-export function DepartmentWhatsAppView({ departmentId, currentUserName, isAdmin }: Props) {
+export function DepartmentWhatsAppView({ departmentId, isAdmin }: Props) {
   const [mode, setMode] = useState<Mode>('none');
-  const [evolutionUrl, setEvolutionUrl] = useState('');
-  const [evolutionApiKey, setEvolutionApiKey] = useState('');
-  const [officialToken, setOfficialToken] = useState('');
+  const [instanceId, setInstanceId] = useState('');
+  const [apiKey, setApiKey] = useState('');
 
-  const { data: credentials } = useDepartmentWhatsAppCredentials(departmentId);
+  const { data: credentials } = useDepartmentWhatsAppConfig(departmentId);
   const saveMutation = useSaveDepartmentWhatsApp(departmentId);
 
   useEffect(() => {
     if (!credentials) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMode(credentials.mode);
-    setEvolutionUrl(credentials.evolution_url ?? '');
-    // NEVER prefill API keys or tokens — blank = keep existing
+    setInstanceId(credentials.instance_id ?? '');
+    // NEVER prefill API keys — blank = keep existing
   }, [credentials]);
 
   const handleSave = () => {
     saveMutation.mutate({
       mode,
-      config: {
-        evolution_url: evolutionUrl || undefined,
-        evolution_api_key: evolutionApiKey || undefined,
-        official_token: officialToken || undefined,
-      },
-      actorName: currentUserName,
+      instanceId: instanceId || null,
+      apiKey: apiKey || null,
     });
   };
 
@@ -80,23 +74,28 @@ export function DepartmentWhatsAppView({ departmentId, currentUserName, isAdmin 
       {mode === 'evolution' && (
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="evo-url">URL da Evolution API</Label>
+            <Label htmlFor="evo-instance">ID da Instância Evolution</Label>
             <Input
-              id="evo-url"
-              placeholder="https://evolution.exemplo.com"
-              value={evolutionUrl}
-              onChange={e => setEvolutionUrl(e.target.value)}
+              id="evo-instance"
+              placeholder="PRINCIPAL"
+              value={instanceId}
+              onChange={e => setInstanceId(e.target.value)}
               disabled={!isAdmin}
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="evo-key">API Key <span className="text-muted-foreground text-xs">(em branco = manter atual)</span></Label>
+            <Label htmlFor="evo-key">
+              API Key{' '}
+              <span className="text-muted-foreground text-xs">
+                {credentials?.has_api_key ? '(configurada — em branco = manter)' : '(em branco = manter atual)'}
+              </span>
+            </Label>
             <Input
               id="evo-key"
               type="password"
               placeholder="••••••••"
-              value={evolutionApiKey}
-              onChange={e => setEvolutionApiKey(e.target.value)}
+              value={apiKey}
+              onChange={e => setApiKey(e.target.value)}
               disabled={!isAdmin}
               autoComplete="new-password"
             />
@@ -106,13 +105,18 @@ export function DepartmentWhatsAppView({ departmentId, currentUserName, isAdmin 
 
       {mode === 'official' && (
         <div className="space-y-1.5">
-          <Label htmlFor="official-token">Token <span className="text-muted-foreground text-xs">(em branco = manter atual)</span></Label>
+          <Label htmlFor="official-token">
+            Token{' '}
+            <span className="text-muted-foreground text-xs">
+              {credentials?.has_api_key ? '(configurado — em branco = manter)' : '(em branco = manter atual)'}
+            </span>
+          </Label>
           <Input
             id="official-token"
             type="password"
             placeholder="••••••••"
-            value={officialToken}
-            onChange={e => setOfficialToken(e.target.value)}
+            value={apiKey}
+            onChange={e => setApiKey(e.target.value)}
             disabled={!isAdmin}
             autoComplete="new-password"
           />

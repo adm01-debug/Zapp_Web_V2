@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Copy, Check, Trash2, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useDepartmentInvites, useCreateDepartmentInvite, useDeleteDepartmentInvite } from '@/hooks/team-chat/useDepartmentManagement';
+import { useDepartmentInvites, useCreateDepartmentInvite, useRevokeDepartmentInvite } from '@/hooks/team-chat/useDepartmentManagement';
 
 interface Props {
   departmentId: string;
@@ -15,7 +15,7 @@ export function DepartmentInvitesView({ departmentId, currentUserName, isAdmin }
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const { data: invites = [], isLoading } = useDepartmentInvites(departmentId);
   const createMutation = useCreateDepartmentInvite(departmentId);
-  const deleteMutation = useDeleteDepartmentInvite(departmentId);
+  const revokeMutation = useRevokeDepartmentInvite(departmentId);
 
   const handleCopy = async (code: string, id: string) => {
     await navigator.clipboard.writeText(code);
@@ -35,7 +35,7 @@ export function DepartmentInvitesView({ departmentId, currentUserName, isAdmin }
             size="sm"
             variant="outline"
             disabled={createMutation.isPending}
-            onClick={() => createMutation.mutate(currentUserName)}
+            onClick={() => createMutation.mutate({})}
           >
             <Plus className="w-4 h-4 mr-1.5" />
             Gerar código
@@ -76,8 +76,8 @@ export function DepartmentInvitesView({ departmentId, currentUserName, isAdmin }
                   size="icon"
                   variant="ghost"
                   className="h-8 w-8 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  disabled={deleteMutation.isPending}
-                  onClick={() => deleteMutation.mutate({ inviteId: invite.id, actorName: currentUserName })}
+                  disabled={revokeMutation.isPending}
+                  onClick={() => revokeMutation.mutate({ inviteId: invite.id })}
                   aria-label="Excluir convite"
                 >
                   <Trash2 className="w-4 h-4" />

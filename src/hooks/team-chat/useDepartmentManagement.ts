@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export interface DepartmentProfile {
   id: string;
@@ -23,23 +24,28 @@ export interface DepartmentInvite {
   id: string;
   department_id: string;
   code: string;
+  email: string;
   created_by: string | null;
   expires_at: string;
   created_at: string;
+  status: string;
+  use_count: number;
+  max_uses: number;
+  used_at: string | null;
+  used_by: string | null;
 }
 
-export interface DepartmentWhatsAppCredentials {
+export interface DepartmentWhatsAppConfig {
   mode: 'none' | 'evolution' | 'official';
-  evolution_url: string | null;
+  instance_id: string | null;
+  has_api_key: boolean;
 }
 
-function generateInviteCode(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = '';
-  for (let i = 0; i < 8; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
+async function getCurrentProfileId(): Promise<string | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.id) return null;
+  const { data } = await supabase.from('profiles').select('id').eq('user_id', user.id).maybeSingle();
+  return data?.id ?? null;
 }
 
 export function useDepartmentProfiles() {
@@ -58,9 +64,10 @@ export function useDepartmentProfiles() {
   });
 }
 
-export function useDepartmentAuditLogs(departmentId: string) {
+export function useDepartmentAuditLogs(departmentId: string, enabled = true) {
   return useQuery<DepartmentAuditLog[]>({
     queryKey: ['departmentChat', 'audit', departmentId],
+    enabled: enabled && !!departmentId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('department_audit_logs')
@@ -78,15 +85,15 @@ export function useDepartmentAuditLogs(departmentId: string) {
   });
 }
 
-export function useDepartmentInvites(departmentId: string) {
+export function useDepartmentInvites(departmentId: string, enabled = true) {
   return useQuery<DepartmentInvite[]>({
     queryKey: ['departmentChat', 'invites', departmentId],
+    enabled: enabled && !!departmentId,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('department_invites')
+        .from('department_invitations')
         .select('*')
         .eq('department_id', departmentId)
-        .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
       if (error) {
         if (error.code === '42P01') return [];
@@ -98,14 +105,16 @@ export function useDepartmentInvites(departmentId: string) {
   });
 }
 
-export function useDepartmentWhatsAppCredentials(departmentId: string) {
-  return useQuery<DepartmentWhatsAppCredentials>({
+export function useDepartmentWhatsAppConfig(departmentId: string, enabled = true) {
+  return useQuery<DepartmentWhatsAppConfig>({
     queryKey: ['departmentChat', 'whatsapp', departmentId],
+    enabled: enabled && !!departmentId,
     queryFn: async () => {
       const { data, error } = await supabase
         .rpc('get_department_whatsapp_credentials', { _department_id: departmentId });
       if (error) throw error;
-      return (data as unknown as DepartmentWhatsAppCredentials) ?? { mode: 'none', evolution_url: null };
+      const row = Array.isArray(data) ? data[0] : data;
+      return (row as unknown as DepartmentWhatsAppConfig) ?? { mode: 'none', instance_id: null, has_api_key: false };
     },
     staleTime: 60 * 1000,
   });
@@ -114,45 +123,49 @@ export function useDepartmentWhatsAppCredentials(departmentId: string) {
 export function useCreateDepartmentInvite(departmentId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (actorName: string) => {
-      const code = generateInviteCode();
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-      const { data: { user } } = await supabase.auth.getUser();
-      const { error: inviteErr } = await supabase
-        .from('department_invites')
-        .insert({ department_id: departmentId, code, expires_at: expiresAt, created_by: user?.id ?? null });
-      if (inviteErr) throw inviteErr;
-      await supabase.from('department_audit_logs').insert({
-        department_id: departmentId,
-        action: 'create_invite',
-        profile_id: user?.id ?? null,
-        details: { code, profile_name: actorName },
+    mutationFn: async ({ email = '', maxUses = 1, ttl = '7 days' }: { email?: string; maxUses?: number; ttl?: string } = {}) => {
+      const { data, error } = await supabase.rpc('create_department_invite', {
+        p_department_id: departmentId,
+        p_email: email,
+        p_max_uses: maxUses,
+        p_ttl: ttl,
       });
+      if (error) throw error;
+      return data as { code: string; id: string } | null;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['departmentChat', 'invites', departmentId] });
       qc.invalidateQueries({ queryKey: ['departmentChat', 'audit', departmentId] });
+    },
+    onError: (err: Error) => {
+      toast.error(`Erro ao criar convite: ${err.message}`);
     },
   });
 }
 
-export function useDeleteDepartmentInvite(departmentId: string) {
+export function useRevokeDepartmentInvite(departmentId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ inviteId, actorName }: { inviteId: string; actorName: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase.from('department_invites').delete().eq('id', inviteId);
+    mutationFn: async ({ inviteId }: { inviteId: string }) => {
+      const profileId = await getCurrentProfileId();
+      const { error } = await supabase
+        .from('department_invitations')
+        .update({ status: 'revoked' })
+        .eq('id', inviteId);
       if (error) throw error;
       await supabase.from('department_audit_logs').insert({
         department_id: departmentId,
-        action: 'delete_invite',
-        profile_id: user?.id ?? null,
-        details: { invite_id: inviteId, profile_name: actorName },
+        action: 'invite_revoked',
+        profile_id: profileId,
+        details: { invite_id: inviteId },
       });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['departmentChat', 'invites', departmentId] });
       qc.invalidateQueries({ queryKey: ['departmentChat', 'audit', departmentId] });
+    },
+    onError: (err: Error) => {
+      toast.error(`Erro ao revogar convite: ${err.message}`);
     },
   });
 }
@@ -160,8 +173,8 @@ export function useDeleteDepartmentInvite(departmentId: string) {
 export function useAddDepartmentMember(departmentId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ profileId, profileName, actorName }: { profileId: string; profileName: string; actorName: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
+    mutationFn: async ({ profileId, profileName }: { profileId: string; profileName: string }) => {
+      const actorProfileId = await getCurrentProfileId();
       const { error } = await supabase
         .from('profiles')
         .update({ department_id: departmentId })
@@ -169,14 +182,17 @@ export function useAddDepartmentMember(departmentId: string) {
       if (error) throw error;
       await supabase.from('department_audit_logs').insert({
         department_id: departmentId,
-        action: 'add_member',
-        profile_id: user?.id ?? null,
-        details: { added_profile_id: profileId, profile_name: profileName, actor_name: actorName },
+        action: 'member_added',
+        profile_id: actorProfileId,
+        details: { added_profile_id: profileId, profile_name: profileName },
       });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['departmentChat', 'profiles'] });
       qc.invalidateQueries({ queryKey: ['departmentChat', 'audit', departmentId] });
+    },
+    onError: (err: Error) => {
+      toast.error(`Erro ao adicionar membro: ${err.message}`);
     },
   });
 }
@@ -184,8 +200,8 @@ export function useAddDepartmentMember(departmentId: string) {
 export function useRemoveDepartmentMember(departmentId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ profileId, profileName, actorName }: { profileId: string; profileName: string; actorName: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
+    mutationFn: async ({ profileId, profileName }: { profileId: string; profileName: string }) => {
+      const actorProfileId = await getCurrentProfileId();
       const { error } = await supabase
         .from('profiles')
         .update({ department_id: null })
@@ -193,14 +209,17 @@ export function useRemoveDepartmentMember(departmentId: string) {
       if (error) throw error;
       await supabase.from('department_audit_logs').insert({
         department_id: departmentId,
-        action: 'remove_member',
-        profile_id: user?.id ?? null,
-        details: { removed_profile_id: profileId, profile_name: profileName, actor_name: actorName },
+        action: 'member_removed',
+        profile_id: actorProfileId,
+        details: { removed_profile_id: profileId, profile_name: profileName },
       });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['departmentChat', 'profiles'] });
       qc.invalidateQueries({ queryKey: ['departmentChat', 'audit', departmentId] });
+    },
+    onError: (err: Error) => {
+      toast.error(`Erro ao remover membro: ${err.message}`);
     },
   });
 }
@@ -208,34 +227,25 @@ export function useRemoveDepartmentMember(departmentId: string) {
 export function useSaveDepartmentWhatsApp(departmentId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ mode, config, actorName }: {
+    mutationFn: async ({ mode, instanceId, apiKey }: {
       mode: 'none' | 'evolution' | 'official';
-      config: { evolution_url?: string; evolution_api_key?: string; official_token?: string };
-      actorName: string;
+      instanceId?: string | null;
+      apiKey?: string | null;
     }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      const payload: Record<string, unknown> = { department_id: departmentId, mode };
-      if (mode === 'evolution') {
-        if (config.evolution_url) payload.evolution_url = config.evolution_url;
-        if (config.evolution_api_key) payload.evolution_api_key = config.evolution_api_key;
-      } else if (mode === 'official') {
-        if (config.official_token) payload.official_token = config.official_token;
-      }
-      const { error } = await supabase
-        // @ts-expect-error table not yet in generated types
-        .from('department_whatsapp_configs')
-        .upsert(payload, { onConflict: 'department_id' });
-      if (error) throw error;
-      await supabase.from('department_audit_logs').insert({
-        department_id: departmentId,
-        action: 'save_whatsapp',
-        profile_id: user?.id ?? null,
-        details: { mode, profile_name: actorName },
+      const { error } = await supabase.rpc('set_department_whatsapp_config', {
+        p_department_id: departmentId,
+        p_mode: mode,
+        p_instance_id: instanceId ?? null,
+        p_api_key: apiKey ?? null,
       });
+      if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['departmentChat', 'whatsapp', departmentId] });
       qc.invalidateQueries({ queryKey: ['departmentChat', 'audit', departmentId] });
+    },
+    onError: (err: Error) => {
+      toast.error(`Erro ao salvar configuração WhatsApp: ${err.message}`);
     },
   });
 }
