@@ -1,7 +1,7 @@
--- 20260929200312_multiplix_revoke_recipient_writes
--- (versao renomeada de 20260929800000 em 2026-09-29: aquela versao foi aplicada por
---  outra sessao com o nome user_settings_sound_volume — o hermes-db-migrar recusaria
---  a aplicacao pos-merge por colisao de versao com nome diferente.)
+-- 20260929840000_multiplix_revoke_recipient_writes
+-- (versao reservada via supabase_migrations.reserve_migration_version: a original,
+--  20260929800000, foi aplicada por outra sessao com o nome user_settings_sound_volume
+--  e o hermes-db-migrar recusaria a aplicacao pos-merge por colisao de versao.)
 -- Bloco A (F08, segunda metade) do docs/multiplix/PLANO_FINALIZACAO_MULTIPLIX_100_ETAPAS_2026-09-29.md.
 --
 -- Com a criacao passando pela RPC multiplix_create_draft (20260929630000) e pela
