@@ -92,3 +92,35 @@ export function phonesMatchExact(
   if (left === null || right === null) return false;
   return left === right;
 }
+
+/**
+ * Grafias que a coluna `contacts.phone` pode ter para o mesmo número: E.164,
+ * só dígitos, sem o nono dígito e com `0` de tronco. Serve para montar a
+ * consulta (que é textual); **a decisão continua sendo `phonesMatchExact`**,
+ * porque um `eq` casaria string formatada e um `ilike` casaria sufixo.
+ */
+export function phoneQueryVariants(raw: string | null | undefined): string[] {
+  const e164 = normalizeE164BR(raw);
+  if (e164 === null) return [];
+
+  const local = e164.slice(3); // DDD + assinante
+  const withoutNine = local.length === 11 ? `${local.slice(0, 2)}${local.slice(3)}` : local;
+
+  return Array.from(new Set([e164, e164.slice(1), local, withoutNine, `0${local}`]));
+}
+
+/**
+ * Entre candidatos vindos do banco, devolve o id do **único** contato que casa
+ * em E.164 — ou `null` quando nenhum casa ou mais de um casa (ambíguo).
+ *
+ * É esta função que impede o vínculo errado: dois contatos com o mesmo final
+ * de 8 dígitos e DDDs diferentes nunca casam entre si.
+ */
+export function pickUniquePhoneMatch<T extends { id: string; phone: string | null }>(
+  rows: readonly T[],
+  phone: string | null | undefined,
+): string | null {
+  if (normalizeE164BR(phone) === null) return null;
+  const matched = rows.filter((row) => phonesMatchExact(row.phone, phone));
+  return matched.length === 1 ? matched[0].id : null;
+}
