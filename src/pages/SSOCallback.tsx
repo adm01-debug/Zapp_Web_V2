@@ -9,20 +9,24 @@ import { toast } from 'sonner';
 
 type CallbackStatus = 'loading' | 'success' | 'error';
 
+// PKCE flow returns error params in the query string, not the hash fragment
+function getUrlError(): string | null {
+  const p = new URLSearchParams(window.location.search);
+  return p.get('error_description') || p.get('error');
+}
+
 export default function SSOCallback() {
   const navigate = useNavigate();
-  const [status, setStatus] = useState<CallbackStatus>('loading');
-  const [errorMessage, setErrorMessage] = useState('');
-  const statusRef = useRef<CallbackStatus>('loading');
+  const urlError = getUrlError();
+  const [status, setStatus] = useState<CallbackStatus>(urlError ? 'error' : 'loading');
+  const [errorMessage, setErrorMessage] = useState(urlError ?? '');
+  // ref tracks live status to avoid stale closure in the timeout callback
+  const statusRef = useRef<CallbackStatus>(urlError ? 'error' : 'loading');
 
   useEffect(() => {
-    // PKCE flow returns error params in the query string, not the hash fragment
-    const searchParams = new URLSearchParams(window.location.search);
-    const errorParam = searchParams.get('error_description') || searchParams.get('error');
+    // If Google returned an error in the redirect URL, show it and stop
+    const errorParam = getUrlError();
     if (errorParam) {
-      statusRef.current = 'error';
-      setStatus('error');
-      setErrorMessage(errorParam);
       toast.error('Erro no login SSO');
       return;
     }
