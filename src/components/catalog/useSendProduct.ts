@@ -60,11 +60,26 @@ export function openContactChat(contactId: string): void {
   setTimeout(tryDispatch, 150);
 }
 
-export function useContactSearch(step: 'configure' | 'selectContact') {
+export function useContactSearch(
+  step: 'configure' | 'selectContact',
+  presetContact?: ContactResult | null,
+) {
   const [contactSearch, setContactSearch] = useState('');
   const [contactResults, setContactResults] = useState<ContactResult[]>([]);
   const [searchingContacts, setSearchingContacts] = useState(false);
-  const [selectedContact, setSelectedContact] = useState<ContactResult | null>(null);
+  // CT-14/CT-17 — quando o dialog abre a partir de uma conversa (chat, perfil
+  // do contato), o contato já vem escolhido e continua trocável.
+  const [selectedContact, setSelectedContact] = useState<ContactResult | null>(presetContact ?? null);
+
+  // Troca do preset durante a vida do dialog (outra conversa/contato) sem
+  // efeito e sem ref-durante-render: mesmo padrão de comparação no corpo do
+  // render já usado em SendProductDialog.
+  const presetContactId = presetContact?.id ?? null;
+  const [prevPresetContactId, setPrevPresetContactId] = useState(presetContactId);
+  if (prevPresetContactId !== presetContactId) {
+    setPrevPresetContactId(presetContactId);
+    setSelectedContact(presetContact ?? null);
+  }
 
   // A single scheduled fetch owns both the recent and filtered lists.  Besides
   // avoiding overlapping requests, state changes only happen after the effect

@@ -2,7 +2,6 @@ import { Suspense, lazy } from 'react';
 import { log } from '@/lib/logger';
 import { toast } from '@/hooks/ui/use-toast';
 import { Conversation, Message, InteractiveMessage, InteractiveButton, LocationMessage } from '@/types/chat';
-import { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 import { ExternalProductCatalog } from '@/components/catalog/ExternalProductCatalog';
 
 const TransferDialog = lazy(() => import('../TransferDialog').then(m => ({ default: m.TransferDialog })));
@@ -35,15 +34,21 @@ interface ChatDialogsProps {
   onSendInteractiveMessage: (interactive: InteractiveMessage) => void;
   onForwardToTargets: (targetIds: string[], targetType: 'contact' | 'group') => void;
   onSendLocation: (location: LocationMessage) => Promise<void> | void;
-  onSendProduct: (product: ExternalProduct) => void;
   onSetInputValue: (value: string | ((prev: string) => string)) => void;
 }
 
 export function ChatDialogs({
   dialogs, openDialog, closeDialog, conversation, forwardMessage, callDirection,
   contactId, onTransfer, onScheduleMessage, onSendInteractiveMessage,
-  onForwardToTargets, onSendLocation, onSendProduct, onSetInputValue,
+  onForwardToTargets, onSendLocation, onSetInputValue,
 }: ChatDialogsProps) {
+  // CT-14 — mesmo caminho de envio do catálogo, com o contato da conversa aberta.
+  const presetContact = {
+    id: conversation.contact.id,
+    name: conversation.contact.name,
+    phone: conversation.contact.phone,
+    avatar_url: conversation.contact.avatar ?? null,
+  };
   return (
     <>
       <Suspense fallback={null}>
@@ -57,7 +62,7 @@ export function ChatDialogs({
         {dialogs.closeDialog && <CloseConversationDialog open={dialogs.closeDialog} onOpenChange={(v) => v ? openDialog('closeDialog') : closeDialog('closeDialog')} contactId={contactId} />}
       </Suspense>
 
-      {dialogs.catalogDirect && <ExternalProductCatalog onSendProduct={onSendProduct} open={dialogs.catalogDirect} onOpenChange={(v) => v ? openDialog('catalogDirect') : closeDialog('catalogDirect')} />}
+      {dialogs.catalogDirect && <ExternalProductCatalog presetContact={presetContact} open={dialogs.catalogDirect} onOpenChange={(v) => v ? openDialog('catalogDirect') : closeDialog('catalogDirect')} />}
 
       {dialogs.realtimeTranscription && (
         <Suspense fallback={null}>

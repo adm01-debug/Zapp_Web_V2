@@ -13,7 +13,7 @@ import { AISuggestions } from '../AISuggestions';
 import { MessageTemplates } from '../MessageTemplates';
 import { AdvancedMessageMenu } from '../AdvancedMessageMenu';
 import { ExternalProductCatalog } from '@/components/catalog/ExternalProductCatalog';
-import { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
+import type { ContactResult } from '@/components/catalog/useSendProduct';
 import { Message } from '@/types/chat';
 import { Package, Layers, MapPin, Clock, Zap, PenTool, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -91,7 +91,6 @@ interface TertiaryToolsMenuProps {
   onOpenInteractiveBuilder: () => void;
   onOpenLocationPicker: () => void;
   onOpenSchedule: () => void;
-  onSendProduct: (product: ExternalProduct) => void;
   onSelectSuggestion: (text: string) => void;
   onSelectTemplate: (text: string) => void;
   onQuickReply: (reply: QuickReplyItem) => void;
@@ -105,9 +104,14 @@ interface TertiaryToolsMenuProps {
 export function TertiaryToolsMenu({
   contactId, instanceName, contactPhone, contactName, messages, quickReplies,
   onOpenInteractiveBuilder, onOpenLocationPicker, onOpenSchedule,
-  onSendProduct, onSelectSuggestion, onSelectTemplate, onQuickReply,
+  onSelectSuggestion, onSelectTemplate, onQuickReply,
   signatureEnabled, signatureName, onToggleSignature, onPollSent, onContactSent,
 }: TertiaryToolsMenuProps) {
+  // CT-14 — o catálogo do chat envia pelo SendProductDialog com o contato da conversa.
+  const presetContact = useMemo<ContactResult | null>(
+    () => (contactId ? { id: contactId, name: contactName, phone: contactPhone, avatar_url: null } : null),
+    [contactId, contactName, contactPhone],
+  );
   const quickRepliesList = useMemo(() => (
     quickReplies.slice(0, 50).map((reply) => (
       <Button
@@ -136,7 +140,7 @@ export function TertiaryToolsMenu({
         <Clock className="w-4 h-4" /> Agendar
       </Button>
       <ExternalProductCatalog
-        onSendProduct={onSendProduct}
+        presetContact={presetContact}
         trigger={
           <Button variant="ghost" size="sm" className="justify-start gap-2 text-muted-foreground hover:text-foreground w-full" aria-label="Catálogo de produtos">
             <Package className="w-4 h-4" /> Catálogo

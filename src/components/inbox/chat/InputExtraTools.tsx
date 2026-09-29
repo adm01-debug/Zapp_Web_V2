@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { motion } from '@/components/ui/motion';
@@ -6,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { AISuggestions } from '../AISuggestions';
 import { MessageTemplates } from '../MessageTemplates';
 import { ExternalProductCatalog } from '@/components/catalog/ExternalProductCatalog';
-import { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
+import type { ContactResult } from '@/components/catalog/useSendProduct';
 import { Message } from '@/types/chat';
 import { cn } from '@/lib/utils';
 import { Zap, Mic, Clock, MapPin, Package, Layers } from 'lucide-react';
@@ -22,6 +23,8 @@ interface QuickReply {
 interface InputExtraToolsProps {
   isRecordingAudio: boolean;
   messages: Message[];
+  contactId: string;
+  contactPhone: string;
   contactName: string;
   quickReplies: QuickReply[];
   onInputChange: (value: string) => void;
@@ -30,14 +33,19 @@ interface InputExtraToolsProps {
   onOpenInteractiveBuilder: () => void;
   onOpenSchedule: () => void;
   onOpenLocationPicker: () => void;
-  onSendProduct: (product: ExternalProduct) => void;
 }
 
 export function InputExtraTools({
-  isRecordingAudio, messages, contactName, quickReplies,
+  isRecordingAudio, messages, contactId, contactPhone, contactName, quickReplies,
   onInputChange, onQuickReply, onRecordToggle,
-  onOpenInteractiveBuilder, onOpenSchedule, onOpenLocationPicker, onSendProduct,
+  onOpenInteractiveBuilder, onOpenSchedule, onOpenLocationPicker,
 }: InputExtraToolsProps) {
+  // CT-14 — envio pelo chat passa pelo mesmo SendProductDialog da tela de
+  // catálogo, já com o contato da conversa aberta.
+  const presetContact = useMemo<ContactResult | null>(
+    () => (contactId ? { id: contactId, name: contactName, phone: contactPhone, avatar_url: null } : null),
+    [contactId, contactName, contactPhone],
+  );
   return (
     <>
       <Tooltip>
@@ -94,7 +102,7 @@ export function InputExtraTools({
         <TooltipContent>Compartilhar localização</TooltipContent>
       </Tooltip>
 
-      <ExternalProductCatalog onSendProduct={onSendProduct} trigger={
+      <ExternalProductCatalog presetContact={presetContact} trigger={
         <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary hover:bg-primary/10" aria-label="Catálogo de produtos">
           <Package className="w-5 h-5" />
         </Button>

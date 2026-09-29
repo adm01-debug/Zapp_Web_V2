@@ -76,16 +76,16 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 ## FASE 1 — Um único fluxo de envio (chat + catálogo) (CT-13–CT-18)
 *Bloco B — 1 PR de front.*
 
-- [ ] **CT-13** — Ler `ChatDialogs.tsx`, `InputExtraTools.tsx`, `ChatInputToolbars.tsx` e o handler `onSendProduct` do
+- [x] **CT-13** — Ler `ChatDialogs.tsx`, `InputExtraTools.tsx`, `ChatInputToolbars.tsx` e o handler `onSendProduct` do
   inbox; registrar na §10 o que o chat faz hoje (mensagem única? sem fotos?). **Aceite:** texto na §10.
-- [ ] **CT-14** — `ExternalProductCatalog.tsx` passa a abrir `SendProductDialog` com `presetContact` = contato da conversa
+- [x] **CT-14** — `ExternalProductCatalog.tsx` passa a abrir `SendProductDialog` com `presetContact` = contato da conversa
   aberta (pula o passo D); `onSendProduct` do inbox é removido ou vira adaptador fino. **Aceite:** envio pelo chat
   grava `catalog_send_events` com `contact_id` da conversa; `grep onSendProduct src/components/inbox` vazio.
-- [ ] **CT-15** — `ExternalProductCatalog.tsx` reusa `CatalogProductCard` (grade/lista), `TalkXPagination`, estados de
+- [x] **CT-15** — `ExternalProductCatalog.tsx` reusa `CatalogProductCard` (grade/lista), `TalkXPagination`, estados de
   vazio/erro da tela principal; remove `ScrollArea` interno e `ExternalProductCard` legado se ficar sem consumidor.
   **Aceite:** `ExternalProductCard.tsx` apagado ou com 1 consumidor; `eslint-baseline.json` sem entrada do arquivo.
-- [ ] **CT-16** — Chip "Meus favoritos" no dialog do chat (`useCatalogFavorites`). **Aceite:** teste RTL.
-- [ ] **CT-17** — `SendProductDialog` em modo `presetContact` mostra o card-resumo do contato e permite trocar.
+- [x] **CT-16** — Chip "Meus favoritos" no dialog do chat (`useCatalogFavorites`). **Aceite:** teste RTL.
+- [x] **CT-17** — `SendProductDialog` em modo `presetContact` mostra o card-resumo do contato e permite trocar.
   **Aceite:** teste RTL.
 - [ ] **CT-18** — Fechamento B: PR mergeada; envio real pelo chat (número de teste) registrado em `ENVIO_E2E.md`.
   **Aceite:** 1 linha em `catalog_send_events` originada do chat.
@@ -290,7 +290,21 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 
 ## 10. Decisões e achados registrados durante a execução
 
-*(preencher em CT-13, CT-51, CT-58)*
+### CT-13 — o que o chat fazia ao enviar produto (medido em 29/09, bloco B)
+
+Antes deste bloco, o envio de produto pelo chat **não** passava pelo catálogo:
+
+| Hoje (antes do bloco B) | Evidência |
+|---|---|
+| `ChatDialogs.tsx` / `InputExtraTools.tsx` / `ChatInputToolbars.tsx` abriam `ExternalProductCatalog` passando `onSendProduct` | `grep -rn onSendProduct src/components/inbox` (3 chamadas + 6 repasses de prop) |
+| O handler `handleSendProduct` (`useChatPanelHandlers.ts`) montava **uma única mensagem de texto**: `📦 *nome*`, marca, preço (pt-BR), qtd. mínima, cores, dimensões, personalização, prazo, estoque, 300 chars de descrição e a URL da foto **como link** | leitura do handler |
+| Resultado: **0 fotos** enviadas como imagem, **nenhum caption**, **nenhum** registro em `catalog_send_events`, **nenhum rascunho** | `catalog_send_events` = 0 linhas em 29/09; `messages` sem `imagedelivery.net` |
+| Toasts do handler usavam `use-toast` (`toast({ title, description })`), não `sonner` | `useChatPanelHandlers.ts` importa `@/hooks/ui/use-toast` |
+
+Depois do bloco B, o chat abre o **mesmo** `SendProductDialog` da tela de catálogo, com
+`presetContact` = contato da conversa (pula o passo de contato) — ou seja, um único fluxo de envio,
+com fotos com caption (CT-04), throttle (CT-05), toasts `sonner` (CT-06), invalidação do rail
+(CT-07), checagem pré-envio (CT-08) e log em `catalog_send_events` (E28).
 
 ## 11. Mapa de PRs
 
