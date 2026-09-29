@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getLogger } from '@/lib/logger';
+
+const log = getLogger('TeamTyping');
 
 interface TypingUser { userId: string; name: string; }
 
@@ -30,7 +33,12 @@ export function useTeamTyping(
           setTypingUsers(prev => prev.filter(u => u.userId !== p.userId));
         }, 4000);
       }
-    }).subscribe();
+    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .on('system' as any, {}, (status: string) => {
+      if (status === 'CHANNEL_ERROR') log.warn('team-typing CHANNEL_ERROR', { conversationId });
+    })
+    .subscribe();
     return () => { void supabase.removeChannel(ch); };
   }, [conversationId, currentUserId]);
 

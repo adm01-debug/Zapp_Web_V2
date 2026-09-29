@@ -19,6 +19,7 @@ import { toast } from 'sonner';
  import { useVoiceAgent } from '@/hooks/voice/useVoiceAgent';
 import { useAgentPresenceJoin } from '@/hooks/crm/useAgentPresence';
 import { useTeamUnreadTotal } from '@/hooks/team-chat/useTeamUnreadTotal';
+import { useTeamGlobalNotifications } from '@/hooks/team-chat/useTeamGlobalNotifications';
 
 const LazyVoiceOverlay = lazy(() => import('@/components/voice/VoiceSearchOverlayConnected'));
 
@@ -64,6 +65,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
   const { startTransition } = useViewTransition();
   const [voiceOpen, setVoiceOpen] = useState(false);
   const teamUnreadTotal = useTeamUnreadTotal();
+  useTeamGlobalNotifications();
 
   const handleViewChange = useCallback((viewId: string) => {
     startTransition(() => setCurrentView(viewId));

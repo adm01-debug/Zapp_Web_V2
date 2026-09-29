@@ -4,7 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { TEAM_KEYS } from './queryKeys';
 import type { TeamMessagePageRow } from './teamChatTypes';
+import { getLogger } from '@/lib/logger';
 
+const log = getLogger('TeamMessages');
 const PAGE_SIZE = 50;
 
 export function useTeamMessages(conversationId: string | null) {
@@ -45,6 +47,10 @@ export function useTeamMessages(conversationId: string | null) {
       }, () => {
         void queryClient.invalidateQueries({ queryKey: TEAM_KEYS.messages(conversationId) });
         void queryClient.invalidateQueries({ queryKey: ['team-chat', 'inbox'] });
+      })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .on('system' as any, {}, (status: string) => {
+        if (status === 'CHANNEL_ERROR') log.warn('team:messages CHANNEL_ERROR', { conversationId });
       })
       .subscribe();
     return () => { void supabase.removeChannel(channel); };

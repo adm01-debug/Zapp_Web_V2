@@ -5,6 +5,9 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
 import { TEAM_KEYS } from './queryKeys';
 import type { ReactionGroup } from '@/components/ui/message-reactions';
+import { getLogger } from '@/lib/logger';
+
+const log = getLogger('TeamReactions');
 
 interface RawReaction {
   id: string;
@@ -72,6 +75,10 @@ export function useTeamMessageReactions(conversationId: string) {
         },
         () => { void qc.invalidateQueries({ queryKey: qKey }); },
       )
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .on('system' as any, {}, (status: string) => {
+        if (status === 'CHANNEL_ERROR') log.warn('team:reactions CHANNEL_ERROR', { conversationId });
+      })
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
   }, [conversationId, qc, qKey]);
