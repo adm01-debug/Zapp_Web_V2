@@ -71,10 +71,10 @@ export function TasksAgendaMode({ items, overdue, isLoading, onOpen, onToggleDon
                 !active && !weekend ? 'border-border/50 hover:border-primary/40 hover:bg-primary/5' : '',
               ].filter(Boolean).join(' ')}
             >
-              <span className="text-[11px] font-medium capitalize">
+              <span className="text-2xs font-medium capitalize">
                 {format(w.date, 'EEE', { locale: ptBR })}
               </span>
-              <span className="text-[20px] font-bold tabular-nums leading-none">
+              <span className="text-xl font-bold tabular-nums leading-none">
                 {format(w.date, 'd')}
               </span>
               {count > 0 && (

@@ -68,7 +68,7 @@ export const WorkItemCard = React.memo(function WorkItemCard({
             {isDone && <span className="block h-2.5 w-2.5 rounded-sm bg-primary" />}
           </button>
         )}
-        <span className={`flex-1 min-w-0 text-[14px] font-semibold leading-snug truncate ${isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+        <span className={`flex-1 min-w-0 text-sm font-semibold leading-snug truncate ${isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
           {item.title}
         </span>
         <PriorityChip priority={item.priority} compact />
@@ -88,7 +88,7 @@ export const WorkItemCard = React.memo(function WorkItemCard({
             {onMoveTo && (
               <>
                 <DropdownMenuSeparator />
-                <span className="px-2 py-1 text-[11px] text-muted-foreground">Mover para</span>
+                <span className="px-2 py-1 text-2xs text-muted-foreground">Mover para</span>
                 {KANBAN_COLUMNS
                   .filter(c => c.status !== item.status)
                   .map(c => (
@@ -127,7 +127,7 @@ export const WorkItemCard = React.memo(function WorkItemCard({
 
       {/* Motivo de espera */}
       {item.status === 'waiting' && item.waiting_reason && (
-        <p className="flex items-center gap-1 text-[11px] text-warning/80 border-t border-border/30 pt-1.5 mt-0.5">
+        <p className="flex items-center gap-1 text-2xs text-warning/80 border-t border-border/30 pt-1.5 mt-0.5">
           <span className="shrink-0">⏸</span>
           <span className="truncate">{item.waiting_reason}</span>
         </p>

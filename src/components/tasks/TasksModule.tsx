@@ -102,8 +102,8 @@ export function TasksModule({ defaultMode = 'list' }: Props) {
           { label: 'Cycle time', value: kpis.avgCycleTimeDays != null ? Math.round(kpis.avgCycleTimeDays) + 'd' : '—', cls: 'text-muted-foreground' },
         ].map(({ label, value, cls }) => (
           <div key={label} data-testid="kpi-card" className="flex flex-col gap-1 rounded-[14px] border border-border/70 bg-card px-4 py-3">
-            <span className="text-[12px] font-medium text-muted-foreground">{label}</span>
-            <span className={`text-[26px] font-bold tabular-nums leading-none ${cls}`}>{value}</span>
+            <span className="text-xs font-medium text-muted-foreground">{label}</span>
+            <span className={`text-2xl font-bold tabular-nums leading-none ${cls}`}>{value}</span>
           </div>
         ))}
       </div>

@@ -39,7 +39,7 @@ export function BoardColumn({ status, items, isLoading, doingCount, onOpen, onMo
       ].join(' ')}>
         <span className="flex-1 text-[13px] font-semibold">{col.label}</span>
         {headerCount && (
-          <span className={`text-[12px] font-bold tabular-nums ${hardFull ? 'text-destructive' : ''}`}>
+          <span className={`text-xs font-bold tabular-nums ${hardFull ? 'text-destructive' : ''}`}>
             {headerCount}
           </span>
         )}
@@ -49,7 +49,7 @@ export function BoardColumn({ status, items, isLoading, doingCount, onOpen, onMo
               <Info className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="bottom" className="max-w-[220px] text-[12px]">
+          <TooltipContent side="bottom" className="max-w-[220px] text-xs">
             {col.policy}
           </TooltipContent>
         </Tooltip>

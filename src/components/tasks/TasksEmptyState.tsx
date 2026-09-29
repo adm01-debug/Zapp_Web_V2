@@ -20,7 +20,7 @@ export function TasksEmptyState({ variant, onClearFilter, onAddTask, columnLabel
   if (variant === 'column') {
     return (
       <div className="flex flex-col items-center gap-2 py-8 text-center">
-        <p className="text-[12px] text-muted-foreground/60 italic">Coluna vazia</p>
+        <p className="text-xs text-muted-foreground/60 italic">Coluna vazia</p>
       </div>
     );
   }
@@ -32,7 +32,7 @@ export function TasksEmptyState({ variant, onClearFilter, onAddTask, columnLabel
       <div className="space-y-1">
         <p className="text-base font-semibold text-foreground">Nada por aqui</p>
         <p className="text-sm text-muted-foreground">Adicione a primeira tarefa acima.</p>
-        <p className="text-xs text-muted-foreground/60">Atalho: <kbd className="rounded bg-muted px-1 py-0.5 text-[10px] font-mono">N</kbd></p>
+        <p className="text-xs text-muted-foreground/60">Atalho: <kbd className="rounded bg-muted px-1 py-0.5 text-3xs font-mono">N</kbd></p>
       </div>
       {onAddTask && (
         <Button size="sm" onClick={onAddTask} className="bg-success hover:bg-success/90 text-white">

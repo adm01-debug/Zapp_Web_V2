@@ -9,7 +9,7 @@ export function RemindChip({ remindAt, notifiedAt }: Props) {
   const day  = new Date(remindAt).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
   return (
     <span
-      className={`inline-flex items-center gap-1 text-[12px] font-medium ${due && !notifiedAt ? 'text-destructive' : 'text-muted-foreground'}`}
+      className={`inline-flex items-center gap-1 text-xs font-medium ${due && !notifiedAt ? 'text-destructive' : 'text-muted-foreground'}`}
       title={`Lembrete: ${day} ${time}`}
     >
       <Icon className="h-3 w-3" />

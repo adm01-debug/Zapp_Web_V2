@@ -44,7 +44,7 @@ function Section({ title, items, defaultOpen = true, headingClass = '', onOpen, 
       >
         <Icon className="h-4 w-4" />
         {title}
-        <span className="rounded-full bg-muted px-1.5 py-0.5 text-[11px] tabular-nums">{items.length}</span>
+        <span className="rounded-full bg-muted px-1.5 py-0.5 text-2xs tabular-nums">{items.length}</span>
       </button>
       <AnimatePresence initial={false}>
         {open && (

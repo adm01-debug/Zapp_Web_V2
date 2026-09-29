@@ -67,7 +67,7 @@ export function TasksTab({ contactId }: TasksTabProps) {
           <button
             type="button"
             onClick={() => setShowDone(o => !o)}
-            className="text-[12px] text-muted-foreground hover:text-foreground transition-colors"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             {showDone ? 'Ocultar concluídas' : `Ver ${done.length} concluída${done.length > 1 ? 's' : ''}`}
           </button>

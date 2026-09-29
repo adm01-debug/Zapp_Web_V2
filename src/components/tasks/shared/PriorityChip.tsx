@@ -16,7 +16,7 @@ interface Props { priority: Priority; compact?: boolean; }
 export function PriorityChip({ priority, compact = false }: Props) {
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[11px] font-semibold leading-none ${PRIORITY_STYLES[priority]}`}
+      className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-2xs font-semibold leading-none ${PRIORITY_STYLES[priority]}`}
       title={`Prioridade: ${PRIORITY_LABELS[priority]}`}
     >
       {compact ? PRIORITY_LABELS[priority][0] : PRIORITY_LABELS[priority]}

@@ -10,7 +10,7 @@ export function DueChip({ dueDate, compact = false }: Props) {
     : label === 'Hoje' ? 'text-warning' : 'text-muted-foreground';
   const Icon = overdue ? AlertCircle : Calendar;
   return (
-    <span className={`inline-flex items-center gap-1 text-[12px] font-medium ${cls}`} title={`Prazo: ${label}`}>
+    <span className={`inline-flex items-center gap-1 text-xs font-medium ${cls}`} title={`Prazo: ${label}`}>
       <Icon className="h-3 w-3" />
       {!compact && label}
     </span>

@@ -79,7 +79,7 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
             type="button"
             onClick={() => void handleSubmit()}
             disabled={loading}
-            className="shrink-0 h-7 px-3 rounded-lg bg-primary text-primary-foreground text-[12px] font-semibold hover:bg-primary/90 transition-colors"
+            className="shrink-0 h-7 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors"
           >
             {loading ? '…' : 'Criar'}
           </button>
