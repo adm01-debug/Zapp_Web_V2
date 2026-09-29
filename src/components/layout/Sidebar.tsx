@@ -20,6 +20,7 @@ interface SidebarProps {
   currentView: string;
   onViewChange: (view: string) => void;
   inboxBadge?: number;
+  teamChatBadge?: number;
   profile?: { name?: string | null; avatar_url?: string | null } | null;
   userEmail?: string;
   signOut?: () => void;
@@ -31,6 +32,7 @@ export const Sidebar = React.memo(function Sidebar({
   currentView,
   onViewChange,
   inboxBadge,
+  teamChatBadge,
   profile,
   userEmail,
   signOut,
@@ -121,7 +123,7 @@ export const Sidebar = React.memo(function Sidebar({
                   item={item}
                   currentView={currentView}
                   onViewChange={onViewChange}
-                  badge={item.id === 'inbox' ? inboxBadge : undefined}
+                  badge={item.id === 'inbox' ? inboxBadge : item.id === 'team-chat' ? teamChatBadge : undefined}
                   collapsed={collapsed}
                 />
               </li>

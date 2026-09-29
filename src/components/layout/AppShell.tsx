@@ -18,6 +18,7 @@ import { useNavShortcuts } from '@/hooks/ui/useNavShortcuts';
 import { toast } from 'sonner';
  import { useVoiceAgent } from '@/hooks/voice/useVoiceAgent';
 import { useAgentPresenceJoin } from '@/hooks/crm/useAgentPresence';
+import { useTeamUnreadTotal } from '@/hooks/team-chat/useTeamUnreadTotal';
 
 const LazyVoiceOverlay = lazy(() => import('@/components/voice/VoiceSearchOverlayConnected'));
 
@@ -62,6 +63,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
   const isInboxView = currentView === 'inbox' || currentView === 'team-chat';
   const { startTransition } = useViewTransition();
   const [voiceOpen, setVoiceOpen] = useState(false);
+  const teamUnreadTotal = useTeamUnreadTotal();
 
   const handleViewChange = useCallback((viewId: string) => {
     startTransition(() => setCurrentView(viewId));
@@ -108,6 +110,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
           currentView={currentView}
           onViewChange={handleViewChange}
           inboxBadge={unreadNotifications || undefined}
+          teamChatBadge={teamUnreadTotal || undefined}
           profile={profile}
           userEmail={userEmail}
           signOut={signOut}
