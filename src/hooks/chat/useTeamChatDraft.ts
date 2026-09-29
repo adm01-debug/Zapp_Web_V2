@@ -52,7 +52,7 @@ export function useTeamChatDraft({ conversationId, text, setText, onFileSent }: 
     try { localStorage.removeItem(`${DRAFT_KEY_PREFIX}${conversationId}`); } catch { /* storage unavailable */ }
   }, [conversationId]);
 
-  // Paste images from clipboard
+  // Paste images from clipboard (E60: usa auth.uid() e signed URL)
   const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
     const items = e.clipboardData?.items;
     if (!items || !profile || pasteUploading) return;
@@ -64,18 +64,23 @@ export function useTeamChatDraft({ conversationId, text, setText, onFileSent }: 
 
         setPasteUploading(true);
         try {
+          const { data: userData, error: authErr } = await supabase.auth.getUser();
+          if (authErr || !userData.user) throw authErr ?? new Error('Não autenticado');
+          const authUid = userData.user.id;
+
           const ext = file.type.split('/')[1] || 'png';
-          const path = `${profile.id}/${conversationId}/${Date.now()}_paste.${ext}`;
+          const path = `${authUid}/${conversationId}/${Date.now()}_paste.${ext}`;
           const { error: uploadError } = await supabase.storage
             .from('team-chat-files')
             .upload(path, file, { contentType: file.type });
           if (uploadError) throw uploadError;
 
-          const { data: urlData } = supabase.storage
+          const { data: signedData, error: signErr } = await supabase.storage
             .from('team-chat-files')
-            .getPublicUrl(path);
+            .createSignedUrl(path, 3600);
+          if (signErr || !signedData?.signedUrl) throw signErr ?? new Error('URL assinada falhou');
 
-          onFileSent(urlData.publicUrl, 'image', `📋 Imagem colada`);
+          onFileSent(signedData.signedUrl, 'image', `📋 Imagem colada`);
         } catch (err) {
           log.error('Paste image upload error:', err);
           toast.error('Erro ao enviar imagem colada');

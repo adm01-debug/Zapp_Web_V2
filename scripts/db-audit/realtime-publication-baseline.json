@@ -1,36 +1,11 @@
 {
-  "schema_version": 1,
-  "project_ref": "tnnnlkbymytvtqngbbqh",
+  "captured_at": "2026-09-29",
   "publication": "supabase_realtime",
-  "tables": [
-    "public.agent_presence",
-    "public.agent_stats",
-    "public.calls",
-    "public.contacts",
-    "public.conversation_sla",
-    "public.email_messages",
-    "public.email_threads",
-    "public.message_reactions",
-    "public.messages",
-    "public.multiplix_dispatches",
-    "public.multiplix_recipients",
-    "public.notifications",
-    "public.payment_links",
-    "public.queue_goals",
-    "public.queue_members",
-    "public.queues",
-    "public.sales_deals",
-    "public.talkx_campaign_events",
-    "public.talkx_campaigns",
-    "public.talkx_recipients",
-    "public.talkx_segments",
-    "public.talkx_templates",
-    "public.team_conversation_members",
-    "public.team_message_reactions",
-    "public.team_message_receipts",
-    "public.team_messages",
-    "public.warroom_alerts",
-    "public.whatsapp_connections",
-    "public.whisper_messages"
+  "team_chat_tables": [
+    { "schema": "public", "table": "team_conversations" },
+    { "schema": "public", "table": "team_conversation_members" },
+    { "schema": "public", "table": "team_messages" },
+    { "schema": "public", "table": "team_message_reactions" },
+    { "schema": "public", "table": "team_message_receipts" }
   ]
 }
