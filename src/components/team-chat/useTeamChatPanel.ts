@@ -40,6 +40,8 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const [oldestCursor, setOldestCursor] = useState<string | null>(null);
   const [hasOlderMessages, setHasOlderMessages] = useState(true);
   const [isFetchingOlder, setIsFetchingOlder] = useState(false);
+  const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
+  const [rpcResults, setRpcResults] = useState<TeamMessage[] | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -168,9 +170,46 @@ export function useTeamChatPanel(conversation: TeamConversation) {
 
   const filteredMessages = useMemo(() => {
     if (!debouncedSearchQuery.trim()) return messages;
+    if (rpcResults !== null) return rpcResults;
     const q = debouncedSearchQuery.toLowerCase();
     return messages.filter(m => m.content?.toLowerCase().includes(q));
-  }, [messages, debouncedSearchQuery]);
+  }, [messages, debouncedSearchQuery, rpcResults]);
+
+  useEffect(() => {
+    setRpcResults(null);
+    if (!debouncedSearchQuery.trim()) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result = await (supabase as any).rpc('search_team_messages', {
+          p_conversation_id: conversation.id,
+          p_query: debouncedSearchQuery.trim(),
+          p_limit: 50,
+        }) as { data: TeamMessage[] | null; error: { message: string } | null };
+        if (cancelled || result.error) return;
+        setRpcResults(result.data ?? []);
+      } catch (_err) {
+        // E42 DDL pendente — fallback client-side ativo
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [debouncedSearchQuery, conversation.id]);
+
+  useEffect(() => {
+    if (!pendingScrollId) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    const target = el.querySelector<HTMLElement>(`[data-message-id="${pendingScrollId}"]`);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPendingScrollId(null);
+    } else if (hasOlderMessages && !isFetchingOlder) {
+      void fetchOlderMessages();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, pendingScrollId, hasOlderMessages, fetchOlderMessages]);
 
   const checkNearBottom = useCallback(() => {
     const el = scrollRef.current;
@@ -188,6 +227,12 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       setShowScrollDown(false);
     }
+  }, []);
+
+  const handleScrollToMessage = useCallback((messageId: string) => {
+    setShowSearch(false);
+    setSearchQuery('');
+    setPendingScrollId(messageId);
   }, []);
 
   const handleSend = useCallback(async () => {
@@ -339,65 +384,19 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   }, [profile, conversation.id, sendMutation]);
 
   return {
-    profile,
-    messages,
-    filteredMessages,
-    isLoading,
-    isMuted,
-    canTransfer,
-    isGroupCreator,
-    isFetchingOlder,
-    hasOlderMessages,
-    fetchOlderMessages,
-    showStats,
-    setShowStats,
-    showTransferDialog,
-    setShowTransferDialog,
-    showGroupManagement,
-    setShowGroupManagement,
-    text,
-    setText,
-    replyTo,
-    setReplyTo,
-    editingId,
-    editText,
-    setEditText,
-    showSearch,
-    setShowSearch,
-    searchQuery,
-    setSearchQuery,
-    showAddMembers,
-    setShowAddMembers,
-    isRecordingAudio,
-    setIsRecordingAudio,
-    showScrollDown,
-    scrollRef,
-    searchInputRef,
-    isNearBottomRef,
-    checkNearBottom,
-    scrollToBottom,
-    handleSend,
-    handleDelete,
-    handleStartEdit,
-    handleSaveEdit,
-    handleCancelEdit,
-    handleCopyMessage,
-    handleAudioSend,
-    handleFileSent,
-    handleSendSticker,
-    handleSendAudioMeme,
-    handleSendCustomEmoji,
-    handlePin,
-    handleArchive,
-    handleVoiceChange,
-    handleSpeedChange,
-    sendMutation,
-    muteMutation,
-    renameConvMutation,
-    removeMemberMutation,
-    leaveMutation,
-    deleteConvMutation,
-    tts,
-    reactions,
+    profile, messages, filteredMessages, isLoading, isMuted, canTransfer, isGroupCreator,
+    isFetchingOlder, hasOlderMessages, fetchOlderMessages,
+    showStats, setShowStats, showTransferDialog, setShowTransferDialog,
+    showGroupManagement, setShowGroupManagement,
+    text, setText, replyTo, setReplyTo, editingId, editText, setEditText,
+    showSearch, setShowSearch, searchQuery, setSearchQuery,
+    showAddMembers, setShowAddMembers, isRecordingAudio, setIsRecordingAudio,
+    showScrollDown, scrollRef, searchInputRef, isNearBottomRef,
+    checkNearBottom, scrollToBottom, handleScrollToMessage,
+    handleSend, handleDelete, handleStartEdit, handleSaveEdit, handleCancelEdit, handleCopyMessage,
+    handleAudioSend, handleFileSent, handleSendSticker, handleSendAudioMeme, handleSendCustomEmoji,
+    handlePin, handleArchive, handleVoiceChange, handleSpeedChange,
+    sendMutation, muteMutation, renameConvMutation, removeMemberMutation, leaveMutation, deleteConvMutation,
+    tts, reactions,
   };
 }
