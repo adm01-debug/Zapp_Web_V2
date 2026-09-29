@@ -15,7 +15,11 @@ set -euo pipefail
 # database system is shutting down", ...), so match the whole class by its
 # common "connection to server on socket ... failed:" prefix instead of one
 # exact suffix — confirmed both suffixes on the same branch within minutes.
-BOOTSTRAP_FAILURE_PATTERN='FAIL: PostgreSQL de teste não iniciou|connection to server on socket .* failed:|Error response from daemon: toomanyrequests'
+BOOTSTRAP_FAILURE_PATTERN='FAIL: PostgreSQL de teste não iniciou|connection to server on socket .* failed:|Error response from daemon: toomanyrequests|registro de imagens indisponivel'
+# A última alternativa é a mensagem que o proprio teste do Talk X emite quando o
+# pre-pull esgota as tentativas: sem ela o wrapper nao reconheceria o flake (a
+# mensagem do teste substitui o texto original do docker) e nao repetiria o
+# bootstrap -- foi exatamente o que o log do CI mostrou na 1a versao deste fix.
 # Terceira assinatura de bootstrap (29/09/2026): o registro público do ECR da AWS
 # (public.ecr.aws, de onde vem postgrest:v14.5) limita pull anônimo por IP e devolve
 # "Error response from daemon: toomanyrequests: Data limit exceeded". Em runner do
