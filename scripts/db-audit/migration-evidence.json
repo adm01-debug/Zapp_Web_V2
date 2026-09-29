@@ -741,7 +741,7 @@
       "kind": "ledger-divergence/pinned-replay",
       "reason": "safer-replay",
       "related_migration": null,
-      "justification": "Migration aplicada no banco com o SQL corrigido (search_contacts com as 23 colunas de retorno) depois de o gateway recusar 42P13 na primeira tentativa; o arquivo no repo preserva o replay anterior, de 20 colunas, porque migration ja aplicada e imutavel (guarda do db-guard). O conteudo correto e o do ledger; o replay fica fixado por hash proprio."
+      "justification": "Migration aplicada no banco com o SQL corrigido (search_contacts com as 23 colunas de retorno) depois de o gateway recusar 42P13 na primeira tentativa; o arquivo no repo preserva o replay anterior, de 17 colunas, porque migration ja aplicada e imutavel (guarda do db-guard). O arquivo foi tambem renomeado dentro do proprio PR #1172, depois de ja aplicado, para evitar colisao de versao -- rastro registrado em docs/audits/DIAGNOSTICO_GUARDAS_HERMES_E_DIVERGENCIAS_2026-09-29.md. O conteudo correto e o do ledger; o replay fica fixado por hash proprio."
     }
   ]
 }

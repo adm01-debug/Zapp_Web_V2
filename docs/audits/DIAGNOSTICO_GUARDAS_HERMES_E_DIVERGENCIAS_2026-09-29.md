@@ -29,6 +29,12 @@ vigor. Não há ação pendente para o executor.
 
 ## 2. `search_contacts`: arquivo de 17 colunas × SQL vivo de 23 colunas
 
+**Rastro (confirmado pelo Joaquim em 29/09/2026):** o arquivo foi **renomeado dentro do próprio PR
+#1172**, depois de já estar aplicado, para evitar colisão de versão. Isso se soma à causa do
+conteúdo divergente: o SQL corrigido (23 colunas) foi aplicado direto no banco depois de o gateway
+recusar `42P13` na primeira tentativa, e o arquivo ficou com o replay anterior — porque migration
+aplicada é imutável (regra 7). A entrada de evidência registra as duas coisas.
+
 - O arquivo `supabase/migrations/20260929370000_*.sql` (F1) declara `search_contacts` com 17
   colunas; o SQL efetivamente aplicado (guardado no ledger) tem 23 — as seis colunas de endereço
   (`address, address_number, neighborhood, city, state, postal_code`).
