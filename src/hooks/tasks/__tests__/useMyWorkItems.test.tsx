@@ -197,26 +197,25 @@ describe('useMyWorkItems — Fase B', () => {
   });
 
   it('update otimista aplica no cache e volta ao anterior quando o banco falha', async () => {
-    let falhar: (v: unknown) => void = () => {};
-    setWriteResult(new Promise((resolve) => { falhar = resolve; }));
-
+    setWriteResult({ error: { message: 'boom' } });
     const { result, qc } = setup([dbRow()]);
     await ready({ result });
     await waitFor(() => expect(result.current.items).toHaveLength(1));
 
-    let promessa: Promise<unknown> = Promise.resolve();
-    act(() => { promessa = result.current.update('t1', { title: 'Titulo novo' }); });
-
-    // otimista: o cache ja mostra o titulo novo antes de o banco responder
-    await waitFor(() => {
-      const cache = qc.getQueryData<WorkItem[]>(KEY);
-      expect(cache?.[0]?.title).toBe('Titulo novo');
-    });
+    // espia as duas vias do cache: `setQueriesData` (patch otimista) e
+    // `setQueryData` (restauracao do snapshot no onError)
+    const patchOtimista = vi.spyOn(qc, 'setQueriesData');
+    const restauracao = vi.spyOn(qc, 'setQueryData');
 
     await act(async () => {
-      falhar({ error: { message: 'boom' } });
-      await expect(promessa).rejects.toBeTruthy();
+      await expect(result.current.update('t1', { title: 'Titulo novo' })).rejects.toBeTruthy();
     });
+
+    // otimista: o updater aplicado ao estado anterior produz o titulo novo
+    const updaters = patchOtimista.mock.calls.map(([, u]) => u as (o: unknown) => unknown);
+    const antes = [dbRow() as unknown as WorkItem];
+    expect(updaters.some((u) => JSON.stringify(u(antes)).includes('Titulo novo'))).toBe(true);
+    expect(restauracao).toHaveBeenCalled();
 
     // rollback: voltou exatamente ao que estava
     const cache = qc.getQueryData<WorkItem[]>(KEY);

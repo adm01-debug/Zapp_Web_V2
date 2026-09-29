@@ -5,12 +5,17 @@
  * exatamente do mesmo mock do cliente Supabase. Ficando em um lugar só, não há
  * duplicação de código novo (o gate do SonarCloud limita a 3% no código novo).
  *
+ * O builder encadeável reaproveita `createQueryBuilder` de `./supabase` em vez de
+ * reimplementá-lo: um builder para leitura (`select`) e outro para escrita
+ * (`insert`/`update`/`upsert`), o que permite testar rollback de mutation.
+ *
  * IMPORTANTE: importe este módulo ANTES do módulo sob teste. Os `vi.mock` abaixo
- * são registrados no momento do import (o Vitest os hoisteia dentro deste módulo).
+ * são registrados no momento do import.
  */
 import { vi } from 'vitest';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createQueryBuilder } from './supabase';
 
 /** Espiões compartilhados: substituem o Supabase/sonner/undoToast/useAuth.
  *
@@ -44,29 +49,16 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
-/** Builder encadeável e "awaitable": aceita qualquer ordem de encadeamento. */
-export type Chainable = Record<string, (...args: unknown[]) => Chainable> & {
-  then: (onOk: (v: unknown) => unknown, onErr?: (e: unknown) => unknown) => Promise<unknown>;
-};
+/** O que o cliente falso devolve numa consulta. */
+export type MockResult = { data?: unknown; error?: unknown };
 
-export function makeChainable(result: unknown): Chainable {
-  const q = {
-    then: (onOk: (v: unknown) => unknown, onErr?: (e: unknown) => unknown) =>
-      Promise.resolve(result).then(onOk, onErr),
-  } as Chainable;
-  for (const m of ['eq', 'neq', 'or', 'not', 'order', 'limit', 'is', 'in']) {
-    q[m] = () => q;
-  }
-  return q;
-}
-
-let selectResult: unknown = { data: [], error: null };
-let writeResult: unknown = { error: null };
+let selectResult: MockResult = { data: [], error: null };
+let writeResult: MockResult = { error: null };
 
 /** O que a próxima leitura (`select`) devolve. */
-export function setSelectResult(result: unknown) { selectResult = result; }
-/** O que a próxima escrita (`insert`/`update`/`upsert`) devolve (aceita Promise). */
-export function setWriteResult(result: unknown) { writeResult = result; }
+export function setSelectResult(result: MockResult) { selectResult = result; }
+/** O que a próxima escrita (`insert`/`update`/`upsert`) devolve. */
+export function setWriteResult(result: MockResult) { writeResult = result; }
 
 /** Zera os espiões e reinstala o cliente falso. Chamar em `beforeEach`. */
 export function resetSupabaseMock() {
@@ -78,15 +70,19 @@ export function resetSupabaseMock() {
     on: vi.fn().mockReturnThis(),
     subscribe: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }),
   });
-  supabaseMock.from.mockImplementation(() => ({
-    select: (cols: string) => { supabaseMock.select(cols); return makeChainable(selectResult); },
-    insert: (row: unknown) => { supabaseMock.insert(row); return makeChainable(writeResult); },
-    update: (patch: unknown) => { supabaseMock.update(patch); return makeChainable(writeResult); },
-    upsert: (rows: unknown, opts: unknown) => {
-      supabaseMock.upsert(rows, opts);
-      return makeChainable(writeResult);
-    },
-  }));
+  supabaseMock.from.mockImplementation(() => {
+    const leitura = createQueryBuilder(selectResult.data ?? null, selectResult.error ?? null);
+    const escrita = createQueryBuilder(null, writeResult.error ?? null);
+    return {
+      select: (cols: string) => { supabaseMock.select(cols); return leitura; },
+      insert: (row: unknown) => { supabaseMock.insert(row); return escrita; },
+      update: (patch: unknown) => { supabaseMock.update(patch); return escrita; },
+      upsert: (rows: unknown, opts: unknown) => {
+        supabaseMock.upsert(rows, opts);
+        return escrita;
+      },
+    };
+  });
 }
 
 /** `QueryClient` de teste (sem retry, sem cache entre casos). */
