@@ -1,0 +1,11 @@
+-- E31: team_conversation_members — last_read_at CHECK + performance indexes
+ALTER TABLE public.team_conversation_members
+  ADD CONSTRAINT team_conv_members_last_read_at_check
+    CHECK (last_read_at IS NULL OR last_read_at <= now() + interval '5 seconds');
+
+CREATE INDEX IF NOT EXISTS idx_team_conv_members_profile_id
+  ON public.team_conversation_members(profile_id);
+
+CREATE INDEX IF NOT EXISTS idx_team_conv_members_conv_muted
+  ON public.team_conversation_members(conversation_id, is_muted)
+  WHERE is_muted = true;
