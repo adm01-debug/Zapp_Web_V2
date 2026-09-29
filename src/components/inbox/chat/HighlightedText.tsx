@@ -4,6 +4,12 @@ interface HighlightedTextProps {
   text: string;
   query: string;
   className?: string;
+  /**
+   * E31: além da cor, o trecho casado sai em negrito. Opcional porque o chat (que já usa este
+   * componente) tem o destaque por cor como referência visual — só a lista de sugestões pede o
+   * negrito.
+   */
+  emphasize?: boolean;
 }
 
 /** Normalize for accent-insensitive matching */
@@ -42,6 +48,7 @@ export const HighlightedText = memo(function HighlightedText({
   text,
   query,
   className,
+  emphasize = false,
 }: HighlightedTextProps) {
   if (!query.trim() || !text) {
     return <span className={className}>{text}</span>;
@@ -101,7 +108,7 @@ export const HighlightedText = memo(function HighlightedText({
         part.highlight ? (
           <mark
             key={i}
-            className="bg-[hsl(var(--warning)/0.35)] dark:bg-[hsl(var(--warning)/0.25)] text-inherit rounded-sm px-0.5"
+            className={`bg-[hsl(var(--warning)/0.35)] dark:bg-[hsl(var(--warning)/0.25)] text-inherit rounded-sm px-0.5${emphasize ? ' font-semibold' : ''}`}
           >
             {part.text}
           </mark>

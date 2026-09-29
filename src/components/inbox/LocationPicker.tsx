@@ -11,6 +11,8 @@ import { cn } from '@/lib/utils';
 import { LocationMessage } from '@/types/chat';
 import { useFeatureFlag } from '@/hooks/system/useFeatureFlag';
 import { HighlightedText } from './chat/HighlightedText';
+import { SuggestionList } from './location-picker/SuggestionList';
+import { searchFailureText } from './location-picker/searchErrors';
 import { useLocationPicker } from './location-picker/useLocationPicker';
 import { useAddressAutocomplete } from './location-picker/useAddressAutocomplete';
 import type { GeoSuggestion } from '@/lib/mapboxGeocode';
@@ -22,22 +24,8 @@ interface LocationPickerProps {
   onSend: (location: LocationMessage) => Promise<void> | void;
 }
 
-// Ícone por tipo de sugestão do Search Box (E22). 'address' e 'other' caem no mesmo pino
-// genérico — não há um símbolo melhor no set do lucide para "endereço avulso".
-const SUGGESTION_ICON: Record<GeoSuggestion['kind'], typeof MapPin> = {
-  poi: MapPin,
-  street: Route,
-  place: Building2,
-  address: Milestone,
-  other: MapPin,
-};
-
-// Sem lib de distância no repo ainda — cálculo já vem pronto do /suggest (`distanceMeters`),
-// só falta o formato km/m local a este item (E22).
-function formatDistanceMeters(meters: number): string {
-  if (meters < 1000) return `${Math.round(meters)} m`;
-  return `${(meters / 1000).toFixed(1).replace('.', ',')} km`;
-}
+// Ícone por tipo de sugestão e formatação de distância vivem em `location-picker/SuggestionList.tsx`
+// (E32): os dois consumidores da lista — este picker e o cadastro de contato — usam os mesmos.
 
 const ADDRESS_LISTBOX_ID = 'location-picker-address-listbox';
 
@@ -61,10 +49,10 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
   });
   const [addressListOpen, setAddressListOpen] = useState(false);
   const addressComboRef = useRef<HTMLDivElement>(null);
-  // E30: clique no mapa e GPS mudam `selectedLocation` pelo caminho antigo (reverseGeocode ->
-  // select), sem passar pelo autocomplete. Se a lista de sugestoes estava aberta ela precisa
-  // fechar E esvaziar - senao, ao focar o campo de novo (onFocus reabre incondicionalmente),
-  // a sugestao velha reaparece flutuando sobre o marcador que acabou de mudar por outra origem.
+  // E29 (M2): clique no mapa e GPS mudam `selectedLocation` pelo caminho antigo (reverseGeocode ->
+  // select), sem passar pelo autocomplete. O termo tem de sumir SEMPRE — antes isso só acontecia
+  // se a lista estivesse aberta, e o endereço antigo ficava escrito num campo que já apontava para
+  // outro ponto (o operador via um endereço que não era o que estava marcado).
   // Ajuste durante o render (nao um useEffect: react-hooks/set-state-in-effect proibe setState
   // sincrono no corpo do effect) - padrao React para "derivar estado quando uma prop muda".
   // useRef não pode ser lido/escrito durante o render (react-hooks/refs) - useState é o
@@ -72,7 +60,7 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
   const [prevSelectedLocation, setPrevSelectedLocation] = useState(selectedLocation);
   if (selectedLocation !== prevSelectedLocation) {
     setPrevSelectedLocation(selectedLocation);
-    if (selectedLocation && addressListOpen) {
+    if (selectedLocation) {
       setAddressListOpen(false);
       autocomplete.clear();
     }
@@ -90,8 +78,20 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
 
   const handleSelectSuggestion = async (index: number) => {
     const place = await autocomplete.select(index);
+    // E26: falha do `/retrieve` (com o fallback do E16 já tentado) não pode fechar a lista — o
+    // operador perde o que estava escolhendo e o campo fica sem coordenada. A lista continua
+    // aberta, o item mostra a causa e o aviso sai uma vez.
+    if (!place) {
+      const kind = autocomplete.retrieveError?.kind;
+      toast({
+        title: 'Não consegui obter a coordenada',
+        description: kind ? searchFailureText(kind) : 'Tente outra sugestão ou busque pelo endereço completo.',
+        variant: 'destructive',
+      });
+      return;
+    }
     setAddressListOpen(false);
-    if (place) chooseSearchResult(place);
+    chooseSearchResult(place);
   };
 
   const handleSend = async () => {
@@ -164,6 +164,13 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
                       value={autocomplete.query}
                       onChange={(e) => { autocomplete.setQuery(e.target.value); setAddressListOpen(true); }}
                       onFocus={() => setAddressListOpen(true)}
+                      onBlur={(e) => {
+                        // E30: sair do campo (Tab, clique em outro campo) fecha a lista. Um clique
+                        // numa opção não fecha: ela vive dentro do mesmo container, então o
+                        // `relatedTarget` continua dentro de `addressComboRef`.
+                        const proximo = e.relatedTarget as Node | null;
+                        if (!proximo || !addressComboRef.current?.contains(proximo)) setAddressListOpen(false);
+                      }}
                       onKeyDown={(e) => {
                         autocomplete.onKeyDown(e);
                         if (e.key === 'Escape') setAddressListOpen(false);
@@ -179,69 +186,24 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
                       className="pl-9"
                     />
                   </div>
-                  {addressListOpen && (autocomplete.isLoading || autocomplete.error || autocomplete.suggestions.length > 0 || autocomplete.query.trim().length >= 3) && (
-                    <div
-                      id={ADDRESS_LISTBOX_ID}
-                      role="listbox"
-                      className="absolute z-20 mt-1 w-full rounded-lg border border-border bg-popover shadow-lg max-h-64 overflow-y-auto"
-                    >
-                      {autocomplete.isLoading && autocomplete.suggestions.length === 0 && (
-                        <div className="p-2 space-y-2">
-                          {[0, 1, 2].map((i) => <div key={i} className="h-9 rounded-md bg-muted animate-pulse" />)}
-                        </div>
-                      )}
-                      {!autocomplete.isLoading && autocomplete.error && autocomplete.suggestions.length === 0 && (
-                        <div className="px-3 py-3 flex items-center justify-between gap-2">
-                          <p className="text-sm text-muted-foreground">Falha ao buscar sugestões.</p>
-                          <Button size="sm" variant="ghost" onClick={() => autocomplete.retrySuggest()}>Tentar novamente</Button>
-                        </div>
-                      )}
-                      {!autocomplete.isLoading && !autocomplete.error && autocomplete.suggestions.length === 0 && autocomplete.query.trim().length >= 3 && (
-                        <p className="px-3 py-3 text-sm text-muted-foreground">Nada encontrado para &quot;{autocomplete.query}&quot;.</p>
-                      )}
-                      {autocomplete.suggestions.length > 0 && (
-                        <div className="divide-y divide-border">
-                          {autocomplete.suggestions.map((suggestion, index) => {
-                            const Icon = SUGGESTION_ICON[suggestion.kind];
-                            const highlighted = index === autocomplete.highlightedIndex;
-                            return (
-                              <button
-                                key={suggestion.id}
-                                id={`${ADDRESS_LISTBOX_ID}-option-${index}`}
-                                role="option"
-                                aria-selected={highlighted}
-                                type="button"
-                                onClick={() => void handleSelectSuggestion(index)}
-                                className={cn(
-                                  'w-full flex items-start gap-2 text-left px-3 py-2 min-h-11 hover:bg-muted/60 transition-colors',
-                                  highlighted && 'bg-muted/60'
-                                )}
-                              >
-                                <Icon className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium truncate">
-                                    <HighlightedText text={suggestion.name} query={autocomplete.query} />
-                                  </p>
-                                  <p className="text-xs text-muted-foreground truncate">
-                                    {suggestion.address}
-                                    {typeof suggestion.distanceMeters === 'number' && ` · ${formatDistanceMeters(suggestion.distanceMeters)}`}
-                                  </p>
-                                </div>
-                                {autocomplete.retrievingId === suggestion.id && (
-                                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0 mt-0.5" />
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                      <p className="px-3 py-1.5 text-3xs text-muted-foreground/70 bg-muted/30 border-t border-border">
-                        Powered by{' '}
-                        <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer" className="underline">
-                          Mapbox
-                        </a>
-                      </p>
-                    </div>
+                  {/* E23/E32: a lista é um componente só, e o que ela mostra vem do `status`
+                      (nunca de `suggestions.length` — era assim que "Nada encontrado" aparecia em
+                      cima de falha e de pausa). */}
+                  {addressListOpen && autocomplete.status !== 'idle' && (
+                    <SuggestionList
+                      listboxId={ADDRESS_LISTBOX_ID}
+                      status={autocomplete.status}
+                      query={autocomplete.query}
+                      suggestions={autocomplete.suggestions}
+                      highlightedIndex={autocomplete.highlightedIndex}
+                      retrievingId={autocomplete.retrievingId}
+                      error={autocomplete.error}
+                      blocked={autocomplete.blocked}
+                      pausedUntil={autocomplete.pausedUntil}
+                      retrieveError={autocomplete.retrieveError}
+                      onSelect={(index) => { void handleSelectSuggestion(index); }}
+                      onRetry={() => autocomplete.retrySuggest()}
+                    />
                   )}
                 </div>
               ) : (

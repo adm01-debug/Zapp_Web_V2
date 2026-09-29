@@ -12,6 +12,7 @@ import { useExternalEmpresas } from '@/hooks/crm/useExternalEmpresas';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useContactFormValidation } from './useContactFormValidation';
 import { useAddressAutocomplete } from '@/components/inbox/location-picker/useAddressAutocomplete';
+import { SuggestionList } from '@/components/inbox/location-picker/SuggestionList';
 import { getMapboxToken } from '@/lib/mapboxToken';
 import type { GeoSearchPlace } from '@/lib/mapboxGeocode';
 
@@ -19,7 +20,7 @@ const ADDRESS_LISTBOX_ID = 'contact-form-address-listbox';
 /** Só endereço/rua/cidade (E41) — POI não faz sentido para "onde entregar o brinde". */
 const ADDRESS_SEARCH_TYPES = 'address,street,place';
 
-interface ContactFormValues {
+export interface ContactFormValues {
   name: string;
   nickname?: string | null;
   surname?: string | null;
@@ -119,9 +120,15 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
 
   const handleSelectAddressSuggestion = async (index: number) => {
     const place = await addressAutocomplete.select(index);
+    // E26: sem coordenada não há o que preencher — a lista continua aberta (com a causa no item)
+    // em vez de fechar e deixar o operador achando que a escolha não pegou.
+    if (!place) {
+      setAddressListOpen(true);
+      return;
+    }
     setAddressListOpen(false);
     addressAutocomplete.clear();
-    if (place) fillFromPlace(place);
+    fillFromPlace(place);
   };
 
   return (
@@ -302,68 +309,23 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
                   }}
                   maxLength={200}
                 />
-                {addressListOpen && (
-                  addressAutocomplete.isLoading ||
-                  addressAutocomplete.error ||
-                  addressAutocomplete.suggestions.length > 0 ||
-                  addressAutocomplete.query.trim().length >= 3
-                ) && (
-                  <div
-                    id={ADDRESS_LISTBOX_ID}
-                    role="listbox"
-                    className="absolute z-20 mt-1 w-full rounded-lg border border-border bg-popover shadow-lg max-h-56 overflow-y-auto"
-                  >
-                    {addressAutocomplete.isLoading && addressAutocomplete.suggestions.length === 0 && (
-                      <div className="p-2 space-y-2">
-                        {[0, 1, 2].map((i) => <div key={i} className="h-9 rounded-md bg-muted animate-pulse" />)}
-                      </div>
-                    )}
-                    {!addressAutocomplete.isLoading && addressAutocomplete.error && addressAutocomplete.suggestions.length === 0 && (
-                      <div className="px-3 py-3 flex items-center justify-between gap-2">
-                        <p className="text-sm text-muted-foreground">Falha ao buscar sugestões.</p>
-                        <Button size="sm" variant="ghost" onClick={() => addressAutocomplete.retrySuggest()}>Tentar novamente</Button>
-                      </div>
-                    )}
-                    {!addressAutocomplete.isLoading && !addressAutocomplete.error && addressAutocomplete.suggestions.length === 0 && addressAutocomplete.query.trim().length >= 3 && (
-                      <p className="px-3 py-3 text-sm text-muted-foreground">Nada encontrado para &quot;{addressAutocomplete.query}&quot;.</p>
-                    )}
-                    {addressAutocomplete.suggestions.length > 0 && (
-                      <div className="divide-y divide-border">
-                        {addressAutocomplete.suggestions.map((suggestion, index) => {
-                          const highlighted = index === addressAutocomplete.highlightedIndex;
-                          return (
-                            <button
-                              key={suggestion.id}
-                              id={`${ADDRESS_LISTBOX_ID}-option-${index}`}
-                              role="option"
-                              aria-selected={highlighted}
-                              type="button"
-                              onClick={() => void handleSelectAddressSuggestion(index)}
-                              className={cn(
-                                'w-full flex items-start gap-2 text-left px-3 py-2 min-h-11 hover:bg-muted/60 transition-colors',
-                                highlighted && 'bg-muted/60'
-                              )}
-                            >
-                              <MapPin className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">{suggestion.name}</p>
-                                <p className="text-xs text-muted-foreground truncate">{suggestion.address}</p>
-                              </div>
-                              {addressAutocomplete.retrievingId === suggestion.id && (
-                                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0 mt-0.5" />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                    <p className="px-3 py-1.5 text-3xs text-muted-foreground/70 bg-muted/30 border-t border-border">
-                      Powered by{' '}
-                      <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer" className="underline">
-                        Mapbox
-                      </a>
-                    </p>
-                  </div>
+                {/* E32: mesma lista do picker do inbox — antes eram duas cópias divergindo (uma
+                    sem destaque, a outra sem a causa da falha por item). */}
+                {addressListOpen && addressAutocomplete.status !== 'idle' && (
+                  <SuggestionList
+                    listboxId={ADDRESS_LISTBOX_ID}
+                    status={addressAutocomplete.status}
+                    query={addressAutocomplete.query}
+                    suggestions={addressAutocomplete.suggestions}
+                    highlightedIndex={addressAutocomplete.highlightedIndex}
+                    retrievingId={addressAutocomplete.retrievingId}
+                    error={addressAutocomplete.error}
+                    blocked={addressAutocomplete.blocked}
+                    pausedUntil={addressAutocomplete.pausedUntil}
+                    retrieveError={addressAutocomplete.retrieveError}
+                    onSelect={(index) => { void handleSelectAddressSuggestion(index); }}
+                    onRetry={() => addressAutocomplete.retrySuggest()}
+                  />
                 )}
               </div>
             </div>
