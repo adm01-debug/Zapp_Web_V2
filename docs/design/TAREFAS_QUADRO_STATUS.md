@@ -94,7 +94,36 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 ## CP-C Sheet       [ ] WorkItemSheet= · ?task= · Aguardando por DnD/kebab/menu= · kebab 5 grupos= · RemindChip popover= · ContactChip=
 ## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
-## CP-E Telas       [ ] KPIs 88px= · filtros 3 modos= · Concluídas 7d= · Quadro WIP/ordem= · Agenda grupos= · 0 requests na troca=
+## CP-E Telas       [~] etapa 47 (B7) fechada 29/09/2026 (executor: Hermes) · KPIs 88px= · filtros 3 modos= · Concluídas 7d= · Quadro WIP/ordem= · Agenda grupos= · 0 requests na troca= · modo por rota: ok
+
+## Etapa 47 (B7) — modo por rota (Fase E) — evidências
+
+**Regra do plano:** `?view=pipeline` abre SEMPRE no Quadro; `?view=tasks` retoma o último modo salvo (ou a Lista); a preferência só é gravada no `onChange` do `ModeSwitcher`.
+
+**Causa no código (por que as duas telas ficaram idênticas):** `src/pages/ViewRouter.tsx` apontava os DOIS itens do menu para o mesmo componente, sem props — `'pipeline'` (menu "Quadro", Alt+P) e `'tasks'` (menu "Tarefas", Alt+K) — e `TasksModule` preferia o modo salvo no `localStorage` sobre o `defaultMode`. O mesmo componente, no mesmo modo, era servido pelos dois caminhos.
+
+**Mudanças (4 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/pages/viewRouteProps.ts` (novo) | contrato de entrada das rotas do módulo: `pipeline` = `{ defaultMode: 'board', forceMode: true }` |
+| `src/pages/ViewRouter.tsx` | `pipeline` sai do `VIEW_MAP` e entra em `SPECIAL_VIEWS` passando o contrato; `tasks` segue sem props |
+| `src/components/tasks/TasksModule.tsx` | prop `forceMode`: o modo da rota vence o salvo; a gravação continua só em `setMode` (troca pelo usuário) |
+| `src/components/tasks/__tests__/TasksModule.test.tsx` | 5 casos novos + `TooltipProvider` no harness (a app fornece em `Providers`) |
+
+**Teste de mutação (4 mutações, uma por vez, árvore restaurada entre elas):**
+
+| mutação | resultado |
+|---|---|
+| M1 `TasksModule` sem `forceMode` | 2 vermelhos (os 2 casos de `pipeline`) |
+| M2 `TasksModule` ignora o modo salvo | 1 vermelho (`tasks` retoma o salvo) |
+| M3 rota `pipeline` sem `forceMode` | 1 vermelho (contrato do roteador) |
+| M4 rota `pipeline` com `defaultMode: 'list'` | 1 vermelho (contrato do roteador) |
+
+**Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · `build` ✓ · bundle 315,5/340 KB inicial e 492,3/550 KB gzip ✓ · `db:guard` ✓ · suíte 4260 passed / 0 failed (311 arquivos, 40 todo) ✓
+
+**Achado fora do escopo (não corrigido):** `src/components/inbox/tabs/Crm360Tab.tsx:120/167/245` manda "Ver funil →" / "Ver pipeline →" para `navigateToView('pipeline')`; depois desta etapa esses botões abrem o Quadro de TAREFAS (antes caíam na mesma tela no modo salvo). Rótulo e destino são decisão de produto.
+
 ## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
 ## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=
 ## CP-H A11y        [ ] 7 atalhos= · aria-live= · reduced-motion 0s= · contraste= · mobile 3 modos= · light= · zen=
