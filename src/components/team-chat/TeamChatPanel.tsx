@@ -57,6 +57,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
     handlePin, handleArchive,
     handleVoiceChange, handleSpeedChange, sendMutation, muteMutation,
     leaveMutation, renameConvMutation, removeMemberMutation, deleteConvMutation, tts, reactions,
+    typingLabel, sendTyping,
   } = useTeamChatPanel(conversation);
 
   const [showDeptManagement, setShowDeptManagement] = useState(false);
@@ -203,11 +204,16 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
         </div>
       )}
 
+      {typingLabel && (
+        <div className="px-4 py-1 text-xs text-muted-foreground italic animate-pulse select-none">
+          {typingLabel}
+        </div>
+      )}
       <TeamChatInputArea conversationId={conversation.id} text={text} setText={setText} replyTo={replyTo}
         isRecordingAudio={isRecordingAudio} isPending={sendMutation.isPending} onSend={handleSend}
         onCancelReply={() => setReplyTo(null)} onRecordToggle={() => setIsRecordingAudio(!isRecordingAudio)}
         onAudioSend={handleAudioSend} onSendSticker={handleSendSticker} onSendAudioMeme={handleSendAudioMeme}
-        onSendCustomEmoji={handleSendCustomEmoji} onFileSent={handleFileSent} />
+        onSendCustomEmoji={handleSendCustomEmoji} onFileSent={handleFileSent} onTyping={sendTyping} />
 
       <AddMembersDialog open={showAddMembers} onOpenChange={setShowAddMembers} conversation={conversation} />
 

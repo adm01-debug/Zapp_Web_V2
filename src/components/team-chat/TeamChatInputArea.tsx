@@ -36,12 +36,13 @@ interface TeamChatInputAreaProps {
   onSendAudioMeme: (url: string) => void;
   onSendCustomEmoji: (url: string) => void;
   onFileSent: (mediaUrl: string, mediaType: string, fileName: string) => void;
+  onTyping?: (isTyping: boolean) => void;
 }
 
 export function TeamChatInputArea({
   conversationId, text, setText, replyTo, isRecordingAudio, isPending,
   onSend, onCancelReply, onRecordToggle, onAudioSend, onSendSticker,
-  onSendAudioMeme, onSendCustomEmoji, onFileSent,
+  onSendAudioMeme, onSendCustomEmoji, onFileSent, onTyping,
 }: TeamChatInputAreaProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showRichToolbar, setShowRichToolbar] = useState(false);
@@ -68,10 +69,11 @@ export function TeamChatInputArea({
     if (!draft.hasText || draft.isOverLimit || isPending) return;
     setSendAnimation(true);
     draft.clearDraft();
+    onTyping?.(false);
     if (isMobile && navigator.vibrate) navigator.vibrate(50);
     onSend();
     setTimeout(() => setSendAnimation(false), 400);
-  }, [draft.hasText, draft.isOverLimit, isPending, isMobile, onSend, draft.clearDraft]);
+  }, [draft.hasText, draft.isOverLimit, isPending, isMobile, onSend, draft.clearDraft, onTyping]);
 
   const handleVoiceDictation = useCallback((transcript: string) => {
     setText(text ? `${text} ${transcript}` : transcript);
@@ -135,7 +137,7 @@ export function TeamChatInputArea({
           <div className="flex-1 min-w-0 relative">
             <MentionAutocomplete inputValue={text} cursorPosition={mentionCursorPos} onSelect={handleMentionSelect} onClose={closeMention} isOpen={mentionOpen} />
             <textarea ref={textareaRef} value={text}
-              onChange={(e) => { setText(e.target.value); checkForMention(e.target.value, e.target.selectionStart ?? 0); }}
+              onChange={(e) => { setText(e.target.value); checkForMention(e.target.value, e.target.selectionStart ?? 0); onTyping?.(e.target.value.length > 0); }}
               onKeyDown={handleKeyDown} onPaste={draft.handlePaste}
               onClick={(e) => { const t = e.target as HTMLTextAreaElement; checkForMention(t.value, t.selectionStart ?? 0); }}
               placeholder="Digite uma mensagem... (/ para comandos, @ para mencionar)" rows={1}
