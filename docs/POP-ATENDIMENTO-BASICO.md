@@ -55,7 +55,7 @@ Padronizar o processo de atendimento ao cliente via WhatsApp no sistema ZAPP-WEB
 
 ## 5. RECURSOS NECESSÁRIOS
 
-- Acesso ao sistema ZAPP-WEB (https://pronto-talk-suite.lovable.app)
+- Acesso ao sistema ZAPP-WEB (https://zapp-web-v2.vercel.app)
 - Conta de atendente ativa
 - Conexão WhatsApp configurada (QR Code escaneado)
 - Headset (para áudios)
@@ -71,7 +71,7 @@ Padronizar o processo de atendimento ao cliente via WhatsApp no sistema ZAPP-WEB
 ┌─────────────────────────────────────────────────────────┐
 │ PASSO 1: Fazer login no sistema                        │
 ├─────────────────────────────────────────────────────────┤
-│ - Acessar: https://pronto-talk-suite.lovable.app       │
+│ - Acessar: https://zapp-web-v2.vercel.app              │
 │ - Inserir e-mail e senha                               │
 │ - Completar MFA se solicitado                          │
 └─────────────────────────────────────────────────────────┘

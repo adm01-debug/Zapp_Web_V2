@@ -22,7 +22,7 @@ Este runbook define procedimentos padronizados para resposta a incidentes no sis
 |-------|------|---------|----------|
 | **On-Call Principal** | Joaquim | WhatsApp / Slack | 24/7 |
 | **Supabase Support** | — | support@supabase.io | 24/7 |
-| **Lovable Support** | — | support@lovable.dev | Business hours |
+| **Vercel Support** | — | support@vercel.com | Business hours |
 | **Evolution API** | — | GitHub Issues | Business hours |
 
 ---
@@ -53,7 +53,7 @@ https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh
 
 # 2. Verificar status público
 https://status.supabase.com/
-https://status.lovable.dev/
+https://www.vercel-status.com/
 
 # 3. Testar conectividade DB
 curl -X POST "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/" \
@@ -73,7 +73,7 @@ curl -X POST "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/" \
 
 ### Escalação
 - **15 min sem resolução:** Escalar para Supabase Support
-- **30 min sem resolução:** Escalar para Lovable Support
+- **30 min sem resolução:** Escalar para Vercel Support
 
 ---
 
@@ -279,8 +279,8 @@ LIMIT 10;
 
 ### Dashboards
 - [Supabase Dashboard](https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh)
-- [Lovable Dashboard](https://lovable.dev/projects)
-- [ZAPP-WEB Produção](https://pronto-talk-suite.lovable.app)
+- [Vercel Dashboard](https://vercel.com/juca1/zapp_web_v2)
+- [ZAPP-WEB Produção (canônica)](https://zapp-web-v2.vercel.app)
 
 ### Documentação
 - [Backup & Recovery](./BACKUP-RECOVERY-STRATEGY.md)

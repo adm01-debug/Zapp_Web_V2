@@ -13,7 +13,7 @@
 
 > Plataforma omnichannel de atendimento ao cliente com WhatsApp, IA integrada, CRM e automações.
 
-**Deploy**: [pronto-talk-suite.lovable.app](https://pronto-talk-suite.lovable.app)
+**Deploy**: [zapp-web-v2.vercel.app](https://zapp-web-v2.vercel.app)
 
 ---
 
@@ -328,13 +328,13 @@ bun test src/hooks/
 
 ## Deploy
 
-O deploy é gerenciado automaticamente pelo **Lovable**:
-1. Edições no código disparam rebuild automático
-2. Edge Functions são deployadas automaticamente
-3. Migrations são aplicadas via ferramenta de migração
+O deploy é automático via **Vercel** (projeto `zapp_web_v2`, branch de produção `main`):
+1. Merge na `main` dispara o build e o deploy de produção
+2. Edge Functions são deployadas **manualmente** (workflow `deploy-functions.yml`)
+3. Migrations são aplicadas pelo fluxo versionado (`supabase/migrations/`)
 
 ### URLs
-- **Produção**: https://pronto-talk-suite.lovable.app
+- **Produção (canônica)**: https://zapp-web-v2.vercel.app
 
 ---
 
