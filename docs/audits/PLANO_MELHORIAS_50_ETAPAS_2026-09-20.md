@@ -325,7 +325,7 @@ Eram 36 em 16/09 — cresceu sem decisão. Incluir `prokind='f'` retorno `trigge
 ### E23 🟢 Varredura anti-prosa no ledger (herda E18/16-09)
 ```sql
 SELECT version FROM supabase_migrations.schema_migrations
-WHERE EXISTS (SELECT 1 FROM unnest(statements) s WHERE s ~ '\.\.\.' OR s ~* '\(add |resumo');
+WHERE EXISTS (SELECT 1 FROM unnest(statements) s WHERE s ~ '\.\.\.'' OR s ~* '\(add |resumo');
 ```
 - [x] 0 statements-prosa reais — 7 violações genuínas encontradas e corrigidas em 26/09 (ver
       "Re-verificação ao vivo"); as 10 restantes eram falso-positivo do regex (SQL completo)
