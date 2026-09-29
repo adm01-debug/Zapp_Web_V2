@@ -1,6 +1,13 @@
 # PLANO — Team Chat V2: remediação e conclusão da paridade com o V3 (100 etapas)
 
-**Data:** 2026-09-28 · **Status:** PLANEJADO — nada executado
+> **⚠️ SUPERSEDIDO em 2026-09-29.** A PR #1151 (`claude/confident-babbage-ivgmmn`) afirmou implementar os blocos
+> A–E deste plano. Auditoria etapa por etapa (`AUDITORIA_TEAM_CHAT_REMEDIACAO_2026-09-29.md`) contra o branch e o
+> banco ao vivo: **1 DONE · 24 PARCIAL · 21 DIVERGENTE · 54 AUSENTE**. Nenhuma migration foi aplicada (ledger em
+> `20260928210000`), e as 44 escritas usam `auth.uid()` como `profiles.id`, `profiles.is_admin` (inexistente) e
+> `department_audit_logs.actor_id` (inexistente) — se aplicadas, derrubam o módulo. O plano vigente é
+> `PLANO_TEAM_CHAT_CONCLUSAO_100_ETAPAS_2026-09-29.md`. Não use os checkboxes abaixo como evidência de nada.
+
+**Data:** 2026-09-28 · **Status:** SUPERSEDIDO (ver aviso acima) — nada aplicado em produção
 **Origem:** `AUDITORIA_TEAM_CHAT_V3_PARITY_2026-09-28.md` (21 DONE · 38 PARCIAL · 41 AUSENTE sobre o
 plano de 27/09) + inspeção ao vivo do banco `tnnnlkbymytvtqngbbqh` (PG 17.6) em 28/09.
 **Base de código:** `main` @ `b59bfc9`. **Ledger:** `max(version) = 20260928140200`;
