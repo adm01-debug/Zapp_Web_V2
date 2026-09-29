@@ -17,6 +17,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration_soft_delete="$repo_root/supabase/migrations/20260929370000_contacts_soft_delete_and_search_filters.sql"
 migration_sicoob="$repo_root/supabase/migrations/20260929380000_disable_sicoob_bridge_trigger.sql"
 migration_status="$repo_root/supabase/migrations/20260929560000_contacts_conversation_status_and_grants.sql"
+migration_delete_align="$repo_root/supabase/migrations/20260929720000_contacts_delete_align_edit_policy.sql"
 postgres_image="${CONTACTS_F1_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-contacts-f1-test-$$"
 tmp_dir="$(mktemp -d /tmp/zapp-v2-contacts-f1-test.XXXXXX)"
@@ -227,6 +228,7 @@ INSERT INTO public.profiles (id, user_id) VALUES
   ('10000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000002'),
   ('10000000-0000-0000-0000-000000000009','20000000-0000-0000-0000-000000000009');
 INSERT INTO public.queues VALUES ('50000000-0000-0000-0000-000000000001');
+INSERT INTO public.queues VALUES ('50000000-0000-0000-0000-000000000002');
 INSERT INTO public.queue_members VALUES ('50000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001',true);
 
 -- 3 contatos: um do agente comum, um de outro dono, um sem dono (invisivel para o comum).
@@ -234,6 +236,12 @@ INSERT INTO public.contacts (id, name, phone, contact_type, assigned_to, convers
   ('30000000-0000-0000-0000-000000000001','Contato do agente','5511900000001','cliente','10000000-0000-0000-0000-000000000001','open'),
   ('30000000-0000-0000-0000-000000000002','Contato de outro','5511900000002','cliente','10000000-0000-0000-0000-000000000002','open'),
   ('30000000-0000-0000-0000-000000000003','Contato sem dono','5511900000003','fornecedor',NULL,'open');
+-- 2 contatos COM fila, para a regra de exclusao alinhada a de edicao (policy de UPDATE):
+--   ...0004 na fila do agente (ele e membro ativo) e atribuido a OUTRO perfil  -> pode excluir
+--   ...0005 em fila alheia e atribuido a OUTRO perfil                         -> nao pode excluir
+INSERT INTO public.contacts (id, name, phone, contact_type, assigned_to, queue_id, conversation_status) VALUES
+  ('30000000-0000-0000-0000-000000000004','Contato da fila do agente','5511900000004','cliente','10000000-0000-0000-0000-000000000002','50000000-0000-0000-0000-000000000001','open'),
+  ('30000000-0000-0000-0000-000000000005','Contato de fila alheia','5511900000005','cliente','10000000-0000-0000-0000-000000000002','50000000-0000-0000-0000-000000000002','open');
 SQL
 psql_file "$tmp_dir/pre.sql" >/dev/null
 
@@ -255,6 +263,7 @@ expect_failure 'RED: transicao open->closed falha antes da migration 14' \
 psql_file "$migration_soft_delete" >/dev/null
 psql_file "$migration_sicoob" >/dev/null
 psql_file "$migration_status" >/dev/null
+psql_file "$migration_delete_align" >/dev/null
 
 # ── GREEN: etapa 14 (status canonico + FSM) ───────────────────────────────────────────────
 expect_value 'so existe UM CHECK de conversation_status' '1' \
@@ -287,8 +296,14 @@ expect_value 'contato excluido tem deleted_at preenchido' 't' \
   "SELECT (deleted_at IS NOT NULL) FROM public.contacts WHERE id='30000000-0000-0000-0000-000000000002'"
 expect_value 'dono exclui o proprio contato' '30000000-0000-0000-0000-000000000001' \
   "SET ROLE authenticated; SET request.jwt.claim.sub='$AGENTE'; SELECT public.delete_contact('30000000-0000-0000-0000-000000000001')"
-expect_failure 'agente comum nao exclui contato de outro (sem sucesso silencioso)' \
+expect_failure 'agente sem vinculo (nem dono, nem fila) nao exclui contato' \
   "SET ROLE authenticated; SET request.jwt.claim.sub='$AGENTE'; SELECT public.delete_contact('30000000-0000-0000-0000-000000000003')"
+expect_value 'agente membro ATIVO da fila exclui contato da fila (regra de edicao)' '30000000-0000-0000-0000-000000000004' \
+  "SET ROLE authenticated; SET request.jwt.claim.sub='$AGENTE'; SELECT public.delete_contact('30000000-0000-0000-0000-000000000004')"
+expect_failure 'agente de outra fila nao exclui contato de fila alheia' \
+  "SET ROLE authenticated; SET request.jwt.claim.sub='$AGENTE'; SELECT public.delete_contact('30000000-0000-0000-0000-000000000005')"
+expect_value 'admin exclui o contato de fila alheia (fecha o estado para as contagens)' '30000000-0000-0000-0000-000000000005' \
+  "SET ROLE authenticated; SET request.jwt.claim.sub='$ADMIN'; SELECT public.delete_contact('30000000-0000-0000-0000-000000000005')"
 expect_failure 'excluir duas vezes falha em vez de fingir sucesso' \
   "SET ROLE authenticated; SET request.jwt.claim.sub='$ADMIN'; SELECT public.delete_contact('30000000-0000-0000-0000-000000000002')"
 expect_failure 'delete_contacts sem nenhuma linha permitida falha' \
@@ -330,6 +345,7 @@ expect_value 'service_role preserva CRUD' 't' \
 psql_file "$migration_soft_delete" >/dev/null
 psql_file "$migration_sicoob" >/dev/null
 psql_file "$migration_status" >/dev/null
+psql_file "$migration_delete_align" >/dev/null
 expect_value 'reaplicacao nao duplica a coluna deleted_at' '1' \
   "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='contacts' AND column_name='deleted_at'"
 expect_value 'reaplicacao mantem um unico CHECK de status' '1' \
