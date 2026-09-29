@@ -146,7 +146,18 @@ describe('phoneQueryVariants (T14)', () => {
     expect(variants).toContain('11999992048');
     expect(variants).toContain('1199992048'); // sem o nono dígito
     expect(variants).toContain('011999992048'); // com tronco 0
-    expect(variants).toHaveLength(5);
+    // Tronco `0` SEM o nono dígito — a grafia que faltava. Sem ela, nem a
+    // grafia idêntica casava: uma chamada de `01199992048` não achava o
+    // contato salvo como `01199992048`.
+    expect(variants).toContain('01199992048');
+    expect(variants).toHaveLength(6);
+  });
+
+  it('cobre a grafia com tronco 0 e sem nono dígito (regressão do T14)', () => {
+    const variants = phoneQueryVariants('01199992048');
+    expect(variants).toContain('01199992048');
+    // e a decisão final continua sendo a forma E.164 completa
+    expect(phonesMatchExact('01199992048', '11999992048')).toBe(true);
   });
 
   it('entrada não normalizável → nenhuma variante (não vai ao banco)', () => {

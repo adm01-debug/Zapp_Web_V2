@@ -76,17 +76,23 @@ export class SipCallAdapter implements CallAdapter {
   }
 
   hangup(session: Session, direction: AdapterDirection): void {
-    if (session.state === 'Established') {
-      void session.bye();
-      return;
+    try {
+      if (session.state === 'Established') {
+        void session.bye();
+        return;
+      }
+      if (direction === 'outbound') {
+        // Atribuído antes do invite() resolver, para o cancelamento rápido achar
+        // a sessão mesmo com o INVITE ainda pendente.
+        void (session as Inviter).cancel();
+        return;
+      }
+      void this.reject(session as Invitation);
+    } catch (error) {
+      // `bye()`/`cancel()` podem lançar de forma síncrona. Antes esse erro era
+      // engolido com log; sem o catch ele sobe pelo clique do botão "desligar".
+      this.logger?.error('Hangup error:', error);
     }
-    if (direction === 'outbound') {
-      // Atribuído antes do invite() resolver, para o cancelamento rápido achar
-      // a sessão mesmo com o INVITE ainda pendente.
-      void (session as Inviter).cancel();
-      return;
-    }
-    void this.reject(session as Invitation);
   }
 
   attachRemoteAudio(session: Session): HTMLAudioElement | null {

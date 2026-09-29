@@ -106,7 +106,12 @@ export function phoneQueryVariants(raw: string | null | undefined): string[] {
   const local = e164.slice(3); // DDD + assinante
   const withoutNine = local.length === 11 ? `${local.slice(0, 2)}${local.slice(3)}` : local;
 
-  return Array.from(new Set([e164, e164.slice(1), local, withoutNine, `0${local}`]));
+  // As duas grafias com tronco `0` precisam estar aqui: o banco guarda números
+  // legados como `0`+DDD+assinante e a variante só com o nono dígito não casa
+  // com eles — nem quando a grafia do banco é igual à da chamada.
+  return Array.from(
+    new Set([e164, e164.slice(1), local, withoutNine, `0${local}`, `0${withoutNine}`]),
+  );
 }
 
 /**
