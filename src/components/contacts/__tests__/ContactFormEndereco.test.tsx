@@ -21,10 +21,15 @@ vi.mock('@/components/inbox/location-picker/useAddressAutocomplete', () => ({
     // F2/E13/E14: o cadastro usa o mesmo retry real do picker.
     retrySuggest: h.retrySuggest,
     blocked: null,
+    // F3/E23: a lista rende pelo `status` — aqui ele segue os dados do mock, como o hook real.
+    status: (h.error ? 'error' : h.suggestions.length > 0 ? 'ok' : 'idle') as SearchStatus,
+    pausedUntil: null,
+    retrieveError: null,
   }),
 }));
 
 import { ContactForm } from '../ContactForm';
+import type { SearchStatus } from '@/components/inbox/location-picker/useAddressAutocomplete';
 
 const base = { name: 'Fulano', phone: '5511999999999' };
 
