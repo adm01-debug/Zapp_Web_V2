@@ -13,6 +13,7 @@ import {
   scopeBaseline,
   stagedLintableFiles,
   stagedRemovedFiles,
+  stripVolatilePosition,
 } from "./lint-ratchet.mjs";
 
 test("ignora artefatos gerados de coverage no comando do ESLint", () => {
@@ -114,6 +115,76 @@ test("aceita deslocamento de linha quando a ocorrencia e a ancora permanecem", (
       message({ line: 3, column: 3, endLine: 3 }),
     ]);
     assert.deepEqual(compareBaseline(baseline, [moved], root).added, []);
+  } finally {
+    cleanup();
+  }
+});
+
+// Mensagem no formato do `react-hooks/purity`: o texto carrega o recorte de codigo COM os numeros
+// de linha e o `:linha:coluna` do arquivo, e os numeros acompanham o deslocamento.
+function purityMessage(line) {
+  return message({
+    ruleId: "react-hooks/purity",
+    messageId: "impure",
+    message:
+      `Error: Cannot call impure function during render. <ROOT>/src/a.ts:${line}:3 ` +
+      `${line - 1} | keep(); ` +
+      `> ${line} | impure(); ` +
+      "| ^^^^^^^^ Cannot call impure function " +
+      `${line + 1} | return 1;`,
+    line,
+    column: 3,
+    endLine: line,
+    endColumn: 11,
+  });
+}
+
+test("stripVolatilePosition tira numero de linha e posicao do arquivo, sem tocar no resto", () => {
+  assert.equal(
+    stripVolatilePosition("Erro /r/src/a.ts:73:18 71 | um(); > 73 | dois(); | ^^^ dois 74 | tres();"),
+    "Erro /r/src/a.ts | um(); | dois(); | ^^^ dois | tres();",
+  );
+  assert.equal(stripVolatilePosition("'x' is not defined."), "'x' is not defined.");
+  assert.equal(stripVolatilePosition("tentou as 12:34:56 do dia"), "tentou as 12:34:56 do dia");
+  assert.equal(stripVolatilePosition(undefined), undefined);
+});
+
+test("code frame com numeros de linha nao faz ocorrencia deslocada parecer nova", () => {
+  const { root, cleanup } = fixture();
+  try {
+    const source = "function a() {\n  keep();\n  impure();\n  return 1;\n}\n";
+    const baseline = createBaseline([result(root, "src/a.ts", source, [purityMessage(3)])], root);
+
+    // Uma linha inserida acima desloca a ocorrencia: o recorte passa a dizer 4 e 5, mas codigo e
+    // contexto sao os mesmos — antes desta normalizacao, isso virava divida "nova" e bloqueava o commit.
+    const deslocado = result(root, "src/a.ts", `// cabecalho novo\n${source}`, [purityMessage(4)]);
+
+    assert.deepEqual(compareBaseline(baseline, [deslocado], root).added, []);
+  } finally {
+    cleanup();
+  }
+});
+
+test("normalizacao do code frame nao engole divida nova", () => {
+  const { root, cleanup } = fixture();
+  try {
+    const source = "function a() {\n  keep();\n  impure();\n  return 1;\n}\n";
+    const baseline = createBaseline([result(root, "src/a.ts", source, [purityMessage(3)])], root);
+
+    // Mesma mensagem normalizada, mas fora do contexto antigo: continua sendo divida nova.
+    const contextoDiferente = "function b() {\n  keep();\n  nada();\n  impure();\n}\n";
+    assert.equal(
+      compareBaseline(baseline, [result(root, "src/a.ts", contextoDiferente, [purityMessage(4)])], root)
+        .added.length,
+      1,
+    );
+
+    // Mesmo contexto, codigo do recorte diferente: tambem e divida nova.
+    const outroCodigo = message({ ...purityMessage(3), message: purityMessage(3).message.replace("impure();", "outro();") });
+    assert.equal(
+      compareBaseline(baseline, [result(root, "src/a.ts", source, [outroCodigo])], root).added.length,
+      1,
+    );
   } finally {
     cleanup();
   }
