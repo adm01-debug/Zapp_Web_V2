@@ -16,7 +16,7 @@ set -Eeuo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration_soft_delete="$repo_root/supabase/migrations/20260929370000_contacts_soft_delete_and_search_filters.sql"
 migration_sicoob="$repo_root/supabase/migrations/20260929380000_disable_sicoob_bridge_trigger.sql"
-migration_status="$repo_root/supabase/migrations/20260929390000_contacts_conversation_status_and_grants.sql"
+migration_status="$repo_root/supabase/migrations/20260929560000_contacts_conversation_status_and_grants.sql"
 postgres_image="${CONTACTS_F1_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-contacts-f1-test-$$"
 tmp_dir="$(mktemp -d /tmp/zapp-v2-contacts-f1-test.XXXXXX)"
