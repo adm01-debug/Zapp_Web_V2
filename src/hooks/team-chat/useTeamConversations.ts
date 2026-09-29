@@ -1,111 +1,127 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { teamChatKeys } from './queryKeys';
-import type { TeamConversation, TeamConversationInbox, TeamMember, TeamMessage } from './teamChatTypes';
-
-function toTeamConversation(row: TeamConversationInbox, myProfileId: string): TeamConversation {
-  let displayName = row.name;
-  if (row.type === 'direct' && !row.name) {
-    const other = row.members.find(m => m.profile_id !== myProfileId);
-    displayName = other?.display_name ?? 'Chat Direto';
-  }
-  return {
-    id: row.conversation_id,
-    type: row.type,
-    name: displayName,
-    avatar_url:
-      row.type === 'direct' && !row.avatar_url
-        ? (row.members.find(m => m.profile_id !== myProfileId)?.avatar_url ?? null)
-        : row.avatar_url,
-    created_by: row.created_by,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-    department_id: row.department_id,
-    member_role: row.member_role,
-    is_pinned: row.is_pinned,
-    is_archived: row.is_archived,
-    is_muted: row.is_muted,
-    last_read_at: row.last_read_at,
-    members: row.members.map((m): TeamMember => ({
-      id: `${row.conversation_id}:${m.profile_id}`,
-      conversation_id: row.conversation_id,
-      profile_id: m.profile_id,
-      joined_at: '',
-      last_read_at: null,
-      is_muted: false,
-      member_role: m.role as 'admin' | 'member' | 'viewer',
-      profile: {
-        id: m.profile_id,
-        name: m.display_name ?? '',
-        email: null,
-        avatar_url: m.avatar_url,
-        is_active: true,
-      },
-    })),
-    last_message: row.last_message_id
-      ? ({
-          id: row.last_message_id,
-          conversation_id: row.conversation_id,
-          sender_id: row.last_message_sender_id!,
-          content: row.last_message_content!,
-          message_type: row.last_message_type ?? 'text',
-          status: 'delivered',
-          media_url: null,
-          media_type: null,
-          media_bucket: null,
-          media_path: null,
-          reply_to_id: null,
-          is_edited: false,
-          created_at: row.last_message_created_at!,
-          updated_at: row.last_message_created_at!,
-        } satisfies TeamMessage)
-      : null,
-    unread_count: row.unread_count,
-  };
-}
+import type { TeamConversation, TeamMember, TeamMessage } from './teamChatTypes';
 
 export function useTeamConversations() {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
-  const channelName = useMemo(
-    () => `team:convs:${crypto.randomUUID().slice(0, 8)}`,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
 
   const query = useQuery({
-    queryKey: teamChatKeys.conversations(),
+    queryKey: ['team-conversations', profile?.id],
     queryFn: async () => {
       if (!profile) return [];
-      const { data, error } = await supabase.rpc('get_team_conversations');
-      if (error) throw error;
-      return ((data ?? []) as TeamConversationInbox[]).map(row =>
-        toTeamConversation(row, profile.id),
-      );
+
+      const { data: memberships, error: memErr } = await supabase
+        .from('team_conversation_members')
+        .select('conversation_id, last_read_at, is_muted, is_pinned, is_archived, member_role')
+        .eq('profile_id', profile.id);
+
+      if (memErr) throw memErr;
+      if (!memberships?.length) return [];
+
+      const convIds = memberships.map(m => m.conversation_id);
+
+      const [convResult, membersResult, previewsResult, unreadResult] = await Promise.all([
+        supabase
+          .from('team_conversations')
+          .select('*')
+          .in('id', convIds)
+          .order('updated_at', { ascending: false }),
+        supabase
+          .from('team_conversation_members')
+          .select('*, profile:profiles(id, name, email, avatar_url, is_active)')
+          .in('conversation_id', convIds),
+        supabase.rpc('get_team_conversation_previews'),
+        supabase.rpc('get_team_unread_counts'),
+      ]);
+
+      if (convResult.error) throw convResult.error;
+      const conversations = convResult.data || [];
+      const allMembers = membersResult.data || [];
+
+      const previewMap = new Map<string, {
+        last_message_id: string;
+        last_message_content: string;
+        last_message_type: string;
+        last_message_sender_id: string;
+        last_message_created_at: string;
+      }>();
+      for (const p of (previewsResult.data || [])) {
+        previewMap.set(p.conversation_id, p);
+      }
+
+      const unreadMap = new Map<string, number>();
+      for (const u of (unreadResult.data || [])) {
+        unreadMap.set(u.conversation_id, Number(u.unread_count) || 0);
+      }
+
+      const enriched: TeamConversation[] = conversations.map(conv => {
+        const members = ((allMembers || []).filter(m => m.conversation_id === conv.id)) as unknown as TeamMember[];
+        const preview = previewMap.get(conv.id);
+
+        let displayName = conv.name;
+        if (conv.type === 'direct' && !conv.name) {
+          const other = members.find(m => m.profile_id !== profile.id);
+          displayName = other?.profile?.name || 'Chat Direto';
+        }
+
+        const lastMsg: TeamMessage | null = preview
+          ? {
+              id: preview.last_message_id,
+              conversation_id: conv.id,
+              sender_id: preview.last_message_sender_id,
+              content: preview.last_message_content,
+              message_type: preview.last_message_type,
+              status: 'delivered',
+              media_url: null,
+              media_type: null,
+              media_bucket: null,
+              media_path: null,
+              reply_to_id: null,
+              is_edited: false,
+              created_at: preview.last_message_created_at,
+              updated_at: preview.last_message_created_at,
+            }
+          : null;
+
+        return {
+          ...conv,
+          type: conv.type as 'direct' | 'group',
+          name: displayName,
+          avatar_url: conv.type === 'direct' && !conv.avatar_url
+            ? members.find(m => m.profile_id !== profile.id)?.profile?.avatar_url ?? null
+            : conv.avatar_url,
+          members,
+          last_message: lastMsg,
+          unread_count: unreadMap.get(conv.id) || 0,
+        };
+      });
+
+      return enriched;
     },
     enabled: !!profile,
-    staleTime: 10_000,
-    refetchInterval: 30_000,
+    refetchInterval: 30000,
+    staleTime: 10000,
   });
 
   useEffect(() => {
     if (!profile) return;
     const channel = supabase
-      .channel(channelName)
+      .channel('team-chat-updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages' }, () => {
-        void queryClient.invalidateQueries({ queryKey: teamChatKeys.conversations() });
+        queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'team_conversation_members' }, () => {
-        void queryClient.invalidateQueries({ queryKey: teamChatKeys.conversations() });
+        queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'team_message_receipts' }, () => {
-        void queryClient.invalidateQueries({ queryKey: teamChatKeys.conversations() });
+        queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
       })
       .subscribe();
-    return () => { void supabase.removeChannel(channel); };
-  }, [profile, queryClient, channelName]);
+    return () => { supabase.removeChannel(channel); };
+  }, [profile, queryClient]);
 
   return query;
 }

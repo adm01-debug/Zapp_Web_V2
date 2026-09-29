@@ -1,61 +1,42 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { teamChatKeys } from './queryKeys';
-
-// E60: helper de upload para o bucket team-chat-files
-export async function uploadTeamMedia(file: File): Promise<{ path: string; url: string }> {
-  const ext = file.name.split('.').pop() ?? 'bin';
-  const path = `${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage.from('team-chat-files').upload(path, file);
-  if (error) throw error;
-  const { data } = await supabase.storage.from('team-chat-files').createSignedUrl(path, 3600);
-  return { path, url: data?.signedUrl ?? '' };
-}
+import { useAuth } from '@/hooks/auth/useAuth';
+import { toast } from '@/hooks/ui/use-toast';
 
 export function useSendTeamMessage() {
+  const { profile } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      conversationId,
-      content,
-      replyToId,
-      mediaUrl,
-      mediaType,
-      mediaBucket,
-      mediaPath,
-      messageType = 'text',
-    }: {
+    mutationFn: async ({ conversationId, content, replyToId, mediaUrl, mediaType, mediaBucket, mediaPath }: {
       conversationId: string;
-      content?: string;
+      content: string;
       replyToId?: string;
       mediaUrl?: string;
       mediaType?: string;
       mediaBucket?: string;
       mediaPath?: string;
-      messageType?: string;
     }) => {
-      const { data, error } = await supabase.rpc('send_team_message', {
-        p_conversation_id: conversationId,
-        p_content: content ?? null,
-        p_message_type: messageType,
-        p_reply_to_id: replyToId ?? null,
-        p_media_url: mediaUrl ?? null,
-        p_media_type: mediaType ?? null,
-        p_media_bucket: mediaBucket ?? null,
-        p_media_path: mediaPath ?? null,
-      });
+      if (!profile) throw new Error('Not authenticated');
+      const { data, error } = await supabase.from('team_messages').insert({
+        conversation_id: conversationId,
+        sender_id: profile.id,
+        content,
+        reply_to_id: replyToId || null,
+        media_url: mediaUrl || null,
+        media_type: mediaType || null,
+        media_bucket: mediaBucket || null,
+        media_path: mediaPath || null,
+      }).select().single();
       if (error) throw error;
-      const result = data as { success: boolean; message_id?: string; error?: string };
-      if (!result.success) throw new Error(result.error ?? 'send_failed');
-      return result;
+      await supabase.from('team_conversations').update({ updated_at: new Date().toISOString() }).eq('id', conversationId);
+      return data;
     },
     onSuccess: (_, vars) => {
-      void queryClient.invalidateQueries({ queryKey: teamChatKeys.messagePages(vars.conversationId) });
-      void queryClient.invalidateQueries({ queryKey: teamChatKeys.conversations() });
+      queryClient.invalidateQueries({ queryKey: ['team-messages', vars.conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
     },
-    onError: () => { toast.error('Erro ao enviar mensagem'); },
+    onError: () => { toast({ title: 'Erro ao enviar mensagem', variant: 'destructive' }); },
   });
 }
 
@@ -68,10 +49,10 @@ export function useDeleteTeamMessage() {
       return { conversationId };
     },
     onSuccess: (data) => {
-      void queryClient.invalidateQueries({ queryKey: teamChatKeys.messagePages(data.conversationId) });
-      void queryClient.invalidateQueries({ queryKey: teamChatKeys.conversations() });
+      queryClient.invalidateQueries({ queryKey: ['team-messages', data.conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
     },
-    onError: () => { toast.error('Erro ao excluir mensagem'); },
+    onError: () => { toast({ title: 'Erro ao excluir mensagem', variant: 'destructive' }); },
   });
 }
 
@@ -79,21 +60,17 @@ export function useEditTeamMessage() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ messageId, content, conversationId }: { messageId: string; content: string; conversationId: string }) => {
-      const { error } = await supabase
-        .from('team_messages')
-        .update({ content, is_edited: true, updated_at: new Date().toISOString() })
-        .eq('id', messageId);
+      const { error } = await supabase.from('team_messages').update({ content, is_edited: true, updated_at: new Date().toISOString() }).eq('id', messageId);
       if (error) throw error;
       return { conversationId };
     },
-    onSuccess: (data) => {
-      void queryClient.invalidateQueries({ queryKey: teamChatKeys.messagePages(data.conversationId) });
-    },
-    onError: () => { toast.error('Erro ao editar mensagem'); },
+    onSuccess: (data) => { queryClient.invalidateQueries({ queryKey: ['team-messages', data.conversationId] }); },
+    onError: () => { toast({ title: 'Erro ao editar mensagem', variant: 'destructive' }); },
   });
 }
 
 export function useCreateTeamConversation() {
+  const { profile } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -103,49 +80,81 @@ export function useCreateTeamConversation() {
       memberIds = [],
       departmentId,
     }: {
-      type: 'direct' | 'group' | 'department' | 'announcement';
+      type: 'direct' | 'group' | 'department';
       name?: string;
       memberIds?: string[];
       departmentId?: string;
     }) => {
+      if (!profile) throw new Error('Not authenticated');
+
       if (type === 'direct' && memberIds.length === 1) {
-        const { data: convId, error } = await supabase.rpc('find_or_create_direct_conversation', {
+        const { data: convId, error: rpcErr } = await supabase.rpc('find_or_create_direct_conversation', {
           other_profile_id: memberIds[0],
         });
-        if (error) throw error;
-        return { conversation_id: convId as string };
+        if (rpcErr) throw rpcErr;
+        const { data: conv, error: convErr } = await supabase
+          .from('team_conversations')
+          .select('*')
+          .eq('id', convId as string)
+          .single();
+        if (convErr) throw convErr;
+        return conv;
       }
 
-      const { data, error } = await supabase.rpc('create_team_conversation', {
-        p_name: name ?? null,
-        p_type: type,
-        p_department_id: departmentId ?? null,
-        p_initial_members: memberIds,
-        p_metadata: {},
-      });
+      if (type === 'department' && departmentId) {
+        const { data: existing } = await supabase
+          .from('team_conversations')
+          .select('id')
+          .eq('department_id', departmentId)
+          .maybeSingle();
+        if (existing) return existing;
+
+        const { data: conv, error } = await supabase
+          .from('team_conversations')
+          .insert({ type: 'department', name: name || null, created_by: profile.id, department_id: departmentId })
+          .select()
+          .single();
+        if (error) throw error;
+        const { error: memError } = await supabase
+          .from('team_conversation_members')
+          .insert([{ conversation_id: conv.id, profile_id: profile.id }]);
+        if (memError) throw memError;
+        return conv;
+      }
+
+      const { data: conv, error } = await supabase
+        .from('team_conversations')
+        .insert({ type, name: name || null, created_by: profile.id })
+        .select()
+        .single();
       if (error) throw error;
-      const result = data as { success: boolean; conversation_id?: string; error?: string };
-      if (!result.success) throw new Error(result.error ?? 'create_failed');
-      return result;
+      const allMembers = [profile.id, ...memberIds.filter(id => id !== profile.id)];
+      const { error: memError } = await supabase
+        .from('team_conversation_members')
+        .insert(allMembers.map(pid => ({ conversation_id: conv.id, profile_id: pid })));
+      if (memError) throw memError;
+      return conv;
     },
-    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: teamChatKeys.conversations() }); },
-    onError: () => { toast.error('Erro ao criar conversa'); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['team-conversations'] }); },
+    onError: () => { toast({ title: 'Erro ao criar conversa', variant: 'destructive' }); },
   });
 }
 
 export function useToggleMuteConversation() {
+  const { profile } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ conversationId, muted, profileId }: { conversationId: string; muted: boolean; profileId: string }) => {
+    mutationFn: async ({ conversationId, muted }: { conversationId: string; muted: boolean }) => {
+      if (!profile) throw new Error('Not authenticated');
       const { error } = await supabase
         .from('team_conversation_members')
         .update({ is_muted: muted })
         .eq('conversation_id', conversationId)
-        .eq('profile_id', profileId);
+        .eq('profile_id', profile.id);
       if (error) throw error;
     },
-    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: teamChatKeys.conversations() }); },
-    onError: () => { toast.error('Erro ao alterar silenciar'); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['team-conversations'] }); },
+    onError: () => { toast({ title: 'Erro ao alterar silenciar', variant: 'destructive' }); },
   });
 }
 
@@ -161,10 +170,10 @@ export function useRenameConversation() {
       return { conversationId };
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: teamChatKeys.conversations() });
-      toast.success('Grupo renomeado com sucesso');
+      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+      toast({ title: 'Grupo renomeado com sucesso' });
     },
-    onError: () => { toast.error('Erro ao renomear grupo'); },
+    onError: () => { toast({ title: 'Erro ao renomear grupo', variant: 'destructive' }); },
   });
 }
 
@@ -172,38 +181,39 @@ export function useRemoveConversationMember() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ conversationId, profileId }: { conversationId: string; profileId: string }) => {
-      const { data, error } = await supabase.rpc('remove_team_conversation_member', {
-        p_conversation_id: conversationId,
-        p_user_id: profileId,
-      });
+      const { error } = await supabase
+        .from('team_conversation_members')
+        .delete()
+        .eq('conversation_id', conversationId)
+        .eq('profile_id', profileId);
       if (error) throw error;
-      const result = data as { success: boolean; error?: string };
-      if (!result.success) throw new Error(result.error ?? 'remove_failed');
       return { conversationId };
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: teamChatKeys.conversations() });
-      toast.success('Membro removido');
+      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+      toast({ title: 'Membro removido' });
     },
-    onError: () => { toast.error('Erro ao remover membro'); },
+    onError: () => { toast({ title: 'Erro ao remover membro', variant: 'destructive' }); },
   });
 }
 
 export function useLeaveConversation() {
+  const { profile } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ conversationId }: { conversationId: string }) => {
-      const { data, error } = await supabase.rpc('leave_team_conversation', {
-        p_conversation_id: conversationId,
-      });
+      if (!profile) throw new Error('Not authenticated');
+      const { error } = await supabase
+        .from('team_conversation_members')
+        .delete()
+        .eq('conversation_id', conversationId)
+        .eq('profile_id', profile.id);
       if (error) throw error;
-      const result = data as { success: boolean; error?: string };
-      if (!result.success) throw new Error(result.error ?? 'leave_failed');
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: teamChatKeys.conversations() });
+      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
     },
-    onError: () => { toast.error('Erro ao sair do grupo'); },
+    onError: () => { toast({ title: 'Erro ao sair do grupo', variant: 'destructive' }); },
   });
 }
 
@@ -218,10 +228,10 @@ export function useTransferConversation() {
       if (error) throw error;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: teamChatKeys.conversations() });
-      toast.success('Propriedade do grupo transferida com sucesso');
+      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+      toast({ title: 'Propriedade do grupo transferida com sucesso' });
     },
-    onError: () => { toast.error('Erro ao transferir grupo'); },
+    onError: () => { toast({ title: 'Erro ao transferir grupo', variant: 'destructive' }); },
   });
 }
 
@@ -236,8 +246,8 @@ export function useDeleteConversation() {
       if (error) throw error;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: teamChatKeys.conversations() });
+      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
     },
-    onError: () => { toast.error('Erro ao excluir grupo'); },
+    onError: () => { toast({ title: 'Erro ao excluir grupo', variant: 'destructive' }); },
   });
 }
