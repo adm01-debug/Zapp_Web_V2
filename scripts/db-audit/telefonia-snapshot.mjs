@@ -8,9 +8,11 @@
  * revisavel num PR.
  *
  * Uso:
- *   DESTINO_URL=postgres://... node scripts/db-audit/telefonia-snapshot.mjs <saida.json>
+ *   DESTINO_URL=postgres://... node scripts/db-audit/telefonia-snapshot.mjs <pos-fase-0|final>
  *
- * Tambem aceita TELEFONIA_SNAPSHOT_OUT no lugar do argumento. A identidade do
+ * O argumento e uma chave fixa, nao um caminho: a chave `pos-fase-0` grava
+ * `docs/design/telefonia-baseline-2026-09-29/pos-fase-0.json` e `final` grava
+ * `.../final.json` (T04 e T93 do plano). Tambem aceita TELEFONIA_SNAPSHOT_OUT. A identidade do
  * banco e conferida antes de qualquer consulta (mesmo contrato do
  * check-catalog-fresh.mjs): sem DESTINO_URL ou apontando para outro projeto, o
  * script sai com codigo 2 e nao escreve nada.
@@ -34,21 +36,30 @@ const SQL_PATH = process.env.TELEFONIA_SNAPSHOT_SQL || 'scripts/db-audit/telefon
 const IDENTITY_PATH = process.env.CATALOG_IDENTITY_PATH || 'scripts/db-audit/database-identity.json';
 const PSQL_BIN = process.env.PSQL_BIN || 'psql';
 
-const destino = (process.argv[2] || process.env.TELEFONIA_SNAPSHOT_OUT || '').trim();
-if (!destino) {
-  console.error('uso: DESTINO_URL=postgres://... node scripts/db-audit/telefonia-snapshot.mjs <saida.json>');
+// O destino NUNCA vem do chamador como caminho: o script aceita so uma chave
+// fixa e o caminho gravado e um literal do repo. Script de auditoria que
+// escreve no caminho que o argumento mandar e escrita arbitraria de arquivo —
+// o SonarCloud marcou exatamente isso como path traversal (jssecurity:S8707).
+const CHAVES_DE_SAIDA = ['pos-fase-0', 'final'];
+const chave = (process.argv[2] || process.env.TELEFONIA_SNAPSHOT_OUT || '').trim();
+if (!CHAVES_DE_SAIDA.includes(chave)) {
+  console.error('uso: DESTINO_URL=postgres://... node scripts/db-audit/telefonia-snapshot.mjs <pos-fase-0|final>');
   process.exit(2);
 }
 
-// O destino e um artefato versionado do repo, nunca um caminho arbitrario:
-// resolve contra a raiz do checkout e recusa o que escapar dela (../, absoluto
-// fora do repo). Sem isso o argumento viraria escrita de arquivo em qualquer
-// lugar do host que roda o script.
-const raizDoRepo = fs.realpathSync(process.cwd());
-const destinoAbsoluto = path.resolve(raizDoRepo, destino);
-const relativo = path.relative(raizDoRepo, destinoAbsoluto);
-if (relativo === '' || relativo.startsWith('..') || path.isAbsolute(relativo)) {
-  console.error('ERRO: a saida precisa ficar dentro do repositorio.');
+/** Caminho absoluto do artefato — sempre um literal, nunca o argumento. */
+function caminhoDaSaida(qual) {
+  const base = process.cwd();
+  switch (qual) {
+    case 'pos-fase-0': return path.resolve(base, 'docs/design/telefonia-baseline-2026-09-29/pos-fase-0.json');
+    case 'final': return path.resolve(base, 'docs/design/telefonia-baseline-2026-09-29/final.json');
+    default: return null;
+  }
+}
+
+const destinoAbsoluto = caminhoDaSaida(chave);
+if (destinoAbsoluto === null) {
+  console.error('ERRO: chave de saida desconhecida.');
   process.exit(2);
 }
 
