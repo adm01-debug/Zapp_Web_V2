@@ -21,6 +21,7 @@ migration_delete_align="$repo_root/supabase/migrations/20260929720000_contacts_d
 migration_helper="$repo_root/supabase/migrations/20260929770000_contacts_can_edit_contact_helper.sql"
 migration_single_predicate="$repo_root/supabase/migrations/20260929780000_contacts_single_permission_predicate.sql"
 migration_guards="$repo_root/supabase/migrations/20260929790000_contacts_hijack_guards_only_on_change.sql"
+migration_hoisted="$repo_root/supabase/migrations/20260929810000_contacts_can_edit_contact_hoisted_params.sql"
 postgres_image="${CONTACTS_F1_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-contacts-f1-test-$$"
 tmp_dir="$(mktemp -d /tmp/zapp-v2-contacts-f1-test.XXXXXX)"
@@ -406,8 +407,7 @@ psql_file "$tmp_dir/search_contacts_producao.sql" >/dev/null
 
 psql_file "$migration_single_predicate" >/dev/null
 psql_file "$migration_guards" >/dev/null
-
-# Roda com os 5 contatos ainda vivos: as assercoes de exclusao mais adiante mudam o estado, e
+psql_file "$migration_hoisted" >/dev/null
 # `can_delete_contacts` ignora contato ja excluido de proposito (a lista nao mostra excluidos).
 expect_value 'can_delete_contacts: dono e membro de fila true, fila alheia false' 'true,true,false' \
   "SET ROLE authenticated; SET request.jwt.claim.sub='$AGENTE'; SELECT string_agg(can_delete::text, ',' ORDER BY contact_id) FROM public.can_delete_contacts(ARRAY['30000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000004','30000000-0000-0000-0000-000000000005']::uuid[])"
@@ -493,7 +493,7 @@ expect_value 'service_role preserva CRUD' 't' \
   "SELECT has_table_privilege('service_role','public.contacts','SELECT,INSERT,UPDATE,DELETE')"
 
 # ── GREEN: debito pos-#1187 item 2 (um predicado so: ver/editar/excluir) ──────────────────
-expect_value 'helper can_edit_contact existe' '1' \
+expect_value 'helper can_edit_contact existe (2 args compat + 5 args policies)' '2' \
   "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='can_edit_contact'"
 expect_value 'delete_contact usa o helper (sem predicado inline)' '1' \
   "SELECT (pg_get_functiondef('public.delete_contact(uuid)'::regprocedure) LIKE '%can_edit_contact%')::int"
@@ -513,7 +513,20 @@ expect_failure 'anon nao pode chamar can_delete_contacts' \
 expect_value 'authenticated executa can_edit_contact (policy roda como chamador)' 't' \
   "SELECT has_function_privilege('authenticated','public.can_edit_contact(uuid,uuid)','EXECUTE')"
 expect_value 'anon NAO executa can_edit_contact' 'f' \
-  "SELECT has_function_privilege('anon','public.can_edit_contact(uuid,uuid)','EXECUTE')"
+  "SELECT has_function_privilege('anon','public.can_edit_contact(uuid, uuid)','EXECUTE')"
+# 20260929795000: a versao de 5 argumentos e a que as policies chamam, e os lookups caros
+# vao por parametro -- se alguem voltar a chamar a de 2 argumentos dentro da policy, o custo
+# por linha volta (medido: 3,2s contra 128ms para varrer os 3.104 contatos de producao).
+expect_value 'authenticated executa can_edit_contact de 5 argumentos' 't' \
+  "SELECT has_function_privilege('authenticated','public.can_edit_contact(uuid, uuid, uuid[], uuid, boolean)','EXECUTE')"
+expect_value 'anon NAO executa a versao de 5 argumentos' 'f' \
+  "SELECT has_function_privilege('anon','public.can_edit_contact(uuid, uuid, uuid[], uuid, boolean)','EXECUTE')"
+expect_value 'policy de UPDATE passa os lookups por parametro' '1' \
+  "SELECT (qual LIKE '%get_visible_agent_ids%')::int FROM pg_policies WHERE schemaname='public' AND tablename='contacts' AND policyname='Users can update their assigned contacts'"
+expect_value 'policy de SELECT passa os lookups por parametro' '1' \
+  "SELECT (qual LIKE '%get_visible_agent_ids%')::int FROM pg_policies WHERE schemaname='public' AND tablename='contacts' AND policyname='contacts_select_policy'"
+expect_value 'a versao de 2 argumentos delega para a de 5' 'true' \
+  "SELECT (pg_get_functiondef('public.can_edit_contact(uuid, uuid)'::regprocedure) LIKE '%can_edit_contact(p_assigned_to, p_queue_id, NULL%')::text"
 expect_value 'authenticated executa can_delete_contacts' 't' \
   "SELECT has_function_privilege('authenticated','public.can_delete_contacts(uuid[])','EXECUTE')"
 
@@ -548,6 +561,7 @@ psql_file "$migration_delete_align" >/dev/null
 psql_file "$migration_helper" >/dev/null
 psql_file "$migration_single_predicate" >/dev/null
 psql_file "$migration_guards" >/dev/null
+psql_file "$migration_hoisted" >/dev/null
 expect_value 'reaplicacao nao duplica a coluna deleted_at' '1' \
   "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='contacts' AND column_name='deleted_at'"
 expect_value 'reaplicacao mantem um unico CHECK de status' '1' \
