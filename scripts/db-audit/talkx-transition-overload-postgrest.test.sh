@@ -203,7 +203,11 @@ docker run --rm -d --name "$pgrst_name" --network "$net_name" \
 pgrst_ip="$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$pgrst_name")"
 postgrest_ready=false
 for _ in $(seq 1 60); do
-  if curl -sf "http://$pgrst_ip:3000/" >/dev/null 2>&1; then
+  # http:// aqui e o proprio objeto sob teste: o PostgREST e descartavel, numa
+  # rede docker isolada criada por este script, sem dado de cliente e sem
+  # credencial real (segredo e senha sao literais de teste, gerados no run).
+  # Nao ha comparador TLS a testar: o alvo e a ambiguidade do overload na RPC.
+  if curl -sf "http://$pgrst_ip:3000/" >/dev/null 2>&1; then # NOSONAR
     postgrest_ready=true
     break
   fi
