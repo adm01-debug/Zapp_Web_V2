@@ -149,6 +149,18 @@ jobs:
           node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1
           -f scripts/db-audit/check-webhook-failures-acl.sql
 
+      # V01 (plano Talk X V3): a view public.talkx_campaign_metrics precisa
+      # rodar com security_invoker. CREATE OR REPLACE VIEW zera reloptions, e
+      # foi assim que 20260922130000 desfez o fix de 20260916170000 e passou a
+      # expor metrica de campanha de outros agentes a qualquer autenticado.
+      - name: Verificar security_invoker da view de metricas Talk X
+        id: acl-talkx-metrics
+        if: steps.credencial.outcome == 'success'
+        continue-on-error: true
+        run: >-
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1
+          -f scripts/db-audit/check-talkx-view-invoker.sql
+
       - name: Regenerar catalogo e comparar com o commitado
         id: catalog
         if: steps.credencial.outcome == 'success'
@@ -211,7 +223,7 @@ jobs:
         continue-on-error: true
         run: node scripts/db-audit/check-runtime-config.mjs /tmp/runtime-config.json
 
-      # Une os 8 vereditos individuais (continue-on-error acima) num unico
+      # Une os 9 vereditos individuais (continue-on-error acima) num unico
       # resultado: falha o job se qualquer um falhou/foi pulado, escreve a
       # tabela no Job Summary (E59) e calcula uma assinatura estavel da causa
       # (lista ordenada dos passos que falharam) para o dedupe do alerta
@@ -223,6 +235,7 @@ jobs:
           O_MIGRATIONS: ${{ steps.migrations.outcome }}
           O_ACL_MCP_EXEC: ${{ steps.acl-mcp-exec.outcome }}
           O_ACL_WEBHOOK: ${{ steps.acl-webhook.outcome }}
+          O_ACL_TALKX_METRICS: ${{ steps.acl-talkx-metrics.outcome }}
           O_CATALOG: ${{ steps.catalog.outcome }}
           O_MANIFEST: ${{ steps.manifest.outcome }}
           O_TYPES: ${{ steps.types.outcome }}
@@ -234,6 +247,7 @@ jobs:
             ["Comparar migrations com schema_migrations"]="$O_MIGRATIONS"
             ["Verificar ACL e contrato de mcp_exec"]="$O_ACL_MCP_EXEC"
             ["Verificar ACL da dead-letter queue de webhooks"]="$O_ACL_WEBHOOK"
+            ["Verificar security_invoker da view de metricas Talk X"]="$O_ACL_TALKX_METRICS"
             ["Regenerar catalogo e comparar com o commitado"]="$O_CATALOG"
             ["Regenerar manifesto e comparar com o commitado"]="$O_MANIFEST"
             ["Verificar frescor do types.ts"]="$O_TYPES"

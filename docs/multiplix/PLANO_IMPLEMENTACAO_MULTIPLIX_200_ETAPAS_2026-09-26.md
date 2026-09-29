@@ -4,6 +4,10 @@
 **Repo:** `adm01-debug/Zapp_Web_V2` · **Destino:** `docs/multiplix/PLANO_IMPLEMENTACAO_MULTIPLIX_200_ETAPAS_2026-09-26.md`
 **Data:** 26/09/2026 · **Substitui:** v1.0 do mesmo dia
 
+> **Auditado em 29/09/2026** (`AUDITORIA_IMPLEMENTACAO_MULTIPLIX_2026-09-29.md`): 11 feitas, 74 parciais, 115 ausentes.
+> Os checkboxes abaixo refletem só o que tem evidência. **Plano sucessor:** `PLANO_FINALIZACAO_MULTIPLIX_100_ETAPAS_2026-09-29.md` —
+> a execução continua por lá; este arquivo fica como registro do que foi pedido.
+
 ---
 
 ## O que a revisão mudou — e por quê
@@ -58,13 +62,13 @@ Outras correções de revisão:
 ## FASE 0 — Descoberta residual e decisões (E001–E010)
 
 - [ ] **E001** · Grafo atualizado (`graphify update . --force`) e `GRAPH_REPORT.md` com commit = `git rev-parse HEAD`. **Feito quando:** report anexado ao `ESTADO_INICIAL.md`.
-- [ ] **E002** · Registrar as PRs abertas verificadas hoje (#791, #802, #804, #805, #807) e re-checar `github_list_pull_requests` antes de cada branch nova. **Feito quando:** tabela no `ESTADO_INICIAL.md`; qualquer PR nova tocando `talkx-*`/`_shared`/`evolution-webhook` pausa a fase.
-- [ ] **E003** · 🔒 PARA — **Caminho de acesso ao Singu.** Opção A (edge function do ZAPP com chave de serviço do Singu, RPCs com guard) vs. esperar o banco único. Recomendação: Opção A agora, porque destrava o Multiplix e fecha o GATE C. **Feito quando:** decisão registrada em `docs/adr/ADR-007-multiplix-ponte-singu.md`.
+- [x] **E002** · Registrar as PRs abertas verificadas hoje (#791, #802, #804, #805, #807) e re-checar `github_list_pull_requests` antes de cada branch nova. **Feito quando:** tabela no `ESTADO_INICIAL.md`; qualquer PR nova tocando `talkx-*`/`_shared`/`evolution-webhook` pausa a fase.
+- [x] **E003** · 🔒 PARA — **Caminho de acesso ao Singu.** Opção A (edge function do ZAPP com chave de serviço do Singu, RPCs com guard) vs. esperar o banco único. Recomendação: Opção A agora, porque destrava o Multiplix e fecha o GATE C. **Feito quando:** decisão registrada em `docs/adr/ADR-007-multiplix-ponte-singu.md`.
 - [ ] **E004** · 🔒 PARA — **Política do canal não oficial (Evolution GO).** Sem template/janela 24h. Definir: intervalo mínimo entre envios por conexão, teto por hora, aquecimento, quando uma conexão é considerada "em risco". **Feito quando:** números definidos e gravados em `whatsapp_connections` ou `talkx_settings`.
-- [ ] **E005** · 🔒 PARA — **O que é "apto" sem dado de consentimento.** Hoje 100% `unknown`. Proposta: B2B operacional (fornecedor/transportadora) = apto salvo supressão em `talkx_blacklist`; cliente = apto só com interação prévia registrada (`last_interaction_at` no Singu ou conversa no ZAPP). **Feito quando:** regra aprovada e escrita na ADR-007.
-- [ ] **E006** · 🔒 PARA — **Cobertura de contatos.** 754 fornecedores × 145 contatos; 114 transportadoras × 76 contatos. Permitir destino = telefone da empresa (`company_phones`) quando não há pessoa? **Feito quando:** decisão registrada; se sim, E014 inclui a regra.
+- [x] **E005** · 🔒 PARA — **O que é "apto" sem dado de consentimento.** Hoje 100% `unknown`. Proposta: B2B operacional (fornecedor/transportadora) = apto salvo supressão em `talkx_blacklist`; cliente = apto só com interação prévia registrada (`last_interaction_at` no Singu ou conversa no ZAPP). **Feito quando:** regra aprovada e escrita na ADR-007.
+- [x] **E006** · 🔒 PARA — **Cobertura de contatos.** 754 fornecedores × 145 contatos; 114 transportadoras × 76 contatos. Permitir destino = telefone da empresa (`company_phones`) quando não há pessoa? **Feito quando:** decisão registrada; se sim, E014 inclui a regra.
 - [ ] **E007** · Modelo de permissão real — ler `user_roles`, `role_permissions` (Singu) e perfis/departamentos (ZAPP); mapear "vendedor → carteira (`companies.user_id`)", "Compras → `is_supplier`", "Logística → `is_carrier`". **Feito quando:** matriz perfil × papel × campo de escopo em `docs/multiplix/PERMISSOES.md`.
-- [ ] **E008** · ⚠️ BLOQUEANTE — Capacidades reais do envio: ler `supabase/functions/talkx-send/index.ts`, `evolution-api/`, `_shared/evolution-helpers.ts`. Tipos suportados (texto, imagem, documento, áudio, **PTT**), limites, ack, `external_id`. **Feito quando:** tabela de capacidades em `docs/multiplix/CANAL.md`.
+- [x] **E008** · ⚠️ BLOQUEANTE — Capacidades reais do envio: ler `supabase/functions/talkx-send/index.ts`, `evolution-api/`, `_shared/evolution-helpers.ts`. Tipos suportados (texto, imagem, documento, áudio, **PTT**), limites, ack, `external_id`. **Feito quando:** tabela de capacidades em `docs/multiplix/CANAL.md`.
 - [ ] **E009** · Contrato do TTS: `elevenlabs-tts/index.ts` (auth, rate limit por usuário, formato, erro) e `elevenlabs-webhook`. **Feito quando:** contrato documentado em `CANAL.md`, incluindo se o MP3 serve como PTT ou precisa de transcodificação para OGG/Opus.
 - [ ] **E010** · Publicar `docs/multiplix/ESTADO_INICIAL.md` (achados desta revisão + E001–E009), `DESIGN_TOKENS_MAP.md` (de-para protótipo→token) e a receita de módulo (`lazyViews.ts` + nav + permissão). **Feito quando:** PR de documentação mergeada.
 
@@ -83,8 +87,8 @@ Outras correções de revisão:
 - [ ] **E016** · Excluir `deleted_at IS NOT NULL` e `is_duplicate` em todas as RPCs. **Feito quando:** contagem bate com `companies_ativas` (57.675 hoje).
 - [ ] **E017** · RPC `multiplix_list_ramos()` — valores distintos de `ramo_atividade` (566 hoje) + contagem + item "Não informado" explícito (~6.977 empresas). **Feito quando:** lista ordenada por frequência.
 - [ ] **E018** · RPC `multiplix_list_ufs()` — UFs distintas de `company_addresses` primários. **Feito quando:** UF sem empresa não aparece.
-- [ ] **E019** · 🔒 PARA (secrets) — Chave de serviço do Singu como secret das edge functions do ZAPP (`SINGU_SERVICE_KEY`) — Opção A do GATE C. **Feito quando:** secret criada via `deploy-functions.yml` e nunca exposta ao front.
-- [ ] **E020** · Edge `multiplix-audience` no ZAPP: autentica o usuário ZAPP, deriva escopo (E007), chama as RPCs com a chave de serviço. **Feito quando:** request com escopo forjado no body é ignorado; escopo vem do JWT.
+- [x] **E019** · 🔒 PARA (secrets) — Chave de serviço do Singu como secret das edge functions do ZAPP (`SINGU_SERVICE_KEY`) — Opção A do GATE C. **Feito quando:** secret criada via `deploy-functions.yml` e nunca exposta ao front.
+- [x] **E020** · Edge `multiplix-audience` no ZAPP: autentica o usuário ZAPP, deriva escopo (E007), chama as RPCs com a chave de serviço. **Feito quando:** request com escopo forjado no body é ignorado; escopo vem do JWT.
 - [ ] **E021** · Cache curto (5 min) de ramos e UFs no edge. **Feito quando:** segundo request não bate no Singu.
 - [ ] **E022** · Identidade cruzada: usar `crm_contact_links` (ZAPP) para ligar contato Singu ↔ conversa ZAPP; **nunca** inserir ID do Singu em FK local. **Feito quando:** abrir conversa a partir de um destinatário funciona sem criar contato duplicado.
 - [ ] **E023** · Frase legível da consulta ("Fornecedor OU transportadora · SP · ramo Embalagens · excluir lista X") + motivo de inclusão por linha (manual / público / filtro). **Feito quando:** ambos vêm na resposta da API.
@@ -232,7 +236,7 @@ Outras correções de revisão:
 
 ## FASE 8 — Front: fundação (E115–E124)
 
-- [ ] **E115** · Entrada via `lazyViews.ts` + rota `/multiplix` em chunk próprio. **Feito quando:** carrega isolado.
+- [x] **E115** · Entrada via `lazyViews.ts` + rota `/multiplix` em chunk próprio. **Feito quando:** carrega isolado.
 - [ ] **E116** · Item "Multiplix · NOVO" sob COMUNICAÇÃO, visível por permissão (E007). **Feito quando:** sem permissão não vê nem acessa por URL.
 - [ ] **E117** · `MultiplixView` — 3 regiões simultâneas + rodapé. **Feito quando:** bate com o protótipo em 1920×1080.
 - [ ] **E118** · ⚠️ BLOQUEANTE — Zero hex no módulo. **Feito quando:** grep por `#` em `src/components/multiplix/` vazio.
@@ -253,7 +257,7 @@ Outras correções de revisão:
 - [ ] **E126** · Busca com debounce, sem acento, via E011. **Feito quando:** "jose" acha "José".
 - [ ] **E127** · Filtro de papel — Clientes / Fornecedores / Transportadoras, **multi-seleção** (papéis não são exclusivos: 388 empresas têm mais de um). **Feito quando:** empresa com 2 papéis aparece nos 2.
 - [ ] **E128** · Filtro de ramo — combobox com busca sobre os 566 valores + "Não informado". **Feito quando:** nada inferido pelo nome.
-- [ ] **E129** · Filtro de UF vindo de E018. **Feito quando:** lista dinâmica.
+- [x] **E129** · Filtro de UF vindo de E018. **Feito quando:** lista dinâmica.
 - [ ] **E130** · Lista virtualizada. **Feito quando:** 5.000 linhas a 60 fps.
 - [ ] **E131** · ⚠️ BLOQUEANTE — Seleção persistente ao trocar filtro. **Feito quando:** 3 trocas, contagem intacta.
 - [ ] **E132** · "Selecionar todos os N resultados" com N do servidor (E058). **Feito quando:** não é a página atual.
@@ -306,8 +310,8 @@ Outras correções de revisão:
 
 ## FASE 12 — Monitor, histórico e retornos (E161–E170)
 
-- [ ] **E161** · Monitor com progresso real (realtime/polling). **Feito quando:** reabrir mostra o correto.
-- [ ] **E162** · Pausar/retomar/cancelar (E069). **Feito quando:** cancelar ≠ desfazer.
+- [x] **E161** · Monitor com progresso real (realtime/polling). **Feito quando:** reabrir mostra o correto.
+- [x] **E162** · Pausar/retomar/cancelar (E069). **Feito quando:** cancelar ≠ desfazer.
 - [ ] **E163** · Detalhe por destinatário — estado, tentativas, erro, `external_id`. **Feito quando:** qualquer falha explicável.
 - [ ] **E164** · Detalhe por bloco — parcial tem rótulo próprio. **Feito quando:** caso parcial visível.
 - [ ] **E165** · Histórico com filtros e paginação. **Feito quando:** sem carregar tudo.
@@ -410,17 +414,21 @@ Escrita no GitHub pelo `GITHUB - MCP - FOREVER`. Merge em `main` = deploy = prod
 
 ## Progresso
 
+Auditoria de 29/09/2026 — feitas / parciais / ausentes (parciais não contam como feitas):
+
 ```
-Fase  0  [ ] 0/10     Fase  8  [ ] 0/10
-Fase  1  [ ] 0/16     Fase  9  [ ] 0/14
-Fase  2  [ ] 0/14     Fase 10  [ ] 0/12
-Fase  3  [ ] 0/12     Fase 11  [ ] 0/10
-Fase  4  [ ] 0/20     Fase 12  [ ] 0/10
-Fase  5  [ ] 0/16     Fase 13  [ ] 0/8
-Fase  6  [ ] 0/10     Fase 14  [ ] 0/10
-Fase  7  [ ] 0/16     Fase 15  [ ] 0/12
-                      TOTAL    [ ] 0/200
+Fase  0  [~]  5/10 (4 parciais)   Fase  8  [~] 1/10 (7 parciais)
+Fase  1  [~]  2/16 (8 parciais)   Fase  9  [~] 1/14 (5 parciais)
+Fase  2  [ ]  0/14 (8 parciais)   Fase 10  [ ] 0/12 (2 parciais)
+Fase  3  [ ]  0/12 (3 parciais)   Fase 11  [ ] 0/10 (2 parciais)
+Fase  4  [ ]  0/20 (10 parciais)  Fase 12  [~] 2/10 (1 parcial)
+Fase  5  [ ]  0/16 (9 parciais)   Fase 13  [ ] 0/8  (6 parciais)
+Fase  6  [ ]  0/10 (5 parciais)   Fase 14  [ ] 0/10 (3 parciais)
+Fase  7  [ ]  0/16 (1 parcial)    Fase 15  [ ] 0/12 (0 parciais)
+                                  TOTAL    [ ] 11/200 (74 parciais, 115 ausentes)
 ```
+
+Nenhum portão (F0–F14) fechou. Continuação em `PLANO_FINALIZACAO_MULTIPLIX_100_ETAPAS_2026-09-29.md`.
 
 ---
 

@@ -222,6 +222,11 @@ jobs:
           TALKX_BLACKLIST_POLICY_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-blacklist-policy-forward-only.test.sh
 
+      - name: Simular vazamento e correção da view de métricas Talk X
+        env:
+          TALKX_METRICS_INVOKER_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-metrics-view-invoker.test.sh
+
       - name: Simular snapshot atômico de destinatários Talk X
         env:
           TALKX_DRAFT_RECIPIENTS_TEST_POSTGRES_IMAGE: postgres:17-alpine

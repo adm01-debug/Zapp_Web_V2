@@ -1912,42 +1912,6 @@ export type Database = {
           },
         ]
       }
-      contact_tags: {
-        Row: {
-          contact_id: string
-          created_at: string
-          id: string
-          tag_id: string
-        }
-        Insert: {
-          contact_id: string
-          created_at?: string
-          id?: string
-          tag_id: string
-        }
-        Update: {
-          contact_id?: string
-          created_at?: string
-          id?: string
-          tag_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contact_tags_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contact_tags_tag_id_fkey"
-            columns: ["tag_id"]
-            isOneToOne: false
-            referencedRelation: "tags"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       contacts: {
         Row: {
           address: string | null
@@ -2558,42 +2522,60 @@ export type Database = {
           completed_at: string | null
           contact_id: string | null
           created_at: string
-          created_by: string | null
+          created_by: string
           description: string | null
           due_date: string | null
           id: string
+          notified_at: string | null
+          position: number
           priority: string
+          remind_at: string | null
+          started_at: string | null
           status: string
+          status_changed_at: string
           title: string
           updated_at: string
+          waiting_reason: string | null
         }
         Insert: {
           assigned_to?: string | null
           completed_at?: string | null
           contact_id?: string | null
           created_at?: string
-          created_by?: string | null
+          created_by: string
           description?: string | null
           due_date?: string | null
           id?: string
+          notified_at?: string | null
+          position?: number
           priority?: string
+          remind_at?: string | null
+          started_at?: string | null
           status?: string
+          status_changed_at?: string
           title: string
           updated_at?: string
+          waiting_reason?: string | null
         }
         Update: {
           assigned_to?: string | null
           completed_at?: string | null
           contact_id?: string | null
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           description?: string | null
           due_date?: string | null
           id?: string
+          notified_at?: string | null
+          position?: number
           priority?: string
+          remind_at?: string | null
+          started_at?: string | null
           status?: string
+          status_changed_at?: string
           title?: string
           updated_at?: string
+          waiting_reason?: string | null
         }
         Relationships: [
           {
@@ -5779,6 +5761,7 @@ export type Database = {
           description: string | null
           id: string
           is_dismissed: boolean
+          migrated_task_id: string | null
           notified_at: string | null
           profile_id: string
           remind_at: string
@@ -5790,6 +5773,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_dismissed?: boolean
+          migrated_task_id?: string | null
           notified_at?: string | null
           profile_id: string
           remind_at: string
@@ -5801,6 +5785,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_dismissed?: boolean
+          migrated_task_id?: string | null
           notified_at?: string | null
           profile_id?: string
           remind_at?: string
@@ -5812,6 +5797,13 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reminders_migrated_task_id_fkey"
+            columns: ["migrated_task_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_tasks"
             referencedColumns: ["id"]
           },
           {
@@ -6481,51 +6473,6 @@ export type Database = {
           {
             foreignKeyName: "stickers_owner_id_fkey"
             columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tags: {
-        Row: {
-          color: string
-          created_at: string
-          created_by: string | null
-          description: string | null
-          id: string
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          color?: string
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          color?: string
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          name?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tags_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tags_created_by_fkey"
-            columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles_public"
             referencedColumns: ["id"]
@@ -9158,12 +9105,7 @@ export type Database = {
           out_user_id: string
         }[]
       }
-      calculate_level: {
-        Args: {
-          xp_amount: number
-        }
-        Returns: number
-      }
+      calculate_level: { Args: { xp_amount: number }; Returns: number }
       claim_crm_sync_outbox: {
         Args: { p_limit?: number; p_worker: string }
         Returns: {
@@ -9428,6 +9370,7 @@ export type Database = {
         Returns: string
       }
       count_searchbox_sessions_this_month: { Args: never; Returns: number }
+      current_profile_id: { Args: never; Returns: string }
       dashboard_contact_counts: {
         Args: {
           p_agent?: string
@@ -9821,11 +9764,11 @@ export type Database = {
       get_visible_agent_ids: { Args: { _user_id: string }; Returns: string[] }
       grant_agent_achievement: {
         Args: {
-          p_description?: string
+          p_description: string
           p_name: string
           p_profile_id: string
           p_type: string
-          p_xp_reward?: number
+          p_xp_reward: number
         }
         Returns: Json
       }
@@ -9957,6 +9900,7 @@ export type Database = {
         }[]
       }
       notify_due_reminders: { Args: never; Returns: number }
+      notify_due_tasks: { Args: never; Returns: number }
       persist_multiplix_recipient_message_snapshot: {
         Args: {
           p_claim_token: string
