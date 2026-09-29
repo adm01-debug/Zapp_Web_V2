@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { evolutionToRealtimeMessage } from '@/adapters/evolutionAdapter';
+import { buildExternalConversations, evolutionToRealtimeMessage } from '@/adapters/evolutionAdapter';
 import type { EvolutionMessage } from '@/types/evolutionExternal';
 
 const externalMessage: EvolutionMessage = {
@@ -55,5 +55,13 @@ describe('evolutionToRealtimeMessage', () => {
       delivery_claimed_by: null,
       delivery_last_claim_token: null,
     });
+  });
+});
+
+describe('derivedToConversationContact', () => {
+  it('marca o contato derivado como não excluído (deleted_at exigido pelo ContactRow)', () => {
+    const [conversation] = buildExternalConversations([externalMessage]);
+
+    expect(conversation.contact.deleted_at).toBeNull();
   });
 });

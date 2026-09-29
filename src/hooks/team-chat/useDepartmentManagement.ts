@@ -103,7 +103,7 @@ export function useDepartmentWhatsAppCredentials(departmentId: string) {
     queryKey: ['departmentChat', 'whatsapp', departmentId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .rpc('get_department_whatsapp_credentials', { _department_id: departmentId });
+        .rpc('get_department_whatsapp_credentials', { p_department_id: departmentId });
       if (error) throw error;
       return (data as unknown as DepartmentWhatsAppCredentials) ?? { mode: 'none', evolution_url: null };
     },

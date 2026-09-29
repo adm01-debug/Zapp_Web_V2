@@ -52,6 +52,9 @@ export function useTeamMessages(conversationId: string | null) {
 
     const receipts = unread.map(m => ({
       message_id: m.id,
+      // team_message_receipts.conversation_id e NOT NULL (migration 20260929440000):
+      // sem ele o upsert falha e o recibo de leitura nunca e gravado.
+      conversation_id: conversationId,
       profile_id: profile.id,
       status: 'read' as const,
       read_at: now,
