@@ -10,11 +10,14 @@ interface Props {
 }
 
 const ACTION_LABELS: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  add_member: { label: 'Inclusão', variant: 'default' },
-  remove_member: { label: 'Remoção', variant: 'destructive' },
-  create_invite: { label: 'Convite criado', variant: 'secondary' },
-  delete_invite: { label: 'Convite excluído', variant: 'outline' },
-  save_whatsapp: { label: 'WhatsApp', variant: 'secondary' },
+  member_added:        { label: 'Inclusão',         variant: 'default' },
+  member_removed:      { label: 'Remoção',          variant: 'destructive' },
+  invite_created:      { label: 'Convite criado',  variant: 'secondary' },
+  invite_revoked:      { label: 'Convite revogado', variant: 'outline' },
+  invite_used:         { label: 'Convite usado',   variant: 'secondary' },
+  whatsapp_updated:    { label: 'WhatsApp',         variant: 'secondary' },
+  department_created:  { label: 'Depto criado',    variant: 'default' },
+  department_renamed:  { label: 'Depto renomeado', variant: 'outline' },
 };
 
 function escapeCsv(value: string): string {
