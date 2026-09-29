@@ -95,6 +95,7 @@ jobs:
           supabase/functions/webhook-diagnostic/diagnostic.test.ts
           supabase/functions/talkx-report/index.test.ts
           supabase/functions/multiplix-send/index.test.ts
+          supabase/functions/_shared/__tests__/talkx-resume-policy.test.ts
 
       - name: 🧪 Test CI and Edge deployment guards
         run: >-

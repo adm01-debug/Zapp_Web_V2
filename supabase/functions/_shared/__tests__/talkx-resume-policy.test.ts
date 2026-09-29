@@ -1,0 +1,122 @@
+/**
+ * V03 — aceite do plano: "teste Deno do scheduler com 3 campanhas pausadas
+ * (manual, janela, conexão) → só as 2 automáticas elegíveis retomam".
+ *
+ * O caso MANUAL é o bug de produção: uma campanha pausada pelo operador, COM
+ * janela de envio configurada, era retomada no minuto seguinte pelo scheduler
+ * antigo (que olhava só a janela). Aqui ela precisa ficar parada — e é o
+ * primeiro teste de cada bloco, de propósito.
+ */
+import {
+  AUTO_RESUME_REASONS,
+  pauseReasonForWindow,
+  selectResumableCampaigns,
+  type PausedCampaignRow,
+} from "../talkx-resume-policy.ts";
+
+function assert(condition: unknown, message: string): asserts condition {
+  if (!condition) throw new Error(message);
+}
+
+// Segunda-feira 10:00 em America/Sao_Paulo — dentro de uma janela 08:00-18:00.
+const DENTRO_DA_JANELA = new Date("2026-09-28T13:00:00.000Z");
+// Mesmo dia, 22:00 em São Paulo — fora da janela.
+const FORA_DA_JANELA = new Date("2026-09-29T01:00:00.000Z");
+
+const JANELA = {
+  schedule_timezone: "America/Sao_Paulo",
+  send_window_start: "08:00",
+  send_window_end: "18:00",
+  business_hours_only: false,
+};
+
+Deno.test("pauseReasonForWindow traduz a recusa da janela no motivo gravado", () => {
+  assert(pauseReasonForWindow({ allowed: true }) === null, "janela aberta não gera motivo");
+  assert(
+    pauseReasonForWindow({ allowed: false, reason: "outside_send_window" }) === "send_window",
+    "fora da janela de envio deve gravar send_window",
+  );
+  assert(
+    pauseReasonForWindow({ allowed: false, reason: "outside_business_hours" }) === "business_hours",
+    "fora do horário comercial deve gravar business_hours",
+  );
+  assert(
+    pauseReasonForWindow({ allowed: false, reason: "invalid_schedule_timezone" }) === "invalid_schedule_timezone",
+    "fuso inválido é preservado para diagnóstico (e fica fora da retomada automática)",
+  );
+  assert(
+    !(AUTO_RESUME_REASONS as readonly string[]).includes("invalid_schedule_timezone"),
+    "fuso inválido NÃO pode autorizar retomada automática",
+  );
+});
+
+Deno.test("as 3 campanhas pausadas do aceite: manual fica parada, janela e conexão retomam", () => {
+  const rows: PausedCampaignRow[] = [
+    { id: "manual-1", name: "Pausada pelo operador", pause_reason: "Pausa manual: revisar texto", ...JANELA },
+    { id: "janela-1", name: "Pausada pela janela", pause_reason: "send_window", ...JANELA },
+    { id: "conexao-1", name: "Pausada pela conexão", pause_reason: "connection_lost", ...JANELA, whatsapp_connection_id: "conn-1" },
+  ];
+
+  const decisions = selectResumableCampaigns(rows, () => "connected", DENTRO_DA_JANELA);
+
+  const retomadas = decisions.filter((d) => d.resume).map((d) => d.id).sort();
+  assert(
+    JSON.stringify(retomadas) === JSON.stringify(["conexao-1", "janela-1"]),
+    `só as 2 automáticas elegíveis podem retomar, obtido: ${JSON.stringify(retomadas)}`,
+  );
+
+  const manual = decisions.find((d) => d.id === "manual-1")!;
+  assert(manual.resume === false, "pausa do operador com janela aberta NÃO pode ser retomada (bug de produção)");
+  assert(manual.because.includes("não retomar"), `motivo do bloqueio precisa ser explicado: ${manual.because}`);
+
+  const janela = decisions.find((d) => d.id === "janela-1")!;
+  assert(janela.resume === true && janela.because.includes("janela"), `janela aberta deve retomar: ${janela.because}`);
+
+  const conexao = decisions.find((d) => d.id === "conexao-1")!;
+  assert(conexao.resume === true && conexao.because.includes("conexão"), `conexão de pé deve retomar: ${conexao.because}`);
+});
+
+Deno.test("conexão caída não retoma, mesmo com a janela aberta", () => {
+  const rows: PausedCampaignRow[] = [
+    { id: "conexao-1", name: "Pausada pela conexão", pause_reason: "connection_lost", ...JANELA, whatsapp_connection_id: "conn-1" },
+  ];
+  for (const status of ["disconnected", "connecting", "qr_pending", null]) {
+    const [decision] = selectResumableCampaigns(rows, () => status, DENTRO_DA_JANELA);
+    assert(decision.resume === false, `conexão '${status}' não pode retomar`);
+    assert(decision.because.includes("conexão"), `motivo precisa citar a conexão: ${decision.because}`);
+  }
+  const [comConexaoDePe] = selectResumableCampaigns(rows, () => "connected", DENTRO_DA_JANELA);
+  assert(comConexaoDePe.resume === true, "com a conexão de pé, retoma");
+});
+
+Deno.test("motivo automático, mas ainda fora da janela: não retoma", () => {
+  const rows: PausedCampaignRow[] = [
+    { id: "janela-1", name: "Pausada pela janela", pause_reason: "send_window", ...JANELA },
+  ];
+  const [possivel] = selectResumableCampaigns(rows, () => "connected", DENTRO_DA_JANELA);
+  const [foraDaJanela] = selectResumableCampaigns(rows, () => "connected", FORA_DA_JANELA);
+  assert(possivel.resume === true && foraDaJanela.resume === false, "a janela precisa ser reavaliada na hora da retomada");
+});
+
+Deno.test("pausa sem motivo (anterior à V03) e motivo desconhecido nunca retomam", () => {
+  const rows: PausedCampaignRow[] = [
+    { id: "legado-1", name: "Pausa antiga", pause_reason: null, ...JANELA },
+    { id: "espaco-1", name: "Motivo só com espaço", pause_reason: "   ", ...JANELA },
+    { id: "outro-1", name: "Motivo de outra versão", pause_reason: "pausado_pelo_cliente", ...JANELA },
+  ];
+  const decisions = selectResumableCampaigns(rows, () => "connected", DENTRO_DA_JANELA);
+  for (const decision of decisions) {
+    assert(decision.resume === false, `${decision.id} não pode retomar sozinha (motivo: ${decision.pauseReason})`);
+  }
+  assert(decisions[1].pauseReason === null, "motivo só com espaço é tratado como ausente");
+});
+
+Deno.test("business_hours retoma só dentro do horário comercial", () => {
+  const rows: PausedCampaignRow[] = [
+    { id: "comercial-1", name: "Fora do comercial", pause_reason: "business_hours", schedule_timezone: "America/Sao_Paulo", business_hours_only: true },
+  ];
+  const [tercaDeMadrugada] = selectResumableCampaigns(rows, () => "connected", FORA_DA_JANELA);
+  const [tercaDeManha] = selectResumableCampaigns(rows, () => "connected", DENTRO_DA_JANELA);
+  assert(tercaDeMadrugada.resume === false, "22:00 não é horário comercial");
+  assert(tercaDeManha.resume === true, "10:00 é horário comercial");
+});

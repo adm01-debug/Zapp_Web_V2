@@ -7,6 +7,7 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
 import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talkx-window.ts";
+import { pauseReasonForWindow } from "../_shared/talkx-resume-policy.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
 import { timingSafeEqual } from "../_shared/hmac-validation.ts";
@@ -410,9 +411,12 @@ export async function handleTalkxSend(
       campaign = { ...campaign, ...currentCampaign };
       const currentWindowStatus = deliveryWindowStatus(campaign);
       if (!currentWindowStatus.allowed) {
+        // V03: grava POR QUE pausou — sem isso a retomada automática não tinha
+        // como distinguir pausa da janela de pausa do operador.
         const { error: pauseError } = await supabase.rpc("transition_talkx_campaign", {
           p_campaign_id: campaignId,
           p_action: "pause",
+          p_pause_reason: pauseReasonForWindow(currentWindowStatus),
         });
         if (pauseError) throw new Error(`talkx_campaign_auto_pause_failed: ${pauseError.message}`);
         break;
@@ -586,9 +590,15 @@ export async function handleTalkxSend(
         const beforeSendInstanceId = liveTalkXInstanceId(beforeSendConnection);
         if (beforeSend?.status !== "sending" || !beforeSendWindowStatus.allowed || !beforeSendInstanceId) {
           if (beforeSend?.status === "sending") {
+            // V03: mesmo cuidado do mid-loop — o motivo gravado diz se a pausa
+            // foi da janela ou da conexão (era nulo nos dois casos).
+            const autoPauseReason = !beforeSendWindowStatus.allowed
+              ? pauseReasonForWindow(beforeSendWindowStatus)
+              : "connection_lost";
             const { error: pauseError } = await supabase.rpc("transition_talkx_campaign", {
               p_campaign_id: campaignId,
               p_action: "pause",
+              p_pause_reason: autoPauseReason,
             });
             if (pauseError) throw new Error(`talkx_campaign_auto_pause_failed: ${pauseError.message}`);
           }
@@ -765,6 +775,7 @@ export async function handleTalkxSend(
             const { error: pauseError } = await supabase.rpc("transition_talkx_campaign", {
               p_campaign_id: campaignId,
               p_action: "pause",
+              p_pause_reason: pauseReasonForWindow(refreshedWindowStatus),
             });
             if (pauseError) throw new Error(`talkx_campaign_auto_pause_failed: ${pauseError.message}`);
             break;
