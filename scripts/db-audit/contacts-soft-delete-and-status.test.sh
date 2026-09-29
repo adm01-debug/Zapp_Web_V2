@@ -121,7 +121,14 @@ CREATE TABLE public.contacts (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   latitude double precision,
-  longitude double precision
+  longitude double precision,
+  -- Colunas de endereco: existem no banco e fazem parte da lista de retorno de search_contacts.
+  address text,
+  address_number text,
+  neighborhood text,
+  city text,
+  state text,
+  postal_code text
 );
 ALTER TABLE public.contacts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY contacts_select_policy ON public.contacts FOR SELECT TO authenticated USING (true);
@@ -182,8 +189,12 @@ CREATE FUNCTION public.is_admin_or_supervisor(_user_id uuid) RETURNS boolean
   AS $$ SELECT _user_id = '20000000-0000-0000-0000-000000000009'::uuid $$;
 
 -- search_contacts/contacts_count_by_type no estado anterior (sem deleted_at).
+-- ATENCAO: a lista de colunas de retorno aqui e a do BANCO (23 colunas, com as 6 de endereco),
+-- nao a de uma migration antiga. `CREATE OR REPLACE` recusa mudar tipo de retorno (42P13), entao
+-- este fixture e o que faz o teste pegar esse erro: ele ja reprovou uma versao desta migration
+-- que omitia address/address_number/neighborhood/city/state/postal_code.
 CREATE FUNCTION public.search_contacts(search_term text DEFAULT ''::text, contact_type_filter text DEFAULT NULL::text, company_filter text DEFAULT NULL::text, job_title_filter text DEFAULT NULL::text, tag_filter text DEFAULT NULL::text, date_from timestamp with time zone DEFAULT NULL::timestamp with time zone, sort_field text DEFAULT 'name'::text, sort_direction text DEFAULT 'asc'::text, page_size integer DEFAULT 50, page_offset integer DEFAULT 0)
- RETURNS TABLE(id uuid, name text, nickname text, surname text, job_title text, company text, phone text, email text, avatar_url text, tags text[], notes text, contact_type text, created_at timestamp with time zone, updated_at timestamp with time zone, latitude double precision, longitude double precision, total_count bigint)
+ RETURNS TABLE(id uuid, name text, nickname text, surname text, job_title text, company text, phone text, email text, avatar_url text, tags text[], notes text, contact_type text, created_at timestamp with time zone, updated_at timestamp with time zone, latitude double precision, longitude double precision, address text, address_number text, neighborhood text, city text, state text, postal_code text, total_count bigint)
  LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path TO 'public'
 AS $function$ DECLARE v_search text; BEGIN
   v_search := NULLIF(TRIM(search_term), '');
@@ -191,6 +202,7 @@ AS $function$ DECLARE v_search text; BEGIN
   SELECT c.id, c.name, c.nickname, c.surname, c.job_title, c.company,
          c.phone, c.email, c.avatar_url, c.tags, c.notes, c.contact_type,
          c.created_at, c.updated_at, c.latitude, c.longitude,
+         c.address, c.address_number, c.neighborhood, c.city, c.state, c.postal_code,
          COUNT(*) OVER () AS total_count
   FROM public.contacts c
   WHERE (v_search IS NULL OR c.name ILIKE '%' || v_search || '%')
