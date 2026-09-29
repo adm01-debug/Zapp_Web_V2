@@ -137,8 +137,8 @@ da prova: `/tmp/mut-b02b.py` (movimentos reais de código, nunca comentário; ar
 | 3 | Voz/modelo escolhidos pelo cliente em `elevenlabs-tts/-tts-stream/-sts/-dialogue` (`IA-003` B4) | bloco 13 |
 | 4 | Idempotência de **evento repetido** no webhook (dedup por id de evento) precisa de estrutura durável — vai com o ledger/outbox do Bloco 05 | bloco 05 |
 | 5 | Consumo pago das funções `elevenlabs-*`, `voice-agent`, `classify-*` e `ai-transcribe-audio` continua **fora** do ledger de uso (`IA-003` B6) — é a causa do item 3 acima | bloco 06 |
-| 6 | A RLS de `messages` não filtra ciclo de vida: mensagem apagada (`is_deleted=true`) continua transcrevível por quem enxerga o contato (achado DB-F1 do laudo) | bloco 15/02 |
-| 7 | O bucket `audio-memes` é **público** e está na allowlist do endpoint de transcrição (achado DB-F3, latente) | bloco 02 (próximo lote) |
+| 6 | A RLS de `messages` não filtra ciclo de vida: mensagem apagada (`is_deleted=true`) continua transcrevível por quem enxerga o contato (achado DB-F1 do laudo; **medido:** 12 mensagens apagadas com mídia) | bloco 15/02 |
+| 7 | O bucket `audio-memes` é **público** e está na allowlist do endpoint de transcrição (achado DB-F3, **confirmado**: 1 `media_url` já aponta para lá) | bloco 02 (próximo lote) |
 
 ## Aceite
 

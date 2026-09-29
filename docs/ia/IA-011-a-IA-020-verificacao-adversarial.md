@@ -45,8 +45,8 @@ saída crua; cada um declarou o que **não** conseguiu medir.
 | A8 | baixo | Normalização permissiva do header: `slice(7).trim()` aceita `\n`/`\t` no fim do token. | `ai-auth.ts:38` | 06 |
 | F2 | baixo | O corpo é lido por inteiro (`req.text()`) antes de verificar, sem teto de tamanho. | `elevenlabs-webhook/index.ts:19` | 05 |
 | F5 | baixo | A "allowlist" é de **campos**, não de valores: `status`/`entity_id` são escalares do emissor. | `index.ts:53-63` | 05 |
-| DB-F1 | médio | A RLS de `messages` **não filtra ciclo de vida**: mensagem com `is_deleted=true` (ou contato excluído/conversa fechada) continua transcrevível por quem enxerga o contato. | policy crua em §3 | 15 / 02 |
-| DB-F3 | baixo (latente) | O bucket `audio-memes` é **público** (`storage.buckets.public=true`) e está na allowlist do endpoint. Se uma `media_url` passar a apontar para lá, "conhecer a URL concede o áudio" volta a valer. | `storage.buckets` + `APPROVED_AUDIO_BUCKETS` | 02 |
+| DB-F1 | médio | A RLS de `messages` **não filtra ciclo de vida**: mensagem com `is_deleted=true` (ou contato excluído/conversa fechada) continua transcrevível por quem enxerga o contato. **Medido:** 49.318 mensagens, 132 apagadas, 7.875 com mídia e **12 com mídia em mensagem apagada** (0 em contato excluído/conversa fechada). | policy crua em §3 + SQL medido | 15 / 02 |
+| DB-F3 | baixo (**confirmado**) | O bucket `audio-memes` é **público** (`storage.buckets.public=true`) e está na allowlist do endpoint. **Medido:** já existe **1 mensagem** com `media_url` nesse bucket (as demais: `whatsapp-media` 4.750, `audio-messages` 2.774, host externo 350) — para esse objeto, "conhecer a URL concede o áudio" é verdade hoje. | SQL medido + `storage.buckets` + `APPROVED_AUDIO_BUCKETS` | 02 |
 | DB-F4 | baixo | `media_url` de host externo (ex.: `mmg.whatsapp.net`) ⇒ 400 falha fechada: áudio legado não transcreve. | amostra real de `messages.media_url` | 02 |
 | P1 | **p0** | **Divergência merge→produção:** `classify-audio-meme` e `elevenlabs-webhook` ainda rodam o código **antigo**. | `ezbr_sha256`/`updated_at` inalterados + sonda 422 + log `[WEBHOOK_AUTH_SHADOW]` vivo | ver §5 |
 | P2 | p1 | **Infra de deploy**: fila compartilhada (1 rodando + 1 pendente por grupo; o resto é cancelado) e o passo `Capturar e validar manifesto remoto pos-deploy` roda ~24 min e **falha em todos os runs** — `smoke` e `Registrar tag de deploy` nunca rodam. | runs 36601680272/36600998789/36583351162/36560547941; passo `Deploy` = 13 s | infra (fora do plano) |
@@ -60,9 +60,10 @@ saída crua; cada um declarou o que **não** conseguiu medir.
   fechada**: publicado sem o secret, ele recusa **100%** dos eventos, inclusive os legítimos da
   ElevenLabs. Antes de publicar `elevenlabs-webhook`: criar o secret no Supabase (Edge Functions →
   Secrets) com o **mesmo valor** configurado no painel da ElevenLabs.
-- A linha criada em `audit_logs` às 18:06:50Z (`action=elevenlabs_webhook_unknown`,
-  `details={"probe":"hermes-blo02"}`) é **da minha sondagem** — foi ela que provou que o defeito
-  A9 estava vivo em produção. Não removi: escrita em banco fora de migration é proibida para mim.
+- As **duas** linhas criadas em `audit_logs` às 18:06:50Z e 18:11:15Z (`action=elevenlabs_webhook_unknown`,
+  `details={"probe":"…"}`) são **das minhas sondagens** — foram elas que provaram que o defeito A9 estava
+  vivo em produção. Existem outras 3 linhas antigas (agosto/2026, `details` vazio ou `x_invalid_payload`),
+  que **não** são minhas. Não removi nenhuma: escrita em banco fora de migration é proibida para mim.
 
 ## 3. O que está provado (e como)
 
@@ -123,8 +124,10 @@ existir, `elevenlabs-webhook`.
 2. **Comportamento do código novo em produção** — não observei o 401 vindo do próprio
    `requireAiIdentity` ao vivo: `/auth/v1` estava fora do ar na janela (522) e o gateway responde
    antes. Para as 4 publicadas, a prova é "código novo no bundle", não "resposta nova observada".
-3. **Contagem de `media_url` por bucket** e total de mensagens soft-deleted — `statement timeout`
-   no banco durante a coleta.
+3. **Contagens por bucket e ciclo de vida** — medidas depois, pelo gateway MCP de leitura do projeto
+   (`media_url`: `whatsapp-media` 4.750 / `audio-messages` 2.774 / externo 350 / `audio-memes` **1**;
+   `messages`: 49.318 total, 132 apagadas, 7.875 com mídia, **12** com mídia apagada). O que segue não
+   medido é apenas: quantas dessas 12 têm áudio transcrito por alguém de fora do escopo do contato.
 4. **`x-forwarded-for` reescrito pelo proxy?** — não medido; se for reescrito, o A5 perde a parte
    de spoofing e resta o limite × isolates.
 5. **`ELEVENLABS_WEBHOOK_SECRET` ausente** se apoia em uma linha de log (18:18:42Z) — nome de env
