@@ -77,15 +77,26 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
   }, [addressListOpen]);
 
   const handleSelectSuggestion = async (index: number) => {
+    const suggestion = autocomplete.suggestions[index];
+    // A3-01 (onda 2): clique duplo no mesmo item disparava N−1 `/retrieve` e N−1 sessões
+    // faturáveis (medido no bundle real: 1 `/suggest` + 2 `/retrieve` com 2 session_token para
+    // UMA seleção). Enquanto a seleção daquele item está em voo, repetir o clique nele é no-op.
+    // Item DIFERENTE continua valendo: quem vence é o mais novo (semântica do E46).
+    if (autocomplete.retrievingId !== null && autocomplete.retrievingId === suggestion?.id) return;
+
     const place = await autocomplete.select(index);
     // E26: falha do `/retrieve` (com o fallback do E16 já tentado) não pode fechar a lista — o
     // operador perde o que estava escolhendo e o campo fica sem coordenada. A lista continua
     // aberta, o item mostra a causa e o aviso sai uma vez.
     if (!place) {
-      const kind = autocomplete.retrieveError?.kind;
+      // A3-01 (onda 2): `null` também é o retorno de uma seleção SUPERADA por outra mais nova.
+      // Sem esta amarração ao item escolhido, o clique duplo produzia toasts destrutivos falsos
+      // ("Não consegui obter a coordenada") enquanto a localização era aplicada logo depois.
+      const erro = autocomplete.retrieveError;
+      if (!erro || erro.id !== suggestion?.id) return;
       toast({
         title: 'Não consegui obter a coordenada',
-        description: kind ? searchFailureText(kind) : 'Tente outra sugestão ou busque pelo endereço completo.',
+        description: searchFailureText(erro.kind),
         variant: 'destructive',
       });
       return;

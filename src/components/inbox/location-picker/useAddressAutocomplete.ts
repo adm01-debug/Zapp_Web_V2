@@ -236,6 +236,9 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
   // Consulta corrente do /suggest: aborta a anterior antes de abrir uma nova, pra resposta
   // lenta da 1ª nunca sobrescrever a 2ª.
   const abortRef = useRef<AbortController | null>(null);
+  // A3-03 (onda 2): termo da consulta em voo. Sem isto, a resposta do termo ANTERIOR chegava
+  // dentro dos 300 ms do debounce do termo novo e pintava a lista de um endereço já trocado.
+  const activeTermRef = useRef<string | null>(null);
   // /retrieve não tem AbortController (a Mapbox não define request in-flight cancelável aqui) —
   // este contador é quem garante que uma seleção anterior, ainda em voo, nunca sobrescreva o
   // resultado de uma seleção mais nova (E46: clique duplo ou Enter rápido em duas sugestões).
@@ -253,18 +256,22 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
+    // A3-03 (onda 2): registra o termo desta consulta — é o que permite descartar a resposta
+    // quando o operador já digitou outra coisa (ver o guard no `.then` abaixo).
+    activeTermRef.current = term;
     dispatch({ type: 'SUGGEST_START' });
     const session = getSearchSession(sessionSource);
     noteSuggestCall();
     suggestPlaces(term, token, { session, proximity, signal: controller.signal, types }).then(async (result) => {
-      // Resposta de uma consulta abortada nunca vira estado — nem sucesso, nem erro.
-      if (controller.signal.aborted) return;
+      // Resposta de uma consulta abortada nunca vira estado — nem sucesso, nem erro. A3-03: a
+      // resposta de um termo que já não é o corrente (janela do debounce de 300 ms) também não.
+      if (controller.signal.aborted || activeTermRef.current !== term) return;
 
       if (!result.ok && FORWARD_FALLBACK_KINDS.has(result.kind)) {
         // F2/E15: `/suggest` caiu por rota — o `/forward` (searchPlaces) é a rede de proteção.
         // Sem isto, `/suggest` fora do ar = busca fora do ar (C3).
         const forward = await searchPlaces(term, token, controller.signal, proximity);
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted || activeTermRef.current !== term) return;
         if (forward.ok && forward.places.length > 0) {
           dispatch({ type: 'SUGGEST_SUCCESS', suggestions: forward.places.map((place, index) => toForwardSuggestion(place, index)) });
           return;
@@ -309,7 +316,20 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
   // Aborta a consulta em voo se o componente desmontar.
   useEffect(() => () => abortRef.current?.abort(), []);
 
+  // A3-02 (onda 2): trocar de aba desliga o picker (`enabled=false`) — a consulta em voo tem de
+  // morrer aqui, e a seleção em voo tem de ser invalidada. Antes só o timer do debounce era
+  // cancelado: o request já disparado seguia vivo e voltava a pintar estado depois.
+  useEffect(() => {
+    if (enabled) return;
+    activeTermRef.current = null;
+    selectionSeqRef.current += 1;
+    abortRef.current?.abort();
+  }, [enabled]);
+
   const setQuery = useCallback((query: string) => {
+    // A3-03 (onda 2): o termo mudou — a resposta do termo anterior não pode mais virar estado,
+    // mesmo que ainda esteja em voo (o debounce de 300 ms é justamente essa janela).
+    activeTermRef.current = null;
     // E28: apagar até menos de 3 caracteres também mata a consulta em voo — sem isso, a resposta
     // do termo antigo chegava depois e repovoava a lista sobre um campo que já está vazio.
     if (query.trim().length < MIN_QUERY_LENGTH) abortRef.current?.abort();
@@ -385,6 +405,10 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
 
   const clear = useCallback(() => {
     abortRef.current?.abort();
+    // A3-05 (onda 2): invalidar a seleção em voo — Esc/Cancelar com um `/retrieve` em curso deixava
+    // a resposta chegar depois e ser aplicada por quem usa, sobre uma tela que o operador fechou.
+    selectionSeqRef.current += 1;
+    activeTermRef.current = null;
     // E46: sem isso, fechar o picker (ou apertar Esc) sem escolher nada deixava a sessão aberta —
     // a próxima busca, mesmo sobre um endereço completamente diferente, reaproveitava o mesmo
     // session_token dentro da janela de 2 min (SESSION_IDLE_MS em mapboxSession.ts).
