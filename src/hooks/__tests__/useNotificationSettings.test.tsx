@@ -35,6 +35,15 @@ const createWrapper = () => {
   );
 };
 
+// Cadeia que o hook usa no supabase: from().select().eq().maybeSingle() + upsert. Devolve os spies
+// para cada caso conferir o select/upsert sem repetir o mock inteiro.
+const montarCadeia = (data: unknown, upsert = vi.fn().mockResolvedValue({ error: null })) => ({
+  select: vi.fn().mockReturnValue({
+    eq: vi.fn().mockReturnValue({ maybeSingle: vi.fn().mockResolvedValue({ data, error: null }) }),
+  }),
+  upsert,
+});
+
 describe('useNotificationSettings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -126,5 +135,67 @@ describe('useNotificationSettings', () => {
 
     const { result } = renderHook(() => useNotificationSettings(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
+  });
+
+  // ========== VOLUME DOS ALERTAS (sound_volume) ==========
+  // O campo existia so no front: sem coluna, sem select, sem gravacao — o slider voltava para 70 a
+  // cada reload. Estes testes pinam as quatro pontas (select, leitura, gravacao e reset).
+  describe('soundVolume persistido', () => {
+    const comLinha = (data: unknown) => {
+      const cadeia = montarCadeia(data);
+      mockFrom.mockReturnValue(cadeia);
+      return cadeia;
+    };
+
+    const carregar = async () => {
+      const { result } = renderHook(() => useNotificationSettings(), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      return result;
+    };
+
+    it('le o volume salvo no banco', async () => {
+      comLinha({ sound_enabled: true, sound_volume: 45 });
+      const result = await carregar();
+      expect(result.current.settings.soundVolume).toBe(45);
+    });
+
+    it('pede a coluna sound_volume no select', async () => {
+      const { select } = comLinha(null);
+      await carregar();
+      expect(select).toHaveBeenCalledWith(expect.stringContaining('sound_volume'));
+    });
+
+    it('usa o default quando a coluna vem nula ou ausente', async () => {
+      comLinha({ sound_enabled: true, sound_volume: null });
+      const result = await carregar();
+      expect(result.current.settings.soundVolume).toBe(70);
+    });
+
+    it('clampa valor fora da faixa do controle', async () => {
+      comLinha({ sound_enabled: true, sound_volume: 500 });
+      const result = await carregar();
+      expect(result.current.settings.soundVolume).toBe(100);
+    });
+
+    it('grava o volume no banco ao atualizar', async () => {
+      const { upsert } = comLinha(null);
+      const result = await carregar();
+      await result.current.updateSettings({ soundVolume: 35 });
+      expect(upsert.mock.calls[0][0]).toMatchObject({ user_id: 'u1', sound_volume: 35 });
+    });
+
+    it('clampa o valor gravado para a faixa do controle', async () => {
+      const { upsert } = comLinha(null);
+      const result = await carregar();
+      await result.current.updateSettings({ soundVolume: 5000 });
+      expect(upsert.mock.calls[0][0]).toMatchObject({ sound_volume: 100 });
+    });
+
+    it('reset volta o volume para o default', async () => {
+      const { upsert } = comLinha(null);
+      const result = await carregar();
+      await result.current.resetSettings();
+      expect(upsert.mock.calls[0][0]).toMatchObject({ sound_volume: 70 });
+    });
   });
 });

@@ -7965,6 +7965,7 @@ export type Database = {
           sentiment_consecutive_count: number | null
           sla_sound_type: string | null
           sound_enabled: boolean | null
+          sound_volume: number | null
           theme: string | null
           transcription_notification_enabled: boolean | null
           transcription_sound_type: string | null
@@ -8001,6 +8002,7 @@ export type Database = {
           sentiment_consecutive_count?: number | null
           sla_sound_type?: string | null
           sound_enabled?: boolean | null
+          sound_volume?: number | null
           theme?: string | null
           transcription_notification_enabled?: boolean | null
           transcription_sound_type?: string | null
@@ -8037,6 +8039,7 @@ export type Database = {
           sentiment_consecutive_count?: number | null
           sla_sound_type?: string | null
           sound_enabled?: boolean | null
+          sound_volume?: number | null
           theme?: string | null
           transcription_notification_enabled?: boolean | null
           transcription_sound_type?: string | null
