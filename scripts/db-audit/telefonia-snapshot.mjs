@@ -40,6 +40,18 @@ if (!destino) {
   process.exit(2);
 }
 
+// O destino e um artefato versionado do repo, nunca um caminho arbitrario:
+// resolve contra a raiz do checkout e recusa o que escapar dela (../, absoluto
+// fora do repo). Sem isso o argumento viraria escrita de arquivo em qualquer
+// lugar do host que roda o script.
+const raizDoRepo = fs.realpathSync(process.cwd());
+const destinoAbsoluto = path.resolve(raizDoRepo, destino);
+const relativo = path.relative(raizDoRepo, destinoAbsoluto);
+if (relativo === '' || relativo.startsWith('..') || path.isAbsolute(relativo)) {
+  console.error('ERRO: a saida precisa ficar dentro do repositorio.');
+  process.exit(2);
+}
+
 const url = process.env.DESTINO_URL?.trim();
 if (!url) {
   console.error('ERRO: DESTINO_URL ausente; nao foi possivel provar a identidade do banco.');
@@ -81,6 +93,6 @@ try {
   process.exit(2);
 }
 
-fs.mkdirSync(path.dirname(path.resolve(destino)), { recursive: true });
-fs.writeFileSync(destino, JSON.stringify(snapshot, null, 2) + '\n');
-console.log(`Snapshot gravado em ${destino} (tabela public.calls: ${snapshot.counts.total} linhas; funcoes: ${snapshot.functions.length}).`);
+fs.mkdirSync(path.dirname(destinoAbsoluto), { recursive: true });
+fs.writeFileSync(destinoAbsoluto, JSON.stringify(snapshot, null, 2) + '\n');
+console.log(`Snapshot gravado em ${destinoAbsoluto} (tabela public.calls: ${snapshot.counts.total} linhas; funcoes: ${snapshot.functions.length}).`);
