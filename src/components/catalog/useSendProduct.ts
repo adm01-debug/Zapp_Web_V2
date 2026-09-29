@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { toast } from '@/hooks/ui/use-toast';
+import { toast } from 'sonner';
 import { getLogger } from '@/lib/logger';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { fetchCatalogContactResults, logCatalogSendEvent, type CatalogSendTemplate } from '@/hooks/integrations/useCatalogContactSearch';
 import { CATALOG_SEND_EVENTS_KEY } from '@/hooks/integrations/useCatalogRecentSends';
 
@@ -13,6 +14,50 @@ export interface ContactResult {
   name: string;
   phone: string;
   avatar_url: string | null;
+}
+
+/** Versão mínima (ms) entre duas fotos do mesmo envio — humanização (CT-05). */
+export const PHOTO_MIN_INTERVAL_MS = 800;
+/** Jitter aleatório somado ao intervalo mínimo, para o ritmo não ser metronômico. */
+export const PHOTO_INTERVAL_JITTER_MS = 700;
+
+const sleep = (ms: number) => new Promise<void>((resolve) => { setTimeout(resolve, ms); });
+
+/**
+ * Fração aleatória em [0, 1) para o jitter do ritmo humano.
+ *
+ * Não é `Math.random()`: a regra S2245 do Sonar marca PRNG fraco como
+ * vulnerabilidade e o quality gate do repositório fica vermelho por causa disso.
+ * O módulo já exige Web Crypto para os ids de entrega (`crypto.randomUUID` em
+ * outbound-message.service), então a fonte é a mesma.
+ */
+function randomFraction(): number {
+  const buffer = new Uint32Array(1);
+  crypto.getRandomValues(buffer);
+  return buffer[0] / 0x1_0000_0000;
+}
+
+/**
+ * CT-06 — abre a conversa do contato no inbox a partir do toast de sucesso.
+ *
+ * Não existe rota `?view=inbox&contact=<id>`: o inbox recebe a conversa por
+ * evento (`open-contact-chat`, escutado em useRealtimeInbox) e o parâmetro de
+ * URL só troca a view. É o mesmo mecanismo já usado por useContactsCRUD
+ * .openContactChat — repetir a tentativa cobre a view do inbox ainda montando.
+ */
+export function openContactChat(contactId: string): void {
+  const appWindow = window as Window & { __pendingOpenContactId?: string };
+  appWindow.__pendingOpenContactId = contactId;
+  if (new URLSearchParams(window.location.search).get('view') !== 'inbox') {
+    navigateToView('inbox');
+  }
+  let attempts = 0;
+  const tryDispatch = () => {
+    attempts++;
+    window.dispatchEvent(new CustomEvent('open-contact-chat', { detail: { contactId } }));
+    if (attempts < 15) setTimeout(tryDispatch, 200);
+  };
+  setTimeout(tryDispatch, 150);
 }
 
 export function useContactSearch(step: 'configure' | 'selectContact') {
@@ -69,7 +114,7 @@ export interface SendEventProductInfo {
   template?: CatalogSendTemplate | null;
 }
 
-export function useSendToContact(onSuccess: () => void) {
+export function useSendToContact(onSuccess: () => void, onRetry?: () => void) {
   const [isSending, setIsSending] = useState(false);
   const queryClient = useQueryClient();
 
@@ -82,30 +127,49 @@ export function useSendToContact(onSuccess: () => void) {
   ) => {
     setIsSending(true);
     try {
-      // Send images
-      let imageFailed = 0;
+      // CT-04 — a mensagem vira **caption da primeira foto**: é assim que o
+      // usuário manda produto no WhatsApp (texto colado na imagem). As demais
+      // fotos vão mudas e o texto só vira mensagem própria quando não há foto
+      // nenhuma. Antes o fluxo mandava N fotos com caption vazio + 1 texto
+      // separado = N+1 mensagens e o cliente recebia a foto órfã do texto.
+      let failed = 0;
       const messageIds: string[] = [];
-      for (const imgUrl of imageUrls) {
+      const hasImages = imageUrls.length > 0;
+
+      for (let i = 0; i < imageUrls.length; i++) {
+        // CT-05 — ritmo humano entre fotos: sem isso as N imagens saem no
+        // mesmo milissegundo (prints de rajada e risco de bloqueio do número).
+        if (i > 0) {
+          await sleep(PHOTO_MIN_INTERVAL_MS + randomFraction() * PHOTO_INTERVAL_JITTER_MS);
+        }
+        const isFirst = i === 0;
         try {
-          // Keep the old empty provider caption. The image URL is stored in
-          // media_url; it must never become customer-facing message text.
-          const result = await sendOutboundMessage({ contactId: contact.id, content: '', messageType: 'image', mediaUrl: imgUrl });
+          const result = await sendOutboundMessage({
+            contactId: contact.id,
+            // `content` é o que a nossa própria UI exibe; `caption` é o que a
+            // Evolution manda junto da mídia. Os dois carregam a mensagem na 1ª.
+            content: isFirst ? message : '',
+            messageType: 'image',
+            mediaUrl: imageUrls[i],
+            caption: isFirst ? message : null,
+          });
           messageIds.push(result.id);
         } catch {
-          imageFailed++;
+          // Uma foto que falha não aborta as demais (mantido do comportamento
+          // anterior): o resultado agregado é que fica `partial`.
+          failed++;
         }
       }
 
-      // Send text
-      let textFailed = false;
-      try {
-        const result = await sendOutboundMessage({ contactId: contact.id, content: message, messageType: 'text' });
-        messageIds.push(result.id);
-      } catch { textFailed = true; }
+      if (!hasImages) {
+        try {
+          const result = await sendOutboundMessage({ contactId: contact.id, content: message, messageType: 'text' });
+          messageIds.push(result.id);
+        } catch { failed++; }
+      }
 
-      const totalFailed = imageFailed + (textFailed ? 1 : 0);
-      const totalAttempted = imageUrls.length + 1;
-      const status = totalFailed === 0 ? 'sent' : totalFailed === totalAttempted ? 'failed' : 'partial';
+      const totalAttempted = hasImages ? imageUrls.length : 1;
+      const status = failed === 0 ? 'sent' : failed === totalAttempted ? 'failed' : 'partial';
 
       if (product) {
         // Falha silenciosa (dentro do próprio helper) — nunca bloqueia o
@@ -122,7 +186,7 @@ export function useSendToContact(onSuccess: () => void) {
           messageLength: message.length,
           status,
           messageIds,
-        }).then(() => {
+        }).finally(() => {
           // O rail do catálogo (E56) lê esta tabela: sem invalidar, o envio
           // recém-registrado só apareceria num refetch por foco de janela
           // ou remount, porque staleTime apenas marca o cache como velho.
@@ -130,12 +194,24 @@ export function useSendToContact(onSuccess: () => void) {
         });
       }
 
+      // CT-06 — três tons de toast (sonner), com as duas ações que o usuário
+      // realmente quer depois de enviar: abrir a conversa ou tentar de novo.
+      const retryAction = onRetry ? { label: 'Tentar de novo', onClick: onRetry } : undefined;
       if (status === 'failed') {
-        toast({ title: 'Falha no envio', description: `Não foi possível enviar para ${contact.name}. Tente novamente.`, variant: 'destructive' });
+        toast.error('Falha no envio', {
+          description: `Nenhuma mensagem chegou a ${contact.name}. Tente novamente.`,
+          action: retryAction,
+        });
       } else if (status === 'partial') {
-        toast({ title: 'Envio parcial', description: `${totalFailed} mensagem(ns) falharam para ${contact.name}`, variant: 'destructive' });
+        toast.warning('Envio parcial', {
+          description: `${failed} de ${totalAttempted} mensagem(ns) falharam para ${contact.name}.`,
+          action: retryAction,
+        });
       } else {
-        toast({ title: '✅ Produto enviado!', description: `Enviado para ${contact.name}` });
+        toast.success('✅ Produto enviado!', {
+          description: `Enviado para ${contact.name}`,
+          action: { label: 'Abrir conversa', onClick: () => openContactChat(contact.id) },
+        });
       }
       // Audit 24/09 — falha total (todas as mensagens/fotos falharam) não
       // pode fechar o dialog nem apagar o rascunho: sem isso, onSuccess()
@@ -144,11 +220,13 @@ export function useSendToContact(onSuccess: () => void) {
       if (status !== 'failed') onSuccess();
     } catch (err) {
       log.error('Error sending product:', err);
-      toast({ title: 'Erro ao enviar produto', variant: 'destructive' });
+      toast.error('Erro ao enviar produto', {
+        action: onRetry ? { label: 'Tentar de novo', onClick: onRetry } : undefined,
+      });
     } finally {
       setIsSending(false);
     }
-  }, [onSuccess, queryClient]);
+  }, [onSuccess, onRetry, queryClient]);
 
   return { isSending, sendProductToContact };
 }

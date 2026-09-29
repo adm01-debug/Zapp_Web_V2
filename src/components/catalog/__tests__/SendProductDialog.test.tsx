@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { ReactNode } from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SendProductDialog } from '../SendProductDialog';
 import type { ExternalProduct, ExternalProductVariant } from '@/hooks/integrations/useExternalCatalog';
@@ -23,10 +23,27 @@ vi.mock('@/components/ui/dropdown-menu', () => ({
   DropdownMenuLabel: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-const mockToast = vi.fn();
-vi.mock('@/hooks/ui/use-toast', () => ({
-  toast: (...args: unknown[]) => mockToast(...args),
+const mockToast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), warning: vi.fn() }));
+vi.mock('sonner', () => ({ toast: mockToast }));
+
+// CT-08/CT-09 — o dialog consulta a prontidão do envio e envia de verdade.
+const mockReadiness = vi.hoisted(() => vi.fn());
+vi.mock('@/hooks/integrations/useCatalogSendReadiness', () => ({
+  useCatalogSendReadiness: (...args: unknown[]) => mockReadiness(...args),
 }));
+
+const mockFetchContacts = vi.hoisted(() => vi.fn());
+vi.mock('@/hooks/integrations/useCatalogContactSearch', () => ({
+  fetchCatalogContactResults: (...args: unknown[]) => mockFetchContacts(...args),
+  logCatalogSendEvent: vi.fn().mockResolvedValue(undefined),
+}));
+
+const mockSendOutboundMessage = vi.hoisted(() => vi.fn());
+vi.mock('@/services/outbound-message.service', () => ({
+  sendOutboundMessage: (...args: unknown[]) => mockSendOutboundMessage(...args),
+}));
+
+vi.mock('@/hooks/system/useNavigationHistory', () => ({ navigateToView: vi.fn() }));
 
 const mockVariant = (o: Partial<ExternalProductVariant> = {}): ExternalProductVariant => ({
   id: 'v1', product_id: 'p1', sku: 'CB-001-A', name: 'Azul',
@@ -51,21 +68,37 @@ const mockProduct = (o: Partial<ExternalProduct> = {}): ExternalProduct => ({
   ...o,
 });
 
-function renderDialog(props: Partial<React.ComponentProps<typeof SendProductDialog>> = {}) {
+const renderDialog = (props: Partial<React.ComponentProps<typeof SendProductDialog>> = {}) => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
       <SendProductDialog product={mockProduct()} open onOpenChange={vi.fn()} {...props} />
     </QueryClientProvider>
   );
-}
+};
+
+const resetToastMocks = () => {
+  mockToast.success.mockReset();
+  mockToast.error.mockReset();
+  mockToast.warning.mockReset();
+};
+
+const setupDialogMocks = () => {
+  mockUseAuth.mockReset();
+  mockUseAuth.mockReturnValue({ profile: { id: 'profile-1' } });
+  resetToastMocks();
+  mockReadiness.mockReset();
+  mockReadiness.mockReturnValue({ blocked: false, reason: null, checking: false });
+  mockFetchContacts.mockReset();
+  mockFetchContacts.mockResolvedValue([]);
+  mockSendOutboundMessage.mockReset();
+  mockSendOutboundMessage.mockResolvedValue({ id: 'msg-1' });
+  Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+};
 
 describe('SendProductDialog — Fase 7 (E72-E75 parcial)', () => {
   beforeEach(() => {
-    mockUseAuth.mockReset();
-    mockUseAuth.mockReturnValue({ profile: { id: 'profile-1' } });
-    mockToast.mockReset();
-    Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+    setupDialogMocks();
   });
 
   it('mostra o contador de caracteres da mensagem (E73)', () => {
@@ -107,7 +140,7 @@ describe('SendProductDialog — Fase 7 (E72-E75 parcial)', () => {
 
     fireEvent.click(screen.getByAltText('Cor 10').closest('button')!);
     expect(screen.getByText('10 de 11 fotos selecionadas')).toBeInTheDocument();
-    expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Limite de 10 fotos por envio' }));
+    expect(mockToast.error).toHaveBeenCalledWith('Limite de 10 fotos por envio', expect.objectContaining({ description: expect.any(String) }));
   });
 
   it('copiar link do produto inclui send=1 pra abrir o dialog direto (E75/E78)', async () => {
@@ -145,10 +178,7 @@ describe('SendProductDialog — Fase 7 (E72-E75 parcial)', () => {
 
 describe('SendProductDialog — Fase 7 (E77-E78)', () => {
   beforeEach(() => {
-    mockUseAuth.mockReset();
-    mockUseAuth.mockReturnValue({ profile: { id: 'profile-1' } });
-    mockToast.mockReset();
-    Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+    setupDialogMocks();
     sessionStorage.clear();
     vi.useFakeTimers({ shouldAdvanceTime: true });
   });
@@ -274,5 +304,66 @@ describe('SendProductDialog — Fase 7 (E77-E78)', () => {
     );
 
     expect(screen.queryByDisplayValue('Mensagem do produto A')).not.toBeInTheDocument();
+  });
+});
+
+describe('SendProductDialog — CT-08/CT-09 (checagem pré-envio e teclado)', () => {
+  const CONTACT = { id: 'c1', name: 'Tomaz', phone: '5511949600474', avatar_url: null };
+
+  beforeEach(() => {
+    setupDialogMocks();
+    sessionStorage.clear();
+  });
+
+  it('com a conexão de WhatsApp fora, o botão Enviar fica desabilitado com explicação (CT-08)', async () => {
+    mockFetchContacts.mockResolvedValue([CONTACT]);
+    mockReadiness.mockReturnValue({
+      blocked: true,
+      reason: 'Nenhuma conexão de WhatsApp ativa. Reconecte a instância em Conexões para poder enviar.',
+      checking: false,
+    });
+    renderDialog();
+
+    fireEvent.click(screen.getByRole('button', { name: /Selecionar Contato/i }));
+    fireEvent.click((await screen.findByText('Tomaz')).closest('button')!);
+
+    expect(screen.getByText(/Nenhuma conexão de WhatsApp ativa/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Enviar para Tomaz/i })).toBeDisabled();
+
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Enter', ctrlKey: true });
+    expect(mockSendOutboundMessage).not.toHaveBeenCalled();
+  });
+
+  it('Esc no passo do contato volta um passo em vez de fechar o dialog (CT-09)', async () => {
+    mockFetchContacts.mockResolvedValue([CONTACT]);
+    const onOpenChange = vi.fn();
+    renderDialog({ onOpenChange });
+
+    fireEvent.click(screen.getByRole('button', { name: /Selecionar Contato/i }));
+    expect(screen.getByRole('heading', { name: /Selecionar Contato/i })).toBeInTheDocument();
+
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+
+    expect(screen.getByRole('heading', { name: /Enviar Produto/i })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /Selecionar Contato/i })).not.toBeInTheDocument();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
+  it('Ctrl+Enter no passo do contato envia com a mensagem como caption da foto (CT-04/CT-09)', async () => {
+    mockFetchContacts.mockResolvedValue([CONTACT]);
+    renderDialog();
+
+    fireEvent.click(screen.getByRole('button', { name: /Selecionar Contato/i }));
+    fireEvent.click((await screen.findByText('Tomaz')).closest('button')!);
+
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Enter', ctrlKey: true });
+
+    await waitFor(() => expect(mockSendOutboundMessage).toHaveBeenCalledTimes(1));
+    expect(mockSendOutboundMessage.mock.calls[0][0]).toMatchObject({
+      contactId: 'c1',
+      messageType: 'image',
+      mediaUrl: 'https://x/a.jpg',
+    });
+    expect((mockSendOutboundMessage.mock.calls[0][0] as { caption: string }).caption).toContain('Olha esse produto');
   });
 });

@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { ExternalProduct, useExternalProduct, useCatalogFavorites } from '@/hooks/integrations/useExternalCatalog';
 import { formatPrice, ProductThumb, handleImageError } from './catalogShared';
-import { toast } from '@/hooks/ui/use-toast';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 /**
@@ -242,8 +242,8 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend }: Pro
                 type="button"
                 onClick={() => {
                   navigator.clipboard.writeText(dp.sku).then(
-                    () => toast({ title: '✅ SKU copiado' }),
-                    () => toast({ title: 'Erro ao copiar', variant: 'destructive' }),
+                    () => toast.success('✅ SKU copiado'),
+                    () => toast.error('Erro ao copiar'),
                   );
                 }}
                 className="text-muted-foreground hover:text-foreground transition-colors"

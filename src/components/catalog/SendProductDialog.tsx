@@ -22,7 +22,8 @@ import {
   Pencil, User, Link2, History,
 } from 'lucide-react';
 import { ExternalProduct, useExternalProduct } from '@/hooks/integrations/useExternalCatalog';
-import { toast } from '@/hooks/ui/use-toast';
+import { toast } from 'sonner';
+import { useCatalogSendReadiness } from '@/hooks/integrations/useCatalogSendReadiness';
 import { cn } from '@/lib/utils';
 import {
   type MessageTemplate, type SendMode, buildMessage, collectAllImages,
@@ -174,12 +175,22 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
   } = useContactSearch(step);
 
   const { profile } = useAuth();
+  // CT-06 — "Tentar de novo" reabre o dialog no passo de contato (o envio pode
+  // ter fechado o dialog no caminho de onConfirmSend) sem perder a seleção.
+  const handleRetry = React.useCallback(() => {
+    onOpenChange(true);
+    setStep('selectContact');
+  }, [onOpenChange]);
   const { isSending, sendProductToContact } = useSendToContact(() => {
     try { sessionStorage.removeItem(draftKey(product.id)); } catch { /* ignore */ }
     onOpenChange(false);
     setStep('configure');
     resetContactSelection();
-  });
+  }, handleRetry);
+
+  // CT-08 — conexão de WhatsApp ativa e contato fora da lista de supressão são
+  // pré-requisitos do envio; sem eles o botão fica desabilitado com explicação.
+  const sendReadiness = useCatalogSendReadiness(step === 'selectContact' ? selectedContact : null);
 
   const variantGroups = useMemo(
     () => groupVariantsByColor(fullProduct.variants || []),
@@ -244,7 +255,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
       return;
     }
     if (selectedImages.size >= MAX_IMAGES) {
-      toast({ title: 'Limite de 10 fotos por envio', description: 'Desmarque alguma foto para adicionar outra.', variant: 'destructive' });
+      toast.error('Limite de 10 fotos por envio', { description: 'Desmarque alguma foto para adicionar outra.' });
       return;
     }
     setSelectedImages((prev) => { const next = new Set(prev); next.add(url); return next; });
@@ -253,7 +264,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
   const handleEditMessage = () => { if (!isEditing) setCustomMessage(message); setIsEditing(!isEditing); };
 
   const handleCopyDescription = async () => {
-    try { await navigator.clipboard.writeText(message); toast({ title: '✅ Copiado!' }); } catch { toast({ title: 'Erro ao copiar', variant: 'destructive' }); }
+    try { await navigator.clipboard.writeText(message); toast.success('✅ Copiado!'); } catch { toast.error('Erro ao copiar'); }
   };
 
   const handleCopyLink = async () => {
@@ -264,18 +275,18 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
       const variantParam = sendMode === 'variant' && activeGroup ? `&variant=${encodeURIComponent(activeGroup.colorName)}` : '';
       const url = `${window.location.origin}${window.location.pathname}?view=catalog&product=${fullProduct.id}&send=1${variantParam}`;
       await navigator.clipboard.writeText(url);
-      toast({ title: '✅ Link copiado!' });
-    } catch { toast({ title: 'Erro ao copiar link', variant: 'destructive' }); }
+      toast.success('✅ Link copiado!');
+    } catch { toast.error('Erro ao copiar link'); }
   };
 
   const handleDownloadImages = () => {
     const urls = Array.from(selectedImages);
-    if (urls.length === 0) { toast({ title: 'Nenhuma foto selecionada', variant: 'destructive' }); return; }
+    if (urls.length === 0) { toast.error('Nenhuma foto selecionada'); return; }
     urls.forEach((url, i) => {
       const a = document.createElement('a'); a.href = url; a.download = `${fullProduct.name.replace(/\s+/g, '_')}_${i + 1}.jpg`;
       a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
     });
-    toast({ title: `📥 Download iniciado`, description: `${urls.length} foto(s)` });
+    toast.success('📥 Download iniciado', { description: `${urls.length} foto(s)` });
   };
 
   const handleSend = () => {
@@ -300,15 +311,36 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
     closeDialog();
   };
 
+  // CT-09 — teclado do dialog: no passo de configuração Ctrl/Cmd+Enter avança
+  // para o contato; no passo do contato Ctrl/Cmd+Enter envia (respeitando os
+  // mesmos bloqueios do botão). O Esc fica no `onEscapeKeyDown` do
+  // DialogContent: o Radix escuta `keydown` em fase de captura no documento
+  // (antes de qualquer handler React de bubbling), então só prevenindo lá
+  // dentro é possível voltar um passo em vez de fechar o dialog inteiro.
   const handleContentKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && step === 'configure' && !messageTooLong) {
+    if (step === 'configure') {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !messageTooLong) {
+        e.preventDefault();
+        handleSend();
+      }
+      return;
+    }
+
+    const canSend = !!selectedContact && !isSending && !sendReadiness.blocked && !sendReadiness.checking;
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && canSend) {
       e.preventDefault();
-      handleSend();
+      void handleSendToContact();
     }
   };
 
+  const handleEscapeKeyDown = (e: KeyboardEvent) => {
+    if (step !== 'selectContact') return;
+    e.preventDefault();
+    setStep('configure');
+  };
+
   const handleSendToContact = async () => {
-    if (!selectedContact) { toast({ title: 'Selecione um contato', variant: 'destructive' }); return; }
+    if (!selectedContact) { toast.error('Selecione um contato'); return; }
     await sendProductToContact(
       selectedContact,
       message,
@@ -326,7 +358,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { requestClose(); return; } onOpenChange(v); }}>
-      <DialogContent aria-describedby={undefined} className="max-w-lg max-h-[85vh] p-0 gap-0" onKeyDown={handleContentKeyDown}>
+      <DialogContent aria-describedby={undefined} className="max-w-lg max-h-[85vh] p-0 gap-0" onKeyDown={handleContentKeyDown} onEscapeKeyDown={handleEscapeKeyDown}>
         {step === 'configure' && (
           <>
             <DialogHeader className="p-5 pb-3">
@@ -496,6 +528,8 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
             selectedContact={selectedContact}
             onSelectContact={setSelectedContact}
             isSending={isSending}
+            sendBlockedReason={sendReadiness.reason}
+            checkingSendReadiness={sendReadiness.checking}
             onBack={() => setStep('configure')}
             onSend={handleSendToContact}
           />
