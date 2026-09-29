@@ -83,18 +83,22 @@ const resetToastMocks = () => {
   mockToast.warning.mockReset();
 };
 
+const setupDialogMocks = () => {
+  mockUseAuth.mockReset();
+  mockUseAuth.mockReturnValue({ profile: { id: 'profile-1' } });
+  resetToastMocks();
+  mockReadiness.mockReset();
+  mockReadiness.mockReturnValue({ blocked: false, reason: null, checking: false });
+  mockFetchContacts.mockReset();
+  mockFetchContacts.mockResolvedValue([]);
+  mockSendOutboundMessage.mockReset();
+  mockSendOutboundMessage.mockResolvedValue({ id: 'msg-1' });
+  Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+};
+
 describe('SendProductDialog — Fase 7 (E72-E75 parcial)', () => {
   beforeEach(() => {
-    mockUseAuth.mockReset();
-    mockUseAuth.mockReturnValue({ profile: { id: 'profile-1' } });
-    resetToastMocks();
-    mockReadiness.mockReset();
-    mockReadiness.mockReturnValue({ blocked: false, reason: null, checking: false });
-    mockFetchContacts.mockReset();
-    mockFetchContacts.mockResolvedValue([]);
-    mockSendOutboundMessage.mockReset();
-    mockSendOutboundMessage.mockResolvedValue({ id: 'msg-1' });
-    Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+    setupDialogMocks();
   });
 
   it('mostra o contador de caracteres da mensagem (E73)', () => {
@@ -174,16 +178,7 @@ describe('SendProductDialog — Fase 7 (E72-E75 parcial)', () => {
 
 describe('SendProductDialog — Fase 7 (E77-E78)', () => {
   beforeEach(() => {
-    mockUseAuth.mockReset();
-    mockUseAuth.mockReturnValue({ profile: { id: 'profile-1' } });
-    resetToastMocks();
-    mockReadiness.mockReset();
-    mockReadiness.mockReturnValue({ blocked: false, reason: null, checking: false });
-    mockFetchContacts.mockReset();
-    mockFetchContacts.mockResolvedValue([]);
-    mockSendOutboundMessage.mockReset();
-    mockSendOutboundMessage.mockResolvedValue({ id: 'msg-1' });
-    Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+    setupDialogMocks();
     sessionStorage.clear();
     vi.useFakeTimers({ shouldAdvanceTime: true });
   });
@@ -316,15 +311,7 @@ describe('SendProductDialog — CT-08/CT-09 (checagem pré-envio e teclado)', ()
   const CONTACT = { id: 'c1', name: 'Tomaz', phone: '5511949600474', avatar_url: null };
 
   beforeEach(() => {
-    mockUseAuth.mockReset();
-    mockUseAuth.mockReturnValue({ profile: { id: 'profile-1' } });
-    resetToastMocks();
-    mockReadiness.mockReset();
-    mockReadiness.mockReturnValue({ blocked: false, reason: null, checking: false });
-    mockFetchContacts.mockReset();
-    mockSendOutboundMessage.mockReset();
-    mockSendOutboundMessage.mockResolvedValue({ id: 'msg-1' });
-    Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+    setupDialogMocks();
     sessionStorage.clear();
   });
 

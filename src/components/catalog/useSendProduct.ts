@@ -24,6 +24,20 @@ export const PHOTO_INTERVAL_JITTER_MS = 700;
 const sleep = (ms: number) => new Promise<void>((resolve) => { setTimeout(resolve, ms); });
 
 /**
+ * Fração aleatória em [0, 1) para o jitter do ritmo humano.
+ *
+ * Não é `Math.random()`: a regra S2245 do Sonar marca PRNG fraco como
+ * vulnerabilidade e o quality gate do repositório fica vermelho por causa disso.
+ * O módulo já exige Web Crypto para os ids de entrega (`crypto.randomUUID` em
+ * outbound-message.service), então a fonte é a mesma.
+ */
+function randomFraction(): number {
+  const buffer = new Uint32Array(1);
+  crypto.getRandomValues(buffer);
+  return buffer[0] / 0x1_0000_0000;
+}
+
+/**
  * CT-06 — abre a conversa do contato no inbox a partir do toast de sucesso.
  *
  * Não existe rota `?view=inbox&contact=<id>`: o inbox recebe a conversa por
@@ -126,7 +140,7 @@ export function useSendToContact(onSuccess: () => void, onRetry?: () => void) {
         // CT-05 — ritmo humano entre fotos: sem isso as N imagens saem no
         // mesmo milissegundo (prints de rajada e risco de bloqueio do número).
         if (i > 0) {
-          await sleep(PHOTO_MIN_INTERVAL_MS + Math.random() * PHOTO_INTERVAL_JITTER_MS);
+          await sleep(PHOTO_MIN_INTERVAL_MS + randomFraction() * PHOTO_INTERVAL_JITTER_MS);
         }
         const isFirst = i === 0;
         try {

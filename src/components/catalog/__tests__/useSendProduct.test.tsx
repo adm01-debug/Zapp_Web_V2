@@ -33,19 +33,21 @@ function wrapper({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }
 
+const resetSendMocks = () => {
+  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  mockSendOutboundMessage.mockReset();
+  mockLogCatalogSendEvent.mockReset();
+  mockLogCatalogSendEvent.mockResolvedValue(undefined);
+  sonnerToast.success.mockReset();
+  sonnerToast.warning.mockReset();
+  sonnerToast.error.mockReset();
+  mockNavigateToView.mockReset();
+};
+
 const CONTACT = { id: 'c1', name: 'Cliente Teste', phone: '5511999999999', avatar_url: null };
 
 describe('useSendToContact — CT-04: caption na primeira foto, texto só sem foto', () => {
-  beforeEach(() => {
-    queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    mockSendOutboundMessage.mockReset();
-    mockLogCatalogSendEvent.mockReset();
-    mockLogCatalogSendEvent.mockResolvedValue(undefined);
-    sonnerToast.success.mockReset();
-    sonnerToast.warning.mockReset();
-    sonnerToast.error.mockReset();
-    mockNavigateToView.mockReset();
-  });
+  beforeEach(resetSendMocks);
 
   it('3 fotos viram 3 mensagens (não 4), só a primeira com o texto como caption', async () => {
     mockSendOutboundMessage.mockImplementation(async () => ({ id: `msg-${mockSendOutboundMessage.mock.calls.length}` }));
@@ -95,13 +97,7 @@ describe('useSendToContact — CT-04: caption na primeira foto, texto só sem fo
 });
 
 describe('useSendToContact — CT-05: throttle e falha parcial', () => {
-  beforeEach(() => {
-    queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    mockSendOutboundMessage.mockReset();
-    sonnerToast.success.mockReset();
-    sonnerToast.warning.mockReset();
-    sonnerToast.error.mockReset();
-  });
+  beforeEach(resetSendMocks);
 
   afterEach(() => {
     vi.useRealTimers();
@@ -176,16 +172,7 @@ describe('useSendToContact — CT-05: throttle e falha parcial', () => {
 });
 
 describe('useSendToContact — CT-06/CT-07: toast de sucesso e cache do rail', () => {
-  beforeEach(() => {
-    queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    mockSendOutboundMessage.mockReset();
-    mockLogCatalogSendEvent.mockReset();
-    mockLogCatalogSendEvent.mockResolvedValue(undefined);
-    sonnerToast.success.mockReset();
-    sonnerToast.warning.mockReset();
-    sonnerToast.error.mockReset();
-    mockNavigateToView.mockReset();
-  });
+  beforeEach(resetSendMocks);
 
   it('sucesso traz a ação "Abrir conversa", que abre a conversa do contato no inbox', async () => {
     mockSendOutboundMessage.mockResolvedValue({ id: 'msg-1' });
