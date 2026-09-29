@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 import { ElevenLabsWebhookV1Schema, ElevenLabsWebhookV2Schema, validationErrorResponse } from "../_shared/schemas.ts";
 import { parseVersioned } from "../_shared/contracts.ts";
-import { logElevenLabsAuthShadow } from "../_shared/hmac-validation.ts";
+import { verifyElevenLabsSignature } from "../_shared/webhook-signature.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -11,14 +11,28 @@ Deno.serve(async (req) => {
   const log = new Logger("elevenlabs-webhook");
 
   try {
-    // [WEBHOOK_AUTH_SHADOW] Modo sombra: valida mas NUNCA bloqueia nesta etapa.
-    // Le o body via clone() para nao alterar o comportamento de req.json() abaixo.
-    // ELEVENLABS_WEBHOOK_SECRET ainda precisa ser confirmado/criado nos Secrets
-    // do Supabase (distinto de ELEVENLABS_API_KEY, que e para chamadas de saida).
-    const rawBodyTextForAuthShadow = await req.clone().text();
-    await logElevenLabsAuthShadow(req.headers, rawBodyTextForAuthShadow, Deno.env.get('ELEVENLABS_WEBHOOK_SECRET'));
+    // IA-013: assinatura BLOQUEANTE. Antes, este handler validava a assinatura
+    // em modo sombra e seguia processando: o corpo cru de QUALQUER requisicao
+    // anonima era gravado em audit_logs com service role.
+    // Falha fechada: sem ELEVENLABS_WEBHOOK_SECRET nos Secrets da funcao a
+    // requisicao e recusada (401) em vez de processada sem verificacao.
+    const rawBodyText = await req.text();
+    const verdict = await verifyElevenLabsSignature(
+      req.headers,
+      rawBodyText,
+      Deno.env.get('ELEVENLABS_WEBHOOK_SECRET'),
+    );
+    if (!verdict.ok) {
+      log.warn(`assinatura recusada (${verdict.reason})`);
+      return errorResponse('Assinatura do webhook invalida', 401, req);
+    }
 
-    const rawBody = await req.json().catch(() => null);
+    let rawBody: unknown = null;
+    try {
+      rawBody = JSON.parse(rawBodyText);
+    } catch {
+      rawBody = null;
+    }
     if (rawBody === null || typeof rawBody !== 'object') {
       return validationErrorResponse([{ path: '(root)', message: 'Body must be a valid JSON object', code: 'invalid_type' }], req);
     }
@@ -34,12 +48,18 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
 
-    // Log the webhook event
+    // IA-013: allowlist de campos. O corpo cru do provedor nao vai mais para o
+    // banco — so o necessario para auditoria, com a assinatura ja verificada.
     await supabase.from('audit_logs').insert({
       action: `elevenlabs_webhook_${eventType}`,
       entity_type: 'elevenlabs',
       entity_id: String(body.id || body.request_id || '').slice(0, 100) || null,
-      details: body,
+      details: {
+        event_type: eventType,
+        request_id: typeof body.request_id === 'string' ? body.request_id.slice(0, 100) : null,
+        status: typeof body.status === 'string' ? body.status.slice(0, 50) : null,
+        signature_verified: true,
+      },
     });
 
     switch (eventType) {
