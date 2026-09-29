@@ -27,6 +27,7 @@
     "public.talkx_segments",
     "public.talkx_templates",
     "public.team_conversation_members",
+    "public.team_conversations",
     "public.team_message_reactions",
     "public.team_message_receipts",
     "public.team_messages",
