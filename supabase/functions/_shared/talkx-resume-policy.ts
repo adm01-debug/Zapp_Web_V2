@@ -66,7 +66,7 @@ export function selectResumableCampaigns(
   now = new Date(),
 ): ResumeDecision[] {
   return rows.map((campaign) => {
-    const pauseReason = typeof campaign.pause_reason === "string" ? campaign.pause_reason.trim() : "";
+    const pauseReason = typeof campaign.pause_reason === "string" ? campaign.pause_reason : "";
     const base = { id: campaign.id, name: campaign.name ?? null, pauseReason: pauseReason || null };
 
     if (!(AUTO_RESUME_REASONS as readonly string[]).includes(pauseReason)) {

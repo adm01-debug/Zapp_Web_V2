@@ -21,8 +21,9 @@
 #       recriada).
 #
 # O fixture espelha a definição VIVA de talkx_campaign_events (colunas, CHECK de
-# 9 valores e as duas policies com TO authenticated) — não uma versão de
-# conveniência.
+# 9 valores e as duas policies com TO authenticated) e a função VIVA
+# is_admin_or_supervisor (SECURITY DEFINER sobre public.user_roles) — não uma
+# versão de conveniência em nenhum dos dois casos.
 
 set -Eeuo pipefail
 
@@ -33,6 +34,7 @@ pg_name="zapp-talkx-events-contract-$$"
 passed=0
 
 ADMIN_UID="aaaaaaaa-0000-4000-8000-000000000001"
+SUPERVISOR_UID="aaaaaaaa-0000-4000-8000-000000000003"
 OWNER_UID="aaaaaaaa-0000-4000-8000-000000000002"
 ADMIN_PROFILE="bbbbbbbb-0000-4000-8000-000000000001"
 OWNER_PROFILE="bbbbbbbb-0000-4000-8000-000000000002"
@@ -113,8 +115,22 @@ CREATE TABLE public.profiles (
   name text,
   role text NOT NULL DEFAULT 'agent'
 );
-CREATE FUNCTION public.is_admin_or_supervisor(uid uuid) RETURNS boolean LANGUAGE sql STABLE AS \$\$
-  SELECT EXISTS (SELECT 1 FROM public.profiles p WHERE p.user_id = uid AND p.role IN ('admin', 'supervisor')) \$\$;
+
+-- FONTE DE VERDADE REAL de admin/supervisor, copiada do canônico com
+-- pg_get_functiondef (auditoria de 2026-09-29): a função viva é SECURITY DEFINER
+-- com search_path fixo e lê public.user_roles — NÃO public.profiles.role. O
+-- fixture anterior usava profiles.role com SECURITY INVOKER, então provava os
+-- cenários de admin contra uma função que não existe em produção.
+CREATE TABLE public.user_roles (
+  user_id uuid NOT NULL,
+  role text NOT NULL
+);
+CREATE FUNCTION public.is_admin_or_supervisor(_user_id uuid) RETURNS boolean
+  LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS \$\$
+  SELECT EXISTS (
+    SELECT 1 FROM public.user_roles
+    WHERE user_id = _user_id AND role IN ('admin', 'supervisor')
+  ) \$\$;
 
 CREATE TABLE public.talkx_campaigns (
   id uuid PRIMARY KEY,
@@ -146,8 +162,17 @@ CREATE POLICY "talkx_campaign_events_insert" ON public.talkx_campaign_events FOR
 GRANT SELECT, INSERT, UPDATE ON public.talkx_campaign_events, public.talkx_campaigns, public.profiles TO authenticated, service_role;
 
 INSERT INTO public.profiles(id, user_id, name, role) VALUES
-  ('$ADMIN_PROFILE', '$ADMIN_UID', 'Admin Teste', 'admin'),
+  ('$ADMIN_PROFILE', '$ADMIN_UID', 'Admin Teste', 'agent'),
   ('$OWNER_PROFILE', '$OWNER_UID', 'Dono Teste', 'agent');
+-- profiles.role é LEGADO e fica de propósito como 'agent' nos dois: assim o
+-- cenário 'admin grava evento de entidade' só passa se a função consultar
+-- user_roles — se o fixture voltar a ler profiles.role, o teste fica vermelho.
+-- user_roles NÃO é concedida a authenticated: o cenário 'recusado para quem não
+-- é admin' prova também que o SECURITY DEFINER funciona sem o chamador ter
+-- privilégio na tabela de papéis.
+INSERT INTO public.user_roles(user_id, role) VALUES
+  ('$ADMIN_UID', 'admin'),
+  ('$SUPERVISOR_UID', 'supervisor');
 INSERT INTO public.talkx_campaigns(id, created_by) VALUES ('$CAMPAIGN', '$OWNER_PROFILE');
 SQL
 
@@ -162,6 +187,18 @@ assert_eq "colunas de entidade ainda não existem" '0' \
 # ── migration ────────────────────────────────────────────────────────────────
 psql_script < "$migration" >/dev/null
 pass 'migration 20260929730000 aplicada'
+
+# ── IDEMPOTÊNCIA: aplicar de novo não pode duplicar constraint nem policy ─────
+# A migration roda em banco recém-criado e, num re-run do pipeline (ou num
+# replay manual), roda de novo. O auditor de 2026-09-29 provou isso fora do
+# repo; aqui fica provado dentro do repo.
+psql_script < "$migration" >/dev/null
+assert_eq 'migration reaplicada não duplica o CHECK de tipo' '1' \
+  "$(psql_query "SELECT count(*) FROM pg_constraint WHERE conrelid='public.talkx_campaign_events'::regclass AND conname='talkx_campaign_events_type_check'")"
+assert_eq 'migration reaplicada não duplica o CHECK de alvo' '1' \
+  "$(psql_query "SELECT count(*) FROM pg_constraint WHERE conrelid='public.talkx_campaign_events'::regclass AND conname='talkx_campaign_events_target_check'")"
+assert_eq 'migration reaplicada não duplica policies' '2' \
+  "$(psql_query "SELECT count(*) FROM pg_policy WHERE polrelid='public.talkx_campaign_events'::regclass")"
 
 # ── DEPOIS: os 19 tipos ──────────────────────────────────────────────────────
 for tipo in created updated scheduled started paused resumed cancelled completed note \
@@ -180,6 +217,18 @@ assert_fails_like 'evento de entidade recusado para quem não é admin' 'row-lev
 
 assert_fails_like 'linha sem campanha e sem entidade é recusada' 'talkx_campaign_events_target_check' \
   "INSERT INTO public.talkx_campaign_events(campaign_id, event_type) VALUES (NULL, 'note')"
+
+# ── anon não alcança a trilha (a policy é TO authenticated; anon fica de fora) ─
+assert_fails_like 'anon não grava evento nem na própria campanha' 'permission denied' \
+  "SET LOCAL role anon; INSERT INTO public.talkx_campaign_events(campaign_id, event_type) VALUES ('$CAMPAIGN', 'note')"
+
+# ── supervisor: o papel vem de user_roles (segundo da lista da função viva) ────
+assert_eq 'supervisor grava evento de entidade' '1' \
+  "$(as_user "$SUPERVISOR_UID" "INSERT INTO public.talkx_campaign_events(campaign_id, event_type, entity_type, entity_id, message) VALUES (NULL, 'suppression_remove', 'suppression', gen_random_uuid(), 'v11-supervisor'); SELECT count(*) FROM public.talkx_campaign_events WHERE message = 'v11-supervisor'")"
+
+# ── admin em campanha de OUTRO dono (o ramo de campanha não exige ser o dono) ──
+assert_eq 'admin grava evento na campanha de outro dono' '1' \
+  "$(as_user "$ADMIN_UID" "INSERT INTO public.talkx_campaign_events(campaign_id, event_type, message) VALUES ('$CAMPAIGN', 'note', 'v11-admin-outro-dono'); SELECT count(*) FROM public.talkx_campaign_events WHERE message = 'v11-admin-outro-dono'")"
 
 # ── DEPOIS: o ramo de campanha continua valendo (policy recriada) ─────────────
 assert_eq 'dono continua gravando e lendo evento da própria campanha' '1' \
