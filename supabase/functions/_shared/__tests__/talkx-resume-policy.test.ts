@@ -10,6 +10,7 @@
 import {
   AUTO_RESUME_REASONS,
   pauseReasonForWindow,
+  connectionStatusResolver,
   selectResumableCampaigns,
   type PausedCampaignRow,
 } from "../talkx-resume-policy.ts";
@@ -130,6 +131,81 @@ Deno.test("connection_lost sem whatsapp_connection_id conhecido NÃO retoma", ()
   ];
   const [ok] = selectResumableCampaigns(comId, () => "connected", DENTRO_DA_JANELA);
   assert(ok.resume === true, "com a conexão identificada e de pé, retoma");
+});
+
+Deno.test("[M6] motivo retomável COM espaço nas bordas não retoma (trava o .trim() fora)", () => {
+  // Lacuna que a auditoria de 2026-09-29 provou: reintroduzir o .trim() no
+  // pause_reason SOBREVIVIA à suíte, porque o único fixture de whitespace era
+  // "   " — não-retomável COM ou SEM trim, logo incapaz de distinguir as duas
+  // implementações. O fixture que distingue é um motivo VÁLIDO com espaço.
+  const rows: PausedCampaignRow[] = [
+    { id: "espaco-antes", name: "Motivo com espaço antes", pause_reason: " send_window", ...JANELA },
+    { id: "espaco-depois", name: "Motivo com espaço depois", pause_reason: "send_window ", ...JANELA },
+  ];
+  for (const decision of selectResumableCampaigns(rows, () => null, DENTRO_DA_JANELA)) {
+    assert(
+      decision.resume === false,
+      `${decision.id} não pode retomar: a comparação é exata, igual ao filtro do banco (${decision.because})`,
+    );
+  }
+});
+
+Deno.test("[M7] o fuso da CAMPANHA é usado de verdade (não cai no DEFAULT)", () => {
+  // 2026-09-28T11:30:00Z é segunda 08:30 em America/Sao_Paulo (DENTRO da janela
+  // 08:00-18:00) e 07:30 em America/New_York (FORA). Se a política deixar de
+  // passar o schedule_timezone da campanha para deliveryWindowStatus, ela avalia
+  // tudo no DEFAULT e retoma indevidamente a campanha de Nova York.
+  const agora = new Date("2026-09-28T11:30:00.000Z");
+  const rows: PausedCampaignRow[] = [
+    { id: "sp", name: "São Paulo 08:30", pause_reason: "send_window", ...JANELA },
+    { id: "ny", name: "Nova York 07:30", pause_reason: "send_window", ...JANELA, schedule_timezone: "America/New_York" },
+  ];
+  const porId = new Map(selectResumableCampaigns(rows, () => null, agora).map((d) => [d.id, d]));
+  assert(
+    porId.get("sp")?.resume === true,
+    `São Paulo deveria retomar (08:30 dentro de 08:00-18:00): ${porId.get("sp")?.because}`,
+  );
+  assert(
+    porId.get("ny")?.resume === false,
+    `Nova York NÃO pode retomar (07:30 fora de 08:00-18:00): ${porId.get("ny")?.because}`,
+  );
+});
+
+Deno.test("[M11] fiação do scheduler: sem conexão conhecida, nunca retoma", () => {
+  // A mutação que sobrevivia era trocar o null do caso "sem
+  // whatsapp_connection_id" por "connected" — inline na edge function, nenhum
+  // teste a alcançava. A fiação agora é connectionStatusResolver, testada aqui.
+  const statusById = new Map<string, string | null>([
+    ["conn-viva", "connected"],
+    ["conn-caida", "disconnected"],
+    ["conn-sem-status", null],
+  ]);
+  const resolver = connectionStatusResolver(statusById);
+  const campanha = (id: string, connectionId?: string | null): PausedCampaignRow => ({
+    id,
+    name: id,
+    pause_reason: "connection_lost",
+    ...JANELA,
+    whatsapp_connection_id: connectionId ?? null,
+  });
+
+  assert(resolver(campanha("x", null)) === null, "sem id o resolvedor devolve null — nunca 'connected'");
+  assert(resolver(campanha("x", "conn-de-outra-conta")) === null, "id fora da resposta devolve null");
+  assert(resolver(campanha("x", "conn-viva")) === "connected", "id conhecido devolve o status da tabela");
+  assert(resolver(campanha("x", "conn-sem-status")) === null, "status nulo na tabela continua null");
+
+  const rows = [
+    campanha("viva", "conn-viva"),
+    campanha("caida", "conn-caida"),
+    campanha("sem-status", "conn-sem-status"),
+    campanha("desconhecida", "conn-de-outra-conta"),
+    campanha("orfa", null),
+  ];
+  const porId = new Map(selectResumableCampaigns(rows, resolver, DENTRO_DA_JANELA).map((d) => [d.id, d]));
+  assert(porId.get("viva")?.resume === true, "conexão de pé retoma");
+  for (const id of ["caida", "sem-status", "desconhecida", "orfa"]) {
+    assert(porId.get(id)?.resume === false, `${id} não pode retomar sem conexão de pé (${porId.get(id)?.because})`);
+  }
 });
 
 Deno.test("business_hours retoma só dentro do horário comercial", () => {

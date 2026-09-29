@@ -52,7 +52,7 @@ export const useSLANotifications = () => {
 
       // Play sound if enabled and not in quiet hours
       if (settings.soundEnabled && settings.slaBreachSound && !isQuietHours()) {
-        playNotificationSound('sla_breach', settings.soundType, settings.soundVolume);
+        playNotificationSound('sla_breach', settings.slaSoundType, settings.soundVolume);
       }
 
       // Show browser notification if enabled

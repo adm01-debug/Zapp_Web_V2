@@ -10,7 +10,7 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
-import { AUTO_RESUME_REASONS, selectResumableCampaigns } from "../_shared/talkx-resume-policy.ts";
+import { AUTO_RESUME_REASONS, connectionStatusResolver, selectResumableCampaigns } from "../_shared/talkx-resume-policy.ts";
 
 
 // ─── Handler principal ──────────────────────────────────────────────────────────────────
@@ -80,9 +80,7 @@ Deno.serve(async (req) => {
 
     const resumeDecisions = selectResumableCampaigns(
       pausedCampaigns ?? [],
-      (c) => (typeof c.whatsapp_connection_id === "string"
-        ? connectionStatusById.get(c.whatsapp_connection_id) ?? null
-        : null),
+      connectionStatusResolver(connectionStatusById),
     );
     const resumeCandidates = resumeDecisions.filter((d) => d.resume);
     for (const skipped of resumeDecisions.filter((d) => !d.resume)) {

@@ -29,6 +29,16 @@ vigor. Não há ação pendente para o executor.
 
 ## 2. `search_contacts`: arquivo de 17 colunas × SQL vivo de 23 colunas
 
+**Rastro (conferido no histórico em 29/09/2026, `git log --all --name-status`):** o próprio arquivo
+`20260929370000` **nunca foi renomeado** — foi **adicionado já com o nome final** no commit `41f66910`
+(PR #1172, status `A`). Quem foi renomeada dentro daquele PR foi a migration **vizinha**
+`20260929390000_contacts_conversation_status_and_grants.sql` → `20260929560000_...` (commit `b1d38824`,
+`+0 -0`), para liberar a versão. A versão desta entrada foi mencionada por engano como se ela mesma
+tivesse sido renomeada; o texto da entrada de evidência foi corrigido no PR #1214. Isso se soma à causa do
+conteúdo divergente: o SQL corrigido (23 colunas) foi aplicado direto no banco depois de o gateway
+recusar `42P13` na primeira tentativa, e o arquivo ficou com o replay anterior — porque migration
+aplicada é imutável (regra 7). A entrada de evidência registra as duas coisas.
+
 - O arquivo `supabase/migrations/20260929370000_*.sql` (F1) declara `search_contacts` com 17
   colunas; o SQL efetivamente aplicado (guardado no ledger) tem 23 — as seis colunas de endereço
   (`address, address_number, neighborhood, city, state, postal_code`).

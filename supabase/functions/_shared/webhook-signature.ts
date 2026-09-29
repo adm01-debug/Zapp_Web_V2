@@ -46,7 +46,11 @@ export function parseElevenLabsSignature(
   for (const part of header.split(',')) {
     const eqIndex = part.indexOf('=');
     if (eqIndex === -1) continue;
-    parts[part.slice(0, eqIndex).trim()] = part.slice(eqIndex + 1).trim();
+    const key = part.slice(0, eqIndex).trim();
+    // Chave repetida torna o header ambíguo ("último vence" seria uma escolha
+    // arbitrária do parser): recusa em vez de adivinhar.
+    if (Object.prototype.hasOwnProperty.call(parts, key)) return null;
+    parts[key] = part.slice(eqIndex + 1).trim();
   }
 
   const timestamp = parts['t'];

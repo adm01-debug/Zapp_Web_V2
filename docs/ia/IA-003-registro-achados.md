@@ -94,3 +94,27 @@ Registro completo do bloco: [`IA-011-a-IA-020-contencao-P0.md`](./IA-011-a-IA-02
 O teste do CI que fixava o comportamento inseguro (B7) **não** foi alterado: ele descreve os outros três
 webhooks (Evolution, WhatsApp, Gmail), que seguem em modo sombra — o caminho bloqueante novo tem testes
 próprios.
+
+## G. Verificação adversarial do Bloco 02 (29/09) e correções do lote B
+
+Cinco verificadores independentes tentaram derrubar as alegações do lote A (`92cd8952`). Laudo completo,
+com evidência crua e o que **não** foi provado: [`IA-011-a-IA-020-verificacao-adversarial.md`](./IA-011-a-IA-020-verificacao-adversarial.md).
+
+| Achado | O que era | Correção (lote B) |
+|---|---|---|
+| A1 (crítico) | o cliente do `voice-agent` mandava a **anon key pública**; com o endpoint endurecido, o comando de voz responderia 401 para 100% dos usuários | `useVoiceAgent` resolve `supabase.auth.getSession()` e envia o access token |
+| A2 (alto) | `classify-sticker` devolvia **403** ao webhook interno do WhatsApp (service role) → figurinha nova perdia a categoria em silêncio | passa a usar `requireAiIdentityOrService` |
+| F1 (baixo) | header de assinatura com `v0` repetido era resolvido por "último vence" | header ambíguo é recusado |
+| F4 (médio) | o contrato de ordem casava a **linha de import** → 4 mutações de ordem sobreviviam | contrato reescrito sem imports; mutação **4/4 detectada** |
+| DB-F2 (médio) | nenhum teste provava a negação por RLS (só rejeições pré-banco) | teste de runtime: zero linhas ⇒ 404, visível ⇒ `media_url`, com o JWT do chamador na consulta |
+| F3 / A3 / A6 | o texto do lote A dizia "sessão verificada **+ cota**" e "as outras 21 funções já tinham cota" | corrigido no registro do bloco — a cota é nominal hoje (A3/A6, bloco 06) |
+
+Novos achados registrados aqui, **sem correção neste PR**:
+
+| # | Achado | Tipo | Destino |
+|---|---|---|---|
+| B11 | `ai-conversation-summary/index.ts:219` compara `urgency === 'critical'` contra enum em português (`_shared/schemas.ts:138`) → `ai_priority` nunca vira `urgent` nesse caminho (o irmão `ai-conversation-analysis:266` usa `'critica'`) | defeito | bloco 03/07 |
+| B12 | `src/hooks/system/useAIStats.ts:72-91` compara sentimento em inglês (`'positive'/'negative'`) enquanto o resto do front usa `'positivo'/'negativo'` (`AnalysisBadges.tsx:8-11`) | defeito | bloco 03 |
+| B13 | `supabase/functions/ai-auto-tag/auth_test.ts` existe mas **não roda no CI** (lista fixa em `ci.yml`) | lacuna de teste | bloco 06 |
+| B14 | A cota de IA é **nominal**: as funções corrigidas não registram consumo em `ai_usage_logs`; `enforceAiGuards` **falha aberto** em erro de infra; o rate limit é por isolate e usa IP do `x-forwarded-for`; **10 endpoints de IA paga** têm identidade sem cota | risco | bloco 06 |
+| B15 | A RLS de `messages` **não filtra ciclo de vida** (`is_deleted`, `contacts.deleted_at`, `conversation_status`) e o bucket `audio-memes` é **público** estando na allowlist do transcritor. **Medido:** 12 mensagens apagadas ainda com mídia (de 49.318) e **1** `media_url` já apontando para o bucket público | risco | bloco 15 / 02 |

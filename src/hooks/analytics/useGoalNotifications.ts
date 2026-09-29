@@ -168,7 +168,7 @@ export function useGoalNotifications() {
 
             // Play sound if enabled
             if (settings.soundEnabled && !isQuietHours()) {
-              playNotificationSound('goal_achieved', settings.soundType, settings.soundVolume);
+              playNotificationSound('goal_achieved', settings.goalSoundType, settings.soundVolume);
             }
 
             // Browser notification

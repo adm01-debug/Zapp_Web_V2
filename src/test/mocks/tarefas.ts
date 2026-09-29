@@ -60,9 +60,18 @@ export function setSelectResult(result: MockResult) { selectResult = result; }
 /** O que a próxima escrita (`insert`/`update`/`upsert`) devolve. */
 export function setWriteResult(result: MockResult) { writeResult = result; }
 
+/** Último builder de LEITURA criado pelo cliente falso.
+ *
+ *  Permite ao teste conferir os filtros que o hook mandou para o PostgREST
+ *  (`.or(...)`, `.not(...)`, `.order(...)`), que é onde moram as regras de
+ *  negócio da query — sem isso só o `select` ficava observável. */
+let ultimaLeitura: Record<string, ReturnType<typeof vi.fn>> | null = null;
+export function getUltimaLeitura() { return ultimaLeitura; }
+
 /** Zera os espiões e reinstala o cliente falso. Chamar em `beforeEach`. */
 export function resetSupabaseMock() {
   vi.clearAllMocks();
+  ultimaLeitura = null;
   selectResult = { data: [], error: null };
   writeResult = { error: null };
   supabaseMock.auth.mockReturnValue({ profile: { id: 'u1' } });
@@ -72,6 +81,7 @@ export function resetSupabaseMock() {
   });
   supabaseMock.from.mockImplementation(() => {
     const leitura = createQueryBuilder(selectResult.data ?? null, selectResult.error ?? null);
+    ultimaLeitura = leitura;
     const escrita = createQueryBuilder(null, writeResult.error ?? null);
     return {
       select: (cols: string) => { supabaseMock.select(cols); return leitura; },

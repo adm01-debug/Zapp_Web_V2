@@ -23,7 +23,7 @@ válidos. Este bloco **não altera código, banco nem configuração** — entre
 | IA-008 | [`IA-008-organizacao-das-entregas.md`](./IA-008-organizacao-das-entregas.md) | Os 20 blocos mapeados em 20 PRs, com dependências, classe de DDL e onde há autorização humana necessária | ✅ |
 | IA-009 | [`IA-009-desligamento-seguro.md`](./IA-009-desligamento-seguro.md) | Desenho de kill switch por capacidade/bot/provedor; lacuna provada: `feature_flags` só é lida no cliente | ✅ (implementação nos blocos 02/05/11) |
 | IA-010 | [`IA-010-ambiente-de-ensaio.md`](./IA-010-ambiente-de-ensaio.md) | Especificação de dados sintéticos por departamento, 4 perfis, credencial de homologação por referência | ✅ (provisionamento **não** executado: escrita em produção) |
-| IA-011..020 | [`IA-011-a-IA-020-contencao-P0.md`](./IA-011-a-IA-020-contencao-P0.md) | **Bloco 02 (P0)** — identidade nas funções de IA sem guarda, assinatura de webhook bloqueante, autorização por objeto no áudio; etapas restantes com destino declarado | 🟡 lote de contenção entregue; política (IA-015/016/017/019/020) nos blocos 03/04/05 |
+| IA-011..020 | [`IA-011-a-IA-020-contencao-P0.md`](./IA-011-a-IA-020-contencao-P0.md) + [laudo adversarial](./IA-011-a-IA-020-verificacao-adversarial.md) | **Bloco 02 (P0)** — identidade nas funções de IA sem guarda, assinatura de webhook bloqueante, autorização por objeto no áudio; mais o laudo de 5 verificadores adversariais (achados, correções e o que não foi provado) | 🟡 lotes A e B entregues (2 regressões do lote A corrigidas); política (IA-015/016/017/019/020) nos blocos 03/04/05; deploy de 2 funções + `ELEVENLABS_WEBHOOK_SECRET` pendentes de você |
 
 ## Os três achados que este bloco já deixa provados (base do Bloco 02, P0)
 

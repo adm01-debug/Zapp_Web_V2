@@ -4,24 +4,15 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Volume2, VolumeX, Play, Bell, RotateCcw } from 'lucide-react';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
-import { previewSound, requestNotificationPermission, SoundType } from '@/utils/notificationSounds';
+import { previewSound, requestNotificationPermission } from '@/utils/notificationSounds';
 import { toast } from '@/hooks/ui/use-toast';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { PushNotificationCard } from './PushNotificationCard';
 import { NotificationTypeSection, SentimentAlertCard, QuietHoursCard } from './NotificationTypeCards';
-
-const SOUND_TYPES: { value: string; label: string; description: string }[] = [
-  { value: 'chime', label: 'Chime', description: 'Tom suave e harmonioso' },
-  { value: 'beep', label: 'Beep', description: 'Som eletrônico clássico' },
-  { value: 'bell', label: 'Sino', description: 'Som de campainha' },
-  { value: 'alert', label: 'Alerta', description: 'Som mais chamativo' },
-  { value: 'soft', label: 'Suave', description: 'Notificação discreta' },
-];
 
 export function NotificationSettingsPanel() {
   const { settings, updateSettings, resetSettings, isQuietHours } = useNotificationSettings();
@@ -29,7 +20,7 @@ export function NotificationSettingsPanel() {
 
   const handleTestSound = async () => {
     setIsTestingSound(true);
-    previewSound(settings.soundType, settings.soundVolume);
+    previewSound(settings.messageSoundType, settings.soundVolume);
     setTimeout(() => setIsTestingSound(false), 1000);
   };
 
@@ -68,22 +59,15 @@ export function NotificationSettingsPanel() {
         {settings.soundEnabled && (
           <CardContent className="space-y-6">
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Tipo de Som</Label>
+              <Label className="text-sm font-medium">Testar som</Label>
               <div className="flex gap-3 items-center">
-                <Select value={settings.soundType} onValueChange={(value: SoundType) => updateSettings({ soundType: value })}>
-                  <SelectTrigger className="flex-1"><SelectValue placeholder="Selecione o tipo de som" /></SelectTrigger>
-                  <SelectContent>
-                    {SOUND_TYPES.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        <div className="flex flex-col"><span>{type.label}</span><span className="text-xs text-muted-foreground">{type.description}</span></div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
                 <Button variant="outline" size="icon" onClick={handleTestSound} disabled={isTestingSound}
                   className={cn("transition-all", isTestingSound && "bg-primary/10")}>
                   <Play className={cn("w-4 h-4", isTestingSound && "animate-pulse")} />
                 </Button>
+                <span className="text-xs text-muted-foreground">
+                  O tipo de cada alerta é escolhido no cartão correspondente, abaixo.
+                </span>
               </div>
             </div>
             <div className="space-y-3">
