@@ -22,6 +22,7 @@ migration_helper="$repo_root/supabase/migrations/20260929770000_contacts_can_edi
 migration_single_predicate="$repo_root/supabase/migrations/20260929780000_contacts_single_permission_predicate.sql"
 migration_guards="$repo_root/supabase/migrations/20260929790000_contacts_hijack_guards_only_on_change.sql"
 migration_hoisted="$repo_root/supabase/migrations/20260929810000_contacts_can_edit_contact_hoisted_params.sql"
+migration_can_delete_hoisted="$repo_root/supabase/migrations/20260929820000_contacts_can_delete_contacts_hoisted_params.sql"
 postgres_image="${CONTACTS_F1_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-contacts-f1-test-$$"
 tmp_dir="$(mktemp -d /tmp/zapp-v2-contacts-f1-test.XXXXXX)"
@@ -408,6 +409,7 @@ psql_file "$tmp_dir/search_contacts_producao.sql" >/dev/null
 psql_file "$migration_single_predicate" >/dev/null
 psql_file "$migration_guards" >/dev/null
 psql_file "$migration_hoisted" >/dev/null
+psql_file "$migration_can_delete_hoisted" >/dev/null
 # `can_delete_contacts` ignora contato ja excluido de proposito (a lista nao mostra excluidos).
 expect_value 'can_delete_contacts: dono e membro de fila true, fila alheia false' 'true,true,false' \
   "SET ROLE authenticated; SET request.jwt.claim.sub='$AGENTE'; SELECT string_agg(can_delete::text, ',' ORDER BY contact_id) FROM public.can_delete_contacts(ARRAY['30000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000004','30000000-0000-0000-0000-000000000005']::uuid[])"
@@ -525,6 +527,11 @@ expect_value 'policy de UPDATE passa os lookups por parametro' '1' \
   "SELECT (qual LIKE '%get_visible_agent_ids%')::int FROM pg_policies WHERE schemaname='public' AND tablename='contacts' AND policyname='Users can update their assigned contacts'"
 expect_value 'policy de SELECT passa os lookups por parametro' '1' \
   "SELECT (qual LIKE '%get_visible_agent_ids%')::int FROM pg_policies WHERE schemaname='public' AND tablename='contacts' AND policyname='contacts_select_policy'"
+# 20260929820000: ultimo ponto de chamada da assinatura de 2 argumentos (o caro por linha).
+expect_value 'can_delete_contacts passa os lookups por parametro' 'true' \
+  "SELECT (pg_get_functiondef('public.can_delete_contacts(uuid[])'::regprocedure) LIKE '%array_agg%')::text"
+expect_value 'nenhuma funcao do public usa a assinatura de 2 argumentos do helper' '0' \
+  "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.prokind='f' AND regexp_replace(pg_get_functiondef(p.oid), E'\\\\s+', ' ', 'g') ~ 'can_edit_contact\\( *[a-z_.]+assigned_to, *[a-z_.]+queue_id *\\)'"
 expect_value 'a versao de 2 argumentos delega para a de 5' 'true' \
   "SELECT (pg_get_functiondef('public.can_edit_contact(uuid, uuid)'::regprocedure) LIKE '%can_edit_contact(p_assigned_to, p_queue_id, NULL%')::text"
 expect_value 'authenticated executa can_delete_contacts' 't' \
@@ -562,6 +569,7 @@ psql_file "$migration_helper" >/dev/null
 psql_file "$migration_single_predicate" >/dev/null
 psql_file "$migration_guards" >/dev/null
 psql_file "$migration_hoisted" >/dev/null
+psql_file "$migration_can_delete_hoisted" >/dev/null
 expect_value 'reaplicacao nao duplica a coluna deleted_at' '1' \
   "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='contacts' AND column_name='deleted_at'"
 expect_value 'reaplicacao mantem um unico CHECK de status' '1' \
