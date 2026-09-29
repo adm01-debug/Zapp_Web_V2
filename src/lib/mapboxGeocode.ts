@@ -245,9 +245,21 @@ export interface GeoSuggestion {
   address: string;
   kind: 'poi' | 'street' | 'address' | 'place' | 'other';
   distanceMeters?: number;
+  /**
+   * E15: coordenada já conhecida — sugestões que vieram do `/forward` (fallback quando o
+   * `/suggest` cai) vêm com ponto no mapa e **dispensam** o `/retrieve` na seleção.
+   */
+  coords?: { lat: number; lng: number };
 }
 
 export type GeoSuggestResult = { ok: true; suggestions: GeoSuggestion[] } | { ok: false; kind: GeoFailureKind };
+
+/**
+ * E18: resultado do `/retrieve` **com a causa**. `retrievePlace()` continua existindo como
+ * wrapper (`place | null`) para quem só quer a coordenada; o hook usa esta aqui para poder
+ * decidir o fallback (E16) e alimentar a telemetria (E51).
+ */
+export type GeoRetrieveResult = { ok: true; place: GeoSearchPlace } | { ok: false; kind: GeoFailureKind };
 
 interface SuggestFeature {
   name?: unknown;
@@ -320,39 +332,65 @@ export async function suggestPlaces(
     return suggestion ? [suggestion] : [];
   });
 
-  if (suggestCache.size >= MAX_SUGGEST_CACHE) {
-    const oldest = suggestCache.keys().next().value;
-    if (oldest !== undefined) suggestCache.delete(oldest);
+  // E19: só guarda lista vazia quando a resposta foi 200 com `suggestions: []` DE VERDADE.
+  // Resposta com itens ilegíveis (sem `mapbox_id`) não pode virar "nenhum resultado" fixo pela
+  // sessão inteira, e o fallback (`/forward`) não passa por este cache.
+  if (features.length === 0 || suggestions.length > 0) {
+    if (suggestCache.size >= MAX_SUGGEST_CACHE) {
+      const oldest = suggestCache.keys().next().value;
+      if (oldest !== undefined) suggestCache.delete(oldest);
+    }
+    suggestCache.set(cacheKey, suggestions);
   }
-  suggestCache.set(cacheKey, suggestions);
 
   return { ok: true, suggestions };
 }
 
 /**
+ * Coordenada do `mapbox_id` escolhido na lista de sugestões, **com a causa da falha** (E18).
+ * O hook usa esta versão para decidir o fallback (E16: repetir com `searchPlaces` usando o nome
+ * da sugestão) e para a telemetria de dupla falha (E51, fora do `not_found`).
+ */
+export async function retrievePlaceResult(
+  mapboxId: string,
+  token: string,
+  opts: { session: string; signal?: AbortSignal },
+): Promise<GeoRetrieveResult> {
+  const url = `https://api.mapbox.com/search/searchbox/v1/retrieve/${encodeURIComponent(mapboxId)}?session_token=${encodeURIComponent(opts.session)}&access_token=${encodeURIComponent(token)}`;
+  const result = await requestJson(url, opts.signal);
+  if (!result.ok) return { ok: false, kind: result.kind };
+  const features = (result.data as { features?: SearchBoxFeature[] } | null)?.features;
+  const coords = features?.[0]?.geometry?.coordinates;
+  // 200 sem coordenada válida é "não encontrado", não falha de rota.
+  if (!Array.isArray(coords) || typeof coords[0] !== 'number' || typeof coords[1] !== 'number') {
+    return { ok: false, kind: 'not_found' };
+  }
+  const properties = features?.[0]?.properties;
+  const name = properties?.name;
+  const address = properties?.full_address ?? properties?.place_formatted;
+  return {
+    ok: true,
+    place: {
+      lat: coords[1],
+      lng: coords[0],
+      name: typeof name === 'string' && name ? name : undefined,
+      address: typeof address === 'string' ? address : '',
+      components: toAddressComponents(properties?.context),
+    },
+  };
+}
+
+/**
  * Coordenada do `mapbox_id` escolhido na lista de sugestões. `null` quando o request falhou ou a
  * resposta não trouxe coordenada válida — quem chama decide o fallback (Fase 2: `searchPlaces`
- * com o nome da sugestão).
+ * com o nome da sugestão). Wrapper fino de `retrievePlaceResult` para os consumidores que só
+ * precisam da coordenada.
  */
 export async function retrievePlace(
   mapboxId: string,
   token: string,
   opts: { session: string; signal?: AbortSignal },
 ): Promise<GeoSearchPlace | null> {
-  const url = `https://api.mapbox.com/search/searchbox/v1/retrieve/${encodeURIComponent(mapboxId)}?session_token=${encodeURIComponent(opts.session)}&access_token=${encodeURIComponent(token)}`;
-  const result = await requestJson(url, opts.signal);
-  if (!result.ok) return null;
-  const features = (result.data as { features?: SearchBoxFeature[] } | null)?.features;
-  const coords = features?.[0]?.geometry?.coordinates;
-  if (!Array.isArray(coords) || typeof coords[0] !== 'number' || typeof coords[1] !== 'number') return null;
-  const properties = features?.[0]?.properties;
-  const name = properties?.name;
-  const address = properties?.full_address ?? properties?.place_formatted;
-  return {
-    lat: coords[1],
-    lng: coords[0],
-    name: typeof name === 'string' && name ? name : undefined,
-    address: typeof address === 'string' ? address : '',
-    components: toAddressComponents(properties?.context),
-  };
+  const result = await retrievePlaceResult(mapboxId, token, opts);
+  return result.ok ? result.place : null;
 }

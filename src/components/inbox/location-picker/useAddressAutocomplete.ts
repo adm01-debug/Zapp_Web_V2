@@ -1,13 +1,34 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 import type { KeyboardEvent } from 'react';
-import { suggestPlaces, retrievePlace } from '@/lib/mapboxGeocode';
+import { suggestPlaces, retrievePlaceResult, searchPlaces } from '@/lib/mapboxGeocode';
 import type { GeoSuggestion, GeoFailureKind, GeoProximity, GeoSearchPlace } from '@/lib/mapboxGeocode';
 import { getSearchSession, noteSuggestCall, noteRetrieveCall, endSearchSession } from '@/lib/mapboxSession';
 import { isSearchBudgetOk } from '@/lib/mapboxCostGuard';
+import { reportMapboxFailure } from '@/lib/mapboxToken';
+import type { MapboxFailureKind } from '@/lib/mapboxToken';
 
 const DEBOUNCE_MS = 300;
 const MIN_QUERY_LENGTH = 3;
 const RATE_LIMIT_BACKOFF_MS = 60_000;
+
+/**
+ * F2/E15: causas de falha do `/suggest` que são **rota quebrada** (não limite de uso) e por isso
+ * caem no `/forward`. `rate_limited` (429) e guarda de custo ficam de fora: são limite, não rota —
+ * o caminho é esperar/degradar com aviso (E27), não trocar de endpoint.
+ */
+const FORWARD_FALLBACK_KINDS = new Set<GeoFailureKind>(['network', 'timeout', 'http']);
+
+/**
+ * F2/E17 · E51: tradução da causa do geocoding para a taxonomia de falha do mapa. Só o que é
+ * falha de ROTA entra aqui — `not_found` (a busca respondeu, só não achou) e `aborted` (consulta
+ * cancelada por outra mais nova) não são falha e não geram `client_error`.
+ */
+const MAPBOX_FAILURE_KIND: Partial<Record<GeoFailureKind, MapboxFailureKind>> = {
+  network: 'network',
+  timeout: 'timeout',
+  http: 'server_error',
+  rate_limited: 'rate_limited',
+};
 
 export interface UseAddressAutocompleteOptions {
   token: string | null;
@@ -41,6 +62,15 @@ export interface UseAddressAutocompleteResult {
   onKeyDown: (event: KeyboardEvent) => void;
   /** Limpa query, sugestões e destaque — usado pelo `Esc` e por quem usa o hook. */
   clear: () => void;
+  /**
+   * F2/E13: nova tentativa **real** — dispara a busca na hora (sem esperar o debounce), reusa o
+   * termo atual e respeita backoff/custo. Quando está bloqueado (429 ou teto do mês) não faz
+   * request nenhum e marca `blocked` (o aviso único é renderizado pelo E27), em vez de deixar a
+   * tela dizer "Nada encontrado".
+   */
+  retrySuggest: () => void;
+  /** Por que a busca está pausada agora: `rate_limited` (429), `cost_guard` (teto do mês) ou `null`. */
+  blocked: 'rate_limited' | 'cost_guard' | null;
 }
 
 interface State {
@@ -52,6 +82,10 @@ interface State {
   retrievingId: string | null;
   /** E38: timestamp até quando o /suggest fica em backoff após um 429. */
   rateLimitedUntil: number | null;
+  /** E13: cada retry incrementa — entra nas deps do effect de busca para reexecutar a consulta. */
+  attempt: number;
+  /** E13/E27: bloqueio vigente (429 ou guarda de custo), separado de "nenhum resultado". */
+  blocked: 'rate_limited' | 'cost_guard' | null;
 }
 
 const initialState: State = {
@@ -62,6 +96,8 @@ const initialState: State = {
   highlightedIndex: -1,
   retrievingId: null,
   rateLimitedUntil: null,
+  attempt: 0,
+  blocked: null,
 };
 
 type Action =
@@ -69,6 +105,8 @@ type Action =
   | { type: 'SUGGEST_START' }
   | { type: 'SUGGEST_SUCCESS'; suggestions: GeoSuggestion[] }
   | { type: 'SUGGEST_ERROR'; kind: GeoFailureKind; rateLimitedUntil?: number }
+  | { type: 'SUGGEST_BLOCKED'; reason: 'rate_limited' | 'cost_guard'; rateLimitedUntil?: number }
+  | { type: 'RETRY' }
   | { type: 'RETRIEVE_START'; id: string }
   | { type: 'RETRIEVE_END' }
   | { type: 'RETRIEVE_ERROR'; kind: GeoFailureKind }
@@ -80,17 +118,29 @@ function reducer(state: State, action: Action): State {
     case 'SET_QUERY':
       return { ...state, query: action.query, error: null };
     case 'SUGGEST_START':
-      return { ...state, isLoading: true, error: null };
+      return { ...state, isLoading: true, error: null, blocked: null };
     case 'SUGGEST_SUCCESS':
-      return { ...state, isLoading: false, error: null, suggestions: action.suggestions, highlightedIndex: -1 };
+      return { ...state, isLoading: false, error: null, blocked: null, suggestions: action.suggestions, highlightedIndex: -1 };
     case 'SUGGEST_ERROR':
       return {
         ...state,
         isLoading: false,
         error: action.kind,
         suggestions: [],
+        blocked: null,
         rateLimitedUntil: action.rateLimitedUntil ?? null,
       };
+    case 'SUGGEST_BLOCKED':
+      return {
+        ...state,
+        isLoading: false,
+        error: null,
+        suggestions: [],
+        blocked: action.reason,
+        rateLimitedUntil: action.rateLimitedUntil ?? state.rateLimitedUntil,
+      };
+    case 'RETRY':
+      return { ...state, attempt: state.attempt + 1, error: null };
     case 'RETRIEVE_START':
       // Falha de retrieve não fecha a lista: só o item some do estado de carregamento
       // (RETRIEVE_END), as sugestões continuam de pé.
@@ -110,6 +160,21 @@ function reducer(state: State, action: Action): State {
 }
 
 /**
+ * F2/E15: sugestão vinda do `/forward` (fallback quando o `/suggest` cai). O `/forward` não
+ * devolve a tipologia do `/suggest` (`feature_type`), então o ícone fica no genérico — o que
+ * importa aqui é a coordenada já vir junto (`coords`), que dispensa o `/retrieve` na seleção.
+ */
+function toForwardSuggestion(place: GeoSearchPlace, index: number): GeoSuggestion {
+  return {
+    id: `forward-${index}-${place.lat},${place.lng}`,
+    name: place.name ?? place.address,
+    address: place.address,
+    kind: 'other',
+    coords: { lat: place.lat, lng: place.lng },
+  };
+}
+
+/**
  * Autocomplete estilo playground da Mapbox (`/suggest` enquanto digita): debounce, piso de
  * caracteres, cancelamento, seleção/retrieve e teclado. Não sabe de UI nem de feature flag: só
  * trabalha quando `enabled`. Compartilhado entre o picker de localização do inbox (Fase 2 do plano
@@ -126,6 +191,9 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
   // este contador é quem garante que uma seleção anterior, ainda em voo, nunca sobrescreva o
   // resultado de uma seleção mais nova (E46: clique duplo ou Enter rápido em duas sugestões).
   const selectionSeqRef = useRef(0);
+  // E13: último retry já executado pelo effect — é a comparação que diz "esta mudança veio de um
+  // clique em Tentar novamente" (dispara na hora) em vez de uma tecla (respeita o debounce).
+  const retryRef = useRef(0);
 
   const runSuggest = useCallback((term: string) => {
     if (!token) return;
@@ -139,15 +207,35 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     dispatch({ type: 'SUGGEST_START' });
     const session = getSearchSession(sessionSource);
     noteSuggestCall();
-    suggestPlaces(term, token, { session, proximity, signal: controller.signal, types }).then((result) => {
+    suggestPlaces(term, token, { session, proximity, signal: controller.signal, types }).then(async (result) => {
       // Resposta de uma consulta abortada nunca vira estado — nem sucesso, nem erro.
       if (controller.signal.aborted) return;
+
+      if (!result.ok && FORWARD_FALLBACK_KINDS.has(result.kind)) {
+        // F2/E15: `/suggest` caiu por rota — o `/forward` (searchPlaces) é a rede de proteção.
+        // Sem isto, `/suggest` fora do ar = busca fora do ar (C3).
+        const forward = await searchPlaces(term, token, controller.signal, proximity);
+        if (controller.signal.aborted) return;
+        if (forward.ok && forward.places.length > 0) {
+          dispatch({ type: 'SUGGEST_SUCCESS', suggestions: forward.places.map(toForwardSuggestion) });
+          return;
+        }
+      }
+
       if (result.ok) {
         dispatch({ type: 'SUGGEST_SUCCESS', suggestions: result.suggestions });
-      } else if (result.kind !== 'aborted') {
-        const rateLimitedUntil = result.kind === 'rate_limited' ? Date.now() + RATE_LIMIT_BACKOFF_MS : undefined;
-        dispatch({ type: 'SUGGEST_ERROR', kind: result.kind, rateLimitedUntil });
+        return;
       }
+      if (result.kind === 'aborted') return;
+
+      if (FORWARD_FALLBACK_KINDS.has(result.kind)) {
+        // F2/E17: só aqui os DOIS caminhos falharam na mesma busca — antes disso seria ruído.
+        // Sem o termo digitado (E39): a telemetria só leva o tipo da falha.
+        const reported = MAPBOX_FAILURE_KIND[result.kind];
+        if (reported) reportMapboxFailure(reported, 'suggest');
+      }
+      const rateLimitedUntil = result.kind === 'rate_limited' ? Date.now() + RATE_LIMIT_BACKOFF_MS : undefined;
+      dispatch({ type: 'SUGGEST_ERROR', kind: result.kind, rateLimitedUntil });
     });
   }, [token, proximity, types, sessionSource, state.rateLimitedUntil]);
 
@@ -155,12 +243,19 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     if (!enabled || !token) return;
     const term = state.query.trim();
     if (term.length < MIN_QUERY_LENGTH) return;
+    // E13: o retry não passa pelo debounce — esperar 300 ms depois de um clique em "Tentar
+    // novamente" é justamente o que a tela não pode fazer; digitação continua com o piso.
+    if (state.attempt !== retryRef.current) {
+      retryRef.current = state.attempt;
+      runSuggest(term);
+      return;
+    }
     // Debounce por timer: cada tecla nova reexecuta o effect, e o cleanup abaixo cancela o
     // timer da tecla anterior antes dele disparar — digitação contínua nunca acumula timers,
     // só o último dispara request.
     const timer = setTimeout(() => { runSuggest(term); }, DEBOUNCE_MS);
     return () => { clearTimeout(timer); };
-  }, [state.query, enabled, token, proximity, runSuggest]);
+  }, [state.query, state.attempt, enabled, token, proximity, runSuggest]);
 
   // Aborta a consulta em voo se o componente desmontar.
   useEffect(() => () => abortRef.current?.abort(), []);
@@ -172,27 +267,69 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
   const select = useCallback(async (index: number): Promise<GeoSearchPlace | null> => {
     const suggestion = state.suggestions[index];
     if (!suggestion || !token) return null;
+    // E15 item 3: sugestão do `/forward` já traz coordenada — sem `/retrieve` e sem gastar sessão.
+    if (suggestion.coords) {
+      endSearchSession();
+      return {
+        lat: suggestion.coords.lat,
+        lng: suggestion.coords.lng,
+        name: suggestion.name,
+        address: suggestion.address,
+      };
+    }
     const seq = ++selectionSeqRef.current;
     dispatch({ type: 'RETRIEVE_START', id: suggestion.id });
     const session = getSearchSession(sessionSource);
     noteRetrieveCall();
-    const place = await retrievePlace(suggestion.id, token, { session });
+    const result = await retrievePlaceResult(suggestion.id, token, { session });
     // Uma seleção mais nova já começou enquanto esta estava em voo (E46) — sem isso o resultado
     // desta, mesmo sem nenhum AbortController, podia chegar depois e virar estado / ser aplicado
     // por quem usa por cima da escolha mais recente do operador.
     if (seq !== selectionSeqRef.current) return null;
+
+    if (result.ok) {
+      dispatch({ type: 'RETRIEVE_END' });
+      endSearchSession();
+      return result.place;
+    }
+
+    // E16: `/retrieve` não devolveu coordenada → repete a busca com o texto da própria sugestão
+    // no `/forward`. O corte de relevância (`MIN_V5_RELEVANCE`) é aplicado dentro de `searchPlaces`.
+    const fallback = await searchPlaces(
+      `${suggestion.name} ${suggestion.address}`.trim(),
+      token,
+      undefined,
+      proximity,
+    );
+    if (seq !== selectionSeqRef.current) return null;
+    // O `/retrieve` fecha a sessão para o billing da Mapbox, sucesso ou falha.
+    endSearchSession();
+    const place = fallback.ok ? fallback.places[0] : undefined;
     if (place) {
       dispatch({ type: 'RETRIEVE_END' });
-    } else {
-      // retrievePlace() só devolve null, sem causa — 'not_found' é o kind mais próximo de "sem
-      // coordenada válida", que é a própria doc do mapboxGeocode.ts pra esse retorno.
-      dispatch({ type: 'RETRIEVE_ERROR', kind: 'not_found' });
+      return place;
     }
-    // O /retrieve em si já fecha a sessão pro billing da Mapbox, sucesso ou falha — não é o
-    // resultado que decide isso.
-    endSearchSession();
-    return place;
-  }, [state.suggestions, token, sessionSource]);
+
+    // E17/E51: telemetria só na dupla falha — e `not_found`/`aborted` não são falha de rota.
+    const reported = MAPBOX_FAILURE_KIND[result.kind];
+    if (reported) reportMapboxFailure(reported, 'retrieve');
+    dispatch({ type: 'RETRIEVE_ERROR', kind: result.kind });
+    return null;
+  }, [state.suggestions, token, sessionSource, proximity]);
+
+  const retrySuggest = useCallback(() => {
+    // E13: bloqueado (429 ou teto do mês) não faz request nem mente "Nada encontrado" — marca o
+    // bloqueio, que a tela mostra como aviso único (E27).
+    if (state.rateLimitedUntil && Date.now() < state.rateLimitedUntil) {
+      dispatch({ type: 'SUGGEST_BLOCKED', reason: 'rate_limited', rateLimitedUntil: state.rateLimitedUntil });
+      return;
+    }
+    if (!isSearchBudgetOk()) {
+      dispatch({ type: 'SUGGEST_BLOCKED', reason: 'cost_guard' });
+      return;
+    }
+    dispatch({ type: 'RETRY' });
+  }, [state.rateLimitedUntil]);
 
   const clear = useCallback(() => {
     abortRef.current?.abort();
@@ -254,5 +391,7 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     select,
     onKeyDown,
     clear,
+    retrySuggest,
+    blocked: state.blocked,
   };
 }

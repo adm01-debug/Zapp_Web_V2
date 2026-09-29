@@ -130,7 +130,7 @@ export function resetMapboxTokenForTests(): void {
 }
 
 /** Log local + linha em audit_logs (client_error), com dedupe/limite do errorReporter. */
-export function reportMapboxFailure(kind: MapboxFailureKind, where: 'picker' | 'bubble', detail?: unknown): void {
+export function reportMapboxFailure(kind: MapboxFailureKind, where: 'picker' | 'bubble' | 'suggest' | 'retrieve', detail?: unknown): void {
   log.error(`Mapbox falhou (${where}/${kind})`, detail);
   reportClientError(new Error(`mapbox_${kind}`), { source: `mapbox_${where}`, kind });
 }

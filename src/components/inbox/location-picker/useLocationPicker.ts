@@ -193,8 +193,14 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
     );
   }, [updateMarker, reverseGeocode]);
 
-  const searchLocation = useCallback(async () => {
-    const query = searchQuery.trim();
+  /**
+   * F2/E12: aceita o termo por parâmetro. O input do combobox (flag ligada) está ligado a
+   * `autocomplete.query` e nunca chama `setSearchQuery` — sem o parâmetro, o Enter sem sugestão
+   * destacada chamava esta função com `searchQuery` vazio e voltava na primeira linha (C2).
+   * O caminho da flag desligada continua usando `searchQuery`.
+   */
+  const searchLocation = useCallback(async (explicitQuery?: string) => {
+    const query = (explicitQuery ?? searchQuery).trim();
     if (!query) return;
     if (!mapboxToken) {
       toast({ title: 'Busca indisponível', description: 'O serviço de mapas não respondeu. Use "Tentar novamente" no mapa.', variant: 'destructive' });

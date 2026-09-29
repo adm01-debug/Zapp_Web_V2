@@ -352,6 +352,22 @@ describe('suggestPlaces', () => {
     await suggestPlaces('xbz', 'pk', { session: 's8' });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  // F2/E19: `suggestions: []` de verdade (200 vazio) é resposta legítima e cacheia; já uma resposta
+  // com itens que não deram para ler não pode virar "nenhum resultado" fixo pela sessão inteira.
+  it('E19: 200 com suggestions: [] de verdade fica em cache (2ª consulta não vai à rede)', async () => {
+    fetchMock.mockResolvedValue(suggestBody([]));
+    await suggestPlaces('rua sem resultado', 'pk', { session: 's9' });
+    await suggestPlaces('rua sem resultado', 'pk', { session: 's9' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('E19: resposta 200 com itens sem mapbox_id (lista sai vazia) NÃO fica em cache', async () => {
+    fetchMock.mockResolvedValue(suggestBody([{ name: 'XBZ Brindes', full_address: 'SP', feature_type: 'poi' }]));
+    await suggestPlaces('xbz quebrado', 'pk', { session: 's10' });
+    await suggestPlaces('xbz quebrado', 'pk', { session: 's10' });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe('retrievePlace', () => {

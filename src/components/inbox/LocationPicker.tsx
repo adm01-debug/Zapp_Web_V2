@@ -170,9 +170,10 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
                         if (e.key === 'Enter') {
                           // Com sugestão destacada, mesmo caminho do clique (E46: antes o hook
                           // resolvia o /retrieve sozinho e o resultado nunca chegava até aqui).
-                          // Sem destaque, cai na busca antiga (/forward) — comportamento da #737.
+                          // Sem destaque, cai na busca antiga (/forward) com o termo do combobox
+                          // (E12/C2: o input da flag ligada nunca preenche `searchQuery`).
                           if (autocomplete.highlightedIndex >= 0) void handleSelectSuggestion(autocomplete.highlightedIndex);
-                          else searchLocation();
+                          else void searchLocation(autocomplete.query);
                         }
                       }}
                       className="pl-9"
@@ -192,7 +193,7 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
                       {!autocomplete.isLoading && autocomplete.error && autocomplete.suggestions.length === 0 && (
                         <div className="px-3 py-3 flex items-center justify-between gap-2">
                           <p className="text-sm text-muted-foreground">Falha ao buscar sugestões.</p>
-                          <Button size="sm" variant="ghost" onClick={() => autocomplete.setQuery(autocomplete.query)}>Tentar novamente</Button>
+                          <Button size="sm" variant="ghost" onClick={() => autocomplete.retrySuggest()}>Tentar novamente</Button>
                         </div>
                       )}
                       {!autocomplete.isLoading && !autocomplete.error && autocomplete.suggestions.length === 0 && autocomplete.query.trim().length >= 3 && (
@@ -249,7 +250,7 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input placeholder="Buscar endereço..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && searchLocation()} className="pl-9" />
                   </div>
-                  <Button variant="outline" onClick={searchLocation} disabled={isSearching}>{isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Buscar'}</Button>
+                  <Button variant="outline" onClick={() => void searchLocation()} disabled={isSearching}>{isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Buscar'}</Button>
                 </div>
               )}
               {!autocompleteEnabled && searchResults.length > 0 && (

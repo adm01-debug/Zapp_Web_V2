@@ -321,7 +321,7 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
                     {!addressAutocomplete.isLoading && addressAutocomplete.error && addressAutocomplete.suggestions.length === 0 && (
                       <div className="px-3 py-3 flex items-center justify-between gap-2">
                         <p className="text-sm text-muted-foreground">Falha ao buscar sugestões.</p>
-                        <Button size="sm" variant="ghost" onClick={() => addressAutocomplete.setQuery(addressAutocomplete.query)}>Tentar novamente</Button>
+                        <Button size="sm" variant="ghost" onClick={() => addressAutocomplete.retrySuggest()}>Tentar novamente</Button>
                       </div>
                     )}
                     {!addressAutocomplete.isLoading && !addressAutocomplete.error && addressAutocomplete.suggestions.length === 0 && addressAutocomplete.query.trim().length >= 3 && (
