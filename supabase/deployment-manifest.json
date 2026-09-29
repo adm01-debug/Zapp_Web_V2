@@ -318,8 +318,8 @@
     },
     {
       "path": "supabase/functions/elevenlabs-tts-stream/index.ts",
-      "bytes": 2860,
-      "sha256": "c1fca4eeef44f87bbc8add3798e8bc3ee842a5dbc8e26fd0873491c483e2874f"
+      "bytes": 2977,
+      "sha256": "c11b1b1dd330d856ec781d1053e31b3616acb493383b00e2be8c351df8826bcd"
     },
     {
       "path": "supabase/functions/elevenlabs-tts/index.ts",
@@ -896,7 +896,7 @@
       "name": "elevenlabs-tts-stream",
       "entrypoint": "supabase/functions/elevenlabs-tts-stream/index.ts",
       "verify_jwt": true,
-      "source_sha256": "77fddd04a459d9506f364be7f2636d34ec3ac5b34a42c88baa37dc1a597311cc",
+      "source_sha256": "70019af7223d0a3eb5f3b66ff7c66d192fc0fb7c6e5f15b5596f80ff67e627a8",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1365,5 +1365,5 @@
       ]
     }
   ],
-  "manifest_sha256": "01f40e466476f204d2715fe72ac7a7f6d3b45d179957381ab3488e56b626d249"
+  "manifest_sha256": "3299b3e94ed020a44eb68c344abab271d185c7484e1ae28a07807f831a0134e8"
 }
