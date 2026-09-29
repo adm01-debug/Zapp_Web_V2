@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTeamConversations } from '@/hooks/chat/useTeamChat';
+import type { TeamConversation, TeamInboxRow, ConversationType } from '@/hooks/team-chat/teamChatTypes';
 import { TeamConversationList } from './TeamConversationList';
 import { TeamChatPanel } from './TeamChatPanel';
 import { TeamMemberDetails } from './TeamMemberDetails';
@@ -10,14 +11,50 @@ import { useTeamChatNotifications } from '@/hooks/chat/useTeamChatNotifications'
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 
+function inboxRowToConversation(row: TeamInboxRow): TeamConversation {
+  return {
+    id: row.conversation_id,
+    type: row.type as ConversationType,
+    name: row.name,
+    avatar_url: row.avatar_url,
+    created_by: null,
+    department_id: null,
+    created_at: row.created_at,
+    updated_at: row.created_at,
+    members: [],
+    last_message: row.last_message_id ? {
+      id: row.last_message_id,
+      conversation_id: row.conversation_id,
+      sender_id: row.last_message_sender_id ?? '',
+      content: row.last_message_content ?? '',
+      message_type: row.last_message_type ?? 'text',
+      status: null,
+      media_url: null,
+      media_type: null,
+      media_bucket: null,
+      media_path: null,
+      reply_to_id: null,
+      is_edited: false,
+      created_at: row.last_message_created_at ?? row.created_at,
+      updated_at: row.last_message_created_at ?? row.created_at,
+    } : null,
+    unread_count: row.unread_count,
+  };
+}
+
 export function TeamChatView() {
-  const { data: conversations = [] } = useTeamConversations();
+  const { data: inboxRows = [] } = useTeamConversations();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
   // Enable differentiated notifications for team chat
   useTeamChatNotifications(selectedId);
+
+  const conversations = useMemo<TeamConversation[]>(
+    () => inboxRows.map(inboxRowToConversation),
+    [inboxRows],
+  );
 
   const selectedConversation = conversations.find(c => c.id === selectedId) || null;
 

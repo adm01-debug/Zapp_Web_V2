@@ -6,10 +6,12 @@ import { TEAM_KEYS } from './queryKeys';
 
 interface ReadReceipt {
   id: string;
-  conversation_id: string;
+  message_id: string;
   profile_id: string;
-  last_read_message_id: string | null;
-  read_at: string;
+  conversation_id: string;
+  delivered_at: string | null;
+  read_at: string | null;
+  status: string;
 }
 
 export function useTeamReadState(conversationId: string) {
@@ -49,20 +51,22 @@ export function useTeamReadState(conversationId: string) {
     return () => { void supabase.removeChannel(channel); };
   }, [conversationId, qc, qKey]);
 
+  // Maps profile_id → latest message_id that was read (status='read')
   const readByProfile = useMemo(() => {
     const map = new Map<string, string | null>();
     for (const r of query.data ?? []) {
-      map.set(r.profile_id, r.last_read_message_id);
+      if (r.status === 'read') {
+        map.set(r.profile_id, r.message_id);
+      }
     }
     return map;
   }, [query.data]);
 
   const isReadByAll = (messageId: string) => {
     if (!query.data?.length) return false;
-    return query.data.every(r => {
-      if (r.profile_id === profile?.id) return true;
-      return r.last_read_message_id === messageId || (r.last_read_message_id ?? '') >= messageId;
-    });
+    const others = query.data.filter(r => r.profile_id !== profile?.id);
+    if (others.length === 0) return false;
+    return others.every(r => r.status === 'read' && r.message_id >= messageId);
   };
 
   return {

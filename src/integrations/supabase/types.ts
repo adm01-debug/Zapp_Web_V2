@@ -7661,6 +7661,7 @@ export type Database = {
       }
       team_message_receipts: {
         Row: {
+          conversation_id: string
           delivered_at: string | null
           id: string
           message_id: string
@@ -7669,6 +7670,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          conversation_id?: string
           delivered_at?: string | null
           id?: string
           message_id: string
@@ -7677,6 +7679,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          conversation_id?: string
           delivered_at?: string | null
           id?: string
           message_id?: string
@@ -10277,6 +10280,7 @@ export type Database = {
           p_media_bucket?: string
           p_media_path?: string
           p_media_type?: string
+          p_media_url?: string
           p_reply_to_id?: string
         }
         Returns: Json

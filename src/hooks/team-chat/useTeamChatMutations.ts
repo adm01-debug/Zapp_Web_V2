@@ -30,11 +30,11 @@ export function useSendTeamMessage() {
       const { data, error } = await supabase.rpc('send_team_message', {
         p_conversation_id: conversationId,
         p_content: content,
-        p_reply_to_id: replyToId ?? null,
-        p_media_url: mediaUrl ?? null,
-        p_media_type: mediaType ?? null,
-        p_media_bucket: mediaBucket ?? null,
-        p_media_path: mediaPath ?? null,
+        p_reply_to_id: replyToId,
+        p_media_url: mediaUrl,
+        p_media_type: mediaType,
+        p_media_bucket: mediaBucket,
+        p_media_path: mediaPath,
       });
       if (error) throw error;
       return data;
@@ -246,5 +246,26 @@ export function useDeleteConversation() {
       void queryClient.invalidateQueries({ queryKey: TEAM_KEYS.inbox(profile?.id) });
     },
     onError: () => { toast.error('Erro ao excluir grupo'); },
+  });
+}
+
+export function useTransferConversation() {
+  const { profile } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ conversationId, newOwnerId }: { conversationId: string; newOwnerId: string }) => {
+      const { error } = await supabase.rpc('set_team_member_role', {
+        p_conversation_id: conversationId,
+        p_profile_id: newOwnerId,
+        p_new_role: 'owner',
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      void queryClient.invalidateQueries({ queryKey: TEAM_KEYS.members(vars.conversationId) });
+      void queryClient.invalidateQueries({ queryKey: TEAM_KEYS.inbox(profile?.id) });
+      toast.success('Propriedade transferida com sucesso');
+    },
+    onError: () => { toast.error('Erro ao transferir propriedade'); },
   });
 }

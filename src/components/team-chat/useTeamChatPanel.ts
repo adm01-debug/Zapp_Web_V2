@@ -101,7 +101,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     const ids = new Set<string>();
     const combined: TeamMessage[] = [];
     for (const m of [...olderMessages, ...newestMessages]) {
-      if (!ids.has(m.id)) { ids.add(m.id); combined.push(m); }
+      if (!ids.has(m.id)) { ids.add(m.id); combined.push(m as TeamMessage); }
     }
     return combined;
   }, [olderMessages, newestMessages]);
