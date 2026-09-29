@@ -86,8 +86,8 @@ export const TeamMessageItem = memo(function TeamMessageItem({
                   'max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm relative transition-all duration-300',
                   hasReactions && 'pb-5',
                   isMine
-                    ? 'bg-primary text-primary-foreground rounded-tr-none border border-primary/20'
-                    : 'bg-card border border-border/50 text-foreground rounded-tl-none',
+                    ? 'bg-chat-sent text-chat-sent-foreground rounded-tr-none'
+                    : 'bg-chat-received text-chat-received-foreground rounded-tl-none',
                 )}
               >
                 {onToggleReaction && (
@@ -114,6 +114,11 @@ export const TeamMessageItem = memo(function TeamMessageItem({
                   </div>
                 ) : (
                   <>
+                    {msg.reply_to_id && !repliedMsg && (
+                      <div className={cn('text-3xs mb-2 px-2 py-1.5 rounded border-l-2 border-muted-foreground/30', isMine ? 'bg-chat-sent-foreground/10' : 'bg-muted/50')}>
+                        <p className="italic opacity-60">Mensagem apagada</p>
+                      </div>
+                    )}
                     {repliedMsg && (
                       <div
                         role="button"
@@ -121,7 +126,7 @@ export const TeamMessageItem = memo(function TeamMessageItem({
                         aria-label={`Ir para mensagem respondida de ${repliedMsg.sender?.name || 'usuário'}`}
                         className={cn(
                           'text-3xs mb-2 px-2 py-1.5 rounded border-l-2 border-primary/50 cursor-pointer hover:bg-muted/50 transition-colors',
-                          isMine ? 'bg-white/10' : 'bg-muted/50',
+                          isMine ? 'bg-chat-sent-foreground/10' : 'bg-muted/50',
                         )}
                         onClick={() => {
                           const el = document.getElementById(`msg-${msg.reply_to_id}`);
@@ -163,8 +168,8 @@ export const TeamMessageItem = memo(function TeamMessageItem({
                           className={cn(
                             'opacity-0 group-hover/msg:opacity-100 transition-opacity p-1 rounded-full',
                             isMine
-                              ? 'text-primary-foreground/80 hover:bg-white/10'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-black/5',
+                              ? 'text-chat-sent-foreground/80 hover:bg-chat-sent-foreground/10'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5',
                           )}
                           title={ttsIsPlaying ? 'Parar' : 'Ouvir mensagem'}
                           aria-label={ttsIsPlaying ? 'Parar leitura' : 'Ouvir mensagem'}
@@ -177,7 +182,7 @@ export const TeamMessageItem = memo(function TeamMessageItem({
                         </button>
                       )}
                       <div className="flex items-center gap-1">
-                        <span className={cn('text-3xs tabular-nums opacity-70 font-medium', isMine ? 'text-primary-foreground' : 'text-muted-foreground')}>
+                        <span className={cn('text-3xs tabular-nums opacity-70 font-medium', isMine ? 'text-chat-sent-foreground' : 'text-muted-foreground')}>
                           {formatTime(msg.created_at)}{msg.is_edited && ' · editado'}
                         </span>
                         {isMine && displayStatus && (
@@ -201,6 +206,21 @@ export const TeamMessageItem = memo(function TeamMessageItem({
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent>
+          {onToggleReaction && (
+            <>
+              <div className="flex gap-1 px-2 py-1.5">
+                {['👍', '❤️', '😂', '😮', '😢', '👏'].map(emoji => (
+                  <button
+                    key={emoji}
+                    onClick={() => onToggleReaction(emoji)}
+                    className="text-base hover:scale-125 transition-transform p-0.5 rounded"
+                    aria-label={`Reagir com ${emoji}`}
+                  >{emoji}</button>
+                ))}
+              </div>
+              <ContextMenuSeparator />
+            </>
+          )}
           <ContextMenuItem onClick={onReply} className="gap-2">
             <Reply className="w-3.5 h-3.5" aria-hidden /> Responder
           </ContextMenuItem>
