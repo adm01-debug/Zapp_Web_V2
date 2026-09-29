@@ -29,7 +29,10 @@ import {
   Volume2,
   Pencil,
   LogOut,
+  Check,
+  Mic,
 } from 'lucide-react';
+import { ELEVENLABS_VOICES } from '@/components/inbox/VoiceSelector';
 
 const SPEED_OPTIONS = [0.75, 1.0, 1.25, 1.5] as const;
 
@@ -61,7 +64,7 @@ interface TeamChatHeaderProps {
 export function TeamChatHeader({
   conversation,
   showDetails,
-  voiceId: _voiceId,
+  voiceId,
   speed,
   showSearch,
   showStats,
@@ -73,7 +76,7 @@ export function TeamChatHeader({
   onToggleSearch,
   onToggleStats,
   onAddMembers,
-  onVoiceChange: _onVoiceChange,
+  onVoiceChange,
   onSpeedChange,
   onToggleMute,
   onTransfer,
@@ -247,6 +250,24 @@ export function TeamChatHeader({
                 >
                   {s}×
                 </button>
+              ))}
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="flex items-center gap-1.5 text-xs text-muted-foreground font-normal py-1.5">
+              <Mic className="w-3.5 h-3.5" aria-hidden />
+              Voz TTS
+            </DropdownMenuLabel>
+            <div className="max-h-36 overflow-y-auto" role="group" aria-label="Selecionar voz">
+              {ELEVENLABS_VOICES.map(v => (
+                <DropdownMenuItem
+                  key={v.id}
+                  onClick={() => onVoiceChange(v.id)}
+                  className="gap-2 text-xs"
+                >
+                  <Check className={cn('w-3 h-3 shrink-0', voiceId === v.id ? 'opacity-100 text-primary' : 'opacity-0')} aria-hidden />
+                  <span className="flex-1 truncate">{v.name}</span>
+                  <span className="text-3xs text-muted-foreground shrink-0">{v.accent}</span>
+                </DropdownMenuItem>
               ))}
             </div>
             <DropdownMenuSeparator />
