@@ -4,6 +4,7 @@ import { ContactListItem } from '../ContactListItem';
 import { ContactCard } from '../ContactCard';
 import { canDeleteContact } from '../contactPermissions';
 import type { Contact } from '../types';
+import { baseContact, noop, openMenu, trigger } from './contactDeleteFixtures';
 
 /**
  * O item "Excluir" só pode aparecer quando o banco confirma que o usuário pode
@@ -12,39 +13,8 @@ import type { Contact } from '../types';
  * (débito levantado no PR #1187).
  */
 
-// DropdownMenuTrigger do Radix abre no pointerdown, não no click — mesmo helper
-// de src/components/inbox/contact-details/__tests__/ContactActionButtons.test.tsx
-function openMenu(element: Element) {
-  fireEvent.pointerDown(element);
-  fireEvent.pointerUp(element);
-  fireEvent.click(element);
-}
-
-function trigger(): Element {
-  const el = document.querySelector('button[aria-haspopup="menu"]');
-  if (!el) throw new Error('botão de menu não encontrado');
-  return el;
-}
-
-function baseContact(overrides: Partial<Contact> = {}): Contact {
-  return {
-    id: '30000000-0000-0000-0000-000000000001',
-    name: 'Ana Souza',
-    surname: null,
-    nickname: null,
-    phone: '5511999999999',
-    email: null,
-    avatar_url: null,
-    company: null,
-    job_title: null,
-    tags: null,
-    contact_type: 'cliente',
-    created_at: '2026-09-01T10:00:00.000Z',
-    ...overrides,
-  };
-}
-
-const noop = () => {};
+// Helpers de menu/contato em ./contactDeleteFixtures (compartilhados com
+// ContactDeleteEntryPoints.test.tsx).
 
 function itemProps(contact: Contact, onDelete = noop) {
   return {

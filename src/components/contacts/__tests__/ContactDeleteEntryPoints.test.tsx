@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ContactsTable } from '../ContactsTable';
 import { canDeleteSelectedContacts } from '../contactPermissions';
 import type { Contact } from '../types';
+import { baseContact, noop, openMenu, trigger } from './contactDeleteFixtures';
 
 /**
  * Regressões encontradas pela auditoria adversarial da série de Contatos (29/09/2026):
@@ -15,40 +16,6 @@ import type { Contact } from '../types';
  *    com a mensagem "nenhum dos contatos selecionados pode ser excluído" — falso:
  *    não havia informação sobre eles.
  */
-
-// DropdownMenuTrigger do Radix abre no pointerdown, não no click — mesmo helper de
-// ContactDeletePermission.test.tsx.
-function openMenu(element: Element) {
-  fireEvent.pointerDown(element);
-  fireEvent.pointerUp(element);
-  fireEvent.click(element);
-}
-
-function trigger(): Element {
-  const el = document.querySelector('button[aria-haspopup="menu"]');
-  if (!el) throw new Error('botão de menu não encontrado');
-  return el;
-}
-
-function baseContact(overrides: Partial<Contact> = {}): Contact {
-  return {
-    id: '30000000-0000-0000-0000-000000000001',
-    name: 'Ana Souza',
-    surname: null,
-    nickname: null,
-    phone: '5511999999999',
-    email: null,
-    avatar_url: null,
-    company: null,
-    job_title: null,
-    tags: null,
-    contact_type: 'cliente',
-    created_at: '2026-09-01T10:00:00.000Z',
-    ...overrides,
-  };
-}
-
-const noop = () => {};
 
 function tableProps(contact: Contact, onDelete = noop) {
   return {
