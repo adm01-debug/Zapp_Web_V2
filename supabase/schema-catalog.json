@@ -1706,6 +1706,7 @@
         "user_settings.sla_sound_type:text:nullable",
         "user_settings.goal_sound_type:text:nullable",
         "user_settings.transcription_sound_type:text:nullable",
+        "user_settings.sound_volume:integer:nullable",
         "voice_command_logs.id:uuid:not-null",
         "voice_command_logs.user_id:uuid:not-null",
         "voice_command_logs.transcript:text:not-null",

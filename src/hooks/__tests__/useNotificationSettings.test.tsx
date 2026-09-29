@@ -127,4 +127,108 @@ describe('useNotificationSettings', () => {
     const { result } = renderHook(() => useNotificationSettings(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
   });
+
+  // ========== VOLUME DOS ALERTAS (sound_volume) ==========
+  // O campo existia so no front: sem coluna, sem select, sem gravacao — o slider voltava para 70 a
+  // cada reload. Estes testes pinam as quatro pontas (select, leitura, gravacao e reset).
+  describe('soundVolume persistido', () => {
+    const comVolume = (valor: unknown) => {
+      mockFrom.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: { sound_enabled: true, sound_volume: valor },
+              error: null,
+            }),
+          }),
+        }),
+        upsert: vi.fn().mockResolvedValue({ error: null }),
+      });
+    };
+
+    it('le o volume salvo no banco', async () => {
+      comVolume(45);
+      const { result } = renderHook(() => useNotificationSettings(), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.settings.soundVolume).toBe(45);
+    });
+
+    it('pede a coluna sound_volume no select', async () => {
+      const select = vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) }),
+      });
+      mockFrom.mockReturnValue({ select, upsert: vi.fn().mockResolvedValue({ error: null }) });
+
+      const { result } = renderHook(() => useNotificationSettings(), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      expect(select).toHaveBeenCalledWith(expect.stringContaining('sound_volume'));
+    });
+
+    it('usa o default quando a coluna vem nula ou ausente', async () => {
+      comVolume(null);
+      const { result } = renderHook(() => useNotificationSettings(), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.settings.soundVolume).toBe(70);
+    });
+
+    it('clampa valor fora da faixa do controle', async () => {
+      comVolume(500);
+      const { result } = renderHook(() => useNotificationSettings(), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.settings.soundVolume).toBe(100);
+    });
+
+    it('grava o volume no banco ao atualizar', async () => {
+      const upsert = vi.fn().mockResolvedValue({ error: null });
+      mockFrom.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) }),
+        }),
+        upsert,
+      });
+
+      const { result } = renderHook(() => useNotificationSettings(), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      await result.current.updateSettings({ soundVolume: 35 });
+
+      expect(upsert).toHaveBeenCalled();
+      expect(upsert.mock.calls[0][0]).toMatchObject({ user_id: 'u1', sound_volume: 35 });
+    });
+
+    it('clampa o valor gravado para a faixa do controle', async () => {
+      const upsert = vi.fn().mockResolvedValue({ error: null });
+      mockFrom.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) }),
+        }),
+        upsert,
+      });
+
+      const { result } = renderHook(() => useNotificationSettings(), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      await result.current.updateSettings({ soundVolume: 5000 });
+
+      expect(upsert.mock.calls[0][0]).toMatchObject({ sound_volume: 100 });
+    });
+
+    it('reset volta o volume para o default', async () => {
+      const upsert = vi.fn().mockResolvedValue({ error: null });
+      mockFrom.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) }),
+        }),
+        upsert,
+      });
+
+      const { result } = renderHook(() => useNotificationSettings(), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      await result.current.resetSettings();
+
+      expect(upsert.mock.calls[0][0]).toMatchObject({ sound_volume: 70 });
+    });
+  });
 });

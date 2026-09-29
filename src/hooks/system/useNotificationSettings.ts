@@ -57,10 +57,22 @@ const DEFAULT_SETTINGS: NotificationSettings = {
 
 const NOTIFICATION_SETTINGS_QUERY_KEY = 'notification-settings';
 
+// Faixa do controle de volume no painel (min/max do Slider em NotificationSettingsPanel).
+const SOUND_VOLUME_MIN = 10;
+const SOUND_VOLUME_MAX = 100;
+
+// O volume dos alertas vem do banco: qualquer valor fora da faixa do controle ou nao numerico cai no
+// default, para nao propagar valor invalido (nem mudo acidental) para playNotificationSound.
+function clampSoundVolume(valor: unknown): number {
+  if (typeof valor !== 'number' || !Number.isFinite(valor)) return DEFAULT_SETTINGS.soundVolume;
+  return Math.min(SOUND_VOLUME_MAX, Math.max(SOUND_VOLUME_MIN, Math.round(valor)));
+}
+
 function mapDbToSettings(data: Record<string, unknown>): NotificationSettings {
   return {
     ...DEFAULT_SETTINGS,
     soundEnabled: (data.sound_enabled as boolean) ?? DEFAULT_SETTINGS.soundEnabled,
+    soundVolume: clampSoundVolume(data.sound_volume),
     quietHoursEnabled: (data.quiet_hours_enabled as boolean) ?? DEFAULT_SETTINGS.quietHoursEnabled,
     quietHoursStart: (data.quiet_hours_start as string) ?? DEFAULT_SETTINGS.quietHoursStart,
     quietHoursEnd: (data.quiet_hours_end as string) ?? DEFAULT_SETTINGS.quietHoursEnd,
@@ -88,7 +100,7 @@ export const useNotificationSettings = () => {
 
       const { data, error } = await supabase
         .from('user_settings')
-        .select('sound_enabled, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, browser_notifications_enabled, sentiment_alert_enabled, sentiment_alert_threshold, sentiment_consecutive_count, transcription_notification_enabled, message_sound_type, mention_sound_type, sla_sound_type, goal_sound_type, transcription_sound_type')
+        .select('sound_enabled, sound_volume, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, browser_notifications_enabled, sentiment_alert_enabled, sentiment_alert_threshold, sentiment_consecutive_count, transcription_notification_enabled, message_sound_type, mention_sound_type, sla_sound_type, goal_sound_type, transcription_sound_type')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -119,6 +131,7 @@ export const useNotificationSettings = () => {
       const dbUpdates: Record<string, unknown> = {};
 
       if ('soundEnabled' in updates) dbUpdates.sound_enabled = updates.soundEnabled;
+      if ('soundVolume' in updates) dbUpdates.sound_volume = clampSoundVolume(updates.soundVolume);
       if ('quietHoursEnabled' in updates) dbUpdates.quiet_hours_enabled = updates.quietHoursEnabled;
       if ('quietHoursStart' in updates) dbUpdates.quiet_hours_start = updates.quietHoursStart;
       if ('quietHoursEnd' in updates) dbUpdates.quiet_hours_end = updates.quietHoursEnd;
@@ -162,6 +175,7 @@ export const useNotificationSettings = () => {
         .upsert({
           user_id: user.id,
           sound_enabled: DEFAULT_SETTINGS.soundEnabled,
+          sound_volume: DEFAULT_SETTINGS.soundVolume,
           quiet_hours_enabled: DEFAULT_SETTINGS.quietHoursEnabled,
           quiet_hours_start: DEFAULT_SETTINGS.quietHoursStart,
           quiet_hours_end: DEFAULT_SETTINGS.quietHoursEnd,
