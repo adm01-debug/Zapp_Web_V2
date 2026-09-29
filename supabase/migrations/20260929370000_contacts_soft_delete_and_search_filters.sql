@@ -105,13 +105,11 @@ GRANT EXECUTE ON FUNCTION public.delete_contact(uuid) TO authenticated, service_
 GRANT EXECUTE ON FUNCTION public.delete_contacts(uuid[]) TO authenticated, service_role;
 
 -- 5) Contatos excluidos saem de todas as leituras do modulo -------------------------------
---    `search_contacts` mantem assinatura, SECURITY DEFINER, search_path e a lista de 23
---    colunas de retorno IDENTICA a vigente no banco (20260926160000 lat/lon + as 6 de endereco
---    de migration posterior) — `CREATE OR REPLACE` recusa mudar o tipo de retorno (42P13), e foi
---    assim que este arquivo foi recusado na primeira aplicacao. CREATE OR REPLACE preserva o ACL
+--    `search_contacts` mantem assinatura, corpo, SECURITY DEFINER e search_path identicos ao
+--    vigente (20260926160000 + ACL de 20260926220000). CREATE OR REPLACE preserva o ACL
 --    manual da funcao, entao nao ha REVOKE/GRANT aqui de proposito.
 CREATE OR REPLACE FUNCTION public.search_contacts(search_term text DEFAULT ''::text, contact_type_filter text DEFAULT NULL::text, company_filter text DEFAULT NULL::text, job_title_filter text DEFAULT NULL::text, tag_filter text DEFAULT NULL::text, date_from timestamp with time zone DEFAULT NULL::timestamp with time zone, sort_field text DEFAULT 'name'::text, sort_direction text DEFAULT 'asc'::text, page_size integer DEFAULT 50, page_offset integer DEFAULT 0)
- RETURNS TABLE(id uuid, name text, nickname text, surname text, job_title text, company text, phone text, email text, avatar_url text, tags text[], notes text, contact_type text, created_at timestamp with time zone, updated_at timestamp with time zone, latitude double precision, longitude double precision, address text, address_number text, neighborhood text, city text, state text, postal_code text, total_count bigint)
+ RETURNS TABLE(id uuid, name text, nickname text, surname text, job_title text, company text, phone text, email text, avatar_url text, tags text[], notes text, contact_type text, created_at timestamp with time zone, updated_at timestamp with time zone, latitude double precision, longitude double precision, total_count bigint)
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
  SET search_path TO 'public'
@@ -122,7 +120,6 @@ AS $function$ DECLARE v_search text; BEGIN
     c.id, c.name, c.nickname, c.surname, c.job_title, c.company,
     c.phone, c.email, c.avatar_url, c.tags, c.notes, c.contact_type,
     c.created_at, c.updated_at, c.latitude, c.longitude,
-    c.address, c.address_number, c.neighborhood, c.city, c.state, c.postal_code,
     COUNT(*) OVER () AS total_count
   FROM public.contacts c
   WHERE
