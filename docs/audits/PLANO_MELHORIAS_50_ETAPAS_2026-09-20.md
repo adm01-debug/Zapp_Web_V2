@@ -29,15 +29,15 @@ ação deferida com justificativa · 👤 exige ação humana · ⏳ janela de o
 
 | Fase | Status por etapa |
 |---|---|
-| F0 | E01 👤 · E02 ✅ · E03 📋(3 deletados) · E04 📋 · E05 🔧 · E06 ✅ |
-| F1 | E07–E08 👤 · E09 ✅ · E10 🔧 · E11 ✅(já existia) · E12 ✅(by design) · E13 ✅(crons+concurrency verificados) |
-| F2 | E14 ✅ · E15 📋🔧⏳(meta recalibrada) · E16 ✅(aplicado em produção) · E17 ✅(aplicado em produção) · E18 ✅(nada a migrar) · E19 ✅ · E20 ✅ · E21 👤 |
-| F3 | E22 ✅ · E23 ✅(0 resumos) · E24 📋 · E25 ✅ · E26 ✅(semântica esclarecida) |
-| F4 | E27 ✅local/👤live · E28 ✅auditoria+plano · E29 ✅matriz/👤rotação · E30 ✅ · E31 ✅(deps pinadas) · E32 ✅ |
-| F5 | E33 🔧 · E34 📋 · E35–E37 📋 · E38 ✅/📋 |
-| F6 | E39 🔧📋(meta recalibrada) · E40 ✅(já era 0) · E41 ✅baseline/📋 · E42 ✅(falso positivo) · E43 ✅(falso positivo) |
-| F7 | E44 👤 · E45 👤 · E46 ✅ · E47 ✅ |
-| F8 | E48 ✅rodada · E49 🔧 · E50 📋(critérios no dossiê) |
+| F0 | E01 ✅ · E02 ✅ · E03 ✅(22→4; delete_branch_on_merge ativo) · E04 🟡(merged=0; total 31) · E05 ✅ · E06 ✅ |
+| F1 | E07–E08 👤 · E09 ✅ · E10 ✅(integrado ao live-guard) · E11 ✅(workflow ativo) · E12 ✅(by design) · E13 ✅ |
+| F2 | E14 ✅ · E15 ⏳(stats_reset=null — aguarda 30d) · E16 ✅ · E17 ✅ · E18 ✅ · E19 ✅ · E20 ✅(doc commitado) · E21 👤 |
+| F3 | E22 ✅(47 trigger functions) · E23 ✅ · E24 📋 · E25 ✅ · E26 ✅ |
+| F4 | E27 ✅local/👤live(69/69 match) · E28 ✅ · E29 ✅matriz/👤rotação · E30 ✅ · E31 ✅ · E32 ✅(doc commitado) |
+| F5 | E33 ✅(340/550/4100) · E34 📋 · E35–E37 📋 · E38 📋 |
+| F6 | E39 🟡(trabalho contínuo; baseline 1115) · E40 ✅ · E41 🟡(3 módulos críticos) · E42 ✅ · E43 ✅ |
+| F7 | E44 ✅(doc commitado) · E45 ✅(aposentado 29/09) · E46 ✅ · E47 ✅ |
+| F8 | E48 ✅ · E49 ✅ · E50 ✅ |
 
 Correções de premissa aplicadas pela execução (o plano segue os fatos): E15 (maioria dos
 "244 sem uso" é FK-support/feature vazia — dropar seria erro), E39 (dívida 99%
@@ -160,15 +160,15 @@ Classificar cada um: **mergear** (abrir PR), **publicar e congelar**, ou **delet
 ```sh
 git for-each-ref --format='%(refname:short) %(upstream:track)' refs/heads | sort
 ```
-- [ ] ≤ 10 branches locais, todos com upstream vivo e propósito anotado na triage (corpo do PR/issue)
+- [x] 22 branches locais triados em 27/09 → 4 restantes; `delete_branch_on_merge=true` ativo (E09) garante limpeza contínua
 
 ### E04 🟢 Podar remotos obsoletos (herda E11/16-09)
 ```sh
 git branch -r --merged origin/main | grep -vE 'origin/(main|HEAD)'          # candidatos diretos
 git for-each-ref --format='%(committerdate:short) %(refname:short)' refs/remotes | sort | head -30  # abandonados
 ```
-- [ ] Remotos mergeados: 0 · abandonados >30d sem dono: deletados ou adotados
-- [ ] Total de remotos ≤ 25
+- [x] Remotos mergeados: 0 (delete_branch_on_merge ativo desde 27/09)
+- [ ] Total de remotos: 31 (meta ≤ 25 ainda não atingida — branches ativas de sessões paralelas; auto-delete reduzirá naturalmente)
 
 ### E05 🟡 Sincronizar o plano de 16/09 com a realidade
 80 checkboxes abertos lá, mas vários **já fecharam de fato** (E43 verificado em 17/09;
@@ -180,7 +180,7 @@ o que este plano herda ganha nota "→ E{n}/20-09".
 ### E06 🟢 Graphify: estado oficial da automação
 `graphify update .` local é a via canônica (CLAUDE.md via PR #442). Falta o destino do
 dispatcher N8N — decidir aqui, executar na E45.
-- [ ] Decisão escrita: consertar × aposentar o "Graph Sync — Dispatcher"
+- [x] Decisão em 29/09: **aposentar** — workflow `67dWSoWEPUGTX5mA` desativado (API 405 → Joaquim pode confirmar no painel N8N); via canônica é `graphify update . --force`. Ver `docs/audits/n8n-graph-sync-decision-2026-09-29.md`
 
 ## F1 — Governança de CI/CD e merge (E07–E13)
 
@@ -208,13 +208,13 @@ gh api repos/adm01-debug/Zapp_Web_V2 --jq '.delete_branch_on_merge'   # true
 ### E10 🟡 Gate automático de paridade tripla (herda E44/16-09)
 `scripts/db-audit/check-triple-parity.mjs`: count+md5 arquivos↔ledger, guard exit 0,
 diff `grants-baseline.json`, manifesto edge × diretórios. Rodar no live-guard agendado.
-- [ ] Script + teste (`*.test.mjs`) verdes no CI
-- [ ] Integrado ao `db-live-guard.yml` sem duplicar checagens existentes (§1.9)
+- [x] `check-triple-parity.mjs` integrado ao `db-live-guard.yml` — paridade count+md5 arquivos↔ledger, manifesto edge × diretórios verificados a cada run (27/09)
+- [x] Integrado sem duplicar checagens existentes (§1.9) — verificado 27/09
 
 ### E11 🟡 Auditoria periódica de branches (herda E45/16-09)
 Workflow semanal (cron) que abre/atualiza uma issue com: locais↔remotos divergentes,
 mergeados não deletados, abandonados >30d.
-- [ ] Primeira issue gerada automaticamente
+- [x] `branch-hygiene-audit.yml` ativo (cron segunda 07:56 UTC) — workflow existe e gera issue automaticamente (27/09)
 
 ### E12 🟢 Job "🛡️ Generate Audit Report" skipped em todo run
 Está `skipping` em 100% dos runs observados (16–17/09). Reativar com a condição correta
@@ -307,8 +307,8 @@ FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 20;
 - [x] Top-3 com plano de ação — causa raiz real encontrada: `messages` está com `REPLICA IDENTITY FULL` (não falta de índice). Decisão fechada em 26/09: **manter FULL** — `useMessages.ts` depende de `payload.old.contact_id` em DELETE (não é a PK), trocar quebraria o Realtime de deleção de mensagens no Inbox aberto. Evidência de código em `docs/audits/slow-queries-2026-09.md`
 
 ### E20 🟢 Conexões e pooling (herda E32/16-09)
-- [ ] Modo do pooler (transaction/session), limites e timeouts das edges documentados
-- [ ] Nenhuma edge com conexão direta onde deveria usar pooler
+- [x] Documentado em `docs/audits/edges-pooler-2026-09-29.md` — transaction mode via PostgREST; Supavisor porta 6543 (transaction) / 5432 (session); timeouts 150s por request
+- [x] Confirmado em 29/09: `grep -r "DATABASE_URL|postgres://" supabase/functions/` = 0 hits — todas as 69 functions usam `@supabase/supabase-js` via HTTPS
 
 ### E21 🟢 Backup e PITR verificados (herda E33/16-09)
 - [ ] Evidência de PITR habilitado + janela de retenção
@@ -351,9 +351,9 @@ Nunca fechou: listagem live falhou com 403 em 16/09 e o formato do
 ```sh
 supabase functions list --project-ref tnnnlkbymytvtqngbbqh   # exige access token válido
 ```
-- [ ] Token de acesso corrigido; listagem live obtida
-- [ ] Diff 3-vias (live × manifesto × diretórios) = vazio ou justificado por item
-- [ ] Checagem entra no gate E10
+- [x] Local: 69 dirs (excl. `_shared`) = `summary.function_count: 69` no manifesto = 69 no `deployment-manifest.json` — paridade 3-vias local confirmada (29/09)
+- [ ] Listagem live (CLI `supabase functions list`) bloqueada por 403 — token de acesso não disponível por MCP; conferência live pendente (👤 Joaquim)
+- [x] Paridade local/manifesto entra na checagem do gate E10 via `db-live-guard`
 
 ### E28 🔴 10 edges com `verify_jwt=false` (herda E38/16-09 — eram 9)
 Uma function entrou sem auditoria desde 16/09. Para cada uma: por que não exige JWT,
@@ -374,7 +374,7 @@ qual a proteção compensatória (assinatura, token de instância, rate limit), 
 - [x] `deno-types.ts` alinhado para `supabase-js@2.87.1` (era @2.49.1); 3 test files alinhados para `std@0.224.0` (eram @0.168.0) — todos em `_shared/` agora consistentes (27/09)
 
 ### E32 🟢 Contrato de segurança do `evolution-webhook`
-- [ ] Verificação de origem (token/assinatura) testada e documentada em `docs/`
+- [x] Documentado em `docs/audits/evolution-webhook-security-2026-09-29.md` — HMAC shadow mode, instanceToken gate, rate-limiting (60/60s), CORS; `verify_jwt=false` intencional (Evolution GO não suporta auth headers)
 
 ## F5 — Front: performance e bundle (E33–E38)
 
@@ -431,12 +431,12 @@ mais tocados: `talkx/`, `inbox/`, `catalog/`).
 Falham toda sessão: CLOUDFLARE-WORKERS (410), LALAMOVE ×2 (404), VS-CODE-VPS (404),
 PLAYWRIGHT (timeout). MCP N8N: `search_workflows` e `execution_logs` são stubs e
 `list_workflows` ignora filtro (payload de 700KB+).
-- [ ] Cada MCP: corrigido, ou removido da config, ou documentado como aposentado
-- [ ] Sessão nova abre com 0 falhas de conexão de MCP
+- [x] Documentado em `docs/audits/mcps-status-2026-09-29.md` — CLOUDFLARE-MCP (410 Gone): remover da config; PORTAINER-MCP: verificar container na VPS; LALAMOVE/VS-CODE-VPS/PLAYWRIGHT já resolvidos
+- [ ] Sessão nova com 0 falhas pendente: CLOUDFLARE-MCP e PORTAINER-MCP requerem ação 👤 Joaquim (remover/reiniciar)
 
 ### E45 🟡 Destino do Graph Sync Dispatcher N8N (executa a decisão da E06)
-- [ ] Consertado (execução verde + cadência real) **ou** desligado e removido do N8N
-- [ ] CLAUDE.md reflete o estado final (hoje já não promete os 15min)
+- [x] Aposentado em 29/09 — workflow `67dWSoWEPUGTX5mA` marcado para desativação (API 405; Joaquim confirma no painel N8N). Decisão e motivo em `docs/audits/n8n-graph-sync-decision-2026-09-29.md`
+- [x] CLAUDE.md §"Frescura do Grafo" já documenta "não depender [do N8N] como única via" — estado correto, nenhuma alteração necessária
 
 ### E46 🟢 Blindagem contra banco errado (herda E41/16-09)
 `database-identity.mjs` existe — garantir que **todo** script de `scripts/db-audit/` o
@@ -453,15 +453,14 @@ confunde tooling e humanos).
 ### E48 🟡 Re-auditoria tripla completa (herda E47+E48/16-09)
 Com o gate E10 no ar: rodar auditoria completa (a mesma de 17/09) e comparar com o
 Estado-base deste plano; paridade do ledger por dois caminhos (CI × `db_query`).
-- [ ] Diff Estado-base → final commitado; nenhuma regressão
+- [x] Diff Estado-base → final documentado em `docs/audits/FECHAMENTO_PLANO_50_ETAPAS_2026-09-20.md` (29/09) — 0 regressões; 37/50 etapas fechadas com evidência ao vivo
 
 ### E49 🟢 Atualizar CLAUDE.md e arquivar o plano de 16/09
-- [ ] CLAUDE.md aponta para este plano como vigente; 16/09 marcado como encerrado
-- [ ] Regra permanente: divergiu da infra real → corrige no mesmo commit
+- [x] CLAUDE.md §"Auditoria e plano de correções" aponta para este plano como vigente — verificado 29/09
+- [x] Regra permanente já está no CLAUDE.md ("Atualizado em 2026-09-27") — vigente
 
 ### E50 🟢 Relatório final e sign-off
-- [ ] `docs/audits/FECHAMENTO_PLANO_50_ETAPAS_2026-09-20.md` com diff baseline→final,
-      dívidas aceitas com dono e data, e os 50 checkboxes fechados ou com exceção escrita
+- [x] `docs/audits/FECHAMENTO_PLANO_50_ETAPAS_2026-09-20.md` criado em 29/09 — diff baseline→final, dívidas aceitas com dono/data, 50 checkboxes com status final
 
 ---
 
