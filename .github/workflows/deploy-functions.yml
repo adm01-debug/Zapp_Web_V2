@@ -48,6 +48,10 @@ jobs:
     environment: producao-edge-functions
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    # GITHUB_TOKEN elevado a contents:write apenas neste job, para o passo de
+    # tag de rastreabilidade — dispensa PAT (DEPLOY_FUNCTIONS_TOKEN).
+    permissions:
+      contents: write
     steps:
       # E09 (auditoria de GitHub Actions, 2026-09-26) — considerado e
       # descartado: um passo dentro do job para detectar outro run
@@ -335,25 +339,24 @@ jobs:
           appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join('\n')}\n`);
           NODE
 
-      - name: Registrar tag de deploy (requer DEPLOY_FUNCTIONS_TOKEN)
-        # Opcional: cria tag leve de rastreabilidade no commit deployado.
-        # Sem DEPLOY_FUNCTIONS_TOKEN o passo e pulado sem falhar.
-        # PAT necessario: contents:write no repo.
+      - name: Registrar tag de deploy
+        # Cria tag leve de rastreabilidade no commit deployado usando o
+        # GITHUB_TOKEN (job elevado a contents:write) — sem PAT. Best-effort:
+        # falha ao criar a tag apenas avisa, nao derruba o deploy.
         if: success()
         env:
-          DEPLOY_FUNCTIONS_TOKEN: ${{ secrets.DEPLOY_FUNCTIONS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ -z "$DEPLOY_FUNCTIONS_TOKEN" ]; then
-            echo "DEPLOY_FUNCTIONS_TOKEN ausente — tag de rastreabilidade nao criada."
-            exit 0
-          fi
           TAG="edge-deploy/$(date -u +%Y%m%d-%H%M%S)-${DEPLOYED_GIT_SHA:0:8}"
           git -c user.name="github-actions[bot]" \
               -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
               tag -a "$TAG" "$DEPLOYED_GIT_SHA" \
               -m "Deploy de edge functions em producao — run $GITHUB_RUN_ID"
-          git push "https://x-access-token:${DEPLOY_FUNCTIONS_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$TAG"
-          echo "::notice::Tag de rastreabilidade criada: $TAG"
+          if git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$TAG"; then
+            echo "::notice::Tag de rastreabilidade criada: $TAG"
+          else
+            echo "::warning::Falha ao criar tag de rastreabilidade $TAG (deploy nao afetado)."
+          fi
 
       - name: Arquivar manifesto, atestado e smokes
         if: always()
