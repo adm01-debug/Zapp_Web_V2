@@ -13,6 +13,12 @@ export interface Contact {
   created_at: string;
   /** Data do último contato via mensagem — populado por useContactsSearch. Null = sem mensagens. */
   last_message_at?: string | null;
+  /**
+   * Se o usuário pode excluir este contato — vem da RPC `can_delete_contacts`
+   * (mesmo predicado de permissão do banco). `undefined` = ainda não respondeu
+   * (ou a RPC falhou): o item "Excluir" permanece visível, como antes.
+   */
+  can_delete?: boolean;
 }
 
 export interface ContactItemProps {

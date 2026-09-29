@@ -24,6 +24,12 @@ interface BulkActionsBarProps {
   onActionComplete: () => void;
   availableTags?: string[];
   availableAgents?: { id: string; name: string }[];
+  /**
+   * Se ao menos um dos contatos selecionados pode ser excluído (`can_delete` do
+   * banco). Sem isso o botão Excluir aparecia mesmo quando o banco ia recusar
+   * todos -- o lote devolve erro só quando NENHUM pôde ser excluído.
+   */
+  canDeleteSelection?: boolean;
 }
 
 export function BulkActionsBar({
@@ -32,6 +38,7 @@ export function BulkActionsBar({
   onActionComplete,
   availableTags = [],
   availableAgents = [],
+  canDeleteSelection = true,
 }: BulkActionsBarProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const count = selectedIds.length;
@@ -200,7 +207,13 @@ export function BulkActionsBar({
         </DropdownMenu>
 
         {/* Delete */}
-        <Button size="sm" variant="destructive" disabled={isProcessing} onClick={handleBulkDelete}>
+        <Button
+          size="sm"
+          variant="destructive"
+          disabled={isProcessing || !canDeleteSelection}
+          title={canDeleteSelection ? undefined : 'Nenhum dos contatos selecionados pode ser excluído por você'}
+          onClick={handleBulkDelete}
+        >
           <Trash2 className="w-3.5 h-3.5 mr-1" />
           Excluir
         </Button>
