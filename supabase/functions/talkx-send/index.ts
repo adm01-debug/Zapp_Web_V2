@@ -9,17 +9,7 @@ import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
 import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talkx-window.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
-
-// Constant-time string comparison — prevents timing attacks on bearer token checks.
-function timingSafeStringEqual(a: string, b: string): boolean {
-  const enc = new TextEncoder();
-  const ab = enc.encode(a);
-  const bb = enc.encode(b);
-  if (ab.length !== bb.length) return false;
-  let diff = 0;
-  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
-  return diff === 0;
-}
+import { timingSafeEqual } from "../_shared/hmac-validation.ts";
 
 function getGreeting(timeZone = DEFAULT_SCHEDULE_TIMEZONE): string {
   const hour = new Date().toLocaleString("pt-BR", { timeZone, hour: "numeric", hour12: false });
@@ -134,7 +124,8 @@ export async function handleTalkxSend(
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
     }
     const token = authHeader.slice(7);
-    const isServiceKey = timingSafeStringEqual(token, serviceKey);
+    // Comparação constant-time: `===` retorna cedo no primeiro byte diferente e vaza timing.
+    const isServiceKey = timingSafeEqual(token, serviceKey);
     if (!isServiceKey) {
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);
       if (authError || !user) {
