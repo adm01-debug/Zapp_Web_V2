@@ -98,4 +98,51 @@ describe('useTextToSpeech', () => {
     act(() => { result.current.setSpeed(1.5); });
     expect(onSpeedChange).toHaveBeenCalledWith(1.5);
   });
+
+  // Os dois "sync with external X changes" eram effects com setState sincrono
+  // (react-hooks/set-state-in-effect) e viraram derivacao no render. Estes testes pinam a semantica
+  // que os effects davam: prop nova vence o valor local; sem prop nova, a escolha local permanece.
+  describe('prop externa x escolha local', () => {
+    it('voz: escolha local vale ate chegar prop nova, e a prop nova vence', () => {
+      const { result, rerender } = renderHook(
+        (props: { voz: string | undefined }) => useTextToSpeech({ initialVoiceId: props.voz }),
+        { initialProps: { voz: 'voz-a' } },
+      );
+      expect(result.current.voiceId).toBe('voz-a');
+
+      act(() => { result.current.setVoiceId('voz-local'); });
+      expect(result.current.voiceId).toBe('voz-local');
+
+      // mesmo valor de prop: a escolha local continua
+      rerender({ voz: 'voz-a' });
+      expect(result.current.voiceId).toBe('voz-local');
+
+      // prop nova: vence o valor local (comportamento do effect antigo)
+      rerender({ voz: 'voz-b' });
+      expect(result.current.voiceId).toBe('voz-b');
+    });
+
+    it('velocidade: prop nova vence o valor local e o clamp continua valendo', () => {
+      const { result, rerender } = renderHook(
+        (props: { velocidade: number | undefined }) => useTextToSpeech({ initialSpeed: props.velocidade }),
+        { initialProps: { velocidade: 1.0 } },
+      );
+
+      act(() => { result.current.setSpeed(1.75); });
+      expect(result.current.speed).toBe(1.75);
+
+      rerender({ velocidade: 1.0 });
+      expect(result.current.speed).toBe(1.75);
+
+      rerender({ velocidade: 1.25 });
+      expect(result.current.speed).toBe(1.25);
+    });
+
+    it('sem prop externa, a escolha local nao e sobrescrita por render', () => {
+      const { result, rerender } = renderHook(() => useTextToSpeech());
+      act(() => { result.current.setSpeed(1.5); });
+      rerender();
+      expect(result.current.speed).toBe(1.5);
+    });
+  });
 });

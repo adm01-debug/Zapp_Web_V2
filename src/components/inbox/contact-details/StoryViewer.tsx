@@ -55,22 +55,34 @@ interface StoryViewerProps {
 }
 
 interface ResolvedMedia {
+  index: number;
   src: string | null;
   mimetype: string | null;
 }
 
+// Sentinela estavel: "nenhuma midia carregada para o status atual".
+const MEDIA_VAZIA: ResolvedMedia = { index: -1, src: null, mimetype: null };
+
 export function StoryViewer({ messages, initialIndex, open, onClose, pushName }: StoryViewerProps) {
   const { getMediaBase64 } = useEvolutionApi();
+  // E — o reset do indice ao abrir era `setState` sincrono em effect (regra
+  // react-hooks/set-state-in-effect). O reset passa a ser por remontagem: o pai abre o visualizador
+  // com um `key` novo a cada abertura (padrao do React para "resetar estado com key"), entao o
+  // `useState(initialIndex)` abaixo ja entrega o indice correto — sem effect e sem estado espelhado.
   const [index, setIndex] = useState(initialIndex);
-  const [resolvedMedia, setResolvedMedia] = useState<ResolvedMedia>({ src: null, mimetype: null });
-  const [mediaLoading, setMediaLoading] = useState(false);
-  const [mediaError, setMediaError] = useState<string | null>(null);
+
+  // A midia resolvida carrega o indice a que pertence: trocar de status torna o valor antigo
+  // obsoleto por derivacao (antes era `setResolvedMedia`/`setMediaError` sincronos no effect).
+  const [mediaCarregada, setMediaCarregada] = useState<ResolvedMedia>(MEDIA_VAZIA);
+  const [erroDeMidia, setErroDeMidia] = useState<{ index: number; message: string } | null>(null);
+  const [carregandoMidia, setCarregandoMidia] = useState<{ index: number; loading: boolean }>({ index: -1, loading: false });
+  const resolvedMedia = mediaCarregada.index === index ? mediaCarregada : MEDIA_VAZIA;
+  const mediaError = erroDeMidia && erroDeMidia.index === index ? erroDeMidia.message : null;
+  const mediaLoading = carregandoMidia.index === index ? carregandoMidia.loading : false;
   // E24 — status de vídeo abre com `autoPlay` no volume do sistema; passa a abrir no
   // volume escolhido pelo atendente (o pior caso hoje é um autoplay a 100% no open space).
   const videoRef = useRef<HTMLVideoElement>(null);
   useMediaElementVolume(videoRef);
-
-  useEffect(() => { if (open) setIndex(initialIndex); }, [open, initialIndex]);
 
   const goNext = useCallback(() => setIndex((i) => Math.min(i + 1, messages.length - 1)), [messages.length]);
   const goPrev = useCallback(() => setIndex((i) => Math.max(i - 1, 0)), []);
@@ -90,25 +102,25 @@ export function StoryViewer({ messages, initialIndex, open, onClose, pushName }:
     if (!open || !messages.length) return;
     const current = messages[index];
     const mediaType = getMediaType(current);
-    setResolvedMedia({ src: null, mimetype: null });
-    setMediaError(null);
-    if (mediaType === 'text') { setMediaLoading(false); return; }
+    // Sem `setState` sincrono aqui: o reset de midia/erro/carregando e por derivacao — cada valor
+    // guardado carrega o indice a que pertence e o que vale e o que casa com o status atual.
+    if (mediaType === 'text') return;
 
     let cancelled = false;
     const loadMedia = async () => {
-      setMediaLoading(true);
+      setCarregandoMidia({ index, loading: true });
       try {
         const instanceName = (typeof window !== 'undefined' && (window as any).__activeInstance__) || '';
         if (!instanceName) return;
         const response = await getMediaBase64(instanceName, current, mediaType === 'video') as { base64?: string; mimetype?: string } | null;
         if (cancelled) return;
         const src = toDataUrl(response?.base64 ?? null, response?.mimetype ?? null);
-        if (!src) { setMediaError('Não foi possível carregar a mídia deste status.'); setResolvedMedia({ src: null, mimetype: response?.mimetype ?? null }); return; }
-        setResolvedMedia({ src, mimetype: response?.mimetype ?? null });
+        if (!src) { setErroDeMidia({ index, message: 'Não foi possível carregar a mídia deste status.' }); setMediaCarregada({ index, src: null, mimetype: response?.mimetype ?? null }); return; }
+        setMediaCarregada({ index, src, mimetype: response?.mimetype ?? null });
       } catch (error) {
         if (cancelled) return;
-        setMediaError(error instanceof Error ? error.message : 'Erro ao carregar mídia');
-      } finally { if (!cancelled) setMediaLoading(false); }
+        setErroDeMidia({ index, message: error instanceof Error ? error.message : 'Erro ao carregar mídia' });
+      } finally { if (!cancelled) setCarregandoMidia({ index, loading: false }); }
     };
     loadMedia();
     return () => { cancelled = true; };
