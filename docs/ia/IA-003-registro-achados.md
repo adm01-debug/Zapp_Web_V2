@@ -80,3 +80,17 @@ confirmei lendo o código.
 - [x] Cada correção com hipótese, impacto, evidência e teste de regressão definidos (seção C).
 - [x] Achados fora dos 10 do plano também registrados (seção B) — nenhum será corrigido "de passagem".
 - [x] Lacunas declaradas em vez de presumidas (seção D).
+
+## F. Correções entregues contra este registro
+
+| Achado | Correção | Onde | Prova |
+|---|---|---|---|
+| A9 | Assinatura do webhook da ElevenLabs passa a ser **bloqueante** (secret obrigatório, timestamp com tolerância, HMAC em tempo constante) e o corpo cru deixa de ser gravado | `_shared/webhook-signature.ts`, `elevenlabs-webhook/index.ts` | 11 casos em `__tests__/webhook-signature.test.ts` + contrato de origem; mutação "aceitar sem secret" quebra 2 testes |
+| A10 | Áudio só é baixado depois de provar visibilidade da **mensagem** com o JWT do chamador; `media_url` do registro vira a fonte do objeto | `_shared/ai-audio-authz.ts`, `ai-transcribe-audio/index.ts` | 4 casos em `__tests__/ai-audio-authz.test.ts` + contrato (checagem antes do download) |
+| B1 | As 4 funções de IA paga sem identidade passam a exigir sessão verificada + cota, recusando a identidade de serviço | `_shared/ai-auth.ts` + `voice-agent`, `classify-*` | 7 casos em `__tests__/ai-auth.test.ts`; mutação "serviço passa como usuário" quebra 1 teste |
+| B2 | Comparação da service role key deixa de ser `===` (tempo constante) e o caminho de serviço ganha limite por IP | `_shared/ai-auth.ts` (`isServiceRoleRequest`, `requireAiIdentityOrService`) | casos de prefixo/sufixo/case em `__tests__/ai-auth.test.ts` |
+
+Registro completo do bloco: [`IA-011-a-IA-020-contencao-P0.md`](./IA-011-a-IA-020-contencao-P0.md).
+O teste do CI que fixava o comportamento inseguro (B7) **não** foi alterado: ele descreve os outros três
+webhooks (Evolution, WhatsApp, Gmail), que seguem em modo sombra — o caminho bloqueante novo tem testes
+próprios.

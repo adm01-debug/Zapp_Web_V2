@@ -23,6 +23,7 @@ válidos. Este bloco **não altera código, banco nem configuração** — entre
 | IA-008 | [`IA-008-organizacao-das-entregas.md`](./IA-008-organizacao-das-entregas.md) | Os 20 blocos mapeados em 20 PRs, com dependências, classe de DDL e onde há autorização humana necessária | ✅ |
 | IA-009 | [`IA-009-desligamento-seguro.md`](./IA-009-desligamento-seguro.md) | Desenho de kill switch por capacidade/bot/provedor; lacuna provada: `feature_flags` só é lida no cliente | ✅ (implementação nos blocos 02/05/11) |
 | IA-010 | [`IA-010-ambiente-de-ensaio.md`](./IA-010-ambiente-de-ensaio.md) | Especificação de dados sintéticos por departamento, 4 perfis, credencial de homologação por referência | ✅ (provisionamento **não** executado: escrita em produção) |
+| IA-011..020 | [`IA-011-a-IA-020-contencao-P0.md`](./IA-011-a-IA-020-contencao-P0.md) | **Bloco 02 (P0)** — identidade nas funções de IA sem guarda, assinatura de webhook bloqueante, autorização por objeto no áudio; etapas restantes com destino declarado | 🟡 lote de contenção entregue; política (IA-015/016/017/019/020) nos blocos 03/04/05 |
 
 ## Os três achados que este bloco já deixa provados (base do Bloco 02, P0)
 
@@ -44,7 +45,11 @@ válidos. Este bloco **não altera código, banco nem configuração** — entre
 
 ## Próximo bloco
 
-**Bloco 02 — Autenticação, autorização e privacidade (IA-011..IA-020, P0)**: identidade verificada nas
-funções de IA, assinatura real no `elevenlabs-webhook`, autorização por objeto no áudio, leitura ≠
-alteração, restrição de destinos/segredos e minimização de dados. Depende de autorização de **deploy de
-Edge Function** (manual, com aprovação) para chegar a produção — o código e os testes não dependem disso.
+**Bloco 03 — Qualidade do sinal de IA (IA-021..IA-030, P0/P1)**: normalizações únicas de sentimento/prioridade,
+histórico de análise sem perda de campo, memória por contato e invalidação de estado de tela.
+
+**Bloco 02 (P0) — em andamento:** o lote de contenção (IA-011/012/013/014) está em
+[`IA-011-a-IA-020-contencao-P0.md`](./IA-011-a-IA-020-contencao-P0.md), com as etapas de política
+apontadas para os blocos 03/04/05. O que ainda **depende de você** para chegar a produção: aprovar o
+deploy das Edge Functions e criar o secret `ELEVENLABS_WEBHOOK_SECRET` (a verificação de assinatura é
+falha fechada: sem o secret, o webhook da ElevenLabs recusa os eventos).
