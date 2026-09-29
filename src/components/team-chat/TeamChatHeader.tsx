@@ -31,6 +31,7 @@ import {
   LogOut,
   Check,
   Mic,
+  Settings2,
 } from 'lucide-react';
 import { ELEVENLABS_VOICES } from '@/components/inbox/VoiceSelector';
 
@@ -57,6 +58,7 @@ interface TeamChatHeaderProps {
   onTransfer?: () => void;
   onRenameGroup?: () => void;
   onLeaveGroup?: () => void;
+  onManageDepartment?: () => void;
   onPin?: () => void;
   onArchive?: () => void;
 }
@@ -82,6 +84,7 @@ export function TeamChatHeader({
   onTransfer,
   onRenameGroup,
   onLeaveGroup,
+  onManageDepartment,
   onPin,
   onArchive,
 }: TeamChatHeaderProps) {
@@ -161,6 +164,24 @@ export function TeamChatHeader({
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">Adicionar membros</TooltipContent>
+          </Tooltip>
+        )}
+
+        {onManageDepartment && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted"
+                onClick={onManageDepartment}
+                aria-label="Gerenciar departamento"
+              >
+                <Settings2 className="w-[18px] h-[18px]" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Gerenciar departamento</TooltipContent>
           </Tooltip>
         )}
 

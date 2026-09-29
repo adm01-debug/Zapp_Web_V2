@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, Component, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, Component, type ReactNode } from 'react';
 import { TeamConversation } from '@/hooks/chat/useTeamChat';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,13 +10,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { AddMembersDialog } from './AddMembersDialog';
 import { TransferConversationDialog } from './TransferConversationDialog';
 import { GroupManagementDialog } from './GroupManagementDialog';
+import { DepartmentManagementDialog } from './department-management/DepartmentManagementDialog';
+import { useUserRole } from '@/hooks/system/useUserRole';
 import { TeamChatHeader } from './TeamChatHeader';
 import { TeamChatInputArea } from './TeamChatInputArea';
 import { useTeamChatPanel } from './useTeamChatPanel';
 import { TeamMessageItem } from './TeamMessageItem';
 import { TeamPerformancePanel } from './TeamPerformancePanel';
 import { ParticipantStatsGraph } from './ParticipantStatsGraph';
-import { useRedeemDepartmentInvite } from '@/hooks/team-chat/useDepartmentManagement';
 
 class ChatErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   constructor(props: { children: ReactNode }) {
@@ -58,13 +59,12 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
     leaveMutation, renameConvMutation, removeMemberMutation, deleteConvMutation, tts, reactions,
   } = useTeamChatPanel(conversation);
 
-  const redeemMutation = useRedeemDepartmentInvite();
-  const [inviteCode, setInviteCode] = useState('');
+  const [showDeptManagement, setShowDeptManagement] = useState(false);
+  const { isAdmin } = useUserRole();
 
-  const convAny = conversation as unknown as Record<string, unknown>;
-  const isDeptChannel = !!(convAny.department_id);
+  const isDeptChannel = conversation.type === 'department';
   const profileDeptId = (profile as Record<string, unknown>)?.department_id as string | null | undefined;
-  const isChannelMember = !isDeptChannel || profileDeptId === convAny.department_id;
+  const isChannelMember = !isDeptChannel || canTransfer || profileDeptId === conversation.department_id;
 
   useEffect(() => {
     if (isNearBottomRef.current && scrollRef.current) {
@@ -95,39 +95,15 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
           showSearch={false} isMuted={isMuted} onBack={onBack} onToggleDetails={onToggleDetails}
           onToggleSearch={() => {}} onAddMembers={() => {}} onVoiceChange={handleVoiceChange} onSpeedChange={handleSpeedChange}
           onToggleMute={() => {}} />
-        <div className="flex-1 flex flex-col items-center justify-center gap-5 p-8 bg-inbox-panel">
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8 bg-inbox-panel">
           <div className="rounded-full bg-muted p-4">
             <Lock className="w-8 h-8 text-muted-foreground" aria-hidden />
           </div>
           <div className="text-center">
             <h3 className="text-base font-semibold text-foreground">Conteúdo Protegido</h3>
             <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-              Este canal é exclusivo para membros do departamento.
+              Este canal é exclusivo para membros do departamento. Solicite um convite ao administrador.
             </p>
-          </div>
-          <div className="w-full max-w-xs space-y-2">
-            <p className="text-xs text-center text-muted-foreground">Tem um código de convite?</p>
-            <div className="flex gap-2">
-              <Input
-                placeholder="XXXXXX"
-                value={inviteCode}
-                onChange={e => setInviteCode(e.target.value.toUpperCase())}
-                className="font-mono tracking-widest text-center uppercase"
-                maxLength={12}
-                disabled={redeemMutation.isPending}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && inviteCode.trim().length >= 4) {
-                    redeemMutation.mutate({ code: inviteCode });
-                  }
-                }}
-              />
-              <Button
-                disabled={inviteCode.trim().length < 4 || redeemMutation.isPending}
-                onClick={() => redeemMutation.mutate({ code: inviteCode })}
-              >
-                {redeemMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Entrar'}
-              </Button>
-            </div>
           </div>
         </div>
       </div>
@@ -147,6 +123,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
         onTransfer={canTransfer ? () => setShowTransferDialog(true) : undefined}
         onRenameGroup={isGroupCreator ? () => setShowGroupManagement(true) : undefined}
         onLeaveGroup={!isGroupCreator && conversation.type === 'group' ? () => leaveMutation.mutate({ conversationId: conversation.id }) : undefined}
+        onManageDepartment={isDeptChannel && canTransfer ? () => setShowDeptManagement(true) : undefined}
         onPin={handlePin}
         onArchive={handleArchive} />
 
@@ -258,6 +235,16 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
           onRemoveMember={profileId => removeMemberMutation.mutate({ conversationId: conversation.id, profileId })}
           onLeave={() => leaveMutation.mutate({ conversationId: conversation.id })}
           onDelete={() => deleteConvMutation.mutate({ conversationId: conversation.id })}
+        />
+      )}
+
+      {isDeptChannel && conversation.department_id && (
+        <DepartmentManagementDialog
+          open={showDeptManagement}
+          onOpenChange={setShowDeptManagement}
+          department={{ id: conversation.department_id, name: conversation.name ?? '', description: null, is_active: true }}
+          currentUserName={profile?.name ?? ''}
+          isAdmin={isAdmin}
         />
       )}
     </div>

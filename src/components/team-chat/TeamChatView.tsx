@@ -20,22 +20,23 @@ import {
 } from '@/hooks/team-chat/useTeamChatMutations';
 
 function inboxRowToConversation(row: TeamInboxRow): TeamConversation {
+  const now = new Date().toISOString();
   return {
     id: row.conversation_id,
-    type: row.type as ConversationType,
-    name: row.name,
-    avatar_url: row.avatar_url,
+    type: row.conversation_type as ConversationType,
+    name: row.conversation_name,
+    avatar_url: null,
     created_by: null,
-    department_id: null,
-    created_at: row.created_at,
-    updated_at: row.created_at,
+    department_id: row.department_id,
+    created_at: now,
+    updated_at: row.last_message_at ?? now,
     members: [],
-    last_message: row.last_message_id ? {
-      id: row.last_message_id,
+    last_message: row.last_message_at ? {
+      id: row.conversation_id + '_last',
       conversation_id: row.conversation_id,
-      sender_id: row.last_message_sender_id ?? '',
-      content: row.last_message_content ?? '',
-      message_type: row.last_message_type ?? 'text',
+      sender_id: row.last_sender_id ?? '',
+      content: row.last_message_text ?? '',
+      message_type: 'text',
       status: null,
       media_url: null,
       media_type: null,
@@ -43,8 +44,8 @@ function inboxRowToConversation(row: TeamInboxRow): TeamConversation {
       media_path: null,
       reply_to_id: null,
       is_edited: false,
-      created_at: row.last_message_created_at ?? row.created_at,
-      updated_at: row.last_message_created_at ?? row.created_at,
+      created_at: row.last_message_at,
+      updated_at: row.last_message_at,
     } : null,
     unread_count: row.unread_count,
   };

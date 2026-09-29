@@ -62,20 +62,18 @@ export interface TeamConversation {
   unread_count: number;
 }
 
-// Linha retornada pela RPC get_team_inbox
+// Linha retornada pela RPC get_team_inbox (colunas reais em produção, 2026-09-29)
 export interface TeamInboxRow {
   conversation_id: string;
-  name: string | null;
-  type: string;
-  avatar_url: string | null;
-  member_role: MemberRole;
-  created_at: string;
+  conversation_type: string;
+  conversation_name: string | null;
+  department_id: string | null;
+  last_message_at: string | null;
+  last_message_text: string | null;
+  last_sender_id: string | null;
   unread_count: number;
-  last_message_id: string | null;
-  last_message_content: string | null;
-  last_message_type: string | null;
-  last_message_sender_id: string | null;
-  last_message_created_at: string | null;
+  is_muted: boolean;
+  member_count: number;
 }
 
 // Linha retornada pela RPC get_team_messages_page
