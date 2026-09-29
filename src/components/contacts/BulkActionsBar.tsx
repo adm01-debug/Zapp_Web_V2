@@ -106,21 +106,26 @@ export function BulkActionsBar({
   const handleBulkDelete = useCallback(async () => {
     setIsProcessing(true);
     try {
-      const { error } = await supabase
-        .from('contacts')
-        .delete()
-        .in('id', selectedIds);
+      // Exclusao em massa pelo RPC auditado (soft-delete). `.delete().in('id', ...)` nao
+      // tinha policy de DELETE em `contacts`: devolvia 0 linhas sem erro e o toast
+      // anunciava "N contatos removidos" (auditoria de 29/09, §3.1).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC de 20260929370000; types.ts sincroniza no types-sync
+      const { data, error } = await (supabase as any).rpc('delete_contacts', { p_ids: selectedIds });
 
       if (error) throw error;
-      toast.success(`${count} contatos removidos`);
+      if (typeof data !== 'number' || data <= 0) {
+        throw new Error('Nenhum contato foi excluído. Verifique se você tem permissão.');
+      }
+
+      toast.success(`${data} contato${data > 1 ? 's' : ''} removido${data > 1 ? 's' : ''}`);
       onClearSelection();
       onActionComplete();
-    } catch {
-      toast.error('Erro ao remover contatos');
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : 'Erro ao remover contatos');
     } finally {
       setIsProcessing(false);
     }
-  }, [selectedIds, count, onClearSelection, onActionComplete]);
+  }, [selectedIds, onClearSelection, onActionComplete]);
 
   if (count === 0) return null;
 
