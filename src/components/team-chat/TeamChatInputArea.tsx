@@ -94,7 +94,7 @@ export function TeamChatInputArea({
     <>
       <AnimatePresence>
         {replyTo && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="px-3 pt-2 bg-card border-t border-border">
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="px-3 pt-2 bg-chat-input-bg border-t border-border">
             <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border-l-2 border-primary">
               <Reply className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
               <div className="flex-1 min-w-0">
@@ -109,7 +109,7 @@ export function TeamChatInputArea({
 
       <RichTextToolbar inputRef={textareaRef} inputValue={text} onInputChange={setText} visible={showRichToolbar} onToggle={() => setShowRichToolbar(!showRichToolbar)} />
 
-      <div className={cn("px-4 py-3 border-t border-border bg-card", isMobile && "px-2.5 py-2 safe-area-bottom")}>
+      <div className={cn("px-4 py-3 border-t border-border bg-chat-input-bg", isMobile && "px-2.5 py-2 safe-area-bottom")}>
         <AnimatePresence>{isRecordingAudio && <div className="mb-3"><AudioRecorder onSend={onAudioSend} onCancel={() => onRecordToggle()} /></div>}</AnimatePresence>
 
         <AnimatePresence>

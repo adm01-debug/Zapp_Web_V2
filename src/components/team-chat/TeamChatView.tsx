@@ -59,7 +59,7 @@ export function TeamChatView() {
   const selectedConversation = conversations.find(c => c.id === selectedId) || null;
 
   return (
-    <div className="flex h-full w-full bg-background">
+    <div className="flex h-full w-full bg-inbox-panel">
       {/* Sidebar */}
       <div className={cn(
         "w-80 border-r border-border flex flex-col shrink-0",

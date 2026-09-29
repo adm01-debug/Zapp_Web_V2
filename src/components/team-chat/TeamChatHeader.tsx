@@ -85,7 +85,7 @@ export function TeamChatHeader({
   const isGroup = conversation.type === 'group';
 
   return (
-    <div className="flex items-center justify-between px-3 md:px-5 h-[56px] md:h-[65px] pr-24 border-b border-border bg-card shrink-0" role="banner" aria-label="Cabeçalho da conversa">
+    <div className="flex items-center justify-between px-3 md:px-5 h-[56px] md:h-[65px] pr-24 border-b border-border bg-chat-header shrink-0" role="banner" aria-label="Cabeçalho da conversa">
       <div className="flex items-center gap-2 md:gap-3 min-w-0">
         <Button variant="ghost" size="icon" className="md:hidden shrink-0 w-8 h-8" onClick={onBack} aria-label="Voltar para lista de conversas">
           <ArrowLeft className="w-4 h-4" />

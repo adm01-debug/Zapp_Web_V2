@@ -35,7 +35,7 @@ export function TeamMemberDetails({ conversation, onClose }: TeamMemberDetailsPr
   const { memberProfile, isLoading, groupMembers } = useTeamMemberDetails(conversation, profile?.id ?? null);
 
   return (
-    <div className="w-[300px] border-l border-border flex flex-col bg-card h-full" role="complementary" aria-label="Detalhes da conversa">
+    <div className="w-[300px] border-l border-border flex flex-col bg-inbox-panel h-full" role="complementary" aria-label="Detalhes da conversa">
       <div className="flex items-center justify-between p-3 border-b border-border">
         <h3 className="text-sm font-semibold flex items-center gap-1.5"><span className="w-1 h-4 bg-primary rounded-full" />{conversation.type === 'direct' ? 'Detalhes do Colaborador' : 'Detalhes do Grupo'}</h3>
         <div className="flex items-center gap-1">

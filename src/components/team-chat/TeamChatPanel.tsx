@@ -121,7 +121,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
 
       <AnimatePresence>
         {showSearch && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="px-3 py-2 border-b border-border bg-card">
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="px-3 py-2 border-b border-border bg-chat-header">
             <div className="flex items-center gap-2">
               <Search className="w-4 h-4 text-muted-foreground shrink-0" />
               <Input ref={searchInputRef} value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
