@@ -1,0 +1,5 @@
+-- E44: remove_team_member() — remove membro de grupo (somente criador pode remover)
+CREATE OR REPLACE FUNCTION public.remove_team_member(p_conversation_id uuid, p_profile_id uuid) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $f$ DECLARE v_caller_id uuid := public.current_profile_id(); v_creator uuid; BEGIN IF v_caller_id IS NULL THEN RAISE EXCEPTION 'not_authenticated'; END IF; SELECT created_by INTO v_creator FROM public.team_conversations WHERE id = p_conversation_id; IF v_caller_id <> v_creator THEN RAISE EXCEPTION 'only_creator_can_remove_members'; END IF; IF p_profile_id = v_creator THEN RAISE EXCEPTION 'creator_cannot_remove_self_use_leave'; END IF; DELETE FROM public.team_conversation_members WHERE conversation_id = p_conversation_id AND profile_id = p_profile_id; IF NOT FOUND THEN RAISE EXCEPTION 'target_not_member'; END IF; END; $f$;
+
+REVOKE EXECUTE ON FUNCTION public.remove_team_member(uuid, uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.remove_team_member(uuid, uuid) TO authenticated;
