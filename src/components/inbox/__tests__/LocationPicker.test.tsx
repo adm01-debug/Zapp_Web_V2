@@ -54,6 +54,9 @@ function baseAutocomplete() {
     select: vi.fn(),
     onKeyDown: vi.fn(),
     clear: vi.fn(),
+    // F2/E13: retry real do botão "Tentar novamente" + bloqueio vigente (429 / teto de custo).
+    retrySuggest: vi.fn(),
+    blocked: null as 'rate_limited' | 'cost_guard' | null,
   };
 }
 
@@ -228,6 +231,31 @@ describe('LocationPicker', () => {
       expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
       expect(input).toHaveAttribute('aria-expanded', 'false');
       expect(ac.clear).toHaveBeenCalled();
+    });
+
+    // F2/E11 (C2): a auditoria mostrou o operador digitando e apertando Enter sem nada acontecer —
+    // com a flag ligada o input é do combobox e `searchQuery` (do useLocationPicker) fica vazio,
+    // então a busca caía na primeira linha de `searchLocation` e voltava sem fazer nada.
+    it('E11/C2: Enter sem sugestão destacada busca o termo digitado no combobox', async () => {
+      const state = { ...hookState(null), searchLocation: vi.fn() };
+      await renderOnMapTab(state, autocompleteState({ query: 'avenida paulista 1000' }));
+      const input = screen.getByRole('combobox');
+
+      fireEvent.keyDown(input, { key: 'Enter' });
+
+      expect(state.searchLocation).toHaveBeenCalledWith('avenida paulista 1000');
+    });
+
+    // F2/E14: antes o botão só reescrevia a query com o mesmo valor — o effect não reexecutava e
+    // o operador ficava olhando "Falha ao buscar sugestões" para sempre.
+    it('E14: "Tentar novamente" chama retrySuggest (retry real), não setQuery', async () => {
+      const ac = autocompleteState({ query: 'avenida paulista', error: 'network' });
+      await renderOnMapTab(hookState(null), ac);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+
+      expect(ac.retrySuggest).toHaveBeenCalledTimes(1);
+      expect(ac.setQuery).not.toHaveBeenCalled();
     });
   });
 });

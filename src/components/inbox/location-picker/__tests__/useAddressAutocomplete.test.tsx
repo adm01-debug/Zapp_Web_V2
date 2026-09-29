@@ -4,7 +4,9 @@ import type { GeoSuggestion, GeoSearchPlace } from '@/lib/mapboxGeocode';
 
 const h = vi.hoisted(() => ({
   suggestPlaces: vi.fn(),
-  retrievePlace: vi.fn(),
+  retrievePlaceResult: vi.fn(),
+  searchPlaces: vi.fn(),
+  reportMapboxFailure: vi.fn(),
   getSearchSession: vi.fn(),
   noteSuggestCall: vi.fn(),
   noteRetrieveCall: vi.fn(),
@@ -17,8 +19,15 @@ vi.mock('@/lib/mapboxGeocode', async (importOriginal) => {
   return {
     ...actual,
     suggestPlaces: (...args: unknown[]) => h.suggestPlaces(...args),
-    retrievePlace: (...args: unknown[]) => h.retrievePlace(...args),
+    // F2/E18: o hook usa a versão com causa — sem mockar, o teste cairia na implementação real.
+    retrievePlaceResult: (...args: unknown[]) => h.retrievePlaceResult(...args),
+    // F2/E15: o fallback do /suggest é o /forward — precisa de mock para o teste controlar a rota.
+    searchPlaces: (...args: unknown[]) => h.searchPlaces(...args),
   };
+});
+vi.mock('@/lib/mapboxToken', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/mapboxToken')>();
+  return { ...actual, reportMapboxFailure: (...args: unknown[]) => h.reportMapboxFailure(...args) };
 });
 vi.mock('@/lib/mapboxSession', () => ({
   getSearchSession: () => h.getSearchSession(),
@@ -35,6 +44,11 @@ import { useAddressAutocomplete } from '../useAddressAutocomplete';
 const suggestionA: GeoSuggestion = { id: 'a', name: 'Rua A', address: 'Rua A, São Paulo', kind: 'street' };
 const suggestionB: GeoSuggestion = { id: 'b', name: 'Rua B', address: 'Rua B, São Paulo', kind: 'street' };
 const suggestionC: GeoSuggestion = { id: 'c', name: 'Rua C', address: 'Rua C, São Paulo', kind: 'street' };
+// Coordenadas que o `/forward` devolveria nos casos de cascata (F2/E15/E16/E17).
+const forwardPaulista: GeoSearchPlace = { name: 'Avenida Paulista', address: 'Av. Paulista, 1000 - Bela Vista, São Paulo', lat: -23.5613, lng: -46.6565 };
+const forwardA: GeoSearchPlace = { name: 'Rua A', address: 'Rua A, 1, São Paulo', lat: -23.5, lng: -46.6 };
+const forwardB: GeoSearchPlace = { name: 'Rua B', address: 'Rua B, 200, São Paulo', lat: -23.5, lng: -46.6 };
+const forwardC: GeoSearchPlace = { name: 'Rua C', address: 'Rua C, 3', lat: -23.5, lng: -46.6 };
 
 type KeyDownEvent = Parameters<ReturnType<typeof useAddressAutocomplete>['onKeyDown']>[0];
 
@@ -46,7 +60,11 @@ describe('useAddressAutocomplete', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     h.suggestPlaces.mockReset();
-    h.retrievePlace.mockReset();
+    h.retrievePlaceResult.mockReset();
+    // Padrão do /forward nos testes: falhou também — é o cenário "as duas rotas caíram", que
+    // mantém o comportamento antigo (erro exposto) nos testes que não falam de fallback.
+    h.searchPlaces.mockReset().mockResolvedValue({ ok: false, kind: 'not_found' });
+    h.reportMapboxFailure.mockReset();
     h.getSearchSession.mockReset().mockReturnValue('session-1');
     h.noteSuggestCall.mockReset();
     h.noteRetrieveCall.mockReset();
@@ -60,6 +78,17 @@ describe('useAddressAutocomplete', () => {
 
   const setup = (overrides?: Partial<Parameters<typeof useAddressAutocomplete>[0]>) =>
     renderHook(() => useAddressAutocomplete({ token: 'tok', enabled: true, ...overrides }));
+
+  // F2: digita o termo, deixa o debounce correr e seleciona o 1º item — o fluxo que todos os
+  // casos de cascata repetem (digitar → esperar → selecionar) fica num lugar só.
+  async function typeAndSelectFirst(term: string) {
+    const { result } = setup();
+    act(() => { result.current.setQuery(term); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    const places: Array<GeoSearchPlace | null> = [];
+    await act(async () => { places.push(await result.current.select(0)); });
+    return { result, place: places[0] ?? null };
+  }
 
   it('não faz nenhuma chamada enquanto enabled=false', async () => {
     const { result } = setup({ enabled: false });
@@ -110,9 +139,9 @@ describe('useAddressAutocomplete', () => {
     expect(result.current.error).toBeNull();
   });
 
-  it('select() chama retrievePlace, devolve a coordenada e encerra a sessão', async () => {
+  it('select() chama retrievePlaceResult, devolve a coordenada e encerra a sessão', async () => {
     h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
-    h.retrievePlace.mockResolvedValue({ address: 'Rua A, 1', lat: -23.5, lng: -46.6 });
+    h.retrievePlaceResult.mockResolvedValue({ ok: true, place: { address: 'Rua A, 1', lat: -23.5, lng: -46.6 } });
     const { result } = setup();
     act(() => { result.current.setQuery('rua a'); });
     await act(async () => { vi.advanceTimersByTime(300); });
@@ -127,7 +156,7 @@ describe('useAddressAutocomplete', () => {
 
   it('falha do /retrieve não fecha a lista — sugestões continuam de pé', async () => {
     h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
-    h.retrievePlace.mockResolvedValue(null);
+    h.retrievePlaceResult.mockResolvedValue({ ok: false, kind: 'not_found' });
     const { result } = setup();
     act(() => { result.current.setQuery('rua a'); });
     await act(async () => { vi.advanceTimersByTime(300); });
@@ -160,7 +189,7 @@ describe('useAddressAutocomplete', () => {
     const preventDefault = vi.fn();
     act(() => { result.current.onKeyDown({ key: 'Enter', preventDefault } as unknown as KeyDownEvent); });
     expect(preventDefault).toHaveBeenCalled();
-    expect(h.retrievePlace).not.toHaveBeenCalled();
+    expect(h.retrievePlaceResult).not.toHaveBeenCalled();
 
     act(() => { result.current.onKeyDown(fakeKeyEvent('Escape')); });
     expect(result.current.query).toBe('');
@@ -182,11 +211,11 @@ describe('useAddressAutocomplete', () => {
 
   it('E46: seleção mais nova vence — resultado de uma seleção anterior em voo não sobrescreve a mais recente (sem AbortController no /retrieve)', async () => {
     h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA, suggestionB] });
-    let resolveFirst: (value: GeoSearchPlace) => void = () => {};
-    const firstRetrieve = new Promise<GeoSearchPlace>((resolve) => { resolveFirst = resolve; });
-    h.retrievePlace
+    let resolveFirst: (value: { ok: true; place: GeoSearchPlace }) => void = () => {};
+    const firstRetrieve = new Promise<{ ok: true; place: GeoSearchPlace }>((resolve) => { resolveFirst = resolve; });
+    h.retrievePlaceResult
       .mockImplementationOnce(() => firstRetrieve)
-      .mockImplementationOnce(() => Promise.resolve({ address: 'Rua B, 2', lat: 2, lng: 2 }));
+      .mockImplementationOnce(() => Promise.resolve({ ok: true, place: { address: 'Rua B, 2', lat: 2, lng: 2 } }));
 
     const { result } = setup();
     act(() => { result.current.setQuery('rua'); });
@@ -197,7 +226,7 @@ describe('useAddressAutocomplete', () => {
     await act(async () => {
       const pendingA = result.current.select(0);
       const pendingB = result.current.select(1);
-      resolveFirst({ address: 'Rua A, 1', lat: 1, lng: 1 });
+      resolveFirst({ ok: true, place: { address: 'Rua A, 1', lat: 1, lng: 1 } });
       placeA = await pendingA;
       placeB = await pendingB;
     });
@@ -215,7 +244,7 @@ describe('useAddressAutocomplete', () => {
     await act(async () => { vi.advanceTimersByTime(300); });
 
     act(() => { result.current.onKeyDown(fakeKeyEvent('Enter')); });
-    expect(h.retrievePlace).not.toHaveBeenCalled();
+    expect(h.retrievePlaceResult).not.toHaveBeenCalled();
   });
 
   it('lista vazia sem erro quando /suggest devolve 0 sugestões', async () => {
@@ -269,5 +298,135 @@ describe('useAddressAutocomplete', () => {
     act(() => { result.current.setQuery('rua abc'); });
     await act(async () => { vi.advanceTimersByTime(300); });
     expect(h.suggestPlaces).toHaveBeenCalledTimes(2);
+  });
+
+  // ── F2 · cascata /suggest → /forward (E15–E20) ──────────────────────────────────────────────
+
+  it('E15: /suggest cai por rota (http) — o /forward assume e as sugestões já vêm com coordenada', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'http' });
+    h.searchPlaces.mockResolvedValue({ ok: true, places: [forwardPaulista] });
+    const { result } = setup();
+    act(() => { result.current.setQuery('avenida paulista'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+
+    // Sem o fallback, /suggest fora do ar = busca fora do ar (C3). O termo é o mesmo digitado.
+    expect(h.searchPlaces).toHaveBeenCalledWith('avenida paulista', 'tok', expect.anything(), undefined);
+    expect(result.current.suggestions).toEqual([
+      expect.objectContaining({
+        name: 'Avenida Paulista',
+        address: 'Av. Paulista, 1000 - Bela Vista, São Paulo',
+        coords: { lat: -23.5613, lng: -46.6565 },
+      }),
+    ]);
+    expect(result.current.error).toBeNull();
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('E15: selecionar sugestão do /forward não chama /retrieve — a coordenada já veio junto', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'timeout' });
+    h.searchPlaces.mockResolvedValue({ ok: true, places: [forwardB] });
+
+    const { place } = await typeAndSelectFirst('rua b');
+
+    expect(h.retrievePlaceResult).not.toHaveBeenCalled();
+    expect(place).toEqual(forwardB);
+    // Sessão fechada de todo jeito — sessão fantasma é o defeito que o E46 fechou.
+    expect(h.endSearchSession).toHaveBeenCalled();
+  });
+
+  it('E16: /retrieve sem coordenada — repete a busca com o texto da sugestão no /forward', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
+    h.retrievePlaceResult.mockResolvedValue({ ok: false, kind: 'not_found' });
+    h.searchPlaces.mockResolvedValue({ ok: true, places: [forwardA] });
+
+    const { result, place } = await typeAndSelectFirst('rua a');
+
+    // O termo do fallback é o nome + endereço da própria sugestão — o corte de relevância do
+    // /forward é aplicado dentro de searchPlaces (MIN_V5_RELEVANCE).
+    expect(h.searchPlaces).toHaveBeenCalledWith('Rua A Rua A, São Paulo', 'tok', undefined, undefined);
+    expect(place).toEqual(forwardA);
+    expect(result.current.error).toBeNull();
+  });
+
+  it('E17: telemetria só quando as DUAS rotas falham na mesma busca', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'http' });
+    h.searchPlaces.mockResolvedValue({ ok: true, places: [forwardC] });
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua c'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    // Fallback salvou a busca — não é falha, não vira client_error.
+    expect(h.reportMapboxFailure).not.toHaveBeenCalled();
+    expect(result.current.suggestions).toHaveLength(1);
+
+    // Agora as duas caem: aí sim reporta uma vez, com a tradução da causa.
+    h.searchPlaces.mockResolvedValue({ ok: false, kind: 'network' });
+    act(() => { result.current.setQuery('rua cc'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    expect(h.reportMapboxFailure).toHaveBeenCalledTimes(1);
+    expect(h.reportMapboxFailure).toHaveBeenCalledWith('server_error', 'suggest');
+  });
+
+  it('E17/E51: /retrieve sem resultado com o /forward também vazio não gera client_error de rota', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
+    h.retrievePlaceResult.mockResolvedValue({ ok: false, kind: 'not_found' });
+    h.searchPlaces.mockResolvedValue({ ok: false, kind: 'not_found' });
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua a'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+
+    await act(async () => { await result.current.select(0); });
+
+    expect(h.reportMapboxFailure).not.toHaveBeenCalled();
+    expect(result.current.error).toBe('not_found');
+  });
+
+  // ── F2 · retry real (E13/E14) ───────────────────────────────────────────────────────────────
+
+  it('E13: retrySuggest dispara na hora, sem esperar o debounce, e reusa o termo atual', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'http' });
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua a'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    expect(h.suggestPlaces).toHaveBeenCalledTimes(1);
+
+    h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
+    h.searchPlaces.mockResolvedValue({ ok: false, kind: 'not_found' });
+    await act(async () => { result.current.retrySuggest(); });
+
+    // Sem `advanceTimersByTime`: antes, o botão só resetava a query e dependia do debounce.
+    expect(h.suggestPlaces).toHaveBeenCalledTimes(2);
+    expect(h.suggestPlaces).toHaveBeenLastCalledWith('rua a', 'tok', expect.objectContaining({ session: 'session-1' }));
+    await act(async () => { await Promise.resolve(); });
+    expect(result.current.suggestions).toEqual([suggestionA]);
+  });
+
+  it('E13: retrySuggest bloqueado pela guarda de custo não faz request e marca `blocked` (não "Nada encontrado")', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [] });
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua a'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    expect(h.suggestPlaces).toHaveBeenCalledTimes(1);
+
+    h.isSearchBudgetOk.mockReturnValue(false);
+    await act(async () => { result.current.retrySuggest(); });
+
+    expect(h.suggestPlaces).toHaveBeenCalledTimes(1);
+    expect(result.current.blocked).toBe('cost_guard');
+    expect(result.current.error).toBeNull();
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('E13: retrySuggest durante o backoff de 429 não faz request e marca `rate_limited`', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'rate_limited' });
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua a'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    expect(h.suggestPlaces).toHaveBeenCalledTimes(1);
+
+    await act(async () => { result.current.retrySuggest(); });
+
+    expect(h.suggestPlaces).toHaveBeenCalledTimes(1);
+    expect(result.current.blocked).toBe('rate_limited');
+    expect(result.current.error).toBeNull();
   });
 });

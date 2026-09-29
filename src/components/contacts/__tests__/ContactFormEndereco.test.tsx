@@ -5,19 +5,22 @@ vi.mock('@/hooks/crm/useExternalCargos', () => ({ useExternalCargos: () => ({ da
 vi.mock('@/hooks/crm/useExternalEmpresas', () => ({ useExternalEmpresas: () => ({ data: [] }) }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null }) }) }) }) } }));
 
-const h = vi.hoisted(() => ({ select: vi.fn(), suggestions: [] as unknown[] }));
+const h = vi.hoisted(() => ({ select: vi.fn(), suggestions: [] as unknown[], retrySuggest: vi.fn(), error: null as string | null }));
 vi.mock('@/components/inbox/location-picker/useAddressAutocomplete', () => ({
   useAddressAutocomplete: () => ({
     query: '',
     setQuery: vi.fn(),
     suggestions: h.suggestions,
     isLoading: false,
-    error: null,
+    error: h.error,
     highlightedIndex: -1,
     retrievingId: null,
     select: h.select,
     onKeyDown: vi.fn(),
     clear: vi.fn(),
+    // F2/E13/E14: o cadastro usa o mesmo retry real do picker.
+    retrySuggest: h.retrySuggest,
+    blocked: null,
   }),
 }));
 
@@ -130,5 +133,26 @@ describe('ContactForm — autocomplete de endereço (E41)', () => {
     expect(onChange).toHaveBeenCalledWith('address', 'Avenida Paulista');
     expect(onChange).not.toHaveBeenCalledWith('neighborhood', expect.anything());
     expect(onChange).not.toHaveBeenCalledWith('postal_code', expect.anything());
+  });
+
+  // F2/E14: o cadastro tinha o mesmo botão inerte do picker (setQuery com o mesmo valor).
+  it('E14: "Tentar novamente" no cadastro chama retrySuggest (retry real)', () => {
+    // `h.suggestions` é estado compartilhado entre os testes do arquivo: sem zerar, a condição
+    // `suggestions.length === 0` do aviso de falha não vale e o botão nem aparece.
+    const anteriores = h.suggestions;
+    h.suggestions = [];
+    h.error = 'network';
+    try {
+      h.retrySuggest.mockClear();
+      renderForm();
+      fireEvent.focus(screen.getByLabelText('Logradouro'));
+
+      fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+
+      expect(h.retrySuggest).toHaveBeenCalledTimes(1);
+    } finally {
+      h.suggestions = anteriores;
+      h.error = null;
+    }
   });
 });
