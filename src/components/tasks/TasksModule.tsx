@@ -28,12 +28,14 @@ export function TasksModule({ defaultMode = 'list' }: Props) {
     localStorage.setItem(STORAGE_KEY, m);
   };
 
-  const opts = mode === 'board'
-    ? { includeDone: true }
-    : {};
+  // B13: uma unica query para os tres modos. A query ja traz `done` dos ultimos
+  // 30 dias; o recorte de 7 dias da Lista e local. Trocar de modo nao gera request.
+  const hook = useMyWorkItems();
+  const { byDue, byStatus, kpis, isLoading, isError, create, move, reorder, complete, deleteItem } = hook;
 
-  const hook = useMyWorkItems(opts);
-  const { byDue, byStatus, kpis, isLoading, isError, create, move, reorder, complete, deleteItem, hasMounted } = hook;
+  // Flag de animacao de entrada: saiu da API do hook na etapa 18 e vive aqui.
+  const hasMounted = useRef(false);
+  useEffect(() => { hasMounted.current = true; }, []);
 
   // Filtro de busca (local)
   const filteredByDue = search

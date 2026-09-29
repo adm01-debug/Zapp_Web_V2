@@ -8,6 +8,18 @@ export type WorkItemStatus =
 
 export type Priority = 'low' | 'medium' | 'high' | 'urgent';
 
+/**
+ * Contato vinculado ao item (join da etapa 13).
+ * Definido aqui — e nao no hook — para os testes puros do modulo nao dependerem
+ * de React/Supabase.
+ */
+export interface WorkItemContact {
+  id: string;
+  name: string | null;
+  phone: string | null;
+  avatar_url: string | null;
+}
+
 export interface WorkItem {
   id: string;
   title: string;
@@ -27,6 +39,8 @@ export interface WorkItem {
   assigned_to: string;
   created_at: string;
   updated_at: string;
+  /** Opcional de proposito: testes puros nao criam contato. */
+  contact?: WorkItemContact | null;
 }
 
 export const KANBAN_COLUMNS: Array<{
