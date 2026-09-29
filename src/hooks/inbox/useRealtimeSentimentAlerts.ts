@@ -1,8 +1,8 @@
 import { useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { playNotificationSound } from '@/utils/notificationSound';
-import { showBrowserNotification, requestNotificationPermission } from '@/utils/notificationSound';
+import { playNotificationSound } from '@/utils/notificationSounds';
+import { showBrowserNotification, requestNotificationPermission } from '@/utils/notificationSounds';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { getLogger } from '@/lib/logger';
@@ -66,7 +66,7 @@ export function useRealtimeSentimentAlerts() {
     // Play alert sound if not in quiet hours
     if (!isQuietHours() && settings.soundEnabled) {
       try {
-        playNotificationSound('alert');
+        playNotificationSound('mention', settings.mentionSoundType, settings.soundVolume);
       } catch (err) {
         log.error('Error playing notification sound:', err);
       }
@@ -78,7 +78,7 @@ export function useRealtimeSentimentAlerts() {
       showBrowserNotification(
         '⚠️ Alerta de Sentimento Negativo',
         `${contactName}: Sentimento em ${sentimentScore}% (${consecutiveLow} análises consecutivas)`,
-        '/favicon.ico'
+        { icon: '/favicon.ico' }
       );
     }
   }, [settings, isQuietHours]);

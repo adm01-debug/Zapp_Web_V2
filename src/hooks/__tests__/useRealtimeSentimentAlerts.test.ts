@@ -28,7 +28,7 @@ vi.mock('sonner', () => ({
   toast: { error: (...args: unknown[]) => mockToastError(...args), success: vi.fn() },
 }));
 
-vi.mock('@/utils/notificationSound', () => ({
+vi.mock('@/utils/notificationSounds', () => ({
   playNotificationSound: vi.fn(),
   showBrowserNotification: vi.fn(),
   requestNotificationPermission: vi.fn(),
