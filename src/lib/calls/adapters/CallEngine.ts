@@ -237,15 +237,17 @@ export class CallEngine {
 
   toggleMute(): void {
     if (!this.session) return;
-    // Semântica herdada do hook original (T18 corrige: a track deve ficar
-    // `enabled !== muted` e o estado devolvido é o lido das tracks).
-    this.adapter.setMutedOnTracks(this.session, this.muted);
-    this.muted = !this.muted;
-    this.sink.onMuted(this.muted);
+    // O estado de verdade é o das tracks (o adapter devolve o que leu); sem
+    // mídia (`null`) vale a intenção, para o botão não travar na UI.
+    const muted = this.adapter.setMuted(this.session, !this.muted) ?? !this.muted;
+    this.muted = muted;
+    this.sink.onMuted(muted);
   }
 
   sendDTMF(digit: string): void {
-    if (!this.session || this.session.state !== 'Established') return;
+    if (!this.session) return;
+    // O guarda de "só estabelecida" (com warn) mora no adapter, que conhece a
+    // sessão; aqui não se duplica para a regra ter um dono só.
     this.adapter.sendDTMF(this.session, digit);
   }
 

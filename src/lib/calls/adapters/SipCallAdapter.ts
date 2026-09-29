@@ -102,16 +102,26 @@ export class SipCallAdapter implements CallAdapter {
     return audio;
   }
 
-  setMutedOnTracks(session: Session, value: boolean): boolean {
+  setMuted(session: Session, muted: boolean): boolean | null {
     const sdh = handlerOf(session);
-    if (!sdh?.peerConnection) return false;
-    sdh.peerConnection.getSenders().forEach((sender) => {
-      if (sender.track?.kind === 'audio') sender.track.enabled = value;
-    });
-    return true;
+    if (!sdh?.peerConnection) return null;
+    const tracks = sdh.peerConnection.getSenders()
+      .map((sender) => sender.track)
+      .filter((track): track is MediaStreamTrack => track !== null && track.kind === 'audio');
+    if (tracks.length === 0) return null;
+    // A track fica `enabled = !muted` — era exatamente aqui que a versão
+    // herdada do hook invertia o valor (`enabled = muted`), deixando o botão
+    // mudo com o microfone aberto.
+    tracks.forEach((track) => { track.enabled = !muted; });
+    // Estado lido de volta das tracks, não o que foi pedido.
+    return tracks.every((track) => !track.enabled);
   }
 
   sendDTMF(session: Session, digit: string): boolean {
+    if (session.state !== 'Established') {
+      this.logger?.warn(`DTMF ignorado: sessão em "${session.state}" (só vale estabelecida).`);
+      return false;
+    }
     const sdh = handlerOf(session);
     if (!sdh?.peerConnection) return false;
     const sender = sdh.peerConnection.getSenders().find((candidate) => candidate.track?.kind === 'audio');

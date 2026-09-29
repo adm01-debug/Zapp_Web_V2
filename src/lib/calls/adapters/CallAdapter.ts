@@ -20,6 +20,7 @@ export type AdapterDirection = 'inbound' | 'outbound';
 /** Log mínimo aceito pelo adapter, para ele não depender de `@/lib/logger`. */
 export interface AdapterLogger {
   error(message: string, ...rest: unknown[]): void;
+  warn(message: string, ...rest: unknown[]): void;
 }
 
 export interface CallAdapter {
@@ -61,14 +62,17 @@ export interface CallAdapter {
   attachRemoteAudio(session: Session): HTMLAudioElement | null;
 
   /**
-   * Aplica o mute nas tracks de áudio de saída. Devolve se havia mídia.
-   * A semântica do valor **ainda é a herdada** do `useSipClient` original; o
-   * T18 corrige (a track deve ficar `enabled !== muted`) e passa a devolver o
-   * estado lido das tracks.
+   * Aplica o mute nas tracks de áudio de saída e devolve o **estado lido de
+   * volta** das tracks (`true` = mudo), que é o que a UI deve mostrar. `null`
+   * quando não há mídia — aí o chamador decide pelo estado pretendido.
    */
-  setMutedOnTracks(session: Session, value: boolean): boolean;
+  setMuted(session: Session, muted: boolean): boolean | null;
 
-  /** Envia um dígito DTMF. `false` quando não há sender de áudio. */
+  /**
+   * Envia um dígito DTMF. Só vale com a sessão estabelecida: fora disso é
+   * no-op com `warn` (teclado apertado durante o toque não pode virar dígito
+   * fantasma depois). Devolve `false` quando não há sender de áudio.
+   */
   sendDTMF(session: Session, digit: string): boolean;
 
   /** Descarta o elemento de áudio remoto (unmount). */
