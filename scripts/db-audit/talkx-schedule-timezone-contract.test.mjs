@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const [migration, sender, editor, delivery, scheduled, windowShared, scheduler] = await Promise.all([
+const [migration, sender, editor, delivery, scheduled, windowShared, scheduler, resumePolicy] = await Promise.all([
   readFile(new URL('../../supabase/migrations/20260911200000_persist_talkx_schedule_timezone.sql', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/talkx-send/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../src/components/talkx/useCampaignEditor.ts', import.meta.url), 'utf8'),
@@ -10,6 +10,7 @@ const [migration, sender, editor, delivery, scheduled, windowShared, scheduler] 
   readFile(new URL('../../src/components/talkx/TalkXCampaignScheduled.tsx', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/_shared/talkx-window.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/talkx-scheduler/index.ts', import.meta.url), 'utf8'),
+  readFile(new URL('../../supabase/functions/_shared/talkx-resume-policy.ts', import.meta.url), 'utf8'),
 ]);
 
 test('Talk X persists an IANA timezone and rejects unsafe scheduling configuration', () => {
@@ -62,7 +63,17 @@ test('Talk X scheduler resume reuses deliveryWindowStatus (fails closed, respect
   assert.match(windowShared, /Number\.isInteger\(start\)/);
 
   assert.doesNotMatch(scheduler, /nowBR|hmBR|isWithinSendWindow/);
-  assert.match(scheduler, /import \{ deliveryWindowStatus \} from "\.\.\/_shared\/talkx-window\.ts"/);
+  // V03: a decisão de retomada saiu do scheduler para a política compartilhada
+  // (_shared/talkx-resume-policy.ts), que o talkx-send também usa para gravar o
+  // MOTIVO da pausa automática. A guarda cobra a CADEIA inteira — scheduler ->
+  // política -> deliveryWindowStatus — em vez do import direto, que deixou de
+  // existir. O que ela protege é o mesmo: a janela não pode ser reimplementada
+  // em elo nenhum (a política decide por deliveryWindowStatus, não por conta
+  // própria, e nenhum dos dois elos calcula hora local à mão).
+  assert.match(scheduler, /import \{ AUTO_RESUME_REASONS, selectResumableCampaigns \} from "\.\.\/_shared\/talkx-resume-policy\.ts"/);
   assert.match(scheduler, /schedule_timezone, send_window_start/);
-  assert.match(scheduler, /deliveryWindowStatus\(c\)\.allowed/);
+  assert.match(scheduler, /selectResumableCampaigns\(/);
+  assert.match(resumePolicy, /import \{ deliveryWindowStatus, type ScheduleGuardCampaign \} from "\.\/talkx-window\.ts"/);
+  assert.match(resumePolicy, /deliveryWindowStatus\(campaign, now\)\.allowed/);
+  assert.doesNotMatch(resumePolicy, /nowBR|hmBR|isWithinSendWindow|Intl\.DateTimeFormat/);
 });

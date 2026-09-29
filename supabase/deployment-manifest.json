@@ -11,7 +11,7 @@
   },
   "summary": {
     "function_count": 67,
-    "source_file_count": 94,
+    "source_file_count": 95,
     "verify_jwt_true": 57,
     "verify_jwt_false": 10
   },
@@ -140,6 +140,11 @@
       "path": "supabase/functions/_shared/talkx-reply.ts",
       "bytes": 2944,
       "sha256": "18e0dace02393de70bdff68c2e383dbaed1e73dad24c50983e80a99b1aef81d2"
+    },
+    {
+      "path": "supabase/functions/_shared/talkx-resume-policy.ts",
+      "bytes": 4226,
+      "sha256": "6e963a842df9ee0b24a8ce3b34ea212b6e7b06a848a381c5e5002a5e73f42b16"
     },
     {
       "path": "supabase/functions/_shared/talkx-window.ts",
@@ -448,13 +453,13 @@
     },
     {
       "path": "supabase/functions/talkx-scheduler/index.ts",
-      "bytes": 5996,
-      "sha256": "be0174fadc1f748f78aa78b6686667c4fbab7f3d15deabd3ba64cb7515c5752c"
+      "bytes": 8626,
+      "sha256": "7c70875e84ff86b2b84ab8cca2824fc9b8b6effec1d04929db6fa106515dc449"
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
-      "bytes": 41312,
-      "sha256": "3c2e0f8a14d94d7ccd24e9a205a93b73d9a5498cf862efdf201b9ae92b8e11ee"
+      "bytes": 42043,
+      "sha256": "0afb884226803bfa5adc72fda98eb5bf1fdc5741ba4b45bd8917a7273c5a895b"
     },
     {
       "path": "supabase/functions/voice-agent/index.ts",
@@ -1237,9 +1242,10 @@
       "name": "talkx-scheduler",
       "entrypoint": "supabase/functions/talkx-scheduler/index.ts",
       "verify_jwt": true,
-      "source_sha256": "9f6c48e790297439f72587a5fc720e571fda8352f58b940a62d59acb7423fff1",
+      "source_sha256": "d4b959366e6b4f50987eaa1ff5d3ca64da671f4d39792175c1d791514be227da",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/talkx-resume-policy.ts",
         "supabase/functions/_shared/talkx-window.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/talkx-scheduler/index.ts"
@@ -1249,13 +1255,14 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ee5dca96907fd6a5df34b204bbdeb089a1551a68708f8bd0654695d1d9a3d03c",
+      "source_sha256": "7a211fba2ac15aa181b094b11636ba8e1628c12169142c54c8a415f1461a876d",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/talkx-delivery-connection.ts",
+        "supabase/functions/_shared/talkx-resume-policy.ts",
         "supabase/functions/_shared/talkx-window.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/talkx-send/index.ts"
@@ -1332,5 +1339,5 @@
       ]
     }
   ],
-  "manifest_sha256": "252c6f83ddbc6f20c4fc3adc4cf2a6db489cf5c6f1e48df664557347aa1f0c2e"
+  "manifest_sha256": "4a2886ba8bc79b60f17ea478ae33f521e735315291b66684f333908272b30e73"
 }
