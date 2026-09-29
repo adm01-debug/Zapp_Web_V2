@@ -15,7 +15,14 @@ set -euo pipefail
 # database system is shutting down", ...), so match the whole class by its
 # common "connection to server on socket ... failed:" prefix instead of one
 # exact suffix — confirmed both suffixes on the same branch within minutes.
-BOOTSTRAP_FAILURE_PATTERN='FAIL: PostgreSQL de teste não iniciou|connection to server on socket .* failed:'
+BOOTSTRAP_FAILURE_PATTERN='FAIL: PostgreSQL de teste não iniciou|connection to server on socket .* failed:|Error response from daemon: toomanyrequests'
+# Terceira assinatura de bootstrap (29/09/2026): o registro público do ECR da AWS
+# (public.ecr.aws, de onde vem postgrest:v14.5) limita pull anônimo por IP e devolve
+# "Error response from daemon: toomanyrequests: Data limit exceeded". Em runner do
+# GitHub isso derruba o passo por motivo alheio ao diff -- medido: 7 de 40 runs
+# recentes do job obrigatório "Contrato DB offline" falharam, 7/7 com essa
+# assinatura. Repetir o bootstrap ajuda quando o limite é momentâneo; o teste que
+# puxa imagem também faz pré-pull com espera (talkx-transition-overload-postgrest).
 if [[ "$#" -eq 0 ]]; then
   printf 'usage: %s <test command> [args...]\n' "${0##*/}" >&2
   exit 64
