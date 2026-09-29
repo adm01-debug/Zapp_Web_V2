@@ -168,8 +168,8 @@
     },
     {
       "path": "supabase/functions/_shared/webhook-signature.ts",
-      "bytes": 3218,
-      "sha256": "68393bed507c22d126eb8689d304c91f8f5342f989a8a7127977c00daa68f39c"
+      "bytes": 3450,
+      "sha256": "422287aa88bb95acb42cbd7e80bc6b014bdd754e30244a289b4fbfa9a5a87350"
     },
     {
       "path": "supabase/functions/ai-auto-tag/index.ts",
@@ -258,8 +258,8 @@
     },
     {
       "path": "supabase/functions/classify-sticker/index.ts",
-      "bytes": 2827,
-      "sha256": "f014fdad3adeba2e2c9bed866dcb41c865e31235f2771d20d6f0aee89fd5be69"
+      "bytes": 3076,
+      "sha256": "4f9c5a6be245c5cecdcdc2cdd2c6c477208f5b3da10cdcb6cb9a2f9a0f933e94"
     },
     {
       "path": "supabase/functions/cleanup-rate-limit-logs/index.ts",
@@ -740,7 +740,7 @@
       "name": "classify-sticker",
       "entrypoint": "supabase/functions/classify-sticker/index.ts",
       "verify_jwt": true,
-      "source_sha256": "47ec141084b8e38a02f6efa746ef317c460440dfdbda7b6b66625bdfd31738d8",
+      "source_sha256": "941e9cae42fad720eb39fe5b0550a39e86583a7f66dda0b2913d2cbe41baf3ba",
       "source_files": [
         "supabase/functions/_shared/ai-auth.ts",
         "supabase/functions/_shared/ai-guards.ts",
@@ -920,7 +920,7 @@
       "name": "elevenlabs-webhook",
       "entrypoint": "supabase/functions/elevenlabs-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "a22e07caa1a8bce8a46c70ed7ab1375d6269e9a8778171b4a17919f1179a1ccb",
+      "source_sha256": "cd4f60008141111be10e6142808dd2afc6b47249a7cb677b9d919e07f9d3781c",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1365,5 +1365,5 @@
       ]
     }
   ],
-  "manifest_sha256": "96af85064b9fe4520a634036eee66f698ed0e7bdcd5765dd5c14e36b3461598a"
+  "manifest_sha256": "989a3a6bfa8d90d314afa34182afd55fed6ab35373fc3dfd462e9871de45ae36"
 }

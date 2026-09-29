@@ -99,6 +99,9 @@ jobs:
           supabase/functions/_shared/__tests__/webhook-signature.test.ts
           supabase/functions/_shared/__tests__/ai-auth.test.ts
           supabase/functions/_shared/__tests__/ai-audio-authz.test.ts
+          supabase/functions/_shared/__tests__/ai-audio-authz-runtime.test.ts
+          supabase/functions/_shared/__tests__/ai-auth-service-path.test.ts
+          supabase/functions/_shared/__tests__/webhook-signature-ambiguity.test.ts
 
       - name: 🧪 Test CI and Edge deployment guards
         run: >-
