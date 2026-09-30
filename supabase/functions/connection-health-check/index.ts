@@ -1,29 +1,27 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
-import { getCorsHeaders, handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
+import { errorResponse, jsonResponse, requireEnv } from "../_shared/validation.ts";
 import { escapeHtml } from '../_shared/notification-events.ts';
 import { EMAIL_FONT_STACK } from '../_shared/email-font-stack.ts';
 import { isAuthorizedCronOrUser, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
+import { bootEdge, type EdgeInjected } from '../_shared/edge-boot.ts';
 
 export async function handleConnectionHealthCheck(
   req: Request,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  _injected?: { supabase?: any; serviceKey?: string },
+  _injected?: EdgeInjected<any>,
 ): Promise<Response> {
-  const cors = handleCors(req);
+  // O `??` do boot e PREGUICOSO de proposito: os testes injetam o client e rodam sem
+  // SUPABASE_URL. A anotacao `as SupabaseClient` fica no generico do bootEdge — sem ela
+  // o receiver `any` faz o TS perder a inferencia dos callbacks do client no corpo.
+  const { cors, log, headers, supabase, serviceKey } = bootEdge<SupabaseClient>(req, {
+    fnName: 'connection-health-check',
+    injected: _injected,
+    makeClient: () => createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY')),
+  });
   if (cors) return cors;
 
-  const log = new Logger("connection-health-check");
-  const headers = { ...getCorsHeaders(req), "Content-Type": "application/json" };
-
   try {
-    // O `as SupabaseClient` e preciso: `_injected?.supabase` e `any` e, sem a anotacao,
-    // o receiver `any` faz o TS perder a inferencia dos callbacks do client (TS7006/TS7031
-    // no corpo que nao mudou). O `??` continua preguicoso de proposito: os testes injetam
-    // o client e rodam sem SUPABASE_URL.
-    const supabase = (_injected?.supabase
-      ?? createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'))) as SupabaseClient;
-    const serviceKey = _injected?.serviceKey ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
     // L5 da matriz IA-004: credencial de maquina do cron (x-cron-secret, segredo
     // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU JWT de usuario autenticado.

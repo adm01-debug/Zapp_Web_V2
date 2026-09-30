@@ -1,30 +1,27 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { evoFetch, extractAvatarUrl } from '../_shared/evolution-send.ts';
 import { avatarObjectPath } from '../_shared/evolution-helpers.ts';
-import { getCorsHeaders, handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+import { errorResponse, jsonResponse, requireEnv, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 import { isAuthorizedCronOrUser, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
+import { bootEdge, type EdgeInjected } from '../_shared/edge-boot.ts';
 
 export async function handleBatchFetchAvatars(
   req: Request,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  _injected?: { supabase?: any; serviceKey?: string },
+  _injected?: EdgeInjected<any>,
 ): Promise<Response> {
-  const cors = handleCors(req);
+  // O `??` do boot e PREGUICOSO de proposito: com `_injected.supabase` (testes) o
+  // requireEnv('SUPABASE_URL') nem roda. O generico de bootEdge e a anotacao
+  // `as SupabaseClient` — sem ela o receiver `any` faria o TS perder a inferencia dos
+  // callbacks das queries abaixo (TS7006 em contacts.map/connections.map/batch.map).
+  const { cors, log, headers, supabase, serviceKey } = bootEdge<SupabaseClient>(req, {
+    fnName: 'batch-fetch-avatars',
+    injected: _injected,
+    makeClient: () => createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY')),
+  });
   if (cors) return cors;
 
-  const log = new Logger("batch-fetch-avatars");
-  const headers = { ...getCorsHeaders(req), "Content-Type": "application/json" };
-
   try {
-    // O `??` preserva a criacao PREGUICOSA: com `_injected.supabase` (testes) o
-    // requireEnv('SUPABASE_URL') nem roda. O `as SupabaseClient` existe porque
-    // `_injected?.supabase` e `any` e, sozinho, alargaria o tipo de `supabase` para
-    // `any` — com receiver `any` o TS perde a inferencia dos callbacks das queries
-    // abaixo (TS7006 em contacts.map/connections.map/batch.map). E anotacao de tipo,
-    // nao muda runtime.
-    const supabase = (_injected?.supabase
-      ?? createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'))) as SupabaseClient;
-    const serviceKey = _injected?.serviceKey ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
     // L5 da matriz IA-004: credencial de maquina do cron (x-cron-secret, segredo
     // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU JWT de usuario autenticado.

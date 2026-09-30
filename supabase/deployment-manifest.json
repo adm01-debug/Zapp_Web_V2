@@ -11,7 +11,7 @@
   },
   "summary": {
     "function_count": 67,
-    "source_file_count": 105,
+    "source_file_count": 106,
     "verify_jwt_true": 55,
     "verify_jwt_false": 12
   },
@@ -80,6 +80,11 @@
       "path": "supabase/functions/_shared/cron-secret-auth.ts",
       "bytes": 3553,
       "sha256": "dd33ad23427bbea78803b40d0cf4523fffcca9140cf5b60d9778299bd3210053"
+    },
+    {
+      "path": "supabase/functions/_shared/edge-boot.ts",
+      "bytes": 1770,
+      "sha256": "4395c71344555f0a34f1aeee1aa260407de6af4c82eaf629073e1ddc1536d591"
     },
     {
       "path": "supabase/functions/_shared/email-font-stack.ts",
@@ -268,8 +273,8 @@
     },
     {
       "path": "supabase/functions/batch-fetch-avatars/index.ts",
-      "bytes": 7370,
-      "sha256": "8d0506993673d8b09d2f4d1bf7ec4d5dab7bab9bde0f4531ad69c2fe849eff64"
+      "bytes": 7120,
+      "sha256": "d1695f0698b4a2ce1a4c4402d959b00f1342dd64e0e04b10d4d7a8b0949821a0"
     },
     {
       "path": "supabase/functions/bitrix-api/index.ts",
@@ -303,8 +308,8 @@
     },
     {
       "path": "supabase/functions/connection-health-check/index.ts",
-      "bytes": 10132,
-      "sha256": "238c296d0a5c26f1ce728ed4c04144a77f4548d2e21d13fc9336a1ecab422fa9"
+      "bytes": 9937,
+      "sha256": "9f3bca264bd7759cf745eacb8bb59c68bd098ebbb76abcb2b6c12a39737fa0a6"
     },
     {
       "path": "supabase/functions/create-user/index.ts",
@@ -722,9 +727,10 @@
       "name": "batch-fetch-avatars",
       "entrypoint": "supabase/functions/batch-fetch-avatars/index.ts",
       "verify_jwt": false,
-      "source_sha256": "f0d1dee1d2cff83d7ad527612529ee03c241a1d24dd042c70ae91d32920a0d7d",
+      "source_sha256": "7b4c7b5f696485b6be4c496945f6e24900787a91ff4b8360135e4719cfba6178",
       "source_files": [
         "supabase/functions/_shared/cron-secret-auth.ts",
+        "supabase/functions/_shared/edge-boot.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-helpers.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -818,9 +824,10 @@
       "name": "connection-health-check",
       "entrypoint": "supabase/functions/connection-health-check/index.ts",
       "verify_jwt": false,
-      "source_sha256": "63c1ba37421a4741d94233a02e4b788e93764a4c927396ee5fc8b78ae3ce0ad6",
+      "source_sha256": "fc13cdc5b99b30afa03e306f61b202615d90dcdaf14ce5441ef4974e463546d7",
       "source_files": [
         "supabase/functions/_shared/cron-secret-auth.ts",
+        "supabase/functions/_shared/edge-boot.ts",
         "supabase/functions/_shared/email-font-stack.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -1420,5 +1427,5 @@
       ]
     }
   ],
-  "manifest_sha256": "8962c98fbe3b57f6bb41fab0eac55934851f9b0fa53a119ee14c3c469b8d717a"
+  "manifest_sha256": "9adbcd073647e6e0b05310ebc67c29b5ebd8da8a06f75b235aa419e4a3bd6651"
 }
