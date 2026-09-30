@@ -26,6 +26,10 @@ vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
+// O hook avisa quando a gravação falha; aqui só interessa SE avisou.
+const toastMock = vi.hoisted(() => vi.fn());
+vi.mock('@/hooks/ui/use-toast', () => ({ toast: toastMock }));
+
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 
 const createWrapper = () => {
@@ -196,6 +200,27 @@ describe('useNotificationSettings', () => {
       const result = await carregar();
       await result.current.resetSettings();
       expect(upsert.mock.calls[0][0]).toMatchObject({ sound_volume: 70 });
+    });
+
+    it('o valor OTIMISTA também é clampado (não mostra 500 enquanto o banco guarda 100)', async () => {
+      comLinha(null);
+      const result = await carregar();
+
+      await result.current.updateSettings({ soundVolume: 5000 });
+
+      // antes do fix, a tela ficava com 5000 (o upsert clampava só no banco)
+      await waitFor(() => expect(result.current.settings.soundVolume).toBe(100));
+    });
+
+    it('avisa o usuário quando a gravação falha (em vez de o controle voltar calado)', async () => {
+      const upsert = vi.fn().mockResolvedValue({ error: new Error('falha de rede') });
+      mockFrom.mockReturnValue(montarCadeia(null, upsert));
+      const result = await carregar();
+
+      await result.current.updateSettings({ soundVolume: 35 });
+
+      expect(upsert).toHaveBeenCalled();
+      expect(toastMock).toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));
     });
   });
 

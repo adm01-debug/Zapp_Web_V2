@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { log } from '@/lib/logger';
+import { toast } from '@/hooks/ui/use-toast';
 
 export type SoundTypeOption = 'beep' | 'chime' | 'bell' | 'alert' | 'soft';
 
@@ -119,10 +120,16 @@ export const useNotificationSettings = () => {
   const updateSettings = useCallback(async (updates: Partial<NotificationSettings>) => {
     if (!user) return;
 
-    // Optimistic update
+    // Optimistic update — clampado igual ao upsert. Sem isto a tela mostra 500 enquanto o
+    // banco guarda 100, e o valor só se corrige no próximo refetch, sem explicação.
     queryClient.setQueryData(
       [NOTIFICATION_SETTINGS_QUERY_KEY, user.id],
-      (prev: NotificationSettings | undefined) => ({ ...(prev ?? DEFAULT_SETTINGS), ...updates }),
+      (prev: NotificationSettings | undefined) => {
+        const next = { ...(prev ?? DEFAULT_SETTINGS), ...updates };
+        return 'soundVolume' in updates
+          ? { ...next, soundVolume: clampSoundVolume(next.soundVolume) }
+          : next;
+      },
     );
 
     try {
@@ -157,6 +164,13 @@ export const useNotificationSettings = () => {
       }
     } catch (error) {
       log.warn('Failed to save notification settings:', error);
+      // A tela já mostrava o valor novo: sem avisar, o controle "pula de volta" sozinho e
+      // o usuário não entende por quê.
+      toast({
+        title: 'Não foi possível salvar',
+        description: 'A preferência voltou para o valor gravado. Tente novamente.',
+        variant: 'destructive',
+      });
       // Rollback optimistic update
       queryClient.invalidateQueries({ queryKey: [NOTIFICATION_SETTINGS_QUERY_KEY, user.id] });
     }
