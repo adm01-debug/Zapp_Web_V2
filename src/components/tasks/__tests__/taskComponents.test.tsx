@@ -22,6 +22,7 @@ import { makeTaskRow, resetSupabaseMock } from '@/test/mocks/tarefas';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { TasksListMode } from '@/components/tasks/list/TasksListMode';
 import { WorkItemCard } from '@/components/tasks/shared/WorkItemCard';
+import { PriorityChip } from '@/components/tasks/shared/PriorityChip';
 import { TasksBoardMode } from '@/components/tasks/board/TasksBoardMode';
 import { TasksFilterBar } from '@/components/tasks/shared/TasksFilterBar';
 import type { BucketsByDue } from '@/hooks/tasks/workItemAggregates';
@@ -324,6 +325,16 @@ describe('Tarefas — componentes dos três modos', () => {
     );
     // Antes: id desconhecido se passava por "Todos os contatos".
     expect(screen.getByLabelText('Contato').textContent).toBe('Contato indisponível');
+  });
+
+  it('F2 (auditoria): PriorityChip com prioridade nula/desconhecida cai no padrão e não imprime "undefined"', () => {
+    const { unmount } = render(<PriorityChip priority={null} />);
+    expect(screen.getByTitle('Prioridade: Media')).toBeTruthy();
+    unmount();
+
+    render(<PriorityChip priority={'turbo' as unknown as 'medium'} />);
+    expect(screen.getByTitle('Prioridade: Media')).toBeTruthy();
+    expect(screen.queryByTitle(/undefined/)).toBeNull();
   });
 
   it('etapa 52 (B8): "Fazendo" cheio aceita reorganizar por dentro e recusa o que vem de fora', () => {
