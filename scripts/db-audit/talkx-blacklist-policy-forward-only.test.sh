@@ -171,7 +171,7 @@ printf '[OK] Talk X blacklist V05: CHECK de origem (auto_optout) e unico parcial
 # a V05 fez em phone. A escrita idempotente do webhook passa pela RPC
 # talkx_suppress_contact (SECURITY DEFINER, service_role) — o PostgREST nao emite
 # ON CONFLICT com predicado, entao a RPC e a unica via atomica.
-v07_migration="$repo_root/supabase/migrations/20260930120000_talkx_blacklist_contact_active_unique.sql"
+v07_migration="$repo_root/supabase/migrations/20260930140000_talkx_blacklist_contact_active_unique.sql"
 [[ -f "$v07_migration" ]] || fail 'migration da V07 nao existe'
 
 # o fixture do harness e minimalista: cria o que a migration da V07 referencia

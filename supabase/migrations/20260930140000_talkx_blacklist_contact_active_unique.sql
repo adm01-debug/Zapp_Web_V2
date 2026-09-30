@@ -1,4 +1,4 @@
--- 20260930120000_talkx_blacklist_contact_active_unique
+-- 20260930140000_talkx_blacklist_contact_active_unique
 -- Etapa V07 do docs/talkx/PLANO_TALKX_V3_100_ETAPAS_2026-09-29.md (P2-1).
 --
 -- Hoje a unicidade de contact_id e TOTAL (talkx_blacklist_contact_id_key UNIQUE(contact_id)).
