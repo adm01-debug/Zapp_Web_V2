@@ -1,5 +1,13 @@
 import { test, expect } from '@playwright/test';
 import {
+  MEDIA_VOLUME_LABEL,
+  MEDIA_VOLUME_LABEL_MUTED,
+  MEDIA_VOLUME_SLIDER_LABEL,
+  SOUND_VOLUME_LABEL,
+  SOUND_VOLUME_LABEL_MUTED,
+} from '../src/lib/volumeLabels';
+import { MEDIA_VOLUME_STORAGE_KEYS } from '../src/lib/mediaVolumeStore';
+import {
   E2E_FIXTURE_CONTACT_DISPLAY_NAME,
   ensureFixtureConversationOpen,
   cleanupFixtureMessages,
@@ -21,9 +29,11 @@ import {
 //   inventado em produção). Essa parte é coberta por
 //   `src/components/inbox/__tests__/MediaVolume.test.tsx` (E07/E12/E44) e pelo
 //   teste do elemento em `src/lib/__tests__/mediaVolumeElement.test.ts`.
-const LABEL_VOLUME = 'Volume dos áudios e vídeos';
-const LABEL_MUDO = 'Áudios e vídeos mudos';
-const CHAVE_VOLUME = 'zapp.media.volume';
+const LABEL_VOLUME = MEDIA_VOLUME_LABEL;
+const LABEL_MUDO = MEDIA_VOLUME_LABEL_MUTED;
+const LABEL_SLIDER = MEDIA_VOLUME_SLIDER_LABEL;
+const LABEL_ALERTA = new RegExp(`${SOUND_VOLUME_LABEL}|${SOUND_VOLUME_LABEL_MUTED}`);
+const CHAVE_VOLUME = MEDIA_VOLUME_STORAGE_KEYS.volume;
 
 test.describe('Volume das mídias de conversa', () => {
   test.beforeEach(async ({ page }) => {
@@ -60,7 +70,7 @@ test.describe('Volume das mídias de conversa', () => {
     await page.waitForTimeout(500);
     await page.mouse.up();
 
-    const slider = page.getByRole('slider', { name: 'Volume das mídias' });
+    const slider = page.getByRole('slider', { name: LABEL_SLIDER });
     await expect(slider).toBeVisible();
 
     // Determinismo (o teste era flaky e só passava no retry):
@@ -99,7 +109,7 @@ test.describe('Volume das mídias de conversa', () => {
     await page.waitForTimeout(500);
     await page.mouse.up();
 
-    await expect(page.getByRole('slider', { name: 'Volume das mídias' })).toHaveAttribute(
+    await expect(page.getByRole('slider', { name: LABEL_SLIDER })).toHaveAttribute(
       'aria-valuenow',
       String(valorEsperado),
     );
@@ -108,7 +118,7 @@ test.describe('Volume das mídias de conversa', () => {
   test('mudo da mídia não silencia os alertas e persiste no reload', async ({ page, browserName }) => {
     test.skip(browserName !== 'chromium', 'spec roda no project chromium-authenticated');
 
-    const alerta = page.getByRole('button', { name: /Volume dos alertas|Sons de alerta mudos/ });
+    const alerta = page.getByRole('button', { name: LABEL_ALERTA });
     const rotuloAlertaAntes = await alerta.getAttribute('aria-label');
 
     await page.getByRole('button', { name: LABEL_VOLUME }).click();

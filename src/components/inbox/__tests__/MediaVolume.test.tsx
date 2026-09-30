@@ -33,7 +33,8 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
   }),
 }));
 
-import { MediaVolumeControl, MEDIA_VOLUME_LABEL, MEDIA_VOLUME_LABEL_MUTED } from '../MediaVolumeControl';
+import { MediaVolumeControl } from '../MediaVolumeControl';
+import { MEDIA_VOLUME_LABEL, MEDIA_VOLUME_LABEL_MUTED } from '@/lib/volumeLabels';
 import { AudioMessagePlayer } from '../AudioMessagePlayer';
 import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
 import { TooltipProvider } from '@/components/ui/tooltip';
