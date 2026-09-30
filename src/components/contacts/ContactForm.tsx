@@ -19,6 +19,8 @@ import type { GeoSearchPlace } from '@/lib/mapboxGeocode';
 const ADDRESS_LISTBOX_ID = 'contact-form-address-listbox';
 /** Só endereço/rua/cidade (E41) — POI não faz sentido para "onde entregar o brinde". */
 const ADDRESS_SEARCH_TYPES = 'address,street,place';
+/** Regra 3 (item 5): campos cuja edição MANUAL pode invalidar a coordenada já gravada. */
+const CAMPOS_DE_ENDERECO = ['address', 'address_number', 'neighborhood', 'city', 'state', 'postal_code'];
 
 export interface ContactFormValues {
   name: string;
@@ -105,9 +107,20 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
     return () => document.removeEventListener('pointerdown', onPointerDown);
   }, [addressListOpen]);
 
+  // Regra 3 da decisão 20260930-122408-sem-tarefa (opção a): o operador reescreveu o endereço à
+  // mão e a coordenada continua a MESMA → o pino pode estar no lugar velho. Aqui só sinalizamos;
+  // nunca apagamos nem reescrevemos a coordenada automaticamente.
+  const [coordenadaPossivelmenteVelha, setCoordenadaPossivelmenteVelha] = useState(false);
+  const marcarCoordenadaPossivelmenteVelha = (field: string) => {
+    if (!CAMPOS_DE_ENDERECO.includes(field)) return;
+    if (values.latitude || values.longitude) setCoordenadaPossivelmenteVelha(true);
+  };
+
   /** Preenche os campos a partir do `/retrieve` — o operador continua podendo editar tudo depois. */
   const fillFromPlace = (place: GeoSearchPlace) => {
     const c = place.components;
+    // Regra 2: a coordenada nova acompanha o endereço escolhido — o aviso de "coordenada velha" sai.
+    setCoordenadaPossivelmenteVelha(false);
     onChange('address', c?.street || place.name || values.address || '');
     if (c?.addressNumber) onChange('address_number', c.addressNumber);
     if (c?.neighborhood) onChange('neighborhood', c.neighborhood);
@@ -275,7 +288,7 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
               <Label htmlFor="postal_code">CEP</Label>
               <Input id="postal_code" placeholder="00000-000" inputMode="numeric"
                 value={formatCep(values.postal_code || '')}
-                onChange={(e) => onChange('postal_code', e.target.value.replace(/\D/g, '').slice(0, 8))}
+                onChange={(e) => { marcarCoordenadaPossivelmenteVelha('postal_code'); onChange('postal_code', e.target.value.replace(/\D/g, '').slice(0, 8)); }}
                 maxLength={9} />
             </div>
             <div className="col-span-2 space-y-1.5">
@@ -294,6 +307,7 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
                   }
                   placeholder="Rua, avenida..." value={values.address || ''}
                   onChange={(e) => {
+                    marcarCoordenadaPossivelmenteVelha('address');
                     onChange('address', e.target.value);
                     addressAutocomplete.setQuery(e.target.value);
                     setAddressListOpen(true);
@@ -335,12 +349,12 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
             <div className="space-y-1.5">
               <Label htmlFor="address_number">Número</Label>
               <Input id="address_number" placeholder="123 ou S/N" value={values.address_number || ''}
-                onChange={(e) => onChange('address_number', e.target.value)} maxLength={20} />
+                onChange={(e) => { marcarCoordenadaPossivelmenteVelha('address_number'); onChange('address_number', e.target.value); }} maxLength={20} />
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label htmlFor="neighborhood">Bairro</Label>
               <Input id="neighborhood" placeholder="Bairro" value={values.neighborhood || ''}
-                onChange={(e) => onChange('neighborhood', e.target.value)} maxLength={100} />
+                onChange={(e) => { marcarCoordenadaPossivelmenteVelha('neighborhood'); onChange('neighborhood', e.target.value); }} maxLength={100} />
             </div>
           </div>
 
@@ -348,15 +362,22 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
             <div className="col-span-2 space-y-1.5">
               <Label htmlFor="city">Cidade</Label>
               <Input id="city" placeholder="Cidade" value={values.city || ''}
-                onChange={(e) => onChange('city', e.target.value)} maxLength={100} />
+                onChange={(e) => { marcarCoordenadaPossivelmenteVelha('city'); onChange('city', e.target.value); }} maxLength={100} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="state">UF</Label>
               <Input id="state" placeholder="SP" value={values.state || ''}
-                onChange={(e) => onChange('state', e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2))}
+                onChange={(e) => { marcarCoordenadaPossivelmenteVelha('state'); onChange('state', e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2)); }}
                 maxLength={2} />
             </div>
           </div>
+
+          {coordenadaPossivelmenteVelha && (
+            <p role="status" className="text-xs text-amber-600 dark:text-amber-500 flex items-center gap-1.5">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              O endereço foi alterado, mas a localização (coordenada) continua a anterior — ela pode estar desatualizada.
+            </p>
+          )}
         </div>
 
         <p className="text-xs text-muted-foreground flex items-center gap-1"><span className="text-destructive">*</span> Campos obrigatórios</p>

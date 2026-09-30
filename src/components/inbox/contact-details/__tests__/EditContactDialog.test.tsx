@@ -298,6 +298,32 @@ describe('EditContactDialog', () => {
     });
   });
 
+  // ========== ITEM 5 (decisão 20260930-122408-sem-tarefa, opção a) ==========
+  it('com a coordenada carregada, salvar sem tocar no endereço NÃO envia latitude/longitude (regra 1)', async () => {
+    renderDialog({
+      contact: { ...baseContact, address: 'Av. Paulista', latitude: -23.5613, longitude: -46.6565 },
+    });
+    fireEvent.change(screen.getByDisplayValue('John Doe'), { target: { value: 'Jonas' } });
+    fireEvent.click(screen.getByText('Salvar'));
+
+    await waitFor(() => {
+      const updatePayload = mockUpdate.mock.calls[0][0];
+      expect(updatePayload).toEqual({ name: 'Jonas' });
+    });
+  });
+
+  it('item 5: reescrever o endereço à mão com coordenada carregada sinaliza coordenada possivelmente velha (regra 3)', () => {
+    renderDialog({
+      contact: { ...baseContact, address: 'Av. Paulista', latitude: -23.5613, longitude: -46.6565 },
+    });
+    const aviso = /localização \(coordenada\) continua a anterior/i;
+    expect(screen.queryByText(aviso)).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Logradouro'), { target: { value: 'Rua Nova' } });
+
+    expect(screen.getByText(aviso)).toBeInTheDocument();
+  });
+
   it('não chama o supabase quando Salvar é clicado sem nenhuma edição', async () => {
     const { onOpenChange } = renderDialog();
     fireEvent.click(screen.getByText('Salvar'));
