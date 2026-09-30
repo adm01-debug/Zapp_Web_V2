@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildTimeline, type TimelineRawRows } from '@/hooks/chat/useConversationHistoryTimeline';
+import { localDayKey } from '@/lib/localDay';
 
 function emptyRows(overrides: Partial<TimelineRawRows> = {}): TimelineRawRows {
   return { messages: [], events: [], notes: [], tasks: [], deals: [], activities: [], ...overrides };
@@ -44,6 +45,28 @@ describe('buildTimeline', () => {
     });
     const { days } = buildTimeline(rows);
     expect(days.map((d) => d.date).sort()).toEqual(['2026-09-07', '2026-09-08']);
+  });
+
+  it('agrupa pelo dia LOCAL: 22:30 no fuso do navegador nao cai no dia seguinte', () => {
+    // Em UTC-3, 22:30 local ja e 01:30Z do dia seguinte — a fatia UTC do ISO daria o dia errado.
+    const at = new Date(2026, 8, 30, 22, 30);
+    const rows = emptyRows({
+      notes: [{ id: 'n1', content: 'nota da noite', created_at: at.toISOString() }],
+    });
+    const { days } = buildTimeline(rows);
+
+    expect(days).toHaveLength(1);
+    expect(days[0].date).toBe(localDayKey(at));
+    expect(days[0].events[0].id).toBe('note-n1');
+  });
+
+  it('o evento das 23:59 locais fica no dia local, junto do proprio cabecalho', () => {
+    const at = new Date(2026, 8, 30, 23, 59, 30);
+    const { days } = buildTimeline(emptyRows({
+      messages: [{ id: 'm1', sender: 'contact', content: 'ultima do dia', media_url: null, media_filename: null, media_size: null, created_at: at.toISOString() }],
+    }));
+    expect(days).toHaveLength(1);
+    expect(days[0].date).toBe('2026-09-30');
   });
 
   it('filtra por tipo — "notes" só retorna eventos de nota', () => {

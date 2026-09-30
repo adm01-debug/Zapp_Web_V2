@@ -7,6 +7,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { calendarDayKey, parseDayKey } from '@/lib/localDay';
 import { useContactNotes, type ContactNote, type ContactNoteCategory } from '@/hooks/crm/useContactNotes';
 import { useMyWorkItems } from '@/hooks/tasks/useMyWorkItems';
 import { useContactSummaryNote } from '@/hooks/crm/useContactSummaryNote';
@@ -137,6 +138,16 @@ function ObjectionItem({ note, onDelete, canDelete }: { note: ContactNote; onDel
   );
 }
 
+/**
+ * Data da pendência como o usuário escolheu. O campo é `type="date"`, então o valor gravado é
+ * uma data-sem-hora (meia-noite UTC): formatar o instante direto mostraria o dia anterior em
+ * UTC-3. Data com hora continua sendo exibida no fuso local.
+ */
+function noteDueLabel(dueDate: string): string {
+  const date = parseDayKey(calendarDayKey(dueDate));
+  return date ? format(date, 'dd/MM/yyyy', { locale: ptBR }) : '';
+}
+
 function PromiseItem({ note, onToggle, onDelete, canDelete }: { note: ContactNote; onToggle: (note: ContactNote) => void; onDelete: (id: string) => void; canDelete: boolean }) {
   return (
     <div className="flex items-start gap-2">
@@ -145,7 +156,7 @@ function PromiseItem({ note, onToggle, onDelete, canDelete }: { note: ContactNot
         <p className={cn('text-sm text-foreground', note.is_done && 'line-through text-muted-foreground')}>{note.content}</p>
         <div className="flex items-center justify-between mt-1">
           {note.due_date ? (
-            <p className="text-xs text-muted-foreground">{format(new Date(note.due_date), 'dd/MM/yyyy', { locale: ptBR })}</p>
+            <p className="text-xs text-muted-foreground">{noteDueLabel(note.due_date)}</p>
           ) : <span />}
           {canDelete && (
             <button type="button" onClick={() => onDelete(note.id)} className="opacity-0 group-hover:opacity-100 text-destructive shrink-0">

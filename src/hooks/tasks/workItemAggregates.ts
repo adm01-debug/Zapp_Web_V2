@@ -2,6 +2,7 @@ import { isBefore, startOfDay, addDays, formatDistanceToNowStrict } from 'date-f
 import { ptBR } from 'date-fns/locale';
 import type { WorkItem, WorkItemStatus } from './workItem.types';
 import type { TasksFilters } from './workItemFilters';
+import { localDayKey } from '@/lib/localDay';
 
 /** Peso de prioridade (menor = primeiro) — usado na ordenacao por prazo (etapa 49) e por coluna. */
 const PRIORITY_WEIGHT: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
@@ -201,22 +202,6 @@ export function dueLabel(
   const dayName  = due.toLocaleDateString('pt-BR', { weekday: 'short' });
   const dayMonth = due.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
   return { label: dayName.replace('.', '') + ' ' + dayMonth, overdue: false };
-}
-
-/**
- * Chave de dia no fuso LOCAL (`AAAA-MM-DD`) — o MESMO dia que a Lista
- * (`bucketByDue`), o Quadro e os cabecalhos da Agenda ja usam (`setHours(0,0,0,0)`
- * + `format`). Fatiar o ISO em UTC (`toISOString().slice(0, 10)`) jogava a tarefa
- * das 23:59 locais no dia seguinte da Agenda. Devolve `null` para valor ausente ou
- * invalido, em vez de estourar dentro do filtro.
- */
-function localDayKey(value: string | Date | null): string | null {
-  if (!value) return null;
-  const d = typeof value === 'string' ? new Date(value) : value;
-  if (Number.isNaN(d.getTime())) return null;
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day   = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${month}-${day}`;
 }
 
 export function weekBuckets(
