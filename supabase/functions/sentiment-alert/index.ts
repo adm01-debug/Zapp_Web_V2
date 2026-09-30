@@ -177,7 +177,7 @@ export async function handleSentimentAlertRequest(req: Request): Promise<Respons
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'Alertas <onboarding@resend.dev>',
+            from: 'ZAPP Alertas <alertas@promobrindes.com.br>',
             to: [agentProfile.email],
             subject: `⚠️ Alerta: Sentimento negativo - ${singleLineLabel(contactName)}`,
             html: `<div style="font-family:${EMAIL_FONT_STACK};max-width:600px;margin:0 auto">
