@@ -264,6 +264,30 @@ export function useTalkX() {
     },
   });
 
+  const updateCampaignLimits = useMutation({
+    mutationFn: async ({
+      id,
+      expectedRevision,
+      limits,
+    }: {
+      id: string;
+      expectedRevision: number | null;
+      limits: Record<string, unknown>;
+    }) => {
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const { data, error } = await rpc('update_talkx_campaign_limits', {
+        p_campaign_id: id,
+        p_expected_revision: expectedRevision,
+        p_limits: limits,
+      });
+      if (error) throw new Error(error.message);
+      return data as { campaign_id: string; revision: number };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
+    },
+  });
+
   const deleteCampaign = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('talkx_campaigns').delete().eq('id', id);
@@ -371,6 +395,7 @@ export function useTalkX() {
     setSelectedCampaignId,
     createCampaign,
     updateCampaign,
+    updateCampaignLimits,
     saveDraftCampaign,
     deleteCampaign,
     addRecipients,
