@@ -94,7 +94,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 ## CP-C Sheet       [ ] WorkItemSheet= · ?task= · Aguardando por DnD/kebab/menu= · kebab 5 grupos= · RemindChip popover= · ContactChip=
 ## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
-## CP-E Telas       [~] etapas 47 (B7), 48 (B4), 49, 50 e 51 (B5) fechadas 29-30/09/2026 (executor: Hermes) · KPIs 88px= · filtros 3 modos= · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem= · Agenda grupos= · 0 requests na troca= · modo por rota: ok
+## CP-E Telas       [~] etapas 47 (B7), 48 (B4), 49, 50, 51 (B5) e 52 (B8) fechadas 29-30/09/2026 (executor: Hermes) · KPIs 88px= · filtros 3 modos= · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · Agenda grupos= · 0 requests na troca= · modo por rota: ok
 
 ## Etapa 47 (B7) — modo por rota (Fase E) — evidências
 
@@ -213,6 +213,24 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 **Teste de mutação (3 mutações, árvore restaurada entre cada):** M1 sem o corte dos 7 dias → 2 vermelhos (agregado + coluna); M2 sem a ordem `completed_at desc` → 2 vermelhos; M3 rodapé que não revela → 1 vermelho.
 
 **Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · guard-rail de tipografia ✓ · `build` ✓ · bundle 492,3/550 KB gzip e 4019,1/4100 KB ✓ · `db:guard` ✓ · suíte 4327 passed / 0 failed (318 arquivos) ✓
+
+## Etapa 52 (B8) — coluna "Fazendo" cheia: drop de fora bloqueado, reorder por dentro liberado — evidências
+
+**Regra do plano:** `isDropDisabled = hardFull && dragSourceStatus !== 'doing'`, com a origem guardada no `onDragStart` do `DragDropContext`; o cabeçalho da coluna cheia ganha `ring-1 ring-destructive/40`. DoD: reordenar dentro de "Fazendo" cheio funciona; a 4ª vinda de fora não solta.
+
+**Mudanças (3 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/components/tasks/board/TasksBoardMode.tsx` | estado `dragSourceStatus` alimentado pelo `onDragStart` (origem do arrasto) e limpo no `onDragEnd`; repassado às colunas |
+| `src/components/tasks/board/BoardColumn.tsx` | prop `dragSourceStatus`; `isDropDisabled = hardFull && dragSourceStatus !== status` (antes: `hardFull` puro, que travava até a reorganização interna); anel `ring-1 ring-destructive/40` no cabeçalho cheio |
+| `src/components/tasks/__tests__/taskComponents.test.tsx` | mock do dnd passa a registrar o `onDragStart` e o `isDropDisabled` de cada coluna; 2 casos novos |
+
+**Por que a regra exata do plano:** `doing` é a única coluna com limite rígido (`WIP_LIMITS.doing.hard = 3`). Sem guardar a origem, com 3/3 o arrasto interno também era recusado — o usuário não conseguia nem reordenar o que já estava lá. Agora: origem `doing` → aceita; origem de outra coluna → recusa (o card volta e o cabeçalho mostra o anel).
+
+**Teste de mutação (3, árvore restaurada entre cada):** M1 `isDropDisabled = hardFull` (trava também o interno) → vermelho no caso do reorder interno; M2 `isDropDisabled = false` (nunca bloqueia) → vermelho no caso da origem externa; M3 sem a classe do anel → vermelho no caso do cabeçalho.
+
+**Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · guard-rail de tipografia ✓ · `build` ✓ · bundle 4018,9/4100 KB ✓ · `db:guard` ✓ · suíte 4330 passed / 0 failed (318 arquivos) ✓
 
 ## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
 ## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=
