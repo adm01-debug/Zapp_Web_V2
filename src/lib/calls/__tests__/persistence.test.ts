@@ -175,11 +175,14 @@ describe('novoCallId/uuidV4 — o id é SEMPRE um uuid válido', () => {
     }
   });
 
-  it('sem `crypto` nenhum (ambiente cru) ainda é uuid v4', () => {
+  it('sem `crypto` nenhum (ambiente cru) ainda é uuid v4 — e único', () => {
     const original = globalThis.crypto;
     vi.stubGlobal('crypto', undefined);
     try {
-      expect(novoCallId(null)).toMatch(UUID_V4);
+      const ids = [novoCallId(null), novoCallId(null), novoCallId(null)];
+      for (const id of ids) expect(id).toMatch(UUID_V4);
+      // O fallback não é aleatório: a unicidade vem do relógio + contador.
+      expect(new Set(ids).size).toBe(3);
     } finally {
       vi.stubGlobal('crypto', original);
     }
