@@ -76,20 +76,16 @@ function buckets(over: Partial<BucketsByDue> = {}): BucketsByDue {
 
 const refMounted = { current: true };
 
-describe('Tarefas — componentes dos três modos', () => {
-  beforeEach(() => {
-    resetSupabaseMock();
-    dnd.onDragEnd = undefined;
-  });
-
-  it('B9: a Lista rotula as seções com acento (Amanhã, Próximas, Concluídas)', () => {
-    render(
+/**
+ * A Lista usa `Tooltip` no cabeçalho de "Próximas" (etapa 49); a app fornece o
+ * `TooltipProvider` em `AppProviders.tsx`, então o harness faz o mesmo — padrão
+ * já usado no caso do Quadro (etapa 15).
+ */
+function renderLista(byDue: BucketsByDue) {
+  return render(
+    <TooltipProvider>
       <TasksListMode
-        byDue={buckets({
-          tomorrow: [item({ id: 'a', title: 'Amanha tem' })],
-          upcoming: [item({ id: 'b', title: 'Depois tem' })],
-          done7d: [item({ id: 'c', title: 'Ja foi', status: 'done' })],
-        })}
+        byDue={byDue}
         isLoading={false}
         searchQuery=""
         onOpen={vi.fn()}
@@ -99,7 +95,22 @@ describe('Tarefas — componentes dos três modos', () => {
         onClearFilter={vi.fn()}
         hasMounted={refMounted}
       />
-    );
+    </TooltipProvider>
+  );
+}
+
+describe('Tarefas — componentes dos três modos', () => {
+  beforeEach(() => {
+    resetSupabaseMock();
+    dnd.onDragEnd = undefined;
+  });
+
+  it('B9: a Lista rotula as seções com acento (Amanhã, Próximas, Concluídas)', () => {
+    renderLista(buckets({
+      tomorrow: [item({ id: 'a', title: 'Amanha tem' })],
+      upcoming: [item({ id: 'b', title: 'Depois tem' })],
+      done7d: [item({ id: 'c', title: 'Ja foi', status: 'done' })],
+    }));
 
     // A `Section` só renderiza com itens, por isso cada bucket tem um item acima.
     expect(screen.getByText('Amanhã')).toBeTruthy();
@@ -159,22 +170,10 @@ describe('Tarefas — componentes dos três modos', () => {
 
   it('etapa 48 (B4): "Concluídas (7 dias)" recolhida e "ver mais (30 dias)" revela as antigas', () => {
     cleanup();
-    render(
-      <TasksListMode
-        byDue={buckets({
-          done7d: [item({ id: 'c', title: 'Feita ontem', status: 'done' })],
-          doneOlder: [item({ id: 'd', title: 'Feita duas semanas atras', status: 'done' })],
-        })}
-        isLoading={false}
-        searchQuery=""
-        onOpen={vi.fn()}
-        onToggleDone={vi.fn()}
-        onMoveTo={vi.fn()}
-        onDelete={vi.fn()}
-        onClearFilter={vi.fn()}
-        hasMounted={refMounted}
-      />
-    );
+    renderLista(buckets({
+      done7d: [item({ id: 'c', title: 'Feita ontem', status: 'done' })],
+      doneOlder: [item({ id: 'd', title: 'Feita duas semanas atras', status: 'done' })],
+    }));
 
     // Nasce recolhida: nem a concluida da semana nem a antiga aparecem.
     expect(screen.getByText('Concluídas (7 dias)')).toBeTruthy();
@@ -193,5 +192,51 @@ describe('Tarefas — componentes dos três modos', () => {
 
     fireEvent.click(screen.getByText('ver menos'));
     expect(screen.queryByText('Feita duas semanas atras')).toBeNull();
+  });
+
+  it('etapa 49: "Próximas" agrupa por dia e joga o que passa de 7 dias em "Semana que vem"', () => {
+    cleanup();
+    const em2Dias  = new Date(Date.now() + 2  * 86_400_000).toISOString();
+    const em10Dias = new Date(Date.now() + 10 * 86_400_000).toISOString();
+    renderLista(buckets({
+      upcoming: [
+        item({ id: 'u1', title: 'Daqui a 2 dias',  due_date: em2Dias }),
+        item({ id: 'u2', title: 'Daqui a 10 dias', due_date: em10Dias }),
+      ],
+    }));
+
+    expect(screen.getByText('Daqui a 2 dias')).toBeTruthy();
+    expect(screen.getByText('Daqui a 10 dias')).toBeTruthy();
+    // subcabecalho do dia no formato "Seg 05/10" (maiusculo; o chip do card e minusculo)
+    expect(screen.getByText(/^[A-ZÀ-Ú].{2} \d{2}\/\d{2}$/)).toBeTruthy();
+    expect(screen.getByText('Semana que vem')).toBeTruthy();
+  });
+
+  it('etapa 49: "Sem prazo" abre com 10 itens e nasce recolhida com 11', () => {
+    cleanup();
+    renderLista(buckets({
+      noDue: Array.from({ length: 10 }, (_, i) => item({ id: `d${i}`, title: `Sem prazo ${i}` })),
+    }));
+    expect(screen.getByText('Sem prazo')).toBeTruthy();
+    expect(screen.getByText('Sem prazo 0')).toBeTruthy();
+
+    cleanup();
+    renderLista(buckets({
+      noDue: Array.from({ length: 11 }, (_, i) => item({ id: `m${i}`, title: `Sem prazo ${i}` })),
+    }));
+    expect(screen.getByText('11')).toBeTruthy();       // o contador segue visivel
+    expect(screen.queryByText('Sem prazo 0')).toBeNull();  // mas os itens nascem escondidos
+
+    fireEvent.click(screen.getByText('Sem prazo'));
+    expect(screen.getByText('Sem prazo 0')).toBeTruthy();
+  });
+
+  it('etapa 49: o cabeçalho de "Próximas" explica a ordenação no tooltip', () => {
+    cleanup();
+    renderLista(buckets({
+      upcoming: [item({ id: 'u1', title: 'Depois', due_date: new Date(Date.now() + 3 * 86_400_000).toISOString() })],
+    }));
+
+    expect(screen.getByLabelText('Ordenado por prazo, depois prioridade')).toBeTruthy();
   });
 });

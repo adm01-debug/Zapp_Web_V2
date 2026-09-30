@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets } from '../workItemAggregates';
+import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay } from '../workItemAggregates';
 import type { WorkItem } from '../workItem.types';
 
 const now = new Date('2026-10-03T12:00:00Z');
@@ -166,5 +166,37 @@ describe('weekBuckets', () => {
     const wb = weekBuckets(items, start);
     expect(wb[0].reminders).toHaveLength(1); // seg
     expect(wb[1].dueTasks).toHaveLength(1);  // ter
+  });
+});
+
+describe('etapa 49 — "Próximas" agrupada por dia', () => {
+  // `now` = sábado 03/10/2026 (12h: o mesmo dia em UTC ou em UTC-3).
+  it('rotula o dia: Hoje, Amanhã, o dia da semana (dentro de 7 dias) e "Semana que vem" (> 7 dias)', () => {
+    expect(dayGroupLabel('2026-10-03T12:00:00Z', now)).toBe('Hoje');
+    expect(dayGroupLabel('2026-10-04T12:00:00Z', now)).toBe('Amanhã');
+    expect(dayGroupLabel('2026-10-05T12:00:00Z', now)).toBe('Seg 05/10');
+    expect(dayGroupLabel('2026-10-10T12:00:00Z', now)).toBe('Sáb 10/10'); // hoje + 7
+    expect(dayGroupLabel('2026-10-11T12:00:00Z', now)).toBe('Semana que vem'); // hoje + 8
+  });
+
+  it('agrupa por dia na ordem prazo → prioridade', () => {
+    const grupos = groupUpcomingByDay([
+      makeItem({ id: 'z', due_date: '2026-10-12T09:00:00Z', priority: 'urgent' }),
+      makeItem({ id: 'b', due_date: '2026-10-05T15:00:00Z', priority: 'low' }),
+      makeItem({ id: 'a', due_date: '2026-10-05T09:00:00Z', priority: 'urgent' }),
+    ], now);
+
+    expect(grupos.map(g => g.label)).toEqual(['Seg 05/10', 'Semana que vem']);
+    expect(grupos[0].items.map(i => i.id)).toEqual(['a', 'b']); // mesmo dia: prazo mais cedo primeiro
+    expect(grupos[1].items.map(i => i.id)).toEqual(['z']);
+  });
+
+  it('desempata o mesmo horário por prioridade', () => {
+    const grupos = groupUpcomingByDay([
+      makeItem({ id: 'low', due_date: '2026-10-05T09:00:00Z', priority: 'low' }),
+      makeItem({ id: 'urg', due_date: '2026-10-05T09:00:00Z', priority: 'urgent' }),
+    ], now);
+
+    expect(grupos[0].items.map(i => i.id)).toEqual(['urg', 'low']);
   });
 });
