@@ -247,6 +247,11 @@ jobs:
           ENQUEUE_SCOPE_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/enqueue-connection-scope.test.sh
 
+      - name: Simular vinculo de time na reacao em mensagem (#1265)
+        env:
+          TEAM_REACTION_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-reaction-membership.test.sh
+
       - name: Simular drop do indice redundante de messages.external_id (perf)
         env:
           DROP_EXTID_INDEX_TEST_POSTGRES_IMAGE: postgres:17-alpine
