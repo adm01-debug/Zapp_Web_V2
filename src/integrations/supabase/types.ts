@@ -1753,6 +1753,42 @@ export type Database = {
           },
         ]
       }
+      contact_deletion_audit: {
+        Row: {
+          contact_id: string
+          deleted_at_from: string | null
+          deleted_at_to: string | null
+          id: number
+          operation: string
+          performed_at: string
+          performed_by: string | null
+          performed_by_db_role: string
+          performed_by_profile: string | null
+        }
+        Insert: {
+          contact_id: string
+          deleted_at_from?: string | null
+          deleted_at_to?: string | null
+          id?: never
+          operation: string
+          performed_at?: string
+          performed_by?: string | null
+          performed_by_db_role?: string
+          performed_by_profile?: string | null
+        }
+        Update: {
+          contact_id?: string
+          deleted_at_from?: string | null
+          deleted_at_to?: string | null
+          id?: never
+          operation?: string
+          performed_at?: string
+          performed_by?: string | null
+          performed_by_db_role?: string
+          performed_by_profile?: string | null
+        }
+        Relationships: []
+      }
       contact_identity_map: {
         Row: {
           first_seen: string
@@ -9199,8 +9235,13 @@ export type Database = {
           out_user_id: string
         }[]
       }
+      ai_is_canonical_churn_risk: {
+        Args: { p_value: string }
+        Returns: boolean
+      }
       ai_is_canonical_priority: { Args: { p_value: string }; Returns: boolean }
       ai_is_canonical_sentiment: { Args: { p_value: string }; Returns: boolean }
+      ai_is_canonical_urgency: { Args: { p_value: string }; Returns: boolean }
       ai_text_array: { Args: { p_value: Json }; Returns: string[] }
       calculate_level: { Args: { xp_amount: number }; Returns: number }
       can_delete_contacts: {
@@ -10438,8 +10479,8 @@ export type Database = {
       talk_me_list_queues: {
         Args: never
         Returns: {
-          oldest_waiting_at: string | null
-          queue_color: string | null
+          oldest_waiting_at: string
+          queue_color: string
           queue_id: string
           queue_name: string
           waiting_count: number
@@ -10454,22 +10495,22 @@ export type Database = {
           p_search?: string
         }
         Returns: {
-          avatar_url: string | null
-          company: string | null
+          avatar_url: string
+          company: string
           contact_id: string
           contact_name: string
-          job_title: string | null
+          job_title: string
           last_message_at: string
-          last_message_caption: string | null
+          last_message_caption: string
           last_message_content: string
           last_message_id: string
-          last_message_media_url: string | null
+          last_message_media_url: string
           last_message_type: string
           pending_message_count: number
-          queue_position: number
-          queue_color: string | null
+          queue_color: string
           queue_id: string
           queue_name: string
+          queue_position: number
           total_count: number
           waiting_since: string
         }[]
@@ -10547,6 +10588,17 @@ export type Database = {
           p_signature?: string
         }
         Returns: boolean
+      }
+      update_talkx_campaign_limits: {
+        Args: {
+          p_campaign_id: string
+          p_expected_revision: number
+          p_limits: Json
+        }
+        Returns: {
+          campaign_id: string
+          revision: number
+        }[]
       }
       update_talkx_template_with_snapshot: {
         Args: {
