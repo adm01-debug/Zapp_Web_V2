@@ -1,9 +1,24 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { ConversationTabs } from '../ConversationTabs';
 import type { ConversationTabCounts } from '@/hooks/chat/useConversationTabCounts';
 
 const ZERO: ConversationTabCounts = { tasksOpen: 0, notesTotal: 0, filesTotal: 0, remindersPending: 0 };
+
+/**
+ * Ordem contratada da barra "Seções da conversa":
+ * Chat → Arquivos → IA → CRM 360° → Pedidos → Histórico → Tarefas → Notas.
+ */
+const ORDEM_CONTRATADA = [
+  'conversation-tab-chat',
+  'conversation-tab-files',
+  'conversation-tab-ia',
+  'conversation-tab-crm',
+  'conversation-tab-orders',
+  'conversation-tab-history',
+  'conversation-tab-tasks',
+  'conversation-tab-notes',
+];
 
 function setup(counts: ConversationTabCounts = ZERO, activeTab = 'chat' as const) {
   const onTabChange = vi.fn();
@@ -12,11 +27,14 @@ function setup(counts: ConversationTabCounts = ZERO, activeTab = 'chat' as const
 }
 
 describe('ConversationTabs', () => {
-  it('renderiza as 8 abas do painel central', () => {
+  it('renderiza as 8 abas do painel central na ordem contratada', () => {
     setup();
-    ['chat', 'ia', 'crm', 'orders', 'tasks', 'notes', 'files', 'history'].forEach((id) => {
-      expect(screen.getByTestId(`conversation-tab-${id}`)).toBeInTheDocument();
-    });
+    const barra = screen.getByTestId('conversation-tabs');
+    const idsRenderizados = within(barra)
+      .getAllByRole('tab')
+      .map((botao) => botao.getAttribute('data-testid'));
+    // Lista completa: detecta inversão, duplicação e abas extras.
+    expect(idsRenderizados).toEqual(ORDEM_CONTRATADA);
   });
 
   it('não tem mais aba Lembretes (fundida em Tarefas)', () => {

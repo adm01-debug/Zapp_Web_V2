@@ -66,6 +66,26 @@ e substitui policies que ja nao existem com esses nomes. As policies atuais do d
 mais estritas que as que este arquivo proporia — ex.: `global_settings` hoje e admin-only,
 e o arquivo mantinha `USING(true)` "por design".
 
+### `20260930120000_harden_default_privileges_revoke_anon_execute.sql`
+
+**Redundante e nao-aplicavel em producao.** Este arquivo (item 5 da auditoria adversarial,
+onda 2) usava `ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin`, que exige SUPERUSER. O caminho
+de escrita de producao (`mcp_exec`, SECURITY DEFINER owner `postgres`) roda como `postgres`, que o
+repo rebaixou (`rolsuper=false`) por endurecimento — resultado: `42501 permission denied to change
+default privileges` na aplicacao pos-merge (PR #1255).
+
+O objetivo do arquivo **ja foi cumprido por outras migrations, corretamente**:
+
+- `20260930113613_revoke_anon_default_privileges_and_gamification_rpcs.sql` — `ALTER DEFAULT
+  PRIVILEGES FOR ROLE postgres ... REVOKE ALL ON TABLES/FUNCTIONS/SEQUENCES FROM anon` (o `FOR ROLE
+  postgres` aplica como nao-superuser) + revoke de anon/PUBLIC nas 13 funcoes (incluindo as 6
+  trigger functions que este arquivo revogaria).
+- `20260930130000_revoke_public_ai_analysis_functions.sql` — revoke nas 5 funcoes de analise de IA.
+
+Como todas as 225 funcoes de `public` sao de `postgres`, o default que importa e o de `postgres`
+(coberto por 20260930113613) — o `FOR ROLE supabase_admin` deste arquivo era desnecessario desde o
+inicio. Nao aplicar, nao reaplicar; a cobertura equivalente ja existe.
+
 ## Regra
 
 Nao apagar. Nao reaplicar. Servem como registro historico do schema anterior a migracao.

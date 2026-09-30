@@ -51,6 +51,7 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
         upcoming: byDue.upcoming.filter(i => i.title.toLowerCase().includes(search.toLowerCase())),
         noDue:    byDue.noDue.filter(i => i.title.toLowerCase().includes(search.toLowerCase())),
         done7d:   byDue.done7d.filter(i => i.title.toLowerCase().includes(search.toLowerCase())),
+        doneOlder: byDue.doneOlder.filter(i => i.title.toLowerCase().includes(search.toLowerCase())),
       }
     : byDue;
 

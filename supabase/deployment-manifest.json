@@ -11,7 +11,7 @@
   },
   "summary": {
     "function_count": 67,
-    "source_file_count": 98,
+    "source_file_count": 99,
     "verify_jwt_true": 57,
     "verify_jwt_false": 10
   },
@@ -98,8 +98,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "bytes": 21952,
-      "sha256": "f747189b5538287bf26770989f331a8812786d970b05049b002ed7878af8915d"
+      "bytes": 22129,
+      "sha256": "edeffdab03cc01cdc740145b2e12d6283b2fb44b8cce0015eaea38e11369083e"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
@@ -165,6 +165,11 @@
       "path": "supabase/functions/_shared/validation.ts",
       "bytes": 11958,
       "sha256": "21cdf66adc5bb9f1820f46936015a67a8b67748f94c13e118ece43fe77423108"
+    },
+    {
+      "path": "supabase/functions/_shared/voice-copilot-authz.ts",
+      "bytes": 2736,
+      "sha256": "c491b2431c16f9218cb116de8e9e076b8bafa72a11c71f04a80f0bcd868956e5"
     },
     {
       "path": "supabase/functions/_shared/webhook-signature.ts",
@@ -288,8 +293,8 @@
     },
     {
       "path": "supabase/functions/detect-new-device/index.ts",
-      "bytes": 7167,
-      "sha256": "9b0359f99ea3d5a404706cd54b65f4fa5a950f97bd1b1cb9e8b4abce3be6b095"
+      "bytes": 7182,
+      "sha256": "589e5e2939b7564d7928b96483cdd1aa71ae1350a85a059dcb0f9d0429076058"
     },
     {
       "path": "supabase/functions/elevenlabs-agent-token/index.ts",
@@ -438,8 +443,8 @@
     },
     {
       "path": "supabase/functions/send-email/index.ts",
-      "bytes": 2183,
-      "sha256": "9d1ac0443fbeab6214710610ef8e9050c4ceecabb5c315fb9c8d7edf8233a52d"
+      "bytes": 2557,
+      "sha256": "d5d01911fd0dbfe6c7c5f40f4b6e49832af7be76f8cadafe727ee55cc3955d83"
     },
     {
       "path": "supabase/functions/send-rate-limit-alert/index.ts",
@@ -448,13 +453,13 @@
     },
     {
       "path": "supabase/functions/send-scheduled-report/index.ts",
-      "bytes": 8930,
-      "sha256": "a11aabc65bfb54227b061392bc73fc561016127ee39273755e23824810b64e52"
+      "bytes": 8952,
+      "sha256": "0171abc38b9ec030c7154520e709d139b5654b626180187417997d7aa6d8d7a4"
     },
     {
       "path": "supabase/functions/sentiment-alert/index.ts",
-      "bytes": 9648,
-      "sha256": "72308314c27869cd8195995444835896e9675bfe3ec0d931e5db4318b9895bc5"
+      "bytes": 9659,
+      "sha256": "75e637b94ec99ac0ce5994b2b6e40ce697e58e418ebd69b5490a2d87d1987e7b"
     },
     {
       "path": "supabase/functions/talkx-link/index.ts",
@@ -488,8 +493,8 @@
     },
     {
       "path": "supabase/functions/voice-copilot-action/index.ts",
-      "bytes": 7158,
-      "sha256": "98ef60e5a17a3b95969f2497e01c4daf1d5b4c18b77acec6547a4c4736afc631"
+      "bytes": 8449,
+      "sha256": "65b4a8c065c4e380525987538f6a51ee646fb99a419adf40ae78958fc1131504"
     },
     {
       "path": "supabase/functions/webauthn/index.ts",
@@ -814,7 +819,7 @@
       "name": "detect-new-device",
       "entrypoint": "supabase/functions/detect-new-device/index.ts",
       "verify_jwt": true,
-      "source_sha256": "6ca2d1344fb2f048e974092f8454386c74f2fb1475acf5705929b3075b22d6ee",
+      "source_sha256": "9dc3c1484a604152284d70ac367efa9770b05907524b2774ae295e87947f6923",
       "source_files": [
         "supabase/functions/_shared/email-font-stack.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -963,7 +968,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "5030426de61d0b232843307bbaeea50b55dd1745e206394b5219fad4ac10cffb",
+      "source_sha256": "d8229baff43e8e5eb8de36d81dd12d809f24b487c90215b6acbc371035bf554e",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -1192,7 +1197,7 @@
       "name": "send-email",
       "entrypoint": "supabase/functions/send-email/index.ts",
       "verify_jwt": true,
-      "source_sha256": "5f1bbd89c7ca31f00f308db692e3e8f8e872ed18ca84c9cc20190271b800cf47",
+      "source_sha256": "a20770f9c53304b71ba61dbf20ee8d97bcabec6cd4b156b1863b2ed3117836d5",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1216,7 +1221,7 @@
       "name": "send-scheduled-report",
       "entrypoint": "supabase/functions/send-scheduled-report/index.ts",
       "verify_jwt": true,
-      "source_sha256": "3573051ee0cf438597c24b67b350f27e242a7eb11e28e29f5350f5fc78cd4243",
+      "source_sha256": "27f3fe78daa2f3d5e98223ddce31e5ddba097f2a339eab514e64b7d949c97925",
       "source_files": [
         "supabase/functions/_shared/email-font-stack.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1229,7 +1234,7 @@
       "name": "sentiment-alert",
       "entrypoint": "supabase/functions/sentiment-alert/index.ts",
       "verify_jwt": true,
-      "source_sha256": "682665499b268c9f5ea0dc2fc516678bea680329ddc66db0c2ceae01cb400fdc",
+      "source_sha256": "aaa60cfd666d80dc7d6ccbd092e9a9ec2df6c2b33908bf244e4ec7524369a7a6",
       "source_files": [
         "supabase/functions/_shared/email-font-stack.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1320,11 +1325,12 @@
       "name": "voice-copilot-action",
       "entrypoint": "supabase/functions/voice-copilot-action/index.ts",
       "verify_jwt": true,
-      "source_sha256": "25a76deb5586afab3ff6b923c12011afb5f19caf7a71b8ded7e7e50b1af889ab",
+      "source_sha256": "b4ef369518e3441d686042e5787c92d9ceff2d3f4df2a9d2e129d49121beae78",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/postgrest-filters.ts",
         "supabase/functions/_shared/validation.ts",
+        "supabase/functions/_shared/voice-copilot-authz.ts",
         "supabase/functions/voice-copilot-action/index.ts"
       ]
     },
@@ -1365,5 +1371,5 @@
       ]
     }
   ],
-  "manifest_sha256": "1144e108f23c74ef8496e7f3beb3a48a4907a8f37e6a1e093d6c969e47c15f86"
+  "manifest_sha256": "318ee8b488be18caf19d0550d52551a6603f46750dec412df1707209bbc484b3"
 }

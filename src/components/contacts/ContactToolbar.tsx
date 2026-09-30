@@ -5,7 +5,7 @@ import {
 } from '@/components/ui/select';
 import {
   Tag, Filter, ArrowUpDown, X,
-  GitCompareArrows, Merge,
+  GitCompareArrows, Merge, Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ContactViewSwitcher, type ContactViewMode } from './ContactViewSwitcher';
@@ -54,6 +54,8 @@ interface ContactToolbarProps {
   gridColumns: number;
   setGridColumns: (cols: number) => void;
   totalCount: number;
+  crmIntegrationEnabled: boolean;
+  onOpenCRM: () => void;
 }
 
 export function ContactToolbar({
@@ -65,6 +67,7 @@ export function ContactToolbar({
   onApplyPreset, groupByCompany, setGroupByCompany,
   selectedIds, onBulkTag, onCompare, onMerge,
   viewMode, setViewMode, gridColumns, setGridColumns, totalCount,
+  crmIntegrationEnabled, onOpenCRM,
 }: ContactToolbarProps) {
   return (
     <div className="space-y-3">
@@ -138,6 +141,14 @@ export function ContactToolbar({
         )}
 
         <div className="ml-auto flex items-center gap-2 shrink-0">
+          {crmIntegrationEnabled && (
+            <Button
+              onClick={onOpenCRM}
+              className="h-11 px-4 rounded-xl bg-primary/20 border border-primary/50 text-primary-glow hover:bg-primary/30 font-semibold text-sm gap-2 shrink-0"
+            >
+              <Sparkles className="w-[18px] h-[18px]" />CRM 360°
+            </Button>
+          )}
           <ContactViewSwitcher
             viewMode={viewMode}
             onViewModeChange={setViewMode}

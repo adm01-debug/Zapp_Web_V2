@@ -47,16 +47,29 @@ export interface SuggestionListProps {
  * a busca antiga (Enter) continua. Um relógio local só serve para a contagem; quando `pausedUntil`
  * expira, o texto cai para o aviso genérico (o hook decide quando tentar de novo).
  */
-function PausedNotice({ blocked, pausedUntil, query }: { blocked: 'rate_limited' | 'cost_guard' | null; pausedUntil: number | null; query: string }) {
+function PausedNotice({ blocked, pausedUntil, query, onRetry }: {
+  blocked: 'rate_limited' | 'cost_guard' | null;
+  pausedUntil: number | null;
+  query: string;
+  onRetry: () => void;
+}) {
   const [agora, setAgora] = useState(() => Date.now());
   useEffect(() => {
     const timer = setInterval(() => setAgora(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
   const segundos = pausedUntil ? Math.max(0, Math.ceil((pausedUntil - agora) / 1000)) : null;
+  // A3-04 (onda 2): a pausa transitória (429) não tinha NENHUM botão — medido no bundle real:
+  // 0 ocorrências de "Tentar novamente" durante toda a espera, e o contador morria em "0 s".
+  // Com o botão, a saída deixa de ser "adivinhe que precisa digitar de novo". O teto de custo do
+  // mês não ganha botão: nova tentativa não muda o limite, seria só ruído.
+  const podeTentar = blocked === 'rate_limited';
   return (
     <div className="px-3 py-3 space-y-1">
-      <p className="text-sm text-muted-foreground">{pausedNoticeText(blocked, segundos)}</p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-sm text-muted-foreground">{pausedNoticeText(blocked, segundos)}</p>
+        {podeTentar && <Button size="sm" variant="ghost" onClick={onRetry}>Tentar novamente</Button>}
+      </div>
       <p className="text-xs text-muted-foreground/70">
         Enquanto isso, o Enter busca &quot;{query.trim()}&quot; pelo endereço.
       </p>
@@ -107,7 +120,9 @@ export function SuggestionList({
           <Button size="sm" variant="ghost" onClick={onRetry}>Tentar novamente</Button>
         </div>
       )}
-      {status === 'paused' && <PausedNotice blocked={blocked} pausedUntil={pausedUntil} query={query} />}
+      {status === 'paused' && (
+        <PausedNotice blocked={blocked} pausedUntil={pausedUntil} query={query} onRetry={onRetry} />
+      )}
       {status === 'empty' && (
         <p className="px-3 py-3 text-sm text-muted-foreground">Nada encontrado para &quot;{query}&quot;.</p>
       )}

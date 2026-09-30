@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
           method: "POST",
           headers: { Authorization: `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            from: "reports@noreply.lovable.app", to: recipient,
+            from: "ZAPP Relatórios <relatorios@promobrindes.com.br>", to: recipient,
             subject: `📊 ${reportData.title} - ${reportData.period}`, html: emailHtml,
           }),
         });

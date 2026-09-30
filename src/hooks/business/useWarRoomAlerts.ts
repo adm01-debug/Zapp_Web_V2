@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { usePushNotifications } from '../system/usePushNotifications';
+import { useNotificationSettings } from '../system/useNotificationSettings';
 
 interface WarRoomAlert {
   id: string;
@@ -17,14 +18,20 @@ export function useWarRoomAlerts(soundEnabled = true) {
   const queryClient = useQueryClient();
   const { showNotification, permission } = usePushNotifications();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { settings } = useNotificationSettings();
 
   // Initialize alert sound
   // Fora do controle de volume de MÍDIA por definição: é ALERTA (WebAudio/HTMLMedia
-  // fora do inbox) e tem volume próprio. Não integrar ao `mediaVolumeStore`.
+  // fora do inbox) e não deve entrar no `mediaVolumeStore`. O volume dele é o volume de
+  // alerta do painel (`user_settings.sound_volume`, 10-100) — não um valor fixo.
   useEffect(() => {
     audioRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgip6LbUg3WX2OgGtLPE51g3lgSkRHZXVzYFRDSWBwaV5WTFFcaGReW1haYmhkYl9eYGVpZ2VkZGRnamlnZmZnaGlpaGdnaGhpaWhoaGhpaWhoaGlpaGlpaGhpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaQ==');
-    audioRef.current.volume = 0.5;
   }, []);
+
+  // Volume do alerta = volume de alerta do painel (10-100 -> 0.1-1.0).
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = settings.soundVolume / 100;
+  }, [settings.soundVolume]);
 
   const playAlertSound = useCallback(() => {
     if (soundEnabled && audioRef.current) {

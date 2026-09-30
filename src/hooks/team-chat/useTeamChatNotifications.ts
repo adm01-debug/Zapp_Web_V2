@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 
 interface Options {
   conversationId: string;
@@ -12,13 +13,18 @@ const SOUND_URL = '/sounds/message.mp3';
 
 export function useTeamChatNotifications({ conversationId, currentUserId, muted = false, onNavigate }: Options) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { settings } = useNotificationSettings();
 
   useEffect(() => {
     // Alerta, não mídia de conversa: fica fora do controle de volume das mídias
-    // (`mediaVolumeStore`) — o atendente não pode silenciar alerta sem querer.
+    // (`mediaVolumeStore`) — o atendente não pode silenciar alerta sem querer. Mas o
+    // volume obedece ao volume de alerta do painel (10-100), não a um fixo.
     audioRef.current = new Audio(SOUND_URL);
-    audioRef.current.volume = 0.4;
   }, []);
+
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = settings.soundVolume / 100;
+  }, [settings.soundVolume]);
 
   useEffect(() => {
     const channel = supabase

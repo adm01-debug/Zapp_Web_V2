@@ -12,6 +12,15 @@ export interface EnrichedContactData {
   ai_sentiment: string | null;
   ai_priority: string | null;
   channel_type: string | null;
+  // A4-D (onda 2): endereço — a query passou a pedir estas 6 colunas; sem elas o editor abria vazio.
+  // Opcionais para não quebrar fixtures legadas; quem garante que a query as pede é o teste
+  // `contact.service.enriched.test.ts`.
+  address?: string | null;
+  address_number?: string | null;
+  city?: string | null;
+  neighborhood?: string | null;
+  postal_code?: string | null;
+  state?: string | null;
 }
 
 export interface AIConversationTag {

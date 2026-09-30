@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import { toast } from 'sonner';
 import { BoardColumn }      from './BoardColumn';
@@ -21,8 +21,12 @@ const BOARD_COLUMNS: WorkItemStatus[] = ['backlog','todo','doing','waiting','don
 
 export function TasksBoardMode({ byStatus, isLoading, onMove, onReorder, onOpen, onDelete, onCreate }: Props) {
   const doingCount = byStatus.doing.length;
+  // Etapa 52 (B8): guarda de onde o arrasto COMECOU — sem isso a coluna "Fazendo"
+  // cheia bloqueia ate a reorganizacao dela mesma.
+  const [dragSourceStatus, setDragSourceStatus] = useState<WorkItemStatus | null>(null);
 
   const handleDragEnd = useCallback((result: DropResult) => {
+    setDragSourceStatus(null);
     if (!result.destination) return;
     const { source, destination } = result;
     const fromStatus = source.droppableId as WorkItemStatus;
@@ -54,7 +58,10 @@ export function TasksBoardMode({ byStatus, isLoading, onMove, onReorder, onOpen,
   }, [byStatus, doingCount, onMove, onReorder]);
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
+    <DragDropContext
+      onDragEnd={handleDragEnd}
+      onDragStart={start => setDragSourceStatus(start.source.droppableId as WorkItemStatus)}
+    >
       <div className="flex gap-3 h-full overflow-x-auto snap-x snap-mandatory pb-4">
         {BOARD_COLUMNS.map(status => (
           <BoardColumn
@@ -63,6 +70,7 @@ export function TasksBoardMode({ byStatus, isLoading, onMove, onReorder, onOpen,
             items={byStatus[status] ?? []}
             isLoading={isLoading}
             doingCount={doingCount}
+            dragSourceStatus={dragSourceStatus}
             onOpen={onOpen}
             onMoveTo={(it, to) => onMove(it, to)}
             onDelete={onDelete}
