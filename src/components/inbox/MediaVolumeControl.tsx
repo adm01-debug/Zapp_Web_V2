@@ -133,6 +133,7 @@ export function MediaVolumeControl({
                 rocker.setOpen((current) => !current);
               }}
               aria-label="Ajustar volume das mídias"
+              aria-haspopup="dialog"
               aria-expanded={rocker.open}
               className={cn(
                 'inline-flex items-center justify-center rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
