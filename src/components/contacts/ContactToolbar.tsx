@@ -49,6 +49,12 @@ interface ContactToolbarProps {
   onBulkTag: () => void;
   onCompare: () => void;
   onMerge: () => void;
+  /**
+   * Se o usuário pode mesclar contatos (RPC `is_admin_or_supervisor` via
+   * `useCRMAdminAccess`). `false` esconde o botão "Mesclar"; `null`/ausente não
+   * bloqueia (ver `canMergeContacts`).
+   */
+  canMerge: boolean;
   viewMode: ContactViewMode;
   setViewMode: (mode: ContactViewMode) => void;
   gridColumns: number;
@@ -65,7 +71,7 @@ export function ContactToolbar({
   filterTag, setFilterTag, filterDateRange, setFilterDateRange,
   uniqueCompanies, uniqueJobTitles, uniqueTags,
   onApplyPreset, groupByCompany, setGroupByCompany,
-  selectedIds, onBulkTag, onCompare, onMerge,
+  selectedIds, onBulkTag, onCompare, onMerge, canMerge,
   viewMode, setViewMode, gridColumns, setGridColumns, totalCount,
   crmIntegrationEnabled, onOpenCRM,
 }: ContactToolbarProps) {
@@ -131,10 +137,14 @@ export function ContactToolbar({
                   <GitCompareArrows className="w-[18px] h-[18px]" />
                   Comparar
                 </Button>
-                <Button variant="outline" className="h-11 rounded-xl text-sm gap-2 shrink-0 border-primary/30 text-primary" onClick={onMerge}>
-                  <Merge className="w-[18px] h-[18px]" />
-                  Mesclar
-                </Button>
+                {/* Mesclar faz DELETE físico dos secundários e exige admin/supervisor
+                    no banco (RPC `merge_contacts_atomic`, 42501): só é oferecido a quem pode. */}
+                {canMerge && (
+                  <Button variant="outline" className="h-11 rounded-xl text-sm gap-2 shrink-0 border-primary/30 text-primary" onClick={onMerge}>
+                    <Merge className="w-[18px] h-[18px]" />
+                    Mesclar
+                  </Button>
+                )}
               </>
             )}
           </>
