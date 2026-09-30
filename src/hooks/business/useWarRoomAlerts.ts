@@ -14,11 +14,14 @@ interface WarRoomAlert {
   created_at: string;
 }
 
-export function useWarRoomAlerts(soundEnabled = true) {
+export function useWarRoomAlerts(soundEnabled?: boolean) {
   const queryClient = useQueryClient();
   const { showNotification, permission } = usePushNotifications();
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const { settings } = useNotificationSettings();
+  const { settings, isQuietHours } = useNotificationSettings();
+  // Sem valor explícito do chamador, o mudo vem da preferência do usuário (`user_settings`),
+  // nunca de um `true` cravado.
+  const soundGate = soundEnabled ?? settings.soundEnabled;
 
   // Initialize alert sound
   // Fora do controle de volume de MÍDIA por definição: é ALERTA (WebAudio/HTMLMedia
@@ -34,11 +37,12 @@ export function useWarRoomAlerts(soundEnabled = true) {
   }, [settings.soundVolume]);
 
   const playAlertSound = useCallback(() => {
-    if (soundEnabled && audioRef.current) {
+    // Alerta do War Room também respeita o mudo do painel e o horário de silêncio.
+    if (soundGate && !isQuietHours() && audioRef.current) {
       audioRef.current.currentTime = 0;
       audioRef.current.play().catch(() => {});
     }
-  }, [soundEnabled]);
+  }, [soundGate, isQuietHours]);
 
   // Fetch existing alerts
   const { data: alerts = [] } = useQuery({
