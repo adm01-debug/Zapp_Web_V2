@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
@@ -27,6 +28,7 @@ export function useNewConversation(
   const [mode, setMode] = useState<'search' | 'new'>('search');
   const [connections, setConnections] = useState<{ id: string; name: string }[]>([]);
   const [selectedConnection, setSelectedConnection] = useState('');
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!open) return;
@@ -99,6 +101,9 @@ export function useNewConversation(
           throw error;
         }
         contactId = newContact.id;
+        // Criar contato no chat muda a quantidade (e o tipo default "cliente") dos contadores.
+        queryClient.invalidateQueries({ queryKey: ['contacts-kpi'] });
+        queryClient.invalidateQueries({ queryKey: ['contacts-type-counts'] });
         await supabase.functions.invoke('batch-fetch-avatars');
       }
       if (!contactId) { toast.error('Selecione um contato'); setIsSending(false); return; }
