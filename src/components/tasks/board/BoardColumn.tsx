@@ -16,17 +16,22 @@ interface Props {
   items: WorkItem[];
   isLoading: boolean;
   doingCount: number;
+  /** Etapa 52 (B8): coluna de origem do arrasto em curso (null = nenhum). */
+  dragSourceStatus: WorkItemStatus | null;
   onOpen: (item: WorkItem) => void;
   onMoveTo: (item: WorkItem, to: WorkItemStatus) => void;
   onDelete: (item: WorkItem) => void;
   onCreate?: (input: WorkItemInput) => Promise<void>;
 }
 
-export function BoardColumn({ status, items, isLoading, doingCount, onOpen, onMoveTo, onDelete, onCreate }: Props) {
+export function BoardColumn({ status, items, isLoading, doingCount, dragSourceStatus, onOpen, onMoveTo, onDelete, onCreate }: Props) {
   const col   = KANBAN_COLUMNS.find(c => c.status === status)!;
   const limit = WIP_LIMITS[status];
   const hardFull  = limit.hard != null && doingCount >= limit.hard;
   const softOver  = limit.soft != null && items.length > limit.soft;
+  // Etapa 52 (B8): a coluna cheia continua aceitando o que veio dela mesma
+  // (reorganizar dentro de "Fazendo" com 3/3), e recusa o que vem de fora.
+  const isDropDisabled = hardFull && dragSourceStatus !== status;
 
   // Etapa 51 (B5): a coluna Concluído mostra os 7 dias e revela o resto da janela
   // de 30 dias no rodapé "Ver mais antigas (30 dias)" (filtro local, sem query nova).
@@ -46,6 +51,7 @@ export function BoardColumn({ status, items, isLoading, doingCount, onOpen, onMo
       <div className={[
         'flex items-center gap-2 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur',
         hardFull ? 'text-destructive' : softOver ? 'text-warning' : 'text-foreground',
+        hardFull ? 'ring-1 ring-destructive/40' : '',
       ].join(' ')}>
         <span className="flex-1 text-[13px] font-semibold">{col.label}</span>
         {headerCount && (
@@ -73,7 +79,7 @@ export function BoardColumn({ status, items, isLoading, doingCount, onOpen, onMo
       )}
 
       {/* cards */}
-      <Droppable droppableId={status} isDropDisabled={hardFull}>
+      <Droppable droppableId={status} isDropDisabled={isDropDisabled}>
         {(provided, snapshot) => (
           <div
             ref={provided.innerRef}
