@@ -56,7 +56,7 @@ describe('volume de mídia — toda superfície de conversa passa pelo controle 
  */
 describe('volume de mídia — isenções explícitas, não silenciosas', () => {
   const isentas: Array<[string, string]> = [
-    ['alerta de rate limit', 'src/components/security/RateLimitRealtimeAlerts.tsx'],
+    ['alerta de rate limit', 'src/utils/securityAlertSound.ts'],
     ['alerta de war room', 'src/hooks/business/useWarRoomAlerts.ts'],
     ['alerta do chat interno', 'src/hooks/team-chat/useTeamChatNotifications.ts'],
   ];
@@ -67,5 +67,13 @@ describe('volume de mídia — isenções explícitas, não silenciosas', () => 
       /useMediaElementVolume|useMediaVolume\b/,
     );
     expect(fonte, `${arquivo} precisa documentar a isenção`).toContain('mediaVolumeStore');
+  });
+
+  // O componente continua fora do controle de volume de mídia, mesmo depois de o som
+  // (e a isenção documentada) morarem no módulo `@/utils/securityAlertSound`.
+  it('o componente do alerta de rate limit não entra no controle de mídia', () => {
+    const fonte = read('src/components/security/RateLimitRealtimeAlerts.tsx');
+
+    expect(fonte).not.toMatch(/useMediaElementVolume|useMediaVolume\b/);
   });
 });

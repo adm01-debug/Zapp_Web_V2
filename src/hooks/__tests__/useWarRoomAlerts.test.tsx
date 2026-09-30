@@ -25,6 +25,25 @@ vi.mock('@/hooks/system/usePushNotifications', () => ({
   }),
 }));
 
+// --- Volume do alerta: vem do painel (achado: era 0.5 fixo no codigo) ---
+const audiosCriados: Array<{ volume: number; src?: string; play: ReturnType<typeof vi.fn> }> = [];
+
+vi.stubGlobal(
+  'Audio',
+  class FakeAudio {
+    volume = 1;
+    currentTime = 0;
+    play = vi.fn().mockResolvedValue(undefined);
+    constructor(public src?: string) {
+      audiosCriados.push(this as never);
+    }
+  },
+);
+
+vi.mock('@/hooks/system/useNotificationSettings', () => ({
+  useNotificationSettings: () => ({ settings: { soundVolume: 40 } }),
+}));
+
 import { useWarRoomAlerts } from '@/hooks/business/useWarRoomAlerts';
 
 function createWrapper() {
@@ -95,5 +114,18 @@ describe('useWarRoomAlerts', () => {
   it('alerts is an array', () => {
     const { result } = renderHook(() => useWarRoomAlerts(), { wrapper: createWrapper() });
     expect(Array.isArray(result.current.alerts)).toBe(true);
+  });
+});
+
+
+describe('useWarRoomAlerts — volume do alerta', () => {
+  it('aplica o volume persistido do painel (40 -> 0.4) em vez do 0.5 fixo', async () => {
+    audiosCriados.length = 0;
+
+    const { result } = renderHook(() => useWarRoomAlerts(true), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(audiosCriados.length).toBeGreaterThan(0));
+    expect(audiosCriados[0].volume).toBeCloseTo(0.4, 5);
+    expect(result.current).toBeTruthy();
   });
 });
