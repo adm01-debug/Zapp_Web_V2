@@ -1,0 +1,91 @@
+/**
+ * Kit compartilhado dos testes de COMPORTAMENTO dos alertas.
+ *
+ * Motivo de existir: os três arquivos repetiam o mesmo andaime de mocks e o portão de qualidade
+ * do Sonar (duplicação em código novo) passou de 3% para 10,9%. Aqui fica o andaime; cada teste
+ * guarda só o que é dele — o gatilho e a asserção.
+ */
+import { vi } from 'vitest';
+
+export const playNotificationSound = vi.fn();
+export const showBrowserNotification = vi.fn();
+export const requestNotificationPermission = vi.fn();
+export const toast = vi.fn();
+
+/** Callbacks entregues pelos canais do Realtime, na ordem em que foram registrados. */
+export const callbacks: Array<(payload: unknown) => unknown> = [];
+
+/** Ajustes do painel lidos pelo `useNotificationSettings`; o teste mexe no que importa. */
+export const settingsCfg: Record<string, unknown> = {
+  soundEnabled: true,
+  browserNotifications: false,
+  messageSoundType: 'chime',
+  slaBreachSound: true,
+  slaSoundType: 'alert',
+  mentionSoundType: 'ping',
+  soundVolume: 55,
+  transcriptionNotificationEnabled: true,
+  transcriptionSoundType: 'soft',
+};
+
+/** Linha devolvida pelas consultas em `contacts`. */
+export const contactRow: Record<string, unknown> = { name: 'Fulano', phone: '1199' };
+
+export function notificationSoundsMock() {
+  return {
+    playNotificationSound: (...args: unknown[]) => playNotificationSound(...args),
+    showBrowserNotification: (...args: unknown[]) => showBrowserNotification(...args),
+    requestNotificationPermission: (...args: unknown[]) => requestNotificationPermission(...args),
+  };
+}
+
+export function settingsMock() {
+  return {
+    useNotificationSettings: () => ({ settings: settingsCfg, isQuietHours: () => false }),
+  };
+}
+
+export function supabaseMock() {
+  const canal: Record<string, unknown> = {};
+  canal.on = (_evt: string, _cfg: unknown, cb: (payload: unknown) => unknown) => {
+    callbacks.push(cb);
+    return canal;
+  };
+  canal.subscribe = () => ({ unsubscribe: vi.fn() });
+
+  return {
+    supabase: {
+      channel: () => canal,
+      removeChannel: vi.fn(),
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({ data: contactRow, error: null }),
+            single: async () => ({ data: contactRow, error: null }),
+          }),
+        }),
+      }),
+    },
+  };
+}
+
+export function authMock() {
+  return { useAuth: () => ({ user: { id: 'u1' } }) };
+}
+
+export function loggerMock() {
+  return { getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }) };
+}
+
+export function toastMock() {
+  return { toast };
+}
+
+export function resetAlertKit() {
+  playNotificationSound.mockClear();
+  showBrowserNotification.mockClear();
+  callbacks.length = 0;
+  settingsCfg.soundEnabled = true;
+  settingsCfg.slaBreachSound = true;
+  settingsCfg.soundVolume = 55;
+}

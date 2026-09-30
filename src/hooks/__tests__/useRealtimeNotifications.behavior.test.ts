@@ -3,49 +3,31 @@ import { renderHook, act } from '@testing-library/react';
 
 /**
  * Comportamento (não encanamento): o alerta de mensagem precisa chegar ao som com o TIPO e o
- * VOLUME persistidos do painel. O teste antigo deste hook cobria só a inscrição no canal.
+ * VOLUME persistidos do painel, e respeitar as condições de silêncio.
  */
-const playNotificationSound = vi.fn();
+import { playNotificationSound, resetAlertKit, settingsCfg } from '@/hooks/__tests__/helpers/alertBehaviorTestKit';
 
-vi.mock('@/utils/notificationSounds', () => ({
-  playNotificationSound: (...args: unknown[]) => playNotificationSound(...args),
-  showBrowserNotification: vi.fn(),
-  requestNotificationPermission: vi.fn(),
-}));
+vi.mock('@/utils/notificationSounds', async () =>
+  (await import('@/hooks/__tests__/helpers/alertBehaviorTestKit')).notificationSoundsMock(),
+);
 
-vi.mock('@/hooks/system/useNotificationSettings', () => ({
-  useNotificationSettings: () => ({
-    settings: {
-      soundEnabled: true,
-      browserNotifications: false,
-      messageSoundType: 'chime',
-      soundVolume: 55,
-      slaSoundType: 'alert',
-      mentionSoundType: 'ping',
-      transcriptionSoundType: 'soft',
-    },
-    isQuietHours: () => false,
-  }),
-}));
+vi.mock('@/hooks/system/useNotificationSettings', async () =>
+  (await import('@/hooks/__tests__/helpers/alertBehaviorTestKit')).settingsMock(),
+);
 
 import { useRealtimeNotifications } from '@/hooks/realtime/useRealtimeNotifications';
 
 const contato = { id: 'c1', name: 'Fulano', phone: '1199' } as never;
 
 function mensagemNova(over: Record<string, unknown> = {}) {
-  return {
-    id: 'm1',
-    contact_id: 'c2',
-    sender: 'contact',
-    is_read: false,
-    content: 'oi',
-    ...over,
-  } as never;
+  return { id: 'm1', contact_id: 'c2', sender: 'contact', is_read: false, content: 'oi', ...over } as never;
 }
 
 describe('useRealtimeNotifications — efeito do alerta', () => {
   beforeEach(() => {
-    playNotificationSound.mockClear();
+    resetAlertKit();
+    settingsCfg.messageSoundType = 'chime';
+    settingsCfg.soundVolume = 55;
   });
 
   it('toca com o tipo e o volume persistidos do painel', () => {
