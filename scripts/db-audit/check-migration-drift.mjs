@@ -23,6 +23,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { withPsqlEnvironment } from './psql-environment.mjs';
+import { sqlTokens } from './sql-lexer.mjs';
 
 const DIR = process.env.MIGRATIONS_DIR || 'supabase/migrations';
 const EVIDENCE_PATH = process.env.MIGRATION_EVIDENCE_PATH
@@ -64,98 +65,6 @@ function sha256(value) {
 
 function ledgerStatementsSha256(statements) {
   return sha256(LEDGER_STATEMENTS_HASH_DOMAIN + JSON.stringify(statements));
-}
-
-/**
- * Tokeniza SQL removendo somente comentarios fora de strings/identificadores e
- * normalizando espacos/case de tokens nao quoted. Dollar-quoted bodies sao
- * preservados integralmente: mudar o corpo de uma funcao continua sendo drift.
- */
-function sqlTokens(input) {
-  const source = input.replace(/^﻿/, '').replace(/\r\n?/g, '\n');
-  const tokens = [];
-  let i = 0;
-
-  while (i < source.length) {
-    const char = source[i];
-    const next = source[i + 1];
-
-    if (/\s/u.test(char)) {
-      i += 1;
-      continue;
-    }
-
-    if (char === '-' && next === '-') {
-      i += 2;
-      while (i < source.length && source[i] !== '\n') i += 1;
-      continue;
-    }
-
-    if (char === '/' && next === '*') {
-      let depth = 1;
-      i += 2;
-      while (i < source.length && depth > 0) {
-        if (source[i] === '/' && source[i + 1] === '*') {
-          depth += 1;
-          i += 2;
-        } else if (source[i] === '*' && source[i + 1] === '/') {
-          depth -= 1;
-          i += 2;
-        } else {
-          i += 1;
-        }
-      }
-      continue;
-    }
-
-    if (char === '$') {
-      const opening = source.slice(i).match(/^\$(?:[A-Za-z_][A-Za-z0-9_]*)?\$/)?.[0];
-      if (opening) {
-        const end = source.indexOf(opening, i + opening.length);
-        if (end === -1) {
-          tokens.push(source.slice(i));
-          break;
-        }
-        tokens.push(source.slice(i, end + opening.length));
-        i = end + opening.length;
-        continue;
-      }
-    }
-
-    if (char === "'" || char === '"') {
-      const quote = char;
-      let token = char;
-      i += 1;
-      while (i < source.length) {
-        token += source[i];
-        if (source[i] === quote) {
-          if (source[i + 1] === quote) {
-            token += source[i + 1];
-            i += 2;
-            continue;
-          }
-          i += 1;
-          break;
-        }
-        i += 1;
-      }
-      tokens.push(token);
-      continue;
-    }
-
-    if (/[A-Za-z0-9_$]/u.test(char)) {
-      const start = i;
-      i += 1;
-      while (i < source.length && /[A-Za-z0-9_$]/u.test(source[i])) i += 1;
-      tokens.push(source.slice(start, i).toLowerCase());
-      continue;
-    }
-
-    tokens.push(char);
-    i += 1;
-  }
-
-  return tokens;
 }
 
 function canonicalSql(input) {
