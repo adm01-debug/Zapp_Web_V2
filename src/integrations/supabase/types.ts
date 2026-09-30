@@ -10425,6 +10425,55 @@ export type Database = {
         Args: { p_limit?: number }
         Returns: number
       }
+      talk_me_claim: {
+        Args: { p_contact_id: string }
+        Returns: {
+          assigned_to: string
+          claimed_at: string
+          contact_id: string
+          conversation_status: string
+          queue_id: string
+        }[]
+      }
+      talk_me_list_queues: {
+        Args: never
+        Returns: {
+          oldest_waiting_at: string | null
+          queue_color: string | null
+          queue_id: string
+          queue_name: string
+          waiting_count: number
+        }[]
+      }
+      talk_me_list_waiting: {
+        Args: {
+          p_cursor_contact_id?: string
+          p_cursor_waiting_since?: string
+          p_limit?: number
+          p_queue_id: string
+          p_search?: string
+        }
+        Returns: {
+          avatar_url: string | null
+          company: string | null
+          contact_id: string
+          contact_name: string
+          job_title: string | null
+          last_message_at: string
+          last_message_caption: string | null
+          last_message_content: string
+          last_message_id: string
+          last_message_media_url: string | null
+          last_message_type: string
+          pending_message_count: number
+          queue_position: number
+          queue_color: string | null
+          queue_id: string
+          queue_name: string
+          total_count: number
+          waiting_since: string
+        }[]
+      }
       talkx_benchmarks: { Args: never; Returns: Json }
       talkx_campaign_report: { Args: { p_campaign: string }; Returns: Json }
       talkx_increment_delivered: {

@@ -257,6 +257,11 @@ jobs:
           DROP_EXTID_INDEX_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/drop-redundant-messages-external-id-index.test.sh
 
+      - name: Simular fila, autorização e aceite concorrente do TALK ME
+        env:
+          TALK_ME_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talk-me-queue-contract.test.sh
+
       - name: Simular histórico atômico de templates Talk X
         env:
           TALKX_HISTORY_TEST_POSTGRES_IMAGE: postgres:17-alpine
