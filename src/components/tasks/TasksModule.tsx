@@ -4,6 +4,7 @@ import { Filter, AlertTriangle } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useMyWorkItems }   from '@/hooks/tasks/useMyWorkItems';
 import { applyFilters, bucketByDue, bucketByStatus, kpis } from '@/hooks/tasks/workItemAggregates';
+import { countDoing } from '@/hooks/tasks/workItemMachine';
 import { useTasksFilters }  from '@/hooks/tasks/useTasksFilters';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import { ModeSwitcher, type TaskMode } from './shared/ModeSwitcher';
@@ -50,6 +51,14 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
   const byStatus = bucketByStatus(items);
   const kpiData = kpis(items);
 
+  // Fase F (auditoria): o filtro é recorte de TELA. O que descreve o trabalho
+  // real — contagem do cabeçalho, card "Fazendo" e a trava de WIP do Quadro —
+  // olha a lista completa; senão a tela anuncia "1/3" com 3 reais e aceita um
+  // drop que o próprio hook recusa (rollback com toast).
+  const kpiReal      = kpis(hook.items);
+  const doingReal    = countDoing(hook.items);
+  const byStatusReal = bucketByStatus(hook.items);
+
   // Contatos que aparecem nas tarefas carregadas: fonte local, sem query nova.
   const contactOptions = Array.from(
     new Map(
@@ -61,9 +70,10 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
 
   // Etapa 43: o subtítulo do cabeçalho mostra números reais em pt-BR (separador
   // de milhar) e com singular correto — "1 aberta", não "1 abertas".
-  const openCount = byStatus.backlog.length + byStatus.todo.length + byStatus.doing.length + byStatus.waiting.length;
+  // Fase F (auditoria): "reais" é literal — o filtro não muda o cabeçalho.
+  const openCount = byStatusReal.backlog.length + byStatusReal.todo.length + byStatusReal.doing.length + byStatusReal.waiting.length;
   const subtitleAbertas = `${openCount.toLocaleString('pt-BR')} ${openCount === 1 ? 'aberta' : 'abertas'}`;
-  const subtitleHoje = `${kpiData.dueToday.toLocaleString('pt-BR')} para hoje`;
+  const subtitleHoje = `${kpiReal.dueToday.toLocaleString('pt-BR')} para hoje`;
 
   // Flag de animacao de entrada: saiu da API do hook na etapa 18 e vive aqui.
   const hasMounted = useRef(false);
@@ -115,7 +125,7 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
       />
 
       {/* KPIs (etapa 44: 5 cards de 88px no padrão ContactKpiCard) */}
-      <TasksKpiStrip kpis={kpiData} />
+      <TasksKpiStrip kpis={{ ...kpiData, doingCount: doingReal }} />
 
       {/* QuickAdd (etapa 57: a Agenda tem o seu, com o dia selecionado) */}
       {mode !== 'agenda' && <QuickAdd ref={quickAddRef} onAdd={create} defaultStatus="backlog" />}
@@ -154,6 +164,7 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
               byDue={byDue}
               isLoading={isLoading}
               searchQuery={filtros.filters.q}
+              filtersActive={filtros.isActive}
               onOpen={setSelectedItem}
               onToggleDone={handleToggleDone}
               onMoveTo={handleMoveTo}
@@ -166,6 +177,7 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
             <TasksBoardMode
               byStatus={byStatus}
               isLoading={isLoading}
+              doingCount={doingReal}
               onMove={move}
               onReorder={reorder}
               onOpen={setSelectedItem}

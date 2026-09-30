@@ -12,7 +12,12 @@ import type { BucketsByDue, DayGroup } from '@/hooks/tasks/workItemAggregates';
 interface Props {
   byDue: BucketsByDue;
   isLoading: boolean;
-  searchQuery: string;
+  /** Texto da busca (compatibilidade com chamadas antigas do modo Lista). */
+  searchQuery?: string;
+  /** Fase F (auditoria): QUALQUER filtro ativo (busca, prioridade, contato,
+   *  alarme, concluídas) faz a Lista oferecer "Limpar filtros" quando esvazia —
+   *  antes só a busca fazia isso e a tela mentia dizendo "Adicione a primeira". */
+  filtersActive?: boolean;
   onOpen: (item: WorkItem) => void;
   onToggleDone: (item: WorkItem) => void;
   onMoveTo: (item: WorkItem, to: WorkItemStatus) => void;
@@ -134,7 +139,7 @@ function Section({ title, items, olderItems = [], groups, hint, defaultOpen = tr
   );
 }
 
-export function TasksListMode({ byDue, isLoading, searchQuery, onOpen, onToggleDone, onMoveTo, onDelete, onClearFilter, hasMounted }: Props) {
+export function TasksListMode({ byDue, isLoading, searchQuery, filtersActive, onOpen, onToggleDone, onMoveTo, onDelete, onClearFilter, hasMounted }: Props) {
   if (isLoading) {
     return (
       <div className="space-y-1.5">
@@ -146,9 +151,9 @@ export function TasksListMode({ byDue, isLoading, searchQuery, onOpen, onToggleD
   const total = byDue.overdue.length + byDue.today.length + byDue.tomorrow.length + byDue.upcoming.length + byDue.noDue.length;
 
   if (total === 0 && byDue.done7d.length === 0 && byDue.doneOlder.length === 0) {
-    return searchQuery
-      ? <TasksEmptyState variant="filter" onClearFilter={onClearFilter} />
-      : <TasksEmptyState variant="all" />;
+    const filtroAtivo = filtersActive ?? (searchQuery ?? '') !== '';
+    if (filtroAtivo) return <TasksEmptyState variant="filter" onClearFilter={onClearFilter} />;
+    return <TasksEmptyState variant="all" />;
   }
 
   return (

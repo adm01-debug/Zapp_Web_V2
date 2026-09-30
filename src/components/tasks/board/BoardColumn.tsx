@@ -87,7 +87,12 @@ export function BoardColumn({ status, items, isLoading, doingCount, dragSourceSt
             className={`flex-1 overflow-y-auto p-2 space-y-1.5 min-h-[80px] ${snapshot.isDraggingOver ? 'bg-primary/5' : ''}`}
           >
             {isLoading && <BoardColumnSkeleton />}
-            {!isLoading && visibleItems.length === 0 && <TasksEmptyState variant="column" policy={col.policy} />}
+            {/* Fase F (auditoria): com concluídas de 8 a 30 dias atrás do rodapé a
+                coluna NÃO está vazia — antes ela mostrava "Coluna vazia" e o
+                "Ver mais antigas (30 dias)" ao mesmo tempo. */}
+            {!isLoading && visibleItems.length === 0 && (doneSplit?.older.length ?? 0) === 0 && (
+              <TasksEmptyState variant="column" policy={col.policy} />
+            )}
             {!isLoading && visibleItems.map((item, index) => (
               <Draggable key={item.id} draggableId={item.id} index={index}>
                 {(drag, snap) => (
