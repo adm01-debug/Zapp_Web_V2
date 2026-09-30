@@ -69,6 +69,7 @@ function buckets(over: Partial<BucketsByDue> = {}): BucketsByDue {
     upcoming: nenhumItem,
     noDue: nenhumItem,
     done7d: nenhumItem,
+    doneOlder: nenhumItem,
     ...over,
   };
 }
@@ -103,7 +104,7 @@ describe('Tarefas — componentes dos três modos', () => {
     // A `Section` só renderiza com itens, por isso cada bucket tem um item acima.
     expect(screen.getByText('Amanhã')).toBeTruthy();
     expect(screen.getByText('Próximas')).toBeTruthy();
-    expect(screen.getByText('Concluídas')).toBeTruthy();
+    expect(screen.getByText('Concluídas (7 dias)')).toBeTruthy();
     expect(screen.queryByText('Amanha')).toBeNull();
     expect(screen.queryByText('Proximas')).toBeNull();
     expect(screen.queryByText('Concluidas')).toBeNull();
@@ -154,5 +155,43 @@ describe('Tarefas — componentes dos três modos', () => {
 
     expect(onMove).toHaveBeenCalledWith(alvo, 'doing', { index: 2 });
     cleanup();
+  });
+
+  it('etapa 48 (B4): "Concluídas (7 dias)" recolhida e "ver mais (30 dias)" revela as antigas', () => {
+    cleanup();
+    render(
+      <TasksListMode
+        byDue={buckets({
+          done7d: [item({ id: 'c', title: 'Feita ontem', status: 'done' })],
+          doneOlder: [item({ id: 'd', title: 'Feita duas semanas atras', status: 'done' })],
+        })}
+        isLoading={false}
+        searchQuery=""
+        onOpen={vi.fn()}
+        onToggleDone={vi.fn()}
+        onMoveTo={vi.fn()}
+        onDelete={vi.fn()}
+        onClearFilter={vi.fn()}
+        hasMounted={refMounted}
+      />
+    );
+
+    // Nasce recolhida: nem a concluida da semana nem a antiga aparecem.
+    expect(screen.getByText('Concluídas (7 dias)')).toBeTruthy();
+    expect(screen.queryByText('Feita ontem')).toBeNull();
+    expect(screen.queryByText('Feita duas semanas atras')).toBeNull();
+
+    // Abrir a secao mostra a de 7 dias; a antiga segue atras do "ver mais (30 dias)".
+    fireEvent.click(screen.getByText('Concluídas (7 dias)'));
+    expect(screen.getByText('Feita ontem')).toBeTruthy();
+    expect(screen.queryByText('Feita duas semanas atras')).toBeNull();
+
+    // O rodape revela a janela de 30 dias e oferece voltar.
+    fireEvent.click(screen.getByText('ver mais (30 dias)'));
+    expect(screen.getByText('Feita duas semanas atras')).toBeTruthy();
+    expect(screen.getByText('ver menos')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('ver menos'));
+    expect(screen.queryByText('Feita duas semanas atras')).toBeNull();
   });
 });
