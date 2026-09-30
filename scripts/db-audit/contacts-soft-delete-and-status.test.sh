@@ -5,6 +5,20 @@
 #   14     - contacts.conversation_status canonico (um CHECK + FSM alinhado)
 #   15     - grants de public.contacts (sem TRUNCATE/REFERENCES; anon sem SELECT)
 #
+# (item 8, endurecimento do contrato) O que este arquivo NAO provava antes, e agora prova:
+#   a) `expect_failure` aceitava QUALQUER erro nao-zero (inclusive
+#      'function does not exist' ou erro de sintaxe) -- agora a MENSAGEM e conferida;
+#   b) nao existia NENHUM `SELECT ... FROM public.contacts` rodando como `authenticated`:
+#      a policy `contacts_select_policy` so era exercitada de lado, pelo RETURNING dos
+#      UPDATE das RPCs (que sao SECURITY DEFINER e nao passam por RLS);
+#   c) 20260929770000 e 20260929810000 so eram 'pegas' por CRASH de aplicacao, sem assercao
+#      nomeada; o ACL de `service_role` e a revogacao de PUBLIC nunca eram conferidos;
+#   d) as chamadas de delete_contact setavam so `request.jwt.claim.sub`, entao os guards de
+#      atribuicao/fila (que decidem por `request.jwt.claims->>'role'`) ficavam INATIVOS
+#      nesse caminho;
+#   e) varias assercoes eram puro TEXTO (`pg_get_functiondef LIKE '%can_edit_contact%'`) --
+#      cada uma delas ganhou a CONTRAPROVA COMPORTAMENTAL correspondente (somada, nao trocada).
+#
 # Roda em PostgreSQL 17 descartavel, com o estado ANTERIOR as migrations reproduzido fiel
 # (os dois CHECKs conflitantes de status, o FSM antigo de 4 estados, o trigger da Sicoob e
 # os grants default do Supabase). A prova do P0 da auditoria de 29/09 e o passo "RED":
@@ -51,7 +65,12 @@ psql_file() {
 }
 
 expect_failure() {
-  local label="$1" sql="$2" output status
+  # $3 (opcional, mas usado em TODAS as chamadas) e uma ERE que a mensagem de erro tem de
+  # casar. Exit != 0 sozinho nao e prova: 'function does not exist', erro de sintaxe e
+  # 'permission denied' tambem saem com status != 0 e fariam a assercao passar por motivo
+  # errado -- foi assim que as migrations 20260929770000/20260929810000 quase ficaram sem
+  # contrato (o teste morria no meio de outra assercao, sem nome e sem contagem).
+  local label="$1" sql="$2" expected_re="${3:-}" output status
   set +e
   output="$(psql_sql "$sql" 2>&1)"
   status=$?
@@ -59,6 +78,10 @@ expect_failure() {
   if (( status == 0 )); then
     printf '%s\n' "$output" >&2
     fail "$label deveria falhar"
+  fi
+  if [[ -n "$expected_re" ]] && ! grep -qE -- "$expected_re" <<<"$output"; then
+    printf '%s\n' "$output" >&2
+    fail "$label: falhou, mas nao com o erro esperado (esperava /$expected_re/)"
   fi
   printf '[PASS] %s\n' "$label"
 }
@@ -307,6 +330,10 @@ INSERT INTO public.profiles (id, user_id, is_active) VALUES
   ('10000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001',true),
   ('10000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000002',true),
   ('10000000-0000-0000-0000-000000000003','20000000-0000-0000-0000-000000000003',false),
+  -- (item 8) ATIVO mas SEM linha em user_roles: e o alvo que o guard de atribuicao recusa
+  -- *por role* (o perfil 1000...003 e recusado por is_active). Sem este perfil nao daria para
+  -- separar "guard inativo (sem claims)" de "guard ativo (com claims)".
+  ('10000000-0000-0000-0000-000000000004','20000000-0000-0000-0000-000000000004',true),
   ('10000000-0000-0000-0000-000000000009','20000000-0000-0000-0000-000000000009',true);
 INSERT INTO public.user_roles VALUES
   ('20000000-0000-0000-0000-000000000001','agent'),
@@ -333,6 +360,16 @@ psql_file "$tmp_dir/pre.sql" >/dev/null
 AGENTE='20000000-0000-0000-0000-000000000001'
 ADMIN='20000000-0000-0000-0000-000000000009'
 ALHEIO='20000000-0000-0000-0000-000000000002'
+SEM_VINCULO='20000000-0000-0000-0000-000000000077'
+
+# (item 8) `request.jwt.claims` COMPLETO (json com sub E role) alem de
+# `request.jwt.claim.sub`. Os guards de atribuicao/fila decidem por
+# `current_setting('request.jwt.claims')->>'role'`; com apenas o claim de sub eles ficam
+# INATIVOS e o teste mede um caminho que o PostgREST nunca produz (ele manda os dois).
+claims_agente="SET ROLE authenticated; SET request.jwt.claims='{\"role\":\"authenticated\",\"sub\":\"$AGENTE\"}'; SET request.jwt.claim.sub='$AGENTE';"
+claims_admin="SET ROLE authenticated; SET request.jwt.claims='{\"role\":\"authenticated\",\"sub\":\"$ADMIN\"}'; SET request.jwt.claim.sub='$ADMIN';"
+claims_alheio="SET ROLE authenticated; SET request.jwt.claims='{\"role\":\"authenticated\",\"sub\":\"$ALHEIO\"}'; SET request.jwt.claim.sub='$ALHEIO';"
+claims_sem_vinculo="SET ROLE authenticated; SET request.jwt.claims='{\"role\":\"authenticated\",\"sub\":\"$SEM_VINCULO\"}'; SET request.jwt.claim.sub='$SEM_VINCULO';"
 
 # ── RED: o P0 da auditoria, antes das migrations ──────────────────────────────────────────
 expect_value 'RLS de contacts ligada' 't' \
@@ -340,9 +377,11 @@ expect_value 'RLS de contacts ligada' 't' \
 expect_value 'nenhuma policy de DELETE em contacts (causa do P0)' '0' \
   "SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='contacts' AND cmd IN ('DELETE','ALL')"
 expect_failure 'RED: gravacao de pending falha antes da migration 14 (CHECKs conflitantes)' \
-  "UPDATE public.contacts SET conversation_status='pending' WHERE id='30000000-0000-0000-0000-000000000001'"
+  "UPDATE public.contacts SET conversation_status='pending' WHERE id='30000000-0000-0000-0000-000000000001'" \
+  'Invalid conversation_status transition: open -> pending|violates check constraint "(contacts_conversation_status_check|chk_conversation_status_values)"'
 expect_failure 'RED: transicao open->closed falha antes da migration 14' \
-  "UPDATE public.contacts SET conversation_status='closed' WHERE id='30000000-0000-0000-0000-000000000001'"
+  "UPDATE public.contacts SET conversation_status='closed' WHERE id='30000000-0000-0000-0000-000000000001'" \
+  'Invalid conversation_status transition: open -> closed|violates check constraint "(contacts_conversation_status_check|chk_conversation_status_values)"'
 
 # ── Aplica as migrations da F1 ────────────────────────────────────────────────────────────
 psql_file "$migration_soft_delete" >/dev/null
@@ -410,6 +449,121 @@ psql_file "$migration_single_predicate" >/dev/null
 psql_file "$migration_guards" >/dev/null
 psql_file "$migration_hoisted" >/dev/null
 psql_file "$migration_can_delete_hoisted" >/dev/null
+# ═══════════════════════════════════════════════════════════════════════════════════════════
+# (item 8) ASSERCOES NOVAS -- fecham os buracos apontados pela auditoria adversarial.
+# Cada uma tem prova de mutacao (mutacao -> assercao que falhou) registrada no RESUMO.md.
+# ═══════════════════════════════════════════════════════════════════════════════════════════
+
+# Le assinatura + ACL de UMA funcao do public por pg_proc + aclexplode. Nao usa
+# has_function_privilege de proposito: ela ESTOURA com erro de catalogo quando a funcao nao
+# existe -- era exatamente assim ("ERROR: function public.can_edit_contact(uuid, uuid) does not
+# exist" no meio de outra assercao) que a ausencia de 20260929770000/20260929810000 aparecia:
+# sem nome, sem contagem. Devolve 'existe|auth=|svc=|anon=|public='.
+fn_acl_tuple() {
+  local fname="$1" sig="$2"
+  cat <<FNSQL
+WITH f AS (
+  SELECT p.oid, p.proacl
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public' AND p.proname = '$fname'
+    AND (SELECT string_agg(format_type(u.t, NULL), ', ' ORDER BY u.ord)
+           FROM unnest(p.proargtypes) WITH ORDINALITY u(t, ord)) = '$sig'
+)
+SELECT
+  CASE WHEN (SELECT count(*) FROM f) = 1 THEN 'existe' ELSE 'AUSENTE' END
+  || '|auth='   || coalesce((SELECT EXISTS (SELECT 1 FROM aclexplode(f.proacl) a
+        WHERE a.grantee = (SELECT oid FROM pg_roles WHERE rolname = 'authenticated')
+          AND a.privilege_type = 'EXECUTE')::text FROM f), 'AUSENTE')
+  || '|svc='    || coalesce((SELECT EXISTS (SELECT 1 FROM aclexplode(f.proacl) a
+        WHERE a.grantee = (SELECT oid FROM pg_roles WHERE rolname = 'service_role')
+          AND a.privilege_type = 'EXECUTE')::text FROM f), 'AUSENTE')
+  || '|anon='   || coalesce((SELECT EXISTS (SELECT 1 FROM aclexplode(f.proacl) a
+        WHERE a.grantee = (SELECT oid FROM pg_roles WHERE rolname = 'anon')
+          AND a.privilege_type = 'EXECUTE')::text FROM f), 'AUSENTE')
+  || '|public=' || coalesce((SELECT (f.proacl IS NULL OR EXISTS (SELECT 1 FROM aclexplode(f.proacl) a
+        WHERE a.grantee = 0 AND a.privilege_type = 'EXECUTE'))::text FROM f), 'AUSENTE')
+FNSQL
+}
+
+# ── (b) as DUAS assinaturas de can_edit_contact: existencia + assinatura EXATA + ACL ──────────
+# Assinatura exata pelos TIPOS dos argumentos (format_type sobre proargtypes): a versao de 2
+# argumentos nao pode "engolir" a de 5 por default, e vice-versa (a de 5 e sem defaults
+# justamente para nao criar ambiguidade -- 'function can_edit_contact is not unique').
+expect_value '[b] can_edit_contact(uuid,uuid) existe, assinatura exata e ACL (auth+service_role; sem anon/PUBLIC)' \
+  'existe|auth=true|svc=true|anon=false|public=false' \
+  "$(fn_acl_tuple can_edit_contact 'uuid, uuid')"
+expect_value '[b] can_edit_contact(uuid,uuid,uuid[],uuid,boolean) existe, assinatura exata e ACL (auth+service_role; sem anon/PUBLIC)' \
+  'existe|auth=true|svc=true|anon=false|public=false' \
+  "$(fn_acl_tuple can_edit_contact 'uuid, uuid, uuid[], uuid, boolean')"
+
+# ── (d) ACL de service_role e revogacao de PUBLIC ─────────────────────────────────────────────
+fns_chave="('public.delete_contact(uuid)'),('public.delete_contacts(uuid[])'),('public.can_edit_contact(uuid,uuid)'),('public.can_edit_contact(uuid,uuid,uuid[],uuid,boolean)'),('public.can_delete_contacts(uuid[])'),('public.search_contacts(text,text,text,text,text,timestamptz,text,text,integer,integer)')"
+expect_value '[d] service_role tem EXECUTE nas 6 funcoes-chave do modulo' 'true,true,true,true,true,true' \
+  "SELECT string_agg(has_function_privilege('service_role', v.f, 'EXECUTE')::text, ',') FROM (VALUES $fns_chave) v(f)"
+# PUBLIC = grantee 0 em aclexplode; proacl NULL tambem significa EXECUTE para PUBLIC (ACL default).
+# `search_contacts` fica FORA de proposito: o harness a recria com DROP + CREATE (para reproduzir
+# o corpo de 23 colunas do ledger) e o DROP apaga o ACL manual, deixando proacl NULL -- artefato
+# do harness, nao regressao. Limitacao registrada no RESUMO.md.
+expect_value '[d] PUBLIC NAO tem EXECUTE nas 5 funcoes criadas pelas migrations' '0' \
+  "SELECT count(*) FROM (VALUES ('public.delete_contact(uuid)'),('public.delete_contacts(uuid[])'),('public.can_edit_contact(uuid,uuid)'),('public.can_edit_contact(uuid,uuid,uuid[],uuid,boolean)'),('public.can_delete_contacts(uuid[])')) v(f) JOIN pg_proc p ON p.oid = v.f::regprocedure WHERE p.proacl IS NULL OR EXISTS (SELECT 1 FROM aclexplode(p.proacl) a WHERE a.grantee = 0 AND a.privilege_type = 'EXECUTE')"
+
+# ── (c) A POLICY DE SELECT SOZINHA: leitura REAL de public.contacts sob RLS ───────────────────
+# Ate aqui nao havia nenhum `SELECT ... FROM public.contacts` rodando como `authenticated`; a
+# policy de SELECT so era tocada de lado (o RETURNING dos UPDATE das RPCs, que sao SECURITY
+# DEFINER e nem passam por RLS). A leitura direta e o unico jeito de provar que
+# `contacts_select_policy` filtra de verdade. Neste ponto da execucao ha 5 contatos vivos:
+#   0001 dono = agente | 0002 dono = ALHEIO | 0003 sem dono/fila | 0004 fila do agente | 0005 fila alheia
+# Este bloco vem ANTES das sondas de claims (e) de proposito: o PostgreSQL aplica tambem as
+# policies de SELECT a UPDATE/DELETE, entao uma mutacao SO na policy de SELECT tem de ser
+# detectada aqui -- se as sondas de UPDATE viessem primeiro, elas mascarariam a mutacao.
+expect_value '[c] RLS de SELECT: usuario SEM VINCULO ve 0 dos 5 contatos' '0' \
+  "$claims_sem_vinculo SELECT count(*) FROM public.contacts"
+expect_value '[c] RLS de SELECT: agente ve exatamente os 2 contatos que pode editar' '2' \
+  "$claims_agente SELECT count(*) FROM public.contacts"
+expect_value '[c] RLS de SELECT: admin ve os 5 contatos vivos' '5' \
+  "$claims_admin SELECT count(*) FROM public.contacts"
+
+# ── (e) os guards de atribuicao/fila so disparam com `request.jwt.claims` COMPLETO ────────────
+# Prova em dois tempos, no MESMO caminho que o teste de delete_contact passou a usar:
+#   COM claims -> guard ATIVO   : reatribuir o contato da fila do agente para um perfil ATIVO
+#                                 sem role operacional (1000...004) e recusado;
+#   SEM claims -> guard INATIVO : a MESMA reatribuicao passa -- e o caminho que o teste media
+#                                 antes do item 8, e o motivo de todas as chamadas de
+#                                 delete_contact agora carregarem o claim completo.
+# A ordem importa: a assercao COM claims falha sem mexer no estado; a SEM claims e a que
+# efetiva a mudanca (0004 fica com assigned_to = 1000...004, ativo e SEM role -- o que mantem
+# as assercoes do bloco dos guards sensiveis a regressao "guard olha so NEW").
+expect_failure '[e] COM request.jwt.claims completo o guard de atribuicao fica ATIVO (reatribuicao para perfil sem role e recusada)' \
+  "$claims_agente WITH u AS (UPDATE public.contacts SET assigned_to='10000000-0000-0000-0000-000000000004' WHERE id='30000000-0000-0000-0000-000000000004' RETURNING 1) SELECT count(*) FROM u" \
+  'Sem permissao para atribuir contato a este agente'
+expect_value '[e] SEM request.jwt.claims o guard fica INATIVO (a mesma reatribuicao passa)' '1' \
+  "SET ROLE authenticated; SET request.jwt.claim.sub='$AGENTE'; WITH u AS (UPDATE public.contacts SET assigned_to='10000000-0000-0000-0000-000000000004' WHERE id='30000000-0000-0000-0000-000000000004' RETURNING 1) SELECT count(*) FROM u"
+
+# ── (f) CONTRAPROVAS COMPORTAMENTAIS das assercoes de TEXTO do bloco do helper ────────────────
+# As assercoes de texto (`pg_get_functiondef LIKE '%can_edit_contact%'`, `qual LIKE ...`)
+# continuam onde estao; o que faltava era medir o COMPORTAMENTO que elas tentam implicar.
+# (f.1) contraprova de 'search_contacts usa o helper'
+expect_value '[f] search_contacts do agente so devolve contatos que ele pode editar (2 de 5)' '2' \
+  "$claims_agente SELECT count(*) FROM public.search_contacts()"
+expect_value '[f] search_contacts de quem NAO tem vinculo devolve 0 dos 5' '0' \
+  "$claims_sem_vinculo SELECT count(*) FROM public.search_contacts()"
+# (f.2) contraprova de 'policy de UPDATE usa o helper' -- e do caminho que as RPCs SECURITY
+# DEFINER existem para driblar (o admin edita o que a policy negaria ao agente).
+# ATENCAO: o Postgres aplica as policies de SELECT tambem a UPDATE/DELETE, e as duas policies
+# tem o MESMO predicado (e o proposito do helper) -- entao o caso 'agente NAO edita' tambem
+# ficaria 0 linhas com a policy de UPDATE liberada. Quem separa os dois e o caso do admin
+# (mutacao 'is_admin forcado a false' na policy de UPDATE: o admin continua VENDO o contato
+# pela policy de SELECT e mesmo assim a edicao da 0 linhas).
+expect_value '[f] policy de UPDATE: agente NAO edita contato alheio (0 linhas)' '0' \
+  "$claims_agente WITH u AS (UPDATE public.contacts SET notes='item8-probe' WHERE id='30000000-0000-0000-0000-000000000002' RETURNING 1) SELECT count(*) FROM u"
+expect_value '[f] policy de UPDATE: admin edita o mesmo contato alheio (1 linha)' '1' \
+  "$claims_admin WITH u AS (UPDATE public.contacts SET notes='item8-probe-admin' WHERE id='30000000-0000-0000-0000-000000000002' RETURNING 1) SELECT count(*) FROM u"
+# (f.3) contraprova de 'a versao de 2 argumentos delega para a de 5' e de 'policy passa os
+# lookups por parametro': as duas assinaturas TEM de concordar nos 4 casos de borda (dono,
+# alheio, fila propria, fila alheia) -- se a de 5 divergir da de 2, a delegacao quebrou.
+expect_value '[f] can_edit_contact de 2 argumentos concorda com a de 5 nos 4 casos de borda' 'true,true,true,true' \
+  "$claims_agente SELECT string_agg(eq, ',') FROM (SELECT (public.can_edit_contact(v.a, v.q) = public.can_edit_contact(v.a, v.q, (SELECT array_agg(x) FROM public.get_visible_agent_ids(auth.uid()) x), (SELECT public.get_profile_id_for_user(auth.uid())), (SELECT public.is_admin_or_supervisor(auth.uid()))))::text AS eq FROM (VALUES ('10000000-0000-0000-0000-000000000001'::uuid, NULL::uuid), ('10000000-0000-0000-0000-000000000002'::uuid, NULL::uuid), ('10000000-0000-0000-0000-000000000003'::uuid, '50000000-0000-0000-0000-000000000001'::uuid), (NULL::uuid, '50000000-0000-0000-0000-000000000002'::uuid)) v(a,q)) t"
+
 # `can_delete_contacts` ignora contato ja excluido de proposito (a lista nao mostra excluidos).
 expect_value 'can_delete_contacts: dono e membro de fila true, fila alheia false' 'true,true,false' \
   "SET ROLE authenticated; SET request.jwt.claim.sub='$AGENTE'; SELECT string_agg(can_delete::text, ',' ORDER BY contact_id) FROM public.can_delete_contacts(ARRAY['30000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000004','30000000-0000-0000-0000-000000000005']::uuid[])"
@@ -432,37 +586,49 @@ expect_value 'GREEN: archived -> open (desarquivar) passa' 'open' \
 expect_value 'timestamps de transicao gravados' 't' \
   "SELECT (conversation_status_changed_at IS NOT NULL) FROM public.contacts WHERE id='30000000-0000-0000-0000-000000000001'"
 expect_failure 'FSM ainda barra resolved -> waiting' \
-  "UPDATE public.contacts SET conversation_status='resolved' WHERE id='30000000-0000-0000-0000-000000000001'; UPDATE public.contacts SET conversation_status='waiting' WHERE id='30000000-0000-0000-0000-000000000001'"
+  "UPDATE public.contacts SET conversation_status='resolved' WHERE id='30000000-0000-0000-0000-000000000001'; UPDATE public.contacts SET conversation_status='waiting' WHERE id='30000000-0000-0000-0000-000000000001'" \
+  'Invalid conversation_status transition: resolved -> waiting'
 expect_failure 'CHECK continua barrando valor fora do conjunto canonico' \
-  "UPDATE public.contacts SET conversation_status='banana' WHERE id='30000000-0000-0000-0000-000000000001'"
+  "UPDATE public.contacts SET conversation_status='banana' WHERE id='30000000-0000-0000-0000-000000000001'" \
+  'Invalid conversation_status transition: open -> banana|violates check constraint "chk_conversation_status_values"'
 expect_value 'volta para open para o resto do teste' 'open' \
   "UPDATE public.contacts SET conversation_status='open' WHERE id='30000000-0000-0000-0000-000000000001' RETURNING conversation_status"
 
 # ── GREEN: etapas 7/9 (delete_contact/delete_contacts) ────────────────────────────────────
+# (item 8) TODAS as chamadas usam `$claims_*` (json com sub E role): com apenas
+# `request.jwt.claim.sub` os guards de atribuicao/fila ficam inativos nesse caminho e o teste
+# media um caminho que o PostgREST nunca produz.
 expect_value 'anon nao tem EXECUTE em delete_contact' 'f' \
   "SELECT has_function_privilege('anon','public.delete_contact(uuid)','EXECUTE')"
 expect_value 'authenticated tem EXECUTE em delete_contact' 't' \
   "SELECT has_function_privilege('authenticated','public.delete_contact(uuid)','EXECUTE')"
 expect_value 'admin exclui contato alheio e recebe o id' '30000000-0000-0000-0000-000000000002' \
-  "SET ROLE authenticated; SET request.jwt.claim.sub='$ADMIN'; SELECT public.delete_contact('30000000-0000-0000-0000-000000000002')"
+  "$claims_admin SELECT public.delete_contact('30000000-0000-0000-0000-000000000002')"
 expect_value 'contato excluido tem deleted_at preenchido' 't' \
   "SELECT (deleted_at IS NOT NULL) FROM public.contacts WHERE id='30000000-0000-0000-0000-000000000002'"
 expect_value 'dono exclui o proprio contato' '30000000-0000-0000-0000-000000000001' \
-  "SET ROLE authenticated; SET request.jwt.claim.sub='$AGENTE'; SELECT public.delete_contact('30000000-0000-0000-0000-000000000001')"
+  "$claims_agente SELECT public.delete_contact('30000000-0000-0000-0000-000000000001')"
 expect_failure 'agente sem vinculo (nem dono, nem fila) nao exclui contato' \
-  "SET ROLE authenticated; SET request.jwt.claim.sub='$AGENTE'; SELECT public.delete_contact('30000000-0000-0000-0000-000000000003')"
-expect_value 'agente membro ATIVO da fila exclui contato da fila (regra de edicao)' '30000000-0000-0000-0000-000000000004' \
-  "SET ROLE authenticated; SET request.jwt.claim.sub='$AGENTE'; SELECT public.delete_contact('30000000-0000-0000-0000-000000000004')"
+  "$claims_agente SELECT public.delete_contact('30000000-0000-0000-0000-000000000003')" \
+  'Contato nao encontrado ou sem permissao para excluir'
+# (item 8) O contato 0004 tem fila E responsavel que o guard de atribuicao recusaria se ele
+# olhasse so NEW (1000...004 e ativo, mas sem role operacional). Com o claim completo este
+# delete_contact so passa porque os guards comparam OLD x NEW -- assercao de (e).
+expect_value '[e] agente membro ATIVO da fila exclui contato de fila (claims completos; guard olha OLD x NEW)' '30000000-0000-0000-0000-000000000004' \
+  "$claims_agente SELECT public.delete_contact('30000000-0000-0000-0000-000000000004')"
 expect_failure 'agente de outra fila nao exclui contato de fila alheia' \
-  "SET ROLE authenticated; SET request.jwt.claim.sub='$AGENTE'; SELECT public.delete_contact('30000000-0000-0000-0000-000000000005')"
+  "$claims_agente SELECT public.delete_contact('30000000-0000-0000-0000-000000000005')" \
+  'Contato nao encontrado ou sem permissao para excluir'
 expect_value 'admin exclui o contato de fila alheia (fecha o estado para as contagens)' '30000000-0000-0000-0000-000000000005' \
-  "SET ROLE authenticated; SET request.jwt.claim.sub='$ADMIN'; SELECT public.delete_contact('30000000-0000-0000-0000-000000000005')"
+  "$claims_admin SELECT public.delete_contact('30000000-0000-0000-0000-000000000005')"
 expect_failure 'excluir duas vezes falha em vez de fingir sucesso' \
-  "SET ROLE authenticated; SET request.jwt.claim.sub='$ADMIN'; SELECT public.delete_contact('30000000-0000-0000-0000-000000000002')"
+  "$claims_admin SELECT public.delete_contact('30000000-0000-0000-0000-000000000002')" \
+  'Contato nao encontrado ou sem permissao para excluir'
 expect_failure 'delete_contacts sem nenhuma linha permitida falha' \
-  "SET ROLE authenticated; SET request.jwt.claim.sub='$ALHEIO'; SELECT public.delete_contacts(ARRAY['30000000-0000-0000-0000-000000000003']::uuid[])"
+  "$claims_alheio SELECT public.delete_contacts(ARRAY['30000000-0000-0000-0000-000000000003']::uuid[])" \
+  'Nenhum contato excluido: sem permissao ou ja excluido'
 expect_value 'delete_contacts em lote devolve a contagem' '1' \
-  "SET ROLE authenticated; SET request.jwt.claim.sub='$ADMIN'; SELECT public.delete_contacts(ARRAY['30000000-0000-0000-0000-000000000003']::uuid[])"
+  "$claims_admin SELECT public.delete_contacts(ARRAY['30000000-0000-0000-0000-000000000003']::uuid[])"
 
 # ── GREEN: etapas 8/10 (excluidos somem de search_contacts e contacts_count_by_type) ──────
 expect_value 'search_contacts do admin nao devolve excluidos' '0' \
@@ -495,6 +661,11 @@ expect_value 'service_role preserva CRUD' 't' \
   "SELECT has_table_privilege('service_role','public.contacts','SELECT,INSERT,UPDATE,DELETE')"
 
 # ── GREEN: debito pos-#1187 item 2 (um predicado so: ver/editar/excluir) ──────────────────
+# As assercoes ABAIXO sao de TEXTO (`pg_get_functiondef LIKE '%can_edit_contact%'`,
+# `qual LIKE '%get_visible_agent_ids%'`): provam que o helper foi CITADO, nao que ele
+# GOVERNA. As contraprovas comportamentais correspondentes (item 8) estao no bloco
+# '[f] CONTRAPROVAS COMPORTAMENTAIS' logo apos as migrations -- leitura real sob RLS,
+# UPDATE negado/permitido pela policy e concordancia entre as duas assinaturas do helper.
 expect_value 'helper can_edit_contact existe (2 args compat + 5 args policies)' '2' \
   "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='can_edit_contact'"
 expect_value 'delete_contact usa o helper (sem predicado inline)' '1' \
@@ -509,7 +680,8 @@ expect_value 'policy de SELECT usa o helper' '1' \
   "SELECT (qual LIKE '%can_edit_contact%')::int FROM pg_policies WHERE schemaname='public' AND tablename='contacts' AND policyname='contacts_select_policy'"
 # (os casos de can_delete_contacts ficam no bloco logo apos as migrations, com os contatos vivos)
 expect_failure 'anon nao pode chamar can_delete_contacts' \
-  "SET ROLE anon; SELECT * FROM public.can_delete_contacts(ARRAY['30000000-0000-0000-0000-000000000001']::uuid[])"
+  "SET ROLE anon; SELECT * FROM public.can_delete_contacts(ARRAY['30000000-0000-0000-0000-000000000001']::uuid[])" \
+  'permission denied for function can_delete_contacts'
 # Expressao de policy roda como o CHAMADOR: sem EXECUTE para authenticated, todo SELECT
 # em contacts passa a falhar com "permission denied for function can_edit_contact".
 expect_value 'authenticated executa can_edit_contact (policy roda como chamador)' 't' \
@@ -542,19 +714,23 @@ expect_value 'authenticated executa can_delete_contacts' 't' \
 # recusado com "Sem permissao para atribuir contato a este agente" -- mesmo sem ninguem
 # ser reatribuido. As duas primeiras assercoes sao o que muda; as duas ultimas garantem
 # que a protecao de verdade (reatribuir/trocar de fila) continua valendo.
-# --1187 item 3: contato COM fila cujo responsavel esta INATIVO. Antes, qualquer UPDATE
-# nesse contato (nota, status, soft-delete) era recusado pelo guard do responsavel, mesmo sem
-# ninguem ser reatribuido; agora o guard so olha reatribuicao de verdade e o membro da fila
-# edita. As duas assercoes seguintes garantem que a protecao real continua valendo.
-claims_agente="SET ROLE authenticated; SET request.jwt.claims='{\"role\":\"authenticated\",\"sub\":\"$AGENTE\"}'; SET request.jwt.claim.sub='$AGENTE';"
-expect_value 'contato de fila com responsavel inativo: membro da fila edita' '1' \
+# --1187 item 3 + item 8: contato COM fila cujo responsavel NAO tem role operacional (o
+# guard o recusaria se olhasse so NEW). Antes, qualquer UPDATE nesse contato (nota, status,
+# soft-delete) era recusado pelo guard do responsavel, mesmo sem ninguem ser reatribuido; agora
+# o guard so olha reatribuicao de verdade e o membro da fila edita. As duas assercoes seguintes
+# garantem que a protecao real continua valendo.
+# (item 8) `$claims_agente` (json com sub E role) e definido no TOPO do arquivo, junto de
+# `$claims_admin`/`$claims_alheio`/`$claims_sem_vinculo` -- um unico formato no arquivo.
+expect_value 'contato de fila com responsavel sem role: membro da fila edita' '1' \
   "$claims_agente UPDATE public.contacts SET notes='ok' WHERE id='30000000-0000-0000-0000-000000000004' RETURNING 1"
 expect_value 'soft-delete direto nao esbarra nos guards de atribuicao/fila' '1' \
   "$claims_agente UPDATE public.contacts SET deleted_at=now() WHERE id='30000000-0000-0000-0000-000000000004' RETURNING 1"
 expect_failure 'reatribuir contato para outro agente continua proibido' \
-  "$claims_agente UPDATE public.contacts SET assigned_to='10000000-0000-0000-0000-000000000002' WHERE id='30000000-0000-0000-0000-000000000001'"
+  "$claims_agente UPDATE public.contacts SET assigned_to='10000000-0000-0000-0000-000000000002' WHERE id='30000000-0000-0000-0000-000000000001'" \
+  'Sem permissao para atribuir contato a este agente'
 expect_failure 'mover contato para fila alheia continua proibido' \
-  "$claims_agente UPDATE public.contacts SET queue_id='50000000-0000-0000-0000-000000000002' WHERE id='30000000-0000-0000-0000-000000000004'"
+  "$claims_agente UPDATE public.contacts SET queue_id='50000000-0000-0000-0000-000000000002' WHERE id='30000000-0000-0000-0000-000000000004'" \
+  'Sem permissao para mover contato para esta fila'
 
 # ── Idempotencia (as migrations sao reaplicaveis) ─────────────────────────────────────────
 # `migration_soft_delete` fica FORA deste bloco de proposito: o arquivo de 20260929370000
