@@ -12,6 +12,8 @@ import {
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { invalidateContactsAggregates } from '@/hooks/crm/contactsAggregates';
 import { toast } from 'sonner';
 
 interface KanbanContact {
@@ -41,6 +43,7 @@ const KANBAN_COLUMNS = [
 ];
 
 export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanViewProps) {
+  const queryClient = useQueryClient();
   const [localContacts, setLocalContacts] = useState<KanbanContact[]>(contacts);
   // id do contato -> token do drag mais recente. Set nao distinguia dois drags
   // do mesmo contato: o primeiro a responder limpava a flag e um update antigo
@@ -125,6 +128,11 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
       .update({ contact_type: newType })
       .eq('id', draggableId);
 
+    // Todo update que o banco aceitou muda o tipo, mesmo se superado por um drag
+    // posterior (que pode falhar e deixar este como o valor final): KPIs e
+    // contadores por tipo precisam refletir, entao invalida antes do token.
+    if (!error) invalidateContactsAggregates(queryClient);
+
     // Se outro drag do mesmo contato comecou depois deste, ele e a verdade:
     // ignora resultado e rollback desta operacao ja superada.
     if (inFlightDrags.current.get(draggableId) !== token) return;
@@ -150,7 +158,7 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
       const col = KANBAN_COLUMNS.find(c => c.type === newType);
       toast.success(`Movido para ${col?.label || newType}`);
     }
-  }, [localContacts]);
+  }, [localContacts, queryClient]);
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>

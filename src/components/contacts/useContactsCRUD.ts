@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useActionFeedback } from '@/hooks/ui/useActionFeedback';
 import { useContactsSearch } from '@/hooks/crm/useContactsSearch';
+import { invalidateContactsAggregates } from '@/hooks/crm/contactsAggregates';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 
 interface ContactFormData {
@@ -88,8 +89,7 @@ export function useContactsCRUD() {
   const searchHook = useContactsSearch();
   const queryClient = useQueryClient();
   const invalidateContactAggregates = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['contacts-kpi'] });
-    queryClient.invalidateQueries({ queryKey: ['contacts-type-counts'] });
+    invalidateContactsAggregates(queryClient);
   }, [queryClient]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
