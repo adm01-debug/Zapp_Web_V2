@@ -5,9 +5,12 @@ import * as app from '../../src/lib/ai-vocabulary.ts';
 /**
  * Comportamento do vocabulário canônico (IA-021 / IA-022).
  *
- * A MESMA tabela roda contra as DUAS cópias (edge Deno e app Vite): se uma
- * delas divergir no comportamento — mesmo que o texto pareça igual — o teste
- * quebra. Complementa o teste de paridade, que compara a origem byte a byte.
+ * A MESMA tabela roda contra as DUAS portas de entrada (edge Deno em
+ * `supabase/functions/_shared/` e app Vite via re-export em `src/lib/`): como o
+ * front reexporta o módulo canônico, as duas pontas são o MESMO código — aqui o
+ * que se prova é o comportamento observável. Complementa o teste de identidade
+ * de exportação, que prova que cada símbolo do front é a mesma referência do
+ * canônico.
  */
 
 const copias: Array<[string, typeof edge]> = [

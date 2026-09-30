@@ -30,9 +30,9 @@ completa, então a ausência de dado era representada por **valores inventados**
 
 | Etapa | Aceite do plano | Estado | Evidência |
 |---|---|---|---|
-| **IA-021** Unificar sentimento | mesmo sentimento mantém significado em análise, contato, churn, alerta e CRM | ✅ | `_shared/ai-vocabulary.ts` + `src/lib/ai-vocabulary.ts` (cópias byte-idênticas) com `normalizeSentiment` e tabela de aliases de legado; consumidores migrados (ver §Consumidores) |
+| **IA-021** Unificar sentimento | mesmo sentimento mantém significado em análise, contato, churn, alerta e CRM | ✅ | **módulo canônico único** `supabase/functions/_shared/ai-vocabulary.ts` (empacotado pelo Deno), consumido pelo front por re-export em `src/lib/ai-vocabulary.ts` — sem cópias duplicadas (o SonarCloud contava 454 linhas de duplicação do par espelhado) — com `normalizeSentiment` e tabela de aliases de legado; consumidores migrados (ver §Consumidores) |
 | **IA-022** Unificar prioridade e urgência | valores inválidos não entram nas projeções; **todos** os consumidores passam na matriz de conversão | ✅ | `normalizeUrgency`, `urgencyToOperationalPriority`, `normalizeOperationalPriority`; a comparação morta com `'critical'` foi removida de `ai-conversation-analysis` e `ai-conversation-summary` |
-| **IA-023** Preservar zero e ausência | zero continua zero, confiança zero não vira 70%, falta de dado não vira satisfação neutra | ✅ | `_shared/ai-values.ts` + `src/lib/ai-values.ts` (`normalizeScore`, `aggregateScores`); fim dos `\|\| 50`, `\|\| 0.7`, CSAT 3 e `\|\| 'low'` nas funções e nos consumidores |
+| **IA-023** Preservar zero e ausência | zero continua zero, confiança zero não vira 70%, falta de dado não vira satisfação neutra | ✅ | **módulo canônico único** `supabase/functions/_shared/ai-values.ts`, consumido pelo front por re-export em `src/lib/ai-values.ts` (`normalizeScore`, `aggregateScores`) — sem cópias duplicadas; fim dos `\|\| 50`, `\|\| 0.7`, CSAT 3 e `\|\| 'low'` nas funções e nos consumidores |
 | **IA-024** Contrato das mensagens | campos necessários não desaparecem; excesso tem tratamento explícito, não truncamento silencioso | ✅ | `_shared/schemas.ts`: `MessageSchema` aceita `id`/`type`/`mediaUrl` e recorte de período, `withConversationBudget` recusa acima de 120.000 caracteres agregados com motivo, `periodDays` 1..365 |
 | **IA-025** Validar toda saída do modelo | JSON válido com estrutura/valor incorreto é rejeitado antes de renderizar ou persistir | ✅ | `_shared/ai-response-contracts.ts`: schemas por capacidade (`ConversationAnalysisOutput`, `ConversationSummaryOutput`, `AutoTagOutput`, `SuggestedRepliesOutput`, `ChatbotL1Output`), `parseModelOutput` com caminho do erro e `buildAiEnvelope` |
 | **IA-026** Persistir a análise completa | reabrir o histórico reproduz a análise originalmente aceita, inclusive campos opcionais | ✅ | colunas novas em `conversation_analyses` (`agent_performance`, `churn_risk`, `sales_opportunity`, `analysis_version`, `period_days`, `coverage`, `model`, `analyzed_at`) e RPC `persist_conversation_analysis` |
@@ -114,7 +114,7 @@ neutra") exigiram ir além dessa lista, sempre com a mesma correção:
 
 **Teste de mutação (o teste pega o defeito?).** Reintroduzido o defeito real no código: ausência virando
 `70` na tabela numérica e `?? 50` na gravação → **3 testes vermelhos** (exit 1), restaurado do backup com
-sha256 conferido. O mesmo exercício foi feito em cada frente delegada (vocabulário nas duas cópias,
+sha256 conferido. O mesmo exercício foi feito em cada frente delegada (vocabulário no módulo canônico único,
 memória por contato, dashboard: `expected 60 to be 40` e `expected 50 to be null`), sempre com restauração
 conferida por hash.
 

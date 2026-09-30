@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { aggregateScores, normalizeScore } from '../../supabase/functions/_shared/ai-values.ts';
+import * as canonicalValues from '../../supabase/functions/_shared/ai-values.ts';
+import * as appValues from '../../src/lib/ai-values.ts';
 
 const PERCENT = { min: 0, max: 100, scale: 'percent' as const };
 const CSAT = { min: 1, max: 5, scale: 'integer' as const };
@@ -85,19 +85,26 @@ describe('IA-023 · aggregateScores exclui o ausente em vez de tratar como 0/50'
   });
 });
 
-describe('IA-023 · paridade byte a byte entre edge e frontend', () => {
-  const root = resolve(__dirname, '../..');
-  const edge = readFileSync(resolve(root, 'supabase/functions/_shared/ai-values.ts'), 'utf8');
-  const front = readFileSync(resolve(root, 'src/lib/ai-values.ts'), 'utf8');
-  const normalize = (s: string) => s.replace(/\s+/g, ' ').trim();
+/**
+ * O contrato numérico existe em UM único módulo:
+ * `supabase/functions/_shared/ai-values.ts` (empacotado pelo Deno). O front
+ * consome esse MESMO arquivo por reexport em `src/lib/ai-values.ts` — não há mais
+ * duas cópias byte-idênticas para divergirem (o SonarCloud contava as duas como
+ * duplicação do bloco). Aqui provamos IDENTIDADE DE EXPORTAÇÃO: cada símbolo de
+ * valor do front é a MESMA referência do canônico.
+ */
+describe('IA-023 · identidade de exportação entre edge e frontend', () => {
+  const VALUE_EXPORTS = ['normalizeScore', 'aggregateScores'] as const;
 
-  it('as duas cópias têm o mesmo conteúdo (ignorando formatação)', () => {
-    expect(normalize(front)).toBe(normalize(edge));
+  it('o front reexporta os MESMOS símbolos de valor do canônico (mesma referência)', () => {
+    for (const name of VALUE_EXPORTS) {
+      expect(appValues[name]).toBeDefined();
+      expect(appValues[name]).toBe(canonicalValues[name]);
+    }
   });
 
-  it('as duas cópias exportam os mesmos símbolos', () => {
-    const symbols = (s: string) => (s.match(/export (?:function|interface|type|const) (\w+)/g) ?? []).sort();
-    expect(symbols(front)).toEqual(symbols(edge));
-    expect(symbols(edge).length).toBeGreaterThanOrEqual(6);
+  it('o front não exporta nada além do canônico e não perde símbolo de valor', () => {
+    expect(Object.keys(appValues).sort()).toEqual(Object.keys(canonicalValues).sort());
+    expect(Object.keys(canonicalValues).sort()).toEqual([...VALUE_EXPORTS].sort());
   });
 });

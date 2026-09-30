@@ -10,10 +10,10 @@
  *   - `src/components/ai/ticketClassification.ts:59` → confiança 0 virava 0,7
  *     (exibia "70%" de confiança que ninguém mediu).
  *
- * Cópia espelhada, byte a byte, em `supabase/functions/_shared/ai-values.ts` e
- * `src/lib/ai-values.ts` (mesma API, sem imports): o edge usa uma, o app usa a
- * outra, e o teste `tests/contracts/ai-values-parity.contract.test.ts` falha se
- * as duas divergirem.
+ * Fonte única do contrato numérico (`_shared/ai-values.ts`) — o edge importa
+ * daqui e o app consome este MESMO arquivo pelo re-export de
+ * `src/lib/ai-values.ts` (não existe cópia paralela). Os testes de contrato
+ * provam, export a export, que o re-export entrega exatamente estes símbolos.
  */
 
 export type ValueIssue =

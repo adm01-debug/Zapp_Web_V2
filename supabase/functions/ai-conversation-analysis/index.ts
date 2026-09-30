@@ -4,6 +4,7 @@ import { AiConversationAnalysisSchema, CONTEXT_CONTRACT_VERSION, measureConversa
 import { normalizeSentiment, normalizeUrgency, urgencyToOperationalPriority } from "../_shared/ai-vocabulary.ts";
 import { normalizeScore } from "../_shared/ai-values.ts";
 import { ConversationAnalysisOutput, buildAiEnvelope, parseModelOutput } from "../_shared/ai-response-contracts.ts";
+import { parseJsonObject } from "../_shared/ai-json.ts";
 import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 
@@ -199,14 +200,10 @@ Responda em português brasileiro.`;
         rawOutput = JSON.parse(toolCall.function.arguments);
       } catch {
         log.error("Failed to parse tool_call arguments");
-        const jsonMatch = toolCall.function.arguments.match(/\{[\s\S]*\}/);
-        rawOutput = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+        rawOutput = parseJsonObject(toolCall.function.arguments);
       }
     } else if (typeof rawContent === 'string') {
-      const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        try { rawOutput = JSON.parse(jsonMatch[0]); } catch { rawOutput = null; }
-      }
+      rawOutput = parseJsonObject(rawContent);
     }
 
     const contextBudget = measureConversationContext(messages, periodDays);

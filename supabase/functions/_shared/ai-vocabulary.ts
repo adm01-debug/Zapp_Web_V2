@@ -2,11 +2,11 @@
  * Vocabulário canônico de IA do Zapp_Web_V2 — etapas IA-021 (sentimento) e
  * IA-022 (urgência × prioridade operacional).
  *
- * Este arquivo vive em DUAS cópias byte-idênticas, uma por runtime:
- *   • supabase/functions/_shared/ai-vocabulary.ts → Edge Functions (Deno)
- *   • src/lib/ai-vocabulary.ts                    → app (Vite/React)
- * `tests/contracts/ai-vocabulary-parity.contract.test.ts` compara as duas cópias
- * (literais, mapeamentos de legado e comportamento) e falha se divergirem.
+ * Este arquivo é a FONTE ÚNICA do vocabulário. O runtime Edge (Deno) importa
+ * daqui direto; o app (Vite/React) consome este MESMO arquivo através do
+ * re-export em `src/lib/ai-vocabulary.ts` — não existe cópia paralela que possa
+ * divergir. `tests/contracts/ai-vocabulary-parity.contract.test.ts` prova, export
+ * a export, que o re-export entrega exatamente estes símbolos.
  *
  * Regras que valem para todas as funções daqui:
  *   1. Sem imports externos, funções puras, sem `console.log`.
