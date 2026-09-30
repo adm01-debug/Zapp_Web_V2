@@ -4008,7 +4008,7 @@
         "f:record_talkx_recipient_sent(p_recipient_id uuid, p_claim_token uuid, p_external_id text)": "ee5d108e0c21c425897ddeb861213a01",
         "f:create_department_invite(p_department_id uuid, p_max_uses integer, p_expires_hours integer)": "db50306934fd957848383c9429ade2b3",
         "f:record_multiplix_recipient_sent(p_recipient_id uuid, p_claim_token uuid, p_external_id text)": "a7fb1c55e83b5a212b419199b184079a",
-        "f:update_talkx_campaign_limits(p_campaign_id uuid, p_expected_revision bigint, p_limits jsonb)": "6ba3505e0d03f24b9c392f55bcfa7bf3",
+        "f:update_talkx_campaign_limits(p_campaign_id uuid, p_expected_revision bigint, p_limits jsonb)": "70fe441d6645a444bfc5c65e5e9ab9c5",
         "f:cleanup_crm_sync_outbox(p_succeeded_days integer, p_dead_letter_days integer, p_limit integer)": "ef5f830461ad7a4a22d0be906e2c49e7",
         "f:claim_outbound_message(p_message_id uuid, p_agent_id uuid, p_worker text, p_lease_seconds integer)": "65bf87bd0d3c5b26e708f88cfd817bcd",
         "f:claim_talkx_recipient(p_campaign_id uuid, p_recipient_id uuid, p_worker text, p_lease_seconds integer)": "8be6edaa9d18ac2c497b1bd7c34f5190",
@@ -4622,7 +4622,7 @@
         "e:public.talkx_blacklist_reason|PUBLIC|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.talkx_blacklist_reason|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-09-30T19:11:43Z",
+    "generated_at": "2026-09-30T19:23:27Z",
     "column_grants": {
         "r:public.departments.id|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.departments.name|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
