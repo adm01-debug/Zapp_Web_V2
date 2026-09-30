@@ -31,6 +31,8 @@ export interface EditContactShapeSource {
   neighborhood?: string | null;
   postal_code?: string | null;
   state?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export function buildEditContactShape({
@@ -60,5 +62,9 @@ export function buildEditContactShape({
     neighborhood: enrichedData?.neighborhood ?? contact.neighborhood ?? undefined,
     postal_code: enrichedData?.postal_code ?? contact.postal_code ?? undefined,
     state: enrichedData?.state ?? contact.state ?? undefined,
+    // Item 5 (onda 2): a coordenada sai daqui também. Sem ela o `EditContactDialog` abria com
+    // lat/lng vazios (o form até os aceita, mas nunca os recebia) e não exibia o pino atual.
+    latitude: enrichedData?.latitude ?? contact.latitude ?? undefined,
+    longitude: enrichedData?.longitude ?? contact.longitude ?? undefined,
   };
 }

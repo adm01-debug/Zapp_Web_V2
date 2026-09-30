@@ -48,6 +48,73 @@ function modoAtual() {
   return screen.getByTestId('tasks-mode').getAttribute('data-mode');
 }
 
+/**
+ * Etapa 45: a barra de filtros (5 controles) com o estado espelhado na URL.
+ *
+ * Os dois `Select` (prioridade e contato) não são dirigidos por aqui — o radix
+ * monta em portal e o clique vira flaky; a regra deles está provada na função
+ * pura (`applyFilters`, no teste do agregado), no parse/serialize da URL e no
+ * teste do hook. O que este arquivo prova é a integração: barra na tela, filtro
+ * recortando os modos e URL refletindo o estado.
+ */
+describe('TasksModule — etapa 45 (barra de filtros)', () => {
+  beforeEach(() => {
+    cleanup();
+    resetSupabaseMock();
+    localStorage.clear();
+    window.history.replaceState(null, '', '/');
+    setSelectResult({
+      data: [
+        makeTaskRow({ id: 'a', title: 'Ligar', status: 'todo' }),
+        makeTaskRow({ id: 'b', title: 'Feita', status: 'done', completed_at: new Date().toISOString() }),
+      ],
+      error: null,
+    });
+  });
+
+  it('traz os 5 controles e só mostra "Limpar" quando um filtro sai do padrão', async () => {
+    renderModule({ defaultMode: 'board' });
+
+    const barra = await screen.findByTestId('tasks-filter-bar');
+    expect(within(barra).getByRole('searchbox', { name: 'Buscar tarefa' })).toBeTruthy();
+    expect(within(barra).getByLabelText('Prioridade')).toBeTruthy();
+    expect(within(barra).getByLabelText('Contato')).toBeTruthy();
+    expect(within(barra).getByRole('switch', { name: 'Com alarme' })).toBeTruthy();
+    expect(within(barra).getByRole('switch', { name: 'Mostrar concluídas' })).toBeTruthy();
+    expect(within(barra).queryByRole('button', { name: /Limpar/ })).toBeNull();
+  });
+
+  it('esconder as concluídas recorta o Quadro, escreve done=0 e o "Limpar" desfaz', async () => {
+    renderModule({ defaultMode: 'board' });
+    expect(await screen.findByText('Feita')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('switch', { name: 'Mostrar concluídas' }));
+
+    await waitFor(() => expect(screen.queryByText('Feita')).toBeNull());
+    // a coluna vazia do Quadro entra no lugar (etapa 46)
+    expect(screen.getAllByText('Coluna vazia').length).toBeGreaterThan(0);
+    expect(window.location.search).toContain('done=0');
+
+    fireEvent.click(screen.getByRole('button', { name: /Limpar/ }));
+
+    await waitFor(() => expect(screen.getByText('Feita')).toBeTruthy());
+    expect(window.location.search).toBe('');
+  });
+
+  it('a busca anda no campo na hora e vira filtro depois do debounce, já na URL', async () => {
+    renderModule({ defaultMode: 'board' });
+    expect(await screen.findByText('Ligar')).toBeTruthy();
+
+    const campo = screen.getByRole('searchbox', { name: 'Buscar tarefa' });
+    fireEvent.change(campo, { target: { value: 'liga' } });
+
+    // o valor do campo é imediato; o recorte (e a URL) vêm com o debounce
+    expect((campo as HTMLInputElement).value).toBe('liga');
+    await waitFor(() => expect(screen.queryByText('Feita')).toBeNull());
+    expect(window.location.search).toContain('q=liga');
+  });
+});
+
 describe('TasksModule — B13 (uma query para os tres modos)', () => {
   beforeEach(() => {
     cleanup();

@@ -1,6 +1,7 @@
 import { isBefore, startOfDay, addDays, formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { WorkItem, WorkItemStatus } from './workItem.types';
+import type { TasksFilters } from './workItemFilters';
 
 /** Peso de prioridade (menor = primeiro) — usado na ordenacao por prazo (etapa 49) e por coluna. */
 const PRIORITY_WEIGHT: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
@@ -60,6 +61,27 @@ export function bucketByDue(items: WorkItem[], now: Date = new Date()): BucketsB
   return { overdue, today, tomorrow, upcoming, noDue, done7d, doneOlder };
 }
 
+/**
+ * Etapa 45/46: o recorte da barra de filtros, aplicado nos três modos (Lista,
+ * Quadro e Agenda). Função pura: recebe os itens que a query única já carregou e
+ * devolve o subconjunto — nenhum modo, e nenhum filtro, gera request novo.
+ *
+ * `done` é o único filtro que olha o estado terminal do item; `q` casa só o
+ * título (o mesmo recorte que a busca sempre fez).
+ */
+export function applyFilters(items: WorkItem[], f: TasksFilters): WorkItem[] {
+  const termo = f.q.trim().toLowerCase();
+
+  return items.filter(item => {
+    if (!f.done && item.status === 'done') return false;
+    if (f.prio !== 'all' && item.priority !== f.prio) return false;
+    if (f.contact !== null && item.contact?.id !== f.contact) return false;
+    if (f.alarm && item.remind_at === null) return false;
+    if (termo !== '' && !item.title.toLowerCase().includes(termo)) return false;
+    return true;
+  });
+}
+
 export function bucketByStatus(items: WorkItem[]): Record<WorkItemStatus, WorkItem[]> {
   const out: Record<WorkItemStatus, WorkItem[]> = {
     backlog: [], todo: [], doing: [], waiting: [], done: [], cancelled: [],
@@ -113,23 +135,39 @@ export function dueLabel(
   return { label: dayName.replace('.', '') + ' ' + dayMonth, overdue: false };
 }
 
+/**
+ * Chave de dia no fuso LOCAL (`AAAA-MM-DD`) — o MESMO dia que a Lista
+ * (`bucketByDue`), o Quadro e os cabecalhos da Agenda ja usam (`setHours(0,0,0,0)`
+ * + `format`). Fatiar o ISO em UTC (`toISOString().slice(0, 10)`) jogava a tarefa
+ * das 23:59 locais no dia seguinte da Agenda. Devolve `null` para valor ausente ou
+ * invalido, em vez de estourar dentro do filtro.
+ */
+function localDayKey(value: string | Date | null): string | null {
+  if (!value) return null;
+  const d = typeof value === 'string' ? new Date(value) : value;
+  if (Number.isNaN(d.getTime())) return null;
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day   = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${month}-${day}`;
+}
+
 export function weekBuckets(
   items: WorkItem[],
   startDate: Date
 ): Array<{ date: Date; reminders: WorkItem[]; dueTasks: WorkItem[] }> {
   return Array.from({ length: 7 }, (_, i) => {
     const day    = addDays(startDate, i);
-    const dayStr = day.toISOString().slice(0, 10);
+    const dayStr = localDayKey(day);
     return {
       date: day,
       reminders: items.filter(it =>
         it.remind_at &&
-        it.remind_at.slice(0, 10) === dayStr &&
+        localDayKey(it.remind_at) === dayStr &&
         it.status !== 'done' && it.status !== 'cancelled'
       ),
       dueTasks: items.filter(it =>
         it.due_date &&
-        it.due_date.slice(0, 10) === dayStr &&
+        localDayKey(it.due_date) === dayStr &&
         it.status !== 'done' && it.status !== 'cancelled'
       ),
     };

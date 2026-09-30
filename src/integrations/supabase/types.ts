@@ -1917,6 +1917,8 @@ export type Database = {
           address: string | null
           address_number: string | null
           ai_priority: string | null
+          ai_projection_analysis_id: string | null
+          ai_projection_updated_at: string | null
           ai_sentiment: string | null
           assigned_to: string | null
           avatar_fetch_attempted_at: string | null
@@ -1958,6 +1960,8 @@ export type Database = {
           address?: string | null
           address_number?: string | null
           ai_priority?: string | null
+          ai_projection_analysis_id?: string | null
+          ai_projection_updated_at?: string | null
           ai_sentiment?: string | null
           assigned_to?: string | null
           avatar_fetch_attempted_at?: string | null
@@ -1999,6 +2003,8 @@ export type Database = {
           address?: string | null
           address_number?: string | null
           ai_priority?: string | null
+          ai_projection_analysis_id?: string | null
+          ai_projection_updated_at?: string | null
           ai_sentiment?: string | null
           assigned_to?: string | null
           avatar_fetch_attempted_at?: string | null
@@ -2037,6 +2043,13 @@ export type Database = {
           whatsapp_connection_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "contacts_ai_projection_analysis_id_fkey"
+            columns: ["ai_projection_analysis_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_analyses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "contacts_assigned_to_fkey"
             columns: ["assigned_to"]
@@ -2104,16 +2117,24 @@ export type Database = {
       }
       conversation_analyses: {
         Row: {
+          agent_performance: Json | null
+          analysis_version: number
+          analyzed_at: string
           analyzed_by: string | null
+          churn_risk: string | null
           contact_id: string
+          coverage: Json | null
           created_at: string
           customer_satisfaction: number | null
           department: string | null
           id: string
           key_points: string[] | null
           message_count: number | null
+          model: string | null
           next_steps: string[] | null
+          period_days: number | null
           relationship_type: string | null
+          sales_opportunity: string | null
           sentiment: string
           sentiment_score: number | null
           status: string
@@ -2122,16 +2143,24 @@ export type Database = {
           urgency: string | null
         }
         Insert: {
+          agent_performance?: Json | null
+          analysis_version?: number
+          analyzed_at?: string
           analyzed_by?: string | null
+          churn_risk?: string | null
           contact_id: string
+          coverage?: Json | null
           created_at?: string
           customer_satisfaction?: number | null
           department?: string | null
           id?: string
           key_points?: string[] | null
           message_count?: number | null
+          model?: string | null
           next_steps?: string[] | null
+          period_days?: number | null
           relationship_type?: string | null
+          sales_opportunity?: string | null
           sentiment?: string
           sentiment_score?: number | null
           status?: string
@@ -2140,16 +2169,24 @@ export type Database = {
           urgency?: string | null
         }
         Update: {
+          agent_performance?: Json | null
+          analysis_version?: number
+          analyzed_at?: string
           analyzed_by?: string | null
+          churn_risk?: string | null
           contact_id?: string
+          coverage?: Json | null
           created_at?: string
           customer_satisfaction?: number | null
           department?: string | null
           id?: string
           key_points?: string[] | null
           message_count?: number | null
+          model?: string | null
           next_steps?: string[] | null
+          period_days?: number | null
           relationship_type?: string | null
+          sales_opportunity?: string | null
           sentiment?: string
           sentiment_score?: number | null
           status?: string
@@ -6605,7 +6642,7 @@ export type Database = {
           {
             foreignKeyName: "talkx_blacklist_contact_id_fkey"
             columns: ["contact_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
@@ -9162,6 +9199,9 @@ export type Database = {
           out_user_id: string
         }[]
       }
+      ai_is_canonical_priority: { Args: { p_value: string }; Returns: boolean }
+      ai_is_canonical_sentiment: { Args: { p_value: string }; Returns: boolean }
+      ai_text_array: { Args: { p_value: Json }; Returns: string[] }
       calculate_level: { Args: { xp_amount: number }; Returns: number }
       can_delete_contacts: {
         Args: { p_ids: string[] }
@@ -10061,6 +10101,10 @@ export type Database = {
       }
       notify_due_reminders: { Args: never; Returns: number }
       notify_due_tasks: { Args: never; Returns: number }
+      persist_conversation_analysis: {
+        Args: { p_analysis: Json; p_analyzed_at?: string; p_contact_id: string }
+        Returns: Json
+      }
       persist_multiplix_recipient_message_snapshot: {
         Args: {
           p_claim_token: string
@@ -10194,6 +10238,10 @@ export type Database = {
       rename_wa_label_on_all_contacts: {
         Args: { p_label_prefix: string; p_new_tag: string }
         Returns: undefined
+      }
+      replace_ai_conversation_tags: {
+        Args: { p_contact_id: string; p_tags: Json }
+        Returns: Json
       }
       replace_talkx_draft_recipients: {
         Args: { p_campaign_id: string; p_contact_ids: string[] }
@@ -10392,6 +10440,17 @@ export type Database = {
         Returns: boolean
       }
       talkx_segment_tags: { Args: { p_segment: string }; Returns: Json }
+      talkx_suppress_contact: {
+        Args: {
+          p_contact_id: string
+          p_origin: string
+          p_phone: string
+          p_reason: string
+          p_reason_code: Database["public"]["Enums"]["talkx_blacklist_reason"]
+          p_source_message_id: string
+        }
+        Returns: string
+      }
       toggle_team_reaction: {
         Args: { p_emoji: string; p_message_id: string }
         Returns: Json

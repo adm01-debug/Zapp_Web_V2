@@ -3,7 +3,6 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 
 const h = vi.hoisted(() => ({
   hook: vi.fn(),
-  flag: vi.fn(),
   autocomplete: vi.fn(),
   // F3/E26: o aviso da falha de `/retrieve` sai por toast — precisa ser observável no teste.
   toast: vi.fn(),
@@ -11,7 +10,6 @@ const h = vi.hoisted(() => ({
 
 vi.mock('../location-picker/useLocationPicker', () => ({ useLocationPicker: (...args: unknown[]) => h.hook(...args) }));
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: (...args: unknown[]) => h.toast(...args) }));
-vi.mock('@/hooks/system/useFeatureFlag', () => ({ useFeatureFlag: (...args: unknown[]) => h.flag(...args) }));
 vi.mock('../location-picker/useAddressAutocomplete', () => ({ useAddressAutocomplete: (...args: unknown[]) => h.autocomplete(...args) }));
 
 import { LocationPicker } from '../LocationPicker';
@@ -40,8 +38,8 @@ function hookState(selectedLocation: Selected | null) {
 }
 
 // Estado inerte do hook de autocomplete — usado por padrão nos testes que não são sobre a
-// Fase 3 (flag desligada é o caminho desses testes, então o hook nem chega a ser consultado
-// pela UI, mas precisa existir porque o componente sempre o chama, feature flag ligada ou não).
+// Fase 3 (o hook nem chega a ser consultado pela UI, mas precisa existir porque o componente
+// sempre o chama).
 function autocompleteState(overrides: Partial<ReturnType<typeof baseAutocomplete>> = {}) {
   const merged = { ...baseAutocomplete(), ...overrides };
   // E23: a lista agora rende por `status`, não por `suggestions.length`. Nos testes de componente
@@ -81,7 +79,6 @@ function baseAutocomplete() {
 describe('LocationPicker', () => {
   it('não oferece localização em tempo real (o provedor só entrega localização pontual)', () => {
     h.hook.mockReturnValue(hookState(null));
-    h.flag.mockReturnValue(false);
     h.autocomplete.mockReturnValue(autocompleteState());
     render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
     expect(screen.getByText('Compartilhar Localização')).toBeInTheDocument();
@@ -91,7 +88,6 @@ describe('LocationPicker', () => {
 
   it('mantém "Enviar Localização" desabilitado sem seleção', () => {
     h.hook.mockReturnValue(hookState(null));
-    h.flag.mockReturnValue(false);
     h.autocomplete.mockReturnValue(autocompleteState());
     render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
     expect(screen.getByRole('button', { name: /Enviar Localização/ })).toBeDisabled();
@@ -100,7 +96,6 @@ describe('LocationPicker', () => {
   it('envia só coordenadas, nome e endereço — sem o campo isLive — e fecha o diálogo', async () => {
     const state = hookState({ lat: -23.5, lng: -46.6, name: 'Rua A', address: 'Rua A, São Paulo' });
     h.hook.mockReturnValue(state);
-    h.flag.mockReturnValue(false);
     h.autocomplete.mockReturnValue(autocompleteState());
     const onSend = vi.fn().mockResolvedValue(undefined);
     const onOpenChange = vi.fn();
@@ -118,7 +113,6 @@ describe('LocationPicker', () => {
   it('se o envio falha, mantém o diálogo aberto e a seleção para nova tentativa', async () => {
     const state = hookState({ lat: -23.5, lng: -46.6 });
     h.hook.mockReturnValue(state);
-    h.flag.mockReturnValue(false);
     h.autocomplete.mockReturnValue(autocompleteState());
     const onSend = vi.fn().mockRejectedValue(new Error('offline'));
     const onOpenChange = vi.fn();
@@ -137,7 +131,6 @@ describe('LocationPicker', () => {
     // documentado em useLocationPicker.ts) — por isso findByRole (com retry) em vez de getByRole.
     async function renderOnMapTab(state: ReturnType<typeof hookState>, ac: ReturnType<typeof autocompleteState>) {
       h.hook.mockReturnValue(state);
-      h.flag.mockReturnValue(true);
       h.autocomplete.mockReturnValue(ac);
       render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
       const mapTab = screen.getByRole('tab', { name: /Escolher no Mapa/ });
@@ -231,7 +224,6 @@ describe('LocationPicker', () => {
     it('clique no mapa (nova selectedLocation) fecha a lista de sugestões aberta', async () => {
       const ac = autocompleteState({ query: 'xbz', suggestions: [{ id: 'a', name: 'XBZ Brindes', address: 'SP', kind: 'poi' }] });
       h.hook.mockReturnValue(hookState(null));
-      h.flag.mockReturnValue(true);
       h.autocomplete.mockReturnValue(ac);
       const view = render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
       const mapTab = screen.getByRole('tab', { name: /Escolher no Mapa/ });
@@ -281,7 +273,6 @@ describe('LocationPicker', () => {
     it('E25: durante o debounce mostra esqueleto — "Nada encontrado" só depois de resposta vazia', async () => {
       const ac = autocompleteState({ status: 'typing', query: 'avenida paulista' });
       h.hook.mockReturnValue(hookState(null));
-      h.flag.mockReturnValue(true);
       h.autocomplete.mockReturnValue(ac);
       const view = render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
       const mapTab = screen.getByRole('tab', { name: /Escolher no Mapa/ });
@@ -349,13 +340,11 @@ describe('LocationPicker', () => {
 
     // ─── 4b: a flag morreu — a UI não pode mais depender dela ──────────────────────────────
 
-    it('4b: com a flag DESLIGADA a UI é a mesma (o ramo legado não existe mais)', async () => {
-      // O helper `renderOnMapTab` liga a flag de propósito, então aqui os passos são repetidos com
-      // a flag DESLIGADA. Antes desta tarefa isso trocava o combobox pelo ramo antigo — que não
-      // tem `role=listbox`, não tem estado de busca (A4-C) e tinha o input próprio —, e este teste
-      // caía no `findByRole('combobox')`. Se alguém reintroduzir o desvio, ele cai de novo.
+    it('4b: a UI é ramo único (o combobox sempre aparece; o ramo legado não voltou)', async () => {
+      // Item 4b: o ramo legado (gated por feature flag) morreu — a UI é ramo único. Este teste
+      // pina isso: o combobox aparece sempre (com `role=listbox`, estado de busca A4-C e o input
+      // próprio), e o botão "Buscar" do ramo antigo, que só existia lá, não volta.
       h.hook.mockReturnValue(hookState(null));
-      h.flag.mockReturnValue(false);
       h.autocomplete.mockReturnValue(autocompleteState());
       render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
 
@@ -418,7 +407,6 @@ describe('LocationPicker', () => {
     it('E29: clique no mapa limpa o termo mesmo com a lista fechada', async () => {
       const ac = autocompleteState({ query: 'avenida paulista' });
       h.hook.mockReturnValue(hookState(null));
-      h.flag.mockReturnValue(true);
       h.autocomplete.mockReturnValue(ac);
       const view = render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
       const mapTab = screen.getByRole('tab', { name: /Escolher no Mapa/ });

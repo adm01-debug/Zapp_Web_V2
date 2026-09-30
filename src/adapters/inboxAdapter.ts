@@ -1,5 +1,6 @@
 import { Message, Conversation, ConversationContact, MessageRow } from '@/types/chat';
 import { RealtimeMessage, ConversationWithMessages, ConversationContact as RealtimeContact } from '@/hooks/chat/useRealtimeMessages';
+import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
 
 function parseLocation(content: string): Message['location'] | undefined {
   try {
@@ -87,13 +88,23 @@ export function mapRealtimeConversationToConversation(rc: ConversationWithMessag
     .filter(m => m.sender === 'agent' && m.status !== 'failed' && m.status !== 'sending')
     .sort((a, b) => a.created_at.localeCompare(b.created_at))[0];
 
+  const operationalPriority = normalizeOperationalPriority(
+    (rc.contact as { ai_priority?: string | null }).ai_priority,
+  ).value;
+  const priority: Conversation['priority'] =
+    operationalPriority === 'high' || operationalPriority === 'urgent'
+      ? 'high'
+      : operationalPriority === 'low'
+        ? 'low'
+        : 'medium';
+
   return {
     id: rc.contact.id,
     contact: mapRealtimeContactToContact(rc.contact),
     lastMessage: rc.lastMessage ? mapRealtimeMessageToMessage(rc.lastMessage, rc.contact.id) : undefined,
     unreadCount: rc.unreadCount,
     status: 'open',
-    priority: (['high','urgent'].includes((rc.contact as { ai_priority?: string | null }).ai_priority ?? '') ? 'high' : (rc.contact as { ai_priority?: string | null }).ai_priority === 'low' ? 'low' : 'medium') as Conversation['priority'],
+    priority,
     tags: rc.contact.tags || [],
     createdAt: new Date(rc.contact.created_at),
     updatedAt: new Date(rc.contact.updated_at),

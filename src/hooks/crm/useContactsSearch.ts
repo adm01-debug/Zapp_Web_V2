@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ContactService, Contact } from '@/services/contact.service';
 import { filterCustomTags } from '@/lib/tags';
+import { CONTACTS_AGGREGATE_QUERY_OPTIONS } from './contactsAggregates';
 
 const PAGE_SIZE = 50;
 
@@ -92,6 +93,9 @@ export function useContactsSearch() {
       if (error) throw error;
       return data as (Contact & { total_count: number })[];
     },
+    // Lista, `totalCount` e contadores revalidam juntos ao abrir a tela: senão as
+    // abas mostram um contato criado fora de Contatos que a lista ainda omite.
+    ...CONTACTS_AGGREGATE_QUERY_OPTIONS,
   });
 
   const contacts = useMemo(() => data ?? [], [data]);
@@ -106,6 +110,7 @@ export function useContactsSearch() {
       return (data as { contact_type: string; count: number }[]) ?? [];
     },
     staleTime: 30000,
+    ...CONTACTS_AGGREGATE_QUERY_OPTIONS,
   });
 
   const contactCountByType = useMemo(() => {

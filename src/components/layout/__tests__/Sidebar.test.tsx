@@ -44,7 +44,7 @@ vi.mock('@/hooks/ui/useSidebarFavorites', () => ({
 
 vi.mock('@/components/notifications/PushNotificationToggle', () => ({ PushNotificationToggle: () => null }));
 vi.mock('@/components/notifications/ScreenProtectionToggle', () => ({ ScreenProtectionToggle: () => null }));
-vi.mock('@/components/notifications/SoundMuteToggle', () => ({ SoundMuteToggle: () => null }));
+vi.mock('@/components/notifications/SoundVolumeControl', () => ({ SoundVolumeControl: () => null }));
 vi.mock('@/components/layout/SidebarUserPill', () => ({ SidebarUserPill: () => null }));
 vi.mock('@/components/layout/SidebarBackButton', () => ({ SidebarBackButton: () => null }));
 

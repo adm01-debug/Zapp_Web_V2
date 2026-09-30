@@ -46,12 +46,11 @@ Uma **sessão de busca** (`src/lib/mapboxSession.ts`) é um `session_token` (UUI
 
 Billing da Mapbox: **1 sessão = até 50 `/suggest` + 1 `/retrieve`**, não 1 request avulso.
 
-## Feature flag
+## Feature flag (removida)
 
-`feature_flags.mapa.searchbox-autocomplete` (tabela `feature_flags`, lida em runtime por `useFeatureFlag('mapa.searchbox-autocomplete', false)` — sem rebuild). Fallback `false` = comportamento anterior ao plano (`/forward` direto, sem autocomplete enquanto digita).
+O autocomplete **não tem mais feature flag de runtime**: o item 4b removeu o ramo legado do picker (que era o gate `useFeatureFlag('mapa.searchbox-autocomplete', false)`) e a UI virou ramo único. A chave `mapa.searchbox-autocomplete` da tabela `feature_flags` foi removida pela migration `20260930210000_remove_orphan_searchbox_flag.sql` — nenhum `src/`, Edge Function, workflow ou `.env` a lia.
 
-- **Ligar/desligar:** `update feature_flags set enabled = ... where key = 'mapa.searchbox-autocomplete';` — sem deploy.
-- **Estado em produção:** `enabled = true` desde `2026-09-26T13:20:15.129749+00:00`.
+- **Rollback:** desligar o autocomplete agora é reverter o código (não há flag de runtime para virar).
 
 ## Limites e custo
 

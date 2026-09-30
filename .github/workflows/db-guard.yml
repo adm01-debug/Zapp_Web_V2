@@ -242,6 +242,16 @@ jobs:
           SEND_MESSAGES_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/send-messages-permission-authorization.test.sh
 
+      - name: Simular escopo de fila na escolha da conexao de envio (L7)
+        env:
+          ENQUEUE_SCOPE_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/enqueue-connection-scope.test.sh
+
+      - name: Simular drop do indice redundante de messages.external_id (perf)
+        env:
+          DROP_EXTID_INDEX_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/drop-redundant-messages-external-id-index.test.sh
+
       - name: Simular histórico atômico de templates Talk X
         env:
           TALKX_HISTORY_TEST_POSTGRES_IMAGE: postgres:17-alpine

@@ -63,8 +63,34 @@ export function ConversationSummary({ messages, contactName, contactId, initialS
       const { data, error } = await supabase.functions.invoke('ai-conversation-summary', {
         body: { messages: filteredMessages.map(m => ({ sender: m.sender, content: m.content, created_at: m.created_at })), contactName, contactId },
       });
-      if (error) throw error;
-      if (isMountedRef.current) { setSummary(data); setHasGenerated(true); }
+
+      if (error) {
+        // O envelope de erro (IA-025) chega no corpo de `error.context` (Response);
+        // lê-lo para mostrar `payload.error` ao usuário em vez de silêncio.
+        const context = (error as { context?: Response } | null)?.context;
+        let envelopeError: unknown;
+        if (context && typeof context.clone === 'function') {
+          try { envelopeError = ((await context.clone().json()) as { error?: unknown } | null)?.error; } catch { /* corpo sem JSON (timeout/proxy) */ }
+        }
+        toast.error(typeof envelopeError === 'string' && envelopeError ? envelopeError : 'Erro ao gerar resumo. Tente novamente.');
+        log.error('Error generating summary:', error);
+        return;
+      }
+
+      // A resposta é um envelope de execução: o resumo vem em `payload.data`.
+      const payload = data as { status?: string; error?: unknown; data?: SummaryData } | null;
+      if (payload?.status === 'error') {
+        const message = typeof payload.error === 'string' && payload.error.trim() ? payload.error : 'Erro ao gerar resumo. Tente novamente.';
+        toast.error(message);
+        return;
+      }
+      const summaryData = payload?.data;
+      if (!summaryData) {
+        toast.error('A IA não devolveu um resumo válido.');
+        return;
+      }
+
+      if (isMountedRef.current) { setSummary(summaryData); setHasGenerated(true); }
       toast.success('Resumo gerado com sucesso!');
     } catch (error) { log.error('Error generating summary:', error); toast.error('Erro ao gerar resumo. Tente novamente.'); }
     finally { if (isMountedRef.current) setIsLoading(false); }

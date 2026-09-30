@@ -84,7 +84,7 @@ export function ContactDialogs({
                   <span
                     aria-hidden="true"
                     style={{ animationDuration: '3s' }}
-                    className="pointer-events-none absolute inset-0 m-auto h-10 w-10 rounded-full bg-success opacity-60 animate-ping group-hover:[animation-play-state:paused]"
+                    className="pointer-events-none absolute inset-0 m-auto h-10 w-10 rounded-full bg-success opacity-60 animate-ping motion-reduce:hidden group-hover:[animation-play-state:paused]"
                   />
                   <Plus className="relative w-6 h-6" strokeWidth={2.5} />
                 </button>

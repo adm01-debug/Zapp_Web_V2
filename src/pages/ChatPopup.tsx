@@ -6,6 +6,7 @@ import { useMessages } from '@/hooks/chat/useMessages';
 import type { Database } from '@/integrations/supabase/types';
 import { Conversation, Message } from '@/types/chat';
 import { log } from '@/lib/logger';
+import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
 
 type ContactRow = Database['public']['Tables']['contacts']['Row'];
 import { Skeleton } from '@/components/ui/skeleton';
@@ -95,6 +96,11 @@ export default function ChatPopup() {
     })();
   }, [contactId]);
 
+  const popupPriority: 'low' | 'medium' | 'high' = (() => {
+    const p = normalizeOperationalPriority(contact?.ai_priority).value;
+    return p === 'high' || p === 'urgent' ? 'high' : p === 'low' ? 'low' : 'medium';
+  })();
+
   const conversation: Conversation | null = contact
     ? {
         id: contactId!,
@@ -111,7 +117,7 @@ export default function ChatPopup() {
         lastMessage: undefined,
         unreadCount: 0,
         tags: contact.tags || [],
-        priority: (['high', 'urgent'].includes(contact.ai_priority ?? '') ? 'high' : contact.ai_priority === 'low' ? 'low' : 'medium') as 'low' | 'medium' | 'high',
+        priority: popupPriority,
         createdAt: new Date(contact.created_at),
         updatedAt: new Date(contact.updated_at),
         firstResponseAt,

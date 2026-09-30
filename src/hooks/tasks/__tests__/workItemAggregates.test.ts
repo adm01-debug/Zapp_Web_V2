@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay, splitDoneByRecency } from '../workItemAggregates';
+import { startOfDay } from 'date-fns';
+import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay, splitDoneByRecency, applyFilters } from '../workItemAggregates';
+import { DEFAULT_FILTERS } from '../workItemFilters';
 import type { WorkItem } from '../workItem.types';
 
 const now = new Date('2026-10-03T12:00:00Z');
@@ -27,6 +29,45 @@ function makeItem(overrides: Partial<WorkItem>): WorkItem {
     ...overrides,
   };
 }
+
+describe('applyFilters (etapas 45/46 — os filtros valem nos três modos)', () => {
+  const base: WorkItem[] = [
+    makeItem({ id: 'a', title: 'Ligar para a Ana', priority: 'urgent' }),
+    makeItem({ id: 'b', title: 'Enviar orçamento', priority: 'low', remind_at: '2026-10-04T09:00:00Z' }),
+    makeItem({ id: 'c', title: 'Ligar de novo', priority: 'high', contact: { id: 'c1', name: 'Ana', phone: null, avatar_url: null } }),
+    makeItem({ id: 'd', title: 'Já feita', status: 'done', completed_at: '2026-10-02T10:00:00Z' }),
+  ];
+  const ids = (items: WorkItem[]) => items.map(i => i.id);
+
+  it('sem filtro nenhum devolve tudo, inclusive as concluídas', () => {
+    expect(ids(applyFilters(base, DEFAULT_FILTERS))).toEqual(['a', 'b', 'c', 'd']);
+  });
+
+  it('a busca casa o título sem diferenciar maiúsculas e ignora espaços das pontas', () => {
+    expect(ids(applyFilters(base, { ...DEFAULT_FILTERS, q: '  LIGAR ' }))).toEqual(['a', 'c']);
+  });
+
+  it('prioridade recorta pela prioridade exata', () => {
+    expect(ids(applyFilters(base, { ...DEFAULT_FILTERS, prio: 'urgent' }))).toEqual(['a']);
+  });
+
+  it('contato recorta pelo id do contato da tarefa', () => {
+    expect(ids(applyFilters(base, { ...DEFAULT_FILTERS, contact: 'c1' }))).toEqual(['c']);
+  });
+
+  it('"com alarme" só deixa o que tem lembrete marcado', () => {
+    expect(ids(applyFilters(base, { ...DEFAULT_FILTERS, alarm: true }))).toEqual(['b']);
+  });
+
+  it('esconder as concluídas tira as `done` dos três modos', () => {
+    expect(ids(applyFilters(base, { ...DEFAULT_FILTERS, done: false }))).toEqual(['a', 'b', 'c']);
+  });
+
+  it('os filtros somam (E, não OU)', () => {
+    expect(ids(applyFilters(base, { ...DEFAULT_FILTERS, q: 'ligar', prio: 'high' }))).toEqual(['c']);
+    expect(applyFilters(base, { ...DEFAULT_FILTERS, q: 'ligar', prio: 'high', done: false })).toHaveLength(1);
+  });
+});
 
 describe('bucketByDue', () => {
   it('classifica atrasada corretamente', () => {
@@ -158,14 +199,48 @@ describe('dueLabel', () => {
 
 describe('weekBuckets', () => {
   it('distribui por dia de remind_at e due_date', () => {
-    const start = new Date('2026-10-06T00:00:00Z'); // segunda
+    // Datas construidas em hora LOCAL: o mesmo caso passa em UTC e em UTC-3.
+    const start = new Date(2026, 9, 6);            // segunda 06/10 as 00:00 locais
     const items = [
-      makeItem({ remind_at: '2026-10-06T09:00:00Z' }),
-      makeItem({ due_date: '2026-10-07T00:00:00Z' }),
+      makeItem({ remind_at: new Date(2026, 9, 6, 9, 0).toISOString() }),
+      makeItem({ due_date: new Date(2026, 9, 7, 0, 0).toISOString() }),
     ];
     const wb = weekBuckets(items, start);
     expect(wb[0].reminders).toHaveLength(1); // seg
     expect(wb[1].dueTasks).toHaveLength(1);  // ter
+  });
+
+  it('a tarefa das 23:59 locais fica no dia LOCAL, o mesmo que a Lista chama de "Hoje"', () => {
+    const due   = new Date(2026, 9, 1, 23, 59);   // 01/10 as 23:59 locais
+    const wb    = weekBuckets([makeItem({ due_date: due.toISOString() })], startOfDay(due));
+    expect(wb[0].dueTasks).toHaveLength(1);
+    expect(wb[1].dueTasks).toHaveLength(0);
+
+    // ...e a Lista concorda: o mesmo instante e "Hoje", nao "amanha".
+    const b = bucketByDue([makeItem({ due_date: due.toISOString() })], due);
+    expect(b.today).toHaveLength(1);
+    expect(b.tomorrow).toHaveLength(0);
+  });
+
+  it('o lembrete das 23:59 locais fica no dia LOCAL, nao no seguinte', () => {
+    const rem = new Date(2026, 9, 1, 23, 59);
+    const wb  = weekBuckets([makeItem({ remind_at: rem.toISOString() })], startOfDay(rem));
+    expect(wb[0].reminders).toHaveLength(1);
+    expect(wb[1].reminders).toHaveLength(0);
+  });
+
+  it('a meia-noite local abre o proprio dia (nao fecha o anterior)', () => {
+    const wb = weekBuckets(
+      [makeItem({ due_date: new Date(2026, 9, 2, 0, 0).toISOString() })],
+      new Date(2026, 9, 1)
+    );
+    expect(wb[0].dueTasks).toHaveLength(0); // 01/10 fica vazio
+    expect(wb[1].dueTasks).toHaveLength(1); // 02/10 recebe
+  });
+
+  it('data invalida e ignorada, nao derruba a Agenda', () => {
+    const wb = weekBuckets([makeItem({ due_date: 'nao-e-data' })], new Date(2026, 9, 1));
+    expect(wb.every(w => w.dueTasks.length === 0)).toBe(true);
   });
 });
 
