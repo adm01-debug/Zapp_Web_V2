@@ -10,6 +10,9 @@ import { canTransition, countDoing } from '@/hooks/tasks/workItemMachine';
 interface Props {
   byStatus: Record<WorkItemStatus, WorkItem[]>;
   isLoading: boolean;
+  /** Fase F (auditoria): contagem REAL de "Fazendo" (lista não filtrada) — é ela
+   *  que vale para a trava de WIP. Sem a prop, cai na própria coluna visível. */
+  doingCount?: number;
   onMove: (item: WorkItem, to: WorkItemStatus, opts?: MoveOpts) => void;
   onReorder: (positions: Array<{ id: string; position: number }>) => void;
   onOpen: (item: WorkItem) => void;
@@ -19,8 +22,8 @@ interface Props {
 
 const BOARD_COLUMNS: WorkItemStatus[] = ['backlog','todo','doing','waiting','done'];
 
-export function TasksBoardMode({ byStatus, isLoading, onMove, onReorder, onOpen, onDelete, onCreate }: Props) {
-  const doingCount = byStatus.doing.length;
+export function TasksBoardMode({ byStatus, isLoading, doingCount, onMove, onReorder, onOpen, onDelete, onCreate }: Props) {
+  const doingTotal = doingCount ?? byStatus.doing.length;
   // Etapa 52 (B8): guarda de onde o arrasto COMECOU — sem isso a coluna "Fazendo"
   // cheia bloqueia ate a reorganizacao dela mesma.
   const [dragSourceStatus, setDragSourceStatus] = useState<WorkItemStatus | null>(null);
@@ -45,7 +48,7 @@ export function TasksBoardMode({ byStatus, isLoading, onMove, onReorder, onOpen,
     }
 
     // transição de coluna
-    const check = canTransition(fromStatus, toStatus, { doingCount, waitingReason: undefined });
+    const check = canTransition(fromStatus, toStatus, { doingCount: doingTotal, waitingReason: undefined });
     if (!check.ok) {
       if (check.reason === 'wip_full')
         toast.error('Fazendo está cheio (máx. 3). Conclua um item antes.');
@@ -55,7 +58,7 @@ export function TasksBoardMode({ byStatus, isLoading, onMove, onReorder, onOpen,
     }
     // etapa 15: leva o indice de destino para persistir a ordem das duas colunas
     onMove(item, toStatus, { index: destination.index });
-  }, [byStatus, doingCount, onMove, onReorder]);
+  }, [byStatus, doingTotal, onMove, onReorder]);
 
   return (
     <DragDropContext
@@ -69,7 +72,7 @@ export function TasksBoardMode({ byStatus, isLoading, onMove, onReorder, onOpen,
             status={status}
             items={byStatus[status] ?? []}
             isLoading={isLoading}
-            doingCount={doingCount}
+            doingCount={doingTotal}
             dragSourceStatus={dragSourceStatus}
             onOpen={onOpen}
             onMoveTo={(it, to) => onMove(it, to)}

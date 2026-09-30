@@ -23,6 +23,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { TasksListMode } from '@/components/tasks/list/TasksListMode';
 import { WorkItemCard } from '@/components/tasks/shared/WorkItemCard';
 import { TasksBoardMode } from '@/components/tasks/board/TasksBoardMode';
+import { TasksFilterBar } from '@/components/tasks/shared/TasksFilterBar';
 import type { BucketsByDue } from '@/hooks/tasks/workItemAggregates';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 
@@ -258,6 +259,71 @@ describe('Tarefas — componentes dos três modos', () => {
     fireEvent.click(screen.getByText('Ver mais antigas (30 dias)'));
     expect(screen.getByText('Feita ha duas semanas')).toBeTruthy();
     expect(screen.getByText('Ver menos')).toBeTruthy();
+  });
+
+  it('Fase F (auditoria): coluna só com concluídas de 8 a 30 dias mostra o rodapé e NÃO diz "Coluna vazia"', () => {
+    cleanup();
+    const dias = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
+
+    render(
+      <TooltipProvider>
+        <TasksBoardMode
+          byStatus={{ ...byStatusVazio, done: [
+            item({ id: 'o1', title: 'Feita ha duas semanas', status: 'done', completed_at: dias(13) }),
+          ] }}
+          isLoading={false}
+          onMove={vi.fn()}
+          onReorder={vi.fn()}
+          onOpen={vi.fn()}
+          onDelete={vi.fn()}
+          onCreate={vi.fn()}
+        />
+      </TooltipProvider>
+    );
+
+    // A coluna TEM conteúdo (atrás do rodapé): antes ela dizia "Coluna vazia" e
+    // oferecia "Ver mais antigas (30 dias)" ao mesmo tempo — contradição.
+    expect(screen.getByText('Ver mais antigas (30 dias)')).toBeTruthy();
+    expect(screen.getAllByText('Coluna vazia')).toHaveLength(4);
+  });
+
+  it('Fase F (auditoria): contato sem nome aparece como "Sem nome" e id fora da lista como "Contato indisponível"', () => {
+    cleanup();
+    const comuns = {
+      searchText: '',
+      onSearch: vi.fn(),
+      onPrio: vi.fn(),
+      onContact: vi.fn(),
+      onToggleAlarm: vi.fn(),
+      onToggleDone: vi.fn(),
+      onClear: vi.fn(),
+    };
+
+    const { rerender } = render(
+      <TooltipProvider>
+        <TasksFilterBar
+          {...comuns}
+          filters={{ q: '', prio: 'all', contact: 'c1', alarm: false, done: true }}
+          contactOptions={[{ id: 'c1', name: '' }]}
+          isActive
+        />
+      </TooltipProvider>
+    );
+    // Antes: o gatilho ficava em BRANCO ('' não casa com o `??`).
+    expect(screen.getByLabelText('Contato').textContent).toBe('Sem nome');
+
+    rerender(
+      <TooltipProvider>
+        <TasksFilterBar
+          {...comuns}
+          filters={{ q: '', prio: 'all', contact: 'c9', alarm: false, done: true }}
+          contactOptions={[{ id: 'c1', name: '' }]}
+          isActive
+        />
+      </TooltipProvider>
+    );
+    // Antes: id desconhecido se passava por "Todos os contatos".
+    expect(screen.getByLabelText('Contato').textContent).toBe('Contato indisponível');
   });
 
   it('etapa 52 (B8): "Fazendo" cheio aceita reorganizar por dentro e recusa o que vem de fora', () => {

@@ -29,6 +29,15 @@ interface Props {
   isActive: boolean;
 }
 
+/** Fase F (auditoria): nome vazio não pode virar gatilho em branco, e um contato
+ *  fora da lista carregada não pode se passar por "Todos os contatos". */
+function rotuloContato(contactId: string | null, contato: { id: string; name: string } | null): string {
+  if (contactId === null) return 'Todos os contatos';
+  if (contato === null) return 'Contato indisponível';
+  if (contato.name === '') return 'Sem nome';
+  return contato.name;
+}
+
 export function TasksFilterBar({
   filters, searchText, contactOptions,
   onSearch, onPrio, onContact, onToggleAlarm, onToggleDone, onClear, isActive,
@@ -69,7 +78,7 @@ export function TasksFilterBar({
             aria-label="Contato"
             className="h-11 w-[170px] rounded-xl justify-start font-normal truncate"
           >
-            {contatoAtual ? (contatoAtual.name ?? 'Sem nome') : 'Todos os contatos'}
+            {rotuloContato(filters.contact, contatoAtual)}
           </Button>
         </PopoverTrigger>
         <PopoverContent align="start" className="p-0 w-[240px]">
@@ -83,10 +92,10 @@ export function TasksFilterBar({
               {contactOptions.map(c => (
                 <CommandItem
                   key={c.id}
-                  value={`${c.name ?? c.id} ${c.id}`}
+                  value={`${c.name || c.id} ${c.id}`}
                   onSelect={() => { onContact(c.id); setContatoAberto(false); }}
                 >
-                  {c.name ?? 'Sem nome'}
+                  {c.name || 'Sem nome'}
                 </CommandItem>
               ))}
             </CommandList>

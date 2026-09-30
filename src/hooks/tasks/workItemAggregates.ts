@@ -33,14 +33,18 @@ export function bucketByDue(items: WorkItem[], now: Date = new Date()): BucketsB
   const thirtyDaysAgo  = new Date(now.getTime() - 30 * 86_400_000);
 
   const active = items.filter(i => i.status !== 'done' && i.status !== 'cancelled');
-  const done = items.filter(i => i.status === 'done' && i.completed_at != null);
-  const done7d = done.filter(i => new Date(i.completed_at!) >= sevenDaysAgo);
+  const done = items.filter(i => i.status === 'done');
+  // Fase F (auditoria): concluída SEM carimbo entra na janela recente — a MESMA
+  // regra do `splitDoneByRecency` do Quadro ("tarefa nunca fica escondida por
+  // falta de dado"). Antes ela sumia da Lista e aparecia no Quadro.
+  const done7d = done.filter(i => i.completed_at == null || new Date(i.completed_at) >= sevenDaysAgo);
   // Etapa 48 (B4): a Lista mostra 7 dias e revela o resto da janela de 30 dias
   // (a query do hook ja traz 30d) no rodape "ver mais (30 dias)". Aqui fica o
   // recorte de 8 a 30 dias — o que a secao recolhida nao mostra.
   const doneOlder = done.filter(i =>
-    isBefore(new Date(i.completed_at!), sevenDaysAgo) &&
-    !isBefore(new Date(i.completed_at!), thirtyDaysAgo)
+    i.completed_at != null &&
+    isBefore(new Date(i.completed_at), sevenDaysAgo) &&
+    !isBefore(new Date(i.completed_at), thirtyDaysAgo)
   );
 
   const overdue: WorkItem[]   = [];
@@ -61,23 +65,29 @@ export function bucketByDue(items: WorkItem[], now: Date = new Date()): BucketsB
   return { overdue, today, tomorrow, upcoming, noDue, done7d, doneOlder };
 }
 
+/** Fase F (auditoria): busca que ignora acento e caixa — "cafe" acha "Café". */
+function normalizarBusca(texto: string): string {
+  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
 /**
  * Etapa 45/46: o recorte da barra de filtros, aplicado nos três modos (Lista,
  * Quadro e Agenda). Função pura: recebe os itens que a query única já carregou e
  * devolve o subconjunto — nenhum modo, e nenhum filtro, gera request novo.
  *
  * `done` é o único filtro que olha o estado terminal do item; `q` casa só o
- * título (o mesmo recorte que a busca sempre fez).
+ * título (o mesmo recorte que a busca sempre fez, agora sem acento).
  */
 export function applyFilters(items: WorkItem[], f: TasksFilters): WorkItem[] {
-  const termo = f.q.trim().toLowerCase();
+  const termo = normalizarBusca(f.q).trim();
+  const base  = items ?? [];
 
-  return items.filter(item => {
+  return base.filter(item => {
     if (!f.done && item.status === 'done') return false;
     if (f.prio !== 'all' && item.priority !== f.prio) return false;
     if (f.contact !== null && item.contact?.id !== f.contact) return false;
     if (f.alarm && item.remind_at === null) return false;
-    if (termo !== '' && !item.title.toLowerCase().includes(termo)) return false;
+    if (termo !== '' && !normalizarBusca(item.title).includes(termo)) return false;
     return true;
   });
 }

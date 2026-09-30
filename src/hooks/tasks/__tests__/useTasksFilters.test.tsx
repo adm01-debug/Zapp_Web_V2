@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useNavigate } from 'react-router-dom';
 import React, { type ReactNode } from 'react';
 import { useTasksFilters, SEARCH_DEBOUNCE_MS } from '../useTasksFilters';
 
@@ -77,5 +77,43 @@ describe('etapa 45 — useTasksFilters', () => {
     const { result } = renderFiltros();
     expect(result.current.isActive).toBe(false);
     expect(window.location.search).toBe('');
+  });
+
+  it('Fase F: o "Limpar" cancela o debounce pendente — o filtro não ressuscita', () => {
+    const { result } = renderFiltros();
+
+    act(() => { result.current.setSearch('liga'); });
+    act(() => { result.current.clear(); });
+
+    // O timer do debounce ficou vivo: sem cancelar, 200ms depois o `q` volta
+    // (campo vazio, lista recortada e `?q=liga` na URL) — o bug ALTO da auditoria.
+    act(() => { vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS * 2); });
+
+    expect(result.current.filters.q).toBe('');
+    expect(result.current.textoDaBusca).toBe('');
+    expect(result.current.isActive).toBe(false);
+    expect(window.location.search).toBe('');
+  });
+
+  it('Fase F: deep-link que chega DEPOIS de montar reidrata os filtros (o router manda)', () => {
+    let ir: (to: string) => void = () => {};
+    const Espiao = () => { ir = useNavigate(); return null; };
+
+    const { result } = renderHook(() => useTasksFilters(), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <MemoryRouter initialEntries={['/']}>
+          <Espiao />
+          {children}
+        </MemoryRouter>
+      ),
+    });
+
+    expect(result.current.filters.prio).toBe('all');
+
+    act(() => { ir('/?q=liga&prio=high'); });
+
+    expect(result.current.filters.q).toBe('liga');
+    expect(result.current.filters.prio).toBe('high');
+    expect(result.current.textoDaBusca).toBe('liga');
   });
 });

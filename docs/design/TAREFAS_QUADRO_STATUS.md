@@ -94,7 +94,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 ## CP-C Sheet       [ ] WorkItemSheet= · ?task= · Aguardando por DnD/kebab/menu= · kebab 5 grupos= · RemindChip popover= · ContactChip=
 ## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
-## CP-E Telas       [~] etapas 43, 44, 45 e 46, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8), 53, 55, 56 e 57 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos: ok (barra de 5 filtros, estado na URL por replaceState, recorte único) · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos: ok (3 grupos, ponto por tipo, atrasadas expansível) · card agenda: ok (h-11, 1 linha, checkbox) · QuickAdd no dia: ok (pré-preenchido) · 0 requests na troca= · modo por rota: ok
+## CP-E Telas       [~] etapas 43, 44, 45 e 46, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8), 53, 55, 56 e 57 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos: ok (barra de 5 filtros, estado na URL por replaceState, recorte único) · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos: ok (3 grupos, ponto por tipo, atrasadas expansível) · card agenda: ok (h-11, 1 linha, checkbox) · QuickAdd no dia: ok (pré-preenchido) · 0 requests na troca= · modo por rota: ok · auditoria F1: ok (7 correções; 9 mutações mortas)
 
 ## Etapa 47 (B7) — modo por rota (Fase E) — evidências
 
@@ -380,6 +380,41 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 **Nota honesta sobre a suíte:** **4517 testes verdes / 0 falhas**, mas o runner acusa **1 erro não tratado (2 ocorrências)** em `src/components/catalog/__tests__/useSendProduct.test.tsx` ("window is not defined"). O arquivo **passa isolado (9/9)** e nada do meu diff o toca — é flake de carga (vários chats rodando em paralelo nesta máquina). O check `🧪 Unit Tests` do CI é a autoridade.
 
 **Gates:** `typecheck` ✓ · guard-rail de tipografia ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · `db:guard` ✓ · suíte 4517 verdes (flake de catálogo declarado) · `build` ✓ · bundle 4033,4/4100 KB ✓
+
+## FASE F — correções da auditoria adversarial (30/09/2026) — evidências
+
+**Origem:** auditoria adversarial das etapas 43–57 (5 frentes independentes + reprodução do
+coordenador; relatório em `~/auditorias/fase-e-260930/RELATORIO-CONSOLIDADO.md`). Nenhuma
+entrega era mentira: os sete achados eram comportamento errado que a suíte não pegava — cada
+um com saída crua de reprodução.
+
+**Mudanças (7 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/hooks/tasks/useTasksFilters.ts` | (a) `clear` **cancela** o debounce pendente (o filtro voltava sozinho 200ms depois, campo vazio e `?q=` na URL); (b) a URL volta a ser fonte da verdade **depois** da montagem — quem sinaliza é o `search` do ROUTER, por ajuste no render (sem efeito de sincronização, sem dívida de lint); (c) a mesma base de URL na leitura e na escrita |
+| `src/hooks/tasks/workItemAggregates.ts` | `applyFilters` ignora acento e caixa; guarda `items ?? []`; `bucketByDue` passa a contar concluída **sem carimbo** na janela de 7 dias (a mesma regra que o `splitDoneByRecency` do Quadro já documentava) |
+| `src/components/tasks/list/TasksListMode.tsx` | o vazio da Lista deixa de olhar só a busca: **qualquer** filtro ativo oferece "Limpar filtros" (`filtersActive`) |
+| `src/components/tasks/board/BoardColumn.tsx` | coluna com concluídas atrás do rodapé não diz mais "Coluna vazia" |
+| `src/components/tasks/TasksModule.tsx` | contagem do cabeçalho, card "Fazendo" e trava de WIP passam a olhar a lista **real** (filtro é recorte de tela) |
+| `src/components/tasks/board/TasksBoardMode.tsx` | prop `doingCount?` (com fallback) para a trava de WIP receber a contagem real |
+| `src/components/tasks/shared/TasksFilterBar.tsx` | contato sem nome → "Sem nome"; id fora da lista → "Contato indisponível" (o `??` deixava o gatilho em branco) |
+
+**Testes:** 9 casos novos (124 → 133 nos arquivos de Tarefas) — cada um **falha** no código anterior.
+
+**Teste de mutação (9, árvore restaurada entre cada):** **9/9 mortas** — M1 `clear` sem cancelar o
+debounce · M2 sem reidratação do router · M3 Lista decidindo o vazio pela busca · M4 cabeçalho
+contando o recorte · M5 coluna vazia ignorando o rodapé · M6 busca exigindo acento · M7 concluída
+sem carimbo sumindo da Lista · M8 sem guarda de lista nula · M9 rótulo de contato antigo.
+
+**Gates:** `typecheck` ✓ · guard-rail de tipografia ✓ · `lint-ratchet` 0 novas (23 removidas) ✓ ·
+suíte completa **345 arquivos / 4549 testes, 0 erro não tratado** ✓ · `build` ✓ · bundle
+**4049,8/4100 KB** ✓
+
+**Próximo (F2, PR separado):** o 2º `create` seguido na Agenda (prazo perdido após o 1º envio), a
+ordenação de "Prazos" por `due_date`, o grupo "Sem hora" (fim do dia 23:59/00:00 = dia inteiro),
+o rascunho preservado ao trocar de dia, `aria-controls` no "Atrasadas" e a blindagem do
+`PriorityChip` com prioridade nula.
 
 ## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
 ## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=
