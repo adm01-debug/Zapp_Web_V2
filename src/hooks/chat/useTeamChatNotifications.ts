@@ -19,6 +19,11 @@ const getCtx = () => {
  *
  * O ganho obedece ao volume de alerta do painel (`settings.soundVolume`, 10-100): `volume/100`
  * multiplica os ganhos-base. Antes eram 0.2/0.15 cravados, ignorando o controle do usuário.
+ *
+ * ISENÇÃO DOCUMENTADA (exigida por `tests/contracts/media-volume-surfaces.contract.test.ts`):
+ * alerta não é mídia de conversa — este som fica FORA do controle de volume de mídia
+ * (`mediaVolumeStore`), porque o atendente não pode silenciar alerta sem querer ao mexer
+ * no volume das conversas. O volume sai SEMPRE do painel (`settings.soundVolume`).
  */
 export function playTeamChatSound(volume: number = 70) {
   try {
