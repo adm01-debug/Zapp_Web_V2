@@ -2,6 +2,9 @@ import { isBefore, startOfDay, addDays, formatDistanceToNowStrict } from 'date-f
 import { ptBR } from 'date-fns/locale';
 import type { WorkItem, WorkItemStatus } from './workItem.types';
 
+/** Peso de prioridade (menor = primeiro) — usado na ordenacao por prazo (etapa 49) e por coluna. */
+const PRIORITY_WEIGHT: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
+
 export interface BucketsByDue {
   overdue: WorkItem[];
   today: WorkItem[];
@@ -62,11 +65,10 @@ export function bucketByStatus(items: WorkItem[]): Record<WorkItemStatus, WorkIt
     backlog: [], todo: [], doing: [], waiting: [], done: [], cancelled: [],
   };
   for (const item of items) out[item.status].push(item);
-  const w: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
   for (const col of Object.values(out)) {
     col.sort((a, b) =>
       a.position - b.position ||
-      (w[a.priority] ?? 2) - (w[b.priority] ?? 2) ||
+      (PRIORITY_WEIGHT[a.priority] ?? 2) - (PRIORITY_WEIGHT[b.priority] ?? 2) ||
       a.created_at.localeCompare(b.created_at)
     );
   }
@@ -132,4 +134,52 @@ export function weekBuckets(
       ),
     };
   });
+}
+
+export interface DayGroup {
+  label: string;
+  items: WorkItem[];
+}
+
+/**
+ * Etapa 49: rotulo do subcabecalho de dia da secao "Proximas" — "Hoje", "Amanhã",
+ * "Qua 01/10" (dentro de 7 dias) ou "Semana que vem" (mais de 7 dias).
+ */
+export function dayGroupLabel(dueDate: string, now: Date = new Date()): string {
+  const due           = new Date(dueDate);
+  const todayStart    = startOfDay(now);
+  const tomorrowStart = startOfDay(addDays(now, 1));
+  const day2Start     = startOfDay(addDays(now, 2));
+  const sevenDayLimit = startOfDay(addDays(now, 7));
+
+  if (due < todayStart)    return 'Atrasada';
+  if (due < tomorrowStart) return 'Hoje';
+  if (due < day2Start)     return 'Amanhã';
+
+  const dueDay = startOfDay(due);
+  if (isBefore(sevenDayLimit, dueDay)) return 'Semana que vem';
+
+  const dayName  = due.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+  const dayMonth = due.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  return dayName.charAt(0).toUpperCase() + dayName.slice(1) + ' ' + dayMonth;
+}
+
+/** Etapa 49: agrupa as "Proximas" por dia, na ordem prazo → prioridade. */
+export function groupUpcomingByDay(items: WorkItem[], now: Date = new Date()): DayGroup[] {
+  const ordered = items
+    .filter(i => i.due_date != null)
+    .slice()
+    .sort((a, b) =>
+      a.due_date!.localeCompare(b.due_date!) ||
+      (PRIORITY_WEIGHT[a.priority] ?? 2) - (PRIORITY_WEIGHT[b.priority] ?? 2)
+    );
+
+  const groups: DayGroup[] = [];
+  for (const item of ordered) {
+    const label = dayGroupLabel(item.due_date!, now);
+    const last  = groups[groups.length - 1];
+    if (last && last.label === label) last.items.push(item);
+    else groups.push({ label, items: [item] });
+  }
+  return groups;
 }

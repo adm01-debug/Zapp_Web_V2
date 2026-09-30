@@ -94,7 +94,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 ## CP-C Sheet       [ ] WorkItemSheet= · ?task= · Aguardando por DnD/kebab/menu= · kebab 5 grupos= · RemindChip popover= · ContactChip=
 ## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
-## CP-E Telas       [~] etapas 47 (B7) e 48 (B4) fechadas 29-30/09/2026 (executor: Hermes) · KPIs 88px= · filtros 3 modos= · Concluídas 7d: ok · Quadro WIP/ordem= · Agenda grupos= · 0 requests na troca= · modo por rota: ok
+## CP-E Telas       [~] etapas 47 (B7), 48 (B4) e 49 fechadas 29-30/09/2026 (executor: Hermes) · KPIs 88px= · filtros 3 modos= · Concluídas 7d: ok · Próximas por dia: ok · Quadro WIP/ordem= · Agenda grupos= · 0 requests na troca= · modo por rota: ok
 
 ## Etapa 47 (B7) — modo por rota (Fase E) — evidências
 
@@ -150,6 +150,27 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 **Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · `build` ✓ · bundle 492,3/550 KB gzip e 4017,5/4100 KB de assets ✓ · `db:guard` ✓ · suíte 4279 passed / 0 failed (312 arquivos) ✓
 
 **Resíduo (comportamento de antes, mantido de propósito):** quem tem só concluídas de 8–30 dias e nada ativo continua vendo o estado vazio da Lista — a seção só nasce quando há algo nos 7 dias.
+
+## Etapa 49 — Lista: "Próximas" por dia, "Sem prazo" colapsável e tooltip da ordenação — evidências
+
+**Regra do plano (3 comportamentos):** "Próximas" agrupa por dia ("Amanhã", "Qua 01/10", …, "Semana que vem" para > 7 dias) com subcabeçalho `text-[12px]`; "Sem prazo" colapsa quando > 10; tooltip no cabeçalho "Ordenado por prazo, depois prioridade".
+
+**Mudanças (4 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/hooks/tasks/workItemAggregates.ts` | `dayGroupLabel` (Hoje / Amanhã / "Seg 05/10" dentro de 7 dias / "Semana que vem" acima disso) e `groupUpcomingByDay` (ordena por prazo → prioridade e agrupa dias consecutivos); `PRIORITY_WEIGHT` extraído do `bucketByStatus` e reusado |
+| `src/components/tasks/list/TasksListMode.tsx` | "Próximas" recebe `groups` + `hint`; subcabeçalho `text-[12px]`; tooltip no cabeçalho; "Sem prazo" com `defaultOpen={noDue.length <= 10}`; `renderCard` extraído (o card estava duplicado nos dois caminhos) |
+| `src/hooks/tasks/__tests__/workItemAggregates.test.ts` | 3 casos: rótulos (incluindo a fronteira +7 / +8 dias), agrupamento ordenado por prazo e desempate por prioridade |
+| `src/components/tasks/__tests__/taskComponents.test.tsx` | 3 casos: subcabeçalhos + "Semana que vem"; "Sem prazo" abre com 10 e recolhe com 11; tooltip do cabeçalho. Harness novo `renderLista` com `TooltipProvider` (a app fornece em `AppProviders.tsx:75`) |
+
+**Divergências do plano (4, pequenas):** (1) o plano não diz **qual** cabeçalho leva o tooltip — escolhi o de "Próximas", que é onde o agrupamento por prazo acontece; (2) o harness da Lista ganhou `TooltipProvider`, porque o `Tooltip` do cabeçalho exige provider e a app já fornece um global (mesmo padrão do board na etapa 47); (3) `PRIORITY_WEIGHT` foi extraído para não duplicar o mapa de pesos (teto de 3% de duplicação do SonarCloud) — `bucketByStatus` passou a usá-lo; (4) o plano pede o subcabeçalho em `text-[12px]`, mas o guard-rail de tipografia (`node scripts/qa/medir-tipografia.cjs --check`, teto 0 para "arbitrário com equivalente exato") reprovou: o token equivalente é `text-xs` (12px). O CI pegou isso no PR #1238 e o valor foi trocado por `text-xs`, preservando o tamanho pedido.
+
+**Teste de mutação (3 mutações, árvore restaurada entre cada):** M1 "Sem prazo" nunca colapsa → 1 vermelho; M2 "Próximas" sem os subcabeçalhos → 1 vermelho; M3 o corte de 7 dias vira 99 → 3 vermelhos; 25 a 27 verdes em cada rodada.
+
+**Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas (baseline 971, atual 955) ✓ · `implicit-any` 0 ✓ · `build` ✓ · bundle 492,3/550 KB gzip e 4018,6/4100 KB ✓ · `db:guard` ✓ · suíte 4302 passed / 0 failed (313 arquivos) ✓
+
+**Resíduo (defensivo, não é regressão):** se `upcoming` trouxer item sem `due_date` — estado impossível vindo do `bucketByDue` — a seção cai na lista plana em vez de esconder a tarefa.
 
 ## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
 ## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=
