@@ -255,3 +255,17 @@ Cada agente recebeu a ordem de **derrubar** as afirmações deste ledger. Result
 ---
 
 *Plano criado em 2026-09-29 a partir da auditoria do mesmo dia. Execução iniciada no mesmo dia: Fase 0 mergeada (#1181, `ecc47a88`); Fase 1 em PR #1193 (T09, T14, T18 — parcial), com a auditoria adversarial acima.*
+
+
+## Fechamento das lacunas da auditoria adversarial — 29/09 (3 de 4)
+
+- **T07 FECHADO com asserção real.** `src/components/calls/__tests__/calls-access.test.ts` deixou de ser 5 `it.todo` (arquivo *skipped*, gate verde sem rede de segurança): agora tem 5 asserções que travam invariantes do módulo — nenhum arquivo da telefonia carrega a chave `service_role`; o hook de SIP não importa `sip.js` (fronteira do adapter, invariante do T09); motor e adapter não importam React (T09); o casamento de telefone nunca volta ao `ilike` por sufixo (T14); e um caso que falha se a superfície de telefonia sumir, para o arquivo não passar por vacuidade. Os `it.todo` restantes continuam nomeando o que depende de código futuro (T43/T45, T13/T66, T13).
+- **4 mutantes sobreviventes → 4 mortos, cada um com prova por mutação** (reintroduzir o defeito → exigir falha na asserção, e só então reverter):
+  - leitura vs intenção no `toggleMute` → `expected ... called with [false]`
+  - `Terminated` não notifica o sink → `called 1 times, but got 0`
+  - `dispose()` não descarta o áudio remoto → `expected <audio ...> to be null`
+  - cronômetro não para em `Terminated` (no hook) → `expected 8 to be 3`
+  Depois de reverter: 12/12 e 28/28 verdes, árvore limpa.
+- **TLS do snapshot FECHADO.** `telefonia-snapshot.mjs` validava a identidade do banco mas repassava `sslmode`/`sslrootcert` da URL direto ao libpq (o próprio `psql-environment.mjs` documenta que validar TLS é dever do chamador). Prova antes/depois, com a identidade correta e credencial falsa: **antes**, `?sslmode=disable` era aceito e o psql **ia à rede** ("psql falhou"); **depois**, recusa com "tenta reduzir sslmode" e "tenta substituir a CA Supabase pinada". Sem parâmetro TLS o script segue fixando `verify-full` e chega ao psql — ou seja, não há falso positivo. Artefato `pos-fase-0.json` intacto.
+
+Pendente da lista do usuário: **T10** (`CallSessionProvider` sobre `session.ts` usando `reduce()`).
