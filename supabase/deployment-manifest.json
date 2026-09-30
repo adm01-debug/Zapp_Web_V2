@@ -11,7 +11,7 @@
   },
   "summary": {
     "function_count": 67,
-    "source_file_count": 104,
+    "source_file_count": 105,
     "verify_jwt_true": 55,
     "verify_jwt_false": 12
   },
@@ -75,6 +75,11 @@
       "path": "supabase/functions/_shared/crm-integration-contract.ts",
       "bytes": 8856,
       "sha256": "fe7af6c83ab19c85de7e1581c4d32862fbfb35f63b8fbac6ec852ca958590e4c"
+    },
+    {
+      "path": "supabase/functions/_shared/cron-secret-auth.ts",
+      "bytes": 3553,
+      "sha256": "dd33ad23427bbea78803b40d0cf4523fffcca9140cf5b60d9778299bd3210053"
     },
     {
       "path": "supabase/functions/_shared/email-font-stack.ts",
@@ -263,8 +268,8 @@
     },
     {
       "path": "supabase/functions/batch-fetch-avatars/index.ts",
-      "bytes": 8322,
-      "sha256": "0f67587841a923c5890dba2d3d9753593d52cbb7e33d879dacae4f407d8af151"
+      "bytes": 7370,
+      "sha256": "8d0506993673d8b09d2f4d1bf7ec4d5dab7bab9bde0f4531ad69c2fe849eff64"
     },
     {
       "path": "supabase/functions/bitrix-api/index.ts",
@@ -298,8 +303,8 @@
     },
     {
       "path": "supabase/functions/connection-health-check/index.ts",
-      "bytes": 10959,
-      "sha256": "1b08a299ce19bd09327583eb770f6ae62d036358b1203a80eadb978f0bdad06c"
+      "bytes": 10132,
+      "sha256": "238c296d0a5c26f1ce728ed4c04144a77f4548d2e21d13fc9336a1ecab422fa9"
     },
     {
       "path": "supabase/functions/create-user/index.ts",
@@ -717,8 +722,9 @@
       "name": "batch-fetch-avatars",
       "entrypoint": "supabase/functions/batch-fetch-avatars/index.ts",
       "verify_jwt": false,
-      "source_sha256": "ba33840095fd326277ec5e5ee850397456cef9bbe00fd0d97c20d363cb26207b",
+      "source_sha256": "f0d1dee1d2cff83d7ad527612529ee03c241a1d24dd042c70ae91d32920a0d7d",
       "source_files": [
+        "supabase/functions/_shared/cron-secret-auth.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-helpers.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -812,8 +818,9 @@
       "name": "connection-health-check",
       "entrypoint": "supabase/functions/connection-health-check/index.ts",
       "verify_jwt": false,
-      "source_sha256": "6c406eab424f23b913e181abc806a0f5a366af5ccd15d89ad056e2c8fd461e8b",
+      "source_sha256": "63c1ba37421a4741d94233a02e4b788e93764a4c927396ee5fc8b78ae3ce0ad6",
       "source_files": [
+        "supabase/functions/_shared/cron-secret-auth.ts",
         "supabase/functions/_shared/email-font-stack.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -1413,5 +1420,5 @@
       ]
     }
   ],
-  "manifest_sha256": "0cf50ac4f449959f62d224deed1902ac8adfbb9ee044f76eb7e19b71047a0341"
+  "manifest_sha256": "8962c98fbe3b57f6bb41fab0eac55934851f9b0fa53a119ee14c3c469b8d717a"
 }

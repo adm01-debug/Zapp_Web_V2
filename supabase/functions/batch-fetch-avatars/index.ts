@@ -2,16 +2,7 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { evoFetch, extractAvatarUrl } from '../_shared/evolution-send.ts';
 import { avatarObjectPath } from '../_shared/evolution-helpers.ts';
 import { getCorsHeaders, handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
-
-function timingSafeStringEqual(a: string, b: string): boolean {
-  const enc = new TextEncoder();
-  const ab = enc.encode(a);
-  const bb = enc.encode(b);
-  if (ab.length !== bb.length) return false;
-  let diff = 0;
-  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
-  return diff === 0;
-}
+import { isAuthorizedCronOrUser, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
 
 export async function handleBatchFetchAvatars(
   req: Request,
@@ -37,35 +28,20 @@ export async function handleBatchFetchAvatars(
 
     // L5 da matriz IA-004: credencial de maquina do cron (x-cron-secret, segredo
     // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU JWT de usuario autenticado.
-    // A ANON KEY deixa de entrar: ela e publica (vai no bundle do front, para qualquer
-    // visitante) e o gateway a aceitava como "um JWT valido", entao qualquer anonimo
-    // passava daqui. O x-cron-secret e conferido ANTES do guard de Bearer para o
-    // pg_cron (job avatars-refresh, de hora em hora) chegar; o getUser recusa a anon
-    // key porque ela nao tem usuario. Fail-closed: se a RPC do Vault falhar, isCronAuth
-    // fica false e a chamada segue para o caminho de JWT.
-    // O caminho de Bearer e o consumidor legitimo do front (useNewConversation e
-    // useInboxBulkActions chamam via supabase.functions.invoke com o JWT da sessao).
-    const cronSecretHeader = req.headers.get('x-cron-secret');
-    let isCronAuth = false;
-    if (cronSecretHeader) {
-      const { data: vaultSecret, error: rpcError } = await supabase.rpc('get_avatars_refresh_cron_secret');
-      if (!rpcError && typeof vaultSecret === 'string') {
-        isCronAuth = timingSafeStringEqual(cronSecretHeader, vaultSecret);
-      }
-    }
-    if (!isCronAuth) {
-      const authHeader = req.headers.get('Authorization');
-      if (!authHeader?.startsWith('Bearer ')) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
-      }
-      const token = authHeader.slice(7);
-      if (!timingSafeStringEqual(token, serviceKey)) {
-        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-        if (authError || !user) {
-          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
-        }
-      }
-    }
+    // A ANON KEY deixa de entrar: ela e publica (vai no bundle do front) e o gateway a
+    // aceitava como "um JWT valido". O caminho de Bearer e o consumidor legitimo do front
+    // (useNewConversation e useInboxBulkActions chamam via functions.invoke com o JWT da
+    // sessao). O guard vive em _shared/cron-secret-auth.ts (as duas edges usam o mesmo);
+    // o literal da RPC fica AQUI de proposito, para o guard de catalogo
+    // (scripts/db-audit/supabase-usage-guard.mjs) continuar validando o alvo.
+    const authorized = await isAuthorizedCronOrUser(req, supabase, {
+      serviceKey,
+      readVaultSecret: async () => {
+        const { data, error } = await supabase.rpc('get_avatars_refresh_cron_secret');
+        return !error && typeof data === 'string' ? data : null;
+      },
+    });
+    if (!authorized) return unauthorizedResponse(headers);
 
     const ip = getClientIP(req);
     const rl = checkRateLimit(`batch-avatars:${ip}`, 5, 60_000);

@@ -96,8 +96,7 @@ jobs:
           supabase/functions/webhook-diagnostic/diagnostic.test.ts
           supabase/functions/talkx-report/index.test.ts
           supabase/functions/multiplix-send/index.test.ts
-          supabase/functions/connection-health-check/index.test.ts
-          supabase/functions/batch-fetch-avatars/index.test.ts
+          supabase/functions/_shared/__tests__/cron-secret-authz-l5.test.ts
           supabase/functions/_shared/__tests__/talkx-resume-policy.test.ts
           supabase/functions/_shared/__tests__/webhook-signature.test.ts
           supabase/functions/_shared/__tests__/ai-auth.test.ts
