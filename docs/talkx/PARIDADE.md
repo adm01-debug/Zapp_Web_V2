@@ -142,8 +142,8 @@ Cobertas nas sessões anteriores (PRs #289–#307). Ver HANDOFF_SESSAO_03.md.
 | Campo `phone` avulso (sem contact) | ✅ E51 | `talkx_blacklist.phone text`, nullable `contact_id`, CHECK phone OR contact_id |
 | Enum `reason_code` (opt_out/invalid_number/manual/lgpd/no_commercial_permission/bounce) | ✅ E51 | tipo `talkx_blacklist_reason` + migration 20260910090000 |
 | Campo `expires_at` (supressão temporária) | ✅ E51 | `expires_at timestamptz`; query ativa filtra expires_at IS NULL OR > now() |
-| Unique parcial em `phone` (WHERE removed_at IS NULL) | ✅ E51/CR | `talkx_blacklist_phone_active_unique` |
-| Hook `useTalkXSuppression` (isSuppressed 2 passos) | ✅ E51 | `src/hooks/integrations/useTalkXSuppression.ts` |
+| Unique parcial em `phone` (WHERE removed_at IS NULL) | ✅ **V05** | `talkx_blacklist_phone_active_unique` + migration `20260929860000` (até a V05 existia **só no banco**, 0 migrations/0 ledger — o drift que o `check-migration-drift.mjs` acusava) |
+| Hook `useTalkXSuppression` (isSuppressed 2 passos) | ⚠️ **código morto** | `src/hooks/integrations/useTalkXSuppression.ts` existe, mas **nenhum arquivo o importa** (`grep -rn useTalkXSuppression src/` = 0 fora dele) e ele faz DELETE físico — contraria a trilha append-only da V11.1. Consumidor real é `TalkXSuppression.tsx` direto |
 | UI: phone avulso + reason_code pill + coluna Expira em | ✅ E52 | `TalkXSuppression.tsx` |
 | CSV import por phone (lookup em contacts + insert contact_id) | ⚠️ E53 parcial | phone-only direto ainda pendente |
 | Search digit guard | ✅ E53/CR | `qNum.length > 0` antes de phone.includes |
@@ -153,7 +153,7 @@ Cobertas nas sessões anteriores (PRs #289–#307). Ver HANDOFF_SESSAO_03.md.
 | Soft-delete removed_by + removed_at | ✅ E56 | migration 20260910080000 + `removeMutation` UPDATE |
 | UPDATE RLS com `is_admin_or_supervisor` | ✅ E56/CR | policy `talkx_blacklist_update` |
 | removed_at IS NULL nos enforcement paths | ✅ E56/CR | `useCampaignEditor` + `talkx-send` |
-| auto_optout no CHECK constraint | ✅ E57 | migration 20260910080000 |
+| auto_optout no CHECK constraint | ✅ **V05** | migration `20260929860000` — a `20260910080000` **não** contém `auto_optout` (medido: 0 ocorrências; ela só adiciona `removed_by`/`removed_at`). O CHECK de 6 valores vivia **só no banco** até a V05 |
 | Opt-out por keyword (SAIR/STOP/CANCELAR/etc.) gateado 30d | ✅ E57/CR | `evolution-webhook-messages.ts` |
 | resolvedPhone via bestJid + r.contacts?.phone | ✅ E57/CR | `evolution-webhook-messages.ts` + `talkx-send` |
 | Notificação de confirmação ao contato após opt-out | ✅ E59 | `evoFetch` com texto PT-BR |
@@ -164,7 +164,7 @@ Cobertas nas sessões anteriores (PRs #289–#307). Ver HANDOFF_SESSAO_03.md.
 | Migration | Conteúdo | Status |
 |---|---|---|
 | `20260910090000` | phone, reason_code enum, expires_at, source_message_id, unique index | ✅ |
-| `20260910080000` | removed_by, removed_at, auto_optout constraint, UPDATE RLS | ✅ |
+| `20260910080000` | removed_by, removed_at, UPDATE RLS (**não** traz `auto_optout` — ver V05) | ✅ |
 
 ### EFs deployadas (Fase 5)
 
@@ -196,4 +196,4 @@ Cobertas nas sessões anteriores (PRs #289–#307). Ver HANDOFF_SESSAO_03.md.
 | `talkx-send` | pickVariant + filtro removed_at + blacklistPhones |
 | `evolution-webhook` | opt-out keyword E57 + confirmação E59 |
 | migration 20260910090000 | blacklist v2 (phone, reason_code, expires_at, unique index) |
-| migration 20260910080000 | removed_by, removed_at, auto_optout, UPDATE RLS is_admin_or_supervisor |
+| migration 20260910080000 | removed_by, removed_at, UPDATE RLS is_admin_or_supervisor (**não** traz `auto_optout`; ver V05) | ✅ |
