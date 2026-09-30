@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { toast } from '@/hooks/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { LocationMessage } from '@/types/chat';
-import { useFeatureFlag } from '@/hooks/system/useFeatureFlag';
 import { HighlightedText } from './chat/HighlightedText';
 import { SuggestionList } from './location-picker/SuggestionList';
 import { searchFailureText } from './location-picker/searchErrors';
@@ -34,18 +33,19 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
 
   const {
     mapContainer, isMapLoaded, mapError, retryMap, isLoadingLocation, mapboxToken,
-    searchQuery, setSearchQuery, isSearching, selectedLocation, searchResults,
+    selectedLocation,
     chooseSearchResult, getCurrentLocation, searchLocation, reset, proximity,
   } = useLocationPicker(open, activeTab);
 
   // Fase 2/3 do plano de busca (docs/mapa/PLANO_BUSCA_SEARCHBOX_50_ETAPAS.md): sugestão
-  // enquanto digita, atrás de flag. Flag desligada (padrão hoje) = fluxo antigo intacto,
-  // zero mudança visual — nenhum destes valores é lido fora do ramo `autocompleteEnabled`.
-  const autocompleteEnabled = useFeatureFlag('mapa.searchbox-autocomplete', false);
+  // enquanto digita. A flag `mapa.searchbox-autocomplete` foi REMOVIDA aqui (auditoria
+  // adversarial, onda 2, A4-B/A4-C): ela estava `true` em produção desde 26/09 e o ramo
+  // desligado — o que ninguém exercia — era o defeituoso (sem estado de busca e sem
+  // `role=listbox`). Manter dois caminhos custava mais caro do que escolher um.
   const autocomplete = useAddressAutocomplete({
     token: mapboxToken,
     proximity,
-    enabled: autocompleteEnabled && open && activeTab === 'map',
+    enabled: open && activeTab === 'map',
   });
   const [addressListOpen, setAddressListOpen] = useState(false);
   const addressComboRef = useRef<HTMLDivElement>(null);
@@ -157,8 +157,7 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
 
           <TabsContent value="map" className="mt-0 space-y-0">
             <div className="p-4 pb-2">
-              {autocompleteEnabled ? (
-                <div ref={addressComboRef} className="relative">
+              <div ref={addressComboRef} className="relative">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                     <Input
@@ -217,31 +216,6 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
                     />
                   )}
                 </div>
-              ) : (
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input placeholder="Buscar endereço..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && searchLocation()} className="pl-9" />
-                  </div>
-                  <Button variant="outline" onClick={() => void searchLocation()} disabled={isSearching}>{isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Buscar'}</Button>
-                </div>
-              )}
-              {!autocompleteEnabled && searchResults.length > 0 && (
-                <div className="mt-2 rounded-lg border border-border divide-y divide-border overflow-hidden">
-                  <p className="px-3 py-2 text-xs text-muted-foreground bg-muted/50">Escolha o endereço certo:</p>
-                  {searchResults.map((place) => (
-                    <button
-                      key={`${place.lat},${place.lng},${place.address}`}
-                      type="button"
-                      onClick={() => chooseSearchResult(place)}
-                      className="w-full text-left px-3 py-2 hover:bg-muted/60 transition-colors"
-                    >
-                      {place.name && <p className="text-sm font-medium truncate">{place.name}</p>}
-                      {place.address && <p className="text-xs text-muted-foreground truncate">{place.address}</p>}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
             <div className="relative">
               <div ref={mapContainer} className="w-full h-64 bg-muted" />

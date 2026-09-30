@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { ChevronDown, ChevronRight, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { WorkItemCard }         from '../shared/WorkItemCard';
 import { WorkItemCardSkeleton } from '../shared/WorkItemCardSkeleton';
 import { TasksEmptyState }      from '../TasksEmptyState';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
-import type { BucketsByDue }    from '@/hooks/tasks/workItemAggregates';
+import { groupUpcomingByDay }   from '@/hooks/tasks/workItemAggregates';
+import type { BucketsByDue, DayGroup } from '@/hooks/tasks/workItemAggregates';
 
 interface Props {
   byDue: BucketsByDue;
@@ -24,6 +26,10 @@ interface SectionProps {
   items: WorkItem[];
   /** Concluidas de 8 a 30 dias, reveladas pelo rodape "ver mais (30 dias)" (etapa 48/B4). */
   olderItems?: WorkItem[];
+  /** Subcabecalhos por dia (etapa 49) — usados pela secao "Proximas". */
+  groups?: DayGroup[];
+  /** Texto do tooltip do cabecalho (etapa 49). */
+  hint?: string;
   defaultOpen?: boolean;
   headingClass?: string;
   onOpen: Props['onOpen'];
@@ -33,23 +39,60 @@ interface SectionProps {
   hasMounted: React.MutableRefObject<boolean>;
 }
 
-function Section({ title, items, olderItems = [], defaultOpen = true, headingClass = '', onOpen, onToggleDone, onMoveTo, onDelete, hasMounted }: SectionProps) {
+function Section({ title, items, olderItems = [], groups, hint, defaultOpen = true, headingClass = '', onOpen, onToggleDone, onMoveTo, onDelete, hasMounted }: SectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [showOlder, setShowOlder] = useState(false);
+  // Etapa 50: com reduced-motion as animacoes (entrada e saida) viram instantaneas.
+  const reduceMotion = useReducedMotion() ?? false;
   if (items.length === 0) return null;
   const Icon = open ? ChevronDown : ChevronRight;
   const visible = showOlder ? [...items, ...olderItems] : items;
+  const renderCard = (item: WorkItem, index: number) => (
+    <motion.div
+      key={item.id}
+      initial={hasMounted.current ? false : { opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, height: 0, transition: { duration: reduceMotion ? 0 : 0.2 } }}
+      transition={{ duration: reduceMotion ? 0 : 0.15, delay: reduceMotion ? 0 : Math.min(index, 12) * 0.02 }}
+      className="overflow-hidden"
+    >
+      <WorkItemCard
+        item={item}
+        mode="list"
+        onOpen={() => onOpen(item)}
+        onToggleDone={() => onToggleDone(item)}
+        onMoveTo={(to) => onMoveTo(item, to)}
+        onDelete={() => onDelete(item)}
+      />
+    </motion.div>
+  );
   return (
     <div className="space-y-1.5">
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className={`flex items-center gap-1.5 text-[13px] font-semibold ${headingClass || 'text-muted-foreground'} hover:text-foreground transition-colors`}
-      >
-        <Icon className="h-4 w-4" />
-        {title}
-        <span className="rounded-full bg-muted px-1.5 py-0.5 text-2xs tabular-nums">{items.length}</span>
-      </button>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => setOpen(o => !o)}
+          className={`flex items-center gap-1.5 text-[13px] font-semibold ${headingClass || 'text-muted-foreground'} hover:text-foreground transition-colors`}
+        >
+          <Icon className="h-4 w-4" />
+          {title}
+          <span className="rounded-full bg-muted px-1.5 py-0.5 text-2xs tabular-nums">{items.length}</span>
+        </button>
+        {hint && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={hint}
+                className="rounded p-0.5 text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <Info className="h-3.5 w-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-[220px] text-xs">{hint}</TooltipContent>
+          </Tooltip>
+        )}
+      </div>
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
@@ -59,23 +102,20 @@ function Section({ title, items, olderItems = [], defaultOpen = true, headingCla
             transition={{ duration: 0.15 }}
             className="overflow-hidden space-y-1.5"
           >
-            {visible.map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={hasMounted.current ? false : { opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.15, delay: Math.min(index, 12) * 0.02 }}
-              >
-                <WorkItemCard
-                  item={item}
-                  mode="list"
-                  onOpen={() => onOpen(item)}
-                  onToggleDone={() => onToggleDone(item)}
-                  onMoveTo={(to) => onMoveTo(item, to)}
-                  onDelete={() => onDelete(item)}
-                />
-              </motion.div>
-            ))}
+            {groups && groups.length > 0
+              ? groups.map(g => (
+                  <div key={g.label} className="space-y-1.5">
+                    <div className="px-1 text-xs font-medium text-muted-foreground">{g.label}</div>
+                    <AnimatePresence initial={false}>
+                      {g.items.map((item, index) => renderCard(item, index))}
+                    </AnimatePresence>
+                  </div>
+                ))
+              : (
+                <AnimatePresence initial={false}>
+                  {visible.map((item, index) => renderCard(item, index))}
+                </AnimatePresence>
+              )}
             {olderItems.length > 0 && (
               <button
                 type="button"
@@ -114,8 +154,8 @@ export function TasksListMode({ byDue, isLoading, searchQuery, onOpen, onToggleD
       <Section title="Atrasadas"   items={byDue.overdue}   headingClass="text-destructive" defaultOpen onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
       <Section title="Hoje"        items={byDue.today}     headingClass="text-warning"     defaultOpen onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
       <Section title="Amanhã"     items={byDue.tomorrow}  defaultOpen onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
-      <Section title="Próximas"   items={byDue.upcoming}  defaultOpen onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
-      <Section title="Sem prazo"   items={byDue.noDue}                defaultOpen onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
+      <Section title="Próximas"   items={byDue.upcoming}  groups={groupUpcomingByDay(byDue.upcoming)} hint="Ordenado por prazo, depois prioridade" defaultOpen onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
+      <Section title="Sem prazo"   items={byDue.noDue}    defaultOpen={byDue.noDue.length <= 10} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
       <Section title="Concluídas (7 dias)" items={byDue.done7d} olderItems={byDue.doneOlder} headingClass="text-muted-foreground/60" defaultOpen={false} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
     </div>
   );

@@ -118,3 +118,28 @@ Novos achados registrados aqui, **sem correção neste PR**:
 | B13 | `supabase/functions/ai-auto-tag/auth_test.ts` existe mas **não roda no CI** (lista fixa em `ci.yml`) | lacuna de teste | bloco 06 |
 | B14 | A cota de IA é **nominal**: as funções corrigidas não registram consumo em `ai_usage_logs`; `enforceAiGuards` **falha aberto** em erro de infra; o rate limit é por isolate e usa IP do `x-forwarded-for`; **10 endpoints de IA paga** têm identidade sem cota | risco | bloco 06 |
 | B15 | A RLS de `messages` **não filtra ciclo de vida** (`is_deleted`, `contacts.deleted_at`, `conversation_status`) e o bucket `audio-memes` é **público** estando na allowlist do transcritor. **Medido:** 12 mensagens apagadas ainda com mídia (de 49.318) e **1** `media_url` já apontando para o bucket público | risco | bloco 15 / 02 |
+
+## H. Publicação do Bloco 02 em produção e achados da verificação (30/09)
+
+Os dois defeitos do lote B estavam mergeados em `main` desde 29/09 mas **não estavam em produção**: o passo
+`Deploy` do `deploy-functions.yml` concluía `success` sem publicar (`version` subia e o conteúdo não mudava —
+o `elevenlabs-webhook` ficou em `version 225` com `updated_at` do deploy em massa). Publicado pelo CLI do
+Supabase, do workspace em `main` (`49967551`), e verificado **baixando o fonte publicado**
+(`supabase functions download`):
+
+| Função | Defeito | Prova da correção em produção |
+|---|---|---|
+| `elevenlabs-webhook` | A9 — assinatura em modo sombra (qualquer anônimo gravava em `audit_logs`) | sonda com assinatura falsa: `200` antes → **`401`** depois; assinatura correta: `200`; fonte publicado chama `verifyElevenLabsSignature` |
+| `classify-audio-meme` | IA-011/IA-012 — não exigia identidade | fonte publicado chama `requireAiIdentity` |
+
+O secret `ELEVENLABS_WEBHOOK_SECRET` foi criado no projeto (`supabase secrets set`, 30/09 10:33Z) — sem ele a
+função passa a falhar fechada e recusaria 100% dos eventos; o digest gravado confere com o valor do painel.
+
+Novo achado, **sem correção neste PR**:
+
+| # | Achado | Tipo | Destino |
+|---|---|---|---|
+| B16 | O insert em `audit_logs` do `elevenlabs-webhook` (`index.ts`) **ignora o `{error}`** e a escrita está falhando em silêncio: 2 sondas pós-deploy devolveram `200` e **zero linhas**, contra 2 linhas gravadas pelo código antigo às 10:35. Formato descartado (`audit_logs` só tem CHECK de `action` não-vazio; `service_role` tem `bypassrls=true`; a URL injetada está correta) — a credencial `SUPABASE_SERVICE_ROLE_KEY` injetada nas Edge Functions tem digest que não corresponde a nenhuma chave atual do projeto. | defeito (robustez + infra) | bloco 03 (logar o erro do insert) / decisão de infra do Joaquim |
+
+Nota operacional: a fila de `deploy-functions.yml` é compartilhada entre chats e `Deploy: success` não prova
+publicação — antes de declarar uma correção em produção, baixar o fonte publicado da função.

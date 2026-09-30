@@ -17,6 +17,7 @@ import { KpiStrip } from './KpiStrip';
 import { SectionCard } from './SectionCard';
 import { OpenDealsList } from './OpenDealsList';
 import { EmptyState } from '@/components/ui/empty-state';
+import { buildEditContactShape } from '../contact-details/editContactShape';
 
 const EditContactDialog = lazy(() =>
   import('../contact-details/EditContactDialog').then((m) => ({ default: m.EditContactDialog })));
@@ -101,17 +102,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
               <EditContactDialog
                 open={editOpen}
                 onOpenChange={setEditOpen}
-                contact={{
-                  id: conversation.contact.id,
-                  name: conversation.contact.name,
-                  phone: conversation.contact.phone,
-                  avatar: conversation.contact.avatar ?? undefined,
-                  email: conversation.contact.email ?? undefined,
-                  nickname: conversation.contact.nickname ?? undefined,
-                  job_title: conversation.contact.job_title ?? undefined,
-                  company: conversation.contact.company ?? undefined,
-                  contact_type: conversation.contact.contact_type,
-                }}
+                contact={buildEditContactShape({ contact: conversation.contact })}
               />
             </Suspense>
           )}

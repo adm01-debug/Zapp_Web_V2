@@ -94,7 +94,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 ## CP-C Sheet       [ ] WorkItemSheet= · ?task= · Aguardando por DnD/kebab/menu= · kebab 5 grupos= · RemindChip popover= · ContactChip=
 ## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
-## CP-E Telas       [~] etapas 47 (B7) e 48 (B4) fechadas 29-30/09/2026 (executor: Hermes) · KPIs 88px= · filtros 3 modos= · Concluídas 7d: ok · Quadro WIP/ordem= · Agenda grupos= · 0 requests na troca= · modo por rota: ok
+## CP-E Telas       [~] etapas 47 (B7), 48 (B4), 49, 50 e 51 (B5) fechadas 29-30/09/2026 (executor: Hermes) · KPIs 88px= · filtros 3 modos= · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem= · Agenda grupos= · 0 requests na troca= · modo por rota: ok
 
 ## Etapa 47 (B7) — modo por rota (Fase E) — evidências
 
@@ -150,6 +150,69 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 **Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · `build` ✓ · bundle 492,3/550 KB gzip e 4017,5/4100 KB de assets ✓ · `db:guard` ✓ · suíte 4279 passed / 0 failed (312 arquivos) ✓
 
 **Resíduo (comportamento de antes, mantido de propósito):** quem tem só concluídas de 8–30 dias e nada ativo continua vendo o estado vazio da Lista — a seção só nasce quando há algo nos 7 dias.
+
+## Etapa 49 — Lista: "Próximas" por dia, "Sem prazo" colapsável e tooltip da ordenação — evidências
+
+**Regra do plano (3 comportamentos):** "Próximas" agrupa por dia ("Amanhã", "Qua 01/10", …, "Semana que vem" para > 7 dias) com subcabeçalho `text-[12px]`; "Sem prazo" colapsa quando > 10; tooltip no cabeçalho "Ordenado por prazo, depois prioridade".
+
+**Mudanças (4 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/hooks/tasks/workItemAggregates.ts` | `dayGroupLabel` (Hoje / Amanhã / "Seg 05/10" dentro de 7 dias / "Semana que vem" acima disso) e `groupUpcomingByDay` (ordena por prazo → prioridade e agrupa dias consecutivos); `PRIORITY_WEIGHT` extraído do `bucketByStatus` e reusado |
+| `src/components/tasks/list/TasksListMode.tsx` | "Próximas" recebe `groups` + `hint`; subcabeçalho `text-[12px]`; tooltip no cabeçalho; "Sem prazo" com `defaultOpen={noDue.length <= 10}`; `renderCard` extraído (o card estava duplicado nos dois caminhos) |
+| `src/hooks/tasks/__tests__/workItemAggregates.test.ts` | 3 casos: rótulos (incluindo a fronteira +7 / +8 dias), agrupamento ordenado por prazo e desempate por prioridade |
+| `src/components/tasks/__tests__/taskComponents.test.tsx` | 3 casos: subcabeçalhos + "Semana que vem"; "Sem prazo" abre com 10 e recolhe com 11; tooltip do cabeçalho. Harness novo `renderLista` com `TooltipProvider` (a app fornece em `AppProviders.tsx:75`) |
+
+**Divergências do plano (4, pequenas):** (1) o plano não diz **qual** cabeçalho leva o tooltip — escolhi o de "Próximas", que é onde o agrupamento por prazo acontece; (2) o harness da Lista ganhou `TooltipProvider`, porque o `Tooltip` do cabeçalho exige provider e a app já fornece um global (mesmo padrão do board na etapa 47); (3) `PRIORITY_WEIGHT` foi extraído para não duplicar o mapa de pesos (teto de 3% de duplicação do SonarCloud) — `bucketByStatus` passou a usá-lo; (4) o plano pede o subcabeçalho em `text-[12px]`, mas o guard-rail de tipografia (`node scripts/qa/medir-tipografia.cjs --check`, teto 0 para "arbitrário com equivalente exato") reprovou: o token equivalente é `text-xs` (12px). O CI pegou isso no PR #1238 e o valor foi trocado por `text-xs`, preservando o tamanho pedido.
+
+**Teste de mutação (3 mutações, árvore restaurada entre cada):** M1 "Sem prazo" nunca colapsa → 1 vermelho; M2 "Próximas" sem os subcabeçalhos → 1 vermelho; M3 o corte de 7 dias vira 99 → 3 vermelhos; 25 a 27 verdes em cada rodada.
+
+**Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas (baseline 971, atual 955) ✓ · `implicit-any` 0 ✓ · `build` ✓ · bundle 492,3/550 KB gzip e 4018,6/4100 KB ✓ · `db:guard` ✓ · suíte 4302 passed / 0 failed (313 arquivos) ✓
+
+**Resíduo (defensivo, não é regressão):** se `upcoming` trouxer item sem `due_date` — estado impossível vindo do `bucketByDue` — a seção cai na lista plana em vez de esconder a tarefa.
+
+## Etapa 50 — animação de concluir na Lista (fade 200ms) — evidências
+
+**Regra do plano:** `motion.div` com `exit={{ opacity: 0, height: 0 }}` de 200ms por item, via `AnimatePresence`, respeitando reduced-motion. DoD: item some com fade.
+
+**Mudanças (2 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/components/tasks/list/TasksListMode.tsx` | o card de cada item ganha `exit` (fade + altura, 200ms) e `overflow-hidden`; cada lista de itens (a plana e a de cada dia de "Próximas") passa a ficar dentro do seu próprio `AnimatePresence`, que é o que faz o exit ser observado; `useReducedMotion()` (padrão do repo) zera as durações de entrada e saída |
+| `src/components/tasks/__tests__/taskComponents.test.tsx` | caso novo da etapa 50 — o item fica montado durante a saída, ainda está lá 60ms depois (pina a duração) e sai ao fim; harness `renderBuckets` para trocar os buckets; a asserção final do caso da etapa 48 virou `waitFor` porque o item continuava montado por causa do exit |
+
+**A primeira prova do exit foi um vermelho:** ao introduzir a animação, o caso da etapa 48 ("ver menos" esconde a antiga) ficou vermelho — o item permanecia montado durante a saída. Foi o que mostrou que a animação está de fato em cima do unmount, e é o mesmo mecanismo que o caso novo pina.
+
+**Achado durante a construção (registrado, não é bug):** quando o **último** item de uma seção é concluído, quem sai é a seção inteira — o fade por item só acontece enquanto a seção continua de pé (com pelo menos um item). O plano pede o fade do item; a animação da seção é outra coisa e não está no escopo.
+
+**Teste de mutação (3 mutações, árvore restaurada entre cada):** M1 sem o `exit` → 1 vermelho; M2 sem o `AnimatePresence` por item → 1 vermelho; M3 saída instantânea (duração 0) → **sobreviveu na primeira rodada** e matou 1 depois que o caso passou a medir a duração (60ms ainda em cena). Na primeira versão o teste pinava o mecanismo do exit, não os 200ms — a lacuna foi encontrada pela própria mutação e fechada.
+
+**Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · **guard-rail de tipografia** ✓ · `build` ✓ · bundle 492,3/550 KB gzip e 4018,8/4100 KB ✓ · `db:guard` ✓ · suíte 4315 passed / 0 failed (316 arquivos) ✓
+
+**Lacuna declarada (não medida):** o caminho de reduced-motion (durações zeradas pelo `useReducedMotion()`) não tem caso próprio — medi-lo exigiria mockar o módulo do framer no arquivo inteiro, mudando o comportamento dos outros casos do harness. O que está pinado é o exit e a duração normal (200ms).
+
+## Etapa 51 (B5) — coluna Concluído do Quadro: 7 dias + "Ver mais antigas (30 dias)" — evidências
+
+**Regra do plano:** a coluna Concluído mostra só `completed_at ≥ now-7d`, ordem `completed_at desc`, rodapé "Ver mais antigas (30 dias)" (filtro local). DoD: paginação local.
+
+**Mudanças (4 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/hooks/tasks/workItemAggregates.ts` | `splitDoneByRecency(items, now)` → `{ recent, older }`, ambos em `completed_at desc`; `recent` é a janela de 7 dias, `older` o resto da janela de 30 dias que a query do hook já traz |
+| `src/components/tasks/board/BoardColumn.tsx` | na coluna `done` a lista passa a ser `recent` e o rodapé "Ver mais antigas (30 dias)"/"Ver menos" revela `older`; o contador do cabeçalho passa a contar o que está visível |
+| `src/hooks/tasks/__tests__/workItemAggregates.test.ts` | 4 casos: janela + ordem desc, teto de 30 dias (mais novo antes do mais antigo), sem carimbo na janela recente, ignora o que não está concluído |
+| `src/components/tasks/__tests__/taskComponents.test.tsx` | caso de componente: a concluída de 13 dias não aparece até clicar no rodapé |
+
+**Decisão declarada (não é divergência silenciosa):** a concluída **sem `completed_at`** entra na janela **recente** (fica visível) em vez de sumir: a auditoria da Fase A mediu 0 linhas nesse estado, e esconder tarefa por falta de dado seria pior do que mostrar. Para quem tem carimbo, a janela de 7 dias do plano vale integralmente.
+
+**Limitação conhecida (registrada, não corrigida):** arrastar um card **dentro** da coluna Concluído continua persistindo `position`, mas a coluna agora é ordenada por `completed_at desc` — o arrasto não muda mais a ordem visível (antes da etapa 51 mudava). Desabilitar o arrasto ali levaria junto o caminho de arrastar a tarefa de volta para outra coluna; decidir isso é de produto, então ficou fora do escopo.
+
+**Teste de mutação (3 mutações, árvore restaurada entre cada):** M1 sem o corte dos 7 dias → 2 vermelhos (agregado + coluna); M2 sem a ordem `completed_at desc` → 2 vermelhos; M3 rodapé que não revela → 1 vermelho.
+
+**Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · guard-rail de tipografia ✓ · `build` ✓ · bundle 492,3/550 KB gzip e 4019,1/4100 KB ✓ · `db:guard` ✓ · suíte 4327 passed / 0 failed (318 arquivos) ✓
 
 ## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
 ## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=

@@ -42,13 +42,27 @@ fi
 PRE_PULL_ATTEMPTS="${PRE_PULL_ATTEMPTS:-5}"
 PRE_PULL_BASE_WAIT="${PRE_PULL_BASE_WAIT:-15}"
 
+# O registro publico do ECR (public.ecr.aws) limita pull anonimo por IP e responde
+# `toomanyrequests: Rate exceeded` de forma SUSTENTADA -- nao e flake: medido em 30/09/2026,
+# 5 tentativas com backoff (~4 min) falharam seguidas e o job obrigatorio ficou vermelho por
+# motivo alheio ao diff. O mesmo projeto publica as imagens equivalentes no GHCR
+# (ghcr.io/supabase/<imagem>), que nao limita igual -- e o caminho que
+# .github/workflows/types-sync.yml ja usa. O espelho vem PRIMEIRO; o pull original continua
+# como reserva, com backoff, e o erro continua aparecendo se nada funcionar.
+espelho_do_ecr() {
+  case "$1" in
+    public.ecr.aws/supabase/*) printf 'ghcr.io/supabase/%s' "${1#public.ecr.aws/supabase/}" ;;
+    *) printf '' ;;
+  esac
+}
+
 pre_pull_images() {
   if ! command -v docker >/dev/null 2>&1; then
     printf 'INFO: docker ausente; pulando o pré-pull das imagens\n' >&2
     return 0
   fi
 
-  local var imagem tentativa espera
+  local var imagem tentativa espera espelho
   while read -r var; do
     imagem="${!var}"
     [[ -n "$imagem" ]] || continue
@@ -56,6 +70,12 @@ pre_pull_images() {
     for tentativa in $(seq 1 "$PRE_PULL_ATTEMPTS"); do
       if docker image inspect "$imagem" >/dev/null 2>&1; then
         printf 'INFO: imagem já local: %s\n' "$imagem"
+        break
+      fi
+      espelho="$(espelho_do_ecr "$imagem")"
+      if [[ -n "$espelho" ]] && docker pull "$espelho" >/dev/null 2>&1; then
+        docker tag "$espelho" "$imagem"
+        printf 'INFO: imagem obtida do espelho %s (o ECR limita pull anonimo)\n' "$espelho"
         break
       fi
       if docker pull "$imagem" >/dev/null 2>&1; then
