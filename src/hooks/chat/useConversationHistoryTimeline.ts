@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { localDayKey } from '@/lib/localDay';
 
 export type TimelineEventKind =
   | 'message_in' | 'message_out' | 'note' | 'transfer' | 'assign' | 'file' | 'task' | 'deal' | 'close' | 'reopen';
@@ -223,7 +224,10 @@ export function buildTimeline(
 
   const days = new Map<string, TimelineEvent[]>();
   for (const event of limited) {
-    const day = event.at.slice(0, 10);
+    // Dia LOCAL do navegador (regra do produto): a fatia UTC do ISO jogaria 22:30 em Sao
+    // Paulo para o dia seguinte, com o cabecalho do dia errado na timeline.
+    const day = localDayKey(event.at);
+    if (!day) continue;
     if (!days.has(day)) days.set(day, []);
     days.get(day)!.push(event);
   }
