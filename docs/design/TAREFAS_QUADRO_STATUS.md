@@ -94,7 +94,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 ## CP-C Sheet       [ ] WorkItemSheet= · ?task= · Aguardando por DnD/kebab/menu= · kebab 5 grupos= · RemindChip popover= · ContactChip=
 ## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
-## CP-E Telas       [~] etapas 43, 44, 45 e 46, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8), 53, 55 e 56 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos: ok (barra de 5 filtros, estado na URL por replaceState, recorte único) · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos: ok (3 grupos, ponto por tipo, atrasadas expansível) · card agenda: ok (h-11, 1 linha, checkbox) · 0 requests na troca= · modo por rota: ok
+## CP-E Telas       [~] etapas 43, 44, 45 e 46, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8), 53, 55, 56 e 57 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos: ok (barra de 5 filtros, estado na URL por replaceState, recorte único) · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos: ok (3 grupos, ponto por tipo, atrasadas expansível) · card agenda: ok (h-11, 1 linha, checkbox) · QuickAdd no dia: ok (pré-preenchido) · 0 requests na troca= · modo por rota: ok
 
 ## Etapa 47 (B7) — modo por rota (Fase E) — evidências
 
@@ -359,6 +359,27 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 **Teste de mutação (3, árvore restaurada entre cada):** M1 altura `h-11`→`h-9` 1 vermelho; M2 checkbox só na Lista 1 vermelho; M3 kebab voltando ao hover na Agenda 1 vermelho.
 
 **Gates:** `typecheck` ✓ · guard-rail de tipografia ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · `db:guard` ✓ · suíte 4514 passed / 0 failed (342 arquivos) ✓ · `build` ✓ · bundle 4033,3/4100 KB ✓
+
+## Etapa 57 — QuickAdd na Agenda com o dia selecionado — evidências
+
+**Regra do plano:** `QuickAdd` na Agenda com chip Data pré-preenchido com o dia selecionado. Decisão D7 mantida (faixa hoje → +6). — DoD: criar cai no dia certo.
+
+**Mudanças (4 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/components/tasks/shared/QuickAdd.tsx` | prop `defaultDueDate` (o campo já nasce com o prazo) e `data-testid="quick-add-due"` no chip ativo, para o teste poder afirmar o dia |
+| `src/components/tasks/agenda/TasksAgendaMode.tsx` | renderiza o `QuickAdd` logo abaixo da faixa dos 7 dias, com `key={selectedDay}` (trocar de dia remonta o campo e reaplica o prazo) e o dia selecionado às 23:59; os botões do dia ganharam `aria-label`/`aria-current` (a11y e testável) |
+| `src/components/tasks/TasksModule.tsx` | o QuickAdd do cabeçalho **não** aparece no modo Agenda (lá quem manda é o da Agenda, com o dia); a Agenda recebe `onCreate` e `quickAddRef`, então o atalho **N** continua focando o campo certo |
+| testes | 2 casos na Agenda (nasce no dia / remonta ao trocar o dia) + 1 no módulo (um único QuickAdd na Agenda, com o placeholder do dia) |
+
+**Decisão declarada:** o prazo do dia selecionado é gravado às **23:59 locais** — a mesma convenção dos chips "Hoje/Amanhã/Próx. semana" do próprio QuickAdd. Assim `temHora` (etapa 55) o classifica em "Prazos" e a faixa hoje→+6 do D7 continua valendo.
+
+**Teste de mutação (3, árvore restaurada entre cada; base verde = 25 casos):** M1 o QuickAdd ignora o `defaultDueDate` 2 vermelhos; M2 sem a `key` (não remonta ao trocar o dia) 1 vermelho; M3 o módulo também renderiza o QuickAdd na Agenda (dois na tela) 1 vermelho.
+
+**Nota honesta sobre a suíte:** **4517 testes verdes / 0 falhas**, mas o runner acusa **1 erro não tratado (2 ocorrências)** em `src/components/catalog/__tests__/useSendProduct.test.tsx` ("window is not defined"). O arquivo **passa isolado (9/9)** e nada do meu diff o toca — é flake de carga (vários chats rodando em paralelo nesta máquina). O check `🧪 Unit Tests` do CI é a autoridade.
+
+**Gates:** `typecheck` ✓ · guard-rail de tipografia ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · `db:guard` ✓ · suíte 4517 verdes (flake de catálogo declarado) · `build` ✓ · bundle 4033,4/4100 KB ✓
 
 ## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
 ## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=
