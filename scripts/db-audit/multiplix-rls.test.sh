@@ -195,6 +195,7 @@ migration "20260929610000_multiplix_cron_window_and_limits.sql"
 migration "20260929620000_multiplix_realtime_column_scope.sql"
 migration "20260929630000_multiplix_create_draft.sql"
 migration "20260929640000_multiplix_dispatch_manage_all_permission.sql"
+migration "20260930300000_multiplix_guards_fail_closed.sql"
 
 # A revogacao da escrita direta em multiplix_recipients (F08, segunda metade) so
 # existe depois que a edge que cria o disparo esta DEPLOYADA — ela entra no PR de
@@ -427,4 +428,42 @@ usage="$(psql_test -Atqc "$service_session WITH uso AS (SELECT public.multiplix_
 [[ "$(psql_test -Atqc "SELECT public.user_has_permission('20000000-0000-0000-0000-00000000000b','multiplix.dispatch.manage_all')")" == 'f' ]] \
   || fail 'supervisor recebeu poder sobre disparo alheio'
 
-printf 'PASS: Multiplix hardening — anon sem acesso, FORCE RLS, policies TO authenticated no replay limpo, guarda de mutabilidade, criacao transacional idempotente com teto, fila (retry_after/sweeper/cancel/parcial) e scheduler por janela e por conexao\n'
+# ── #1267: guards FAIL-OPEN por GUC — prova antes/depois no MESMO container ────
+# Sessao com o papel `authenticated` e o `sub` do admin (para a RLS de UPDATE passar), mas SEM a
+# claim `role`: e o estado em que `auth.role()` e NULL. Antes, o guard fazia COALESCE(..., '') -> ''
+# e `'' <> 'authenticated'` era verdadeiro: a guarda DESAPARECIA e o staff escrevia por cima do motor.
+sem_claim="SET ROLE authenticated; SET request.jwt.claim.sub='20000000-0000-0000-0000-00000000000a';"
+dispatch_alvo='30000000-0000-0000-0000-000000000002'
+
+# (1) ESTADO ANTERIOR: reaplica a migration do guard original para voltar ao predicado fail-open.
+migration "20260929590000_multiplix_mutability_guard.sql"
+psql_test -Atqc "UPDATE public.multiplix_dispatches SET status='draft' WHERE id='$dispatch_alvo';" >/dev/null
+vazou="$(psql_test -Atqc "$sem_claim UPDATE public.multiplix_dispatches SET status='sending' WHERE id='$dispatch_alvo' RETURNING 1;" 2>&1 || true)"
+[[ "$vazou" == '1' ]] || fail "#1267: o defeito nao reproduziu (a escrita sem claim deveria passar antes do fix): $vazou"
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$dispatch_alvo';")" == 'sending' ]] \
+  || fail '#1267: o defeito nao reproduziu (o status nao mudou para sending)'
+
+# (2) ESTADO CORRIGIDO: aplica a migration desta tarefa e repete exatamente a mesma escrita.
+migration "20260930300000_multiplix_guards_fail_closed.sql"
+psql_test -Atqc "UPDATE public.multiplix_dispatches SET status='draft' WHERE id='$dispatch_alvo';" >/dev/null
+fechou="$(psql_test -Atqc "$sem_claim UPDATE public.multiplix_dispatches SET status='sending' WHERE id='$dispatch_alvo' RETURNING 1;" 2>&1 || true)"
+[[ "$fechou" != '1' ]] || fail '#1267: a escrita sem claim continuou passando (guard ainda fail-open)'
+[[ "$fechou" == *multiplix_guard_auth_role_undefined* ]] || fail "#1267: esperava multiplix_guard_auth_role_undefined, veio: $fechou"
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$dispatch_alvo';")" == 'draft' ]] \
+  || fail '#1267: a linha mudou de estado mesmo com o guard fechado'
+
+# (3) Caminhos DISPENSADOS seguem livres: o dono postgres (migrations, backfill, TODOS os jobs do
+# pg_cron de hoje) e o service_role (worker e RPCs do motor).
+[[ "$(psql_test -Atqc "UPDATE public.multiplix_dispatches SET status='scheduled' WHERE id='$dispatch_alvo' RETURNING 1;" 2>&1 || true)" == '1' ]] \
+  || fail '#1267: postgres (dono/migrations/cron) perdeu a escrita livre'
+[[ "$(psql_test -Atqc "SET ROLE service_role; UPDATE public.multiplix_dispatches SET status='draft' WHERE id='$dispatch_alvo' RETURNING 1;" 2>&1 || true)" == '1' ]] \
+  || fail '#1267: service_role (worker/RPCs do motor) perdeu a escrita livre'
+
+# (4) Regressao: o staff COM a claim continua bloqueado como antes (o check do F05 acima).
+staff_com_claim="$(psql_test -v VERBOSITY=verbose -c "$admin_a UPDATE public.multiplix_dispatches SET status='sending' WHERE id='$dispatch_alvo';" 2>&1 || true)"
+[[ "$staff_com_claim" == *multiplix_dispatch_transition_denied* ]] \
+  || fail '#1267: o guard deixou de valer para o staff com claim (regressao do F05)'
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$dispatch_alvo';")" == 'draft' ]] \
+  || fail '#1267: status final inesperado'
+
+printf 'PASS: Multiplix hardening — anon sem acesso, FORCE RLS, policies TO authenticated no replay limpo, guarda de mutabilidade (fail-closed por papel real desde #1267), criacao transacional idempotente com teto, fila (retry_after/sweeper/cancel/parcial) e scheduler por janela e por conexao\n'
