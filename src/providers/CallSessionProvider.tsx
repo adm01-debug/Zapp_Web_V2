@@ -138,9 +138,12 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
   const dial = useCallback(
     (phone: string) => {
       reiniciarSeTerminal();
-      dispatch({ type: 'DIAL', sessionId: novoId(), channel: 'voip', phone });
+      // T11: UM id por chamada — o mesmo uuid no evento `DIAL` (máquina), no
+      // `sessionId` do evento e no `p_id` das 3 gravações do banco.
+      const id = novoId();
+      dispatch({ type: 'DIAL', sessionId: id, channel: 'voip', phone });
       openDialer();
-      sip.makeCall(phone);
+      sip.makeCall(phone, id);
     },
     [openDialer, novoId, reiniciarSeTerminal, sip],
   );

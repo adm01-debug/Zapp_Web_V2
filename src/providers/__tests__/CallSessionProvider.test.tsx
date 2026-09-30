@@ -243,4 +243,37 @@ describe('CallSessionProvider (T10)', () => {
     expect(invalidas).toEqual([]);
     aviso.mockRestore();
   });
+
+  /**
+   * T11 — um id por chamada: o uuid que o provider põe no evento `DIAL` (e que
+   * a máquina guarda em `sessionId`) é o MESMO que vai para o fluxo SIP, que o
+   * usa como `p_id` das 3 gravações no banco. Se os dois divergirem, a linha da
+   * chamada nunca é encontrada pelo resto do ciclo.
+   */
+  it('T11: `dial` entrega o MESMO uuid ao evento DIAL e ao SIP', () => {
+    montar();
+    fireEvent.click(screen.getByText('discar'));
+
+    const sessao = texto('sessao');
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+    expect(sessao).toMatch(uuid);
+
+    const makeCall = h.value.makeCall as ReturnType<typeof vi.fn>;
+    expect(makeCall).toHaveBeenCalledWith('11999992048', sessao);
+  });
+
+  /**
+   * O id calculado é UM só, mesmo quando ele não é sorteado na hora: com uma
+   * `currentCallId` em mãos (chamada em curso no SIP), o provider adota esse
+   * valor — e o evento `DIAL` e a chamada SIP recebem, os dois, o mesmo.
+   */
+  it('T11: quando `currentCallId` já existe, DIAL e SIP usam esse mesmo id', () => {
+    const makeCall = vi.fn();
+    h.value = sipDuble({ currentCallId: 'linha-em-curso', makeCall });
+    montar();
+    fireEvent.click(screen.getByText('discar'));
+
+    expect(texto('sessao')).toBe('linha-em-curso');
+    expect(makeCall).toHaveBeenCalledWith('11999992048', 'linha-em-curso');
+  });
 });

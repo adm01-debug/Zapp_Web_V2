@@ -28,6 +28,10 @@ export interface CreateCallParams {
   contactPhone: string;
   contactName: string;
   direction: AdapterDirection;
+  /** Id da sessão no front (= `sessionId` da máquina); vira o `p_id` da linha. */
+  sessionId?: string;
+  /** Call-ID do SIP (`Session.id`) — prova da sessão no provedor. */
+  providerCallId?: string;
 }
 
 /** Saídas do motor: tudo o que precisa de React, de toast ou de banco. */
@@ -120,6 +124,8 @@ export class CallEngine {
       contactPhone: remoteUser,
       contactName: '',
       direction: 'inbound',
+      // `Invitation` estende `Session`: `id` é o Call-ID do convite.
+      providerCallId: invitation.id,
     });
   }
 
@@ -168,7 +174,7 @@ export class CallEngine {
     }
   }
 
-  async makeCall(number: string, ua: UserAgent | null, registered: boolean): Promise<void> {
+  async makeCall(number: string, ua: UserAgent | null, registered: boolean, sessionId?: string): Promise<void> {
     if (!ua || !registered) { this.sink.onError('VoIP não conectado.'); return; }
     if (this.status !== 'idle') { this.sink.onError('Já existe uma chamada em andamento.'); return; }
     try {
@@ -181,18 +187,24 @@ export class CallEngine {
       this.setStatus('calling');
       this.sink.onSession('outbound', number);
 
-      // Não bloqueia a discagem: o registro roda em paralelo com o convite SIP.
-      this.callIdPromise = this.sink.create({
-        contactPhone: number,
-        contactName: '',
-        direction: 'outbound',
-      });
-
+      // O Inviter vem ANTES do registro: é dele o Call-ID que vai para
+      // `provider_call_id` (T11). O import do sip.js é dinâmico, por isso a ordem
+      // real só se prova aqui dentro.
       const inviter = await this.adapter.createInviter(ua, number);
       // Atribuído antes do invite() para que hangUp() encontre a sessão mesmo
       // com o INVITE ainda pendente (evita ligação órfã em cancelamento rápido).
       this.session = inviter;
       inviter.stateChange.addListener((state) => this.handleStateChange(state, inviter, number, 'outbound'));
+
+      // Não bloqueia a discagem: o registro roda em paralelo com o convite SIP.
+      this.callIdPromise = this.sink.create({
+        contactPhone: number,
+        contactName: '',
+        direction: 'outbound',
+        sessionId,
+        providerCallId: inviter.id,
+      });
+
       await this.adapter.invite(inviter);
     } catch (error: unknown) {
       void this.callIdPromise?.then((id) => { if (id) this.sink.onFinished(id, null); });
