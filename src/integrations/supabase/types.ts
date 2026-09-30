@@ -10476,6 +10476,25 @@ export type Database = {
           queue_id: string
         }[]
       }
+      talk_me_eligible_waiting_contacts: {
+        Args: { p_contact_id?: string; p_queue_id?: string }
+        Returns: {
+          avatar_url: string
+          company: string
+          contact_id: string
+          contact_name: string
+          job_title: string
+          last_message_at: string
+          last_message_caption: string
+          last_message_content: string
+          last_message_id: string
+          last_message_media_url: string
+          last_message_type: string
+          pending_message_count: number
+          queue_id: string
+          waiting_since: string
+        }[]
+      }
       talk_me_list_queues: {
         Args: never
         Returns: {
