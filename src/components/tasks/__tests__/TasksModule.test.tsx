@@ -111,14 +111,34 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     fireEvent.click(screen.getByRole('switch', { name: 'Mostrar concluídas' }));
 
     await waitFor(() => expect(screen.queryByText('Feita')).toBeNull());
-    // a coluna vazia do Quadro entra no lugar (etapa 46)
-    expect(screen.getAllByText('Coluna vazia').length).toBeGreaterThan(0);
+    // a coluna vazia do Quadro entra no lugar (etapa 46); Fase F: asserção EXATA —
+    // 4 das 5 colunas ficam vazias (backlog, fazendo, aguardando e concluído)
+    expect(screen.getAllByText('Coluna vazia')).toHaveLength(4);
     expect(window.location.search).toContain('done=0');
 
     fireEvent.click(screen.getByRole('button', { name: /Limpar/ }));
 
     await waitFor(() => expect(screen.getByText('Feita')).toBeTruthy());
     expect(window.location.search).toBe('');
+  });
+
+  it('Fase F: a Lista esvaziada por um filtro QUE NÃO É A BUSCA oferece "Limpar filtros"', async () => {
+    // Antes: só a busca decidia o vazio — com prioridade/contato/alarme a Lista
+    // dizia "Adicione a primeira tarefa" e não oferecia como desfazer.
+    window.history.replaceState(null, '', '/?prio=urgent');
+    renderModule({ defaultMode: 'list' });
+
+    expect(await screen.findByText('Nenhuma tarefa com esse filtro')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Limpar filtros' })).toBeTruthy();
+  });
+
+  it('Fase F: o cabeçalho conta a lista REAL, não o recorte do filtro', async () => {
+    window.history.replaceState(null, '', '/?q=zzz');
+    renderModule({ defaultMode: 'board' });
+
+    // O recorte zera a tela, mas "1 aberta" (a tarefa real) segue no cabeçalho.
+    expect((await screen.findAllByText(/1 aberta/)).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/0 abertas/)).toBeNull();
   });
 
   it('a busca anda no campo na hora e vira filtro depois do debounce, já na URL', async () => {

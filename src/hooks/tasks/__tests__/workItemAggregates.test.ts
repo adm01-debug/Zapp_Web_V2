@@ -30,6 +30,34 @@ function makeItem(overrides: Partial<WorkItem>): WorkItem {
   };
 }
 
+/**
+ * Fase F (auditoria adversarial de 30/09): as correções que a suíte não pegava.
+ * Cada caso aqui FALHA no código anterior — são testemunhas dos bugs, não enfeite.
+ */
+describe('Fase F — correções da auditoria', () => {
+  it('a busca ignora acento e caixa: "cafe" acha "Café"', () => {
+    const itens = [
+      makeItem({ id: 'ac', title: 'Café com o cliente' }),
+      makeItem({ id: 'ag', title: 'Água' }),
+    ];
+
+    expect(applyFilters(itens, { ...DEFAULT_FILTERS, q: 'cafe' }).map(i => i.id)).toEqual(['ac']);
+    expect(applyFilters(itens, { ...DEFAULT_FILTERS, q: 'CAFÉ' }).map(i => i.id)).toEqual(['ac']);
+    expect(applyFilters(itens, { ...DEFAULT_FILTERS, q: 'agua' }).map(i => i.id)).toEqual(['ag']);
+  });
+
+  it('lista nula não derruba o recorte (guarda `items ?? []`)', () => {
+    expect(applyFilters(undefined as unknown as WorkItem[], DEFAULT_FILTERS)).toEqual([]);
+  });
+
+  it('concluída SEM carimbo entra nos 7 dias da Lista (mesma regra do Quadro)', () => {
+    const b = bucketByDue([makeItem({ id: 'x', status: 'done', completed_at: null })]);
+
+    expect(b.done7d.map(i => i.id)).toEqual(['x']);
+    expect(b.doneOlder).toEqual([]);
+  });
+});
+
 describe('applyFilters (etapas 45/46 — os filtros valem nos três modos)', () => {
   const base: WorkItem[] = [
     makeItem({ id: 'a', title: 'Ligar para a Ana', priority: 'urgent' }),
