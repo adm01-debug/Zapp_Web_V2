@@ -31,6 +31,8 @@ export const settingsCfg: Record<string, unknown> = {
   soundVolume: 55,
   transcriptionNotificationEnabled: true,
   transcriptionSoundType: 'soft',
+  /** Horário de silêncio: mutável, para o teste abrir a janela DEPOIS do mount. */
+  quietHours: false,
 };
 
 /** Linha devolvida pelas consultas em `contacts`. */
@@ -46,7 +48,13 @@ export function notificationSoundsMock() {
 
 export function settingsMock() {
   return {
-    useNotificationSettings: () => ({ settings: settingsCfg, isQuietHours: () => false }),
+    // `isQuietHours` lê o flag a cada chamada (e não uma constante `false`): é assim que o
+    // teste consegue abrir a janela de silêncio DEPOIS do mount e provar que o alerta não
+    // fica congelado com o valor da montagem.
+    useNotificationSettings: () => ({
+      settings: settingsCfg,
+      isQuietHours: () => settingsCfg.quietHours === true,
+    }),
   };
 }
 
@@ -109,4 +117,5 @@ export function resetAlertKit() {
   settingsCfg.soundEnabled = true;
   settingsCfg.slaBreachSound = true;
   settingsCfg.soundVolume = 55;
+  settingsCfg.quietHours = false;
 }

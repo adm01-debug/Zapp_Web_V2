@@ -9,10 +9,13 @@ export function useRealtimeNotifications() {
   const soundEnabledRef = useRef(true);
   const { settings: notifSettings, isQuietHours } = useNotificationSettings();
 
-  // Sync soundEnabledRef with global notification settings
+  // O ref espelha SÓ `soundEnabled`. O horário de silêncio é avaliado AO VIVO, no ponto de
+  // uso: congelá-lo aqui (como era) prendia o valor do mount — numa aba aberta o beep
+  // continuava tocando depois de a janela de silêncio abrir, porque nada neste efeito
+  // muda com o relógio.
   useEffect(() => {
-    soundEnabledRef.current = notifSettings.soundEnabled && !isQuietHours();
-  }, [notifSettings.soundEnabled, isQuietHours]);
+    soundEnabledRef.current = notifSettings.soundEnabled;
+  }, [notifSettings.soundEnabled]);
 
   // Request notification permission on mount
   useEffect(() => {
@@ -28,7 +31,7 @@ export function useRealtimeNotifications() {
       const notificationsActive = notifSettings.soundEnabled || notifSettings.browserNotifications;
       if (!notificationsActive && isQuietHours()) return;
 
-      if (soundEnabledRef.current) {
+      if (soundEnabledRef.current && !isQuietHours()) {
         playNotificationSound('message', notifSettings.messageSoundType, notifSettings.soundVolume);
       }
 
