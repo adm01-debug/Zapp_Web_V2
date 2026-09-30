@@ -162,3 +162,73 @@ describe('CallEngine.toggleMute (T18 — aceite)', () => {
     expect(sink.onMuted).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * Os quatro casos abaixo fecham mutações que **sobreviveram** à suíte na
+ * auditoria adversarial de 29/09 — ou seja, o código estava certo mas nenhum
+ * teste o defendia. Cada um foi escrito depois de ver o mutante passar.
+ */
+describe('CallEngine — lacunas que a auditoria adversarial expôs', () => {
+  it('toggleMute reporta o estado LIDO da track, não a intenção', async () => {
+    // Track que RECUSA a escrita: continua habilitada depois do pedido de mute.
+    // Sem o valor lido, o botão mostraria "mudo" com o microfone aberto.
+    const teimosa = {
+      kind: 'audio',
+      get enabled() { return true; },
+      set enabled(_valor: boolean) { /* recusa a escrita */ },
+    } as unknown as MediaStreamTrack;
+    const adapter = new TestAdapter({ error: vi.fn(), warn: vi.fn() });
+    adapter.inviter = sessionWithTrack(teimosa);
+    const sink = fakeSink();
+    const engine = new CallEngine(adapter, sink);
+
+    await engine.makeCall('11999992048', fakeUa(), true);
+    engine.toggleMute();
+
+    expect(sink.onMuted).toHaveBeenLastCalledWith(false); // o lido, não a intenção
+    expect(teimosa.enabled).toBe(true); // a track de fato não mudou
+  });
+
+  it('Terminated notifica o sink (o fim da chamada não pode ser silencioso)', async () => {
+    const adapter = new TestAdapter();
+    const session = sessionWithTrack(fakeAudioTrack(true));
+    adapter.inviter = session;
+    const sink = fakeSink();
+    const engine = new CallEngine(adapter, sink);
+
+    await engine.makeCall('11999992048', fakeUa(), true);
+    engine.handleStateChange(
+      'Terminated',
+      session as unknown as Session,
+      '11999992048',
+      'outbound',
+    );
+
+    expect(sink.onTerminated).toHaveBeenCalledTimes(1);
+  });
+
+  it('dispose() descarta o áudio remoto do DOM', async () => {
+    vi.stubGlobal('MediaStream', class { addTrack() { /* dublê */ } });
+    const adapter = new TestAdapter();
+    const inviter = {
+      ...sessionWithTrack(fakeAudioTrack(true)),
+      sessionDescriptionHandler: {
+        peerConnection: {
+          getSenders: () => [{ track: fakeAudioTrack(true) }],
+          getReceivers: () => [],
+        },
+      },
+    };
+    adapter.inviter = inviter;
+    const sink = fakeSink();
+    const engine = new CallEngine(adapter, sink);
+
+    await engine.makeCall('11999992048', fakeUa(), true);
+    adapter.attachRemoteAudio(inviter as unknown as Session);
+    expect(document.getElementById('sip-remote-audio')).not.toBeNull();
+
+    engine.dispose();
+    expect(document.getElementById('sip-remote-audio')).toBeNull();
+    vi.unstubAllGlobals();
+  });
+});

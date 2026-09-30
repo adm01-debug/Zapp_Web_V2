@@ -30,6 +30,8 @@ import { withPsqlEnvironment } from './psql-environment.mjs';
 import {
   carregarIdentidadeEsperada,
   validarDestino,
+  validarSupabaseCa,
+  endurecerDestinoTls,
 } from './database-identity.mjs';
 
 const SQL_PATH = process.env.TELEFONIA_SNAPSHOT_SQL || 'scripts/db-audit/telefonia-snapshot.sql';
@@ -84,9 +86,22 @@ if (problemas.length > 0) {
   process.exit(2);
 }
 
+// Identidade nao basta: o destino tambem nao pode degradar o TLS. O transporte
+// (psql-environment.mjs) repassa `sslmode`/`sslrootcert` da URL para o libpq e
+// avisa no cabecalho que validar isso e' dever do chamador — sem este bloco,
+// `?sslmode=disable` ou um `sslrootcert` de terceiro chegavam ao PGSSLMODE e o
+// snapshot gravava com exit 0 sobre uma conexao sem verificacao. Mesmo contrato
+// de check-runtime-config.mjs.
+const tls = endurecerDestinoTls(url);
+const problemasTls = [...validarSupabaseCa(), ...tls.erros];
+if (problemasTls.length > 0) {
+  console.error('ERRO: ' + problemasTls.join('; '));
+  process.exit(2);
+}
+
 let bruto;
 try {
-  bruto = withPsqlEnvironment(url, env => execFileSync(PSQL_BIN,
+  bruto = withPsqlEnvironment(tls.connectionString, env => execFileSync(PSQL_BIN,
     ['-X', '-v', 'ON_ERROR_STOP=1', '-At', '-f', SQL_PATH],
     { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 60_000, env }));
 } catch (error) {

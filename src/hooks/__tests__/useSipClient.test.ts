@@ -461,6 +461,29 @@ describe('useSipClient', () => {
     vi.useRealTimers();
   });
 
+  it('congela a duração quando a chamada termina (lacuna da auditoria de 29/09)', async () => {
+    // O cronômetro tem de PARAR em Terminated. Sem isto, a duração continua
+    // subindo depois de desligar e a linha gravada no banco sai errada.
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useSipClient());
+    await act(async () => {
+      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+    act(() => mockRegisterStateListeners.forEach((fn) => fn('Registered')));
+    await act(async () => { await result.current.makeCall('111'); });
+    act(() => mockStateChangeListeners.forEach((fn) => fn('Established')));
+
+    await act(async () => { vi.advanceTimersByTime(3000); });
+    const aosTresSegundos = result.current.callDuration;
+    expect(aosTresSegundos).toBe(3);
+
+    act(() => mockStateChangeListeners.forEach((fn) => fn('Terminated')));
+    await act(async () => { vi.advanceTimersByTime(5000); });
+
+    expect(result.current.callDuration).toBe(aosTresSegundos);
+    vi.useRealTimers();
+  });
+
   // === INBOUND CALL TESTS ===
 
   it('surfaces an incoming SIP invitation as a ringing inbound call', async () => {
