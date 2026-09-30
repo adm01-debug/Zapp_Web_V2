@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import {
-  Sparkles, MessageSquare, FileText, ShieldQuestion, Zap, Package, Smile, Meh, Frown, ChevronRight,
+  Sparkles, MessageSquare, FileText, ShieldQuestion, Zap, Package, Smile, Meh, Frown, AlertTriangle, ChevronRight,
 } from 'lucide-react';
+import { normalizeSentiment, type Sentiment } from '@/lib/ai-vocabulary';
 import { cn } from '@/lib/utils';
 import { formatBRL } from '@/lib/formatters';
 import { useLatestAnalysis } from '@/hooks/chat/useLatestAnalysis';
@@ -16,10 +17,11 @@ import { ObjectionDetector } from '../ObjectionDetector';
 import { EmptyState } from '@/components/ui/empty-state';
 import type { Conversation, Message } from '@/types/chat';
 
-const SENTIMENT_CONFIG: Record<string, { label: string; icon: typeof Smile; className: string }> = {
-  positive: { label: 'Positivo', icon: Smile, className: 'text-success bg-success/10' },
-  neutral: { label: 'Neutro', icon: Meh, className: 'text-muted-foreground bg-muted/30' },
-  negative: { label: 'Negativo', icon: Frown, className: 'text-warning bg-warning/10' },
+const SENTIMENT_CONFIG: Record<Sentiment, { label: string; icon: typeof Smile; className: string }> = {
+  positivo: { label: 'Positivo', icon: Smile, className: 'text-success bg-success/10' },
+  neutro: { label: 'Neutro', icon: Meh, className: 'text-muted-foreground bg-muted/30' },
+  negativo: { label: 'Negativo', icon: Frown, className: 'text-warning bg-warning/10' },
+  critico: { label: 'Crítico', icon: AlertTriangle, className: 'text-destructive bg-destructive/10' },
 };
 
 interface AiTabProps {
@@ -56,8 +58,8 @@ export function AiTab({ conversation, messages, onUseSuggestion }: AiTabProps) {
     [messages]
   );
 
-  const sentimentKey = conversation.contact.ai_sentiment ?? undefined;
-  const sentimentCfg = sentimentKey ? SENTIMENT_CONFIG[sentimentKey] : undefined;
+  const sentimentValue = normalizeSentiment(conversation.contact.ai_sentiment).value;
+  const sentimentCfg = sentimentValue ? SENTIMENT_CONFIG[sentimentValue] : undefined;
 
   const analysisStatusLabel = latestAnalysis
     ? `Análise atualizada às ${format(new Date(latestAnalysis.created_at), 'HH:mm')}`

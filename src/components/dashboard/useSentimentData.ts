@@ -3,6 +3,15 @@ import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { subDays, startOfDay, endOfDay, isWithinInterval, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { normalizeScore, aggregateScores } from '@/lib/ai-values';
+
+/**
+ * Score de sentimento (0-100) ou `null` quando ausente/inválido (IA-023).
+ * Nunca devolve default: ausência fica ausente e 0 continua 0.
+ */
+function sentimentScoreValue(raw: unknown): number | null {
+  return normalizeScore(raw, { min: 0, max: 100, scale: 'percent' }).value;
+}
 
 export interface SentimentAlert {
   id: string;
@@ -21,7 +30,8 @@ export interface ConversationAnalysis {
   id: string;
   contact_id: string;
   sentiment: string;
-  sentiment_score: number;
+  /** Pode faltar no banco; ausência nunca vira 50 (IA-023). */
+  sentiment_score: number | null;
   created_at: string;
   analyzed_by: string | null;
   contacts?: { name: string; phone: string };
@@ -36,11 +46,13 @@ export interface AgentProfile {
 export interface AgentSentimentData {
   agent: AgentProfile;
   totalAnalyses: number;
-  avgScore: number;
+  /** Média que exclui amostras ausentes; `null` quando não há nenhuma válida. */
+  avgScore: number | null;
   positive: number;
   neutral: number;
   negative: number;
-  trend: number;
+  /** Variação entre metades; `null` quando falta amostra válida de um dos lados. */
+  trend: number | null;
 }
 
 export function useSentimentData(period: string) {
@@ -109,10 +121,14 @@ export function useSentimentData(period: string) {
     const negativeAnalyses = analyses.filter(a => a.sentiment === 'negativo').length;
     const positiveAnalyses = analyses.filter(a => a.sentiment === 'positivo').length;
     const neutralAnalyses = analyses.filter(a => a.sentiment === 'neutro').length;
-    const avgSentiment = totalAnalyses > 0
-      ? Math.round(analyses.reduce((sum, a) => sum + (a.sentiment_score || 50), 0) / totalAnalyses)
-      : 50;
-    const criticalAlerts = alerts.filter(a => (a.sentiment_score || 50) < 20).length;
+    // Média que EXCLUI ausente/inválido (IA-023): sem amostra válida é `null`,
+    // nunca 50; nota 0 continua 0.
+    const avgSentiment = aggregateScores(analyses.map(a => a.sentiment_score)).average;
+    // Crítico só com score presente e < 20 — ausência não conta como crítico.
+    const criticalAlerts = alerts.filter(a => {
+      const score = sentimentScoreValue(a.sentiment_score);
+      return score !== null && score < 20;
+    }).length;
     const emailsSent = alerts.filter(a => a.email_sent).length;
     const uniqueContacts = new Set(alerts.map(a => a.contactId)).size;
 
@@ -125,7 +141,7 @@ export function useSentimentData(period: string) {
 
   const dailyData = useMemo(() => {
     const days = parseInt(period);
-    const data: { date: string; positive: number; neutral: number; negative: number; avgScore: number }[] = [];
+    const data: { date: string; positive: number; neutral: number; negative: number; avgScore: number | null }[] = [];
 
     for (let i = days - 1; i >= 0; i--) {
       const date = subDays(new Date(), i);
@@ -138,9 +154,8 @@ export function useSentimentData(period: string) {
         positive: dayAnalyses.filter(a => a.sentiment === 'positivo').length,
         neutral: dayAnalyses.filter(a => a.sentiment === 'neutro').length,
         negative: dayAnalyses.filter(a => a.sentiment === 'negativo').length,
-        avgScore: dayAnalyses.length > 0
-          ? Math.round(dayAnalyses.reduce((sum, a) => sum + (a.sentiment_score || 50), 0) / dayAnalyses.length)
-          : 0,
+        // Dia sem amostra válida é `null` (não 0 nem 50) — não entra no histograma.
+        avgScore: aggregateScores(dayAnalyses.map(a => a.sentiment_score)).average,
       });
     }
     return data;
@@ -156,9 +171,8 @@ export function useSentimentData(period: string) {
       const positive = agentAnalyses.filter(a => a.sentiment === 'positivo').length;
       const neutral = agentAnalyses.filter(a => a.sentiment === 'neutro').length;
       const negative = agentAnalyses.filter(a => a.sentiment === 'negativo').length;
-      const avgScore = totalAnalyses > 0
-        ? Math.round(agentAnalyses.reduce((sum, a) => sum + (a.sentiment_score || 50), 0) / totalAnalyses)
-        : 0;
+      // Média do agente que exclui ausente/inválido; `null` sem amostra válida.
+      const avgScore = aggregateScores(agentAnalyses.map(a => a.sentiment_score)).average;
 
       const firstHalfStart = subDays(new Date(), days);
       const firstHalfEnd = subDays(new Date(), halfPeriod);
@@ -167,23 +181,30 @@ export function useSentimentData(period: string) {
       const firstHalfAnalyses = agentAnalyses.filter(a => { const d = new Date(a.created_at); return d >= firstHalfStart && d < firstHalfEnd; });
       const secondHalfAnalyses = agentAnalyses.filter(a => { const d = new Date(a.created_at); return d >= secondHalfStart; });
 
-      const firstHalfAvg = firstHalfAnalyses.length > 0 ? firstHalfAnalyses.reduce((s, a) => s + (a.sentiment_score || 50), 0) / firstHalfAnalyses.length : 50;
-      const secondHalfAvg = secondHalfAnalyses.length > 0 ? secondHalfAnalyses.reduce((s, a) => s + (a.sentiment_score || 50), 0) / secondHalfAnalyses.length : 50;
+      const firstHalfAgg = aggregateScores(firstHalfAnalyses.map(a => a.sentiment_score));
+      const secondHalfAgg = aggregateScores(secondHalfAnalyses.map(a => a.sentiment_score));
+      // Sem amostra válida de um dos lados não há variação a afirmar (IA-023):
+      // `null` em vez de inventar 50 de cada lado.
+      const trend = firstHalfAgg.average !== null && secondHalfAgg.average !== null
+        ? Math.round(secondHalfAgg.average - firstHalfAgg.average)
+        : null;
 
-      return { agent, totalAnalyses, avgScore, positive, neutral, negative, trend: Math.round(secondHalfAvg - firstHalfAvg) };
-    }).filter(a => a.totalAnalyses > 0).sort((a, b) => b.avgScore - a.avgScore);
+      return { agent, totalAnalyses, avgScore, positive, neutral, negative, trend };
+    }).filter(a => a.totalAnalyses > 0).sort((a, b) => (b.avgScore ?? -1) - (a.avgScore ?? -1));
   }, [analyses, agents, period]);
 
   return { alerts, analyses, agents, loading, stats, dailyData, agentData, fetchData };
 }
 
-export function getSentimentColor(score: number) {
+export function getSentimentColor(score: number | null) {
+  if (score === null || score === undefined) return 'text-muted-foreground';
   if (score < 30) return 'text-destructive';
   if (score < 70) return 'text-warning';
   return 'text-success';
 }
 
-export function getSentimentBg(score: number) {
+export function getSentimentBg(score: number | null) {
+  if (score === null || score === undefined) return 'bg-muted';
   if (score < 30) return 'bg-destructive';
   if (score < 70) return 'bg-warning';
   return 'bg-success';

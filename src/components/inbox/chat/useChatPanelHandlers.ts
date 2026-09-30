@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { undoToast } from '@/lib/undoToast';
+import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
 import { Message, InteractiveMessage, InteractiveButton, LocationMessage } from '@/types/chat';
 import { SlashCommand } from '../SlashCommands';
 import { toast } from '@/hooks/ui/use-toast';
@@ -150,8 +151,17 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       case 'priority': {
         if (!subCommand) break;
         const labels: Record<string, string> = { high: 'Alta', medium: 'Média', low: 'Baixa' };
+        const priorityValue = normalizeOperationalPriority(subCommand).value;
+        if (!priorityValue) {
+          toast({
+            title: '⚠️ Prioridade inválida',
+            description: `"${subCommand}" não é uma prioridade válida — use baixa, média ou alta.`,
+            variant: 'destructive',
+          });
+          break;
+        }
         void (async () => {
-          const { error } = await supabase.from('contacts').update({ ai_priority: subCommand }).eq('id', contactId);
+          const { error } = await supabase.from('contacts').update({ ai_priority: priorityValue }).eq('id', contactId);
           if (error) {
             log.error('Failed to set priority:', error);
             toast({ title: 'Erro ao definir prioridade', description: 'Não foi possível atualizar a prioridade.', variant: 'destructive' });

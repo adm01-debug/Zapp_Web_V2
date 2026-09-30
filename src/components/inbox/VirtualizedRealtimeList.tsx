@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
+import { normalizeOperationalPriority, normalizeSentiment, type Sentiment } from '@/lib/ai-vocabulary';
 import { formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Pin, CheckCircle2, UserCheck, Star, AlarmClock, Archive, Instagram, Facebook, Send, Mail, Globe, Linkedin, type LucideIcon } from 'lucide-react';
@@ -250,11 +251,17 @@ export function VirtualizedRealtimeList({
   );
 }
 
-const SENTIMENT_LABEL: Record<string, string> = {
-  positive: 'positivo',
-  negative: 'negativo',
-  neutral: 'neutro',
+// Rótulos do sentimento canônico (pt-BR). Não existe chave em inglês: o valor
+// cru passa por normalizeSentiment, que traduz o legado EN e devolve
+// `value: null` para desconhecido — aí o rótulo é 'sem análise', nunca um
+// positivo/negativo inventado.
+const SENTIMENT_LABEL: Record<Sentiment, string> = {
+  positivo: 'positivo',
+  neutro: 'neutro',
+  negativo: 'negativo',
+  critico: 'crítico',
 };
+const SEM_ANALISE = 'sem análise';
 
 interface ConversationRowProps {
   conversation: ConversationWithMessages;
@@ -300,7 +307,11 @@ const ConversationRow = memo(({
   const contactId = conversation.contact.id;
   const typeConfig = conversation.contact.contact_type ? CONTACT_TYPE_CONFIG[conversation.contact.contact_type] : null;
   const isVip = (conversation.contact.tags ?? []).some(t => t.toLowerCase() === 'vip');
-  const isHighPriority = conversation.contact.ai_priority === 'high' || conversation.contact.ai_priority === 'urgent';
+  // Prioridade operacional canônica (EN) ou legado pt-BR ('alta'→'high');
+  // ausente/desconhecido devolve `value: null` e nunca vira prioridade alta.
+  const priority = normalizeOperationalPriority(conversation.contact.ai_priority);
+  const sentiment = normalizeSentiment(conversation.contact.ai_sentiment);
+  const isHighPriority = priority.value === 'high' || priority.value === 'urgent';
   const channelType = conversation.contact.channel_type;
   const channelBadge = channelType && channelType !== 'whatsapp' ? CHANNEL_BADGE_CONFIG[channelType] : null;
   const assignedToId = conversation.contact.assigned_to;
@@ -428,14 +439,18 @@ const ConversationRow = memo(({
             {conversation.contact.ai_sentiment && (
               <span
                 role="img"
-                aria-label={`Sentimento: ${SENTIMENT_LABEL[conversation.contact.ai_sentiment] ?? conversation.contact.ai_sentiment}`}
+                aria-label={`Sentimento: ${sentiment.value ? SENTIMENT_LABEL[sentiment.value] : SEM_ANALISE}`}
                 className={cn(
                   'absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card',
-                  conversation.contact.ai_sentiment === 'positive' && 'bg-[hsl(var(--success))]',
-                  conversation.contact.ai_sentiment === 'negative' && 'bg-destructive',
-                  conversation.contact.ai_sentiment === 'neutral' && 'bg-[hsl(var(--warning))]'
+                  sentiment.value === 'positivo' && 'bg-[hsl(var(--success))]',
+                  sentiment.value === 'negativo' && 'bg-destructive',
+                  sentiment.value === 'neutro' && 'bg-[hsl(var(--warning))]',
+                  sentiment.value === 'critico' && 'bg-destructive',
+                  // sem rótulo canônico (legado inventado/vazio) → cinza, não
+                  // inventa positivo/negativo
+                  sentiment.value === null && 'bg-muted'
                 )}
-                title={`Sentimento: ${SENTIMENT_LABEL[conversation.contact.ai_sentiment] ?? conversation.contact.ai_sentiment}`}
+                title={`Sentimento: ${sentiment.value ? SENTIMENT_LABEL[sentiment.value] : SEM_ANALISE}`}
               />
             )}
           </div>
