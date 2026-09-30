@@ -1,14 +1,11 @@
 import type { Priority } from '@/hooks/tasks/workItem.types';
+import { PRIORITY_LABELS } from '@/hooks/tasks/workItemLabels';
 
 const PRIORITY_STYLES: Record<Priority, string> = {
   low:    'bg-muted/60 text-muted-foreground border-border/40',
   medium: 'bg-primary/15 text-primary border-primary/30',
   high:   'bg-warning/15 text-warning border-warning/40',
   urgent: 'bg-destructive/15 text-destructive border-destructive/40',
-};
-
-const PRIORITY_LABELS: Record<Priority, string> = {
-  low: 'Baixa', medium: 'Media', high: 'Alta', urgent: 'Urgente',
 };
 
 interface Props { priority: Priority; compact?: boolean; }

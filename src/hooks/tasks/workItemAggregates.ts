@@ -1,6 +1,7 @@
 import { isBefore, startOfDay, addDays, formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { WorkItem, WorkItemStatus } from './workItem.types';
+import type { TasksFilters } from './workItemFilters';
 
 /** Peso de prioridade (menor = primeiro) — usado na ordenacao por prazo (etapa 49) e por coluna. */
 const PRIORITY_WEIGHT: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
@@ -58,6 +59,27 @@ export function bucketByDue(items: WorkItem[], now: Date = new Date()): BucketsB
   }
 
   return { overdue, today, tomorrow, upcoming, noDue, done7d, doneOlder };
+}
+
+/**
+ * Etapa 45/46: o recorte da barra de filtros, aplicado nos três modos (Lista,
+ * Quadro e Agenda). Função pura: recebe os itens que a query única já carregou e
+ * devolve o subconjunto — nenhum modo, e nenhum filtro, gera request novo.
+ *
+ * `done` é o único filtro que olha o estado terminal do item; `q` casa só o
+ * título (o mesmo recorte que a busca sempre fez).
+ */
+export function applyFilters(items: WorkItem[], f: TasksFilters): WorkItem[] {
+  const termo = f.q.trim().toLowerCase();
+
+  return items.filter(item => {
+    if (!f.done && item.status === 'done') return false;
+    if (f.prio !== 'all' && item.priority !== f.prio) return false;
+    if (f.contact !== null && item.contact?.id !== f.contact) return false;
+    if (f.alarm && item.remind_at === null) return false;
+    if (termo !== '' && !item.title.toLowerCase().includes(termo)) return false;
+    return true;
+  });
 }
 
 export function bucketByStatus(items: WorkItem[]): Record<WorkItemStatus, WorkItem[]> {
