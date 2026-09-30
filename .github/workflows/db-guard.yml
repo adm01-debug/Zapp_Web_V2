@@ -308,6 +308,11 @@ jobs:
           TALKX_UPDATE_LIMITS_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-update-limits-send-window.test.sh
 
+      - name: Simular endurecimento de casts na RPC Talk X (V09c)
+        env:
+          TALKX_UPDATE_LIMITS_CASTS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-update-limits-casts.test.sh
+
       - name: Simular supressão de contato idempotente nos eixos phone e contact_id (V07b)
         env:
           TALKX_SUPPRESS_PHONE_TEST_POSTGRES_IMAGE: postgres:17-alpine
