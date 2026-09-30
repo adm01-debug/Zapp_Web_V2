@@ -5,12 +5,17 @@ import { AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
 import { weekBuckets, groupAgendaDay, agendaDayDots } from '@/hooks/tasks/workItemAggregates';
 import { WorkItemCard } from '../shared/WorkItemCard';
 import { WorkItemCardSkeleton } from '../shared/WorkItemCardSkeleton';
+import { QuickAdd } from '../shared/QuickAdd';
+import type { WorkItemInput } from '@/hooks/tasks/useMyWorkItems';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 
 interface Props {
   items: WorkItem[];
   overdue: WorkItem[];
   isLoading: boolean;
+  /** Etapa 57: o QuickAdd da Agenda cria no dia selecionado. */
+  onCreate: (input: WorkItemInput) => Promise<void>;
+  quickAddRef?: React.RefObject<HTMLInputElement | null>;
   onOpen: (item: WorkItem) => void;
   onToggleDone: (item: WorkItem) => void;
   onMoveTo: (item: WorkItem, to: WorkItemStatus) => void;
@@ -24,7 +29,7 @@ const GRUPOS = [
   { id: 'semHora', titulo: 'Sem hora' },
 ] as const;
 
-export function TasksAgendaMode({ items, overdue, isLoading, onOpen, onToggleDone, onMoveTo, onDelete }: Props) {
+export function TasksAgendaMode({ items, overdue, isLoading, onCreate, quickAddRef, onOpen, onToggleDone, onMoveTo, onDelete }: Props) {
   const [selectedDay, setSelectedDay] = useState(0); // offset desde hoje
   // Etapa 55: o bloco "Atrasadas" nasce colapsado quando passa de 3.
   const [mostraAtrasadas, setMostraAtrasadas] = useState(overdue.length <= 3);
@@ -39,6 +44,12 @@ export function TasksAgendaMode({ items, overdue, isLoading, onOpen, onToggleDon
   const dayData = weeks[selectedDay] ?? { reminders: [], dueTasks: [] };
   const grupos  = groupAgendaDay(dayData);
   const noDia   = new Set([...grupos.alarmes, ...grupos.prazos, ...grupos.semHora].map(i => i.id)).size;
+
+  // Etapa 57: o dia selecionado vai pré-preenchido no QuickAdd (fim do dia, como
+  // os chips "Hoje/Amanhã" já faziam). O `key` remonta o campo ao trocar de dia.
+  const diaSelecionado = weeks[selectedDay]?.date ?? startDate;
+  const dueDoDia = new Date(diaSelecionado);
+  dueDoDia.setHours(23, 59, 0, 0);
 
   const cardProps = (item: WorkItem) => ({
     item,
@@ -90,6 +101,8 @@ export function TasksAgendaMode({ items, overdue, isLoading, onOpen, onToggleDon
               key={i}
               type="button"
               onClick={() => setSelectedDay(i)}
+              aria-label={format(w.date, "d 'de' MMMM", { locale: ptBR })}
+              aria-current={active ? 'date' : undefined}
               className={[
                 'flex flex-col items-center gap-0.5 min-w-[64px] h-[64px] rounded-xl border px-2 py-1.5 snap-start transition-colors',
                 active  ? 'border-primary bg-accent text-foreground' : '',
@@ -110,6 +123,16 @@ export function TasksAgendaMode({ items, overdue, isLoading, onOpen, onToggleDon
           );
         })}
       </div>
+
+      {/* QuickAdd do dia selecionado (etapa 57) */}
+      <QuickAdd
+        key={selectedDay}
+        ref={quickAddRef}
+        onAdd={onCreate}
+        defaultStatus="todo"
+        defaultDueDate={dueDoDia.toISOString()}
+        placeholder={`Adicionar em ${format(diaSelecionado, 'dd/MM')}… (Enter para criar)`}
+      />
 
       {/* Lista do dia selecionado, em 3 grupos */}
       <div className="space-y-3">

@@ -117,8 +117,8 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
       {/* KPIs (etapa 44: 5 cards de 88px no padrão ContactKpiCard) */}
       <TasksKpiStrip kpis={kpiData} />
 
-      {/* QuickAdd */}
-      <QuickAdd ref={quickAddRef} onAdd={create} defaultStatus="backlog" />
+      {/* QuickAdd (etapa 57: a Agenda tem o seu, com o dia selecionado) */}
+      {mode !== 'agenda' && <QuickAdd ref={quickAddRef} onAdd={create} defaultStatus="backlog" />}
 
       {/* Toolbar: barra de filtros (etapa 45) + troca de modo */}
       <div className="flex items-center gap-3 flex-wrap">
@@ -178,6 +178,8 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
               items={items}
               overdue={byDue.overdue}
               isLoading={isLoading}
+              onCreate={create}
+              quickAddRef={quickAddRef}
               onOpen={setSelectedItem}
               onToggleDone={handleToggleDone}
               onMoveTo={handleMoveTo}

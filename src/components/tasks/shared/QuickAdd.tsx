@@ -7,16 +7,18 @@ interface Props {
   onAdd: (input: WorkItemInput) => Promise<void>;
   defaultStatus?: WorkItemStatus;
   defaultContactId?: string | null;
+  /** Etapa 57: já nasce com o prazo do dia escolhido (a Agenda passa o dia selecionado). */
+  defaultDueDate?: string | null;
   placeholder?: string;
   compact?: boolean;
 }
 
 export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
-  { onAdd, defaultStatus = 'backlog', defaultContactId, placeholder, compact = false },
+  { onAdd, defaultStatus = 'backlog', defaultContactId, defaultDueDate = null, placeholder, compact = false },
   ref
 ) {
   const [title, setTitle]       = useState('');
-  const [dueDate, setDueDate]   = useState<string | null>(null);
+  const [dueDate, setDueDate]   = useState<string | null>(defaultDueDate);
   const [remindAt, setRemindAt] = useState<string | null>(null);
   const [loading, setLoading]   = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -91,7 +93,7 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
           <button type="button" data-testid="quick-add-chip-tomorrow" onClick={setTomorrow}        className="chip-btn">Amanhã <Calendar className="h-3 w-3" /></button>
           <button type="button" data-testid="quick-add-chip-nextweek" onClick={setNextWeek}        className="chip-btn">Próx. semana <Calendar className="h-3 w-3" /></button>
           <button type="button" data-testid="quick-add-chip-remind"   onClick={setRemindTomorrow9} className="chip-btn">Lembrar amanhã 9h <Bell className="h-3 w-3" /></button>
-          {dueDate   && <span className="chip-active">Prazo: {new Date(dueDate).toLocaleDateString('pt-BR')}</span>}
+          {dueDate   && <span data-testid="quick-add-due" className="chip-active">Prazo: {new Date(dueDate).toLocaleDateString('pt-BR')}</span>}
           {remindAt  && <span className="chip-active">Alerta: {new Date(remindAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>}
         </div>
       )}
