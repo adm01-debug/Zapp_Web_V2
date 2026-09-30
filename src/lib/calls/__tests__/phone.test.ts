@@ -11,6 +11,8 @@ import {
   formatPhoneBR,
   normalizeE164BR,
   phonesMatchExact,
+  phoneQueryVariants,
+  pickUniquePhoneMatch,
 } from '../phone';
 
 const CANONICAL = '+5511999992048';
@@ -133,5 +135,72 @@ describe('reexport dos utilitários de formatters', () => {
     expect(formatBrazilianPhone('5511999992048')).toBe('(11) 99999-2048');
     expect(cleanPhone).toBe(legacyCleanPhone);
     expect(formatBrazilianPhone).toBe(legacyFormatBrazilianPhone);
+  });
+});
+
+describe('phoneQueryVariants (T14)', () => {
+  it('cobre as grafias em que o número pode estar salvo no banco', () => {
+    const variants = phoneQueryVariants('11999992048');
+    expect(variants).toContain('+5511999992048');
+    expect(variants).toContain('5511999992048');
+    expect(variants).toContain('11999992048');
+    expect(variants).toContain('1199992048'); // sem o nono dígito
+    expect(variants).toContain('011999992048'); // com tronco 0
+    // Tronco `0` SEM o nono dígito — a grafia que faltava. Sem ela, nem a
+    // grafia idêntica casava: uma chamada de `01199992048` não achava o
+    // contato salvo como `01199992048`.
+    expect(variants).toContain('01199992048');
+    // `55` + DDD + SEM o nono dígito: 44% do banco real está nesta grafia
+    // (1367 de 3104 contatos medidos).
+    expect(variants).toContain('551199992048');
+    expect(variants).toHaveLength(7);
+  });
+
+  it('cobre a grafia real do banco: 55 + DDD sem o nono dígito (12 dígitos)', () => {
+    const variants = phoneQueryVariants('11999992048');
+    expect(variants).toContain('551199992048');
+    // a decisão final continua sendo a forma E.164 completa
+    expect(phonesMatchExact('551199992048', '+5511999992048')).toBe(true);
+  });
+
+  it('cobre a grafia com tronco 0 e sem nono dígito (regressão do T14)', () => {
+    const variants = phoneQueryVariants('01199992048');
+    expect(variants).toContain('01199992048');
+    // e a decisão final continua sendo a forma E.164 completa
+    expect(phonesMatchExact('01199992048', '11999992048')).toBe(true);
+  });
+
+  it('entrada não normalizável → nenhuma variante (não vai ao banco)', () => {
+    expect(phoneQueryVariants('abc')).toEqual([]);
+    expect(phoneQueryVariants(null)).toEqual([]);
+    expect(phoneQueryVariants('')).toEqual([]);
+  });
+});
+
+describe('pickUniquePhoneMatch (T14)', () => {
+  it('vincula quando UM contato casa em E.164', () => {
+    const rows = [{ id: 'c1', phone: '+5511999992048' }];
+    expect(pickUniquePhoneMatch(rows, '(11) 99999-2048')).toBe('c1');
+  });
+
+  it('NÃO vincula pelo final de 8 dígitos com DDD diferente', () => {
+    // Antes do T14 o fallback `ilike '%99992048'` devolvia este contato e a
+    // chamada do DDD 85 era vinculada ao contato do DDD 11.
+    const rows = [{ id: 'c11', phone: '(11) 99999-2048' }];
+    expect(pickUniquePhoneMatch(rows, '85999992048')).toBeNull();
+  });
+
+  it('não vincula quando mais de um contato casa (ambíguo)', () => {
+    const rows = [
+      { id: 'c1', phone: '+5511999992048' },
+      { id: 'c2', phone: '011999992048' },
+    ];
+    expect(pickUniquePhoneMatch(rows, '11999992048')).toBeNull();
+  });
+
+  it('não vincula com telefone ausente ou não normalizável', () => {
+    expect(pickUniquePhoneMatch([{ id: 'c1', phone: '+5511999992048' }], 'abc')).toBeNull();
+    expect(pickUniquePhoneMatch([{ id: 'c1', phone: null }], '11999992048')).toBeNull();
+    expect(pickUniquePhoneMatch([], '11999992048')).toBeNull();
   });
 });
