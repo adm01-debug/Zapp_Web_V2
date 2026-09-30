@@ -81,15 +81,23 @@ function Sonda() {
   );
 }
 
-function montar() {
-  return render(
-    <MemoryRouter initialEntries={['/']}>
+function Harness({ rota = '/' }: { rota?: string }) {
+  return (
+    <MemoryRouter initialEntries={[rota]}>
       <CallSessionProvider>
         <RotaAtual />
         <Sonda />
       </CallSessionProvider>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
+}
+
+function montar() {
+  return render(<Harness />);
+}
+
+function remontar(tela: ReturnType<typeof render>, rota = '/') {
+  tela.rerender(<Harness rota={rota} />);
 }
 
 const texto = (id: string) => screen.getByTestId(id).textContent;
@@ -140,27 +148,13 @@ describe('CallSessionProvider (T10)', () => {
 
     // O motor estabelece: ESTABLISHED, sem trocar a sessão.
     h.value = sipDuble({ callStatus: 'active', callDirection: 'outbound', currentNumber: '11999992048' });
-    tela.rerender(
-      <MemoryRouter initialEntries={[`/${VOIP_VIEW_SEARCH}`]}>
-        <CallSessionProvider>
-          <RotaAtual />
-          <Sonda />
-        </CallSessionProvider>
-      </MemoryRouter>,
-    );
+    remontar(tela, `/${VOIP_VIEW_SEARCH}`);
     expect(texto('status')).toBe('active');
     expect(texto('sessao')).toBe(sessaoDoDial);
 
     // O motor encerra: a máquina fecha a sessão.
     h.value = sipDuble({ callStatus: 'ended', callDirection: 'outbound', currentNumber: '11999992048' });
-    tela.rerender(
-      <MemoryRouter initialEntries={[`/${VOIP_VIEW_SEARCH}`]}>
-        <CallSessionProvider>
-          <RotaAtual />
-          <Sonda />
-        </CallSessionProvider>
-      </MemoryRouter>,
-    );
+    remontar(tela, `/${VOIP_VIEW_SEARCH}`);
     expect(texto('status')).toBe('ended');
   });
 
@@ -212,25 +206,11 @@ describe('CallSessionProvider (T10)', () => {
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const tela = montar();
     h.value = sipDuble({ callStatus: 'ringing', callDirection: 'inbound', currentNumber: '5511988887777' });
-    tela.rerender(
-      <MemoryRouter initialEntries={['/']}>
-        <CallSessionProvider>
-          <RotaAtual />
-          <Sonda />
-        </CallSessionProvider>
-      </MemoryRouter>,
-    );
+    remontar(tela);
     expect(texto('status')).toBe('ringing_in');
 
     h.value = sipDuble({ callStatus: 'ended', callDirection: 'inbound', currentNumber: '5511988887777' });
-    tela.rerender(
-      <MemoryRouter initialEntries={['/']}>
-        <CallSessionProvider>
-          <RotaAtual />
-          <Sonda />
-        </CallSessionProvider>
-      </MemoryRouter>,
-    );
+    remontar(tela);
     expect(texto('status')).toBe('ended');
     expect(texto('endReason')).toBe('cancelled_remote');
     const invalidas = aviso.mock.calls.filter((linha) =>
@@ -249,26 +229,12 @@ describe('CallSessionProvider (T10)', () => {
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const tela = montar();
     h.value = sipDuble({ callStatus: 'ringing', callDirection: 'inbound', currentNumber: '5511988887777' });
-    tela.rerender(
-      <MemoryRouter initialEntries={['/']}>
-        <CallSessionProvider>
-          <RotaAtual />
-          <Sonda />
-        </CallSessionProvider>
-      </MemoryRouter>,
-    );
+    remontar(tela);
     expect(texto('status')).toBe('ringing_in');
 
     fireEvent.click(screen.getByText('aceitar'));
     h.value = sipDuble({ callStatus: 'active', callDirection: 'inbound', currentNumber: '5511988887777' });
-    tela.rerender(
-      <MemoryRouter initialEntries={['/']}>
-        <CallSessionProvider>
-          <RotaAtual />
-          <Sonda />
-        </CallSessionProvider>
-      </MemoryRouter>,
-    );
+    remontar(tela);
     expect(texto('status')).toBe('active');
     expect(texto('answeredAt')).not.toBe('-');
     const invalidas = aviso.mock.calls.filter((linha) =>
