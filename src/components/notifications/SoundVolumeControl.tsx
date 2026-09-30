@@ -6,6 +6,11 @@ import { VolumeSliderPopoverContent } from '@/components/ui/VolumeSliderPopoverC
 import { VolumeTriggerButton } from '@/components/ui/VolumeTriggerButton';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 import { useVolumeRocker } from '@/hooks/ui/useVolumeRocker';
+import {
+  SOUND_VOLUME_LABEL,
+  SOUND_VOLUME_LABEL_MUTED,
+  SOUND_VOLUME_SLIDER_LABEL,
+} from '@/lib/volumeLabels';
 import { cn } from '@/lib/utils';
 
 /** Passo e faixa do volume dos sons de alerta — espelha o painel (`sound_volume`, 10–100). */
@@ -62,7 +67,7 @@ export function SoundVolumeControl({ className }: { className?: string }) {
     rootRef,
   });
 
-  const label = muted ? 'Sons de alerta mudos' : `Volume dos alertas: ${volume}%`;
+  const label = muted ? SOUND_VOLUME_LABEL_MUTED : `${SOUND_VOLUME_LABEL}: ${volume}%`;
   const showLowVolumeDot = muted || volume < LOW_VOLUME_THRESHOLD;
   const Icon = muted ? VolumeX : volume < 50 ? Volume1 : Volume2;
 
@@ -106,14 +111,14 @@ export function SoundVolumeControl({ className }: { className?: string }) {
         onClick={(event) => event.stopPropagation()}
       >
         <VolumeSliderPopoverContent
-          title="Volume dos alertas"
+          title={SOUND_VOLUME_SLIDER_LABEL}
           valueLabel={muted ? 'Mudo' : `${volume}%`}
           volume={volume}
           muted={muted}
           min={SOUND_VOLUME_MIN}
           max={SOUND_VOLUME_MAX}
           step={SOUND_VOLUME_STEP}
-          thumbLabel="Volume dos alertas"
+          thumbLabel={SOUND_VOLUME_SLIDER_LABEL}
           onVolumeChange={setVolume}
           onToggleMute={toggleMuted}
           valueTestId="sound-volume-value"

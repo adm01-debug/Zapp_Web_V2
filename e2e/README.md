@@ -9,7 +9,7 @@ sessão em `e2e/.auth/user.json`. Esse arquivo **nunca** é commitado (está no
 `.gitignore`).
 
 Os projects `chromium-authenticated` e `chromium-e2e-core` declaram
-`dependsOn: ['setup']`, então `auth.setup.ts` só roda (e só exige as
+`dependencies: ['setup']`, então `auth.setup.ts` só roda (e só exige as
 variáveis abaixo) quando algum teste de um desses projects é executado, e
 consume o `storageState` resultante.
 
@@ -59,20 +59,20 @@ npm run test:e2e
   `--project=setup --project=chromium-e2e-core --project=chromium-authenticated
   --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation
   --project=webkit-conversation`. `setup` gera `e2e/.auth/user.json` uma vez;
-  todos os projects com `dependsOn: ['setup']` reutilizam o mesmo arquivo de
+  todos os projects com `dependencies: ['setup']` reutilizam o mesmo arquivo de
   sessão — o `storageState` gerado pelo Chrome é browser-agnostic e funciona
   igualmente no Firefox e no WebKit.
 
 `chromium-e2e-core` cobre só `conversation.spec.ts` e `messaging.spec.ts`
 (`testMatch` dedicado em `playwright.config.ts`) — passar os 2 arquivos como
-path no CLI junto de `--project` quebra a resolução de `dependsOn` (o filtro
+path no CLI junto de `--project` quebra a resolução de `dependencies` (o filtro
 de arquivo vale para todos os projects da invocação, então `setup` roda com
 0 testes e nunca gera `e2e/.auth/user.json`; foi exatamente esse bug na
 primeira tentativa, run 36247270724). Rodar `setup` e os specs em 2
 invocações separadas do CLI evita esse bug mas sobe 2 `vite` dev server do
 zero (um por invocação) — sem o `setup` aquecer o bundle antes, a 1ª
 navegação real do job cai num vite frio e estoura o timeout de 30s
-(confirmado na run 36249048738). O project dedicado com `dependsOn` resolve
+(confirmado na run 36249048738). O project dedicado com `dependencies` resolve
 os dois problemas numa invocação só.
 
 `chromium-authenticated` (mesma dependência de `setup`, mas com
@@ -109,7 +109,7 @@ cross-browser completa do módulo. Para rodar localmente: `npx playwright test
 `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` do usuário de teste (supervisor).
 
 `conversation.spec.ts` e `messaging.spec.ts` ganham cobertura cross-browser via
-`firefox-conversation` e `webkit-conversation` (ambos com `dependsOn: ['setup']`
+`firefox-conversation` e `webkit-conversation` (ambos com `dependencies: ['setup']`
 e o mesmo `storageState` do Chrome), rodando junto dos outros projects no
 `e2e-logado.yml`. Esses dois projects novos completam a paridade Firefox/WebKit
 para todos os specs autenticados do módulo de inbox.

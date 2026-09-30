@@ -7,6 +7,11 @@ import { VolumeTriggerButton } from '@/components/ui/VolumeTriggerButton';
 import { useMediaVolume } from '@/hooks/communication/useMediaVolume';
 import { useVolumeRocker } from '@/hooks/ui/useVolumeRocker';
 import { MEDIA_VOLUME_STEP } from '@/lib/mediaVolumeStore';
+import {
+  MEDIA_VOLUME_LABEL,
+  MEDIA_VOLUME_LABEL_MUTED,
+  MEDIA_VOLUME_SLIDER_LABEL,
+} from '@/lib/volumeLabels';
 import { cn } from '@/lib/utils';
 
 export type MediaVolumeControlVariant = 'bubble' | 'overlay' | 'sidebar';
@@ -22,11 +27,8 @@ export interface MediaVolumeControlProps {
 /** Abaixo disso o atendente não descobre sozinho por que "não escuta o áudio do cliente" (E30). */
 const LOW_VOLUME_THRESHOLD = 30;
 
-// Textos distintos dos do botão de alertas (E29): "Volume dos alertas" continua sendo só
-// dos alertas — sem ambiguidade com "Volume dos áudios e vídeos" das mídias.
-export const MEDIA_VOLUME_LABEL = 'Volume dos áudios e vídeos';
-export const MEDIA_VOLUME_LABEL_MUTED = 'Áudios e vídeos mudos';
-const SLIDER_LABEL = 'Volume das mídias';
+// Rótulos vêm de `@/lib/volumeLabels` (fonte única também usada pelo E2E; E29 — distintos
+// dos do botão de alertas).
 
 /**
  * E13 — controle único de volume das mídias de conversa (áudio/vídeo das mensagens).
@@ -159,7 +161,7 @@ export function MediaVolumeControl({
           min={0}
           max={100}
           step={MEDIA_VOLUME_STEP}
-          thumbLabel={SLIDER_LABEL}
+          thumbLabel={MEDIA_VOLUME_SLIDER_LABEL}
           onVolumeChange={setVolume}
           onToggleMute={toggleMuted}
           disabled={sliderDisabled}

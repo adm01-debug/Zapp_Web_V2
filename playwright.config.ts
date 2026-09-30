@@ -23,7 +23,7 @@ export default defineConfig({
     },
     {
       // Login real (e2e/auth.setup.ts), executado só quando o projeto
-      // "chromium-authenticated" ou "chromium-e2e-core" roda (via dependsOn
+      // "chromium-authenticated" ou "chromium-e2e-core" roda (via dependencies
       // abaixo) — nunca bloqueia o projeto "chromium" acima.
       name: 'setup',
       testMatch: /auth\.setup\.ts/,
@@ -33,10 +33,10 @@ export default defineConfig({
       // conversation.spec.ts / messaging.spec.ts: specs autenticados do
       // e2e-logado.yml. Projeto dedicado (em vez de rodar via path de arquivo
       // no CLI sob "chromium-authenticated") para que uma única invocação do
-      // Playwright resolva "setup" sozinha via dependsOn — ver e2e/README.md.
+      // Playwright resolva "setup" sozinha via dependencies — ver e2e/README.md.
       name: 'chromium-e2e-core',
       testMatch: [/conversation\.spec\.ts/, /messaging\.spec\.ts/],
-      dependsOn: ['setup'],
+      dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'e2e/.auth/user.json',
@@ -47,7 +47,7 @@ export default defineConfig({
       // "setup" e salva em e2e/.auth/user.json.
       name: 'chromium-authenticated',
       testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts/,
-      dependsOn: ['setup'],
+      dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'e2e/.auth/user.json',
@@ -59,7 +59,7 @@ export default defineConfig({
       // Reusa o storageState gerado pelo projeto "setup".
       name: 'chromium-talkx',
       testMatch: /talkx\.spec\.ts/,
-      dependsOn: ['setup'],
+      dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'e2e/.auth/user.json',
@@ -71,7 +71,7 @@ export default defineConfig({
       // browser-agnostic; the same user.json works for all engine projects).
       name: 'firefox-talkx',
       testMatch: /talkx\.spec\.ts/,
-      dependsOn: ['setup'],
+      dependencies: ['setup'],
       use: {
         ...devices['Desktop Firefox'],
         storageState: 'e2e/.auth/user.json',
@@ -82,7 +82,7 @@ export default defineConfig({
       // Talk X module. Uses the same storageState as the other auth projects.
       name: 'webkit-talkx',
       testMatch: /talkx\.spec\.ts/,
-      dependsOn: ['setup'],
+      dependencies: ['setup'],
       use: {
         ...devices['Desktop Safari'],
         storageState: 'e2e/.auth/user.json',
@@ -90,7 +90,7 @@ export default defineConfig({
     },
     {
       // auth.spec.ts on Firefox — cross-browser login UI coverage.
-      // No dependsOn, no storageState: runs without E2E_TEST_EMAIL/E2E_TEST_PASSWORD,
+      // No dependencies, no storageState: runs without E2E_TEST_EMAIL/E2E_TEST_PASSWORD,
       // safe to include in ci.yml (PR checks cannot reference those secrets).
       name: 'firefox-auth',
       testMatch: /auth\.spec\.ts/,
@@ -98,7 +98,7 @@ export default defineConfig({
     },
     {
       // auth.spec.ts on WebKit (Safari engine) — cross-browser login UI coverage.
-      // No dependsOn, no storageState: safe to include in ci.yml.
+      // No dependencies, no storageState: safe to include in ci.yml.
       name: 'webkit-auth',
       testMatch: /auth\.spec\.ts/,
       use: { ...devices['Desktop Safari'] },
@@ -108,7 +108,7 @@ export default defineConfig({
       // coverage of the authenticated inbox. Reuses the storageState from setup.
       name: 'firefox-conversation',
       testMatch: [/conversation\.spec\.ts/, /messaging\.spec\.ts/],
-      dependsOn: ['setup'],
+      dependencies: ['setup'],
       use: {
         ...devices['Desktop Firefox'],
         storageState: 'e2e/.auth/user.json',
@@ -119,7 +119,7 @@ export default defineConfig({
       // cross-browser coverage of the authenticated inbox.
       name: 'webkit-conversation',
       testMatch: [/conversation\.spec\.ts/, /messaging\.spec\.ts/],
-      dependsOn: ['setup'],
+      dependencies: ['setup'],
       use: {
         ...devices['Desktop Safari'],
         storageState: 'e2e/.auth/user.json',
