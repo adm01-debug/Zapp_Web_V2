@@ -65,4 +65,23 @@ describe('useRealtimeNotifications — efeito do alerta', () => {
 
     expect(playNotificationSound).not.toHaveBeenCalled();
   });
+
+  it('para de tocar quando o horário de silêncio ABRE com a aba já aberta (não congela no mount)', () => {
+    const { result } = renderHook(() => useRealtimeNotifications());
+
+    act(() => {
+      result.current.notifyAboutIncomingMessage(contato, mensagemNova());
+    });
+    expect(playNotificationSound).toHaveBeenCalledTimes(1);
+
+    // A janela abre DEPOIS do mount e sem mudar nenhum ajuste: o relógio sozinho não
+    // dispara re-render. Antes, o `soundEnabledRef` guardava o valor calculado na montagem
+    // ("não é silêncio" = true) e o beep continuava tocando dentro do horário de silêncio.
+    settingsCfg.quietHours = true;
+
+    act(() => {
+      result.current.notifyAboutIncomingMessage(contato, mensagemNova({ id: 'm2' }));
+    });
+    expect(playNotificationSound).toHaveBeenCalledTimes(1);
+  });
 });
