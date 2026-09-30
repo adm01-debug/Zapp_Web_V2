@@ -187,7 +187,19 @@ function reducer(state: State, action: Action): State {
         rateLimitedUntil: action.rateLimitedUntil ?? state.rateLimitedUntil,
       };
     case 'RETRY':
-      return { ...state, attempt: state.attempt + 1, error: null, retrieveError: null };
+      // A3-04 (onda 2): quem chega aqui já passou pelo guard de backoff do `retrySuggest` (com o
+      // backoff valendo, ele preserva a pausa). Então a espera acabou e o estado TEM de sair dela:
+      // antes o retry só incrementava `attempt`, e a lista voltava a buscar com o aviso
+      // "pausadas por 0 s" ainda de pé — o contador morto continuava na tela.
+      return {
+        ...state,
+        status: 'typing',
+        blocked: null,
+        rateLimitedUntil: null,
+        attempt: state.attempt + 1,
+        error: null,
+        retrieveError: null,
+      };
     case 'RETRIEVE_START':
       // Falha de retrieve não fecha a lista: só o item some do estado de carregamento
       // (RETRIEVE_END), as sugestões continuam de pé.
