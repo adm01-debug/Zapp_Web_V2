@@ -5,16 +5,18 @@
  interface ZenModeToggleProps {
    isZen: boolean;
    toggleZen: () => void;
+   placement?: 'floating' | 'inline';
  }
  
- export function ZenModeToggle({ isZen, toggleZen }: ZenModeToggleProps) {
+ export function ZenModeToggle({ isZen, toggleZen, placement = 'floating' }: ZenModeToggleProps) {
    return (
      <Tooltip delayDuration={0}>
        <TooltipTrigger asChild>
          <button
            onClick={toggleZen}
            className={cn(
-             'absolute top-3 right-3 z-30 h-8 rounded-full flex items-center gap-1.5 transition-all duration-200',
+             placement === 'floating' ? 'absolute top-3 right-3 z-30' : 'relative z-10 shrink-0',
+             'h-8 rounded-full flex items-center gap-1.5 transition-all duration-200',
              'border backdrop-blur-sm shadow-sm',
              isZen
                ? 'px-3 bg-primary/15 border-primary/30 text-primary hover:bg-primary/25 hover:border-primary/50 shadow-primary/10'
@@ -28,7 +30,7 @@
            </span>
          </button>
        </TooltipTrigger>
-       <TooltipContent side="left" sideOffset={8} className="text-xs">
+       <TooltipContent side={placement === 'inline' ? 'right' : 'left'} sideOffset={8} className="text-xs">
          {isZen ? 'Sair do modo zen (Esc)' : 'Modo zen — foco total'}
        </TooltipContent>
      </Tooltip>

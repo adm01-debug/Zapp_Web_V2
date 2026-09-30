@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { MotionConfig } from 'framer-motion';
 import { useExternalContact360Batch } from '@/hooks/crm/useExternalContact360Batch';
+import { useCRMAdminAccess } from '@/hooks/crm/useCRMAdminAccess';
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
 import { useLayoutScroll } from '@/contexts/LayoutScrollContext';
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
@@ -17,7 +18,7 @@ import { ContactContentArea } from './ContactContentArea';
 import { ContactResultsSummary } from './ContactResultsSummary';
 import { ContactCRMDialog } from './ContactCRMDialog';
 import { useContactsViewState } from './useContactsViewState';
-import { canDeleteSelectedContacts } from './contactPermissions';
+import { canDeleteSelectedContacts, canMergeContacts } from './contactPermissions';
 export function ContactsView() {
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
   const {
@@ -50,6 +51,7 @@ export function ContactsView() {
     handleAddContact, handleEditContact, handleDeleteContact,
     openEditDialog, handleCancelForm,
     handleNewContactChange, handleEditContactChange,
+    invalidateContactAggregates,
   } = crud;
 
   const crmContacts = useMemo(() => filteredContacts.map(c => ({ id: c.id, phone: c.phone })), [filteredContacts]);
@@ -69,6 +71,16 @@ export function ContactsView() {
     () => canDeleteSelectedContacts(selectedIds, filteredContacts),
     [filteredContacts, selectedIds],
   );
+
+  /**
+   * Mesclar não tem permissão por contato: a RPC `merge_contacts_atomic` recusa
+   * com `42501` quem não é admin/supervisor (`is_admin_or_supervisor`), e o merge
+   * faz DELETE físico dos secundários. O dado vem do mesmo predicado do servidor
+   * (`useCRMAdminAccess`); `null` (consulta em andamento) não bloqueia — mesma
+   * semântica da série de exclusão.
+   */
+  const adminAccess = useCRMAdminAccess();
+  const canMerge = canMergeContacts(adminAccess);
 
   return (
     <MotionConfig reducedMotion="user">
@@ -98,11 +110,13 @@ export function ContactsView() {
       />
 
       <div className="space-y-4">
-      <ContactMergeDialog
-        open={isMergeOpen} onOpenChange={setIsMergeOpen}
-        contacts={filteredContacts.filter(c => selectedIds.includes(c.id))}
-        onMergeComplete={() => { setSelectedIds([]); refetch(); }}
-      />
+      {canMerge && (
+        <ContactMergeDialog
+          open={isMergeOpen} onOpenChange={setIsMergeOpen}
+          contacts={filteredContacts.filter(c => selectedIds.includes(c.id))}
+          onMergeComplete={() => { setSelectedIds([]); refetch(); invalidateContactAggregates(); }}
+        />
+      )}
       <ContactCompareDialog
         open={isCompareOpen} onOpenChange={setIsCompareOpen}
         contacts={filteredContacts.filter(c => selectedIds.includes(c.id))}
@@ -133,6 +147,7 @@ export function ContactsView() {
         selectedIds={selectedIds}
         onBulkTag={() => setIsBulkTagOpen(true)}
         onCompare={() => setIsCompareOpen(true)}
+        canMerge={canMerge}
         onMerge={() => setIsMergeOpen(true)}
         viewMode={viewMode} setViewMode={setViewMode}
         gridColumns={gridColumns} setGridColumns={setGridColumns}
@@ -196,6 +211,7 @@ export function ContactsView() {
           open={isCRMSearchOpen}
           onOpenChange={setIsCRMSearchOpen}
           onContactSelected={openContactChat}
+          onImported={invalidateContactAggregates}
         />
       )}
 
@@ -203,6 +219,7 @@ export function ContactsView() {
         selectedIds={selectedIds}
         onClearSelection={() => setSelectedIds([])}
         onActionComplete={() => { setSelectedIds([]); refetch(); }}
+        onCountersChanged={invalidateContactAggregates}
         availableTags={uniqueTags}
         canDeleteSelection={canDeleteSelection}
       />

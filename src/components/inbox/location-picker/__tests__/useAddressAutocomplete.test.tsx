@@ -335,6 +335,43 @@ describe('useAddressAutocomplete', () => {
     expect(result.current.pausedUntil).toBeNull();
   });
 
+  // ── Onda 2 · estado stale (A3-06) e backoff vs clear (E38) ──────────────────────────────────
+
+  it('A3-06: digitar de novo invalida o destaque do termo anterior (Enter não aplica sugestão invisível)', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA, suggestionB] });
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua a'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    expect(result.current.suggestions).toHaveLength(2);
+
+    // O operador navega com o teclado (destaque no 1º item)…
+    act(() => { result.current.onKeyDown(fakeKeyEvent('ArrowDown')); });
+    expect(result.current.highlightedIndex).toBe(0);
+
+    // …e digita mais (>=3 chars). O destaque é do termo ANTERIOR: tem de cair, senão o Enter em
+    // LocationPicker (highlightedIndex >= 0) aplicaria a sugestão invisível do termo antigo.
+    act(() => { result.current.setQuery('rua augusta 100'); });
+    expect(result.current.highlightedIndex).toBe(-1);
+  });
+
+  it('E38 (onda 2): clear() NÃO destrava o backoff de 429 — a proteção anti-hammering sobrevive ao Esc/fechar', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'rate_limited' });
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua a'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    expect(result.current.pausedUntil).not.toBeNull();
+
+    // O operador fecha/reabre o picker (clear) 1 s depois — bem dentro dos 60 s de backoff.
+    act(() => { result.current.clear(); });
+    act(() => { vi.advanceTimersByTime(1000); });
+    h.suggestPlaces.mockClear();
+
+    // A tecla seguinte não pode re-requestar em cima do 429.
+    act(() => { result.current.setQuery('rua b'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    expect(h.suggestPlaces).not.toHaveBeenCalled();
+  });
+
   // ── F2 · cascata /suggest → /forward (E15–E20) ──────────────────────────────────────────────
 
   it('E15: /suggest cai por rota (http) — o /forward assume e as sugestões já vêm com coordenada', async () => {

@@ -22,6 +22,8 @@ interface BulkActionsBarProps {
   selectedIds: string[];
   onClearSelection: () => void;
   onActionComplete: () => void;
+  /** Chamado após operações em lote que mudam a quantidade ou o tipo dos contatos. */
+  onCountersChanged?: () => void;
   availableTags?: string[];
   availableAgents?: { id: string; name: string }[];
   /**
@@ -36,6 +38,7 @@ export function BulkActionsBar({
   selectedIds,
   onClearSelection,
   onActionComplete,
+  onCountersChanged,
   availableTags = [],
   availableAgents = [],
   canDeleteSelection = true,
@@ -103,12 +106,13 @@ export function BulkActionsBar({
       if (error) throw error;
       toast.success(`${count} contatos atualizados para "${contactType}"`);
       onActionComplete();
+      onCountersChanged?.();
     } catch {
       toast.error('Erro ao atualizar tipo');
     } finally {
       setIsProcessing(false);
     }
-  }, [selectedIds, count, onActionComplete]);
+  }, [selectedIds, count, onActionComplete, onCountersChanged]);
 
   const handleBulkDelete = useCallback(async () => {
     setIsProcessing(true);
@@ -136,12 +140,13 @@ export function BulkActionsBar({
       }
       onClearSelection();
       onActionComplete();
+      onCountersChanged?.();
     } catch (err) {
       toast.error(err instanceof Error && err.message ? err.message : 'Erro ao remover contatos');
     } finally {
       setIsProcessing(false);
     }
-  }, [selectedIds, count, onClearSelection, onActionComplete]);
+  }, [selectedIds, count, onClearSelection, onActionComplete, onCountersChanged]);
 
   if (count === 0) return null;
 

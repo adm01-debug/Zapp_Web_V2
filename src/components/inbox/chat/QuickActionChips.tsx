@@ -3,7 +3,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Badge } from '@/components/ui/badge';
 import { motion } from '@/components/ui/motion';
 import {
-  MessageSquareText, Sparkles, Paperclip, CalendarClock, ArrowLeftRight, MoreHorizontal,
+  MessageSquareText, Paperclip, CalendarClock, ArrowLeftRight, MoreHorizontal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -12,7 +12,6 @@ interface QuickReplyItem { id: string; title: string; shortcut: string; content:
 interface QuickActionChipsProps {
   quickReplies: QuickReplyItem[];
   onQuickReply: (reply: QuickReplyItem) => void;
-  onOpenAiAssistant: () => void;
   onAttach: () => void;
   onOpenSchedule: () => void;
   onOpenTransfer?: () => void;
@@ -35,7 +34,7 @@ function Chip({ icon: Icon, label, onClick, testId }: { icon: typeof MessageSqua
 }
 
 export function QuickActionChips({
-  quickReplies, onQuickReply, onOpenAiAssistant, onAttach, onOpenSchedule, onOpenTransfer, moreContent,
+  quickReplies, onQuickReply, onAttach, onOpenSchedule, onOpenTransfer, moreContent,
 }: QuickActionChipsProps) {
   const [quickReplyOpen, setQuickReplyOpen] = useState(false);
   return (
@@ -73,7 +72,6 @@ export function QuickActionChips({
         </PopoverContent>
       </Popover>
 
-      <Chip icon={Sparkles} label="Assistente IA" onClick={onOpenAiAssistant} testId="chip-ai-assistant" />
       <Chip icon={Paperclip} label="Anexar" onClick={onAttach} testId="chip-attach" />
       <Chip icon={CalendarClock} label="Agendar" onClick={onOpenSchedule} testId="chip-schedule" />
       {onOpenTransfer && <Chip icon={ArrowLeftRight} label="Transferir" onClick={onOpenTransfer} testId="chip-transfer" />}

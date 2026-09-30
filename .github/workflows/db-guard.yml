@@ -227,6 +227,21 @@ jobs:
           AI_READ_QUEUE_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/ai-read-policies-queue-scope.test.sh
 
+      - name: Simular autorização do notify_due_tasks (RPC sem guarda)
+        env:
+          NOTIFY_DUE_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/notify-due-tasks-authorization.test.sh
+
+      - name: Simular escopo das 14 policies TO public -> authenticated
+        env:
+          PUBLIC_POLICY_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/scope-public-policies-authenticated.test.sh
+
+      - name: Simular permissao send_messages imposta na RPC de envio (L9)
+        env:
+          SEND_MESSAGES_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/send-messages-permission-authorization.test.sh
+
       - name: Simular histórico atômico de templates Talk X
         env:
           TALKX_HISTORY_TEST_POSTGRES_IMAGE: postgres:17-alpine
@@ -249,6 +264,11 @@ jobs:
         env:
           TALKX_BLACKLIST_POLICY_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-blacklist-policy-forward-only.test.sh
+
+      - name: Simular edição de limites de campanha via RPC Talk X (V09)
+        env:
+          TALKX_UPDATE_LIMITS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-update-limits-rpc.test.sh
 
       - name: Simular vazamento e correção da view de métricas Talk X
         env:

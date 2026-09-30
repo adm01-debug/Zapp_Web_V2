@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useWarRoomAlerts } from '@/hooks/business/useWarRoomAlerts';
+import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 import { useWarRoomData, useWarRoomMetrics } from '@/hooks/business/useWarRoomData';
 import type { WarRoomAgent, WarRoomQueue, WarRoomAlert } from '@/hooks/business/useWarRoomData';
 import {
@@ -35,15 +36,16 @@ export function WarRoomDashboard({
   onAgentClick, onQueueClick, onAlertDismiss, className,
 }: WarRoomDashboardProps) {
   const realData = useWarRoomData();
+  const { settings, updateSettings } = useNotificationSettings();
   const agents = propsAgents || realData.agents;
   const queues = propsQueues || realData.queues;
-  const { alerts: realtimeAlerts, dismissAlert } = useWarRoomAlerts(true);
+  // Som do War Room obedece à preferência do painel (não a um `true` cravado).
+  const { alerts: realtimeAlerts, dismissAlert } = useWarRoomAlerts(settings.soundEnabled);
   const alerts = propsAlerts || realtimeAlerts.map(a => ({
     id: a.id, type: a.alert_type as 'critical' | 'warning' | 'info',
     title: a.title, message: a.message, timestamp: new Date(a.created_at), isNew: !a.is_read,
   }));
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
@@ -71,7 +73,7 @@ export function WarRoomDashboard({
           <span className="text-sm text-muted-foreground">Atualizado: {lastUpdate.toLocaleTimeString()}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => setSoundEnabled(!soundEnabled)}>{soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}</Button></TooltipTrigger><TooltipContent>Som de alertas</TooltipContent></Tooltip>
+          <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => updateSettings({ soundEnabled: !settings.soundEnabled })}>{settings.soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}</Button></TooltipTrigger><TooltipContent>Som de alertas</TooltipContent></Tooltip>
           <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => setAutoRefresh(!autoRefresh)}><RefreshCw className={cn("w-4 h-4", autoRefresh && "animate-spin-slow")} /></Button></TooltipTrigger><TooltipContent>Auto-atualização</TooltipContent></Tooltip>
           <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={toggleFullscreen}>{isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</Button></TooltipTrigger><TooltipContent>Tela cheia</TooltipContent></Tooltip>
         </div>

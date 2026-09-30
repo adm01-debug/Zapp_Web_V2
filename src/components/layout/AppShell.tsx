@@ -59,7 +59,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
   const isMobile = useIsMobile();
   useAgentPresenceJoin(userId);
   const { isZen, toggleZen } = useZenMode();
-  const isInboxView = currentView === 'inbox' || currentView === 'team-chat';
+  const showFloatingZenToggle = currentView === 'team-chat';
   const { startTransition } = useViewTransition();
   const [voiceOpen, setVoiceOpen] = useState(false);
 
@@ -68,7 +68,10 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
   }, [startTransition, setCurrentView]);
 
    const { handleVoiceAction } = useVoiceAgent(handleViewChange);
-  const layoutContextValue = useMemo(() => ({ hidePageBreadcrumbs: !isMobile && !isZen }), [isMobile, isZen]);
+  const layoutContextValue = useMemo(
+    () => ({ hidePageBreadcrumbs: !isMobile && !isZen, isZen, toggleZen }),
+    [isMobile, isZen, toggleZen]
+  );
   useNavShortcuts(handleViewChange);
 
   // Mobile edge-swipe navigation
@@ -128,7 +131,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
             isMobile && 'pt-12 pb-[56px]'
           )}
         >
-           {!isMobile && isInboxView && <ZenModeToggle isZen={isZen} toggleZen={toggleZen} />}
+           {!isMobile && showFloatingZenToggle && <ZenModeToggle isZen={isZen} toggleZen={toggleZen} />}
           {showChecklist && currentView === 'dashboard' && (
             <div className="absolute top-4 right-4 z-20 w-96 max-w-[calc(100%-2rem)]">
               <OnboardingChecklist onNavigate={handleViewChange} />
