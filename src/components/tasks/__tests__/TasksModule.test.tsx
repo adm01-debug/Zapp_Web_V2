@@ -8,7 +8,7 @@
  * O mock vem de `@/test/mocks/tarefas` (mesmo harness do teste do hook).
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import {
@@ -194,5 +194,95 @@ describe('TasksModule — etapa 43 (subtítulo com contagens reais)', () => {
     renderModule();
 
     await waitFor(() => expect(screen.getByText('1.234 abertas · 0 para hoje')).toBeTruthy());
+  });
+});
+
+/**
+ * Etapa 44: os 5 KPIs do topo passam ao padrão visual da casa
+ * (`ContactKpiCard`) — card 88px, tile 44px com `bg-kpi-*`, ícone 20px,
+ * valor 26/700 tabular, rótulo 13/500 — e o grid ganha o breakpoint de 3.
+ * O jsdom não tem layout, então o que se prova aqui é o contrato de classes
+ * (o mesmo que o gate visual `kpiCard=88±4` mede no navegador).
+ */
+describe('TasksModule — etapa 44 (KPIs no padrão ContactKpiCard)', () => {
+  beforeEach(() => {
+    cleanup();
+    resetSupabaseMock();
+    localStorage.clear();
+  });
+
+  /** 1 atrasada · 1 para hoje · 2 fazendo · 1 concluída hoje. */
+  function renderComKpis() {
+    const ontem = new Date(Date.now() - 86_400_000).toISOString();
+    setSelectResult({
+      data: [
+        makeTaskRow({ id: 'o1', status: 'todo', due_date: ontem }),
+        makeTaskRow({ id: 'h1', status: 'todo', due_date: new Date().toISOString() }),
+        makeTaskRow({ id: 'f1', status: 'doing' }),
+        makeTaskRow({ id: 'f2', status: 'doing' }),
+        makeTaskRow({ id: 'd1', status: 'done', completed_at: new Date().toISOString() }),
+      ],
+      error: null,
+    });
+    return renderModule();
+  }
+
+  it('renderiza 5 cards de 88px, cada um com tile de 44px', async () => {
+    renderComKpis();
+    await waitFor(() => expect(screen.getAllByTestId('kpi-card')).toHaveLength(5));
+
+    for (const card of screen.getAllByTestId('kpi-card')) {
+      expect(card.className).toContain('h-[88px]');
+      expect(card.className).toContain('rounded-[14px]');
+    }
+
+    const tiles = screen.getAllByTestId('kpi-tile');
+    expect(tiles).toHaveLength(5);
+    for (const tile of tiles) expect(tile.className).toContain('h-11 w-11');
+
+    // valor 700 + tabular (o tamanho fica no token da escala: text-2xl)
+    for (const valor of screen.getAllByTestId('kpi-value')) {
+      expect(valor.className).toContain('font-bold');
+      expect(valor.className).toContain('tabular-nums');
+      expect(valor.className).toContain('text-2xl');
+    }
+  });
+
+  it('pinta os tiles por tipo e mostra o WIP "n/3" no Fazendo', async () => {
+    renderComKpis();
+    // os 5 cards existem desde o primeiro render (vazio): espera os numeros
+    // reais chegarem antes de olhar as cores
+    const strip = within(screen.getByTestId('tasks-kpi-strip'));
+    await waitFor(() => expect(strip.getByText('Fazendo').closest('[data-testid="kpi-card"]')
+      ?.querySelector('[data-testid="kpi-value"]')?.textContent).toBe('2/3'));
+
+    const tileDe = (label: string) =>
+      strip.getByText(label).closest('[data-testid="kpi-card"]')
+        ?.querySelector('[data-testid="kpi-tile"]')?.className ?? '';
+    const valorDe = (label: string) =>
+      strip.getByText(label).closest('[data-testid="kpi-card"]')
+        ?.querySelector('[data-testid="kpi-value"]')?.textContent ?? '';
+
+    // com 1 atrasada o tile vira o de alerta; sem atrasadas seria o amarelo
+    expect(tileDe('Atrasadas')).toContain('bg-destructive/15');
+    expect(tileDe('Para hoje')).toContain('bg-kpi-blue');
+    expect(tileDe('Fazendo')).toContain('bg-kpi-purple');
+    expect(tileDe('Concluídas (7d)')).toContain('bg-kpi-green');
+    expect(tileDe('Tempo médio')).toContain('bg-muted');
+
+    expect(valorDe('Fazendo')).toBe('2/3');
+    expect(valorDe('Atrasadas')).toBe('1');
+    expect(valorDe('Para hoje')).toBe('1');
+    expect(valorDe('Concluídas (7d)')).toBe('1');
+  });
+
+  it('o grid tem os 3 breakpoints (2 / 3 / 5 colunas)', async () => {
+    renderComKpis();
+    await waitFor(() => expect(screen.getAllByTestId('kpi-card')).toHaveLength(5));
+
+    const grid = screen.getByTestId('tasks-kpi-strip').className;
+    expect(grid).toContain('grid-cols-2');
+    expect(grid).toContain('md:grid-cols-3');
+    expect(grid).toContain('xl:grid-cols-5');
   });
 });
