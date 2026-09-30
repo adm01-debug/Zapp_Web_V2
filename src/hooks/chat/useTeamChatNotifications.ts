@@ -16,13 +16,17 @@ const getCtx = () => {
 /**
  * Play a distinct notification sound for internal team chat.
  * Uses a unique chord-like pattern to differentiate from external chat beeps.
+ *
+ * O ganho obedece ao volume de alerta do painel (`settings.soundVolume`, 10-100): `volume/100`
+ * multiplica os ganhos-base. Antes eram 0.2/0.15 cravados, ignorando o controle do usuário.
  */
-export function playTeamChatSound() {
+export function playTeamChatSound(volume: number = 70) {
   try {
     const ctx = getCtx();
     if (ctx.state === 'suspended') ctx.resume();
 
     const now = ctx.currentTime;
+    const volumeMultiplier = volume / 100;
 
     // Two-tone chord: C5 + E5 for a pleasant, distinct chime
     const frequencies = [523, 659];
@@ -36,7 +40,7 @@ export function playTeamChatSound() {
       osc.frequency.setValueAtTime(freq, now);
 
       gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.2, now + 0.02);
+      gain.gain.linearRampToValueAtTime(0.2 * volumeMultiplier, now + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
 
       osc.start(now + i * 0.05); // Slight stagger for richness
@@ -53,7 +57,7 @@ export function playTeamChatSound() {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(784, ctx.currentTime);
         gain.gain.setValueAtTime(0, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.02);
+        gain.gain.linearRampToValueAtTime(0.15 * volumeMultiplier, ctx.currentTime + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
         osc.start(ctx.currentTime);
         osc.stop(ctx.currentTime + 0.35);
@@ -121,9 +125,9 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
         if (!membership) return; // Not a member
         if (membership.is_muted) return; // Muted
 
-        // Play sound if enabled
+        // Play sound if enabled — volume do painel (10-100), nunca fixo
         if (notifSettings.soundEnabled && !isQuietHours()) {
-          playTeamChatSound();
+          playTeamChatSound(notifSettings.soundVolume);
         }
 
         // Show browser notification if enabled
@@ -168,5 +172,5 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile, notifSettings.soundEnabled, notifSettings.browserNotifications, permission, isSubscribed, isQuietHours, showNotification]);
+  }, [profile, notifSettings.soundEnabled, notifSettings.soundVolume, notifSettings.browserNotifications, permission, isSubscribed, isQuietHours, showNotification]);
 }

@@ -1,7 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { ConnectionInfo } from './types';
+import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 
-function playAlertSound() {
+// Alerta de conexão perdida: WebAudio fora do `mediaVolumeStore` (é ALERTA, não mídia de
+// conversa). O volume vem do painel (`user_settings.sound_volume`, 10-100) — nunca de um
+// ganho fixo cravado no código.
+function playAlertSound(volume: number) {
   try {
     const ctx = new AudioContext();
     const osc = ctx.createOscillator();
@@ -12,7 +16,7 @@ function playAlertSound() {
     osc.frequency.setValueAtTime(520, ctx.currentTime);
     osc.frequency.setValueAtTime(420, ctx.currentTime + 0.15);
     osc.frequency.setValueAtTime(520, ctx.currentTime + 0.3);
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.setValueAtTime(0.3 * (volume / 100), ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.5);
@@ -20,19 +24,19 @@ function playAlertSound() {
 }
 
 export function useMonitoringNotifications() {
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(() => {
-    try { return localStorage.getItem('monitoring_sound') !== 'false'; } catch { return true; }
+  // Estado inicial derivado da permissão do navegador (sem setState dentro de efeito).
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+    try { return 'Notification' in window && Notification.permission === 'granted'; } catch { return false; }
   });
+  const { settings, updateSettings, isQuietHours } = useNotificationSettings();
   const prevRef = useRef<ConnectionInfo[]>([]);
 
-  useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'granted') setNotificationsEnabled(true);
-  }, []);
-
-  useEffect(() => {
-    try { localStorage.setItem('monitoring_sound', String(soundEnabled)); } catch { /* */ }
-  }, [soundEnabled]);
+  // Volume e mudo vêm das preferências do usuário (`user_settings`), não de `localStorage`
+  // nem de constante: o mesmo controle do painel de notificações passa a valer no monitoramento.
+  const soundEnabled = settings.soundEnabled;
+  const setSoundEnabled = useCallback((enabled: boolean) => {
+    void updateSettings({ soundEnabled: enabled });
+  }, [updateSettings]);
 
   const requestNotifications = useCallback(async () => {
     if (!('Notification' in window)) return;
@@ -46,7 +50,7 @@ export function useMonitoringNotifications() {
       connections.forEach(conn => {
         const p = prev.find(x => x.id === conn.id);
         if (p && p.status === 'connected' && conn.status !== 'connected') {
-          if (soundEnabled) playAlertSound();
+          if (soundEnabled && !isQuietHours()) playAlertSound(settings.soundVolume);
           if (notificationsEnabled) {
             try {
               new Notification('⚠️ Conexão Perdida', {
@@ -60,7 +64,7 @@ export function useMonitoringNotifications() {
       });
     }
     prevRef.current = connections;
-  }, [notificationsEnabled, soundEnabled]);
+  }, [notificationsEnabled, soundEnabled, settings.soundVolume, isQuietHours]);
 
   return { notificationsEnabled, soundEnabled, setSoundEnabled, requestNotifications, checkDisconnections };
 }

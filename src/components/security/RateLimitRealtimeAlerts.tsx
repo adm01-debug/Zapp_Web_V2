@@ -36,10 +36,16 @@ const SEVERITY_COLORS: Record<string, string> = {
 export function RateLimitRealtimeAlerts() {
   const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
-  const { settings } = useNotificationSettings();
-  // O polling roda uma vez (deps []): a ref evita ler volume velho na detecção.
+  const { settings, isQuietHours } = useNotificationSettings();
+  // O polling roda uma vez (deps []): as refs evitam ler volume/mudo/horário velhos na detecção.
   const soundVolumeRef = useRef(settings.soundVolume);
-  useEffect(() => { soundVolumeRef.current = settings.soundVolume; }, [settings.soundVolume]);
+  const soundEnabledRef = useRef(settings.soundEnabled);
+  const isQuietHoursRef = useRef(isQuietHours);
+  useEffect(() => {
+    soundVolumeRef.current = settings.soundVolume;
+    soundEnabledRef.current = settings.soundEnabled;
+    isQuietHoursRef.current = isQuietHours;
+  }, [settings.soundVolume, settings.soundEnabled, isQuietHours]);
 
   useEffect(() => {
     // Fetch recent unresolved alerts
@@ -82,7 +88,11 @@ export function RateLimitRealtimeAlerts() {
       if (newAlerts.length > 0) {
         setAlerts(fresh as SecurityAlert[]);
         newAlerts.forEach(a => {
-          if (a.severity === 'critical' || a.severity === 'high') playAlertSound(soundVolumeRef.current);
+          // Mudo do painel e horário de silêncio valem para o alerta de segurança também.
+          const severo = a.severity === 'critical' || a.severity === 'high';
+          if (severo && soundEnabledRef.current && !isQuietHoursRef.current()) {
+            playAlertSound(soundVolumeRef.current);
+          }
         });
         lastKnownIds = new Set((fresh as SecurityAlert[]).map(a => a.id));
       }
