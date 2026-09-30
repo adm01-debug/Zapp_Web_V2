@@ -315,6 +315,7 @@ describe('useAddressAutocomplete', () => {
     act(() => { result.current.retrySuggest(); });
     expect(result.current.status).toBe('paused');
     expect(result.current.blocked).toBe('rate_limited');
+    expect(result.current.pausedUntil).not.toBeNull();
     expect(h.suggestPlaces).toHaveBeenCalledTimes(1);
 
     // a espera passa; a partir daqui o retry tem de religar a busca e SAIR da pausa — era aqui
@@ -327,6 +328,11 @@ describe('useAddressAutocomplete', () => {
     expect(h.suggestPlaces).toHaveBeenCalledTimes(2);
     expect(result.current.status).toBe('ok');
     expect(result.current.blocked).toBeNull();
+    // A3-04 (gap fechado): o retry tem de zerar `pausedUntil` (rateLimitedUntil) — é ele que
+    // alimenta o aviso "pausadas por X s". SUGGEST_SUCCESS não mexe em rateLimitedUntil, então só
+    // o RETRY limpa de verdade; se ficar preso no timestamp expirado, a tela mostra o contador
+    // morto em "0 s".
+    expect(result.current.pausedUntil).toBeNull();
   });
 
   // ── F2 · cascata /suggest → /forward (E15–E20) ──────────────────────────────────────────────
