@@ -94,7 +94,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 ## CP-C Sheet       [ ] WorkItemSheet= · ?task= · Aguardando por DnD/kebab/menu= · kebab 5 grupos= · RemindChip popover= · ContactChip=
 ## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
-## CP-E Telas       [~] etapas 47 (B7), 48 (B4), 49, 50, 51 (B5) e 52 (B8) fechadas 29-30/09/2026 (executor: Hermes) · KPIs 88px= · filtros 3 modos= · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · Agenda grupos= · 0 requests na troca= · modo por rota: ok
+## CP-E Telas       [~] etapas 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8) e 53 fechadas 29-30/09/2026 (executor: Hermes) · KPIs 88px= · filtros 3 modos= · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos= · 0 requests na troca= · modo por rota: ok
 
 ## Etapa 47 (B7) — modo por rota (Fase E) — evidências
 
@@ -231,6 +231,26 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 **Teste de mutação (3, árvore restaurada entre cada):** M1 `isDropDisabled = hardFull` (trava também o interno) → vermelho no caso do reorder interno; M2 `isDropDisabled = false` (nunca bloqueia) → vermelho no caso da origem externa; M3 sem a classe do anel → vermelho no caso do cabeçalho.
 
 **Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · guard-rail de tipografia ✓ · `build` ✓ · bundle 4018,9/4100 KB ✓ · `db:guard` ✓ · suíte 4330 passed / 0 failed (318 arquivos) ✓
+
+## Etapa 53 — coluna vazia com política, esqueleto próprio e altura sem número mágico — evidências
+
+**Regra do plano:** (1) `TasksEmptyState variant="column"` recebe `policy` e mostra o texto da política em `text-muted-foreground/70`; (2) `BoardColumnSkeleton` (3 `WorkItemCardSkeleton`) usado no `isLoading`; (3) remover `max-h-[calc(100vh-280px)]` → `min-h-0 flex-1` com o pai em `h-full`. DoD: 3 itens.
+
+**Mudanças (5 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/components/tasks/TasksEmptyState.tsx` | prop `policy?: string`; no `variant="column"` o texto da política entra abaixo de "Coluna vazia" em `text-xs text-muted-foreground/70` |
+| `src/components/tasks/shared/BoardColumnSkeleton.tsx` (**novo**) | esqueleto da coluna: 3 `WorkItemCardSkeleton` |
+| `src/components/tasks/board/BoardColumn.tsx` | `{isLoading && <BoardColumnSkeleton />}` no lugar dos 2 cartões montados ad hoc; `policy={col.policy}` no estado vazio; raiz da coluna troca `max-h-[calc(100vh-280px)]` por `h-full min-h-0` (e o import de `WorkItemCardSkeleton` sai, senão vira dívida nova de lint) |
+| `src/components/tasks/__tests__/taskComponents.test.tsx` | 3 casos: política na coluna vazia (as 5 políticas), esqueleto (5 × 3 = 15 `.animate-shimmer`, e nenhum "Coluna vazia" durante o carregamento) e a raiz da coluna sem o teto de 100vh com `min-h-0` |
+| `docs/design/TAREFAS_QUADRO_STATUS.md` | este bloco |
+
+**Divergência declarada (item 3, mínima):** o plano pede `min-h-0 flex-1` na raiz da coluna. `flex-1` ali atua no eixo principal do pai — que é uma **linha** (`flex gap-3 overflow-x-auto`) — e distribuiria a **largura** entre as colunas, acabando com a largura fixa (`min-w-[232px] xl:min-w-[260px]`) e com o scroll horizontal; isso ainda contraria a premissa da etapa 54 (verificar se as 5 colunas cabem em 1440, ou seja, elas não são fluidas). Usei `h-full min-h-0`: o pai (container do Quadro) já é `h-full` e a cadeia acima (`motion.div` do módulo com `flex-1 min-h-0`) tem altura resolvida, então a coluna preenche a altura disponível pelo `align-items: stretch` do flex — mesmo efeito pretendido (coluna alta usa a altura real, sem constante de viewport), sem mexer na largura.
+
+**Teste de mutação (3, árvore restaurada entre cada):** M1 sem o texto da política → vermelho no caso da coluna vazia; M2 esqueleto com 2 cartões → vermelho na contagem (15 → 10); M3 teto mágico de volta → vermelho no caso da raiz da coluna.
+
+**Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · guard-rail de tipografia ✓ · `build` ✓ · bundle 4019,1/4100 KB ✓ · `db:guard` ✓ · suíte 4333 passed / 0 failed (318 arquivos) ✓
 
 ## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
 ## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=
