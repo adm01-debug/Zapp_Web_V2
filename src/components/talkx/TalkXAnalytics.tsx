@@ -214,7 +214,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
         <DashboardKpiCard size="hero" index={1} label="Taxa de envio" value={stats.total > 0 ? `${String(stats.successRate).replace('.', ',')}%` : '—'} delta={null} tile="green" icon={CheckCircle2} bars={null} barsColor="green" chart="none" />
         <DashboardKpiCard size="hero" index={2} label="Taxa de resposta" value={replyRate !== null ? `${String(replyRate).replace('.', ',')}%` : '—'} delta={replyLoading ? { text: 'calculando…', tone: 'muted' } : replyData && replyData.sent > 0 ? { text: `${replyData.replied} de ${replyData.sent} responderam`, tone: 'muted' } : { text: 'sem envios no período', tone: 'muted' }} tile="violet" icon={Users} bars={null} barsColor="violet" chart="none" />
         <DashboardKpiCard size="hero" index={3}
-          label="Conversão por segmento"
+          label="Envio por segmento"
           value={top3Segments.length > 0 ? `${top3Segments[0].rate.toString().replace('.', ',')}%` : '—'}
           delta={top3Segments.length > 0
             ? { text: top3Segments.map((sg) => `${sg.name.slice(0, 14)}: ${sg.rate.toString().replace('.', ',')}%`).join(' | '), tone: 'muted' }

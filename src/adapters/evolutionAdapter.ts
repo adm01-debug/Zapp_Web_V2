@@ -171,6 +171,10 @@ export function derivedToConversationContact(dc: DerivedContact): ConversationCo
     contact_type: 'whatsapp',
     group_category: null,
     ai_sentiment: null,
+    // Colunas de projecao de IA existem em contacts, mas contato derivado do
+    // WhatsApp nao tem analise de IA associada.
+    ai_projection_analysis_id: null,
+    ai_projection_updated_at: null,
     ai_priority: 'medium',
     consent_status: 'opt_in',
     lead_origin: null,

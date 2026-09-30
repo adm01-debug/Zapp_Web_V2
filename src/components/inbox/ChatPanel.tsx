@@ -52,7 +52,6 @@ interface ChatPanelProps {
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
   onArchiveConversation?: () => void;
-  onSwitchToAiTab?: () => void;
   pinnedConversations?: PinnedChatItem[];
   onSelectPinned?: (contactId: string) => void;
 }
@@ -93,7 +92,7 @@ function dialogReducer(state: DialogState, action: DialogAction): DialogState {
 
 type ActiveTool = 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null;
 
-export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isFavorite, onToggleFavorite, onArchiveConversation, onSwitchToAiTab, pinnedConversations, onSelectPinned }: ChatPanelProps) {
+export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isFavorite, onToggleFavorite, onArchiveConversation, pinnedConversations, onSelectPinned }: ChatPanelProps) {
   const [dialogs, dispatch] = useReducer(dialogReducer, initialDialogState);
   const openDialog = useCallback((key: DialogKey) => dispatch({ type: 'OPEN', key }), []);
   const closeDialog = useCallback((key: DialogKey) => dispatch({ type: 'CLOSE', key }), []);
@@ -299,7 +298,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           signatureEnabled={signatureEnabled} signatureName={agentName} onToggleSignature={toggleSignature}
           onOpenCatalog={() => openDialog('catalogDirect')} onSelectSuggestion={(text) => handlers.setInputValue(text)} onSelectTemplate={(text) => handlers.setInputValue(text)}
           fileUploaderRef={fileUploaderRef} inputRef={handlers.inputRef}
-          onOpenAiAssistant={onSwitchToAiTab} onOpenTransfer={() => openDialog('transferDialog')} />
+          onOpenTransfer={() => openDialog('transferDialog')} />
 
         <ChatDialogs
           dialogs={dialogs} openDialog={openDialog} closeDialog={closeDialog}

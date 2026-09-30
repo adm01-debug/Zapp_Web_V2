@@ -17,6 +17,8 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { CloseConversationDialog } from './CloseConversationDialog';
 import { TransferDialog } from './TransferDialog';
+import { ZenModeToggle } from '@/components/layout/ZenModeToggle';
+import { useLayoutContext } from '@/contexts/LayoutContext';
 
 const SKELETON_WIDTHS = [
   { name: 68, msg: 55 }, { name: 82, msg: 70 }, { name: 74, msg: 62 },
@@ -34,6 +36,7 @@ interface ConversationListSidebarProps {
 
 export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pullToRefresh, conversationActions }: ConversationListSidebarProps) {
   const isMobile = useIsMobile();
+  const { isZen = false, toggleZen } = useLayoutContext();
   const contactSearchRef = useRef<HTMLInputElement>(null);
   const [contactSearch, setContactSearch] = useState('');
   const [resolveTarget, setResolveTarget] = useState<string | null>(null);
@@ -109,6 +112,7 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
                 <span className="text-[13px] text-muted-foreground truncate">{inbox.cachedConversations.length.toLocaleString('pt-BR')} conversas</span>
               </div>
             </div>
+            {toggleZen && <ZenModeToggle isZen={isZen} toggleZen={toggleZen} placement="inline" />}
           </div>
         )}
 

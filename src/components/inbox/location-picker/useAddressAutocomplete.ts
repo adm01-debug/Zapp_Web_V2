@@ -98,7 +98,7 @@ interface State {
   retrieveError: { id: string; kind: GeoFailureKind } | null;
 }
 
-const initialState: State = {
+export const initialState: State = {
   query: '',
   suggestions: [],
   isLoading: false,
@@ -133,7 +133,7 @@ type Action =
  */
 export type SearchStatus = 'idle' | 'typing' | 'loading' | 'ok' | 'empty' | 'error' | 'paused';
 
-function reducer(state: State, action: Action): State {
+export function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'SET_QUERY': {
       const belowMin = action.query.trim().length < MIN_QUERY_LENGTH;
@@ -144,9 +144,12 @@ function reducer(state: State, action: Action): State {
         // ele que explica por que não há sugestões. Fora da pausa, a tecla nova limpa o erro.
         error: state.blocked ? state.error : null,
         retrieveError: null,
-        ...(belowMin
-          ? { suggestions: [], isLoading: false, highlightedIndex: -1 }
-          : {}),
+        // A3-06 (onda 2): o destaque pertence ao TERMO anterior — qualquer mudança de termo o
+        // invalida. Sem isto, digitar sobre uma lista antiga deixava `highlightedIndex` vivo e o
+        // Enter (LocationPicker.tsx:192) aplicava a sugestão invisível do termo antigo; o guard
+        // A3-03 protege a RESPOSTA, não a SELEÇÃO.
+        highlightedIndex: -1,
+        ...(belowMin ? { suggestions: [], isLoading: false } : {}),
         // E27: pausado continua pausado enquanto o bloqueio vale — seja apagando o termo, seja
         // digitando mais. Sem isso a tela cairia num esqueleto que nunca sai (a busca nem vai
         // disparar) ou num "Nada encontrado" que não é verdade.
@@ -214,7 +217,11 @@ function reducer(state: State, action: Action): State {
     case 'HIGHLIGHT':
       return { ...state, highlightedIndex: action.index };
     case 'CLEAR':
-      return { ...initialState };
+      // E38 (onda 2): o backoff de 429 é do SERVIDOR, não da tela. O clear() (Esc, fechar o
+      // picker, selecionar um ponto) zerava `rateLimitedUntil` e a próxima tecla re-requestava em
+      // cima do 429 — furava a proteção anti-hammering. O backoff sobrevive ao clear; mesmo
+      // vencido é inócuo (o guard do runSuggest compara com Date.now()).
+      return { ...initialState, rateLimitedUntil: state.rateLimitedUntil };
     default:
       return state;
   }

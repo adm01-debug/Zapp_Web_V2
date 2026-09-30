@@ -6,6 +6,7 @@ import { useMyWorkItems }   from '@/hooks/tasks/useMyWorkItems';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import { ModeSwitcher, type TaskMode } from './shared/ModeSwitcher';
 import { QuickAdd }         from './shared/QuickAdd';
+import { TasksKpiStrip }    from './shared/TasksKpiStrip';
 import { TasksListMode }    from './list/TasksListMode';
 import { TasksBoardMode }   from './board/TasksBoardMode';
 import { TasksAgendaMode }  from './agenda/TasksAgendaMode';
@@ -37,6 +38,12 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
   // 30 dias; o recorte de 7 dias da Lista e local. Trocar de modo nao gera request.
   const hook = useMyWorkItems();
   const { byDue, byStatus, kpis, isLoading, isError, create, move, reorder, complete, deleteItem } = hook;
+
+  // Etapa 43: o subtítulo do cabeçalho mostra números reais em pt-BR (separador
+  // de milhar) e com singular correto — "1 aberta", não "1 abertas".
+  const openCount = byStatus.backlog.length + byStatus.todo.length + byStatus.doing.length + byStatus.waiting.length;
+  const subtitleAbertas = `${openCount.toLocaleString('pt-BR')} ${openCount === 1 ? 'aberta' : 'abertas'}`;
+  const subtitleHoje = `${kpis.dueToday.toLocaleString('pt-BR')} para hoje`;
 
   // Flag de animacao de entrada: saiu da API do hook na etapa 18 e vive aqui.
   const hasMounted = useRef(false);
@@ -96,25 +103,12 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
       <PageHeader
         variant="plain"
         title="Tarefas"
-        subtitle="Suas tarefas pessoais"
+        subtitle={`${subtitleAbertas} · ${subtitleHoje}`}
         breadcrumbs={[{ label: 'Início', href: '/' }, { label: 'Tarefas' }]}
       />
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        {[
-          { label: 'Atrasadas',  value: kpis.overdue,   cls: 'text-destructive' },
-          { label: 'Para hoje',  value: kpis.dueToday,  cls: 'text-warning' },
-          { label: 'Fazendo',    value: kpis.doingCount,cls: 'text-primary' },
-          { label: 'Concluídas (7d)', value: kpis.done7d, cls: 'text-success' },
-          { label: 'Cycle time', value: kpis.avgCycleTimeDays != null ? Math.round(kpis.avgCycleTimeDays) + 'd' : '—', cls: 'text-muted-foreground' },
-        ].map(({ label, value, cls }) => (
-          <div key={label} data-testid="kpi-card" className="flex flex-col gap-1 rounded-[14px] border border-border/70 bg-card px-4 py-3">
-            <span className="text-xs font-medium text-muted-foreground">{label}</span>
-            <span className={`text-2xl font-bold tabular-nums leading-none ${cls}`}>{value}</span>
-          </div>
-        ))}
-      </div>
+      {/* KPIs (etapa 44: 5 cards de 88px no padrão ContactKpiCard) */}
+      <TasksKpiStrip kpis={kpis} />
 
       {/* QuickAdd */}
       <QuickAdd ref={quickAddRef} onAdd={create} defaultStatus="backlog" />

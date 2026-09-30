@@ -74,7 +74,6 @@ interface ChatInputAreaProps {
   onToggleSignature?: () => void;
   fileUploaderRef: React.RefObject<FileUploaderRef | null>;
   inputRef: React.RefObject<HTMLTextAreaElement | null>;
-  onOpenAiAssistant?: () => void;
   onOpenTransfer?: () => void;
 }
 
@@ -89,7 +88,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
     onOpenLocationPicker, onSendSticker, onSendAudioMeme,
     onSendCustomEmoji, onOpenCatalog, onSelectSuggestion, onSelectTemplate,
     onPasteFiles, signatureEnabled, signatureName, onToggleSignature,
-    fileUploaderRef, inputRef, onOpenAiAssistant, onOpenTransfer,
+    fileUploaderRef, inputRef, onOpenTransfer,
   } = props;
 
   const logic = useChatInputLogic({
@@ -141,7 +140,6 @@ export function ChatInputArea(props: ChatInputAreaProps) {
         <QuickActionChips
           quickReplies={quickReplies}
           onQuickReply={onQuickReply}
-          onOpenAiAssistant={() => onOpenAiAssistant?.()}
           onAttach={openAttachDialog}
           onOpenSchedule={onOpenSchedule}
           onOpenTransfer={onOpenTransfer}

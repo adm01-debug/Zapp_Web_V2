@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import type { TalkXCampaign, TalkXRecipient } from '@/hooks/integrations/useTalkX';
 import { useTalkX } from '@/hooks/integrations/useTalkX';
 import { useTalkXEvents } from '@/hooks/integrations/useTalkXEvents';
+import { useTalkXConnectionStatus } from '@/hooks/integrations/useTalkXConnectionStatus';
 import { IconTile, RailCard, MetaRow, StatusPill, CAMPAIGN_STATUS, RECIPIENT_STATUS, fmtInt, pct, fmtDateTime, fmtAgo } from './talkxShared';
 interface Props { campaignId: string; onBack?: () => void }
 type MonitorTab = 'overview' | 'recipients' | 'timeline';
@@ -47,6 +48,8 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
     },
     refetchInterval: REFETCH,
   });
+
+  const { label: connStatusLabel } = useTalkXConnectionStatus(campaign?.whatsapp_connection_id);
 
   const { data: recipients = [] } = useQuery({
     queryKey: ['talkx-recipients-monitor', campaignId, statusFilter],
@@ -161,7 +164,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
           </section>
           <RailCard icon={Activity} title="Saúde da Campanha" right={<Pill label={isRunning?'Em andamento':isPaused?'Pausada':'Concluída'} tone={isRunning?'info':isPaused?'warning':'success'} dot/>}>
             <MetaRow label="Status" value={isRunning?'Enviando normalmente':isPaused?'Envio pausado':campaign.status}/>
-            <MetaRow label="Conexão WA" value="Conectada"/>
+            <MetaRow label="Conexão WA" value={connStatusLabel ?? '—'}/>
             <MetaRow label="Iniciado em" value={campaign.started_at?fmtDateTime(campaign.started_at):'—'}/>
           </RailCard>
         </div>

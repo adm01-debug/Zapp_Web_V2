@@ -120,7 +120,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4">
             <KpiCard icon={Users}         color="blue"   index={0} label="Total de campanhas"   value={fmtInt(totals.total)}    bars={totals.bars} />
-            <KpiCard icon={Play}          color="blue"   index={1} label="Em andamento"          value={fmtInt(totals.active)}   delta={totals.active>0?{value:totals.active,suffix:'%',tone:'up'}:undefined} />
+            <KpiCard icon={Play}          color="blue"   index={1} label="Em andamento"          value={fmtInt(totals.active)} />
             <KpiCard icon={CheckCircle2}  color="green"  index={2} label="Concluídas"            value={fmtInt(totals.completed)} bars={totals.barsCompleted} />
             <KpiCard icon={Target}        color="green"  index={3} label="Taxa de sucesso"       value={totals.successRate===null?'—':`${totals.successRate}%`} />
             <KpiCard icon={Send}          color="violet" index={4} label="Contatos alcançados"   value={fmtInt(totals.reached)} />
@@ -310,7 +310,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
             })} />
           )}
         </RailCard>
-        <TipCard tip="Campanhas segmentadas por ramo têm 3× mais chances de conversão." />
+        <TipCard tip="Segmentar por ramo ajuda a direcionar a mensagem ao público certo." />
       </div>
 
       {/* E25 — Modais de confirmação via TalkXConfirmDialog */}

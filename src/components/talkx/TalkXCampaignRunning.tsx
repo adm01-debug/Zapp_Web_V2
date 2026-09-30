@@ -468,7 +468,7 @@ interface Props {
 }
 
 export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId }: Props) {
-  const { campaigns, updateCampaign, pauseCampaign, cancelCampaign, startCampaign, refetchCampaigns } = useTalkX();
+  const { campaigns, updateCampaign, updateCampaignLimits, pauseCampaign, cancelCampaign, startCampaign, refetchCampaigns } = useTalkX();
   const sending = useMemo(() => campaigns.filter((c) => c.status === 'sending' || c.status === 'paused'), [campaigns]);
 
   const [selectedId, setSelectedId] = useState<string | null>(initialCampaignId ?? sending[0]?.id ?? null);
@@ -553,23 +553,29 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
     }
     setLSaving(true);
     try {
-      await updateCampaign.mutateAsync({
+      await updateCampaignLimits.mutateAsync({
         id: campaign.id,
-        speed_profile: lSpeed as 'slow' | 'moderate' | 'fast',
-        send_interval_min: lIntMin,
-        send_interval_max: Math.max(lIntMin, lIntMax),
-        send_window_start: lWinStart ? `${lWinStart}:00` : null,
-        send_window_end: lWinEnd ? `${lWinEnd}:00` : null,
-        business_hours_only: lBizHours,
+        expectedRevision: campaign.revision ?? null,
+        limits: {
+          speed_profile: lSpeed,
+          send_interval_min: lIntMin,
+          send_interval_max: Math.max(lIntMin, lIntMax),
+          send_window_start: lWinStart ? `${lWinStart}:00` : null,
+          send_window_end: lWinEnd ? `${lWinEnd}:00` : null,
+          business_hours_only: lBizHours,
+        },
       });
       setLimitsOpen(false);
       toast.success('Limites atualizados. Aplicados no próximo lote de envios.');
-    } catch {
-      toast.error('Erro ao salvar limites.');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : '';
+      toast.error(msg.includes('stale_revision')
+        ? 'A campanha mudou em outra aba. Recarregue e tente de novo.'
+        : 'Erro ao salvar limites.');
     } finally {
       setLSaving(false);
     }
-  }, [campaign, updateCampaign, lSpeed, lIntMin, lIntMax, lWinStart, lWinEnd, lBizHours]);
+  }, [campaign, updateCampaignLimits, lSpeed, lIntMin, lIntMax, lWinStart, lWinEnd, lBizHours]);
 
   const handlePause = useCallback(async () => {
     if (!campaign) return;
