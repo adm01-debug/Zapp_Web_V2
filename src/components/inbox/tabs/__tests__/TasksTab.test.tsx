@@ -7,7 +7,7 @@ vi.mock('@/hooks/tasks/useMyWorkItems', () => ({ useMyWorkItems: (...a: unknown[
 vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ profile: { id: 'me', name: 'Agente' } }) }));
 
 const emptyHook = {
-  byDue: { overdue: [], today: [], tomorrow: [], upcoming: [], noDue: [], done7d: [] },
+  byDue: { overdue: [], today: [], tomorrow: [], upcoming: [], noDue: [], done7d: [], doneOlder: [] },
   create: vi.fn().mockResolvedValue(undefined),
   complete: vi.fn().mockResolvedValue(undefined),
   deleteItem: vi.fn().mockResolvedValue(undefined),

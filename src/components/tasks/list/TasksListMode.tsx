@@ -22,6 +22,8 @@ interface Props {
 interface SectionProps {
   title: string;
   items: WorkItem[];
+  /** Concluidas de 8 a 30 dias, reveladas pelo rodape "ver mais (30 dias)" (etapa 48/B4). */
+  olderItems?: WorkItem[];
   defaultOpen?: boolean;
   headingClass?: string;
   onOpen: Props['onOpen'];
@@ -31,10 +33,12 @@ interface SectionProps {
   hasMounted: React.MutableRefObject<boolean>;
 }
 
-function Section({ title, items, defaultOpen = true, headingClass = '', onOpen, onToggleDone, onMoveTo, onDelete, hasMounted }: SectionProps) {
+function Section({ title, items, olderItems = [], defaultOpen = true, headingClass = '', onOpen, onToggleDone, onMoveTo, onDelete, hasMounted }: SectionProps) {
   const [open, setOpen] = useState(defaultOpen);
+  const [showOlder, setShowOlder] = useState(false);
   if (items.length === 0) return null;
   const Icon = open ? ChevronDown : ChevronRight;
+  const visible = showOlder ? [...items, ...olderItems] : items;
   return (
     <div className="space-y-1.5">
       <button
@@ -55,7 +59,7 @@ function Section({ title, items, defaultOpen = true, headingClass = '', onOpen, 
             transition={{ duration: 0.15 }}
             className="overflow-hidden space-y-1.5"
           >
-            {items.map((item, index) => (
+            {visible.map((item, index) => (
               <motion.div
                 key={item.id}
                 initial={hasMounted.current ? false : { opacity: 0, y: 4 }}
@@ -72,6 +76,15 @@ function Section({ title, items, defaultOpen = true, headingClass = '', onOpen, 
                 />
               </motion.div>
             ))}
+            {olderItems.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowOlder(s => !s)}
+                className="w-full rounded-lg border border-dashed border-border/70 px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+              >
+                {showOlder ? 'ver menos' : 'ver mais (30 dias)'}
+              </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -103,7 +116,7 @@ export function TasksListMode({ byDue, isLoading, searchQuery, onOpen, onToggleD
       <Section title="Amanhã"     items={byDue.tomorrow}  defaultOpen onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
       <Section title="Próximas"   items={byDue.upcoming}  defaultOpen onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
       <Section title="Sem prazo"   items={byDue.noDue}                defaultOpen onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
-      <Section title="Concluídas" items={byDue.done7d}    headingClass="text-muted-foreground/60" defaultOpen={false} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
+      <Section title="Concluídas (7 dias)" items={byDue.done7d} olderItems={byDue.doneOlder} headingClass="text-muted-foreground/60" defaultOpen={false} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
     </div>
   );
 }

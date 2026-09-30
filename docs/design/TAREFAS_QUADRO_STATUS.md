@@ -94,7 +94,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 ## CP-C Sheet       [ ] WorkItemSheet= · ?task= · Aguardando por DnD/kebab/menu= · kebab 5 grupos= · RemindChip popover= · ContactChip=
 ## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
-## CP-E Telas       [~] etapa 47 (B7) fechada 29/09/2026 (executor: Hermes) · KPIs 88px= · filtros 3 modos= · Concluídas 7d= · Quadro WIP/ordem= · Agenda grupos= · 0 requests na troca= · modo por rota: ok
+## CP-E Telas       [~] etapas 47 (B7) e 48 (B4) fechadas 29-30/09/2026 (executor: Hermes) · KPIs 88px= · filtros 3 modos= · Concluídas 7d: ok · Quadro WIP/ordem= · Agenda grupos= · 0 requests na troca= · modo por rota: ok
 
 ## Etapa 47 (B7) — modo por rota (Fase E) — evidências
 
@@ -125,6 +125,31 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 **Entrega:** PR #1230 mergeada em `1b23980d358aac2525c960168664ce43a9346d0b` (squash; commits de fix/test/docs) · deploy de produção: success · prova em produção: dos 376 chunks servidos por `zapp-web-v2.vercel.app`, exatamente 2 trazem `forceMode` — o do roteador (`{pipeline:{defaultMode:"board",forceMode:!0}}`) e o do módulo (`{defaultMode:e="list",forceMode:t=!1}`) — trechos idênticos ao build local.
 
 **Achado fora do escopo (não corrigido):** `src/components/inbox/tabs/Crm360Tab.tsx:120/167/245` manda "Ver funil →" / "Ver pipeline →" para `navigateToView('pipeline')`; depois desta etapa esses botões abrem o Quadro de TAREFAS (antes caíam na mesma tela no modo salvo). Rótulo e destino são decisão de produto.
+
+## Etapa 48 (B4) — "Concluídas (7 dias)" na Lista — evidências
+
+**Regra do plano:** a seção "Concluídas (7 dias)" da Lista recebe `done7d` (a query da etapa 20 já traz 30 dias; o agregado filtra 7), com cabeçalho colapsado e "ver mais (30 dias)" no rodapé.
+
+**O que já existia (Fase B) e o que faltava:** a seção já existia com `done7d` e recolhida, mas chamava-se só "Concluídas" e **não tinha rodapé** — não havia recorte dos 8 aos 30 dias para revelar.
+
+**Mudanças (8 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/hooks/tasks/workItemAggregates.ts` | bucket novo `doneOlder` (8–30 dias) no `BucketsByDue`, com o corte dos 7 dias e o teto de 30 |
+| `src/components/tasks/list/TasksListMode.tsx` | seção passa a ser "Concluídas (7 dias)"; a `Section` ganha `olderItems` e o rodapé "ver mais (30 dias)" / "ver menos" |
+| `src/components/tasks/TasksModule.tsx` | o filtro de busca também passa pelo `doneOlder` |
+| `src/components/tasks/__tests__/taskComponents.test.tsx` | caso novo (recolhida → abre → revela as antigas → volta) e B9 atualizado para o rótulo novo |
+| `src/hooks/tasks/__tests__/workItemAggregates.test.ts` | 3 casos do recorte (8–30 dentro; ≤7 fora; >30 fora) |
+| `TasksTab` / `NotesTab` / `Crm360Tab` `.test.tsx` | mocks de `byDue` sincronizados com o campo novo do tipo (o typecheck exige) |
+
+**DoD ("concluir → item aparece na seção"), em três elos medidos:** o hook grava `status=done` + `completed_at` no payload (teste do hook "complete move para done e oferece undo"); o agregado joga esse item em `done7d` (testes do bucket); a Lista o renderiza na seção (teste de componente). O clique-a-clique dentro do `TasksModule` **não** é simulado: o mock devolve leitura fixa e a invalidação desfaz o patch otimista, então a asserção mediria o mock — não o app.
+
+**Teste de mutação (3 mutações, árvore restaurada entre cada):** M1 sem o corte dos 7 dias em `doneOlder` → 1 vermelho (o caso do recorte); M2 rodapé que não revela → 1 vermelho; M3 seção apontando para o bucket errado (`done7d`) → 1 vermelho. 21 verdes nas três rodadas.
+
+**Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · `build` ✓ · bundle 492,3/550 KB gzip e 4017,5/4100 KB de assets ✓ · `db:guard` ✓ · suíte 4279 passed / 0 failed (312 arquivos) ✓
+
+**Resíduo (comportamento de antes, mantido de propósito):** quem tem só concluídas de 8–30 dias e nada ativo continua vendo o estado vazio da Lista — a seção só nasce quando há algo nos 7 dias.
 
 ## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
 ## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=

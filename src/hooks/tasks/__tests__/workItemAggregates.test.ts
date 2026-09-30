@@ -66,6 +66,27 @@ describe('bucketByDue', () => {
     expect(b.done7d).toHaveLength(0);
   });
 
+  it('doneOlder inclui concluída entre 8 e 30 dias', () => {
+    const item = makeItem({ status: 'done', completed_at: '2026-09-20T10:00:00Z' }); // 13 dias atrás
+    const b = bucketByDue([item], now);
+    expect(b.doneOlder).toHaveLength(1);
+    expect(b.done7d).toHaveLength(0);
+  });
+
+  it('doneOlder exclui concluída dentro dos 7 dias (fica em done7d)', () => {
+    const item = makeItem({ status: 'done', completed_at: '2026-10-02T10:00:00Z' }); // 1 dia
+    const b = bucketByDue([item], now);
+    expect(b.doneOlder).toHaveLength(0);
+    expect(b.done7d).toHaveLength(1);
+  });
+
+  it('doneOlder exclui concluída com mais de 30 dias', () => {
+    const item = makeItem({ status: 'done', completed_at: '2026-08-20T10:00:00Z' }); // 44 dias
+    const b = bucketByDue([item], now);
+    expect(b.doneOlder).toHaveLength(0);
+    expect(b.done7d).toHaveLength(0);
+  });
+
   it('exclui done de active buckets', () => {
     const item = makeItem({ status: 'done', due_date: '2026-10-01T10:00:00Z', completed_at: now.toISOString() });
     const b = bucketByDue([item], now);
