@@ -237,6 +237,11 @@ jobs:
           PUBLIC_POLICY_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/scope-public-policies-authenticated.test.sh
 
+      - name: Simular permissao send_messages imposta na RPC de envio (L9)
+        env:
+          SEND_MESSAGES_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/send-messages-permission-authorization.test.sh
+
       - name: Simular histórico atômico de templates Talk X
         env:
           TALKX_HISTORY_TEST_POSTGRES_IMAGE: postgres:17-alpine
