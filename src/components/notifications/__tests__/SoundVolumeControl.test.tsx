@@ -109,4 +109,65 @@ describe('SoundVolumeControl — sobe e desce o volume dos alertas', () => {
     renderControl();
     expect(botao()).toHaveAccessibleName('Sons de alerta mudos');
   });
+
+  it('a tecla `M` alterna o mudo', () => {
+    renderControl();
+    fireEvent.keyDown(botao(), { key: 'm' });
+    expect(h.updateSettings).toHaveBeenCalledWith({ soundEnabled: false });
+  });
+
+  it('clique longo (400 ms) abre o slider, e o clique seguinte NÃO alterna o mudo', async () => {
+    vi.useFakeTimers();
+    renderControl();
+
+    fireEvent.pointerDown(botao());
+    act(() => {
+      vi.advanceTimersByTime(399);
+    });
+    expect(screen.queryByRole('slider', { name: 'Volume dos alertas' })).not.toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    vi.useRealTimers();
+
+    expect(await screen.findByRole('slider', { name: 'Volume dos alertas' })).toBeInTheDocument();
+
+    // O `click` que o navegador dispara no pointerup vem DEPOIS do clique longo:
+    // ele não pode alternar o mudo (regressão clássica do dedup).
+    fireEvent.click(botao());
+    expect(h.updateSettings).not.toHaveBeenCalled();
+  });
+
+  it('Enter abre o slider (equivalente de teclado do clique longo) e não alterna o mudo', async () => {
+    renderControl();
+    expect(botao()).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.keyDown(botao(), { key: 'Enter' });
+
+    expect(await screen.findByRole('slider', { name: 'Volume dos alertas' })).toBeInTheDocument();
+    expect(botao()).toHaveAttribute('aria-expanded', 'true');
+    expect(h.updateSettings).not.toHaveBeenCalled();
+  });
+
+  it('o gatilho anuncia que abre um popover (aria-haspopup=dialog)', () => {
+    renderControl();
+    expect(botao()).toHaveAttribute('aria-haspopup', 'dialog');
+  });
+
+  it('o ponto de atenção aparece com o alerta mudo ou baixo e some com volume alto', () => {
+    h.settings.soundVolume = 20;
+    const baixo = renderControl();
+    expect(screen.getByTestId('sound-volume-low-dot')).toBeInTheDocument();
+    baixo.unmount();
+
+    h.settings.soundVolume = 70;
+    const alto = renderControl();
+    expect(screen.queryByTestId('sound-volume-low-dot')).not.toBeInTheDocument();
+    alto.unmount();
+
+    h.settings.soundEnabled = false;
+    renderControl();
+    expect(screen.getByTestId('sound-volume-low-dot')).toBeInTheDocument();
+  });
 });

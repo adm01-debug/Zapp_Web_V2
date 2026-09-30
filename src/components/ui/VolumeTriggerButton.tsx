@@ -43,6 +43,8 @@ export function VolumeTriggerButton({
       onKeyDown={rocker.handleTriggerKeyDown}
       aria-label={label}
       aria-pressed={muted}
+      aria-haspopup="dialog"
+      aria-expanded={rocker.open}
       aria-disabled={ariaDisabled}
       title={title}
       className={cn(
