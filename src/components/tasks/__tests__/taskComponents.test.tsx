@@ -172,6 +172,36 @@ describe('Tarefas — componentes dos três modos', () => {
     cleanup();
   });
 
+  it('etapa 51 (B5): a coluna Concluído mostra 7 dias e "Ver mais antigas (30 dias)" revela o resto', () => {
+    cleanup();
+    const dias = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
+
+    render(
+      <TooltipProvider>
+        <TasksBoardMode
+          byStatus={{ ...byStatusVazio, done: [
+            item({ id: 'r1', title: 'Feita ontem',             status: 'done', completed_at: dias(1) }),
+            item({ id: 'o1', title: 'Feita ha duas semanas',   status: 'done', completed_at: dias(13) }),
+          ] }}
+          isLoading={false}
+          onMove={vi.fn()}
+          onReorder={vi.fn()}
+          onOpen={vi.fn()}
+          onDelete={vi.fn()}
+          onCreate={vi.fn()}
+        />
+      </TooltipProvider>
+    );
+
+    // a de 7 dias aparece; a de 13 dias só depois do rodapé
+    expect(screen.getByText('Feita ontem')).toBeTruthy();
+    expect(screen.queryByText('Feita ha duas semanas')).toBeNull();
+
+    fireEvent.click(screen.getByText('Ver mais antigas (30 dias)'));
+    expect(screen.getByText('Feita ha duas semanas')).toBeTruthy();
+    expect(screen.getByText('Ver menos')).toBeTruthy();
+  });
+
   it('etapa 48 (B4): "Concluídas (7 dias)" recolhida e "ver mais (30 dias)" revela as antigas', async () => {
     cleanup();
     renderLista(buckets({
