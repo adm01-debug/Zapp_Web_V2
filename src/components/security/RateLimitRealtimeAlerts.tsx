@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Shield, Ban, Clock, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
+import { playAlertSound } from '@/utils/securityAlertSound';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -31,20 +33,13 @@ const SEVERITY_COLORS: Record<string, string> = {
   critical: 'border-l-red-500'
 };
 
-function playAlertSound() {
-  // Alerta de segurança, não mídia de conversa: fora do `mediaVolumeStore` de propósito.
-  try {
-    const audio = new Audio('/notification.mp3');
-    audio.volume = 0.5;
-    audio.play().catch((err) => { console.warn('[RateLimitRealtimeAlerts] Audio play failed:', err); });
-  } catch (e) {
-    console.warn('[RateLimitRealtimeAlerts] Alert sound failed:', e);
-  }
-}
-
 export function RateLimitRealtimeAlerts() {
   const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const { settings } = useNotificationSettings();
+  // O polling roda uma vez (deps []): a ref evita ler volume velho na detecção.
+  const soundVolumeRef = useRef(settings.soundVolume);
+  useEffect(() => { soundVolumeRef.current = settings.soundVolume; }, [settings.soundVolume]);
 
   useEffect(() => {
     // Fetch recent unresolved alerts
@@ -87,7 +82,7 @@ export function RateLimitRealtimeAlerts() {
       if (newAlerts.length > 0) {
         setAlerts(fresh as SecurityAlert[]);
         newAlerts.forEach(a => {
-          if (a.severity === 'critical' || a.severity === 'high') playAlertSound();
+          if (a.severity === 'critical' || a.severity === 'high') playAlertSound(soundVolumeRef.current);
         });
         lastKnownIds = new Set((fresh as SecurityAlert[]).map(a => a.id));
       }
