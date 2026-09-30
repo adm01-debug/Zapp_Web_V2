@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 
 /**
  * E27 — controle rápido do volume das mídias de conversa na sidebar ("Controles
- * rápidos"). Ícone de fone, não de alto-falante: ao lado do `SoundMuteToggle` (que
+ * rápidos"). Ícone de fone, não de alto-falante: ao lado do `SoundVolumeControl` (que
  * silencia os **alertas**) o usuário não pode confundir os dois (D6).
  */
 export function MediaVolumeToggle({ className }: { className?: string }) {
