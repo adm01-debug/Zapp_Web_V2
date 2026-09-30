@@ -9,7 +9,7 @@ import {
   useRef,
   type ReactNode,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useInRouterContext, useNavigate } from 'react-router-dom';
 
 import { useSipClient } from '@/hooks/communication/useSipClient';
 import type { EngineStatus } from '@/lib/calls/adapters/CallEngine';
@@ -73,10 +73,40 @@ function novoSessionId(callId: string | null): string {
   return `local-${Date.now()}-${contadorLocal}`;
 }
 
+/**
+ * Ponte de navegação: registra o `navigate` do Router sem obrigar o provider a
+ * estar dentro dele.
+ *
+ * Existe por um defeito real: `AppProviders` monta este provider **fora** do
+ * `BrowserRouter` (`App.tsx:129-156`), então chamar `useNavigate()` no provider
+ * derrubava a aplicação inteira — a página de login parava de renderizar e o
+ * E2E pegou isso. O teste unitário não pegava porque ele mesmo fornecia o
+ * `MemoryRouter` que o app não tem: o teste escondia a dependência que faltava.
+ */
+function PonteDeNavegacao({
+  registrar,
+}: {
+  registrar: (navegar: (search: string) => void) => void;
+}) {
+  const navigate = useNavigate();
+  useEffect(() => {
+    registrar((search) => {
+      navigate({ search });
+    });
+  }, [navigate, registrar]);
+  return null;
+}
+
 export function CallSessionProvider({ children }: { children: ReactNode }) {
   const sip = useSipClient();
-  const navigate = useNavigate();
+  const emRouter = useInRouterContext();
   const [session, dispatch] = useReducer(reduce, undefined, initialState);
+
+  // Preenchido pela ponte quando (e só quando) há Router acima.
+  const navegarRef = useRef<((search: string) => void) | null>(null);
+  const registrarNavegador = useCallback((navegar: (search: string) => void) => {
+    navegarRef.current = navegar;
+  }, []);
 
   // Espelho do estado para o efeito decidir sem virar dependência (e sem
   // closure velha): o estado muda a cada evento, o status do motor não.
@@ -93,8 +123,17 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const openDialer = useCallback(() => {
-    navigate({ search: VOIP_VIEW_SEARCH });
-  }, [navigate]);
+    const navegar = navegarRef.current;
+    if (navegar) {
+      navegar(VOIP_VIEW_SEARCH);
+      return;
+    }
+    // Sem Router acima: navega pelo histórico, que o `BrowserRouter` escuta via
+    // popstate. Assim o dialer abre também no app como ele é montado hoje.
+    const { pathname, hash } = window.location;
+    window.history.pushState(null, '', `${pathname}${VOIP_VIEW_SEARCH}${hash}`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  }, []);
 
   const dial = useCallback(
     (phone: string) => {
@@ -166,7 +205,12 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
     [sip, session, dial, accept, reject, hangup, openDialer],
   );
 
-  return <CallSessionContext.Provider value={value}>{children}</CallSessionContext.Provider>;
+  return (
+    <CallSessionContext.Provider value={value}>
+      {emRouter ? <PonteDeNavegacao registrar={registrarNavegador} /> : null}
+      {children}
+    </CallSessionContext.Provider>
+  );
 }
 
 export function useCallSession(): CallSessionApi {

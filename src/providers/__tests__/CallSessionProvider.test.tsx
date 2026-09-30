@@ -173,4 +173,28 @@ describe('CallSessionProvider (T10)', () => {
     expect(invalidas).toEqual([]);
     aviso.mockRestore();
   });
+
+  /**
+   * Regressão do defeito que o **E2E** pegou em 30/09: `AppProviders` monta este
+   * provider FORA do `BrowserRouter` (`App.tsx:129-156`), então um
+   * `useNavigate()` aqui derrubava a aplicação inteira — a página de login
+   * parou de renderizar.
+   *
+   * Os casos acima não pegavam porque eles mesmos fornecem o `MemoryRouter` que
+   * o app não tem: o teste escondia a dependência que faltava. Este monta sem
+   * Router nenhum, exatamente como o app monta.
+   */
+  it('monta SEM Router (como o app monta) e ainda assim abre o dialer', () => {
+    h.value = sipDuble();
+    expect(() =>
+      render(
+        <CallSessionProvider>
+          <Sonda />
+        </CallSessionProvider>,
+      ),
+    ).not.toThrow();
+
+    fireEvent.click(screen.getByText('abrir'));
+    expect(window.location.search).toBe('?view=voip');
+  });
 });
