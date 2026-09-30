@@ -1,19 +1,46 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
+import { errorResponse, jsonResponse, requireEnv } from "../_shared/validation.ts";
 import { escapeHtml } from '../_shared/notification-events.ts';
 import { EMAIL_FONT_STACK } from '../_shared/email-font-stack.ts';
+import { isAuthorizedCronOrUser, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
+import { bootEdge, type EdgeInjected } from '../_shared/edge-boot.ts';
 
-Deno.serve(async (req) => {
-  const cors = handleCors(req);
+export async function handleConnectionHealthCheck(
+  req: Request,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _injected?: EdgeInjected<any>,
+): Promise<Response> {
+  // O `??` do boot e PREGUICOSO de proposito: os testes injetam o client e rodam sem
+  // SUPABASE_URL. A anotacao `as SupabaseClient` fica no generico do bootEdge — sem ela
+  // o receiver `any` faz o TS perder a inferencia dos callbacks do client no corpo.
+  const { cors, log, headers, supabase, serviceKey } = bootEdge<SupabaseClient>(req, {
+    fnName: 'connection-health-check',
+    injected: _injected,
+    makeClient: () => createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY')),
+  });
   if (cors) return cors;
 
-  const log = new Logger("connection-health-check");
-
   try {
+
+    // L5 da matriz IA-004: credencial de maquina do cron (x-cron-secret, segredo
+    // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU JWT de usuario autenticado.
+    // A ANON KEY deixa de entrar: ela e publica (vai no bundle do front) e o gateway a
+    // aceitava como "um JWT valido", entao qualquer visitante anonimo passava daqui.
+    // O guard vive em _shared/cron-secret-auth.ts (as duas edges usam o mesmo); o
+    // literal da RPC fica AQUI de proposito, para o guard de catalogo
+    // (scripts/db-audit/supabase-usage-guard.mjs) continuar validando o alvo.
+    const authorized = await isAuthorizedCronOrUser(req, supabase, {
+      serviceKey,
+      readVaultSecret: async () => {
+        const { data, error } = await supabase.rpc('get_connection_health_check_cron_secret');
+        return !error && typeof data === 'string' ? data : null;
+      },
+    });
+    if (!authorized) return unauthorizedResponse(headers);
+
     const evolutionUrl = requireEnv('EVOLUTION_API_URL');
     const evolutionKey = requireEnv('EVOLUTION_API_KEY');
-    const supabase = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
     const baseUrl = evolutionUrl.replace(/\/+$/, '');
 
     const { data: connections, error: connError } = await supabase
@@ -151,4 +178,8 @@ Deno.serve(async (req) => {
     log.error("Health check error", { error: msg });
     return errorResponse(msg, 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve((req) => handleConnectionHealthCheck(req));
+}

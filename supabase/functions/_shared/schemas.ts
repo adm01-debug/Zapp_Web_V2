@@ -399,3 +399,18 @@ export const ElevenLabsWebhookV2Schema = ElevenLabsWebhookV1Schema.refine(
 export const GmailCronSyncHeadersSchema = z.object({
   'x-cron-secret': z.string().min(1, 'x-cron-secret is required'),
 });
+
+// ─── Connection Health Check (contrato de headers; cron via x-cron-secret) ──
+// L5 da matriz IA-004: o job do pg_cron manda uma credencial DEDICADA no header
+// x-cron-secret (segredo do Vault lido por RPC SECURITY DEFINER), no lugar da
+// anon key no Authorization. A função não lê body.
+export const ConnectionHealthCheckHeadersSchema = z.object({
+  'x-cron-secret': z.string().min(1, 'x-cron-secret is required'),
+});
+
+// ─── Batch Fetch Avatars / avatars-refresh (contrato de headers) ──
+// Mesmo contrato de credencial de máquina do cron: header x-cron-secret com o
+// segredo dedicado avatars_refresh_cron_secret. A função não lê body.
+export const AvatarsRefreshHeadersSchema = z.object({
+  'x-cron-secret': z.string().min(1, 'x-cron-secret is required'),
+});
