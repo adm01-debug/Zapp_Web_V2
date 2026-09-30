@@ -1,5 +1,5 @@
 import { Phone, PhoneOff, Mic, MicOff } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigationHistory } from '@/hooks/system/useNavigationHistory';
 import { Button } from '@/components/ui/button';
 import { useCallSession } from '@/providers/CallSessionProvider';
 
@@ -12,18 +12,21 @@ function formatTime(seconds: number) {
 // Mantém a chamada visível (e controlável) enquanto o usuário navega para
 // outros módulos — a tela de Telefonia já mostra os mesmos controles.
 export function ActiveCallBar() {
-  const [searchParams] = useSearchParams();
+  // Fonte de verdade da view é o useNavigationHistory (o app navega por
+  // pushState cru + evento `zapp:navigate`; o useSearchParams do react-router
+  // não é atualizado nessa navegação e ficaria com view obsoleto durante a sessão).
+  const { currentView } = useNavigationHistory('inbox');
   const sip = useCallSession();
 
   const isInCall = sip.callStatus === 'calling' || sip.callStatus === 'ringing' || sip.callStatus === 'active';
-  if (!isInCall || searchParams.get('view') === 'voip') return null;
+  if (!isInCall || currentView === 'voip') return null;
 
   const isIncomingRinging = sip.callStatus === 'ringing' && sip.callDirection === 'inbound';
 
   // Na view Contatos há uma pilha de botões flutuantes (novo "+" verde + voltar ao
   // topo + microfone). A barra sobe acima dessa pilha para não cobrir nenhum deles.
   // Nas demais views mantém bottom-24 (livre do microfone e do voltar ao topo).
-  const inContacts = searchParams.get('view') === 'contacts';
+  const inContacts = currentView === 'contacts';
   const positionClass = inContacts
     ? 'bottom-[calc(284px+env(safe-area-inset-bottom,0px))] md:bottom-56'
     : 'bottom-24';
