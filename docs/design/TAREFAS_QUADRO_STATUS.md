@@ -94,7 +94,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 ## CP-C Sheet       [ ] WorkItemSheet= · ?task= · Aguardando por DnD/kebab/menu= · kebab 5 grupos= · RemindChip popover= · ContactChip=
 ## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
-## CP-E Telas       [~] etapas 43, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8) e 53 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px= · filtros 3 modos= · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos= · 0 requests na troca= · modo por rota: ok
+## CP-E Telas       [~] etapas 43, 44, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8) e 53 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos= · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos= · 0 requests na troca= · modo por rota: ok
 
 ## Etapa 47 (B7) — modo por rota (Fase E) — evidências
 
@@ -268,6 +268,26 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 **Teste de mutação (3, árvore restaurada entre cada):** M1 sem `toLocaleString` → vermelho no caso do milhar; M2 `kpis.dueToday` trocado por `kpis.overdue` → 2 vermelhos (número errado); M3 plural fixo → vermelho no caso do singular.
 
 **Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · guard-rail de tipografia ✓ · `build` ✓ · bundle 4019,1/4100 KB ✓ · `db:guard` ✓ · suíte 4347 passed / 0 failed (321 arquivos) ✓
+
+## Etapa 44 — KPIs no padrão `ContactKpiCard` (88px) — evidências
+
+**Regra do plano:** 5 cards `h-[88px] rounded-[14px]`, tile 44px (`bg-kpi-*`), ícone 20px, valor 26/700 tabular, label 13/500. Cores: Atrasadas `kpi-yellow` (`destructive/15` se > 0), Para hoje `kpi-blue`, Fazendo `kpi-purple` "n/3", Concluídas 7d `kpi-green`, Tempo médio `muted`. Grid `grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3`. DoD: E.2 `kpiCard=88±4`.
+
+**Mudanças (3 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/components/tasks/shared/TasksKpiStrip.tsx` (**novo**) | as 5 leituras com card de 88px + tile de 44px (`bg-kpi-*`), ícone de 20px, valor da escala com `font-bold tabular-nums`, rótulo 13/500; Atrasadas troca o `kpi-yellow` por `bg-destructive/15` quando há atraso; Fazendo sai como `n/3` lendo `WIP_LIMITS.doing.hard`; grid com os 3 breakpoints |
+| `src/components/tasks/TasksModule.tsx` | o bloco inline de KPIs (cards sem altura fixa, sem tile e com `md:grid-cols-5`) vira `<TasksKpiStrip kpis={kpis} />` |
+| `src/components/tasks/__tests__/TasksModule.test.tsx` | 3 casos: 5 cards de 88px com tile de 44px e valor `font-bold tabular-nums text-2xl`; cores por tipo + `n/3` + números reais; os 3 breakpoints do grid |
+
+**Divergência declarada (mínima):** o plano pede o valor em **26px**. O guard-rail de tipografia do repo (`scripts/qa/medir-tipografia.cjs`) **proíbe tamanho arbitrário acima de 16px** — o teto é a escala do `tailwind.config.ts` — e o `text-[26px]` fez a dívida subir de 2 para 3 (reprovando o gate). Token mais próximo: **`text-2xl` (24px)**, 2px do pedido; o `font-bold` e o `tabular-nums` saíram como escrito. O gate visual da etapa mede o **card** (88±4), não a fonte. Mesma natureza da divergência do `text-[12px]`→`text-xs` na etapa 49.
+
+**Nota de teste (honestidade):** o jsdom não mede layout, então "88px" é provado pelo contrato de classe (`h-[88px]`) — a medida real é o gate visual da etapa 54.
+
+**Teste de mutação (4, árvore restaurada entre cada):** M1 `h-[88px]`→`h-[108px]` vermelho no caso dos cards; M2 Atrasadas sempre amarela vermelho no caso das cores; M3 grid sem `md:grid-cols-3` vermelho no caso dos breakpoints; M4 Fazendo sem o `/3` vermelho no caso das cores.
+
+**Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · guard-rail de tipografia ✓ (arbitrário >16px de volta a 2) · `build` ✓ · bundle 4021,4/4100 KB ✓ · `db:guard` ✓ · suíte 4379 passed / 0 failed (324 arquivos) ✓
 
 ## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
 ## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=
