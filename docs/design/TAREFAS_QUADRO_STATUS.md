@@ -94,7 +94,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 ## CP-C Sheet       [ ] WorkItemSheet= · ?task= · Aguardando por DnD/kebab/menu= · kebab 5 grupos= · RemindChip popover= · ContactChip=
 ## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
-## CP-E Telas       [~] etapas 43, 44, 45 e 46, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8) e 53 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos: ok (barra de 5 filtros, estado na URL por replaceState, recorte único) · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos= · 0 requests na troca= · modo por rota: ok
+## CP-E Telas       [~] etapas 43, 44, 45 e 46, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8), 53 e 55 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos: ok (barra de 5 filtros, estado na URL por replaceState, recorte único) · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos: ok (3 grupos, ponto por tipo, atrasadas expansível) · 0 requests na troca= · modo por rota: ok
 
 ## Etapa 47 (B7) — modo por rota (Fase E) — evidências
 
@@ -321,6 +321,26 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 **Nota de teste (honestidade):** os dois `Select` (radix) não são dirigidos no jsdom — o clique no portal é flaky. O que eles fazem está provado na função pura, no parse/serialize da URL e no teste do hook; a barra na tela, o recorte nos modos e a URL são provados na integração.
 
 **Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ (17 ocorrências antigas saíram junto) · `implicit-any` 0 ✓ · `db:guard` ✓ · guard-rail de tipografia ✓ · suíte 4424 passed / 0 failed (332 arquivos) ✓ · `build` ✓ · bundle 4027,9/4100 KB ✓
+
+## Etapa 55 — Agenda: ponto por tipo, "Atrasadas" expansível e o dia em 3 grupos — evidências
+
+**Regra do plano:** Agenda — reescrita autorizada: ponto do dia com cor por tipo (prazo `primary`, alarme `warning`, atrasada `destructive` — até 3 pontos); bloco "Atrasadas" expansível (colapsado por padrão se > 3); lista do dia em **3 grupos** (Alarmes por `remind_at` com hora à esquerda `w-14 tabular-nums`; Prazos por `due_date`; Sem hora). — DoD: item com prazo e alarme no mesmo dia aparece nos **dois** grupos.
+
+**Mudanças (3 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/hooks/tasks/workItemAggregates.ts` | `temHora` (prazo com hora × dia inteiro), `agendaDayDots` (até 3 pontos, na ordem do plano) e `groupAgendaDay` (os 3 grupos) — puros, testáveis sem React |
+| `src/components/tasks/agenda/TasksAgendaMode.tsx` | a faixa dos 7 dias troca o ponto único por até 3 pontos com cor por tipo; o bloco "Atrasadas" ganha botão de expandir (`aria-expanded`) e nasce colapsado quando passa de 3; o dia selecionado passa a ser listado em 3 grupos, com a hora à esquerda (`w-14 tabular-nums`) no grupo dos alarmes |
+| testes | 3 casos puros no teste do agregado + `src/components/tasks/__tests__/agendaGroups.test.tsx` (**novo**, 6 casos: DoD nos dois grupos, hora à esquerda, 3 pontos por tipo, colapsado/expandido, aberto com ≤ 3, estado vazio) |
+
+**Decisão declarada — o que é "Sem hora":** `due_date` gravado só com o dia (meia-noite local) não tem horário marcado, então vai para **Sem hora**; o prazo com hora vai para **Prazos**. Assim o prazo de dia inteiro não some nem aparece duas vezes.
+
+**Nada é deduplicado:** o código antigo escondia dos "Prazos" o item que já estava nos alarmes (`filter(t => !reminders.find(...))`). Isso contraria o DoD da etapa, então a deduplicação saiu — o item com prazo **e** alarme aparece nos dois grupos.
+
+**Teste de mutação (4, árvore restaurada entre cada):** M1 `temHora` sempre `true` (nada cai em "Sem hora") 3 vermelhos; M2 pontos fora da ordem do plano 1 vermelho; M3 "Atrasadas" sempre aberto 1 vermelho; M4 volta a deduplicar 2 vermelhos.
+
+**Gates:** `typecheck` ✓ · guard-rail de tipografia ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · `db:guard` ✓ · suíte 4474 passed / 0 failed (336 arquivos) ✓ · `build` ✓ · bundle 4031,3/4100 KB ✓
 
 ## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
 ## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=

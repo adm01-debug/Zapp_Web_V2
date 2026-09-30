@@ -82,6 +82,50 @@ export function applyFilters(items: WorkItem[], f: TasksFilters): WorkItem[] {
   });
 }
 
+/** `due_date` gravado só com o dia (meia-noite local) não tem hora marcada. */
+export function temHora(iso: string | null): boolean {
+  if (iso === null) return false;
+  const d = new Date(iso);
+  return d.getHours() !== 0 || d.getMinutes() !== 0;
+}
+
+/**
+ * Até 3 pontos do dia na faixa da Agenda (etapa 55), na ordem do plano:
+ * prazo (`primary`), alarme (`warning`) e atrasada (`destructive`).
+ */
+export function agendaDayDots(
+  day: { reminders: WorkItem[]; dueTasks: WorkItem[] },
+  atrasadas: number,
+): string[] {
+  const dots: string[] = [];
+  if (day.dueTasks.length > 0) dots.push('bg-primary');
+  if (day.reminders.length > 0) dots.push('bg-warning');
+  if (atrasadas > 0) dots.push('bg-destructive');
+  return dots.slice(0, 3);
+}
+
+export interface AgendaDayGroups {
+  /** por `remind_at`, com a hora à esquerda na tela. */
+  alarmes: WorkItem[];
+  /** prazo com hora marcada. */
+  prazos: WorkItem[];
+  /** prazo de dia inteiro (sem hora). */
+  semHora: WorkItem[];
+}
+
+/**
+ * Os três grupos do dia selecionado (etapa 55). Um item com prazo **e** alarme no
+ * mesmo dia aparece nos dois grupos — é o DoD da etapa, então nada é deduplicado.
+ */
+export function groupAgendaDay(day: { reminders: WorkItem[]; dueTasks: WorkItem[] }): AgendaDayGroups {
+  const porAlarme = (a: WorkItem, b: WorkItem) => (a.remind_at ?? '').localeCompare(b.remind_at ?? '');
+  return {
+    alarmes: [...day.reminders].sort(porAlarme),
+    prazos:  day.dueTasks.filter(t => temHora(t.due_date)),
+    semHora: day.dueTasks.filter(t => !temHora(t.due_date)),
+  };
+}
+
 export function bucketByStatus(items: WorkItem[]): Record<WorkItemStatus, WorkItem[]> {
   const out: Record<WorkItemStatus, WorkItem[]> = {
     backlog: [], todo: [], doing: [], waiting: [], done: [], cancelled: [],

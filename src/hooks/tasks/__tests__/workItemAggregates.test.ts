@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { startOfDay } from 'date-fns';
-import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay, splitDoneByRecency, applyFilters } from '../workItemAggregates';
+import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay, splitDoneByRecency, applyFilters, temHora, agendaDayDots, groupAgendaDay } from '../workItemAggregates';
 import { DEFAULT_FILTERS } from '../workItemFilters';
 import type { WorkItem } from '../workItem.types';
 
@@ -66,6 +66,41 @@ describe('applyFilters (etapas 45/46 — os filtros valem nos três modos)', () 
   it('os filtros somam (E, não OU)', () => {
     expect(ids(applyFilters(base, { ...DEFAULT_FILTERS, q: 'ligar', prio: 'high' }))).toEqual(['c']);
     expect(applyFilters(base, { ...DEFAULT_FILTERS, q: 'ligar', prio: 'high', done: false })).toHaveLength(1);
+  });
+});
+
+describe('etapa 55 — Agenda: pontos do dia e os 3 grupos', () => {
+  it('temHora separa prazo com hora de prazo de dia inteiro', () => {
+    expect(temHora(null)).toBe(false);
+    expect(temHora(new Date(2026, 9, 3, 0, 0).toISOString())).toBe(false);
+    expect(temHora(new Date(2026, 9, 3, 14, 30).toISOString())).toBe(true);
+  });
+
+  it('dots: prazo, alarme e atrasada — no máximo 3', () => {
+    const vazio = { reminders: [], dueTasks: [] };
+    expect(agendaDayDots(vazio, 0)).toEqual([]);
+    expect(agendaDayDots({ reminders: [makeItem({}), ], dueTasks: [makeItem({})] }, 0))
+      .toEqual(['bg-primary', 'bg-warning']);
+    expect(agendaDayDots({ reminders: [makeItem({})], dueTasks: [makeItem({})] }, 2))
+      .toEqual(['bg-primary', 'bg-warning', 'bg-destructive']);
+  });
+
+  it('o item com prazo E alarme no mesmo dia entra nos dois grupos (DoD)', () => {
+    const dois = makeItem({
+      id: 'dois',
+      remind_at: new Date(2026, 9, 3, 9, 0).toISOString(),
+      due_date:  new Date(2026, 9, 3, 18, 0).toISOString(),
+    });
+    const soAlarme = makeItem({ id: 'alarme', remind_at: new Date(2026, 9, 3, 8, 0).toISOString() });
+    const diaInteiro = makeItem({ id: 'dia', due_date: new Date(2026, 9, 3, 0, 0).toISOString() });
+    const comHora = makeItem({ id: 'hora', due_date: new Date(2026, 9, 3, 15, 0).toISOString() });
+
+    const g = groupAgendaDay({ reminders: [soAlarme, dois], dueTasks: [dois, diaInteiro, comHora] });
+
+    expect(g.alarmes.map(i => i.id)).toEqual(['alarme', 'dois']);   // ordenado por remind_at
+    expect(g.prazos.map(i => i.id)).toEqual(['dois', 'hora']);      // dia inteiro sai daqui
+    expect(g.semHora.map(i => i.id)).toEqual(['dia']);
+    expect(g.alarmes).toContain(g.prazos[0]);                       // o mesmo objeto nos dois
   });
 });
 
