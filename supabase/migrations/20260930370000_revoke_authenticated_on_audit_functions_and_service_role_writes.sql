@@ -1,3 +1,10 @@
+-- rollback: reverter exige GRANTs explicitos na ordem inversa (nenhum dado e removido, so privilegios):
+--   GRANT EXECUTE ON FUNCTION public.audit_contact_address_change(), public.audit_role_changes(),
+--     public.audit_role_permissions_changes(), public.department_audit_logs_fill_profile_name()
+--     TO authenticated, service_role;  -- e TO PUBLIC se quiser voltar ao estado exato anterior
+--   GRANT UPDATE, DELETE, TRUNCATE ON public.audit_logs, public.department_audit_logs TO authenticated, service_role;
+--   GRANT TRUNCATE ON public.contacts TO service_role;
+
 -- =============================================================================================
 -- Fecha a classe "trilha de auditoria forjavel / reescrivel" que sobrou depois de #1254/#1258/#1283.
 -- Versao: 20260930154205. Classe: ADITIVA e REVOGADORA (so REVOKE; nenhum GRANT, nenhum DDL de
