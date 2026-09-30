@@ -138,7 +138,13 @@ test.describe('Volume das mídias de conversa', () => {
     await expect(page.getByRole('button', { name: LABEL_VOLUME })).toBeVisible();
   });
 
-  test('se a conversa do fixture tiver áudio, o elemento nasce no volume escolhido', async ({ page, browserName }) => {
+  // `test.fixme` em vez de `test.skip(true, ...)` no CORPO: o fixture não garante mensagem
+  // de áudio, então este caso quase sempre pulava no meio da execução — um "verde" que
+  // nunca assertava nada. Declarado assim, o estado é honesto (aparece como fixme no
+  // relatório) e reabilitar é trocar `fixme` por `test` quando o fixture tiver áudio.
+  // A aplicação no elemento segue coberta por src/components/inbox/__tests__/MediaVolume.test.tsx
+  // e src/lib/__tests__/mediaVolumeElement.test.ts.
+  test.fixme('se a conversa do fixture tiver áudio, o elemento nasce no volume escolhido', async ({ page, browserName }) => {
     test.skip(browserName !== 'chromium', 'spec roda no project chromium-authenticated');
 
     await page.evaluate((chave) => window.localStorage.setItem(chave, '40'), CHAVE_VOLUME);
@@ -147,13 +153,6 @@ test.describe('Volume das mídias de conversa', () => {
     await page.locator('[data-testid="conversation-item"]').first().click();
 
     const audio = page.locator('audio').first();
-    if ((await audio.count()) === 0) {
-      test.skip(
-        true,
-        'conversa do fixture não tem mensagem de áudio — a aplicação no elemento é coberta por ' +
-          'src/components/inbox/__tests__/MediaVolume.test.tsx e src/lib/__tests__/mediaVolumeElement.test.ts',
-      );
-    }
 
     // 40% → ganho perceptual (40/100)² = 0.16
     await expect
