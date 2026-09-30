@@ -9965,6 +9965,7 @@ export type Database = {
       }
       is_ip_blocked: { Args: { check_ip: string }; Returns: boolean }
       is_ip_whitelisted: { Args: { check_ip: string }; Returns: boolean }
+      is_privileged_contact_caller: { Args: never; Returns: boolean }
       is_team_conversation_member: {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
@@ -10198,6 +10199,11 @@ export type Database = {
         Args: { p_campaign_id: string; p_contact_ids: string[] }
         Returns: number
       }
+      require_contact_edit_permission: {
+        Args: { p_contact_id: string }
+        Returns: undefined
+      }
+      require_contact_global_admin: { Args: never; Returns: undefined }
       reschedule_multiplix_recipient: {
         Args: {
           p_claim_token: string
