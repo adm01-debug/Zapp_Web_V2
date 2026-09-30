@@ -113,7 +113,8 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
               <AssignmentSection conversation={conversation} />
             </MoreDetailsBlock>
             <MoreDetailsBlock icon={<Brain className="w-3.5 h-3.5 text-primary" />} label="Memória Viva">
-              <ConversationMemoryPanel contactId={contact.id} profileId={profileId} />
+              {/* key: remonta o painel a cada contato para não reaproveitar estado. */}
+              <ConversationMemoryPanel key={contact.id} contactId={contact.id} profileId={profileId} />
             </MoreDetailsBlock>
             <MoreDetailsBlock icon={<TrendingUp className="w-3.5 h-3.5 text-primary" />} label="Scoring & LGPD">
               <LeadRiskScorePanel contactId={contact.id} />

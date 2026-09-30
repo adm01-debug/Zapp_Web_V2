@@ -48,6 +48,44 @@ export interface AnalysisMessage {
   created_at: string;
 }
 
+/**
+ * Envelope de execução das capacidades de IA (IA-025): toda resposta das Edge
+ * Functions de IA carrega `status`, `error` e o payload em `data`. Campos
+ * opcionais permanecem opcionais — ausência é ausência.
+ */
+export interface AiEnvelope<T> {
+  capability?: string;
+  status?: 'ok' | 'partial' | 'error';
+  error?: unknown;
+  data?: T;
+  /** Só a análise devolve o id da linha gravada; o resumo não tem id. */
+  analysisId?: string | null;
+}
+
+/** Mensagem de erro apresentável ao usuário, sem inventar texto genérico. */
+export function aiEnvelopeErrorMessage(error: unknown, fallback: string): string {
+  return typeof error === 'string' && error.trim() !== '' ? error : fallback;
+}
+
+/**
+ * Lê o envelope de um `functions.invoke` que falhou (HTTP não-2xx). O corpo da
+ * resposta fica em `error.context` (Response) — sem lê-lo o usuário só veria
+ * "Edge Function returned a non-2xx status code".
+ */
+export async function readAiErrorEnvelope<T>(error: unknown): Promise<AiEnvelope<T> | null> {
+  const context = (error as { context?: Response } | null)?.context;
+  if (!context || typeof context.clone !== 'function') return null;
+  try {
+    const body = (await context.clone().json()) as unknown;
+    if (body && typeof body === 'object' && 'capability' in body && 'status' in body) {
+      return body as AiEnvelope<T>;
+    }
+  } catch {
+    // corpo sem JSON (timeout/proxy): sem envelope a mostrar
+  }
+  return null;
+}
+
 export const statusConfig: Record<string, { label: string; icon: React.ElementType; className: string }> = {
   resolvido: { label: 'Resolvido', icon: CheckCircle2, className: 'bg-success/20 text-success border-success/30' },
   pendente: { label: 'Pendente', icon: Clock, className: 'bg-warning/20 text-warning border-warning/30' },

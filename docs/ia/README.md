@@ -24,6 +24,7 @@ válidos. Este bloco **não altera código, banco nem configuração** — entre
 | IA-009 | [`IA-009-desligamento-seguro.md`](./IA-009-desligamento-seguro.md) | Desenho de kill switch por capacidade/bot/provedor; lacuna provada: `feature_flags` só é lida no cliente | ✅ (implementação nos blocos 02/05/11) |
 | IA-010 | [`IA-010-ambiente-de-ensaio.md`](./IA-010-ambiente-de-ensaio.md) | Especificação de dados sintéticos por departamento, 4 perfis, credencial de homologação por referência | ✅ (provisionamento **não** executado: escrita em produção) |
 | IA-011..020 | [`IA-011-a-IA-020-contencao-P0.md`](./IA-011-a-IA-020-contencao-P0.md) + [laudo adversarial](./IA-011-a-IA-020-verificacao-adversarial.md) | **Bloco 02 (P0)** — identidade nas funções de IA sem guarda, assinatura de webhook bloqueante, autorização por objeto no áudio; mais o laudo de 5 verificadores adversariais (achados, correções e o que não foi provado) | 🟡 lotes A e B entregues (2 regressões do lote A corrigidas); política (IA-015/016/017/019/020) nos blocos 03/04/05; deploy de 2 funções + `ELEVENLABS_WEBHOOK_SECRET` pendentes de você |
+| IA-021..030 | [`IA-021-a-IA-030-contratos-integridade.md`](./IA-021-a-IA-030-contratos-integridade.md) | **Bloco 03 (P0/P1)** — vocabulário canônico único (sentimento/urgência/prioridade) nas duas cópias edge+front, contrato de mensagens com limite agregado, validação de toda saída de modelo com envelope, persistência completa da análise com projeção transacional e trava de recência, etiquetas atômicas e identidade da memória por contato | 🟡 PR único aberto; migration aditiva aplicada no banco canônico, contrato aplicado pós-merge |
 
 ## Os três achados que este bloco já deixa provados (base do Bloco 02, P0)
 
@@ -45,8 +46,9 @@ válidos. Este bloco **não altera código, banco nem configuração** — entre
 
 ## Próximo bloco
 
-**Bloco 03 — Qualidade do sinal de IA (IA-021..IA-030, P0/P1)**: normalizações únicas de sentimento/prioridade,
-histórico de análise sem perda de campo, memória por contato e invalidação de estado de tela.
+**Bloco 04 — Camada única de provedores e modelos (IA-031..IA-040, P1)**: arquitetura e comportamento
+consistente entre provedores (mesmo desenho que já isolou o áudio no Bloco 02/03). O Bloco 03 está em
+[`IA-021-a-IA-030-contratos-integridade.md`](./IA-021-a-IA-030-contratos-integridade.md).
 
 **Bloco 02 (P0) — em andamento:** o lote de contenção (IA-011/012/013/014) está em
 [`IA-011-a-IA-020-contencao-P0.md`](./IA-011-a-IA-020-contencao-P0.md), com as etapas de política

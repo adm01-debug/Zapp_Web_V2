@@ -82,9 +82,11 @@ export function AIStatsWidget() {
     );
   }
 
+  const avgSentimentScore = stats?.avgSentimentScore;
   const metrics = [
     { label: 'Análises de IA', value: stats?.totalAnalyses || 0, icon: Brain, color: 'text-primary', bgColor: 'bg-primary/10', trend: stats?.trends.analyses },
-    { label: 'Sentimento Médio', value: `${((stats?.avgSentimentScore || 0) * 100).toFixed(0)}%`, icon: TrendingUp, color: 'text-success', bgColor: 'bg-success/10', trend: stats?.trends.sentiment },
+    // Média ausente é "sem dado" (—), nunca 0% nem 50% (IA-023); 0 continua 0%.
+    { label: 'Sentimento Médio', value: avgSentimentScore == null ? '—' : `${(avgSentimentScore * 100).toFixed(0)}%`, icon: TrendingUp, color: 'text-success', bgColor: 'bg-success/10', trend: stats?.trends.sentiment },
     { label: 'Alertas Negativos', value: stats?.negativeSentiment || 0, icon: AlertTriangle, color: 'text-destructive', bgColor: 'bg-destructive/10', trend: stats?.trends.negative },
     { label: 'Transcrições', value: stats?.transcriptionsCount || 0, icon: Mic, color: 'text-info', bgColor: 'bg-info/10', trend: stats?.trends.transcriptions },
   ];
@@ -153,7 +155,7 @@ export function AIStatsWidget() {
                   <div key={alert.id} className="flex items-center justify-between text-xs">
                     <span className="text-foreground truncate max-w-[150px]">{alert.contact_name || 'Cliente'}</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-destructive font-medium">{alert.sentiment_score || 0}%</span>
+                      <span className="text-destructive font-medium">{alert.sentiment_score == null ? '—' : `${alert.sentiment_score}%`}</span>
                       {alert.consecutive_low && <span className="text-muted-foreground">({alert.consecutive_low}x)</span>}
                     </div>
                   </div>

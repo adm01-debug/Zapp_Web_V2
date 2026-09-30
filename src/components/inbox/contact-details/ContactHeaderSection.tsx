@@ -7,6 +7,7 @@ import { CompanyLogo } from '@/components/contacts/CompanyLogo';
 import { motion } from 'framer-motion';
 import { format, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { normalizeOperationalPriority, normalizeSentiment, type OperationalPriority } from '@/lib/ai-vocabulary';
 import { EnrichedContactData } from '@/hooks/crm/useContactEnrichedData';
 import { ImagePreview } from '../ImagePreview';
 import { useExternalContact360 } from '@/hooks/crm/useExternalContact360';
@@ -17,8 +18,15 @@ import { CompactContactHeader } from './CompactContactHeader';
 import { ContactActionButtons } from './ContactActionButtons';
 import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
 
-const priorityConfig: Record<string, { label: string; color: string }> = {
+// Rótulos da prioridade operacional canônica (EN). O valor cru passa por
+// normalizeOperationalPriority: o legado pt-BR que as funções de análise
+// gravam ('alta'/'media'/'baixa') vira a escala do front e 'normal' vira
+// 'medium' — sem isso o selo nunca aparecia com o dado em português.
+const priorityConfig: Record<OperationalPriority, { label: string; color: string }> = {
+  urgent: { label: 'Prioridade urgente', color: 'bg-destructive/15 text-destructive border-destructive/40' },
   high: { label: 'Alta prioridade', color: 'bg-destructive/15 text-destructive border-destructive/40' },
+  medium: { label: 'Prioridade média', color: 'bg-warning/15 text-warning border-warning/40' },
+  low: { label: 'Prioridade baixa', color: 'bg-muted text-muted-foreground border-transparent' },
 };
 
 // Labels vêm do config canônico (src/components/contacts/contactTypeConfig.tsx); cores usam
@@ -80,14 +88,19 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
       : null;
   const companyName = crmCompany?.nome_fantasia ?? enrichedData?.company;
 
-  const sentiment = enrichedData?.ai_sentiment;
-  const priority = enrichedData?.ai_priority;
+  const sentiment = normalizeSentiment(enrichedData?.ai_sentiment);
+  const priority = normalizeOperationalPriority(enrichedData?.ai_priority);
   const contactType = enrichedData?.contact_type;
+  // Selo só para prioridade alta/urgente. Ausente/desconhecido → null (nunca
+  // 'não classificado' apresentado como prioridade alta).
+  const priorityLevel = priority.value;
+  const priorityBadge =
+    priorityLevel === 'high' || priorityLevel === 'urgent' ? priorityConfig[priorityLevel] : null;
 
   const engagementScore = (() => {
     let s = 50;
-    if (sentiment === 'positive') s += 25;
-    if (priority === 'high') s += 15;
+    if (sentiment.value === 'positivo') s += 25;
+    if (priority.value === 'high') s += 15;
     if (enrichedData?.company) s += 5;
     if (contactType === 'customer') s += 5;
     return Math.min(s, 100);
@@ -194,8 +207,8 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
               <Crown className="w-3 h-3 mr-1" />VIP
             </Badge>
           )}
-          {priority === 'high' && (
-            <Badge variant="outline" className={`h-6 px-2.5 rounded-full text-xs font-semibold ${priorityConfig.high.color}`}>{priorityConfig.high.label}</Badge>
+          {priorityBadge && (
+            <Badge variant="outline" className={`h-6 px-2.5 rounded-full text-xs font-semibold ${priorityBadge.color}`}>{priorityBadge.label}</Badge>
           )}
         </div>
 

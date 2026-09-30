@@ -1,18 +1,21 @@
--- Recuperacao de DDL aplicado fora do Git (item F18 do plano do Multiplix / issue #1228).
--- Versao: 20260930110000 · nome no ledger: ai_block03_analysis_persistence
+-- Bloco 03 do plano de IA (IA-026 / IA-027 / IA-028).
 --
--- Origem: o DDL abaixo foi aplicado diretamente no banco canonico do Zapp Web V2
--- (tnnnlkbymytvtqngbbqh) e registrado em supabase_migrations.schema_migrations SEM que o
--- arquivo correspondente fosse commitado. O DB Live Guard acusou exatamente isso:
--- "Registro no banco sem arquivo no repo (DDL fora do Git)".
+-- (a) Persistência COMPLETA da análise: colunas para os campos que o modelo
+--     produz e hoje são descartados (agentPerformance, churnRisk,
+--     salesOpportunity) e para versão/recorte/cobertura da análise.
+-- (b) Projeção do contato condicionada por RECÊNCIA, dentro da mesma transação
+--     do insert — hoje é um segundo UPDATE solto (sem versão, sem atomicidade).
+-- (c) Troca ATÔMICA das etiquetas de IA, preservando etiqueta humana.
 --
--- Reconciliacao: reconstrucao fiel a partir do proprio ledger (os statements foram copiados
--- como estao, sem edicao), conforme docs/MIGRATIONS.md §2. Nada foi reaplicado no banco:
--- a versao ja consta no ledger, por isso o hermes-db-migrar NAO deve ser executado para
--- este arquivo. Os statements abaixo sao o registro historico do que ja esta aplicado.
---
--- Autor da recuperacao: Hermes (tarefa portao-a-f18-contrato-vivo), 30/09/2026.
+-- Classe: ADITIVA — cria coluna nullable (uma com default constante), índice e
+-- funções de nome novo; não altera nem apaga dado existente. A imposição do
+-- vocabulário canônico (CHECK) e a remoção dos defaults mascaradores (IA-023)
+-- ficam para migration de contrato, aplicada depois do deploy, para não
+-- quebrar função antiga que ainda esteja em produção escrevendo 'neutral'.
 
+-- ── 1. Vocabulário canônico verificável pelo banco ──────────────────
+-- Mesmos conjuntos de supabase/functions/_shared/ai-vocabulary.ts:
+-- sentimento em português; prioridade operacional em inglês.
 create function public.ai_is_canonical_sentiment(p_value text)
 returns boolean
 language sql
@@ -29,6 +32,7 @@ as $$
   select p_value is null or p_value in ('low', 'medium', 'high', 'urgent');
 $$;
 
+-- Converte jsonb (array) em text[], tratando ausência como ausência.
 create function public.ai_text_array(p_value jsonb)
 returns text[]
 language sql
@@ -46,6 +50,7 @@ as $$
   ) s;
 $$;
 
+-- ── 2. Colunas de completude/versão da análise (IA-026) ─────────────
 alter table public.conversation_analyses
   add column if not exists agent_performance jsonb,
   add column if not exists churn_risk text,
@@ -58,13 +63,12 @@ alter table public.conversation_analyses
 
 comment on column public.conversation_analyses.agent_performance is
   'Desempenho estimado pelo modelo (empathy/clarity/efficiency/knowledge 1-10). Antes existia só na resposta viva e sumia ao recarregar.';
-
 comment on column public.conversation_analyses.coverage is
   'Evidência/cobertura da análise (quantas mensagens, recorte de período, valores recusados). Distingue medido de estimado.';
-
 comment on column public.conversation_analyses.analysis_version is
   'Versão do contrato de saída usado na análise (IA-025).';
 
+-- ── 3. Rastro da projeção do contato (IA-027) ───────────────────────
 alter table public.contacts
   add column if not exists ai_projection_updated_at timestamptz,
   add column if not exists ai_projection_analysis_id uuid
@@ -73,9 +77,11 @@ alter table public.contacts
 comment on column public.contacts.ai_projection_updated_at is
   'Quando a projeção de IA (ai_sentiment/ai_priority) foi escrita pela última vez. Usada para impedir que análise de período antigo sobrescreva projeção mais recente.';
 
+-- ── 4. Unicidade das etiquetas por contato (IA-028) ─────────────────
 create unique index if not exists ai_conversation_tags_contact_tag_uidx
   on public.ai_conversation_tags (contact_id, tag_name);
 
+-- ── 5. Persistência + projeção em UMA transação (IA-026 / IA-027) ───
 create function public.persist_conversation_analysis(
   p_contact_id uuid,
   p_analysis jsonb,
@@ -166,6 +172,7 @@ $$;
 comment on function public.persist_conversation_analysis(uuid, jsonb, timestamptz) is
   'Grava a análise e projeta no contato em uma única transação, com trava de recência (IA-026/IA-027). Falha em qualquer etapa desfaz tudo: não existe estado em que a análise não gravou mas o contato mudou.';
 
+-- ── 6. Troca atômica das etiquetas de IA (IA-028) ───────────────────
 create function public.replace_ai_conversation_tags(
   p_contact_id uuid,
   p_tags jsonb

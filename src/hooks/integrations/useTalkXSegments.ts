@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
 import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
 import { CONVERSATION_STATUSES } from '@/types/chat';
+import { OPERATIONAL_PRIORITY_VALUES, SENTIMENT_VALUES } from '@/lib/ai-vocabulary';
 
 /* ------------------------------------------------------------------ */
 /* Modelo de regras                                                   */
@@ -52,8 +53,11 @@ export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'arr
   { value: 'conversation_status', label: 'Status da conversa', kind: 'enum', category: 'comportamento', options: [...CONVERSATION_STATUSES] },
   { value: 'lead_score', label: 'Lead score', kind: 'number', category: 'comercial' },
   { value: 'risk_score', label: 'Risco de churn', kind: 'number', category: 'comportamento' },
-  { value: 'ai_priority', label: 'Prioridade (IA)', kind: 'enum', category: 'comportamento', options: ['high', 'urgent', 'medium', 'low'] },
-  { value: 'ai_sentiment', label: 'Sentimento (IA)', kind: 'enum', category: 'comportamento', options: ['positive', 'neutral', 'negative'] },
+  // Opções vindas do vocabulário canônico (IA-021/IA-022): sentimento em pt-BR
+  // e prioridade na escala EN do front. Uma regra de segmento nunca pode
+  // oferecer valor que o banco não guarda.
+  { value: 'ai_priority', label: 'Prioridade (IA)', kind: 'enum', category: 'comportamento', options: [...OPERATIONAL_PRIORITY_VALUES] },
+  { value: 'ai_sentiment', label: 'Sentimento (IA)', kind: 'enum', category: 'comportamento', options: [...SENTIMENT_VALUES] },
   { value: 'updated_at', label: 'Última interação', kind: 'date', category: 'comportamento' },
   { value: 'created_at', label: 'Data de cadastro', kind: 'date', category: 'basico' },
   { value: 'consent_status', label: 'Consentimento (LGPD)', kind: 'enum', category: 'lgpd', options: ['granted', 'unknown', 'revoked'] },

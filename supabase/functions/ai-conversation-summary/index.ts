@@ -1,6 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, checkRateLimit, getClientIP, createAuthedClient } from "../_shared/validation.ts";
-import { AiConversationSummarySchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { AiConversationSummarySchema, CONTEXT_CONTRACT_VERSION, measureConversationContext, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { normalizeSentiment, normalizeUrgency, urgencyToOperationalPriority } from "../_shared/ai-vocabulary.ts";
+import { normalizeScore } from "../_shared/ai-values.ts";
+import { ConversationSummaryOutput, buildAiEnvelope, parseModelOutput } from "../_shared/ai-response-contracts.ts";
 import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 
@@ -25,7 +28,7 @@ Deno.serve(async (req) => {
     const parsed = parseBody(AiConversationSummarySchema, await req.json());
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
-    const { messages, contactName, contactId } = parsed.data;
+    const { messages, contactName, contactId, periodDays } = parsed.data;
     const LOVABLE_API_KEY = requireEnv("LOVABLE_API_KEY");
     const supabase = createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
 
@@ -154,74 +157,156 @@ Foque em:
     }
 
     const toolCall = (data.choices as Array<{message: {tool_calls?: Array<{function: {arguments: string}}>; content?: string}}>)?.[0]?.message?.tool_calls?.[0];
+    const rawContent = (data.choices as Array<{message: {content?: string}}>)?.[0]?.message?.content;
 
-    let analysisData;
+    // Extrai o objeto JSON do modelo. O fallback que sintetizava um resumo
+    // (texto genérico + nota de sentimento e CSAT fixos) foi removido (IA-023):
+    // sem JSON parseável não existe resumo — a resposta vira erro explícito,
+    // nunca dado fabricado.
+    let rawOutput: unknown = null;
     if (toolCall?.function?.arguments) {
       try {
-        analysisData = JSON.parse(toolCall.function.arguments);
-      } catch (parseErr) {
-        log.error("Failed to parse tool_call arguments", { raw: toolCall.function.arguments });
-        // Attempt to extract JSON from malformed response
+        rawOutput = JSON.parse(toolCall.function.arguments);
+      } catch {
+        log.error("Failed to parse tool_call arguments");
         const jsonMatch = toolCall.function.arguments.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          analysisData = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error("AI returned malformed JSON in tool_call");
-        }
+        try { rawOutput = jsonMatch ? JSON.parse(jsonMatch[0]) : null; } catch { rawOutput = null; }
       }
-    } else {
-      const content = (data.choices as Array<{message: {content?: string}}>)?.[0]?.message?.content;
-      // Try to extract structured data from content if possible
-      let parsed = null;
-      if (content) {
-        try {
-          const jsonMatch = content.match(/\{[\s\S]*\}/);
-          if (jsonMatch) parsed = JSON.parse(jsonMatch[0]);
-        } catch { /* fallback below */ }
+    } else if (typeof rawContent === 'string') {
+      const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try { rawOutput = JSON.parse(jsonMatch[0]); } catch { rawOutput = null; }
       }
-      analysisData = parsed || { summary: content || 'Não foi possível gerar análise.', status: 'pendente', keyPoints: [], sentiment: 'neutro', sentimentScore: 50, customerSatisfaction: 3, topics: [], urgency: 'media' };
     }
 
-    // Validate required fields with defaults
-    analysisData = {
-      summary: analysisData.summary || 'Resumo não disponível',
-      status: ['resolvido', 'pendente', 'aguardando_cliente', 'aguardando_atendente', 'escalado'].includes(analysisData.status) ? analysisData.status : 'pendente',
-      keyPoints: Array.isArray(analysisData.keyPoints) ? analysisData.keyPoints : [],
-      nextSteps: Array.isArray(analysisData.nextSteps) ? analysisData.nextSteps : [],
-      sentiment: ['positivo', 'neutro', 'negativo', 'critico'].includes(analysisData.sentiment) ? analysisData.sentiment : 'neutro',
-      sentimentScore: typeof analysisData.sentimentScore === 'number' ? Math.max(0, Math.min(100, analysisData.sentimentScore)) : 50,
-      customerSatisfaction: typeof analysisData.customerSatisfaction === 'number' ? Math.max(1, Math.min(5, analysisData.customerSatisfaction)) : 3,
-      agentPerformance: analysisData.agentPerformance || null,
-      churnRisk: analysisData.churnRisk || 'low',
-      salesOpportunity: analysisData.salesOpportunity || null,
-      topics: Array.isArray(analysisData.topics) ? analysisData.topics : [],
-      urgency: ['baixa', 'media', 'alta', 'critica'].includes(analysisData.urgency) ? analysisData.urgency : 'media',
-    };
+    const contextBudget = measureConversationContext(messages, periodDays);
 
-    // Save analysis to database
+    if (!rawOutput || typeof rawOutput !== 'object') {
+      log.warn("Model returned no parseable JSON");
+      return jsonResponse(buildAiEnvelope({
+        capability: 'ai-conversation-summary',
+        status: 'error',
+        error: 'A IA não devolveu um resumo em formato válido; nada foi gravado.',
+        context: contextBudget,
+        evidence: { contractVersion: CONTEXT_CONTRACT_VERSION },
+      }), 502, req);
+    }
+
+    // Legado conhecido é TRADUZIDO antes do contrato (IA-021/IA-022); valor
+    // inventado (ex.: 'purple') segue inválido e é rejeitado logo abaixo.
+    const rawSummary = rawOutput as Record<string, unknown>;
+    const vocabularyConversions: Array<{ field: string; from: unknown; to: string }> = [];
+    const legacySentiment = normalizeSentiment(rawSummary.sentiment);
+    if (legacySentiment.known && legacySentiment.value && legacySentiment.value !== rawSummary.sentiment) {
+      vocabularyConversions.push({ field: 'sentiment', from: rawSummary.sentiment, to: legacySentiment.value });
+      rawSummary.sentiment = legacySentiment.value;
+    }
+    const legacyUrgency = normalizeUrgency(rawSummary.urgency);
+    if (legacyUrgency.known && legacyUrgency.value && legacyUrgency.value !== rawSummary.urgency) {
+      vocabularyConversions.push({ field: 'urgency', from: rawSummary.urgency, to: legacyUrgency.value });
+      rawSummary.urgency = legacyUrgency.value;
+    }
+
+    // Contrato de saída da capacidade (IA-025): estrutura ou valor incorreto é
+    // rejeitado ANTES de renderizar ou persistir.
+    const validated = parseModelOutput(ConversationSummaryOutput, rawSummary);
+    if (!validated.ok) {
+      log.warn("Model output rejected by contract", {
+        errors: validated.errors.map((e) => `${e.path}: ${e.message}`).slice(0, 8),
+      });
+      return jsonResponse(buildAiEnvelope({
+        capability: 'ai-conversation-summary',
+        status: 'error',
+        error: 'A resposta do modelo não atende ao contrato de resumo; nada foi gravado.',
+        context: contextBudget,
+        evidence: { contractVersion: CONTEXT_CONTRACT_VERSION, errors: validated.errors },
+      }), 502, req);
+    }
+
+    const analysis = validated.data;
+
+    // Números passam pelo contrato numérico (IA-023): ausente continua ausente e
+    // escala trocada (0,7 querendo dizer 70%) é recusada — nunca vira 50 nem 3.
+    const sentimentScore = normalizeScore(analysis.sentimentScore, { min: 0, max: 100, scale: 'percent' });
+    const customerSatisfaction = normalizeScore(analysis.customerSatisfaction, { min: 1, max: 5, scale: 'integer' });
+    const valueIssues: Record<string, string> = {};
+    if (analysis.sentimentScore !== undefined && sentimentScore.issue) valueIssues.sentimentScore = sentimentScore.issue;
+    if (analysis.customerSatisfaction !== undefined && customerSatisfaction.issue) valueIssues.customerSatisfaction = customerSatisfaction.issue;
+
+    // Urgência (analítica, pt) e prioridade (operacional, EN) são grandezas
+    // separadas: a conversão é explícita, não mais uma comparação com um token
+    // em inglês que nunca casava com o valor em português do modelo.
+    const operationalPriority = urgencyToOperationalPriority(normalizeUrgency(analysis.urgency).value);
+
+    let analysisId: string | null = null;
+    let projected = false;
+
     if (visibleContactId) {
-      await supabase.from('conversation_analyses').insert({
-        contact_id: visibleContactId,
-        summary: analysisData.summary,
-        sentiment: analysisData.sentiment,
-        sentiment_score: analysisData.sentimentScore,
-        customer_satisfaction: analysisData.customerSatisfaction,
-        key_points: analysisData.keyPoints,
-        next_steps: analysisData.nextSteps || [],
-        topics: analysisData.topics,
-        urgency: analysisData.urgency,
-        status: analysisData.status,
-        message_count: messages.length,
+      // Uma única transação no banco: grava a análise COMPLETA (incluindo
+      // department/relationshipType/agentPerformance/churnRisk/salesOpportunity,
+      // hoje descartados) e projeta no contato com trava de recência
+      // (IA-026/IA-027). O UPDATE solto em `contacts` deixou de existir.
+      const { data: persisted, error: persistError } = await supabase.rpc('persist_conversation_analysis', {
+        p_contact_id: visibleContactId,
+        p_analysis: {
+          department: analysis.department ?? null,
+          relationship_type: analysis.relationshipType ?? null,
+          summary: analysis.summary,
+          sentiment: analysis.sentiment,
+          sentiment_score: sentimentScore.value,
+          customer_satisfaction: customerSatisfaction.value,
+          key_points: analysis.keyPoints,
+          next_steps: analysis.nextSteps,
+          topics: analysis.topics,
+          urgency: analysis.urgency,
+          status: analysis.status,
+          message_count: messages.length,
+          agent_performance: analysis.agentPerformance ?? null,
+          churn_risk: analysis.churnRisk ?? null,
+          sales_opportunity: analysis.salesOpportunity ?? null,
+          analysis_version: CONTEXT_CONTRACT_VERSION,
+          period_days: periodDays ?? null,
+          coverage: contextBudget,
+          ai_priority: operationalPriority,
+        },
+        p_analyzed_at: new Date().toISOString(),
       });
 
-      await supabase.from('contacts').update({
-        ai_sentiment: analysisData.sentiment,
-        ai_priority: analysisData.urgency === 'critical' ? 'urgent' : analysisData.urgency,
-      }).eq('id', visibleContactId);
+      if (persistError) {
+        log.error("Failed to persist conversation summary", {
+          contactId: visibleContactId,
+          error: persistError.message,
+        });
+        return jsonResponse(buildAiEnvelope({
+          capability: 'ai-conversation-summary',
+          status: 'error',
+          error: 'Não foi possível gravar o resumo; nada foi alterado no contato.',
+          context: contextBudget,
+          evidence: { contractVersion: CONTEXT_CONTRACT_VERSION },
+        }), 502, req);
+      }
+
+      const persistedResult = persisted as { analysis_id?: string; projected?: boolean } | null;
+      analysisId = persistedResult?.analysis_id ?? null;
+      projected = persistedResult?.projected === true;
     }
 
-    log.done(200);
-    return jsonResponse(analysisData, 200, req);
+    log.done(200, { analysisId, messageCount: messages.length, projected });
+    return jsonResponse({
+      ...buildAiEnvelope({
+        capability: 'ai-conversation-summary',
+        status: Object.keys(valueIssues).length > 0 ? 'partial' : 'ok',
+        context: contextBudget,
+        evidence: {
+          contractVersion: CONTEXT_CONTRACT_VERSION,
+          valueIssues,
+          vocabularyConversions,
+          projected,
+        },
+        data: analysis,
+      }),
+      analysisId,
+    }, 200, req);
   } catch (error) {
     log.error("Error generating summary", { error: error instanceof Error ? error.message : String(error) });
     return errorResponse(error instanceof Error ? error.message : 'Unknown error', 500, req);

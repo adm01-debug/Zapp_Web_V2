@@ -1,6 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, checkRateLimit, getClientIP, createAuthedClient } from "../_shared/validation.ts";
-import { AiConversationAnalysisSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { AiConversationAnalysisSchema, CONTEXT_CONTRACT_VERSION, measureConversationContext, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { normalizeSentiment, normalizeUrgency, urgencyToOperationalPriority } from "../_shared/ai-vocabulary.ts";
+import { normalizeScore } from "../_shared/ai-values.ts";
+import { ConversationAnalysisOutput, buildAiEnvelope, parseModelOutput } from "../_shared/ai-response-contracts.ts";
 import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 
@@ -25,7 +28,7 @@ Deno.serve(async (req) => {
     const parsed = parseBody(AiConversationAnalysisSchema, await req.json());
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
-    const { messages, contactName, contactId } = parsed.data;
+    const { messages, contactName, contactId, periodDays } = parsed.data;
     const LOVABLE_API_KEY = requireEnv("LOVABLE_API_KEY");
     const supabase = createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
 
@@ -59,7 +62,10 @@ Deno.serve(async (req) => {
         if (contact.company) contactContext += `, Empresa: ${contact.company}`;
         if (contact.tags?.length) contactContext += `, Tags: ${contact.tags.join(', ')}`;
         if (contact.contact_type) contactContext += `, Tipo: ${contact.contact_type}`;
-        if (contact.ai_sentiment) contactContext += `, Sentimento anterior: ${contact.ai_sentiment}`;
+        // O sentimento anterior entra no prompt já no vocabulário CANÔNICO
+        // (IA-021): antes o modelo recebia o valor cru, que podia estar em inglês.
+        const previousSentiment = normalizeSentiment(contact.ai_sentiment);
+        if (previousSentiment.value) contactContext += `, Sentimento anterior: ${previousSentiment.value}`;
       }
 
       const { data: prevAnalyses } = await supabase
@@ -70,7 +76,17 @@ Deno.serve(async (req) => {
         .limit(3);
 
       if (prevAnalyses && prevAnalyses.length > 0) {
-        contactContext += `\nAnálises anteriores: ${prevAnalyses.map(a => `[${a.sentiment} ${a.sentiment_score}%] ${a.summary?.substring(0, 80)}`).join(' | ')}`;
+        // Histórico sem "undefined%": nota ausente é dita como ausente (IA-023).
+        contactContext += `\nAnálises anteriores: ${prevAnalyses.map(a => {
+          const s = normalizeSentiment(a.sentiment);
+          const score = normalizeScore(a.sentiment_score, { min: 0, max: 100, scale: 'percent' });
+          const label = `${s.value ?? 'sentimento não classificado'} ${score.value === null ? 'sem nota' : `${score.value}%`}`;
+          return `[${label}] ${typeof a.summary === 'string' ? a.summary.substring(0, 80) : ''}`;
+        }).join(' | ')}`;
+      }
+
+      if (typeof periodDays === 'number') {
+        contactContext += `\nRecorte pedido: ${messages.length} mensagens dos últimos ${periodDays} dias.`;
       }
     }
 
@@ -172,111 +188,154 @@ Responda em português brasileiro.`;
     }
 
     const toolCall = (data.choices as Array<{message: {tool_calls?: Array<{function: {arguments: string}}>; content?: string}}>)?.[0]?.message?.tool_calls?.[0];
+    const rawContent = (data.choices as Array<{message: {content?: string}}>)?.[0]?.message?.content;
 
-    let analysisData;
+    // Extrai o objeto JSON do modelo. O fallback que sintetizava "análise" com
+    // sentimento/nota inventados foi removido (IA-023): sem JSON parseável não
+    // existe análise — a resposta vira erro explícito, não dado fabricado.
+    let rawOutput: unknown = null;
     if (toolCall?.function?.arguments) {
       try {
-        analysisData = JSON.parse(toolCall.function.arguments);
+        rawOutput = JSON.parse(toolCall.function.arguments);
       } catch {
         log.error("Failed to parse tool_call arguments");
         const jsonMatch = toolCall.function.arguments.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          analysisData = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error("AI returned malformed JSON");
-        }
+        rawOutput = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
       }
-    } else {
-      const content = (data.choices as Array<{message: {content?: string}}>)?.[0]?.message?.content;
-      let parsedContent = null;
-      if (content) {
-        try {
-          const jsonMatch = content.match(/\{[\s\S]*\}/);
-          if (jsonMatch) parsedContent = JSON.parse(jsonMatch[0]);
-        } catch {
-          parsedContent = null;
-        }
+    } else if (typeof rawContent === 'string') {
+      const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try { rawOutput = JSON.parse(jsonMatch[0]); } catch { rawOutput = null; }
       }
-      analysisData = parsedContent || {
-        summary: content || 'Não foi possível gerar análise.',
-        status: 'pendente',
-        keyPoints: [],
-        sentiment: 'neutro',
-        sentimentScore: 50,
-        customerSatisfaction: 3,
-        topics: [],
-        urgency: 'media'
-      };
     }
 
-    const validDepartments = ['vendas', 'compras', 'logistica', 'rh', 'financeiro', 'sac', 'outros'];
-    analysisData = {
-      department: validDepartments.includes(analysisData.department) ? analysisData.department : 'outros',
-      relationshipType: typeof analysisData.relationshipType === 'string' ? analysisData.relationshipType : 'não identificado',
-      summary: analysisData.summary || 'Resumo não disponível',
-      status: ['resolvido', 'pendente', 'aguardando_cliente', 'aguardando_atendente', 'escalado'].includes(analysisData.status) ? analysisData.status : 'pendente',
-      keyPoints: Array.isArray(analysisData.keyPoints) ? analysisData.keyPoints.slice(0, 5) : [],
-      nextSteps: Array.isArray(analysisData.nextSteps) ? analysisData.nextSteps : [],
-      sentiment: ['positivo', 'neutro', 'negativo', 'critico'].includes(analysisData.sentiment) ? analysisData.sentiment : 'neutro',
-      sentimentScore: typeof analysisData.sentimentScore === 'number' ? Math.max(0, Math.min(100, analysisData.sentimentScore)) : 50,
-      customerSatisfaction: typeof analysisData.customerSatisfaction === 'number' ? Math.max(1, Math.min(5, analysisData.customerSatisfaction)) : 3,
-      topics: Array.isArray(analysisData.topics) ? analysisData.topics.slice(0, 5) : [],
-      urgency: ['baixa', 'media', 'alta', 'critica'].includes(analysisData.urgency) ? analysisData.urgency : 'media',
-      agentPerformance: analysisData.agentPerformance || null,
-      churnRisk: ['low', 'medium', 'high'].includes(analysisData.churnRisk) ? analysisData.churnRisk : 'low',
-      salesOpportunity: analysisData.salesOpportunity || null,
-    };
+    const contextBudget = measureConversationContext(messages, periodDays);
+
+    if (!rawOutput || typeof rawOutput !== 'object') {
+      log.warn("Model returned no parseable JSON");
+      return jsonResponse(buildAiEnvelope({
+        capability: 'ai-conversation-analysis',
+        status: 'error',
+        error: 'A IA não devolveu uma análise em formato válido; nada foi gravado.',
+        context: contextBudget,
+        evidence: { contractVersion: CONTEXT_CONTRACT_VERSION },
+      }), 502, req);
+    }
+
+    // Legado conhecido é TRADUZIDO antes do contrato (IA-021/IA-022); valor
+    // inventado (ex.: 'purple') continua inválido e é rejeitado abaixo.
+    const rawAnalysis = rawOutput as Record<string, unknown>;
+    const vocabularyConversions: Array<{ field: string; from: unknown; to: string }> = [];
+    const legacySentiment = normalizeSentiment(rawAnalysis.sentiment);
+    if (legacySentiment.known && legacySentiment.value && legacySentiment.value !== rawAnalysis.sentiment) {
+      vocabularyConversions.push({ field: 'sentiment', from: rawAnalysis.sentiment, to: legacySentiment.value });
+      rawAnalysis.sentiment = legacySentiment.value;
+    }
+    const legacyUrgency = normalizeUrgency(rawAnalysis.urgency);
+    if (legacyUrgency.known && legacyUrgency.value && legacyUrgency.value !== rawAnalysis.urgency) {
+      vocabularyConversions.push({ field: 'urgency', from: rawAnalysis.urgency, to: legacyUrgency.value });
+      rawAnalysis.urgency = legacyUrgency.value;
+    }
+
+    // Contrato de saída da capacidade (IA-025): estrutura ou valor incorreto é
+    // rejeitado ANTES de renderizar ou persistir.
+    const validated = parseModelOutput(ConversationAnalysisOutput, rawAnalysis);
+    if (!validated.ok) {
+      log.warn("Model output rejected by contract", {
+        errors: validated.errors.map((e) => `${e.path}: ${e.message}`).slice(0, 8),
+      });
+      return jsonResponse(buildAiEnvelope({
+        capability: 'ai-conversation-analysis',
+        status: 'error',
+        error: 'A resposta do modelo não atende ao contrato de análise; nada foi gravado.',
+        context: contextBudget,
+        evidence: { contractVersion: CONTEXT_CONTRACT_VERSION, errors: validated.errors },
+      }), 502, req);
+    }
+
+    const analysis = validated.data;
+
+    // Números passam pelo contrato numérico (IA-023): ausente continua ausente e
+    // escala trocada (0,7 querendo dizer 70%) é recusada — nunca vira 50 nem 3.
+    const sentimentScore = normalizeScore(analysis.sentimentScore, { min: 0, max: 100, scale: 'percent' });
+    const customerSatisfaction = normalizeScore(analysis.customerSatisfaction, { min: 1, max: 5, scale: 'integer' });
+    const valueIssues: Record<string, string> = {};
+    if (analysis.sentimentScore !== undefined && sentimentScore.issue) valueIssues.sentimentScore = sentimentScore.issue;
+    if (analysis.customerSatisfaction !== undefined && customerSatisfaction.issue) valueIssues.customerSatisfaction = customerSatisfaction.issue;
+
+    // Urgência (analítica, pt) e prioridade (operacional, EN) são grandezas
+    // separadas: a conversão é explícita, não mais um `=== 'critical'` morto.
+    const operationalPriority = urgencyToOperationalPriority(normalizeUrgency(analysis.urgency).value);
 
     let analysisId: string | null = null;
+    let projected = false;
 
     if (visibleContactId) {
-      const { data: insertedAnalysis, error: insertError } = await supabase
-        .from('conversation_analyses')
-        .insert({
-          contact_id: visibleContactId,
-          department: analysisData.department,
-          relationship_type: analysisData.relationshipType,
-          summary: analysisData.summary,
-          sentiment: analysisData.sentiment,
-          sentiment_score: analysisData.sentimentScore,
-          customer_satisfaction: analysisData.customerSatisfaction,
-          key_points: analysisData.keyPoints,
-          next_steps: analysisData.nextSteps,
-          topics: analysisData.topics,
-          urgency: analysisData.urgency,
-          status: analysisData.status,
+      // Uma única transação no banco: grava a análise COMPLETA e projeta no
+      // contato com trava de recência (IA-026/IA-027). Falha em qualquer etapa
+      // desfaz tudo — não existe estado em que a análise não gravou e o contato
+      // mudou, nem projeção sobrescrita por análise de período antigo.
+      const { data: persisted, error: persistError } = await supabase.rpc('persist_conversation_analysis', {
+        p_contact_id: visibleContactId,
+        p_analysis: {
+          department: analysis.department,
+          relationship_type: analysis.relationshipType,
+          summary: analysis.summary,
+          sentiment: analysis.sentiment,
+          sentiment_score: sentimentScore.value,
+          customer_satisfaction: customerSatisfaction.value,
+          key_points: analysis.keyPoints,
+          next_steps: analysis.nextSteps,
+          topics: analysis.topics,
+          urgency: analysis.urgency,
+          status: analysis.status,
           message_count: messages.length,
-        })
-        .select('id')
-        .single();
+          agent_performance: analysis.agentPerformance ?? null,
+          churn_risk: analysis.churnRisk ?? null,
+          sales_opportunity: analysis.salesOpportunity ?? null,
+          analysis_version: CONTEXT_CONTRACT_VERSION,
+          period_days: periodDays ?? null,
+          coverage: contextBudget,
+          ai_priority: operationalPriority,
+        },
+        p_analyzed_at: new Date().toISOString(),
+      });
 
-      if (insertError) {
-        log.warn("Failed to persist conversation analysis", {
+      if (persistError) {
+        log.error("Failed to persist conversation analysis", {
           contactId: visibleContactId,
-          error: insertError.message,
+          error: persistError.message,
         });
-      } else {
-        analysisId = insertedAnalysis?.id ?? null;
+        return jsonResponse(buildAiEnvelope({
+          capability: 'ai-conversation-analysis',
+          status: 'error',
+          error: 'Não foi possível gravar a análise; nada foi alterado no contato.',
+          context: contextBudget,
+          evidence: { contractVersion: CONTEXT_CONTRACT_VERSION },
+        }), 502, req);
       }
 
-      const { error: updateError } = await supabase
-        .from('contacts')
-        .update({
-          ai_sentiment: analysisData.sentiment,
-          ai_priority: analysisData.urgency === 'critica' ? 'urgent' : analysisData.urgency,
-        })
-        .eq('id', visibleContactId);
-
-      if (updateError) {
-        log.warn("Failed to update contact AI fields", {
-          contactId: visibleContactId,
-          error: updateError.message,
-        });
-      }
+      const persistedResult = persisted as { analysis_id?: string; projected?: boolean } | null;
+      analysisId = persistedResult?.analysis_id ?? null;
+      projected = persistedResult?.projected === true;
     }
 
-    log.done(200, { analysisId, messageCount: messages.length });
-    return jsonResponse({ ...analysisData, analysisId }, 200, req);
+    log.done(200, { analysisId, messageCount: messages.length, projected });
+    return jsonResponse({
+      ...buildAiEnvelope({
+        capability: 'ai-conversation-analysis',
+        status: Object.keys(valueIssues).length > 0 ? 'partial' : 'ok',
+        context: contextBudget,
+        evidence: {
+          contractVersion: CONTEXT_CONTRACT_VERSION,
+          valueIssues,
+          vocabularyConversions,
+          projected,
+        },
+        data: analysis,
+      }),
+      analysisId,
+    }, 200, req);
   } catch (error) {
     log.error("Error analyzing conversation", { error: error instanceof Error ? error.message : String(error) });
     return errorResponse(error instanceof Error ? error.message : 'Unknown error', 500, req);

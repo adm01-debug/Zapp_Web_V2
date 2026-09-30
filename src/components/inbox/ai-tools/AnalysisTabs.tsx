@@ -12,7 +12,8 @@ interface AnalysisTabsProps {
   analysis: AnalysisData;
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  sentimentScore: number;
+  /** Percentual medido ou `null` quando a IA não devolveu nota — não inventamos. */
+  sentimentScore: number | null;
   currentSentiment: string;
   analyses: Array<{
     id: string;

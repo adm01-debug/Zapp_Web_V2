@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format, differenceInDays, subDays } from 'date-fns';
+import { normalizeSentiment } from '@/lib/ai-vocabulary';
 import { ptBR } from 'date-fns/locale';
 
 interface ChurnRisk {
@@ -57,10 +58,13 @@ export function ChurnPredictionDashboard() {
         }
 
         // Sentiment factor (max 30 points)
-        if (contact.ai_sentiment === 'negative') {
+        // Sentimento canônico (pt-BR) com tradução do legado EN na leitura
+        // (antes: `=== 'negative'`, que nunca casava com 'negativo').
+        const sentimentValue = normalizeSentiment(contact.ai_sentiment).value;
+        if (sentimentValue === 'negativo') {
           score += 30;
           reasons.push('Sentimento negativo detectado');
-        } else if (contact.ai_sentiment === 'neutral') {
+        } else if (sentimentValue === 'neutro') {
           score += 10;
         }
 
