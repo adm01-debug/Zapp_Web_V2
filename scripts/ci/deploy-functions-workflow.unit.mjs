@@ -40,3 +40,13 @@ test('rollback deploy is pinned to a historical ancestor and attests deployed SH
   assert.match(workflow, /git merge-base --is-ancestor "\$DEPLOYED_GIT_SHA" "\$GITHUB_SHA"/);
   assert.equal((workflow.match(/--git-sha "\$DEPLOYED_GIT_SHA"/g) || []).length, 2);
 });
+
+test('concurrency e por funcao: dispatch de uma funcao nao cancela o pendente de outra', () => {
+  // Grupo unico fazia o GitHub cancelar o pendente de OUTRA funcao a cada dispatch
+  // (30/09/2026: 11 cancelados em 16 runs; 3 funcoes do #1240 nunca publicaram).
+  const block = workflow.match(/^concurrency:\n((?:  .*\n)+)/m);
+  assert.ok(block, 'bloco concurrency de topo ausente');
+  assert.match(block[1], /^  group: deploy-edge-functions-\$\{\{ inputs\.function_name \|\| 'all' \}\}$/m);
+  assert.match(block[1], /^  cancel-in-progress: false$/m);
+});
+

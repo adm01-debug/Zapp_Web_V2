@@ -33,8 +33,19 @@ on:
 permissions:
   contents: read
 
+# Um grupo POR FUNCAO. O GitHub Actions guarda no maximo 1 run em execucao e
+# 1 pendente por grupo, e um novo dispatch CANCELA o pendente anterior do
+# mesmo grupo (cancel-in-progress: false so protege o que ja esta rodando).
+# Com um grupo unico, o dispatch de uma funcao cancelava o de outra: em
+# 30/09/2026 foram 11 cancelados em 16 runs e 3 funcoes do PR #1240 nunca
+# publicaram. Por funcao, dispatches de funcoes diferentes nao se anulam;
+# redisparar a MESMA funcao so troca o pendente dela (mesma main, ok).
+# Deploys paralelos nao quebram a atestacao: mudanca fora do escopo e so
+# registrada (changed_outside_scope) e a estabilizacao espera 3 amostras
+# iguais. "Vazio = TODAS" fica no grupo `all` e pode rodar junto de um
+# deploy de funcao unica — ambos publicam a mesma main.
 concurrency:
-  group: deploy-edge-functions
+  group: deploy-edge-functions-${{ inputs.function_name || 'all' }}
   cancel-in-progress: false
 
 env:
@@ -53,20 +64,13 @@ jobs:
     permissions:
       contents: write
     steps:
-      # E09 (auditoria de GitHub Actions, 2026-09-26) — considerado e
-      # descartado: um passo dentro do job para detectar outro run
-      # waiting/queued (mesma ideia do E47 em db-migrate.yml) NUNCA
-      # executaria de fato aqui. A concurrency (group: deploy-edge-functions,
-      # cancel-in-progress: false) ja impede um 2o job do mesmo grupo de
-      # iniciar qualquer step enquanto o 1o estiver waiting/in_progress — o
-      # 2o dispatch fica preso em "queued" pelo proprio GitHub Actions ANTES
-      # de rodar qualquer coisa, inclusive um passo de deteccao. Os runs
-      # 36265179129/36265412081 (cancelled) em 26/09 foram exatamente isso:
-      # a concorrencia funcionou, alguem so cancelou por impaciencia com a
-      # fila. Mitigacao real: checar a aba Actions antes de um novo dispatch
-      # (nenhum outro run deste workflow em waiting/queued/in_progress); se
-      # um "Waiting" antigo nao for mais necessario, cancele-o em vez de
-      # empilhar outro por cima.
+      # E09 (auditoria de GitHub Actions, 2026-09-26), corrigido em 30/09/2026:
+      # a concurrency NAO enfileira mais de um dispatch — ela mantem 1 em
+      # execucao + 1 pendente por grupo e cancela o pendente anterior a cada
+      # novo dispatch do mesmo grupo. Os cancelados de 26/09 e 30/09 vieram
+      # disso, nao de alguem cancelando por impaciencia. Por isso o grupo e
+      # por funcao (ver o bloco `concurrency` acima). Antes de redisparar a
+      # MESMA funcao, confira se ja nao ha um run dela pendente/em execucao.
       - name: Exigir ref confiavel da main
         run: |
           if [ "$GITHUB_REF" != "refs/heads/main" ]; then
