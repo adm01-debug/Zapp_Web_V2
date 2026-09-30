@@ -95,3 +95,26 @@ test('usage guard ignora DDL dentro de corpo dollar-quoted', () => {
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.match(result.stdout, /projecao forward-only: 1 relacoes, 1 funcoes/);
 });
+
+test('usage guard ignora comentario de bloco ANINHADO com DROP TABLE', () => {
+  const result = runGuard({
+    migrations: {
+      '20260909210000_nested_block_comment.sql':
+        '/* outer /* inner */ DROP TABLE public.t */\n'
+        + 'CREATE TABLE public.t (id integer);\n',
+    },
+  });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /projecao forward-only: 1 relacoes, 0 funcoes/);
+});
+
+test('usage guard preserva tokens quando comentario fica entre keywords sem espaco', () => {
+  const result = runGuard({
+    migrations: {
+      '20260909210000_inline_comment.sql':
+        'CREATE/* c */FUNCTION public.f() RETURNS void LANGUAGE sql AS $$ SELECT 1 $$;\n',
+    },
+  });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /projecao forward-only: 0 relacoes, 1 funcoes/);
+});
