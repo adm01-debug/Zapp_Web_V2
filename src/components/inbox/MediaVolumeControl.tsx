@@ -22,8 +22,8 @@ export interface MediaVolumeControlProps {
 /** Abaixo disso o atendente não descobre sozinho por que "não escuta o áudio do cliente" (E30). */
 const LOW_VOLUME_THRESHOLD = 30;
 
-// Textos distintos dos do botão de alertas (E29): "Silenciar sons de alerta" já existe e
-// continua sendo só dos alertas.
+// Textos distintos dos do botão de alertas (E29): "Volume dos alertas" continua sendo só
+// dos alertas — sem ambiguidade com "Volume dos áudios e vídeos" das mídias.
 export const MEDIA_VOLUME_LABEL = 'Volume dos áudios e vídeos';
 export const MEDIA_VOLUME_LABEL_MUTED = 'Áudios e vídeos mudos';
 const SLIDER_LABEL = 'Volume das mídias';

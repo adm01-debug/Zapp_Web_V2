@@ -108,7 +108,7 @@ test.describe('Volume das mídias de conversa', () => {
   test('mudo da mídia não silencia os alertas e persiste no reload', async ({ page, browserName }) => {
     test.skip(browserName !== 'chromium', 'spec roda no project chromium-authenticated');
 
-    const alerta = page.getByRole('button', { name: /Silenciar sons de alerta|Ativar sons de alerta/ });
+    const alerta = page.getByRole('button', { name: /Volume dos alertas|Sons de alerta mudos/ });
     const rotuloAlertaAntes = await alerta.getAttribute('aria-label');
 
     await page.getByRole('button', { name: LABEL_VOLUME }).click();
