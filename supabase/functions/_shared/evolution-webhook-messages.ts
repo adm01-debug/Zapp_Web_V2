@@ -289,15 +289,15 @@ export async function handleIncomingMessage(
           .select('id').eq('contact_id', tx.contact_id)
           .not('sent_at', 'is', null).gte('sent_at', cutoff).limit(1);
         if (recentSend && recentSend.length > 0) {
-          const { error: suppErr } = await supabase.from('talkx_blacklist').insert({
-            phone: resolvedPhone,
-            contact_id: tx.contact_id,
-            reason: 'Opt-out via mensagem: ' + content.trim().slice(0, 50),
-            reason_code: 'opt_out',
-            origin: 'auto_optout',
-            source_message_id: tx.message_id ?? null,
-          }).select().single();
-          if (!suppErr) {
+          const { data: newId, error: suppErr } = await supabase.rpc('talkx_suppress_contact', {
+            p_contact_id: tx.contact_id,
+            p_phone: resolvedPhone,
+            p_reason: 'Opt-out via mensagem: ' + content.trim().slice(0, 50),
+            p_reason_code: 'opt_out',
+            p_origin: 'auto_optout',
+            p_source_message_id: tx.message_id ?? null,
+          });
+          if (newId) {
             console.warn('[OPT-OUT] ' + resolvedPhone + ' adicionado a talkx_blacklist');
             // E59: enviar mensagem de confirmacao ao contato
             try {
@@ -314,7 +314,11 @@ export async function handleIncomingMessage(
             } catch (notifErr) {
               console.warn('[OPT-OUT] Falha ao enviar confirmacao:', notifErr instanceof Error ? notifErr.message : String(notifErr));
             }
-          } else console.warn('[OPT-OUT] Falha:', suppErr?.message);
+          } else if (!suppErr) {
+            console.warn('[OPT-OUT] ' + resolvedPhone + ' ja suprimido (idempotente): confirmacao nao reenviada');
+          } else {
+            console.warn('[OPT-OUT] Falha:', suppErr?.message);
+          }
         } else {
           console.warn('[OPT-OUT] Ignorado (sem campanha recente) para ', resolvedPhone);
         }

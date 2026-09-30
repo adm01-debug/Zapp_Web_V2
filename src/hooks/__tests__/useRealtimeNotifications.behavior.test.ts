@@ -1,0 +1,75 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
+
+/**
+ * Comportamento (não encanamento): o alerta de mensagem precisa chegar ao som com o TIPO e o
+ * VOLUME persistidos do painel, e respeitar as condições de silêncio.
+ */
+import { playNotificationSound, resetAlertKit, settingsCfg } from '@/hooks/__tests__/helpers/alertBehaviorTestKit';
+
+vi.mock('@/utils/notificationSounds', async () =>
+  (await import('@/hooks/__tests__/helpers/alertBehaviorTestKit')).notificationSoundsMock(),
+);
+
+vi.mock('@/hooks/system/useNotificationSettings', async () =>
+  (await import('@/hooks/__tests__/helpers/alertBehaviorTestKit')).settingsMock(),
+);
+
+import { useRealtimeNotifications } from '@/hooks/realtime/useRealtimeNotifications';
+
+const contato = { id: 'c1', name: 'Fulano', phone: '1199' } as never;
+
+function mensagemNova(over: Record<string, unknown> = {}) {
+  return { id: 'm1', contact_id: 'c2', sender: 'contact', is_read: false, content: 'oi', ...over } as never;
+}
+
+describe('useRealtimeNotifications — efeito do alerta', () => {
+  beforeEach(() => {
+    resetAlertKit();
+    settingsCfg.messageSoundType = 'chime';
+    settingsCfg.soundVolume = 55;
+  });
+
+  it('toca com o tipo e o volume persistidos do painel', () => {
+    const { result } = renderHook(() => useRealtimeNotifications());
+
+    act(() => {
+      result.current.notifyAboutIncomingMessage(contato, mensagemNova());
+    });
+
+    expect(playNotificationSound).toHaveBeenCalledWith('message', 'chime', 55);
+  });
+
+  it('não toca mensagem enviada por mim', () => {
+    const { result } = renderHook(() => useRealtimeNotifications());
+
+    act(() => {
+      result.current.notifyAboutIncomingMessage(contato, mensagemNova({ sender: 'me' }));
+    });
+
+    expect(playNotificationSound).not.toHaveBeenCalled();
+  });
+
+  it('não toca mensagem já lida', () => {
+    const { result } = renderHook(() => useRealtimeNotifications());
+
+    act(() => {
+      result.current.notifyAboutIncomingMessage(contato, mensagemNova({ is_read: true }));
+    });
+
+    expect(playNotificationSound).not.toHaveBeenCalled();
+  });
+
+  it('não toca a conversa que está aberta na tela', () => {
+    const { result } = renderHook(() => useRealtimeNotifications());
+
+    act(() => {
+      result.current.setSelectedContact('c2');
+    });
+    act(() => {
+      result.current.notifyAboutIncomingMessage(contato, mensagemNova({ contact_id: 'c2' }));
+    });
+
+    expect(playNotificationSound).not.toHaveBeenCalled();
+  });
+});

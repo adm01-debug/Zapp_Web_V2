@@ -1,14 +1,8 @@
 import { useMemo } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { motion, useReducedMotion, MotionConfig } from 'framer-motion';
+import { MotionConfig } from 'framer-motion';
 import { useExternalContact360Batch } from '@/hooks/crm/useExternalContact360Batch';
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
 import { useLayoutScroll } from '@/contexts/LayoutScrollContext';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { Button } from '@/components/ui/button';
-import {
-  Sparkles, RefreshCw,
-} from 'lucide-react';
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { BulkActionsBar } from '@/components/contacts/BulkActionsBar';
 import { ContactStatsCards } from './ContactStatsCards';
@@ -75,64 +69,35 @@ export function ContactsView() {
     () => canDeleteSelectedContacts(selectedIds, filteredContacts),
     [filteredContacts, selectedIds],
   );
-  const reduceMotion = useReducedMotion();
-  const tapAnimation = reduceMotion ? undefined : { scale: 0.98 };
-  const queryClient = useQueryClient();
-  const handleSync = () => {
-    refetch();
-    queryClient.invalidateQueries({ queryKey: ['contacts-kpi'] });
-    queryClient.invalidateQueries({ queryKey: ['contacts-type-counts'] });
-  };
 
   return (
     <MotionConfig reducedMotion="user">
     <div className="relative bg-background w-full min-w-0">
-      <ScrollToTopButton scrollRef={layoutScrollRef} />
-
-      <div className="space-y-4">
-      <PageHeader
-        variant="plain"
-        title="Contatos"
-        subtitle={`Base de clientes e leads (${totalCount.toLocaleString('pt-BR')} contatos)`}
-        breadcrumbs={[{ label: 'Início' }, { label: 'Gestão' }, { label: 'Contatos' }]}
-        actions={
-          <div className="flex items-center gap-3 flex-wrap">
-            {crmIntegrationEnabled && (
-              <motion.div whileTap={tapAnimation}>
-                <Button
-                  onClick={() => setIsCRMSearchOpen(true)}
-                  className="h-12 px-5 rounded-xl bg-primary/20 border border-primary/50 text-primary-glow hover:bg-primary/30 font-semibold text-base gap-2"
-                >
-                  <Sparkles className="w-[18px] h-[18px]" />CRM 360°
-                </Button>
-              </motion.div>
-            )}
-            <motion.div whileTap={tapAnimation}>
-              <Button
-                onClick={handleSync}
-                disabled={loading}
-                className="h-12 px-5 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-base gap-2"
-              >
-                <RefreshCw className={`w-[18px] h-[18px] ${loading ? 'animate-spin' : ''}`} />Sincronizar
-              </Button>
-            </motion.div>
-            <ContactDialogs
-              isAddDialogOpen={isAddDialogOpen} setIsAddDialogOpen={setIsAddDialogOpen}
-              newContact={newContact} handleNewContactChange={handleNewContactChange}
-              handleAddContact={handleAddContact} handleCancelForm={handleCancelForm}
-              isSubmitting={isSubmitting}
-              isEditDialogOpen={isEditDialogOpen} setIsEditDialogOpen={setIsEditDialogOpen}
-              editingContact={editingContact} handleEditContactChange={handleEditContactChange}
-              handleEditContact={handleEditContact}
-              showSuccess={showSuccess} setShowSuccess={setShowSuccess}
-              deleteTarget={deleteTarget} setDeleteTarget={setDeleteTarget}
-              handleDeleteContact={handleDeleteContact}
-              tapAnimation={tapAnimation}
-            />
-          </div>
-        }
+      <ScrollToTopButton
+        scrollRef={layoutScrollRef}
+        className="bottom-[calc(228px+env(safe-area-inset-bottom,0px))] md:bottom-[168px] md:right-8"
       />
 
+      {/* Identificação semântica da página (o cabeçalho visual foi removido;
+          o documento continua anunciando "Contatos" para leitores de tela). */}
+      <h1 className="sr-only">Contatos</h1>
+
+      {/* ContactDialogs vive fora de qualquer condição de lista vazia/carregamento:
+          uma única instância preserva os quatro diálogos e o gatilho verde flutuante. */}
+      <ContactDialogs
+        isAddDialogOpen={isAddDialogOpen} setIsAddDialogOpen={setIsAddDialogOpen}
+        newContact={newContact} handleNewContactChange={handleNewContactChange}
+        handleAddContact={handleAddContact} handleCancelForm={handleCancelForm}
+        isSubmitting={isSubmitting}
+        isEditDialogOpen={isEditDialogOpen} setIsEditDialogOpen={setIsEditDialogOpen}
+        editingContact={editingContact} handleEditContactChange={handleEditContactChange}
+        handleEditContact={handleEditContact}
+        showSuccess={showSuccess} setShowSuccess={setShowSuccess}
+        deleteTarget={deleteTarget} setDeleteTarget={setDeleteTarget}
+        handleDeleteContact={handleDeleteContact}
+      />
+
+      <div className="space-y-4">
       <ContactMergeDialog
         open={isMergeOpen} onOpenChange={setIsMergeOpen}
         contacts={filteredContacts.filter(c => selectedIds.includes(c.id))}
@@ -172,6 +137,8 @@ export function ContactsView() {
         viewMode={viewMode} setViewMode={setViewMode}
         gridColumns={gridColumns} setGridColumns={setGridColumns}
         totalCount={totalCount}
+        crmIntegrationEnabled={crmIntegrationEnabled}
+        onOpenCRM={() => setIsCRMSearchOpen(true)}
       />
       </div>
 

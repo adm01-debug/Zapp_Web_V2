@@ -1,4 +1,5 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient } from "../_shared/validation.ts";
+import { decideReassignConversation, REASSIGN_DENIED_MESSAGE } from "../_shared/voice-copilot-authz.ts";
 import { escapeOrFilterValue } from "../_shared/postgrest-filters.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
@@ -111,6 +112,34 @@ Deno.serve(async (req) => {
 
         if (!agent) {
           result = { success: false, message: `Agente "${agentName}" não encontrado.` };
+          break;
+        }
+
+        // L4 (IA-004 / N19): a checagem acima é de VISIBILIDADE. Como a escrita roda
+        // com service_role (bypassa a RLS de contacts), sem esta segunda checagem de
+        // PAPEL um agent que apenas enxergasse o contato moveria a conversa para
+        // qualquer colega ativo. Perfil e papéis do chamador NUNCA vêm do body: saem
+        // do JWT já verificado por requireAuth. Agente reivindica para si; reatribuir
+        // para outra pessoa exige admin/supervisor.
+        const { data: callerProfile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', __uid)
+          .maybeSingle();
+
+        const { data: callerRoles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', __uid);
+
+        const reassignDecision = decideReassignConversation({
+          targetProfileId: agent.id,
+          callerProfileId: callerProfile?.id ?? null,
+          callerRoles: (callerRoles ?? []).map((row: { role: string }) => row.role),
+        });
+
+        if (!reassignDecision.allowed) {
+          result = { success: false, message: REASSIGN_DENIED_MESSAGE };
           break;
         }
 

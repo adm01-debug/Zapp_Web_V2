@@ -166,7 +166,9 @@ export class ContactService {
    static async fetchEnrichedData(contactId: string) {
      return supabase
        .from('contacts')
-       .select('company, job_title, nickname, surname, contact_type, ai_sentiment, ai_priority, channel_type')
+       // A4-D (onda 2): as 6 colunas de endereço entram aqui. Sem elas o painel abria o editor com
+      // `address`/`city`/`postal_code` vazios e o Salvar gravava esse vazio por cima do endereço.
+      .select('company, job_title, nickname, surname, contact_type, ai_sentiment, ai_priority, channel_type, address, address_number, city, neighborhood, postal_code, state')
        .eq('id', contactId)
        .single();
    }

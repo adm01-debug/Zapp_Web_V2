@@ -11,7 +11,7 @@
   },
   "summary": {
     "function_count": 67,
-    "source_file_count": 98,
+    "source_file_count": 99,
     "verify_jwt_true": 57,
     "verify_jwt_false": 10
   },
@@ -98,8 +98,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "bytes": 21952,
-      "sha256": "f747189b5538287bf26770989f331a8812786d970b05049b002ed7878af8915d"
+      "bytes": 22129,
+      "sha256": "edeffdab03cc01cdc740145b2e12d6283b2fb44b8cce0015eaea38e11369083e"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
@@ -165,6 +165,11 @@
       "path": "supabase/functions/_shared/validation.ts",
       "bytes": 11958,
       "sha256": "21cdf66adc5bb9f1820f46936015a67a8b67748f94c13e118ece43fe77423108"
+    },
+    {
+      "path": "supabase/functions/_shared/voice-copilot-authz.ts",
+      "bytes": 2736,
+      "sha256": "c491b2431c16f9218cb116de8e9e076b8bafa72a11c71f04a80f0bcd868956e5"
     },
     {
       "path": "supabase/functions/_shared/webhook-signature.ts",
@@ -488,8 +493,8 @@
     },
     {
       "path": "supabase/functions/voice-copilot-action/index.ts",
-      "bytes": 7158,
-      "sha256": "98ef60e5a17a3b95969f2497e01c4daf1d5b4c18b77acec6547a4c4736afc631"
+      "bytes": 8449,
+      "sha256": "65b4a8c065c4e380525987538f6a51ee646fb99a419adf40ae78958fc1131504"
     },
     {
       "path": "supabase/functions/webauthn/index.ts",
@@ -963,7 +968,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "5030426de61d0b232843307bbaeea50b55dd1745e206394b5219fad4ac10cffb",
+      "source_sha256": "d8229baff43e8e5eb8de36d81dd12d809f24b487c90215b6acbc371035bf554e",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -1320,11 +1325,12 @@
       "name": "voice-copilot-action",
       "entrypoint": "supabase/functions/voice-copilot-action/index.ts",
       "verify_jwt": true,
-      "source_sha256": "25a76deb5586afab3ff6b923c12011afb5f19caf7a71b8ded7e7e50b1af889ab",
+      "source_sha256": "b4ef369518e3441d686042e5787c92d9ceff2d3f4df2a9d2e129d49121beae78",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/postgrest-filters.ts",
         "supabase/functions/_shared/validation.ts",
+        "supabase/functions/_shared/voice-copilot-authz.ts",
         "supabase/functions/voice-copilot-action/index.ts"
       ]
     },
@@ -1365,5 +1371,5 @@
       ]
     }
   ],
-  "manifest_sha256": "65aceee549434d446b5ad3f697f6e0c8c588793a92871612a44dfc6f62382e24"
+  "manifest_sha256": "318ee8b488be18caf19d0550d52551a6603f46750dec412df1707209bbc484b3"
 }

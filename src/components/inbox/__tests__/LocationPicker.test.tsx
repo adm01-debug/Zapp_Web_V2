@@ -132,7 +132,7 @@ describe('LocationPicker', () => {
   });
 
   // Fase 3 (E27) — combobox de autocomplete, flag ligada, aba "Escolher no Mapa".
-  describe('autocomplete de endereço (flag mapa.searchbox-autocomplete ligada)', () => {
+  describe('autocomplete de endereço (ramo único — a flag foi removida no 4b)', () => {
     // Radix Tabs monta o conteúdo da aba num render posterior ao clique (mesmo motivo
     // documentado em useLocationPicker.ts) — por isso findByRole (com retry) em vez de getByRole.
     async function renderOnMapTab(state: ReturnType<typeof hookState>, ac: ReturnType<typeof autocompleteState>) {
@@ -345,6 +345,29 @@ describe('LocationPicker', () => {
       // …mas o operador é avisado, com a causa (E24), uma vez.
       expect(h.toast).toHaveBeenCalledTimes(1);
       expect(screen.getByText('Sem conexão com o serviço de mapas.')).toBeInTheDocument();
+    });
+
+    // ─── 4b: a flag morreu — a UI não pode mais depender dela ──────────────────────────────
+
+    it('4b: com a flag DESLIGADA a UI é a mesma (o ramo legado não existe mais)', async () => {
+      // O helper `renderOnMapTab` liga a flag de propósito, então aqui os passos são repetidos com
+      // a flag DESLIGADA. Antes desta tarefa isso trocava o combobox pelo ramo antigo — que não
+      // tem `role=listbox`, não tem estado de busca (A4-C) e tinha o input próprio —, e este teste
+      // caía no `findByRole('combobox')`. Se alguém reintroduzir o desvio, ele cai de novo.
+      h.hook.mockReturnValue(hookState(null));
+      h.flag.mockReturnValue(false);
+      h.autocomplete.mockReturnValue(autocompleteState());
+      render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
+
+      const mapTab = screen.getByRole('tab', { name: /Escolher no Mapa/ });
+      fireEvent.click(mapTab);
+      fireEvent.focus(mapTab);
+
+      const campo = await screen.findByRole('combobox');
+      expect(campo).toHaveAttribute('aria-autocomplete', 'list');
+      expect(campo).toHaveAttribute('aria-controls', 'location-picker-address-listbox');
+      // e o botão "Buscar" do ramo antigo, que só existia ali, não volta
+      expect(screen.queryByRole('button', { name: /^Buscar$/ })).not.toBeInTheDocument();
     });
 
     // ─── Onda 2 (auditoria adversarial): A3-01, reproduzido no bundle real ──────────────────

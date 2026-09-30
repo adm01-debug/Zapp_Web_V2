@@ -183,3 +183,31 @@ export function groupUpcomingByDay(items: WorkItem[], now: Date = new Date()): D
   }
   return groups;
 }
+
+/**
+ * Etapa 51 (B5): separa as concluidas da coluna Concluido do Quadro — os 7 dias
+ * na frente (ordem `completed_at desc`) e o resto da janela de 30 dias atras do
+ * rodape "Ver mais antigas (30 dias)". Concluida sem carimbo entra na janela
+ * recente: tarefa nunca fica escondida por falta de dado.
+ */
+export function splitDoneByRecency(
+  items: WorkItem[],
+  now: Date = new Date()
+): { recent: WorkItem[]; older: WorkItem[] } {
+  const sevenDaysAgo  = now.getTime() - 7 * 86_400_000;
+  const thirtyDaysAgo = now.getTime() - 30 * 86_400_000;
+  const stamp = (i: WorkItem) => (i.completed_at ? new Date(i.completed_at).getTime() : null);
+
+  const done = items.filter(i => i.status === 'done');
+  const recent = done.filter(i => {
+    const t = stamp(i);
+    return t == null || t >= sevenDaysAgo;
+  });
+  const older = done.filter(i => {
+    const t = stamp(i);
+    return t != null && t >= thirtyDaysAgo && t < sevenDaysAgo;
+  });
+
+  const desc = (a: WorkItem, b: WorkItem) => (stamp(b) ?? 0) - (stamp(a) ?? 0);
+  return { recent: recent.sort(desc), older: older.sort(desc) };
+}
