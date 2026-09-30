@@ -112,7 +112,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[820px] border-collapse">
                 <thead className="bg-muted/20 border-b border-border/60"><tr>
-                  <Th className="w-8">⭐</Th><Th>Segmento</Th><Th>Origem</Th><Th>Critérios</Th><Th>Público estimado</Th><Th>Último uso</Th><Th>Desempenho</Th><Th className="text-right">Ações</Th>
+                  <Th className="w-8">⭐</Th><Th>Segmento</Th><Th>Origem</Th><Th>Critérios</Th><Th>Público estimado</Th><Th>Último uso</Th><Th>Público relativo</Th><Th className="text-right">Ações</Th>
                 </tr></thead>
                 <tbody>
                   {paged.map((s) => (
@@ -174,7 +174,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
         )}
         <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4 flex items-start gap-3">
           <IconTile icon={Info} size={36} color="blue" />
-          <div><p className="text-[13px] font-bold text-foreground">Sugestão de IA</p><p className="text-xs text-foreground-secondary leading-snug">Segmentos com mais de 1.000 contatos têm 2,3× mais conversões que envios genéricos. Segmente mais sua base.</p></div>
+          <div><p className="text-[13px] font-bold text-foreground">Sugestão de IA</p><p className="text-xs text-foreground-secondary leading-snug">Segmentos maiores concentram público semelhante; revise antes de enviar.</p></div>
         </div>
       </div>
 

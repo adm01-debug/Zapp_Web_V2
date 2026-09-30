@@ -600,17 +600,17 @@ export function SegmentedToggle<T extends string>({ value, onChange, options }: 
 }
 
 // Wrapper com glow + tone para PrimaryButton (E15)
-export function TalkXPrimaryButton({ children, onClick, icon: Icon, tone = 'primary', glow = true, loading = false, size = 'md', className }: {
+export function TalkXPrimaryButton({ children, onClick, icon: Icon, tone = 'primary', glow = true, loading = false, disabled = false, size = 'md', className }: {
   children?: ReactNode; onClick?: () => void; icon?: LucideIcon;
-  tone?: 'primary' | 'danger' | 'success'; glow?: boolean; loading?: boolean;
+  tone?: 'primary' | 'danger' | 'success'; glow?: boolean; loading?: boolean; disabled?: boolean;
   size?: 'sm' | 'md' | 'lg'; className?: string;
 }) {
   const h = size === 'lg' ? 'h-11 px-5 text-sm' : size === 'sm' ? 'h-8 px-3 text-xs' : 'h-9 px-4 text-[13px]';
   const bg = tone === 'danger' ? 'bg-destructive hover:bg-destructive/90' : tone === 'success' ? 'bg-success hover:bg-success/90' : 'bg-primary hover:bg-primary/90';
   const shadow = glow && tone === 'primary' ? 'shadow-[var(--shadow-glow-primary)] hover:shadow-[var(--glow-primary-md)]' : '';
   return (
-    <button type="button" onClick={onClick} disabled={loading}
-      className={cn('talkx-glow-ring inline-flex items-center gap-2 rounded-lg text-white font-semibold transition-all shrink-0', h, bg, shadow, loading && 'opacity-70 cursor-not-allowed', className)}
+    <button type="button" onClick={onClick} disabled={disabled || loading}
+      className={cn('talkx-glow-ring inline-flex items-center gap-2 rounded-lg text-white font-semibold transition-all shrink-0', h, bg, shadow, (disabled || loading) && 'opacity-70 cursor-not-allowed', className)}
     >
       {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : Icon && <Icon className="w-4 h-4" />}
       {children}
@@ -845,8 +845,8 @@ export function TalkXConfirmDialog({ open, onClose, onConfirm, icon, iconColor =
         <AlertDialogFooter className="gap-2">
           <AlertDialogCancel onClick={onClose} className="h-9 text-[13px]">{cancelLabel}</AlertDialogCancel>
           <TalkXPrimaryButton tone={tone === 'danger' ? 'danger' : tone === 'success' ? 'success' : 'primary'}
-            glow={tone !== 'danger'} loading={loading} onClick={onConfirm}
-            className={cn('h-9 text-[13px]', !allChecked && 'opacity-40 cursor-not-allowed')}
+            glow={tone !== 'danger'} loading={loading} disabled={!allChecked || loading} onClick={onConfirm}
+            className="h-9 text-[13px]"
           >
             {confirmLabel}
           </TalkXPrimaryButton>
