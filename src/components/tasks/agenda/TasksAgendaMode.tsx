@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { addDays, format, isWeekend } from 'date-fns';
+import { format, isWeekend } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { AlertCircle } from 'lucide-react';
-import { weekBuckets } from '@/hooks/tasks/workItemAggregates';
+import { AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import { weekBuckets, groupAgendaDay, agendaDayDots } from '@/hooks/tasks/workItemAggregates';
 import { WorkItemCard } from '../shared/WorkItemCard';
 import { WorkItemCardSkeleton } from '../shared/WorkItemCardSkeleton';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
@@ -17,8 +17,17 @@ interface Props {
   onDelete: (item: WorkItem) => void;
 }
 
+/** Etapa 55: os grupos do dia, na ordem em que aparecem na tela. */
+const GRUPOS = [
+  { id: 'alarmes', titulo: 'Alarmes' },
+  { id: 'prazos',  titulo: 'Prazos'  },
+  { id: 'semHora', titulo: 'Sem hora' },
+] as const;
+
 export function TasksAgendaMode({ items, overdue, isLoading, onOpen, onToggleDone, onMoveTo, onDelete }: Props) {
   const [selectedDay, setSelectedDay] = useState(0); // offset desde hoje
+  // Etapa 55: o bloco "Atrasadas" nasce colapsado quando passa de 3.
+  const [mostraAtrasadas, setMostraAtrasadas] = useState(overdue.length <= 3);
   const now       = new Date();
   const startDate = new Date(now); startDate.setHours(0, 0, 0, 0);
   const weeks     = weekBuckets(items, startDate);
@@ -28,37 +37,54 @@ export function TasksAgendaMode({ items, overdue, isLoading, onOpen, onToggleDon
   }
 
   const dayData = weeks[selectedDay] ?? { reminders: [], dueTasks: [] };
-  const dayItems = [
-    ...dayData.reminders,
-    ...dayData.dueTasks.filter(t => !dayData.reminders.find(r => r.id === t.id)),
-  ];
+  const grupos  = groupAgendaDay(dayData);
+  const noDia   = new Set([...grupos.alarmes, ...grupos.prazos, ...grupos.semHora].map(i => i.id)).size;
+
+  const cardProps = (item: WorkItem) => ({
+    item,
+    mode: 'agenda' as const,
+    onOpen:       () => onOpen(item),
+    onToggleDone: () => onToggleDone(item),
+    onMoveTo:     (to: WorkItemStatus) => onMoveTo(item, to),
+    onDelete:     () => onDelete(item),
+  });
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Atrasadas (sempre visíveis) */}
+      {/* Atrasadas (expansível; colapsado por padrão quando passa de 3) */}
       {overdue.length > 0 && (
         <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2">
-          <div className="flex items-center gap-2 mb-2">
+          <button
+            type="button"
+            onClick={() => setMostraAtrasadas(v => !v)}
+            aria-expanded={mostraAtrasadas}
+            className="flex w-full items-center gap-2 text-left"
+          >
             <AlertCircle className="h-4 w-4 text-destructive" />
-            <span className="text-[13px] font-semibold text-destructive">{overdue.length} atrasadas</span>
-          </div>
-          <div className="space-y-1.5">
-            {overdue.map(item => (
-              <WorkItemCard key={item.id} item={item} mode="agenda"
-                onOpen={() => onOpen(item)} onToggleDone={() => onToggleDone(item)}
-                onMoveTo={(to) => onMoveTo(item, to)} onDelete={() => onDelete(item)}
-              />
-            ))}
-          </div>
+            <span className="text-[13px] font-semibold text-destructive">
+              {overdue.length} atrasada{overdue.length === 1 ? '' : 's'}
+            </span>
+            <span className="ml-auto text-2xs text-muted-foreground">
+              {mostraAtrasadas ? 'Ver menos' : 'Ver todas'}
+            </span>
+            {mostraAtrasadas
+              ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+              : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+          </button>
+          {mostraAtrasadas && (
+            <div className="mt-2 space-y-1.5">
+              {overdue.map(item => <WorkItemCard key={item.id} {...cardProps(item)} />)}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Faixa de 7 dias */}
+      {/* Faixa de 7 dias: até 3 pontos por tipo de compromisso (etapa 55) */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 snap-x">
         {weeks.map((w, i) => {
           const weekend = isWeekend(w.date);
           const active  = selectedDay === i;
-          const count   = w.reminders.length + w.dueTasks.length;
+          const dots    = agendaDayDots(w, i === 0 ? overdue.length : 0);
           return (
             <button
               key={i}
@@ -77,25 +103,42 @@ export function TasksAgendaMode({ items, overdue, isLoading, onOpen, onToggleDon
               <span className="text-xl font-bold tabular-nums leading-none">
                 {format(w.date, 'd')}
               </span>
-              {count > 0 && (
-                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              )}
+              <span className="flex h-1.5 items-center gap-0.5" data-testid="agenda-day-dots">
+                {dots.map((cor, k) => <span key={k} className={`h-1.5 w-1.5 rounded-full ${cor}`} />)}
+              </span>
             </button>
           );
         })}
       </div>
 
-      {/* Lista do dia selecionado */}
-      <div className="space-y-1.5">
-        {dayItems.length === 0 && (
+      {/* Lista do dia selecionado, em 3 grupos */}
+      <div className="space-y-3">
+        {noDia === 0 && (
           <p className="text-center text-[13px] text-muted-foreground py-8">Nenhuma tarefa neste dia</p>
         )}
-        {dayItems.map(item => (
-          <WorkItemCard key={item.id} item={item} mode="agenda"
-            onOpen={() => onOpen(item)} onToggleDone={() => onToggleDone(item)}
-            onMoveTo={(to) => onMoveTo(item, to)} onDelete={() => onDelete(item)}
-          />
-        ))}
+        {GRUPOS.map(g => {
+          const lista = grupos[g.id];
+          if (lista.length === 0) return null;
+          return (
+            <section key={g.id} aria-label={g.titulo} className="space-y-1.5">
+              <h3 className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {g.titulo} ({lista.length})
+              </h3>
+              {lista.map(item => g.id === 'alarmes' ? (
+                <div key={item.id} className="flex items-start gap-2">
+                  <span className="w-14 shrink-0 pt-3 text-xs tabular-nums text-muted-foreground">
+                    {item.remind_at ? format(new Date(item.remind_at), 'HH:mm') : ''}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <WorkItemCard {...cardProps(item)} />
+                  </div>
+                </div>
+              ) : (
+                <WorkItemCard key={item.id} {...cardProps(item)} />
+              ))}
+            </section>
+          );
+        })}
       </div>
     </div>
   );
