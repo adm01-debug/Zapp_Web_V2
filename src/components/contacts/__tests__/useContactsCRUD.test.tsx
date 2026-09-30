@@ -14,6 +14,9 @@ const mocks = vi.hoisted(() => ({
   getById: vi.fn(),
   refetch: vi.fn(),
   warning: vi.fn(),
+  invalidateQueries: vi.fn(),
+  /** Liga o `onSuccess` do `withFeedback` (o mock padrão só roda a mutação). */
+  callOnSuccess: false,
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -29,6 +32,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       },
       delete: () => ({ eq: async () => ({ error: null }) }),
     }),
+    rpc: () => Promise.resolve({ data: 'ok', error: null }),
   },
 }));
 
@@ -36,8 +40,9 @@ vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ profile: { id: 'u-1' 
 
 vi.mock('@/hooks/ui/useActionFeedback', () => ({
   useActionFeedback: () => ({
-    withFeedback: async (fn: () => Promise<unknown>) => {
+    withFeedback: async (fn: () => Promise<unknown>, options?: { onSuccess?: () => void }) => {
       await fn();
+      if (mocks.callOnSuccess) options?.onSuccess?.();
     },
     warning: mocks.warning,
     success: vi.fn(),
@@ -52,7 +57,7 @@ vi.mock('@/hooks/crm/useContactsSearch', () => ({
 vi.mock('@/hooks/system/useNavigationHistory', () => ({ navigateToView: vi.fn() }));
 
 vi.mock('@tanstack/react-query', () => ({
-  useQueryClient: () => ({ invalidateQueries: vi.fn() }),
+  useQueryClient: () => ({ invalidateQueries: mocks.invalidateQueries }),
 }));
 
 vi.mock('@/services/contact.service', () => ({
@@ -117,6 +122,8 @@ describe('useContactsCRUD — edição não apaga endereço (C1)', () => {
     mocks.getById.mockReset();
     mocks.refetch.mockReset();
     mocks.warning.mockReset();
+    mocks.invalidateQueries.mockReset();
+    mocks.callOnSuccess = false;
   });
 
   it('E01 — editar só o nome preserva endereço e coordenada da linha completa', async () => {
@@ -231,5 +238,50 @@ describe('useContactsCRUD — edição não apaga endereço (C1)', () => {
     expect(payload.address).toBe('Av. Paulista');
     expect(payload.latitude).toBe(-23.5613);
     expect(payload.longitude).toBe(-46.6565);
+  });
+});
+
+describe('useContactsCRUD — invalida os contadores por tipo (contacts-type-counts)', () => {
+  const expectAggregatesInvalidated = () => {
+    expect(mocks.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['contacts-kpi'] });
+    expect(mocks.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['contacts-type-counts'] });
+  };
+
+  it('após criar, invalida contacts-kpi E contacts-type-counts', async () => {
+    mocks.callOnSuccess = true;
+    const hook = mountHook();
+    act(() => {
+      hook.result.current.handleNewContactChange('name', 'Beltrano');
+      hook.result.current.handleNewContactChange('phone', '5511988887777');
+    });
+    await act(async () => {
+      await hook.result.current.handleAddContact();
+    });
+    expectAggregatesInvalidated();
+  });
+
+  it('após editar com troca de tipo, invalida contacts-type-counts', async () => {
+    mocks.callOnSuccess = true;
+    mocks.getById.mockResolvedValue({ data: FULL_ROW, error: null });
+    const hook = mountHook();
+    await act(async () => {
+      await hook.result.current.openEditDialog(LIST_ROW as never);
+    });
+    act(() => {
+      hook.result.current.handleEditContactChange('contact_type', 'fornecedor');
+    });
+    await act(async () => {
+      await hook.result.current.handleEditContact();
+    });
+    expectAggregatesInvalidated();
+  });
+
+  it('após apagar, invalida contacts-type-counts', async () => {
+    mocks.callOnSuccess = true;
+    const hook = mountHook();
+    await act(async () => {
+      await hook.result.current.handleDeleteContact('c1');
+    });
+    expectAggregatesInvalidated();
   });
 });

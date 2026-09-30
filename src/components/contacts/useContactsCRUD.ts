@@ -87,8 +87,9 @@ export function useContactsCRUD() {
   const feedback = useActionFeedback();
   const searchHook = useContactsSearch();
   const queryClient = useQueryClient();
-  const invalidateKpi = useCallback(() => {
+  const invalidateContactAggregates = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['contacts-kpi'] });
+    queryClient.invalidateQueries({ queryKey: ['contacts-type-counts'] });
   }, [queryClient]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -169,7 +170,7 @@ export function useContactsCRUD() {
           setIsAddDialogOpen(false);
           setShowSuccess({ name: contactName, protocol });
           searchHook.refetch();
-          invalidateKpi();
+          invalidateContactAggregates();
         },
       }
     );
@@ -219,7 +220,7 @@ export function useContactsCRUD() {
           setIsEditDialogOpen(false);
           setEditingContact(null);
           searchHook.refetch();
-          invalidateKpi();
+          invalidateContactAggregates();
         },
       }
     );
@@ -249,7 +250,7 @@ export function useContactsCRUD() {
         onSuccess: () => {
           setDeleteTarget(null);
           searchHook.refetch();
-          invalidateKpi();
+          invalidateContactAggregates();
         },
       }
     );
@@ -312,5 +313,6 @@ export function useContactsCRUD() {
     handleAddContact, handleEditContact, handleDeleteContact,
     openEditDialog, handleCancelForm,
     handleNewContactChange, handleEditContactChange,
+    invalidateContactAggregates,
   };
 }
