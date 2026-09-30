@@ -311,7 +311,11 @@ describe('LocationPicker', () => {
 
       expect(screen.getByText(/Sugestões pausadas por \d+ s/)).toBeInTheDocument();
       expect(screen.queryByText(/Nada encontrado/)).not.toBeInTheDocument();
-      expect(screen.queryByText('Tentar novamente')).not.toBeInTheDocument();
+      // A3-04 (onda 2): a pausa transitória PASSA a oferecer "Tentar novamente" — a ausência do
+      // botão era exatamente o defeito medido no bundle real (0 ocorrências durante toda a espera).
+      // O que continua proibido é a pausa se passar por ERRO.
+      expect(screen.queryByText('Falha ao buscar sugestões.')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /tentar novamente/i })).toBeInTheDocument();
     });
 
     it('E24: a falha mostra a causa em texto, não um "Falha ao buscar sugestões" genérico', async () => {

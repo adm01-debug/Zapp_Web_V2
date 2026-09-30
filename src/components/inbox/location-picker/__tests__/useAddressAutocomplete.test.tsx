@@ -302,6 +302,33 @@ describe('useAddressAutocomplete', () => {
     expect(h.suggestPlaces).toHaveBeenCalledTimes(2);
   });
 
+  it('A3-04: retry depois da espera ENCERRA a pausa (o aviso não fica preso em "0 s")', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'rate_limited' });
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua a'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    expect(result.current.status).toBe('error');
+    expect(result.current.error).toBe('rate_limited');
+
+    // "Tentar novamente" durante a espera troca o erro pela PAUSA — é exatamente a tela que o
+    // operador via no bundle real (botão sumia, contador começava) e não faz request novo (E13)
+    act(() => { result.current.retrySuggest(); });
+    expect(result.current.status).toBe('paused');
+    expect(result.current.blocked).toBe('rate_limited');
+    expect(h.suggestPlaces).toHaveBeenCalledTimes(1);
+
+    // a espera passa; a partir daqui o retry tem de religar a busca e SAIR da pausa — era aqui
+    // que ela ficava presa (o aviso seguia de pé, com o contador morto em "0 s")
+    act(() => { vi.advanceTimersByTime(60_000); });
+    h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
+    act(() => { result.current.retrySuggest(); });
+    await act(async () => {});
+
+    expect(h.suggestPlaces).toHaveBeenCalledTimes(2);
+    expect(result.current.status).toBe('ok');
+    expect(result.current.blocked).toBeNull();
+  });
+
   // ── F2 · cascata /suggest → /forward (E15–E20) ──────────────────────────────────────────────
 
   it('E15: /suggest cai por rota (http) — o /forward assume e as sugestões já vêm com coordenada', async () => {

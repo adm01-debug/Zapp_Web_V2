@@ -35,5 +35,8 @@ export function pausedNoticeText(
 ): string {
   if (reason === 'cost_guard') return SEARCH_FAILURE_TEXT.cost_guard;
   if (secondsLeft === null) return 'Sugestões pausadas — aguarde um instante.';
+  // A3-04 (onda 2): a espera terminava e o texto continuava "pausadas por 0 s" — um contador
+  // morto, que dizia limite vigente quando não havia mais nenhum. Zero é "já pode tentar".
+  if (secondsLeft <= 0) return 'Sugestões pausadas — o tempo de espera acabou, já pode tentar de novo.';
   return `Sugestões pausadas por ${secondsLeft} s — a busca por Enter continua funcionando.`;
 }
