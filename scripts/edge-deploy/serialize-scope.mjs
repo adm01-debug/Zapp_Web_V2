@@ -44,26 +44,34 @@ async function githubGet(path, token) {
   return response.json();
 }
 
-/** Runs deste workflow em execucao, com o escopo e se ja passaram do gate. Busca jobs so dos conflitantes. */
-export async function listInProgress({ repo, workflowFile, token, me, get = githubGet }) {
+/**
+ * Runs deste workflow em execucao, com o escopo e se ja passaram do gate. Busca jobs so dos
+ * conflitantes que ainda nao foram vistos passando: passar do gate e irreversivel, entao
+ * `passedGates` (mutado aqui) evita reconsultar — senao, esperando atras de varios runs longos,
+ * o laco estoura a cota de 1000 req/h do GITHUB_TOKEN (review do #1315).
+ */
+export async function listInProgress({ repo, workflowFile, token, me, get = githubGet, passedGates = new Set() }) {
   const data = await get(`/repos/${repo}/actions/workflows/${workflowFile}/runs?status=in_progress&per_page=100`, token);
   const runs = (data.workflow_runs ?? []).map((run) => ({ id: Number(run.id), scope: parseScopeFromTitle(run.display_title) }))
     .filter((run) => run.id !== me.id && (me.scope === 'all' || run.scope === 'all'));
   for (const run of runs) {
+    if (passedGates.has(run.id)) { run.gatePassed = true; continue; }
     const jobs = await get(`/repos/${repo}/actions/runs/${run.id}/jobs?per_page=100`, token);
     run.gatePassed = (jobs.jobs ?? []).some((job) => (job.steps ?? [])
       .some((step) => step.name === GATE_STEP_NAME && step.status === 'completed'));
+    if (run.gatePassed) passedGates.add(run.id);
   }
   return runs;
 }
 
 export async function waitForTurn({
   me, repo, workflowFile, token, get = githubGet,
-  intervalMs = 15_000, maxWaitMs = MAX_WAIT_MINUTES * 60_000, now = () => Date.now(), sleep = (ms) => new Promise((r) => setTimeout(r, ms)), log = console.log,
+  intervalMs = 30_000, maxWaitMs = MAX_WAIT_MINUTES * 60_000, now = () => Date.now(), sleep = (ms) => new Promise((r) => setTimeout(r, ms)), log = console.log,
 }) {
   const started = now();
+  const passedGates = new Set();
   for (;;) {
-    const blocking = blockingRuns(me, await listInProgress({ repo, workflowFile, token, me, get }));
+    const blocking = blockingRuns(me, await listInProgress({ repo, workflowFile, token, me, get, passedGates }));
     if (blocking.length === 0) return;
     if (now() - started >= maxWaitMs) {
       throw new Error(`Deploy ${me.scope} ainda conflita com run(s) ${blocking.map((r) => `${r.id}(${r.scope})`).join(', ')} apos ${maxWaitMs / 60_000} min`);

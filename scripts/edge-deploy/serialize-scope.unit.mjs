@@ -35,11 +35,12 @@ test('ignora o proprio run', () => {
   assert.deepEqual(blockingRuns({ id: 10, scope: 'all' }, [{ id: 10, scope: 'all', gatePassed: true }]), []);
 });
 
-function fakeApi(states) {
+function fakeApi(states, counter = { jobs: 0 }) {
   let call = 0;
   return async (path) => {
     const state = states[Math.min(call, states.length - 1)];
     if (path.includes('/runs?status=in_progress')) { call += 1; return { workflow_runs: state.runs }; }
+    counter.jobs += 1;
     const id = Number(/runs\/(\d+)\/jobs/.exec(path)[1]);
     const done = state.gatePassed.includes(id);
     return { jobs: [{ steps: [{ name: GATE_STEP_NAME, status: done ? 'completed' : 'in_progress' }] }] };
@@ -70,3 +71,17 @@ test('waitForTurn falha alto quando o conflito passa do teto', async () => {
     intervalMs: 1_000, maxWaitMs: 5_000, now: () => tick, sleep: async (ms) => { tick += ms; }, log: () => {},
   }), /ainda conflita com run\(s\) 10\(send-email\)/);
 });
+
+test('gate ja visto passando nao e reconsultado (cota da API)', async () => {
+  let tick = 0;
+  const counter = { jobs: 0 };
+  const running = { runs: [10, 11, 12].map((id) => ({ id, display_title: `Deploy Edge Functions (fn-${id})` })), gatePassed: [10, 11, 12] };
+  await waitForTurn({
+    me: { id: 20, scope: 'all' }, repo: 'o/r', workflowFile: 'w.yml', token: 't',
+    get: fakeApi([running, running, running, running, { runs: [], gatePassed: [] }], counter),
+    intervalMs: 1, now: () => tick, sleep: async (ms) => { tick += ms; }, log: () => {},
+  });
+  // 4 polls com 3 runs conflitantes: sem cache seriam 12 consultas de jobs; com cache, 3.
+  assert.equal(counter.jobs, 3);
+});
+
