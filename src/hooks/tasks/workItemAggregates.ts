@@ -9,6 +9,8 @@ export interface BucketsByDue {
   upcoming: WorkItem[];
   noDue: WorkItem[];
   done7d: WorkItem[];
+  /** Concluidas entre 8 e 30 dias — reveladas pelo "ver mais (30 dias)" da Lista (etapa 48/B4). */
+  doneOlder: WorkItem[];
 }
 
 export interface KpiSnapshot {
@@ -24,11 +26,17 @@ export function bucketByDue(items: WorkItem[], now: Date = new Date()): BucketsB
   const tomorrowStart  = startOfDay(addDays(now, 1));
   const day2Start      = startOfDay(addDays(now, 2));
   const sevenDaysAgo   = new Date(now.getTime() - 7 * 86_400_000);
+  const thirtyDaysAgo  = new Date(now.getTime() - 30 * 86_400_000);
 
   const active = items.filter(i => i.status !== 'done' && i.status !== 'cancelled');
-  const done7d = items.filter(i =>
-    i.status === 'done' && i.completed_at != null &&
-    new Date(i.completed_at) >= sevenDaysAgo
+  const done = items.filter(i => i.status === 'done' && i.completed_at != null);
+  const done7d = done.filter(i => new Date(i.completed_at!) >= sevenDaysAgo);
+  // Etapa 48 (B4): a Lista mostra 7 dias e revela o resto da janela de 30 dias
+  // (a query do hook ja traz 30d) no rodape "ver mais (30 dias)". Aqui fica o
+  // recorte de 8 a 30 dias — o que a secao recolhida nao mostra.
+  const doneOlder = done.filter(i =>
+    isBefore(new Date(i.completed_at!), sevenDaysAgo) &&
+    !isBefore(new Date(i.completed_at!), thirtyDaysAgo)
   );
 
   const overdue: WorkItem[]   = [];
@@ -46,7 +54,7 @@ export function bucketByDue(items: WorkItem[], now: Date = new Date()): BucketsB
     else                          { upcoming.push(item); }
   }
 
-  return { overdue, today, tomorrow, upcoming, noDue, done7d };
+  return { overdue, today, tomorrow, upcoming, noDue, done7d, doneOlder };
 }
 
 export function bucketByStatus(items: WorkItem[]): Record<WorkItemStatus, WorkItem[]> {

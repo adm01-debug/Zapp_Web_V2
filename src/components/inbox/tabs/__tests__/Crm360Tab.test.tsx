@@ -22,7 +22,7 @@ vi.mock('@/hooks/chat/useNextBestAction', () => ({
 }));
 
 vi.mock('@/hooks/tasks/useMyWorkItems', () => ({
-  useMyWorkItems: () => ({ create: mockCreateTask, byDue: { overdue:[], today:[], tomorrow:[], upcoming:[], noDue:[], done7d:[] }, isLoading: false }),
+  useMyWorkItems: () => ({ create: mockCreateTask, byDue: { overdue:[], today:[], tomorrow:[], upcoming:[], noDue:[], done7d:[], doneOlder:[] }, isLoading: false }),
 }));
 
 vi.mock('@/hooks/system/useNavigationHistory', () => ({

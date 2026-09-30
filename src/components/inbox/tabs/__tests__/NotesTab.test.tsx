@@ -36,7 +36,7 @@ function renderTab(notes: ContactNote[] = NOTES, openTasks: Array<{ id: string; 
     allNotes: notes, addNote: mockAddNote, deleteNote: mockDeleteNote, toggleNoteDone: mockToggleNoteDone, currentProfileId: 'me',
   });
   mockUseMyWorkItems.mockReturnValue({
-    byDue: { overdue: openTasks, today: [], tomorrow: [], upcoming: [], noDue: [], done7d: [] },
+    byDue: { overdue: openTasks, today: [], tomorrow: [], upcoming: [], noDue: [], done7d: [], doneOlder: [] },
     create: mockCreateTask,
     isLoading: false,
   });
