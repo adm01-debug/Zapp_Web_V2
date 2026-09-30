@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { startOfDay } from 'date-fns';
-import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay, splitDoneByRecency } from '../workItemAggregates';
+import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay, splitDoneByRecency, applyFilters } from '../workItemAggregates';
+import { DEFAULT_FILTERS } from '../workItemFilters';
 import type { WorkItem } from '../workItem.types';
 
 const now = new Date('2026-10-03T12:00:00Z');
@@ -28,6 +29,45 @@ function makeItem(overrides: Partial<WorkItem>): WorkItem {
     ...overrides,
   };
 }
+
+describe('applyFilters (etapas 45/46 — os filtros valem nos três modos)', () => {
+  const base: WorkItem[] = [
+    makeItem({ id: 'a', title: 'Ligar para a Ana', priority: 'urgent' }),
+    makeItem({ id: 'b', title: 'Enviar orçamento', priority: 'low', remind_at: '2026-10-04T09:00:00Z' }),
+    makeItem({ id: 'c', title: 'Ligar de novo', priority: 'high', contact: { id: 'c1', name: 'Ana', phone: null, avatar_url: null } }),
+    makeItem({ id: 'd', title: 'Já feita', status: 'done', completed_at: '2026-10-02T10:00:00Z' }),
+  ];
+  const ids = (items: WorkItem[]) => items.map(i => i.id);
+
+  it('sem filtro nenhum devolve tudo, inclusive as concluídas', () => {
+    expect(ids(applyFilters(base, DEFAULT_FILTERS))).toEqual(['a', 'b', 'c', 'd']);
+  });
+
+  it('a busca casa o título sem diferenciar maiúsculas e ignora espaços das pontas', () => {
+    expect(ids(applyFilters(base, { ...DEFAULT_FILTERS, q: '  LIGAR ' }))).toEqual(['a', 'c']);
+  });
+
+  it('prioridade recorta pela prioridade exata', () => {
+    expect(ids(applyFilters(base, { ...DEFAULT_FILTERS, prio: 'urgent' }))).toEqual(['a']);
+  });
+
+  it('contato recorta pelo id do contato da tarefa', () => {
+    expect(ids(applyFilters(base, { ...DEFAULT_FILTERS, contact: 'c1' }))).toEqual(['c']);
+  });
+
+  it('"com alarme" só deixa o que tem lembrete marcado', () => {
+    expect(ids(applyFilters(base, { ...DEFAULT_FILTERS, alarm: true }))).toEqual(['b']);
+  });
+
+  it('esconder as concluídas tira as `done` dos três modos', () => {
+    expect(ids(applyFilters(base, { ...DEFAULT_FILTERS, done: false }))).toEqual(['a', 'b', 'c']);
+  });
+
+  it('os filtros somam (E, não OU)', () => {
+    expect(ids(applyFilters(base, { ...DEFAULT_FILTERS, q: 'ligar', prio: 'high' }))).toEqual(['c']);
+    expect(applyFilters(base, { ...DEFAULT_FILTERS, q: 'ligar', prio: 'high', done: false })).toHaveLength(1);
+  });
+});
 
 describe('bucketByDue', () => {
   it('classifica atrasada corretamente', () => {
