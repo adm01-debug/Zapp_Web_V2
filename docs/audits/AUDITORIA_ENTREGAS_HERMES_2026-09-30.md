@@ -19,7 +19,7 @@ planejada antes de ser aplicada.
 | Testes novos provam comportamento (mutação) | **15 de 17 mutações mortas (94%)** — 2 sobreviventes |
 | Produção = `main` | **sim** para os 24 merges (24/24 deploy `success`); bundle avançou 4× durante a auditoria |
 | Gates do repositório | **verdes**, exceto a instabilidade intermitente da suíte unitária (C-06) |
-| CI da `main` depois dos merges | **3 workflows vermelhos** + fila de Edge quebrada |
+| CI da `main` depois dos merges | **3 workflows vermelhos** (DB Live Guard, types-sync, E2E logado) + fila de Edge quebrada; a colisão de versão que derrubava o `Contrato DB offline` foi resolvida durante a auditoria (§4/F2) |
 | Segredos / escopo / lockfile nos 24 diffs | **limpo** (0 segredo, 0 lockfile, 0 arquivo 100755) |
 | Paridade ledger ↔ repositório | **1 divergência real** (DDL fora do Git, C-01) |
 
@@ -206,12 +206,15 @@ limpeza, e/ou sair cedo quando `typeof window === 'undefined'`.
 - **Aplicam e são idempotentes:** 6/6 no snapshot (P1 exit=0 e P2 exit=0 → 12/12). **A ordem do lote
   não importa** (em ordem inversa: 6/6 exit=0 e estado final idêntico). São **incrementais**: 3 de 6
   dependem de tabelas de dias anteriores.
-- **Colisão de versão (P0, confirmada pelo coordenador):** `20260930140000` existe **duas vezes** no
-  `main` (`_align_ai_read_policies_with_contact_visibility` e `_talkx_blacklist_contact_active_unique`).
-  O check obrigatório **`Contrato DB offline` está vermelho** no commit mais recente da `main`
-  (`9f817ac2` = completed/**failure**, enquanto `Lint & TypeCheck` = success), com a mensagem
-  `versao duplicada 20260930140000`. Os dois PRs passaram **isolados** porque a branch protection tem
-  `strict=false` — cada um validou contra uma base sem o outro.
+- **Colisão de versão (P0 — introduzida e resolvida DURANTE esta auditoria):** `20260930140000` existiu
+  **duas vezes** no `main` (`_align_ai_read_policies_with_contact_visibility`, do PR #1263, e
+  `_talkx_blacklist_contact_active_unique`, do PR #1264). O check obrigatório **`Contrato DB offline`
+  ficou vermelho** em `9f817ac2` (= completed/**failure**, com `Lint & TypeCheck` = success), com a
+  mensagem `versao duplicada 20260930140000`. Os dois PRs passaram **isolados** porque a branch
+  protection tem `strict=false` — cada um validou contra uma base sem o outro.
+  **Resolvido às 13:52Z pelo PR #1269**, que renumerou a V07 para `20260930160000`: em `1f7ac6a5` o
+  check voltou a `success` (medido). A lição estrutural permanece: com `strict=false`, dois PRs podem
+  introduzir a mesma versão e cada um passa sozinho.
 - **`DROP POLICY` sem `IF EXISTS`** em `20260930100000:36` — a única das migrations do dia que não é
   *replay-safe* (falha `42704` onde a policy não exista).
 - **Cobertura de CI furada:** só 3 das 7 migrations do dia têm harness rodando no check obrigatório.
@@ -313,8 +316,8 @@ de novo, por mim:
 
 | Claim | Minha medição | Veredito |
 | --- | --- | --- |
-| Colisão de versão + check obrigatório vermelho na `main` | `supabase/migrations/` na `main` tem **dois** arquivos `20260930140000_*`; `Contrato DB offline` = completed/**failure** em `9f817ac2` (com `Lint & TypeCheck` = success) | **confirmado** |
-| 3 funções de e-mail do PR #1240 não publicadas | `supabase functions download send-email` → `from: body.from \|\| "ZAPP System <noreply@zapp.com>"` × repo → `from: "ZAPP System <noreply@promobrindes.com.br>"` | **confirmado** |
+| Colisão de versão + check obrigatório vermelho na `main` | `supabase/migrations/` na `main` tinha **dois** arquivos `20260930140000_*`; `Contrato DB offline` = completed/**failure** em `9f817ac2` (com `Lint & TypeCheck` = success) | **confirmado** às 12:50Z; **resolvido** às 13:52Z pelo PR #1269 → `1f7ac6a5` = success |
+| 3 funções de e-mail do PR #1240 não publicadas | `supabase functions download send-email` → `from: body.from \|\| "ZAPP System <noreply@zapp.com>"` × repo → `from: "ZAPP System <noreply@promobrindes.com.br>"` | **confirmado** (medido 2×: 12:40Z e 14:20Z; as 3 funções seguem com o fonte antigo) |
 | Seção "Concluídas" órfã na Lista | `TasksListMode.tsx:47` retorna `null` por `items.length === 0` antes de considerar `olderItems` | **confirmado** |
 | C-06 (suíte sai 1 sem falha) | 3 rodadas próprias com resultados divergentes (exit 1 / exit 0 isolado / exit 0 com `CI=true`) | **confirmado como latente** |
 
@@ -333,10 +336,12 @@ de novo, por mim:
 
 ## 7. Ações priorizadas (nenhuma executada por esta auditoria)
 
-**P0 — bloqueia merge de qualquer chat agora**
-1. Renumerar uma das duas `20260930140000` (a que não está no ledger) e revalidar `Contrato DB
-   offline` na `main`. Enquanto isso, o check obrigatório fica vermelho e todo PR que precise dele
-   emperra.
+**P0 — resolvido durante a auditoria (mantido como lição estrutural)**
+1. ~~Renumerar uma das duas `20260930140000` e revalidar o `Contrato DB offline` na `main`.~~
+   **Feito em outro chat: PR #1269, às 13:52Z** (a V07 virou `20260930160000`; `1f7ac6a5` =
+   `Contrato DB offline` success). O risco que produziu o vermelho segue aberto: com `strict=false`
+   dois PRs podem introduzir a mesma versão e cada um passa isolado — avaliar `strict=true` ou levar
+   a checagem de versão duplicada para o PR.
 
 **P1 — produção não tem o que o repositório diz que tem**
 2. Publicar `send-email`, `detect-new-device` e `send-scheduled-report` do PR #1240 (a correção do
