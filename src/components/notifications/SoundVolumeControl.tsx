@@ -3,6 +3,7 @@ import { Volume1, Volume2, VolumeX } from 'lucide-react';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { VolumeSliderPopoverContent } from '@/components/ui/VolumeSliderPopoverContent';
+import { VolumeTriggerButton } from '@/components/ui/VolumeTriggerButton';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 import { useVolumeRocker } from '@/hooks/ui/useVolumeRocker';
 import { cn } from '@/lib/utils';
@@ -66,30 +67,18 @@ export function SoundVolumeControl({ className }: { className?: string }) {
   const Icon = muted ? VolumeX : volume < 50 ? Volume1 : Volume2;
 
   const trigger = (
-    <button
-      type="button"
-      onClick={rocker.handleTriggerClick}
-      onPointerDown={rocker.handlePointerDown}
-      onPointerUp={rocker.clearLongPress}
-      onPointerLeave={rocker.clearLongPress}
-      onPointerCancel={rocker.clearLongPress}
-      onKeyDown={rocker.handleTriggerKeyDown}
-      aria-label={label}
-      aria-pressed={muted}
+    <VolumeTriggerButton
+      label={label}
+      muted={muted}
+      icon={<Icon className="h-[16px] w-[16px]" />}
       className={cn(
-        'relative inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
-        'text-muted-foreground hover:bg-muted hover:text-foreground',
+        'h-9 w-9 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground',
         !muted && 'text-primary',
       )}
-    >
-      <Icon className="h-[16px] w-[16px]" />
-      {showLowVolumeDot && (
-        <span
-          data-testid="sound-volume-low-dot"
-          className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-primary ring-2 ring-background"
-        />
-      )}
-    </button>
+      lowDot={showLowVolumeDot}
+      lowDotTestId="sound-volume-low-dot"
+      rocker={rocker}
+    />
   );
 
   return (

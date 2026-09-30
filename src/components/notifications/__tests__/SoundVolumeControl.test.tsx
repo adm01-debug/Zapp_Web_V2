@@ -1,17 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import React from 'react';
 
-// ─── Mocks (mesmo conjunto do teste de volume das mídias) ─────────────────
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    channel: vi.fn(() => ({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() })),
-    removeChannel: vi.fn(),
-    from: vi.fn(() => ({ select: vi.fn(() => Promise.resolve({ data: [], error: null })) })),
-  },
-}));
-
-vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
+// Mocks comuns aos testes de controle de volume (toast/logger/framer-motion/ResizeObserver).
+import '@/test/volumeControlMocks';
 
 const h = vi.hoisted(() => ({
   settings: { soundEnabled: true, soundVolume: 70 },
@@ -25,29 +16,6 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
     isSaving: false,
   }),
 }));
-
-vi.mock('@/lib/logger', () => ({
-  log: { error: vi.fn(), info: vi.fn(), debug: vi.fn(), warn: vi.fn() },
-}));
-
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
-      const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
-      return React.createElement('div', { ...rest, ref });
-    }),
-  },
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
-}));
-
-if (!('ResizeObserver' in globalThis)) {
-  class ResizeObserverStub {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  }
-  (globalThis as { ResizeObserver?: unknown }).ResizeObserver = ResizeObserverStub;
-}
 
 import { SoundVolumeControl } from '../SoundVolumeControl';
 import { TooltipProvider } from '@/components/ui/tooltip';

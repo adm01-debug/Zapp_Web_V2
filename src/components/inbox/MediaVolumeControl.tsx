@@ -3,6 +3,7 @@ import { ChevronUp, HeadphoneOff, Headphones, Volume1, Volume2, VolumeX } from '
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { VolumeSliderPopoverContent } from '@/components/ui/VolumeSliderPopoverContent';
+import { VolumeTriggerButton } from '@/components/ui/VolumeTriggerButton';
 import { useMediaVolume } from '@/hooks/communication/useMediaVolume';
 import { useVolumeRocker } from '@/hooks/ui/useVolumeRocker';
 import { MEDIA_VOLUME_STEP } from '@/lib/mediaVolumeStore';
@@ -79,38 +80,23 @@ export function MediaVolumeControl({
         : Volume2;
 
   const trigger = (
-    <button
-      type="button"
-      onClick={rocker.handleTriggerClick}
-      onPointerDown={rocker.handlePointerDown}
-      onPointerUp={rocker.clearLongPress}
-      onPointerLeave={rocker.clearLongPress}
-      onPointerCancel={rocker.clearLongPress}
-      onKeyDown={rocker.handleTriggerKeyDown}
-      aria-label={label}
-      aria-pressed={muted}
-      aria-disabled={disabled}
-      // Fora da sidebar o padrão da casa é `title` nativo (é o que a velocidade e a
-      // transcrição do balão usam) — o Radix Tooltip exige TooltipProvider e o balão
-      // precisa funcionar fora do shell do app.
-      title={isSidebar ? undefined : label}
+    <VolumeTriggerButton
+      label={label}
+      muted={muted}
+      icon={<Icon className={isSidebar ? 'h-[16px] w-[16px]' : 'h-[14px] w-[14px]'} />}
       className={cn(
-        'relative inline-flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
         variant === 'bubble' && 'h-6 w-6 rounded-md hover:bg-foreground/10',
         variant === 'overlay' && 'h-9 w-9 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80',
         variant === 'sidebar' && 'h-9 w-9 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground',
         disabled && 'cursor-not-allowed opacity-50',
         !disabled && isSidebar && !muted && 'text-primary',
       )}
-    >
-      <Icon className={isSidebar ? 'h-[16px] w-[16px]' : 'h-[14px] w-[14px]'} />
-      {showLowVolumeDot && (
-        <span
-          data-testid="media-volume-low-dot"
-          className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-primary ring-2 ring-background"
-        />
-      )}
-    </button>
+      lowDot={showLowVolumeDot}
+      lowDotTestId="media-volume-low-dot"
+      ariaDisabled={disabled}
+      title={isSidebar ? undefined : label}
+      rocker={rocker}
+    />
   );
 
   return (
