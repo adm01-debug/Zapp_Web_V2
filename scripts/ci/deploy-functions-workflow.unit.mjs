@@ -50,3 +50,18 @@ test('concurrency e por funcao: dispatch de uma funcao nao cancela o pendente de
   assert.match(block[1], /^  cancel-in-progress: false$/m);
 });
 
+test('escopo all e serializado contra deploys por funcao antes do Deploy', () => {
+  // Grupos diferentes (all x funcao) rodariam juntos: rollback por source_ref ou SHAs
+  // diferentes publicariam bundles distintos da mesma funcao (review do #1315).
+  assert.match(workflow, /^run-name: Deploy Edge Functions \(\$\{\{ inputs\.function_name \|\| 'all' \}\}\)$/m);
+  assert.match(workflow, /^      actions: read$/m);
+  const gate = workflow.indexOf('- name: Serializar escopo TODAS contra deploys por funcao');
+  const deploy = workflow.indexOf('- name: Deploy\n');
+  assert.ok(gate > 0 && deploy > gate, 'gate precisa vir antes do Deploy');
+  assert.match(workflow.slice(gate, deploy), /edge-tooling\/scripts\/edge-deploy\/serialize-scope\.mjs/);
+});
+
+test('tag de deploy e unica por run (deploys paralelos no mesmo segundo)', () => {
+  assert.match(workflow, /TAG="edge-deploy\/[^"\n]*\$\{GITHUB_RUN_ID\}"/);
+});
+
