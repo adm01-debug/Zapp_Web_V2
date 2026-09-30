@@ -38,6 +38,12 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
   const hook = useMyWorkItems();
   const { byDue, byStatus, kpis, isLoading, isError, create, move, reorder, complete, deleteItem } = hook;
 
+  // Etapa 43: o subtítulo do cabeçalho mostra números reais em pt-BR (separador
+  // de milhar) e com singular correto — "1 aberta", não "1 abertas".
+  const openCount = byStatus.backlog.length + byStatus.todo.length + byStatus.doing.length + byStatus.waiting.length;
+  const subtitleAbertas = `${openCount.toLocaleString('pt-BR')} ${openCount === 1 ? 'aberta' : 'abertas'}`;
+  const subtitleHoje = `${kpis.dueToday.toLocaleString('pt-BR')} para hoje`;
+
   // Flag de animacao de entrada: saiu da API do hook na etapa 18 e vive aqui.
   const hasMounted = useRef(false);
   useEffect(() => { hasMounted.current = true; }, []);
@@ -96,7 +102,7 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
       <PageHeader
         variant="plain"
         title="Tarefas"
-        subtitle="Suas tarefas pessoais"
+        subtitle={`${subtitleAbertas} · ${subtitleHoje}`}
         breadcrumbs={[{ label: 'Início', href: '/' }, { label: 'Tarefas' }]}
       />
 

@@ -94,7 +94,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 ## CP-C Sheet       [ ] WorkItemSheet= · ?task= · Aguardando por DnD/kebab/menu= · kebab 5 grupos= · RemindChip popover= · ContactChip=
 ## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
-## CP-E Telas       [~] etapas 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8) e 53 fechadas 29-30/09/2026 (executor: Hermes) · KPIs 88px= · filtros 3 modos= · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos= · 0 requests na troca= · modo por rota: ok
+## CP-E Telas       [~] etapas 43, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8) e 53 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px= · filtros 3 modos= · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos= · 0 requests na troca= · modo por rota: ok
 
 ## Etapa 47 (B7) — modo por rota (Fase E) — evidências
 
@@ -251,6 +251,23 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 **Teste de mutação (3, árvore restaurada entre cada):** M1 sem o texto da política → vermelho no caso da coluna vazia; M2 esqueleto com 2 cartões → vermelho na contagem (15 → 10); M3 teto mágico de volta → vermelho no caso da raiz da coluna.
 
 **Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · guard-rail de tipografia ✓ · `build` ✓ · bundle 4019,1/4100 KB ✓ · `db:guard` ✓ · suíte 4333 passed / 0 failed (318 arquivos) ✓
+
+## Etapa 43 — subtítulo do cabeçalho com contagens reais — evidências
+
+**Regra do plano:** subtítulo do `PageHeader` = `"{abertas} abertas · {hoje} para hoje"` com `toLocaleString('pt-BR')`. DoD: números reais.
+
+**Mudanças (2 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/components/tasks/TasksModule.tsx` | `openCount` = tudo que não está concluído (`backlog + todo + doing + waiting`, tirado do `byStatus` que já vem do hook) e `kpis.dueToday`; o subtítulo fixo "Suas tarefas pessoais" vira `${abertas} · ${hoje}` |
+| `src/components/tasks/__tests__/TasksModule.test.tsx` | 3 casos: contagens da carga (4 abertas / 1 para hoje, com a concluída fora da conta), singular ("1 aberta") e separador de milhar em pt-BR ("1.234", com 1234 linhas no mock) |
+
+**Refinamento declarado (mínimo):** o plano escreve o rótulo no plural fixo ("{abertas} abertas"). Com uma tarefa só isso leria "1 abertas", então o texto alterna para **"1 aberta"** — o número é o mesmo pedido, só a concordância acompanha. Testado.
+
+**Teste de mutação (3, árvore restaurada entre cada):** M1 sem `toLocaleString` → vermelho no caso do milhar; M2 `kpis.dueToday` trocado por `kpis.overdue` → 2 vermelhos (número errado); M3 plural fixo → vermelho no caso do singular.
+
+**Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · guard-rail de tipografia ✓ · `build` ✓ · bundle 4019,1/4100 KB ✓ · `db:guard` ✓ · suíte 4347 passed / 0 failed (321 arquivos) ✓
 
 ## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
 ## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=
