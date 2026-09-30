@@ -1,4 +1,6 @@
 -- E93 · talkx_settings + RLS audit
+-- rollback: n/a (migration aditiva e idempotente já aplicada no banco; a edição
+--           apenas torna o replay válido — desfazer a edição é reverter este arquivo)
 
 CREATE TABLE IF NOT EXISTS public.talkx_settings (
   key         text PRIMARY KEY,
@@ -11,7 +13,8 @@ ALTER TABLE public.talkx_settings ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.talkx_settings FROM PUBLIC;
 GRANT ALL ON public.talkx_settings TO service_role;
 
-CREATE POLICY IF NOT EXISTS "authenticated_read_talkx_settings"
+DROP POLICY IF EXISTS "authenticated_read_talkx_settings" ON public.talkx_settings;
+CREATE POLICY "authenticated_read_talkx_settings"
   ON public.talkx_settings FOR SELECT
   TO authenticated
   USING (true);
