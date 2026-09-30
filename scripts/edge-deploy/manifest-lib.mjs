@@ -155,8 +155,15 @@ export async function buildDeploymentManifest({ repoRoot, orphanAllowlist = [], 
   functionNames.sort();
 
   if (functionNames.length === 0) throw new Error('No Edge Functions found');
+  // Funcoes legadas nao gerenciadas (scripts/edge-deploy/legacy-functions.json) vivem em
+  // producao sem fonte versionada. Sem esta tolerancia nao existe ordem possivel para
+  // declarar o verify_jwt delas: a excecao antes do fonte e recusada aqui, e o fonte sem
+  // a excecao faz o proximo deploy reverter a funcao para verify_jwt=true (default do CLI),
+  // quebrando quem a chama antes de existir sessao. Elas seguem fora de functions[], logo
+  // nao entram em deploy, hash de closure nem atestacao remota.
+  const legacyUnmanagedSet = new Set(legacyUnmanaged);
   for (const configuredName of settings.keys()) {
-    if (!functionNames.includes(configuredName)) {
+    if (!functionNames.includes(configuredName) && !legacyUnmanagedSet.has(configuredName)) {
       throw new Error(`Function configured but missing entrypoint: ${configuredName}`);
     }
   }

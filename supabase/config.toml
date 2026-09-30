@@ -39,6 +39,19 @@ verify_jwt = false
 [functions.auth-login]
 verify_jwt = false
 
+# Lockout do login (ADR-006): chamadas do fluxo de autenticacao antes de existir
+# sessao; a propria funcao roda com service_role. Sem esta excecao o gateway
+# rejeita com 401 antes do codigo rodar (mesmo caso do auth-login acima e do
+# talkx-link no fim do arquivo). Producao ja roda com verify_jwt=false desde o
+# primeiro deploy — o que faltava era a declaracao aqui, que e a fonte da verdade:
+# qualquer funcao fora desta lista volta a verify_jwt=true ao ser deployada.
+# Sao orfas legadas (sem fonte versionada no repo): scripts/edge-deploy/legacy-functions.json.
+[functions.check-account-lock]
+verify_jwt = false
+
+[functions.record-failed-login]
+verify_jwt = false
+
 # Catálogo de produtos — edge-only; endpoint e service role via Supabase Secrets.
 # verify_jwt=true é o default do CLI; declarado aqui para documentação explícita.
 [functions.promogifts-catalog]
