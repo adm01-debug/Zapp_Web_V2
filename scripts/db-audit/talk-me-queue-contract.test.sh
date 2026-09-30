@@ -189,7 +189,8 @@ INSERT INTO public.contacts(id,name,phone,company,job_title,queue_id,assigned_to
  ('c1000000-0000-0000-0000-000000000012','Corrida Revogacao','551100000012',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'open','whatsapp','cliente',NULL,'2026-09-01 08:00Z'),
  ('c1000000-0000-0000-0000-000000000013','Mesmo Instante','551100000013',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'open','whatsapp','cliente',NULL,'2026-09-01 08:00Z'),
  ('c1000000-0000-0000-0000-000000000014','Grupo Relacional','120363000002-222',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'open','whatsapp','cliente',NULL,'2026-09-01 08:00Z'),
- ('c1000000-0000-0000-0000-000000000015','Grupo pelo JID','120363000003-333@g.us',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'open','whatsapp','cliente',NULL,'2026-09-01 08:00Z');
+ ('c1000000-0000-0000-0000-000000000015','Grupo pelo JID','120363000003-333@g.us',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'open','whatsapp','cliente',NULL,'2026-09-01 08:00Z'),
+ ('c1000000-0000-0000-0000-000000000016','Grupo legado','551100000016',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'open','whatsapp','grupo_legado',NULL,'2026-09-01 08:00Z');
 
 INSERT INTO public.whatsapp_groups(group_id,name)
 VALUES ('120363000002-222@g.us','Grupo sem categoria no contato');
@@ -212,7 +213,8 @@ INSERT INTO public.messages(id,contact_id,sender,content,created_at) VALUES
  ('d1000000-0000-0000-0000-000000000015','c1000000-0000-0000-0000-000000000013','agent','Agente no mesmo instante','2026-09-01 10:50Z'),
  ('d1000000-0000-0000-0000-000000000016','c1000000-0000-0000-0000-000000000013','contact','Contato no mesmo instante','2026-09-01 10:50Z'),
  ('d1000000-0000-0000-0000-000000000017','c1000000-0000-0000-0000-000000000014','contact','Grupo relacional','2026-09-01 11:00Z'),
- ('d1000000-0000-0000-0000-000000000018','c1000000-0000-0000-0000-000000000015','contact','Grupo por JID','2026-09-01 11:05Z');
+ ('d1000000-0000-0000-0000-000000000018','c1000000-0000-0000-0000-000000000015','contact','Grupo por JID','2026-09-01 11:05Z'),
+ ('d1000000-0000-0000-0000-000000000019','c1000000-0000-0000-0000-000000000016','contact','Grupo legado','2026-09-01 11:10Z');
 SQL
 psql_file "$tmp_dir/fixtures.sql"
 
@@ -248,11 +250,13 @@ expect_error 'A9 anonimo nao pode aceitar' 'authentication_required' \
   "RESET app.user_id; SELECT * FROM public.talk_me_claim('$contact1')"
 expect_error 'A10 role anon nao possui EXECUTE nas RPCs' 'permission denied' \
   "SET ROLE anon; SELECT count(*) FROM public.talk_me_list_queues()"
+expect_error 'A10b helper interno nao pode ser executado por authenticated' 'permission denied' \
+  "SET ROLE authenticated; SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_eligible_waiting_contacts(NULL,NULL)"
 expect_value 'A11 role authenticated executa com sessao valida' '1' \
   "SET ROLE authenticated; SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_queues()"
 expect_value 'A12 desempate por id inclui contato posterior no mesmo timestamp' '1|Contato no mesmo instante' \
   "SET app.user_id='$agent1'; SELECT pending_message_count||'|'||last_message_content FROM public.talk_me_list_waiting('$queue1','Mesmo Instante',50,NULL,NULL)"
-expect_value 'A13 grupos por categoria, telefone e registro relacional nao entram' '0' \
+expect_value 'A13 grupos por tipo legado, categoria, telefone e registro relacional nao entram' '0' \
   "SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_waiting('$queue1','Grupo',50,NULL,NULL)"
 
 expect_value 'B1 aceite atribui ao perfil autenticado e abre a conversa' "${contact1}|a1000000-0000-0000-0000-000000000001|open" \

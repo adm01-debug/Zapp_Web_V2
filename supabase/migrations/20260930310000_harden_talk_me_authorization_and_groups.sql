@@ -7,6 +7,97 @@
 --
 -- rollback: restore the three function bodies from 20260930290000_talk_me_queue_claim.sql
 
+CREATE OR REPLACE FUNCTION public.talk_me_eligible_waiting_contacts(
+  p_queue_id uuid DEFAULT NULL,
+  p_contact_id uuid DEFAULT NULL
+)
+RETURNS TABLE (
+  contact_id uuid,
+  contact_name text,
+  avatar_url text,
+  company text,
+  job_title text,
+  queue_id uuid,
+  waiting_since timestamptz,
+  pending_message_count bigint,
+  last_message_id uuid,
+  last_message_content text,
+  last_message_type text,
+  last_message_media_url text,
+  last_message_caption text,
+  last_message_at timestamptz
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+  SELECT
+    c.id,
+    c.name,
+    c.avatar_url,
+    c.company,
+    c.job_title,
+    c.queue_id,
+    COALESCE(pending.waiting_since, latest_message.created_at, c.created_at),
+    pending.pending_message_count,
+    latest_message.id,
+    latest_message.content,
+    latest_message.message_type,
+    latest_message.media_url,
+    latest_message.caption,
+    latest_message.created_at
+  FROM public.contacts c
+  JOIN LATERAL (
+    SELECT
+      m.id,
+      m.sender,
+      m.content,
+      m.message_type,
+      m.media_url,
+      m.caption,
+      m.created_at
+    FROM public.messages m
+    WHERE m.contact_id = c.id
+      AND COALESCE(m.is_deleted, false) = false
+    ORDER BY m.created_at DESC, m.id DESC
+    LIMIT 1
+  ) latest_message ON latest_message.sender = 'contact'
+  LEFT JOIN LATERAL (
+    SELECT
+      MIN(m.created_at) AS waiting_since,
+      COUNT(*) AS pending_message_count
+    FROM public.messages m
+    WHERE m.contact_id = c.id
+      AND m.sender = 'contact'
+      AND COALESCE(m.is_deleted, false) = false
+      AND NOT EXISTS (
+        SELECT 1
+        FROM public.messages agent_message
+        WHERE agent_message.contact_id = c.id
+          AND agent_message.sender = 'agent'
+          AND COALESCE(agent_message.is_deleted, false) = false
+          AND (agent_message.created_at, agent_message.id) >= (m.created_at, m.id)
+      )
+  ) pending ON true
+  WHERE (p_queue_id IS NULL OR c.queue_id = p_queue_id)
+    AND (p_contact_id IS NULL OR c.id = p_contact_id)
+    AND c.assigned_to IS NULL
+    AND c.deleted_at IS NULL
+    AND c.conversation_status IN ('open', 'waiting')
+    AND c.channel_type = 'whatsapp'
+    AND COALESCE(c.contact_type, 'cliente') NOT LIKE 'grupo%'
+    AND c.group_category IS NULL
+    AND c.phone !~* '@g[.]us$'
+    AND c.phone !~ '^[0-9]+-[0-9]+$'
+    AND NOT EXISTS (
+      SELECT 1
+      FROM public.whatsapp_groups wg
+      WHERE regexp_replace(c.phone, '[^0-9-]', '', 'g') =
+            regexp_replace(wg.group_id, '[^0-9-]', '', 'g')
+    );
+$function$;
+
 CREATE OR REPLACE FUNCTION public.talk_me_list_queues()
 RETURNS TABLE (
   queue_id uuid,
@@ -58,47 +149,9 @@ AS $function$
       )
   ),
   eligible AS (
-    SELECT
-      c.queue_id,
-      COALESCE(pending.waiting_since, latest_message.created_at, c.created_at) AS waiting_since
-    FROM public.contacts c
+    SELECT c.queue_id, c.waiting_since
+    FROM public.talk_me_eligible_waiting_contacts(NULL, NULL) c
     JOIN allowed_queues aq ON aq.id = c.queue_id
-    JOIN LATERAL (
-      SELECT m.sender, m.created_at
-      FROM public.messages m
-      WHERE m.contact_id = c.id
-        AND COALESCE(m.is_deleted, false) = false
-      ORDER BY m.created_at DESC, m.id DESC
-      LIMIT 1
-    ) latest_message ON latest_message.sender = 'contact'
-    LEFT JOIN LATERAL (
-      SELECT MIN(m.created_at) AS waiting_since
-      FROM public.messages m
-      WHERE m.contact_id = c.id
-        AND m.sender = 'contact'
-        AND COALESCE(m.is_deleted, false) = false
-        AND NOT EXISTS (
-          SELECT 1
-          FROM public.messages agent_message
-          WHERE agent_message.contact_id = c.id
-            AND agent_message.sender = 'agent'
-            AND COALESCE(agent_message.is_deleted, false) = false
-            AND (agent_message.created_at, agent_message.id) >= (m.created_at, m.id)
-        )
-    ) pending ON true
-    WHERE c.assigned_to IS NULL
-      AND c.deleted_at IS NULL
-      AND c.conversation_status IN ('open', 'waiting')
-      AND c.channel_type = 'whatsapp'
-      AND c.group_category IS NULL
-      AND c.phone !~* '@g[.]us$'
-      AND c.phone !~ '^[0-9]+-[0-9]+$'
-      AND NOT EXISTS (
-        SELECT 1
-        FROM public.whatsapp_groups wg
-        WHERE regexp_replace(c.phone, '[^0-9-]', '', 'g') =
-              regexp_replace(wg.group_id, '[^0-9-]', '', 'g')
-      )
   )
   SELECT
     aq.id,
@@ -184,75 +237,30 @@ AS $function$
   ),
   eligible AS (
     SELECT
-      c.id AS contact_id,
-      c.name AS contact_name,
+      c.contact_id,
+      c.contact_name,
       c.avatar_url,
       c.company,
       c.job_title,
       aq.id AS queue_id,
       aq.name AS queue_name,
       aq.color AS queue_color,
-      COALESCE(pending.waiting_since, latest_message.created_at, c.created_at) AS waiting_since,
-      pending.pending_message_count,
-      latest_message.id AS last_message_id,
-      latest_message.content AS last_message_content,
-      latest_message.message_type AS last_message_type,
-      latest_message.media_url AS last_message_media_url,
-      latest_message.caption AS last_message_caption,
-      latest_message.created_at AS last_message_at
-    FROM public.contacts c
+      c.waiting_since,
+      c.pending_message_count,
+      c.last_message_id,
+      c.last_message_content,
+      c.last_message_type,
+      c.last_message_media_url,
+      c.last_message_caption,
+      c.last_message_at
+    FROM public.talk_me_eligible_waiting_contacts(p_queue_id, NULL) c
     JOIN allowed_queue aq ON aq.id = c.queue_id
-    JOIN LATERAL (
-      SELECT
-        m.id,
-        m.sender,
-        m.content,
-        m.message_type,
-        m.media_url,
-        m.caption,
-        m.created_at
-      FROM public.messages m
-      WHERE m.contact_id = c.id
-        AND COALESCE(m.is_deleted, false) = false
-      ORDER BY m.created_at DESC, m.id DESC
-      LIMIT 1
-    ) latest_message ON latest_message.sender = 'contact'
-    LEFT JOIN LATERAL (
-      SELECT
-        MIN(m.created_at) AS waiting_since,
-        COUNT(*) AS pending_message_count
-      FROM public.messages m
-      WHERE m.contact_id = c.id
-        AND m.sender = 'contact'
-        AND COALESCE(m.is_deleted, false) = false
-        AND NOT EXISTS (
-          SELECT 1
-          FROM public.messages agent_message
-          WHERE agent_message.contact_id = c.id
-            AND agent_message.sender = 'agent'
-            AND COALESCE(agent_message.is_deleted, false) = false
-            AND (agent_message.created_at, agent_message.id) >= (m.created_at, m.id)
-        )
-    ) pending ON true
-    WHERE c.assigned_to IS NULL
-      AND c.deleted_at IS NULL
-      AND c.conversation_status IN ('open', 'waiting')
-      AND c.channel_type = 'whatsapp'
-      AND c.group_category IS NULL
-      AND c.phone !~* '@g[.]us$'
-      AND c.phone !~ '^[0-9]+-[0-9]+$'
-      AND NOT EXISTS (
-        SELECT 1
-        FROM public.whatsapp_groups wg
-        WHERE regexp_replace(c.phone, '[^0-9-]', '', 'g') =
-              regexp_replace(wg.group_id, '[^0-9-]', '', 'g')
-      )
-      AND (
+    WHERE (
         NULLIF(BTRIM(p_search), '') IS NULL
-        OR c.name ILIKE '%' || BTRIM(p_search) || '%'
+        OR c.contact_name ILIKE '%' || BTRIM(p_search) || '%'
         OR COALESCE(c.company, '') ILIKE '%' || BTRIM(p_search) || '%'
         OR COALESCE(c.job_title, '') ILIKE '%' || BTRIM(p_search) || '%'
-        OR latest_message.content ILIKE '%' || BTRIM(p_search) || '%'
+        OR c.last_message_content ILIKE '%' || BTRIM(p_search) || '%'
       )
   ),
   ranked AS (
@@ -376,14 +384,10 @@ BEGIN
     AND c.deleted_at IS NULL
     AND c.conversation_status IN ('open', 'waiting')
     AND c.channel_type = 'whatsapp'
-    AND c.group_category IS NULL
-    AND c.phone !~* '@g[.]us$'
-    AND c.phone !~ '^[0-9]+-[0-9]+$'
-    AND NOT EXISTS (
+    AND EXISTS (
       SELECT 1
-      FROM public.whatsapp_groups wg
-      WHERE regexp_replace(c.phone, '[^0-9-]', '', 'g') =
-            regexp_replace(wg.group_id, '[^0-9-]', '', 'g')
+      FROM public.talk_me_eligible_waiting_contacts(c.queue_id, c.id) eligible
+      WHERE eligible.contact_id = c.id
     )
     AND EXISTS (
       SELECT 1
@@ -413,15 +417,7 @@ BEGIN
               AND qm.is_active = true
           )
         )
-    )
-    AND (
-      SELECT m.sender
-      FROM public.messages m
-      WHERE m.contact_id = c.id
-        AND COALESCE(m.is_deleted, false) = false
-      ORDER BY m.created_at DESC, m.id DESC
-      LIMIT 1
-    ) = 'contact';
+    );
 
   IF NOT FOUND THEN
     RAISE EXCEPTION 'talk_me_unavailable' USING ERRCODE = 'P0001';
@@ -441,6 +437,7 @@ BEGIN
 END;
 $function$;
 
+REVOKE ALL ON FUNCTION public.talk_me_eligible_waiting_contacts(uuid, uuid) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.talk_me_list_queues() FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.talk_me_list_waiting(uuid, text, integer, timestamptz, uuid) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.talk_me_claim(uuid) FROM PUBLIC, anon;
@@ -449,6 +446,8 @@ GRANT EXECUTE ON FUNCTION public.talk_me_list_queues() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.talk_me_list_waiting(uuid, text, integer, timestamptz, uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.talk_me_claim(uuid) TO authenticated;
 
+COMMENT ON FUNCTION public.talk_me_eligible_waiting_contacts(uuid, uuid) IS
+  'Regra interna sem EXECUTE para identificar contatos individuais elegiveis ao TALK ME.';
 COMMENT ON FUNCTION public.talk_me_list_queues() IS
   'Filas ativas autorizadas para TALK ME, com perfil e feature flag ativos.';
 COMMENT ON FUNCTION public.talk_me_list_waiting(uuid, text, integer, timestamptz, uuid) IS
