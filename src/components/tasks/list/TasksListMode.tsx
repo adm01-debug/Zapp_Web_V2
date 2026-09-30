@@ -101,7 +101,7 @@ function Section({ title, items, olderItems = [], groups, hint, defaultOpen = tr
             {groups && groups.length > 0
               ? groups.map(g => (
                   <div key={g.label} className="space-y-1.5">
-                    <div className="px-1 text-[12px] font-medium text-muted-foreground">{g.label}</div>
+                    <div className="px-1 text-xs font-medium text-muted-foreground">{g.label}</div>
                     {g.items.map((item, index) => renderCard(item, index))}
                   </div>
                 ))
