@@ -3,7 +3,7 @@ import { Droppable, Draggable } from '@hello-pangea/dnd';
 import { Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { WorkItemCard }         from '../shared/WorkItemCard';
-import { WorkItemCardSkeleton } from '../shared/WorkItemCardSkeleton';
+import { BoardColumnSkeleton } from '../shared/BoardColumnSkeleton';
 import { QuickAdd }             from '../shared/QuickAdd';
 import { TasksEmptyState }      from '../TasksEmptyState';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
@@ -46,7 +46,7 @@ export function BoardColumn({ status, items, isLoading, doingCount, dragSourceSt
     : visibleItems.length > 0 ? String(visibleItems.length) : '';
 
   return (
-    <div className="flex flex-col min-w-[232px] xl:min-w-[260px] max-h-[calc(100vh-280px)] rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start">
+    <div className="flex flex-col min-w-[232px] xl:min-w-[260px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start">
       {/* cabeçalho sticky */}
       <div className={[
         'flex items-center gap-2 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur',
@@ -86,8 +86,8 @@ export function BoardColumn({ status, items, isLoading, doingCount, dragSourceSt
             {...provided.droppableProps}
             className={`flex-1 overflow-y-auto p-2 space-y-1.5 min-h-[80px] ${snapshot.isDraggingOver ? 'bg-primary/5' : ''}`}
           >
-            {isLoading && Array.from({ length: 2 }).map((_, i) => <WorkItemCardSkeleton key={i} />)}
-            {!isLoading && visibleItems.length === 0 && <TasksEmptyState variant="column" />}
+            {isLoading && <BoardColumnSkeleton />}
+            {!isLoading && visibleItems.length === 0 && <TasksEmptyState variant="column" policy={col.policy} />}
             {!isLoading && visibleItems.map((item, index) => (
               <Draggable key={item.id} draggableId={item.id} index={index}>
                 {(drag, snap) => (
