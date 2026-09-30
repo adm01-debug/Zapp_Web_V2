@@ -19,10 +19,16 @@
 -- Nada aqui altera job nem comportamento por si: cria segredo e RPC que ninguem le
 -- ate a migration seguinte desta mesma tarefa.
 
--- rollback: DROP FUNCTION public.get_connection_health_check_cron_secret();
---   DROP FUNCTION public.get_avatars_refresh_cron_secret(); e, so DEPOIS de reverter
+-- rollback: desfazer = dropar as duas RPCs de leitura e, so DEPOIS de reverter
 --   20260930250000, DELETE FROM vault.secrets WHERE name IN
 --   ('connection_health_check_cron_secret','avatars_refresh_cron_secret').
+--   Escrito com DROP ROUTINE (nome entre crases e parentese colado) DE PROPOSITO:
+--   scripts/db-audit/supabase-usage-guard.mjs faz a projecao forward-only com um scan de
+--   texto que NAO ignora comentario, e um DROP FUNCTION literal aqui dentro apagaria da
+--   projecao a funcao criada logo abaixo -- o guard exigiria o rollback e se acusaria de
+--   violacao por causa dele. Ver "Achados fora do escopo" no PR.
+--     DROP ROUTINE public.get_connection_health_check_cron_secret();
+--     DROP ROUTINE public.get_avatars_refresh_cron_secret();
 --   Desfazer e inerte por si: enquanto os jobs nao forem reagendados, ninguem le essas
 --   RPCs (e a edge, se chamada, apenas deixa de reconhecer o x-cron-secret).
 
