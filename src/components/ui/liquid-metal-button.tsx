@@ -89,7 +89,7 @@ export const LiquidMetalButton = forwardRef<HTMLButtonElement, LiquidMetalButton
         disabled={disabled || loading}
         className={cn(
           'group relative isolate inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full',
-          'border border-white/25 bg-zinc-950 text-white shadow-lg shadow-black/30',
+          'border border-white/25 bg-black text-white shadow-lg shadow-black/30',
           'transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 active:scale-[0.98]',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
           'disabled:pointer-events-none disabled:opacity-60 motion-reduce:transform-none',
@@ -106,14 +106,14 @@ export const LiquidMetalButton = forwardRef<HTMLButtonElement, LiquidMetalButton
         <span
           aria-hidden="true"
           className={cn(
-            'absolute inset-0 -z-20 rounded-full',
+            'pointer-events-none absolute inset-0 z-0 rounded-full',
             'bg-[linear-gradient(115deg,#fafafa_0%,#71717a_18%,#f4f4f5_38%,#18181b_58%,#d4d4d8_79%,#52525b_100%)]',
             !shaderReady && !reduceMotion && 'animate-pulse motion-reduce:animate-none',
           )}
         />
-        <div ref={shaderContainerRef} aria-hidden="true" className="absolute inset-0 -z-10 rounded-full overflow-hidden" />
-        <span aria-hidden="true" className="absolute inset-[2px] -z-[5] rounded-full bg-zinc-950/88 shadow-inner" />
-        <span className="flex items-center gap-2 text-2xs font-black tracking-[0.15em] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+        <div ref={shaderContainerRef} aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-full" />
+        <span aria-hidden="true" className="pointer-events-none absolute inset-[2px] z-[1] rounded-full bg-black shadow-inner" />
+        <span className="relative z-10 flex items-center gap-2 text-2xs font-black tracking-[0.15em]">
           {loading && <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />}
           {label}
           {visibleCount !== null && (
