@@ -164,4 +164,75 @@ psql_test -q -c "INSERT INTO public.talkx_blacklist(id, phone) VALUES ('20000000
 
 printf '[OK] Talk X blacklist V05: CHECK de origem (auto_optout) e unico parcial em phone vieram do SQL vivo.\n'
 
+# --- V07: unicidade PARCIAL em contact_id (P2-1) ---
+# A tabela do harness nasceu sem contact_id (E51 so tinha phone). A V07 troca a
+# unicidade TOTAL de contact_id (o bug: soft-delete impede re-supressao, 23505 vira
+# console.warn no webhook) por indice unico parcial por linha ATIVA, espelhando o que
+# a V05 fez em phone. A escrita idempotente do webhook passa pela RPC
+# talkx_suppress_contact (SECURITY DEFINER, service_role) — o PostgREST nao emite
+# ON CONFLICT com predicado, entao a RPC e a unica via atomica.
+v07_migration="$repo_root/supabase/migrations/20260930140000_talkx_blacklist_contact_active_unique.sql"
+[[ -f "$v07_migration" ]] || fail 'migration da V07 nao existe'
+
+# o fixture do harness e minimalista: cria o que a migration da V07 referencia
+psql_test -q -c 'ALTER TABLE public.talkx_blacklist ADD COLUMN IF NOT EXISTS contact_id uuid' >/dev/null
+psql_test -Atqc "SELECT 1 FROM pg_roles WHERE rolname='service_role'" | grep -q 1 \
+  || psql_test -q -c 'CREATE ROLE service_role NOLOGIN' >/dev/null
+psql_test -Atqc "SELECT 1 FROM pg_roles WHERE rolname='anon'" | grep -q 1 \
+  || psql_test -q -c 'CREATE ROLE anon NOLOGIN' >/dev/null
+psql_test -Atqc "SELECT 1 FROM pg_type WHERE typname='talkx_blacklist_reason'" | grep -q 1 \
+  || psql_test -q -c "CREATE TYPE public.talkx_blacklist_reason AS ENUM ('opt_out','invalid_number','manual','lgpd','no_commercial_permission','bounce')" >/dev/null
+
+# estado legado canonico medido no banco vivo: CONSTRAINT UNIQUE(contact_id) total
+psql_test -q -c 'ALTER TABLE public.talkx_blacklist DROP CONSTRAINT IF EXISTS talkx_blacklist_contact_id_key' >/dev/null
+psql_test -q -c 'ALTER TABLE public.talkx_blacklist ADD CONSTRAINT talkx_blacklist_contact_id_key UNIQUE (contact_id)' >/dev/null
+
+# pre-condicao: com o UNIQUE total, adicionar -> remover -> adicionar de novo FALHA
+psql_test -q -c "INSERT INTO public.talkx_blacklist(id, contact_id) VALUES ('20000000-0000-0000-0000-0000000000b1','30000000-0000-0000-0000-000000000001')" >/dev/null
+psql_test -q -c "UPDATE public.talkx_blacklist SET removed_at = now() WHERE id = '20000000-0000-0000-0000-0000000000b1'" >/dev/null
+if psql_test -q -c "INSERT INTO public.talkx_blacklist(id, contact_id) VALUES ('20000000-0000-0000-0000-0000000000b2','30000000-0000-0000-0000-000000000001')" >/dev/null 2>&1; then
+  fail 'pre-condicao errada: UNIQUE total em contact_id deixou re-suprimir apos remocao'
+fi
+
+# replayavel: duas aplicacoes nao podem falhar
+psql_test < "$v07_migration" >/dev/null || fail 'V07 nao aplicou'
+psql_test < "$v07_migration" >/dev/null || fail 'V07 nao e replayavel (segunda aplicacao falhou)'
+
+# o UNIQUE total sumiu...
+[[ "$(psql_test -Atqc "SELECT count(*) FROM pg_constraint WHERE conname='talkx_blacklist_contact_id_key' AND conrelid='public.talkx_blacklist'::regclass")" == '0' ]] \
+  || fail 'constraint UNIQUE total talkx_blacklist_contact_id_key sobreviveu a V07'
+# ...e no lugar entrou o indice unico PARCIAL por linha ativa
+v07_indexdef="$(psql_test -Atqc "SELECT indexdef FROM pg_indexes WHERE schemaname='public' AND tablename='talkx_blacklist' AND indexname='talkx_blacklist_contact_active_unique'")"
+[[ "$v07_indexdef" == 'CREATE UNIQUE INDEX talkx_blacklist_contact_active_unique ON public.talkx_blacklist USING btree (contact_id) WHERE ((contact_id IS NOT NULL) AND (removed_at IS NULL))' ]] \
+  || fail "indice parcial da V07 ausente/divergente: $v07_indexdef"
+# a RPC existe e so service_role executa
+[[ "$(psql_test -Atqc "SELECT count(*) FROM pg_proc WHERE proname='talkx_suppress_contact'")" == '1' ]] \
+  || fail 'RPC talkx_suppress_contact ausente apos a V07'
+[[ "$(psql_test -Atqc "SELECT has_function_privilege('authenticated','public.talkx_suppress_contact(uuid,text,text,public.talkx_blacklist_reason,text,uuid)','EXECUTE')")" == 'f' ]] \
+  || fail 'authenticated nao deveria ter EXECUTE na RPC da V07'
+
+# cenario do aceite: adicionar -> remover -> adicionar de novo = 2 linhas, 1 ativa
+psql_test -q -c "INSERT INTO public.talkx_blacklist(id, contact_id) VALUES ('20000000-0000-0000-0000-0000000000b3','30000000-0000-0000-0000-000000000002')" >/dev/null \
+  || fail 'V07: primeira supressao falhou'
+if psql_test -q -c "INSERT INTO public.talkx_blacklist(id, contact_id) VALUES ('20000000-0000-0000-0000-0000000000b4','30000000-0000-0000-0000-000000000002')" >/dev/null 2>&1; then
+  fail 'V07: duas supressoes ATIVAS do mesmo contact foram aceitas'
+fi
+psql_test -q -c "UPDATE public.talkx_blacklist SET removed_at = now() WHERE id = '20000000-0000-0000-0000-0000000000b3'" >/dev/null
+psql_test -q -c "INSERT INTO public.talkx_blacklist(id, contact_id) VALUES ('20000000-0000-0000-0000-0000000000b5','30000000-0000-0000-0000-000000000002')" >/dev/null \
+  || fail 'V07: re-supressao apos remocao bloqueada'
+rows_total="$(psql_test -Atqc "SELECT count(*) FROM public.talkx_blacklist WHERE contact_id='30000000-0000-0000-0000-000000000002'")"
+rows_active="$(psql_test -Atqc "SELECT count(*) FROM public.talkx_blacklist WHERE contact_id='30000000-0000-0000-0000-000000000002' AND removed_at IS NULL")"
+[[ "$rows_total" == '2' && "$rows_active" == '1' ]] || fail "V07: esperado 2 linhas/1 ativa, veio ${rows_total}/${rows_active}"
+
+# o alvo de conflito do webhook (SQL que a RPC emite): opt-out repetido de um contato
+# ATIVO vira no-op silencioso, sem 23505
+psql_test -q -c "INSERT INTO public.talkx_blacklist(id, contact_id) VALUES ('20000000-0000-0000-0000-0000000000c1','30000000-0000-0000-0000-000000000003') ON CONFLICT (contact_id) WHERE ((contact_id IS NOT NULL) AND (removed_at IS NULL)) DO NOTHING" >/dev/null \
+  || fail 'V07: insert com alvo de conflito parcial falhou'
+psql_test -q -c "INSERT INTO public.talkx_blacklist(id, contact_id) VALUES ('20000000-0000-0000-0000-0000000000c2','30000000-0000-0000-0000-000000000003') ON CONFLICT (contact_id) WHERE ((contact_id IS NOT NULL) AND (removed_at IS NULL)) DO NOTHING" >/dev/null \
+  || fail 'V07: opt-out repetido levantou 23505 (alvo de conflito nao casou com o indice parcial)'
+active_c="$(psql_test -Atqc "SELECT count(*) FROM public.talkx_blacklist WHERE contact_id='30000000-0000-0000-0000-000000000003' AND removed_at IS NULL")"
+[[ "$active_c" == '1' ]] || fail "V07: opt-out repetido duplicou linha ativa (${active_c})"
+
+printf '[OK] Talk X blacklist V07: unicidade de contact_id e parcial (so linha ativa); adicionar->remover->adicionar = 2 linhas/1 ativa.\n'
+
 printf '[OK] Talk X blacklist: ledger historico preservado e policy restrita por migration forward-only.\n'
