@@ -56,6 +56,33 @@ describe('Fase F — correções da auditoria', () => {
     expect(b.done7d.map(i => i.id)).toEqual(['x']);
     expect(b.doneOlder).toEqual([]);
   });
+
+  describe('F2 — Agenda e QuickAdd', () => {
+    it('temHora: fim do dia (23:59) e meia-noite são DIA INTEIRO; 09:30 tem hora', () => {
+      // É a convenção que o próprio app grava nos chips "Hoje/Amanhã" e no
+      // QuickAdd da Agenda — sem tratá-la, "Sem hora" ficava inalcançável.
+      expect(temHora(null)).toBe(false);
+      expect(temHora(new Date(2026, 9, 3, 23, 59, 0, 0).toISOString())).toBe(false);
+      expect(temHora(new Date(2026, 9, 3, 0, 0, 0, 0).toISOString())).toBe(false);
+      expect(temHora(new Date(2026, 9, 3, 9, 30, 0, 0).toISOString())).toBe(true);
+      expect(temHora(new Date(2026, 9, 3, 23, 30, 0, 0).toISOString())).toBe(true);
+    });
+
+    it('"Sem hora" recebe o prazo de dia inteiro e "Prazos" sai em ordem de `due_date`', () => {
+      const dia = (h: number, m: number) => new Date(2026, 9, 3, h, m).toISOString();
+      const grupos = groupAgendaDay({
+        reminders: [],
+        dueTasks: [
+          makeItem({ id: 'tarde',  due_date: dia(15, 0) }),
+          makeItem({ id: 'cedo',   due_date: dia(9, 0) }),
+          makeItem({ id: 'semHora', due_date: dia(23, 59) }),
+        ],
+      });
+
+      expect(grupos.semHora.map(i => i.id)).toEqual(['semHora']);
+      expect(grupos.prazos.map(i => i.id)).toEqual(['cedo', 'tarde']);
+    });
+  });
 });
 
 describe('applyFilters (etapas 45/46 — os filtros valem nos três modos)', () => {
@@ -126,9 +153,9 @@ describe('etapa 55 — Agenda: pontos do dia e os 3 grupos', () => {
     const g = groupAgendaDay({ reminders: [soAlarme, dois], dueTasks: [dois, diaInteiro, comHora] });
 
     expect(g.alarmes.map(i => i.id)).toEqual(['alarme', 'dois']);   // ordenado por remind_at
-    expect(g.prazos.map(i => i.id)).toEqual(['dois', 'hora']);      // dia inteiro sai daqui
+    expect(g.prazos.map(i => i.id)).toEqual(['hora', 'dois']);      // dia inteiro sai daqui
     expect(g.semHora.map(i => i.id)).toEqual(['dia']);
-    expect(g.alarmes).toContain(g.prazos[0]);                       // o mesmo objeto nos dois
+    expect(g.alarmes.map(i => i.id)).toContain('dois');                       // o mesmo objeto nos dois
   });
 });
 

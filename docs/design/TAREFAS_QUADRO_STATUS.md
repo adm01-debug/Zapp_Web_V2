@@ -94,7 +94,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 ## CP-C Sheet       [ ] WorkItemSheet= · ?task= · Aguardando por DnD/kebab/menu= · kebab 5 grupos= · RemindChip popover= · ContactChip=
 ## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
-## CP-E Telas       [~] etapas 43, 44, 45 e 46, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8), 53, 55, 56 e 57 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos: ok (barra de 5 filtros, estado na URL por replaceState, recorte único) · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos: ok (3 grupos, ponto por tipo, atrasadas expansível) · card agenda: ok (h-11, 1 linha, checkbox) · QuickAdd no dia: ok (pré-preenchido) · 0 requests na troca= · modo por rota: ok · auditoria F1: ok (7 correções; 9 mutações mortas)
+## CP-E Telas       [~] etapas 43, 44, 45 e 46, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8), 53, 55, 56 e 57 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos: ok (barra de 5 filtros, estado na URL por replaceState, recorte único) · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos: ok (3 grupos, ponto por tipo, atrasadas expansível) · card agenda: ok (h-11, 1 linha, checkbox) · QuickAdd no dia: ok (pré-preenchido) · 0 requests na troca= · modo por rota: ok · auditoria F1: ok (7 correções; 9 mutações mortas) · auditoria F2: ok (7 correções; 7 mutações mortas)
 
 ## Etapa 47 (B7) — modo por rota (Fase E) — evidências
 
@@ -373,7 +373,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 | `src/components/tasks/TasksModule.tsx` | o QuickAdd do cabeçalho **não** aparece no modo Agenda (lá quem manda é o da Agenda, com o dia); a Agenda recebe `onCreate` e `quickAddRef`, então o atalho **N** continua focando o campo certo |
 | testes | 2 casos na Agenda (nasce no dia / remonta ao trocar o dia) + 1 no módulo (um único QuickAdd na Agenda, com o placeholder do dia) |
 
-**Decisão declarada:** o prazo do dia selecionado é gravado às **23:59 locais** — a mesma convenção dos chips "Hoje/Amanhã/Próx. semana" do próprio QuickAdd. Assim `temHora` (etapa 55) o classifica em "Prazos" e a faixa hoje→+6 do D7 continua valendo.
+**Decisão declarada:** o prazo do dia selecionado é gravado às **23:59 locais** — a mesma convenção dos chips "Hoje/Amanhã/Próx. semana" do próprio QuickAdd. Assim a faixa hoje→+6 do D7 continua valendo. *(Fase F2: 23:59 passou a ser lido como **dia inteiro**, e não como "Prazos" — ver a FASE F2; era a única leitura que tornava o grupo "Sem hora" alcançável.)*
 
 **Teste de mutação (3, árvore restaurada entre cada; base verde = 25 casos):** M1 o QuickAdd ignora o `defaultDueDate` 2 vermelhos; M2 sem a `key` (não remonta ao trocar o dia) 1 vermelho; M3 o módulo também renderiza o QuickAdd na Agenda (dois na tela) 1 vermelho.
 
@@ -415,6 +415,25 @@ suíte completa **345 arquivos / 4549 testes, 0 erro não tratado** ✓ · `buil
 ordenação de "Prazos" por `due_date`, o grupo "Sem hora" (fim do dia 23:59/00:00 = dia inteiro),
 o rascunho preservado ao trocar de dia, `aria-controls` no "Atrasadas" e a blindagem do
 `PriorityChip` com prioridade nula.
+
+## FASE F2 — Agenda e QuickAdd (correções da auditoria) — evidências
+
+**Origem:** os achados de severidade ALTA/MÉDIA da mesma auditoria que sobraram do F1.
+
+**Mudanças (4 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/components/tasks/shared/QuickAdd.tsx` | o envio (e o Esc) volta ao prazo **padrão do campo**, não a `null` — o 2º create seguido na Agenda nascia sem prazo e sumia do dia; e trocar de dia reaplica o prazo por **ajuste no render**, sem remontar o campo |
+| `src/components/tasks/agenda/TasksAgendaMode.tsx` | sai o `key={selectedDay}` (o rascunho digitado deixa de ser descartado) e o botão de "Atrasadas" ganha `aria-controls` para a região que ele abre |
+| `src/hooks/tasks/workItemAggregates.ts` | `temHora`: fim do dia (23:59) e meia-noite contam como **dia inteiro** — "Sem hora" deixa de ser inalcançável; `groupAgendaDay` ordena "Prazos" por `due_date` |
+| `src/components/tasks/shared/PriorityChip.tsx` | prioridade nula/desconhecida cai em `medium` (antes o card imprimia "undefined") |
+
+**Testes:** 5 novos + 2 atualizados (o da etapa 57 afirmava o **descarte** do rascunho; o da etapa 55 afirmava a ordem bruta da query). Suíte da Tarefas 133 → 138.
+
+**Mutação (7, árvore restaurada entre cada):** **7/7 mortas** — M1 submit apagando o prazo · M2 sem o ajuste no render · M3 `temHora` exigindo hora ≠ 23:59 · M4 "Prazos" sem ordenação · M5 o pai remontando o campo · M6 sem `aria-controls` · M7 chip sem blindagem.
+
+**Gates:** `typecheck` ✓ · tipografia ✓ · `lint-ratchet` 0 novas ✓ · suíte completa **345 arquivos / 4554 testes** ✓ · `build` ✓ · bundle **4050,2/4100 KB** ✓
 
 ## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
 ## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=

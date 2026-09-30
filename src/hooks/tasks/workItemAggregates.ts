@@ -92,11 +92,21 @@ export function applyFilters(items: WorkItem[], f: TasksFilters): WorkItem[] {
   });
 }
 
-/** `due_date` gravado só com o dia (meia-noite local) não tem hora marcada. */
+/**
+ * `due_date` gravado como dia inteiro não tem hora marcada. O app grava **23:59
+ * local** nos chips "Hoje/Amanhã/Próx. semana" e no QuickAdd da Agenda — então
+ * fim do dia conta como dia inteiro; `00:00` idem, pela convenção oposta.
+ * (Fase F2/auditoria: sem isso o grupo "Sem hora" da etapa 55 era inalcançável —
+ * toda tarefa criada na interface caía em "Prazos".)
+ */
 export function temHora(iso: string | null): boolean {
   if (iso === null) return false;
   const d = new Date(iso);
-  return d.getHours() !== 0 || d.getMinutes() !== 0;
+  const h = d.getHours();
+  const m = d.getMinutes();
+  const fimDoDia = h === 23 && m >= 59;
+  const meiaNoite = h === 0 && m === 0;
+  return !fimDoDia && !meiaNoite;
 }
 
 /**
@@ -129,9 +139,13 @@ export interface AgendaDayGroups {
  */
 export function groupAgendaDay(day: { reminders: WorkItem[]; dueTasks: WorkItem[] }): AgendaDayGroups {
   const porAlarme = (a: WorkItem, b: WorkItem) => (a.remind_at ?? '').localeCompare(b.remind_at ?? '');
+  // Fase F2 (auditoria): dentro de "Prazos" a ordem é por `due_date` (ISO ordena
+  // cronologicamente) — antes vinha a ordem bruta da query e a lista do dia
+  // aparecia embaralhada.
+  const porPrazo  = (a: WorkItem, b: WorkItem) => (a.due_date ?? '').localeCompare(b.due_date ?? '');
   return {
     alarmes: [...day.reminders].sort(porAlarme),
-    prazos:  day.dueTasks.filter(t => temHora(t.due_date)),
+    prazos:  day.dueTasks.filter(t => temHora(t.due_date)).sort(porPrazo),
     semHora: day.dueTasks.filter(t => !temHora(t.due_date)),
   };
 }
