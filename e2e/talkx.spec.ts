@@ -174,14 +174,22 @@ test.describe('Talk X module', () => {
 
     // Step 1 — select WhatsApp connection (fixture connection, may be disconnected).
     // StepAudience renders two comboboxes: index 0 = Objetivo, index 1 = Conexão WhatsApp.
-    // Using .nth(1) avoids StrictModeViolation from getByRole('combobox') matching both.
-    await page.getByRole('combobox').nth(1).click();
-    await page.getByRole('option', { name: E2E_TALKX_CONNECTION_LABEL }).click();
+    // O trigger do Select de conexão agora tem aria-label="Conexão WhatsApp", então
+    // miramos pelo nome (determinístico) em vez de .nth(1) — .nth(1) é ambíguo quando o
+    // overview renderiza comboboxes atrás do wizard, e o Radix Select é flaky no WebKit
+    // se o conteúdo do portal não é aguardado explicitamente.
+    const connectionCombo = page.getByRole('combobox', { name: 'Conexão WhatsApp' });
+    await connectionCombo.click();
+    const connectionOption = page.getByRole('option', { name: E2E_TALKX_CONNECTION_LABEL });
+    await expect(connectionOption).toBeVisible();
+    await connectionOption.click();
 
     // Step 1 — select audience source "Segmento salvo" and pick the fixture segment.
     // The SourceCard is only clickable when segments.length > 0 (fixture segment is seeded).
     await page.getByRole('button', { name: /segmento salvo/i }).click();
-    await page.getByRole('button', { name: E2E_TALKX_SEGMENT_REGEX }).click();
+    const segmentButton = page.getByRole('button', { name: E2E_TALKX_SEGMENT_REGEX });
+    await expect(segmentButton).toBeVisible();
+    await segmentButton.click();
 
     // canProceed[1]: name ✓, connectionId ✓, segmentId ✓ → "Continuar" becomes enabled.
     const continuar = page.getByRole('button', { name: /continuar/i });
