@@ -205,6 +205,22 @@ jobs:
         run: echo "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin || true
         continue-on-error: true
 
+      # A CLI 2.116.0 ainda referencia a imagem no ECR publico. Esse registry
+      # aplica uma cota anonima compartilhada entre runners e pode falhar com
+      # `toomanyrequests` mesmo depois do login no GHCR. Baixar a mesma imagem
+      # pelo GHCR autenticado e retaga-la faz o CLI reutilizar o cache local.
+      - name: Pre-pull postgres-meta via ghcr.io (evita rate-limit do ECR public)
+        continue-on-error: true
+        run: |
+          GHCR_IMG="ghcr.io/supabase/postgres-meta:v0.98.0"
+          ECR_IMG="public.ecr.aws/supabase/postgres-meta:v0.98.0"
+          if docker pull "$GHCR_IMG" 2>&1; then
+            docker tag "$GHCR_IMG" "$ECR_IMG"
+            echo "Pre-pull concluido: $ECR_IMG em cache local."
+          else
+            echo "::warning::Pre-pull de $GHCR_IMG falhou; CLI tentara ECR diretamente."
+          fi
+
       - name: Verificar frescor do types.ts
         id: types
         if: steps.credencial.outcome == 'success'
