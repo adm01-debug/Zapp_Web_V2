@@ -5,6 +5,7 @@ import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usag
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { ChatbotL1Output, parseModelOutput } from "../_shared/ai-response-contracts.ts";
 import { normalizeSentiment, normalizeOperationalPriority } from "../_shared/ai-vocabulary.ts";
+import { parseJsonObject } from "../_shared/ai-json.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -193,10 +194,7 @@ Responda em JSON:
 
     let rawOutput: unknown = null;
     if (typeof content === 'string') {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        try { rawOutput = JSON.parse(jsonMatch[0]); } catch { rawOutput = null; }
-      }
+      rawOutput = parseJsonObject(content);
     }
 
     if (!rawOutput || typeof rawOutput !== 'object') {

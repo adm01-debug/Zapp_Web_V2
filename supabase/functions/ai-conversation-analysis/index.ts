@@ -7,6 +7,7 @@ import { ConversationAnalysisOutput, buildAiEnvelope, parseModelOutput } from ".
 import { parseJsonObject } from "../_shared/ai-json.ts";
 import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
+import { CHURN_RISK_TOOL_SCHEMA, CONVERSATION_STATUS_TOOL_SCHEMA, KEY_POINTS_TOOL_SCHEMA, NEXT_STEPS_TOOL_SCHEMA, SENTIMENT_TOOL_SCHEMA, type ConversationToolDefinition, applyVocabularyConversion, buildConversationModelBody, buildConversationText, collectValueIssues, contractRejectionEvidence, conversationAnalysisRecord, conversationPersistFailureResponse, conversationRunResponse, loadContactPromptContext, noModelPayloadResponse, requestConversationModelJson, resolveVisibleContactId, summarizeContractIssues } from "../_shared/ai-conversation-pipeline.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -33,30 +34,17 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = requireEnv("LOVABLE_API_KEY");
     const supabase = createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
 
-    // Este client roda com service_role (bypassa RLS). Sem esta checagem,
-    // qualquer usuário autenticado poderia usar contactId de um contato que
-    // não enxerga para ler notas/sentimento/histórico (PII) — a RLS real de
-    // `contacts` é a fonte de verdade de visibilidade.
-    let visibleContactId: string | null = contactId ?? null;
-    if (visibleContactId) {
-      const authedClient = await createAuthedClient(req);
-      const { data: visibleContact } = await authedClient
-        .from('contacts')
-        .select('id')
-        .eq('id', visibleContactId)
-        .maybeSingle();
-      if (!visibleContact) {
-        visibleContactId = null;
-      }
-    }
+    // Visibilidade do contato (IA-004): este client é service_role (bypassa RLS).
+    const visibleContactId = await resolveVisibleContactId(req, contactId);
 
     let contactContext = '';
     if (visibleContactId) {
-      const { data: contact } = await supabase
-        .from('contacts')
-        .select('name, company, tags, ai_priority, ai_sentiment, notes, contact_type')
-        .eq('id', visibleContactId)
-        .maybeSingle();
+      const { contact, recentAnalyses } = await loadContactPromptContext({
+        supabase,
+        contactId: visibleContactId,
+        contactColumns: 'name, company, tags, ai_priority, ai_sentiment, notes, contact_type',
+        analysisColumns: 'sentiment, sentiment_score, summary, urgency, created_at',
+      });
 
       if (contact) {
         contactContext = `\nContexto do cliente: ${contact.name || 'Cliente'}`;
@@ -69,16 +57,9 @@ Deno.serve(async (req) => {
         if (previousSentiment.value) contactContext += `, Sentimento anterior: ${previousSentiment.value}`;
       }
 
-      const { data: prevAnalyses } = await supabase
-        .from('conversation_analyses')
-        .select('sentiment, sentiment_score, summary, urgency, created_at')
-        .eq('contact_id', visibleContactId)
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      if (prevAnalyses && prevAnalyses.length > 0) {
+      if (recentAnalyses.length > 0) {
         // Histórico sem "undefined%": nota ausente é dita como ausente (IA-023).
-        contactContext += `\nAnálises anteriores: ${prevAnalyses.map(a => {
+        contactContext += `\nAnálises anteriores: ${recentAnalyses.map(a => {
           const s = normalizeSentiment(a.sentiment);
           const score = normalizeScore(a.sentiment_score, { min: 0, max: 100, scale: 'percent' });
           const label = `${s.value ?? 'sentimento não classificado'} ${score.value === null ? 'sem nota' : `${score.value}%`}`;
@@ -91,9 +72,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const conversationText = messages
-      .map((msg) => `[${msg.sender === 'agent' ? 'Atendente' : contactName || 'Cliente'}]: ${msg.content || ''}`)
-      .join('\n');
+    const conversationText = buildConversationText(messages, contactName);
 
     const systemPrompt = `Você é um analista sênior de inteligência conversacional de uma empresa distribuidora/comercial. Seu papel é compreender o CONTEXTO REAL de cada conversa e fornecer insights acionáveis e precisos.
 
@@ -130,93 +109,59 @@ Responda em português brasileiro.`;
       messageCount: messages.length,
     });
 
-    const { response, data } = await callAiWithTracking({
+    // Ferramenta (function call) desta capacidade: o schema muda, a chamada não.
+    const conversationTool: ConversationToolDefinition = {
+      name: "analyze_conversation",
+      description: "Perform comprehensive analysis of the customer service conversation",
+      schema: {
+        properties: {
+          department: { type: "string", enum: ["vendas", "compras", "logistica", "rh", "financeiro", "sac", "outros"], description: "Departamento identificado na conversa" },
+          relationshipType: { type: "string", description: "Tipo de relação: vendedor→cliente, comprador→fornecedor, logística→transportadora, RH→colaborador, financeiro→cliente, sac→cliente, etc." },
+          summary: { type: "string", description: "Brief summary (max 4 sentences) identifying department and relationship" },
+          status: CONVERSATION_STATUS_TOOL_SCHEMA,
+          keyPoints: KEY_POINTS_TOOL_SCHEMA,
+          nextSteps: NEXT_STEPS_TOOL_SCHEMA,
+          sentiment: SENTIMENT_TOOL_SCHEMA,
+          sentimentScore: { type: "number", description: "Sentiment 0-100" },
+          topics: { type: "array", items: { type: "string" }, description: "Main topics (max 5)" },
+          urgency: { type: "string", enum: ["baixa", "media", "alta", "critica"] },
+          customerSatisfaction: { type: "number", description: "CSAT 1-5" },
+          agentPerformance: {
+            type: "object",
+            properties: {
+              empathy: { type: "number", description: "1-10" },
+              clarity: { type: "number", description: "1-10" },
+              efficiency: { type: "number", description: "1-10" },
+              knowledge: { type: "number", description: "1-10" },
+            },
+          },
+          churnRisk: CHURN_RISK_TOOL_SCHEMA,
+          salesOpportunity: { type: "string", description: "Sales/business opportunity description or null" },
+        },
+        required: ["department", "relationshipType", "summary", "status", "keyPoints", "sentiment", "sentimentScore", "urgency", "customerSatisfaction"],
+      },
+    };
+
+    const { failure, rawOutput } = await requestConversationModelJson({
       functionName: 'ai-conversation-analysis',
       userId,
       apiKey: LOVABLE_API_KEY,
-      body: {
-        model: 'google/gemini-3-flash-preview',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Conversa com ${contactName || 'Cliente'}:\n\n${conversationText}` }
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "analyze_conversation",
-              description: "Perform comprehensive analysis of the customer service conversation",
-              parameters: {
-                type: "object",
-                properties: {
-                  department: { type: "string", enum: ["vendas", "compras", "logistica", "rh", "financeiro", "sac", "outros"], description: "Departamento identificado na conversa" },
-                  relationshipType: { type: "string", description: "Tipo de relação: vendedor→cliente, comprador→fornecedor, logística→transportadora, RH→colaborador, financeiro→cliente, sac→cliente, etc." },
-                  summary: { type: "string", description: "Brief summary (max 4 sentences) identifying department and relationship" },
-                  status: { type: "string", enum: ["resolvido", "pendente", "aguardando_cliente", "aguardando_atendente", "escalado"] },
-                  keyPoints: { type: "array", items: { type: "string" }, description: "Key points (max 5)" },
-                  nextSteps: { type: "array", items: { type: "string" }, description: "Actionable next steps" },
-                  sentiment: { type: "string", enum: ["positivo", "neutro", "negativo", "critico"] },
-                  sentimentScore: { type: "number", description: "Sentiment 0-100" },
-                  topics: { type: "array", items: { type: "string" }, description: "Main topics (max 5)" },
-                  urgency: { type: "string", enum: ["baixa", "media", "alta", "critica"] },
-                  customerSatisfaction: { type: "number", description: "CSAT 1-5" },
-                  agentPerformance: {
-                    type: "object",
-                    properties: {
-                      empathy: { type: "number", description: "1-10" },
-                      clarity: { type: "number", description: "1-10" },
-                      efficiency: { type: "number", description: "1-10" },
-                      knowledge: { type: "number", description: "1-10" },
-                    },
-                  },
-                  churnRisk: { type: "string", enum: ["low", "medium", "high"] },
-                  salesOpportunity: { type: "string", description: "Sales/business opportunity description or null" },
-                },
-                required: ["department", "relationshipType", "summary", "status", "keyPoints", "sentiment", "sentimentScore", "urgency", "customerSatisfaction"],
-                additionalProperties: false
-              }
-            }
-          }
-        ],
-        tool_choice: { type: "function", function: { name: "analyze_conversation" } }
-      },
+      body: buildConversationModelBody({ systemPrompt, contactName, conversationText, tool: conversationTool }),
+      log,
+      req,
     });
-
-    if (!response.ok || !data) {
-      if (response.status === 429) return errorResponse("Rate limit exceeded", 429, req);
-      if (response.status === 402) return errorResponse("Payment required", 402, req);
-      throw new Error(`AI gateway error: ${response.status}`);
-    }
-
-    const toolCall = (data.choices as Array<{message: {tool_calls?: Array<{function: {arguments: string}}>; content?: string}}>)?.[0]?.message?.tool_calls?.[0];
-    const rawContent = (data.choices as Array<{message: {content?: string}}>)?.[0]?.message?.content;
-
-    // Extrai o objeto JSON do modelo. O fallback que sintetizava "análise" com
-    // sentimento/nota inventados foi removido (IA-023): sem JSON parseável não
-    // existe análise — a resposta vira erro explícito, não dado fabricado.
-    let rawOutput: unknown = null;
-    if (toolCall?.function?.arguments) {
-      try {
-        rawOutput = JSON.parse(toolCall.function.arguments);
-      } catch {
-        log.error("Failed to parse tool_call arguments");
-        rawOutput = parseJsonObject(toolCall.function.arguments);
-      }
-    } else if (typeof rawContent === 'string') {
-      rawOutput = parseJsonObject(rawContent);
-    }
+    if (failure) return failure;
 
     const contextBudget = measureConversationContext(messages, periodDays);
 
     if (!rawOutput || typeof rawOutput !== 'object') {
       log.warn("Model returned no parseable JSON");
-      return jsonResponse(buildAiEnvelope({
+      return noModelPayloadResponse({
         capability: 'ai-conversation-analysis',
-        status: 'error',
         error: 'A IA não devolveu uma análise em formato válido; nada foi gravado.',
         context: contextBudget,
-        evidence: { contractVersion: CONTEXT_CONTRACT_VERSION },
-      }), 502, req);
+        req,
+      });
     }
 
     // Legado conhecido é TRADUZIDO antes do contrato (IA-021/IA-022); valor
@@ -224,29 +169,20 @@ Responda em português brasileiro.`;
     const rawAnalysis = rawOutput as Record<string, unknown>;
     const vocabularyConversions: Array<{ field: string; from: unknown; to: string }> = [];
     const legacySentiment = normalizeSentiment(rawAnalysis.sentiment);
-    if (legacySentiment.known && legacySentiment.value && legacySentiment.value !== rawAnalysis.sentiment) {
-      vocabularyConversions.push({ field: 'sentiment', from: rawAnalysis.sentiment, to: legacySentiment.value });
-      rawAnalysis.sentiment = legacySentiment.value;
-    }
+    if (legacySentiment.known) applyVocabularyConversion(rawAnalysis, 'sentiment', legacySentiment, vocabularyConversions);
     const legacyUrgency = normalizeUrgency(rawAnalysis.urgency);
-    if (legacyUrgency.known && legacyUrgency.value && legacyUrgency.value !== rawAnalysis.urgency) {
-      vocabularyConversions.push({ field: 'urgency', from: rawAnalysis.urgency, to: legacyUrgency.value });
-      rawAnalysis.urgency = legacyUrgency.value;
-    }
+    if (legacyUrgency.known) applyVocabularyConversion(rawAnalysis, 'urgency', legacyUrgency, vocabularyConversions);
 
     // Contrato de saída da capacidade (IA-025): estrutura ou valor incorreto é
     // rejeitado ANTES de renderizar ou persistir.
     const validated = parseModelOutput(ConversationAnalysisOutput, rawAnalysis);
     if (!validated.ok) {
-      log.warn("Model output rejected by contract", {
-        errors: validated.errors.map((e) => `${e.path}: ${e.message}`).slice(0, 8),
-      });
+      log.warn("Model output rejected by contract", { errors: summarizeContractIssues(validated.errors) });
       return jsonResponse(buildAiEnvelope({
         capability: 'ai-conversation-analysis',
         status: 'error',
         error: 'A resposta do modelo não atende ao contrato de análise; nada foi gravado.',
-        context: contextBudget,
-        evidence: { contractVersion: CONTEXT_CONTRACT_VERSION, errors: validated.errors },
+        ...contractRejectionEvidence(contextBudget, validated.errors),
       }), 502, req);
     }
 
@@ -256,9 +192,7 @@ Responda em português brasileiro.`;
     // escala trocada (0,7 querendo dizer 70%) é recusada — nunca vira 50 nem 3.
     const sentimentScore = normalizeScore(analysis.sentimentScore, { min: 0, max: 100, scale: 'percent' });
     const customerSatisfaction = normalizeScore(analysis.customerSatisfaction, { min: 1, max: 5, scale: 'integer' });
-    const valueIssues: Record<string, string> = {};
-    if (analysis.sentimentScore !== undefined && sentimentScore.issue) valueIssues.sentimentScore = sentimentScore.issue;
-    if (analysis.customerSatisfaction !== undefined && customerSatisfaction.issue) valueIssues.customerSatisfaction = customerSatisfaction.issue;
+    const valueIssues = collectValueIssues(analysis, { sentimentScore, customerSatisfaction });
 
     // Urgência (analítica, pt) e prioridade (operacional, EN) são grandezas
     // separadas: a conversão é explícita, não mais um `=== 'critical'` morto.
@@ -274,18 +208,9 @@ Responda em português brasileiro.`;
       // mudou, nem projeção sobrescrita por análise de período antigo.
       const { data: persisted, error: persistError } = await supabase.rpc('persist_conversation_analysis', {
         p_contact_id: visibleContactId,
-        p_analysis: {
-          department: analysis.department,
-          relationship_type: analysis.relationshipType,
-          summary: analysis.summary,
-          sentiment: analysis.sentiment,
+        p_analysis: conversationAnalysisRecord(analysis, {
           sentiment_score: sentimentScore.value,
           customer_satisfaction: customerSatisfaction.value,
-          key_points: analysis.keyPoints,
-          next_steps: analysis.nextSteps,
-          topics: analysis.topics,
-          urgency: analysis.urgency,
-          status: analysis.status,
           message_count: messages.length,
           agent_performance: analysis.agentPerformance ?? null,
           churn_risk: analysis.churnRisk ?? null,
@@ -294,7 +219,7 @@ Responda em português brasileiro.`;
           period_days: periodDays ?? null,
           coverage: contextBudget,
           ai_priority: operationalPriority,
-        },
+        }),
         p_analyzed_at: new Date().toISOString(),
       });
 
@@ -303,13 +228,12 @@ Responda em português brasileiro.`;
           contactId: visibleContactId,
           error: persistError.message,
         });
-        return jsonResponse(buildAiEnvelope({
+        return conversationPersistFailureResponse({
           capability: 'ai-conversation-analysis',
-          status: 'error',
-          error: 'Não foi possível gravar a análise; nada foi alterado no contato.',
+          message: 'Não foi possível gravar a análise; nada foi alterado no contato.',
           context: contextBudget,
-          evidence: { contractVersion: CONTEXT_CONTRACT_VERSION },
-        }), 502, req);
+          req,
+        });
       }
 
       const persistedResult = persisted as { analysis_id?: string; projected?: boolean } | null;
@@ -318,21 +242,17 @@ Responda em português brasileiro.`;
     }
 
     log.done(200, { analysisId, messageCount: messages.length, projected });
-    return jsonResponse({
-      ...buildAiEnvelope({
-        capability: 'ai-conversation-analysis',
-        status: Object.keys(valueIssues).length > 0 ? 'partial' : 'ok',
-        context: contextBudget,
-        evidence: {
-          contractVersion: CONTEXT_CONTRACT_VERSION,
-          valueIssues,
-          vocabularyConversions,
-          projected,
-        },
-        data: analysis,
-      }),
+    return conversationRunResponse({
+      capability: 'ai-conversation-analysis',
+      status: Object.keys(valueIssues).length > 0 ? 'partial' : 'ok',
+      context: contextBudget,
+      valueIssues,
+      vocabularyConversions,
+      projected,
       analysisId,
-    }, 200, req);
+      data: analysis,
+      req,
+    });
   } catch (error) {
     log.error("Error analyzing conversation", { error: error instanceof Error ? error.message : String(error) });
     return errorResponse(error instanceof Error ? error.message : 'Unknown error', 500, req);

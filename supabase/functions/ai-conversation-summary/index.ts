@@ -7,6 +7,7 @@ import { ConversationSummaryOutput, buildAiEnvelope, parseModelOutput } from "..
 import { parseJsonObject } from "../_shared/ai-json.ts";
 import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
+import { CHURN_RISK_TOOL_SCHEMA, CONVERSATION_STATUS_TOOL_SCHEMA, KEY_POINTS_TOOL_SCHEMA, NEXT_STEPS_TOOL_SCHEMA, SENTIMENT_TOOL_SCHEMA, type ConversationToolDefinition, applyVocabularyConversion, buildConversationModelBody, buildConversationText, collectValueIssues, contractRejectionEvidence, conversationRunEnvelope, loadContactPromptContext, noModelPayloadResponse, persistenceFailureEnvelope, requestConversationModelJson, resolveVisibleContactId, summarizeContractIssues } from "../_shared/ai-conversation-pipeline.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -33,57 +34,33 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = requireEnv("LOVABLE_API_KEY");
     const supabase = createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
 
-    // Este client roda com service_role (bypassa RLS). Sem esta checagem,
-    // qualquer usuário autenticado poderia usar contactId de um contato que
-    // não enxerga para ler notas/sentimento/histórico (PII) — a RLS real de
-    // `contacts` é a fonte de verdade de visibilidade.
-    let visibleContactId: string | null = contactId ?? null;
-    if (visibleContactId) {
-      const authedClient = await createAuthedClient(req);
-      const { data: visibleContact } = await authedClient
-        .from('contacts')
-        .select('id')
-        .eq('id', visibleContactId)
-        .maybeSingle();
-      if (!visibleContact) {
-        visibleContactId = null;
-      }
-    }
+    // Visibilidade do contato (IA-004): este client é service_role (bypassa RLS).
+    const visibleContactId = await resolveVisibleContactId(req, contactId);
 
     // Fetch contact context for richer analysis
     let contactContext = '';
     if (visibleContactId) {
-      const { data: contact } = await supabase
-        .from('contacts')
-        .select('name, company, tags, ai_priority, ai_sentiment, notes')
-        .eq('id', visibleContactId)
-        .maybeSingle();
+      const { contact, recentAnalyses } = await loadContactPromptContext({
+        supabase,
+        contactId: visibleContactId,
+        contactColumns: 'name, company, tags, ai_priority, ai_sentiment, notes',
+        analysisColumns: 'sentiment, summary, created_at',
+      });
 
       if (contact) {
         contactContext = `\nContexto: ${contact.name || 'Cliente'}, Empresa: ${contact.company || 'N/A'}, Tags: ${contact.tags?.join(', ') || 'Nenhuma'}`;
       }
 
-      const { data: prevAnalyses } = await supabase
-        .from('conversation_analyses')
-        .select('sentiment, summary, created_at')
-        .eq('contact_id', visibleContactId)
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      if (prevAnalyses && prevAnalyses.length > 0) {
-        contactContext += `\nHistórico: ${prevAnalyses.map(a => `[${a.sentiment}] ${a.summary}`).join(' | ')}`;
+      if (recentAnalyses.length > 0) {
+        contactContext += `\nHistórico: ${recentAnalyses.map(a => `[${a.sentiment}] ${a.summary}`).join(' | ')}`;
       }
     }
 
-    const conversationText = messages
-      .map((msg) =>
-        `[${msg.sender === 'agent' ? 'Atendente' : contactName || 'Cliente'}]: ${msg.content || ''}`
-      )
-      .join('\n');
+    const conversationText = buildConversationText(messages, contactName);
 
     const systemPrompt = `Você é um analista sênior de inteligência conversacional de uma empresa distribuidora/comercial.
 
-CONTEXTO DO NEGÓCIO — Nossa empresa opera múltiplos departamentos que se comunicam via WhatsApp:
+CONTEXTO DO NEGÓCIO — Nossa empresa opera múltiplos departamentos que se comunicam com diferentes públicos via WhatsApp:
 • VENDAS: Vendedores atendem clientes (empresas/lojistas) — pedidos, condições, follow-ups comerciais.
 • COMPRAS: Time de compras interage com FORNECEDORES — cotações, prazos, acompanhamento de produção.
 • LOGÍSTICA: Logística cota e acompanha TRANSPORTADORAS — fretes, rastreio, ocorrências.
@@ -101,92 +78,57 @@ Foque em:
 - Identificar riscos (churn, rompimento com fornecedor, turnover)
 - Sugerir ações concretas e mensuráveis`;
 
-    const { response, data } = await callAiWithTracking({
+    // Ferramenta (function call) desta capacidade: o schema muda, a chamada não.
+    const conversationTool: ConversationToolDefinition = {
+      name: "generate_analysis",
+      description: "Generate a comprehensive analysis of the conversation",
+      schema: {
+        properties: {
+          department: { type: "string", enum: ["vendas", "compras", "logistica", "rh", "financeiro", "sac", "outros"], description: "Departamento identificado" },
+          relationshipType: { type: "string", description: "Tipo de relação identificada (ex: vendedor→cliente)" },
+          summary: { type: "string", description: "Brief summary (max 3 sentences)" },
+          status: CONVERSATION_STATUS_TOOL_SCHEMA,
+          keyPoints: KEY_POINTS_TOOL_SCHEMA,
+          nextSteps: NEXT_STEPS_TOOL_SCHEMA,
+          sentiment: SENTIMENT_TOOL_SCHEMA,
+          sentimentScore: { type: "number", description: "Sentiment score 0-100 (100=very positive)" },
+          customerSatisfaction: { type: "number", description: "Estimated CSAT 1-5" },
+          agentPerformance: {
+            type: "object",
+            properties: {
+              empathy: { type: "number" }, clarity: { type: "number" },
+              efficiency: { type: "number" }, knowledge: { type: "number" },
+            },
+          },
+          churnRisk: CHURN_RISK_TOOL_SCHEMA,
+          salesOpportunity: { type: "string", description: "Description of sales opportunity or null" },
+          topics: { type: "array", items: { type: "string" }, description: "Main topics discussed" },
+          urgency: { type: "string", enum: ["baixa", "media", "alta", "critica"] },
+        },
+        required: ["department", "summary", "status", "keyPoints", "sentiment", "sentimentScore", "customerSatisfaction", "topics", "urgency"],
+      },
+    };
+
+    const { failure, rawOutput } = await requestConversationModelJson({
       functionName: 'ai-conversation-summary',
       userId,
       apiKey: LOVABLE_API_KEY,
-      body: {
-        model: 'google/gemini-3-flash-preview',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Conversa com ${contactName || 'Cliente'}:\n\n${conversationText}` }
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "generate_analysis",
-              description: "Generate a comprehensive analysis of the conversation",
-              parameters: {
-                type: "object",
-                properties: {
-                  department: { type: "string", enum: ["vendas", "compras", "logistica", "rh", "financeiro", "sac", "outros"], description: "Departamento identificado" },
-                  relationshipType: { type: "string", description: "Tipo de relação identificada (ex: vendedor→cliente)" },
-                  summary: { type: "string", description: "Brief summary (max 3 sentences)" },
-                  status: { type: "string", enum: ["resolvido", "pendente", "aguardando_cliente", "aguardando_atendente", "escalado"] },
-                  keyPoints: { type: "array", items: { type: "string" }, description: "Key points (max 5)" },
-                  nextSteps: { type: "array", items: { type: "string" }, description: "Actionable next steps" },
-                  sentiment: { type: "string", enum: ["positivo", "neutro", "negativo", "critico"] },
-                  sentimentScore: { type: "number", description: "Sentiment score 0-100 (100=very positive)" },
-                  customerSatisfaction: { type: "number", description: "Estimated CSAT 1-5" },
-                  agentPerformance: {
-                    type: "object",
-                    properties: {
-                      empathy: { type: "number" }, clarity: { type: "number" },
-                      efficiency: { type: "number" }, knowledge: { type: "number" },
-                    },
-                  },
-                  churnRisk: { type: "string", enum: ["low", "medium", "high"] },
-                  salesOpportunity: { type: "string", description: "Description of sales opportunity or null" },
-                  topics: { type: "array", items: { type: "string" }, description: "Main topics discussed" },
-                  urgency: { type: "string", enum: ["baixa", "media", "alta", "critica"] },
-                },
-                required: ["department", "summary", "status", "keyPoints", "sentiment", "sentimentScore", "customerSatisfaction", "topics", "urgency"],
-                additionalProperties: false,
-              }
-            }
-          }
-        ],
-        tool_choice: { type: "function", function: { name: "generate_analysis" } }
-      },
+      body: buildConversationModelBody({ systemPrompt, contactName, conversationText, tool: conversationTool }),
+      log,
+      req,
     });
-
-    if (!response.ok || !data) {
-      if (response.status === 429) return errorResponse("Rate limit exceeded", 429, req);
-      if (response.status === 402) return errorResponse("Payment required", 402, req);
-      throw new Error(`AI gateway error: ${response.status}`);
-    }
-
-    const toolCall = (data.choices as Array<{message: {tool_calls?: Array<{function: {arguments: string}}>; content?: string}}>)?.[0]?.message?.tool_calls?.[0];
-    const rawContent = (data.choices as Array<{message: {content?: string}}>)?.[0]?.message?.content;
-
-    // Extrai o objeto JSON do modelo. O fallback que sintetizava um resumo
-    // (texto genérico + nota de sentimento e CSAT fixos) foi removido (IA-023):
-    // sem JSON parseável não existe resumo — a resposta vira erro explícito,
-    // nunca dado fabricado.
-    let rawOutput: unknown = null;
-    if (toolCall?.function?.arguments) {
-      try {
-        rawOutput = JSON.parse(toolCall.function.arguments);
-      } catch {
-        log.error("Failed to parse tool_call arguments");
-        rawOutput = parseJsonObject(toolCall.function.arguments);
-      }
-    } else if (typeof rawContent === 'string') {
-      rawOutput = parseJsonObject(rawContent);
-    }
+    if (failure) return failure;
 
     const contextBudget = measureConversationContext(messages, periodDays);
 
     if (!rawOutput || typeof rawOutput !== 'object') {
       log.warn("Model returned no parseable JSON");
-      return jsonResponse(buildAiEnvelope({
+      return noModelPayloadResponse({
         capability: 'ai-conversation-summary',
-        status: 'error',
         error: 'A IA não devolveu um resumo em formato válido; nada foi gravado.',
         context: contextBudget,
-        evidence: { contractVersion: CONTEXT_CONTRACT_VERSION },
-      }), 502, req);
+        req,
+      });
     }
 
     // Legado conhecido é TRADUZIDO antes do contrato (IA-021/IA-022); valor
@@ -194,29 +136,20 @@ Foque em:
     const rawSummary = rawOutput as Record<string, unknown>;
     const vocabularyConversions: Array<{ field: string; from: unknown; to: string }> = [];
     const legacySentiment = normalizeSentiment(rawSummary.sentiment);
-    if (legacySentiment.known && legacySentiment.value && legacySentiment.value !== rawSummary.sentiment) {
-      vocabularyConversions.push({ field: 'sentiment', from: rawSummary.sentiment, to: legacySentiment.value });
-      rawSummary.sentiment = legacySentiment.value;
-    }
+    if (legacySentiment.known) applyVocabularyConversion(rawSummary, 'sentiment', legacySentiment, vocabularyConversions);
     const legacyUrgency = normalizeUrgency(rawSummary.urgency);
-    if (legacyUrgency.known && legacyUrgency.value && legacyUrgency.value !== rawSummary.urgency) {
-      vocabularyConversions.push({ field: 'urgency', from: rawSummary.urgency, to: legacyUrgency.value });
-      rawSummary.urgency = legacyUrgency.value;
-    }
+    if (legacyUrgency.known) applyVocabularyConversion(rawSummary, 'urgency', legacyUrgency, vocabularyConversions);
 
     // Contrato de saída da capacidade (IA-025): estrutura ou valor incorreto é
     // rejeitado ANTES de renderizar ou persistir.
     const validated = parseModelOutput(ConversationSummaryOutput, rawSummary);
     if (!validated.ok) {
-      log.warn("Model output rejected by contract", {
-        errors: validated.errors.map((e) => `${e.path}: ${e.message}`).slice(0, 8),
-      });
+      log.warn("Model output rejected by contract", { errors: summarizeContractIssues(validated.errors) });
       return jsonResponse(buildAiEnvelope({
         capability: 'ai-conversation-summary',
         status: 'error',
         error: 'A resposta do modelo não atende ao contrato de resumo; nada foi gravado.',
-        context: contextBudget,
-        evidence: { contractVersion: CONTEXT_CONTRACT_VERSION, errors: validated.errors },
+        ...contractRejectionEvidence(contextBudget, validated.errors),
       }), 502, req);
     }
 
@@ -226,9 +159,7 @@ Foque em:
     // escala trocada (0,7 querendo dizer 70%) é recusada — nunca vira 50 nem 3.
     const sentimentScore = normalizeScore(analysis.sentimentScore, { min: 0, max: 100, scale: 'percent' });
     const customerSatisfaction = normalizeScore(analysis.customerSatisfaction, { min: 1, max: 5, scale: 'integer' });
-    const valueIssues: Record<string, string> = {};
-    if (analysis.sentimentScore !== undefined && sentimentScore.issue) valueIssues.sentimentScore = sentimentScore.issue;
-    if (analysis.customerSatisfaction !== undefined && customerSatisfaction.issue) valueIssues.customerSatisfaction = customerSatisfaction.issue;
+    const valueIssues = collectValueIssues(analysis, { sentimentScore, customerSatisfaction });
 
     // Urgência (analítica, pt) e prioridade (operacional, EN) são grandezas
     // separadas: a conversão é explícita, não mais uma comparação com um token
@@ -274,12 +205,10 @@ Foque em:
           contactId: visibleContactId,
           error: persistError.message,
         });
-        return jsonResponse(buildAiEnvelope({
+        return jsonResponse(persistenceFailureEnvelope({
           capability: 'ai-conversation-summary',
-          status: 'error',
           error: 'Não foi possível gravar o resumo; nada foi alterado no contato.',
           context: contextBudget,
-          evidence: { contractVersion: CONTEXT_CONTRACT_VERSION },
         }), 502, req);
       }
 
@@ -293,13 +222,7 @@ Foque em:
       ...buildAiEnvelope({
         capability: 'ai-conversation-summary',
         status: Object.keys(valueIssues).length > 0 ? 'partial' : 'ok',
-        context: contextBudget,
-        evidence: {
-          contractVersion: CONTEXT_CONTRACT_VERSION,
-          valueIssues,
-          vocabularyConversions,
-          projected,
-        },
+        ...conversationRunEnvelope(contextBudget, valueIssues, vocabularyConversions, projected),
         data: analysis,
       }),
       analysisId,

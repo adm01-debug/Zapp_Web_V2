@@ -11,7 +11,7 @@
   },
   "summary": {
     "function_count": 67,
-    "source_file_count": 103,
+    "source_file_count": 104,
     "verify_jwt_true": 57,
     "verify_jwt_false": 10
   },
@@ -25,6 +25,11 @@
       "path": "supabase/functions/_shared/ai-auth.ts",
       "bytes": 3945,
       "sha256": "80ec690034f445416c1205b5863a4322fe6e260466d49ffaad45f89dc8633820"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-conversation-pipeline.ts",
+      "bytes": 15810,
+      "sha256": "e14fdd00d8310e236f852d87b991d2236ef0252ca76b8e6eb5f778ec7ee43cb5"
     },
     {
       "path": "supabase/functions/_shared/ai-guards.ts",
@@ -198,8 +203,8 @@
     },
     {
       "path": "supabase/functions/ai-auto-tag/index.ts",
-      "bytes": 13115,
-      "sha256": "6f0b0c7f93cd935ef49aaceaa930afe4a71b539b27c9904b6805ae9e6d829d83"
+      "bytes": 13049,
+      "sha256": "091731c99043defedfe1cf5d0c00ae2dd0e9189fbc9296364aa7ae51b300c0b0"
     },
     {
       "path": "supabase/functions/ai-churn-analysis/index.ts",
@@ -213,13 +218,13 @@
     },
     {
       "path": "supabase/functions/ai-conversation-analysis/index.ts",
-      "bytes": 18034,
-      "sha256": "a67e679487fc82dbc2e235febe4fb81d4c81839ae5be9fbd062a85ed2d87e6eb"
+      "bytes": 14626,
+      "sha256": "889414e004217cb9868abbe390e72354973d8bcb298ef1a7e27b11f3e9a36233"
     },
     {
       "path": "supabase/functions/ai-conversation-summary/index.ts",
-      "bytes": 15397,
-      "sha256": "3ef5ce7a5420fb844cca40bb6fe3049e9b673f5488270ce6ff0740a85a4eacdc"
+      "bytes": 12321,
+      "sha256": "d02a3ed739c301a04daf0fef7e3fab47d605db0ca4dc97735368e0443e3ab02c"
     },
     {
       "path": "supabase/functions/ai-enhance-message/index.ts",
@@ -268,8 +273,8 @@
     },
     {
       "path": "supabase/functions/chatbot-l1/index.ts",
-      "bytes": 11672,
-      "sha256": "bb02cef19e67e27d8efbca3ecd308704f30adeec3dadb80211458fbb95a7d7b6"
+      "bytes": 11606,
+      "sha256": "61697a1959b490dcafba7fbe6db624da9d2c91a3636686bf0414eea3978fa0dc"
     },
     {
       "path": "supabase/functions/classify-audio-meme/index.ts",
@@ -537,9 +542,10 @@
       "name": "ai-auto-tag",
       "entrypoint": "supabase/functions/ai-auto-tag/index.ts",
       "verify_jwt": true,
-      "source_sha256": "e4d8118c4571f112126a01e97d19d009dd9adbefc418d107336ab92e7b04bddc",
+      "source_sha256": "d462e7736d5afb72271c35cbd91d41b772d213363939a6c6aa3a655c678d6533",
       "source_files": [
         "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/ai-json.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/ai-values.ts",
@@ -580,8 +586,9 @@
       "name": "ai-conversation-analysis",
       "entrypoint": "supabase/functions/ai-conversation-analysis/index.ts",
       "verify_jwt": true,
-      "source_sha256": "0afa1df2be587089a983c4ec3fd22a323a659504fde9197941fd4004eb3fd0d6",
+      "source_sha256": "d0fe5b0f853b2fe1402fd7f2ea0ff1372e92eda3ce783a3deec70eebf4cee41f",
       "source_files": [
+        "supabase/functions/_shared/ai-conversation-pipeline.ts",
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-json.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
@@ -598,8 +605,9 @@
       "name": "ai-conversation-summary",
       "entrypoint": "supabase/functions/ai-conversation-summary/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ec6e4f3cda8188f247aa96531965547704a0960beee969e2a33ba897f3d46264",
+      "source_sha256": "db821294b5046afd16c441e59f1a12d610984c0ded207b43343f071b72cb8a46",
       "source_files": [
+        "supabase/functions/_shared/ai-conversation-pipeline.ts",
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-json.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
@@ -734,9 +742,10 @@
       "name": "chatbot-l1",
       "entrypoint": "supabase/functions/chatbot-l1/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d9cbac8e4c4b1a8a3f8c5b8de1b0971facd03688c76e9e01565dc35e94729624",
+      "source_sha256": "8323b321dd0cda706370c9bac3dc4eb98238b3985d2e5ff087d4e98e89904628",
       "source_files": [
         "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/ai-json.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/ai-vocabulary.ts",
@@ -1404,5 +1413,5 @@
       ]
     }
   ],
-  "manifest_sha256": "38d7f6558974208106f83871f069dc1d2766b4d35b51c59574cd1d8121de628f"
+  "manifest_sha256": "7e8ccb516d7bb1ef6efd7ae0efe9557e19fc1c60fdbb30b12086e661c4e1da9d"
 }

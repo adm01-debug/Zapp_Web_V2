@@ -10,6 +10,7 @@ import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { AutoTagOutput, buildAiEnvelope, parseModelOutput } from "../_shared/ai-response-contracts.ts";
 import { normalizeSentiment, normalizeOperationalPriority } from "../_shared/ai-vocabulary.ts";
 import { normalizeScore } from "../_shared/ai-values.ts";
+import { parseJsonObject } from "../_shared/ai-json.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -143,10 +144,7 @@ Responda APENAS em JSON:
     // JSON parseável não existe classificação — default inventado é pior que erro.
     let rawOutput: unknown = null;
     if (typeof content === 'string') {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        try { rawOutput = JSON.parse(jsonMatch[0]); } catch { rawOutput = null; }
-      }
+      rawOutput = parseJsonObject(content);
     }
 
     if (!rawOutput || typeof rawOutput !== 'object') {
