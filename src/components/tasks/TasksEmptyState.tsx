@@ -6,9 +6,11 @@ interface Props {
   onClearFilter?: () => void;
   onAddTask?: () => void;
   columnLabel?: string;
+  /** Etapa 53: política da coluna (Quadro) exibida quando ela está vazia. */
+  policy?: string;
 }
 
-export function TasksEmptyState({ variant, onClearFilter, onAddTask, columnLabel }: Props) {
+export function TasksEmptyState({ variant, onClearFilter, onAddTask, columnLabel, policy }: Props) {
   if (variant === 'filter') {
     return (
       <div className="flex flex-col items-center gap-3 py-12 text-center">
@@ -21,6 +23,7 @@ export function TasksEmptyState({ variant, onClearFilter, onAddTask, columnLabel
     return (
       <div className="flex flex-col items-center gap-2 py-8 text-center">
         <p className="text-xs text-muted-foreground/60 italic">Coluna vazia</p>
+        {policy && <p className="text-xs text-muted-foreground/70">{policy}</p>}
       </div>
     );
   }

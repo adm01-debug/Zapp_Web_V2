@@ -272,6 +272,70 @@ describe('Tarefas — componentes dos três modos', () => {
     expect(screen.getByText('Fazendo').closest('div')?.className).toContain('ring-destructive');
   });
 
+  it('etapa 53: coluna vazia mostra a política da coluna', () => {
+    cleanup();
+    render(
+      <TooltipProvider>
+        <TasksBoardMode
+          byStatus={byStatusVazio}
+          isLoading={false}
+          onMove={vi.fn()}
+          onReorder={vi.fn()}
+          onOpen={vi.fn()}
+          onDelete={vi.fn()}
+          onCreate={vi.fn()}
+        />
+      </TooltipProvider>
+    );
+
+    expect(screen.getAllByText('Coluna vazia')).toHaveLength(5);
+    // a política sai da KANBAN_COLUMNS (mesmo texto do tooltip do cabeçalho)
+    expect(screen.getByText('O que esta nas suas maos agora. Tres e o limite.')).toBeTruthy();
+    expect(screen.getByText('Feito. Fica 7 dias a vista.')).toBeTruthy();
+  });
+
+  it('etapa 53: o carregamento usa o esqueleto da coluna (3 cartões por coluna)', () => {
+    cleanup();
+    const { container } = render(
+      <TooltipProvider>
+        <TasksBoardMode
+          byStatus={byStatusVazio}
+          isLoading
+          onMove={vi.fn()}
+          onReorder={vi.fn()}
+          onOpen={vi.fn()}
+          onDelete={vi.fn()}
+          onCreate={vi.fn()}
+        />
+      </TooltipProvider>
+    );
+
+    // 5 colunas × 3 cartões do BoardColumnSkeleton
+    expect(container.querySelectorAll('.animate-shimmer')).toHaveLength(15);
+    expect(screen.queryByText('Coluna vazia')).toBeNull();
+  });
+
+  it('etapa 53: a coluna não usa mais o teto mágico de 100vh e encolhe por flex', () => {
+    cleanup();
+    render(
+      <TooltipProvider>
+        <TasksBoardMode
+          byStatus={byStatusVazio}
+          isLoading={false}
+          onMove={vi.fn()}
+          onReorder={vi.fn()}
+          onOpen={vi.fn()}
+          onDelete={vi.fn()}
+          onCreate={vi.fn()}
+        />
+      </TooltipProvider>
+    );
+
+    const raiz = screen.getByText('Fazendo').closest('div')?.parentElement;
+    expect(raiz?.className).toContain('min-h-0');
+    expect(raiz?.className).not.toContain('100vh-280px');
+  });
+
   it('etapa 48 (B4): "Concluídas (7 dias)" recolhida e "ver mais (30 dias)" revela as antigas', async () => {
     cleanup();
     renderLista(buckets({

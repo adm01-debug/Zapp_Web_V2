@@ -20,10 +20,16 @@ export function ActiveCallBar() {
 
   const isIncomingRinging = sip.callStatus === 'ringing' && sip.callDirection === 'inbound';
 
-  // bottom-24 (não bottom-4): livre da faixa ocupada por VoiceCopilotFAB e
-  // ScrollToTopButton, ambos fixed bottom-6 right-6, no mesmo canto.
+  // Na view Contatos há uma pilha de botões flutuantes (novo "+" verde + voltar ao
+  // topo + microfone). A barra sobe acima dessa pilha para não cobrir nenhum deles.
+  // Nas demais views mantém bottom-24 (livre do microfone e do voltar ao topo).
+  const inContacts = searchParams.get('view') === 'contacts';
+  const positionClass = inContacts
+    ? 'bottom-[calc(284px+env(safe-area-inset-bottom,0px))] md:bottom-56'
+    : 'bottom-24';
+
   return (
-    <div className="fixed bottom-24 right-4 z-[9998] w-72 rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
+    <div className={`fixed right-4 z-[9998] w-72 rounded-2xl border border-border bg-card shadow-2xl overflow-hidden ${positionClass}`}>
       <div className="px-4 py-3 flex items-center justify-between gap-2 bg-primary/10">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-foreground truncate">{sip.currentNumber || 'Chamada'}</p>
