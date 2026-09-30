@@ -113,23 +113,39 @@ export function dueLabel(
   return { label: dayName.replace('.', '') + ' ' + dayMonth, overdue: false };
 }
 
+/**
+ * Chave de dia no fuso LOCAL (`AAAA-MM-DD`) — o MESMO dia que a Lista
+ * (`bucketByDue`), o Quadro e os cabecalhos da Agenda ja usam (`setHours(0,0,0,0)`
+ * + `format`). Fatiar o ISO em UTC (`toISOString().slice(0, 10)`) jogava a tarefa
+ * das 23:59 locais no dia seguinte da Agenda. Devolve `null` para valor ausente ou
+ * invalido, em vez de estourar dentro do filtro.
+ */
+function localDayKey(value: string | Date | null): string | null {
+  if (!value) return null;
+  const d = typeof value === 'string' ? new Date(value) : value;
+  if (Number.isNaN(d.getTime())) return null;
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day   = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${month}-${day}`;
+}
+
 export function weekBuckets(
   items: WorkItem[],
   startDate: Date
 ): Array<{ date: Date; reminders: WorkItem[]; dueTasks: WorkItem[] }> {
   return Array.from({ length: 7 }, (_, i) => {
     const day    = addDays(startDate, i);
-    const dayStr = day.toISOString().slice(0, 10);
+    const dayStr = localDayKey(day);
     return {
       date: day,
       reminders: items.filter(it =>
         it.remind_at &&
-        it.remind_at.slice(0, 10) === dayStr &&
+        localDayKey(it.remind_at) === dayStr &&
         it.status !== 'done' && it.status !== 'cancelled'
       ),
       dueTasks: items.filter(it =>
         it.due_date &&
-        it.due_date.slice(0, 10) === dayStr &&
+        localDayKey(it.due_date) === dayStr &&
         it.status !== 'done' && it.status !== 'cancelled'
       ),
     };

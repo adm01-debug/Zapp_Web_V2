@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { startOfDay } from 'date-fns';
 import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay, splitDoneByRecency } from '../workItemAggregates';
 import type { WorkItem } from '../workItem.types';
 
@@ -158,14 +159,48 @@ describe('dueLabel', () => {
 
 describe('weekBuckets', () => {
   it('distribui por dia de remind_at e due_date', () => {
-    const start = new Date('2026-10-06T00:00:00Z'); // segunda
+    // Datas construidas em hora LOCAL: o mesmo caso passa em UTC e em UTC-3.
+    const start = new Date(2026, 9, 6);            // segunda 06/10 as 00:00 locais
     const items = [
-      makeItem({ remind_at: '2026-10-06T09:00:00Z' }),
-      makeItem({ due_date: '2026-10-07T00:00:00Z' }),
+      makeItem({ remind_at: new Date(2026, 9, 6, 9, 0).toISOString() }),
+      makeItem({ due_date: new Date(2026, 9, 7, 0, 0).toISOString() }),
     ];
     const wb = weekBuckets(items, start);
     expect(wb[0].reminders).toHaveLength(1); // seg
     expect(wb[1].dueTasks).toHaveLength(1);  // ter
+  });
+
+  it('a tarefa das 23:59 locais fica no dia LOCAL, o mesmo que a Lista chama de "Hoje"', () => {
+    const due   = new Date(2026, 9, 1, 23, 59);   // 01/10 as 23:59 locais
+    const wb    = weekBuckets([makeItem({ due_date: due.toISOString() })], startOfDay(due));
+    expect(wb[0].dueTasks).toHaveLength(1);
+    expect(wb[1].dueTasks).toHaveLength(0);
+
+    // ...e a Lista concorda: o mesmo instante e "Hoje", nao "amanha".
+    const b = bucketByDue([makeItem({ due_date: due.toISOString() })], due);
+    expect(b.today).toHaveLength(1);
+    expect(b.tomorrow).toHaveLength(0);
+  });
+
+  it('o lembrete das 23:59 locais fica no dia LOCAL, nao no seguinte', () => {
+    const rem = new Date(2026, 9, 1, 23, 59);
+    const wb  = weekBuckets([makeItem({ remind_at: rem.toISOString() })], startOfDay(rem));
+    expect(wb[0].reminders).toHaveLength(1);
+    expect(wb[1].reminders).toHaveLength(0);
+  });
+
+  it('a meia-noite local abre o proprio dia (nao fecha o anterior)', () => {
+    const wb = weekBuckets(
+      [makeItem({ due_date: new Date(2026, 9, 2, 0, 0).toISOString() })],
+      new Date(2026, 9, 1)
+    );
+    expect(wb[0].dueTasks).toHaveLength(0); // 01/10 fica vazio
+    expect(wb[1].dueTasks).toHaveLength(1); // 02/10 recebe
+  });
+
+  it('data invalida e ignorada, nao derruba a Agenda', () => {
+    const wb = weekBuckets([makeItem({ due_date: 'nao-e-data' })], new Date(2026, 9, 1));
+    expect(wb.every(w => w.dueTasks.length === 0)).toBe(true);
   });
 });
 
