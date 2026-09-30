@@ -11,6 +11,11 @@ export const playNotificationSound = vi.fn();
 export const showBrowserNotification = vi.fn();
 export const requestNotificationPermission = vi.fn();
 export const toast = vi.fn();
+export const sonnerToast = { error: vi.fn(), success: vi.fn() };
+export const invoke = vi.fn();
+
+/** Resultado do dedupe de notificacoes; o teste pode desligar para cobrir o caminho silencioso. */
+export const dedupeResult = { valor: true };
 
 /** Callbacks entregues pelos canais do Realtime, na ordem em que foram registrados. */
 export const callbacks: Array<(payload: unknown) => unknown> = [];
@@ -57,13 +62,17 @@ export function supabaseMock() {
     supabase: {
       channel: () => canal,
       removeChannel: vi.fn(),
+      functions: { invoke: (...args: unknown[]) => invoke(...args) },
       from: () => ({
         select: () => ({
           eq: () => ({
             maybeSingle: async () => ({ data: contactRow, error: null }),
             single: async () => ({ data: contactRow, error: null }),
           }),
+          order: () => ({ limit: async () => ({ data: [], error: null }) }),
         }),
+        insert: async () => ({ error: null }),
+        update: () => ({ eq: async () => ({ error: null }) }),
       }),
     },
   };
@@ -74,16 +83,28 @@ export function authMock() {
 }
 
 export function loggerMock() {
-  return { getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }) };
+  const logger = () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() });
+  return { getLogger: logger, log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() } };
 }
 
 export function toastMock() {
   return { toast };
 }
 
+export function dedupeMock() {
+  return { claimNotificationEvent: () => dedupeResult.valor };
+}
+
+export function sonnerMock() {
+  return { toast: sonnerToast };
+}
+
 export function resetAlertKit() {
   playNotificationSound.mockClear();
   showBrowserNotification.mockClear();
+  invoke.mockClear();
+  sonnerToast.error.mockClear();
+  dedupeResult.valor = true;
   callbacks.length = 0;
   settingsCfg.soundEnabled = true;
   settingsCfg.slaBreachSound = true;
