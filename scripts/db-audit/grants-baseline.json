@@ -11,7 +11,7 @@
         "grant_agent_achievement(p_profile_id uuid, p_type text, p_name text, p_description text, p_xp_reward integer)",
         "team_receipts_fill_conversation_id()"
     ],
-    "generated_at": "2026-09-29",
+    "generated_at": "2026-09-30",
     "anon_table_select": [
         "agent_achievements",
         "agent_presence",
@@ -45,7 +45,6 @@
         "contact_custom_fields",
         "contact_identity_map",
         "contact_purchases",
-        "conversation_analyses",
         "conversation_closures",
         "conversation_events",
         "conversation_memory",
@@ -145,6 +144,6 @@
         "whisper_messages"
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 208,
-    "authenticated_execute_count": 140
+    "service_role_execute_count": 211,
+    "authenticated_execute_count": 143
 }
