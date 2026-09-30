@@ -190,6 +190,46 @@ describe('Tarefas — componentes dos três modos', () => {
     cleanup();
   });
 
+  it('a ordem das colunas do Quadro e a contratada (nao pode mudar em silencio)', () => {
+    cleanup();
+    render(
+      <TooltipProvider>
+        <TasksBoardMode
+          byStatus={byStatusVazio}
+          isLoading={false}
+          onMove={vi.fn()}
+          onReorder={vi.fn()}
+          onOpen={vi.fn()}
+          onDelete={vi.fn()}
+          onCreate={vi.fn()}
+        />
+      </TooltipProvider>
+    );
+
+    // A ordem que o usuario ve, da esquerda para a direita.
+    const esperados = ['Caixa de entrada', 'A fazer', 'Fazendo', 'Aguardando', 'Concluido'];
+    const titulos   = esperados.map(rotulo => screen.getByText(rotulo));
+
+    // 1) a linha que contem as colunas nao inverte a ordem visual (flex-row-reverse)
+    const linha = titulos[0].closest('.flex.gap-3') as HTMLElement | null;
+    expect(linha).toBeTruthy();
+    expect(linha!.className).not.toMatch(/reverse/);
+
+    // 2) os 5 titulos estao no DOM exatamente nessa ordem
+    for (let i = 1; i < titulos.length; i++) {
+      const posicao = titulos[i - 1].compareDocumentPosition(titulos[i]);
+      expect(posicao & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+
+    // 3) a coluna de destino do arrasto segue a mesma ordem (indice da coluna)
+    const colunas = linha!.querySelectorAll(':scope > div');
+    expect(colunas).toHaveLength(5);
+    expect(colunas[0].contains(titulos[0])).toBe(true);
+    expect(colunas[4].contains(titulos[4])).toBe(true);
+
+    cleanup();
+  });
+
   it('etapa 51 (B5): a coluna Concluído mostra 7 dias e "Ver mais antigas (30 dias)" revela o resto', () => {
     cleanup();
     const dias = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
