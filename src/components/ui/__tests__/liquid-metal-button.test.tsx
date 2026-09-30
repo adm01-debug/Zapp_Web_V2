@@ -61,5 +61,11 @@ describe('LiquidMetalButton', () => {
     expect(button).toBeDisabled();
     fireEvent.click(button);
     expect(onClick).not.toHaveBeenCalled();
+    expect(button).toHaveAttribute('aria-busy', 'true');
+  });
+
+  it('preserva um nome acessível contextual com departamento', () => {
+    render(<LiquidMetalButton label="TALK ME" count={12} aria-label="TALK ME: 12 atendimentos aguardando em Comercial" />);
+    expect(screen.getByRole('button', { name: 'TALK ME: 12 atendimentos aguardando em Comercial' })).toBeInTheDocument();
   });
 });

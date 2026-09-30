@@ -15,7 +15,7 @@ export interface LiquidMetalButtonProps extends ButtonHTMLAttributes<HTMLButtonE
 }
 
 export const LiquidMetalButton = forwardRef<HTMLButtonElement, LiquidMetalButtonProps>(
-  ({ label = 'TALK ME', count, loading = false, compact = false, className, disabled, ...props }, ref) => {
+  ({ label = 'TALK ME', count, loading = false, compact = false, className, disabled, 'aria-label': ariaLabel, ...props }, ref) => {
     const shaderContainerRef = useRef<HTMLDivElement>(null);
     const shaderMountRef = useRef<ShaderMountInstance | null>(null);
     const [shaderReady, setShaderReady] = useState(false);
@@ -96,7 +96,8 @@ export const LiquidMetalButton = forwardRef<HTMLButtonElement, LiquidMetalButton
           compact ? 'h-[38px] min-w-[108px] px-3' : 'h-[46px] min-w-[142px] px-4',
           className,
         )}
-        aria-label={visibleCount === null ? label : `${label}: ${visibleCount} aguardando`}
+        aria-label={ariaLabel ?? (visibleCount === null ? label : `${label}: ${visibleCount} aguardando`)}
+        aria-busy={loading || undefined}
         onPointerEnter={(event) => { setShaderSpeed(0.85); props.onPointerEnter?.(event); }}
         onPointerLeave={(event) => { setShaderSpeed(0.35); props.onPointerLeave?.(event); }}
         onFocus={(event) => { setShaderSpeed(0.85); props.onFocus?.(event); }}
