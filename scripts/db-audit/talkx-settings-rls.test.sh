@@ -11,7 +11,7 @@
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-migration_file="$repo_root/supabase/migrations/20260930100000_talkx_settings_policies_replay_safe.sql"
+migration_file="$repo_root/supabase/migrations/20260930112833_talkx_settings_policies_replay_safe.sql"
 postgres_image="${TALKX_SETTINGS_RLS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-talkx-settings-rls-$RANDOM-$$"
 test_password="talkx_settings_rls_test_only"

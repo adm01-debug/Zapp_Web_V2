@@ -1,4 +1,4 @@
--- 20260930100000_talkx_settings_policies_replay_safe
+-- 20260930112833_talkx_settings_policies_replay_safe
 -- Etapa V06 do docs/talkx/PLANO_TALKX_V3_100_ETAPAS_2026-09-29.md.
 --
 -- Dois problemas medidos em 2026-09-30 (PG17 descartavel + banco vivo):
