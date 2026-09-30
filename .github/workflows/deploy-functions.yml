@@ -57,8 +57,13 @@ env:
 jobs:
   deploy:
     name: Deploy Edge Functions
-    # Aprovacao humana obrigatoria: sem isto um workflow_dispatch promovia edge
-    # functions para producao sem nenhum gate alem de estar na main.
+    # O environment `producao-edge-functions` tem SO branch policy (branches
+    # protegidas) — NAO tem revisor obrigatorio (conferido em 30/09/2026 pela API
+    # de environments). O gate real de producao e o merge na main (CI obrigatorio);
+    # este job so publica codigo da main ou, em rollback, um ancestral dela (passo
+    # "Provar checkout imutavel"). Revisor obrigatorio so vira controle de verdade
+    # com identidades separadas: hoje agentes e humano operam pela mesma conta, que
+    # aprovaria a si mesma (ou travaria tudo com "Prevent self-review").
     environment: producao-edge-functions
     runs-on: ubuntu-24.04
     # 60 min de deploy completo (setup + deploy + coletor pos-deploy de ate ~24 min
