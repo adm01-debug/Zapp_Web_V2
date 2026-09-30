@@ -212,7 +212,6 @@ export function RealtimeInboxView() {
                         if (!inbox.legacyConversation) return;
                         conversationActions.archiveContact(inbox.legacyConversation.contact.id);
                       }}
-                      onSwitchToAiTab={() => setActiveTab('ia')}
                       pinnedConversations={pinnedConversations}
                       onSelectPinned={inbox.handleSelectConversation}
                     />
