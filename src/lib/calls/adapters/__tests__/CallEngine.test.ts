@@ -11,7 +11,7 @@
 
 import { describe, expect, it, vi } from 'vitest';
 
-import type { Inviter, Session, UserAgent } from 'sip.js';
+import type { Invitation, Inviter, Session, UserAgent } from 'sip.js';
 
 import { CallEngine } from '../CallEngine';
 import type { CallEngineSink } from '../CallEngine';
@@ -164,10 +164,58 @@ describe('CallEngine.toggleMute (T18 — aceite)', () => {
 });
 
 /**
- * Os quatro casos abaixo fecham mutações que **sobreviveram** à suíte na
- * auditoria adversarial de 29/09 — ou seja, o código estava certo mas nenhum
- * teste o defendia. Cada um foi escrito depois de ver o mutante passar.
+ * T11 — o registro da chamada precisa do Call-ID do SIP e do mesmo id do
+ * provider. Isso obriga o `createInviter` a vir ANTES do `sink.create`: até o
+ * T10 o registro era disparado primeiro (fire-and-forget) e o Call-ID não
+ * existia. As asserções abaixo provam o payload e a ORDEM.
  */
+describe('CallEngine — Call-ID e sessionId no registro (T11)', () => {
+  it('create recebe o sessionId do provider e o Call-ID da sessão SIP', async () => {
+    const ordem: string[] = [];
+    class AdapterComOrdem extends SipCallAdapter {
+      override async isDialable(): Promise<boolean> { return true; }
+      override async createInviter(): Promise<Inviter> {
+        ordem.push('createInviter');
+        return { id: 'sip-call-7', ...sessionWithTrack(fakeAudioTrack(true)) } as unknown as Inviter;
+      }
+      override async invite(): Promise<void> { ordem.push('invite'); }
+    }
+    const sink = fakeSink({
+      create: vi.fn(async () => { ordem.push('create'); return 'linha-1'; }),
+    });
+    const engine = new CallEngine(new AdapterComOrdem(), sink);
+
+    await engine.makeCall('11999992048', fakeUa(), true, 'sessao-1');
+
+    expect(sink.create).toHaveBeenCalledWith(expect.objectContaining({
+      direction: 'outbound',
+      contactPhone: '11999992048',
+      sessionId: 'sessao-1',
+      providerCallId: 'sip-call-7',
+    }));
+    // createInviter → create (Call-ID já existe) → invite (não bloqueia a discagem).
+    expect(ordem).toEqual(['createInviter', 'create', 'invite']);
+  });
+
+  it('handleInvitation passa o Call-ID do convite como providerCallId', async () => {
+    const sink = fakeSink();
+    const engine = new CallEngine(new TestAdapter(), sink);
+    const invitation = {
+      id: 'sip-invite-9',
+      state: 'Initial',
+      stateChange: { addListener: vi.fn() },
+      remoteIdentity: { uri: { user: '5511988887777' }, displayName: '' },
+    } as unknown as Invitation;
+
+    engine.handleInvitation(invitation);
+
+    expect(sink.create).toHaveBeenCalledWith(expect.objectContaining({
+      direction: 'inbound',
+      contactPhone: '5511988887777',
+      providerCallId: 'sip-invite-9',
+    }));
+  });
+});
 describe('CallEngine — lacunas que a auditoria adversarial expôs', () => {
   it('toggleMute reporta o estado LIDO da track, não a intenção', async () => {
     // Track que RECUSA a escrita: continua habilitada depois do pedido de mute.

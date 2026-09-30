@@ -243,4 +243,77 @@ describe('CallSessionProvider (T10)', () => {
     expect(invalidas).toEqual([]);
     aviso.mockRestore();
   });
+
+  /**
+   * T11 — um id por chamada: o uuid que o provider põe no evento `DIAL` (e que
+   * a máquina guarda em `sessionId`) é o MESMO que vai para o fluxo SIP, que o
+   * usa como `p_id` das 3 gravações no banco. Se os dois divergirem, a linha da
+   * chamada nunca é encontrada pelo resto do ciclo.
+   */
+  it('T11: `dial` entrega o MESMO uuid ao evento DIAL e ao SIP', () => {
+    montar();
+    fireEvent.click(screen.getByText('discar'));
+
+    const sessao = texto('sessao');
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+    expect(sessao).toMatch(uuid);
+
+    const makeCall = h.value.makeCall as ReturnType<typeof vi.fn>;
+    expect(makeCall).toHaveBeenCalledWith('11999992048', sessao);
+  });
+
+  /**
+   * O id calculado é UM só, mesmo quando ele não é sorteado na hora: com uma
+   * `currentCallId` em mãos (chamada em curso no SIP), o provider adota esse
+   * valor — e o evento `DIAL` e a chamada SIP recebem, os dois, o mesmo.
+   */
+  it('T11: quando `currentCallId` já existe, DIAL e SIP usam esse mesmo id', () => {
+    const makeCall = vi.fn();
+    h.value = sipDuble({ currentCallId: 'linha-em-curso', makeCall });
+    montar();
+    fireEvent.click(screen.getByText('discar'));
+
+    expect(texto('sessao')).toBe('linha-em-curso');
+    expect(makeCall).toHaveBeenCalledWith('11999992048', 'linha-em-curso');
+  });
+
+  /**
+   * Regressão medida pelo agente 3 da auditoria adversarial: uma **2ª chamada
+   * de ENTRADA** depois de uma chamada terminal ficava PRESA em `ended` — só o
+   * ramo `calling` reiniciava a máquina, então o `INVITE_RECEIVED` era engolido
+   * sem warn e a chamada nunca tocava.
+   */
+  it('2ª chamada de ENTRADA após terminal destrava a máquina (não fica presa em `ended`)', () => {
+    const tela = montar();
+    h.value = sipDuble({ callStatus: 'calling', currentNumber: '11999992048' });
+    remontar(tela);
+    expect(texto('status')).toBe('dialing');
+
+    h.value = sipDuble({ callStatus: 'ended', currentNumber: '11999992048' });
+    remontar(tela);
+    expect(texto('status')).toBe('ended');
+
+    h.value = sipDuble({ callStatus: 'ringing', callDirection: 'inbound', currentNumber: '5511988887777' });
+    remontar(tela);
+    expect(texto('status')).toBe('ringing_in');
+  });
+
+  /**
+   * O id da sessão é SEMPRE um uuid: ele vira `p_id` (coluna `uuid`) nas 3
+   * gravações, então um id fora do formato mataria a persistência inteira
+   * (`22P02`). Achado do agente DBA — o fallback antigo devolvia `local-…`.
+   */
+  it('o id da sessão é sempre um uuid, mesmo sem `crypto.randomUUID`', () => {
+    const original = globalThis.crypto;
+    vi.stubGlobal('crypto', { getRandomValues: original.getRandomValues.bind(original) });
+    try {
+      montar();
+      fireEvent.click(screen.getByText('discar'));
+      expect(texto('sessao')).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+      );
+    } finally {
+      vi.stubGlobal('crypto', original);
+    }
+  });
 });

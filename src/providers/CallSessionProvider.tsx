@@ -13,6 +13,7 @@ import { useInRouterContext, useNavigate } from 'react-router-dom';
 
 import { useSipClient } from '@/hooks/communication/useSipClient';
 import type { EngineStatus } from '@/lib/calls/adapters/CallEngine';
+import { uuidV4 } from '@/lib/calls/persistence';
 import {
   initialState,
   isTerminal,
@@ -62,15 +63,9 @@ export type CallSessionApi = ReturnType<typeof useSipClient> & {
 
 const CallSessionContext = createContext<CallSessionApi | undefined>(undefined);
 
-let contadorLocal = 0;
-
-/** Id da sessão: o uuid do banco quando existir; senão um local estável. */
+/** Id da sessão: o uuid do banco quando existir; senão um uuid v4 local. */
 function novoSessionId(callId: string | null): string {
-  if (callId) return callId;
-  const aleatorio = globalThis.crypto?.randomUUID?.();
-  if (aleatorio) return aleatorio;
-  contadorLocal += 1;
-  return `local-${Date.now()}-${contadorLocal}`;
+  return callId || uuidV4();
 }
 
 /**
@@ -138,9 +133,12 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
   const dial = useCallback(
     (phone: string) => {
       reiniciarSeTerminal();
-      dispatch({ type: 'DIAL', sessionId: novoId(), channel: 'voip', phone });
+      // T11: UM id por chamada — o mesmo uuid no evento `DIAL` (máquina), no
+      // `sessionId` do evento e no `p_id` das 3 gravações do banco.
+      const id = novoId();
+      dispatch({ type: 'DIAL', sessionId: id, channel: 'voip', phone });
       openDialer();
-      sip.makeCall(phone);
+      sip.makeCall(phone, id);
     },
     [openDialer, novoId, reiniciarSeTerminal, sip],
   );
@@ -186,6 +184,10 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
     }
     if (callStatus === 'ringing') {
       if (callDirection === 'inbound') {
+        // 2ª entrada depois de uma chamada terminal: sem o reset a máquina
+        // segue `ended` e o INVITE_RECEIVED é engolido (sem warn) — a chamada
+        // de entrada fica presa e nunca toca.
+        reiniciarSeTerminal();
         dispatch({ type: 'INVITE_RECEIVED', sessionId: novoId(), channel: 'voip', phone });
       } else {
         dispatch({ type: 'RINGING' });
