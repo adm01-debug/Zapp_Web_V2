@@ -68,4 +68,20 @@ describe('ActiveCallBar', () => {
     fireEvent.click(screen.getByLabelText('Atender'));
     expect(session.acceptIncomingCall).toHaveBeenCalledOnce();
   });
+
+  it('sobe acima da pilha de botões flutuantes na view Contatos', () => {
+    mockUseCallSession.mockReturnValue(baseSession({ callStatus: 'active', currentNumber: '5511999999999' }));
+    const { container } = renderAt('/?view=contacts');
+    const bar = container.querySelector('div.fixed') as HTMLElement;
+    expect(bar.className).toContain('md:bottom-56');
+    expect(bar.className).not.toContain('bottom-24');
+  });
+
+  it('mantém a posição original fora da view Contatos', () => {
+    mockUseCallSession.mockReturnValue(baseSession({ callStatus: 'active', currentNumber: '5511999999999' }));
+    const { container } = renderAt('/?view=inbox');
+    const bar = container.querySelector('div.fixed') as HTMLElement;
+    expect(bar.className).toContain('bottom-24');
+    expect(bar.className).not.toContain('md:bottom-56');
+  });
 });

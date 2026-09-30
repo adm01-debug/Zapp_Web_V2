@@ -1,6 +1,10 @@
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { ContactForm } from '@/components/contacts/ContactForm';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip, TooltipContent, TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription,
 } from '@/components/ui/dialog';
@@ -40,7 +44,6 @@ interface ContactDialogsProps {
   handleAddContact: () => void;
   handleCancelForm: () => void;
   isSubmitting: boolean;
-  tapAnimation?: { scale: number };
   // Edit dialog
   isEditDialogOpen: boolean;
   setIsEditDialogOpen: (open: boolean) => void;
@@ -58,23 +61,41 @@ interface ContactDialogsProps {
 
 export function ContactDialogs({
   isAddDialogOpen, setIsAddDialogOpen, newContact, handleNewContactChange,
-  handleAddContact, handleCancelForm, isSubmitting, tapAnimation,
+  handleAddContact, handleCancelForm, isSubmitting,
   isEditDialogOpen, setIsEditDialogOpen, editingContact, handleEditContactChange, handleEditContact,
   showSuccess, setShowSuccess,
   deleteTarget, setDeleteTarget, handleDeleteContact,
 }: ContactDialogsProps) {
   return (
     <>
-      {/* Add Dialog */}
+      {/* Add Dialog — o gatilho é o botão verde flutuante, portaled para o body
+          para escapar do scroller e da transformação de troca de módulo. */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogTrigger asChild>
-          <motion.div whileTap={tapAnimation} className="inline-block">
-            <Button className="h-12 px-5 rounded-xl bg-success hover:bg-success/90 text-white font-semibold text-base gap-2 shadow-[0_8px_24px_-10px_hsl(var(--success)/.7)]">
-              <Plus className="w-[18px] h-[18px]" strokeWidth={2.5} />
-              Novo Contato
-            </Button>
-          </motion.div>
-        </DialogTrigger>
+        {createPortal(
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DialogTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Novo contato"
+                  data-testid="contact-create-fab"
+                  className="group fixed z-20 right-4 bottom-[calc(156px+env(safe-area-inset-bottom,0px))] md:right-6 md:bottom-24 w-14 h-14 rounded-full bg-success text-success-foreground shadow-[0_8px_24px_-10px_hsl(var(--success)/.8)] hover:bg-success/90 hover:scale-105 active:scale-95 transition-all flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                >
+                  <span
+                    aria-hidden="true"
+                    style={{ animationDuration: '3s' }}
+                    className="pointer-events-none absolute inset-0 m-auto h-10 w-10 rounded-full bg-success opacity-60 animate-ping group-hover:[animation-play-state:paused]"
+                  />
+                  <Plus className="relative w-6 h-6" strokeWidth={2.5} />
+                </button>
+              </DialogTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="left" sideOffset={8}>
+              Novo contato
+            </TooltipContent>
+          </Tooltip>,
+          document.body,
+        )}
         <DialogContent aria-describedby={undefined} className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Adicionar Contato</DialogTitle>
