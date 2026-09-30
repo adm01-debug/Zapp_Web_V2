@@ -1,9 +1,13 @@
 # TALK ME — Plano de refinamento visual e navegação em 50 etapas
 
-**Data:** 30/09/2026.  
-**Status:** planejamento; todas as 50 etapas estão pendentes.  
-**Entrega autorizada nesta solicitação:** criar e commitar este documento no repositório.  
-**Base consultada:** `main` e `origin/main` em `826fa1486a51d8bfdab285abb5a6e76ce7921426`, conferidas também no remoto.  
+**Data:** 30/09/2026.
+
+**Status:** planejamento; todas as 50 etapas estão pendentes.
+
+**Entrega autorizada nesta solicitação:** criar e commitar este documento no repositório.
+
+**Base consultada:** `main` e `origin/main` em `826fa1486a51d8bfdab285abb5a6e76ce7921426`, conferidas também no remoto.
+
 **Escopo:** painel opaco, carrossel principal mais alto e faixa inferior sincronizada de atendimentos em preto e branco.
 
 Este commit contém somente planejamento. Implementação, instalação de dependências, alteração de banco e publicação das mudanças de interface são trabalho futuro. A publicação do documento não indica execução ou validação dos cenários descritos abaixo.
