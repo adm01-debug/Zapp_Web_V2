@@ -13,7 +13,7 @@
  * assim o drag&drop é exercitado sem precisar de geometria real no jsdom.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 
 // Importa o harness ANTES dos módulos sob teste (ele registra os `vi.mock`).
@@ -82,10 +82,10 @@ const refMounted = { current: true };
  * já usado no caso do Quadro (etapa 15).
  */
 function renderLista(byDue: BucketsByDue) {
-  return render(
+  const ui = (b: BucketsByDue) => (
     <TooltipProvider>
       <TasksListMode
-        byDue={byDue}
+        byDue={b}
         isLoading={false}
         searchQuery=""
         onOpen={vi.fn()}
@@ -97,6 +97,10 @@ function renderLista(byDue: BucketsByDue) {
       />
     </TooltipProvider>
   );
+
+  const view = render(ui(byDue));
+  /** Troca os buckets no mesmo harness (ex.: a tarefa foi concluída). */
+  return { ...view, renderBuckets: (b: BucketsByDue) => view.rerender(ui(b)) };
 }
 
 describe('Tarefas — componentes dos três modos', () => {
@@ -168,7 +172,7 @@ describe('Tarefas — componentes dos três modos', () => {
     cleanup();
   });
 
-  it('etapa 48 (B4): "Concluídas (7 dias)" recolhida e "ver mais (30 dias)" revela as antigas', () => {
+  it('etapa 48 (B4): "Concluídas (7 dias)" recolhida e "ver mais (30 dias)" revela as antigas', async () => {
     cleanup();
     renderLista(buckets({
       done7d: [item({ id: 'c', title: 'Feita ontem', status: 'done' })],
@@ -191,7 +195,9 @@ describe('Tarefas — componentes dos três modos', () => {
     expect(screen.getByText('ver menos')).toBeTruthy();
 
     fireEvent.click(screen.getByText('ver menos'));
-    expect(screen.queryByText('Feita duas semanas atras')).toBeNull();
+    // Etapa 50: o item fica montado durante a animacao de saida (fade 200ms),
+    // por isso a saida de cena e observada com waitFor.
+    await waitFor(() => expect(screen.queryByText('Feita duas semanas atras')).toBeNull());
   });
 
   it('etapa 49: "Próximas" agrupa por dia e joga o que passa de 7 dias em "Semana que vem"', () => {
@@ -238,5 +244,34 @@ describe('Tarefas — componentes dos três modos', () => {
     }));
 
     expect(screen.getByLabelText('Ordenado por prazo, depois prioridade')).toBeTruthy();
+  });
+
+  it('etapa 50: concluir deixa o item montado durante a saída e ele reaparece em "Concluídas (7 dias)"', async () => {
+    cleanup();
+    const { renderBuckets } = renderLista(buckets({
+      noDue: [item({ id: 'k1', title: 'Concluir agora' }), item({ id: 'k2', title: 'Fica aqui' })],
+    }));
+    expect(screen.getByText('Concluir agora')).toBeTruthy();
+
+    // A tarefa sai de "Sem prazo" e passa a "Concluidas (7 dias)"; a secao segue
+    // de pe por causa da outra tarefa (é nela que o fade por item acontece).
+    renderBuckets(buckets({
+      noDue: [item({ id: 'k2', title: 'Fica aqui' })],
+      done7d: [item({ id: 'k1', title: 'Concluir agora', status: 'done' })],
+    }));
+
+    // Continua montada: e a animacao de saida em curso (sem exit + AnimatePresence
+    // o item sumiria no mesmo instante, e este getByText falharia).
+    expect(screen.getByText('Fica aqui')).toBeTruthy();
+    expect(screen.getByText('Concluir agora')).toBeTruthy();
+    expect(screen.getByText('Concluídas (7 dias)')).toBeTruthy();
+
+    // O fade de 200ms nao acaba num piscar: 60ms depois o item ainda esta em cena
+    // (com saida instantanea ele ja teria saido — é o que pina a duracao).
+    await new Promise(resolve => setTimeout(resolve, 60));
+    expect(screen.getByText('Concluir agora')).toBeTruthy();
+
+    // Terminada a saida, o item sai de cena (a secao de concluidas esta recolhida).
+    await waitFor(() => expect(screen.queryByText('Concluir agora')).toBeNull());
   });
 });
