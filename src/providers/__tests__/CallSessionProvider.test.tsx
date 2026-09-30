@@ -12,17 +12,24 @@
  *    inválida por evento duplicado.
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CallSessionApi } from '../CallSessionProvider';
 
 /** O hook de SIP é o transporte — aqui ele é dublê, controlado pelo teste. */
-const h = vi.hoisted(() => ({ value: {} as Record<string, unknown> }));
+const h = vi.hoisted(() => ({
+  value: {} as Record<string, unknown>,
+  // T12: o callback de fim que o provider passa ao hook (`useSipClient(onEnd)`).
+  onEnd: undefined as ((outcome: unknown) => void) | undefined,
+}));
 
 vi.mock('@/hooks/communication/useSipClient', () => ({
-  useSipClient: () => h.value,
+  useSipClient: (onEnd?: (outcome: unknown) => void) => {
+    h.onEnd = onEnd;
+    return h.value;
+  },
 }));
 
 const { CallSessionProvider, useCallSession, VOIP_VIEW_SEARCH } = await import('../CallSessionProvider');
@@ -102,6 +109,22 @@ function remontar(tela: ReturnType<typeof render>, rota = '/') {
 
 const texto = (id: string) => screen.getByTestId(id).textContent;
 
+/** Warnings de transição inválida registrados (o esperado é nenhum). */
+function transicoesInvalidas(aviso: { mock: { calls: unknown[][] } }): string[] {
+  return aviso.mock.calls
+    .filter((linha) => String(linha[0]).includes(INVALID_TRANSITION_PREFIX))
+    .map((linha) => String(linha[0]));
+}
+
+/** Leva o provider a `active`: disca e depois o motor reporta `active`. */
+function emChamadaAtiva(): ReturnType<typeof render> {
+  const tela = montar();
+  fireEvent.click(screen.getByText('discar'));
+  h.value = sipDuble({ callStatus: 'active', callDirection: 'outbound', currentNumber: '11999992048' });
+  remontar(tela, `/${VOIP_VIEW_SEARCH}`);
+  return tela;
+}
+
 beforeEach(() => {
   h.value = sipDuble();
 });
@@ -167,8 +190,7 @@ describe('CallSessionProvider (T10)', () => {
     expect(texto('endedBy')).toBe('hangup_local');
     expect(texto('status')).toBe('ended');
     // O efeito não repete o encerramento depois que o estado já é terminal.
-    const invalidas = aviso.mock.calls.filter((linha) => String(linha[0]).includes(INVALID_TRANSITION_PREFIX));
-    expect(invalidas).toEqual([]);
+    expect(transicoesInvalidas(aviso)).toEqual([]);
     aviso.mockRestore();
   });
 
@@ -213,10 +235,7 @@ describe('CallSessionProvider (T10)', () => {
     remontar(tela);
     expect(texto('status')).toBe('ended');
     expect(texto('endReason')).toBe('cancelled_remote');
-    const invalidas = aviso.mock.calls.filter((linha) =>
-      String(linha[0]).includes(INVALID_TRANSITION_PREFIX),
-    );
-    expect(invalidas).toEqual([]);
+    expect(transicoesInvalidas(aviso)).toEqual([]);
     aviso.mockRestore();
   });
 
@@ -237,10 +256,7 @@ describe('CallSessionProvider (T10)', () => {
     remontar(tela);
     expect(texto('status')).toBe('active');
     expect(texto('answeredAt')).not.toBe('-');
-    const invalidas = aviso.mock.calls.filter((linha) =>
-      String(linha[0]).includes(INVALID_TRANSITION_PREFIX),
-    );
-    expect(invalidas).toEqual([]);
+    expect(transicoesInvalidas(aviso)).toEqual([]);
     aviso.mockRestore();
   });
 
@@ -315,5 +331,68 @@ describe('CallSessionProvider (T10)', () => {
     } finally {
       vi.stubGlobal('crypto', original);
     }
+  });
+
+  /**
+   * T12 — o desfecho fino do fim (quem encerrou + código SIP) chega pelo `onEnd`
+   * do hook e é despachado num PONTO ÚNICO (`despacharFim`), com guarda de estado
+   * terminal. O clique em desligar continua fechando a sessão na hora, com
+   * `HANGUP_LOCAL`.
+   */
+  it('T12: desligamento local fecha a sessão como hangup_local (endReason, não só endedBy)', () => {
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    emChamadaAtiva();
+
+    act(() => { h.onEnd?.({ endedBy: 'hangup_local', sipCode: null }); });
+
+    expect(texto('status')).toBe('ended');
+    expect(texto('endReason')).toBe('hangup_local');
+    expect(texto('endedBy')).toBe('hangup_local');
+    expect(transicoesInvalidas(aviso)).toEqual([]);
+    aviso.mockRestore();
+  });
+
+  it('T12: fim informado pelo motor como remoto fecha a sessão como hangup_remote', () => {
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    emChamadaAtiva();
+
+    act(() => { h.onEnd?.({ endedBy: 'hangup_remote', sipCode: 200 }); });
+
+    expect(texto('status')).toBe('ended');
+    expect(texto('endReason')).toBe('hangup_remote');
+    expect(texto('endedBy')).toBe('hangup_remote');
+    expect(transicoesInvalidas(aviso)).toEqual([]);
+    aviso.mockRestore();
+  });
+
+  it('T12: sem clique, o status `ended` do motor também fecha como hangup_remote', () => {
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const tela = emChamadaAtiva();
+
+    h.value = sipDuble({ callStatus: 'ended', callDirection: 'outbound', currentNumber: '11999992048' });
+    remontar(tela, `/${VOIP_VIEW_SEARCH}`);
+
+    expect(texto('status')).toBe('ended');
+    expect(texto('endedBy')).toBe('hangup_remote');
+    expect(transicoesInvalidas(aviso)).toEqual([]);
+    aviso.mockRestore();
+  });
+
+  it('T12: o desfecho do hook NÃO reescreve um fim já decidido (guarda de terminal)', () => {
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    emChamadaAtiva();
+
+    fireEvent.click(screen.getByText('desligar'));
+    expect(texto('endedBy')).toBe('hangup_local');
+
+    // O `onEnd` do remoto chega DEPOIS do clique (e duas vezes): a guarda de
+    // terminal ignora os dois — sem duplo dispatch e sem warn de transição.
+    act(() => { h.onEnd?.({ endedBy: 'hangup_remote', sipCode: 200 }); });
+    act(() => { h.onEnd?.({ endedBy: 'hangup_remote', sipCode: 200 }); });
+
+    expect(texto('endedBy')).toBe('hangup_local');
+    expect(texto('status')).toBe('ended');
+    expect(transicoesInvalidas(aviso)).toEqual([]);
+    aviso.mockRestore();
   });
 });

@@ -126,6 +126,7 @@ vi.mock('sonner', () => ({
 }));
 
 import { useSipClient } from '../communication/useSipClient';
+import type { CallEndOutcome } from '@/lib/calls/callStatus';
 import { toast } from 'sonner';
 
 /** Deixa a cadeia assíncrona do sink (contato + RPC) rodar até o fim. */
@@ -139,8 +140,8 @@ function gravacoes(): Array<Record<string, unknown>> {
 }
 
 /** Monta o hook JÁ conectado (preâmbulo repetido da maioria dos testes). */
-async function montarConectado() {
-  const utils = renderHook(() => useSipClient());
+async function montarConectado(onEnd?: (outcome: CallEndOutcome) => void) {
+  const utils = renderHook(() => useSipClient(onEnd));
   await act(async () => {
     await utils.result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
   });
@@ -148,8 +149,8 @@ async function montarConectado() {
 }
 
 /** Monta o hook conectado E registrado. */
-async function montarRegistrado() {
-  const utils = await montarConectado();
+async function montarRegistrado(onEnd?: (outcome: CallEndOutcome) => void) {
+  const utils = await montarConectado(onEnd);
   act(() => mockRegisterStateListeners.forEach(fn => fn('Registered')));
   return utils;
 }
@@ -289,13 +290,32 @@ describe('useSipClient', () => {
 
   // === OUTBOUND CALL TESTS ===
 
-  it('should reject call when not registered', async () => {
+  it('recusa a discagem sem conexão nenhuma (uaRef nulo)', async () => {
     const { result } = renderHook(() => useSipClient());
     await act(async () => {
       await result.current.makeCall('123');
     });
     expect(toast.error).toHaveBeenCalledWith('VoIP não conectado.');
     expect(result.current.callStatus).toBe('idle');
+    expect(mockInvite).not.toHaveBeenCalled();
+  });
+
+  it('recusa a discagem com o UA criado mas ainda NÃO registrado', async () => {
+    // Falso verde apontado pela auditoria adversarial: o teste acima monta o
+    // hook DESCONECTADO, então `uaRef.current` é `null` e o que ele exercita é
+    // o ramo `!ua` — o guard `registered === false` nunca era testado. Aqui o
+    // UA existe (conexão em curso) e o 'Registered' nunca chega: é ESTE guard
+    // que tem de recusar a chamada.
+    const { result } = await montarConectado();
+    expect(result.current.sipStatus).toBe('connecting');
+
+    await act(async () => {
+      await result.current.makeCall('123');
+    });
+
+    expect(toast.error).toHaveBeenCalledWith('VoIP não conectado.');
+    expect(result.current.callStatus).toBe('idle');
+    expect(mockInvite).not.toHaveBeenCalled();
   });
 
   it('should set calling status and register the call before the invite resolves', async () => {
@@ -375,7 +395,8 @@ describe('useSipClient', () => {
     const chamadas = gravacoes();
     expect(chamadas.map(c => c.p_status)).toEqual(['ringing', 'answered', 'ended']);
     expect(chamadas[2].p_id).toBe(chamadas[0].p_id);
-    expect(chamadas[2]).toMatchObject({ p_end_reason: 'completed' });
+    // T12: ninguém clicou em desligar — quem encerrou foi o outro lado.
+    expect(chamadas[2]).toMatchObject({ p_end_reason: 'hangup_remote' });
     expect(chamadas[2].p_talk_seconds).toBeGreaterThanOrEqual(0);
     expect(chamadas[2].p_ended_at).toEqual(expect.any(String));
   });
@@ -526,7 +547,7 @@ describe('useSipClient', () => {
     expect((invitation as unknown as { accept: ReturnType<typeof vi.fn> }).accept).toHaveBeenCalled();
   });
 
-  it('marks the call missed when rejectIncomingCall is invoked', async () => {
+  it('marks the call declined when rejectIncomingCall is invoked', async () => {
     const { result } = await montarConectado();
 
     await act(async () => {
@@ -539,10 +560,12 @@ describe('useSipClient', () => {
     });
     await evento('Terminated');
 
-    // Recusada/entrada não atendida: `missed` + `no_answer` (regra do T11).
+    // T12: recusa é ação NOSSA antes de atender → `declined`/`declined` (antes
+    // do T12 virava `missed`/`no_answer` e a recusa não se distinguia de uma
+    // chamada perdida).
     const chamadas = gravacoes();
     expect(chamadas[chamadas.length - 1]).toMatchObject({
-      p_status: 'missed', p_end_reason: 'no_answer', p_direction: 'inbound',
+      p_status: 'declined', p_end_reason: 'declined', p_direction: 'inbound',
     });
   });
 
@@ -571,7 +594,8 @@ describe('useSipClient', () => {
     });
     expect(chamadas[1]).toMatchObject({ p_status: 'answered' });
     expect(chamadas[1].p_answered_at).toEqual(expect.any(String));
-    expect(chamadas[2]).toMatchObject({ p_status: 'ended', p_end_reason: 'completed' });
+    // T12: o Terminated veio sem clique em desligar → quem encerrou foi o remoto.
+    expect(chamadas[2]).toMatchObject({ p_status: 'ended', p_end_reason: 'hangup_remote' });
     expect(chamadas[2].p_ended_at).toEqual(expect.any(String));
     expect(chamadas[2].p_talk_seconds).toBeGreaterThanOrEqual(0);
   });
@@ -602,5 +626,56 @@ describe('useSipClient', () => {
     expect(gravacoes().map(c => c.p_id)).toEqual(['sessao-falha', 'sessao-falha', 'sessao-falha']);
     expect(toast.error).toHaveBeenCalledWith('Não foi possível salvar a ligação');
     erro.mockRestore();
+  });
+
+  // === T12: desfecho fino (quem encerrou + código SIP) ===
+
+  it('entrega o desfecho ao `onEnd` e grava hangup_local no desligamento local', async () => {
+    const desfechos: CallEndOutcome[] = [];
+    const { result } = await montarRegistrado((outcome) => desfechos.push(outcome));
+
+    await discar(result);
+    await evento('Established');
+    act(() => { result.current.hangUp(); });
+    await evento('Terminated');
+
+    expect(desfechos).toEqual([{ endedBy: 'hangup_local', sipCode: null }]);
+    const chamadas = gravacoes();
+    expect(chamadas[chamadas.length - 1]).toMatchObject({ p_status: 'ended', p_end_reason: 'hangup_local' });
+  });
+
+  it('sem clique em desligar, o fim sai hangup_remote', async () => {
+    const desfechos: CallEndOutcome[] = [];
+    const { result } = await montarRegistrado((outcome) => desfechos.push(outcome));
+
+    await discar(result);
+    await evento('Established');
+    await evento('Terminated');
+
+    expect(desfechos).toEqual([{ endedBy: 'hangup_remote', sipCode: null }]);
+    const chamadas = gravacoes();
+    expect(chamadas[chamadas.length - 1]).toMatchObject({ p_status: 'ended', p_end_reason: 'hangup_remote' });
+  });
+
+  it('cancelar antes de atender grava cancelled (nunca "Concluída")', async () => {
+    const desfechos: CallEndOutcome[] = [];
+    const { result } = await montarRegistrado((outcome) => desfechos.push(outcome));
+
+    await discar(result);
+    act(() => { result.current.hangUp(); });
+    await evento('Terminated');
+
+    expect(desfechos).toEqual([{ endedBy: 'hangup_local', sipCode: null }]);
+    const chamadas = gravacoes();
+    expect(chamadas[chamadas.length - 1]).toMatchObject({ p_status: 'cancelled', p_end_reason: 'cancelled' });
+  });
+
+  it('sem `onEnd` (consumidor que não passa o callback) o fim segue funcionando', async () => {
+    const { result } = await montarRegistrado();
+
+    await discar(result);
+    await evento('Terminated');
+
+    expect(result.current.callStatus).toBe('ended');
   });
 });

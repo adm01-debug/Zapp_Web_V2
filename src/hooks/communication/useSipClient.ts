@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useSipConnection } from '../sip/useSipConnection';
 import { upsertMyCall, novoCallId, desfechoDaChamada } from '@/lib/calls/persistence';
-import type { UpsertMyCallInput } from '@/lib/calls/persistence';
+import type { CallEndOutcome, UpsertMyCallInput } from '@/lib/calls/persistence';
 import { phoneQueryVariants, pickUniquePhoneMatch } from '@/lib/calls/phone';
 import { SipCallAdapter } from '@/lib/calls/adapters/SipCallAdapter';
 import { CallEngine } from '@/lib/calls/adapters/CallEngine';
@@ -23,9 +23,9 @@ const SIP_WS_PORT = 8089;
 
 /**
  * T09: estado espelhado do motor, cronômetro, toast e conexão. T11: o banco é
- * gravado por `upsert_my_call` (mesmo id nas 3 gravações) — `useCalls` sai.
+ * gravado por `upsert_my_call` (mesmo id nas 3 gravações) — `useCalls` sai. T12: `onEnd` recebe o desfecho fino do fim (quem encerrou + o código SIP).
  */
-export function useSipClient() {
+export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
   const [callStatus, setCallStatus] = useState<CallStatus>('idle');
   const [callDuration, setCallDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
@@ -73,13 +73,13 @@ export function useSipClient() {
       onAnswered: (callId) => {
         void persistir({ id: callId, direction: directionRef.current ?? 'outbound', status: 'answered', answeredAt: new Date().toISOString() });
       },
-      onFinished: (callId, talkSeconds) => {
+      onFinished: (callId, talkSeconds, outcome) => {
         const direction = directionRef.current ?? 'outbound';
-        setCurrentCallId(null); // a próxima discagem não reaproveita a linha anterior
-        void persistir({ id: callId, direction, endedAt: new Date().toISOString(), talkSeconds, ...desfechoDaChamada(talkSeconds, direction) });
+        setCurrentCallId(null); onEnd?.(outcome); // a próxima discagem não reaproveita a linha anterior
+        void persistir({ id: callId, direction, endedAt: new Date().toISOString(), talkSeconds, ...desfechoDaChamada(talkSeconds, direction, outcome) });
       },
     };
-  }, [startTimer, stopTimer, findContactByPhone]);
+  }, [startTimer, stopTimer, findContactByPhone, onEnd]);
 
   // Lazy init (não `useRef`): o motor é criado uma vez e nunca lido em render.
   const [engine] = useState(() => new CallEngine(new SipCallAdapter(log)));
