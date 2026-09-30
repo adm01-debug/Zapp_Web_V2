@@ -76,6 +76,29 @@ test('buildDeploymentManifest rejects config for a missing function', async (t) 
   );
 });
 
+test('buildDeploymentManifest accepts config for a legacy unmanaged function', async (t) => {
+  // Orfas legadas rodam em producao com verify_jwt=false e nao tem fonte versionada.
+  // Declarar a excecao antes de trazer o fonte e o unico jeito de o proximo deploy nao
+  // reverter a funcao para verify_jwt=true; a entrada continua fora de functions[].
+  const root = await createFixture();
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await writeFile(
+    path.join(root, 'supabase', 'config.toml'),
+    'project_id = "abcdefghijklmnopqrst"\n\n[functions.zombie]\nverify_jwt = false\n',
+  );
+  const manifest = await buildDeploymentManifest({ repoRoot: root, legacyUnmanaged: ['zombie'] });
+  assert.deepEqual(manifest.legacy_unmanaged_functions, ['zombie']);
+  assert.ok(
+    !manifest.functions.some((fn) => fn.name === 'zombie'),
+    'orfas legadas nao entram na lista de funcoes gerenciadas',
+  );
+  // a mesma config continua sendo recusada quando o nome nao esta na lista de legadas
+  await assert.rejects(
+    buildDeploymentManifest({ repoRoot: root }),
+    /Function configured but missing entrypoint: zombie/,
+  );
+});
+
 test('buildDeploymentManifest rejects a function directory without index.ts', async (t) => {
   const root = await createFixture();
   t.after(() => rm(root, { recursive: true, force: true }));

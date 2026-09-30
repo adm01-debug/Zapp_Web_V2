@@ -7,7 +7,7 @@
   ],
   "config": {
     "path": "supabase/config.toml",
-    "sha256": "4ce1acb56ca0cd8efb82cc269a4942c306e1863b79ed9b887e784b7ca8c70375"
+    "sha256": "0ace24a6b298e1a7749cabdf0c4a6a9b96bde564d04f0f4356c729845b8a9f84"
   },
   "summary": {
     "function_count": 67,
@@ -1427,5 +1427,5 @@
       ]
     }
   ],
-  "manifest_sha256": "9adbcd073647e6e0b05310ebc67c29b5ebd8da8a06f75b235aa419e4a3bd6651"
+  "manifest_sha256": "01f2aed2f627e1702201763048b35e6f0892918a26e45ebd59783e642aeeb9a7"
 }
