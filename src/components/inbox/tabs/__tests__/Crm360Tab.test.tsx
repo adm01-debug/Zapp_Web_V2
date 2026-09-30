@@ -10,6 +10,18 @@ const mockUseContactLeadScore = vi.fn();
 const mockAdvanceMutate = vi.fn();
 const mockNavigateToView = vi.fn();
 const mockCreateTask = vi.fn();
+const mockUseContactEnrichedQuery = vi.fn(() => ({ data: undefined as unknown, isLoading: false }));
+
+vi.mock('@/hooks/crm/useContactEnrichedData', () => ({
+  useContactEnrichedQuery: (...args: unknown[]) => mockUseContactEnrichedQuery(...(args as [])),
+}));
+
+// Stub do editor (lazy): expõe o `contact` que o Crm360Tab monta, para provar o que chega ao form.
+vi.mock('../../contact-details/EditContactDialog', () => ({
+  EditContactDialog: ({ contact }: { contact: Record<string, unknown> }) => (
+    <div data-testid="edit-contact-stub" data-contact={JSON.stringify(contact)} />
+  ),
+}));
 
 vi.mock('@/hooks/crm/useContactCrm360', () => ({
   useContactCrm360: (...args: unknown[]) => mockUseContactCrm360(...args),
@@ -61,6 +73,19 @@ const conversation: Conversation = {
   unreadCount: 0,
   status: 'open',
 } as unknown as Conversation;
+
+function renderTabWithRerender() {
+  mockUseContactCrm360.mockReturnValue({ data: EMPTY_CRM360 });
+  mockUseContactLeadScore.mockReturnValue({ data: null });
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const ui = () => (
+    <QueryClientProvider client={qc}>
+      <Crm360Tab conversation={conversation} messages={[]} onTabChange={vi.fn()} />
+    </QueryClientProvider>
+  );
+  const r = render(ui());
+  return { rerender: () => r.rerender(ui()) };
+}
 
 function renderTab(crm360: Partial<Crm360Result> | undefined = EMPTY_CRM360) {
   mockUseContactCrm360.mockReturnValue({ data: crm360 });
@@ -132,5 +157,51 @@ describe('Crm360Tab', () => {
     });
     expect(screen.getByText('Prospecção')).toBeInTheDocument();
     expect(screen.getByText('Avançar etapa →')).toBeInTheDocument();
+  });
+
+  /**
+   * A4-D (2º chamador): `conversation.contact` não traz endereço nem coordenada. Sem o dado
+   * enriquecido o editor abria com endereço vazio e mapa sem pino — o ContactDetails já passava
+   * `enrichedData`, o Crm360Tab não.
+   */
+  it('editar contato repassa endereço e coordenada do dado enriquecido ao editor', async () => {
+    mockUseContactEnrichedQuery.mockReturnValue({
+      data: {
+        address: 'Av. Paulista', address_number: '1000', city: 'São Paulo', state: 'SP',
+        postal_code: '01310100', neighborhood: 'Bela Vista', latitude: -23.5613, longitude: -46.6565,
+      },
+      isLoading: false,
+    });
+    renderTab();
+    fireEvent.click(screen.getByText('Adicionar empresa'));
+
+    const stub = await screen.findByTestId('edit-contact-stub');
+    const contact = JSON.parse(stub.getAttribute('data-contact') ?? '{}');
+    expect(mockUseContactEnrichedQuery).toHaveBeenCalledWith('contact-1');
+    expect(contact).toMatchObject({
+      id: 'contact-1',
+      address: 'Av. Paulista',
+      city: 'São Paulo',
+      postal_code: '01310100',
+      latitude: -23.5613,
+      longitude: -46.6565,
+    });
+  });
+
+  it('com cache frio, só monta o editor quando o dado enriquecido chega', async () => {
+    mockUseContactEnrichedQuery.mockReturnValue({ data: undefined, isLoading: true });
+    const { rerender } = renderTabWithRerender();
+    fireEvent.click(screen.getByText('Adicionar empresa'));
+    // Montar agora congelaria o form sem endereço.
+    expect(screen.queryByTestId('edit-contact-stub')).toBeNull();
+
+    mockUseContactEnrichedQuery.mockReturnValue({
+      data: { address: 'Av. Paulista', city: 'São Paulo' },
+      isLoading: false,
+    });
+    rerender();
+
+    const stub = await screen.findByTestId('edit-contact-stub');
+    expect(JSON.parse(stub.getAttribute('data-contact') ?? '{}')).toMatchObject({ address: 'Av. Paulista' });
   });
 });
