@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ChevronDown, ChevronRight, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { WorkItemCard }         from '../shared/WorkItemCard';
@@ -42,6 +42,8 @@ interface SectionProps {
 function Section({ title, items, olderItems = [], groups, hint, defaultOpen = true, headingClass = '', onOpen, onToggleDone, onMoveTo, onDelete, hasMounted }: SectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [showOlder, setShowOlder] = useState(false);
+  // Etapa 50: com reduced-motion as animacoes (entrada e saida) viram instantaneas.
+  const reduceMotion = useReducedMotion() ?? false;
   if (items.length === 0) return null;
   const Icon = open ? ChevronDown : ChevronRight;
   const visible = showOlder ? [...items, ...olderItems] : items;
@@ -50,7 +52,9 @@ function Section({ title, items, olderItems = [], groups, hint, defaultOpen = tr
       key={item.id}
       initial={hasMounted.current ? false : { opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.15, delay: Math.min(index, 12) * 0.02 }}
+      exit={{ opacity: 0, height: 0, transition: { duration: reduceMotion ? 0 : 0.2 } }}
+      transition={{ duration: reduceMotion ? 0 : 0.15, delay: reduceMotion ? 0 : Math.min(index, 12) * 0.02 }}
+      className="overflow-hidden"
     >
       <WorkItemCard
         item={item}
@@ -102,10 +106,16 @@ function Section({ title, items, olderItems = [], groups, hint, defaultOpen = tr
               ? groups.map(g => (
                   <div key={g.label} className="space-y-1.5">
                     <div className="px-1 text-xs font-medium text-muted-foreground">{g.label}</div>
-                    {g.items.map((item, index) => renderCard(item, index))}
+                    <AnimatePresence initial={false}>
+                      {g.items.map((item, index) => renderCard(item, index))}
+                    </AnimatePresence>
                   </div>
                 ))
-              : visible.map((item, index) => renderCard(item, index))}
+              : (
+                <AnimatePresence initial={false}>
+                  {visible.map((item, index) => renderCard(item, index))}
+                </AnimatePresence>
+              )}
             {olderItems.length > 0 && (
               <button
                 type="button"
