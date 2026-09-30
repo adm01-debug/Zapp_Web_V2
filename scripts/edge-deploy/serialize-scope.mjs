@@ -16,6 +16,8 @@
 import { pathToFileURL } from 'node:url';
 
 export const GATE_STEP_NAME = 'Serializar escopo TODAS contra deploys por funcao';
+/** Teto da espera. O `timeout-minutes` do job precisa cobrir isto + um deploy completo (meta-teste pina). */
+export const MAX_WAIT_MINUTES = 40;
 
 /** Titulo do run: "Deploy Edge Functions (<escopo>)". Sem escopo (run antigo) = `all`, por cautela. */
 export function parseScopeFromTitle(title) {
@@ -57,7 +59,7 @@ export async function listInProgress({ repo, workflowFile, token, me, get = gith
 
 export async function waitForTurn({
   me, repo, workflowFile, token, get = githubGet,
-  intervalMs = 15_000, maxWaitMs = 40 * 60_000, now = () => Date.now(), sleep = (ms) => new Promise((r) => setTimeout(r, ms)), log = console.log,
+  intervalMs = 15_000, maxWaitMs = MAX_WAIT_MINUTES * 60_000, now = () => Date.now(), sleep = (ms) => new Promise((r) => setTimeout(r, ms)), log = console.log,
 }) {
   const started = now();
   for (;;) {

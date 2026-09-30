@@ -65,3 +65,10 @@ test('tag de deploy e unica por run (deploys paralelos no mesmo segundo)', () =>
   assert.match(workflow, /TAG="edge-deploy\/[^"\n]*\$\{GITHUB_RUN_ID\}"/);
 });
 
+test('timeout do job cobre a espera maxima do gate mais um deploy completo', async () => {
+  // Com 60 min e espera de ate 40, sobravam ~20 para setup + deploy + coletor de ~24 min.
+  const { MAX_WAIT_MINUTES } = await import('../edge-deploy/serialize-scope.mjs');
+  const timeout = Number(/^    timeout-minutes: (\d+)$/m.exec(workflow)?.[1]);
+  assert.ok(timeout >= MAX_WAIT_MINUTES + 60, `timeout-minutes=${timeout} < ${MAX_WAIT_MINUTES} + 60`);
+});
+

@@ -61,7 +61,10 @@ jobs:
     # functions para producao sem nenhum gate alem de estar na main.
     environment: producao-edge-functions
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    # 60 min de deploy completo (setup + deploy + coletor pos-deploy de ate ~24 min
+    # + smokes) somados ao teto de espera do passo de serializacao (MAX_WAIT_MINUTES=40
+    # em scripts/edge-deploy/serialize-scope.mjs). Pinado em deploy-functions-workflow.unit.mjs.
+    timeout-minutes: 100
     # GITHUB_TOKEN elevado a contents:write apenas neste job, para o passo de
     # tag de rastreabilidade — dispensa PAT (DEPLOY_FUNCTIONS_TOKEN).
     permissions:
