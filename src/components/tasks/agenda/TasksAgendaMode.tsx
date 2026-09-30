@@ -125,8 +125,8 @@ export function TasksAgendaMode({ items, overdue, isLoading, onOpen, onToggleDon
                 {g.titulo} ({lista.length})
               </h3>
               {lista.map(item => g.id === 'alarmes' ? (
-                <div key={item.id} className="flex items-start gap-2">
-                  <span className="w-14 shrink-0 pt-3 text-xs tabular-nums text-muted-foreground">
+                <div key={item.id} className="flex items-center gap-2">
+                  <span className="w-14 shrink-0 text-xs tabular-nums text-muted-foreground">
                     {item.remind_at ? format(new Date(item.remind_at), 'HH:mm') : ''}
                   </span>
                   <div className="min-w-0 flex-1">
