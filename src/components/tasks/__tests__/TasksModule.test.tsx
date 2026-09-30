@@ -57,6 +57,26 @@ function modoAtual() {
  * teste do hook. O que este arquivo prova é a integração: barra na tela, filtro
  * recortando os modos e URL refletindo o estado.
  */
+describe('TasksModule — etapa 57 (QuickAdd da Agenda)', () => {
+  beforeEach(() => {
+    cleanup();
+    resetSupabaseMock();
+    localStorage.clear();
+    window.history.replaceState(null, '', '/');
+    setSelectResult({ data: [makeTaskRow()], error: null });
+  });
+
+  it('na Agenda existe um único QuickAdd, já apontando para o dia selecionado', async () => {
+    renderModule({ defaultMode: 'agenda', forceMode: true });
+
+    // espera sair do esqueleto (a Agenda só monta o QuickAdd com o dia na tela)
+    await screen.findAllByTestId('agenda-day-dots');
+
+    expect(screen.getAllByTestId('quick-add')).toHaveLength(1);
+    expect(screen.getByTestId('quick-add-input').getAttribute('placeholder')).toContain('Adicionar em');
+  });
+});
+
 describe('TasksModule — etapa 45 (barra de filtros)', () => {
   beforeEach(() => {
     cleanup();

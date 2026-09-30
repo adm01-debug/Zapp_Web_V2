@@ -6,7 +6,7 @@
  * monta em `AppProviders` (os chips usam `Tooltip`).
  */
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, within, fireEvent } from '@testing-library/react';
+import { render, screen, within, fireEvent, waitFor } from '@testing-library/react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { TasksAgendaMode } from '@/components/tasks/agenda/TasksAgendaMode';
 import type { WorkItem } from '@/hooks/tasks/workItem.types';
@@ -42,13 +42,54 @@ function makeItem(over: Partial<WorkItem>): WorkItem {
   };
 }
 
-function renderAgenda(items: WorkItem[], overdue: WorkItem[] = []) {
+function renderAgenda(items: WorkItem[], overdue: WorkItem[] = [], onCreate = vi.fn().mockResolvedValue(undefined)) {
   const props = {
-    items, overdue, isLoading: false,
+    items, overdue, isLoading: false, onCreate,
     onOpen: vi.fn(), onToggleDone: vi.fn(), onMoveTo: vi.fn(), onDelete: vi.fn(),
   };
   render(<TooltipProvider><TasksAgendaMode {...props} /></TooltipProvider>);
+  return onCreate;
 }
+
+describe('TasksAgendaMode — etapa 57 (QuickAdd no dia selecionado)', () => {
+  it('nasce com o prazo do dia selecionado e cria nele', async () => {
+    const onCreate = renderAgenda([]);
+
+    const campo = screen.getByTestId('quick-add-input');
+    fireEvent.change(campo, { target: { value: 'Comprar insumo' } });
+
+    // pré-preenchido: o chip do prazo já mostra o dia de hoje
+    expect(screen.getByTestId('quick-add-due').textContent).toContain(new Date().toLocaleDateString('pt-BR'));
+
+    fireEvent.keyDown(campo, { key: 'Enter' });
+
+    await waitFor(() => expect(onCreate).toHaveBeenCalledTimes(1));
+    const entrada = onCreate.mock.calls[0][0];
+    expect(entrada.title).toBe('Comprar insumo');
+    expect(entrada.status).toBe('todo');
+    const prazo = new Date(entrada.dueDate);
+    expect(prazo.getDate()).toBe(new Date().getDate());
+    expect(prazo.getHours()).toBe(23);
+    expect(prazo.getMinutes()).toBe(59);
+  });
+
+  it('ao trocar de dia o campo remonta e passa a criar no dia novo', async () => {
+    const onCreate = renderAgenda([]);
+    fireEvent.change(screen.getByTestId('quick-add-input'), { target: { value: 'Rascunho' } });
+
+    const amanha = new Date(); amanha.setDate(amanha.getDate() + 1);
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${amanha.getDate()} de`, 'i') }));
+
+    const campo = screen.getByTestId('quick-add-input');
+    expect((campo as HTMLInputElement).value).toBe('');
+
+    fireEvent.change(campo, { target: { value: 'Para amanhã' } });
+    fireEvent.keyDown(campo, { key: 'Enter' });
+
+    await waitFor(() => expect(onCreate).toHaveBeenCalledTimes(1));
+    expect(new Date(onCreate.mock.calls[0][0].dueDate).getDate()).toBe(amanha.getDate());
+  });
+});
 
 describe('TasksAgendaMode — etapa 55', () => {
   it('o item com prazo e alarme no mesmo dia aparece nos dois grupos', () => {
