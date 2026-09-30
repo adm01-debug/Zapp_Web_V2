@@ -50,6 +50,32 @@ interface SearchResult {
   crmPhone?: string;
 }
 
+interface TalkMeHeaderButtonProps {
+  testId: string;
+  count: number | null;
+  loading: boolean;
+  queueName?: string;
+  onClick: () => void;
+}
+
+function TalkMeHeaderButton({ testId, count, loading, queueName, onClick }: TalkMeHeaderButtonProps) {
+  const queueSuffix = queueName ? ` em ${queueName}` : '';
+  const countLabel = count === null ? '' : `: ${count} atendimentos aguardando`;
+
+  return (
+    <LiquidMetalButton
+      data-testid={testId}
+      label="TALK ME"
+      count={count}
+      loading={loading}
+      compact
+      aria-label={`TALK ME${countLabel}${queueSuffix}`}
+      title={`Abrir atendimentos aguardando${queueSuffix}`}
+      onClick={onClick}
+    />
+  );
+}
+
 export function RealtimeInboxView() {
   const isMobile = useIsMobile();
   const inbox = useRealtimeInbox();
@@ -60,7 +86,6 @@ export function RealtimeInboxView() {
   const talkMeEnabled = useFeatureFlag('inbox.talk-me', false);
   const talkMe = useTalkMeQueue(talkMeOpen, talkMeEnabled);
   const talkMeCount = talkMe.queuesError ? null : (talkMe.selectedQueue?.waitingCount ?? null);
-  const talkMeAccessibleLabel = `TALK ME${talkMeCount === null ? '' : `: ${talkMeCount} atendimentos aguardando`}${talkMe.selectedQueue?.name ? ` em ${talkMe.selectedQueue.name}` : ''}`;
   // Rostos das conversas fixadas exibidos no header do chat (ocupam o espaço
   // livre quando o painel de detalhes está fechado).
   const pinnedConversations = useMemo(
@@ -215,14 +240,11 @@ export function RealtimeInboxView() {
                   counts={tabCounts}
                   extraCounts={tabExtraCounts}
                   trailingAction={talkMeEnabled ? (
-                    <LiquidMetalButton
-                      data-testid="talk-me-button"
-                      label="TALK ME"
+                    <TalkMeHeaderButton
+                      testId="talk-me-button"
                       count={talkMeCount}
                       loading={talkMe.queuesLoading}
-                      compact
-                      aria-label={talkMeAccessibleLabel}
-                      title={`Abrir atendimentos aguardando${talkMe.selectedQueue?.name ? ` em ${talkMe.selectedQueue.name}` : ''}`}
+                      queueName={talkMe.selectedQueue?.name}
                       onClick={() => setTalkMeOpen(true)}
                     />
                   ) : null}
@@ -289,14 +311,11 @@ export function RealtimeInboxView() {
           <div className="flex h-full min-h-0 flex-1 flex-col">
             {!isMobile && talkMeEnabled && (
               <div className="flex h-[58px] shrink-0 items-center justify-end border-b border-border px-3">
-                <LiquidMetalButton
-                  data-testid="talk-me-button-empty"
-                  label="TALK ME"
+                <TalkMeHeaderButton
+                  testId="talk-me-button-empty"
                   count={talkMeCount}
                   loading={talkMe.queuesLoading}
-                  compact
-                  aria-label={talkMeAccessibleLabel}
-                  title={`Abrir atendimentos aguardando${talkMe.selectedQueue?.name ? ` em ${talkMe.selectedQueue.name}` : ''}`}
+                  queueName={talkMe.selectedQueue?.name}
                   onClick={() => setTalkMeOpen(true)}
                 />
               </div>
