@@ -138,6 +138,22 @@ function gravacoes(): Array<Record<string, unknown>> {
   return mockRpc.mock.calls.map(([, args]) => args as Record<string, unknown>);
 }
 
+/** Monta o hook JÁ conectado (preâmbulo repetido da maioria dos testes). */
+async function montarConectado() {
+  const utils = renderHook(() => useSipClient());
+  await act(async () => {
+    await utils.result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+  });
+  return utils;
+}
+
+/** Monta o hook conectado E registrado. */
+async function montarRegistrado() {
+  const utils = await montarConectado();
+  act(() => mockRegisterStateListeners.forEach(fn => fn('Registered')));
+  return utils;
+}
+
 describe('useSipClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -164,18 +180,12 @@ describe('useSipClient', () => {
   });
 
   it('should set connecting status when connect is called', async () => {
-    const { result } = renderHook(() => useSipClient());
-    await act(async () => {
-      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
-    });
+    const { result } = await montarConectado();
     expect(result.current.sipStatus).toBe('connecting');
   });
 
   it('should become registered when registerer fires Registered', async () => {
-    const { result } = renderHook(() => useSipClient());
-    await act(async () => {
-      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
-    });
+    const { result } = await montarConectado();
     act(() => {
       mockRegisterStateListeners.forEach(fn => fn('Registered'));
     });
@@ -184,10 +194,7 @@ describe('useSipClient', () => {
   });
 
   it('should set disconnected when registerer fires Unregistered', async () => {
-    const { result } = renderHook(() => useSipClient());
-    await act(async () => {
-      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
-    });
+    const { result } = await montarConectado();
     act(() => {
       mockRegisterStateListeners.forEach(fn => fn('Registered'));
     });
@@ -198,10 +205,7 @@ describe('useSipClient', () => {
   });
 
   it('should disconnect properly', async () => {
-    const { result } = renderHook(() => useSipClient());
-    await act(async () => {
-      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
-    });
+    const { result } = await montarConectado();
     act(() => {
       mockRegisterStateListeners.forEach(fn => fn('Registered'));
     });
@@ -272,11 +276,7 @@ describe('useSipClient', () => {
   });
 
   it('should set calling status and register the call before the invite resolves', async () => {
-    const { result } = renderHook(() => useSipClient());
-    await act(async () => {
-      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
-    });
-    act(() => mockRegisterStateListeners.forEach(fn => fn('Registered')));
+    const { result } = await montarRegistrado();
 
     await act(async () => {
       await result.current.makeCall('5511999999999');
@@ -293,11 +293,7 @@ describe('useSipClient', () => {
   });
 
   it('should transition to ringing on Establishing', async () => {
-    const { result } = renderHook(() => useSipClient());
-    await act(async () => {
-      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
-    });
-    act(() => mockRegisterStateListeners.forEach(fn => fn('Registered')));
+    const { result } = await montarRegistrado();
 
     await act(async () => {
       await result.current.makeCall('123');
@@ -311,11 +307,7 @@ describe('useSipClient', () => {
 
   it('should transition to active on Established, start timer and mark the call answered', async () => {
     vi.useFakeTimers();
-    const { result } = renderHook(() => useSipClient());
-    await act(async () => {
-      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
-    });
-    act(() => mockRegisterStateListeners.forEach(fn => fn('Registered')));
+    const { result } = await montarRegistrado();
 
     await act(async () => {
       await result.current.makeCall('123');
@@ -339,11 +331,7 @@ describe('useSipClient', () => {
   });
 
   it('registra a saída encerrada sem atendimento como ended/no_answer', async () => {
-    const { result } = renderHook(() => useSipClient());
-    await act(async () => {
-      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
-    });
-    act(() => mockRegisterStateListeners.forEach(fn => fn('Registered')));
+    const { result } = await montarRegistrado();
 
     await act(async () => {
       await result.current.makeCall('123');
@@ -364,11 +352,7 @@ describe('useSipClient', () => {
   });
 
   it('records the call as ended (not missed) when terminated after being answered', async () => {
-    const { result } = renderHook(() => useSipClient());
-    await act(async () => {
-      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
-    });
-    act(() => mockRegisterStateListeners.forEach(fn => fn('Registered')));
+    const { result } = await montarRegistrado();
 
     await act(async () => {
       await result.current.makeCall('123');
@@ -396,11 +380,7 @@ describe('useSipClient', () => {
     // mesmo assim, porque ela é atribuída antes do await (corrige a corrida
     // em que um cancelamento rápido não encontrava sessão nenhuma).
     mockInvite.mockReturnValueOnce(new Promise(() => {}));
-    const { result } = renderHook(() => useSipClient());
-    await act(async () => {
-      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
-    });
-    act(() => mockRegisterStateListeners.forEach(fn => fn('Registered')));
+    const { result } = await montarRegistrado();
 
     act(() => { result.current.makeCall('123'); });
     await act(async () => { await Promise.resolve(); });
@@ -410,11 +390,7 @@ describe('useSipClient', () => {
   });
 
   it('should not force idle immediately on hangUp of an active call — waits for Terminated', async () => {
-    const { result } = renderHook(() => useSipClient());
-    await act(async () => {
-      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
-    });
-    act(() => mockRegisterStateListeners.forEach(fn => fn('Registered')));
+    const { result } = await montarRegistrado();
     await act(async () => { await result.current.makeCall('123'); });
     await act(async () => {
       mockStateChangeListeners.forEach(fn => fn('Established'));
@@ -459,11 +435,7 @@ describe('useSipClient', () => {
   });
 
   it('should reject a second makeCall while one is already in progress', async () => {
-    const { result } = renderHook(() => useSipClient());
-    await act(async () => {
-      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
-    });
-    act(() => mockRegisterStateListeners.forEach(fn => fn('Registered')));
+    const { result } = await montarRegistrado();
 
     await act(async () => { await result.current.makeCall('111'); });
     await act(async () => { await result.current.makeCall('222'); });
@@ -483,11 +455,7 @@ describe('useSipClient', () => {
     // O cronômetro tem de PARAR em Terminated. Sem isto, a duração continua
     // subindo depois de desligar e a linha gravada no banco sai errada.
     vi.useFakeTimers();
-    const { result } = renderHook(() => useSipClient());
-    await act(async () => {
-      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
-    });
-    act(() => mockRegisterStateListeners.forEach((fn) => fn('Registered')));
+    const { result } = await montarRegistrado();
     await act(async () => { await result.current.makeCall('111'); });
     act(() => mockStateChangeListeners.forEach((fn) => fn('Established')));
 
@@ -505,10 +473,7 @@ describe('useSipClient', () => {
   // === INBOUND CALL TESTS ===
 
   it('surfaces an incoming SIP invitation as a ringing inbound call', async () => {
-    const { result } = renderHook(() => useSipClient());
-    await act(async () => {
-      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
-    });
+    const { result } = await montarConectado();
     expect(lastOnInvite).toBeInstanceOf(Function);
 
     await act(async () => {
@@ -527,10 +492,7 @@ describe('useSipClient', () => {
   });
 
   it('rejects a second incoming invitation as busy while a call is active', async () => {
-    const { result } = renderHook(() => useSipClient());
-    await act(async () => {
-      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
-    });
+    const { result } = await montarConectado();
 
     await act(async () => {
       lastOnInvite?.(await createMockInvitation());
@@ -547,10 +509,7 @@ describe('useSipClient', () => {
   });
 
   it('answers the call once acceptIncomingCall is invoked', async () => {
-    const { result } = renderHook(() => useSipClient());
-    await act(async () => {
-      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
-    });
+    const { result } = await montarConectado();
     let invitation!: Invitation;
 
     await act(async () => {
@@ -566,10 +525,7 @@ describe('useSipClient', () => {
   });
 
   it('marks the call missed when rejectIncomingCall is invoked', async () => {
-    const { result } = renderHook(() => useSipClient());
-    await act(async () => {
-      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
-    });
+    const { result } = await montarConectado();
 
     await act(async () => {
       lastOnInvite?.(await createMockInvitation());
@@ -594,11 +550,7 @@ describe('useSipClient', () => {
   // === T11: o ciclo completo grava 3 vezes com o MESMO id ===
 
   it('aceite T11: ciclo completo gera 3 RPCs com o mesmo p_id (o sessionId do provider)', async () => {
-    const { result } = renderHook(() => useSipClient());
-    await act(async () => {
-      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
-    });
-    act(() => mockRegisterStateListeners.forEach(fn => fn('Registered')));
+    const { result } = await montarRegistrado();
 
     await act(async () => {
       await result.current.makeCall('5511999999999', 'sessao-do-provider');
@@ -632,11 +584,7 @@ describe('useSipClient', () => {
   });
 
   it('sem sessionId do provider, o id da linha é um uuid local (mesmo nas 3)', async () => {
-    const { result } = renderHook(() => useSipClient());
-    await act(async () => {
-      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
-    });
-    act(() => mockRegisterStateListeners.forEach(fn => fn('Registered')));
+    const { result } = await montarRegistrado();
 
     await act(async () => {
       await result.current.makeCall('5511999999999');
@@ -656,11 +604,7 @@ describe('useSipClient', () => {
   it('falha da RPC: 3 tentativas com o mesmo p_id, log e toast (nada silencioso)', async () => {
     mockRpc.mockResolvedValue({ data: null, error: { message: 'sem rede' } });
     const erro = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const { result } = renderHook(() => useSipClient());
-    await act(async () => {
-      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
-    });
-    act(() => mockRegisterStateListeners.forEach(fn => fn('Registered')));
+    const { result } = await montarRegistrado();
 
     await act(async () => {
       await result.current.makeCall('5511999999999', 'sessao-falha');
