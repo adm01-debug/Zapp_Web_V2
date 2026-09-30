@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay } from '../workItemAggregates';
+import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay, splitDoneByRecency } from '../workItemAggregates';
 import type { WorkItem } from '../workItem.types';
 
 const now = new Date('2026-10-03T12:00:00Z');
@@ -198,5 +198,46 @@ describe('etapa 49 — "Próximas" agrupada por dia', () => {
     ], now);
 
     expect(grupos[0].items.map(i => i.id)).toEqual(['urg', 'low']);
+  });
+});
+
+describe('etapa 51 — splitDoneByRecency (coluna Concluído do Quadro)', () => {
+  const done = (id: string, completed_at: string | null) =>
+    makeItem({ id, status: 'done', completed_at });
+
+  it('recent = só os 7 dias, na ordem completed_at desc', () => {
+    const { recent, older } = splitDoneByRecency([
+      done('antigaDaSemana', '2026-09-28T10:00:00Z'), // 5 dias
+      done('ontem',          '2026-10-02T10:00:00Z'), // 1 dia
+      done('duasSemanas',    '2026-09-20T10:00:00Z'), // 13 dias
+      done('mesPassado',     '2026-08-20T10:00:00Z'), // 44 dias
+    ], now);
+
+    expect(recent.map(i => i.id)).toEqual(['ontem', 'antigaDaSemana']);
+    expect(older.map(i => i.id)).toEqual(['duasSemanas']);
+  });
+
+  it('older vai do mais recente ao mais antigo e para no teto de 30 dias', () => {
+    const { older } = splitDoneByRecency([
+      done('a', '2026-09-10T10:00:00Z'), // 23 dias
+      done('b', '2026-09-25T10:00:00Z'), // 8 dias
+      done('c', '2026-08-01T10:00:00Z'), // 63 dias — fora da janela da query
+    ], now);
+
+    expect(older.map(i => i.id)).toEqual(['b', 'a']);
+  });
+
+  it('concluída sem carimbo fica na janela recente (tarefa não se esconde por falta de dado)', () => {
+    const { recent, older } = splitDoneByRecency([done('semCarimbo', null)], now);
+
+    expect(recent.map(i => i.id)).toEqual(['semCarimbo']);
+    expect(older).toHaveLength(0);
+  });
+
+  it('ignora o que não está concluído', () => {
+    const { recent, older } = splitDoneByRecency([makeItem({ id: 'aberta', status: 'todo' })], now);
+
+    expect(recent).toHaveLength(0);
+    expect(older).toHaveLength(0);
   });
 });

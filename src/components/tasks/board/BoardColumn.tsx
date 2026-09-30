@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 import { Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -8,6 +9,7 @@ import { TasksEmptyState }      from '../TasksEmptyState';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import type { WorkItemInput }   from '@/hooks/tasks/useMyWorkItems';
 import { WIP_LIMITS, KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
+import { splitDoneByRecency }   from '@/hooks/tasks/workItemAggregates';
 
 interface Props {
   status: WorkItemStatus;
@@ -26,9 +28,17 @@ export function BoardColumn({ status, items, isLoading, doingCount, onOpen, onMo
   const hardFull  = limit.hard != null && doingCount >= limit.hard;
   const softOver  = limit.soft != null && items.length > limit.soft;
 
+  // Etapa 51 (B5): a coluna Concluído mostra os 7 dias e revela o resto da janela
+  // de 30 dias no rodapé "Ver mais antigas (30 dias)" (filtro local, sem query nova).
+  const [showOlderDone, setShowOlderDone] = useState(false);
+  const doneSplit = status === 'done' ? splitDoneByRecency(items) : null;
+  const visibleItems = doneSplit
+    ? (showOlderDone ? [...doneSplit.recent, ...doneSplit.older] : doneSplit.recent)
+    : items;
+
   const headerCount = limit.hard
     ? `${doingCount}/${limit.hard}`
-    : items.length > 0 ? String(items.length) : '';
+    : visibleItems.length > 0 ? String(visibleItems.length) : '';
 
   return (
     <div className="flex flex-col min-w-[232px] xl:min-w-[260px] max-h-[calc(100vh-280px)] rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start">
@@ -71,8 +81,8 @@ export function BoardColumn({ status, items, isLoading, doingCount, onOpen, onMo
             className={`flex-1 overflow-y-auto p-2 space-y-1.5 min-h-[80px] ${snapshot.isDraggingOver ? 'bg-primary/5' : ''}`}
           >
             {isLoading && Array.from({ length: 2 }).map((_, i) => <WorkItemCardSkeleton key={i} />)}
-            {!isLoading && items.length === 0 && <TasksEmptyState variant="column" />}
-            {!isLoading && items.map((item, index) => (
+            {!isLoading && visibleItems.length === 0 && <TasksEmptyState variant="column" />}
+            {!isLoading && visibleItems.map((item, index) => (
               <Draggable key={item.id} draggableId={item.id} index={index}>
                 {(drag, snap) => (
                   <div ref={drag.innerRef} {...drag.draggableProps}>
@@ -89,6 +99,15 @@ export function BoardColumn({ status, items, isLoading, doingCount, onOpen, onMo
                 )}
               </Draggable>
             ))}
+            {!isLoading && doneSplit && doneSplit.older.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowOlderDone(s => !s)}
+                className="w-full rounded-lg border border-dashed border-border/70 px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+              >
+                {showOlderDone ? 'Ver menos' : 'Ver mais antigas (30 dias)'}
+              </button>
+            )}
             {provided.placeholder}
           </div>
         )}

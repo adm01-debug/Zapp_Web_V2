@@ -94,7 +94,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 ## CP-C Sheet       [ ] WorkItemSheet= · ?task= · Aguardando por DnD/kebab/menu= · kebab 5 grupos= · RemindChip popover= · ContactChip=
 ## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
-## CP-E Telas       [~] etapas 47 (B7), 48 (B4), 49 e 50 fechadas 29-30/09/2026 (executor: Hermes) · KPIs 88px= · filtros 3 modos= · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Quadro WIP/ordem= · Agenda grupos= · 0 requests na troca= · modo por rota: ok
+## CP-E Telas       [~] etapas 47 (B7), 48 (B4), 49, 50 e 51 (B5) fechadas 29-30/09/2026 (executor: Hermes) · KPIs 88px= · filtros 3 modos= · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem= · Agenda grupos= · 0 requests na troca= · modo por rota: ok
 
 ## Etapa 47 (B7) — modo por rota (Fase E) — evidências
 
@@ -192,6 +192,27 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 **Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · **guard-rail de tipografia** ✓ · `build` ✓ · bundle 492,3/550 KB gzip e 4018,8/4100 KB ✓ · `db:guard` ✓ · suíte 4315 passed / 0 failed (316 arquivos) ✓
 
 **Lacuna declarada (não medida):** o caminho de reduced-motion (durações zeradas pelo `useReducedMotion()`) não tem caso próprio — medi-lo exigiria mockar o módulo do framer no arquivo inteiro, mudando o comportamento dos outros casos do harness. O que está pinado é o exit e a duração normal (200ms).
+
+## Etapa 51 (B5) — coluna Concluído do Quadro: 7 dias + "Ver mais antigas (30 dias)" — evidências
+
+**Regra do plano:** a coluna Concluído mostra só `completed_at ≥ now-7d`, ordem `completed_at desc`, rodapé "Ver mais antigas (30 dias)" (filtro local). DoD: paginação local.
+
+**Mudanças (4 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/hooks/tasks/workItemAggregates.ts` | `splitDoneByRecency(items, now)` → `{ recent, older }`, ambos em `completed_at desc`; `recent` é a janela de 7 dias, `older` o resto da janela de 30 dias que a query do hook já traz |
+| `src/components/tasks/board/BoardColumn.tsx` | na coluna `done` a lista passa a ser `recent` e o rodapé "Ver mais antigas (30 dias)"/"Ver menos" revela `older`; o contador do cabeçalho passa a contar o que está visível |
+| `src/hooks/tasks/__tests__/workItemAggregates.test.ts` | 4 casos: janela + ordem desc, teto de 30 dias (mais novo antes do mais antigo), sem carimbo na janela recente, ignora o que não está concluído |
+| `src/components/tasks/__tests__/taskComponents.test.tsx` | caso de componente: a concluída de 13 dias não aparece até clicar no rodapé |
+
+**Decisão declarada (não é divergência silenciosa):** a concluída **sem `completed_at`** entra na janela **recente** (fica visível) em vez de sumir: a auditoria da Fase A mediu 0 linhas nesse estado, e esconder tarefa por falta de dado seria pior do que mostrar. Para quem tem carimbo, a janela de 7 dias do plano vale integralmente.
+
+**Limitação conhecida (registrada, não corrigida):** arrastar um card **dentro** da coluna Concluído continua persistindo `position`, mas a coluna agora é ordenada por `completed_at desc` — o arrasto não muda mais a ordem visível (antes da etapa 51 mudava). Desabilitar o arrasto ali levaria junto o caminho de arrastar a tarefa de volta para outra coluna; decidir isso é de produto, então ficou fora do escopo.
+
+**Teste de mutação (3 mutações, árvore restaurada entre cada):** M1 sem o corte dos 7 dias → 2 vermelhos (agregado + coluna); M2 sem a ordem `completed_at desc` → 2 vermelhos; M3 rodapé que não revela → 1 vermelho.
+
+**Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · guard-rail de tipografia ✓ · `build` ✓ · bundle 492,3/550 KB gzip e 4019,1/4100 KB ✓ · `db:guard` ✓ · suíte 4327 passed / 0 failed (318 arquivos) ✓
 
 ## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
 ## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=
