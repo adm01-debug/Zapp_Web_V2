@@ -20,28 +20,40 @@ const RAIZ = resolve(__dirname, '..', '..');
 const ALERTAS = [
   'src/components/security/RateLimitRealtimeAlerts.tsx',
   'src/hooks/business/useWarRoomAlerts.ts',
-  'src/hooks/team-chat/useTeamChatNotifications.ts',
+  // O hook de PRODUÇÃO (usado por TeamChatView). O antigo `src/hooks/team-chat/...`
+  // era código morto — só o teste o importava — e tocava `/sounds/message.mp3`, que
+  // nunca existiu em `public/` (era alerta silencioso por 404).
+  'src/hooks/chat/useTeamChatNotifications.ts',
 ] as const;
 
 function ler(rel: string): string {
   return readFileSync(resolve(RAIZ, rel), 'utf8');
 }
 
+/**
+ * Remove comentários de linha e de bloco antes de casar o contrato: prosa NÃO pode
+ * satisfazer sozinha um guard de código (sem isto, um arquivo que só MENCIONA
+ * `soundVolume` num comentário — sem lê-lo — passava verde).
+ */
+function semComentarios(src: string): string {
+  return src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
+}
+
 describe('contrato: som de alerta com volume do painel', () => {
   it.each(ALERTAS)('%s não crava volume fixo no código', (rel) => {
-    const src = ler(rel);
+    const src = semComentarios(ler(rel));
 
     expect(src).not.toMatch(/\.volume\s*=\s*0?\.\d/);
   });
 
   it.each(ALERTAS)('%s lê o volume persistido do painel', (rel) => {
-    const src = ler(rel);
+    const src = semComentarios(ler(rel));
 
     expect(src).toMatch(/soundVolume/);
   });
 
   it.each(ALERTAS)('%s continua fora do controle de volume de mídia', (rel) => {
-    const src = ler(rel);
+    const src = semComentarios(ler(rel));
 
     expect(src).not.toMatch(
       /import[^\n]*(useMediaElementVolume|useMediaVolume|mediaVolumeStore|applyMediaVolume|attachMediaVolume)/,
