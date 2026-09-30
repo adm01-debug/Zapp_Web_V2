@@ -94,7 +94,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 ## CP-C Sheet       [ ] WorkItemSheet= · ?task= · Aguardando por DnD/kebab/menu= · kebab 5 grupos= · RemindChip popover= · ContactChip=
 ## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
-## CP-E Telas       [~] etapas 43, 44, 45 e 46, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8), 53 e 55 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos: ok (barra de 5 filtros, estado na URL por replaceState, recorte único) · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos: ok (3 grupos, ponto por tipo, atrasadas expansível) · 0 requests na troca= · modo por rota: ok
+## CP-E Telas       [~] etapas 43, 44, 45 e 46, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8), 53, 55 e 56 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos: ok (barra de 5 filtros, estado na URL por replaceState, recorte único) · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos: ok (3 grupos, ponto por tipo, atrasadas expansível) · card agenda: ok (h-11, 1 linha, checkbox) · 0 requests na troca= · modo por rota: ok
 
 ## Etapa 47 (B7) — modo por rota (Fase E) — evidências
 
@@ -341,6 +341,24 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 **Teste de mutação (4, árvore restaurada entre cada):** M1 `temHora` sempre `true` (nada cai em "Sem hora") 3 vermelhos; M2 pontos fora da ordem do plano 1 vermelho; M3 "Atrasadas" sempre aberto 1 vermelho; M4 volta a deduplicar 2 vermelhos.
 
 **Gates:** `typecheck` ✓ · guard-rail de tipografia ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · `db:guard` ✓ · suíte 4474 passed / 0 failed (336 arquivos) ✓ · `build` ✓ · bundle 4031,3/4100 KB ✓
+
+## Etapa 56 — card da Agenda em linha única (`h-11`) — evidências
+
+**Regra do plano:** `WorkItemCard mode="agenda"`: linha única `h-11` (checkbox · título · chips à direita · kebab), sem motivo de espera. — DoD: altura 44±2.
+
+**Mudanças (3 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/components/tasks/shared/WorkItemCard.tsx` | o card deixou de duplicar JSX: checkbox, título, chips de contexto e kebab são montados **uma vez** e compostos nos dois layouts. Na Agenda a raiz sai como `flex flex-row h-11 items-center rounded-xl px-3` (uma linha), com checkbox e kebab **sempre visíveis** (na Lista/Quadro o kebab continua aparecendo no hover) e sem o motivo de espera. `data-mode` passou a marcar o modo no DOM (é o que o teste consulta) |
+| `src/components/tasks/agenda/TasksAgendaMode.tsx` | a coluna da hora do grupo dos alarmes passou a centralizar na linha (`items-center`, sem `pt-3`): com o card de 44px, o `pt-3` da etapa 55 desalinhava a hora |
+| testes | 1 caso novo em `agendaGroups.test.tsx`: contrato de classe (`h-11`, `flex-row`), checkbox presente na Agenda, nada de motivo de espera e kebab sem `opacity-0` |
+
+**Nota de honestidade:** o jsdom não mede layout — "44±2" está provado pelo contrato de classe (`h-11` = 44px); a medida real é o gate visual da etapa 54.
+
+**Teste de mutação (3, árvore restaurada entre cada):** M1 altura `h-11`→`h-9` 1 vermelho; M2 checkbox só na Lista 1 vermelho; M3 kebab voltando ao hover na Agenda 1 vermelho.
+
+**Gates:** `typecheck` ✓ · guard-rail de tipografia ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · `db:guard` ✓ · suíte 4514 passed / 0 failed (342 arquivos) ✓ · `build` ✓ · bundle 4033,3/4100 KB ✓
 
 ## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
 ## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=
