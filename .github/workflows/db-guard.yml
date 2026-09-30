@@ -389,3 +389,8 @@ jobs:
 
       - name: Provar transporte libpq com cliente e PostgreSQL reais
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh node scripts/db-audit/psql-environment.integration.mjs
+
+      - name: Simular ambiguidade da RPC e recursao da policy do team chat (#1266)
+        env:
+          TEAM_CHAT_RPC_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-rpc-ambiguity.test.sh
