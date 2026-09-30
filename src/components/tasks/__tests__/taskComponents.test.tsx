@@ -13,7 +13,7 @@
  * assim o drag&drop é exercitado sem precisar de geometria real no jsdom.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, waitFor, act } from '@testing-library/react';
 import type { ReactNode } from 'react';
 
 // Importa o harness ANTES dos módulos sob teste (ele registra os `vi.mock`).
@@ -27,18 +27,34 @@ import type { BucketsByDue } from '@/hooks/tasks/workItemAggregates';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 
 /** O `onDragEnd` que o quadro registrou (preenchido pelo mock do dnd). */
-const dnd = vi.hoisted(() => ({ onDragEnd: undefined as undefined | ((r: unknown) => void) }));
+const dnd = vi.hoisted(() => ({
+  onDragEnd: undefined as undefined | ((r: unknown) => void),
+  onDragStart: undefined as undefined | ((r: unknown) => void),
+  /** `isDropDisabled` de cada coluna na última renderização (etapa 52/B8). */
+  droppables: {} as Record<string, boolean | undefined>,
+}));
 
 vi.mock('@hello-pangea/dnd', () => ({
-  DragDropContext: ({ onDragEnd, children }: { onDragEnd: (r: unknown) => void; children: ReactNode }) => {
+  DragDropContext: ({ onDragEnd, onDragStart, children }: {
+    onDragEnd: (r: unknown) => void;
+    onDragStart?: (r: unknown) => void;
+    children: ReactNode;
+  }) => {
     dnd.onDragEnd = onDragEnd;
+    dnd.onDragStart = onDragStart;
     return children;
   },
-  Droppable: ({ children }: { children: (p: unknown, s: unknown) => ReactNode }) =>
-    children(
+  Droppable: ({ droppableId, isDropDisabled, children }: {
+    droppableId: string;
+    isDropDisabled?: boolean;
+    children: (p: unknown, s: unknown) => ReactNode;
+  }) => {
+    dnd.droppables[droppableId] = isDropDisabled;
+    return children(
       { innerRef: () => undefined, droppableProps: {}, placeholder: null },
       { isDraggingOver: false }
-    ),
+    );
+  },
   Draggable: ({ children }: { children: (p: unknown, s: unknown) => ReactNode }) =>
     children(
       { innerRef: () => undefined, draggableProps: {}, dragHandleProps: {} },
@@ -107,6 +123,8 @@ describe('Tarefas — componentes dos três modos', () => {
   beforeEach(() => {
     resetSupabaseMock();
     dnd.onDragEnd = undefined;
+    dnd.onDragStart = undefined;
+    dnd.droppables = {};
   });
 
   it('B9: a Lista rotula as seções com acento (Amanhã, Próximas, Concluídas)', () => {
@@ -200,6 +218,58 @@ describe('Tarefas — componentes dos três modos', () => {
     fireEvent.click(screen.getByText('Ver mais antigas (30 dias)'));
     expect(screen.getByText('Feita ha duas semanas')).toBeTruthy();
     expect(screen.getByText('Ver menos')).toBeTruthy();
+  });
+
+  it('etapa 52 (B8): "Fazendo" cheio aceita reorganizar por dentro e recusa o que vem de fora', () => {
+    cleanup();
+    render(
+      <TooltipProvider>
+        <TasksBoardMode
+          byStatus={{ ...byStatusVazio,
+            doing: [item({ id: 'f1', status: 'doing' }), item({ id: 'f2', status: 'doing' }), item({ id: 'f3', status: 'doing' })],
+            todo:  [item({ id: 't1', status: 'todo' })],
+          }}
+          isLoading={false}
+          onMove={vi.fn()}
+          onReorder={vi.fn()}
+          onOpen={vi.fn()}
+          onDelete={vi.fn()}
+          onCreate={vi.fn()}
+        />
+      </TooltipProvider>
+    );
+
+    // 3/3 sem arrasto em curso: a coluna recusa o drop
+    expect(dnd.droppables.doing).toBe(true);
+
+    // arrasto vindo de fora continua recusado
+    act(() => dnd.onDragStart?.({ source: { droppableId: 'todo', index: 0 } }));
+    expect(dnd.droppables.doing).toBe(true);
+
+    // arrasto comecado DENTRO de "Fazendo" e aceito (reorganizar 3/3)
+    act(() => dnd.onDragStart?.({ source: { droppableId: 'doing', index: 0 } }));
+    expect(dnd.droppables.doing).toBe(false);
+  });
+
+  it('etapa 52 (B8): a coluna cheia marca o cabeçalho com o anel de aviso', () => {
+    cleanup();
+    render(
+      <TooltipProvider>
+        <TasksBoardMode
+          byStatus={{ ...byStatusVazio,
+            doing: [item({ id: 'f1', status: 'doing' }), item({ id: 'f2', status: 'doing' }), item({ id: 'f3', status: 'doing' })],
+          }}
+          isLoading={false}
+          onMove={vi.fn()}
+          onReorder={vi.fn()}
+          onOpen={vi.fn()}
+          onDelete={vi.fn()}
+          onCreate={vi.fn()}
+        />
+      </TooltipProvider>
+    );
+
+    expect(screen.getByText('Fazendo').closest('div')?.className).toContain('ring-destructive');
   });
 
   it('etapa 48 (B4): "Concluídas (7 dias)" recolhida e "ver mais (30 dias)" revela as antigas', async () => {
