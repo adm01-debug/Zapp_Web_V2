@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { EditContactDialog } from './contact-details/EditContactDialog';
+import { buildEditContactShape } from './contact-details/editContactShape';
 import { Conversation } from '@/types/chat';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -139,12 +140,7 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
 
       <EditContactDialog
         open={editDialogOpen} onOpenChange={setEditDialogOpen}
-        contact={{
-          id: contact.id, name: contact.name, phone: contact.phone, avatar: contact.avatar ?? undefined,
-          email: contact.email ?? undefined, nickname: enrichedData?.nickname ?? undefined,
-          surname: enrichedData?.surname ?? undefined, job_title: enrichedData?.job_title ?? undefined,
-          company: enrichedData?.company ?? undefined, contact_type: enrichedData?.contact_type,
-        }}
+        contact={buildEditContactShape({ contact, enrichedData })}
       />
     </motion.div>
   );
