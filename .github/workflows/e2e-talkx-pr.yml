@@ -26,6 +26,7 @@ on:
       - 'src/hooks/integrations/useTalkX*'
       - 'supabase/functions/talkx-*'
       - 'e2e/talkx.spec.ts'
+      - '.github/workflows/e2e-talkx-pr.yml'
   workflow_dispatch:
 
 permissions:
