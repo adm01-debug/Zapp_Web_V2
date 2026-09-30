@@ -94,7 +94,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 ## CP-C Sheet       [ ] WorkItemSheet= · ?task= · Aguardando por DnD/kebab/menu= · kebab 5 grupos= · RemindChip popover= · ContactChip=
 ## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
-## CP-E Telas       [~] etapas 47 (B7), 48 (B4) e 49 fechadas 29-30/09/2026 (executor: Hermes) · KPIs 88px= · filtros 3 modos= · Concluídas 7d: ok · Próximas por dia: ok · Quadro WIP/ordem= · Agenda grupos= · 0 requests na troca= · modo por rota: ok
+## CP-E Telas       [~] etapas 47 (B7), 48 (B4), 49 e 50 fechadas 29-30/09/2026 (executor: Hermes) · KPIs 88px= · filtros 3 modos= · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Quadro WIP/ordem= · Agenda grupos= · 0 requests na troca= · modo por rota: ok
 
 ## Etapa 47 (B7) — modo por rota (Fase E) — evidências
 
@@ -171,6 +171,27 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 **Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas (baseline 971, atual 955) ✓ · `implicit-any` 0 ✓ · `build` ✓ · bundle 492,3/550 KB gzip e 4018,6/4100 KB ✓ · `db:guard` ✓ · suíte 4302 passed / 0 failed (313 arquivos) ✓
 
 **Resíduo (defensivo, não é regressão):** se `upcoming` trouxer item sem `due_date` — estado impossível vindo do `bucketByDue` — a seção cai na lista plana em vez de esconder a tarefa.
+
+## Etapa 50 — animação de concluir na Lista (fade 200ms) — evidências
+
+**Regra do plano:** `motion.div` com `exit={{ opacity: 0, height: 0 }}` de 200ms por item, via `AnimatePresence`, respeitando reduced-motion. DoD: item some com fade.
+
+**Mudanças (2 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/components/tasks/list/TasksListMode.tsx` | o card de cada item ganha `exit` (fade + altura, 200ms) e `overflow-hidden`; cada lista de itens (a plana e a de cada dia de "Próximas") passa a ficar dentro do seu próprio `AnimatePresence`, que é o que faz o exit ser observado; `useReducedMotion()` (padrão do repo) zera as durações de entrada e saída |
+| `src/components/tasks/__tests__/taskComponents.test.tsx` | caso novo da etapa 50 — o item fica montado durante a saída, ainda está lá 60ms depois (pina a duração) e sai ao fim; harness `renderBuckets` para trocar os buckets; a asserção final do caso da etapa 48 virou `waitFor` porque o item continuava montado por causa do exit |
+
+**A primeira prova do exit foi um vermelho:** ao introduzir a animação, o caso da etapa 48 ("ver menos" esconde a antiga) ficou vermelho — o item permanecia montado durante a saída. Foi o que mostrou que a animação está de fato em cima do unmount, e é o mesmo mecanismo que o caso novo pina.
+
+**Achado durante a construção (registrado, não é bug):** quando o **último** item de uma seção é concluído, quem sai é a seção inteira — o fade por item só acontece enquanto a seção continua de pé (com pelo menos um item). O plano pede o fade do item; a animação da seção é outra coisa e não está no escopo.
+
+**Teste de mutação (3 mutações, árvore restaurada entre cada):** M1 sem o `exit` → 1 vermelho; M2 sem o `AnimatePresence` por item → 1 vermelho; M3 saída instantânea (duração 0) → **sobreviveu na primeira rodada** e matou 1 depois que o caso passou a medir a duração (60ms ainda em cena). Na primeira versão o teste pinava o mecanismo do exit, não os 200ms — a lacuna foi encontrada pela própria mutação e fechada.
+
+**Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · **guard-rail de tipografia** ✓ · `build` ✓ · bundle 492,3/550 KB gzip e 4018,8/4100 KB ✓ · `db:guard` ✓ · suíte 4315 passed / 0 failed (316 arquivos) ✓
+
+**Lacuna declarada (não medida):** o caminho de reduced-motion (durações zeradas pelo `useReducedMotion()`) não tem caso próprio — medi-lo exigiria mockar o módulo do framer no arquivo inteiro, mudando o comportamento dos outros casos do harness. O que está pinado é o exit e a duração normal (200ms).
 
 ## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
 ## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=
