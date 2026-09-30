@@ -32,3 +32,23 @@ export function parseDayKey(key: string | null | undefined): Date | null {
   const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
   return Number.isNaN(d.getTime()) ? null : d;
 }
+
+/**
+ * Dia-calendário de um timestamp gravado **sem hora**: o `<input type="date">` do app grava
+ * `new Date('yyyy-MM-dd').toISOString()`, que é meia-noite **UTC** — o dia escolhido é a data
+ * UTC do instante. Formatar esse valor em hora local mostraria o dia anterior (em UTC-3,
+ * 30/09 vira 29/09). Qualquer outro instante é tratado como instante (dia local).
+ *
+ * Não muda o que está gravado: só decide como ler.
+ */
+export function calendarDayKey(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  const semHora =
+    d.getUTCHours() === 0 && d.getUTCMinutes() === 0 && d.getUTCSeconds() === 0 && d.getUTCMilliseconds() === 0;
+  if (!semHora) return localDayKey(d);
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  return `${d.getUTCFullYear()}-${month}-${day}`;
+}

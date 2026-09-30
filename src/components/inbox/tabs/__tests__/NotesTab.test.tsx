@@ -79,6 +79,22 @@ describe('NotesTab', () => {
     expect(mockToggleNoteDone).toHaveBeenCalledWith(promise);
   });
 
+  it('mostra a data da pendencia no dia escolhido (data sem hora nao volta um dia)', () => {
+    // O <input type="date"> grava new Date('2026-09-30').toISOString() = meia-noite UTC.
+    const promise: ContactNote = { id: 'n4', contact_id: 'c1', author_id: 'me', content: 'Enviar proposta', category: 'promise', is_done: false, due_date: '2026-09-30T00:00:00.000Z', created_at: '2026-09-03T10:00:00Z', updated_at: '2026-09-03T10:00:00Z' };
+    renderTab([promise]);
+
+    expect(screen.getByText('30/09/2026')).toBeTruthy();
+  });
+
+  it('data com hora continua no fuso local (22:30 nao vira o dia seguinte)', () => {
+    const at = new Date(2026, 8, 30, 22, 30).toISOString(); // em UTC-3 ja e 01:30Z de 01/10
+    const promise: ContactNote = { id: 'n5', contact_id: 'c1', author_id: 'me', content: 'Ligar hoje', category: 'promise', is_done: false, due_date: at, created_at: '2026-09-03T10:00:00Z', updated_at: '2026-09-03T10:00:00Z' };
+    renderTab([promise]);
+
+    expect(screen.getByText('30/09/2026')).toBeTruthy();
+  });
+
   it('pendências vazias mostram o empty state honesto', () => {
     renderTab([], []);
     expect(screen.getByText('Nenhuma pendência')).toBeInTheDocument();
