@@ -198,4 +198,123 @@ describe('useTalkMeQueue', () => {
       vi.useRealTimers();
     }
   });
+
+  it('preserva os cartões existentes quando apenas o carregamento adicional falha', async () => {
+    let waitingCall = 0;
+    rpc.mockImplementation((name: string) => {
+      if (name === 'talk_me_list_queues') return Promise.resolve({ data: queueRows, error: null });
+      if (name === 'talk_me_list_waiting') {
+        waitingCall += 1;
+        if (waitingCall === 1) return waitingRequest([{ ...waitingRows[0], total_count: 51 }]);
+        return { abortSignal: vi.fn(async () => ({ data: null, error: { message: 'falha de rede' } })) };
+      }
+      throw new Error(`RPC inesperada: ${name}`);
+    });
+    const { result } = renderHook(() => useTalkMeQueue(true));
+    await waitFor(() => expect(result.current.items).toHaveLength(1));
+
+    await act(async () => { await result.current.loadMore(); });
+
+    expect(result.current.items).toHaveLength(1);
+    expect(result.current.itemsError).toBeNull();
+    expect(result.current.loadMoreError).toBe('Não foi possível carregar mais atendimentos.');
+  });
+
+  it('impede paginações simultâneas e descarta a resposta ao trocar a busca', async () => {
+    let resolveAppend!: (value: unknown) => void;
+    const appendResponse = new Promise((resolve) => { resolveAppend = resolve; });
+    let waitingCall = 0;
+    rpc.mockImplementation((name: string) => {
+      if (name === 'talk_me_list_queues') return Promise.resolve({ data: queueRows, error: null });
+      if (name === 'talk_me_list_waiting') {
+        waitingCall += 1;
+        if (waitingCall === 1) return waitingRequest([{ ...waitingRows[0], total_count: 51 }]);
+        return { abortSignal: vi.fn(() => appendResponse) };
+      }
+      throw new Error(`RPC inesperada: ${name}`);
+    });
+    const { result } = renderHook(() => useTalkMeQueue(true));
+    await waitFor(() => expect(result.current.items).toHaveLength(1));
+
+    let firstLoad!: Promise<boolean>;
+    act(() => { firstLoad = result.current.loadMore(); });
+    await waitFor(() => expect(result.current.loadingMore).toBe(true));
+    await expect(result.current.loadMore()).resolves.toBe(false);
+    expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_waiting')).toHaveLength(2);
+
+    act(() => result.current.setSearch('nova busca'));
+    expect(result.current.loadingMore).toBe(false);
+    expect(result.current.items).toEqual([]);
+
+    resolveAppend({ data: [{ ...waitingRows[0], contact_id: 'stale-contact' }], error: null });
+    await act(async () => { await firstLoad; });
+    expect(result.current.items).toEqual([]);
+  });
+
+  it('restaura a profundidade já carregada ao atualizar uma fila paginada', async () => {
+    const makeRow = (index: number) => ({
+      ...waitingRows[0],
+      contact_id: `contact-${index}`,
+      contact_name: `Contato ${index}`,
+      last_message_id: `message-${index}`,
+      total_count: 51,
+      queue_position: index,
+    });
+    const firstPage = Array.from({ length: 50 }, (_, index) => makeRow(index + 1));
+    const secondPage = [makeRow(51)];
+    let waitingCall = 0;
+    rpc.mockImplementation((name: string) => {
+      if (name === 'talk_me_list_queues') return Promise.resolve({ data: [{ ...queueRows[0], waiting_count: 51 }], error: null });
+      if (name === 'talk_me_list_waiting') {
+        waitingCall += 1;
+        return waitingRequest(waitingCall % 2 === 1 ? firstPage : secondPage);
+      }
+      throw new Error(`RPC inesperada: ${name}`);
+    });
+    const { result } = renderHook(() => useTalkMeQueue(true));
+    await waitFor(() => expect(result.current.items).toHaveLength(50));
+    await act(async () => { await result.current.loadMore(); });
+    expect(result.current.items).toHaveLength(51);
+
+    await act(async () => { await result.current.refresh(); });
+
+    expect(result.current.items).toHaveLength(51);
+    expect(result.current.items[result.current.items.length - 1]?.contactId).toBe('contact-51');
+    expect(result.current.reconciling).toBe(false);
+  });
+
+  it('alcança o último atendimento de uma fila com 500 itens sem duplicar identidades', async () => {
+    const makeRow = (index: number) => ({
+      ...waitingRows[0],
+      contact_id: `contact-${index}`,
+      contact_name: `Contato ${index}`,
+      last_message_id: `message-${index}`,
+      total_count: 500,
+      queue_position: index,
+    });
+    const pages = Array.from({ length: 10 }, (_, page) => (
+      Array.from({ length: 50 }, (_, index) => makeRow(page * 50 + index + 1))
+    ));
+    let waitingCall = 0;
+    rpc.mockImplementation((name: string) => {
+      if (name === 'talk_me_list_queues') return Promise.resolve({ data: [{ ...queueRows[0], waiting_count: 500 }], error: null });
+      if (name === 'talk_me_list_waiting') {
+        const page = pages[waitingCall] ?? [];
+        waitingCall += 1;
+        return waitingRequest(page);
+      }
+      throw new Error(`RPC inesperada: ${name}`);
+    });
+    const { result } = renderHook(() => useTalkMeQueue(true));
+    await waitFor(() => expect(result.current.items).toHaveLength(50));
+
+    for (let page = 1; page < pages.length; page += 1) {
+      await act(async () => { await result.current.loadMore(); });
+    }
+
+    expect(result.current.items).toHaveLength(500);
+    expect(new Set(result.current.items.map((item) => item.contactId))).toHaveProperty('size', 500);
+    expect(result.current.items[499]?.contactId).toBe('contact-500');
+    expect(result.current.hasMore).toBe(false);
+  });
 });

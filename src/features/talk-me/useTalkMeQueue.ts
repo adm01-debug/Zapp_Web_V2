@@ -85,6 +85,8 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
   const [claimingContactId, setClaimingContactId] = useState<string | null>(null);
   const [queuesError, setQueuesError] = useState<string | null>(null);
   const [itemsError, setItemsError] = useState<string | null>(null);
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
+  const [reconciling, setReconciling] = useState(false);
   const debouncedSearch = useDebounce(search, 300);
   const searchPending = search.trim() !== debouncedSearch.trim();
   const queuesGenerationRef = useRef(0);
@@ -93,6 +95,8 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const refreshBurstStartedAtRef = useRef<number | null>(null);
   const itemsRef = useRef<TalkMeWaitingContact[]>([]);
+  const loadingMoreRef = useRef(false);
+  const reconcileGenerationRef = useRef(0);
   const claimingRef = useRef(false);
 
   useEffect(() => {
@@ -133,18 +137,26 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
     setQueuesLoading(false);
   }, [enabled]);
 
-  const fetchWaiting = useCallback(async (append = false) => {
+  const fetchWaiting = useCallback(async (append = false): Promise<boolean> => {
     if (!enabled || !isOpen || !selectedQueueId) {
       if (!append) setItems([]);
-      return;
+      return false;
     }
+    if (append && loadingMoreRef.current) return false;
 
     const generation = ++listGenerationRef.current;
     listAbortRef.current?.abort();
     const controller = new AbortController();
     listAbortRef.current = controller;
-    if (append) setLoadingMore(true);
-    else setItemsLoading(true);
+    if (append) {
+      loadingMoreRef.current = true;
+      setLoadingMore(true);
+      setLoadMoreError(null);
+    } else {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+      setItemsLoading(true);
+    }
     if (!append) setItemsError(null);
 
     const cursor = append ? itemsRef.current[itemsRef.current.length - 1] : undefined;
@@ -159,20 +171,58 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
       .abortSignal(controller.signal);
     const { data, error } = await request;
 
-    if (controller.signal.aborted || generation !== listGenerationRef.current) return;
+    if (controller.signal.aborted || generation !== listGenerationRef.current) {
+      if (generation === listGenerationRef.current) {
+        if (append) {
+          loadingMoreRef.current = false;
+          setLoadingMore(false);
+        } else {
+          setItemsLoading(false);
+        }
+      }
+      return false;
+    }
     if (error) {
       log.error('Falha ao consultar atendimentos TALK ME', error);
-      setItemsError('Não foi possível carregar os atendimentos.');
+      if (append) setLoadMoreError('Não foi possível carregar mais atendimentos.');
+      else setItemsError('Não foi possível carregar os atendimentos.');
     } else {
       const next = (data ?? []).map(mapWaitingContact);
-      setItems((current) => append
-        ? [...new Map([...current, ...next].map((item) => [item.contactId, item])).values()]
-        : next);
+      setItems((current) => {
+        const merged = append
+          ? [...new Map([...current, ...next].map((item) => [item.contactId, item])).values()]
+          : next;
+        itemsRef.current = merged;
+        return merged;
+      });
       setItemsError(null);
+      if (append) setLoadMoreError(null);
+      setItemsLoading(false);
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+      return next.length > 0;
     }
     setItemsLoading(false);
+    loadingMoreRef.current = false;
     setLoadingMore(false);
+    return false;
   }, [debouncedSearch, enabled, isOpen, selectedQueueId]);
+
+  const reconcileLoadedPages = useCallback(async () => {
+    const reconcileGeneration = ++reconcileGenerationRef.current;
+    const pagesToRestore = Math.max(1, Math.ceil(itemsRef.current.length / PAGE_SIZE));
+    setReconciling(true);
+    try {
+      const firstPageLoaded = await fetchWaiting(false);
+      if (!firstPageLoaded || reconcileGeneration !== reconcileGenerationRef.current) return;
+      for (let page = 1; page < pagesToRestore; page += 1) {
+        const pageLoaded = await fetchWaiting(true);
+        if (!pageLoaded || reconcileGeneration !== reconcileGenerationRef.current) break;
+      }
+    } finally {
+      if (reconcileGeneration === reconcileGenerationRef.current) setReconciling(false);
+    }
+  }, [fetchWaiting]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- busca remota inicial; o estado de loading pertence ao ciclo da requisição.
@@ -198,15 +248,16 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
       refreshTimerRef.current = null;
       refreshBurstStartedAtRef.current = null;
       void fetchQueues();
-      if (isOpen) void fetchWaiting(false);
+      if (isOpen) void reconcileLoadedPages();
     }, Math.min(REALTIME_DEBOUNCE_MS, remaining));
-  }, [enabled, fetchQueues, fetchWaiting, isOpen]);
+  }, [enabled, fetchQueues, isOpen, reconcileLoadedPages]);
 
   useEffect(() => () => {
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     refreshBurstStartedAtRef.current = null;
     queuesGenerationRef.current += 1;
     listGenerationRef.current += 1;
+    reconcileGenerationRef.current += 1;
     listAbortRef.current?.abort();
   }, []);
 
@@ -226,15 +277,30 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
 
   const setSearchSafely = useCallback((value: string) => {
     listGenerationRef.current += 1;
+    reconcileGenerationRef.current += 1;
     listAbortRef.current?.abort();
+    loadingMoreRef.current = false;
     setSearch(value);
     setItems([]);
+    itemsRef.current = [];
+    setLoadingMore(false);
+    setReconciling(false);
     setItemsError(null);
+    setLoadMoreError(null);
   }, []);
 
   const setSelectedQueueId = useCallback((queueId: string) => {
+    listGenerationRef.current += 1;
+    reconcileGenerationRef.current += 1;
+    listAbortRef.current?.abort();
+    loadingMoreRef.current = false;
     setSelectedQueueIdState(queueId);
     setItems([]);
+    itemsRef.current = [];
+    setLoadingMore(false);
+    setReconciling(false);
+    setItemsError(null);
+    setLoadMoreError(null);
     if (typeof window !== 'undefined') window.sessionStorage.setItem(SELECTED_QUEUE_KEY, queueId);
   }, []);
 
@@ -249,7 +315,11 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
         throw error ?? new Error('Resposta de aceite inválida.');
       }
       const row = data[0];
-      setItems((current) => current.filter((item) => item.contactId !== contactId));
+      setItems((current) => {
+        const remaining = current.filter((item) => item.contactId !== contactId);
+        itemsRef.current = remaining;
+        return remaining;
+      });
       await fetchQueues();
       return {
         contactId: row.contact_id,
@@ -286,10 +356,12 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
     claimingContactId,
     queuesError,
     itemsError,
+    loadMoreError,
+    reconciling,
     totalCount,
     hasMore,
     loadMore: () => fetchWaiting(true),
-    refresh: async () => { await Promise.all([fetchQueues(), fetchWaiting(false)]); },
+    refresh: async () => { await Promise.all([fetchQueues(), reconcileLoadedPages()]); },
     claim,
   };
 }
