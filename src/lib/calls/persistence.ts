@@ -54,15 +54,30 @@ function omitirNulo<T>(valor: T | null | undefined): T | undefined {
 }
 
 /**
+ * UUID v4 — sempre no formato que a coluna `calls.id` (`uuid`) aceita.
+ *
+ * O fallback é deliberado: `p_id` é `uuid` no banco, então um id fora desse
+ * formato derruba as 3 tentativas com `22P02` e **nenhuma linha nasce**
+ * (Safari/iOS < 15.4 e contexto não-seguro não têm `crypto.randomUUID`).
+ */
+export function uuidV4(): string {
+  const c = globalThis.crypto;
+  if (typeof c?.randomUUID === 'function') return c.randomUUID();
+  const b = new Uint8Array(16);
+  if (typeof c?.getRandomValues === 'function') c.getRandomValues(b);
+  else for (let i = 0; i < b.length; i += 1) b[i] = Math.floor(Math.random() * 256);
+  b[6] = (b[6] & 0x0f) | 0x40; // versão 4
+  b[8] = (b[8] & 0x3f) | 0x80; // variante RFC 4122
+  const h = Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
+/**
  * Id da linha da chamada: o `sessionId` do provider (um só id por chamada) ou,
- * sem ele, um uuid local não previsível (o id vai para `audit_logs`).
+ * sem ele, um uuid local (o id vai para `audit_logs`).
  */
 export function novoCallId(sessionId?: string | null): string {
-  if (sessionId) return sessionId;
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
-  const bytes = new Uint8Array(8);
-  crypto.getRandomValues(bytes);
-  return `${Date.now()}-${Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')}`;
+  return sessionId || uuidV4();
 }
 
 /**

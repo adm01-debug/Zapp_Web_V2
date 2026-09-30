@@ -16,7 +16,7 @@ const { mockRpc } = vi.hoisted(() => ({ mockRpc: vi.fn() }));
 
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc: mockRpc } }));
 
-import { UPSERT_MY_CALL_RPC, desfechoDaChamada, novoCallId, upsertMyCall } from '../persistence';
+import { UPSERT_MY_CALL_RPC, desfechoDaChamada, novoCallId, upsertMyCall, uuidV4 } from '../persistence';
 
 /** Argumentos da n-ésima chamada a `upsert_my_call` (0 = primeira). */
 function argsDe(n: number): Record<string, unknown> {
@@ -156,5 +156,32 @@ describe('desfechoDaChamada (regra de status do fim)', () => {
   it('saída não atendida → ended/no_answer', () => {
     expect(desfechoDaChamada(null, 'outbound')).toEqual({ status: 'ended', endReason: 'no_answer' });
     expect(desfechoDaChamada(null, null)).toEqual({ status: 'ended', endReason: 'no_answer' });
+  });
+});
+
+describe('novoCallId/uuidV4 — o id é SEMPRE um uuid válido', () => {
+  // `p_id` é `uuid` no banco: um id fora desse formato derruba as 3 tentativas
+  // com 22P02 e a chamada NUNCA nasce. Achado do agente DBA da auditoria.
+  const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+  it('sem `crypto.randomUUID` (Safari/iOS antigo, contexto não-seguro) ainda é uuid v4', () => {
+    const original = globalThis.crypto;
+    vi.stubGlobal('crypto', { getRandomValues: original.getRandomValues.bind(original) });
+    try {
+      expect(novoCallId(null)).toMatch(UUID_V4);
+      expect(uuidV4()).toMatch(UUID_V4);
+    } finally {
+      vi.stubGlobal('crypto', original);
+    }
+  });
+
+  it('sem `crypto` nenhum (ambiente cru) ainda é uuid v4', () => {
+    const original = globalThis.crypto;
+    vi.stubGlobal('crypto', undefined);
+    try {
+      expect(novoCallId(null)).toMatch(UUID_V4);
+    } finally {
+      vi.stubGlobal('crypto', original);
+    }
   });
 });

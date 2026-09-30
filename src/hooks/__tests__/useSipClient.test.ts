@@ -154,6 +154,29 @@ async function montarRegistrado() {
   return utils;
 }
 
+type Resultado = Awaited<ReturnType<typeof montarRegistrado>>['result'];
+
+/** Disca e assenta as microtarefas (o registro sai antes do `invite()` resolver). */
+async function discar(result: Resultado, numero = '5511999999999', voltas = 12) {
+  await act(async () => {
+    await result.current.makeCall(numero);
+    await escoar(voltas);
+  });
+}
+
+/** Leva o motor a um estado do SIP e assenta. */
+async function evento(nome: 'Establishing' | 'Established' | 'Terminated') {
+  await act(async () => {
+    mockStateChangeListeners.forEach(fn => fn(nome));
+    await escoar();
+  });
+}
+
+/** O registro da chamada foi esta RPC idempotente, com estes campos `p_*`. */
+function esperaRegistro(campos: Record<string, unknown>) {
+  expect(mockRpc).toHaveBeenCalledWith('upsert_my_call', expect.objectContaining(campos));
+}
+
 describe('useSipClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -278,18 +301,12 @@ describe('useSipClient', () => {
   it('should set calling status and register the call before the invite resolves', async () => {
     const { result } = await montarRegistrado();
 
-    await act(async () => {
-      await result.current.makeCall('5511999999999');
-      await escoar();
-    });
+    await discar(result);
     expect(result.current.callStatus).toBe('calling');
     expect(result.current.callDirection).toBe('outbound');
     expect(result.current.currentNumber).toBe('5511999999999');
     // T11: o registro é a RPC idempotente, com o canal e o Call-ID do convite.
-    expect(mockRpc).toHaveBeenCalledWith('upsert_my_call', expect.objectContaining({
-      p_direction: 'outbound', p_status: 'ringing', p_channel: 'voip',
-      p_peer_number: '5511999999999', p_provider_call_id: 'sip-call-1',
-    }));
+    esperaRegistro({ p_direction: 'outbound', p_status: 'ringing', p_channel: 'voip', p_peer_number: '5511999999999', p_provider_call_id: 'sip-call-1' });
   });
 
   it('should transition to ringing on Establishing', async () => {
@@ -313,10 +330,7 @@ describe('useSipClient', () => {
       await result.current.makeCall('123');
     });
 
-    await act(async () => {
-      mockStateChangeListeners.forEach(fn => fn('Established'));
-      await escoar();
-    });
+    await evento('Established');
     expect(result.current.callStatus).toBe('active');
     // T11: a 2ª gravação é o atendimento, com o MESMO p_id da 1ª.
     const chamadas = gravacoes();
@@ -338,10 +352,7 @@ describe('useSipClient', () => {
       await escoar();
     });
 
-    await act(async () => {
-      mockStateChangeListeners.forEach(fn => fn('Terminated'));
-      await escoar();
-    });
+    await evento('Terminated');
 
     // Saída não atendida: `ended` (só a ENTRADA perdida vira `missed`).
     const chamadas = gravacoes();
@@ -358,14 +369,8 @@ describe('useSipClient', () => {
       await result.current.makeCall('123');
       await escoar();
     });
-    await act(async () => {
-      mockStateChangeListeners.forEach(fn => fn('Established'));
-      await escoar();
-    });
-    await act(async () => {
-      mockStateChangeListeners.forEach(fn => fn('Terminated'));
-      await escoar();
-    });
+    await evento('Established');
+    await evento('Terminated');
 
     const chamadas = gravacoes();
     expect(chamadas.map(c => c.p_status)).toEqual(['ringing', 'answered', 'ended']);
@@ -485,10 +490,7 @@ describe('useSipClient', () => {
     expect(result.current.callDirection).toBe('inbound');
     expect(result.current.currentNumber).toBe('5511988887777');
     // Entrada: `ringing` + o Call-ID do CONVITE em `provider_call_id`.
-    expect(mockRpc).toHaveBeenCalledWith('upsert_my_call', expect.objectContaining({
-      p_direction: 'inbound', p_status: 'ringing', p_channel: 'voip',
-      p_peer_number: '5511988887777', p_provider_call_id: 'invite-1',
-    }));
+    esperaRegistro({ p_direction: 'inbound', p_status: 'ringing', p_channel: 'voip', p_peer_number: '5511988887777', p_provider_call_id: 'invite-1' });
   });
 
   it('rejects a second incoming invitation as busy while a call is active', async () => {
@@ -535,10 +537,7 @@ describe('useSipClient', () => {
     await act(async () => {
       await result.current.rejectIncomingCall();
     });
-    await act(async () => {
-      mockStateChangeListeners.forEach(fn => fn('Terminated'));
-      await escoar();
-    });
+    await evento('Terminated');
 
     // Recusada/entrada não atendida: `missed` + `no_answer` (regra do T11).
     const chamadas = gravacoes();
@@ -559,14 +558,8 @@ describe('useSipClient', () => {
     await act(async () => {
       mockStateChangeListeners.forEach(fn => fn('Establishing'));
     });
-    await act(async () => {
-      mockStateChangeListeners.forEach(fn => fn('Established'));
-      await escoar();
-    });
-    await act(async () => {
-      mockStateChangeListeners.forEach(fn => fn('Terminated'));
-      await escoar();
-    });
+    await evento('Established');
+    await evento('Terminated');
 
     expect(mockRpc).toHaveBeenCalledTimes(3);
     expect(mockRpc.mock.calls.every(([nome]) => nome === 'upsert_my_call')).toBe(true);
@@ -586,14 +579,8 @@ describe('useSipClient', () => {
   it('sem sessionId do provider, o id da linha é um uuid local (mesmo nas 3)', async () => {
     const { result } = await montarRegistrado();
 
-    await act(async () => {
-      await result.current.makeCall('5511999999999');
-      await escoar();
-    });
-    await act(async () => {
-      mockStateChangeListeners.forEach(fn => fn('Established'));
-      await escoar();
-    });
+    await discar(result);
+    await evento('Established');
 
     const chamadas = gravacoes();
     expect(chamadas.map(c => c.p_status)).toEqual(['ringing', 'answered']);

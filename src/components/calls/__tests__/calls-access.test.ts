@@ -76,7 +76,7 @@ describe('Telefonia — acesso e fronteiras (T07)', () => {
       'lib/calls/adapters/SipCallAdapter.ts',
       'lib/calls/adapters/CallAdapter.ts',
     ]) {
-      expect(readFileSync(join(SRC, relativo), 'utf8'), relativo).not.toMatch(/from 'react'/);
+      expect(readFileSync(join(SRC, relativo), 'utf8'), relativo).not.toMatch(/from\s+['"]react['"]/);
     }
   });
 
@@ -85,7 +85,11 @@ describe('Telefonia — acesso e fronteiras (T07)', () => {
     // chamadas de outro DDD são vinculadas ao contato errado.
     for (const arquivo of FONTES) {
       const conteudo = readFileSync(arquivo, 'utf8');
-      expect(conteudo, arquivo).not.toMatch(/ilike\s*\(\s*['"]phone['"]\s*,\s*[`'"]%/i);
+      // Pega o '%' literal, o template `%${...}`, e qualquer valor computado
+      // (sufixo/slice/substring) — a mutação que só o `%` literal deixava passar.
+      expect(conteudo, arquivo).not.toMatch(
+        /ilike\s*\(\s*['"]phone['"]\s*,\s*[^)]*(?:%|sufixo|suffix|slice\(|substring\(|substr\()/i,
+      );
     }
   });
 });
