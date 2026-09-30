@@ -303,6 +303,11 @@ jobs:
           TALKX_UPDATE_LIMITS_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-update-limits-rpc.test.sh
 
+      - name: Simular correção da janela de envio via RPC Talk X (V09b)
+        env:
+          TALKX_UPDATE_LIMITS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-update-limits-send-window.test.sh
+
       - name: Simular vazamento e correção da view de métricas Talk X
         env:
           TALKX_METRICS_INVOKER_TEST_POSTGRES_IMAGE: postgres:17-alpine
