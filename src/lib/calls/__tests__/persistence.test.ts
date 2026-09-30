@@ -17,6 +17,7 @@ const { mockRpc } = vi.hoisted(() => ({ mockRpc: vi.fn() }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc: mockRpc } }));
 
 import { UPSERT_MY_CALL_RPC, desfechoDaChamada, novoCallId, upsertMyCall, uuidV4 } from '../persistence';
+import type { CallDirection, CallEndOutcome, EndReason, PersistedStatus } from '../callStatus';
 
 /** Argumentos da n-ésima chamada a `upsert_my_call` (0 = primeira). */
 function argsDe(n: number): Record<string, unknown> {
@@ -144,9 +145,9 @@ describe('novoCallId', () => {
 });
 
 describe('desfechoDaChamada (regra de status do fim)', () => {
-  it('atendida → ended/completed', () => {
-    expect(desfechoDaChamada(42, 'outbound')).toEqual({ status: 'ended', endReason: 'completed' });
-    expect(desfechoDaChamada(0, 'inbound')).toEqual({ status: 'ended', endReason: 'completed' });
+  it('atendida → ended/hangup_local (sem `outcome` é legado: ninguém disse quem desligou)', () => {
+    expect(desfechoDaChamada(42, 'outbound')).toEqual({ status: 'ended', endReason: 'hangup_local' });
+    expect(desfechoDaChamada(0, 'inbound')).toEqual({ status: 'ended', endReason: 'hangup_local' });
   });
 
   it('entrada não atendida → missed/no_answer', () => {
@@ -156,6 +157,123 @@ describe('desfechoDaChamada (regra de status do fim)', () => {
   it('saída não atendida → ended/no_answer', () => {
     expect(desfechoDaChamada(null, 'outbound')).toEqual({ status: 'ended', endReason: 'no_answer' });
     expect(desfechoDaChamada(null, null)).toEqual({ status: 'ended', endReason: 'no_answer' });
+  });
+});
+
+/**
+ * T12 — o `end_reason` deixa de ser genérico: quem encerrou (hangup local,
+ * remoto, recusa, cancelamento remoto ou timeout) e o código SIP final decidem
+ * o que vai para a linha do banco. São estes os 5 casos do aceite do plano:
+ * atendida+local, atendida+remoto, 486, cancelamento local antes de atender e
+ * 480 na entrada.
+ */
+describe('desfechoDaChamada com outcome (T12)', () => {
+  interface CasoT12 {
+    nome: string;
+    talkSeconds: number | null;
+    direction: CallDirection | null;
+    outcome?: CallEndOutcome;
+    esperado: { status: PersistedStatus; endReason: EndReason };
+  }
+
+  const CASOS: CasoT12[] = [
+    {
+      nome: 'ACEITE: atendida + desligamento local → ended/hangup_local',
+      talkSeconds: 42,
+      direction: 'outbound',
+      outcome: { endedBy: 'hangup_local', sipCode: null },
+      esperado: { status: 'ended', endReason: 'hangup_local' },
+    },
+    {
+      nome: 'ACEITE: atendida + fim pelo outro lado → ended/hangup_remote',
+      talkSeconds: 17,
+      direction: 'inbound',
+      outcome: { endedBy: 'hangup_remote', sipCode: null },
+      esperado: { status: 'ended', endReason: 'hangup_remote' },
+    },
+    {
+      nome: 'ACEITE: 486 antes de atender → busy/busy',
+      talkSeconds: null,
+      direction: 'outbound',
+      outcome: { endedBy: 'hangup_remote', sipCode: 486 },
+      esperado: { status: 'busy', endReason: 'busy' },
+    },
+    {
+      nome: 'ACEITE: cancelamento local antes de atender → cancelled/cancelled',
+      talkSeconds: null,
+      direction: 'outbound',
+      outcome: { endedBy: 'hangup_local', sipCode: null },
+      esperado: { status: 'cancelled', endReason: 'cancelled' },
+    },
+    {
+      nome: 'ACEITE: 480 na entrada → missed/no_answer',
+      talkSeconds: null,
+      direction: 'inbound',
+      outcome: { endedBy: 'hangup_remote', sipCode: 480 },
+      esperado: { status: 'missed', endReason: 'no_answer' },
+    },
+    {
+      // A corrida do CANCEL: o servidor pode responder 200 ao INVITE que o
+      // usuário já cancelou. Nesse caminho o código é IGNORADO de propósito.
+      nome: 'cancelamento local com 200 na resposta ainda é cancelled (corrida do CANCEL)',
+      talkSeconds: null,
+      direction: 'outbound',
+      outcome: { endedBy: 'hangup_local', sipCode: 200 },
+      esperado: { status: 'cancelled', endReason: 'cancelled' },
+    },
+    {
+      nome: 'recusa (reject) antes de atender → declined/declined',
+      talkSeconds: null,
+      direction: 'inbound',
+      outcome: { endedBy: 'reject', sipCode: null },
+      esperado: { status: 'declined', endReason: 'declined' },
+    },
+    {
+      nome: 'cancelamento remoto (entrada) → missed/cancelled_remote',
+      talkSeconds: null,
+      direction: 'inbound',
+      outcome: { endedBy: 'cancel_remote', sipCode: 487 },
+      esperado: { status: 'missed', endReason: 'cancelled_remote' },
+    },
+    {
+      nome: 'timeout local (entrada) → missed/timeout',
+      talkSeconds: null,
+      direction: 'inbound',
+      outcome: { endedBy: 'timeout', sipCode: null },
+      esperado: { status: 'missed', endReason: 'timeout' },
+    },
+    {
+      nome: 'falha durante a conversa → failed/failed (não "Concluída")',
+      talkSeconds: 8,
+      direction: 'outbound',
+      outcome: { endedBy: 'failure', sipCode: null },
+      esperado: { status: 'failed', endReason: 'failed' },
+    },
+    {
+      nome: '603 na saída antes de atender → declined/declined',
+      talkSeconds: null,
+      direction: 'outbound',
+      outcome: { endedBy: 'hangup_remote', sipCode: 603 },
+      esperado: { status: 'declined', endReason: 'declined' },
+    },
+    {
+      nome: 'sem código SIP (remoto encerrou o toque) → ended/no_answer',
+      talkSeconds: null,
+      direction: 'outbound',
+      outcome: { endedBy: 'hangup_remote', sipCode: null },
+      esperado: { status: 'ended', endReason: 'no_answer' },
+    },
+  ];
+
+  for (const caso of CASOS) {
+    it(caso.nome, () => {
+      expect(desfechoDaChamada(caso.talkSeconds, caso.direction, caso.outcome)).toEqual(caso.esperado);
+    });
+  }
+
+  it('desfecho ausente/null continua valendo como legado', () => {
+    expect(desfechoDaChamada(30, 'outbound', null)).toEqual({ status: 'ended', endReason: 'hangup_local' });
+    expect(desfechoDaChamada(null, 'inbound', undefined)).toEqual({ status: 'missed', endReason: 'no_answer' });
   });
 });
 

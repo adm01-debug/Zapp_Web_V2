@@ -53,6 +53,31 @@ export type SipEndReason = Extract<
   'completed' | 'busy' | 'no_answer' | 'cancelled' | 'declined' | 'failed'
 >;
 
+/**
+ * Como a chamada terminou, do **nosso** ponto de vista (quem encerrou de fato).
+ * O `end_reason` persistido é derivado disto por `desfechoDaChamada` (T12).
+ */
+export type EndedBy =
+  | 'hangup_local'
+  | 'hangup_remote'
+  | 'reject'
+  | 'cancel_remote'
+  | 'timeout'
+  | 'failure';
+
+/**
+ * Desfecho observado no fim da chamada (T12): a origem do encerramento mais o
+ * código SIP final, quando houve um.
+ *
+ * O código vem do `requestDelegate.onReject` do sip.js — a resposta final
+ * (4xx/5xx/6xx) do INVITE. `null` quando o fim não teve resposta SIP própria
+ * (BYE do lado remoto, timeout local, falha do transporte).
+ */
+export interface CallEndOutcome {
+  endedBy: EndedBy;
+  sipCode: number | null;
+}
+
 /** Token de tom — vira classe CSS no componente, nunca aqui. */
 export type ResultTone = 'success' | 'destructive' | 'warning' | 'muted' | 'primary';
 

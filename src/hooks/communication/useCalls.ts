@@ -4,6 +4,15 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from '@/hooks/ui/use-toast';
 import { log } from '@/lib/logger';
 
+/**
+ * Nome da RPC de anotação humana da chamada — o contrato é o da migration
+ * `20260927100000_fix_set_call_agent_notes_null_owner.sql`
+ * (`set_call_agent_notes(p_call_id uuid, p_notes text) returns void`); não se
+ * inventa outro nome aqui. Mesmo padrão de `UPSERT_MY_CALL_RPC` em
+ * `src/lib/calls/persistence.ts`.
+ */
+const SET_CALL_AGENT_NOTES_RPC = 'set_call_agent_notes' as const;
+
 export interface Call {
   id: string;
   contact_id: string | null;
@@ -46,7 +55,14 @@ export const useCalls = () => {
     return data?.id || null;
   }, [user]);
 
-  // Start a new call
+  /**
+   * Cria a linha da chamada (`calls`) e o estado local da sessão.
+   *
+   * @deprecated T13 — escrita direta na tabela `calls`. O caminho vigente é a
+   * RPC `upsert_my_call` (idempotente, um id por chamada) via
+   * `src/lib/calls/persistence.ts` (T11). Este método continua aqui só até o
+   * T21, porque o `CallDialog` ainda o consome.
+   */
   const startCall = useCallback(async (params: StartCallParams): Promise<string | null> => {
     setIsLoading(true);
     try {
@@ -81,7 +97,14 @@ export const useCalls = () => {
     }
   }, [getProfileId]);
 
-  // Answer the call
+  /**
+   * Marca a chamada como atendida por escrita direta na tabela `calls`.
+   *
+   * @deprecated T13 — o caminho vigente é a RPC `upsert_my_call` (T11). Sai no
+   * T21: o `CallDialog` **e** o `IncomingCallAlert` ainda o consomem — o plano
+   * diz que o consumidor é só o `CallDialog`, mas a realidade medida no código
+   * são os dois (o alerta usa `answerCall`).
+   */
   const answerCall = useCallback(async (callId: string): Promise<boolean> => {
     try {
       const { error } = await supabase
@@ -100,7 +123,12 @@ export const useCalls = () => {
     }
   }, []);
 
-  // End the call
+  /**
+   * Finaliza a chamada por escrita direta na tabela `calls`.
+   *
+   * @deprecated T13 — o caminho vigente é a RPC `upsert_my_call` (T11). Sai no
+   * T21, porque o `CallDialog` ainda o consome.
+   */
   const endCall = useCallback(async (callId: string, durationSeconds: number): Promise<boolean> => {
     try {
       const { error } = await supabase
@@ -127,7 +155,12 @@ export const useCalls = () => {
     }
   }, []);
 
-  // Mark call as missed
+  /**
+   * Marca a chamada como não atendida por escrita direta na tabela `calls`.
+   *
+   * @deprecated T13 — o caminho vigente é a RPC `upsert_my_call` (T11). Sai no
+   * T21: o `CallDialog` **e** o `IncomingCallAlert` ainda o consomem.
+   */
   const missCall = useCallback(async (callId: string): Promise<boolean> => {
     try {
       const { error } = await supabase
@@ -148,18 +181,32 @@ export const useCalls = () => {
     }
   }, []);
 
-  // Add notes to a call
+  /**
+   * Grava a **anotação humana** da chamada pela RPC `set_call_agent_notes`
+   * (`p_call_id`, `p_notes`) — T13.
+   *
+   * O motivo de ser RPC e não escrita de coluna: a anotação do agente mora em
+   * `agent_notes`, e a coluna do provedor é metadado somente-leitura (T66). A
+   * RPC roda `security definer`, confere o dono da chamada e recusa quem não é
+   * o agente — coisa que uma escrita de coluna sujeita a RLS "resolvia" em
+   * silêncio, sem afetar linha nenhuma e sem erro.
+   */
   const addCallNotes = useCallback(async (callId: string, notes: string): Promise<boolean> => {
     try {
-      const { error } = await supabase
-        .from('calls')
-        .update({ notes })
-        .eq('id', callId);
+      const { error } = await supabase.rpc(SET_CALL_AGENT_NOTES_RPC, {
+        p_call_id: callId,
+        p_notes: notes,
+      });
 
       if (error) throw error;
       return true;
     } catch (error) {
       log.error('Error adding call notes:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível salvar a anotação da chamada',
+        variant: 'destructive',
+      });
       return false;
     }
   }, []);

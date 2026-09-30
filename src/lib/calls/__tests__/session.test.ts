@@ -21,6 +21,9 @@ import type {
   PersistedStatus,
 } from '../session';
 
+// Leitura do resultado exibido: prova que o T12 não mexeu na UI (C3).
+import { toResult } from '../callStatus';
+
 // ── Fixtures ────────────────────────────────────────────────────────────────
 
 const T0 = 1_700_000_000_000;
@@ -115,10 +118,11 @@ const VALIDAS: CasoValido[] = [
   { de: 'ringing_in', evento: { type: 'REJECT', at: T0 + 22 }, para: 'ended', endReason: 'declined', endedBy: 'reject', persisted: 'declined' },
   { de: 'ringing_in', evento: { type: 'CANCEL_REMOTE', at: T0 + 23 }, para: 'ended', endReason: 'cancelled_remote', endedBy: 'cancel_remote', persisted: 'missed' },
   { de: 'ringing_in', evento: { type: 'TIMEOUT', at: T0 + 24 }, para: 'ended', endReason: 'timeout', endedBy: 'timeout', persisted: 'missed' },
-  // em conversa
-  { de: 'active', evento: { type: 'HANGUP_LOCAL', at: T0 + 50 }, para: 'ended', endReason: 'completed', endedBy: 'hangup_local', persisted: 'ended', extras: { answeredAt: T0 + 30 } },
-  { de: 'active', evento: { type: 'HANGUP_REMOTE', at: T0 + 51 }, para: 'ended', endReason: 'completed', endedBy: 'hangup_remote', persisted: 'ended' },
-  { de: 'active', evento: { type: 'HANGUP_REMOTE', code: 200, at: T0 + 51 }, para: 'ended', endReason: 'completed', endedBy: 'hangup_remote', persisted: 'ended' },
+  // em conversa — T12/C3: atendida encerrada NUNCA é `completed`; o motivo diz
+  // QUEM encerrou (o `completed` da UI vem de `answered_at`, em `closedResult`)
+  { de: 'active', evento: { type: 'HANGUP_LOCAL', at: T0 + 50 }, para: 'ended', endReason: 'hangup_local', endedBy: 'hangup_local', persisted: 'ended', extras: { answeredAt: T0 + 30 } },
+  { de: 'active', evento: { type: 'HANGUP_REMOTE', at: T0 + 51 }, para: 'ended', endReason: 'hangup_remote', endedBy: 'hangup_remote', persisted: 'ended' },
+  { de: 'active', evento: { type: 'HANGUP_REMOTE', code: 200, at: T0 + 51 }, para: 'ended', endReason: 'hangup_remote', endedBy: 'hangup_remote', persisted: 'ended' },
   { de: 'active', evento: { type: 'FAILED', code: 500, at: T0 + 52 }, para: 'ended', endReason: 'failed', endedBy: 'failure', persisted: 'failed' },
   // finalização de um encerramento já em curso (`ending`)
   { de: 'ending', evento: { type: 'HANGUP_LOCAL', at: T0 + 41 }, para: 'ended', endReason: 'cancelled', endedBy: 'hangup_local', persisted: 'cancelled' }, // extensão
@@ -380,14 +384,30 @@ describe('session — invariantes', () => {
     expect(busyHereOutcome()).toEqual({ persistedStatus: 'missed', endReason: 'busy' });
   });
 
-  it('HANGUP_LOCAL em active encerra como completed/hangup_local', () => {
+  it('HANGUP_LOCAL em active encerra como hangup_local (T12/C3)', () => {
     const active = estadoDe('active');
     const encerrada = reduce(active, { type: 'HANGUP_LOCAL', at: T0 + 100 });
     expect(encerrada.status).toBe('ended');
-    expect(encerrada.endReason).toBe('completed');
+    expect(encerrada.endReason).toBe('hangup_local');
     expect(encerrada.endedBy).toBe('hangup_local');
     expect(encerrada.endedAt).toBe(T0 + 100);
     expect(persistedStatusOf(encerrada)).toBe('ended');
+  });
+
+  it('T12: atendida + HANGUP_REMOTE encerra como hangup_remote, e a UI segue "Concluída"', () => {
+    const encerrada = reduce(estadoDe('active'), { type: 'HANGUP_REMOTE', code: 200, at: T0 + 101 });
+    expect([encerrada.endReason, encerrada.endedBy, persistedStatusOf(encerrada)])
+      .toEqual(['hangup_remote', 'hangup_remote', 'ended']);
+
+    // Sem regressão de UI: o rótulo "Concluída" da linha atendida vem de
+    // `answered_at` (`closedResult`), não do end_reason — o T12 só passou a
+    // guardar QUEM desligou.
+    expect(toResult({
+      status: persistedStatusOf(encerrada),
+      direction: 'outbound',
+      answered_at: new Date(T0 + 30).toISOString(),
+      ended_at: new Date(T0 + 101).toISOString(),
+    })).toBe('completed');
   });
 
   it('HANGUP_LOCAL antes de atender encerra como cancelled', () => {
@@ -419,8 +439,8 @@ describe('session — invariantes', () => {
 
 describe('session — endReasonFor', () => {
   it('devolve o motivo do encerramento por estado', () => {
-    expect(endReasonFor(estadoDe('active'), { type: 'HANGUP_LOCAL' })).toBe('completed');
-    expect(endReasonFor(estadoDe('active'), { type: 'HANGUP_REMOTE' })).toBe('completed');
+    expect(endReasonFor(estadoDe('active'), { type: 'HANGUP_LOCAL' })).toBe('hangup_local');
+    expect(endReasonFor(estadoDe('active'), { type: 'HANGUP_REMOTE' })).toBe('hangup_remote');
     expect(endReasonFor(estadoDe('active'), { type: 'FAILED', code: 500 })).toBe('failed');
     expect(endReasonFor(estadoDe('dialing'), { type: 'HANGUP_LOCAL' })).toBe('cancelled');
     expect(endReasonFor(estadoDe('ringing_out'), { type: 'HANGUP_LOCAL' })).toBe('cancelled');

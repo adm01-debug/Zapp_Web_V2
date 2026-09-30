@@ -18,6 +18,7 @@ import {
   initialState,
   isTerminal,
   reduce,
+  type CallEndOutcome,
   type CallSessionEvent,
   type CallSessionState,
 } from '@/lib/calls/session';
@@ -41,7 +42,8 @@ import {
  * de encerramento por ação do usuário (`hangup`/`reject`) são despachados na
  * hora, para preservar o `endedBy` correto — e o efeito não repete o
  * encerramento quando o estado já é terminal. O `end_reason` fino (código SIP,
- * quem desligou) é o T12.
+ * quem desligou) chega pelo `onEnd` do hook e é despachado por `despacharFim`
+ * (T12), o ponto único de encerramento.
  */
 
 /** Rota da view de telefonia — o `ViewRouter` mapeia `voip` → `VoIPPanel`. */
@@ -93,22 +95,47 @@ function PonteDeNavegacao({
 }
 
 export function CallSessionProvider({ children }: { children: ReactNode }) {
-  const sip = useSipClient();
   const emRouter = useInRouterContext();
   const [session, dispatch] = useReducer(reduce, undefined, initialState);
+
+  // Espelho do estado para o efeito decidir sem virar dependência (e sem
+  // closure velha): o estado muda a cada evento, o status do motor não.
+  // Fica ANTES do hook de SIP porque o `despacharFim` (T12) lê daqui.
+  const estadoRef = useRef(session);
+  useEffect(() => {
+    estadoRef.current = session;
+  }, [session]);
+
+  /**
+   * Fim da chamada (T12): PONTO ÚNICO de despacho do encerramento, usado pelo
+   * callback `onEnd` do hook E pelo ramo `ended` do efeito de status. A guarda
+   * `!isTerminal` garante um só dispatch — e nenhum warn de transição inválida
+   * quando as duas fontes chegam (hangup local já fecha o estado na hora).
+   */
+  const despacharFim = useCallback((outcome: CallEndOutcome) => {
+    const atual = estadoRef.current;
+    if (isTerminal(atual.status)) return;
+    const code = outcome.sipCode ?? undefined;
+    // Entrada ainda tocando: quem encerrou foi o remoto. `HANGUP_REMOTE` é
+    // inválido a partir de `ringing_in` — ali só `CANCEL_REMOTE` fecha.
+    if (atual.status === 'ringing_in') {
+      dispatch({ type: 'CANCEL_REMOTE', code });
+      return;
+    }
+    if (outcome.endedBy === 'hangup_local') {
+      dispatch({ type: 'HANGUP_LOCAL' });
+      return;
+    }
+    dispatch({ type: 'HANGUP_REMOTE', code });
+  }, []);
+
+  const sip = useSipClient(despacharFim);
 
   // Preenchido pela ponte quando (e só quando) há Router acima.
   const navegarRef = useRef<((search: string) => void) | null>(null);
   const registrarNavegador = useCallback((navegar: (search: string) => void) => {
     navegarRef.current = navegar;
   }, []);
-
-  // Espelho do estado para o efeito decidir sem virar dependência (e sem
-  // closure velha): o estado muda a cada evento, o status do motor não.
-  const estadoRef = useRef(session);
-  useEffect(() => {
-    estadoRef.current = session;
-  }, [session]);
 
   const novoId = useCallback(() => novoSessionId(sip.currentCallId ?? null), [sip.currentCallId]);
 
@@ -193,19 +220,14 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'RINGING' });
       }
     } else if (callStatus === 'active') dispatch({ type: 'ESTABLISHED' });
-    else if (callStatus === 'ended' && !isTerminal(estadoRef.current.status)) {
-      // Entrada ainda tocando que encerra SEM `reject()`: o lado remoto
-      // cancelou/expirou. `HANGUP_LOCAL` é inválido a partir de `ringing_in`
-      // (`isPreAnswer` não o inclui) e congelava a máquina para sempre.
-      // `reject()` já despacha `REJECT` na hora, então chegar aqui com
-      // `ringing_in` significa que foi o remoto.
-      dispatch(
-        estadoRef.current.status === 'ringing_in'
-          ? { type: 'CANCEL_REMOTE' }
-          : { type: 'HANGUP_LOCAL' },
-      );
+    else if (callStatus === 'ended') {
+      // T12: o fim chega primeiro pelo `onEnd` do hook, que traz o desfecho
+      // fino (quem encerrou + código SIP). CHEGAR AQUI com o estado ainda aberto
+      // significa que o encerramento veio do outro lado: quando VOCÊ desliga é
+      // `hangup()`, que já fecha o estado na hora e cai na guarda do helper.
+      despacharFim({ endedBy: 'hangup_remote', sipCode: null });
     }
-  }, [sip, novoId, reiniciarSeTerminal]);
+  }, [sip, novoId, reiniciarSeTerminal, despacharFim]);
 
   const value = useMemo<CallSessionApi>(
     () => ({

@@ -18,6 +18,7 @@
 
 import type { Invitation, Session, UserAgent } from 'sip.js';
 
+import type { CallEndOutcome } from '../callStatus';
 import type { AdapterDirection, CallAdapter } from './CallAdapter';
 
 /** Estados do ciclo de vida, iguais aos que a UI do T09 já consumia. */
@@ -47,8 +48,8 @@ export interface CallEngineSink {
   /** Cria o registro da chamada e devolve o id (ou null em falha). */
   create(params: CreateCallParams): Promise<string | null>;
   onAnswered(callId: string): void;
-  /** `talkSeconds` null = não atendida. */
-  onFinished(callId: string, talkSeconds: number | null): void;
+  /** `talkSeconds` null = não atendida. `outcome` = quem encerrou + código SIP (T12). */
+  onFinished(callId: string, talkSeconds: number | null, outcome: CallEndOutcome): void;
 }
 
 /** Quanto tempo o desfecho fica na tela antes de voltar para `idle`. */
@@ -78,6 +79,12 @@ export class CallEngine {
   private status: EngineStatus = 'idle';
   private direction: AdapterDirection | null = null;
   private muted = false;
+  // T12: desfecho fino da chamada corrente. `sipCode` é escrito pelo callback
+  // `onReject` do INVITE (antes do Terminated); as bandeiras dizem se o fim
+  // partiu de uma ação nossa. Todas zeradas no início de cada chamada.
+  private sipCode: number | null = null;
+  private localHangup = false;
+  private localReject = false;
   private idleResetTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
@@ -113,6 +120,10 @@ export class CallEngine {
     this.invitation = invitation;
     this.answeredAt = null;
     this.direction = 'inbound';
+    // Bandeira velha não pode vazar para esta chamada (T12).
+    this.sipCode = null;
+    this.localHangup = false;
+    this.localReject = false;
     this.setStatus('ringing');
     this.sink.onSession('inbound', remoteUser);
 
@@ -147,6 +158,13 @@ export class CallEngine {
 
     if (state === 'Terminated') {
       const answeredAt = this.answeredAt;
+      // T12: o desfecho fino é montado AQUI, antes de zerar a sessão. O
+      // `sipCode` já está preenchido (o `onReject` do INVITE roda antes do
+      // Terminated) e as bandeiras dizem se o fim partiu de uma ação nossa.
+      const outcome: CallEndOutcome = {
+        endedBy: this.localReject ? 'reject' : this.localHangup ? 'hangup_local' : 'hangup_remote',
+        sipCode: this.sipCode,
+      };
       this.setStatus('ended');
       this.sink.onTerminated();
       if (this.muted) { this.muted = false; this.sink.onMuted(false); }
@@ -156,7 +174,7 @@ export class CallEngine {
         const talkSeconds = answeredAt
           ? Math.max(0, Math.round((Date.now() - answeredAt.getTime()) / 1000))
           : null;
-        this.sink.onFinished(id, talkSeconds);
+        this.sink.onFinished(id, talkSeconds, outcome);
       });
 
       this.answeredAt = null;
@@ -184,6 +202,10 @@ export class CallEngine {
 
       this.answeredAt = null;
       this.direction = 'outbound';
+      // T12: esta chamada começa com o desfecho limpo (bandeira velha não vaza).
+      this.sipCode = null;
+      this.localHangup = false;
+      this.localReject = false;
       this.setStatus('calling');
       this.sink.onSession('outbound', number);
 
@@ -205,9 +227,11 @@ export class CallEngine {
         providerCallId: inviter.id,
       });
 
-      await this.adapter.invite(inviter);
+      await this.adapter.invite(inviter, (statusCode) => { this.sipCode = statusCode ?? null; });
     } catch (error: unknown) {
-      void this.callIdPromise?.then((id) => { if (id) this.sink.onFinished(id, null); });
+      // Falha do próprio discar (transporte/URI): o desfecho é `failure`, sem
+      // código SIP — o Terminated pode nunca chegar neste caminho.
+      void this.callIdPromise?.then((id) => { if (id) this.sink.onFinished(id, null, { endedBy: 'failure', sipCode: null }); });
       this.callIdPromise = null;
       this.session = null;
       this.setStatus('idle');
@@ -231,6 +255,9 @@ export class CallEngine {
   async reject(): Promise<void> {
     const invitation = this.invitation;
     if (!invitation) return;
+    // T12: a recusa é AÇÃO nossa — o Terminated seguinte é `reject`, não um
+    // encerramento remoto.
+    this.localReject = true;
     await this.adapter.reject(invitation);
   }
 
@@ -241,6 +268,9 @@ export class CallEngine {
   hangUp(): void {
     const session = this.session;
     if (session) {
+      // A bandeira vem ANTES do adapter: o Terminated pode chegar durante o
+      // `bye()`/`cancel()` e, sem ela, o fim pareceria remoto (T12).
+      this.localHangup = true;
       this.adapter.hangup(session, this.direction ?? 'outbound');
       return;
     }

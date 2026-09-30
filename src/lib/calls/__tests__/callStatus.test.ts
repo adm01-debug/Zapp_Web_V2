@@ -8,9 +8,11 @@ import {
   normalizeStatus,
   sipCodeToEndReason,
   toResult,
+  type CallEndOutcome,
   type CallResult,
   type CallStatusRow,
   type EndReason,
+  type EndedBy,
   type PersistedStatus,
   type SipEndReason,
 } from '../callStatus';
@@ -272,5 +274,44 @@ describe('sipCodeToEndReason', () => {
     expect(sipCodeToEndReason('abc')).toBe('failed');
     expect(sipCodeToEndReason(undefined)).toBe('failed');
     expect(sipCodeToEndReason(null)).toBe('failed');
+  });
+});
+
+// ─── T12 — origem do encerramento + código SIP ──────────────────────
+
+describe('EndedBy / CallEndOutcome (T12)', () => {
+  /**
+   * Exaustividade em tempo de COMPILAÇÃO: `Record<EndedBy, …>` deixa de
+   * compilar se um valor novo entrar na união sem entrar aqui. O teste em si
+   * percorre a lista — é o compilador que faz o trabalho pesado.
+   */
+  const DESCRICAO: Record<EndedBy, string> = {
+    hangup_local: 'desliguei aqui',
+    hangup_remote: 'o outro lado desligou',
+    reject: 'recusei',
+    cancel_remote: 'o outro lado cancelou antes de atender',
+    timeout: 'o toque expirou',
+    failure: 'falhou',
+  };
+
+  it('cobre os 6 valores de EndedBy', () => {
+    const todos: EndedBy[] = ['hangup_local', 'hangup_remote', 'reject', 'cancel_remote', 'timeout', 'failure'];
+    expect(todos.map((motivo) => DESCRICAO[motivo])).toEqual([
+      'desliguei aqui',
+      'o outro lado desligou',
+      'recusei',
+      'o outro lado cancelou antes de atender',
+      'o toque expirou',
+      'falhou',
+    ]);
+  });
+
+  it('CallEndOutcome carrega a origem e o código SIP (null quando não houve resposta)', () => {
+    const comCodigo: CallEndOutcome = { endedBy: 'hangup_remote', sipCode: 486 };
+    const semCodigo: CallEndOutcome = { endedBy: 'hangup_local', sipCode: null };
+
+    expect(comCodigo).toEqual({ endedBy: 'hangup_remote', sipCode: 486 });
+    expect(semCodigo.sipCode).toBeNull();
+    expect(DESCRICAO[comCodigo.endedBy]).toBe('o outro lado desligou');
   });
 });
