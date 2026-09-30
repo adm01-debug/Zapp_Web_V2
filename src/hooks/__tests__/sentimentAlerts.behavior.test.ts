@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import '@/hooks/__tests__/helpers/alertMocks';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 
 /**
@@ -19,28 +20,6 @@ import {
   resetAlertKit,
   settingsCfg,
 } from '@/hooks/__tests__/helpers/alertBehaviorTestKit';
-
-vi.mock('@/utils/notificationSounds', async () =>
-  (await import('@/hooks/__tests__/helpers/alertBehaviorTestKit')).notificationSoundsMock(),
-);
-vi.mock('@/integrations/supabase/client', async () =>
-  (await import('@/hooks/__tests__/helpers/alertBehaviorTestKit')).supabaseMock(),
-);
-vi.mock('@/hooks/auth/useAuth', async () =>
-  (await import('@/hooks/__tests__/helpers/alertBehaviorTestKit')).authMock(),
-);
-vi.mock('@/lib/logger', async () =>
-  (await import('@/hooks/__tests__/helpers/alertBehaviorTestKit')).loggerMock(),
-);
-vi.mock('@/lib/notificationDedupe', async () =>
-  (await import('@/hooks/__tests__/helpers/alertBehaviorTestKit')).dedupeMock(),
-);
-vi.mock('sonner', async () =>
-  (await import('@/hooks/__tests__/helpers/alertBehaviorTestKit')).sonnerMock(),
-);
-vi.mock('@/hooks/system/useNotificationSettings', async () =>
-  (await import('@/hooks/__tests__/helpers/alertBehaviorTestKit')).settingsMock(),
-);
 
 import { useRealtimeSentimentAlerts } from '@/hooks/inbox/useRealtimeSentimentAlerts';
 import { useSentimentAlerts } from '@/hooks/inbox/useSentimentAlerts';
