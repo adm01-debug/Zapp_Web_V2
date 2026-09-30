@@ -1,0 +1,127 @@
+-- =============================================================================================
+-- Fecha a classe "trilha de auditoria forjavel / reescrivel" que sobrou depois de #1254/#1258/#1283.
+-- Versao: 20260930154205. Classe: ADITIVA e REVOGADORA (so REVOKE; nenhum GRANT, nenhum DDL de
+-- objeto). Reaplicavel: todo REVOKE e idempotente por natureza (revogar privilegio ausente e
+-- no-op silencioso; REVOKE EXECUTE ON FUNCTION ... FROM PUBLIC cria a entrada de ACL explicitamente
+-- ausente em vez de falhar).
+--
+-- ATENCAO DE ORDENACAO (ler antes de aplicar)
+--   O nome desta migration e o relogio UTC do host no momento da escrita
+--   (`date -u +%Y%m%d%H%M%S` = 20260930154205). O repositorio JA contem
+--   20260930180000_talkx_update_campaign_limits_rpc.sql (#1287), versionada no futuro. Antes de
+--   aplicar, compare este version com a cabeca do ledger
+--   (`SELECT max(version) FROM supabase_migrations.schema_migrations`): se a cabeca for maior que
+--   esta version, RENOMEIE o arquivo para uma versao acima da cabeca (o conteudo nao muda). Mesmo
+--   aviso que a 20260930170000 ja carrega no proprio cabecalho (item R4 do parecer dela).
+--
+-- Sem transacao explicita: o executor da casa (`hermes-db-migrar`) recusa arquivo com uma linha
+-- comecando por `BEGIN`. Nao ha bloco DO/plpgsql aqui — so instrucoes REVOKE, todas atomicas por
+-- si e independentes entre si (ao contrario de 20260930170000, aqui nao existe ordem obrigatoria:
+-- cada REVOKE fecha um risco proprio).
+-- =============================================================================================
+--
+-- O QUE FOI MEDIDO NO BANCO CANONICO (projeto tnnnlkbymytvtqngbbqh, PG 17.6) em 30/09/2026 15:3x UTC
+-- ---------------------------------------------------------------------------------------------
+--   proacl de public.audit_contact_address_change()                 = {postgres=X,authenticated=X,service_role=X}
+--   proacl de public.audit_role_changes()                           = {postgres=X,authenticated=X,service_role=X}
+--   proacl de public.audit_role_permissions_changes()               = {postgres=X,authenticated=X,service_role=X}
+--   proacl de public.department_audit_logs_fill_profile_name()      = {postgres=X,authenticated=X,service_role=X}
+--   proacl de public.audit_contact_deletion_change()                = {postgres=X}          <- #1283 ja fechou esta
+--   relacl de public.audit_logs            = {postgres=arwdDxtm, anon=rm, authenticated=arwdDxtm, service_role=arwdDxtm}
+--   relacl de public.department_audit_logs = {postgres=arwdDxtm, authenticated=rm, service_role=arwdDxtm}
+--   relacl de public.contacts              = {postgres=arwdDxtm, anon=m, authenticated=arwdtm, service_role=arwdDxtm}
+--   relacl de public.contact_deletion_audit= {postgres=arwdDxtm, authenticated=r, service_role=ar}   <- PADRAO CORRETO
+--   has_database_privilege('authenticated', <db>, 'TEMPORARY') = true
+--   has_function_privilege('authenticated', <as 4 funcoes>, 'EXECUTE') = true
+--   pg_roles: service_role rolbypassrls=true; authenticated/anon rolbypassrls=false
+--
+-- =============================================================================================
+-- (a) REVOKE EXECUTE das 4 funcoes de auditoria de TODOS os papeis da API
+-- =============================================================================================
+-- RISCO QUE FECHA — forja de trilha por `authenticated` (mesma classe do R2 do #1283, que so
+-- fechou a funcao NOVA `audit_contact_deletion_change`).
+--   As 4 funcoes sao SECURITY DEFINER, pertencem a `postgres` e fazem INSERT em public.audit_logs.
+--   `authenticated` tem TEMPORARY no database e TRIGGER em 124 tabelas de public. Com EXECUTE,
+--   uma sessao autenticada (conexao direta no papel, nao via PostgREST, que nao expoe funcao que
+--   retorna `trigger`) cria uma tabela TEMP com as colunas que a funcao le, pendura um trigger
+--   nela apontando para a funcao e faz um INSERT trivial. O trigger dispara a funcao no papel
+--   `postgres` (dono), onde a policy `"Block direct audit log inserts" (WITH CHECK false)` NAO se
+--   aplica — ela e `TO authenticated`. Resultado: linha forjada em public.audit_logs com autor,
+--   acao e detalhe controlados pelo atacante. Integridade de prova quebrada (trilha de mudanca de
+--   endereco, de papel e de permissao de papel).
+--   POR QUE E SEGURO REVOGAR DE TODOS: as 4 retornam `trigger` (RETURNS trigger) e NENHUMA e
+--   chamavel pela aplicacao — confirmado por grep no repositorio (as 4 aparecem apenas em
+--   supabase/migrations/**, docs/**, supabase-export/** e nos artefatos gerados
+--   supabase/schema-manifest.json / supabase/schema-catalog.json; ZERO ocorrencia em src/,
+--   supabase/functions/, e2e/ ou scripts/). Trigger function NAO verifica o privilegio EXECUTE do
+--   chamador no momento em que dispara — o CREATE TRIGGER e que verifica — entao os triggers vivos
+--   em public.contacts (trg_audit_contact_address_change) e public.user_roles /
+--   role_permissions / department_audit_logs continuam funcionando normalmente. O que deixa de
+--   existir e a CAPACIDADE de criar novos triggers apontando para elas.
+--   PUBLIC e `anon` entram no REVOKE por completude/idempotencia: hoje a ACL viva das 4 nao tem
+--   entrada de PUBLIC nem de anon (as entradas foram removidas por #1254/#1258 e o defacl de
+--   `postgres` para FUNCOES segue sem PUBLIC), logo o REVOKE desses dois grantee e no-op — mas
+--   fica escrito de forma que um GRANT acidental futuro nao reabra a classe por omissao.
+REVOKE EXECUTE ON FUNCTION public.audit_contact_address_change() FROM PUBLIC, anon, authenticated, service_role;
+REVOKE EXECUTE ON FUNCTION public.audit_role_changes() FROM PUBLIC, anon, authenticated, service_role;
+REVOKE EXECUTE ON FUNCTION public.audit_role_permissions_changes() FROM PUBLIC, anon, authenticated, service_role;
+REVOKE EXECUTE ON FUNCTION public.department_audit_logs_fill_profile_name() FROM PUBLIC, anon, authenticated, service_role;
+
+-- =============================================================================================
+-- (b) REVOKE UPDATE, DELETE, TRUNCATE das trilhas globais/de departamento
+-- =============================================================================================
+-- RISCO QUE FECHA — a prova das trilhas antigas podia ser REESCRITA ou APAGADA pelo papel da API.
+--   `service_role` tem BYPASSRLS=true: para ele nao existe policy de barreira — a unica barreira
+--   possivel e o privilegio de tabela. Hoje as duas trilhas vivem com UPDATE/DELETE/TRUNCATE
+--   abertos para `service_role` e `authenticated`, ou seja o mesmo papel que atende a API podia
+--   alterar ou apagar uma linha de audit_logs / department_audit_logs e apagar a evidencia de
+--   qualquer acao. `audit_logs` tinha ainda TRUNCATE para os dois (apaga a trilha inteira).
+--   O QUE FICA PRESERVADO (desenho de cada tabela, lido das migrations que as criaram):
+--     * public.audit_logs (migration 20251215025014 + 20260410111418 e posteriores):
+--       `authenticated` PRECISA de SELECT na tabela para a policy
+--       `"Only admins can view audit logs"` (USING has_role(auth.uid(),'admin')) filtrar linhas —
+--       o front faz `.from('audit_logs').select(...)` (src/components/security/AuditLogDashboard.tsx,
+--       src/components/admin/useAdminData.ts, src/hooks/analytics/useAIStats.ts). INSERT de
+--       `authenticated` FICA: a policy `"Block direct audit log inserts" (WITH CHECK false)` ja
+--       nega o efeito — o GRANT nao e a barreira, e manter o privilegio evita mudar o estado da
+--       ACL num eixo que a policy ja controla.
+--       `service_role` PRECISA de SELECT (backoffice/relatorios) e de INSERT: a Edge Function
+--       `elevenlabs-webhook` escreve a trilha com `.from('audit_logs').insert({...})`
+--       (supabase/functions/elevenlabs-webhook/index.ts:53) e roda com service_role.
+--       Grep de UPDATE/DELETE de audit_logs em codigo de aplicacao: o unico hit e
+--       src/__tests__/rls-boundary.test.ts:190 — um teste que EXIGE que o delete seja negado.
+--     * public.department_audit_logs (migration 20260927400000 + 20260928530000):
+--       `service_role` mantem SELECT e INSERT (mesmo desenho de leitura/backfill de trilha de
+--       dominio). `authenticated` fica intacto: na 20260928530000 o INSERT/UPDATE/DELETE ja foram
+--       revogados e a 20260928450000 ja revogou TRUNCATE/TRIGGER/REFERENCES — entao dos dois papeis
+--       deste REVOKE o unico que ainda tinha algo era `service_role`; o de `authenticated` e no-op.
+--   POR QUE NAO REVOGAR TAMBEM `TRIGGER`/`REFERENCES`: fora do escopo deste pedido e sem vetor
+--   demonstrado — fica registrado como residual no RESUMO, nao resolvido aqui.
+REVOKE UPDATE, DELETE, TRUNCATE ON TABLE public.audit_logs FROM authenticated, service_role;
+REVOKE UPDATE, DELETE, TRUNCATE ON TABLE public.department_audit_logs FROM authenticated, service_role;
+
+-- =============================================================================================
+-- (c) REVOKE TRUNCATE em public.contacts
+-- =============================================================================================
+-- RISCO QUE FECHA — `service_role` podia esvaziar a base de contatos em um comando.
+--   `relacl` de public.contacts: service_role=arwdDxtm, onde `D` = TRUNCATE. Nenhuma policy de RLS
+--   barra TRUNCATE (TRUNCATE nao passa por RLS e o service_role ainda tem BYPASSRLS), logo o
+--   privilegio era a unica barreira existente e ele estava aberto. TRUNCATE em `contacts` apagaria
+--   todas as linhas (e, por CASCADE/FK, o que depende delas) sem deixar rastro em audit_logs nem em
+--   contact_deletion_audit — os triggers de auditoria de contato sao FOR EACH ROW (AFTER UPDATE/
+--   AFTER DELETE) e TRUNCATE nao dispara trigger de linha.
+--   `authenticated` JAMAIS teve TRUNCATE em contacts (relacl = arwdtm), entao nao entra no REVOKE
+--   (nao ha o que revogar) — e o DELETE/UPDATE/INSERT de `authenticated` em contacts NAO sao
+--   tocados aqui: sao o caminho normal do modulo (policies can_edit_contact/can_delete_contacts).
+REVOKE TRUNCATE ON TABLE public.contacts FROM service_role;
+
+-- =============================================================================================
+-- RESIDUAL FORA DO ESCOPO (nao resolvido por esta migration — registrado para nao parecer coberto)
+--   * `anon` mantem `m` (MAINTAIN) em public.contacts e `rm` em public.audit_logs (SELECT+MAINTAIN):
+--     inofensivo sob RLS hoje (nenhuma policy permissiva para anon existe nessas tabelas), mas e
+--     superficie desnecessaria. Nao e o padrao de `contact_deletion_audit` (que nao tem anon).
+--   * Default privileges de `supabase_admin` em public seguem concedendo a `anon` (achado 2 do
+--     parecer de #1254) — causa-raiz de reinicidencia, enderecada em migration separada.
+--   * `audit_logs` e `department_audit_logs` seguem com `anon=...` no relacl de audit_logs.
+--   * `contacts` mantem TRIGGER/REFERENCES para authenticated/service_role (nao ha vetor medido).
+-- =============================================================================================
