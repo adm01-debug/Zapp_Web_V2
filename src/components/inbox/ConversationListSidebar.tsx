@@ -19,6 +19,7 @@ import { CloseConversationDialog } from './CloseConversationDialog';
 import { TransferDialog } from './TransferDialog';
 import { ZenModeToggle } from '@/components/layout/ZenModeToggle';
 import { useLayoutContext } from '@/contexts/LayoutContext';
+import { LiquidMetalButton } from '@/components/ui/liquid-metal-button';
 
 const SKELETON_WIDTHS = [
   { name: 68, msg: 55 }, { name: 82, msg: 70 }, { name: 74, msg: 62 },
@@ -27,14 +28,34 @@ const SKELETON_WIDTHS = [
 ];
 
 interface ConversationListSidebarProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- facade legado do Inbox; tipagem integral fica fora deste componente.
   inbox: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- facade legado dos filtros; preservado para compatibilidade dos consumidores.
   inboxFilters: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- facade legado das ações em lote.
   bulkActions: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- retorno do gesto legado inclui handlers dinâmicos.
   pullToRefresh: any;
   conversationActions?: ReturnType<typeof useConversationActions>;
+  onOpenTalkMe?: () => void;
+  talkMeCount?: number | null;
+  talkMeLoading?: boolean;
+  talkMeQueueName?: string;
+  talkMeEnabled?: boolean;
 }
 
-export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pullToRefresh, conversationActions }: ConversationListSidebarProps) {
+export function ConversationListSidebar({
+  inbox,
+  inboxFilters,
+  bulkActions,
+  pullToRefresh,
+  conversationActions,
+  onOpenTalkMe = () => undefined,
+  talkMeCount = null,
+  talkMeLoading = false,
+  talkMeQueueName,
+  talkMeEnabled = false,
+}: ConversationListSidebarProps) {
   const isMobile = useIsMobile();
   const { isZen = false, toggleZen } = useLayoutContext();
   const contactSearchRef = useRef<HTMLInputElement>(null);
@@ -134,6 +155,17 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
               </Button>
             )}
           </div>
+          {isMobile && talkMeEnabled && (
+            <LiquidMetalButton
+              data-testid="talk-me-button-mobile"
+              label="TALK ME"
+              count={talkMeCount}
+              loading={talkMeLoading}
+              compact
+              title={`Abrir atendimentos aguardando${talkMeQueueName ? ` em ${talkMeQueueName}` : ''}`}
+              onClick={onOpenTalkMe}
+            />
+          )}
         </div>
         <div className="px-4 pb-2 overflow-x-auto scrollbar-none">
           <InboxFilters
