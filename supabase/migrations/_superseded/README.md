@@ -70,3 +70,11 @@ e o arquivo mantinha `USING(true)` "por design".
 
 Nao apagar. Nao reaplicar. Servem como registro historico do schema anterior a migracao.
 Se precisar do conteudo em outro lugar, copie — nao mova de volta.
+
+## `20260930120000_harden_default_privileges_revoke_anon_execute.sql` (superada em 2026-09-30)
+
+Motivo: usava `ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin`, que exige SUPERUSER. O caminho
+de escrita de produção (`mcp_exec`, SECURITY DEFINER owner `postgres`) roda como `postgres`, que o
+repo rebaixou (`rolsuper=false`) por endurecimento — 42501 `permission denied to change default
+privileges`. Substituída pela `20260930140000_*`, que faz o mesmo **sem** a cláusula `FOR ROLE`
+(`postgres` é dono de todas as 225 funções de `public`, então o default que importa é o dele).
