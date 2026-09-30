@@ -9,9 +9,11 @@ interface ContactCRMDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onContactSelected: (contactId: string) => void;
+  /** Chamado após importar um contato do CRM 360° (muda a quantidade de contatos). */
+  onImported?: () => void;
 }
 
-export function ContactCRMDialog({ open, onOpenChange, onContactSelected }: ContactCRMDialogProps) {
+export function ContactCRMDialog({ open, onOpenChange, onContactSelected, onImported }: ContactCRMDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent aria-describedby={undefined} className="max-w-2xl h-[80vh] p-0 flex flex-col">
@@ -47,6 +49,7 @@ export function ContactCRMDialog({ open, onOpenChange, onContactSelected }: Cont
                   .select('id').single();
                 if (error) { toast.error('Erro ao importar contato'); return; }
                 toast.success('Contato importado do CRM!');
+                onImported?.();
                 onOpenChange(false);
                 if (newC) onContactSelected(newC.id);
               }

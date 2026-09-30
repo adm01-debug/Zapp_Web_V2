@@ -44,7 +44,9 @@ function Section({ title, items, olderItems = [], groups, hint, defaultOpen = tr
   const [showOlder, setShowOlder] = useState(false);
   // Etapa 50: com reduced-motion as animacoes (entrada e saida) viram instantaneas.
   const reduceMotion = useReducedMotion() ?? false;
-  if (items.length === 0) return null;
+  // Etapa 51: a secao existe enquanto houver o que mostrar — inclusive quando so ha
+  // concluidas de 8 a 30 dias, que ficam atras do rodape "ver mais (30 dias)".
+  if (items.length === 0 && olderItems.length === 0) return null;
   const Icon = open ? ChevronDown : ChevronRight;
   const visible = showOlder ? [...items, ...olderItems] : items;
   const renderCard = (item: WorkItem, index: number) => (
@@ -76,7 +78,7 @@ function Section({ title, items, olderItems = [], groups, hint, defaultOpen = tr
         >
           <Icon className="h-4 w-4" />
           {title}
-          <span className="rounded-full bg-muted px-1.5 py-0.5 text-2xs tabular-nums">{items.length}</span>
+          <span className="rounded-full bg-muted px-1.5 py-0.5 text-2xs tabular-nums">{visible.length}</span>
         </button>
         {hint && (
           <Tooltip>
@@ -143,7 +145,7 @@ export function TasksListMode({ byDue, isLoading, searchQuery, onOpen, onToggleD
 
   const total = byDue.overdue.length + byDue.today.length + byDue.tomorrow.length + byDue.upcoming.length + byDue.noDue.length;
 
-  if (total === 0 && byDue.done7d.length === 0) {
+  if (total === 0 && byDue.done7d.length === 0 && byDue.doneOlder.length === 0) {
     return searchQuery
       ? <TasksEmptyState variant="filter" onClearFilter={onClearFilter} />
       : <TasksEmptyState variant="all" />;

@@ -143,8 +143,8 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
       </div>
 
       <div className="space-y-4 min-w-0">
-        <RailCard icon={Star} color="amber" title="Biblioteca inteligente" subtitle="Templates que convertem, recomendações sob medida.">
-          <p className="text-xs font-semibold text-foreground mb-2">Mais convertidos</p>
+        <RailCard icon={Star} color="amber" title="Biblioteca inteligente" subtitle="Os templates mais usados na sua base.">
+          <p className="text-xs font-semibold text-foreground mb-2">Mais usados</p>
           {most.map((t, i) => (
             <button key={t.id} type="button" onClick={() => onUseTemplate(t.id)} className="w-full flex items-center gap-2.5 py-2.5 border-b border-border/50 last:border-0 hover:bg-muted/20 text-left rounded-xl px-1">
               <span className="w-6 h-6 rounded-full bg-primary/15 text-primary-glow text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>

@@ -364,6 +364,44 @@ describe('Tarefas — componentes dos três modos', () => {
     await waitFor(() => expect(screen.queryByText('Feita duas semanas atras')).toBeNull());
   });
 
+  it('etapa 51: sem concluídas nos 7 dias, a seção e o "ver mais (30 dias)" seguem alcançáveis', () => {
+    cleanup();
+    renderLista(buckets({
+      doneOlder: [
+        item({ id: 'o1', title: 'Feita ha duas semanas', status: 'done' }),
+        item({ id: 'o2', title: 'Feita ha tres semanas', status: 'done' }),
+      ],
+    }));
+
+    // O defeito: com a janela de 7 dias vazia, a secao — e com ela o rodape, unica
+    // entrada para as antigas — desaparecia da tela.
+    const cabecalho = screen.getByText('Concluídas (7 dias)');
+    expect(cabecalho).toBeTruthy();
+    // O contador nao mente: recolhida, nada esta renderizado na secao.
+    expect(screen.getByText('0')).toBeTruthy();
+    expect(screen.queryByText('Feita ha duas semanas')).toBeNull();
+
+    // Abrir a secao confirma o vazio de 7 dias e mantem o rodape a mao.
+    fireEvent.click(cabecalho);
+    expect(screen.getByText('ver mais (30 dias)')).toBeTruthy();
+    expect(screen.queryByText('Feita ha duas semanas')).toBeNull();
+
+    // O rodape revela as duas antigas e o contador passa a contar o que esta na tela.
+    fireEvent.click(screen.getByText('ver mais (30 dias)'));
+    expect(screen.getByText('Feita ha duas semanas')).toBeTruthy();
+    expect(screen.getByText('Feita ha tres semanas')).toBeTruthy();
+    expect(screen.getByText('2')).toBeTruthy();
+    expect(screen.getByText('ver menos')).toBeTruthy();
+  });
+
+  it('etapa 51: sem concluída nenhuma, a seção não aparece', () => {
+    cleanup();
+    renderLista(buckets({ noDue: [item({ id: 'n1', title: 'Sem prazo aqui' })] }));
+
+    expect(screen.getByText('Sem prazo')).toBeTruthy();
+    expect(screen.queryByText('Concluídas (7 dias)')).toBeNull();
+  });
+
   it('etapa 49: "Próximas" agrupa por dia e joga o que passa de 7 dias em "Semana que vem"', () => {
     cleanup();
     const em2Dias  = new Date(Date.now() + 2  * 86_400_000).toISOString();

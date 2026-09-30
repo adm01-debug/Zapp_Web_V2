@@ -143,3 +143,56 @@ describe('TasksModule — B7 (etapa 47: modo por rota)', () => {
     expect(localStorage.getItem(MODE_STORAGE_KEY)).toBe('agenda');
   });
 });
+
+/**
+ * Etapa 43: o subtítulo do `PageHeader` deixa de ser texto fixo e passa a
+ * mostrar as contagens reais — abertas (tudo que não está concluído) e para
+ * hoje — formatadas em pt-BR e com singular correto.
+ */
+describe('TasksModule — etapa 43 (subtítulo com contagens reais)', () => {
+  beforeEach(() => {
+    cleanup();
+    resetSupabaseMock();
+    localStorage.clear();
+  });
+
+  it('mostra abertas e para hoje com os números da carga', async () => {
+    setSelectResult({
+      data: [
+        makeTaskRow({ id: 'a', status: 'todo' }),
+        makeTaskRow({ id: 'b', status: 'doing' }),
+        makeTaskRow({ id: 'c', status: 'waiting' }),
+        makeTaskRow({ id: 'd', status: 'todo', due_date: new Date().toISOString() }),
+        makeTaskRow({ id: 'e', status: 'done', completed_at: '2026-09-30T10:00:00.000Z' }),
+      ],
+      error: null,
+    });
+
+    renderModule();
+
+    // 4 nao concluidas (a, b, c, d) e 1 delas vence hoje; a concluida nao conta
+    await waitFor(() => expect(screen.getByText('4 abertas · 1 para hoje')).toBeTruthy());
+  });
+
+  it('usa singular com uma única tarefa aberta', async () => {
+    setSelectResult({
+      data: [makeTaskRow({ id: 'a', status: 'todo', due_date: new Date().toISOString() })],
+      error: null,
+    });
+
+    renderModule();
+
+    await waitFor(() => expect(screen.getByText('1 aberta · 1 para hoje')).toBeTruthy());
+  });
+
+  it('formata milhar em pt-BR (1.234, não 1234)', async () => {
+    setSelectResult({
+      data: Array.from({ length: 1234 }, (_, i) => makeTaskRow({ id: `t${i}`, status: 'todo' })),
+      error: null,
+    });
+
+    renderModule();
+
+    await waitFor(() => expect(screen.getByText('1.234 abertas · 0 para hoje')).toBeTruthy());
+  });
+});
