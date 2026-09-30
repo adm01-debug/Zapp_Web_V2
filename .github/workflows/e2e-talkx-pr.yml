@@ -59,7 +59,7 @@ jobs:
         run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
 
       - name: 📐 Run Playwright E2E Talk X (login real, 3 browsers)
-        run: bun run test:e2e -- --project=setup --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx talkx.spec.ts
+        run: bun run test:e2e -- --project=setup --project=chromium-talkx --project=firefox-talkx --project=webkit-talkx
         env:
           CI: true
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
