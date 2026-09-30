@@ -52,7 +52,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
   const advanceStage = useAdvanceDealStage(contactId);
   // Endereço/coordenada não vêm em `conversation.contact`: sem o dado enriquecido o editor abria
   // com endereço vazio e mapa sem pino (A4-D, mesmo conserto do ContactDetails).
-  const { data: enrichedData } = useContactEnrichedQuery(contactId);
+  const { data: enrichedData, isLoading: enrichedLoading } = useContactEnrichedQuery(contactId);
 
   const lastInteractionAt = useMemo(() => {
     if (messages.length === 0) return null;
@@ -101,7 +101,9 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
               )}
             </div>
           </div>
-          {editOpen && (
+          {/* O editor congela os valores ao montar: com cache frio, espera o dado enriquecido
+              (em erro, `isLoading` cai e abre com o básico — seguro, só grava campo alterado). */}
+          {editOpen && !enrichedLoading && (
             <Suspense fallback={null}>
               <EditContactDialog
                 open={editOpen}

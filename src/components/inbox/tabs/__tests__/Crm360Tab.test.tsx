@@ -10,7 +10,7 @@ const mockUseContactLeadScore = vi.fn();
 const mockAdvanceMutate = vi.fn();
 const mockNavigateToView = vi.fn();
 const mockCreateTask = vi.fn();
-const mockUseContactEnrichedQuery = vi.fn(() => ({ data: undefined as unknown }));
+const mockUseContactEnrichedQuery = vi.fn(() => ({ data: undefined as unknown, isLoading: false }));
 
 vi.mock('@/hooks/crm/useContactEnrichedData', () => ({
   useContactEnrichedQuery: (...args: unknown[]) => mockUseContactEnrichedQuery(...(args as [])),
@@ -73,6 +73,19 @@ const conversation: Conversation = {
   unreadCount: 0,
   status: 'open',
 } as unknown as Conversation;
+
+function renderTabWithRerender() {
+  mockUseContactCrm360.mockReturnValue({ data: EMPTY_CRM360 });
+  mockUseContactLeadScore.mockReturnValue({ data: null });
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const ui = () => (
+    <QueryClientProvider client={qc}>
+      <Crm360Tab conversation={conversation} messages={[]} onTabChange={vi.fn()} />
+    </QueryClientProvider>
+  );
+  const r = render(ui());
+  return { rerender: () => r.rerender(ui()) };
+}
 
 function renderTab(crm360: Partial<Crm360Result> | undefined = EMPTY_CRM360) {
   mockUseContactCrm360.mockReturnValue({ data: crm360 });
@@ -157,6 +170,7 @@ describe('Crm360Tab', () => {
         address: 'Av. Paulista', address_number: '1000', city: 'São Paulo', state: 'SP',
         postal_code: '01310100', neighborhood: 'Bela Vista', latitude: -23.5613, longitude: -46.6565,
       },
+      isLoading: false,
     });
     renderTab();
     fireEvent.click(screen.getByText('Adicionar empresa'));
@@ -172,5 +186,22 @@ describe('Crm360Tab', () => {
       latitude: -23.5613,
       longitude: -46.6565,
     });
+  });
+
+  it('com cache frio, só monta o editor quando o dado enriquecido chega', async () => {
+    mockUseContactEnrichedQuery.mockReturnValue({ data: undefined, isLoading: true });
+    const { rerender } = renderTabWithRerender();
+    fireEvent.click(screen.getByText('Adicionar empresa'));
+    // Montar agora congelaria o form sem endereço.
+    expect(screen.queryByTestId('edit-contact-stub')).toBeNull();
+
+    mockUseContactEnrichedQuery.mockReturnValue({
+      data: { address: 'Av. Paulista', city: 'São Paulo' },
+      isLoading: false,
+    });
+    rerender();
+
+    const stub = await screen.findByTestId('edit-contact-stub');
+    expect(JSON.parse(stub.getAttribute('data-contact') ?? '{}')).toMatchObject({ address: 'Av. Paulista' });
   });
 });
