@@ -222,6 +222,11 @@ jobs:
           ANALYSES_AUTHZ_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/conversation-analyses-authorization.test.sh
 
+      - name: Simular autorização da LEITURA de análises/etiquetas por fila (L8)
+        env:
+          AI_READ_QUEUE_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/ai-read-policies-queue-scope.test.sh
+
       - name: Simular histórico atômico de templates Talk X
         env:
           TALKX_HISTORY_TEST_POSTGRES_IMAGE: postgres:17-alpine
