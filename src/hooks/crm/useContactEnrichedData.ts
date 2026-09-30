@@ -21,6 +21,11 @@ export interface EnrichedContactData {
   neighborhood?: string | null;
   postal_code?: string | null;
   state?: string | null;
+  // Item 5 (decisão 20260930-122408-sem-tarefa, opção a): a coordenada entra no painel para o
+  // editor abrir COM ela — sem isso o form abria vazio e o operador não enxergava a localização
+  // já gravada. Opcionais para não quebrar fixtures legadas.
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface AIConversationTag {

@@ -168,7 +168,9 @@ export class ContactService {
        .from('contacts')
        // A4-D (onda 2): as 6 colunas de endereço entram aqui. Sem elas o painel abria o editor com
       // `address`/`city`/`postal_code` vazios e o Salvar gravava esse vazio por cima do endereço.
-      .select('company, job_title, nickname, surname, contact_type, ai_sentiment, ai_priority, channel_type, address, address_number, city, neighborhood, postal_code, state')
+      // Item 5 (onda 2): latitude/longitude entram pelo mesmo motivo — o editor precisa abrir com a
+      // coordenada para poder preservá-la (o Salvar é por diferença; não tocar = não gravar).
+      .select('company, job_title, nickname, surname, contact_type, ai_sentiment, ai_priority, channel_type, address, address_number, city, neighborhood, postal_code, state, latitude, longitude')
        .eq('id', contactId)
        .single();
    }

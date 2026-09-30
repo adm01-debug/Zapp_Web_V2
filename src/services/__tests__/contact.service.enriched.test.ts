@@ -38,4 +38,14 @@ describe('ContactService.fetchEnrichedData — endereço (A4-D)', () => {
       expect(cols).toContain(coluna);
     }
   });
+
+  // Item 5: sem a coordenada na query o editor abre com lat/lng vazios mesmo quando o contato tem.
+  it('pede latitude/longitude (item 5)', async () => {
+    await ContactService.fetchEnrichedData('c1');
+
+    const cols = colunasPedidas[colunasPedidas.length - 1] ?? '';
+    for (const coluna of ['latitude', 'longitude']) {
+      expect(cols, `faltou pedir "${coluna}"`).toContain(coluna);
+    }
+  });
 });
