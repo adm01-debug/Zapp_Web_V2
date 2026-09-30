@@ -39,7 +39,7 @@ jobs:
   e2e-talkx-pr:
     name: 🎭 E2E Talk X (PR, 3 browsers)
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - name: 📥 Checkout confiável
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -52,10 +52,10 @@ jobs:
           bun-version: '1.4.0'
 
       - name: 📦 Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
-        run: bunx playwright install --with-deps chromium firefox webkit
+        run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
 
       - name: 📐 Run Playwright E2E Talk X (login real, 3 browsers)
         run: bun run test:e2e -- --project=setup --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx talkx.spec.ts
