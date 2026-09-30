@@ -146,6 +146,11 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
   );
 
   const accept = useCallback(async () => {
+    // `ACCEPT` só vale a partir de `ringing_in` → `connecting`; sem ele o
+    // `ESTABLISHED` seguinte (status `active` do motor) é transição inválida e a
+    // chamada atendida nunca marca `answeredAt`. Despachado ANTES do await para
+    // garantir a ordem mesmo quando o motor já emitiu `active` em microtask.
+    if (estadoRef.current.status === 'ringing_in') dispatch({ type: 'ACCEPT' });
     await sip.acceptIncomingCall();
   }, [sip]);
 
@@ -186,7 +191,18 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'RINGING' });
       }
     } else if (callStatus === 'active') dispatch({ type: 'ESTABLISHED' });
-    else if (callStatus === 'ended' && !isTerminal(estadoRef.current.status)) dispatch({ type: 'HANGUP_LOCAL' });
+    else if (callStatus === 'ended' && !isTerminal(estadoRef.current.status)) {
+      // Entrada ainda tocando que encerra SEM `reject()`: o lado remoto
+      // cancelou/expirou. `HANGUP_LOCAL` é inválido a partir de `ringing_in`
+      // (`isPreAnswer` não o inclui) e congelava a máquina para sempre.
+      // `reject()` já despacha `REJECT` na hora, então chegar aqui com
+      // `ringing_in` significa que foi o remoto.
+      dispatch(
+        estadoRef.current.status === 'ringing_in'
+          ? { type: 'CANCEL_REMOTE' }
+          : { type: 'HANGUP_LOCAL' },
+      );
+    }
   }, [sip, novoId, reiniciarSeTerminal]);
 
   const value = useMemo<CallSessionApi>(

@@ -70,8 +70,12 @@ function Sonda() {
       <span data-testid="isMuted">{String(api.isMuted)}</span>
       <span data-testid="currentNumber">{String(api.currentNumber)}</span>
       <span data-testid="callDirection">{String(api.callDirection)}</span>
+      <span data-testid="answeredAt">{api.session.answeredAt ?? '-'}</span>
+      <span data-testid="endReason">{api.session.endReason ?? '-'}</span>
       <button onClick={() => { api.dial('11999992048'); }}>discar</button>
       <button onClick={() => { api.hangup(); }}>desligar</button>
+      <button onClick={() => { void api.accept(); }}>aceitar</button>
+      <button onClick={() => { void api.reject(); }}>recusar</button>
       <button onClick={() => { api.openDialer(); }}>abrir</button>
     </div>
   );
@@ -196,5 +200,81 @@ describe('CallSessionProvider (T10)', () => {
 
     fireEvent.click(screen.getByText('abrir'));
     expect(window.location.search).toBe('?view=voip');
+  });
+
+  /**
+   * Regressão do caminho de ENTRADA, apontado pela auditoria adversarial
+   * (dois agentes independentes): a máquina congelava em `ringing_in` porque
+   * o encerramento despachava `HANGUP_LOCAL`, inválido ali. O remoto que
+   * cancela/expira uma chamada ainda tocando é `CANCEL_REMOTE`.
+   */
+  it('chamada ENTRADA encerrada sem `reject` não congela a máquina', () => {
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const tela = montar();
+    h.value = sipDuble({ callStatus: 'ringing', callDirection: 'inbound', currentNumber: '5511988887777' });
+    tela.rerender(
+      <MemoryRouter initialEntries={['/']}>
+        <CallSessionProvider>
+          <RotaAtual />
+          <Sonda />
+        </CallSessionProvider>
+      </MemoryRouter>,
+    );
+    expect(texto('status')).toBe('ringing_in');
+
+    h.value = sipDuble({ callStatus: 'ended', callDirection: 'inbound', currentNumber: '5511988887777' });
+    tela.rerender(
+      <MemoryRouter initialEntries={['/']}>
+        <CallSessionProvider>
+          <RotaAtual />
+          <Sonda />
+        </CallSessionProvider>
+      </MemoryRouter>,
+    );
+    expect(texto('status')).toBe('ended');
+    expect(texto('endReason')).toBe('cancelled_remote');
+    const invalidas = aviso.mock.calls.filter((linha) =>
+      String(linha[0]).includes(INVALID_TRANSITION_PREFIX),
+    );
+    expect(invalidas).toEqual([]);
+    aviso.mockRestore();
+  });
+
+  /**
+   * Regressão do caminho de ENTRADA atendida: sem despachar `ACCEPT`, o
+   * `ESTABLISHED` do motor era transição inválida e `answeredAt` ficava `null`
+   * para sempre — a chamada atendida nunca marcava atendimento.
+   */
+  it('aceitar uma chamada ENTRADA marca `active` com `answeredAt`', () => {
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const tela = montar();
+    h.value = sipDuble({ callStatus: 'ringing', callDirection: 'inbound', currentNumber: '5511988887777' });
+    tela.rerender(
+      <MemoryRouter initialEntries={['/']}>
+        <CallSessionProvider>
+          <RotaAtual />
+          <Sonda />
+        </CallSessionProvider>
+      </MemoryRouter>,
+    );
+    expect(texto('status')).toBe('ringing_in');
+
+    fireEvent.click(screen.getByText('aceitar'));
+    h.value = sipDuble({ callStatus: 'active', callDirection: 'inbound', currentNumber: '5511988887777' });
+    tela.rerender(
+      <MemoryRouter initialEntries={['/']}>
+        <CallSessionProvider>
+          <RotaAtual />
+          <Sonda />
+        </CallSessionProvider>
+      </MemoryRouter>,
+    );
+    expect(texto('status')).toBe('active');
+    expect(texto('answeredAt')).not.toBe('-');
+    const invalidas = aviso.mock.calls.filter((linha) =>
+      String(linha[0]).includes(INVALID_TRANSITION_PREFIX),
+    );
+    expect(invalidas).toEqual([]);
+    aviso.mockRestore();
   });
 });
