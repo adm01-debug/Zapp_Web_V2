@@ -51,6 +51,7 @@ export function ContactsView() {
     handleAddContact, handleEditContact, handleDeleteContact,
     openEditDialog, handleCancelForm,
     handleNewContactChange, handleEditContactChange,
+    invalidateContactAggregates,
   } = crud;
 
   const crmContacts = useMemo(() => filteredContacts.map(c => ({ id: c.id, phone: c.phone })), [filteredContacts]);
@@ -113,7 +114,7 @@ export function ContactsView() {
         <ContactMergeDialog
           open={isMergeOpen} onOpenChange={setIsMergeOpen}
           contacts={filteredContacts.filter(c => selectedIds.includes(c.id))}
-          onMergeComplete={() => { setSelectedIds([]); refetch(); }}
+          onMergeComplete={() => { setSelectedIds([]); refetch(); invalidateContactAggregates(); }}
         />
       )}
       <ContactCompareDialog
@@ -210,6 +211,7 @@ export function ContactsView() {
           open={isCRMSearchOpen}
           onOpenChange={setIsCRMSearchOpen}
           onContactSelected={openContactChat}
+          onImported={invalidateContactAggregates}
         />
       )}
 
@@ -217,6 +219,7 @@ export function ContactsView() {
         selectedIds={selectedIds}
         onClearSelection={() => setSelectedIds([])}
         onActionComplete={() => { setSelectedIds([]); refetch(); }}
+        onCountersChanged={invalidateContactAggregates}
         availableTags={uniqueTags}
         canDeleteSelection={canDeleteSelection}
       />
