@@ -61,20 +61,34 @@ function messagePreview(item: TalkMeWaitingContact) {
   return 'Nova mensagem recebida';
 }
 
-function TalkMeCard({ item, active, onSelect }: {
+function TalkMeCard({ item, active, onSelect, buttonRef, onMove }: {
   item: TalkMeWaitingContact;
   active: boolean;
   onSelect: () => void;
+  buttonRef?: (node: HTMLButtonElement | null) => void;
+  onMove?: (direction: -1 | 1) => void;
 }) {
   const colors = getAvatarColor(item.name || '?');
   const isAudio = item.lastMessageType.toLowerCase().includes('audio');
 
+  const nameId = `talk-me-name-${item.contactId}`;
+  const companyId = `talk-me-company-${item.contactId}`;
+  const jobTitleId = `talk-me-job-title-${item.contactId}`;
+  const detailsId = `talk-me-details-${item.contactId}`;
+
   return (
     <button
+      ref={buttonRef}
       type="button"
       onClick={onSelect}
+      onKeyDown={(event) => {
+        if (event.key === 'ArrowLeft') { event.preventDefault(); onMove?.(-1); }
+        if (event.key === 'ArrowRight') { event.preventDefault(); onMove?.(1); }
+      }}
       tabIndex={active ? 0 : -1}
-      aria-label={`${item.name}, aguardando há ${waitingLabel(item.waitingSince)}`}
+      aria-labelledby={nameId}
+      aria-describedby={`${companyId} ${jobTitleId} ${detailsId}`}
+      aria-current={active ? 'true' : undefined}
       className={cn(
         'flex h-full w-full flex-col overflow-hidden rounded-[28px] border text-left shadow-2xl',
         'bg-card/95 backdrop-blur-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
@@ -96,18 +110,18 @@ function TalkMeCard({ item, active, onSelect }: {
           </AvatarFallback>
         </Avatar>
         <div className="relative mt-3 min-w-0 max-w-full sm:mt-5">
-          <h3 className="truncate text-base font-black tracking-tight text-foreground sm:text-2xl">{item.name || 'Contato sem nome'}</h3>
-          <p className="mt-1 flex items-center justify-center gap-1.5 truncate text-xs font-medium text-muted-foreground sm:text-sm">
+          <h3 id={nameId} className="truncate text-base font-black tracking-tight text-foreground sm:text-2xl">{item.name || 'Contato sem nome'}</h3>
+          <p id={companyId} className="mt-1 flex items-center justify-center gap-1.5 truncate text-xs font-medium text-muted-foreground sm:text-sm">
             <Building2 className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span className="truncate">{item.company || 'Empresa não informada'}</span>
           </p>
-          <p className="mt-0.5 truncate text-2xs text-muted-foreground/80 sm:mt-1 sm:text-xs">{item.jobTitle || 'Cargo não informado'}</p>
+          <p id={jobTitleId} className="mt-0.5 truncate text-xs text-muted-foreground sm:mt-1">{item.jobTitle || 'Cargo não informado'}</p>
         </div>
       </div>
 
-      <div className="relative border-t border-border/70 bg-background/75 p-3 sm:p-5">
+      <div id={detailsId} className="relative border-t border-border/70 bg-background/75 p-3 sm:p-5">
         <div className="mb-2 flex items-center justify-between gap-3 text-xs sm:mb-3">
-          <span className="inline-flex items-center gap-1.5 font-semibold text-warning">
+          <span className="inline-flex items-center gap-1.5 font-semibold text-foreground">
             <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
             Aguardando há {waitingLabel(item.waitingSince)}
           </span>
@@ -122,7 +136,7 @@ function TalkMeCard({ item, active, onSelect }: {
             {messagePreview(item)}
           </p>
           {item.pendingMessageCount > 1 && (
-            <p className="mt-2 text-2xs font-medium text-primary">
+            <p className="mt-2 text-xs font-semibold text-foreground">
               {item.pendingMessageCount} mensagens aguardando resposta
             </p>
           )}
@@ -147,6 +161,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
     claimingContactId,
     queuesError,
     itemsError,
+    searchPending,
     totalCount,
     hasMore,
     loadMore,
@@ -156,6 +171,8 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
   const reduceMotion = useReducedMotion() ?? false;
   const scopeKey = `${selectedQueueId ?? 'none'}:${search}`;
   const [selection, setSelection] = useState<{ scopeKey: string; contactId: string } | null>(null);
+  const [, setClockTick] = useState(0);
+  const cardRefs = useRef(new Map<string, HTMLButtonElement>());
   const selectedContactId = selection?.scopeKey === scopeKey ? selection.contactId : null;
   const notifiedMissingRef = useRef<string | null>(null);
 
@@ -180,20 +197,21 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
     }
   }, [items, itemsLoading, open, selectedContactId]);
 
-  const move = useCallback((direction: -1 | 1) => {
+  const move = useCallback((direction: -1 | 1, moveFocus = false) => {
     if (items.length === 0) return;
     const nextIndex = Math.min(items.length - 1, Math.max(0, safeIndex + direction));
     setSelection({ scopeKey, contactId: items[nextIndex].contactId });
+    if (moveFocus) requestAnimationFrame(() => cardRefs.current.get(items[nextIndex].contactId)?.focus());
     if (direction === 1 && nextIndex >= items.length - 3 && hasMore && !loadingMore) void loadMore();
   }, [hasMore, items, loadMore, loadingMore, safeIndex, scopeKey]);
 
   const handleClaim = useCallback(async () => {
     if (!activeItem) return;
+    const contactId = activeItem.contactId;
     try {
-      const result = await claim(activeItem.contactId);
+      await claim(contactId);
       toast.success(`Atendimento de ${activeItem.name} assumido.`);
       onOpenChange(false);
-      await onAccepted(result.contactId);
     } catch (error) {
       if (error instanceof TalkMeConflictError) {
         toast.info('Este atendimento acabou de ser assumido ou deixou a fila.');
@@ -201,11 +219,23 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
         return;
       }
       toast.error('Não foi possível assumir o atendimento. Tente novamente.');
+      return;
+    }
+    try {
+      await onAccepted(contactId);
+    } catch {
+      toast.error('Atendimento assumido, mas a conversa não abriu. Atualize o Inbox.');
     }
   }, [activeItem, claim, onAccepted, onOpenChange, refresh]);
 
   const isClaiming = !!activeItem && claimingContactId === activeItem.contactId;
-  const showInitialLoading = queuesLoading || (itemsLoading && items.length === 0);
+  const showInitialLoading = queuesLoading || searchPending || (itemsLoading && items.length === 0);
+
+  useEffect(() => {
+    if (!open) return;
+    const timer = window.setInterval(() => setClockTick((current) => current + 1), 60_000);
+    return () => window.clearInterval(timer);
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -213,11 +243,6 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
         size="full"
         showCloseButton={false}
         aria-describedby="talk-me-description"
-        onKeyDown={(event) => {
-          if (event.target instanceof HTMLInputElement) return;
-          if (event.key === 'ArrowLeft') { event.preventDefault(); move(-1); }
-          if (event.key === 'ArrowRight') { event.preventDefault(); move(1); }
-        }}
         className="h-[calc(100dvh-16px)] max-h-none w-[calc(100vw-16px)] max-w-none overflow-hidden rounded-2xl border-border/70 bg-background/96 p-0 sm:h-[calc(100dvh-32px)] sm:w-[calc(100vw-32px)] sm:rounded-[28px]"
       >
         <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
@@ -270,12 +295,15 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
             </div>
           </header>
 
-          <main className="relative z-10 flex min-h-0 flex-1 flex-col px-3 py-4 sm:px-6 sm:py-5">
+          <main className="relative z-10 flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-4 sm:px-6 sm:py-5">
             <div className="mx-auto mb-2 flex w-full max-w-5xl items-center justify-between gap-3 px-1 text-xs text-muted-foreground sm:text-sm">
               <span aria-live="polite">
                 {selectedQueue ? <><strong className="text-foreground">{totalCount}</strong> aguardando em {selectedQueue.name}</> : 'Nenhum departamento disponível'}
               </span>
               {activeItem && <span>Atendimento {activeItem.position} de {totalCount}</span>}
+            </div>
+            <div className="sr-only" aria-live="polite" aria-atomic="true">
+              {activeItem ? `${activeItem.name}, atendimento ${activeItem.position} de ${totalCount}` : ''}
             </div>
 
             {queuesError || itemsError ? (
@@ -286,7 +314,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                 <Button className="mt-5" onClick={() => void refresh()}><RefreshCw className="mr-2 h-4 w-4" />Tentar novamente</Button>
               </div>
             ) : showInitialLoading ? (
-              <div aria-label="Carregando atendimentos" className="m-auto flex w-full max-w-sm flex-col items-center">
+              <div role="status" aria-live="polite" aria-label="Carregando atendimentos" className="m-auto flex w-full max-w-sm flex-col items-center">
                 <Skeleton className="h-[430px] w-full rounded-[28px]" />
                 <Skeleton className="mt-5 h-11 w-52 rounded-full" />
               </div>
@@ -306,7 +334,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
               </div>
             ) : (
               <>
-                <div className="relative mx-auto flex min-h-0 w-full max-w-6xl flex-1 items-center justify-center overflow-hidden [perspective:1200px]">
+                <div className="relative mx-auto flex min-h-0 w-full max-w-6xl flex-1 items-center justify-center overflow-hidden [perspective:1200px] [@media(max-height:600px)]:min-h-[300px] [@media(max-height:600px)]:flex-none">
                   <AnimatePresence initial={false}>
                     {items.map((item, index) => {
                       const offset = index - safeIndex;
@@ -320,15 +348,25 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                             x: `${offset * 55}%`,
                             scale: active ? 1 : 0.82,
                             rotateY: reduceMotion ? 0 : offset * -11,
-                            opacity: active ? 1 : 0.34,
+                            opacity: 1,
                             filter: active || reduceMotion ? 'blur(0px)' : 'blur(3px)',
                             zIndex: active ? 20 : 10,
                           }}
                           exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.82 }}
                           transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 230, damping: 28 }}
-                          className="absolute h-[min(440px,calc(100%-8px))] w-[min(340px,calc(100%-74px))] sm:h-[min(490px,calc(100%-12px))] sm:w-[360px]"
+                          aria-hidden={!active}
+                          className="absolute h-[min(440px,calc(100%-8px))] w-[min(340px,calc(100%-74px))] sm:h-[min(490px,calc(100%-12px))] sm:w-[360px] [@media(max-height:600px)]:h-[280px]"
                         >
-                          <TalkMeCard item={item} active={active} onSelect={() => setSelection({ scopeKey, contactId: item.contactId })} />
+                          <TalkMeCard
+                            item={item}
+                            active={active}
+                            onSelect={() => setSelection({ scopeKey, contactId: item.contactId })}
+                            onMove={(direction) => move(direction, true)}
+                            buttonRef={(node) => {
+                              if (node) cardRefs.current.set(item.contactId, node);
+                              else cardRefs.current.delete(item.contactId);
+                            }}
+                          />
                         </motion.div>
                       );
                     })}
@@ -346,7 +384,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                   <Button
                     size="lg"
                     onClick={() => void handleClaim()}
-                    disabled={!activeItem || !!claimingContactId}
+                    disabled={!activeItem || !!claimingContactId || itemsLoading || searchPending}
                     className="h-12 flex-1 rounded-full px-7 font-bold shadow-lg shadow-primary/20"
                   >
                     {isClaiming ? <Loader2 className="mr-2 h-5 w-5 animate-spin motion-reduce:animate-none" /> : <MessageCircleMore className="mr-2 h-5 w-5" />}

@@ -162,6 +162,7 @@ export function ConversationListSidebar({
               count={talkMeCount}
               loading={talkMeLoading}
               compact
+              aria-label={`TALK ME${talkMeCount === null ? '' : `: ${talkMeCount} atendimentos aguardando`}${talkMeQueueName ? ` em ${talkMeQueueName}` : ''}`}
               title={`Abrir atendimentos aguardando${talkMeQueueName ? ` em ${talkMeQueueName}` : ''}`}
               onClick={onOpenTalkMe}
             />

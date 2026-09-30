@@ -6,6 +6,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20260930290000_talk_me_queue_claim.sql"
+hardening_migration="$repo_root/supabase/migrations/20260930310000_harden_talk_me_authorization_and_groups.sql"
 postgres_image="${TALK_ME_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-talk-me-test-$$"
 tmp_dir="$(mktemp -d)"
@@ -43,6 +44,7 @@ expect_error() {
 command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
 [[ -f "$migration" ]] || fail "migration nao encontrada: $migration"
+[[ -f "$hardening_migration" ]] || fail "migration nao encontrada: $hardening_migration"
 
 docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD=test_only "$postgres_image" >/dev/null
 ready_checks=0
@@ -99,6 +101,7 @@ CREATE TABLE public.feature_flags (
 CREATE TABLE public.contacts (
   id uuid PRIMARY KEY,
   name text NOT NULL,
+  phone text NOT NULL,
   avatar_url text,
   company text,
   job_title text,
@@ -108,7 +111,13 @@ CREATE TABLE public.contacts (
   conversation_status text NOT NULL DEFAULT 'open',
   channel_type text,
   contact_type text,
+  group_category text,
   created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE public.whatsapp_groups (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id text NOT NULL,
+  name text NOT NULL
 );
 CREATE TABLE public.messages (
   id uuid PRIMARY KEY,
@@ -134,7 +143,7 @@ CREATE TABLE public.audit_logs (
 
 CREATE FUNCTION public.get_profile_id_for_user(_user_id uuid)
 RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,pg_temp AS $$
-  SELECT p.id FROM public.profiles p WHERE p.user_id=_user_id AND p.is_active LIMIT 1
+  SELECT p.id FROM public.profiles p WHERE p.user_id=_user_id LIMIT 1
 $$;
 CREATE FUNCTION public.is_admin_or_supervisor(_user_id uuid)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,pg_temp AS $$
@@ -143,6 +152,7 @@ $$;
 SQL
 psql_file "$tmp_dir/pre.sql"
 psql_file "$migration"
+psql_file "$hardening_migration"
 
 cat > "$tmp_dir/fixtures.sql" <<'SQL'
 INSERT INTO public.profiles(id,user_id) VALUES
@@ -164,18 +174,25 @@ INSERT INTO public.queue_members(queue_id,profile_id) VALUES
  ('10000000-0000-0000-0000-000000000001','a1000000-0000-0000-0000-000000000002'),
  ('10000000-0000-0000-0000-000000000002','a1000000-0000-0000-0000-000000000003');
 
-INSERT INTO public.contacts(id,name,company,job_title,queue_id,assigned_to,deleted_at,conversation_status,channel_type,contact_type,created_at) VALUES
- ('c1000000-0000-0000-0000-000000000001','Ana Antiga','Acme','Compradora','10000000-0000-0000-0000-000000000001',NULL,NULL,'open','whatsapp','cliente','2026-09-01 08:00Z'),
- ('c1000000-0000-0000-0000-000000000002','Sem Mensagem',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'open','whatsapp','cliente','2026-09-01 08:00Z'),
- ('c1000000-0000-0000-0000-000000000003','Ja Respondida',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'open','whatsapp','cliente','2026-09-01 08:00Z'),
- ('c1000000-0000-0000-0000-000000000004','Ja Atribuida',NULL,NULL,'10000000-0000-0000-0000-000000000001','a1000000-0000-0000-0000-000000000001',NULL,'open','whatsapp','cliente','2026-09-01 08:00Z'),
- ('c1000000-0000-0000-0000-000000000005','Resolvida',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'resolved','whatsapp','cliente','2026-09-01 08:00Z'),
- ('c1000000-0000-0000-0000-000000000006','Grupo',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'open','whatsapp','grupo','2026-09-01 08:00Z'),
- ('c1000000-0000-0000-0000-000000000007','Outro Departamento',NULL,NULL,'10000000-0000-0000-0000-000000000002',NULL,NULL,'open','whatsapp','cliente','2026-09-01 08:00Z'),
- ('c1000000-0000-0000-0000-000000000008','Bruno Novo','Beta','Gerente','10000000-0000-0000-0000-000000000001',NULL,NULL,'waiting','whatsapp','cliente','2026-09-01 08:00Z'),
- ('c1000000-0000-0000-0000-000000000009','Excluida',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,'2026-09-01 08:00Z','open','whatsapp','cliente','2026-09-01 08:00Z'),
- ('c1000000-0000-0000-0000-000000000010','Instagram',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'open','instagram','cliente','2026-09-01 08:00Z'),
- ('c1000000-0000-0000-0000-000000000011','Revogacao',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'open','whatsapp','cliente','2026-09-01 08:00Z');
+INSERT INTO public.contacts(id,name,phone,company,job_title,queue_id,assigned_to,deleted_at,conversation_status,channel_type,contact_type,group_category,created_at) VALUES
+ ('c1000000-0000-0000-0000-000000000001','Ana Antiga','551100000001','Acme','Compradora','10000000-0000-0000-0000-000000000001',NULL,NULL,'open','whatsapp','cliente',NULL,'2026-09-01 08:00Z'),
+ ('c1000000-0000-0000-0000-000000000002','Sem Mensagem','551100000002',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'open','whatsapp','cliente',NULL,'2026-09-01 08:00Z'),
+ ('c1000000-0000-0000-0000-000000000003','Ja Respondida','551100000003',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'open','whatsapp','cliente',NULL,'2026-09-01 08:00Z'),
+ ('c1000000-0000-0000-0000-000000000004','Ja Atribuida','551100000004',NULL,NULL,'10000000-0000-0000-0000-000000000001','a1000000-0000-0000-0000-000000000001',NULL,'open','whatsapp','cliente',NULL,'2026-09-01 08:00Z'),
+ ('c1000000-0000-0000-0000-000000000005','Resolvida','551100000005',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'resolved','whatsapp','cliente',NULL,'2026-09-01 08:00Z'),
+ ('c1000000-0000-0000-0000-000000000006','Grupo categorizado','120363000001-111@g.us',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'open','whatsapp','cliente','clientes','2026-09-01 08:00Z'),
+ ('c1000000-0000-0000-0000-000000000007','Outro Departamento','551100000007',NULL,NULL,'10000000-0000-0000-0000-000000000002',NULL,NULL,'open','whatsapp','cliente',NULL,'2026-09-01 08:00Z'),
+ ('c1000000-0000-0000-0000-000000000008','Bruno Novo','551100000008','Beta','Gerente','10000000-0000-0000-0000-000000000001',NULL,NULL,'waiting','whatsapp','cliente',NULL,'2026-09-01 08:00Z'),
+ ('c1000000-0000-0000-0000-000000000009','Excluida','551100000009',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,'2026-09-01 08:00Z','open','whatsapp','cliente',NULL,'2026-09-01 08:00Z'),
+ ('c1000000-0000-0000-0000-000000000010','Instagram','551100000010',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'open','instagram','cliente',NULL,'2026-09-01 08:00Z'),
+ ('c1000000-0000-0000-0000-000000000011','Revogacao','551100000011',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'open','whatsapp','cliente',NULL,'2026-09-01 08:00Z'),
+ ('c1000000-0000-0000-0000-000000000012','Corrida Revogacao','551100000012',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'open','whatsapp','cliente',NULL,'2026-09-01 08:00Z'),
+ ('c1000000-0000-0000-0000-000000000013','Mesmo Instante','551100000013',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'open','whatsapp','cliente',NULL,'2026-09-01 08:00Z'),
+ ('c1000000-0000-0000-0000-000000000014','Grupo Relacional','120363000002-222',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'open','whatsapp','cliente',NULL,'2026-09-01 08:00Z'),
+ ('c1000000-0000-0000-0000-000000000015','Grupo pelo JID','120363000003-333@g.us',NULL,NULL,'10000000-0000-0000-0000-000000000001',NULL,NULL,'open','whatsapp','cliente',NULL,'2026-09-01 08:00Z');
+
+INSERT INTO public.whatsapp_groups(group_id,name)
+VALUES ('120363000002-222@g.us','Grupo sem categoria no contato');
 
 INSERT INTO public.messages(id,contact_id,sender,content,created_at) VALUES
  ('d1000000-0000-0000-0000-000000000001','c1000000-0000-0000-0000-000000000001','agent','Como posso ajudar?','2026-09-01 08:00Z'),
@@ -190,7 +207,12 @@ INSERT INTO public.messages(id,contact_id,sender,content,created_at) VALUES
  ('d1000000-0000-0000-0000-000000000010','c1000000-0000-0000-0000-000000000008','contact','Mensagem nova','2026-09-01 10:00Z'),
  ('d1000000-0000-0000-0000-000000000011','c1000000-0000-0000-0000-000000000009','contact','Excluida','2026-09-01 10:10Z'),
  ('d1000000-0000-0000-0000-000000000012','c1000000-0000-0000-0000-000000000010','contact','Instagram','2026-09-01 10:20Z'),
- ('d1000000-0000-0000-0000-000000000013','c1000000-0000-0000-0000-000000000011','contact','Ainda aguardando','2026-09-01 10:30Z');
+ ('d1000000-0000-0000-0000-000000000013','c1000000-0000-0000-0000-000000000011','contact','Ainda aguardando','2026-09-01 10:30Z'),
+ ('d1000000-0000-0000-0000-000000000014','c1000000-0000-0000-0000-000000000012','contact','Aceite concorrente','2026-09-01 10:40Z'),
+ ('d1000000-0000-0000-0000-000000000015','c1000000-0000-0000-0000-000000000013','agent','Agente no mesmo instante','2026-09-01 10:50Z'),
+ ('d1000000-0000-0000-0000-000000000016','c1000000-0000-0000-0000-000000000013','contact','Contato no mesmo instante','2026-09-01 10:50Z'),
+ ('d1000000-0000-0000-0000-000000000017','c1000000-0000-0000-0000-000000000014','contact','Grupo relacional','2026-09-01 11:00Z'),
+ ('d1000000-0000-0000-0000-000000000018','c1000000-0000-0000-0000-000000000015','contact','Grupo por JID','2026-09-01 11:05Z');
 SQL
 psql_file "$tmp_dir/fixtures.sql"
 
@@ -206,15 +228,15 @@ contact11='c1000000-0000-0000-0000-000000000011'
 
 as_user() { local user="$1" sql="$2"; psql_sql "SET app.user_id='$user'; $sql"; }
 
-expect_value 'A1 agente ve apenas sua fila ativa' 'Comercial|3' \
+expect_value 'A1 agente ve apenas sua fila ativa' 'Comercial|5' \
   "SET app.user_id='$agent1'; SELECT queue_name||'|'||waiting_count FROM public.talk_me_list_queues()"
-expect_value 'A2 cadastros vazios, respondidos, atribuidos, resolvidos, grupos, excluidos e outros canais nao entram' '3' \
+expect_value 'A2 cadastros vazios, respondidos, atribuidos, resolvidos, grupos, excluidos e outros canais nao entram' '5' \
   "SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_waiting('$queue1',NULL,50,NULL,NULL)"
 expect_value 'A3 ordem usa a primeira mensagem ainda sem resposta e desempate estavel' 'Ana Antiga|2026-09-01 09:00:00+00|2|Segunda sem resposta' \
   "SET app.user_id='$agent1'; SELECT contact_name||'|'||waiting_since||'|'||pending_message_count||'|'||last_message_content FROM public.talk_me_list_waiting('$queue1',NULL,50,NULL,NULL) ORDER BY queue_position LIMIT 1"
 expect_value 'A4 busca no servidor encontra empresa sem depender da pagina carregada' 'Ana Antiga' \
   "SET app.user_id='$agent1'; SELECT contact_name FROM public.talk_me_list_waiting('$queue1','Acme',50,NULL,NULL)"
-expect_value 'A5 cursor devolve somente itens posteriores' 'Bruno Novo,Revogacao' \
+expect_value 'A5 cursor devolve somente itens posteriores' 'Bruno Novo,Revogacao,Corrida Revogacao,Mesmo Instante' \
   "SET app.user_id='$agent1'; SELECT string_agg(contact_name,',' ORDER BY queue_position) FROM public.talk_me_list_waiting('$queue1',NULL,50,'2026-09-01 09:00Z','$contact1')"
 expect_value 'A6 agente de outra fila nao recebe dados do Comercial' '0' \
   "SET app.user_id='$outsider'; SELECT count(*) FROM public.talk_me_list_waiting('$queue1',NULL,50,NULL,NULL)"
@@ -224,21 +246,81 @@ expect_value 'A8 anonimo nao recebe filas' '0' \
   "RESET app.user_id; SELECT count(*) FROM public.talk_me_list_queues()"
 expect_error 'A9 anonimo nao pode aceitar' 'authentication_required' \
   "RESET app.user_id; SELECT * FROM public.talk_me_claim('$contact1')"
+expect_error 'A10 role anon nao possui EXECUTE nas RPCs' 'permission denied' \
+  "SET ROLE anon; SELECT count(*) FROM public.talk_me_list_queues()"
+expect_value 'A11 role authenticated executa com sessao valida' '1' \
+  "SET ROLE authenticated; SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_queues()"
+expect_value 'A12 desempate por id inclui contato posterior no mesmo timestamp' '1|Contato no mesmo instante' \
+  "SET app.user_id='$agent1'; SELECT pending_message_count||'|'||last_message_content FROM public.talk_me_list_waiting('$queue1','Mesmo Instante',50,NULL,NULL)"
+expect_value 'A13 grupos por categoria, telefone e registro relacional nao entram' '0' \
+  "SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_waiting('$queue1','Grupo',50,NULL,NULL)"
 
 expect_value 'B1 aceite atribui ao perfil autenticado e abre a conversa' "${contact1}|a1000000-0000-0000-0000-000000000001|open" \
   "SET app.user_id='$agent1'; SELECT contact_id||'|'||assigned_to||'|'||conversation_status FROM public.talk_me_claim('$contact1')"
 expect_value 'B2 aceite gera auditoria minima com origem TALK ME' 'talk_me_claim|talk_me' \
   "SELECT action||'|'||(details->>'source') FROM public.audit_logs WHERE entity_id='$contact1'"
-expect_error 'B3 segundo aceite do mesmo contato perde sem sobrescrever responsavel' 'talk_me_unavailable' \
+expect_value 'B3 retry do vencedor e idempotente' "${contact1}|a1000000-0000-0000-0000-000000000001|open" \
+  "SET app.user_id='$agent1'; SELECT contact_id||'|'||assigned_to||'|'||conversation_status FROM public.talk_me_claim('$contact1')"
+expect_value 'B4 retry nao duplica auditoria' '1' \
+  "SELECT count(*) FROM public.audit_logs WHERE entity_id='$contact1' AND action='talk_me_claim'"
+expect_error 'B5 segundo agente perde sem sobrescrever responsavel' 'talk_me_unavailable' \
   "SET app.user_id='$agent2'; SELECT * FROM public.talk_me_claim('$contact1')"
 
 # A permissao e revalidada no clique: o agente 2 viu o item, perde o vinculo e
 # a RPC falha sem revelar estado adicional do contato.
-expect_value 'C1 agente 2 ve o item antes da revogacao' '1' \
+expect_value 'C1 agente 2 ve o item antes da revogacao' '2' \
   "SET app.user_id='$agent2'; SELECT count(*) FROM public.talk_me_list_waiting('$queue1','Revogacao',50,NULL,NULL)"
 psql_sql "UPDATE public.queue_members SET is_active=false WHERE queue_id='$queue1' AND profile_id='a1000000-0000-0000-0000-000000000002'" >/dev/null
 expect_error 'C2 permissao revogada com tela aberta bloqueia o aceite' 'talk_me_unavailable' \
   "SET app.user_id='$agent2'; SELECT * FROM public.talk_me_claim('$contact11')"
+psql_sql "UPDATE public.queue_members SET is_active=true WHERE queue_id='$queue1' AND profile_id='a1000000-0000-0000-0000-000000000002'" >/dev/null
+
+psql_sql "UPDATE public.feature_flags SET enabled=false WHERE key='inbox.talk-me'" >/dev/null
+expect_value 'C3 flag desligada esvazia as filas no servidor' '0' \
+  "SET app.user_id='$agent2'; SELECT count(*) FROM public.talk_me_list_queues()"
+expect_error 'C4 flag desligada bloqueia aceite direto' 'talk_me_unavailable' \
+  "SET app.user_id='$agent2'; SELECT * FROM public.talk_me_claim('$contact11')"
+expect_value 'C5 flag desligada nao atribui nem audita' '1|0' \
+  "SELECT (count(*) FILTER (WHERE assigned_to IS NULL))||'|'||(SELECT count(*) FROM public.audit_logs WHERE entity_id='$contact11') FROM public.contacts WHERE id='$contact11'"
+psql_sql "UPDATE public.feature_flags SET enabled=true WHERE key='inbox.talk-me'" >/dev/null
+
+psql_sql "UPDATE public.profiles SET is_active=false WHERE id='a1000000-0000-0000-0000-000000000002'" >/dev/null
+expect_value 'C6 perfil inativo nao lista filas' '0' \
+  "SET app.user_id='$agent2'; SELECT count(*) FROM public.talk_me_list_queues()"
+expect_error 'C7 perfil inativo nao aceita' 'talk_me_unavailable' \
+  "SET app.user_id='$agent2'; SELECT * FROM public.talk_me_claim('$contact11')"
+expect_value 'C8 perfil inativo nao atribui nem audita' '1|0' \
+  "SELECT (count(*) FILTER (WHERE assigned_to IS NULL))||'|'||(SELECT count(*) FROM public.audit_logs WHERE entity_id='$contact11') FROM public.contacts WHERE id='$contact11'"
+psql_sql "UPDATE public.profiles SET is_active=true WHERE id='a1000000-0000-0000-0000-000000000002'" >/dev/null
+
+# A chamada comeca autorizada e para na leitura de messages. A revogacao que
+# confirma antes do UPDATE final deve vencer e impedir atribuicao/auditoria.
+docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres \
+  -c "BEGIN; LOCK TABLE public.messages IN ACCESS EXCLUSIVE MODE; SELECT pg_sleep(3); COMMIT" \
+  >"$tmp_dir/message-lock.out" 2>"$tmp_dir/message-lock.err" & lock_pid=$!
+for _ in $(seq 1 30); do
+  [[ "$(psql_sql "SELECT count(*) FROM pg_locks WHERE relation='public.messages'::regclass AND mode='AccessExclusiveLock' AND granted")" == '1' ]] && break
+  sleep 0.1
+done
+set +e
+docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres \
+  -c "SET app.user_id='$agent2'; SELECT * FROM public.talk_me_claim('c1000000-0000-0000-0000-000000000012')" \
+  >"$tmp_dir/revoked-race.out" 2>"$tmp_dir/revoked-race.err" & race_pid=$!
+set -e
+for _ in $(seq 1 30); do
+  [[ "$(psql_sql "SELECT count(*) FROM pg_stat_activity WHERE query LIKE '%talk_me_claim(''c1000000-0000-0000-0000-000000000012'')%' AND wait_event_type='Lock'")" == '1' ]] && break
+  sleep 0.1
+done
+psql_sql "UPDATE public.queue_members SET is_active=false WHERE queue_id='$queue1' AND profile_id='a1000000-0000-0000-0000-000000000002'" >/dev/null
+set +e
+wait "$race_pid"; race_status=$?
+wait "$lock_pid"; lock_status=$?
+set -e
+(( lock_status == 0 )) || fail 'C9 locker da corrida falhou'
+(( race_status != 0 )) || fail 'C9 aceite concorrente deveria falhar apos revogacao confirmada'
+grep -q 'talk_me_unavailable' "$tmp_dir/revoked-race.err" || fail 'C9 erro concorrente nao foi talk_me_unavailable'
+expect_value 'C9 revogacao concorrente vence antes do UPDATE final' '1|0' \
+  "SELECT (count(*) FILTER (WHERE assigned_to IS NULL))||'|'||(SELECT count(*) FROM public.audit_logs WHERE entity_id='c1000000-0000-0000-0000-000000000012') FROM public.contacts WHERE id='c1000000-0000-0000-0000-000000000012'"
 psql_sql "UPDATE public.queue_members SET is_active=true WHERE queue_id='$queue1' AND profile_id='a1000000-0000-0000-0000-000000000002'" >/dev/null
 
 # Dois processos reais competem pela mesma linha. O SELECT ... FOR UPDATE da RPC

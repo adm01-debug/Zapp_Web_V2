@@ -13,6 +13,8 @@ import {
 const log = getLogger('useTalkMeQueue');
 const SELECTED_QUEUE_KEY = 'zapp:talk-me:selected-queue';
 const PAGE_SIZE = 50;
+const REALTIME_DEBOUNCE_MS = 350;
+const REALTIME_MAX_WAIT_MS = 2_000;
 
 function mapQueue(row: {
   queue_id: string;
@@ -84,9 +86,12 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
   const [queuesError, setQueuesError] = useState<string | null>(null);
   const [itemsError, setItemsError] = useState<string | null>(null);
   const debouncedSearch = useDebounce(search, 300);
+  const searchPending = search.trim() !== debouncedSearch.trim();
+  const queuesGenerationRef = useRef(0);
   const listGenerationRef = useRef(0);
   const listAbortRef = useRef<AbortController | null>(null);
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const refreshBurstStartedAtRef = useRef<number | null>(null);
   const itemsRef = useRef<TalkMeWaitingContact[]>([]);
   const claimingRef = useRef(false);
 
@@ -95,6 +100,7 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
   }, [items]);
 
   const fetchQueues = useCallback(async () => {
+    const generation = ++queuesGenerationRef.current;
     if (!enabled) {
       setQueues([]);
       setSelectedQueueIdState(null);
@@ -104,6 +110,7 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
     }
     setQueuesLoading(true);
     const { data, error } = await supabase.rpc('talk_me_list_queues');
+    if (generation !== queuesGenerationRef.current) return;
     if (error) {
       log.error('Falha ao consultar filas TALK ME', error);
       setQueuesError('Não foi possível atualizar as filas.');
@@ -183,15 +190,23 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
 
   const scheduleRealtimeRefresh = useCallback(() => {
     if (!enabled) return;
+    const now = Date.now();
+    refreshBurstStartedAtRef.current ??= now;
+    const remaining = Math.max(0, REALTIME_MAX_WAIT_MS - (now - refreshBurstStartedAtRef.current));
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     refreshTimerRef.current = setTimeout(() => {
+      refreshTimerRef.current = null;
+      refreshBurstStartedAtRef.current = null;
       void fetchQueues();
       if (isOpen) void fetchWaiting(false);
-    }, 350);
+    }, Math.min(REALTIME_DEBOUNCE_MS, remaining));
   }, [enabled, fetchQueues, fetchWaiting, isOpen]);
 
   useEffect(() => () => {
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+    refreshBurstStartedAtRef.current = null;
+    queuesGenerationRef.current += 1;
+    listGenerationRef.current += 1;
     listAbortRef.current?.abort();
   }, []);
 
@@ -199,13 +214,23 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
     channelName: 'talk-me-contacts',
     table: 'contacts',
     onAll: scheduleRealtimeRefresh,
+    enabled,
   });
   useSupabaseRealtime({
     channelName: 'talk-me-messages',
     table: 'messages',
     onInsert: scheduleRealtimeRefresh,
     onUpdate: scheduleRealtimeRefresh,
+    enabled,
   });
+
+  const setSearchSafely = useCallback((value: string) => {
+    listGenerationRef.current += 1;
+    listAbortRef.current?.abort();
+    setSearch(value);
+    setItems([]);
+    setItemsError(null);
+  }, []);
 
   const setSelectedQueueId = useCallback((queueId: string) => {
     setSelectedQueueIdState(queueId);
@@ -253,7 +278,8 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
     setSelectedQueueId,
     items,
     search,
-    setSearch,
+    setSearch: setSearchSafely,
+    searchPending,
     queuesLoading,
     itemsLoading,
     loadingMore,

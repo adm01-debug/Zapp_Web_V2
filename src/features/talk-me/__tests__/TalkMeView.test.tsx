@@ -60,6 +60,7 @@ function controller(overrides: Partial<TalkMeQueueController> = {}): TalkMeQueue
     claimingContactId: null,
     queuesError: null,
     itemsError: null,
+    searchPending: false,
     totalCount: 2,
     hasMore: false,
     loadMore: vi.fn(async () => undefined),
@@ -93,7 +94,7 @@ describe('TalkMeView', () => {
     expect(screen.getByText('Acme')).toBeInTheDocument();
     expect(screen.getByText('Compradora')).toBeInTheDocument();
     expect(screen.getByText('Preciso de cem caixas')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Ana Compras, aguardando/ })).toHaveAttribute('tabindex', '0');
+    expect(screen.getByRole('button', { name: 'Ana Compras' })).toHaveAttribute('tabindex', '0');
     expect(screen.getByText('2 mensagens aguardando resposta')).toBeInTheDocument();
   });
 
@@ -101,7 +102,7 @@ describe('TalkMeView', () => {
     renderView();
     fireEvent.click(screen.getByRole('button', { name: 'Próximo atendimento' }));
 
-    expect(screen.getByRole('button', { name: /Bruno Financeiro, aguardando/ })).toHaveAttribute('tabindex', '0');
+    expect(screen.getByRole('button', { name: 'Bruno Financeiro' })).toHaveAttribute('tabindex', '0');
     expect(screen.getByText('Empresa não informada')).toBeInTheDocument();
     expect(screen.getByText('Cargo não informado')).toBeInTheDocument();
     expect(screen.getByText('Mensagem de áudio')).toBeInTheDocument();
@@ -141,5 +142,33 @@ describe('TalkMeView', () => {
     renderView(ctrl);
     fireEvent.change(screen.getByLabelText('Buscar na fila TALK ME'), { target: { value: 'Acme' } });
     expect(ctrl.setSearch).toHaveBeenCalledWith('Acme');
+  });
+
+  it('move a seleção e o foco juntos ao navegar pelo cartão com o teclado', async () => {
+    renderView();
+    const ana = screen.getByRole('button', { name: 'Ana Compras' });
+    ana.focus();
+
+    fireEvent.keyDown(ana, { key: 'ArrowRight' });
+
+    const bruno = await screen.findByRole('button', { name: 'Bruno Financeiro' });
+    await waitFor(() => expect(bruno).toHaveFocus());
+    expect(bruno).toHaveAttribute('aria-current', 'true');
+    expect(bruno).toHaveAccessibleDescription(/Empresa não informada[\s\S]*Cargo não informado[\s\S]*Mensagem de áudio/);
+  });
+
+  it('não usa as setas do seletor de departamento para mover o carrossel', () => {
+    renderView();
+    const department = screen.getByRole('combobox', { name: 'Departamento' });
+    department.focus();
+    fireEvent.keyDown(department, { key: 'ArrowRight' });
+
+    expect(screen.getByRole('button', { name: 'Ana Compras' })).toHaveAttribute('aria-current', 'true');
+  });
+
+  it('bloqueia o aceite enquanto a busca nova ainda não foi reconciliada', () => {
+    renderView(controller({ search: 'novo termo', searchPending: true }));
+    expect(screen.queryByRole('button', { name: 'Aceitar e conversar' })).not.toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Carregando atendimentos' })).toBeInTheDocument();
   });
 });

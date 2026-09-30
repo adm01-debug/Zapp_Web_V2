@@ -2,8 +2,9 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const rpc = vi.hoisted(() => vi.fn());
+const useSupabaseRealtime = vi.hoisted(() => vi.fn());
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc } }));
-vi.mock('@/hooks/realtime/useSupabaseRealtime', () => ({ useSupabaseRealtime: vi.fn() }));
+vi.mock('@/hooks/realtime/useSupabaseRealtime', () => ({ useSupabaseRealtime }));
 
 import { TalkMeConflictError } from '../types';
 import { useTalkMeQueue } from '../useTalkMeQueue';
@@ -71,6 +72,8 @@ describe('useTalkMeQueue', () => {
     expect(result.current.queues).toEqual([]);
     expect(result.current.items).toEqual([]);
     expect(rpc).not.toHaveBeenCalled();
+    expect(useSupabaseRealtime.mock.calls.length).toBeGreaterThanOrEqual(2);
+    expect(useSupabaseRealtime.mock.calls.every(([options]) => options.enabled === false)).toBe(true);
   });
 
   it('carrega apenas a fila autorizada, normaliza os dados e remove o contato após o aceite', async () => {
@@ -131,7 +134,68 @@ describe('useTalkMeQueue', () => {
     const { result } = renderHook(() => useTalkMeQueue(true));
     await waitFor(() => expect(result.current.items).toHaveLength(1));
 
-    await expect(result.current.claim('contact-1')).rejects.toBeInstanceOf(TalkMeConflictError);
+    await act(async () => {
+      await expect(result.current.claim('contact-1')).rejects.toBeInstanceOf(TalkMeConflictError);
+    });
     expect(result.current.items).toHaveLength(1);
+  });
+
+  it('remove resultados antigos imediatamente ao alterar a busca', async () => {
+    const { result } = renderHook(() => useTalkMeQueue(true));
+    await waitFor(() => expect(result.current.items).toHaveLength(1));
+
+    act(() => result.current.setSearch('Beta'));
+
+    expect(result.current.items).toEqual([]);
+    expect(result.current.searchPending).toBe(true);
+  });
+
+  it('ignora uma resposta antiga de filas que termina depois da atualização mais nova', async () => {
+    let resolveFirst!: (value: unknown) => void;
+    const first = new Promise((resolve) => { resolveFirst = resolve; });
+    let queueCall = 0;
+    rpc.mockImplementation((name: string) => {
+      if (name === 'talk_me_list_queues') {
+        queueCall += 1;
+        if (queueCall === 1) return first;
+        return Promise.resolve({ data: [{ ...queueRows[0], queue_name: 'Fila atual' }], error: null });
+      }
+      if (name === 'talk_me_list_waiting') return waitingRequest();
+      throw new Error(`RPC inesperada: ${name}`);
+    });
+    const { result } = renderHook(() => useTalkMeQueue(false));
+
+    await act(async () => { await result.current.refresh(); });
+    expect(result.current.queues[0]?.name).toBe('Fila atual');
+
+    resolveFirst({ data: [{ ...queueRows[0], queue_name: 'Fila antiga' }], error: null });
+    await act(async () => { await first; });
+    expect(result.current.queues[0]?.name).toBe('Fila atual');
+  });
+
+  it('atualiza em até dois segundos mesmo sob uma rajada contínua do realtime', async () => {
+    renderHook(() => useTalkMeQueue(false));
+    await waitFor(() => expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_queues')).toHaveLength(1));
+    const contactsSubscription = useSupabaseRealtime.mock.calls
+      .map(([options]) => options)
+      .find((options) => options.channelName === 'talk-me-contacts');
+    expect(contactsSubscription?.onAll).toBeTypeOf('function');
+
+    vi.useFakeTimers();
+    try {
+      act(() => contactsSubscription.onAll());
+      for (let elapsed = 300; elapsed <= 1_800; elapsed += 300) {
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(300);
+          contactsSubscription.onAll();
+        });
+      }
+      expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_queues')).toHaveLength(1);
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(200); });
+      expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_queues')).toHaveLength(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

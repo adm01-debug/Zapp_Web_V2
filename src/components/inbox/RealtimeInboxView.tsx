@@ -59,6 +59,8 @@ export function RealtimeInboxView() {
   const [talkMeOpen, setTalkMeOpen] = useState(false);
   const talkMeEnabled = useFeatureFlag('inbox.talk-me', false);
   const talkMe = useTalkMeQueue(talkMeOpen, talkMeEnabled);
+  const talkMeCount = talkMe.queuesError ? null : (talkMe.selectedQueue?.waitingCount ?? null);
+  const talkMeAccessibleLabel = `TALK ME${talkMeCount === null ? '' : `: ${talkMeCount} atendimentos aguardando`}${talkMe.selectedQueue?.name ? ` em ${talkMe.selectedQueue.name}` : ''}`;
   // Rostos das conversas fixadas exibidos no header do chat (ocupam o espaço
   // livre quando o painel de detalhes está fechado).
   const pinnedConversations = useMemo(
@@ -216,9 +218,10 @@ export function RealtimeInboxView() {
                     <LiquidMetalButton
                       data-testid="talk-me-button"
                       label="TALK ME"
-                      count={talkMe.queuesError ? null : (talkMe.selectedQueue?.waitingCount ?? null)}
+                      count={talkMeCount}
                       loading={talkMe.queuesLoading}
                       compact
+                      aria-label={talkMeAccessibleLabel}
                       title={`Abrir atendimentos aguardando${talkMe.selectedQueue?.name ? ` em ${talkMe.selectedQueue.name}` : ''}`}
                       onClick={() => setTalkMeOpen(true)}
                     />
@@ -282,7 +285,25 @@ export function RealtimeInboxView() {
               )}
             </>
           </Suspense>
-        ) : <InboxEmptyChat />}
+        ) : (
+          <div className="flex h-full min-h-0 flex-1 flex-col">
+            {!isMobile && talkMeEnabled && (
+              <div className="flex h-[58px] shrink-0 items-center justify-end border-b border-border px-3">
+                <LiquidMetalButton
+                  data-testid="talk-me-button-empty"
+                  label="TALK ME"
+                  count={talkMeCount}
+                  loading={talkMe.queuesLoading}
+                  compact
+                  aria-label={talkMeAccessibleLabel}
+                  title={`Abrir atendimentos aguardando${talkMe.selectedQueue?.name ? ` em ${talkMe.selectedQueue.name}` : ''}`}
+                  onClick={() => setTalkMeOpen(true)}
+                />
+              </div>
+            )}
+            <InboxEmptyChat />
+          </div>
+        )}
       </div>
 
       {inbox.usingCache && (
