@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${RESEND_API_KEY}` },
             body: JSON.stringify({
-              from: "Segurança <security@resend.dev>",
+              from: "ZAPP Segurança <seguranca@promobrindes.com.br>",
               to: [userEmail],
               subject: "🔐 Novo dispositivo detectado na sua conta",
               html: emailHtml,

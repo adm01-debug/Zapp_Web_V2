@@ -20,7 +20,11 @@ Deno.serve(async (req) => {
     const body = parsed.data;
 
     const payload: Record<string, unknown> = {
-      from: body.from || "ZAPP System <noreply@zapp.com>",
+      // Remetente fixo no servidor: o corpo nao escolhe mais o "from". O default anterior
+      // apontava para um dominio que o projeto nao controla — o provedor recusaria o envio —
+      // e aceitar "from" do cliente permite disparo com remetente arbitrario na conta do
+      // projeto. Nenhum chamador do app enviava o campo (so InviteAgentDialog usa esta funcao).
+      from: "ZAPP System <noreply@promobrindes.com.br>",
       to: Array.isArray(body.to) ? body.to : [body.to],
       subject: body.subject,
     };
