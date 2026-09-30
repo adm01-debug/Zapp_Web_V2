@@ -48,6 +48,7 @@ CREATE TABLE public.talkx_recipients(id int);
 CREATE TABLE public.talkx_segments(id int);
 CREATE TABLE public.talkx_templates(id int);
 CREATE TABLE public.team_conversation_members(id int);
+CREATE TABLE public.team_conversations(id int);
 CREATE TABLE public.team_message_reactions(id int);
 CREATE TABLE public.team_message_receipts(id int);
 CREATE TABLE public.team_messages(id int);
@@ -63,7 +64,7 @@ CREATE PUBLICATION supabase_realtime FOR TABLE
   public.queue_goals, public.queue_members, public.queues, public.sales_deals,
   public.talkx_campaign_events, public.talkx_campaigns, public.talkx_recipients,
   public.talkx_segments, public.talkx_templates,
-  public.team_conversation_members, public.team_message_reactions, public.team_message_receipts, public.team_messages, public.warroom_alerts,
+  public.team_conversation_members, public.team_conversations, public.team_message_reactions, public.team_message_receipts, public.team_messages, public.warroom_alerts,
   public.whatsapp_connections, public.whisper_messages;
 SQL
 db < "$repo_root/scripts/db-audit/runtime-config.sql" > "$test_dir/absent.jsonl"

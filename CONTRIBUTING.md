@@ -29,7 +29,7 @@ npm run dev
 | Backend | Supabase (PostgreSQL + Auth + Realtime + Storage) |
 | Edge Functions | Deno (Supabase Functions) |
 | WhatsApp | Evolution API |
-| Deploy | Lovable |
+| Deploy | Vercel (front) + GitHub Actions (edge functions) |
 
 ## 📁 Estrutura do Projeto
 

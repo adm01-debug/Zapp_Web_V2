@@ -63,14 +63,14 @@ export class Logger {
   }
 }
 
-// Dominios exatos permitidos no CORS.
+// Endereco canonico de producao no CORS (ver docs/runbooks/deploy.md). So ele
+// entra na lista exata: os hosts que ja serviram o app fora do fluxo
+// GitHub -> Vercel entregavam build velho. URLs de deployment/preview deste
+// projeto (zappwebv2-<hash|branch>-juca1.vercel.app) continuam em
+// ORIGIN_PATTERNS; o alias padrao do projeto (zappwebv2-juca1.vercel.app)
+// deixa de ser aceito de proposito, para existir UM endereco canonico.
 const EXACT_ALLOWED_ORIGINS = new Set([
   'https://zapp-web-v2.vercel.app',
-  'https://zappwebv2-juca1.vercel.app',
-  'https://zappwebv2-git-main-juca1.vercel.app',
-  'https://pronto-talk-suite.lovable.app',
-  'https://id-preview--1d419c34-35ac-4a71-96a5-146ca1b3ebf2.lovable.app',
-  'https://1d419c34-35ac-4a71-96a5-146ca1b3ebf2.lovableproject.com',
 ]);
 
 const ORIGIN_PATTERNS = [

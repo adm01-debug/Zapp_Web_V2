@@ -51,7 +51,18 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
   }, []);
 
   const supabaseUrl = SUPABASE_URL;
-  const supabaseKey = SUPABASE_ANON_KEY;
+
+  /**
+   * Token das Edge Functions de IA: o access token da SESSÃO do usuário.
+   * A anon key é pública (vive no bundle) e não identifica ninguém — `voice-agent`
+   * recusa chamada sem sessão verificada (IA-011). A anon key fica só como valor
+   * de transporte quando não há sessão, para o erro vir da função (401) em vez
+   * de virar falha opaca de rede.
+   */
+  const resolveAuthToken = useCallback(async () => {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token ?? SUPABASE_ANON_KEY;
+  }, []);
 
   // Safe state setter — only updates if still mounted
   const safeSetPhase = useCallback((p: VoiceAgentPhase) => {
@@ -75,9 +86,10 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
     if (mountedRef.current) setAgentResponse('');
 
     try {
+      const authToken = await resolveAuthToken();
       const result = await withRetry(() => {
         if (abortCtrl.signal.aborted) throw new Error('Aborted');
-        return processVoiceTranscript(text, supabaseUrl, supabaseKey);
+        return processVoiceTranscript(text, supabaseUrl, authToken);
       });
 
       if (abortCtrl.signal.aborted || !mountedRef.current) return;
@@ -86,7 +98,7 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
       safeSetPhase('speaking');
 
       try {
-        const tts = playTtsAudio(result.response, supabaseUrl, supabaseKey);
+        const tts = playTtsAudio(result.response, supabaseUrl, authToken);
         ttsRef.current = tts;
         await tts.promise;
       } catch (ttsErr) {
@@ -135,7 +147,7 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
         safeSetPhase(scribeRef.current?.isConnected ? 'listening' : 'idle');
       }, ERROR_RESET_DELAY_MS);
     }
-  }, [supabaseUrl, supabaseKey, safeSetPhase]);
+  }, [supabaseUrl, resolveAuthToken, safeSetPhase]);
 
   const scribe = useScribe({
     modelId: 'scribe_v2_realtime',

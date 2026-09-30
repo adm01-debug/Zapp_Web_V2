@@ -814,7 +814,7 @@
     "dates": "date-fns"
   },
   "backend": {
-    "platform": "Supabase (Lovable Cloud)",
+    "platform": "Supabase Cloud",
     "database": "PostgreSQL",
     "auth": "Supabase Auth + RLS + RBAC",
     "realtime": "Supabase Realtime",

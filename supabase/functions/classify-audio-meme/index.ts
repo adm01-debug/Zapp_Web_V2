@@ -1,5 +1,6 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 import { ClassifyAudioMemeSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { requireAiIdentity } from "../_shared/ai-auth.ts";
 
 const AUDIO_CATEGORIES = [
   'risada', 'aplausos', 'suspense', 'vitória', 'falha',
@@ -11,6 +12,10 @@ const AUDIO_CATEGORIES = [
 Deno.serve(async (req) => {
   const cors = handleCors(req);
   if (cors) return cors;
+
+  // IA-011: identidade de usuário verificada + cota antes de gastar provedor.
+  const identity = await requireAiIdentity(req, "classify-audio-meme");
+  if (identity instanceof Response) return identity;
 
   const log = new Logger("classify-audio-meme");
 

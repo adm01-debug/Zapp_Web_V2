@@ -24,7 +24,9 @@ Deno.serve(async (req) => {
     const selectedVoiceId = voiceId || 'TY3h8ANhQUsJaa0Bga5F';
     const selectedModel = modelId || 'eleven_flash_v2_5';
 
-    log.info(`Streaming TTS: "${text.substring(0, 50)}..." voice: ${selectedVoiceId}`);
+    // F16 (mesma classe do fix em elevenlabs-tts): log nunca carrega o roteiro
+    // do usuario — apenas metadados.
+    log.info(`Streaming TTS: ${text.length} caracteres, voice: ${selectedVoiceId}`);
 
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${selectedVoiceId}/stream?output_format=mp3_44100_128`,

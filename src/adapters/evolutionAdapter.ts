@@ -163,6 +163,8 @@ export function derivedToConversationContact(dc: DerivedContact): ConversationCo
     queue_id: null,
     created_at: dc.lastMessageAt,
     updated_at: dc.lastMessageAt,
+    // Contato derivado nao existe no banco: nunca foi marcado como excluido.
+    deleted_at: null,
     whatsapp_connection_id: null,
     channel_connection_id: null,
     channel_type: 'whatsapp',

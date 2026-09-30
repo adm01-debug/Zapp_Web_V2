@@ -1,0 +1,133 @@
+{
+  "contatoNoBancoSimulado": {
+    "address": "Avenida Paulista",
+    "address_number": "1578",
+    "neighborhood": "Bela Vista",
+    "city": "Sao Paulo",
+    "state": "SP",
+    "postal_code": "01310200",
+    "latitude": -23.561414,
+    "longitude": -46.655881
+  },
+  "uiMostraEnderecoEmAlgumLugar": {
+    "painelMostraEndereco": false,
+    "trecho": null
+  },
+  "caminho1_detalhesDoContato": {
+    "titulo": "Editar Contato",
+    "name": "W5 Contato Endereco",
+    "email": "w5@example.invalid",
+    "postal_code": "",
+    "address": "",
+    "address_number": "",
+    "neighborhood": "",
+    "city": "",
+    "state": "",
+    "addressPlaceholder": "Rua, avenida..."
+  },
+  "caminho2_crm360": {
+    "titulo": "Editar Contato",
+    "name": "W5 Contato Endereco",
+    "email": "w5@example.invalid",
+    "postal_code": "",
+    "address": "",
+    "address_number": "",
+    "neighborhood": "",
+    "city": "",
+    "state": "",
+    "addressPlaceholder": "Rua, avenida..."
+  },
+  "payloadsContacts": [
+    {
+      "select": "assigned_to",
+      "colunasNaResposta": [
+        "assigned_to"
+      ],
+      "temColunaDeEndereco": []
+    },
+    {
+      "select": "tags",
+      "colunasNaResposta": [
+        "tags"
+      ],
+      "temColunaDeEndereco": []
+    },
+    {
+      "select": "*,conversation_sla(first_response_at,first_message_at,first_response_breached)",
+      "colunasNaResposta": [
+        "id",
+        "name",
+        "phone",
+        "email",
+        "nickname",
+        "surname",
+        "job_title",
+        "company",
+        "contact_type",
+        "avatar_url",
+        "address",
+        "address_number",
+        "neighborhood",
+        "city",
+        "state",
+        "postal_code",
+        "latitude",
+        "longitude",
+        "assigned_to",
+        "queue_id",
+        "conversation_status",
+        "tags",
+        "notes",
+        "created_at",
+        "updated_at",
+        "deleted_at"
+      ],
+      "temColunaDeEndereco": [
+        "postal_code",
+        "address",
+        "address_number",
+        "neighborhood",
+        "city",
+        "state",
+        "latitude",
+        "longitude"
+      ]
+    },
+    {
+      "select": "tags",
+      "colunasNaResposta": [
+        "tags"
+      ],
+      "temColunaDeEndereco": []
+    },
+    {
+      "select": "whatsapp_connection_id",
+      "colunasNaResposta": [],
+      "temColunaDeEndereco": []
+    },
+    {
+      "select": "name,whatsapp_connection_id",
+      "colunasNaResposta": [
+        "name"
+      ],
+      "temColunaDeEndereco": []
+    },
+    {
+      "select": "company,job_title,nickname,surname,contact_type,ai_sentiment,ai_priority,channel_type",
+      "colunasNaResposta": [
+        "company",
+        "job_title",
+        "nickname",
+        "surname",
+        "contact_type"
+      ],
+      "temColunaDeEndereco": []
+    }
+  ],
+  "queryEnrichedNoHAR": [
+    {
+      "select": "company,job_title,nickname,surname,contact_type,ai_sentiment,ai_priority,channel_type",
+      "body": "{\"company\":\"Promo Brindes\",\"job_title\":\"Analista\",\"nickname\":\"W5\",\"surname\":\"Auditoria\",\"contact_type\":\"cliente\"}"
+    }
+  ]
+}

@@ -56,6 +56,28 @@ export type ResumeDecision = {
 };
 
 /**
+ * Monta o resolvedor de status de conexão do talkx-scheduler.
+ *
+ * Fica AQUI, e não inline na edge function, porque foi exatamente onde a
+ * auditoria de 2026-09-29 achou a lacuna: trocar o `null` do caso "campanha sem
+ * whatsapp_connection_id" por `"connected"` — retomar campanha órfã sem saber se
+ * a conexão está de pé — sobrevivia às DUAS camadas de teste, porque a fiação
+ * morava dentro do scheduler e nenhum teste a alcançava.
+ *
+ * Sem id (ou id não-string) devolve null, NUNCA "connected". Id conhecido devolve
+ * o status da tabela; id ausente da resposta também devolve null.
+ */
+export function connectionStatusResolver(
+  statusById: ReadonlyMap<string, string | null>,
+): (campaign: PausedCampaignRow) => string | null {
+  return (campaign) => {
+    const connectionId = campaign.whatsapp_connection_id;
+    if (typeof connectionId !== "string") return null;
+    return statusById.get(connectionId) ?? null;
+  };
+}
+
+/**
  * Decide, para cada campanha pausada, se a retomada automática pode agir.
  * Não faz I/O: recebe as linhas e uma função que devolve o status da conexão
  * WhatsApp da campanha, para ser testável sem banco e sem rede.
@@ -66,7 +88,7 @@ export function selectResumableCampaigns(
   now = new Date(),
 ): ResumeDecision[] {
   return rows.map((campaign) => {
-    const pauseReason = typeof campaign.pause_reason === "string" ? campaign.pause_reason.trim() : "";
+    const pauseReason = typeof campaign.pause_reason === "string" ? campaign.pause_reason : "";
     const base = { id: campaign.id, name: campaign.name ?? null, pauseReason: pauseReason || null };
 
     if (!(AUTO_RESUME_REASONS as readonly string[]).includes(pauseReason)) {

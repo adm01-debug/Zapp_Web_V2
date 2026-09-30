@@ -1,5 +1,6 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 import { ClassifyEmojiSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { requireAiIdentity } from "../_shared/ai-auth.ts";
 
 const EMOJI_CATEGORIES = [
   'sorriso', 'riso', 'amor', 'triste', 'raiva',
@@ -12,6 +13,11 @@ const EMOJI_CATEGORIES = [
 Deno.serve(async (req) => {
   const cors = handleCors(req);
   if (cors) return cors;
+
+  // IA-011: identidade de usuário verificada + cota antes de gastar provedor.
+  // Sem isto, o endpoint aceitava qualquer portador da anon key pública.
+  const identity = await requireAiIdentity(req, "classify-emoji");
+  if (identity instanceof Response) return identity;
 
   const log = new Logger("classify-emoji");
 

@@ -192,6 +192,18 @@ fi
   || fail "erro inesperado ao gravar 'scheduled': $scheduled_before"
 pass "status='scheduled' é recusado pelo CHECK antes da V02"
 
+# O registro público do ECR da AWS limita pull anônimo por IP ("toomanyrequests").
+# Sem pré-pull, o flake derruba este passo -- que é check obrigatório da main -- por
+# motivo alheio ao diff. Puxar com espera progressiva antes de subir o container
+# separa "imagem indisponível" (mensagem explícita) de "contrato quebrado".
+for tentativa_pull in 1 2 3; do
+  docker pull "$pgrst_image" >/dev/null 2>&1 && break
+  echo "WARN: pull de $pgrst_image falhou (tentativa $tentativa_pull/3); aguardando ${tentativa_pull}0s" >&2
+  sleep "$((tentativa_pull * 10))"
+done
+docker image inspect "$pgrst_image" >/dev/null 2>&1 \
+  || fail "registro de imagens indisponivel ($pgrst_image): public.ecr.aws aplicou rate limit de pull anonimo"
+
 docker run --rm -d --name "$pgrst_name" --network "$net_name" \
   -e PGRST_DB_URI="postgres://postgres:transition_test_only@$pg_name:5432/postgres" \
   -e PGRST_DB_SCHEMAS=public \

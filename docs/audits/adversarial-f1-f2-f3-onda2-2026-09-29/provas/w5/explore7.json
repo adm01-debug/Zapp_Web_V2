@@ -1,0 +1,33 @@
+{
+  "menuitems": [
+    "Buscar na conversa (Ctrl+F)",
+    "Monitoramento de Objeções",
+    "Ajuda dos Universitários",
+    "Visão",
+    "Resumo da conversa",
+    "Detalhes do contato",
+    "Abrir em popup",
+    "Adicionar tag",
+    "Transferir",
+    "Agendar mensagem",
+    "Marcar como resolvido",
+    "Arquivar",
+    "Encerrar Conversa"
+  ],
+  "dataRadix": [
+    "Buscar na conversa (Ctrl+F)",
+    "Monitoramento de Objeções",
+    "Ajuda dos Universitários",
+    "Visão",
+    "Resumo da conversa",
+    "Detalhes do contato",
+    "Abrir em popup",
+    "Adicionar tag",
+    "Transferir",
+    "Agendar mensagem",
+    "Marcar como resolvido",
+    "Arquivar",
+    "Encerrar Conversa"
+  ],
+  "anyEditText": []
+}

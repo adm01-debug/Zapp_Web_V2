@@ -8,8 +8,7 @@ export type SoundTypeOption = 'beep' | 'chime' | 'bell' | 'alert' | 'soft';
 
 export interface NotificationSettings {
   soundEnabled: boolean;
-  soundVolume: number; // 0-100
-  soundType: SoundTypeOption;
+  soundVolume: number; // 10-100 (mesmo intervalo do Slider do painel)
   browserNotifications: boolean;
   slaBreachSound: boolean;
   newMessageSound: boolean;
@@ -35,7 +34,6 @@ export interface NotificationSettings {
 const DEFAULT_SETTINGS: NotificationSettings = {
   soundEnabled: true,
   soundVolume: 70,
-  soundType: 'chime',
   browserNotifications: true,
   slaBreachSound: true,
   newMessageSound: true,

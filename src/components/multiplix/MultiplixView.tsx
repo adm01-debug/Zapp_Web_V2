@@ -22,6 +22,7 @@ const DISPATCH_STATUS: Record<string, { label: string; tone: 'success' | 'danger
   sending: { label: 'Enviando', tone: 'info' },
   paused: { label: 'Pausado', tone: 'warning' },
   completed: { label: 'Concluído', tone: 'success' },
+  completed_with_failures: { label: 'Concluído com falhas', tone: 'warning' },
   failed: { label: 'Falhou', tone: 'danger' },
   cancelled: { label: 'Cancelado', tone: 'danger' },
 };

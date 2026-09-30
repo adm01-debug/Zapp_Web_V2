@@ -41,7 +41,7 @@
 | Tipagem | TypeScript | - | `tsconfig.json` |
 | Estilização | Tailwind CSS | ^3.4.11 | `tailwind.config.ts` |
 | Roteamento | react-router-dom | ^6.30.1 | `src/App.tsx` |
-| Backend/DB | Supabase (Lovable Cloud) | ^2.87.1 | `src/integrations/supabase/` |
+| Backend/DB | Supabase Cloud | ^2.87.1 | `src/integrations/supabase/` |
 
 ---
 
@@ -492,10 +492,10 @@ projeto/
 
 | Secret | Serviço | Uso |
 |--------|---------|-----|
-| `SUPABASE_URL` | Lovable Cloud | URL do backend |
-| `SUPABASE_ANON_KEY` | Lovable Cloud | Chave anônima |
-| `SUPABASE_SERVICE_ROLE_KEY` | Lovable Cloud | Chave de serviço |
-| `SUPABASE_PUBLISHABLE_KEY` | Lovable Cloud | Chave pública |
+| `SUPABASE_URL` | Supabase Cloud | URL do backend |
+| `SUPABASE_ANON_KEY` | Supabase Cloud | Chave anônima |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase Cloud | Chave de serviço |
+| `SUPABASE_PUBLISHABLE_KEY` | Supabase Cloud | Chave pública |
 | `LOVABLE_API_KEY` | Lovable AI | Gateway de IA |
 | `ELEVENLABS_API_KEY` | ElevenLabs | TTS e Transcrição |
 | `MAPBOX_PUBLIC_TOKEN` | Mapbox | Mapas |
@@ -597,7 +597,7 @@ projeto/
 
 1. **Copiar Stack Base** - Configurar React + Vite + TypeScript + Tailwind
 2. **Instalar shadcn/ui** - `npx shadcn@latest init`
-3. **Configurar Lovable Cloud** - Backend automático
+3. **Configurar Supabase Cloud** - Backend
 4. **Copiar Design System** - `index.css` e `tailwind.config.ts`
 5. **Implementar Auth** - `useAuth.tsx` como base
 6. **Adicionar Componentes** - Conforme necessidade

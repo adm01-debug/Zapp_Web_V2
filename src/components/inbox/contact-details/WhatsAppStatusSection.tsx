@@ -39,8 +39,11 @@ export function WhatsAppStatusSection({ phone }: WhatsAppStatusSectionProps) {
   const { statusMessages, presence, loading, error, refresh } = useWhatsAppStatus(phone);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
+  // Muda a cada abertura do visualizador: e o `key` que remonta o StoryViewer, fazendo o estado dele
+  // (indice atual, midia carregada) comecar limpo em `initialIndex` sem `setState` dentro de effect.
+  const [viewerSessao, setViewerSessao] = useState(0);
 
-  const openViewer = (index: number) => { setViewerIndex(index); setViewerOpen(true); };
+  const openViewer = (index: number) => { setViewerIndex(index); setViewerSessao((s) => s + 1); setViewerOpen(true); };
 
   if (loading) {
     return (
@@ -88,7 +91,7 @@ export function WhatsAppStatusSection({ phone }: WhatsAppStatusSectionProps) {
         </Button>
       )}
 
-      <StoryViewer messages={statusMessages} initialIndex={viewerIndex} open={viewerOpen} onClose={() => setViewerOpen(false)} pushName={statusMessages[0]?.pushName} />
+      <StoryViewer key={viewerSessao} messages={statusMessages} initialIndex={viewerIndex} open={viewerOpen} onClose={() => setViewerOpen(false)} pushName={statusMessages[0]?.pushName} />
     </div>
   );
 }

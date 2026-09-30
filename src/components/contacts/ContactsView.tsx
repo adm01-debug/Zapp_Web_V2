@@ -23,8 +23,7 @@ import { ContactContentArea } from './ContactContentArea';
 import { ContactResultsSummary } from './ContactResultsSummary';
 import { ContactCRMDialog } from './ContactCRMDialog';
 import { useContactsViewState } from './useContactsViewState';
-import { canDeleteContact } from './contactPermissions';
-
+import { canDeleteSelectedContacts } from './contactPermissions';
 export function ContactsView() {
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
   const {
@@ -63,6 +62,19 @@ export function ContactsView() {
   const { lookup } = useExternalContact360Batch(crmContacts);
   const getCRMData = (phone: string) => lookup(phone) ?? null;
   const layoutScrollRef = useLayoutScroll();
+
+  /**
+   * `can_delete` chega do banco por contato (RPC `can_delete_contacts`). A seleção
+   * sobrevive à troca de página/filtro, então um contato selecionado pode não estar
+   * na lista carregada agora: nesse caso não há informação sobre ele e o botão NÃO
+   * deve ser bloqueado -- mesma semântica do item avulso (`undefined` = segue
+   * visível). Antes, o cálculo era feito sobre a página visível e desabilitava o
+   * botão com a mensagem errada ("nenhum pode ser excluído") só por paginar.
+   */
+  const canDeleteSelection = useMemo(
+    () => canDeleteSelectedContacts(selectedIds, filteredContacts),
+    [filteredContacts, selectedIds],
+  );
   const reduceMotion = useReducedMotion();
   const tapAnimation = reduceMotion ? undefined : { scale: 0.98 };
   const queryClient = useQueryClient();
@@ -225,7 +237,7 @@ export function ContactsView() {
         onClearSelection={() => setSelectedIds([])}
         onActionComplete={() => { setSelectedIds([]); refetch(); }}
         availableTags={uniqueTags}
-        canDeleteSelection={filteredContacts.some(c => selectedIds.includes(c.id) && canDeleteContact(c))}
+        canDeleteSelection={canDeleteSelection}
       />
     </div>
     </MotionConfig>

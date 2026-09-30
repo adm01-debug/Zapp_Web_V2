@@ -227,7 +227,7 @@ describe('volume das mídias — controle, aplicação e separação dos alertas
 
   it('E41: alertas e mídia não se importam; as âncoras de separação estão no lugar', () => {
     const ler = (relativo: string) => readFileSync(path.join(process.cwd(), relativo), 'utf8');
-    const alertas = ['src/utils/notificationSounds.ts', 'src/utils/notificationSound.ts', 'src/components/calls/IncomingCallAlert.tsx'];
+    const alertas = ['src/utils/notificationSounds.ts', 'src/components/calls/IncomingCallAlert.tsx'];
     const midia = ['src/lib/mediaVolumeStore.ts', 'src/lib/mediaVolumeElement.ts'];
 
     for (const arquivo of alertas) {

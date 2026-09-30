@@ -91,11 +91,18 @@ jobs:
           supabase/functions/message-delivery/index.test.ts
           supabase/functions/sentiment-alert/index.test.ts
           supabase/functions/talkx-send/index.test.ts
+          supabase/functions/multiplix-audience/index.test.ts
           supabase/functions/public-api/index.test.ts
           supabase/functions/webhook-diagnostic/diagnostic.test.ts
           supabase/functions/talkx-report/index.test.ts
           supabase/functions/multiplix-send/index.test.ts
           supabase/functions/_shared/__tests__/talkx-resume-policy.test.ts
+          supabase/functions/_shared/__tests__/webhook-signature.test.ts
+          supabase/functions/_shared/__tests__/ai-auth.test.ts
+          supabase/functions/_shared/__tests__/ai-audio-authz.test.ts
+          supabase/functions/_shared/__tests__/ai-audio-authz-runtime.test.ts
+          supabase/functions/_shared/__tests__/ai-auth-service-path.test.ts
+          supabase/functions/_shared/__tests__/webhook-signature-ambiguity.test.ts
 
       - name: 🧪 Test CI and Edge deployment guards
         run: >-

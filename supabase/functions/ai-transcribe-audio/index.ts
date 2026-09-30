@@ -1,4 +1,5 @@
-import { enforceAiGuards } from "../_shared/ai-guards.ts";
+import { requireAiIdentityOrService } from "../_shared/ai-auth.ts";
+import { assertMessageVisibleToCaller } from "../_shared/ai-audio-authz.ts";
 import {
   checkRateLimit,
   errorResponse,
@@ -6,7 +7,6 @@ import {
   handleCors,
   jsonResponse,
   Logger,
-  requireAuth,
   requireEnv,
 } from "../_shared/validation.ts";
 import {
@@ -64,24 +64,14 @@ Deno.serve(async (req) => {
   const cors = handleCors(req);
   if (cors) return cors;
 
-  // Service-to-service bypass: evolution-webhook chama com service role key para auto-transcrição.
-  // Guards de rate limit e quota de usuário só se aplicam a chamadas vindas do browser.
-  const _authHeader = req.headers.get("authorization") ?? "";
-  const _token = _authHeader.startsWith("Bearer ") ? _authHeader.slice(7).trim() : "";
-  const _svcKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const _isService = _svcKey !== "" && _token === _svcKey;
-
-  if (!_isService) {
-    const authCheck = await requireAuth(req);
-    if (authCheck instanceof Response) return authCheck;
-    const __uid = (authCheck as { userId: string }).userId;
-    const __guard = await enforceAiGuards({
-      functionName: "ai-transcribe-audio",
-      userId: __uid,
-      req,
-    });
-    if (__guard) return __guard;
-  }
+  // IA-011/IA-012: caminho de usuário com identidade verificada + cota; caminho de
+  // serviço (evolution-webhook, auto-transcrição) reconhecido por comparação em
+  // tempo constante e limitado por IP. A comparação `===` que existia aqui vazava
+  // o segredo pelo tempo de resposta e não tinha limite nenhum.
+  const identity = await requireAiIdentityOrService(req, "ai-transcribe-audio", {
+    perUserPerMinute: 10,
+  });
+  if (identity instanceof Response) return identity;
 
   const log = new Logger("ai-transcribe-audio");
 
@@ -100,12 +90,26 @@ Deno.serve(async (req) => {
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const {
-      audioUrl,
+      audioUrl: requestedAudioUrl,
       messageId,
       languageCode,
       enableDiarization,
       tagAudioEvents,
     } = parsed.data;
+
+    // IA-014: antes de baixar com service_role, provar com o JWT do chamador que
+    // a mensagem é visível para ele. No caminho de serviço (worker de entrada) a
+    // autorização do objeto pertence ao pipeline que já validou a origem.
+    let audioUrl = requestedAudioUrl;
+    if (identity.kind === "user") {
+      const objectAuthz = await assertMessageVisibleToCaller(req, messageId);
+      if (!objectAuthz.ok) {
+        return errorResponse(objectAuthz.error, objectAuthz.status, req);
+      }
+      // A `media_url` do registro é a fonte da verdade do objeto: a URL enviada
+      // pelo cliente deixa de decidir o que é baixado.
+      if (objectAuthz.mediaUrl) audioUrl = objectAuthz.mediaUrl;
+    }
 
     log.info("Starting transcription", { messageId, languageCode });
     const ELEVENLABS_API_KEY = requireEnv("ELEVENLABS_API_KEY");

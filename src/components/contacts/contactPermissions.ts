@@ -18,3 +18,27 @@ import type { Contact } from './types';
 export function canDeleteContact(contact: Pick<Contact, 'can_delete'>): boolean {
   return contact.can_delete !== false;
 }
+
+/**
+ * Decide se o botão "Excluir" da barra de ações em massa fica habilitado, a partir
+ * dos contatos que a lista carregada conhece.
+ *
+ * A seleção sobrevive à troca de página e de filtro, então um id selecionado pode
+ * não estar na lista de agora: sem informação sobre ele, o botão **não** é
+ * bloqueado (mesma regra do item avulso — `undefined` = segue disponível). O bug
+ * que isto corrige: o cálculo era feito direto sobre a página visível, então
+ * paginar deixava o botão desabilitado com a mensagem "nenhum dos contatos
+ * selecionados pode ser excluído", mesmo havendo contatos que o usuário pode excluir.
+ *
+ * Basta UM selecionado conhecido com permissão para habilitar — o lote é parcial
+ * por natureza: o banco exclui o que pode e devolve a contagem.
+ */
+export function canDeleteSelectedContacts(
+  selectedIds: string[],
+  contacts: Pick<Contact, 'id' | 'can_delete'>[],
+): boolean | undefined {
+  if (selectedIds.length === 0) return undefined;
+  const conhecidos = contacts.filter(c => selectedIds.includes(c.id));
+  if (conhecidos.length === 0) return undefined;
+  return conhecidos.some(c => canDeleteContact(c));
+}

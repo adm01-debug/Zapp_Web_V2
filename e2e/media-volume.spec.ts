@@ -63,18 +63,30 @@ test.describe('Volume das mídias de conversa', () => {
     const slider = page.getByRole('slider', { name: 'Volume das mídias' });
     await expect(slider).toBeVisible();
 
-    const valorInicial = Number(await slider.getAttribute('aria-valuenow'));
+    // Determinismo (o teste era flaky e só passava no retry):
+    // 1) o store hidrata do localStorage num efeito; ler `aria-valuenow` antes disso
+    //    pega valor velho. A expectativa abaixo re-tenta até a hidratação acontecer.
+    let persistido = await page.evaluate((chave) => window.localStorage.getItem(chave), CHAVE_VOLUME);
+    const valorInicial = persistido === null ? 80 : Number(persistido);
     expect(Number.isFinite(valorInicial)).toBe(true);
+    await expect(slider).toHaveAttribute('aria-valuenow', String(valorInicial));
 
+    // 2) andar para o lado que nunca encosta no clamp...
+    const desce = valorInicial >= 10;
+    const tecla = desce ? 'ArrowDown' : 'ArrowUp';
+    const passo = desce ? -5 : 5;
+    const valorEsperado = valorInicial + passo * 2;
+
+    // 3) ...e conferir cada passo: sem esperar entre as teclas, a 2ª podia ser
+    //    engolida pelo re-render e o valor final ficava um passo atrás.
     await slider.focus();
-    await slider.press('ArrowDown');
-    await slider.press('ArrowDown');
-
-    const valorEsperado = valorInicial - 10;
+    await slider.press(tecla);
+    await expect(slider).toHaveAttribute('aria-valuenow', String(valorInicial + passo));
+    await slider.press(tecla);
     await expect(slider).toHaveAttribute('aria-valuenow', String(valorEsperado));
     await expect(page.getByTestId('media-volume-value')).toHaveText(`${valorEsperado}%`);
 
-    const persistido = await page.evaluate((chave) => window.localStorage.getItem(chave), CHAVE_VOLUME);
+    persistido = await page.evaluate((chave) => window.localStorage.getItem(chave), CHAVE_VOLUME);
     expect(persistido).toBe(String(valorEsperado));
 
     await page.reload();

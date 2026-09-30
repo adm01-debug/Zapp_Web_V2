@@ -23,7 +23,9 @@ Deno.serve(async (req) => {
     const selectedVoiceId = voiceId || 'TY3h8ANhQUsJaa0Bga5F';
     const selectedModel = modelId || 'eleven_v3';
 
-    log.info(`TTS: "${text.substring(0, 50)}..." voice: ${selectedVoiceId}, model: ${selectedModel}`);
+    // F16: sem trecho do texto — o roteiro e conteudo do cliente e nao pode
+    // aparecer em log. Tamanho basta para diagnostico.
+    log.info(`TTS: ${text.length} caracteres, voice: ${selectedVoiceId}, model: ${selectedModel}`);
 
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${selectedVoiceId}?output_format=mp3_44100_128`,

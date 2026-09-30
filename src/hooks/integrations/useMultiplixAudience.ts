@@ -8,8 +8,41 @@ async function invokeMultiplixAudience<T>(action: string, params?: object): Prom
     body: { action, params },
     headers: { Authorization: `Bearer ${session.access_token}` },
   });
-  if (response.error) throw new Error(response.error.message);
+  if (response.error) throw await toMultiplixError(response.error);
   return (response.data as { data: T }).data;
+}
+
+// F17: acima do teto de destinatarios a edge responde 400 com
+// { error: 'multiplix_over_recipient_limit', count, limit } — o composer usa o
+// numero real para pedir a confirmacao explicita do operador.
+export class MultiplixOverLimitError extends Error {
+  readonly count: number;
+  readonly limit: number | null;
+
+  constructor(count: number, limit: number | null, message?: string) {
+    super(message ?? `Disparo acima do teto de destinatarios (${count}${limit ? `/${limit}` : ''})`);
+    this.name = 'MultiplixOverLimitError';
+    this.count = count;
+    this.limit = limit;
+  }
+}
+
+// O corpo da resposta de erro fica em error.context (Response) — sem ler isso o
+// usuario so veria "Edge Function returned a non-2xx status code".
+async function toMultiplixError(error: unknown): Promise<Error> {
+  const fallback = (error as { message?: string })?.message ?? 'Falha ao chamar multiplix-audience';
+  const context = (error as { context?: Response })?.context;
+  if (!context || typeof context.clone !== 'function') return new Error(fallback);
+  try {
+    const body = await context.clone().json() as { error?: string; count?: number; limit?: number; message?: string };
+    if (body?.error === 'multiplix_over_recipient_limit') {
+      return new MultiplixOverLimitError(body.count ?? 0, body.limit ?? null, body.message);
+    }
+    if (body?.error) return new Error(body.error);
+  } catch {
+    // corpo sem JSON (timeout/proxy): fica a mensagem padrao
+  }
+  return new Error(fallback);
 }
 
 export interface MultiplixRamo { ramo_atividade: string; total: number }
@@ -79,4 +112,26 @@ export function useMultiplixResolve() {
     mutationFn: (companyIds: string[]) =>
       invokeMultiplixAudience<MultiplixResolvedRecipient[]>('resolve', { company_ids: companyIds }),
   });
+}
+
+// F08: criacao do disparo no servidor (a RPC transacional multiplix_create_draft
+// e chamada pela edge, com o publico re-resolvido no Singu sob o escopo do JWT).
+export interface MultiplixDraftInput {
+  name: string;
+  message_template: string;
+  company_ids: string[];
+  contact_ids?: string[];
+  client_request_id: string;
+  scheduled_at?: string | null;
+  confirm_over_limit?: boolean;
+}
+
+export interface MultiplixDraftResult {
+  dispatch_id: string | null;
+  recipient_count: number;
+  created: boolean;
+}
+
+export function createMultiplixDraft(input: MultiplixDraftInput) {
+  return invokeMultiplixAudience<MultiplixDraftResult>('create_draft', input);
 }

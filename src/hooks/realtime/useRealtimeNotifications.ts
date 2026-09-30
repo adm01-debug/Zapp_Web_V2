@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { playNotificationSound, showBrowserNotification, requestNotificationPermission } from '@/utils/notificationSound';
+import { playNotificationSound, showBrowserNotification, requestNotificationPermission } from '@/utils/notificationSounds';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 import type { ConversationContact, RealtimeMessage, NewMessageNotification } from '../chat/useRealtimeMessages';
 
@@ -28,13 +28,15 @@ export function useRealtimeNotifications() {
       const notificationsActive = notifSettings.soundEnabled || notifSettings.browserNotifications;
       if (!notificationsActive && isQuietHours()) return;
 
-      if (soundEnabledRef.current) playNotificationSound('message');
+      if (soundEnabledRef.current) {
+        playNotificationSound('message', notifSettings.messageSoundType, notifSettings.soundVolume);
+      }
 
       if (notifSettings.browserNotifications && !isQuietHours()) {
         showBrowserNotification(
           `Nova mensagem de ${contact.name}`,
           message.content,
-          contact.avatar_url || undefined
+          { icon: contact.avatar_url || undefined }
         );
       }
 
@@ -49,7 +51,13 @@ export function useRealtimeNotifications() {
         });
       }
     },
-    [notifSettings.soundEnabled, notifSettings.browserNotifications, isQuietHours]
+    [
+      notifSettings.soundEnabled,
+      notifSettings.browserNotifications,
+      notifSettings.messageSoundType,
+      notifSettings.soundVolume,
+      isQuietHours,
+    ]
   );
 
   const dismissNotification = useCallback(() => setNewMessageNotification(null), []);

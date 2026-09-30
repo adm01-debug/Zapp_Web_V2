@@ -1,5 +1,6 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 import { ClassifyStickerSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { requireAiIdentityOrService } from "../_shared/ai-auth.ts";
 
 const STICKER_CATEGORIES = [
   'comemoração', 'riso', 'chorando', 'amor', 'raiva',
@@ -11,6 +12,13 @@ const STICKER_CATEGORIES = [
 Deno.serve(async (req) => {
   const cors = handleCors(req);
   if (cors) return cors;
+
+  // IA-011: identidade de usuário verificada + cota antes de gastar provedor.
+  // Aceita também o caminho de serviço: o webhook do WhatsApp classifica
+  // figurinhas recebidas chamando esta função com a service role key
+  // (`_shared/evolution-webhook-messages.ts`), que `requireAiIdentity` recusaria.
+  const identity = await requireAiIdentityOrService(req, "classify-sticker");
+  if (identity instanceof Response) return identity;
 
   const log = new Logger("classify-sticker");
 

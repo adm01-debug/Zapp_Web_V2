@@ -1,0 +1,70 @@
+### HARNESS ativo: cluster CONTATOS (F1/#1198) - PostgreSQL 17 descartavel
+APPLY|OK|20260929140000_search_contacts_returns_address
+APPLY|OK|20260929150000_contact_address_audit_trigger
+APPLY|FAIL|20260929370000_contacts_soft_delete_and_search_filters|ERROR:  cannot change return type of existing function~DETAIL:  Row type defined by OUT parameters is different.~HINT:  Use DROP FUNCTION search_contacts(text,text,text,text,text,timestamp with time zone,text,text,integer,integer) first.
+APPLY|OK|20260929380000_disable_sicoob_bridge_trigger
+APPLY|OK|20260929560000_contacts_conversation_status_and_grants
+APPLY|OK|20260929720000_contacts_delete_align_edit_policy
+APPLY|OK|20260929770000_contacts_can_edit_contact_helper
+APPLY|OK|20260929780000_contacts_single_permission_predicate
+APPLY|OK|20260929790000_contacts_hijack_guards_only_on_change
+APPLY|OK|20260929810000_contacts_can_edit_contact_hoisted_params
+APPLY|OK|20260929820000_contacts_can_delete_contacts_hoisted_params
+### [1] INVENTARIO ACL/prosecdef/search_path das funcoes do dia
+PROBE|acl_inventory|exit=0|audit_contact_address_change() prosrc_definer=true proconfig=search_path=public proacl=<NULL=default PUBLIC EXECUTE> anon=true authenticated=true~can_delete_contacts(p_ids uuid[]) prosrc_definer=true proconfig=search_path=public, pg_temp proacl=postgres=X/postgres|authenticated=X/postgres|service_role=X/postgres anon=false authenticated=true~can_edit_contact(p_assigned_to uuid, p_queue_id uuid) prosrc_definer=true proconfig=search_path=public, pg_temp proacl=postgres=X/postgres|authenticated=X/p
+### [1b] triggers do dia em public.contacts
+PROBE|triggers_contacts|exit=0|trg_audit_contact_address_change -> audit_contact_address_change definer=true~trg_contacts_fsm_transition -> enforce_conversation_status_transition definer=true~trg_prevent_contact_assignee_hijack -> prevent_contact_assignee_hijack definer=true~trg_prevent_contact_queue_hijack -> prevent_contact_queue_hijack definer=true
+### [1c] policies de public.contacts (final)
+PROBE|policies_contacts|exit=0|Users can update their assigned contacts cmd=UPDATE roles=authenticated qual=can_edit_contact(assigned_to, queue_id, ( SELECT array_agg(v.v) AS array_agg~   FROM get_visible_agent_ids(auth.uid()) v(v)), ( SELECT get_profile_id_for_user(auth.uid()) AS get_profile_id_for_user), ( SELECT is_admin_or_supervisor(auth.uid()) AS is_admin_or_supervisor))~contacts_select_policy cmd=SELECT roles=authenticated qual=can_edit_contact(assigned_to, queue_id, ( SELECT array_agg(v.v) AS array_agg~   FROM get_vis
+### [1d] funcoes SECURITY DEFINER do dia que NAO fixam pg_temp no search_path
+PROBE|definer_without_pg_temp|exit=0|audit_contact_address_change~delete_contact~delete_contacts~enforce_conversation_status_transition~get_profile_id_for_user~get_visible_agent_ids~is_admin_or_supervisor~search_contacts
+### [1e] search_contacts final: referencia sem schema?
+PROBE|search_contacts_unqualified|exit=0|NAO - tudo qualificado
+### [2] BURLA DOS GUARDS: session_replication_role e GUC request.jwt.claims
+PROBE|srr_authenticated|exit=1|ERROR:  permission denied to set parameter "session_replication_role"
+PROBE|srr_service_role|exit=1|ERROR:  permission denied to set parameter "session_replication_role"
+PROBE|srr_dono_tabela|exit=0|set-ok (postgres=superuser)
+PROBE|guard_reenquadro_com_claims|exit=1|ERROR:  Sem permissao para atribuir contato a este agente~CONTEXT:  PL/pgSQL function prevent_contact_assignee_hijack() line 37 at RAISE
+PROBE|guard_reenquadro_sem_claims_guc|exit=1|ERROR:  invalid input syntax for type json~DETAIL:  The input string ended unexpectedly.~CONTEXT:  JSON data, line 1: ~PL/pgSQL function prevent_contact_assignee_hijack() line 19 at IF
+PROBE|estado_apos_burla|exit=0|10000000-0000-0000-0000-000000000001
+PROBE|guard_reenquadro_sem_role_no_claims|exit=1|ERROR:  new row violates row-level security policy for table "contacts"
+### [5b] semantica do pg_temp: onde ele e resolvido em cada search_path
+PROBE|prep_pg_temp_shadow|exit=0|preparado
+PROBE|pg_temp_primeiro_quando_ausente|exit=0|t
+PROBE|pg_temp_por_ultimo_quando_declarado|exit=0|t
+PROBE|guard_reenquadro_role_forjado|exit=1|ERROR:  new row violates row-level security policy for table "contacts"
+PROBE|guard_mover_fila_sem_claims|exit=1|ERROR:  invalid input syntax for type json~DETAIL:  The input string ended unexpectedly.~CONTEXT:  JSON data, line 1: ~PL/pgSQL function prevent_contact_assignee_hijack() line 19 at IF
+### [3] ACL: PUBLIC/anon executando funcoes internas do dia
+PROBE|public_execute_funcs_dia|exit=0|audit_contact_address_change() definer=true triggerfn=true~contacts_count_by_type() definer=false triggerfn=false
+PROBE|definer_sem_pg_temp_e_ref_sem_schema|exit=0|audit_contact_address_change~w2_probe_pub
+PROBE|anon_chama_can_edit_contact|exit=1|ERROR:  permission denied for function can_edit_contact
+PROBE|anon_chama_can_delete_contacts|exit=1|ERROR:  permission denied for function can_delete_contacts
+PROBE|anon_chama_search_contacts|exit=1|ERROR:  permission denied for function search_contacts
+PROBE|anon_chama_audit_fn_direto|exit=1|ERROR:  trigger functions can only be called as triggers~CONTEXT:  compilation of PL/pgSQL function "audit_contact_address_change" near line 1
+PROBE|auth_chama_audit_fn_direto|exit=1|ERROR:  trigger functions can only be called as triggers~CONTEXT:  compilation of PL/pgSQL function "audit_contact_address_change" near line 1
+PROBE|anon_chama_guard_direto|exit=1|ERROR:  permission denied for function prevent_contact_assignee_hijack
+PROBE|anon_chama_fsm_direto|exit=1|ERROR:  permission denied for function enforce_conversation_status_transition
+PROBE|anon_chama_contacts_count_by_type|exit=1|ERROR:  permission denied for table contacts~CONTEXT:  SQL function "contacts_count_by_type" statement 1
+### [4] can_edit_contact: parametros do cliente e oraculo
+PROBE|cec_outro_tenant_2args|exit=0|f
+PROBE|cec_p_is_admin_forjado|exit=0|t
+PROBE|cec_p_visible_forjado|exit=0|t
+PROBE|cec_oraculo_existe_perfil_qualquer|exit=0|t
+PROBE|cec_oraculo_membro_da_fila_alheia|exit=0|outro_perfil_na_fila_2=true eu_na_fila_2=false
+### [4b] can_delete_contacts: oraculo de existencia de contato alheio
+PROBE|cdc_contato_alheio_invisivel|exit=0|linhas=1 ids=30000000-0000-0000-0000-000000000001 can_delete=false
+PROBE|cdc_contato_soft_deletado_alheio|exit=0|linhas=0
+PROBE|cdc_uuid_inexistente|exit=0|0
+PROBE|cdc_alheio_le_contatos_direto|exit=0|2
+### [5] pg_temp shadowing e privilegio de CREATE
+PROBE|db_temp_privilege|exit=0|t
+PROBE|auth_create_temp_table|exit=0|temp-criada
+PROBE|auth_schema_create_public|exit=0|f
+PROBE|auth_create_func_public|exit=1|ERROR:  permission denied for schema public
+### [6] Trigger de auditoria de endereco: SECURITY DEFINER + RLS de audit_logs
+PROBE|audit_logs_rls_insert_direto|exit=1|ERROR:  permission denied for table audit_logs
+PROBE|audit_logs_insert_sem_privilegio?|exit=0|f
+PROBE|trigger_auditoria_grava_via_definer|exit=0|update-ok
+PROBE|audit_logs_linhas_apos_trigger|exit=0|1 | contact_address_changed/user_id=20000000-0000-0000-0000-000000000001
+PROBE|anon_dispara_trigger_auditoria|exit=1|ERROR:  permission denied for table audit_logs
+HARNESS-END|cluster=contatos

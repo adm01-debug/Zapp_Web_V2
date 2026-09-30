@@ -1,0 +1,10 @@
+{
+  "origens": {
+    "http://127.0.0.1:4173": 221,
+    "https://tnnnlkbymytvtqngbbqh.supabase.co": 89,
+    "https://api.mapbox.com": 4,
+    "https://fonts.gstatic.com": 3,
+    "https://fonts.googleapis.com": 1
+  },
+  "requestsfalhos": []
+}

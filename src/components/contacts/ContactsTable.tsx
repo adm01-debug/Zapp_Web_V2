@@ -22,6 +22,7 @@ import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
 import { CompanyLogo } from './CompanyLogo';
 import { HighlightText } from './HighlightText';
 import type { Contact } from './types';
+import { canDeleteContact } from './contactPermissions';
 import type { CRMBatchResult } from '@/hooks/crm/useExternalContact360Batch';
 
 const CONTACT_TYPE_ICONS: Record<string, React.ReactNode> = {
@@ -241,8 +242,15 @@ export function ContactsTable({
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => onEdit(contact)}><Edit className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>
                         <DropdownMenuItem><Tag className="w-4 h-4 mr-2" />Gerenciar etiquetas</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive" onClick={() => onDelete(contact)}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>
+                        {/* Mesmo gate da lista e do card: o item só aparece quando o banco
+                            diz que este contato pode ser excluído (`contact.can_delete`).
+                            A visão Tabela era o único ponto de exclusão sem gate. */}
+                        {canDeleteContact(contact) && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive" onClick={() => onDelete(contact)}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>
+                          </>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
