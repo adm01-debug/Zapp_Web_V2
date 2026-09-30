@@ -19,6 +19,10 @@ import { ConversationTabs, type ConversationTab } from './chat/ConversationTabs'
 import { ConversationTabContent } from './chat/ConversationTabContent';
 import { useConversationTabCounts } from '@/hooks/chat/useConversationTabCounts';
 import { useContactCrm360 } from '@/hooks/crm/useContactCrm360';
+import { useTalkMeQueue } from '@/features/talk-me/useTalkMeQueue';
+import { TalkMeView } from '@/features/talk-me/TalkMeView';
+import { LiquidMetalButton } from '@/components/ui/liquid-metal-button';
+import { useFeatureFlag } from '@/hooks/system/useFeatureFlag';
 
 const ChatPanel = lazy(() => import('./ChatPanel').then(m => ({ default: m.ChatPanel })));
 const ContactDetails = lazy(() => import('./ContactDetails').then(m => ({ default: m.ContactDetails })));
@@ -52,6 +56,9 @@ export function RealtimeInboxView() {
   const inboxFilters = useInboxFilters({ conversations: inbox.cachedConversations, profileId: inbox.profile?.id });
   const bulkActions = useInboxBulkActions({ refetch: inbox.refetch, filteredConversations: inboxFilters.filteredConversations });
   const conversationActions = useConversationActions();
+  const [talkMeOpen, setTalkMeOpen] = useState(false);
+  const talkMeEnabled = useFeatureFlag('inbox.talk-me', false);
+  const talkMe = useTalkMeQueue(talkMeOpen, talkMeEnabled);
   // Rostos das conversas fixadas exibidos no header do chat (ocupam o espaço
   // livre quando o painel de detalhes está fechado).
   const pinnedConversations = useMemo(
@@ -103,7 +110,9 @@ export function RealtimeInboxView() {
     };
 
     handlePendingContact();
-  }, [inbox.pendingContactId, inbox.loading]);
+  // inbox e inboxFilters são facades recriadas a cada render; depender dos objetos
+  // inteiros repetiria o deep-link enquanto as funções assíncronas atualizam estado.
+  }, [inbox.pendingContactId, inbox.loading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -150,6 +159,18 @@ export function RealtimeInboxView() {
         </Suspense>
       )}
 
+      {talkMeEnabled && (
+        <TalkMeView
+          open={talkMeOpen}
+          onOpenChange={setTalkMeOpen}
+          controller={talkMe}
+          onAccepted={async (contactId) => {
+            await inbox.refetch();
+            inbox.handleSelectConversation(contactId);
+          }}
+        />
+      )}
+
       {!isMobile && (
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
@@ -168,14 +189,41 @@ export function RealtimeInboxView() {
         </Tooltip>
       )}
 
-      <ConversationListSidebar inbox={inbox} inboxFilters={inboxFilters} bulkActions={bulkActions} pullToRefresh={pullToRefresh} conversationActions={conversationActions} />
+      <ConversationListSidebar
+        inbox={inbox}
+        inboxFilters={inboxFilters}
+        bulkActions={bulkActions}
+        pullToRefresh={pullToRefresh}
+        conversationActions={conversationActions}
+        onOpenTalkMe={() => setTalkMeOpen(true)}
+        talkMeCount={talkMe.queuesError ? null : (talkMe.selectedQueue?.waitingCount ?? null)}
+        talkMeLoading={talkMe.queuesLoading}
+        talkMeQueueName={talkMe.selectedQueue?.name}
+        talkMeEnabled={talkMeEnabled}
+      />
 
       <div className={cn('flex-1 flex min-w-0 min-h-0 relative z-10 bg-background h-full overflow-hidden', isMobile && !inbox.selectedContactId && 'hidden')}>
         {inbox.legacyConversation ? (
           <Suspense fallback={<ChatFallback />}>
             <>
               <div className="flex-1 min-w-0 min-h-0 relative h-full overflow-hidden flex flex-col">
-                <ConversationTabs activeTab={activeTab} onTabChange={setActiveTab} counts={tabCounts} extraCounts={tabExtraCounts} />
+                <ConversationTabs
+                  activeTab={activeTab}
+                  onTabChange={setActiveTab}
+                  counts={tabCounts}
+                  extraCounts={tabExtraCounts}
+                  trailingAction={talkMeEnabled ? (
+                    <LiquidMetalButton
+                      data-testid="talk-me-button"
+                      label="TALK ME"
+                      count={talkMe.queuesError ? null : (talkMe.selectedQueue?.waitingCount ?? null)}
+                      loading={talkMe.queuesLoading}
+                      compact
+                      title={`Abrir atendimentos aguardando${talkMe.selectedQueue?.name ? ` em ${talkMe.selectedQueue.name}` : ''}`}
+                      onClick={() => setTalkMeOpen(true)}
+                    />
+                  ) : null}
+                />
                 {inbox.selectedContactId && inbox.selectedMessagesLoading ? <ChatFallback /> : (
                   <ConversationTabContent
                     activeTab={activeTab}

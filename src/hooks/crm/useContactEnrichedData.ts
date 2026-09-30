@@ -21,6 +21,11 @@ export interface EnrichedContactData {
   neighborhood?: string | null;
   postal_code?: string | null;
   state?: string | null;
+  // Item 5 (decisão 20260930-122408-sem-tarefa, opção a): a coordenada entra no painel para o
+  // editor abrir COM ela — sem isso o form abria vazio e o operador não enxergava a localização
+  // já gravada. Opcionais para não quebrar fixtures legadas.
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface AIConversationTag {
@@ -37,10 +42,15 @@ export interface SLAInfo {
   resolved_at: string | null;
 }
 
-export function useContactEnrichedData(contactId: string) {
-  const queryClient = useQueryClient();
-
-  const { data: enrichedData } = useQuery({
+/**
+ * Só a query do dado enriquecido (endereço, apelido, cargo...), sem o canal Realtime nem as
+ * queries de tags/SLA. Para quem precisa do dado mas não é o painel de detalhes: usar o
+ * `useContactEnrichedData` completo em outro componente montado junto abriria um segundo canal
+ * `contact-enriched:<id>` com o mesmo nome. A chave de cache é a mesma — o react-query deduplica
+ * a busca e as invalidações do painel/Realtime valem aqui também.
+ */
+export function useContactEnrichedQuery(contactId: string) {
+  return useQuery({
     queryKey: ['contact-enriched', contactId],
     // Lança em vez de engolir o erro: um `return null` aqui vira "sucesso" pro
     // React Query, que trava esse null em cache até o staleTime (5min) expirar
@@ -57,6 +67,12 @@ export function useContactEnrichedData(contactId: string) {
     },
     enabled: !!contactId,
   });
+}
+
+export function useContactEnrichedData(contactId: string) {
+  const queryClient = useQueryClient();
+
+  const { data: enrichedData } = useContactEnrichedQuery(contactId);
 
   const { data: aiTags = [] } = useQuery({
     queryKey: ['contact-ai-tags', contactId],

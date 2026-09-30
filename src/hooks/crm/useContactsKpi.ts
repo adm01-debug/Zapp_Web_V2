@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { CONTACTS_AGGREGATE_QUERY_OPTIONS } from './contactsAggregates';
 
 type Row = { created_at: string; contact_type: string | null; company: string | null };
 const DAY = 86_400_000;
@@ -75,5 +76,6 @@ export function useContactsKpi(filterLidLegacy: boolean) {
       return aggregateKpi((data ?? []) as Row[]);
     },
     staleTime: 60_000,
+    ...CONTACTS_AGGREGATE_QUERY_OPTIONS,
   });
 }

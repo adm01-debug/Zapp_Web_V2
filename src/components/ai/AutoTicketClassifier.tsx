@@ -10,13 +10,15 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { normalizeScore } from '@/lib/ai-values';
 
 interface ClassifiedTicket {
   contactId: string;
   contactName: string;
   category: string;
   priority: string;
-  confidence: number;
+  /** Percentual 0..100 medido; `null` quando a confiança falta ou é inválida. */
+  confidence: number | null;
   tags: string[];
   lastMessage: string;
 }
@@ -77,13 +79,15 @@ export function AutoTicketClassifier() {
         tags.forEach((tag: Record<string, unknown>) => {
           const contactId = tag.contact_id as string;
           const contact = tag.contacts as Record<string, string> | null;
+          // Confiança ausente/inválida não vira 0,7: fica null e a UI omite (IA-023).
+          const confidence = normalizeScore(tag.confidence, { min: 0, max: 1, scale: 'ratio' });
           if (!grouped.has(contactId)) {
             grouped.set(contactId, {
               contactId,
               contactName: contact?.name || 'Desconhecido',
               category: classifyTag(tag.tag_name as string),
-              priority: derivePriority(tag.tag_name as string, (tag.confidence as number) || 0),
-              confidence: ((tag.confidence as number) || 0.7) * 100,
+              priority: derivePriority(tag.tag_name as string, confidence.value ?? 0),
+              confidence: confidence.value === null ? null : confidence.value * 100,
               tags: [tag.tag_name as string],
               lastMessage: '',
             });
@@ -221,10 +225,12 @@ export function AutoTicketClassifier() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <div className="text-right">
-                          <p className="text-xs text-muted-foreground">Confiança</p>
-                          <p className="text-sm font-medium">{Math.round(ticket.confidence)}%</p>
-                        </div>
+                        {ticket.confidence !== null && (
+                          <div className="text-right">
+                            <p className="text-xs text-muted-foreground">Confiança</p>
+                            <p className="text-sm font-medium">{Math.round(ticket.confidence)}%</p>
+                          </div>
+                        )}
                         <CheckCircle className="w-4 h-4 text-success" />
                       </div>
                     </motion.div>

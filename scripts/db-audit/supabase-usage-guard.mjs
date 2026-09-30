@@ -18,6 +18,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { stripSqlComments } from './sql-lexer.mjs';
 
 const ROOT = process.cwd();
 const CATALOG = path.join(ROOT, 'supabase/schema-catalog.json');
@@ -76,7 +77,14 @@ function projectSchemaFromForwardMigrations(catalog) {
     // migration from the same UTC day may have been created after the snapshot,
     // so same-day files must remain in the forward-only projection.
     if (filename.slice(0, 8) < cutoff) continue;
-    const sql = fs.readFileSync(path.join(migrationsDir, filename), 'utf8');
+    // Remove comentarios antes de projetar CREATE/DROP. O hermes-db-migrar
+    // exige um cabecalho '-- rollback: ...' que frequentemente cita um DROP;
+    // sem remover comentarios, esse DROP (que nunca roda) removeria da
+    // projecao a funcao que a propria migration cria. stripSqlComments tambem
+    // torna strings e corpos dollar-quoted opacos, para CREATE/DROP citados
+    // como texto (ex.: dentro do corpo de uma funcao) nao virarem DDL.
+    const rawSql = fs.readFileSync(path.join(migrationsDir, filename), 'utf8');
+    const sql = stripSqlComments(rawSql);
     for (const match of sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+public\.([a-zA-Z0-9_]+)\s*\(/gi)) {
       functions.add(match[1]);
     }

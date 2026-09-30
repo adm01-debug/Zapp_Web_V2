@@ -94,7 +94,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 ## CP-C Sheet       [ ] WorkItemSheet= · ?task= · Aguardando por DnD/kebab/menu= · kebab 5 grupos= · RemindChip popover= · ContactChip=
 ## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
-## CP-E Telas       [~] etapas 43, 44, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8) e 53 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos= · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos= · 0 requests na troca= · modo por rota: ok
+## CP-E Telas       [~] etapas 43, 44, 45 e 46, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8), 53, 55, 56 e 57 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos: ok (barra de 5 filtros, estado na URL por replaceState, recorte único) · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos: ok (3 grupos, ponto por tipo, atrasadas expansível) · card agenda: ok (h-11, 1 linha, checkbox) · QuickAdd no dia: ok (pré-preenchido) · 0 requests na troca= · modo por rota: ok
 
 ## Etapa 47 (B7) — modo por rota (Fase E) — evidências
 
@@ -288,6 +288,98 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 **Teste de mutação (4, árvore restaurada entre cada):** M1 `h-[88px]`→`h-[108px]` vermelho no caso dos cards; M2 Atrasadas sempre amarela vermelho no caso das cores; M3 grid sem `md:grid-cols-3` vermelho no caso dos breakpoints; M4 Fazendo sem o `/3` vermelho no caso das cores.
 
 **Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · guard-rail de tipografia ✓ (arbitrário >16px de volta a 2) · `build` ✓ · bundle 4021,4/4100 KB ✓ · `db:guard` ✓ · suíte 4379 passed / 0 failed (324 arquivos) ✓
+
+## Etapas 45 e 46 — barra de filtros (estado na URL) e o recorte nos três modos — evidências
+
+**Regra do plano (45):** barra com `useReducer`: busca com debounce de 200ms · `Select` de prioridade · `Select` de contato com busca · toggle "Com alarme" · toggle "Mostrar concluídas" · "Limpar" (só com filtro ativo). Estado em `?q=&prio=&contact=&alarm=1&done=1` via `replaceState`. DoD: 5 filtros; a URL reflete.
+**Regra do plano (46):** filtro aplicado nos **3 modos** pela função pura `applyFilters(items, filters)` em `workItemAggregates.ts` (+ teste). No Quadro, a coluna que o filtro esvazia mostra `variant="column"`. DoD: filtrar por prioridade esvazia colunas no Quadro.
+
+**Por que as duas etapas saíram no mesmo PR (divergência declarada):** a barra sem o `applyFilters` entregaria 4 controles **inertes** — clicar em "Com alarme" não mudaria nada na tela. Como o recorte é a razão de existir da barra, as duas etapas foram entregues juntas; os dois DoDs estão verificados abaixo e o ledger registra as duas.
+
+**Mudanças (8 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/hooks/tasks/workItemFilters.ts` (**novo**) | `TasksFilters`/`DEFAULT_FILTERS`/`isFilterActive` + `filtersFromSearch`/`searchWithFilters` (puros); o serialize preserva o resto da URL (o `view` da rota) |
+| `src/hooks/tasks/useTasksFilters.ts` (**novo**) | `useReducer` + debounce de 200ms (`SEARCH_DEBOUNCE_MS`) + espelho na URL por `replaceState`, sem empilhar histórico |
+| `src/components/tasks/shared/TasksFilterBar.tsx` (**novo**) | os 5 controles + "Limpar" condicional; o seletor de contato usa os contatos das próprias tarefas (fonte local, sem query nova) |
+| `src/hooks/tasks/workItemLabels.ts` (**novo**) | `PRIORITY_LABELS` num `.ts` — exportar do `PriorityChip.tsx` esbarraria no `react-refresh/only-export-components` (dívida nova no ratchet) |
+| `src/hooks/tasks/workItemAggregates.ts` | `applyFilters(items, filters)` pura; é o **único** recorte — os três modos consomem os mesmos itens filtrados |
+| `src/components/tasks/TasksModule.tsx` | a barra entra na toolbar; `byDue`/`byStatus`/`kpis` passam a sair dos itens filtrados; a busca inline antiga sai; os 3 modos recebem o mesmo recorte |
+| `src/components/tasks/shared/PriorityChip.tsx` | passa a importar os rótulos do módulo novo (mesmos textos, sem duplicação) |
+| testes | `workItemFilters.test.ts` (7) · `useTasksFilters.test.tsx` (5, com fake timers no debounce) · `applyFilters` no teste do agregado (7) · 3 casos de integração no `TasksModule.test.tsx` |
+
+**Decisões do executor:**
+- **`done` nasce ligado.** "Mostrar concluídas" já é o comportamento entregue nas etapas 48 e 51 — desligar por padrão esconderia as duas. Como o plano lista `done=1`, a URL escreve a **exceção** (`done=0`) e o "Limpar" devolve a URL vazia; sem essa inversão a URL nasceria "suja" e o "Limpar" apareceria sempre.
+- **Debounce no estado, não no campo:** o texto anda na hora e só depois de 200ms vira filtro e parâmetro — a espera nunca aparece na digitação.
+- **Contato vem das tarefas carregadas** (com busca embutida), evitando uma segunda query só para popular o filtro.
+- **KPIs refletem o filtro** — o recorte é do módulo, não de uma tela.
+- **Filtros somam (E, não OU).**
+
+**Teste de mutação (4, árvore restaurada entre cada):** M1 sem debounce (dispatch direto) vermelho no caso do debounce; M2 a URL nunca marca `done=0` 4 vermelhos; M3 a busca volta a diferenciar maiúsculas 7 vermelhos; M4 "Limpar" sempre visível vermelho no caso do botão condicional.
+
+**Nota de teste (honestidade):** os dois `Select` (radix) não são dirigidos no jsdom — o clique no portal é flaky. O que eles fazem está provado na função pura, no parse/serialize da URL e no teste do hook; a barra na tela, o recorte nos modos e a URL são provados na integração.
+
+**Gates:** `typecheck` ✓ · `lint-ratchet` 0 novas ✓ (17 ocorrências antigas saíram junto) · `implicit-any` 0 ✓ · `db:guard` ✓ · guard-rail de tipografia ✓ · suíte 4424 passed / 0 failed (332 arquivos) ✓ · `build` ✓ · bundle 4027,9/4100 KB ✓
+
+## Etapa 55 — Agenda: ponto por tipo, "Atrasadas" expansível e o dia em 3 grupos — evidências
+
+**Regra do plano:** Agenda — reescrita autorizada: ponto do dia com cor por tipo (prazo `primary`, alarme `warning`, atrasada `destructive` — até 3 pontos); bloco "Atrasadas" expansível (colapsado por padrão se > 3); lista do dia em **3 grupos** (Alarmes por `remind_at` com hora à esquerda `w-14 tabular-nums`; Prazos por `due_date`; Sem hora). — DoD: item com prazo e alarme no mesmo dia aparece nos **dois** grupos.
+
+**Mudanças (3 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/hooks/tasks/workItemAggregates.ts` | `temHora` (prazo com hora × dia inteiro), `agendaDayDots` (até 3 pontos, na ordem do plano) e `groupAgendaDay` (os 3 grupos) — puros, testáveis sem React |
+| `src/components/tasks/agenda/TasksAgendaMode.tsx` | a faixa dos 7 dias troca o ponto único por até 3 pontos com cor por tipo; o bloco "Atrasadas" ganha botão de expandir (`aria-expanded`) e nasce colapsado quando passa de 3; o dia selecionado passa a ser listado em 3 grupos, com a hora à esquerda (`w-14 tabular-nums`) no grupo dos alarmes |
+| testes | 3 casos puros no teste do agregado + `src/components/tasks/__tests__/agendaGroups.test.tsx` (**novo**, 6 casos: DoD nos dois grupos, hora à esquerda, 3 pontos por tipo, colapsado/expandido, aberto com ≤ 3, estado vazio) |
+
+**Decisão declarada — o que é "Sem hora":** `due_date` gravado só com o dia (meia-noite local) não tem horário marcado, então vai para **Sem hora**; o prazo com hora vai para **Prazos**. Assim o prazo de dia inteiro não some nem aparece duas vezes.
+
+**Nada é deduplicado:** o código antigo escondia dos "Prazos" o item que já estava nos alarmes (`filter(t => !reminders.find(...))`). Isso contraria o DoD da etapa, então a deduplicação saiu — o item com prazo **e** alarme aparece nos dois grupos.
+
+**Teste de mutação (4, árvore restaurada entre cada):** M1 `temHora` sempre `true` (nada cai em "Sem hora") 3 vermelhos; M2 pontos fora da ordem do plano 1 vermelho; M3 "Atrasadas" sempre aberto 1 vermelho; M4 volta a deduplicar 2 vermelhos.
+
+**Gates:** `typecheck` ✓ · guard-rail de tipografia ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · `db:guard` ✓ · suíte 4474 passed / 0 failed (336 arquivos) ✓ · `build` ✓ · bundle 4031,3/4100 KB ✓
+
+## Etapa 56 — card da Agenda em linha única (`h-11`) — evidências
+
+**Regra do plano:** `WorkItemCard mode="agenda"`: linha única `h-11` (checkbox · título · chips à direita · kebab), sem motivo de espera. — DoD: altura 44±2.
+
+**Mudanças (3 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/components/tasks/shared/WorkItemCard.tsx` | o card deixou de duplicar JSX: checkbox, título, chips de contexto e kebab são montados **uma vez** e compostos nos dois layouts. Na Agenda a raiz sai como `flex flex-row h-11 items-center rounded-xl px-3` (uma linha), com checkbox e kebab **sempre visíveis** (na Lista/Quadro o kebab continua aparecendo no hover) e sem o motivo de espera. `data-mode` passou a marcar o modo no DOM (é o que o teste consulta) |
+| `src/components/tasks/agenda/TasksAgendaMode.tsx` | a coluna da hora do grupo dos alarmes passou a centralizar na linha (`items-center`, sem `pt-3`): com o card de 44px, o `pt-3` da etapa 55 desalinhava a hora |
+| testes | 1 caso novo em `agendaGroups.test.tsx`: contrato de classe (`h-11`, `flex-row`), checkbox presente na Agenda, nada de motivo de espera e kebab sem `opacity-0` |
+
+**Nota de honestidade:** o jsdom não mede layout — "44±2" está provado pelo contrato de classe (`h-11` = 44px); a medida real é o gate visual da etapa 54.
+
+**Teste de mutação (3, árvore restaurada entre cada):** M1 altura `h-11`→`h-9` 1 vermelho; M2 checkbox só na Lista 1 vermelho; M3 kebab voltando ao hover na Agenda 1 vermelho.
+
+**Gates:** `typecheck` ✓ · guard-rail de tipografia ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · `db:guard` ✓ · suíte 4514 passed / 0 failed (342 arquivos) ✓ · `build` ✓ · bundle 4033,3/4100 KB ✓
+
+## Etapa 57 — QuickAdd na Agenda com o dia selecionado — evidências
+
+**Regra do plano:** `QuickAdd` na Agenda com chip Data pré-preenchido com o dia selecionado. Decisão D7 mantida (faixa hoje → +6). — DoD: criar cai no dia certo.
+
+**Mudanças (4 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/components/tasks/shared/QuickAdd.tsx` | prop `defaultDueDate` (o campo já nasce com o prazo) e `data-testid="quick-add-due"` no chip ativo, para o teste poder afirmar o dia |
+| `src/components/tasks/agenda/TasksAgendaMode.tsx` | renderiza o `QuickAdd` logo abaixo da faixa dos 7 dias, com `key={selectedDay}` (trocar de dia remonta o campo e reaplica o prazo) e o dia selecionado às 23:59; os botões do dia ganharam `aria-label`/`aria-current` (a11y e testável) |
+| `src/components/tasks/TasksModule.tsx` | o QuickAdd do cabeçalho **não** aparece no modo Agenda (lá quem manda é o da Agenda, com o dia); a Agenda recebe `onCreate` e `quickAddRef`, então o atalho **N** continua focando o campo certo |
+| testes | 2 casos na Agenda (nasce no dia / remonta ao trocar o dia) + 1 no módulo (um único QuickAdd na Agenda, com o placeholder do dia) |
+
+**Decisão declarada:** o prazo do dia selecionado é gravado às **23:59 locais** — a mesma convenção dos chips "Hoje/Amanhã/Próx. semana" do próprio QuickAdd. Assim `temHora` (etapa 55) o classifica em "Prazos" e a faixa hoje→+6 do D7 continua valendo.
+
+**Teste de mutação (3, árvore restaurada entre cada; base verde = 25 casos):** M1 o QuickAdd ignora o `defaultDueDate` 2 vermelhos; M2 sem a `key` (não remonta ao trocar o dia) 1 vermelho; M3 o módulo também renderiza o QuickAdd na Agenda (dois na tela) 1 vermelho.
+
+**Nota honesta sobre a suíte:** **4517 testes verdes / 0 falhas**, mas o runner acusa **1 erro não tratado (2 ocorrências)** em `src/components/catalog/__tests__/useSendProduct.test.tsx` ("window is not defined"). O arquivo **passa isolado (9/9)** e nada do meu diff o toca — é flake de carga (vários chats rodando em paralelo nesta máquina). O check `🧪 Unit Tests` do CI é a autoridade.
+
+**Gates:** `typecheck` ✓ · guard-rail de tipografia ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · `db:guard` ✓ · suíte 4517 verdes (flake de catálogo declarado) · `build` ✓ · bundle 4033,4/4100 KB ✓
 
 ## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
 ## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=

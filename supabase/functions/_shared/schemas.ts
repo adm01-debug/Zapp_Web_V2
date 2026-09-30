@@ -12,12 +12,69 @@ export const EmailSchema = z.string().email("Invalid email").max(255);
 export const SafeStringSchema = (maxLen = 10000) => z.string().max(maxLen).transform(s => s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim());
 
 // ─── AI function schemas ─────────────────────────────────────
+// ─── Contrato de contexto de conversa (IA-024) ───────────────
+// O frontend (src/components/inbox/AIConversationAssistant.tsx:89-101 e
+// src/components/inbox/chat/ChatToolPanels.tsx:32) envia id/type/created_at e
+// periodDays; antes esses campos eram descartados em silêncio pelo zod (.strip).
+export const CONTEXT_CONTRACT_VERSION = 2 as const;
+
+/** Tetos do contexto enviado ao modelo. Excedente é REJEITADO com 422,
+ *  nunca truncado em silêncio (aceite do IA-024). */
+export const CONTEXT_LIMITS = {
+  maxMessages: 200,
+  maxTotalChars: 120000,
+  maxSingleMessageChars: 5000,
+  maxMessagesInPromptChars: 1000,
+} as const;
+
 export const MessageSchema = z.object({
+  id: z.string().max(100).optional(),
   sender: z.string().max(50).optional(),
   content: z.string().max(5000).optional(),
-  created_at: z.string().optional(),
+  created_at: z.string().max(40).optional(),
+  /** O front envia `type`; `message_type` é aceito como legado. */
+  type: z.string().max(50).optional(),
   message_type: z.string().max(50).optional(),
+  mediaUrl: z.string().max(2048).optional(),
 });
+
+export type ConversationContextBudget = {
+  version: typeof CONTEXT_CONTRACT_VERSION;
+  messageCount: number;
+  totalChars: number;
+  periodDays: number | null;
+};
+
+/** Mede o contexto aceito — usado no envelope de resposta (IA-025) para o
+ *  frontend saber exatamente o que foi analisado (versão + recorte). */
+export function measureConversationContext(
+  messages: Array<{ content?: string }>,
+  periodDays?: number | null,
+): ConversationContextBudget {
+  const totalChars = messages.reduce((sum, m) => sum + (typeof m.content === 'string' ? m.content.length : 0), 0);
+  return {
+    version: CONTEXT_CONTRACT_VERSION,
+    messageCount: messages.length,
+    totalChars,
+    periodDays: typeof periodDays === 'number' ? periodDays : null,
+  };
+}
+
+/** Refinamento compartilhado: recusa o contexto que estoura os tetos agregados. */
+function withConversationBudget<T extends z.ZodTypeAny>(schema: T): T {
+  return schema.superRefine((payload: unknown, ctx: z.RefinementCtx) => {
+    const p = payload as { messages?: Array<{ content?: string }>; periodDays?: number };
+    const messages = Array.isArray(p?.messages) ? p.messages : [];
+    const { totalChars } = measureConversationContext(messages, p?.periodDays);
+    if (totalChars > CONTEXT_LIMITS.maxTotalChars) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['messages'],
+        message: `Contexto acima do limite agregado de ${CONTEXT_LIMITS.maxTotalChars} caracteres (recebido ${totalChars}). Reduza o período ou o número de mensagens.`,
+      });
+    }
+  }) as unknown as T;
+}
 
 export const AiSuggestReplySchema = z.object({
   messages: z.array(MessageSchema).max(50).optional(),
@@ -32,11 +89,14 @@ export const AiEnhanceMessageSchema = z.object({
   contactName: z.string().max(200).optional(),
 });
 
-export const AiConversationAnalysisSchema = z.object({
+export const AiConversationAnalysisSchema = withConversationBudget(z.object({
   messages: z.array(MessageSchema).min(5, "Conversation must have at least 5 messages").max(200),
   contactName: z.string().max(200).optional(),
   contactId: z.string().uuid().optional().nullable(),
-});
+  /** Recorte pedido pelo usuário na UI (PeriodFilterSelector) — antes era
+   *  descartado e o modelo analisava sem saber a janela de tempo. */
+  periodDays: z.number().int().min(1).max(365).optional(),
+}));
 
 export const AiAutoTagSchema = z.object({
   contactId: z.string().uuid().optional().nullable(),
@@ -158,11 +218,12 @@ export const ApprovePasswordResetSchema = z.object({
 });
 
 // ─── Conversation Analysis / Summary ─────────────────────────
-export const AiConversationSummarySchema = z.object({
+export const AiConversationSummarySchema = withConversationBudget(z.object({
   messages: z.array(MessageSchema).min(5, "Conversation must have at least 5 messages").max(200),
   contactName: z.string().max(200).optional(),
   contactId: z.string().uuid().optional().nullable(),
-});
+  periodDays: z.number().int().min(1).max(365).optional(),
+}));
 
 // ─── Chatbot L1 ──────────────────────────────────────────────
 export const ChatbotL1Schema = z.object({
@@ -336,5 +397,20 @@ export const ElevenLabsWebhookV2Schema = ElevenLabsWebhookV1Schema.refine(
 
 // ─── Gmail Cron Sync (contrato de headers; função não lê body) ──
 export const GmailCronSyncHeadersSchema = z.object({
+  'x-cron-secret': z.string().min(1, 'x-cron-secret is required'),
+});
+
+// ─── Connection Health Check (contrato de headers; cron via x-cron-secret) ──
+// L5 da matriz IA-004: o job do pg_cron manda uma credencial DEDICADA no header
+// x-cron-secret (segredo do Vault lido por RPC SECURITY DEFINER), no lugar da
+// anon key no Authorization. A função não lê body.
+export const ConnectionHealthCheckHeadersSchema = z.object({
+  'x-cron-secret': z.string().min(1, 'x-cron-secret is required'),
+});
+
+// ─── Batch Fetch Avatars / avatars-refresh (contrato de headers) ──
+// Mesmo contrato de credencial de máquina do cron: header x-cron-secret com o
+// segredo dedicado avatars_refresh_cron_secret. A função não lê body.
+export const AvatarsRefreshHeadersSchema = z.object({
   'x-cron-secret': z.string().min(1, 'x-cron-secret is required'),
 });

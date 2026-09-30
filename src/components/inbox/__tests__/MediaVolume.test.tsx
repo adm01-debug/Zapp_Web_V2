@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+
+// Mocks comuns aos testes de controle de volume (toast/logger/framer-motion/ResizeObserver).
+import '@/test/volumeControlMocks';
 
 // ─── Mocks (mesmo conjunto do teste de velocidade do player) ──────────────
 vi.mock('@/integrations/supabase/client', () => ({
@@ -19,8 +22,6 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
-vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
-
 const { updateSettingsSpy } = vi.hoisted(() => ({ updateSettingsSpy: vi.fn() }));
 
 // E38 — o controle de mídia não pode encostar nas configurações de notificação.
@@ -31,32 +32,6 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
     isSaving: false,
   }),
 }));
-
-vi.mock('@/lib/logger', () => ({
-  log: { error: vi.fn(), info: vi.fn(), debug: vi.fn(), warn: vi.fn() },
-}));
-
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
-      const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
-      return React.createElement('div', { ...rest, ref });
-    }),
-  },
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
-}));
-
-// ─── jsdom não traz ResizeObserver, que o Popper do Radix usa para medir o
-// ─── conteúdo do popover. Stub mínimo (atribuição direta, fora do `stubGlobal`,
-// ─── para sobreviver ao `unstubAllGlobals` do afterEach).
-if (!('ResizeObserver' in globalThis)) {
-  class ResizeObserverStub {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  }
-  (globalThis as { ResizeObserver?: unknown }).ResizeObserver = ResizeObserverStub;
-}
 
 import { MediaVolumeControl, MEDIA_VOLUME_LABEL, MEDIA_VOLUME_LABEL_MUTED } from '../MediaVolumeControl';
 import { AudioMessagePlayer } from '../AudioMessagePlayer';

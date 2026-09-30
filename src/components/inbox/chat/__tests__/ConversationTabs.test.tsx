@@ -85,4 +85,13 @@ describe('ConversationTabs', () => {
       expect(screen.queryByTestId(`conversation-tab-count-${id}`)).not.toBeInTheDocument();
     });
   });
+
+  it('mantém a ação do canto direito fora da semântica de abas', () => {
+    const action = <button type="button">TALK ME</button>;
+    render(<ConversationTabs activeTab="chat" onTabChange={vi.fn()} counts={ZERO} trailingAction={action} />);
+
+    expect(screen.getByRole('button', { name: 'TALK ME' })).toBeInTheDocument();
+    expect(within(screen.getByRole('tablist')).queryByRole('button', { name: 'TALK ME' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('tab')).toHaveLength(8);
+  });
 });

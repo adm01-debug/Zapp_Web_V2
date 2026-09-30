@@ -232,6 +232,19 @@ jobs:
           NOTIFY_DUE_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/notify-due-tasks-authorization.test.sh
 
+      # L5 da matriz IA-004: os jobs do pg_cron autenticavam com a ANON KEY do projeto
+      # (credencial pública, no bundle do front). O fixture cria STUBS de Vault/pg_cron
+      # no container, aplica as duas migrations e prova: segredos dedicados de 32 bytes
+      # gerados in-db, RPCs SECURITY DEFINER devolvendo o valor exato de cada segredo,
+      # EXECUTE fechado para PUBLIC/anon/authenticated e aberto só para service_role,
+      # jobs com o schedule original, sem Bearer e com x-cron-secret lido por subquery
+      # do Vault — mais o BLOCO C, que remove o REVOKE numa cópia temporária da migration
+      # (o arquivo do repo não é tocado) e exige que a asserção de ACL falhe.
+      - name: Simular credencial dedicada de cron no Vault (L5)
+        env:
+          CRON_SECRET_L5_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/cron-secret-l5-contract.test.sh
+
       - name: Simular escopo das 14 policies TO public -> authenticated
         env:
           PUBLIC_POLICY_TEST_POSTGRES_IMAGE: postgres:17-alpine
@@ -241,6 +254,26 @@ jobs:
         env:
           SEND_MESSAGES_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/send-messages-permission-authorization.test.sh
+
+      - name: Simular escopo de fila na escolha da conexao de envio (L7)
+        env:
+          ENQUEUE_SCOPE_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/enqueue-connection-scope.test.sh
+
+      - name: Simular vinculo de time na reacao em mensagem (#1265)
+        env:
+          TEAM_REACTION_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-reaction-membership.test.sh
+
+      - name: Simular drop do indice redundante de messages.external_id (perf)
+        env:
+          DROP_EXTID_INDEX_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/drop-redundant-messages-external-id-index.test.sh
+
+      - name: Simular fila, autorização e aceite concorrente do TALK ME
+        env:
+          TALK_ME_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talk-me-queue-contract.test.sh
 
       - name: Simular histórico atômico de templates Talk X
         env:
@@ -369,3 +402,8 @@ jobs:
 
       - name: Provar transporte libpq com cliente e PostgreSQL reais
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh node scripts/db-audit/psql-environment.integration.mjs
+
+      - name: Simular ambiguidade da RPC e recursao da policy do team chat (#1266)
+        env:
+          TEAM_CHAT_RPC_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-rpc-ambiguity.test.sh

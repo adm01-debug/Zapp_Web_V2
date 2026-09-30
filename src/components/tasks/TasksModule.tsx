@@ -1,11 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Search, Filter, AlertTriangle } from 'lucide-react';
+import { Filter, AlertTriangle } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useMyWorkItems }   from '@/hooks/tasks/useMyWorkItems';
+import { applyFilters, bucketByDue, bucketByStatus, kpis } from '@/hooks/tasks/workItemAggregates';
+import { useTasksFilters }  from '@/hooks/tasks/useTasksFilters';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import { ModeSwitcher, type TaskMode } from './shared/ModeSwitcher';
 import { QuickAdd }         from './shared/QuickAdd';
+import { TasksFilterBar }   from './shared/TasksFilterBar';
 import { TasksKpiStrip }    from './shared/TasksKpiStrip';
 import { TasksListMode }    from './list/TasksListMode';
 import { TasksBoardMode }   from './board/TasksBoardMode';
@@ -25,7 +28,6 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
   // modo salvo. A gravacao continua so em `setMode`, que e o trocar de modo
   // pelo usuario — visitar a rota nao reescreve a preferencia dele.
   const [mode, setModeState] = useState<TaskMode>(forceMode ? defaultMode : savedMode);
-  const [search, setSearch]  = useState('');
   const [selectedItem, setSelectedItem] = useState<WorkItem | null>(null);
   const quickAddRef = useRef<HTMLInputElement>(null);
 
@@ -37,30 +39,35 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
   // B13: uma unica query para os tres modos. A query ja traz `done` dos ultimos
   // 30 dias; o recorte de 7 dias da Lista e local. Trocar de modo nao gera request.
   const hook = useMyWorkItems();
-  const { byDue, byStatus, kpis, isLoading, isError, create, move, reorder, complete, deleteItem } = hook;
+  const { isLoading, isError, create, move, reorder, complete, deleteItem } = hook;
+
+  // Etapa 45/46: a barra de filtros (estado no reducer, espelhado na URL) e o
+  // recorte aplicado UMA vez, sobre os itens que a query única já carregou —
+  // nenhum modo nem filtro dispara request novo (B13 continua valendo).
+  const filtros = useTasksFilters();
+  const items = applyFilters(hook.items, filtros.filters);
+  const byDue = bucketByDue(items);
+  const byStatus = bucketByStatus(items);
+  const kpiData = kpis(items);
+
+  // Contatos que aparecem nas tarefas carregadas: fonte local, sem query nova.
+  const contactOptions = Array.from(
+    new Map(
+      hook.items
+        .filter(i => i.contact !== null)
+        .map(i => [i.contact!.id, { id: i.contact!.id, name: i.contact!.name ?? '' }])
+    ).values()
+  ).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 
   // Etapa 43: o subtítulo do cabeçalho mostra números reais em pt-BR (separador
   // de milhar) e com singular correto — "1 aberta", não "1 abertas".
   const openCount = byStatus.backlog.length + byStatus.todo.length + byStatus.doing.length + byStatus.waiting.length;
   const subtitleAbertas = `${openCount.toLocaleString('pt-BR')} ${openCount === 1 ? 'aberta' : 'abertas'}`;
-  const subtitleHoje = `${kpis.dueToday.toLocaleString('pt-BR')} para hoje`;
+  const subtitleHoje = `${kpiData.dueToday.toLocaleString('pt-BR')} para hoje`;
 
   // Flag de animacao de entrada: saiu da API do hook na etapa 18 e vive aqui.
   const hasMounted = useRef(false);
   useEffect(() => { hasMounted.current = true; }, []);
-
-  // Filtro de busca (local)
-  const filteredByDue = search
-    ? {
-        overdue:  byDue.overdue.filter(i => i.title.toLowerCase().includes(search.toLowerCase())),
-        today:    byDue.today.filter(i => i.title.toLowerCase().includes(search.toLowerCase())),
-        tomorrow: byDue.tomorrow.filter(i => i.title.toLowerCase().includes(search.toLowerCase())),
-        upcoming: byDue.upcoming.filter(i => i.title.toLowerCase().includes(search.toLowerCase())),
-        noDue:    byDue.noDue.filter(i => i.title.toLowerCase().includes(search.toLowerCase())),
-        done7d:   byDue.done7d.filter(i => i.title.toLowerCase().includes(search.toLowerCase())),
-        doneOlder: byDue.doneOlder.filter(i => i.title.toLowerCase().includes(search.toLowerCase())),
-      }
-    : byDue;
 
   // Atalho N → foca o QuickAdd
   useEffect(() => {
@@ -108,23 +115,25 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
       />
 
       {/* KPIs (etapa 44: 5 cards de 88px no padrão ContactKpiCard) */}
-      <TasksKpiStrip kpis={kpis} />
+      <TasksKpiStrip kpis={kpiData} />
 
-      {/* QuickAdd */}
-      <QuickAdd ref={quickAddRef} onAdd={create} defaultStatus="backlog" />
+      {/* QuickAdd (etapa 57: a Agenda tem o seu, com o dia selecionado) */}
+      {mode !== 'agenda' && <QuickAdd ref={quickAddRef} onAdd={create} defaultStatus="backlog" />}
 
-      {/* Toolbar */}
+      {/* Toolbar: barra de filtros (etapa 45) + troca de modo */}
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px] max-w-[420px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar tarefa…"
-            className="h-11 w-full rounded-xl bg-input border border-border pl-9 pr-4 text-[15px] placeholder:text-muted-foreground/60 outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
+        <TasksFilterBar
+          filters={filtros.filters}
+          searchText={filtros.textoDaBusca}
+          contactOptions={contactOptions}
+          onSearch={filtros.setSearch}
+          onPrio={filtros.setPrio}
+          onContact={filtros.setContact}
+          onToggleAlarm={filtros.toggleAlarm}
+          onToggleDone={filtros.toggleDone}
+          onClear={filtros.clear}
+          isActive={filtros.isActive}
+        />
         <div className="ml-auto">
           <ModeSwitcher mode={mode} onChange={setMode} />
         </div>
@@ -142,14 +151,14 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
         >
           {mode === 'list' && (
             <TasksListMode
-              byDue={filteredByDue}
+              byDue={byDue}
               isLoading={isLoading}
-              searchQuery={search}
+              searchQuery={filtros.filters.q}
               onOpen={setSelectedItem}
               onToggleDone={handleToggleDone}
               onMoveTo={handleMoveTo}
               onDelete={deleteItem}
-              onClearFilter={() => setSearch('')}
+              onClearFilter={filtros.clear}
               hasMounted={hasMounted}
             />
           )}
@@ -166,9 +175,11 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
           )}
           {mode === 'agenda' && (
             <TasksAgendaMode
-              items={hook.items}
+              items={items}
               overdue={byDue.overdue}
               isLoading={isLoading}
+              onCreate={create}
+              quickAddRef={quickAddRef}
               onOpen={setSelectedItem}
               onToggleDone={handleToggleDone}
               onMoveTo={handleMoveTo}

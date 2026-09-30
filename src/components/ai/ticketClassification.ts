@@ -1,9 +1,12 @@
+import { normalizeScore } from '@/lib/ai-values';
+
 export interface ClassifiedTicket {
   contactId: string;
   contactName: string;
   category: string;
   priority: string;
-  confidence: number;
+  /** Percentual 0..100 medido; `null` quando a confiança falta ou é inválida. */
+  confidence: number | null;
   tags: string[];
   lastMessage: string;
 }
@@ -56,14 +59,16 @@ export function groupTagsIntoTickets(tags: Array<Record<string, unknown>>): Clas
     if (!contactId || !tagName) return;
 
     const contact = tag.contacts as Record<string, string> | null;
-    const confidence = typeof tag.confidence === 'number' && tag.confidence > 0 ? tag.confidence : 0.7;
+    // Ausente ou inválido continua ausente (null): a UI omite a confiança em vez
+    // de exibir um "70%" que ninguém mediu. Confiança 0 permanece 0 (IA-023).
+    const confidence = normalizeScore(tag.confidence, { min: 0, max: 1, scale: 'ratio' });
     if (!grouped.has(contactId)) {
       grouped.set(contactId, {
         contactId,
         contactName: contact?.name || 'Desconhecido',
         category: classifyTag(tagName),
-        priority: derivePriority(tagName, typeof tag.confidence === 'number' ? tag.confidence : 0),
-        confidence: confidence * 100,
+        priority: derivePriority(tagName, confidence.value ?? 0),
+        confidence: confidence.value === null ? null : confidence.value * 100,
         tags: [tagName],
         lastMessage: '',
       });

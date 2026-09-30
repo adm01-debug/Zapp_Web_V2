@@ -58,3 +58,36 @@ describe('buildEditContactShape — endereço (A4-D)', () => {
     expect(shape).toMatchObject({ nickname: 'Joãozinho', company: 'XBZ', job_title: 'Diretor', surname: 'Silva', contact_type: 'lead' });
   });
 });
+
+/**
+ * Item 5 (decisão 20260930-122408-sem-tarefa, opção a): o `EditContactDialog` já aceitava
+ * latitude/longitude no tipo, no estado e nos parsers — mas o shape nunca as entregava, então o
+ * form abria com a coordenada VAZIA e o operador não enxergava o pino já gravado.
+ */
+describe('buildEditContactShape — coordenada (item 5)', () => {
+  const coordenada = { latitude: -23.5613, longitude: -46.6565 };
+
+  it('repassa latitude/longitude vindas do dado enriquecido', () => {
+    const shape = buildEditContactShape({ contact: contato, enrichedData: coordenada });
+
+    expect(shape.latitude).toBe(-23.5613);
+    expect(shape.longitude).toBe(-46.6565);
+  });
+
+  it('usa a coordenada do próprio contato quando a query não trouxe (rede de segurança)', () => {
+    const shape = buildEditContactShape({
+      contact: { ...contato, ...coordenada },
+      enrichedData: null,
+    });
+
+    expect(shape.latitude).toBe(-23.5613);
+    expect(shape.longitude).toBe(-46.6565);
+  });
+
+  it('sem coordenada nenhuma fica undefined — e o Salvar por diferença não grava null por cima', () => {
+    const shape = buildEditContactShape({ contact: contato });
+
+    expect(shape.latitude).toBeUndefined();
+    expect(shape.longitude).toBeUndefined();
+  });
+});

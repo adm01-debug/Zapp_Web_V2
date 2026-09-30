@@ -8,7 +8,7 @@ const DEFAULT_ALLOWED_ORIGIN = 'https://zapp-web-v2.vercel.app';
 const DEFAULT_DENIED_ORIGIN = 'https://edge-smoke.invalid';
 // verify_jwt=false is required for cron callers that cannot mint a user JWT,
 // but these functions still enforce authentication inside their handler.
-const INTERNAL_AUTH_FUNCTIONS = new Set(['crm-integration']);
+const INTERNAL_AUTH_FUNCTIONS = new Set(['crm-integration', 'connection-health-check', 'batch-fetch-avatars']);
 const DISABLED_FUNCTIONS = new Map([['public-api', 410]]);
 
 function parseArgs(argv) {

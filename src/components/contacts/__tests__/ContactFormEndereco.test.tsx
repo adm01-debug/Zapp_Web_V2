@@ -161,3 +161,64 @@ describe('ContactForm — autocomplete de endereço (E41)', () => {
     }
   });
 });
+
+/**
+ * Item 5 (decisão 20260930-122408-sem-tarefa, opção a) — regra 3: o endereço foi reescrito à mão
+ * e a coordenada continua a MESMA → o pino pode estar no lugar velho. Aviso discreto, e nada é
+ * apagado nem reescrito sozinho.
+ */
+describe('ContactForm — coordenada possivelmente desatualizada (item 5, regra 3)', () => {
+  const AVISO = /localização \(coordenada\) continua a anterior/i;
+  const comCoordenada = { address: 'Av. Paulista', latitude: '-23.5613', longitude: '-46.6565' };
+
+  it('reescrever o endereço à mão com coordenada já gravada mostra o aviso', () => {
+    renderForm(comCoordenada);
+    expect(screen.queryByText(AVISO)).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Logradouro'), { target: { value: 'Rua Nova' } });
+
+    expect(screen.getByText(AVISO)).toBeInTheDocument();
+  });
+
+  it('sem coordenada nenhuma, mexer no endereço NÃO mostra o aviso', () => {
+    renderForm({ address: 'Av. Paulista' });
+
+    fireEvent.change(screen.getByLabelText('Logradouro'), { target: { value: 'Rua Nova' } });
+
+    expect(screen.queryByText(AVISO)).not.toBeInTheDocument();
+  });
+
+  it('editar outro campo de endereço (cidade) também sinaliza', () => {
+    renderForm({ city: 'São Paulo', latitude: '-23.5', longitude: '-46.6' });
+
+    fireEvent.change(screen.getByLabelText('Cidade'), { target: { value: 'Campinas' } });
+
+    expect(screen.getByText(AVISO)).toBeInTheDocument();
+  });
+
+  it('editar um campo que NÃO é de endereço (nome) não sinaliza', () => {
+    renderForm({ latitude: '-23.5', longitude: '-46.6' });
+
+    fireEvent.change(screen.getByLabelText(/Nome Principal/), { target: { value: 'Beltrano' } });
+
+    expect(screen.queryByText(AVISO)).not.toBeInTheDocument();
+  });
+
+  it('escolher uma sugestão do autocomplete LIMPA o aviso (a coordenada nova acompanha — regra 2)', async () => {
+    h.select.mockResolvedValue({ lat: -22.9, lng: -43.2, name: 'Rua X', address: 'Rua X' });
+    const anteriores = h.suggestions;
+    h.suggestions = [{ id: 's1', name: 'Rua X', address: 'Rua X', kind: 'street' }];
+    try {
+      renderForm(comCoordenada);
+      fireEvent.change(screen.getByLabelText('Logradouro'), { target: { value: 'Rua X' } });
+      expect(screen.getByText(AVISO)).toBeInTheDocument();
+
+      fireEvent.focus(screen.getByLabelText('Logradouro'));
+      fireEvent.click(screen.getByRole('option', { name: /Rua X/ }));
+
+      await waitFor(() => expect(screen.queryByText(AVISO)).not.toBeInTheDocument());
+    } finally {
+      h.suggestions = anteriores;
+    }
+  });
+});

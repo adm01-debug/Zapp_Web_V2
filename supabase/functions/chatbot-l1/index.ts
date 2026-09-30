@@ -3,6 +3,9 @@ import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAut
 import { ChatbotL1Schema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
+import { ChatbotL1Output, parseModelOutput } from "../_shared/ai-response-contracts.ts";
+import { normalizeSentiment, normalizeOperationalPriority } from "../_shared/ai-vocabulary.ts";
+import { parseJsonObject } from "../_shared/ai-json.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -122,12 +125,19 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (contact) {
-      contactContext = `\nCONTEXTO DO CLIENTE:
-- Nome: ${contact.name || 'Desconhecido'}
-- Empresa: ${contact.company || 'N/A'}
-- Tags: ${contact.tags?.join(', ') || 'Nenhuma'}
-- Prioridade: ${contact.ai_priority || 'normal'}
-- Sentimento: ${contact.ai_sentiment || 'neutro'}`;
+      // Vocabulário CANÔNICO (IA-021/IA-022): o valor cru do banco é traduzido
+      // (legado EN → pt-BR / EN→EN de prioridade) e, quando não é reconhecido,
+      // simplesmente não entra no prompt — nada de `|| 'neutro'`/`|| 'normal'`.
+      const previousSentiment = normalizeSentiment(contact.ai_sentiment);
+      const previousPriority = normalizeOperationalPriority(contact.ai_priority);
+      const linhas = [
+        `- Nome: ${contact.name || 'Desconhecido'}`,
+        `- Empresa: ${contact.company || 'N/A'}`,
+        `- Tags: ${contact.tags?.join(', ') || 'Nenhuma'}`,
+      ];
+      if (previousPriority.value) linhas.push(`- Prioridade: ${previousPriority.value}`);
+      if (previousSentiment.value) linhas.push(`- Sentimento: ${previousSentiment.value}`);
+      contactContext = `\nCONTEXTO DO CLIENTE:\n${linhas.join('\n')}`;
     }
 
     const systemPrompt = `Você é um assistente de atendimento automatizado (Nível 1) via WhatsApp.
@@ -148,13 +158,14 @@ REGRAS:
 
 Responda em JSON:
 {
+  "handled": true,
   "response": "sua resposta ao cliente",
   "transfer_to_human": false,
   "transfer_reason": null,
   "confidence": 0.95,
   "matched_article": "título do artigo usado ou null",
   "detected_intent": "categoria da intenção (suporte, vendas, reclamação, etc)",
-  "detected_sentiment": "positive|neutral|negative|critical"
+  "detected_sentiment": "positivo|neutro|negativo|critico"
 }`;
 
     const { response, data } = await callAiWithTracking({
@@ -181,43 +192,71 @@ Responda em JSON:
 
     const content = (data.choices as Array<{message: {content: string}}>)?.[0]?.message?.content;
 
-    let result;
-    try {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      result = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
-    } catch {
-      result = null;
+    let rawOutput: unknown = null;
+    if (typeof content === 'string') {
+      rawOutput = parseJsonObject(content);
     }
 
-    if (!result) {
+    if (!rawOutput || typeof rawOutput !== 'object') {
       return jsonResponse({ handled: false, reason: 'parse_error' }, 200, req);
     }
 
-    if (result.confidence < 0.6) {
+    // O sentimento CRU é traduzido ANTES do contrato (IA-021): o legado em
+    // inglês vira o canônico pt-BR e o valor desconhecido é OMITIDO — ausência
+    // continua ausência, sem default inventado.
+    const rawRecord = rawOutput as Record<string, unknown>;
+    const legacySentiment = normalizeSentiment(rawRecord.detected_sentiment);
+    if (legacySentiment.known && legacySentiment.value) {
+      rawRecord.detected_sentiment = legacySentiment.value;
+    } else {
+      delete rawRecord.detected_sentiment;
+    }
+
+    // Contrato de saída (IA-025): `confidence` precisa ser NÚMERO em 0-1 —
+    // string (`'0.9'`) ou percentual é REJEITADO, não coagido.
+    const validated = parseModelOutput(ChatbotL1Output, rawRecord);
+    if (!validated.ok) {
+      log.warn("Model output rejected by contract", {
+        errors: validated.errors.map((e) => `${e.path}: ${e.message}`).slice(0, 8),
+      });
+      return jsonResponse({ handled: false, reason: 'invalid_output' }, 200, req);
+    }
+
+    const result = validated.data;
+
+    // Confiança AUSENTE não transfere por default: só o valor medido abaixo do
+    // limite força a transferência.
+    if (result.confidence !== undefined && result.confidence < 0.6) {
       result.transfer_to_human = true;
       result.transfer_reason = 'low_confidence';
     }
 
-    // Update contact AI metadata
-    if (result.detected_sentiment || result.detected_intent) {
-      const updateData: Record<string, string> = {};
-      if (result.detected_sentiment) updateData.ai_sentiment = result.detected_sentiment;
-      if (result.detected_sentiment === 'critical' || result.detected_sentiment === 'negative') {
-        updateData.ai_priority = 'high';
+    // Update contact AI metadata — só com valor CANÔNICO reconhecido; campo
+    // desconhecido NÃO é escrito (antes ia o inglês cru vindo do modelo).
+    const detectedSentiment = normalizeSentiment(result.detected_sentiment);
+    const updateData: Record<string, string> = {};
+    if (detectedSentiment.value) updateData.ai_sentiment = detectedSentiment.value;
+    // Sentimento negativo/crítico eleva a prioridade OPERACIONAL do front.
+    if (detectedSentiment.value === 'negativo' || detectedSentiment.value === 'critico') {
+      updateData.ai_priority = 'high';
+    }
+    if (Object.keys(updateData).length > 0) {
+      const { error: updateError } = await supabase.from('contacts').update(updateData).eq('id', contactId);
+      if (updateError) {
+        log.error("Failed to update contact AI metadata", { contactId, error: updateError.message });
       }
-      await supabase.from('contacts').update(updateData).eq('id', contactId);
     }
 
     log.done(200);
     return jsonResponse({
       handled: !result.transfer_to_human,
       response: result.response,
-      transfer_to_human: result.transfer_to_human || false,
-      transfer_reason: result.transfer_reason,
-      confidence: result.confidence,
-      matched_article: result.matched_article,
-      detected_intent: result.detected_intent,
-      detected_sentiment: result.detected_sentiment,
+      transfer_to_human: result.transfer_to_human,
+      transfer_reason: result.transfer_reason ?? null,
+      confidence: result.confidence ?? null,
+      matched_article: result.matched_article ?? null,
+      detected_intent: result.detected_intent ?? null,
+      detected_sentiment: detectedSentiment.value,
     }, 200, req);
   } catch (error: unknown) {
     log.error("Error in chatbot-l1", { error: error instanceof Error ? error.message : String(error) });

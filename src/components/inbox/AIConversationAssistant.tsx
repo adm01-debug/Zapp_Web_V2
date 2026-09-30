@@ -24,7 +24,8 @@ import { withRetry } from '@/lib/retry';
 import { VisionIcon } from './ai-tools/VisionIcon';
 import { useAnalysisTts } from './ai-tools/useAnalysisTts';
 import { AnalysisTabs } from './ai-tools/AnalysisTabs';
-import { type AnalysisData, type AnalysisMessage, sentimentConfig } from './ai-tools/analysisConfigs';
+import { type AnalysisData, type AnalysisMessage, type AiEnvelope, aiEnvelopeErrorMessage, readAiErrorEnvelope, sentimentConfig } from './ai-tools/analysisConfigs';
+import { normalizeScore } from '@/lib/ai-values';
 
 interface AIConversationAssistantProps {
   messages: AnalysisMessage[];
@@ -84,7 +85,7 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
     setIsLoading(true);
 
     try {
-      const result = await withRetry(
+      const payload = await withRetry(
         async () => {
           const { data, error } = await supabase.functions.invoke('ai-conversation-analysis', {
             body: {
@@ -101,8 +102,14 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
             },
           });
 
-          if (error) throw error;
-          return data as AnalysisData;
+          if (error) {
+            // O envelope de erro (IA-025) chega no corpo de `error.context`; lê-lo
+            // para mostrar `payload.error` ao usuário em vez de silêncio.
+            const envelope = await readAiErrorEnvelope<AnalysisData>(error);
+            if (envelope) return envelope;
+            throw error;
+          }
+          return data as AiEnvelope<AnalysisData>;
         },
         {
           maxRetries: 2,
@@ -117,19 +124,33 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
       );
 
       if (!isMountedRef.current) return;
-      setAnalysis(result);
+
+      // `payload.error` + `status === 'error'` vira mensagem ao usuário, não silêncio.
+      if (payload?.status === 'error') {
+        toast.error(aiEnvelopeErrorMessage(payload.error, 'A IA não devolveu uma análise válida.'));
+        return;
+      }
+      const analysisData = payload?.data;
+      if (!analysisData) {
+        toast.error('A IA não devolveu uma análise válida; nada foi exibido.');
+        return;
+      }
+
+      setAnalysis(analysisData);
       setActiveTab('resumo');
       await refetch();
 
-      const sentimentScore = result.sentimentScore || 50;
-      if (result.analysisId) {
+      // Nota ausente/inválida não vira 50: só dispara alerta com número válido (IA-023).
+      const score = normalizeScore(analysisData.sentimentScore, { min: 0, max: 100, scale: 'percent' });
+      const analysisId = payload?.analysisId ?? null;
+      if (analysisId && score.value !== null) {
         const previousAnalysis = analyses[0];
         await checkAndTriggerAlert({
           contactId,
           contactName,
-          sentimentScore,
+          sentimentScore: score.value,
           previousScore: previousAnalysis?.sentiment_score,
-          analysisId: result.analysisId,
+          analysisId,
         });
       }
 
@@ -150,7 +171,10 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
   const sentimentTrend = getSentimentTrend();
   const currentSentiment = analysis?.sentiment || 'neutro';
   const SentimentIcon = sentimentConfig[currentSentiment]?.icon || Minus;
-  const sentimentScore = analysis?.sentimentScore ?? 50;
+  // Nota ausente/inválida fica `null` — a UI omite em vez de mostrar 50% (IA-023).
+  const sentimentScore = analysis
+    ? normalizeScore(analysis.sentimentScore, { min: 0, max: 100, scale: 'percent' }).value
+    : null;
 
   if (!isOpen) return null;
 

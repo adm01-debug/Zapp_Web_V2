@@ -1,4 +1,5 @@
 import { differenceInDays } from 'date-fns';
+import { normalizeSentiment } from '@/lib/ai-vocabulary';
 
 export interface ChurnContact {
   id: string;
@@ -43,10 +44,15 @@ export function computeChurnRisk(contact: ChurnContact, now: Date = new Date()):
   }
 
   // Sentiment factor (max 30 points)
-  if (contact.ai_sentiment === 'negative') {
+  // Sentimento canônico (pt-BR) com tradução do legado EN na leitura: antes
+  // comparava `=== 'negative'`/`'neutral'` e nunca casava com 'negativo'.
+  // Desconhecido (ex.: 'very_positive') não pontua nem ganha motivo — não é
+  // lido como negativo por adivinhação.
+  const sentiment = normalizeSentiment(contact.ai_sentiment).value;
+  if (sentiment === 'negativo') {
     score += 30;
     reasons.push('Sentimento negativo detectado');
-  } else if (contact.ai_sentiment === 'neutral') {
+  } else if (sentiment === 'neutro') {
     score += 10;
   }
 

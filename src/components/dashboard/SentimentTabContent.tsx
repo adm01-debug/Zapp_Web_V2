@@ -11,6 +11,17 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getSentimentColor, getSentimentBg } from './useSentimentData';
+import { normalizeScore } from '@/lib/ai-values';
+
+/** Score 0-100 ou `null` quando ausente/inválido — nunca um default (IA-023). */
+function scoreValue(raw: unknown): number | null {
+  return normalizeScore(raw, { min: 0, max: 100, scale: 'percent' }).value;
+}
+
+/** Renderiza um score 0-100 ou um traço quando não há dado (nunca "50%"). */
+function ScoreText({ score }: { score: number | null }) {
+  return score === null ? <span className="text-muted-foreground">—</span> : <>{score}%</>;
+}
 
 interface Alert {
   id: string;
@@ -25,9 +36,9 @@ interface Alert {
 
 interface AgentData {
   agent: { id: string; name: string; avatar_url: string | null };
-  avgScore: number;
+  avgScore: number | null;
   totalAnalyses: number;
-  trend: number;
+  trend: number | null;
   positive: number;
   neutral: number;
   negative: number;
@@ -41,7 +52,7 @@ interface DailyData {
 }
 
 interface Analysis {
-  sentiment_score?: number;
+  sentiment_score?: number | null;
 }
 
 // Overview Tab
@@ -92,19 +103,22 @@ export function OverviewTab({ dailyData, alerts, onViewAllAlerts }: {
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground"><Bell className="h-8 w-8 mb-2 opacity-50" /><p className="text-sm">Nenhum alerta no período</p></div>
             ) : (
               <div className="space-y-3">
-                {alerts.slice(0, 5).map((alert) => (
+                {alerts.slice(0, 5).map((alert) => {
+                  const alertScore = scoreValue(alert.sentiment_score);
+                  return (
                   <div key={alert.id} className="flex items-start gap-3 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                     <div className="h-8 w-8 rounded-full bg-destructive/20 flex items-center justify-center flex-shrink-0"><AlertTriangle className="h-4 w-4 text-destructive" /></div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{alert.contact_name || 'Cliente'}</p>
-                      <p className="text-xs text-muted-foreground">Sentimento: <span className="text-destructive">{alert.sentiment_score}%</span>{alert.consecutive_low && ` (${alert.consecutive_low}x consecutivas)`}</p>
+                      <p className="text-xs text-muted-foreground">Sentimento: <span className="text-destructive"><ScoreText score={alertScore} /></span>{alert.consecutive_low && ` (${alert.consecutive_low}x consecutivas)`}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <span className="text-3xs text-muted-foreground">{format(new Date(alert.createdAt), 'dd/MM HH:mm')}</span>
                       {alert.email_sent && <Badge variant="outline" className="text-3xs gap-1 py-0"><Mail className="h-3 w-3" />Enviado</Badge>}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </ScrollArea>
@@ -136,13 +150,14 @@ export function AgentsTab({ agentData }: { agentData: AgentData[] }) {
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         <span>{data.totalAnalyses} análises</span>
                         <span className="flex items-center gap-1">
-                          {data.trend > 0 ? <><TrendingUp className="h-3 w-3 text-success" /><span className="text-success">+{data.trend}%</span></> :
+                          {data.trend === null ? <span className="text-muted-foreground" title="Sem amostra válida para comparar">—</span> :
+                           data.trend > 0 ? <><TrendingUp className="h-3 w-3 text-success" /><span className="text-success">+{data.trend}%</span></> :
                            data.trend < 0 ? <><TrendingDown className="h-3 w-3 text-destructive" /><span className="text-destructive">{data.trend}%</span></> :
                            <span>Estável</span>}
                         </span>
                       </div>
                     </div>
-                    <div className="text-right"><p className={`text-xl font-bold ${getSentimentColor(data.avgScore)}`}>{data.avgScore}%</p></div>
+                    <div className="text-right"><p className={`text-xl font-bold ${getSentimentColor(data.avgScore)}`}><ScoreText score={data.avgScore} /></p></div>
                   </motion.div>
                 ))}
               </div>
@@ -164,7 +179,7 @@ export function AgentsTab({ agentData }: { agentData: AgentData[] }) {
                       <Avatar className="h-6 w-6"><AvatarImage src={data.agent.avatar_url || undefined} alt={data.agent.name || 'Agente'} /><AvatarFallback className="text-3xs">{data.agent.name.substring(0, 2).toUpperCase()}</AvatarFallback></Avatar>
                       <span className="text-sm font-medium truncate max-w-[120px]">{data.agent.name}</span>
                     </div>
-                    <span className={`text-sm font-bold ${getSentimentColor(data.avgScore)}`}>{data.avgScore}%</span>
+                    <span className={`text-sm font-bold ${getSentimentColor(data.avgScore)}`}><ScoreText score={data.avgScore} /></span>
                   </div>
                   <div className="h-4 flex rounded-full overflow-hidden bg-muted">
                     <div className="bg-success transition-all" style={{ width: `${(data.positive / Math.max(total, 1)) * 100}%` }} />
@@ -198,16 +213,19 @@ export function AlertsTab({ alerts }: { alerts: Alert[] }) {
             </div>
           ) : (
             <div className="space-y-3">
-              {alerts.map((alert) => (
+              {alerts.map((alert) => {
+                const alertScore = scoreValue(alert.sentiment_score);
+                const isCritical = alertScore !== null && alertScore < 20;
+                return (
                 <motion.div key={alert.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
                   className="flex items-start gap-4 p-4 rounded-lg border border-border/50 bg-card hover:bg-muted/30 transition-colors">
-                  <div className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 ${(alert.sentiment_score || 50) < 20 ? 'bg-destructive/30' : 'bg-warning/20'}`}>
-                    <AlertTriangle className={`h-5 w-5 ${(alert.sentiment_score || 50) < 20 ? 'text-destructive' : 'text-warning'}`} />
+                  <div className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 ${isCritical ? 'bg-destructive/30' : alertScore === null ? 'bg-muted' : 'bg-warning/20'}`}>
+                    <AlertTriangle className={`h-5 w-5 ${isCritical ? 'text-destructive' : alertScore === null ? 'text-muted-foreground' : 'text-warning'}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h4 className="font-medium">{alert.contact_name || 'Cliente'}</h4>
-                      {(alert.sentiment_score || 50) < 20 && <Badge variant="destructive" className="text-3xs">Crítico</Badge>}
+                      {isCritical && <Badge variant="destructive" className="text-3xs">Crítico</Badge>}
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">{alert.message}</p>
                     <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
@@ -217,11 +235,12 @@ export function AlertsTab({ alerts }: { alerts: Alert[] }) {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className={`text-2xl font-bold ${getSentimentColor(alert.sentiment_score || 50)}`}>{alert.sentiment_score || 50}%</div>
+                    <div className={`text-2xl font-bold ${getSentimentColor(alertScore)}`}><ScoreText score={alertScore} /></div>
                     <p className="text-xs text-muted-foreground">{alert.consecutive_low}x consecutivas</p>
                   </div>
                 </motion.div>
-              ))}
+                );
+              })}
             </div>
           )}
         </ScrollArea>
@@ -242,7 +261,12 @@ export function DistributionTab({ stats, analyses }: {
     { label: '61-80%', min: 61, max: 80, color: 'bg-success/70' },
     { label: '81-100%', min: 81, max: 100, color: 'bg-success' },
   ];
-  const maxCount = Math.max(...ranges.map(r => analyses.filter(a => (a.sentiment_score || 50) >= r.min && (a.sentiment_score || 50) <= r.max).length), 1);
+  // Histograma só com score presente e válido: ausência não conta em faixa alguma.
+  const inRange = (a: Analysis, min: number, max: number) => {
+    const s = scoreValue(a.sentiment_score);
+    return s !== null && s >= min && s <= max;
+  };
+  const maxCount = Math.max(...ranges.map(r => analyses.filter(a => inRange(a, r.min, r.max)).length), 1);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -277,7 +301,7 @@ export function DistributionTab({ stats, analyses }: {
         <CardContent>
           <div className="space-y-3">
             {ranges.map((range) => {
-              const count = analyses.filter(a => (a.sentiment_score || 50) >= range.min && (a.sentiment_score || 50) <= range.max).length;
+              const count = analyses.filter(a => inRange(a, range.min, range.max)).length;
               const percentage = (count / maxCount) * 100;
               return (
                 <div key={range.label} className="flex items-center gap-4">

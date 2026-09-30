@@ -1,19 +1,48 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { evoFetch, extractAvatarUrl } from '../_shared/evolution-send.ts';
 import { avatarObjectPath } from '../_shared/evolution-helpers.ts';
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+import { errorResponse, jsonResponse, requireEnv, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+import { isAuthorizedCronOrUser, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
+import { bootEdge, type EdgeInjected } from '../_shared/edge-boot.ts';
 
-Deno.serve(async (req) => {
-  const cors = handleCors(req);
+export async function handleBatchFetchAvatars(
+  req: Request,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _injected?: EdgeInjected<any>,
+): Promise<Response> {
+  // O `??` do boot e PREGUICOSO de proposito: com `_injected.supabase` (testes) o
+  // requireEnv('SUPABASE_URL') nem roda. O generico de bootEdge e a anotacao
+  // `as SupabaseClient` — sem ela o receiver `any` faria o TS perder a inferencia dos
+  // callbacks das queries abaixo (TS7006 em contacts.map/connections.map/batch.map).
+  const { cors, log, headers, supabase, serviceKey } = bootEdge<SupabaseClient>(req, {
+    fnName: 'batch-fetch-avatars',
+    injected: _injected,
+    makeClient: () => createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY')),
+  });
   if (cors) return cors;
 
-  const log = new Logger("batch-fetch-avatars");
-
   try {
+
+    // L5 da matriz IA-004: credencial de maquina do cron (x-cron-secret, segredo
+    // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU JWT de usuario autenticado.
+    // A ANON KEY deixa de entrar: ela e publica (vai no bundle do front) e o gateway a
+    // aceitava como "um JWT valido". O caminho de Bearer e o consumidor legitimo do front
+    // (useNewConversation e useInboxBulkActions chamam via functions.invoke com o JWT da
+    // sessao). O guard vive em _shared/cron-secret-auth.ts (as duas edges usam o mesmo);
+    // o literal da RPC fica AQUI de proposito, para o guard de catalogo
+    // (scripts/db-audit/supabase-usage-guard.mjs) continuar validando o alvo.
+    const authorized = await isAuthorizedCronOrUser(req, supabase, {
+      serviceKey,
+      readVaultSecret: async () => {
+        const { data, error } = await supabase.rpc('get_avatars_refresh_cron_secret');
+        return !error && typeof data === 'string' ? data : null;
+      },
+    });
+    if (!authorized) return unauthorizedResponse(headers);
+
     const ip = getClientIP(req);
     const rl = checkRateLimit(`batch-avatars:${ip}`, 5, 60_000);
     if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
-    const supabase = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
 
     // Backoff: nao reprocessar ocultos/sem-foto por 7 dias.
     // NULL = nunca tentado (sempre entra); contatos novos entram automaticamente.
@@ -108,4 +137,8 @@ Deno.serve(async (req) => {
     log.error("Batch avatar error", { error: msg });
     return errorResponse(msg, 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve((req) => handleBatchFetchAvatars(req));
+}

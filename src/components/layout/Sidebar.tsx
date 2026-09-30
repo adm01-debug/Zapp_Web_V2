@@ -7,7 +7,7 @@ import { useSidebarCollapse } from '@/hooks/ui/useSidebarCollapse';
 import { useSidebarFavorites } from '@/hooks/ui/useSidebarFavorites';
 import { PushNotificationToggle } from '@/components/notifications/PushNotificationToggle';
 import { ScreenProtectionToggle } from '@/components/notifications/ScreenProtectionToggle';
-import { SoundMuteToggle } from '@/components/notifications/SoundMuteToggle';
+import { SoundVolumeControl } from '@/components/notifications/SoundVolumeControl';
 import { MediaVolumeToggle } from './MediaVolumeToggle';
 import { SidebarNavItem } from './SidebarNavItem';
 import { SidebarNavGroup } from './SidebarNavGroup';
@@ -218,8 +218,8 @@ export const Sidebar = React.memo(function Sidebar({
           <div className={cn('flex items-center gap-1', collapsed ? 'flex-col' : 'flex-row')}>
             <ScreenProtectionToggle className="w-[36px] h-[36px]" />
             <PushNotificationToggle className="w-[36px] h-[36px]" />
-            <SoundMuteToggle className="w-[36px] h-[36px]" />
-            {/* E28 — volume das mídias de conversa, logo depois do mute dos ALERTAS.
+            <SoundVolumeControl className="w-[36px] h-[36px]" />
+            {/* E28 — volume das mídias de conversa, logo depois do volume dos ALERTAS.
                 5 × 36px + 4 gaps = 196px, dentro dos 228px úteis da sidebar (256px). */}
             <MediaVolumeToggle className="w-[36px] h-[36px]" />
             <Tooltip delayDuration={200}><TooltipTrigger asChild>

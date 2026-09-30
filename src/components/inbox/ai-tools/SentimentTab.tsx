@@ -9,7 +9,8 @@ import { type AnalysisData, sentimentConfig, churnConfig, performanceLabels } fr
 
 interface SentimentTabProps {
   analysis: AnalysisData;
-  sentimentScore: number;
+  /** Percentual medido ou `null` quando a IA não devolveu nota — não inventamos. */
+  sentimentScore: number | null;
   currentSentiment: string;
   analyses: Array<{
     id: string;
@@ -31,13 +32,17 @@ export function SentimentTab({ analysis, sentimentScore, currentSentiment, analy
               <SentimentIcon className={`h-5 w-5 ${sentimentConfig[currentSentiment]?.color}`} />
               <span className="text-sm font-semibold">{sentimentConfig[currentSentiment]?.label}</span>
             </div>
-            <span className={`text-3xl font-black tabular-nums ${sentimentConfig[currentSentiment]?.color}`}>{sentimentScore}%</span>
+            {sentimentScore !== null ? (
+              <span className={`text-3xl font-black tabular-nums ${sentimentConfig[currentSentiment]?.color}`}>{sentimentScore}%</span>
+            ) : (
+              <span className="text-3xs text-muted-foreground">sem nota</span>
+            )}
           </div>
           <div className="space-y-1.5">
             <div className="flex justify-between text-3xs text-muted-foreground">
               <span>Negativo</span><span>Positivo</span>
             </div>
-            <Progress value={sentimentScore} className="h-2.5 rounded-full" />
+            {sentimentScore !== null && <Progress value={sentimentScore} className="h-2.5 rounded-full" />}
           </div>
           {analysis.customerSatisfaction !== undefined && (
             <div className="border-t border-border pt-3">
