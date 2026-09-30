@@ -73,6 +73,27 @@ describe('TasksAgendaMode — etapa 55', () => {
     expect(alarmes.querySelector('.w-14')?.textContent).toBe('09:30');
   });
 
+  it('o card da Agenda é uma linha só de 44px, com checkbox e sem motivo de espera (etapa 56)', () => {
+    const esperando = makeItem({
+      title: 'Aguardando retorno', status: 'waiting', waiting_reason: 'cliente vai responder',
+      remind_at: asHoje(11),
+    });
+    renderAgenda([esperando]);
+
+    const card = screen.getAllByTestId('work-item-card')[0];
+    expect(card.getAttribute('data-mode')).toBe('agenda');
+    // contrato de classe: altura da linha única (a medida real é o gate visual da etapa 54)
+    expect(card.className).toContain('h-11');
+    expect(card.className).toContain('flex-row');
+    // checkbox presente na Agenda (na Lista ele já era; no Quadro não)
+    expect(within(card).getByRole('button', { name: 'Concluir tarefa' })).toBeTruthy();
+    // nada de motivo de espera na linha
+    expect(screen.queryByText('cliente vai responder')).toBeNull();
+    // o kebab continua acessível (não fica escondido atrás do hover na Agenda)
+    const kebab = within(card).getByRole('button', { name: 'Mais opções' });
+    expect(kebab.className).not.toContain('opacity-0');
+  });
+
   it('a faixa marca prazo, alarme e atrasada — até 3 pontos', () => {
     const item = makeItem({ remind_at: asHoje(9), due_date: asHoje(18) });
     renderAgenda([item], [makeItem({ title: 'Vencida' })]);
