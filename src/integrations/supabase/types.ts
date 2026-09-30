@@ -9243,6 +9243,7 @@ export type Database = {
       ai_is_canonical_sentiment: { Args: { p_value: string }; Returns: boolean }
       ai_is_canonical_urgency: { Args: { p_value: string }; Returns: boolean }
       ai_text_array: { Args: { p_value: Json }; Returns: string[] }
+      apply_zapp_cron_secrets_l5: { Args: never; Returns: undefined }
       calculate_level: { Args: { xp_amount: number }; Returns: number }
       can_delete_contacts: {
         Args: { p_ids: string[] }
@@ -9799,6 +9800,7 @@ export type Database = {
         Args: { p_meme_id: string }
         Returns: boolean
       }
+      get_avatars_refresh_cron_secret: { Args: never; Returns: string }
       get_channel_credentials: {
         Args: { _connection_id: string }
         Returns: Json
@@ -9807,6 +9809,7 @@ export type Database = {
         Args: { p_channel_id: string }
         Returns: Json
       }
+      get_connection_health_check_cron_secret: { Args: never; Returns: string }
       get_connection_instance: {
         Args: { _connection_id: string }
         Returns: string
