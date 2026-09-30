@@ -23,6 +23,16 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
   const [loading, setLoading]   = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  // Fase F2 (auditoria): trocar de dia na Agenda reaplica o prazo SEM remontar o
+  // campo — o rascunho digitado sobrevive à troca (antes o `key` do pai descartava
+  // o texto). Ajuste durante o render, o padrão do React quando "o dado de fora
+  // mudou"; sem efeito de sincronização e sem dívida de lint.
+  const [diaAplicado, setDiaAplicado] = useState<string | null>(defaultDueDate);
+  if (defaultDueDate !== diaAplicado) {
+    setDiaAplicado(defaultDueDate);
+    setDueDate(defaultDueDate);
+  }
+
   const setToday = () => {
     const d = new Date(); d.setHours(23, 59, 0, 0);
     setDueDate(d.toISOString());
@@ -46,7 +56,11 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
     setLoading(true);
     try {
       await onAdd({ title: t, status: defaultStatus, contactId: defaultContactId, dueDate, remindAt });
-      setTitle(''); setDueDate(null); setRemindAt(null);
+      // Fase F2 (auditoria): volta ao prazo PADRÃO do campo, não a `null`. Na
+      // Agenda o padrão é o dia selecionado — sem isso o 2º create seguido do
+      // mesmo dia nascia sem prazo e sumia da Agenda (o DoD da etapa 57 só valia
+      // para o 1º envio).
+      setTitle(''); setDueDate(defaultDueDate ?? null); setRemindAt(null);
     } finally {
       setLoading(false);
     }
@@ -54,7 +68,7 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') { e.preventDefault(); void handleSubmit(); }
-    if (e.key === 'Escape') { setTitle(''); setDueDate(null); setRemindAt(null); }
+    if (e.key === 'Escape') { setTitle(''); setDueDate(defaultDueDate ?? null); setRemindAt(null); }
   };
 
   return (
