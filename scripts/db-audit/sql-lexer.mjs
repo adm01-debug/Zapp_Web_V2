@@ -78,9 +78,21 @@ function scanSqlSegments(input) {
 
     if (char === "'" || char === '"') {
       const quote = char;
+      const prev = segments.length > 0 ? segments[segments.length - 1] : null;
+      // E'...' (escape string) usa backslash para escapar a aspa; sem honrar o
+      // escape o scanner fecharia a string no \' errado e engoliria (ou exporia)
+      // o restante do arquivo — um fail-open/falso-positivo no guard.
+      const backslashEscapes = quote === "'"
+        && prev != null
+        && prev.type === 'word'
+        && /^[eE]$/.test(prev.text);
       const start = i;
       i += 1;
       while (i < source.length) {
+        if (backslashEscapes && source[i] === '\\' && i + 1 < source.length) {
+          i += 2;
+          continue;
+        }
         if (source[i] === quote) {
           if (source[i + 1] === quote) {
             i += 2;
@@ -98,7 +110,14 @@ function scanSqlSegments(input) {
     if (/[A-Za-z0-9_$]/u.test(char)) {
       const start = i;
       i += 1;
-      while (i < source.length && /[A-Za-z0-9_$]/u.test(source[i])) i += 1;
+      const numeric = /[0-9]/.test(char);
+      // Um token que comeca por digito e NUMERICO: o PostgreSQL nao deixa '$'
+      // logo apos numero (1$q$X$q$ e erro), entao '$' nao pode ser engolido
+      // como parte do word — ele deve abrir um dollar-quote/identificador.
+      while (i < source.length && /[A-Za-z0-9_$]/u.test(source[i])) {
+        if (numeric && source[i] === '$') break;
+        i += 1;
+      }
       segments.push({ type: 'word', text: source.slice(start, i) });
       continue;
     }
