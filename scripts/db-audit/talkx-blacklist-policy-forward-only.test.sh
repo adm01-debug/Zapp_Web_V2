@@ -134,4 +134,34 @@ SQL
 [[ "$(psql_test -Atqc "SELECT marker FROM public.talkx_blacklist WHERE id = '20000000-0000-0000-0000-000000000001'")" == 'admin' ]] \
   || fail 'atualizacao do admin nao persistiu'
 
+# --- V05: os dois objetos que existiam SO no banco canonico entram em migration ---
+# (drift que o check-migration-drift/db-live-guard acusavam: CHECK com 'auto_optout' e
+#  o indice unico parcial em phone, 0 migrations e 0 ledger)
+v05_migration="$repo_root/supabase/migrations/20260929860000_talkx_blacklist_origin_check_and_phone_active_unique.sql"
+[[ -f "$v05_migration" ]] || fail 'migration da V05 nao existe'
+
+psql_test -q -c 'ALTER TABLE public.talkx_blacklist ADD COLUMN IF NOT EXISTS phone text' >/dev/null
+
+# replayavel: aplicar duas vezes nao pode falhar (e o que a V05 promete ao ledger/reset)
+psql_test < "$v05_migration" >/dev/null || fail 'V05 nao aplicou'
+psql_test < "$v05_migration" >/dev/null || fail 'V05 nao e replayavel (segunda aplicacao falhou)'
+
+# 1) CHECK com os 6 valores: 'auto_optout' (gravado pelo webhook de opt-out) entra
+psql_test -q -c "INSERT INTO public.talkx_blacklist(id, phone, origin) VALUES ('20000000-0000-0000-0000-0000000000a1','5511900000001','auto_optout')" >/dev/null \
+  || fail "origem 'auto_optout' recusada: o webhook de opt-out automatico quebraria"
+if psql_test -q -c "INSERT INTO public.talkx_blacklist(id, phone, origin) VALUES ('20000000-0000-0000-0000-0000000000a2','5511900000002','lixo')" >/dev/null 2>&1; then
+  fail 'origem invalida aceita: o CHECK de origem nao esta restringindo'
+fi
+
+# 2) indice unico parcial em phone: duas ATIVAS com o mesmo phone nao coexistem...
+if psql_test -q -c "INSERT INTO public.talkx_blacklist(id, phone) VALUES ('20000000-0000-0000-0000-0000000000a3','5511900000001')" >/dev/null 2>&1; then
+  fail 'duas supressoes ativas com o mesmo phone foram aceitas'
+fi
+# ...mas depois de remover a primeira, a re-supressao TEM de ser possivel (bug do soft-delete)
+psql_test -q -c "UPDATE public.talkx_blacklist SET removed_at = now() WHERE id = '20000000-0000-0000-0000-0000000000a1'" >/dev/null
+psql_test -q -c "INSERT INTO public.talkx_blacklist(id, phone) VALUES ('20000000-0000-0000-0000-0000000000a4','5511900000001')" >/dev/null \
+  || fail 're-supressao apos remocao bloqueada: o indice nao e parcial em removed_at'
+
+printf '[OK] Talk X blacklist V05: CHECK de origem (auto_optout) e unico parcial em phone vieram do SQL vivo.\n'
+
 printf '[OK] Talk X blacklist: ledger historico preservado e policy restrita por migration forward-only.\n'
