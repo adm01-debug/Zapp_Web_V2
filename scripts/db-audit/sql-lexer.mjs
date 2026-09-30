@@ -12,9 +12,10 @@
  *  - sqlTokens(): base do canonicalSql() de check-migration-drift.mjs
  *    (comparacao arquivo <-> ledger), que normaliza case e espacos.
  *  - stripSqlComments(): base da projecao forward-only do
- *    supabase-usage-guard.mjs, que remove comentarios e torna strings/corpos
- *    dollar-quoted opacos para que os regex de CREATE/DROP nao casem dentro
- *    deles.
+ *    supabase-usage-guard.mjs, que substitui comentarios por espaco (no SQL,
+ *    comentario vale como whitespace — nao pode colar tokens adjacentes) e
+ *    torna strings/corpos dollar-quoted opacos para que os regex de CREATE/DROP
+ *    nao casem dentro deles.
  */
 
 function scanSqlSegments(input) {
@@ -120,7 +121,11 @@ export function sqlTokens(input) {
 export function stripSqlComments(input) {
   return scanSqlSegments(input)
     .map((seg) => {
-      if (seg.type === 'line-comment' || seg.type === 'block-comment') return '';
+      // No SQL um comentario vale como whitespace: substituir por espaco (nao
+      // remover) preserva a separacao entre tokens adjacentes — CREATE/*c*/FUNCTION
+      // continua sendo CREATE FUNCTION, e dois '-' separados por comentario nao
+      // colam num '--'.
+      if (seg.type === 'line-comment' || seg.type === 'block-comment') return ' ';
       if (seg.type === 'dollar' || seg.type === 'quoted') return ' ';
       return seg.text;
     })
