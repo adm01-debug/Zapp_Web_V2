@@ -92,6 +92,10 @@ const suites: Record<string, Suite> = {
     { payload: {}, hint: 'identificação ausente' }] },
   GmailCronSyncHeadersSchema: { schema: S.GmailCronSyncHeadersSchema, valid: [{ 'x-cron-secret': 's' }], invalid: [
     { payload: {}, hint: 'ausente' }, { payload: { 'x-cron-secret': '' }, hint: 'vazio' }] },
+  ConnectionHealthCheckHeadersSchema: { schema: S.ConnectionHealthCheckHeadersSchema, valid: [{ 'x-cron-secret': 's' }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { 'x-cron-secret': '' }, hint: 'vazio' }] },
+  AvatarsRefreshHeadersSchema: { schema: S.AvatarsRefreshHeadersSchema, valid: [{ 'x-cron-secret': 's' }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { 'x-cron-secret': '' }, hint: 'vazio' }] },
 };
 
 describe('cobertura de contrato por schema', () => {

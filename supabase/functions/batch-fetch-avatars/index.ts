@@ -1,19 +1,75 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { evoFetch, extractAvatarUrl } from '../_shared/evolution-send.ts';
 import { avatarObjectPath } from '../_shared/evolution-helpers.ts';
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+import { getCorsHeaders, handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 
-Deno.serve(async (req) => {
+function timingSafeStringEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const ab = enc.encode(a);
+  const bb = enc.encode(b);
+  if (ab.length !== bb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
+  return diff === 0;
+}
+
+export async function handleBatchFetchAvatars(
+  req: Request,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _injected?: { supabase?: any; serviceKey?: string },
+): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
   const log = new Logger("batch-fetch-avatars");
+  const headers = { ...getCorsHeaders(req), "Content-Type": "application/json" };
 
   try {
+    // O `??` preserva a criacao PREGUICOSA: com `_injected.supabase` (testes) o
+    // requireEnv('SUPABASE_URL') nem roda. O `as SupabaseClient` existe porque
+    // `_injected?.supabase` e `any` e, sozinho, alargaria o tipo de `supabase` para
+    // `any` — com receiver `any` o TS perde a inferencia dos callbacks das queries
+    // abaixo (TS7006 em contacts.map/connections.map/batch.map). E anotacao de tipo,
+    // nao muda runtime.
+    const supabase = (_injected?.supabase
+      ?? createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'))) as SupabaseClient;
+    const serviceKey = _injected?.serviceKey ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+    // L5 da matriz IA-004: credencial de maquina do cron (x-cron-secret, segredo
+    // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU JWT de usuario autenticado.
+    // A ANON KEY deixa de entrar: ela e publica (vai no bundle do front, para qualquer
+    // visitante) e o gateway a aceitava como "um JWT valido", entao qualquer anonimo
+    // passava daqui. O x-cron-secret e conferido ANTES do guard de Bearer para o
+    // pg_cron (job avatars-refresh, de hora em hora) chegar; o getUser recusa a anon
+    // key porque ela nao tem usuario. Fail-closed: se a RPC do Vault falhar, isCronAuth
+    // fica false e a chamada segue para o caminho de JWT.
+    // O caminho de Bearer e o consumidor legitimo do front (useNewConversation e
+    // useInboxBulkActions chamam via supabase.functions.invoke com o JWT da sessao).
+    const cronSecretHeader = req.headers.get('x-cron-secret');
+    let isCronAuth = false;
+    if (cronSecretHeader) {
+      const { data: vaultSecret, error: rpcError } = await supabase.rpc('get_avatars_refresh_cron_secret');
+      if (!rpcError && typeof vaultSecret === 'string') {
+        isCronAuth = timingSafeStringEqual(cronSecretHeader, vaultSecret);
+      }
+    }
+    if (!isCronAuth) {
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader?.startsWith('Bearer ')) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+      }
+      const token = authHeader.slice(7);
+      if (!timingSafeStringEqual(token, serviceKey)) {
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        if (authError || !user) {
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+        }
+      }
+    }
+
     const ip = getClientIP(req);
     const rl = checkRateLimit(`batch-avatars:${ip}`, 5, 60_000);
     if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
-    const supabase = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
 
     // Backoff: nao reprocessar ocultos/sem-foto por 7 dias.
     // NULL = nunca tentado (sempre entra); contatos novos entram automaticamente.
@@ -108,4 +164,8 @@ Deno.serve(async (req) => {
     log.error("Batch avatar error", { error: msg });
     return errorResponse(msg, 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve((req) => handleBatchFetchAvatars(req));
+}

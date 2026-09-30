@@ -83,6 +83,46 @@ vault (`supabase/migrations/20260927320000_multiplix_cron_scheduler.sql`). Rotac
 
 6. **Registrar** data, operador e motivo (issue de segurança), sem incluir o valor.
 
+## Segredos autocontidos (padrão Multiplix) — rotação em UM lugar só
+
+Os jobs abaixo **não** usam o regime de três cópias acima. A edge lê o valor do Vault a
+cada chamada (RPC `SECURITY DEFINER`) e o pg_cron lê a subquery do Vault a cada tick:
+o valor existe em um lugar só, e rotacionar é um único `UPDATE`.
+
+| Segredo (Vault) | Quem usa | RPC de leitura | Job do pg_cron |
+|---|---|---|---|
+| `multiplix_cron_secret` | edge `multiplix-send` | `get_multiplix_cron_secret()` | `multiplix-send-trigger` |
+| `connection_health_check_cron_secret` | edge `connection-health-check` | `get_connection_health_check_cron_secret()` | `connection-health-check` |
+| `avatars_refresh_cron_secret` | edge `batch-fetch-avatars` | `get_avatars_refresh_cron_secret()` | `avatars-refresh` |
+
+**Procedimento (sem janela de indisponibilidade: as duas pontas releem a cada chamada):**
+
+1. Gerar o novo valor **dentro do banco** (nunca em shell/histórico/argv):
+
+   ```sql
+   SELECT vault.update_secret(
+     (SELECT id FROM vault.secrets WHERE name = 'connection_health_check_cron_secret'),
+     encode(extensions.gen_random_bytes(32), 'hex')
+   );
+   ```
+
+   Para criar do zero (fresh db), `SELECT vault.create_secret(encode(extensions.gen_random_bytes(32), 'hex'), '<nome>');`.
+
+2. Validar no próximo tick (≤5 min para o health check, ≤1 h para os avatars):
+   `cron.job_run_details` mostra `succeeded` (o `net.http_post` saiu) e o log da edge
+   mostra `200`. Se a edge responder `401`, o segredo gravado e o do job divergiram —
+   conferir se a migration `20260930250000_reschedule_cron_secrets_l5.sql` está aplicada.
+
+3. Registrar data, operador e motivo, sem o valor.
+
+**Nunca** imprimir o valor: nem em `RAISE NOTICE`, nem no `Logger` da edge, nem em PR.
+Os testes usam fixture fictícia. A ACL das RPCs é `REVOKE ALL FROM PUBLIC, anon,
+authenticated` + `GRANT EXECUTE TO service_role` — se essa ACL abrir, a credencial de
+máquina vira credencial de qualquer `authenticated`.
+
+O `gmail_cron_secret`/`CRON_SECRET` **continua** no regime de três cópias (seção acima)
+até migrar para este padrão numa tarefa própria.
+
 ## Rollback
 
 Reaplicar os passos 2–4 com o valor anterior **apenas** se o novo valor foi perdido antes

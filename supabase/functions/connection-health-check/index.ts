@@ -1,19 +1,70 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
+import { getCorsHeaders, handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 import { escapeHtml } from '../_shared/notification-events.ts';
 import { EMAIL_FONT_STACK } from '../_shared/email-font-stack.ts';
 
-Deno.serve(async (req) => {
+function timingSafeStringEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const ab = enc.encode(a);
+  const bb = enc.encode(b);
+  if (ab.length !== bb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
+  return diff === 0;
+}
+
+export async function handleConnectionHealthCheck(
+  req: Request,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _injected?: { supabase?: any; serviceKey?: string },
+): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
   const log = new Logger("connection-health-check");
+  const headers = { ...getCorsHeaders(req), "Content-Type": "application/json" };
 
   try {
+    // O `as SupabaseClient` e preciso: `_injected?.supabase` e `any` e, sem a anotacao,
+    // o receiver `any` faz o TS perder a inferencia dos callbacks do client (TS7006/TS7031
+    // no corpo que nao mudou). O `??` continua preguicoso de proposito: os testes injetam
+    // o client e rodam sem SUPABASE_URL.
+    const supabase = (_injected?.supabase
+      ?? createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'))) as SupabaseClient;
+    const serviceKey = _injected?.serviceKey ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+    // L5 da matriz IA-004: credencial de maquina do cron (x-cron-secret, segredo
+    // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU JWT de usuario autenticado.
+    // A ANON KEY deixa de entrar: ela e publica (vai no bundle do front) e o gateway a
+    // aceitava como "um JWT valido", entao qualquer visitante anonimo passava daqui.
+    // O x-cron-secret e conferido ANTES do guard de Bearer para o pg_cron chegar; o
+    // getUser recusa a anon key porque ela nao tem usuario. Fail-closed: se a RPC do
+    // Vault falhar, isCronAuth fica false e a chamada segue para o caminho de JWT.
+    const cronSecretHeader = req.headers.get('x-cron-secret');
+    let isCronAuth = false;
+    if (cronSecretHeader) {
+      const { data: vaultSecret, error: rpcError } = await supabase.rpc('get_connection_health_check_cron_secret');
+      if (!rpcError && typeof vaultSecret === 'string') {
+        isCronAuth = timingSafeStringEqual(cronSecretHeader, vaultSecret);
+      }
+    }
+    if (!isCronAuth) {
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader?.startsWith('Bearer ')) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+      }
+      const token = authHeader.slice(7);
+      if (!timingSafeStringEqual(token, serviceKey)) {
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        if (authError || !user) {
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+        }
+      }
+    }
+
     const evolutionUrl = requireEnv('EVOLUTION_API_URL');
     const evolutionKey = requireEnv('EVOLUTION_API_KEY');
-    const supabase = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
     const baseUrl = evolutionUrl.replace(/\/+$/, '');
 
     const { data: connections, error: connError } = await supabase
@@ -151,4 +202,8 @@ Deno.serve(async (req) => {
     log.error("Health check error", { error: msg });
     return errorResponse(msg, 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve((req) => handleConnectionHealthCheck(req));
+}

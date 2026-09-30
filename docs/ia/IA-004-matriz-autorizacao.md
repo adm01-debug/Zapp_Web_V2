@@ -390,8 +390,17 @@ Cada item é uma asserção que **deve falhar** (retornar negação). Formato: a
 
 - **N/V**: políticas de leitura de object storage de áudio (`whatsapp-media`) não foram lidas linha a
   linha; a evidência de bucket restringe o **download pela função**, não a policy de `storage.objects`.
-- O `supabase/deployment-manifest.json` no HEAD desta cópia traz `67 / 57 / 10`, enquanto o
-  `IA-001-referencia-de-execucao.md` (§3.1) registra `69 / 59 / 10`. **Divergência não reconciliada**
-  nesta etapa — registrada para não ser varrida para baixo do tapete.
+- O `supabase/deployment-manifest.json` no HEAD desta cópia trazia `67 / 57 / 10` e passou a
+  `67 / 55 / 12` com o fechamento da **L5** (as edges `connection-health-check` e
+  `batch-fetch-avatars` deixaram de depender do `verify_jwt` do gateway e ganharam guarda
+  interna), enquanto o `IA-001-referencia-de-execucao.md` (§3.1) registra `69 / 59 / 10`.
+  **Divergência não reconciliada** nesta etapa — registrada para não ser varrida para baixo
+  do tapete.
+- **L5 fechado** na série de endurecimento: `connection-health-check` e `batch-fetch-avatars`
+  passam a exigir credencial de máquina dedicada (`x-cron-secret`, segredo próprio no Vault
+  lido por RPC `SECURITY DEFINER`) ou JWT de usuário autenticado, e **recusam a `anon key`**
+  — que é pública (vai no bundle) e o gateway aceitava como "um JWT válido". Migrations
+  `20260930240000_cron_secret_dedicado_l5.sql` e `20260930250000_reschedule_cron_secrets_l5.sql`;
+  rotação em `docs/runbooks/cron-secret-rotation.md` (seção "Segredos autocontidos").
 - Nenhum valor de segredo foi impresso; as referências apontam apenas linhas com *nomes* de
   secret/coluna e predicados de permissão.
