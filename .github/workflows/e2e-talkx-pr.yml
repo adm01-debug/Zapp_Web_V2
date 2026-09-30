@@ -1,0 +1,65 @@
+# ==========================================================================
+# ZAPP-WEB · E2E Talk X em PR (Playwright, login real, NÃO required)
+# ==========================================================================
+# Complementa e2e-logado.yml (que roda só na main). Este roda o spec do Talk X
+# nos 3 browsers quando um branch de PR toca arquivos do Talk X — antes do merge.
+#
+# SEGURANCA: deliberadamente usa `push` (branches de colaboradores confiáveis,
+# que é quem empurra os branches hermes/* claude/* codex/*) e NAO `pull_request`,
+# porque scripts/ci/check-pr-workflow-secrets.mjs proíbe `pull_request` + secrets.
+# `push` com branches-ignore:main + paths é o equivalente seguro: o job só roda
+# quando um colaborador empurra um branch não-main que altera o Talk X, e o
+# secret E2E_TEST_* não vaza para código de fork.
+#
+# NÃO é required no branch protection — é informativo (mesmo status do
+# e2e-logado.yml pós-merge). "required após 2 semanas verde" é critério da V92.
+# ==========================================================================
+
+name: E2E Talk X (PR)
+
+on:
+  push:
+    branches-ignore:
+      - main
+    paths:
+      - 'src/components/talkx/**'
+      - 'src/hooks/integrations/useTalkX*'
+      - 'supabase/functions/talkx-*'
+      - 'e2e/talkx.spec.ts'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-talkx-pr-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  e2e-talkx-pr:
+    name: 🎭 E2E Talk X (PR, 3 browsers)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: 📥 Checkout confiável
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🥖 Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+
+      - name: 📦 Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
+        run: bunx playwright install --with-deps chromium firefox webkit
+
+      - name: 📐 Run Playwright E2E Talk X (login real, 3 browsers)
+        run: bun run test:e2e -- --project=setup --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx talkx.spec.ts
+        env:
+          CI: true
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}

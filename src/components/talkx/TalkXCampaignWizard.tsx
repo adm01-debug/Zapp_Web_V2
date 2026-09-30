@@ -237,7 +237,7 @@ function StepAudience({ ed }: { ed: WizardState }) {
           <div>
             <Label className="text-xs text-foreground-secondary">Conexão WhatsApp</Label>
             <Select value={ed.connectionId} onValueChange={ed.setConnectionId}>
-              <SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue placeholder="Selecione…" /></SelectTrigger>
+              <SelectTrigger aria-label="Conexão WhatsApp" className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue placeholder="Selecione…" /></SelectTrigger>
               <SelectContent>
                 {(ed.connections ?? []).map((c) => <SelectItem key={c.id} value={c.id}>{c.name} ({c.phone_number || 'sem número'})</SelectItem>)}
               </SelectContent>
