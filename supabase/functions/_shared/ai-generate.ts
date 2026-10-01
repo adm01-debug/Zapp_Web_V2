@@ -31,6 +31,12 @@
  * 10. NÃO lança por falha de provedor — devolve `ok:false`. Só lança erro de
  *     programação (parâmetro obrigatório ausente/com tipo inválido).
  *
+ * IA-033 (resolução por MODALIDADE): quando `need.modality` é não-texto, o provedor é
+ * escolhido entre as linhas ATIVAS que DECLARAM todas as modalidades exigidas
+ * (`declaredCapabilities`) — SEM exigir `is_default`, porque o DeepSeek segue dono do
+ * texto. Nenhum candidato → NO_PROVIDER (falha fechada); mais de um → AMBIGUOUS_PROVIDER
+ * (nunca sortear). `purpose` continua validada/usada e `logAiUsage` cobre todos os desfechos.
+ *
  * Diferença esperada em relação aos módulos puros (`ai-routing`/`ai-capabilities`):
  * aqui usa-se `Deno.env`, `fetch` e o client Supabase com service role.
  *
@@ -46,6 +52,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import {
   AiRoutingError,
+  AI_PURPOSES,
   composeMessages,
   filterConfigBody,
   filterExtraBody,
@@ -59,8 +66,10 @@ import {
 import {
   AiCapabilityError,
   assertCapabilities,
+  declaredCapabilities,
   type AiCapabilityErrorCode,
   type AiCapabilityNeed,
+  type AiModality,
 } from "./ai-capabilities.ts";
 import {
   callCustomWebhook,
@@ -214,7 +223,7 @@ function requireSecret(secretName: string | null, label: string): string {
 interface DispatchArgs {
   provider: AiProviderRow;
   model: string | null;
-  messages: Array<{ role: string; content: string }>;
+  messages: Array<{ role: string; content: unknown }>;
   tools: unknown[] | null;
   toolChoice: unknown;
   extraBody: Record<string, unknown> | null;
@@ -300,6 +309,48 @@ function buildDispatch(args: DispatchArgs): () => Promise<Response> {
     default:
       throw new ProviderConfigError(`Tipo de provedor nao suportado: ${provider.provider_type} (${label}).`);
   }
+}
+
+/**
+ * Escolhe o provedor por MODALIDADE DECLARADA (IA-033 — visão/áudio).
+ *
+ * Vive AQUI (e não em `ai-routing.ts`) porque depende de `declaredCapabilities`
+ * de `./ai-capabilities.ts` — manter o módulo puro de roteamento livre dessa
+ * dependência (o desenho congelado). Sem `providerId` e SEM exigir `is_default`:
+ * a modalidade é o critério, não o padrão de texto (o DeepSeek segue dono do
+ * texto). Falha FECHADA: nenhum candidato → NO_PROVIDER; mais de um → o
+ * AMBIGUOUS_PROVIDER de sempre (nunca sortear a ordem do banco).
+ */
+function resolveProviderByModalities(
+  rows: AiProviderRow[],
+  requiredModalities: readonly AiModality[],
+): AiProviderRow {
+  const list: AiProviderRow[] = Array.isArray(rows) ? rows : [];
+  const lista = requiredModalities.join(', ');
+
+  const candidates = list.filter(
+    (row) =>
+      row?.is_active === true &&
+      requiredModalities.every((modality) =>
+        declaredCapabilities(row).modalities.includes(modality),
+      ),
+  );
+
+  if (candidates.length === 0) {
+    throw new AiRoutingError(
+      'NO_PROVIDER',
+      `Nenhum provedor ativo declara as modalidades exigidas: ${lista}.`,
+    );
+  }
+  if (candidates.length > 1) {
+    // Ordena só para a mensagem: a decisão não pode depender da ordem do banco.
+    const ids = candidates.map((row) => row.id).sort().join(', ');
+    throw new AiRoutingError(
+      'AMBIGUOUS_PROVIDER',
+      `Mais de um provedor ativo declara as modalidades exigidas (${lista}): ${ids}. Desative/remova o provedor duplicado.`,
+    );
+  }
+  return candidates[0];
 }
 
 /**
@@ -407,10 +458,29 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
   // --- (1)(2) provedores do banco + roteamento determinístico -----------------
   const { rows } = await loadProviders();
 
+  // IA-033: a modalidade exigida (quando há) RESTRINGE o conjunto de provedores.
+  // Texto puro cai no caminho de sempre (`resolveProvider` + is_default = DeepSeek);
+  // qualquer modalidade não-texto (visão/áudio) resolve por capacidade declarada.
+  const requestedModality: AiModality | undefined = params.need?.modality;
+  const requiredModalities: AiModality[] = requestedModality ? [requestedModality] : [];
+  const usesNonTextModality = requiredModalities.some((modality) => modality !== 'text');
+
   let provider: AiProviderRow;
   let routing: ReturnType<typeof resolveModel>;
   try {
-    provider = resolveProvider(rows, purpose);
+    if (usesNonTextModality) {
+      // O caminho por modalidade não passa por `resolveProvider`, então a
+      // finalidade é validada aqui — `purpose` continua obrigatória e válida.
+      if (!(AI_PURPOSES as readonly string[]).includes(purpose)) {
+        throw new AiRoutingError(
+          'BAD_PURPOSE',
+          `Finalidade de IA inválida: ${String(purpose)}.`,
+        );
+      }
+      provider = resolveProviderByModalities(rows, requiredModalities);
+    } else {
+      provider = resolveProvider(rows, purpose);
+    }
     // (4) modelo sempre decidido pelo servidor: o `model` do cliente não existe aqui.
     routing = resolveModel(provider, null);
   } catch (err) {
@@ -468,7 +538,7 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
       provider,
       model,
       // A política do servidor vai na posição 0; as mensagens do cliente não são mutadas.
-      messages: composeMessages(system, messages as Array<{ role: string; content: string }>),
+      messages: composeMessages(system, messages as Array<{ role: string; content: unknown }>),
       tools,
       toolChoice: params.toolChoice,
       extraBody,

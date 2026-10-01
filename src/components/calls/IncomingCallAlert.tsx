@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { CallDialog } from './CallDialog';
 import { useIncomingCallListener, type IncomingCall } from '@/hooks/communication/useIncomingCallListener';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
-import { useCalls } from '@/hooks/communication/useCalls';
+import { useCallSession } from '@/providers/CallSessionProvider';
 import { cn } from '@/lib/utils';
 
 import { getLogger } from '@/lib/logger';
@@ -28,7 +28,10 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
   function IncomingCallAlert(_props, ref) {
   const { incomingCall, dismissCall } = useIncomingCallListener();
   const { settings: notifSettings, isQuietHours } = useNotificationSettings();
-  const { answerCall, missCall } = useCalls();
+  // Atender/recusar falam com a MÁQUINA da sessão (o provider decide o desfecho:
+  // `accept()` → atendida, `reject()` → `declined` e persistência em `declined`).
+  // O componente não escreve mais direto na tabela `calls` (legado `useCalls`).
+  const { accept, reject } = useCallSession();
   const [showDialog, setShowDialog] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -75,21 +78,18 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
     }
   }, [incomingCall, showDialog, notifSettings.soundEnabled, notifSettings.soundVolume, isQuietHours]);
 
-  // Auto-dismiss após 30s sem resposta — não roda quando já atendida
-  // (senão a chamada em andamento some da tela sozinha).
-  useEffect(() => {
-    if (!incomingCall || showDialog) return;
-    const timeout = setTimeout(dismissCall, 30000);
-    return () => clearTimeout(timeout);
-  }, [incomingCall, showDialog, dismissCall]);
+  // O timeout de toque NÃO mora mais aqui: quem conta os 30s é a máquina da sessão
+  // (provider). O alerta só reage — quando a chamada sai de `ringing_in` o listener
+  // deixa de entregá-la e o `if (!incomingCall) return null` abaixo o remove. Nada de
+  // decidir desfecho por tempo na UI.
 
   const handleAnswer = () => {
-    if (incomingCall?.callId) answerCall(incomingCall.callId);
+    if (incomingCall?.callId) void accept();
     setShowDialog(true);
   };
 
   const handleDecline = () => {
-    if (incomingCall?.callId) missCall(incomingCall.callId);
+    void reject();
     dismissCall();
   };
 

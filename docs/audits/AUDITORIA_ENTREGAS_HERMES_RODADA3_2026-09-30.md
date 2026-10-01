@@ -167,3 +167,68 @@ Escopo pedido: provar que **R3-01 (#1380), R3-02 (#1392), R3-03 (#1397) e R3-06 
 
 **Veredito da verificação.** As quatro correções estão **no ar**, cada uma no chunk da sua tela, consumindo o util compartilhado, e **nenhuma delas carrega o padrão antigo**. Fica aberto como candidato: o `in_last_days` do TalkX (filtro de audiência).
 
+### 9.1 Verificação de produção — decisão `8ea1` (TalkX `in_last_days` e Telemetria `7d`)
+
+**Medição de 01/10/2026, ~23:17Z, somente leitura**, sobre o bundle **servido** por `https://zapp-web-v2.vercel.app`.
+Deploy de produção medido: **`a5116ae31743`** (Vercel, `2026-10-01T23:07:23Z`; `index.html` servido com `last-modified 23:07:33Z`),
+e ele contém **os dois** merges desta decisão — `compare a5116ae3…f9900f52ba` = `behind, frente=0` (item 1),
+`compare a5116ae3…bf70beaf` = `behind, frente=0` (item 2) — com o deploy `identical` à `main`.
+
+Artefatos: `index.html` (6.640 B, sha256 `8c49acee50f99a5b…`) + entry `assets/index-IWph2-N_.js`; o grafo de chunks foi
+percorrido por BFS (manifesto do entry + referências `./`, `assets/` e nomes nus dentro de cada chunk):
+**386 chunks, 8,4 MB, 0 falhas de download**.
+
+**Item 1 — `useTalkXSegments` (`in_last_days` / `not_in_last_days`) — NO AR.** Uma única implementação no bundle
+(`in_last_days` aparece em **1** dos 386 chunks): `TalkXView-LJo2dkM-.js` (261.690 B, sha256 `e37110c788a21b7a…`):
+
+```js
+… ,Gn=`America/Sao_Paulo`,Kn=[…]                                            // fuso do segmento, explícito
+date:[{value:`in_last_days`,label:`nos últimos (dias)`},{value:`not_in_last_days`,label:`há mais de (dias)`}]
+case`in_last_days`:{let t=Number(n);return t?`${e.field}.gte.${c(Gn,t-1)}`:null}
+case`not_in_last_days`:{let t=Number(n);return t?`${e.field}.lt.${c(Gn,t-1)}`:null}
+```
+
+O filtro é montado chamando um helper **com o fuso de São Paulo como argumento** (`c(Gn, dias−1)`) — o helper de dia
+ancorado no fuso, cuja maquinaria está no mesmo chunk (`function kr(e,t){…new Intl.DateTimeFormat('en-CA',{timeZone:t,…hourCycle:'h23'}).formatToParts(…)…}`,
+mais `Pr`/`Fr` com sondagem de offset). A janela móvel antiga **desapareceu do bundle**: `d * 86_400_000` → **0 chunks**.
+
+**Item 2 — Telemetria, `'7d'` = 7 dias de calendário — NO AR.** `AdminTelemetriaPage-7BkCwAb2.js` (15.546 B, sha256 `58ee910a6e29cc43…`):
+
+```js
+function $(e,t=new Date){let n={"1h":1,"6h":6,"24h":24}[e];
+  return n?new Date(t.getTime()-n*36e5).toISOString():g(_(t,6)).toISOString()}
+```
+
+Cadeia dos helpers, fechada em código de produção (não em nome de chunk):
+
+```
+AdminTelemetriaPage-…: import{et as g, f as _, …}from"./vendor-utils-CROwA8Ot.js"
+vendor-utils-CROwA8Ot: export{… b as et … En as f …}
+vendor-utils-CROwA8Ot: function b(t){let n=e(t);return n.setHours(0,0,0,0),n}   // startOfDay
+vendor-utils-CROwA8Ot: function En(e,t){return n(e,-t)}                         // subDays
+```
+
+Ou seja, `'7d'` → **`startOfDay(subDays(agora, 6))`** = 7 dias de **calendário** no fuso do navegador (igual ao R3-06),
+enquanto `1h/6h/24h` seguem janelas corridas em horas (o rótulo promete horas). Nessa função **não há `6048e5`**;
+o único `6048e5` do chunk está na **limpeza/retenção** — `…from('query_telemetry').delete().lt('created_at', new Date(Date.now()-6048e5)…)` —
+que é exatamente o achado de retenção **registrado e deixado fora do escopo** por decisão do plano.
+
+**Ausências varridas nos 386 chunks:** `d * 86_400_000` → **0**; `setHours(new Date(` → **0** (o defeito do R3-01 continua fora do ar);
+`6048e5` → 13 chunks, todos explicáveis por date-fns (`c=6048e5`, constante de dias) ou por retenção/limpeza — nenhum sob rótulo de dias nos caminhos dos dois itens.
+
+**Achados novos, mesma família, NÃO corrigidos** (para triagem do Claude; fora do escopo deste plano):
+
+1. **Painel de campanhas do TalkX** (`TalkXView-LJo2dkM-.js`, componente `Si({campaigns})`) — é o "`X*864e5` residual" que o §9 acima apontava sem identificar.
+   Rótulo em **dias**, aritmética em **horas corridas**:
+   ```js
+   var yi={"7d":`Últimos 7 dias`,"30d":`Últimos 30 dias`,"90d":`Últimos 90 dias`}, bi={"7d":7,"30d":30,"90d":90}, …
+   let a=bi[t], s=useMemo(()=>new Date(o-a*864e5),[o,a]), c=…filter(e=>!e.started_at||new Date(e.started_at)>=s)
+   ```
+2. **Rótulos "Últimos N dias" aparecem em 11 chunks** (`PeriodSelector`, `PeriodFilterSelector`, `HistoryTab`, `AdvancedReportsView`,
+   `AIUsageDashboard`, `DashboardView`, `ChatPanel`, `GlobalSearch`, `ExternalProductManagement`, `SentimentAlertsDashboard`, `TalkXView`).
+   Este documento **não** julga esses 11: é uma varredura de seletores de período, trabalho de triagem com identidade própria. Fica registrado para não se perder.
+
+**Observação de método — build não determinista.** Neste build o util de data **não** é chunk próprio: está *inlined* nos consumidores
+(`TalkXView-…` e `useMyWorkItems-DS3gGdu2.js` carregam `en-CA` + `formatToParts`), enquanto no build do §9 acima ele era `localDay-*.js`.
+Prova de produção aqui é **semântica** (chamada, argumento de fuso, ausência do padrão antigo), nunca por nome de chunk.
+

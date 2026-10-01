@@ -191,19 +191,41 @@ describe('CT-52 — o envio leva o contato do painel como presetContact', () => 
     expect(dialog).toHaveAttribute('data-contact-avatar', '');
   });
 
-  // Comportamento REAL do código: o botão NÃO é condicionado ao telefone —
-  // ele sempre renderiza e leva o contato (com telefone vazio) como preset.
-  // (Ver relatório: divergência com a expectativa "não aparece quando não há
-  // telefone" — o código não tem esse guard.)
-  it('sem telefone, o botão continua presente e o presetContact leva telefone vazio', async () => {
+  // Decisão de produto (Joaquim, 01/10/2026): sem WhatsApp não há como enviar
+  // produto — o botão fica DESABILITADO e explica o motivo. O critério de
+  // "tem WhatsApp" é o mesmo do resto do app: `normalizeE164BR` de
+  // src/lib/calls/phone.ts (telefone inutilizável → null).
+  it('sem telefone, o botão fica DESABILITADO com o aviso "Contato sem WhatsApp"', () => {
     renderPanel(makeContact({ phone: '' }));
 
-    expect(screen.getByRole('button', { name: /Enviar produto/i })).toBeInTheDocument();
+    const botao = screen.getByRole('button', { name: /Enviar produto/i });
+    expect(botao).toBeDisabled();
+    expect(screen.getByTitle('Contato sem WhatsApp')).toBeInTheDocument();
+
+    // e o catálogo NÃO abre: o envio fica bloqueado de verdade
+    fireEvent.click(botao);
+    expect(screen.queryByRole('button', { name: 'Abrir envio p1' })).not.toBeInTheDocument();
+  });
+
+  it('telefone inválido (curto/lixo) também desabilita o envio', () => {
+    renderPanel(makeContact({ phone: '123' }));
+
+    const botao = screen.getByRole('button', { name: /Enviar produto/i });
+    expect(botao).toBeDisabled();
+    expect(screen.getByTitle('Contato sem WhatsApp')).toBeInTheDocument();
+  });
+
+  it('telefone válido mantém o envio habilitado e envia para o contato do painel', async () => {
+    renderPanel(makeContact({ phone: '5541999990000' }));
+
+    const botao = screen.getByRole('button', { name: /Enviar produto/i });
+    expect(botao).toBeEnabled();
+    expect(screen.queryByTitle('Contato sem WhatsApp')).not.toBeInTheDocument();
 
     await enviarProduto();
 
     const dialog = await screen.findByTestId('send-dialog');
     expect(dialog).toHaveAttribute('data-contact-id', 'c9');
-    expect(dialog).toHaveAttribute('data-contact-phone', '');
+    expect(dialog).toHaveAttribute('data-contact-phone', '5541999990000');
   });
 });

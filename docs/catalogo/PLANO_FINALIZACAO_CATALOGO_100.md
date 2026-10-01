@@ -392,7 +392,17 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   registrar na §10. **Aceite:** texto na §10.
 - [ ] **CT-52** — Botão "Enviar produto" no header do contato → `ExternalProductCatalog` com `presetContact` (CT-14).
   **Aceite:** evento em `catalog_send_events` com `contact_id` do perfil.
-- [ ] **CT-53** — Mesmo botão no CRM 360 (se a tela existir; senão registrar). **Aceite:** idem ou nota.
+- [x] **CT-53** — Mesmo botão no CRM 360 (se a tela existir; senão registrar). **Aceite:** idem ou nota.
+  **Nota (01/10/2026) — NÃO existe ponto de extensão; nada foi inventado.** O CRM 360 é um explorador
+  **somente-leitura de um banco CRM externo** (`useExternalTableBrowser` / `ExternalTableName`), não uma tela de perfil:
+  não há cabeçalho/detalhe de contato. A pasta `src/components/crm360/` contém só `CRM360ExplorerView.tsx` (header + abas +
+  `DataExplorerTable`), `CRM360StatsCards.tsx`, `DataExplorerTable.tsx` (tabela genérica), `CompanyFormDialog.tsx`,
+  `ContactFormDialog.tsx`, `crm360TabsConfig.ts` e `crm360TabsData.ts`. A aba "Contatos"
+  (`crm360TabsData.ts:26-37`) lista colunas do CRM (nome/cargo/departamento/estágio/score), **sem telefone/WhatsApp**, e o
+  clique na linha abre o `ContactFormDialog` (form de edição do CRM externo — `first_name`/`last_name`/`cpf`/…), que **não
+  carrega `contact_id` do Zapp nem telefone**. O envio de produto (`SendProductDialog`/`catalog_send_events`) exige um
+  contato do Zapp; adicionar o botão ali exigiria uma vinculação CRM→Zapp que não existe hoje. Portanto: **sem botão no
+  CRM 360** (não se inventa tela).
 - [ ] **CT-54** — Histórico "Produtos enviados" no perfil do contato (lista de `catalog_send_events` por `contact_id`,
   RLS já cobre). **Aceite:** teste RTL com mock.
   **🟡 DECISÃO (Joaquim, 01/10/2026):** o histórico por contato será **por agente na v1**; a visão de equipe fica para
@@ -412,8 +422,14 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 - [ ] **CT-57** — Aba "Enviados": `TalkXTable` sobre `catalog_send_events` (produto, contato, agente, modelo, fotos,
   status, data) + filtros + export CSV (CT-20); contagem nas 3 abas; deep link `?tab=`. **Aceite:** teste RTL; URL
   reflete a aba.
-- [ ] **CT-58** — Abas com `DashboardTabs` (reuso) em vez de `Tabs` cru, se o componente aceitar 3 itens sem mudança;
+- [x] **CT-58** — Abas com `DashboardTabs` (reuso) em vez de `Tabs` cru, se o componente aceitar 3 itens sem mudança;
   senão manter e registrar. **Aceite:** decisão na §10.
+  **✅ DECISÃO (01/10/2026): manter o `Tabs` cru do shadcn — `DashboardTabs` NÃO serve (medido).** Ele renderiza
+  `{label}` e **nenhum `children`** (`src/components/dashboard/overview/DashboardTabs.tsx:40-41`), então reusá-lo
+  **apagaria silenciosamente** os 3 badges `TabCount` do gerenciador (`ExternalProductManagement.tsx:599`, `:604`,
+  `:611`), sem erro nenhum; e ele **não é** provider `Tabs` (é montado **dentro** de um `<Tabs>` externo em
+  `DashboardView.tsx:151-152`), logo trocar o `<Tabs>` quebra o contexto Radix. Ainda arrastaria o estilo do dashboard
+  para o catálogo. **Nenhum código das abas foi alterado.** Justificativa completa na §10.
 - [x] **CT-59** — Estados de erro por código da edge: `CATALOG_UPSTREAM_ERROR` → `TalkXDataUnavailableState`
   ("Catálogo PromoGifts indisponível" + Tentar de novo); `CATALOG_NOT_CONFIGURED`/`CREDENTIALS_INVALID` → estado
   para admin com o código; 429 → toast "Muitas requisições, aguarde 1 min" + botões desabilitados 10 s. **Aceite:**
@@ -445,17 +461,45 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   com a razão comentada no código (`ExternalProductCatalog.tsx:239-254`, `ExternalProductManagement.tsx:480-497`).
   **Para fechar:** agregado de fornecedor na edge/PromoGifts (`suppliers.products_count` ou RPC) — sistema **externo**,
   logo depende da decisão pendente sobre DDL no PromoGifts. Fecha em 1 linha quando existir: `countLabel(s.name, s.products_count)`.
-- [ ] **CT-61** — Atalhos: `/` foca a busca, `Esc` limpa, `⌘F` foca. **Aceite:** teste RTL.
-- [ ] **CT-62** — `ExternalProductManagement.tsx`: filtros em `useReducer` único (a reescrita adiada na E06), zerar os
+- [x] **CT-61** — Atalhos: `/` foca a busca, `Esc` limpa, `⌘F` foca. **Aceite:** teste RTL.
+  **✅ FEITO — provado em 01/10/2026.** Atalhos nas **duas** telas: a página (`ExternalProductManagement.tsx`, input
+  com `ref` e listener em `~:674-705`) e o Sheet do chat (`ExternalProductCatalog.tsx`, input com `ref` e listener em
+  `~:185-214`, ativo **só com o dialog aberto** via `if (!isOpen) return`). `/` e `Ctrl/Cmd+F` focam a busca; `Esc`
+  limpa. **O trap do `Cmd/Ctrl+F` nativo foi tratado:** o listener é de **captura** no `window` e chama
+  `event.preventDefault()` **antes** de focar — sem isso o "localizar" do browser abre e o app nem recebe o evento.
+  `/` é ignorado quando o alvo é `INPUT`/`TEXTAREA`/`contenteditable` (não rouba o foco de quem digita). Prova em
+  `__tests__/CT61_62_65_catalogFilters.test.tsx:236-331` (7 casos): o de `Cmd+F` **dispara o evento no `window` e afirma
+  que o `preventDefault` foi chamado** (`:251` e `:296`), o de `/` dentro de input afirma `defaultPrevented === false`
+  (`:288`), e o Sheet fechado não intercepta (`:322`).
+- [x] **CT-62** — `ExternalProductManagement.tsx`: filtros em `useReducer` único (a reescrita adiada na E06), zerar os
   4 `eslint-disable` e os `useEffect` de sincronização. **Aceite:** `grep -c eslint-disable` = 0 no arquivo;
   lint-ratchet `novas: 0`.
+  **✅ FEITO — provado em 01/10/2026.** `grep -c eslint-disable ExternalProductManagement.tsx`: **4 → 0**. Os 10
+  `useState` de filtro (search/categoria/fornecedor/onlyInStock/lowStock/isFeatured/isNew/orderBy/ascending/advFilters)
+  viraram um `useReducer` (`catalogFilterReducer`, `:195-283`) com ações tipadas e `initialCatalogFilters` (categoria
+  da URL, ordenação do sessionStorage). `buildFilters` (`:455`) passou a ler o estado do reducer e os 3 efeitos de
+  sincronização o consomem via **`buildFiltersRef`** (`:485-489`, mesmo padrão `doFetchRef` já usado no
+  `ExternalProductCatalog`) — sem stale closure e sem a deps instável. **O disable do deep link (`:590` antigo) NÃO era
+  de sincronização de filtro:** era do efeito de mount do `?product=&send=1` (CT-55); a supressão foi removida trocando
+  a dep real (`fetchProduct`, estável por `useCallback`) — comportamento do deep link preservado (os 6 testes de CT-55
+  em `CT55_57_management.test.tsx:227-309` seguem verdes). **Prova:** `CT61_62_65_catalogFilters.test.tsx` — (a) marcar
+  "Novidades" → a consulta sai com `is_new: true` (`:176`); (b) "Limpar filtros" → a NOVA consulta sai **sem** `search`
+  e **sem** `is_new` (`:190`). **Prova por mutação:** trocar o case `isNew` para gravar `isFeatured` derruba os testes
+  (a) e CT-65 do chip; revertido com `patch` byte-idêntico. Suíte do módulo: **19 arquivos, 399 testes passando**;
+  `eslint` 0 problemas; `typecheck` exit 0.
 - [ ] **CT-63** — `Date.now()` fora do render (`ExternalProductManagement.tsx:54`, `SendProductDialog.tsx:147`) —
   inicializador de estado ou `useMemo` com `key`. **Aceite:** `grep "Date.now\|Math.random" src/components/catalog
   --include=*.tsx` (fora de testes) = 0.
 - [ ] **CT-64** — Filtro "Novidades" = `is_new OR created_at > now()-30d` (`new_or_recent` na edge) — deploy.
   **Aceite:** contagem bate com `new_30d` do stats.
-- [ ] **CT-65** — Chip de estado acima da grade quando filtro de flag ativo ("Mostrando só Novidades · limpar").
+- [x] **CT-65** — Chip de estado acima da grade quando filtro de flag ativo ("Mostrando só Novidades · limpar").
   **Aceite:** teste RTL.
+  **✅ FEITO — provado em 01/10/2026.** Chip `data-testid="catalog-flag-chip"` renderizado **acima da grade**
+  (`ExternalProductManagement.tsx:924-943`, logo antes do `<div ref={gridRef}>`), com o texto "Mostrando só Novidades
+  · limpar" e botão que despacha `{ type: 'isNew', value: false }`. **Guiado pelo `isNew` específico, não por
+  `hasFilters`** (que agrega busca textual/categoria/fornecedor — o chip apareceria só com uma busca digitada). Não se
+  tocou no bloco "Mostrando X–Y de Z" (é o contador de paginação). Testes em
+  `CT61_62_65_catalogFilters.test.tsx:214-235`: aparece/desliga com a flag e **não** aparece só com busca textual.
 - [ ] **CT-66** — Fechamento G: PR mergeada; `PARIDADE.md` seção "Topo" e "Grade" com prints 1920/1440/1280.
   **Aceite:** prints commitados.
 
@@ -609,6 +653,21 @@ Depois do bloco B, o chat abre o **mesmo** `SendProductDialog` da tela de catál
 `presetContact` = contato da conversa (pula o passo de contato) — ou seja, um único fluxo de envio,
 com fotos com caption (CT-04), throttle (CT-05), toasts `sonner` (CT-06), invalidação do rail
 (CT-07), checagem pré-envio (CT-08) e log em `catalog_send_events` (E28).
+
+### CT-58 — `DashboardTabs` não serve para as abas do gerenciador (medido em 01/10/2026, bloco G)
+
+O plano sugeria reusar `DashboardTabs` nas 3 abas do `ExternalProductManagement` **se o componente aceitasse 3 itens sem
+mudança**. **Não aceita — e o motivo é estrutural, não estético:**
+
+| Achado | Evidência | Consequência de reusar |
+|---|---|---|
+| `DashboardTabs` renderiza só `{label}` + ícone: **não recebe nem renderiza `children`** | `src/components/dashboard/overview/DashboardTabs.tsx:40-41` | os **3 badges `TabCount`** do gerenciador (`ExternalProductManagement.tsx:599`, `:604`, `:611`) **sumiriam sem erro** — o contador de produtos/favoritos/envios sai da UI |
+| **Não é** provider `Tabs` do Radix: é um `<TabsList>` montado **dentro** de um `<Tabs>` externo | `src/components/dashboard/DashboardView.tsx:151-152` monta o `<Tabs>` e passa o `<DashboardTabs>` | substituir o `<Tabs>` do gerenciador quebraria o contexto Radix (`TabsTrigger`/`TabsContent` exigem o provider) |
+| Arrasta o estilo do dashboard | leitura do componente | o catálogo perderia o visual atual das abas, sem ganho funcional |
+
+**DECISÃO: manter o `Tabs` cru do shadcn** em `ExternalProductManagement.tsx:594-1027` (o array de abas "aceita 3 itens"
+no sentido de dados, mas o **componente** do dashboard não serve). Nenhuma linha das abas foi alterada por causa do
+CT-58 — o aceite da etapa ("decisão na §10") está cumprido por este registro.
 
 ## 11. Mapa de PRs
 

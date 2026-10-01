@@ -656,6 +656,20 @@ Etapas 35–41 fechadas; 42 entregue (commit/PR/CI/merge), restando só o screen
 > `VITE_CRM_INTEGRATION_ENABLED=true node scripts/ci/bundle-budget.mjs` (o budget local sem esse env
 > nao acusa o estouro).
 
+## FASE I — Rede de testes (85-90)
+
+- 85 WorkItemCard.test.tsx: 11 casos (status, teclado com guarda de alvo, checkbox/contato, kebab
+  liberado, WIP) — 14/14 mutantes mortos pelo autor
+- 86 TasksListMode.test.tsx (8) + TasksModule.test.tsx +6 (defaultMode, ?view=pipeline forca Quadro
+  sem reescrever a preferencia, ?task= abre o Sheet, atalho N)
+- 87 resolveDragEnd extraido como funcao PURA em board/resolveDragEnd.ts + TasksBoardMode.test.tsx (10)
+- 88 TasksAgendaMode.test.tsx (7, relogio congelado) + WorkItemSheet.test.tsx +4 de borda
+- 89 numeros: chunk do modulo 12,2 KB gz (teto 45) · JS inicial 334,9/341 KB ·
+  NAO medido: seed de 300 tarefas e TTI dos 3 modos (dependem do login de QA)
+- 90 commit/PR/CI/merge
+- Evidencia: dominios 19 arquivos / 254 casos · suite 398 arquivos / 5219 testes / 0 falhas ·
+  typecheck 0 · lint-ratchet 0 novas · typecheck-ratchet 0 novas · implicit-any 0 · tipografia ok · db:guard ok
+
 ## Pendências / resíduos (honestos)
 - Push do navegador: decidir na etapa 64 (infra existe: usePushNotifications.ts, PushNotificationToggle.tsx — não avaliada)
 - Parser de linguagem natural: v2 (G-5)

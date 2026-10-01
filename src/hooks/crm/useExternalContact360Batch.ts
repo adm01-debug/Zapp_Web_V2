@@ -36,7 +36,7 @@ export function useExternalContact360Batch(contacts: Array<{ id: string; phone: 
   // canonical IDs but resolves the current phone server-side.
   const queryKey = stableContacts
     .map((contact) => `${contact.id}:${cleanPhone(contact.phone)}`)
-    .sort()
+    .sort((a, b) => a.localeCompare(b))
     .join(',');
 
   const query = useQuery<Map<string, CRMBatchResult>>({

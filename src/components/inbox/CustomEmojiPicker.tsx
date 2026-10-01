@@ -85,7 +85,7 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
     handleSend, toggleFavorite, handleCategoryChange, handleDelete, setPendingUpload,
   } = useCustomEmojis(open);
 
-  const categories = [...new Set(emojis.map(e => e.category).filter(Boolean))].sort();
+  const categories = [...new Set(emojis.map(e => e.category).filter(Boolean))].sort((a, b) => a.localeCompare(b));
   const filtered = emojis.filter(em => {
     const matchSearch = !search || em.name?.toLowerCase().includes(search.toLowerCase()) || em.category?.toLowerCase().includes(search.toLowerCase());
     if (showFavorites) return matchSearch && em.is_favorite;

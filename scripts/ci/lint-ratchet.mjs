@@ -211,7 +211,7 @@ function createSnapshot(report, root = process.cwd()) {
 
   files.sort((left, right) => left.path.localeCompare(right.path));
   issues.sort((left, right) => issueSortKey(left).localeCompare(issueSortKey(right)));
-  scannedFiles.sort();
+  scannedFiles.sort((a, b) => a.localeCompare(b));
 
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -386,7 +386,7 @@ export function compareBaseline(baseline, report, root = process.cwd()) {
     matchedCount: currentMatched.size,
     added,
     removed,
-    renameAliases: Object.fromEntries([...aliases.entries()].sort()),
+    renameAliases: Object.fromEntries([...aliases.entries()].sort((a, b) => a[0].localeCompare(b[0]))),
   };
 }
 

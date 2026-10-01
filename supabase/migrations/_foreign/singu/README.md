@@ -14,9 +14,9 @@ Extraídas ao vivo por `pg_get_functiondef` (sessão autorizada, somente leitura
 
 | função | arquivo | md5 (repo = banco) | bytes |
 |---|---|---|---|
-| `multiplix_search_audience` | `multiplix_search_audience.sql` | `6be9304afeb6d21bb8946d31d32b7a4d` | 4317 |
-| `multiplix_count_audience` | `multiplix_count_audience.sql` | `9d7d5fa744577ec7e01ac887b2e1bba7` | 2029 |
-| `multiplix_resolve_recipients` | `multiplix_resolve_recipients.sql` | `525e84b737a03959db8e9f5ddefbe274` | 4496 |
+| `multiplix_search_audience` | `multiplix_search_audience.sql` | `86fc1393286a2f0783d6bf50ec3c121e` | 4417 |
+| `multiplix_count_audience` | `multiplix_count_audience.sql` | `f123d5abf1065321692def6fb355ec22` | 2128 |
+| `multiplix_resolve_recipients` | `multiplix_resolve_recipients.sql` | `4badeb626e52a38a836aa5ead50a26c6` | 4594 |
 | `multiplix_list_ramos` | `multiplix_list_ramos.sql` | `133d1043dd4d96fe1a186ce66cd33788` | 439 |
 | `multiplix_list_ufs` | `multiplix_list_ufs.sql` | `b7942d122f2f34b7764e8dff3141754b` | 487 |
 
@@ -91,14 +91,27 @@ os default privileges do Supabase (`… | authenticated=X/postgres`), o bloco re
 e regranta só `service_role`, republicando a ACL medida antes e depois: `postgres=X/postgres |
 service_role=X/postgres` (`anon` e `authenticated` sem EXECUTE, conferido por `has_function_privilege`).
 
-## Guard HMAC do escopo (F22) — versionado, ainda NÃO aplicado
+## Guard HMAC do escopo (F22) — ✅ APLICADO no Singu em 01/10/2026
 
 Arquivo: `20261001160000_singu_guard_hmac_escopo.sql` (neste diretório).
 
-**Por que ainda não foi aplicado:** a partir do momento em que ele entra, escopo sem assinatura válida é
-recusado com `42501`. A edge do Zapp precisa estar em produção **assinando** antes — é a ordem decidida
-(`20261001-152728-906f`): (1) arquivo versionado → (2) deploy da edge assinando → (3) aplicar no Singu →
-(4) `md5` de volta nesta tabela.
+**Aplicado depois do deploy da edge assinando** (a ordem decidida em `20261001-152728-906f`:
+(1) arquivo versionado → (2) deploy da edge assinando → (3) aplicar no Singu → (4) `md5` de volta nesta
+tabela — este passo 4 está feita acima).
+
+Provas medidas **depois** de aplicar (a produção é o Singu real):
+
+| prova | resultado |
+|---|---|
+| RPC direta com a service key e **sem cabeçalho** | **`42501 escopo sem assinatura: cabecalhos x-multiplix-scope-hmac/x-multiplix-scope-exp ausentes`** |
+| edge real `multiplix-audience`, `agent` (`comercial01`) | **HTTP 200**, `count = 5319` (a carteira dele) |
+| edge real, `supervisor` (compras e logística) | **HTTP 200**, `count = 55930` |
+| `scripts/db-audit/multiplix-scope.test.sh` (3 perfis, escopo forjado) | **43 PASS / 0 FAIL**, `exit 0` |
+| `md5` dos 5 espelhos | 3 mudaram (as 3 com escopo), 2 de lista iguais — tabela acima atualizada |
+
+Efeito colateral corrigido no mesmo follow-up: a perna de **referência** do `multiplix-scope.test.sh` chama a
+RPC direto, então passou a assinar o escopo (mesmo contrato v1, segredo lido do vault ou da env
+`MULTIPLIX_SCOPE_HMAC_SECRET`) — sem isso ela abortava com `42501`.
 
 **Por que a assinatura vai em cabeçalho, e não em parâmetro** (medido, não suposto): acrescentar
 `p_scope_hmac`/`p_scope_exp` muda a assinatura da função, e o PostgREST casa a chamada pelo **conjunto de

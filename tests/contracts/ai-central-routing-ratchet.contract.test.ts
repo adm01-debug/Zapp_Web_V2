@@ -126,16 +126,19 @@ const CAPACIDADES_DE_CONVERSA: readonly string[] = [
 ];
 
 /**
- * Dívida declarada do IA-033 (próximo PR do bloco): estes 4 arquivos ainda falam com o
- * gateway antigo por `fetch` direto. Entram como BASELINE explícito, não como exceção
- * permanente: o IA-033 os migra e esta lista volta a zero — se alguém acrescentar um
- * quinto, o teste falha.
+ * Dívida declarada do IA-033: arquivos que ainda falam com o gateway antigo por `fetch`
+ * direto. Entram como BASELINE explícito, não como exceção permanente: o IA-033 os migra
+ * e esta lista volta a zero.
+ *
+ * Neste PR (IA-033 parte 1: VISÃO) a dívida ENCOLHEU DE 4 PARA 2: `classify-sticker` e
+ * `classify-emoji` foram migrados para o despacho central com `need.modality:'vision'`
+ * (contrato anti-regressão no describe (3) deste arquivo). Os 2 restantes continuam
+ * declarados aqui — voz/áudio e o classificador de meme de áudio — e qualquer arquivo
+ * NOVO que encoste no endereço fixo falha o teste (a lista é a única allowlist).
  */
 const DIVIDA_IA_033: readonly string[] = [
   'supabase/functions/voice-agent/index.ts',
   'supabase/functions/classify-audio-meme/index.ts',
-  'supabase/functions/classify-emoji/index.ts',
-  'supabase/functions/classify-sticker/index.ts',
 ];
 
 /** Despacho legítimo do `provider_type` lovable_ai (item 7 do desenho): só entra por provedor do banco. */
@@ -151,9 +154,9 @@ const PAPEL_NO_INVENTARIO: ReadonlyMap<string, string> = new Map([
     'despachante do provider_type lovable_ai (item 7 do desenho: só entra por provedor do banco)',
   ],
   ['supabase/functions/voice-agent/index.ts', 'fora do escopo do IA-032 — dívida do IA-033 (voz/áudio)'],
-  ['supabase/functions/classify-audio-meme/index.ts', 'fora do escopo do IA-032 — dívida do IA-033 (classificadores)'],
-  ['supabase/functions/classify-emoji/index.ts', 'fora do escopo do IA-032 — dívida do IA-033 (classificadores)'],
-  ['supabase/functions/classify-sticker/index.ts', 'fora do escopo do IA-032 — dívida do IA-033 (classificadores)'],
+  ['supabase/functions/classify-audio-meme/index.ts', 'fora do escopo do IA-032 — dívida do IA-033 (classificador de áudio)'],
+  ['supabase/functions/classify-emoji/index.ts', 'migrado no IA-033 parte 1 (visão) — REINCIDÊNCIA no gateway fixo'],
+  ['supabase/functions/classify-sticker/index.ts', 'migrado no IA-033 parte 1 (visão) — REINCIDÊNCIA no gateway fixo'],
 ]);
 
 /** Lista de infratores legível: caminho + papel do que sobrou. */
@@ -246,5 +249,67 @@ describe('(2) os 6 consumidores do aceite usam o despacho central', () => {
     expect(fonte, 'extractTokenUsage precisa continuar existindo').toMatch(
       /export\s+function\s+extractTokenUsage\s*\(/,
     );
+  });
+});
+
+/* ---------------------------------------------------------------------------------------- */
+/* (3) Escopo desta rodada (IA-033, parte 1 — VISÃO) e o contrato ANTI-REGRESSÃO.             */
+/* Os 2 classificadores deixaram o `fetch` fixo e passaram a exigir a modalidade `vision`     */
+/* pelo despacho central. As asserções abaixo são o contrato de que a migração não volta     */
+/* atrás: qualquer um dos dois que volte ao gateway fixo, ao modelo fixo, à chave antiga,    */
+/* que perca a exigência de visão OU a degradação para `outros` fica vermelho.                */
+/* ---------------------------------------------------------------------------------------- */
+
+const MIGRADOS_PARA_VISAO: readonly string[] = [
+  'supabase/functions/classify-sticker/index.ts',
+  'supabase/functions/classify-emoji/index.ts',
+];
+
+/** `{ category: 'outros' }` — a degradação que impede erro de provedor de virar 500. */
+const CATEGORIA_NEUTRA = /category\s*:\s*['"]outros['"]/g;
+
+describe('(3) os 2 classificadores de visão (IA-033 parte 1) usam o despacho central', () => {
+  it('os 2 CHAMAM generateWithRouting (import morto não conta)', () => {
+    for (const caminho of MIGRADOS_PARA_VISAO) {
+      const fonte = FONTES.get(caminho);
+      expect(fonte, `arquivo migrado ausente: ${caminho}`).toBeDefined();
+      expect(
+        chamadas(fonte!, 'generateWithRouting').length,
+        `${caminho} não chama generateWithRouting (voltou ao fetch direto ao gateway?)`,
+      ).toBeGreaterThan(0);
+    }
+  });
+
+  it('nenhum dos 2 cita lovable, o modelo fixo antigo nem LOVABLE_API_KEY', () => {
+    for (const caminho of MIGRADOS_PARA_VISAO) {
+      const fonte = FONTES.get(caminho)!;
+      esperaAusencia(fonte, /lovable/i, `${caminho} ainda cita o gateway/fornecedor antigo`);
+      esperaAusencia(fonte, /gemini-2\.5-flash-lite/, `${caminho} fixa o modelo antigo de novo`);
+      esperaAusencia(fonte, /\bLOVABLE_API_KEY\b/, `${caminho} ainda carrega a chave do gateway antigo`);
+    }
+  });
+
+  it('os 2 exigem a modalidade de visão (sem need.modality a chamada cairia no texto)', () => {
+    for (const caminho of MIGRADOS_PARA_VISAO) {
+      const comVisao = chamadas(FONTES.get(caminho)!, 'generateWithRouting').filter((args) =>
+        /modality\s*:\s*['"]vision['"]/.test(args),
+      );
+      expect(
+        comVisao.length,
+        `${caminho} chama generateWithRouting sem exigir need.modality:'vision'`,
+      ).toBeGreaterThan(0);
+    }
+  });
+
+  it("os 2 preservam a degradação para 'outros' (falha do provedor não vira 500)", () => {
+    for (const caminho of MIGRADOS_PARA_VISAO) {
+      const fonte = FONTES.get(caminho)!;
+      const ocorrencias = fonte.match(CATEGORIA_NEUTRA)?.length ?? 0;
+      // Entrada vazia/sem imagem E o catch de exceção: sem as duas, um erro de provedor vira 500.
+      expect(
+        ocorrencias,
+        `${caminho} perdeu a degradação para 'outros' (esperado >= 2, achou ${ocorrencias})`,
+      ).toBeGreaterThanOrEqual(2);
+    }
   });
 });
