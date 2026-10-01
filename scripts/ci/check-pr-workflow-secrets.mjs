@@ -45,8 +45,8 @@ export function hasPushTriggerUnrestricted(source) {
     const line = lines[i];
     // Top-level key ends the 'on:' block
     if (/^[^\s#]/.test(line)) { pushEnd = i; break; }
-    // Detect: push: (empty), push: {} (inline empty mapping), push: null, push: ~
-    const pushMatch = /^(\s+)push:\s*(?:\{\}|null|~)?\s*(?:#.*)?$/.exec(line);
+    // Detect: push: (empty), push: {} (inline empty mapping), push: null, push: Null, push: NULL, push: ~
+    const pushMatch = /^(\s+)push:\s*(?:\{\}|null|Null|NULL|~)?\s*(?:#.*)?$/.exec(line);
     if (pushMatch) { pushStart = i; pushIndent = pushMatch[1].length; continue; }
     // Detect: push: { key: value } (nonempty inline mapping)
     const pushInlineMatch = /^(\s+)push:\s*(\{[^}]+\})\s*(?:#.*)?$/.exec(line);

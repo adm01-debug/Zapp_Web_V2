@@ -91,6 +91,11 @@ test('hasPushTriggerUnrestricted: push: null e push: ~ (irrestrito)', () => {
   assert.equal(hasPushTriggerUnrestricted('on:\n  push: ~\n'), true);
 });
 
+test('hasPushTriggerUnrestricted: push: Null e push: NULL (irrestrito)', () => {
+  assert.equal(hasPushTriggerUnrestricted('on:\n  push: Null\n'), true);
+  assert.equal(hasPushTriggerUnrestricted('on:\n  push: NULL\n'), true);
+});
+
 test('hasPushTriggerUnrestricted: push com mapeamento inline nao-vazio (irrestrito)', () => {
   assert.equal(hasPushTriggerUnrestricted('on:\n  push: { branches-ignore: [main] }\n'), true);
   assert.equal(hasPushTriggerUnrestricted('on:\n  push: { branches: [main] }\n'), false);
