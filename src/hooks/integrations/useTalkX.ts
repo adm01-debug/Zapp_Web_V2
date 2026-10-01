@@ -55,6 +55,10 @@ export interface TalkXCampaign {
   business_hours_only?: boolean;
   speed_profile?: 'slow' | 'moderate' | 'fast';
   paused_at?: string | null;
+  respect_suppression?: boolean;
+  confirm_consent?: boolean;
+  launched_by?: string | null;
+  launched_at?: string | null;
   // Introduzido por 20260912130000. Opcional até o types-sync canônico após
   // aplicar a migration; o editor usa 1 como revisão de linhas legadas.
   revision?: number;

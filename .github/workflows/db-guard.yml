@@ -360,6 +360,9 @@ jobs:
       - name: Simular retry manual de destinatário terminal (V19)
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-v19-retry-recipient.test.sh
 
+      - name: Simular flags de lançamento persistidas (V21)
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-v21-launch-flags.test.sh
+
       - name: Simular supressão de contato idempotente nos eixos phone e contact_id (V07b)
         env:
           TALKX_SUPPRESS_PHONE_TEST_POSTGRES_IMAGE: postgres:17-alpine

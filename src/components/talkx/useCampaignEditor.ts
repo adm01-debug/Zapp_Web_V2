@@ -236,8 +236,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [sendWindowStart, setSendWindowStart] = useState(campaign?.send_window_start?.slice(0, 5) || '08:00');
   const [sendWindowEnd, setSendWindowEnd] = useState(campaign?.send_window_end?.slice(0, 5) || '18:00');
   const [businessHoursOnly, setBusinessHoursOnly] = useState(!!campaign?.business_hours_only);
-  const [respectSuppression, setRespectSuppression] = useState(true);
-  const [confirmConsent, setConfirmConsent] = useState(false);
+  const [respectSuppression, setRespectSuppression] = useState(campaign?.respect_suppression ?? true);
+  const [confirmConsent, setConfirmConsent] = useState(!!campaign?.confirm_consent);
   const [confirmContent, setConfirmContent] = useState(false);
   const [confirmSuppression, setConfirmSuppression] = useState(false);
 
@@ -516,7 +516,9 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     send_window_start: sendWindowEnabled ? `${sendWindowStart}:00` : null,
     send_window_end: sendWindowEnabled ? `${sendWindowEnd}:00` : null,
     business_hours_only: businessHoursOnly,
-  }), [name, description, objective, messageTemplate, audienceSource, companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter, contactSearch, segmentId, templateId, typingDelay, sendInterval, speedProfile, connectionId, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly]);
+    respect_suppression: respectSuppression,
+    confirm_consent: confirmConsent,
+  }), [name, description, objective, messageTemplate, audienceSource, companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter, contactSearch, segmentId, templateId, typingDelay, sendInterval, speedProfile, connectionId, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly, respectSuppression, confirmConsent]);
 
   /** Salva (rascunho/agendada) e, se `launch`, dispara imediatamente. Devolve o id da campanha. */
   const persistSave = useCallback(async (mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
