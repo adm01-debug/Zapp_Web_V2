@@ -92,6 +92,7 @@ export async function collectStableAttestation({
       for (const fn of attestation.functions) {
         if (!fn.remote_updated_at || !fn.remote_id) throw new Error('Missing remote identity or timestamp');
       }
+      const acceptedByDigest = [];
       for (const name of selected) {
         const old = pre.get(name);
         if (!old) continue;
@@ -104,11 +105,30 @@ export async function collectStableAttestation({
         // 24 min. Sem baseline de versao verificavel, aceitar a funcao se o id bate.
         if (old.version === null) continue;
         const versionBumped = current.version !== null && current.version > old.version;
-        const legitimatelyUnchanged = unchangedSet.has(name) && current.version === old.version
-          && old.ezbr_sha256 !== null && current.ezbr_sha256 === old.ezbr_sha256;
-        if (!versionBumped && !legitimatelyUnchanged) {
-          throw new Error('Selected deployment not yet observed');
+        if (versionBumped) continue;
+        const digestUnchanged = old.ezbr_sha256 !== null && current.ezbr_sha256 === old.ezbr_sha256;
+        // Contrato alterado em 01/10/2026 (run 36852598923): o Supabase CLI pula o
+        // deploy de uma funcao cujo bundle bate byte a byte com o publicado e NAO
+        // bumpa version, sinalizando "No change found in Function: X" -- e escreve
+        // essa linha no STDERR. Enquanto a aceitacao dependia do log capturado pelo
+        // workflow (knownUnchanged), o arquivo chegava vazio, a funcao ficava sem
+        // bump e a atestacao queimava 144 amostras (~24 min) para falhar com
+        // "did not stabilize", escondendo a causa. O digest remoto identico ao
+        // baseline prova que nao havia bundle novo a publicar para essa funcao, e
+        // passa a ser o sinal primario; o log do CLI continua aceito e agora cobre
+        // o caso oposto (contradicao), logo abaixo.
+        if (digestUnchanged) {
+          acceptedByDigest.push(name);
+          continue;
         }
+        if (unchangedSet.has(name)) {
+          // `permanentError` e privada do manifest-lib.mjs; aqui o padrao do
+          // proprio modulo (ver o 401/403 em fetchRemoteInventory).
+          const contradicao = new Error(`${name}: o passo de deploy reportou "No change found" e o bundle remoto mudou desde o baseline (deploy concorrente ou sinal do CLI divergente); a atestacao nao pode inferir o que foi publicado`);
+          contradicao.permanent = true;
+          throw contradicao;
+        }
+        throw new Error('Selected deployment not yet observed');
       }
       const digest = createHash('sha256').update(JSON.stringify(snapshot.functions)).digest('hex');
       consecutive = digest === previousDigest ? consecutive + 1 : 1;
@@ -123,6 +143,11 @@ export async function collectStableAttestation({
             mode: 'stable-management-inventory-v1',
             consecutive_samples: consecutive, observation_ms: now() - started, samples,
             selected_functions: selected, changed_outside_scope: changedOutsideScope,
+            // Funcoes do escopo aceitas sem bump de versao porque o digest remoto
+            // segue identico ao baseline (nada novo a publicar). Fica explicito no
+            // artefato o que foi aceito por digest -- nao e prova de equivalencia
+            // fonte<->bundle, so de que o bundle publicado nao mudou.
+            accepted_without_version_bump: acceptedByDigest,
             source_to_bundle_equivalence_proven: false,
             limitation: 'Stable metadata associates source inputs and observed deployment versions; it does not reproduce remote bundle bytes or prove business E2E.',
           },
