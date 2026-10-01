@@ -43,14 +43,48 @@ function hslParaRgb(h: number, s: number, l: number): Rgb {
   return [Math.round(255 * f(0)), Math.round(255 * f(8)), Math.round(255 * f(4))];
 }
 
-/** Extrai `--nome: h s% l%` de um bloco de CSS. */
+/** Remove comentários CSS — menção a `.dark`/`:root` em comentário quebrava a extração. */
+function semComentarios(css: string): string {
+  return css.replace(/\/\*[\s\S]*?\*\//g, '');
+}
+
+/**
+ * Extrai os tokens de TODOS os blocos cujo seletor é `seletor` (ex.: `:root`, `.dark`),
+ * com chaves balanceadas. Um `indexOf` simples falhava em dois cenários reais: menção ao
+ * seletor dentro de comentário e arquivo com mais de um bloco do mesmo seletor.
+ */
 function tokensDoBloco(css: string, seletor: string): Record<string, Rgb> {
-  const inicio = css.indexOf(seletor);
-  if (inicio < 0) throw new Error(`seletor ${seletor} não encontrado em tokens.css`);
-  const corpo = css.slice(inicio, css.indexOf('}', inicio));
+  const limpo = semComentarios(css);
   const tokens: Record<string, Rgb> = {};
-  for (const m of Array.from(corpo.matchAll(/--([\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g))) {
-    tokens[m[1]] = hslParaRgb(Number(m[2]), Number(m[3]), Number(m[4]));
+  let pos = 0;
+  for (;;) {
+    const i = limpo.indexOf(seletor, pos);
+    if (i < 0) break;
+    pos = i + seletor.length;
+    const resto = limpo.slice(pos, pos + 80);
+    const abreRel = resto.indexOf('{');
+    if (abreRel < 0) continue;
+    // entre o seletor e a chave só pode haver espaço/vírgula — assim `.dark` citado em
+    // texto solto ou usado como descendente (`.dark .x {`) não é confundido com o bloco.
+    const entre = resto.slice(0, abreRel);
+    if (/[^\s,]/.test(entre)) continue;
+    const abre = pos + abreRel;
+    let nivel = 0;
+    for (let j = abre; j < limpo.length; j++) {
+      if (limpo[j] === '{') nivel += 1;
+      else if (limpo[j] === '}') {
+        nivel -= 1;
+        if (nivel === 0) {
+          const corpo = limpo.slice(abre + 1, j);
+          for (const t of Array.from(
+            corpo.matchAll(/--([\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g),
+          )) {
+            tokens[t[1]] = hslParaRgb(Number(t[2]), Number(t[3]), Number(t[4]));
+          }
+          break;
+        }
+      }
+    }
   }
   return tokens;
 }
@@ -77,6 +111,37 @@ function listar(dir: string, ext: string): string[] {
 }
 
 const FONTES = ['tsx', 'ts', 'css'].flatMap((ext) => listar('src', ext));
+
+describe('contraste AA — o parser de tokens não pode quebrar por causa do arquivo', () => {
+  it('acha o token no SEGUNDO bloco :root (tokens.css com 2 blocos)', () => {
+    const css = `:root { --radius-md: 0.5rem; }
+:root { --warning: 38 92% 50%; --warning-foreground: 30 90% 12%; }`;
+    expect(tokensDoBloco(css, ':root')['warning-foreground']).toBeDefined();
+    expect(tokensDoBloco(css, ':root')['warning']).toBeDefined();
+  });
+
+  it('ignora menção ao seletor dentro de comentário', () => {
+    const css = `/* o tema escuro fica em \`.dark\` logo abaixo */
+.dark { --warning-foreground: 0 0% 8%; }`;
+    expect(tokensDoBloco(css, '.dark')['warning-foreground']).toEqual([20, 20, 20]);
+  });
+
+  it('não se perde com chave aninhada dentro do bloco', () => {
+    const css = `:root { --a: 0 0% 0%; }
+@media (min-width: 1px) { :root { --b: 100 50% 50%; } }`;
+    const t = tokensDoBloco(css, ':root');
+    expect(t.a).toBeDefined();
+    expect(t.b).toBeDefined();
+  });
+
+  it('o tokens.css real entrega os tokens dos dois temas', () => {
+    const claro = tokensDoBloco(TOKENS_CSS, ':root');
+    const escuro = tokensDoBloco(TOKENS_CSS, '.dark');
+    expect(claro['warning-foreground']).toBeDefined();
+    expect(escuro['warning-foreground']).toBeDefined();
+    expect(escuro['muted-foreground']).toBeDefined();
+  });
+});
 
 describe('contraste AA — tokens que o axe reprovou (sem tocar na skin)', () => {
   it('texto do aviso de 2FA sobre --warning fecha 4,5:1 nos dois temas', () => {

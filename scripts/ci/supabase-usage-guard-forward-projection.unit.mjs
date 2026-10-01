@@ -310,3 +310,43 @@ test('usage guard remove a funcao quando TODAS as assinaturas sao dropadas', () 
   assert.equal(result.status, 1, result.stdout + result.stderr);
   assert.match(result.stderr, /\.rpc\('f'\)/);
 });
+
+test('usage guard honra todas as formas de SET/RESET de standard_conforming_strings que o PG aceita', () => {
+  // Sonda identica a usada no PG 17.11: a migration liga/desliga o SCS e depois
+  // faz `SELECT 'a\';`. Com o SCS OFF a string fica ABERTA e o DROP seguinte e
+  // texto (o alvo continua na projecao -> exit 0); com o SCS ON a string fecha no
+  // \' e o DROP roda (o alvo sai -> exit 1).
+  const casos = [
+    ['SET standard_conforming_strings = off;', 0],
+    ['SET standard_conforming_strings = false;', 0], // false = off (medido)
+    ['SET standard_conforming_strings = 0;', 0],
+    ['SET standard_conforming_strings = no;', 0],
+    ["SET standard_conforming_strings = 'Off';", 0], // case-insensitive, citado
+    ['SET "standard_conforming_strings" = off;', 0], // nome do parametro citado
+    ['SET SESSION standard_conforming_strings = off;', 0],
+    ['SET standard_conforming_strings TO off;', 0],
+    ["SELECT set_config('standard_conforming_strings', 'off', false);", 0],
+    ['SET standard_conforming_strings = on;', 1],
+    ['SET standard_conforming_strings = true;', 1],
+    ['SET standard_conforming_strings = default;', 1],
+    ['SET standard_conforming_strings = 2;', 1], // PG rejeita -> continua on
+    ['SET standard_conforming_strings = off; RESET standard_conforming_strings;', 1],
+    ['SET standard_conforming_strings = off; RESET ALL;', 1],
+    ['SET standard_conforming_strings = off; DISCARD ALL;', 1],
+    ['SET LOCAL standard_conforming_strings = off;', 1], // fora de transacao nao vale
+    ['BEGIN;\nSET LOCAL standard_conforming_strings = off;\nCOMMIT;', 1], // revertido no COMMIT
+  ];
+  for (const [forma, esperado] of casos) {
+    const result = runGuard({
+      migrations: {
+        '20260909210000_scs.sql':
+          'CREATE TABLE public.t (id integer);\n'
+          + `${forma}\n`
+          + "SELECT 'a\\';\n"
+          + 'DROP TABLE public.t;\n',
+      },
+      callers: { 'c.ts': "supabase.from('t').select('*');\n" },
+    });
+    assert.equal(result.status, esperado, `${forma}\n${result.stdout}${result.stderr}`);
+  }
+});

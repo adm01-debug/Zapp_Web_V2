@@ -15,6 +15,7 @@
  *    `_shared/__tests__/talkx-v20-window-business-hours.test.ts` e `talkx-send/v20-daily-limit.test.ts` (V20).
  *  - 149: Bloco 04 (IA-036) — `_shared/ai-capabilities.ts` (módulo de fonte novo: entra na contagem
  *    de arquivos .ts, mas NÃO produz token legado — verificado pelo próprio mapa INVENTARIO).
+ *  - 150: Bloco 04 (IA-032) — `_shared/ai-generate.ts` (despacho central; também não produz token legado).
  * O mapa INVENTARIO e o total de ocorrências (3) permanecem idênticos.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -90,8 +91,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('149 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(149);
+  it('150 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(150);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );

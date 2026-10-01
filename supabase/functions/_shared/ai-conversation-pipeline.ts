@@ -29,7 +29,8 @@
  */
 import { jsonResponse, errorResponse, Logger, createAuthedClient } from "./validation.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { callAiWithTracking } from "./ai-usage.ts";
+import { generateWithRouting } from "./ai-generate.ts";
+import type { AiPurpose } from "./ai-routing.ts";
 import { parseJsonObject } from "./ai-json.ts";
 import { buildAiEnvelope, type ContractIssue } from "./ai-response-contracts.ts";
 import type { NormalizedNumber } from "./ai-values.ts";
@@ -175,22 +176,36 @@ export async function loadContactPromptContext(input: {
 }
 
 /**
- * Corpo da chamada ao modelo, idêntico nas duas capacidades: mesmo modelo,
- * mesma forma de mensagens (system + conversa) e mesma forma de ferramenta
- * (function call forçada). O que muda é exatamente o que chega por parâmetro:
- * prompt, nome/descrição da ferramenta e o esquema das propriedades.
+ * Parâmetros da chamada roteada que ESTE pipeline entrega ao despacho central:
+ * política do SERVIDOR em `system` (IA-037) e conversa do cliente em
+ * `messages`, mais a ferramenta forçada (`tools` + `toolChoice`).
+ *
+ * O MODELO não existe aqui: quem o escolhe é o `generateWithRouting`, a partir do
+ * provedor resolvido pela finalidade (IA-035). Nada de `model` fixo no corpo.
+ */
+export interface ConversationModelPayload {
+  system: string;
+  messages: Array<{ role: 'user'; content: string }>;
+  tools: unknown[];
+  toolChoice: unknown;
+}
+
+/**
+ * Parâmetros da chamada ao modelo, idênticos nas duas capacidades: mesma forma
+ * de mensagens (system + conversa) e mesma forma de ferramenta (function call
+ * forçada). O que muda é exatamente o que chega por parâmetro: prompt,
+ * nome/descrição da ferramenta e o esquema das propriedades.
  */
 export function buildConversationModelBody(input: {
   systemPrompt: string;
   contactName?: string | null;
   conversationText: string;
   tool: ConversationToolDefinition;
-}): Record<string, unknown> {
+}): ConversationModelPayload {
   const { tool } = input;
   return {
-    model: 'google/gemini-3-flash-preview',
+    system: input.systemPrompt,
     messages: [
-      { role: 'system', content: input.systemPrompt },
       { role: 'user', content: `Conversa com ${input.contactName || 'Cliente'}:\n\n${input.conversationText}` },
     ],
     tools: [
@@ -208,37 +223,54 @@ export function buildConversationModelBody(input: {
         },
       },
     ],
-    tool_choice: { type: "function", function: { name: tool.name } },
+    toolChoice: { type: "function", function: { name: tool.name } },
   };
 }
 
 export interface ConversationModelRequest {
+  /**
+   * Finalidade do uso no roteamento central. NÃO tem default: as duas
+   * capacidades declaram a sua (`'summary'` no resumo, `'analysis'` na análise)
+   * e finalidade ausente é erro de programação tratado pelo pipeline — chutar
+   * uma finalidade trocaria o provedor de quem chamou.
+   */
+  purpose: AiPurpose;
   functionName: string;
   userId: string | null;
-  apiKey: string;
-  body: Record<string, unknown>;
+  body: ConversationModelPayload;
   log: Logger;
   req: Request;
 }
 
 /**
- * Chama o gateway e devolve o JSON do modelo já extraído.
+ * Chama a IA pelo despacho central e devolve o JSON do modelo já extraído.
  *
- * Mesma sequência de antes, agora num só lugar: chamada rastreada (usage),
- * erro de gateway (429/402 devolvem `failure`; o resto estoura e vira 500 no
- * chamador) e extração do objeto — `tool_calls[0].function.arguments` e, se
- * não houver tool call, o `content` como texto JSON. Sem JSON parseável o
- * resultado é `rawOutput` não-objeto e quem chamou responde 502; nada é
- * fabricado no lugar.
+ * Mesma sequência de antes, agora num só lugar: chamada roteada pela finalidade
+ * (e auditada em `ai_usage_logs` pelo próprio despacho), erro de provedor
+ * (429/402 devolvem `failure`; o resto estoura e vira 500 no chamador) e
+ * extração do objeto — `tool_calls[0].function.arguments` e, se não houver tool
+ * call, o `content` como texto JSON. Sem JSON parseável o resultado é
+ * `rawOutput` não-objeto e quem chamou responde 502; nada é fabricado no lugar.
  */
 export async function requestConversationModelJson(
   request: ConversationModelRequest,
 ): Promise<{ failure: Response | null; rawOutput: unknown }> {
-  const { response, data } = await callAiWithTracking({
+  // Erro de PROGRAMAÇÃO, nunca de provedor: sem finalidade não existe roteamento
+  // possível e escolher uma por conta própria mudaria a chamada paga de lugar.
+  if (!request.purpose) {
+    throw new TypeError(
+      `${request.functionName}: 'purpose' é obrigatório em requestConversationModelJson (roteamento central).`,
+    );
+  }
+
+  const { response, data } = await generateWithRouting({
+    purpose: request.purpose,
     functionName: request.functionName,
     userId: request.userId,
-    apiKey: request.apiKey,
-    body: request.body,
+    system: request.body.system,
+    messages: request.body.messages,
+    tools: request.body.tools,
+    toolChoice: request.body.toolChoice,
   });
 
   if (!response.ok || !data) {
