@@ -80,10 +80,10 @@ jobs:
         run: bash scripts/ci/install-pgbouncer.sh
 
       # E37 (auditoria de GitHub Actions, 2026-09-26): TLS verify-full + CA
-      # Supabase pinada, mesmo padrao ja usado por db-live-guard.yml e
-      # targeted-ledger-evidence.yml. Antes, este passo so comprovava a
-      # identidade do endpoint (validarDestino) sem exigir TLS verify-full —
-      # unico dos 3 workflows que tocam DESTINO_URL sem esse endurecimento.
+      # Supabase pinada. Na epoca eram 3 workflows com DESTINO_URL (db-live-guard,
+      # targeted-ledger-evidence, types-sync); este era o unico sem TLS verify-full.
+      # Hoje sao 6 workflows com DESTINO_URL: db-guard, db-migrate e supabase-sync
+      # ainda nao tem este endurecimento (ver G-37 no plano de 2026-10-01).
       - name: Exigir credencial do banco oficial
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}

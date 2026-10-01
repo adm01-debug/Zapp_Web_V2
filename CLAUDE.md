@@ -116,7 +116,7 @@ então esse caminho nunca foi executável por agente de qualquer forma.
 
 ---
 
-*Atualizado em 2026-09-27. Se algo aqui divergir do banco/infra real, corrija ESTE arquivo no mesmo commit do fix.*
+*Atualizado em 2026-10-01. Se algo aqui divergir do banco/infra real, corrija ESTE arquivo no mesmo commit do fix.*
 
 ## Auditoria e plano de correções (2026-09-16)
 
@@ -139,7 +139,9 @@ Estado dos achados após re-auditoria de 2026-09-17:
   **Correção de 2026-09-25:** a linha original afirmava "review obrigatório". A API não retorna
   `required_pull_request_reviews` para a `main` e `list_rulesets` volta vazio — **não há** revisão
   obrigatória, e o `.github/CODEOWNERS` é decorativo sem a regra ligada. Isso é deliberado: com
-  vários agentes abrindo PR e usando auto-merge, exigir aprovação humana pararia o fluxo inteiro.
+  vários agentes abrindo PR — `allow_auto_merge: false` no repo, ninguém usa auto-merge de
+  fato (`auto-update-pr-branch.yml` filtra `.autoMergeRequest != null` e nunca encontra PRs
+  elegíveis) — exigir aprovação humana pararia o fluxo inteiro.
   `required_conversation_resolution` segue desligado pelo mesmo motivo (bots de review deixam
   threads abertas). O perímetro real da `main` hoje é: `enforce_admins`, sem force-push, sem
   deleção, e os 6 required checks da seção abaixo.
@@ -164,18 +166,24 @@ Estado dos achados após re-auditoria de 2026-09-17:
   merge retorna 405 "N of N expected" com CI totalmente verde — o diagnóstico correto é
   verificar `strict` ao vivo com `github_get_branch_protection`, não retentar o merge.
 
+  **Correção de 2026-10-01 (E01, 4ª regressão):** `strict` regrediu novamente para `true`
+  entre 27/09 e 01/10 — causa não identificada. Restaurado para `false` via `github_request`
+  (PUT direto; `github_update_branch_protection` retornava 500 nesta sessão). Verificado:
+  `strict: false` confirmado pela API; PR #1343 mergeada em seguida. Snapshot em
+  `docs/audits/evidence/branch-protection-2026-10-01.json`.
+
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
 Auditoria dos 13 workflows + 3 dinâmicos (16 total), da branch protection, dos secrets e dos environments. O que passou a
 valer (confira antes de propor mudança de CI, para não refazer o que já existe):
 
-**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions):** são 13 arquivos em
+**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions):** são 14 arquivos em
 `.github/workflows/` (`auto-update-pr-branch.yml`, `branch-hygiene-audit.yml`, `ci.yml`,
 `codeql.yml`, `crm-sync-worker.yml`, `db-guard.yml`, `db-live-guard.yml`, `db-migrate.yml`,
-`deploy-functions.yml`, `e2e-logado.yml`, `supabase-sync.yml`, `targeted-ledger-evidence.yml`,
-`types-sync.yml`), mais 3 workflows dinâmicos que não têm arquivo próprio no repo (Dependabot
-Updates, Dependency Graph, Copilot reviewer) — 16 no total. Plano completo em
-`docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-26.md`.
+`deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx-pr.yml`, `supabase-sync.yml`,
+`targeted-ledger-evidence.yml`, `types-sync.yml`), mais 3 workflows dinâmicos que não têm
+arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) — 17 no
+total. Plano completo em `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md`.
 
 **Required checks da `main`** (6; `strict` está `false` ao vivo — ver correções em 25/09 e 27/09 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
 `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline` e
@@ -183,13 +191,15 @@ Updates, Dependency Graph, Copilot reviewer) — 16 no total. Plano completo em
 sem bloquear merge. `🔬 CodeQL (javascript-typescript)` roda em CI mas **não** é required check
 (não bloqueia merge).
 
-**Environments com aprovação humana** (`required_reviewers`, branch policy restrita a branches
-protegidas) — os quatro já criados no repo; os dois primeiros passam a ser exigidos pelos
-workflows quando a PR #687 mergear: `producao-edge-functions` (deploy-functions.yml),
-`producao-ddl` (db-migrate.yml),
-`legacy-import-destrutivo` (supabase-sync.yml) e `db-ledger-evidence` (que existia só com
-`branch_policy`, portanto sem exigir aprovação de ninguém). Disparar qualquer um desses
-workflows agora pausa em `Waiting` até alguém aprovar na aba Actions.
+**Environments com aprovação humana** — os quatro já criados no repo: `producao-edge-functions`
+(deploy-functions.yml), `producao-ddl` (db-migrate.yml), `legacy-import-destrutivo`
+(supabase-sync.yml) e `db-ledger-evidence`. **Atenção:** `producao-edge-functions` tem apenas
+`branch_policy` (API), **sem `required_reviewers`** — o CLAUDE.md anterior afirmava que havia
+aprovação humana neste environment, mas isso não é verdade ao vivo; o deploy-functions.yml
+pausa em `Waiting` quando o environment exige revisores, mas como não há revisores configurados,
+pode avançar sem aprovação humana. `producao-ddl` e `legacy-import-destrutivo` têm
+`required_reviewers`. `db-ledger-evidence` só tem `branch_policy`. Disparar qualquer um desses
+workflows pausa em `Waiting` até o environment ser satisfeito.
 
 **`supabase-sync.yml` está desarmado.** A única barreira era digitar o project-ref, que é público
 (está neste arquivo, num repo público). Agora exige, cumulativamente, aprovação no environment e o
@@ -221,9 +231,12 @@ mexer no parsing de `LEDGER_RETRY_DELAYS_MS`: `Number("")` é `0`, não `NaN`, e
 precisam ser descartadas **antes** do `Number()`, senão "vazio" vira um retry imediato em vez de
 nenhum.
 
-**Agendamentos sem colisão:** types-sync `49 5 * * 1`, db-live-guard `13 6 * * 1` (nesta ordem, o
-segundo compara o que o primeiro gera), branch-hygiene `56 7 * * 1`, codeql `30 9 * * 1`. Os dois
-primeiros rodavam ambos às 06:00 e disputavam o banco no mesmo minuto.
+**Agendamentos sem colisão:** types-sync `49 5 * * 1` (semanal, segunda), db-live-guard
+`13 6 * * *` (**diário**, toda madrugada — não semanal como aparecia numa versão anterior do
+CLAUDE.md; a seção acima mencionava `13 6 * * 1` por erro), branch-hygiene `56 7 * * 1`
+(semanal, segunda), codeql `30 9 * * 1` (semanal, segunda). Types-sync e db-live-guard nesta
+ordem: o segundo compara o que o primeiro gera; rodavam ambos às 06:00 segunda e disputavam
+o banco no mesmo minuto.
 
 **Repo:** `sha_pinning_required` ligado no GitHub (além do `check-workflow-pins.mjs`).
 
