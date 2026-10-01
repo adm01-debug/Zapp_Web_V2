@@ -229,10 +229,7 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
           }
         }
         const payload = row.payload || {};
-        const result = await withTimeout(externalClient.rpc(
-          'sync_interaction_from_zapp',
-          buildSyncInteractionArgs(row, payload),
-        ));
+        const result = await withTimeout(externalClient.rpc('sync_interaction_from_zapp', buildSyncInteractionArgs(row, payload)));
         if (result.error) throw new Error(`CRM_SYNC:${result.error.code || 'unknown'}`);
         const value = parseSyncResult(result.data);
         if (stableLink && stableLink.external_contact_id !== value.contact_id) throw new Error('CRM_IDENTITY_MISMATCH');

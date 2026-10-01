@@ -319,8 +319,8 @@
     },
     {
       "path": "supabase/functions/crm-integration/index.ts",
-      "bytes": 26132,
-      "sha256": "f7af2b48e73d39fe28fb209a058edacea1be0999be073ca148c118370f9738d0"
+      "bytes": 26101,
+      "sha256": "d4f5d62881a5efe398436d1a4663e152aab1c937110403ff26dd60435122e16e"
     },
     {
       "path": "supabase/functions/csp-report/index.ts",
@@ -853,7 +853,7 @@
       "name": "crm-integration",
       "entrypoint": "supabase/functions/crm-integration/index.ts",
       "verify_jwt": false,
-      "source_sha256": "2b39c707e5805815e47c507915e17516d21e9b4ba7105afbf57cc8420ad4c731",
+      "source_sha256": "131dd3f0ae4f2d482c9ed8c245901ab56dec1fcb1334a7dbf8a0df3f3c6aa38d",
       "source_files": [
         "supabase/functions/_shared/ai-vocabulary.ts",
         "supabase/functions/_shared/crm-integration-contract.ts",
@@ -1429,5 +1429,5 @@
       ]
     }
   ],
-  "manifest_sha256": "722f844bdaf81a7823acd56af3414c8850e363b9e51181912961c79e6e2c8ab8"
+  "manifest_sha256": "a49831f605318a7d2c1d54ef6c0a9f0dc6a76cbd3be6e0a797c363811d0e4a05"
 }
