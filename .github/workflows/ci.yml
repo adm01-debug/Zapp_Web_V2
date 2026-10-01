@@ -111,7 +111,7 @@ jobs:
       - name: 🧪 Test CI and Edge deployment guards
         run: >-
           node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs
-          scripts/db-audit/crm-sync-outbox-contract.test.mjs
+          scripts/db-audit/crm-sync-outbox-contract.test.mjs scripts/talkx/*.unit.mjs
 
       - name: 🐹 Setup Go for egress-proxy contracts
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -151,6 +151,15 @@ jobs:
 
       - name: 🛡️ Run Supabase usage guard
         run: node scripts/db-audit/supabase-usage-guard.mjs
+
+      - name: 🧾 Verify Talk X V4 placar freshness
+        run: |
+          # O checkout do job de lint é raso (fetch-depth padrão 1); o placar varre
+          # `git log origin/main` atrás de títulos (X<NNN>), então precisa do histórico
+          # completo de main. `--unshallow` busca a história toda sem tocar no checkout
+          # dos demais steps (e é no-op se o clone já for completo).
+          git fetch origin main --unshallow --quiet
+          node scripts/talkx/v4-status.mjs --check --ref origin/main
 
   # ===========================================
   # JOB 2: Unit Tests
