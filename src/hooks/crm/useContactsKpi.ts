@@ -69,7 +69,7 @@ export function useContactsKpi(filterLidLegacy: boolean) {
   return useQuery({
     queryKey: ['contacts-kpi', filterLidLegacy],
     queryFn: async () => {
-      let q = supabase.from('contacts').select('created_at, contact_type, company');
+      let q = supabase.from('contacts').select('created_at, contact_type, company').is('deleted_at', null);
       if (filterLidLegacy) q = q.eq('is_lid_legacy', false);
       const { data, error } = await q;
       if (error) throw error;
