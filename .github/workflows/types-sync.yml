@@ -316,10 +316,11 @@ jobs:
       - name: Gate 3 — remocoes destrutivas
         id: gate3
         if: steps.diff.outputs.schema_changed == 'true' && steps.gate2.outputs.passed == 'true'
+        env:
+          FORCE_GATE3: ${{ github.event.inputs.force_gate3 }}
         run: |
           REMOVED=$(diff /tmp/types.old.stripped /tmp/types.new.stripped | grep -c '^<' || true)
           echo "Linhas removidas do types.ts: ${REMOVED}"
-          FORCE_GATE3="${{ github.event.inputs.force_gate3 }}"
           if [ "$REMOVED" -gt 10 ] && [ "$FORCE_GATE3" != "true" ]; then
             echo "passed=false" >> "$GITHUB_OUTPUT"
             echo "::warning::Gate 3 requer revisao humana: ${REMOVED} linhas removidas."
