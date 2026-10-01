@@ -262,7 +262,9 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
       const targetStatus = input.status ?? 'backlog';
       const posicoes = items.filter((i) => i.status === targetStatus).map((i) => i.position);
       const position = posicoes.length ? Math.min(...posicoes) - 1 : 0;
-      const { error } = await supabase.from('conversation_tasks').insert({
+      // Devolve o id: quem cria fora do modulo precisa dele para abrir o item
+      // (o /remind da fase F abria o Sheet e fazia uma leitura extra so para isso).
+      const { data, error } = await supabase.from('conversation_tasks').insert({
         title: input.title,
         description: input.description ?? null,
         contact_id: input.contactId ?? null,
@@ -274,8 +276,9 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
         due_date: input.dueDate ?? null,
         remind_at: input.remindAt ?? null,
         waiting_reason: input.waitingReason ?? null,
-      });
+      }).select('id').single();
       if (error) throw error;
+      return (data as { id: string } | null)?.id ?? null;
     },
     onSettled: () => invalidate(),
     onSuccess: () => { toast.success('Tarefa criada'); },
@@ -512,7 +515,10 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
     byStatus,
     kpis: kpiData,
     // mutations
-    create:   (input: WorkItemInput) => createMutation.mutateAsync(input),
+    // `create` segue devolvendo void (varios consumidores tipam assim); quem precisa
+    // do id da tarefa criada usa `createAndGetId` (fase F: o /remind abre o item).
+    create:   async (input: WorkItemInput) => { await createMutation.mutateAsync(input); },
+    createAndGetId: (input: WorkItemInput) => createMutation.mutateAsync(input),
     update:   (id: string, patch: Partial<WorkItemInput>) => updateMutation.mutateAsync({ id, patch }),
     move:     (item: WorkItem, to: WorkItemStatus, opts?: MoveOpts) =>
                 moveMutation.mutateAsync({ item, to, opts }),
