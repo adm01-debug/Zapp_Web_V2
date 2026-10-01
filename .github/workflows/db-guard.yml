@@ -150,7 +150,7 @@ jobs:
           bun-version: '1.4.0'
 
       - name: Instalar dependencias do guard AST
-        run: bun install --frozen-lockfile
+        run: bun install --frozen-lockfile --ignore-scripts
 
       # O teste de integracao da V02 fala com um PostgREST real e e escrito em
       # Deno, como os testes da edge. Mesma action e mesmo SHA pinado do ci.yml

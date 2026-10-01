@@ -118,7 +118,8 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
   useDocumentTitle(mod.label);
   const { announce } = useAriaAnnouncer();
   const prefersReduced = useReducedMotion();
-  const { roles, loading: rolesLoading } = useUserRole();
+  const { roles, permissions, loading: rolesLoading, permissionsLoading } = useUserRole();
+  const accessLoading = rolesLoading || permissionsLoading;
 
   // Announce view changes for screen readers
   useEffect(() => {
@@ -126,12 +127,12 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
   }, [currentView, mod.label, announce]);
 
   // Bloqueio real de rota: esconder do menu nao impede ?view= digitado a mao,
-  // deep link ou favorito antigo. Nega por padrao ate os papeis carregarem —
-  // evita flash da tela restrita (mesmo padrao do ProtectedRoute).
-  const authorized = !rolesLoading && NavigationService.canAccess(currentView, roles);
+  // deep link ou favorito antigo. Nega por padrao ate os papeis E as permissoes
+  // nomeadas carregarem — evita flash da tela restrita (mesmo padrao do ProtectedRoute).
+  const authorized = !accessLoading && NavigationService.canAccess(currentView, roles, permissions);
 
   const content = useMemo(() => {
-    if (rolesLoading) {
+    if (accessLoading) {
       return <ViewLoadingFallback noPadding />;
     }
     if (!authorized) {
@@ -151,7 +152,7 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
       );
     }
     return <FallbackView currentView={currentView} />;
-  }, [currentView, userId, rolesLoading, authorized, canGoBack, canGoForward, onGoBack, onGoForward, breadcrumbTrail, onNavigateTo]);
+  }, [currentView, userId, accessLoading, authorized, canGoBack, canGoForward, onGoBack, onGoForward, breadcrumbTrail, onNavigateTo]);
 
   return (
     <ViewContainer

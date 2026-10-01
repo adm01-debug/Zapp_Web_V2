@@ -188,12 +188,12 @@ Formato: `[ ] N. Ação — arquivo — DoD`. Marque `[x]` **só** com evidênci
 
 ### FASE G — Chat: Notas, redirecionamento, atalho, mini-quadro (etapas 71–76) → CP-G
 
-- [ ] **71.** Branch `claude/feat-tarefas-g-chat-<carimbo>`. `NotesTab.tsx` seção "Pendências": trocar `openTasks.map` por resumo "{n} tarefas abertas com este contato" + botão "Ver na aba Tarefas" (`onTabChange('tasks')` — descobrir a prop real em `ConversationTabContent`) + `QuickAdd compact`. — DoD: sem lista duplicada.
-- [ ] **72.** `TasksTab.tsx` — reescrita autorizada: mini-quadro vertical por status (Fazendo · A fazer · Aguardando · Caixa de entrada, cada um colapsável com contador) + "Concluídas" (7d) colapsada; `QuickAdd` com chip Lembrar em destaque e `@` oculto. — DoD: 5 grupos.
-- [ ] **73.** Redirecionamento: se a aba ativa persistida (`grep -rn "activeTab" src/components/inbox/RealtimeInboxView.tsx src/hooks/inbox`) for `'reminders'` → mapear para `'tasks'`. — DoD: usuário que estava em Lembretes cai em Tarefas.
-- [ ] **74.** Atalho no chat: `Alt+T` (verificar conflito em `useKeyboardShortcuts`) abre a aba Tarefas com foco no `QuickAdd`. — DoD: registrado sem conflito.
-- [ ] **75.** Testes: `ConversationTabs.test.tsx` (8 abas, badge `tasksOpen`), `TasksTab.test.tsx` (grupos, quick add com contato), `NotesTab.test.tsx` (resumo + botão). — DoD: `npx vitest run src/components/inbox` verde.
-- [ ] **76.** Commit `feat(tarefas): fase G — chat: Notas sem duplicação, mini-quadro na aba Tarefas, redirecionamento, Alt+T`. PR, CI, merge, screenshots `out/G-76-{tarefas,notas}.png`. — DoD: SHA.
+- [x] **71.** Branch `claude/feat-tarefas-g-chat-<carimbo>`. `NotesTab.tsx` seção "Pendências": trocar `openTasks.map` por resumo "{n} tarefas abertas com este contato" + botão "Ver na aba Tarefas" (`onTabChange('tasks')` — descobrir a prop real em `ConversationTabContent`) + `QuickAdd compact`. — DoD: sem lista duplicada.
+- [x] **72.** `TasksTab.tsx` — reescrita autorizada: mini-quadro vertical por status (Fazendo · A fazer · Aguardando · Caixa de entrada, cada um colapsável com contador) + "Concluídas" (7d) colapsada; `QuickAdd` com chip Lembrar em destaque e `@` oculto. — DoD: 5 grupos.
+- [x] **73.** Redirecionamento: se a aba ativa persistida (`grep -rn "activeTab" src/components/inbox/RealtimeInboxView.tsx src/hooks/inbox`) for `'reminders'` → mapear para `'tasks'`. — DoD: usuário que estava em Lembretes cai em Tarefas.
+- [x] **74.** Atalho no chat: `Alt+T` (verificar conflito em `useKeyboardShortcuts`) abre a aba Tarefas com foco no `QuickAdd`. — DoD: registrado sem conflito.
+- [x] **75.** Testes: `ConversationTabs.test.tsx` (8 abas, badge `tasksOpen`), `TasksTab.test.tsx` (grupos, quick add com contato), `NotesTab.test.tsx` (resumo + botão). — DoD: `npx vitest run src/components/inbox` verde.
+- [x] **76.** Commit `feat(tarefas): fase G — chat: Notas sem duplicação, mini-quadro na aba Tarefas, redirecionamento, Alt+T`. PR, CI, merge, screenshots `out/G-76-{tarefas,notas}.png`. — DoD: SHA.
 
 **CP-G — Chat coerente.** Gate: `git grep -n "Lembrete" src/components/inbox` = só "Lembrar-me"/"/remind"; badge == itens.
 

@@ -12,6 +12,7 @@ export const DEFAULT_SHORTCUTS: ShortcutBinding[] = [
   { id: 'global-search', name: 'Busca global', description: 'Abre a busca global', defaultKey: 'k', defaultModifiers: { ctrlKey: true }, category: 'navigation' },
   { id: 'next-conversation', name: 'Próxima conversa', description: 'Navega para a próxima conversa', defaultKey: 'ArrowDown', defaultModifiers: { altKey: true }, category: 'navigation' },
   { id: 'prev-conversation', name: 'Conversa anterior', description: 'Navega para a conversa anterior', defaultKey: 'ArrowUp', defaultModifiers: { altKey: true }, category: 'navigation' },
+  { id: 'open-tasks-tab', name: 'Tarefas da conversa', description: 'Abre a aba Tarefas com o foco no campo de nova tarefa', defaultKey: 't', defaultModifiers: { altKey: true }, category: 'navigation' },
   { id: 'show-shortcuts-help', name: 'Ajuda de atalhos', description: 'Mostra todos os atalhos disponíveis', defaultKey: '/', defaultModifiers: { ctrlKey: true }, category: 'navigation' },
   { id: 'toggle-sidebar', name: 'Alternar barra lateral', description: 'Mostra ou oculta a barra lateral', defaultKey: 'b', defaultModifiers: { ctrlKey: true }, category: 'navigation' },
   { id: 'go-to-inbox', name: 'Ir para Inbox', description: 'Navega para a caixa de entrada', defaultKey: '1', defaultModifiers: { ctrlKey: true }, category: 'navigation' },

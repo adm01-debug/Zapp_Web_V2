@@ -506,7 +506,7 @@ leituras foram descartadas.
 (etapas 54/58, que dependem do login de QA no cofre).
 
 ## CP-F Avisos de alarme [x] — toast=ok · popover=criado · badge=ok · push=fora da v1 · 66/67 pendentes de QA
-## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=
+## CP-G Chat integrado [x] — NotesTab=resumo+atalho+QuickAdd · TasksTab=5 grupos · reminders->tasks=ok · Alt+T=ok
 ## CP-H A11y        [ ] 7 atalhos= · aria-live= · reduced-motion 0s= · contraste= · mobile 3 modos= · light= · zen=
 ## CP-I Testes      [ ] arquivos= · casos= · bundle= KB gz · TTI 300 itens=
 ## CP-J Entrega     [ ] gates 8/8= · func 24/24= · geometria= · cores= · isolamento 2 usuários= · migração= · PR drop reminders_pending (aguarda APROVADO)= · docs= · prod final=
@@ -616,6 +616,20 @@ Etapas 35–41 fechadas; 42 entregue (commit/PR/CI/merge), restando só o screen
 - Evidencia: typecheck 0 · ratchet 0 novas/29 removidas · tipografia ok · db:guard ok · build ok,
   bundle 4068,3/4100 KB · suite 371 arquivos / 4853 testes / 0 falhas · 2/2 mutacoes mortas
 - Pendente de QA: 66/67 (idempotencia com timestamps) e screenshots
+
+## FASE G — Chat: Notas, redirecionamento, atalho, mini-quadro (71-76)
+
+- 71 NotesTab: lista duplicada virou resumo '{n} tarefas abertas com este contato' + botao 'Ver na aba Tarefas'
+  (onTabChange) + QuickAdd compact com o contato
+- 72 TasksTab reescrito: mini-quadro vertical (Fazendo, A fazer, Aguardando, Caixa de entrada colapsaveis com
+  contador) + 'Concluidas (7d)' colapsada; QuickAdd compact no topo
+- 73 aba ativa passou a ser persistida, com redirect 'reminders' -> 'tasks' na hidratacao (normalizeConversationTab)
+- 74 Alt+T abre a aba Tarefas e foca o QuickAdd; registry real, sem conflito
+- 75 testes: NotesTab 10 + TasksTab 10 + ConversationTabs 13 (inbox/hooks: 519 casos verdes)
+- Evidencia: typecheck 0 · ratchet 0 novas/30 removidas · tipografia ok · db:guard ok · build ok,
+  bundle 4071,4/4100 KB · suite 378 arquivos / 4938 testes / 0 falhas · 1/1 mutacao morta (reminders sem redirect)
+- Divergencias: chip Lembrar em destaque nao feito (QuickAdd sem prop de destaque; compact esconde os chips);
+  reset para 'chat' ao trocar de conversa mantido (pre-existente)
 
 ## Pendências / resíduos (honestos)
 - Push do navegador: decidir na etapa 64 (infra existe: usePushNotifications.ts, PushNotificationToggle.tsx — não avaliada)

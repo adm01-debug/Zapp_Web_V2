@@ -31,7 +31,7 @@ jobs:
     steps:
       - name: Validar configuracao e processar lote
         env:
-          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          PROJECT_REF: tnnnlkbymytvtqngbbqh
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           INPUT_BATCH: ${{ inputs.batch_size }}
         run: |
