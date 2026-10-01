@@ -71,7 +71,10 @@ export function useSentimentAlerts() {
             }
           );
 
-          if (!isQuietHours() && settings.soundEnabled && settings.slaBreachSound) {
+          // O que toca aqui é o som de MENÇÃO (`mention`/`mentionSoundType`): o portão tem de
+          // ser a preferência de menção. Estava `slaBreachSound` (copiado do caminho de SLA),
+          // então desligar o som de SLA emudecia este alerta e desligar o de menção não fazia nada.
+          if (!isQuietHours() && settings.soundEnabled && settings.mentionSound) {
             playNotificationSound('mention', settings.mentionSoundType, settings.soundVolume);
           }
 

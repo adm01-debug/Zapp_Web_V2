@@ -1,19 +1,15 @@
-import React from 'react';
 import { Users } from 'lucide-react';
 import { motion, LayoutGroup, useReducedMotion } from 'framer-motion';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
 import { cn } from '@/lib/utils';
-import { CONTACT_TYPE_ICONS } from './ContactsTable';
+import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
 
 interface ContactTypeTabsProps {
   activeTab: string;
   setActiveTab: (value: string) => void;
   contactCountByType: Record<string, number>;
 }
-
-const resizeIcon = (icon: React.ReactNode) =>
-  icon ? React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-[18px] h-[18px]' }) : null;
 
 function CountBadge({ count, active }: { count: number; active: boolean }) {
   return (
@@ -62,6 +58,7 @@ export function ContactTypeTabs({ activeTab, setActiveTab, contactCountByType }:
             {CONTACT_TYPES.map((type) => {
               const count = contactCountByType[type.value] || 0;
               const active = activeTab === type.value;
+              const TypeIcon = CONTACT_TYPE_CONFIG[type.value].Icon;
               return (
                 <TabsTrigger
                   key={type.value}
@@ -69,7 +66,7 @@ export function ContactTypeTabs({ activeTab, setActiveTab, contactCountByType }:
                   className="relative isolate h-10 px-4 rounded-[10px] text-sm font-medium text-muted-foreground gap-2 data-[state=active]:text-foreground data-[state=active]:font-semibold data-[state=active]:bg-transparent data-[state=active]:shadow-none shrink-0 snap-start"
                 >
                   {active && <Pill reduceMotion={reduceMotion} />}
-                  {resizeIcon(CONTACT_TYPE_ICONS[type.value])}
+                  <TypeIcon className="w-[18px] h-[18px]" />
                   {type.label}
                   {count > 0 && <CountBadge count={count} active={active} />}
                 </TabsTrigger>

@@ -29,21 +29,18 @@ const priorityConfig: Record<OperationalPriority, { label: string; color: string
   low: { label: 'Prioridade baixa', color: 'bg-muted text-muted-foreground border-transparent' },
 };
 
-// Labels vêm do config canônico (src/components/contacts/contactTypeConfig.tsx); cores usam
-// tokens carvão em vez do badgeClass daquele arquivo (que embute cor literal inline).
-const contactTypeColor: Record<string, string> = {
-  cliente: 'bg-primary/15 text-primary border-primary/40',
-  customer: 'bg-primary/15 text-primary border-primary/40',
-  fornecedor: 'bg-warning/15 text-warning border-warning/40',
-  supplier: 'bg-warning/15 text-warning border-warning/40',
-  colaborador: 'bg-success/15 text-success border-success/40',
-  employee: 'bg-success/15 text-success border-success/40',
+// Rótulo e cor dos 6 tipos canônicos vêm de src/components/contacts/contactTypeConfig.tsx;
+// os aliases em inglês (legado de importações antigas) usam tokens.
+const LEGACY_TYPE_BADGES: Record<string, { label: string; color: string }> = {
+  customer: { label: 'Cliente', color: 'bg-primary/15 text-primary border-primary/40' },
+  supplier: { label: 'Fornecedor', color: 'bg-warning/15 text-warning border-warning/40' },
+  employee: { label: 'Colaborador', color: 'bg-success/15 text-success border-success/40' },
 };
-const contactTypeLabel: Record<string, string> = { customer: 'Cliente', employee: 'Colaborador', supplier: 'Fornecedor' };
-const getContactTypeBadge = (type: string) => ({
-  label: CONTACT_TYPE_CONFIG[type]?.label ?? contactTypeLabel[type] ?? type,
-  color: contactTypeColor[type] ?? 'bg-muted text-foreground border-transparent',
-});
+const getContactTypeBadge = (type: string) => {
+  const canonical = CONTACT_TYPE_CONFIG[type];
+  if (canonical) return { label: canonical.label, color: canonical.badgeClass };
+  return LEGACY_TYPE_BADGES[type] ?? { label: type, color: 'bg-muted text-foreground border-transparent' };
+};
 
 interface ContactHeaderSectionProps {
   contact: { id: string; name: string; phone: string; avatar?: string; email?: string };

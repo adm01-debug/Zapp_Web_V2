@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion, useReducedMotion } from 'framer-motion';
@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
+import { getInitials } from '@/lib/avatar-colors';
 import { TalkMeConflictError, type TalkMeWaitingContact } from './types';
 import type { TalkMeQueueController } from './useTalkMeQueue';
 import './talk-me-layout.css';
@@ -62,14 +62,14 @@ function messagePreview(item: TalkMeWaitingContact) {
   return 'Nova mensagem recebida';
 }
 
-function TalkMeCard({ item, active, onSelect, buttonRef, onMove }: {
+function TalkMeCard({ item, active, onSelect, onFocus, buttonRef, onMove }: {
   item: TalkMeWaitingContact;
   active: boolean;
   onSelect: () => void;
+  onFocus: () => void;
   buttonRef?: (node: HTMLButtonElement | null) => void;
   onMove?: (direction: -1 | 1) => void;
 }) {
-  const colors = getAvatarColor(item.name || '?');
   const isAudio = item.lastMessageType.toLowerCase().includes('audio');
 
   const nameId = `talk-me-main-name-${item.contactId}`;
@@ -82,7 +82,9 @@ function TalkMeCard({ item, active, onSelect, buttonRef, onMove }: {
       ref={buttonRef}
       type="button"
       onClick={onSelect}
+      onFocus={onFocus}
       onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
         if (event.key === 'ArrowLeft') { event.preventDefault(); onMove?.(-1); }
         if (event.key === 'ArrowRight') { event.preventDefault(); onMove?.(1); }
       }}
@@ -106,7 +108,7 @@ function TalkMeCard({ item, active, onSelect, buttonRef, onMove }: {
         />
         <Avatar className="talk-me-avatar relative h-16 w-16 shrink-0 border-2 border-white/20 shadow-2xl sm:h-20 sm:w-20">
           <AvatarImage src={item.avatarUrl ?? undefined} alt="" className="object-cover" />
-          <AvatarFallback className={cn('text-2xl font-bold', colors.bg, colors.text)}>
+          <AvatarFallback className="bg-zinc-950 text-2xl font-bold text-white">
             {getInitials(item.name || '?')}
           </AvatarFallback>
         </Avatar>
@@ -147,15 +149,18 @@ function TalkMeCard({ item, active, onSelect, buttonRef, onMove }: {
   );
 }
 
-function TalkMeQueueCard({ item, active, disabled, onSelect, onMove, buttonRef }: {
+function TalkMeQueueCard({ item, active, disabled, onSelect, onFocus, onMove, buttonRef }: {
   item: TalkMeWaitingContact;
   active: boolean;
   disabled: boolean;
   onSelect: () => void;
+  onFocus: () => void;
   onMove: (direction: -1 | 1) => void;
   buttonRef: (node: HTMLButtonElement | null) => void;
 }) {
   const nameId = `talk-me-queue-name-${item.contactId}`;
+  const companyId = `talk-me-queue-company-${item.contactId}`;
+  const jobTitleId = `talk-me-queue-job-title-${item.contactId}`;
   const detailsId = `talk-me-queue-details-${item.contactId}`;
 
   return (
@@ -163,13 +168,15 @@ function TalkMeQueueCard({ item, active, disabled, onSelect, onMove, buttonRef }
       ref={buttonRef}
       type="button"
       onClick={onSelect}
+      onFocus={onFocus}
       onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
         if (event.key === 'ArrowLeft') { event.preventDefault(); onMove(-1); }
         if (event.key === 'ArrowRight') { event.preventDefault(); onMove(1); }
       }}
       disabled={disabled}
       aria-label={`Selecionar ${item.name || 'contato sem nome'}`}
-      aria-describedby={detailsId}
+      aria-describedby={`${companyId} ${jobTitleId} ${detailsId}`}
       aria-pressed={active}
       className={cn(
         'talk-me-queue-card group relative flex h-[211px] w-[173px] shrink-0 snap-center flex-col overflow-hidden rounded-[20px] border bg-black text-left shadow-lg',
@@ -191,9 +198,11 @@ function TalkMeQueueCard({ item, active, disabled, onSelect, onMove, buttonRef }
         <h3 id={nameId} className="relative mt-2 w-full truncate text-sm font-black text-white">
           {item.name || 'Contato sem nome'}
         </h3>
-        <p className="relative mt-1 w-full truncate text-xs text-zinc-400">
+        <p id={companyId} className="relative mt-1 w-full truncate text-xs text-zinc-400">
+          <span className="sr-only">Empresa:</span>{' '}
           {item.company || 'Empresa não informada'}
         </p>
+        <span id={jobTitleId} className="sr-only">Cargo: {item.jobTitle || 'Cargo não informado'}</span>
       </div>
       <div id={detailsId} className="shrink-0 border-t border-white/10 bg-zinc-950 px-2.5 py-2">
         <div className="flex items-center justify-between gap-2 text-2xs font-semibold text-zinc-300">
@@ -204,6 +213,7 @@ function TalkMeQueueCard({ item, active, disabled, onSelect, onMove, buttonRef }
           <span className="shrink-0 text-zinc-400">#{item.position}</span>
         </div>
         <p className="mt-2 line-clamp-2 min-h-8 break-words text-xs leading-4 text-zinc-200">
+          <span className="sr-only">Última mensagem:</span>{' '}
           {messagePreview(item)}
         </p>
       </div>
@@ -252,6 +262,8 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
   } | null>(null);
   const suppressQueueClickRef = useRef(false);
   const pendingForwardRef = useRef<{ contactId: string; moveFocus: boolean } | null>(null);
+  const focusRequestRef = useRef<{ contactId: string; surface: 'main' | 'queue' } | null>(null);
+  const lastCardFocusRef = useRef<{ contactId: string; surface: 'main' | 'queue' } | null>(null);
   const selectedContactId = selection?.scopeKey === scopeKey ? selection.contactId : null;
   const notifiedMissingRef = useRef<string | null>(null);
 
@@ -265,6 +277,15 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
   useEffect(() => {
     if (!open || items.length === 0 || itemsLoading || reconciling) return;
     if (selectedContactId && items.some((item) => item.contactId === selectedContactId)) return;
+    const previousFocus = lastCardFocusRef.current;
+    const activeElement = document.activeElement;
+    if (
+      selectedContactId
+      && previousFocus?.contactId === selectedContactId
+      && (!activeElement || activeElement === document.body || !activeElement.isConnected)
+    ) {
+      focusRequestRef.current = { contactId: items[0].contactId, surface: previousFocus.surface };
+    }
     if (selectedContactId && notifiedMissingRef.current !== selectedContactId) {
       toast.info('O atendimento anterior saiu da fila. Exibimos o próximo disponível.');
       notifiedMissingRef.current = selectedContactId;
@@ -275,7 +296,19 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
 
   useEffect(() => {
     pendingForwardRef.current = null;
+    focusRequestRef.current = null;
   }, [open, scopeKey]);
+
+  useLayoutEffect(() => {
+    const request = focusRequestRef.current;
+    if (!open || !selectedContactId || request?.contactId !== selectedContactId) return;
+    const node = request.surface === 'main'
+      ? cardRefs.current.get(request.contactId)
+      : queueCardRefs.current.get(request.contactId);
+    if (!node?.isConnected) return;
+    node.focus({ preventScroll: true });
+    if (document.activeElement === node) focusRequestRef.current = null;
+  }, [open, selectedContactId]);
 
   const move = useCallback((direction: -1 | 1, moveFocus = false) => {
     if (items.length === 0 || claimingContactId || reconciling) return;
@@ -291,16 +324,16 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
       return;
     }
     const nextIndex = Math.min(items.length - 1, Math.max(0, safeIndex + direction));
+    if (moveFocus) focusRequestRef.current = { contactId: items[nextIndex].contactId, surface: 'main' };
     setSelection({ scopeKey, contactId: items[nextIndex].contactId });
-    if (moveFocus) requestAnimationFrame(() => cardRefs.current.get(items[nextIndex].contactId)?.focus());
     if (direction === 1 && nextIndex >= items.length - 3 && hasMore && !loadingMore) void loadMore();
   }, [activeItem?.contactId, claimingContactId, hasMore, items, loadMore, loadingMore, reconciling, safeIndex, scopeKey]);
 
   const selectQueueItem = useCallback((index: number, moveFocus = false) => {
     if (claimingContactId || reconciling || index < 0 || index >= items.length) return;
     const item = items[index];
+    if (moveFocus) focusRequestRef.current = { contactId: item.contactId, surface: 'queue' };
     setSelection({ scopeKey, contactId: item.contactId });
-    if (moveFocus) requestAnimationFrame(() => queueCardRefs.current.get(item.contactId)?.focus());
     if (index >= items.length - 3 && hasMore && !loadingMore) void loadMore();
   }, [claimingContactId, hasMore, items, loadMore, loadingMore, reconciling, scopeKey]);
 
@@ -321,8 +354,8 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
     const nextItem = previousIndex >= 0 ? items[previousIndex + 1] : undefined;
     if (nextItem) {
       pendingForwardRef.current = null;
+      if (pending.moveFocus) focusRequestRef.current = { contactId: nextItem.contactId, surface: 'main' };
       setSelection({ scopeKey, contactId: nextItem.contactId });
-      if (pending.moveFocus) requestAnimationFrame(() => cardRefs.current.get(nextItem.contactId)?.focus());
     } else if (!loadingMore) {
       pendingForwardRef.current = null;
     }
@@ -504,6 +537,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                               item={item}
                               active={active}
                               onSelect={() => !claimingContactId && setSelection({ scopeKey, contactId: item.contactId })}
+                              onFocus={() => { lastCardFocusRef.current = { contactId: item.contactId, surface: 'main' }; }}
                               onMove={(direction) => move(direction, true)}
                               buttonRef={(node) => {
                                 if (node) cardRefs.current.set(item.contactId, node);
@@ -613,6 +647,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                           active={index === safeIndex}
                           disabled={!!claimingContactId || reconciling}
                           onSelect={() => selectQueueItem(index)}
+                          onFocus={() => { lastCardFocusRef.current = { contactId: item.contactId, surface: 'queue' }; }}
                           onMove={(direction) => selectQueueItem(index + direction, true)}
                           buttonRef={(node) => {
                             if (node) queueCardRefs.current.set(item.contactId, node);

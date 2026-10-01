@@ -109,7 +109,7 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold truncate">{region}</p>
-                      <p className="text-3xs text-muted-foreground">{members.length} contato{members.length !== 1 ? 's' : ''}</p>
+                      <p className="text-caption">{members.length} contato{members.length !== 1 ? 's' : ''}</p>
                     </div>
                     <Badge variant="secondary" className="text-3xs h-5 shrink-0">{percentage}%</Badge>
                   </div>
@@ -149,7 +149,7 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
                                 </Avatar>
                                 <span className="text-2xs truncate flex-1">{c.name}</span>
                                 {c.company && (
-                                  <span className="text-3xs text-muted-foreground/60 truncate max-w-[80px]">{c.company}</span>
+                                  <span className="text-xs text-muted-foreground/60 truncate max-w-[80px]">{c.company}</span>
                                 )}
                               </button>
                             );

@@ -4,7 +4,7 @@
         "ai_is_canonical_churn_risk(p_value text)",
         "ai_is_canonical_urgency(p_value text)"
     ],
-    "generated_at": "2026-09-30",
+    "generated_at": "2026-10-01",
     "anon_table_select": [
         "agent_achievements",
         "agent_presence",
@@ -137,6 +137,6 @@
         "whisper_messages"
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 227,
-    "authenticated_execute_count": 152
+    "service_role_execute_count": 222,
+    "authenticated_execute_count": 148
 }

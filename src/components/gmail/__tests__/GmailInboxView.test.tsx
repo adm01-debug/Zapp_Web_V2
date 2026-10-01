@@ -169,10 +169,10 @@ describe('GmailInboxView', () => {
     subscribeToThreads.mockClear().mockReturnValue(vi.fn());
   });
 
-  it('exibe estado "Gmail nao conectado" quando não há conta ativa', () => {
+  it('exibe estado "Gmail não conectado" quando não há conta ativa', () => {
     config.activeAccount = null;
     render(<GmailInboxView />);
-    expect(screen.getByText('Gmail nao conectado')).toBeInTheDocument();
+    expect(screen.getByText('Gmail não conectado')).toBeInTheDocument();
   });
 
   it('renderiza a lista de threads do inbox quando há conta ativa', () => {
@@ -198,13 +198,13 @@ describe('GmailInboxView', () => {
     });
   });
 
-  it('aba Nao lidos exibe apenas threads com is_unread=true', async () => {
+  it('aba Não lidos exibe apenas threads com is_unread=true', async () => {
     config.threads = [
       makeThread({ subject: 'Email lido', is_unread: false }),
       makeThread({ subject: 'Email nao lido', is_unread: true }),
     ];
     render(<GmailInboxView />);
-    fireEvent.click(screen.getByRole('tab', { name: /nao lidos/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /não lidos/i }));
     await waitFor(() => {
       expect(screen.queryByText('Email lido')).not.toBeInTheDocument();
       expect(screen.getByText('Email nao lido')).toBeInTheDocument();

@@ -41,7 +41,7 @@ export default function GmailInboxView() {
     return (
       <div className="flex flex-col items-center justify-center h-full py-20">
         <Mail className="w-16 h-16 text-muted-foreground/20 mb-4" />
-        <h3 className="text-lg font-semibold mb-2">Gmail nao conectado</h3>
+        <h3 className="text-lg font-semibold mb-2">Gmail não conectado</h3>
         <p className="text-sm text-muted-foreground text-center max-w-sm mb-4">Conecte sua conta Gmail nas Integracoes para visualizar e gerenciar seus emails aqui.</p>
         <Badge variant="outline" className="text-xs">Integracoes &rarr; Gmail &rarr; Conectar</Badge>
       </div>
@@ -68,7 +68,7 @@ export default function GmailInboxView() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
         <TabsList className="w-full justify-start rounded-none border-b px-3 h-9 bg-transparent">
           <TabsTrigger value="inbox" className="text-xs gap-1 data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"><Inbox className="w-3.5 h-3.5" />Inbox{unreadCount > 0 && <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1">{unreadCount}</Badge>}</TabsTrigger>
-          <TabsTrigger value="unread" className="text-xs gap-1 data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"><MailOpen className="w-3.5 h-3.5" />Nao lidos</TabsTrigger>
+          <TabsTrigger value="unread" className="text-xs gap-1 data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"><MailOpen className="w-3.5 h-3.5" />Não lidos</TabsTrigger>
           <TabsTrigger value="starred" className="text-xs gap-1 data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"><Star className="w-3.5 h-3.5" />Favoritos{starredCount > 0 && <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1">{starredCount}</Badge>}</TabsTrigger>
           <TabsTrigger value="sent" className="text-xs gap-1 data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"><SendIcon className="w-3.5 h-3.5" />Enviados</TabsTrigger>
         </TabsList>

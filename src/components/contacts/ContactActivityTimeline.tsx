@@ -189,7 +189,7 @@ export function ContactActivityTimeline({ contactId, contactCreatedAt, className
                 <div className="flex-1 min-w-0 pt-0.5">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-xs font-medium text-foreground truncate">{event.title}</p>
-                    <span className="text-3xs text-muted-foreground whitespace-nowrap">
+                    <span className="text-caption whitespace-nowrap">
                       {formatDistanceToNow(new Date(event.timestamp), { addSuffix: true, locale: ptBR })}
                     </span>
                   </div>
