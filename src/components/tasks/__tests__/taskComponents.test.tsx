@@ -192,7 +192,7 @@ describe('Tarefas — componentes dos três modos', () => {
     cleanup();
   });
 
-  it('a ordem das colunas do Quadro e a contratada (nao pode mudar em silencio)', () => {
+  it('a ordem das colunas do Quadro e a contratada (não pode mudar em silêncio)', () => {
     cleanup();
     render(
       <TooltipProvider>
@@ -209,7 +209,7 @@ describe('Tarefas — componentes dos três modos', () => {
     );
 
     // A ordem que o usuario ve, da esquerda para a direita.
-    const esperados = ['Caixa de entrada', 'A fazer', 'Fazendo', 'Aguardando', 'Concluido'];
+    const esperados = ['Caixa de entrada', 'A fazer', 'Fazendo', 'Aguardando', 'Concluído'];
     const titulos   = esperados.map(rotulo => screen.getByText(rotulo));
 
     // 1) a linha que contem as colunas nao inverte a ordem visual (flex-row-reverse)
@@ -329,11 +329,11 @@ describe('Tarefas — componentes dos três modos', () => {
 
   it('F2 (auditoria): PriorityChip com prioridade nula/desconhecida cai no padrão e não imprime "undefined"', () => {
     const { unmount } = render(<PriorityChip priority={null} />);
-    expect(screen.getByTitle('Prioridade: Media')).toBeTruthy();
+    expect(screen.getByTitle('Prioridade: Média')).toBeTruthy();
     unmount();
 
     render(<PriorityChip priority={'turbo' as unknown as 'medium'} />);
-    expect(screen.getByTitle('Prioridade: Media')).toBeTruthy();
+    expect(screen.getByTitle('Prioridade: Média')).toBeTruthy();
     expect(screen.queryByTitle(/undefined/)).toBeNull();
   });
 
@@ -407,8 +407,8 @@ describe('Tarefas — componentes dos três modos', () => {
 
     expect(screen.getAllByText('Coluna vazia')).toHaveLength(5);
     // a política sai da KANBAN_COLUMNS (mesmo texto do tooltip do cabeçalho)
-    expect(screen.getByText('O que esta nas suas maos agora. Tres e o limite.')).toBeTruthy();
-    expect(screen.getByText('Feito. Fica 7 dias a vista.')).toBeTruthy();
+    expect(screen.getByText('O que está nas suas mãos agora. Três é o limite.')).toBeTruthy();
+    expect(screen.getByText('Feito. Fica 7 dias à vista.')).toBeTruthy();
   });
 
   it('etapa 53: o carregamento usa o esqueleto da coluna (3 cartões por coluna)', () => {

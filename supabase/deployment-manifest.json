@@ -319,8 +319,8 @@
     },
     {
       "path": "supabase/functions/crm-integration/index.ts",
-      "bytes": 23541,
-      "sha256": "b5d565af15dda84208f7c4b8f87038b36062a20e007a200be3facd86da694187"
+      "bytes": 25244,
+      "sha256": "f0f8150924d448e4579b68de0eebb7d08c799265449f28dbf58a3a107a177167"
     },
     {
       "path": "supabase/functions/csp-report/index.ts",
@@ -529,8 +529,8 @@
     },
     {
       "path": "supabase/functions/voice-copilot-action/index.ts",
-      "bytes": 8449,
-      "sha256": "65b4a8c065c4e380525987538f6a51ee646fb99a419adf40ae78958fc1131504"
+      "bytes": 9159,
+      "sha256": "6377cb171be1bf756031d744e3d75d78485472961fb19f67f2e9aa0df5a96d82"
     },
     {
       "path": "supabase/functions/webauthn/index.ts",
@@ -853,8 +853,9 @@
       "name": "crm-integration",
       "entrypoint": "supabase/functions/crm-integration/index.ts",
       "verify_jwt": false,
-      "source_sha256": "68cd09eaf970e943d503092a1824e0b8015011840aa84d714bd9458e36a16346",
+      "source_sha256": "d3530662e42e627a7834ffcbe07f7a5ec013e7f91ab00247456aa9a959f071d5",
       "source_files": [
+        "supabase/functions/_shared/ai-vocabulary.ts",
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1382,7 +1383,7 @@
       "name": "voice-copilot-action",
       "entrypoint": "supabase/functions/voice-copilot-action/index.ts",
       "verify_jwt": true,
-      "source_sha256": "b4ef369518e3441d686042e5787c92d9ceff2d3f4df2a9d2e129d49121beae78",
+      "source_sha256": "2d4853abbb09a26fa432b01c3412be46543bbc80e5fc4a619746e2cdebbff6b4",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/postgrest-filters.ts",
@@ -1428,5 +1429,5 @@
       ]
     }
   ],
-  "manifest_sha256": "1b619087c478662e0f2ce5fa7c0acf4206e4015ae7777b9cc097ea8028f98905"
+  "manifest_sha256": "4138fea88d19e229eaebae4e5df94780a34b3cb64d7ad99b9e94df7d1b62c523"
 }

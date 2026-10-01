@@ -66,15 +66,25 @@ Deno.serve(async (req) => {
           .from('contacts')
           .select('*', { count: 'exact', head: true });
 
+        // Conversa aberta = MESMA definicao do dashboard (RPC
+        // dashboard_contact_counts, campo 'open': assigned_to IS NOT NULL e
+        // conversation_status = 'open'). A versao anterior contava contato com
+        // ai_sentiment preenchido — o default 'neutro' fabricado de TODO
+        // contato, que passou a ser ausencia (NULL) e zeraria a metrica.
         const { count: openConversations } = await authedClient
           .from('contacts')
           .select('*', { count: 'exact', head: true })
-          .not('ai_sentiment', 'is', null);
+          .not('assigned_to', 'is', null)
+          .eq('conversation_status', 'open');
 
+        // Alertas negativos: vocabulario canonico pt-BR (positivo|neutro|
+        // negativo|critico). Os literais EN ('negative'/'very_negative') nao
+        // existem mais no banco e nunca casavam (filtro morto); 'critico' e o
+        // pior nivel canonico e substitui o extinto 'very_negative'.
         const { count: negativeAlerts } = await authedClient
           .from('contacts')
           .select('*', { count: 'exact', head: true })
-          .in('ai_sentiment', ['negative', 'very_negative']);
+          .in('ai_sentiment', ['negativo', 'critico']);
 
         result = {
           totalContacts: totalContacts || 0,

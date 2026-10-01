@@ -108,7 +108,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
 
   const loadTemplate = (t: TalkXTemplate) => {
     setVersions([]); setShowVersions(false);
-    if (isDirty && !window.confirm('Tem alteracoes nao salvas. Descartar?')) return;
+    if (isDirty && !window.confirm('Tem alterações não salvas. Descartar?')) return;
     setVariants([]); setShowVariants(false);
     setActiveTemplateId(t.id);
     setExpectedUpdatedAt(t.updated_at);
@@ -141,7 +141,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   /** E47: envia mensagem de teste para o numero informado */
   const handleTest = async () => {
     const phone = testPhone.replace(/\D/g, '');
-    if (!phone || phone.length < 10) { setTestResult({ ok: false, msg: 'Numero invalido' }); return; }
+    if (!phone || phone.length < 10) { setTestResult({ ok: false, msg: 'Número inválido' }); return; }
     if (!eContent.trim()) { setTestResult({ ok: false, msg: 'Template vazio' }); return; }
     setTesting(true); setTestResult(null);
     try {
@@ -165,7 +165,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
 
   /** E46: restaura campos de uma versao anterior */
   const restoreVersion = (v: typeof versions[0]) => {
-    if (!confirm('Restaurar esta versao? Os campos atuais serao substituidos.')) return;
+    if (!confirm('Restaurar esta versão? Os campos atuais serão substituídos.')) return;
     setEName(v.name); setEDesc(v.description ?? ''); setECat(v.category); setEContent(v.content);
     setEStatus(v.status as 'draft'|'review'|'approved');
     setEMediaUrl(v.media_url ?? ''); setEMediaType(v.media_type ?? ''); setEHasMedia(!!v.media_url);
@@ -364,8 +364,8 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
 
           {/* E45: Variaveis customizadas */}
           <div>
-            <p className="text-xs text-foreground-secondary mb-1.5">Variaveis personalizadas</p>
-            <p className="text-2xs text-muted-foreground mb-2">Defina variaveis proprias para este template. Serao inseridas como <span className="font-mono text-primary-glow">{'{{'}var{'}}'}</span> na mensagem.</p>
+            <p className="text-xs text-foreground-secondary mb-1.5">Variáveis personalizadas</p>
+            <p className="text-2xs text-muted-foreground mb-2">Defina variáveis próprias para este template. Serão inseridas como <span className="font-mono text-primary-glow">{'{{'}var{'}}'}</span> na mensagem.</p>
             <div className="flex items-center gap-2 flex-wrap mb-2">
               {eCustomVars.map((v) => (
                 <span key={v} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-violet-500/10 border border-violet-400/20 text-xs font-mono text-violet-300">
@@ -520,12 +520,12 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             </div>
           )}
           <div className="flex items-center justify-between mb-2 pt-3 border-t border-border/50">
-            <p className="text-xs font-semibold text-foreground">Historico</p>
-            <button type="button" onClick={() => { setShowVersions(!showVersions); if (!showVersions && activeTemplateId) fetchVersions(activeTemplateId); }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVersions ? 'Ocultar' : 'Ver versoes'}</button>
+            <p className="text-xs font-semibold text-foreground">Histórico</p>
+            <button type="button" onClick={() => { setShowVersions(!showVersions); if (!showVersions && activeTemplateId) fetchVersions(activeTemplateId); }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVersions ? 'Ocultar' : 'Ver versões'}</button>
           </div>
           {showVersions && (
             <div className="space-y-1">
-              {loadingVersions ? <p className="text-2xs text-muted-foreground">Carregando...</p> : versions.length === 0 ? <p className="text-2xs text-muted-foreground">Nenhuma versao salva.</p> : versions.map((v) => (
+              {loadingVersions ? <p className="text-2xs text-muted-foreground">Carregando...</p> : versions.length === 0 ? <p className="text-2xs text-muted-foreground">Nenhuma versão salva.</p> : versions.map((v) => (
                 <div key={v.id} className="flex items-start justify-between gap-1.5 py-1.5 border-b border-border/40 last:border-0">
                   <div className="min-w-0">
                     <p className="text-2xs font-semibold text-foreground">v{v.version_number} · {v.name.slice(0, 20)}</p>
@@ -555,9 +555,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
       </aside>
 
       {/* E47: Test Dialog */}
-      <Dialog open={showTest} onOpenChange={setShowTest}><DialogContent className="max-w-sm"><DialogHeader><DialogTitle>Testar template</DialogTitle><DialogDescription>Envia a mensagem personalizada para um numero via WhatsApp.</DialogDescription></DialogHeader>
+      <Dialog open={showTest} onOpenChange={setShowTest}><DialogContent className="max-w-sm"><DialogHeader><DialogTitle>Testar template</DialogTitle><DialogDescription>Envia a mensagem personalizada para um número via WhatsApp.</DialogDescription></DialogHeader>
             <div>
-              <Label className="text-xs text-foreground-secondary">Numero de destino</Label>
+              <Label className="text-xs text-foreground-secondary">Número de destino</Label>
               <Input value={testPhone} onChange={(e) => setTestPhone(e.target.value)} placeholder="5541999001234" className="mt-1.5 h-10 bg-input/40 border-border/70 font-mono" />
             </div>
             {testResult && (
