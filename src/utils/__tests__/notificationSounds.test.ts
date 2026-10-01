@@ -13,18 +13,28 @@ const mockGainNode = {
   connect: vi.fn(),
   gain: {
     setValueAtTime: vi.fn(),
+    linearRampToValueAtTime: vi.fn(),
     exponentialRampToValueAtTime: vi.fn(),
   },
 };
 
-const mockAudioContext = {
-  createOscillator: vi.fn().mockReturnValue(mockOscillator),
-  createGain: vi.fn().mockReturnValue(mockGainNode),
-  currentTime: 0,
-  destination: {},
-};
+const criarOscilador = vi.fn(() => mockOscillator);
+const criarGanho = vi.fn(() => mockGainNode);
 
-vi.stubGlobal('AudioContext', vi.fn().mockImplementation(() => mockAudioContext));
+/**
+ * Precisa ser uma CLASSE de verdade. Com um `vi.fn()` no lugar do construtor, o
+ * `new AudioContext()` estourava ("is not a constructor"), o erro era engolido pelo catch do
+ * `playNotificationSound` e a suíte inteira passava sem nunca tocar um som — verde falso.
+ */
+class FakeAudioContext {
+  state = 'running';
+  currentTime = 0;
+  destination = {};
+  createOscillator = criarOscilador;
+  createGain = criarGanho;
+}
+
+vi.stubGlobal('AudioContext', FakeAudioContext);
 
 import {
   playNotificationSound,
@@ -92,6 +102,21 @@ describe('notificationSounds', () => {
       sounds.forEach(sound => {
         expect(() => playNotificationSound('message', sound)).not.toThrow();
       });
+    });
+
+    it('não fica mudo quando o tipo de som vem fora do vocabulário', () => {
+      // Um valor inválido (preferência antiga, cache otimista) fazia o acesso ao SOUND_CONFIGS
+      // estourar: o erro era engolido pelo catch e o alerta simplesmente não tocava. Silêncio é
+      // o pior resultado para um alerta, então o som padrão é a resposta certa — e o oscilador
+      // precisa ser criado de fato (antes, nenhum era).
+      vi.useFakeTimers();
+      try {
+        expect(() => playNotificationSound('message', 'quiet' as never)).not.toThrow();
+        vi.runAllTimers();
+        expect(criarOscilador).toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 });

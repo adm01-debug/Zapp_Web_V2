@@ -67,6 +67,17 @@ function clampSoundVolume(valor: unknown): number {
   return Math.min(SOUND_VOLUME_MAX, Math.max(SOUND_VOLUME_MIN, Math.round(valor)));
 }
 
+// O vocabulário é fechado ('beep'|'chime'|'bell'|'alert'|'soft') e o banco também o exige (CHECK
+// na migration de integridade). Mesmo assim o app não deve confiar no que chega: um valor fora do
+// conjunto virava `SOUND_CONFIGS[x]` undefined → throw → alerta MUDO.
+const SOUND_TYPES: readonly SoundTypeOption[] = ['beep', 'chime', 'bell', 'alert', 'soft'];
+
+function toSoundType(valor: unknown, padrao: SoundTypeOption): SoundTypeOption {
+  return typeof valor === 'string' && (SOUND_TYPES as readonly string[]).includes(valor)
+    ? (valor as SoundTypeOption)
+    : padrao;
+}
+
 function mapDbToSettings(data: Record<string, unknown>): NotificationSettings {
   return {
     ...DEFAULT_SETTINGS,
@@ -80,11 +91,11 @@ function mapDbToSettings(data: Record<string, unknown>): NotificationSettings {
     sentimentAlertThreshold: (data.sentiment_alert_threshold as number) ?? DEFAULT_SETTINGS.sentimentAlertThreshold,
     sentimentConsecutiveCount: (data.sentiment_consecutive_count as number) ?? DEFAULT_SETTINGS.sentimentConsecutiveCount,
     transcriptionNotificationEnabled: (data.transcription_notification_enabled as boolean) ?? DEFAULT_SETTINGS.transcriptionNotificationEnabled,
-    messageSoundType: (data.message_sound_type as SoundTypeOption) ?? DEFAULT_SETTINGS.messageSoundType,
-    mentionSoundType: (data.mention_sound_type as SoundTypeOption) ?? DEFAULT_SETTINGS.mentionSoundType,
-    slaSoundType: (data.sla_sound_type as SoundTypeOption) ?? DEFAULT_SETTINGS.slaSoundType,
-    goalSoundType: (data.goal_sound_type as SoundTypeOption) ?? DEFAULT_SETTINGS.goalSoundType,
-    transcriptionSoundType: (data.transcription_sound_type as SoundTypeOption) ?? DEFAULT_SETTINGS.transcriptionSoundType,
+    messageSoundType: toSoundType(data.message_sound_type, DEFAULT_SETTINGS.messageSoundType),
+    mentionSoundType: toSoundType(data.mention_sound_type, DEFAULT_SETTINGS.mentionSoundType),
+    slaSoundType: toSoundType(data.sla_sound_type, DEFAULT_SETTINGS.slaSoundType),
+    goalSoundType: toSoundType(data.goal_sound_type, DEFAULT_SETTINGS.goalSoundType),
+    transcriptionSoundType: toSoundType(data.transcription_sound_type, DEFAULT_SETTINGS.transcriptionSoundType),
   };
 }
 

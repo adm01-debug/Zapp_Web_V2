@@ -224,6 +224,36 @@ describe('useNotificationSettings', () => {
     });
   });
 
+  // ========== VOCABULÁRIO DE SOM VINDO DO BANCO ==========
+  // O banco tem CHECK para ('beep'|'chime'|'bell'|'alert'|'soft'), mas o app não deve confiar
+  // nisso: um valor fora do conjunto virava `SOUND_CONFIGS[x]` undefined → throw engolido pelo
+  // catch → alerta MUDO, sem sintoma nenhum além de um warn no log.
+  describe('vocabulário de som', () => {
+    const comLinha = (data: unknown) => mockFrom.mockReturnValue(montarCadeia(data));
+
+    const carregar = async () => {
+      const { result } = renderHook(() => useNotificationSettings(), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      return result;
+    };
+
+    it('tipo fora do vocabulário cai no default em vez de emudecer o alerta', async () => {
+      comLinha({ sound_enabled: true, message_sound_type: 'quiet', mention_sound_type: 'pop' });
+      const result = await carregar();
+
+      expect(result.current.settings.messageSoundType).toBe('chime');
+      expect(result.current.settings.mentionSoundType).toBe('bell');
+    });
+
+    it('tipo válido continua sendo respeitado', async () => {
+      comLinha({ sound_enabled: true, message_sound_type: 'soft' });
+      const result = await carregar();
+
+      expect(result.current.settings.messageSoundType).toBe('soft');
+    });
+
+  });
+
   // ========== HORÁRIO DE SILÊNCIO (isQuietHours) ==========
   // A lógica tem uma virada de dia (22:00 -> 08:00) e duas bordas ASSIMÉTRICAS
   // (início inclusivo, fim exclusivo). Nada disso estava coberto: um `>` trocado
