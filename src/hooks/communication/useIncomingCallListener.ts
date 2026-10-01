@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '../auth/useAuth';
 import { log } from '@/lib/logger';
 import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
+import { isFinishedStatus, normalizeStatus } from '@/lib/calls/callStatus';
 
 export interface IncomingCall {
   id: string;
@@ -31,6 +32,24 @@ interface IncomingCallNotification {
     event_id?: string;
     call_id?: string;
   } | null;
+}
+
+/**
+ * T19: a chamada do `call_id` já terminou no banco? A consulta é **best-effort**:
+ * quando não dá para saber (linha invisível à RLS, `id` fora do formato uuid ou
+ * erro de rede) devolve `false` e o alerta **toca**. Perder ligação é pior que
+ * mostrar uma a mais, que o agente cancela com um clique.
+ */
+async function chamadaJaTerminou(callId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('calls')
+    .select('status')
+    .eq('id', callId)
+    .maybeSingle();
+
+  if (error || !data) return false;
+  const status = normalizeStatus((data as { status?: unknown }).status);
+  return status !== null && isFinishedStatus(status);
 }
 
 export function useIncomingCallListener() {
@@ -81,9 +100,12 @@ export function useIncomingCallListener() {
             if (oldest) seenNotificationsRef.current.delete(oldest);
           }
 
-          // Only a provider event ID proves replay identity. Contact +
-          // connection would also collapse a legitimate second call.
-          const callKey = metadata.event_id;
+          // T19: a identidade é o `call_id` do provedor; o `event_id` fica como
+          // fallback de quem ainda emite sem ele. Duas notificações da MESMA
+          // chamada com `event_id`s diferentes eram tratadas como duas ligações
+          // e tocavam dois alertas. Contato + conexão continuam fora da chave:
+          // colapsariam uma segunda ligação legítima do mesmo número.
+          const callKey = metadata.call_id || metadata.event_id;
           const now = Date.now();
           if (callKey) {
             const lastSeen = recentProviderEventsRef.current.get(callKey);
@@ -93,6 +115,11 @@ export function useIncomingCallListener() {
               if (now - timestamp >= 35_000) recentProviderEventsRef.current.delete(key);
             }
           }
+
+          // T19: o provedor pode entregar a notificação depois do fim da
+          // chamada (fila/replay). Sem isto, o agente tocava o alerta de uma
+          // ligação que já não existe mais.
+          if (metadata.call_id && (await chamadaJaTerminou(metadata.call_id))) return;
 
           const deliveryGeneration = ++deliveryGenerationRef.current;
 
