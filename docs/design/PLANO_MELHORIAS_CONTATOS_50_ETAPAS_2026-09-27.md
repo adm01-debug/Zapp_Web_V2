@@ -3,7 +3,10 @@
 > ⚠️ **PLANO ENCERRADO (2026-09-29) — SOMENTE LEITURA.** Auditado etapa a etapa em
 > [`../audits/AUDITORIA_MODULO_CONTATOS_2026-09-29.md`](../audits/AUDITORIA_MODULO_CONTATOS_2026-09-29.md)
 > (26 ✅ · 7 parciais · 9 revertidas/substituídas · 4 não feitas · 4 sem evidência). As etapas 8, 9, 10,
-> 14, 45 e 46 foram **revertidas** por #1131/#1134/`e14ddeab` seguindo o plano Navy — decisão D3 pendente.
+> 14, 45 e 46 foram **revertidas** por #1131/#1134/`e14ddeab` seguindo o plano Navy — **D3 = Navy**
+> (escala 38/48/108 APROVADA em 2026-10-01 como definitiva do módulo Contatos; ver etapa 20 de
+> [`../audits/PLANO_CONTATOS_100_ETAPAS_2026-09-29.md`](../audits/PLANO_CONTATOS_100_ETAPAS_2026-09-29.md) e a
+> tabela de Decisões lá — ramo "D3 = Navy": `text-[38px]` → token `text-page-title`, teto `acima16px` de volta a 1).
 > Tudo o que restou vive em [`../audits/PLANO_CONTATOS_100_ETAPAS_2026-09-29.md`](../audits/PLANO_CONTATOS_100_ETAPAS_2026-09-29.md).
 > Não registrar checkboxes aqui.
 
