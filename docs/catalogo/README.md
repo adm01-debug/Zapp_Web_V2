@@ -9,7 +9,7 @@ Módulo `?view=catalog` (`src/components/catalog/`), sincronizado em tempo real 
 | `ESTADO_INICIAL.md` | Gates e mapa de importadores no início (E01) |
 | `ARQUITETURA.md` | Diagrama, mapa métrica→fonte, decisões, riscos conhecidos |
 | `COMPONENTES.md` | Primitivos de `catalogShared.tsx` e classes `.catalog-*` (F1) |
-| `PARIDADE.md` | Mock × implementado, por tela (E40/E50/E58/E68/E80/E90/E98) |
+| [`PARIDADE.md`](./PARIDADE.md) | Mock × implementado, por tela (Detalhes / Enviar / Contato) |
 | `screens/` | Referência visual: `A-catalogo`, `B-detalhes`, `C-enviar-produto`, `D-selecionar-contato`, `00-estado-atual-2026-09-11` |
 
 Validar a estrutura do plano: `node scripts/catalog/validate-plan.mjs`.

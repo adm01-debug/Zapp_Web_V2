@@ -359,11 +359,11 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend, produ
               </div>
               {/* meta: badges */}
               <div className="flex flex-wrap gap-1 pt-1">
-                {dp.is_new && <Badge className="bg-emerald-500 text-white text-3xs"><Sparkles className="w-2.5 h-2.5 mr-0.5" />Novo</Badge>}
-                {dp.is_bestseller && <Badge className="bg-orange-500 text-white text-3xs"><TrendingUp className="w-2.5 h-2.5 mr-0.5" />Top</Badge>}
+                {dp.is_new && <Badge className="bg-emerald-500 text-primary-foreground text-3xs"><Sparkles className="w-2.5 h-2.5 mr-0.5" />Novo</Badge>}
+                {dp.is_bestseller && <Badge className="bg-orange-500 text-primary-foreground text-3xs"><TrendingUp className="w-2.5 h-2.5 mr-0.5" />Top</Badge>}
                 {dp.is_featured && <Badge variant="secondary" className="text-3xs"><Star className="w-2.5 h-2.5 mr-0.5" />Destaque</Badge>}
                 {dp.brand && <Badge variant="outline" className="text-3xs">{dp.brand}</Badge>}
-                {dp.is_kit && <Badge className="bg-violet-500 text-white text-3xs">Kit</Badge>}
+                {dp.is_kit && <Badge className="bg-[hsl(var(--badge-new))] text-primary-foreground text-3xs">Kit</Badge>}
                 {dp.allows_personalization && <Badge variant="outline" className="border-primary/50 text-primary text-3xs">Personalizável</Badge>}
               </div>
               {/* CT-35 — pills de categoria + tags. A pill usa o caminho

@@ -49,12 +49,12 @@ export async function fetchCatalogContactResults(query: string): Promise<Contact
   const request = filter
     ? supabase
         .from('contacts')
-        .select('id, name, phone, avatar_url')
+        .select('id, name, phone, avatar_url, company')
         .or(filter)
         .limit(15)
     : supabase
         .from('contacts')
-        .select('id, name, phone, avatar_url')
+        .select('id, name, phone, avatar_url, company')
         .order('updated_at', { ascending: false })
         .limit(15);
   const { data } = await request;

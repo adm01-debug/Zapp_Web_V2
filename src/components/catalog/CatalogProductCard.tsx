@@ -62,17 +62,17 @@ export const CATALOG_GRADE_SIZES =
 // ── badge de destaque (top-left) ───────────────────────────────────────────
 function ProductBadge({ product }: { product: ExternalProduct }) {
   if (product.is_new) return (
-    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500 text-white">
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500 text-primary-foreground">
       <Sparkles className="w-2.5 h-2.5" />Novo
     </span>
   );
   if (product.is_bestseller) return (
-    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-500 text-white">
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-500 text-primary-foreground">
       <TrendingUp className="w-2.5 h-2.5" />Top
     </span>
   );
   if (product.is_on_sale) return (
-    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-500 text-white">
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-500 text-primary-foreground">
       <Tag className="w-2.5 h-2.5" />Promo
     </span>
   );
@@ -396,7 +396,7 @@ export function CatalogProductCard({
 
           {/* is_kit top-right (quando sem favorito) */}
           {product.is_kit && !onToggleFavorite && (
-            <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-bold bg-violet-500 text-white">
+            <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[hsl(var(--badge-new))] text-primary-foreground">
               Kit
             </span>
           )}
