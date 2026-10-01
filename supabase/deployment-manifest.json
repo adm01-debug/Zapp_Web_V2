@@ -12,6 +12,10 @@
     "verify_jwt_true": 55,
     "verify_jwt_false": 12
   },
+  "orphan_allowlist": [
+    "sicoob-bridge",
+    "sicoob-bridge-reply"
+  ],
   "source_files": [
     {
       "path": "supabase/functions/_shared/ai-audio-authz.ts",
@@ -120,8 +124,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-media.ts",
-      "bytes": 12141,
-      "sha256": "c4455a9b4e255cb0b9dd4865ac8b5b7344358abab1866ac2573c30a5604af73c"
+      "bytes": 12364,
+      "sha256": "9ca6b0d5d16af38bffcde78bf934958743a335f80ecfbbb4e4aeaee9995fa28e"
     },
     {
       "path": "supabase/functions/_shared/evolution-send.ts",
@@ -140,8 +144,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "bytes": 22129,
-      "sha256": "edeffdab03cc01cdc740145b2e12d6283b2fb44b8cce0015eaea38e11369083e"
+      "bytes": 22196,
+      "sha256": "60ebd58276e854a3d82141e661dab8b043bfdcbb3ac94ac187a4fac103809ea6"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
@@ -1034,7 +1038,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "e0cadb817ff8e1763d62a66f572b5a69d62d3b0b2de7302e8a854e95be34393a",
+      "source_sha256": "66b09b3c3ea177498ad791808fb8220a67144aeb28159904d73314cf068798aa",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -1437,5 +1441,5 @@
       ]
     }
   ],
-  "manifest_sha256": "f40de9ed19e36a6cbd105b4c29080a44dc516a24da8d3e7acd7e705a0f195bd7"
+  "manifest_sha256": "ab4c66258af7c9db5a499e6e024840b356c6fd4cc738dcc729f57fd355e72da3"
 }

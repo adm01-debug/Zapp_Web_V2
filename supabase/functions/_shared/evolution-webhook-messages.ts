@@ -27,19 +27,20 @@ function isWhatsAppCdnUrl(url: string | null | undefined): boolean {
 async function persistIncomingMedia(
   supabase: any, instance: string, data: Record<string, unknown>,
   messageType: string, msgId: string, parsedUrl: string | null,
+  contactId?: string,
 ): Promise<string | null> {
   const message = data.message as Record<string, unknown> | undefined;
   const webhookB64 = (data.base64 as string) || (message?.base64 as string);
   if (typeof webhookB64 === 'string' && webhookB64) {
-    const fromB64 = await persistBase64Media(supabase, webhookB64, '', messageType, msgId);
+    const fromB64 = await persistBase64Media(supabase, webhookB64, '', messageType, msgId, contactId);
     if (fromB64) return fromB64;
   }
   const directUrl = parsedUrl || (data.mediaUrl as string) || (message?.mediaUrl as string) || null;
   if (directUrl && directUrl.startsWith('http')) {
-    const fromUrl = await persistMediaToStorage(supabase, directUrl, messageType, msgId);
+    const fromUrl = await persistMediaToStorage(supabase, directUrl, messageType, msgId, contactId);
     if (fromUrl) return fromUrl;
   }
-  return await persistMediaViaApi(supabase, instance, data, messageType, msgId);
+  return await persistMediaViaApi(supabase, instance, data, messageType, msgId, contactId);
 }
 
 const URL_REGEX = /https?:\/\/[^\s<>"'`]+/i;
@@ -134,7 +135,7 @@ export async function handleOutgoingWhatsAppMessage(
   let { mediaUrl } = parsed;
   if (['image', 'video', 'audio', 'document'].includes(parsed.messageType)) {
     const msgId = key.id.replace(/[^a-zA-Z0-9]/g, '');
-    const permanentUrl = await persistIncomingMedia(supabase, instance, data, parsed.messageType, msgId, mediaUrl);
+    const permanentUrl = await persistIncomingMedia(supabase, instance, data, parsed.messageType, msgId, mediaUrl, contact.id);
     if (permanentUrl) mediaUrl = permanentUrl;
   }
 
