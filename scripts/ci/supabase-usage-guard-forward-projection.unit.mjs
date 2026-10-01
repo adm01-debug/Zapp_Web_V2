@@ -149,3 +149,43 @@ test('usage guard nao trata texto de E-string com escape como DDL (falso positiv
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.match(result.stdout, /projecao forward-only: 1 relacoes, 0 funcoes/);
 });
+
+test('usage guard detecta DROP de tabela ja catalogada (uniao nao restaura)', () => {
+  const result = runGuard({
+    catalog: { tables: ['playbooks'] },
+    migrations: {
+      '20260909210000_drop_cataloged_table.sql': 'DROP TABLE public.playbooks;\n',
+    },
+    callers: { 'c.ts': "supabase.from('playbooks').select('*');\n" },
+  });
+  // DROP de tabela do catalogo deve sair da projecao e orfar o caller.
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stderr, /\.from\('playbooks'\)/);
+});
+
+test('usage guard detecta DROP com identificador entre aspas (public."t")', () => {
+  const result = runGuard({
+    migrations: {
+      '20260909210000_drop_quoted_ident.sql':
+        'CREATE TABLE public.t (id integer);\n'
+        + 'DROP TABLE public."t";\n',
+    },
+    callers: { 'c.ts': "supabase.from('t').select('*');\n" },
+  });
+  // "t" e identificador (nome de objeto), nao string: o DROP deve casar.
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stderr, /\.from\('t'\)/);
+});
+
+test('usage guard detecta DROP ROUTINE de funcao', () => {
+  const result = runGuard({
+    migrations: {
+      '20260909210000_drop_routine.sql':
+        'CREATE FUNCTION public.fn() RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;\n'
+        + 'DROP ROUTINE public.fn();\n',
+    },
+    callers: { 'c.ts': "supabase.rpc('fn');\n" },
+  });
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stderr, /\.rpc\('fn'\)/);
+});

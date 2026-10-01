@@ -67,8 +67,14 @@ function scan() {
 
 function projectSchemaFromForwardMigrations(catalog) {
   const cutoff = String(catalog.generated_at || '').replace(/\D/g, '').slice(0, 8);
-  const functions = new Set();
-  const relations = new Set();
+  // Base = estado do catalogo no snapshot. A janela forward-only pode ADICIONAR
+  // (CREATE) e REMOVER (DROP) objetos. Comecar VAZIO e unir ao catalogo depois
+  // (no main) tornaria o DROP de um objeto do catalogo INVISIVEL — a uniao o
+  // restauraria — e o guard aprovaria o DROP de uma tabela/funcao existente
+  // ainda usada por um caller. Partindo do catalogo, o DROP remove tanto
+  // objetos novos da janela quanto os ja catalogados.
+  const functions = new Set(catalog.functions);
+  const relations = new Set([...catalog.tables, ...catalog.views]);
   const migrationsDir = path.join(ROOT, 'supabase/migrations');
   if (!/^\d{8}$/.test(cutoff) || !fs.existsSync(migrationsDir)) return { functions, relations };
 
@@ -85,10 +91,10 @@ function projectSchemaFromForwardMigrations(catalog) {
     // como texto (ex.: dentro do corpo de uma funcao) nao virarem DDL.
     const rawSql = fs.readFileSync(path.join(migrationsDir, filename), 'utf8');
     const sql = stripSqlComments(rawSql);
-    for (const match of sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+public\.([a-zA-Z0-9_]+)\s*\(/gi)) {
+    for (const match of sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?(?:FUNCTION|ROUTINE|PROCEDURE)\s+public\.([a-zA-Z0-9_]+)\s*\(/gi)) {
       functions.add(match[1]);
     }
-    for (const match of sql.matchAll(/DROP\s+FUNCTION(?:\s+IF\s+EXISTS)?\s+public\.([a-zA-Z0-9_]+)\s*\(/gi)) {
+    for (const match of sql.matchAll(/DROP\s+(?:FUNCTION|ROUTINE|PROCEDURE)(?:\s+IF\s+EXISTS)?\s+public\.([a-zA-Z0-9_]+)\s*\(/gi)) {
       functions.delete(match[1]);
     }
     for (const match of sql.matchAll(/CREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?\s+public\.([a-zA-Z0-9_]+)/gi)) {
@@ -108,8 +114,8 @@ function main() {
   }
   const cat = JSON.parse(fs.readFileSync(CATALOG, 'utf8'));
   const projected = projectSchemaFromForwardMigrations(cat);
-  const relations = new Set([...cat.tables, ...cat.views, ...projected.relations]);
-  const functions = new Set([...cat.functions, ...projected.functions]);
+  const relations = projected.relations;
+  const functions = projected.functions;
   const baseline = fs.existsSync(BASELINE)
     ? new Set(JSON.parse(fs.readFileSync(BASELINE, 'utf8')).known)
     : new Set();
