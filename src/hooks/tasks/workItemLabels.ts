@@ -6,5 +6,5 @@ import type { Priority } from './workItem.types';
  * `react-refresh/only-export-components`, que conta dívida NOVA no lint-ratchet.
  */
 export const PRIORITY_LABELS: Record<Priority, string> = {
-  low: 'Baixa', medium: 'Media', high: 'Alta', urgent: 'Urgente',
+  low: 'Baixa', medium: 'Média', high: 'Alta', urgent: 'Urgente',
 };
