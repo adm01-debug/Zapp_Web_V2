@@ -132,26 +132,26 @@
 
 ## F8 — Testes unitários e E2E (79–90) — PR própria (só testes + fixtures)
 
-- [ ] **79.** Unit `useContactsViewState`: Ctrl+A ignora inputs, Ctrl+N abre form, Esc fecha painel, sanitização de aba. — DoD: verde.
-- [ ] **80.** Unit `useContactsCRUD`: add/edit/delete chamam RPC/insert corretos, invalidam `contacts-kpi`, delete sem linha → erro (cobre a regressão P0). — DoD: verde; mock do `rpc` devolvendo `null` falha o fluxo.
-- [ ] **81.** Unit `BulkActionsBar`: tag/assign/type/delete; delete em massa usa RPC. — DoD: verde.
-- [ ] **82.** Unit `ContactToolbar` + `ContactViewSwitcher`: 5 sorts, 6 vistas, colunas 3–6, Comparar só com ≥2. — DoD: verde.
-- [ ] **83.** Unit `FilterPresets`: preset inválido removido no load (etapa 33). — DoD: verde.
-- [ ] **84.** E2E `e2e/contacts-view.spec.ts` (projeto `chromium-authenticated`): abre `?view=contacts`, KPI Total == badge Todos, 7 abas na ordem, busca "a" retorna, limpar, aba Cliente filtra, sort "Mais recentes", Filtros abre/fecha, Filtros Salvos abre. — DoD: verde no `e2e-logado.yml`.
-- [ ] **85.** E2E `e2e/contacts-selection.spec.ts`: selecionar todos → BulkActionsBar; Comparar (2); Mesclar dialog abre (não confirmar); Tags em massa dialog abre. — DoD: verde.
-- [ ] **86.** E2E `e2e/contacts-views.spec.ts`: Cards/Lista/Tabela/Pipeline/Mapa/Analytics renderizam sem erro de console; Colunas 3; Agrupar por empresa; página 2 e volta. — DoD: verde, 0 console errors.
-- [ ] **87.** E2E `e2e/contacts-crud.spec.ts` com fixture própria (prefixo `[E2E]`, padrão de `e2e/fixtures/e2e-contact.ts`): criar → editar → **excluir** → confirmar que sumiu da lista e do banco. — DoD: verde; é o teste que teria pegado o P0.
-- [ ] **88.** E2E `e2e/contacts-detail.spec.ts`: abrir painel, Esc fecha, "Conversar" leva ao inbox com o contato (etapa 61). — DoD: verde.
-- [ ] **89.** E2E light mode + mobile 390px em `contacts-view.spec.ts` (`scrollWidth <= innerWidth`, header sem sobreposição — lição do CP11). — DoD: verde nos 2 viewports.
+- [x] **79.** Unit `useContactsViewState`: Ctrl+A ignora inputs, Ctrl+N abre form, Esc fecha painel, sanitização de aba. — DoD: verde.
+- [x] **80.** Unit `useContactsCRUD`: add/edit/delete chamam RPC/insert corretos, invalidam `contacts-kpi`, delete sem linha → erro (cobre a regressão P0). — DoD: verde; mock do `rpc` devolvendo `null` falha o fluxo.
+- [x] **81.** Unit `BulkActionsBar`: tag/assign/type/delete; delete em massa usa RPC. — DoD: verde.
+- [x] **82.** Unit `ContactToolbar` + `ContactViewSwitcher`: 5 sorts, 6 vistas, colunas 3–6, Comparar só com ≥2. — DoD: verde.
+- [x] **83.** Unit `FilterPresets`: preset inválido removido no load (etapa 33). — DoD: verde.
+- [x] **84.** E2E `e2e/contacts-view.spec.ts` (projeto `chromium-authenticated`): abre `?view=contacts`, KPI Total == badge Todos, 7 abas na ordem, busca "a" retorna, limpar, aba Cliente filtra, sort "Mais recentes", Filtros abre/fecha, Filtros Salvos abre. — DoD: verde no `e2e-logado.yml`.
+- [x] **85.** E2E `e2e/contacts-selection.spec.ts`: selecionar todos → BulkActionsBar; Comparar (2); Mesclar dialog abre (não confirmar); Tags em massa dialog abre. — DoD: verde.
+- [x] **86.** E2E `e2e/contacts-views.spec.ts`: Cards/Lista/Tabela/Pipeline/Mapa/Analytics renderizam sem erro de console; Colunas 3; Agrupar por empresa; página 2 e volta. — DoD: verde, 0 console errors.
+- [x] **87.** E2E `e2e/contacts-crud.spec.ts` com fixture própria (prefixo `[E2E]`, padrão de `e2e/fixtures/e2e-contact.ts`): criar → editar → **excluir** → confirmar que sumiu da lista e do banco. — DoD: verde; é o teste que teria pegado o P0.
+- [x] **88.** E2E `e2e/contacts-detail.spec.ts`: abrir painel, Esc fecha, "Conversar" leva ao inbox com o contato (etapa 61). — DoD: verde.
+- [x] **89.** E2E light mode + mobile 390px em `contacts-view.spec.ts` (`scrollWidth <= innerWidth`, header sem sobreposição — lição do CP11). — DoD: verde nos 2 viewports.
 - [ ] **90.** Screenshot de referência (light/dark) das 3 vistas em `e2e/__screenshots__/contacts-*.png` com `toHaveScreenshot` tolerância 0,2% (o que a etapa 48 do plano antigo nunca entregou). — DoD: PNGs versionados; CI compara.
 
 ## F9 — Documentação e inventário (91–95) — junto da PR da F8
 
-- [ ] **91.** `docs/FUNCTIONALITIES_INVENTORY.md`: nova seção "Gestão de Contatos" (componentes reais de `src/components/contacts/` após F7, hooks `useContactsSearch/useContactsKpi/useContactsCRUD/useContactsViewState`, RPCs, atalhos, vistas, permissões) + entrada no índice. — DoD: seção existe e bate com `ls`.
-- [ ] **92.** `docs/FUNCTIONALITIES_INVENTORY.md` §17: tabela `contacts` com 38 colunas, 5 CHECKs, 9 triggers, 16(+3) índices, `deleted_at` se D1. — DoD: linha completa.
-- [ ] **93.** `docs/design/REDESIGN_CONTATOS_STATUS.md`: adicionar bloco "Pós-encerramento (29/09)" com o estado das pendências (§1 da auditoria) — 5 resolvidas, 1 pendente (`is_lid_legacy` → F5). — DoD: bloco presente.
-- [ ] **94.** `CLAUDE.md`: 6 linhas em "Contatos" — tipos canônicos (6 + decisão Sicoob), exclusão via RPC, `include_legacy`, onde vive a verdade de ícone/cor (`contactTypeConfig.tsx`). — DoD: seção presente.
-- [ ] **95.** Runbook curto `docs/runbooks/contatos-exclusao-e-legados.md`: como restaurar um contato soft-deleted (`UPDATE … SET deleted_at=NULL`), como reclassificar um `is_lid_legacy`. — DoD: arquivo com 2 receitas SQL testadas.
+- [x] **91.** `docs/FUNCTIONALITIES_INVENTORY.md`: nova seção "Gestão de Contatos" (componentes reais de `src/components/contacts/` após F7, hooks `useContactsSearch/useContactsKpi/useContactsCRUD/useContactsViewState`, RPCs, atalhos, vistas, permissões) + entrada no índice. — DoD: seção existe e bate com `ls`.
+- [x] **92.** `docs/FUNCTIONALITIES_INVENTORY.md` §17: tabela `contacts` com 38 colunas, 5 CHECKs, 9 triggers, 16(+3) índices, `deleted_at` se D1. — DoD: linha completa.
+- [x] **93.** `docs/design/REDESIGN_CONTATOS_STATUS.md`: adicionar bloco "Pós-encerramento (29/09)" com o estado das pendências (§1 da auditoria) — 5 resolvidas, 1 pendente (`is_lid_legacy` → F5). — DoD: bloco presente.
+- [x] **94.** `CLAUDE.md`: 6 linhas em "Contatos" — tipos canônicos (6 + decisão Sicoob), exclusão via RPC, `include_legacy`, onde vive a verdade de ícone/cor (`contactTypeConfig.tsx`). — DoD: seção presente.
+- [x] **95.** Runbook curto `docs/runbooks/contatos-exclusao-e-legados.md`: como restaurar um contato soft-deleted (`UPDATE … SET deleted_at=NULL`), como reclassificar um `is_lid_legacy`. — DoD: arquivo com 2 receitas SQL testadas.
 
 ## F10 — Entrega, deploy e verificação (96–100)
 
