@@ -183,8 +183,8 @@ VirtualizedMessageList, VirtualizedRealtimeList, VoiceSelector
 | Dashboard Metas | Custom | `src/components/dashboard/GoalsDashboard.tsx` |
 | Comparação de Filas | Custom | `src/components/queues/QueuesComparisonDashboard.tsx` |
 | Relatórios Avançados | Custom | `src/components/reports/AdvancedReportsView.tsx` |
-| Exportar PDF | jsPDF + jspdf-autotable | ^3.0.4 / ^5.0.2 |
-| Exportar Excel | xlsx | ^0.18.5 |
+| PDF de diagnóstico | jsPDF ^4.2.1 | `src/components/monitoring/MonitoringDiagnosticPanel.tsx` |
+| PDF da auditoria (script) | jsPDF + jspdf-autotable | `generate_audit_pdf.ts` (checado por `scripts/ci/check-audit-pdf-determinism.mjs`) |
 | Indicador de Tendência | Custom | `src/components/dashboard/TrendIndicator.tsx` |
 
 ---
