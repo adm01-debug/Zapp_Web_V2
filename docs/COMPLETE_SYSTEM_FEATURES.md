@@ -209,21 +209,22 @@
 
 | # | Funcionalidade | Status | Arquivo Principal |
 |---|---------------|--------|-------------------|
-| 6.1 | CRUD de contatos | ✅ | `src/components/contacts/ContactsView.tsx` |
-| 6.2 | Campos estendidos (nome, apelido, sobrenome, cargo, empresa) | ✅ | Tabela `contacts` |
+| 6.1 | CRUD de contatos | ✅ | `src/components/contacts/ContactsView.tsx`, `useContactsCRUD.ts` |
+| 6.2 | Campos estendidos (nome, apelido, sobrenome, cargo, empresa, endereço) | ✅ | Tabela `contacts` |
 | 6.3 | Avatar de contato | ✅ | Campo `avatar_url` |
 | 6.4 | Atribuição de contato a agente | ✅ | Campo `assigned_to` |
 | 6.5 | Atribuição a fila | ✅ | Campo `queue_id` |
-| 6.6 | Tags/etiquetas em contatos | ✅ | Tabela `contact_tags` |
-| 6.7 | Notas privadas por contato | ✅ | Tabela `contact_notes` |
-| 6.8 | Tipo de contato (cliente, lead, etc.) | ✅ | Campo `contact_type` |
-| 6.9 | Importação de contatos | ✅ | `src/components/DataImporter.tsx` |
-| 6.10 | Exportação de contatos | ✅ | `src/components/ExportDropdown.tsx` |
-| 6.11 | Duplicação de contato | ✅ | `src/components/DuplicateButton.tsx` |
-| 6.12 | Busca e filtros avançados | ✅ | `src/components/SearchInput.tsx` |
-| 6.13 | Filtros salvos | ✅ | `src/components/SavedFiltersDropdown.tsx` |
-| 6.14 | Scroll infinito na lista | ✅ | `src/components/InfiniteScrollList.tsx` |
-| 6.15 | Ações em bulk | ✅ | `src/components/BulkActionsBar.tsx` |
+| 6.6 | Tags/etiquetas em contatos | ✅ | Coluna `contacts.tags` (`text[]`), `ContactBulkTagDialog.tsx` |
+| 6.7 | Notas privadas por contato | ✅ | Tabela `contact_notes`, `ContactNotes.tsx` |
+| 6.8 | Tipo de contato (cliente, fornecedor, transportadora, colaborador, prestador de serviço, parceiro) | ✅ | Campo `contact_type` (CHECK `chk_contact_type`), `contactTypeConfig.tsx` |
+| 6.9 | Exclusão (soft-delete) | ✅ | Coluna `deleted_at`, RPCs `delete_contact`/`delete_contacts` |
+| 6.10 | Mesclagem de duplicados | ✅ | `src/components/contacts/ContactMergeDialog.tsx` |
+| 6.11 | Comparação de contatos | ✅ | `src/components/contacts/ContactCompareDialog.tsx` |
+| 6.12 | Busca e filtros avançados | ✅ | `ContactSearchWithSuggestions.tsx`, `ContactAdvancedFilters.tsx` |
+| 6.13 | Filtros salvos | ✅ | `src/components/contacts/FilterPresets.tsx` |
+| 6.14 | Paginação incremental | ✅ | `ContactsView.tsx` (`loadMore`/`loadPrevious`) |
+| 6.15 | Ações em bulk | ✅ | `src/components/contacts/BulkActionsBar.tsx` |
+| 6.16 | Vistas cards / lista / tabela / kanban / mapa | ✅ | `src/components/contacts/ContactViewSwitcher.tsx` |
 | 6.16 | Versionamento de registros | ✅ | `src/components/VersionHistory.tsx` |
 
 ---
@@ -699,7 +700,6 @@
 | `user_settings` | Configurações por usuário |
 | `user_sessions` | Sessões ativas |
 | `contacts` | Contatos WhatsApp |
-| `contact_tags` | Relação contato-tag |
 | `contact_notes` | Notas privadas |
 | `messages` | Mensagens (realtime) |
 | `message_reactions` | Reações a mensagens |

@@ -1,6 +1,6 @@
 import {
   Shield, MessageSquare, FileText, Headphones, Brain, Users, Layers,
-  Clock, Trophy, BarChart3, Download, Star, ShoppingCart, Wifi, Layout,
+  Clock, Trophy, BarChart3, Star, ShoppingCart, Wifi, Layout,
   UsersRound, Phone, Wallet, Zap, Bell, CalendarClock, MapPin, Settings,
   Lock, Accessibility, Gauge, Smartphone, Keyboard, GraduationCap,
   Plug, ClipboardList, Palette, Database, Cloud,
@@ -86,7 +86,7 @@ export const sections: FeatureSection[] = [
       "CRUD de contatos", "Campos estendidos (nome, apelido, sobrenome, cargo, empresa)",
       "Avatar de contato", "Atribuição de contato a agente", "Atribuição a fila",
       "Tags/etiquetas em contatos", "Notas privadas por contato", "Tipo de contato",
-      "Importação de contatos", "Exportação de contatos", "Duplicação de contato",
+      "Mesclagem de contatos duplicados",
       "Busca e filtros avançados", "Filtros salvos", "Scroll infinito na lista",
       "Ações em bulk", "Versionamento de registros"
     ]
@@ -131,10 +131,9 @@ export const sections: FeatureSection[] = [
     ]
   },
   {
-    id: 11, title: "Relatórios e Exportação", icon: Download, color: "text-info",
+    id: 11, title: "Relatórios", icon: FileText, color: "text-info",
     items: [
-      "Relatórios avançados", "Exportação avançada (wizard 3 passos)",
-      
+      "Relatórios avançados",
       "Relatórios agendados por email",
       "Edge function para envio de relatórios"
     ]

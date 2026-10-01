@@ -29,6 +29,7 @@
 19. [Estrutura de Pastas](#19-estrutura-de-pastas)
 20. [Secrets Configurados](#20-secrets-configurados)
 21. [Talk X / Campanhas WhatsApp](#21-talk-x--campanhas-whatsapp)
+22. [Gestão de Contatos](#22-gestão-de-contatos)
 
 ---
 
@@ -182,8 +183,8 @@ VirtualizedMessageList, VirtualizedRealtimeList, VoiceSelector
 | Dashboard Metas | Custom | `src/components/dashboard/GoalsDashboard.tsx` |
 | Comparação de Filas | Custom | `src/components/queues/QueuesComparisonDashboard.tsx` |
 | Relatórios Avançados | Custom | `src/components/reports/AdvancedReportsView.tsx` |
-| Exportar PDF | jsPDF + jspdf-autotable | ^3.0.4 / ^5.0.2 |
-| Exportar Excel | xlsx | ^0.18.5 |
+| PDF de diagnóstico | jsPDF ^4.2.1 | `src/components/monitoring/MonitoringDiagnosticPanel.tsx` |
+| PDF da auditoria (script) | jsPDF + jspdf-autotable | `generate_audit_pdf.ts` (checado por `scripts/ci/check-audit-pdf-determinism.mjs`) |
 | Indicador de Tendência | Custom | `src/components/dashboard/TrendIndicator.tsx` |
 
 ---
@@ -361,7 +362,7 @@ logDelete(entityType, entityId, details)
 | `profiles` | Perfis de usuário | id, user_id, name, email, role, access_level |
 | `user_roles` | Roles RBAC | id, user_id, role (enum) |
 | `user_settings` | Configurações | theme, notifications, business_hours, etc. |
-| `contacts` | Contatos WhatsApp (41 colunas; soft-delete por `deleted_at`) | name, phone, email, assigned_to, queue_id, contact_type, company, conversation_status, is_lid_legacy, deleted_at. CHECKs: `chk_contact_type`, `chk_conversation_status_values`, `contacts_email_format`, `contacts_phone_not_empty`, `contacts_ai_*_canonical`. Tipos canônicos: 6 (CHECK `chk_contact_type` ≡ `CONTACT_TYPES`) |
+| `contacts` | Contatos WhatsApp (41 colunas; soft-delete por `deleted_at`) | name, phone, email, assigned_to, queue_id, contact_type, company, conversation_status, is_lid_legacy, deleted_at. CHECKs: `chk_contact_type`, `chk_conversation_status_values`, `contacts_email_format`, `contacts_phone_not_empty`, `contacts_ai_*_canonical`. Tipos canônicos: 6 (CHECK `chk_contact_type` ≡ `CONTACT_TYPES`). Triggers (9 na auditoria de 29/09): auto_assign, auto_assign_to_queue_agent, fsm_transition, log_assignment_change, normalize_contact_phone, prevent_assignee_hijack, prevent_queue_hijack, redact_crm_sync_on_delete, updated_at — mais os de auditoria de endereço (`20260929150000`) e de exclusão/restauração (`trg_audit_contact_deletion_change`, `trg_audit_contact_purge`, `20260930170000`). Índices (16 na auditoria de 29/09): pkey, `phone` UNIQUE (vale também para linha excluída), btree em assigned_to/queue_id/contact_type/created_at/updated_at/name/whatsapp_connection_id/channel_connection_id, parciais em is_lid_legacy/conversation_status/assigned_to_gamif, GIN em tags, trigram em email — mais `idx_contacts_deleted_at` (parcial, `20260929370000`); `name`/`phone`/`company` seguem sem trigram (removidos em `20260902100004` por 0 scans). Visível na UI: `deleted_at IS NULL AND is_lid_legacy = false AND phone ~ '^[0-9]{10,15}$'` (ver §22) |
 | `messages` | Mensagens | content, sender, contact_id, status, media_url |
 | `message_reactions` | Reações | message_id, emoji, user_id |
 | `message_templates` | Templates | title, content, category, shortcut |
@@ -574,6 +575,50 @@ projeto/
 - RLS em todas as tabelas `talkx_*`; `REVOKE EXECUTE` de `anon`/`authenticated` nas RPCs sensíveis
 - `{{link}}` nunca fica sem substituição no `talkx-send` (proteção contra envio de URL bruta)
 - Rate limit e proteção contra IDOR no encurtador de links; slug case-insensitive
+
+---
+
+## 22. Gestão de Contatos
+
+Módulo `?view=contacts`. Plano de referência: `docs/audits/PLANO_CONTATOS_100_ETAPAS_2026-09-29.md`.
+
+### Componentes (`src/components/contacts/`)
+
+| Área | Arquivos |
+|------|----------|
+| Página e estado | `ContactsView.tsx`, `useContactsViewState.ts` (vista, colunas, diálogos, atalhos), `useContactsCRUD.ts` (busca, CRUD, seleção, filtros) |
+| Topo | `ContactStatsCards.tsx` + `ContactKpiCard.tsx` (4 KPIs), `ContactTypeTabs.tsx` (Todos + 6 tipos), `ContactToolbar.tsx`, `ContactSearchWithSuggestions.tsx`, `ContactAdvancedFilters.tsx`, `FilterPresets.tsx`, `ContactViewSwitcher.tsx` |
+| Vistas | `ContactContentArea.tsx` → `ContactCard.tsx` (Cards), `ContactListItem.tsx` / `ContactGroupedList.tsx` (Lista), `ContactsTable.tsx` (Tabela), `ContactKanbanView.tsx` (Pipeline), `ContactMapView.tsx` + `ContactRegionMap.tsx` + `contactRegionGeo.ts` + `getRegionFromPhone.ts` (Mapa), `ContactAnalyticsDashboard.tsx` (Analytics), `ContactEmptyState.tsx`, `ContactsSkeleton.tsx`, `ContactResultsSummary.tsx` (contagem, selecionar todos, paginação) |
+| Ações | `BulkActionsBar.tsx` (tag, atribuir, tipo, excluir em lote), `ContactDialogs.tsx` (criar, editar, excluir, botão flutuante "Novo contato"), `ContactForm.tsx` + `useContactFormValidation.ts`, `ContactBulkTagDialog.tsx`, `ContactCompareDialog.tsx`, `ContactMergeDialog.tsx` |
+| Detalhe | `ContactDetailPanel.tsx`, `ContactActivityTimeline.tsx`, `ContactNotes.tsx`, `ContactEngagementScore.tsx`, `ContactPurchaseHistory.tsx`, `CompanyLogo.tsx`, `HighlightText.tsx` |
+| CRM externo | `AdvancedCRMSearch.tsx`, `CRMContactCard.tsx`, `CRMFiltersPanel.tsx`, `ContactCRMDialog.tsx` (atrás de flag; enriquecimento fora do plano, decisão D5) |
+| Fonte de verdade | `contactTypeConfig.tsx` (ícone/cor por tipo), `contactTypeOrder.ts` (ordem e `VALID_TAB_TYPES`), `contactPermissions.ts` (`can_delete`), `types.ts` |
+
+### Hooks e RPCs
+
+| Hook | Função | Banco |
+|------|--------|-------|
+| `useContactsSearch` | lista paginada, busca, filtros, sort, toggle de legados (`localStorage` `contact-show-legacy`) | RPCs `search_contacts(..., include_legacy)`, `contacts_count_by_type(include_legacy)`, `get_last_message_dates` |
+| `useContactsKpi` | 4 KPIs, paginado de 1.000 em 1.000 com o mesmo critério da aba "Todos" | `contacts` (select) — `contactsAggregates.ts` |
+| `useContactsCRUD` | criar/editar (insert/update), excluir | RPC `delete_contact(p_id)` (soft-delete; erro ou `null` = falha) |
+| `BulkActionsBar` | ações em lote | RPC `delete_contacts(p_ids)`, update de `tags`/`assigned_to`/`contact_type` |
+| `ContactService` | detalhe e permissão | `getById`, RPC `can_delete_contacts` |
+
+### Vistas, atalhos e permissões
+
+- Vistas: Cards (3–6 colunas, agrupar por empresa), Lista, Tabela, Pipeline, Mapa, Analytics.
+- Ordenação: Nome A-Z/Z-A, Mais recentes, Mais antigos, Atualizado recentemente.
+- Atalhos: `Ctrl/⌘+N` novo contato; `Ctrl/⌘+A` seleciona todos (fora de campos de texto); `Esc` fecha o detalhe → limpa a seleção → limpa a busca.
+- "Conversar" (card, lista, tabela, detalhe) abre o inbox com o contato; o corpo do item abre o detalhe.
+- Excluir: aparece só onde `can_delete` confirma (admin/supervisor ou responsável); a RPC repete a checagem.
+- Alterar tipo em massa e Mesclar: só admin/supervisor.
+- Legados (`is_lid_legacy` ou telefone fora de `^[0-9]{10,15}$`) ficam ocultos por padrão; o switch "Mostrar legados" traz de volta e limpa a seleção.
+- Restaurar exclusão / reclassificar legado: `docs/runbooks/contatos-exclusao-e-legados.md`.
+
+### Testes
+
+- Unitários: `src/components/contacts/__tests__/` e `src/hooks/crm/__tests__/useContactsKpi*.test.ts`.
+- E2E (projeto `chromium-authenticated`, roda no `e2e-logado.yml` depois do merge): `e2e/contacts-view.spec.ts`, `contacts-selection.spec.ts`, `contacts-views.spec.ts`, `contacts-crud.spec.ts`, `contacts-detail.spec.ts`.
 
 ---
 

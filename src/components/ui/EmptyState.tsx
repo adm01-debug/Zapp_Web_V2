@@ -49,7 +49,7 @@ const emptyStateConfigs = {
   contacts: {
     icon: Users,
     title: 'Nenhum contato encontrado',
-    description: 'Comece adicionando seus primeiros contatos ou importe uma lista.',
+    description: 'Comece adicionando seus primeiros contatos.',
     actionLabel: 'Adicionar Contato',
     gradient: 'from-info/20 to-success/20',
   },

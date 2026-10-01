@@ -11,6 +11,8 @@
  * sempre reaplica o par certo, nunca mistura.
  */
 
+import { coresComContrasteAA } from './contrasteAA';
+
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 
 export interface ThemeModeColors {
@@ -674,7 +676,10 @@ export function applyThemePreset(
   root.classList.add('theme-transitioning');
   root.dataset.presetId = presetId;
 
-  const colors = preset[mode];
+  const colors = coresComContrasteAA(
+    preset[mode] as unknown as Record<string, string>,
+    mode,
+  ) as unknown as typeof preset.light;
   const cache: Record<string, string> = {};
   // Alto contraste manda nas CORES (`.high-contrast`, em src/styles/accessibility.css).
   // Escrever os tokens do preset aqui — inline, no mesmo `<html>` — venceria a classe e

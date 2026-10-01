@@ -360,3 +360,33 @@ Honestidade sobre as medições: o delta no mesmo filtro é **+215 testes** (exa
 `src/lib/calls`), sem nenhum teste removido ou alterado. A suíte completa do repo (4029 testes) foi medida
 **depois** do trabalho; o baseline completo não foi executado antes — o número de comparação confiável é o do
 filtro idêntico (1113 → 1328). O gate que decide a regressão em produção é o CI do PR.
+
+## Fase 1-B — T15 e T16 (01/10/2026 · executor: Hermes)
+
+**T15 — provisionamento por Edge.** O host/usuario/porta SIP sairam do front e passaram a vir da funcao
+`get-sip-password` (`{ server, user, wsPort, password, profileId }`, lendo `SIP_SERVER`/`SIP_USER`/`SIP_WS_PORT`),
+e o 403 do REGISTER virou "linha em uso por outro usuario" em vez de erro generico. Os defaults moram **so** na
+funcao — decisao deliberada: o front sobe na hora (Vercel) e a Edge so depois do deploy, entao um fallback no
+front seria host velho silencioso. PR **#1384**, `MERGE_SHA=e27367b2`, deploy de producao verde, nenhuma DDL.
+
+**T16 — estados da conexao.** `useSipConnection` passou a `idle|connecting|registered|reconnecting|unavailable`,
+com guarda "um UA por vez", unmount durante o backoff nao cria UserAgent orfao e a 6a falha seguida vira
+`unavailable` (para de tentar). Detalhe medido: o retry reusa `connect`, entao ele limpa os refs antes de
+reentrar — senao a propria guarda impediria a reconexao.
+
+```
+npx tsc -b --force                              -> exit 0
+bun run test:coverage                           -> 371 arquivos, 4879 testes passando | 38 todo -> exit 0
+bun run test:contracts                          -> 27 arquivos, 601 testes passando -> exit 0
+node scripts/ci/typecheck-ratchet.mjs           -> nenhum novo erro de tipo -> exit 0
+node scripts/ci/lint-ratchet.mjs                -> nenhuma nova divida -> exit 0
+node scripts/ci/implicit-any-ratchet.mjs        -> 0 (baseline 0) -> exit 0
+node scripts/edge-deploy/generate-manifest.mjs --check  -> Edge manifest OK (67 functions) -> exit 0
+node scripts/ci/check-workflow-pins.mjs         -> exit 0
+```
+
+**Flake registrado (nao e do diff):** sob a suite completa **com cobertura**, `TasksModule.test.tsx`
+("a busca anda no campo na hora e vira filtro depois do debounce, ja na URL") falhou 1x por timing
+(`expected '' to contain 'q=liga'`). O diff nao toca `src/components/tasks` nem nada que o modulo importe, e o
+arquivo passa **3/3 isolado** sob a mesma config de cobertura. Mesmo padrao de flake de timing que ja apareceu
+no E2E de `auth.spec.ts` em 01/10.

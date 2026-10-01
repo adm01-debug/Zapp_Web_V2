@@ -104,3 +104,20 @@ Detalhe+Esc ✓ | Atalhos Ctrl+N/A/Esc ✓ | Skeleton ✓ | EmptyState ✓ | Ava
 #277 redesign(dashboard): Navy nas 7 abas restantes
 #278 fix(contatos): elimina button nested — 0 console errors
 #279 fix(contatos): 3 gaps auditoria — KPI 34px, card spacing, form select
+
+## Pós-encerramento (29/09)
+
+Estado das pendências honestas acima, conferido na auditoria `docs/audits/AUDITORIA_MODULO_CONTATOS_2026-09-29.md` §1 e fechado pelo plano `docs/audits/PLANO_CONTATOS_100_ETAPAS_2026-09-29.md`:
+
+| Pendência | Estado |
+|---|---|
+| Delta % absurdo no KPI Total | ✅ resolvido — `pctOrNull` devolve `null` com base anterior < 50 (`useContactsKpi.ts`) |
+| `deltaNovosPct` sempre +100% | ✅ resolvido — compara com os 30 dias anteriores |
+| Sparkline sem dado | ✅ resolvido — `ContactKpiCard` não desenha série vazia |
+| "Último contato" = `created_at` | ✅ resolvido — `get_last_message_dates`; card alterna "Último contato em" / "Cadastrado em" |
+| 10 abas rolando | ✅ resolvido — 7 abas (Todos + 6 tipos canônicos); rolagem horizontal fica só como fallback em telas estreitas |
+| Sino abre Cmd+K | ✅ resolvido — o header de Contatos não tem mais sino |
+| `is_lid_legacy` não filtrado | ✅ resolvido na F5 — `search_contacts`/`contacts_count_by_type` com `include_legacy DEFAULT false` (migration `20260930450000`), KPIs com o mesmo critério e switch "Mostrar legados". Aplicar a migration em produção pelo `db-migrate.yml` é passo da F10 |
+| KPI "Empresas" com sparkline de outra grandeza | ✅ resolvido na F5 — série de empresas distintas por semana |
+
+Decisões do plano: D1 soft-delete por RPC, D2 desligar a Sicoob Bridge, D3 manter a tipografia Navy 38/48/108, D4 legados ocultos por padrão, D5 enriquecimento por CRM fora do plano, D6 apagar componentes órfãos.

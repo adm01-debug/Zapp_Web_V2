@@ -1,12 +1,27 @@
 /**
  * AI Proxy Edge Function
  * Routes AI calls through admin-configured provider with automatic fallback to OpenRouter.
+ *
+ * Bloco 04 (IA-031/034/035/037/038): roteamento determinístico via _shared/ai-routing.ts
+ * (sem `limit(1)` sem ORDER BY e sem inventar provedor), modelo decidido pelo SERVIDOR,
+ * política de sistema sem sobrescrever mensagem do cliente e config do provedor lida
+ * apenas pelos filtros do módulo de roteamento.
  */
 import { handleCors, errorResponse, jsonResponse, Logger, requireEnv, requireAuth, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 import { z, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { logAiUsage, extractTokenUsage, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { callLovableAI, callOpenAICompatible, callCustomWebhook, withRetry } from "../_shared/ai-providers.ts";
+import {
+  AiRoutingError,
+  resolveProvider,
+  resolveModel,
+  composeMessages,
+  filterConfigBody,
+  filterHeaders,
+  filterExtraBody,
+  type AiProviderRow,
+} from "../_shared/ai-routing.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 
 const AiProxySchema = z.object({
@@ -22,18 +37,6 @@ const AiProxySchema = z.object({
   stream: z.boolean().optional().default(false),
 });
 
-interface AiProvider {
-  id: string;
-  name: string;
-  provider_type: string;
-  api_endpoint: string | null;
-  api_key_secret_name: string | null;
-  model: string | null;
-  system_prompt: string | null;
-  config: Record<string, unknown>;
-  is_active: boolean;
-}
-
 const OR_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 const OR_CONFIG = { headers: { "HTTP-Referer": "https://zappweb.com.br", "X-Title": "ZappWeb" } };
 
@@ -48,64 +51,97 @@ function callOpenRouter(
   return () => callOpenAICompatible({ endpoint: OR_ENDPOINT, apiKey, messages, tools, toolChoice, stream, config: OR_CONFIG });
 }
 
-async function getProvider(supabase: ReturnType<typeof createClient>, useFor: string, providerId?: string): Promise<AiProvider | null> {
-  let query = supabase.from('ai_providers').select('*').eq('is_active', true);
-  if (providerId) {
-    query = query.eq('id', providerId);
-  } else {
-    query = query.contains('use_for', [useFor]).eq('is_default', true);
-  }
-  const { data } = await query.limit(1).maybeSingle();
-  return data as AiProvider | null;
+/**
+ * Resposta explícita de roteamento. NÃO usa errorResponse: em 5xx ele troca o corpo por
+ * "Internal server error" e o cliente ficaria sem o código (NO_PROVIDER/AMBIGUOUS_PROVIDER).
+ * Estes casos nunca caem no fallback legado.
+ */
+function routingErrorResponse(err: AiRoutingError, req: Request): Response {
+  const status = err.code === 'PROVIDER_INACTIVE' ? 409 : err.code === 'BAD_PURPOSE' ? 400 : 503;
+  // A mensagem do módulo já lista os ids conflitantes no AMBIGUOUS_PROVIDER.
+  return jsonResponse({ error: { code: err.code, message: err.message } }, status, req);
 }
 
-function injectSystemPrompt(messages: Array<{ role: string; content: string }>, systemPrompt: string) {
-  const result = [...messages];
-  const hasSystem = result.some(m => m.role === 'system');
-  if (hasSystem) {
-    result[0] = { role: 'system', content: systemPrompt + '\n\n' + result[0].content };
-  } else {
-    result.unshift({ role: 'system', content: systemPrompt });
-  }
-  return result;
+/**
+ * Modelo que o caminho de fallback realmente usa: `callOpenRouter` chama o helper
+ * sem modelo e ele aplica este default. Fica nomeado para a auditoria não mentir
+ * (antes gravávamos o modelo do provedor resolvido, que não foi quem respondeu).
+ */
+const FALLBACK_MODEL = 'gpt-4o';
+
+/** Normaliza a config vinda do banco (nunca confia no formato). */
+function asPlainConfig(config: unknown): Record<string, unknown> {
+  return (config && typeof config === 'object' && !Array.isArray(config))
+    ? config as Record<string, unknown>
+    : {};
 }
 
+/**
+ * Config para chamadas de chat (openai_compatible/google_gemini): corpo apenas com a
+ * allowlist do módulo e cabeçalhos apenas com os nomes permitidos. Nenhum espalhamento
+ * de config cru — `headers`/`extra_body` do painel nunca vão direto.
+ */
+function chatProviderConfig(config: unknown): Record<string, unknown> {
+  const raw = asPlainConfig(config);
+  return {
+    ...filterConfigBody(raw),
+    headers: filterHeaders(raw['headers']),
+  };
+}
+
+/**
+ * Config para webhook/agente: preserva as chaves específicas do provedor (ex.: auth_scheme
+ * e parâmetros próprios) mas tira as reservadas; `extra_body` e cabeçalhos passam pelos filtros.
+ */
+function webhookProviderConfig(config: unknown): Record<string, unknown> {
+  const raw = asPlainConfig(config);
+  return {
+    ...filterExtraBody(raw),
+    headers: filterHeaders(raw['headers']),
+    extra_body: filterExtraBody(raw['extra_body']),
+  };
+}
+
+/**
+ * Despacha para o provedor já resolvido. O modelo é SEMPRE o decidido pelo servidor
+ * (`resolveModel`), em todos os ramos — inclusive lovable_ai (IA-035).
+ */
 function dispatchProvider(
-  providerType: string,
-  provider: AiProvider | null,
-  finalMessages: Array<{ role: string; content: string }>,
+  provider: AiProviderRow,
+  model: string | null,
+  messages: Array<{ role: string; content: string }>,
   tools: unknown,
   toolChoice: unknown,
   stream: boolean,
-  clientModel?: string,
 ): () => Promise<Response> {
-  switch (providerType) {
+  switch (provider.provider_type) {
     case 'lovable_ai': {
       const apiKey = requireEnv("LOVABLE_API_KEY");
-      return () => callLovableAI({ messages: finalMessages, apiKey, model: clientModel || provider?.model || undefined, tools, toolChoice, stream });
+      return () => callLovableAI({ messages, apiKey, model: model ?? undefined, tools, toolChoice, stream });
     }
     case 'openai_compatible':
     case 'google_gemini': {
-      if (!provider?.api_endpoint) throw new Error("Endpoint da API nao configurado para este provedor.");
+      if (!provider.api_endpoint) throw new Error("Endpoint da API nao configurado para este provedor.");
       const secretName = provider.api_key_secret_name;
       const apiKey = secretName ? Deno.env.get(secretName) : null;
       if (!apiKey) throw new Error("Chave de API do provedor nao encontrada nos secrets (ver api_key_secret_name do provedor).");
+      const config = chatProviderConfig(provider.config);
       return () => callOpenAICompatible({
-        endpoint: provider.api_endpoint!, apiKey, messages: finalMessages,
-        model: provider.model || undefined, tools, toolChoice, stream, config: provider.config || {},
+        endpoint: provider.api_endpoint!, apiKey, messages,
+        model: model ?? undefined, tools, toolChoice, stream, config,
       });
     }
     case 'custom_webhook':
     case 'custom_agent': {
-      if (!provider?.api_endpoint) throw new Error("Endpoint nao configurado para este agente/webhook.");
-      const secretName2 = provider.api_key_secret_name;
-      const apiKey2 = secretName2 ? Deno.env.get(secretName2) : undefined;
-      return () => callCustomWebhook({
-        endpoint: provider.api_endpoint!, apiKey: apiKey2, messages: finalMessages, config: provider.config || {},
-      });
+      if (!provider.api_endpoint) throw new Error("Endpoint nao configurado para este agente/webhook.");
+      const secretName = provider.api_key_secret_name;
+      const apiKey = secretName ? Deno.env.get(secretName) : undefined;
+      const config = webhookProviderConfig(provider.config);
+      return () => callCustomWebhook({ endpoint: provider.api_endpoint!, apiKey, messages, config });
     }
     default: {
-      return callOpenRouter(finalMessages, tools, toolChoice, stream);
+      // Tipo desconhecido: comportamento legado (OpenRouter).
+      return callOpenRouter(messages, tools, toolChoice, stream);
     }
   }
 }
@@ -131,30 +167,57 @@ Deno.serve(async (req) => {
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { messages, model: clientModel, use_for, provider_id, tools, tool_choice, stream } = parsed.data;
+    // O schema já aplica o default 'copilot'; o `?? ` só fecha o tipo (parseBody infere a entrada).
+    const purpose = use_for ?? 'copilot';
 
     const supabaseUrl = requireEnv("SUPABASE_URL");
     const serviceRoleKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const provider = await getProvider(supabase as any, use_for as string, provider_id);
-    const providerType = provider?.provider_type || 'openai_compatible';
-    const providerName = provider?.name || 'OpenRouter';
+    // Roteamento determinístico: 0 padrão -> NO_PROVIDER, 2+ -> AMBIGUOUS_PROVIDER (nunca escolhe um).
+    let provider: AiProviderRow;
+    let routing: ReturnType<typeof resolveModel>;
+    try {
+      const base = supabase.from('ai_providers').select('*');
+      const filtered = provider_id
+        // sem filtro de is_active: o módulo distingue INATIVO (409) de inexistente (503)
+        ? base.eq('id', provider_id)
+        : base.eq('is_active', true).contains('use_for', [purpose]).eq('is_default', true).order('id');
+      const { data } = await filtered;
+      provider = resolveProvider((data ?? []) as unknown as AiProviderRow[], purpose, provider_id ?? null);
+      routing = resolveModel(provider, clientModel ?? null);
+    } catch (routingErr) {
+      if (routingErr instanceof AiRoutingError) {
+        log.warn("Routing recusado", { code: routingErr.code, use_for: purpose, provider_id });
+        return routingErrorResponse(routingErr, req);
+      }
+      throw routingErr;
+    }
 
-    log.info("Routing AI call", { provider: providerName, type: providerType, use_for });
+    const providerType = provider.provider_type;
+    const providerName = provider.name;
 
-    const finalMessages = provider?.system_prompt
-      ? injectSystemPrompt(messages, provider.system_prompt)
-      : [...messages];
+    log.info("Routing AI call", { provider: providerName, type: providerType, use_for, model: routing.model });
+
+    // Política do servidor vira mensagem própria; nenhuma mensagem do cliente é removida/reescrita (IA-037).
+    const finalMessages = composeMessages(provider.system_prompt, messages);
+
+    // Auditoria da substituição administrativa de modelo (IA-035).
+    const modelMetadata = {
+      model_requested: routing.modelRequested,
+      model_used: routing.model,
+      model_substituted: routing.modelSubstituted,
+    };
 
     const startTime = Date.now();
     let response: Response;
     let usedFallback = false;
 
     try {
-      const callFn = dispatchProvider(providerType, provider, finalMessages, tools, tool_choice, stream ?? false, clientModel);
+      const callFn = dispatchProvider(provider, routing.model, finalMessages, tools, tool_choice, stream ?? false);
       response = await withRetry(callFn, 2, 500);
     } catch (dispatchErr) {
-      const isOpenRouter = provider?.api_key_secret_name === 'OPENROUTER_API_KEY';
+      const isOpenRouter = provider.api_key_secret_name === 'OPENROUTER_API_KEY';
       if (!isOpenRouter) {
         log.warn("Provider dispatch failed, falling back to OpenRouter", {
           provider: providerName,
@@ -181,22 +244,21 @@ Deno.serve(async (req) => {
       response = await callOpenRouter(finalMessages, tools, tool_choice, stream ?? false)();
       usedFallback = true;
 
-      logAiUsage({
-        functionName: 'ai-proxy', userId, model: provider?.model || null,
-        durationMs, status: 'fallback',
-        errorMessage: providerName + ": HTTP error -> fallback OpenRouter",
-        metadata: { provider_id: provider?.id, provider_type: providerType, fallback: true },
-      });
+      // Sem logAiUsage aqui: a linha de uso é gravada UMA vez, no fecho da
+      // requisição (:270 no sucesso / bloco de erro abaixo), com status 'fallback'.
+      // Gravar nos dois pontos contava a mesma chamada duas vezes e corrompia a
+      // auditoria de uso/cota.
     }
 
     if (!response.ok) {
       const errText = await response.text();
       log.error("Final provider error", { status: response.status, error: errText.slice(0, 200) });
       logAiUsage({
-        functionName: 'ai-proxy', userId, model: provider?.model || null,
+        functionName: 'ai-proxy', userId,
+        model: usedFallback ? FALLBACK_MODEL : routing.model,
         durationMs, status: 'error',
         errorMessage: "HTTP " + response.status,
-        metadata: { provider_id: provider?.id, provider_type: providerType },
+        metadata: { ...modelMetadata, model_used: usedFallback ? FALLBACK_MODEL : modelMetadata.model_used, model_resolved: routing.model, provider_id: provider.id, provider_type: providerType },
       });
       return errorResponse("Erro do provedor: " + response.status, 502, req);
     }
@@ -213,10 +275,10 @@ Deno.serve(async (req) => {
 
     logAiUsage({
       functionName: 'ai-proxy', userId,
-      model: model || provider?.model || null,
+      model: model || (usedFallback ? FALLBACK_MODEL : routing.model) || null,
       inputTokens, outputTokens, durationMs,
       status: usedFallback ? 'fallback' : 'success',
-      metadata: { provider_id: provider?.id, provider_type: providerType, use_for, fallback: usedFallback },
+      metadata: { ...modelMetadata, model_used: usedFallback ? FALLBACK_MODEL : modelMetadata.model_used, model_resolved: routing.model, provider_id: provider.id, provider_type: providerType, use_for: purpose, fallback: usedFallback },
     });
 
     log.done(200, { provider: usedFallback ? 'OpenRouter (fallback)' : providerName, tokens: inputTokens + outputTokens });

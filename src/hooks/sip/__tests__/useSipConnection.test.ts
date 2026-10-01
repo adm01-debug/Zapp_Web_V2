@@ -74,7 +74,7 @@ describe('useSipConnection', () => {
     const onReject = mockRegisterCalls[0]?.requestDelegate?.onReject;
     expect(onReject).toBeInstanceOf(Function);
     await act(async () => { onReject?.({ message: { statusCode: 403 } }); });
-    expect(result.current.sipStatus).toBe('error');
+    expect(result.current.sipStatus).toBe('unavailable');
     expect(result.current.sipReason).toBe('line_in_use_other_user');
     expect(toast.error).toHaveBeenCalledWith('Linha em uso por outro usuário');
   });
@@ -123,7 +123,7 @@ describe('useSipConnection', () => {
 
     const ua = mockUaInstances[0];
     act(() => { ua.transport.onDisconnect?.(); }); // agenda uma tentativa de reconexão
-    expect(result.current.sipStatus).toBe('disconnected');
+    expect(result.current.sipStatus).toBe('reconnecting');
 
     await act(async () => { await result.current.disconnect(); });
     const uaCountAfterDisconnect = mockUaInstances.length;
@@ -132,6 +132,64 @@ describe('useSipConnection', () => {
     act(() => { vi.advanceTimersByTime(60000); });
     expect(mockUaInstances.length).toBe(uaCountAfterDisconnect);
 
+    vi.useRealTimers();
+  });
+
+  it('T16: connect() com um UA vivo não cria um segundo UserAgent', async () => {
+    const { result } = renderHook(() => useSipConnection());
+    await act(async () => {
+      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+    const uaCount = mockUaInstances.length;
+
+    await act(async () => {
+      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+
+    expect(mockUaInstances.length).toBe(uaCount);
+  });
+
+  it('T16: unmount durante o backoff não cria UserAgent', async () => {
+    vi.useFakeTimers();
+    const { result, unmount } = renderHook(() => useSipConnection());
+    await act(async () => {
+      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+
+    act(() => { mockUaInstances[0].transport.onDisconnect?.(); });
+    expect(result.current.sipStatus).toBe('reconnecting');
+    const uaCount = mockUaInstances.length;
+
+    // O painel saiu da tela com o retry agendado: ele NÃO pode criar um
+    // UserAgent órfão (o servidor só aceita um ramal por vez).
+    unmount();
+    await act(async () => { vi.advanceTimersByTime(120000); });
+
+    expect(mockUaInstances.length).toBe(uaCount);
+    vi.useRealTimers();
+  });
+
+  it('T16: 6ª falha seguida vira "unavailable" e para de tentar', async () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useSipConnection());
+    await act(async () => {
+      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+
+    for (let i = 0; i < 6; i++) {
+      const ua = mockUaInstances[mockUaInstances.length - 1];
+      act(() => { ua.transport.onDisconnect?.(); });
+      if (i < 5) {
+        expect(result.current.sipStatus).toBe('reconnecting');
+        await act(async () => { vi.advanceTimersByTime(31000); });
+      }
+    }
+
+    expect(result.current.sipStatus).toBe('unavailable');
+    expect(toast.error).toHaveBeenCalledWith('Não foi possível reconectar ao servidor VoIP.');
+    const uaCount = mockUaInstances.length;
+    await act(async () => { vi.advanceTimersByTime(120000); });
+    expect(mockUaInstances.length).toBe(uaCount);
     vi.useRealTimers();
   });
 });

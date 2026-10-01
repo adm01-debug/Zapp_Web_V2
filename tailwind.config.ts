@@ -49,6 +49,10 @@ export default {
         "8xl": ["6rem", { lineHeight: "1" }],
         "9xl": ["8rem", { lineHeight: "1" }],
         "kpi-value": ["2.125rem", { lineHeight: "1", fontVariantNumeric: "tabular-nums" }], // 34px — KPI card value
+        // Título de página (variante `plain` do PageHeader, usada só por
+        // Contatos). Substitui o `text-[38px]` arbitrário que era a única
+        // violação acima16px do módulo (etapa 20, D3 = Navy).
+        "page-title": ["2.375rem", { lineHeight: "1" }], // 38px — título de página
       },
       colors: {
         border: "hsl(var(--border))",

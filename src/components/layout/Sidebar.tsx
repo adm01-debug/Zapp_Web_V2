@@ -16,6 +16,8 @@ import { SidebarBackButton } from './SidebarBackButton';
 import { primaryNav, sidebarGroups, advancedNav } from './sidebarNavConfig';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { NavigationService } from '@/services/navigation.service';
+import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
+import { useMyWorkItemsBadge } from '@/hooks/tasks/useMyWorkItems';
 
 interface SidebarProps {
   currentView: string;
@@ -43,6 +45,10 @@ export const Sidebar = React.memo(function Sidebar({
   const { collapsed, toggle } = useSidebarCollapse();
   const { favorites, toggleFavorite, isFavorite } = useSidebarFavorites();
   const { roles, permissions } = useUserRole();
+
+  // Fase F (etapa 62): badge do item Tarefas = atrasadas + avisos já disparados
+  // e ainda não tratados (mesma regra do `useMyWorkItemsBadge`).
+  const tasksBadge = useMyWorkItemsBadge();
 
   const filteredPrimaryNav = useMemo(() =>
     NavigationService.filterNavItems(primaryNav, roles, permissions),
@@ -87,6 +93,7 @@ export const Sidebar = React.memo(function Sidebar({
         </button>
         {!collapsed && <span className="font-display text-xl font-bold leading-none tracking-[-0.01em] text-foreground ml-2 mr-auto">ZAPP</span>}
         {!collapsed && <SidebarBackButton canGoBack={canGoBack} onGoBack={onGoBack} collapsed={false} />}
+        {!collapsed && <NotificationsPopover />}
         {!collapsed && (
           <Tooltip delayDuration={200}><TooltipTrigger asChild>
             <button onClick={toggle} className="w-[28px] h-[28px] rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none" aria-label="Recolher menu">
@@ -108,6 +115,8 @@ export const Sidebar = React.memo(function Sidebar({
 
       {collapsed && <SidebarBackButton canGoBack={canGoBack} onGoBack={onGoBack} collapsed />}
 
+      {collapsed && <NotificationsPopover collapsed />}
+
       {/* Área única de rolagem: nav primária + busca + favoritos + grupos.
           Antes só os grupos rolavam e a nav primária ficava fixa no topo —
           cada item novo ali (ex.: Multiplix) encolhia permanentemente o
@@ -122,7 +131,7 @@ export const Sidebar = React.memo(function Sidebar({
                   item={item}
                   currentView={currentView}
                   onViewChange={onViewChange}
-                  badge={item.id === 'inbox' ? inboxBadge : undefined}
+                  badge={item.id === 'inbox' ? inboxBadge : item.id === 'tasks' ? tasksBadge : undefined}
                   collapsed={collapsed}
                 />
               </li>

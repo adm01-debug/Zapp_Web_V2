@@ -2,7 +2,7 @@
 # ZAPP-WEB CI/CD Pipeline
 # =================================================
 # Triggered on: push to main, pull requests
-# Jobs: lint, typecheck, test, build
+# Jobs: lint-and-typecheck, test, build, security, e2e
 # Runtime: bun (o repo usa bun.lock, nao package-lock.json)
 # =================================================
 

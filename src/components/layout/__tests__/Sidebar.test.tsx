@@ -55,6 +55,11 @@ vi.mock('@/hooks/ui/useSidebarFavorites', () => ({
 vi.mock('@/components/notifications/PushNotificationToggle', () => ({ PushNotificationToggle: () => null }));
 vi.mock('@/components/notifications/ScreenProtectionToggle', () => ({ ScreenProtectionToggle: () => null }));
 vi.mock('@/components/notifications/SoundVolumeControl', () => ({ SoundVolumeControl: () => null }));
+// Fase F: o popover de notificações consome `useNotifications` (useAuth/supabase)
+// e o badge de Tarefas consome `useMyWorkItemsBadge` (useAuth/useQuery). Este teste
+// é sobre a estrutura de navegação, então os dois entram mockados.
+vi.mock('@/components/notifications/NotificationsPopover', () => ({ NotificationsPopover: () => null }));
+vi.mock('@/hooks/tasks/useMyWorkItems', () => ({ useMyWorkItemsBadge: () => 0 }));
 vi.mock('@/components/layout/SidebarUserPill', () => ({ SidebarUserPill: () => null }));
 vi.mock('@/components/layout/SidebarBackButton', () => ({ SidebarBackButton: () => null }));
 
