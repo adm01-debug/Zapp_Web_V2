@@ -212,6 +212,43 @@ export async function handleTalkxSend(
       }
     }
 
+    // V19: retry manual de um destinatário terminal (failed/outcome_unknown).
+    // Não reenvia cego: revalida a supressão e o RPC respeita attempt_count < 3.
+    if (action === "retry") {
+      const { recipientId } = body as { recipientId?: string };
+      if (!recipientId) {
+        return new Response(JSON.stringify({ error: "recipientId required" }), { status: 400, headers });
+      }
+      const { data: retryRecipient, error: retryLookupError } = await supabase
+        .from("talkx_recipients")
+        .select("id, contact_id, status, attempt_count")
+        .eq("id", recipientId)
+        .single();
+      if (retryLookupError || !retryRecipient) {
+        return new Response(JSON.stringify({ error: "Recipient not found" }), { status: 404, headers });
+      }
+      if (!["failed", "outcome_unknown"].includes(retryRecipient.status as string)) {
+        return new Response(JSON.stringify({ error: "Recipient not retryable" }), { status: 409, headers });
+      }
+      const { data: suppressed, error: suppressionError } = await supabase.rpc("talkx_recipient_is_suppressed", {
+        p_contact_id: retryRecipient.contact_id,
+        p_phone: null,
+      });
+      if (suppressionError) {
+        return new Response(JSON.stringify({ error: suppressionError.message }), { status: 500, headers });
+      }
+      if (suppressed === true) {
+        return new Response(JSON.stringify({ success: false, reason: "suppressed" }), { headers });
+      }
+      const { data: retried, error: retryError } = await supabase.rpc("retry_talkx_recipient", {
+        p_recipient_id: recipientId,
+      });
+      if (retryError) {
+        return new Response(JSON.stringify({ error: retryError.message }), { status: 409, headers });
+      }
+      return new Response(JSON.stringify({ success: retried === true }), { headers });
+    }
+
     if (!campaignId) {
       return new Response(JSON.stringify({ error: "campaignId required" }), { status: 400, headers });
     }
@@ -262,6 +299,12 @@ export async function handleTalkxSend(
           p_pause_reason: "connection_lost",
         });
       } catch { /* já pausada ou outro estado — ignora */ }
+      // V19: evento connection_failed alimenta a timeline ("Falha de conexão").
+      await supabase.from("talkx_campaign_events").insert({
+        campaign_id: campaignId,
+        event_type: "connection_failed",
+        message: "Falha de conexão",
+      }).catch(() => {});
       return new Response(JSON.stringify({ error: "WhatsApp connection lost: campaign paused" }), { status: 409, headers });
     }
 
@@ -607,6 +650,13 @@ export async function handleTalkxSend(
               p_pause_reason: autoPauseReason,
             });
             if (pauseError) throw new Error(`talkx_campaign_auto_pause_failed: ${pauseError.message}`);
+            if (autoPauseReason === "connection_lost") {
+              await supabase.from("talkx_campaign_events").insert({
+                campaign_id: campaignId,
+                event_type: "connection_failed",
+                message: "Falha de conexão",
+              }).catch(() => {});
+            }
           }
           if (!beforeSendInstanceId) {
             log.warn("Campanha pausada: conexão WhatsApp indisponível antes do envio", { campaignId });
@@ -736,6 +786,10 @@ export async function handleTalkxSend(
         // ao expirar o lease, isso permitiria um segundo POST ao mesmo número.
         if (providerPostAttempted) {
           const reason = err instanceof Error ? err.message : "request_failed";
+          const attemptSoFar = typeof (recipient as Record<string, unknown>).attempt_count === 'number'
+            ? (recipient as Record<string, unknown>).attempt_count as number
+            : 0;
+          log.warn("Destinatário em quarentena (outcome_unknown)", { campaignId, recipient_id: recipient.id, attempt: attemptSoFar });
           const { error: quarantineError } = await supabase.rpc("complete_talkx_recipient", {
             p_recipient_id: recipient.id,
             p_claim_token: claim.claim_token,
@@ -798,7 +852,7 @@ export async function handleTalkxSend(
     );
     if (completionError) throw new Error(`talkx_campaign_completion_failed: ${completionError.message}`);
 
-    log.done(200, { sent: sentCount, failed: failedCount, outcomeUnknown: outcomeUnknownCount });
+    log.done(200, { campaignId, sent: sentCount, failed: failedCount, outcomeUnknown: outcomeUnknownCount });
 
     return new Response(
       JSON.stringify({

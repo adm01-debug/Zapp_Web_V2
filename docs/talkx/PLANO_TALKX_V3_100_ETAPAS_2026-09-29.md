@@ -147,6 +147,7 @@ mesmos arquivos (`talkxShared.tsx` é o ponto de colisão — quem mexer nele ab
 **Hoje:** 5xx/timeout → `outcome_unknown` sem retry; sem action `retry`; sem `connection_failed`; Logger sem `recipient_id/attempt`.
 **Fazer:** action `retry {recipientId}` (só `failed`/`outcome_unknown`, respeita `attempt_count` ≤ 3, revalida supressão, gera nova tentativa via `reschedule_talkx_recipient`); perda de conexão mid-loop grava `pause_reason='connection_lost'` + evento `connection_failed`; scheduler emite `resumed_auto` (V03); Logger com `campaign_id, recipient_id, attempt`; documentar em `OPERACAO.md` que `outcome_unknown` exige decisão humana (não reenvio cego).
 **Aceite:** teste Deno 500→retry manual→200; timeline mostra "Falha de conexão".
+**✅ FEITO 2026-10-01:** action `retry {recipientId}` na `talkx-send` (revalida supressão + RPC `retry_talkx_recipient` respeita `attempt_count < 3` — migration `20260930630000`); evento `connection_failed` (message "Falha de conexão") gravado nos 2 pontos de perda de conexão; Logger com `campaign_id`/`recipient_id`/`attempt`; `docs/talkx/OPERACAO.md` §8.4 documenta que `outcome_unknown` exige decisão humana; testes Deno (33, incl. retry→success e retry→suppressed) + harness `talkx-v19-retry-recipient.test.sh` verdes.
 
 ### V20 · Limite diário por conexão e horário comercial configurável
 **Hoje:** `daily_limit_per_connection` e `business_hours` semeados mas nunca lidos; 08–18 seg–sex fixo em `talkx-window.ts:82` e no front.

@@ -421,3 +421,69 @@ Deno.test("dispatch/start (GO flavor): Evolution GO retorna 5xx em /send/text �
     restore();
   }
 });
+
+// ---------------------------------------------------------------------------
+// V19 — retry manual de destinatário terminal (outcome_unknown/failed)
+// ---------------------------------------------------------------------------
+
+Deno.test("retry: destinatário outcome_unknown → retry manual → success:true", async () => {
+  const deps = {
+    serviceKey: TEST_SERVICE_KEY,
+    supabase: {
+      auth: { getUser: () => Promise.resolve({ data: { user: null }, error: new Error("") }) },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      rpc(name: string): Promise<any> {
+        if (name === "talkx_recipient_is_suppressed") return Promise.resolve({ data: false, error: null });
+        if (name === "retry_talkx_recipient") return Promise.resolve({ data: true, error: null });
+        return Promise.resolve({ data: null, error: null });
+      },
+      from(table: string) {
+        if (table === "user_roles") return qb({ maybeSingle: () => Promise.resolve({ data: null, error: null }) });
+        if (table === "talkx_recipients") {
+          return qb({
+            single: () => Promise.resolve({
+              data: { id: "recip-1", contact_id: "contact-1", status: "outcome_unknown", attempt_count: 1 },
+              error: null,
+            }),
+          });
+        }
+        return qb();
+      },
+    },
+  };
+  const req = makePost({ bearer: TEST_SERVICE_KEY, body: { action: "retry", recipientId: "recip-1" } });
+  const res = await handleTalkxSend(req, deps);
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.success === true, `esperado success:true, recebido: ${JSON.stringify(body)}`);
+});
+
+Deno.test("retry: destinatário suprimido → success:false reason:suppressed", async () => {
+  const deps = {
+    serviceKey: TEST_SERVICE_KEY,
+    supabase: {
+      auth: { getUser: () => Promise.resolve({ data: { user: null }, error: new Error("") }) },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      rpc(name: string): Promise<any> {
+        if (name === "talkx_recipient_is_suppressed") return Promise.resolve({ data: true, error: null });
+        return Promise.resolve({ data: null, error: null });
+      },
+      from(table: string) {
+        if (table === "user_roles") return qb({ maybeSingle: () => Promise.resolve({ data: null, error: null }) });
+        if (table === "talkx_recipients") {
+          return qb({
+            single: () => Promise.resolve({
+              data: { id: "recip-1", contact_id: "contact-1", status: "failed", attempt_count: 0 },
+              error: null,
+            }),
+          });
+        }
+        return qb();
+      },
+    },
+  };
+  const req = makePost({ bearer: TEST_SERVICE_KEY, body: { action: "retry", recipientId: "recip-1" } });
+  const res = await handleTalkxSend(req, deps);
+  const body = await res.json();
+  assert(body.success === false && body.reason === "suppressed", `esperado suppressed, recebido: ${JSON.stringify(body)}`);
+});
