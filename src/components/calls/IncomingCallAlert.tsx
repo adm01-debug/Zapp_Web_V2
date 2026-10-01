@@ -29,7 +29,15 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
         // A chamada chega pelo Realtime, não por um gesto do usuário: o navegador cria
         // o AudioContext SUSPENSO e o toque fica MUDO, sem erro nenhum. Os outros dois
         // caminhos de alerta (`notificationSounds`, chat interno) já retomam — aqui faltava.
-        if (ctx.state === 'suspended') void ctx.resume();
+        // E retomar não basta quando a aba ainda não recebeu NENHUMA interação (aí o navegador
+        // ignora o resume em silêncio): nesse caso retomamos no primeiro gesto — a única janela
+        // que o navegador oferece.
+        const retomar = () => {
+          if (ctx.state === 'suspended') void ctx.resume().catch(() => {});
+        };
+        retomar();
+        document.addEventListener('pointerdown', retomar);
+        document.addEventListener('keydown', retomar);
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
@@ -46,6 +54,8 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
 
         return () => {
           clearInterval(interval);
+          document.removeEventListener('pointerdown', retomar);
+          document.removeEventListener('keydown', retomar);
           osc.stop();
           ctx.close();
         };
