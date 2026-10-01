@@ -127,6 +127,8 @@ export async function handleTalkxSend(
     const token = authHeader.slice(7);
     // Comparação constant-time: `===` retorna cedo no primeiro byte diferente e vaza timing.
     const isServiceKey = timingSafeEqual(token, serviceKey);
+    // V12: ator da transição — perfil do JWT (quando não é service key) ou null (worker).
+    let actorId: string | null = null;
     if (!isServiceKey) {
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);
       if (authError || !user) {
@@ -141,6 +143,7 @@ export async function handleTalkxSend(
       if (!roleData) {
         return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
       }
+      actorId = user.id;
     }
 
     const body = await req.json();
@@ -222,6 +225,7 @@ export async function handleTalkxSend(
       const { data, error } = await supabase.rpc("transition_talkx_campaign", {
         p_campaign_id: campaignId,
         p_action: campaignAction,
+        p_actor_id: actorId,
       });
       if (error) {
         return new Response(JSON.stringify({ error: error.message }), { status: 409, headers });
@@ -273,6 +277,7 @@ export async function handleTalkxSend(
     const { error: transitionError } = await supabase.rpc("transition_talkx_campaign", {
       p_campaign_id: campaignId,
       p_action: "start",
+      p_actor_id: actorId,
     });
     if (transitionError) {
       return new Response(JSON.stringify({ error: transitionError.message }), { status: 409, headers });

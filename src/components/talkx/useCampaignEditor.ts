@@ -573,20 +573,18 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
 
       if (mode === 'schedule' && payload.scheduled_at) {
         await updateCampaign.mutateAsync({ id, status: 'scheduled' });
-        await logEvent(id, 'scheduled', `Agendada para ${utcToLocalInTimezone(payload.scheduled_at, scheduleTimezone)} (${scheduleTimezone})`);
       }
       if (mode === 'launch') {
-        // A trilha de auditoria só é gravada após a Edge Function confirmar a
-        // solicitação; isso impede um falso "iniciado" quando o invoke falha.
+        // V12: a trilha (started) é gravada pelo servidor na transição; o cliente
+        // não insere o evento para não duplicar.
         const started = await startCampaign(id);
         if (!started) throw new Error('A campanha não foi iniciada. Verifique a conexão e tente novamente.');
-        await logEvent(id, 'started', 'Envio iniciado manualmente');
       }
       return id;
     } finally {
       setSaving(false);
     }
-  }, [recipientSnapshotReady, canProceed, buildPayload, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, replaceDraftRecipients, selectedTemplate, registerUse, startCampaign, scheduleTimezone]);
+  }, [recipientSnapshotReady, canProceed, buildPayload, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, replaceDraftRecipients, selectedTemplate, registerUse, startCampaign]);
 
   // Serializa autosave, salvar manual e lançamento. Uma falha não bloqueia a
   // próxima operação, mas nenhuma mutação posterior começa antes do término da
