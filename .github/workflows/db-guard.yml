@@ -465,3 +465,11 @@ jobs:
         env:
           L11_DEPARTMENTS_ACL_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/l11-departments-acl-escrita.test.sh
+
+      # Auditoria Onda 3, achado 2: a RPC de recibo de leitura e SECURITY DEFINER e nao checava
+      # vinculo — gravava recibo cross-team por RPC enquanto o insert direto era barrado pela RLS.
+      # Bloco A prova o defeito no mesmo container, aplica a migration e o bloco B prova a correcao.
+      - name: Simular vinculo obrigatorio no recibo de leitura do team chat (auditoria Onda 3)
+        env:
+          TEAM_RECEIPTS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-receipts-membership.test.sh
