@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   updateError: null as null | { code?: string; message?: string },
   getById: vi.fn(),
   refetch: vi.fn(),
+  setShowLegacy: vi.fn(),
   warning: vi.fn(),
   invalidateQueries: vi.fn(),
   /** Liga o `onSuccess` do `withFeedback` (o mock padrão só roda a mutação). */
@@ -51,7 +52,7 @@ vi.mock('@/hooks/ui/useActionFeedback', () => ({
 }));
 
 vi.mock('@/hooks/crm/useContactsSearch', () => ({
-  useContactsSearch: () => ({ refetch: mocks.refetch, contacts: [], totalCount: 0 }),
+  useContactsSearch: () => ({ refetch: mocks.refetch, setShowLegacy: mocks.setShowLegacy, contacts: [], totalCount: 0 }),
 }));
 
 vi.mock('@/hooks/system/useNavigationHistory', () => ({ navigateToView: vi.fn() }));
@@ -283,5 +284,18 @@ describe('useContactsCRUD — invalida os contadores por tipo (contacts-type-cou
       await hook.result.current.handleDeleteContact('c1');
     });
     expectAggregatesInvalidated();
+  });
+});
+
+describe('useContactsCRUD — toggle de legados', () => {
+  it('limpa a seleção ao alternar "Mostrar legados" para não agir sobre contatos ocultos', () => {
+    const { result } = renderHook(() => useContactsCRUD());
+    act(() => { result.current.setSelectedIds(['legado-1', 'c2']); });
+    expect(result.current.selectedIds).toEqual(['legado-1', 'c2']);
+
+    act(() => { result.current.setShowLegacy(false); });
+
+    expect(result.current.selectedIds).toEqual([]);
+    expect(mocks.setShowLegacy).toHaveBeenCalledWith(false);
   });
 });

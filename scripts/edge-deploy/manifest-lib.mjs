@@ -165,12 +165,14 @@ export async function buildDeploymentManifest({ repoRoot, orphanAllowlist = [], 
   functionNames.sort();
 
   if (functionNames.length === 0) throw new Error('No Edge Functions found');
-  // Funcoes legadas nao gerenciadas (scripts/edge-deploy/legacy-functions.json) vivem em
-  // producao sem fonte versionada. Sem esta tolerancia nao existe ordem possivel para
-  // declarar o verify_jwt delas: a excecao antes do fonte e recusada aqui, e o fonte sem
-  // a excecao faz o proximo deploy reverter a funcao para verify_jwt=true (default do CLI),
-  // quebrando quem a chama antes de existir sessao. Elas seguem fora de functions[], logo
-  // nao entram em deploy, hash de closure nem atestacao remota.
+  // Funcoes legadas nao gerenciadas (declaradas em scripts/edge-deploy/legacy-functions.json)
+  // cobrem o caso de uma funcao que roda em producao sem fonte na arvore de deploy: sem esta
+  // tolerancia nao existe ordem possivel para declarar o verify_jwt dela - a excecao antes do
+  // fonte e recusada aqui, e o fonte sem a excecao faz o proximo deploy reverter a funcao para
+  // verify_jwt=true (default do CLI), quebrando quem a chama antes de existir sessao.
+  // Em 01/10/2026 a lista esta vazia (as duas ultimas, de lockout do login, foram removidas de
+  // producao): o mecanismo fica dormente ate existir outra funcao nessa condicao. Funcoes desta
+  // lista seguem fora de functions[], logo nao entram em deploy, hash de closure nem atestacao.
   const legacyUnmanagedSet = new Set(legacyUnmanaged);
   for (const configuredName of settings.keys()) {
     if (!functionNames.includes(configuredName) && !legacyUnmanagedSet.has(configuredName)) {

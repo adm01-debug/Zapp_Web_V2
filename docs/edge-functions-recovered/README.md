@@ -1,20 +1,37 @@
-# Fontes recuperados: edge functions que rodam em produção sem fonte versionada
+# Fontes recuperados de edge functions que rodam (ou rodaram) sem fonte na árvore de deploy
 
-Estas funções **não têm fonte no repositório**. O texto em cada `index.ts.txt` foi recuperado do
-**bundle publicado** (Management API → corpo `ESZIP2.3` → source map embutido → `sourcesContent`),
-sem republicar nada. É cópia fiel do `index.ts` que estava em produção; o `sha256` abaixo é o do
-arquivo salvo aqui, para conferência.
+Cada `index.ts.txt` é **cópia fiel do `index.ts` publicado** naquela função, recuperada do bundle
+(Management API → corpo `ESZIP2.3` → source map embutido → `sourcesContent`), sem republicar nada.
+O `sha256` abaixo é do arquivo salvo aqui e foi conferido contra o `sourcesContent` publicado.
 
 **Situação em 01/10/2026:** as duas do Sicoob seguem **no ar**; as duas de lockout foram
 **removidas de produção** (junto com as declarações em `supabase/config.toml` e em
 `scripts/edge-deploy/legacy-functions.json`) e os arquivos desta pasta ficam como histórico.
 
-| função | versão publicada | publicado em (UTC) | `verify_jwt` | sha256 do fonte | módulo no bundle |
+| função | situação em 01/10/2026 | conteúdo publicado em (UTC) | `verify_jwt` | sha256 do fonte | sources embutidos |
 |---|---|---|---|---|---|
-| `check-account-lock` | v162 | 2026-09-05T06:50:50Z | `false` | `a5361127e867947928403f0e042744c802e887a4f6019a6231f4856ead8422cf` | `functions/check-account-lock/index.ts` |
-| `record-failed-login` | v160 | 2026-09-05T06:50:50Z | `false` | `b174d665f60d2ec136d2e29d7b916e3d7127165c88bcad6b1599ccb20707aa18` | `functions/record-failed-login/index.ts` |
-| `sicoob-bridge` | v209 | 2026-09-29T12:57:52Z | `true` | `246f8edb416b1db51540ba0183c847536beea800240cb133de50b7e061170c2f` | `functions/sicoob-bridge/index.ts` |
-| `sicoob-bridge-reply` | v209 | 2026-09-29T12:57:52Z | `true` | `4cbe87b0edb091b79eeb452d9312cbac2cc9d286435d33d688b889b358fba432` | `functions/sicoob-bridge-reply/index.ts` |
+| `check-account-lock` | **removida** de produção | 2026-09-05T06:50:50Z | `false` (à época) | `a5361127e867947928403f0e042744c802e887a4f6019a6231f4856ead8422cf` | `index.ts` + `_shared/*` (ver nota) |
+| `record-failed-login` | **removida** de produção | 2026-09-05T06:50:50Z | `false` (à época) | `b174d665f60d2ec136d2e29d7b916e3d7127165c88bcad6b1599ccb20707aa18` | idem |
+| `sicoob-bridge` | **no ar** | 2026-09-29T12:57:52Z | `true` | `246f8edb416b1db51540ba0183c847536beea800240cb133de50b7e061170c2f` | `index.ts`, `_shared/validation.ts`, `_shared/hmac-validation.ts`, `_shared/schemas.ts` |
+| `sicoob-bridge-reply` | **no ar** | 2026-09-29T12:57:52Z | `true` | `4cbe87b0edb091b79eeb452d9312cbac2cc9d286435d33d688b889b358fba432` | idem |
+
+A coluna "conteúdo publicado em" vem do campo `updated_at`, que é a data do **bundle** — é o
+identificador estável de conteúdo, junto com o `sha256`.
+
+**O campo `version` não é a versão da função.** Medido em 01/10/2026: as 71 funções do projeto
+subiram exatamente +1 ao mesmo tempo (168→169, 166→167, 215→216…), mantendo `updated_at` e
+`ezbr_sha256` idênticos — é um contador global de deploys do projeto, que sobe a cada publicação de
+qualquer função. Por isso ele não aparece nesta tabela: número de versão aqui não identifica
+conteúdo.
+
+**O bundle embute as dependências compartilhadas — e elas divergem do `main`.** Medido em
+01/10/2026 no `sicoob-bridge`: o `_shared/validation.ts` embutido tem **seis** origens na allowlist
+de CORS (`zapp-web-v2.vercel.app`, `zappwebv2-juca1`, `zappwebv2-git-main-juca1`,
+`pronto-talk-suite.lovable.app`, `id-preview--1d419c34-…lovable.app` e `…lovableproject.com`),
+enquanto o `_shared/validation.ts` do `main` tem **uma** (`https://zapp-web-v2.vercel.app`). Ou
+seja: trazer um fonte daqui para a árvore de deploy **não reproduz** o que está no ar — o
+comportamento de CORS muda pela dependência compartilhada atual. Restaurar exige comparar também os
+`_shared` publicados.
 
 Os quatro arquivos foram conferidos **byte a byte** contra o `sourcesContent` do bundle publicado
 no momento deste PR: idênticos. A extensão `.ts.txt` é deliberada — `.ts` solto aqui seria
@@ -53,22 +70,43 @@ ficou vazio e as exceções de `verify_jwt` saíram do `config.toml`.
 
 ## Como reverificar a fidelidade do que está aqui
 
+O fonte **original** vive dentro do bundle publicado, no `sourcesContent` do source map embutido.
+**Não** use `supabase functions download` para conferir esta pasta: medido em 01/10/2026 no
+`sicoob-bridge`, ele extrai uma versão **transformada** do módulo (5872 bytes, com
+`Deno.serve(async (req)=>{` sem espaços) contra os 5589 bytes do original, e ainda **sobrescreve
+`supabase/functions/_shared/*`** com o que está publicado, deixando a árvore de deploy suja (o
+download roda em container e grava os arquivos como `root`).
+
+Medição de referência (01/10/2026): `sicoob-bridge/index.ts` = `246f8edb…`, que bate com o arquivo
+arquivado aqui; `_shared/validation.ts` publicado = `5b61ce7b…` contra `21cdf66a…` no `main` — a
+divergência de CORS descrita acima.
+
 ```bash
 TOK=$(cat ~/.supabase/access-token)
 curl -s -H "Authorization: Bearer $TOK" \
   "https://api.supabase.com/v1/projects/tnnnlkbymytvtqngbbqh/functions/<slug>/body" -o <slug>.body
 
-# extrai sourcesContent do source map embutido e compara com o arquivo do repo
-/usr/bin/python3 - <<'PY'
+# extrai TODOS os sourcesContent do(s) source map(s) embutidos e imprime o hash de cada um
+/usr/bin/python3 - <slug>.body <<'PY'
 import json, hashlib, sys
-slug = "<slug>"
-body = open(slug + ".body", "rb").read()
-dec = json.JSONDecoder()
-k = body.find(b'"sourcesContent"')
-arr, _ = dec.raw_decode(body[body.find(b"[", k):].decode("utf-8", "replace"))
-for src, content in zip(["index.ts"], arr):
-    h = hashlib.sha256(content.encode()).hexdigest()
-    print(slug, src, len(content), h)
+ANCORA = '"sourcesContent"'
+corpo = open(sys.argv[1], "rb").read().decode("utf-8", "replace")
+dec, idx, achados = json.JSONDecoder(), 0, []
+while True:
+    k = corpo.find(ANCORA, idx)
+    if k < 0:
+        break
+    idx = k + len(ANCORA)   # avanca SEMPRE: sem isso o laco relê o mesmo mapa e trava
+    inicio = corpo.rfind('{"version":3', max(0, k - 6000), k)
+    if inicio < 0:
+        continue
+    try:
+        mapa, _ = dec.raw_decode(corpo[inicio:])
+    except ValueError:
+        continue
+    for src, conteudo in zip(mapa.get("sources") or [], mapa.get("sourcesContent") or []):
+        if conteudo is not None:
+            print(src, len(conteudo), hashlib.sha256(conteudo.encode()).hexdigest())
 PY
 
 sha256sum docs/edge-functions-recovered/<slug>/index.ts.txt   # tem de bater
