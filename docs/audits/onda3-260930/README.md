@@ -21,7 +21,7 @@ achados com severidade, falsos positivos derrubados e o que **não** foi verific
 
 ## Validação do que está mergeado
 
-[`validacao-harnesses-origin-main.log`](validacao-harnesses-origin-main.log) — os três harnesses de
+[`validacao-harnesses-origin-main.txt`](validacao-harnesses-origin-main.txt) — os três harnesses de
 contrato rodados contra o `origin/main` do momento (`multiplix-rls` PASS, `team-reaction-membership`
 14 passes, `team-chat-rpc-ambiguity` 17 passes, todos `EXIT=0`): o conjunto de migrations do repo
 reproduz o estado seguro.
