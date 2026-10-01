@@ -126,7 +126,7 @@ mesmos arquivos (`talkxShared.tsx` é o ponto de colisão — quem mexer nele ab
 ### V15 · Contadores íntegros: `replied_count` protegido, `use_count` único (P2-7, P2-4)
 **Fazer:** migration adiciona `replied_count` ao guard de `enforce_talkx_campaign_mutability`; remover chamadas de `increment_talkx_template_use` do front (`useCampaignEditor.ts:572`, `useTalkXTemplates.ts:151`) — o trigger E86 basta; `DROP FUNCTION increment_talkx_template_use` + `REVOKE`.
 **Aceite:** update direto de `replied_count` como authenticated → erro; lançar campanha com template incrementa `use_count` exatamente 1.
-**✅ FEITO 2026-10-01:** migration `20260930660000_talkx_v15_replied_count_guard_and_drop_increment.sql` (guard `replied_count` 42501 + DROP `increment_talkx_template_use`); front sem `registerUse` (`useCampaignEditor.ts`/`useTalkXTemplates.ts`); harness `scripts/db-audit/talkx-v15-replied-count-guard.test.sh` verde (red-first).
+**✅ FEITO 2026-10-01:** migration `20260930750000_talkx_v15_replied_count_guard_and_drop_increment.sql` (guard `replied_count` 42501 + DROP `increment_talkx_template_use`); front sem `registerUse` (`useCampaignEditor.ts`/`useTalkXTemplates.ts`); harness `scripts/db-audit/talkx-v15-replied-count-guard.test.sh` verde (red-first).
 
 ### V16 · Séries temporais contam `sent` + `delivered` (P2-5)
 **Fazer:** `talkx_campaign_report` CTE `hourly` e `TalkXAnalytics.tsx:96` usam `status in ('sent','delivered')` (ou `sent_at is not null`); série diária fixa em 7 dias em `talkx_overview_stats`; `contacts_reached` = `count(distinct contact_id)`.
