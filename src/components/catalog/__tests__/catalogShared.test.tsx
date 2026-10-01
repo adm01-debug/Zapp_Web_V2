@@ -410,6 +410,22 @@ describe('AdvancedFilterChips (E36 — cor/material)', () => {
     expect(screen.getByText('Material: Metal')).toBeInTheDocument();
   });
 
+  it('CT-22: o chip de "Mais pedidos" (isBestseller) continua renderizando e removendo o filtro', () => {
+    // A opção de ORDENAR por mais pedidos e o switch de destaque foram
+    // removidos (o PromoGifts ainda não expõe order_count). O chip segue
+    // existindo DE PROPÓSITO, para o usuário conseguir LIMPAR um filtro
+    // antigo persistido — este teste garante que ele não foi removido junto.
+    const onChange = vi.fn();
+    render(
+      <AdvancedFilterChips
+        filters={{ ...base, isBestseller: true }}
+        onChange={onChange}
+      />
+    );
+    fireEvent.click(screen.getByText('Mais pedidos'));
+    expect(onChange).toHaveBeenCalledWith({ ...base, isBestseller: false });
+  });
+
   it('remover o chip de uma cor tira só ela, preservando as demais cores e outros filtros', () => {
     const onChange = vi.fn();
     render(

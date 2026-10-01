@@ -60,6 +60,12 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 - [ ] **CT-03** — PromoGifts: `REVOKE EXECUTE ON FUNCTION zapp_catalog_stats() FROM authenticated` (só service key,
   como o plano E24.2 pedia) — via `apply_migration` do MCP GESTÃO DE PRODUTOS. **Aceite:** `proacl` sem `authenticated`;
   edge continua respondendo `catalog_stats`.
+  **🚫 DECISÃO DO JOAQUIM (01/10/2026, via Claude): NÃO EXECUTAR — DDL em banco externo é proibida (`CLAUDE.md` §1).**
+  Vira **pendência do responsável pelo PromoGifts**: aplicar esse `REVOKE` **dentro do PromoGifts** (a RPC deve ficar
+  acessível só pela service key). Do nosso lado não há trabalho: a edge `promogifts-catalog` chama a RPC com a
+  **service key** (`Deno.env.get("PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY")`), que é o único caminho exercitado em produção.
+  **Aceite quando o PromoGifts entregar:** `proacl` de `zapp_catalog_stats()` sem `authenticated` e a edge seguindo
+  respondendo `catalog_stats` normalmente.
 - [ ] **CT-04** — `useSendProduct.ts`: caption na 1ª imagem (`content = mensagem`, `messageType: 'image'`), demais
   imagens sem caption, texto separado **só** quando não há foto. Confirmar que `sendOutboundMessage`/`message-delivery`
   propagam caption (coluna `messages.caption` existe — ler `message-delivery/index.ts` antes). **Aceite:** teste unitário
@@ -124,6 +130,23 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 - [ ] **CT-22** — "Ordenar por": ocultar "Mais pedidos" enquanto `order_count` = 0 em todos (flag vinda do
   `catalog_stats`: adicionar `has_order_data boolean` à RPC `zapp_catalog_stats()` — migration aditiva no PromoGifts —
   e à ação `catalog_stats`). **Aceite:** opção some em produção; volta sozinha quando houver dado.
+  **🟡 FRONT FEITO E PROVADO (01/10/2026); a metade do PromoGifts fica como pendência do responsável pelo PromoGifts.**
+  **Nosso lado (feito):** a opção **some em produção** — por decisão do Joaquim (via Claude, 01/10/2026) de **não** fazer
+  DDL no banco externo. Foram removidos os **dois pontos que permitiam ativar** o filtro: a entrada
+  `{ label: 'Mais pedidos', order_by: 'order_count', ascending: false }` de `SORT_OPTIONS`
+  (`ExternalProductManagement.tsx:~286`, um sort antigo salvo em `sessionStorage` cai no fallback `?? SORT_OPTIONS[0]`) e a
+  seção "Destaques" com o `Switch` `id="adv-bestseller"` (`CatalogAdvancedFilters.tsx:80`, junto com o import órfão
+  `TrendingUp`). O **chip** de `isBestseller` (`catalogShared.tsx:726`) foi **mantido de propósito**, para o usuário ainda
+  conseguir **limpar** um filtro antigo — mas não há como reativá-lo. A razão está comentada no código, apontando para
+  esta pendência e para o `CLAUDE.md` §1.
+  **Prova por teste COM MUTAÇÃO** (o repo exige prova, não relato): reintroduzir a entrada de ordenação derruba o teste
+  de ordenação; reintroduzir o switch derruba o de filtro — ambos revertidos com **sha256 byte-idêntico** ao estado
+  correto. **3 testes novos** (ordenação ausente, switch ausente, chip funcionando); **118 testes** do módulo passando;
+  `eslint` 0; `typecheck` 0; `lint-ratchet novas: 0`.
+  **Pendência do responsável pelo PromoGifts (para o aceite completo):** acrescentar `has_order_data boolean` à RPC
+  `zapp_catalog_stats()` (migration aditiva **no PromoGifts**) e à ação `catalog_stats`. Só com a flag a opção pode
+  "voltar sozinha quando houver dado" — hoje ela está oculta de forma incondicional, que é o máximo possível sem DDL
+  externa. Quando a flag existir, reexibir são 2 linhas (os comentários no código marcam exatamente onde).
 - [ ] **CT-23** — Rail alertas: `AlertCard warning` "PromoGifts sem sincronizar há N dias" quando `last_sync_at` >
   3 dias (hoje 24), `AlertCard info` "N produtos com estoque baixo" (clicável → filtro), ocultáveis por sessão.
   **Aceite:** com os dados de hoje, o alerta de sync aparece.

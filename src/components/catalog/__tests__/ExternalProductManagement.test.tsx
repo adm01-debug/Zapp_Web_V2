@@ -467,6 +467,27 @@ describe('ExternalProductManagement', () => {
       expect(screen.getByRole('option', { name: 'Spot' })).toBeInTheDocument();
     });
   });
+
+  describe('CT-22: opção de ordenação "Mais pedidos" removida', () => {
+    it('o menu de ordenação não oferece "Mais pedidos" (PromoGifts ainda não expõe order_count)', () => {
+      renderManagement();
+      // O gatilho é um DropdownMenu (Radix): abre com ArrowDown no trigger,
+      // as opções viram menuitemradio (mesmo padrão dos testes de Select acima).
+      const trigger = screen.getByRole('button', { name: /^Ordenar:/ });
+      fireEvent.keyDown(trigger, { key: 'ArrowDown' });
+
+      const labels = screen
+        .getAllByRole('menuitemradio')
+        .map((o) => (o.textContent ?? '').trim());
+
+      expect(labels.some((l) => /mais pedidos/i.test(l))).toBe(false);
+      expect(labels).not.toContain('Mais pedidos');
+      // A remoção foi cirúrgica: as demais opções continuam disponíveis.
+      expect(labels).toContain('Nome A–Z');
+      expect(labels).toContain('Maior estoque');
+      expect(labels).toContain('Mais recentes');
+    });
+  });
 });
 
 describe('ExternalProductManagement — CT-70 (prefers-reduced-motion)', () => {
