@@ -5,7 +5,7 @@ import { normalizeSentiment, normalizeUrgency, urgencyToOperationalPriority } fr
 import { normalizeScore } from "../_shared/ai-values.ts";
 import { ConversationSummaryOutput, buildAiEnvelope, parseModelOutput } from "../_shared/ai-response-contracts.ts";
 import { parseJsonObject } from "../_shared/ai-json.ts";
-import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
+import { extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { CHURN_RISK_TOOL_SCHEMA, CONVERSATION_STATUS_TOOL_SCHEMA, KEY_POINTS_TOOL_SCHEMA, NEXT_STEPS_TOOL_SCHEMA, SENTIMENT_TOOL_SCHEMA, type ConversationToolDefinition, applyVocabularyConversion, buildConversationModelBody, buildConversationText, collectValueIssues, contractRejectionEvidence, conversationRunEnvelope, loadContactPromptContext, noModelPayloadResponse, persistenceFailureEnvelope, requestConversationModelJson, resolveVisibleContactId, summarizeContractIssues } from "../_shared/ai-conversation-pipeline.ts";
 
@@ -31,7 +31,6 @@ Deno.serve(async (req) => {
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { messages, contactName, contactId, periodDays } = parsed.data;
-    const LOVABLE_API_KEY = requireEnv("LOVABLE_API_KEY");
     const supabase = createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
 
     // Visibilidade do contato (IA-004): este client é service_role (bypassa RLS).
@@ -111,8 +110,8 @@ Foque em:
 
     const { failure, rawOutput } = await requestConversationModelJson({
       functionName: 'ai-conversation-summary',
+      purpose: 'summary',
       userId,
-      apiKey: LOVABLE_API_KEY,
       body: buildConversationModelBody({ systemPrompt, contactName, conversationText, tool: conversationTool }),
       log,
       req,
