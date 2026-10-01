@@ -214,6 +214,13 @@ jobs:
   assert.deepEqual(findPushSecretLeaks(workflow, 'workflow.yml'), []);
 });
 
+test('findPushSecretLeaks: secrets inherit em forma quoted (aspas duplas/simples) → violação', () => {
+  const workflowDouble = `on:\n  push:\njobs:\n  call:\n    uses: org/repo/.github/workflows/callable.yml@main\n    secrets: "inherit"\n`;
+  const workflowSingle = `on:\n  push:\njobs:\n  call:\n    uses: org/repo/.github/workflows/callable.yml@main\n    secrets: 'inherit'\n`;
+  assert.equal(findPushSecretLeaks(workflowDouble, 'w.yml').length, 1);
+  assert.equal(findPushSecretLeaks(workflowSingle, 'w.yml').length, 1);
+});
+
 // --- dedup: pull_request + push irrestrito no mesmo workflow ---
 
 test('scanWorkflowDirectory nao duplica violations quando workflow tem pull_request e push', () => {

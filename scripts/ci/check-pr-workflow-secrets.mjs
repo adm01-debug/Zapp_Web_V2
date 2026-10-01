@@ -123,7 +123,7 @@ function _findSecretRefs(source, file) {
 }
 
 function _findInheritLeaks(source, file) {
-  const inheritMatch = /^(\s+)secrets:\s*inherit\b/mu.exec(source);
+  const inheritMatch = /^(\s+)secrets:\s*(?:"inherit"|'inherit'|inherit)\b/mu.exec(source);
   if (!inheritMatch) return [];
   const lineNumber = source.slice(0, inheritMatch.index).split(/\r?\n/u).length;
   return [{ file, line: lineNumber, secret: 'secrets:inherit (reusable workflow call)' }];
