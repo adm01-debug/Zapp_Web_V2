@@ -114,7 +114,7 @@ telemetria não encontra coluna dedicada. A correlação ponta a ponta da IA-051
 | Provedor ligado/desligado | `public.ai_providers.is_active` / `is_default` / `use_for[]` (`supabase/migrations/20260408194438_1ad57139-c089-4711-86e1-71d8f461e02d.sql:12-31`), com trigger `ensure_single_default_ai_provider` | **SIM**, se a função checar antes de chamar — este é o kill switch por provedor que a IA-039 pode usar |
 | Fluxo de bot ligado/desligado | `public.chatbot_flows.is_active` (`20260315151618:45`) | **SIM**, se a seleção validar — e a IA-104 aponta que a seleção é global |
 | Kill switch de endpoint | `public-api` respondendo `410` + comentário em `supabase/config.toml:23-27` | SIM, para um endpoint |
-| `verify_jwt` por função | `supabase/config.toml:8-57`; resumo em `supabase/deployment-manifest.json` (`function_count: 69`, `verify_jwt_true: 59`, `verify_jwt_false: 10`) | SIM, mas exige deploy manual |
+| `verify_jwt` por função | `supabase/config.toml:8-57`; resumo em `supabase/deployment-manifest.json` (`function_count: 69`, `verify_jwt_true: 59`, `verify_jwt_false: 10`) | SIM, mas exige deploy (que é automático no merge na `main`) |
 
 ### 1.5 Autenticação/CORS/validação reutilizável (`supabase/functions/_shared/`)
 

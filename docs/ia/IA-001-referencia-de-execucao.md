@@ -55,7 +55,7 @@ Ou seja: **os 10 achados do plano seguem de pé no HEAD atual** e valem no códi
 |---|---|
 | 3 migrations novas de contatos (`20260929770000_contacts_can_edit_contact_helper.sql`, `20260929780000_contacts_single_permission_predicate.sql`, `20260929790000_contacts_hijack_guards_only_on_change.sql`) | mexem no predicado de permissão de contatos — base da **IA-004** (matriz de autorização) e da **IA-015** (leitura ≠ alteração). A matriz foi levantada no HEAD, não no commit do plano. |
 | `supabase/functions/{talkx-scheduler,talkx-send}/index.ts` e `_shared/talkx-resume-policy.ts` (+ teste) | primeira extração de política para `_shared` — referência de desenho para **IA-031/IA-032** (camada única) e **IA-048** (estado/retomada). |
-| `.github/workflows/ci.yml` e `deploy-functions.yml` | mudam gates e o caminho de deploy de Edge Function (que continua **manual**, com aprovação humana no environment `producao-edge-functions`) — condição de **IA-105** e do Bloco 20. |
+| `.github/workflows/ci.yml` e `deploy-functions.yml` | mudam gates e o caminho de deploy de Edge Function (que é **automático no merge na `main`** — o environment `producao-edge-functions` tem só branch policy, sem aprovação humana) — condição de **IA-105** e do Bloco 20. |
 | `supabase/deployment-manifest.json` | `function_count` **67 → 67**, `source_file_count` 94 → 95, `verify_jwt_true` **57 → 57**, `verify_jwt_false` **10 → 10**. O manifesto é a prova do estado de autenticação de cada função (ele lista nome, entrypoint e `verify_jwt` por função) e é regenerado pelo próprio pipeline. |
 
 > **Armadilha medida aqui (vale para os próximos blocos):** a cópia de referência `~/projetos/Zapp_Web_V2`

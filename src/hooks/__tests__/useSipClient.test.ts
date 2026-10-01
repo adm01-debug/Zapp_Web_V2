@@ -19,6 +19,11 @@ type StateListener = (state: string) => void;
 const mockStateChangeListeners: StateListener[] = [];
 const mockRegisterStateListeners: StateListener[] = [];
 let lastOnInvite: ((invitation: unknown) => void) | undefined;
+// T15: o teste prova que host/usuário/porta PROVISIONADOS chegam ao SIP —
+// não só que `connect` foi chamado. `makeURI` recebe `sip:user@server` e o
+// construtor do UserAgent recebe `wss://server:porta/ws`.
+const mockMakeURI = vi.fn((uri: string) => uri);
+let lastUserAgentOptions: { transportOptions?: { server?: string } } | undefined;
 
 const mockSessionDescriptionHandler = {
   peerConnection: {
@@ -38,6 +43,7 @@ vi.mock('sip.js', () => {
     SessionState,
     UserAgent: class {
       static makeURI(uri: string) {
+        mockMakeURI(uri);
         if (uri.includes('invalid')) return null;
         return { host: 'test.server.com' };
       }
@@ -45,7 +51,8 @@ vi.mock('sip.js', () => {
       transport: { onDisconnect: (() => void) | null } = { onDisconnect: null };
       start = vi.fn().mockResolvedValue(undefined);
       stop = vi.fn().mockResolvedValue(undefined);
-      constructor(options: { delegate?: { onInvite?: (invitation: unknown) => void } }) {
+      constructor(options: { delegate?: { onInvite?: (invitation: unknown) => void }; transportOptions?: { server?: string } }) {
+        lastUserAgentOptions = options;
         lastOnInvite = options.delegate?.onInvite;
       }
     },
@@ -104,7 +111,10 @@ function makeQueryBuilder(result: { data: unknown; error: unknown } = { data: []
 }
 
 const { mockFunctionsInvoke } = vi.hoisted(() => ({
-  mockFunctionsInvoke: vi.fn().mockResolvedValue({ data: { password: 'test-pass' }, error: null }),
+  mockFunctionsInvoke: vi.fn().mockResolvedValue({
+    data: { server: 'sip.test.com', user: 'phone1', wsPort: 8089, password: 'test-pass', profileId: 'prof-1' },
+    error: null,
+  }),
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -243,13 +253,30 @@ describe('useSipClient', () => {
 
   // === CREDENTIAL FETCH (connectWithStoredCredentials) ===
 
-  it('happy path: fetches the SIP password and connects when invoke succeeds', async () => {
-    mockFunctionsInvoke.mockResolvedValueOnce({ data: { password: 'secret123' }, error: null });
+  it('happy path: usa o provisionamento da função (host/usuário/porta vêm do servidor)', async () => {
+    mockFunctionsInvoke.mockResolvedValueOnce({
+      data: { server: 'sip.prov.com', user: 'phone9', wsPort: 5066, password: 'secret123', profileId: 'p1' },
+      error: null,
+    });
     const { result } = renderHook(() => useSipClient());
     await act(async () => {
       await result.current.connectWithStoredCredentials();
     });
     expect(result.current.sipStatus).toBe('connecting');
+    // T15: prova que os valores PROVISIONADOS chegam ao SIP — não só que conectou.
+    expect(mockMakeURI).toHaveBeenCalledWith('sip:phone9@sip.prov.com');
+    expect(lastUserAgentOptions?.transportOptions?.server).toBe('wss://sip.prov.com:5066/ws');
+  });
+
+  it('T15: função antiga (sem host/porta) avisa em vez de conectar com valor velho', async () => {
+    mockFunctionsInvoke.mockResolvedValueOnce({ data: { password: 'secret123', profileId: 'p1' }, error: null });
+    const { result } = renderHook(() => useSipClient());
+    await act(async () => {
+      await result.current.connectWithStoredCredentials();
+    });
+    expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('desatualizada'));
+    expect(result.current.sipStatus).toBe('disconnected');
+    expect(mockMakeURI).not.toHaveBeenCalled();
   });
 
   it('shows SIP_PASSWORD config toast when invoke returns 503', async () => {

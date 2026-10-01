@@ -15,10 +15,6 @@ export type CallStatus = EngineStatus;
 export type CallDirection = AdapterDirection;
 
 const log = getLogger('SipClient');
-// Removidos no T15 (provisionamento por Edge): por ora são o default do servidor.
-const SIP_SERVER = 'ip.b24-9441-1552764901.bitrixphone.com';
-const SIP_USER = 'phone1';
-const SIP_WS_PORT = 8089;
 
 /**
  * T09: estado espelhado do motor, cronômetro, toast e conexão. T11: o banco é
@@ -98,15 +94,19 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
   const connectWithStoredCredentials = useCallback(async () => {
     const { data, error } = await supabase.functions.invoke('get-sip-password');
     const password = data?.password;
-    if (error || !password) {
+    // T15: host/usuário/porta vêm do servidor — o front não conhece mais a linha.
+    const { server, user, wsPort } = data ?? {};
+    if (error || !password || !server || !user || !wsPort) {
       // FunctionsHttpError.context pode ser Response (status) ou corpo já
       // parseado (code), dependendo da versão do supabase-js.
       const ctx = (error as { context?: { status?: number; code?: string } } | null)?.context;
-      const isMissingSecret = error ? ctx?.status === 503 || ctx?.code === 'SIP_NOT_CONFIGURED' : true;
-      toast.error(isMissingSecret ? 'Senha SIP não configurada. Adicione o segredo SIP_PASSWORD no Supabase.' : 'Erro ao conectar ao servidor SIP. Verifique sua sessão e tente novamente.');
+      const isMissingSecret = error ? ctx?.status === 503 || ctx?.code === 'SIP_NOT_CONFIGURED' : !password;
+      // Sem erro e sem os campos = função ainda antiga (janela entre o deploy do
+      // front, imediato, e o da Edge): avisa em vez de conectar com valor velho.
+      toast.error(isMissingSecret ? 'Senha SIP não configurada. Adicione o segredo SIP_PASSWORD no Supabase.' : error ? 'Erro ao conectar ao servidor SIP. Verifique sua sessão e tente novamente.' : 'Provisionamento SIP indisponível (função desatualizada). Tente novamente após a publicação.');
       return;
     }
-    await connect({ server: SIP_SERVER, user: SIP_USER, password, wsPort: SIP_WS_PORT });
+    await connect({ server, user, password, wsPort });
   }, [connect]);
 
   useEffect(() => () => { stopTimer(); engine.dispose(); }, [stopTimer, engine]);

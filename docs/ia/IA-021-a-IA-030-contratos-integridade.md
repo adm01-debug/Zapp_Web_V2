@@ -154,7 +154,7 @@ intacto (sha256 conferido antes e depois).
 - **Não há prova de runtime das funções em produção**: as 4 funções tocadas (`ai-conversation-analysis`,
   `ai-conversation-summary`, `ai-auto-tag`, `chatbot-l1`) só passam a rodar o código novo depois do
   deploy que o merge dispara. Até lá, a prova é de contrato (testes + `deno check`) e de banco (RPCs).
-- O deploy de Edge Functions do repo é manual e pausa aguardando aprovação humana.
+- O deploy de Edge Functions do repo é automático no merge na `main` (o environment `producao-edge-functions` tem só branch policy: nenhum card de aprovação humana aparece).
 - **O ensaio do IA-030 não é o banco de produção**: o container reproduz o estado a partir da
   especificação (roles, 3 tabelas, atributos usados), sem RLS/policies/FKs e sem executar o **corpo** das
   duas RPCs (nelas foi provada a ACL, não o comportamento funcional — esse já foi medido no banco canônico

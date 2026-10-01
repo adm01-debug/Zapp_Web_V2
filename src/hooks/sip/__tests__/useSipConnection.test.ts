@@ -1,8 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
+import { toast } from 'sonner';
 
 type StateListener = (state: string) => void;
 const mockRegisterStateListeners: StateListener[] = [];
+// T15: as opções passadas ao `register` (para exercitar o `onReject` do 403).
+type RegisterOptions = { requestDelegate?: { onReject?: (response: { message: { statusCode: number } }) => void } };
+const mockRegisterCalls: Array<RegisterOptions | undefined> = [];
 const mockUaInstances: Array<{ start: ReturnType<typeof vi.fn>; stop: ReturnType<typeof vi.fn>; transport: { onDisconnect: (() => void) | null } }> = [];
 let lastDelegate: { onInvite?: (invitation: unknown) => void } | undefined;
 
@@ -26,7 +30,7 @@ vi.mock('sip.js', () => {
       stateChange = {
         addListener: (fn: StateListener) => { mockRegisterStateListeners.push(fn); },
       };
-      register = vi.fn().mockResolvedValue(undefined);
+      register = vi.fn((options?: RegisterOptions) => { mockRegisterCalls.push(options); return Promise.resolve(undefined); });
       unregister = vi.fn().mockResolvedValue(undefined);
     },
   };
@@ -42,6 +46,7 @@ describe('useSipConnection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockRegisterStateListeners.length = 0;
+    mockRegisterCalls.length = 0;
     mockUaInstances.length = 0;
     lastDelegate = undefined;
   });
@@ -59,6 +64,31 @@ describe('useSipConnection', () => {
     expect(lastDelegate?.onInvite).toBeInstanceOf(Function);
     lastDelegate?.onInvite?.({ fake: 'invitation' });
     expect(onIncomingInvitation).toHaveBeenCalledWith({ fake: 'invitation' });
+  });
+
+  it('T15: 403 no REGISTER vira "linha em uso por outro usuário" (não erro genérico)', async () => {
+    const { result } = renderHook(() => useSipConnection());
+    await act(async () => {
+      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+    const onReject = mockRegisterCalls[0]?.requestDelegate?.onReject;
+    expect(onReject).toBeInstanceOf(Function);
+    await act(async () => { onReject?.({ message: { statusCode: 403 } }); });
+    expect(result.current.sipStatus).toBe('error');
+    expect(result.current.sipReason).toBe('line_in_use_other_user');
+    expect(toast.error).toHaveBeenCalledWith('Linha em uso por outro usuário');
+  });
+
+  it('T15: resposta que não é 403 não vira "linha em uso"', async () => {
+    const { result } = renderHook(() => useSipConnection());
+    await act(async () => {
+      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+    await act(async () => {
+      mockRegisterCalls[0]?.requestDelegate?.onReject?.({ message: { statusCode: 500 } });
+    });
+    expect(result.current.sipReason).toBeNull();
+    expect(toast.error).not.toHaveBeenCalledWith('Linha em uso por outro usuário');
   });
 
   it('does not attempt to reconnect after an intentional disconnect', async () => {

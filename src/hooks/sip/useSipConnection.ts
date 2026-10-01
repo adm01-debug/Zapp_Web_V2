@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { getLogger } from '@/lib/logger';
 import type { UserAgent, Registerer, Invitation } from 'sip.js';
 import { toast } from 'sonner';
+import { REASON_LABEL, type CapabilityReason } from '@/lib/calls/capabilities';
 
 const log = getLogger('SipConnection');
 
@@ -16,6 +17,8 @@ interface SipConfig {
 
 export function useSipConnection(onIncomingInvitation?: (invitation: Invitation) => void) {
   const [sipStatus, setSipStatus] = useState<SipStatus>('disconnected');
+  // T15: motivo operacional do estado (ex.: linha em uso por outro usuário).
+  const [sipReason, setSipReason] = useState<CapabilityReason | null>(null);
   const uaRef = useRef<UserAgent | null>(null);
   const registererRef = useRef<Registerer | null>(null);
   const reconnectAttemptsRef = useRef(0);
@@ -76,10 +79,22 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
       await ua.start();
       const registerer = new Registerer(ua);
       registerer.stateChange.addListener((state) => {
-        if (state === 'Registered') { setSipStatus('registered'); reconnectAttemptsRef.current = 0; toast.success('VoIP conectado!'); }
+        if (state === 'Registered') { setSipStatus('registered'); setSipReason(null); reconnectAttemptsRef.current = 0; toast.success('VoIP conectado!'); }
         else if (state === 'Unregistered' || state === 'Terminated') setSipStatus('disconnected');
       });
-      await registerer.register();
+      await registerer.register({
+        requestDelegate: {
+          // T15: 403 no REGISTER = a credencial está certa, mas a linha já está
+          // atendendo em outro dispositivo (o servidor limita um ramal por vez).
+          // Sem isso o agente via "Erro ao conectar VoIP" e não entendia nada.
+          onReject: (response) => {
+            if (response.message.statusCode !== 403) return;
+            setSipStatus('error');
+            setSipReason('line_in_use_other_user');
+            toast.error(REASON_LABEL.line_in_use_other_user);
+          },
+        },
+      });
       uaRef.current = ua;
       registererRef.current = registerer;
     } catch (err: unknown) {
@@ -100,5 +115,5 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
     } catch (err) { log.error('SIP disconnect error:', err); }
   }, [clearReconnectTimer]);
 
-  return { sipStatus, uaRef, connect, disconnect };
+  return { sipStatus, sipReason, uaRef, connect, disconnect };
 }
