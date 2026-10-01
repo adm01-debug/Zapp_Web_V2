@@ -12,6 +12,18 @@ import { cn } from '@/lib/utils';
 import { getLogger } from '@/lib/logger';
 const log = getLogger('IncomingCallAlert');
 
+/**
+ * ÂNCORA (não unificar): o toque da chamada entrante é um **alerta**, não mídia de
+ * conversa. Sai por WebAudio (oscilador → gain → `ctx.destination`) com o ganho vindo de
+ * `settings.soundVolume` — o mesmo caminho de `utils/notificationSound*.ts` — e o
+ * `AudioContext` aqui é uma instância PRÓPRIA.
+ *
+ * O controle de volume das mídias (`mediaVolumeStore` / `lib/mediaVolumeElement.ts`)
+ * nunca deve ser plugado neste componente: quem abaixa o áudio do cliente não pode, sem
+ * querer, silenciar a chamada que está entrando. A separação é garantida por teste em
+ * `src/components/inbox/__tests__/MediaVolume.test.tsx` (E38–E41).
+ */
+
 export const IncomingCallAlert = forwardRef<HTMLDivElement>(
   function IncomingCallAlert(_props, ref) {
   const { incomingCall, dismissCall } = useIncomingCallListener();

@@ -29,6 +29,9 @@ export function AIGenerateDialog({ open, onOpenChange, onSaved }: { open: boolea
       const audioUrl = `data:audio/mpeg;base64,${data.audioContent}`;
       setGenPreviewUrl(audioUrl);
       audioRef.current?.pause();
+      // E37 — isenta do controle de volume de mídia (`mediaVolumeStore`): a prévia roda
+      // na geração de SFX da BIBLIOTECA do admin (gestão de arquivo, fora do escopo do
+      // plano), não na conversa do atendente.
       const audio = new Audio(audioUrl); audio.play().catch(() => {}); audioRef.current = audio;
     } catch (err: unknown) { toast.error(err instanceof Error ? err.message : 'Erro ao gerar áudio'); } finally { setGenerating(false); }
   };
