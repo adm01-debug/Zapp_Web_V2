@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
-import { SlidersHorizontal, TrendingUp } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
 import {
   countAdvancedFilters,
   DEFAULT_ADVANCED_FILTERS,
@@ -77,22 +77,13 @@ export function CatalogAdvancedFilters({ open, onOpenChange, filters, onApply, o
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
-          <section>
-            <h3 className="text-sm font-semibold mb-3 text-foreground">Destaques</h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="adv-bestseller" className="flex items-center gap-2 cursor-pointer text-sm">
-                  <TrendingUp className="w-3.5 h-3.5 text-orange-500" />
-                  Mais pedidos
-                </Label>
-                <Switch
-                  id="adv-bestseller"
-                  checked={local.isBestseller}
-                  onCheckedChange={(v) => setLocal((p) => ({ ...p, isBestseller: v }))}
-                />
-              </div>
-            </div>
-          </section>
+          {/* CT-22 — o destaque "Mais pedidos" (filtro `isBestseller`) fica OCULTO de
+              propósito: o PromoGifts ainda não expõe dado de pedido (falta
+              `has_order_data` na RPC zapp_catalog_stats). É pendência do responsável
+              pelo PromoGifts, registrada no plano; não se faz DDL no banco externo
+              (CLAUDE.md §1). O chip correspondente em `catalogShared.tsx` segue
+              renderizando para o usuário conseguir LIMPAR um filtro antigo, mas não há
+              como ativá-lo por aqui. */}
 
           <section>
             <h3 className="text-sm font-semibold mb-3 text-foreground">Faixa de preço</h3>

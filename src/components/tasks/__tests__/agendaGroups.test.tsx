@@ -7,6 +7,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, within, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { TasksAgendaMode } from '@/components/tasks/agenda/TasksAgendaMode';
 import type { WorkItem } from '@/hooks/tasks/workItem.types';
@@ -47,7 +48,15 @@ function renderAgenda(items: WorkItem[], overdue: WorkItem[] = [], onCreate = vi
     items, overdue, isLoading: false, onCreate,
     onOpen: vi.fn(), onToggleDone: vi.fn(), onMoveTo: vi.fn(), onDelete: vi.fn(),
   };
-  render(<TooltipProvider><TasksAgendaMode {...props} /></TooltipProvider>);
+  // O QuickAdd da Agenda monta o chip @ (ContactCombobox) do módulo, que usa
+  // react-query; a app fornece o QueryClient em AppProviders — o harness faz o
+  // mesmo (padrão do TasksModule.test).
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={qc}>
+      <TooltipProvider><TasksAgendaMode {...props} /></TooltipProvider>
+    </QueryClientProvider>
+  );
   return onCreate;
 }
 
@@ -58,8 +67,10 @@ describe('TasksAgendaMode — etapa 57 (QuickAdd no dia selecionado)', () => {
     const campo = screen.getByTestId('quick-add-input');
     fireEvent.change(campo, { target: { value: 'Comprar insumo' } });
 
-    // pré-preenchido: o chip do prazo já mostra o dia de hoje
-    expect(screen.getByTestId('quick-add-due').textContent).toContain(new Date().toLocaleDateString('pt-BR'));
+    // pré-preenchido: o chip Data já mostra o dia de hoje (etapa 37/57)
+    expect(screen.getByTestId('quick-add-chip-date').textContent).toContain(
+      new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+    );
 
     fireEvent.keyDown(campo, { key: 'Enter' });
 

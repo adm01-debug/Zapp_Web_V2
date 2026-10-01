@@ -306,8 +306,20 @@ function toSuggestion(feature: SuggestFeature): GeoSuggestion | null {
 }
 
 /**
+ * E45 · Lê o cache de `/suggest` de uma sessão **sem** abrir sessão nova e sem ir à rede.
+ * Devolve `undefined` quando não há entrada — cuidado: lista vazia (`[]`) é resposta cacheada
+ * legítima do E19, então quem chama testa `!== undefined`, e não a veracidade do array.
+ */
+export function getCachedSuggest(sessionToken: string, query: string): GeoSuggestion[] | undefined {
+  const term = query.trim();
+  if (!term) return undefined;
+  return suggestCache.get(suggestCacheKey(sessionToken, term));
+}
+
+/**
  * Autocomplete enquanto o operador digita. Nunca lança; string vazia/só espaço não vai à rede.
- * `opts.session` é obrigatório (billing por sessão) — quem chama pega de `getSearchSession()`.
+ * `opts.session` é obrigatório (billing por sessão) — quem chama pega de `getSearchSession()`,
+ * e só **depois** de conferir o cache com `getCachedSuggest` sobre `peekSearchSession()` (E45).
  */
 export async function suggestPlaces(
   query: string,

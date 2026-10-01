@@ -51,7 +51,7 @@ export function ContactViewSwitcher({
   const isSecondaryActive = SECONDARY_MODES.some(m => m.value === viewMode);
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" data-testid="view-switcher">
       {/* Segmented view mode toggles */}
       <LayoutGroup id="contacts-view">
         <div data-testid="view-switcher" className="h-11 rounded-xl border border-border bg-card p-1 flex items-center gap-1">

@@ -250,18 +250,20 @@ Referências curtas usadas abaixo: `H` = `src/components/inbox/location-picker/u
 
 > Defeitos C7, M9; fecha a Fase 6 antiga de verdade.
 
-### E35 · Flag própria para o cadastro
-**Arquivos:** migration `feature_flags` (aditiva), `CF`
-1. `insert into feature_flags (key, enabled, description) values ('mapa.searchbox-contact-form', true, 'Autocomplete de endereço no cadastro de contato')` — `true` porque já está ligado em produção (não regredir).
-2. `CF:91` → `enabled: !!mapboxToken && useFeatureFlag('mapa.searchbox-contact-form', false)`.
-3. Documentar as duas chaves em `ARQUITETURA_BUSCA.md`.
-**Checklist:** [ ] flag · [ ] consumo · [ ] doc
-
-### E36 · Token só quando o autocomplete está ligado
+### E35 · Sem flag própria: rollback é reverter código
+**Decisão:** `20261001-103207-6c0b` (opção b) — sem flag própria.
+A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`); recriar
+`mapa.searchbox-contact-form` reabriria a mesma superfície morta.
+**Arquivos:** `CF`
+1. Nenhuma chave nova em `feature_flags`: o cadastro de contato usa o autocomplete sempre que houver token.
+2. `getMapboxToken()` só é chamado quando o campo de endereço entra em **foco** (prova em E36/E81).
+3. Rollback = **reverter o código** (git revert do commit), não desligar chave.
+**Checklist:** [ ] sem flag no código · [ ] teste de foco
+### E36 · Token só com o campo de endereço em foco
 **Arquivos:** `CF:83-87`
-1. `getMapboxToken()` só se a flag estiver on (evita 1 invoke da edge por abertura de form com flag off).
-**Checklist:** [ ] sem invoke com flag off · [ ] teste
-
+1. `getMapboxToken()` só quando o campo de endereço está **em foco** — a abertura do form não invoca a edge à toa.
+2. Sem flag (decisão `20261001-103207-6c0b`): rollback é reverter código, não desligar chave.
+**Checklist:** [ ] 0 invoke com o campo fora de foco · [ ] teste
 ### E37 · `proximity` no cadastro
 **Arquivos:** `CF`
 1. Prioridade: coordenada já salva do contato (edição) → cidade/UF já digitadas (geocodificar 1× com `/forward`, cacheado por sessão) → São Paulo (`DEFAULT_PROXIMITY`).
@@ -506,10 +508,11 @@ Referências curtas usadas abaixo: `H` = `src/components/inbox/location-picker/u
 1. Simular 200 teclas em 5 s com fake timers → ≤ 17 requests (1 a cada 300 ms) e 1 sessão.
 **Checklist:** [ ] teste
 
-### E81 · Teste de que a flag off não chama a Mapbox
-1. Integração: flag off → `fetch` da Mapbox nunca chamado ao digitar; `get-mapbox-token` não invocado no `ContactForm` (E36).
+### E81 · Teste de que o autocomplete não chama a Mapbox sem uso
+**Sem flag** (decisão `20261001-103207-6c0b`): a contenção se prova por foco, não por chave.
+1. Integração: campo de endereço **fora de foco** → `fetch` da Mapbox nunca chamado e `get-mapbox-token` **não** invocado (E36).
+2. Com o campo em foco e digitando → 1 `get-mapbox-token` por sessão de busca, não mais que isso.
 **Checklist:** [ ] 2 casos
-
 ### E82 · PR da Fase 7
 1. Título: `test(mapa): integração com hook real, mutação reproduzível e E2E do picker/cadastro/mapa`.
 **Checklist:** [ ] PR · [ ] CI verde · [ ] `e2e-logado` verde
@@ -547,10 +550,11 @@ Referências curtas usadas abaixo: `H` = `src/components/inbox/location-picker/u
 2. Comando de reversão (`UPDATE feature_flags …`) para as 2 flags.
 **Checklist:** [ ] 4 cenários · [ ] reversão escrita
 
-### E89 · Teste real de reversão da flag
-1. Em horário de baixo uso: desligar `mapa.searchbox-autocomplete` por 10 min, confirmar no navegador que o picker volta ao input+Buscar e que `searchLocation` funciona (F2), religar. Registrar horário e resultado.
-**Checklist:** [ ] executado · [ ] registrado (nunca foi feito)
-
+### E89 · Reversão testada (sem flag, revert de código)
+Substitui o antigo "desligar a flag": sem chave (decisão `20261001-103207-6c0b`), a reversão é de código.
+1. Aplicar o `git revert` do commit do autocomplete em **preview** e conferir que o campo de endereço volta ao input+Buscar e que `searchLocation` funciona (F2).
+2. Registrar horário, ambiente e resultado — sem tocar produção.
+**Checklist:** [ ] executado em preview · [ ] registrado
 ### E90 · Restrição de URL do token público da Mapbox
 1. No painel da Mapbox, restringir o token servido por `get-mapbox-token` aos domínios de produção/preview da Vercel. Não é do repo — registrar como tarefa do Joaquim com o link da página de tokens e conferir depois com uma chamada de fora do domínio (deve dar 403).
 **Checklist:** [ ] restrito · [ ] 403 confirmado
@@ -563,10 +567,11 @@ Referências curtas usadas abaixo: `H` = `src/components/inbox/location-picker/u
 1. Confirmar que os contratos de E76/E77 rodam no guard vivo e que o `grants-baseline.json` inclui as RPCs novas.
 **Checklist:** [ ] 8 guards verdes com os contratos novos
 
-### E93 · Rollout gradual do cadastro (flag E35)
-1. Se a tabela `feature_flags` suportar escopo por usuário/fila, ligar primeiro para 2 operadores; senão, manter ligado para todos e acompanhar 48 h **reais** pela view.
+### E93 · Rollout do cadastro sem flag
+Sem flag (decisão `20261001-103207-6c0b`): não existe "ligar só para 2 operadores".
+1. Ligado para todos, acompanhar 48 h **reais** pela view `searchbox_usage_daily` (E52), com o teto de custo (E48) como freio.
+2. Registrar os números no doc ao fim das 48 h.
 **Checklist:** [ ] 48 h decorridas · [ ] números no doc
-
 ### E94 · Confirmação visual do envio de localização (E49 antigo, agora de verdade)
 1. Com F2/F3 em produção, um operador real (ou o Joaquim) envia 1 localização para um número de teste da empresa; conferir `location_sent` (E50) e o balão no WhatsApp; print no doc.
 **Checklist:** [ ] `location_sent` ≥ 1 · [ ] print
@@ -609,6 +614,12 @@ Referências curtas usadas abaixo: `H` = `src/components/inbox/location-picker/u
 | 3 | F4 → F5 | Flag do cadastro (custo majoritário) e telemetria que responde "é usado?" |
 | 4 | F7 | Impede regressão silenciosa antes de mexer em UX fina |
 | 5 | F6 → F8 | A11y/mobile e fechamento com evidência |
+
+## Registro de decisões
+
+| Decisão | Data | Etapas | O que ficou |
+| --- | --- | --- | --- |
+| `20261001-103207-6c0b` | 2026-10-01 | E35, E36, E81, E89, E93 | **(b) Sem flag.** A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`); não se recria chave. Rollback = reverter o código. A prova de contenção passa a ser: `get-mapbox-token` só é chamado com o campo de endereço em foco. |
 
 ## Apêndice — mapa defeito → etapa
 
