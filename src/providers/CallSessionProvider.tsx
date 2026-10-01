@@ -56,6 +56,17 @@ import {
 /** Rota da view de telefonia — o `ViewRouter` mapeia `voip` → `VoIPPanel`. */
 export const VOIP_VIEW_SEARCH = '?view=voip';
 
+/**
+ * T21 — TTL do toque de uma chamada de ENTRADA: quanto tempo ela toca antes de
+ * a MÁQUINA encerrar sozinha por `TIMEOUT` (`ringing_in` → `timeout`).
+ *
+ * Antes esse relógio era um `setTimeout(dismissCall, 30_000)` na UI
+ * (`IncomingCallAlert`): quem decidia o fim da chamada era a tela. Aqui a
+ * decisão volta para a máquina de sessão, que já sabe persistir e rotular o
+ * desfecho (`END_REASON_LABEL.timeout`).
+ */
+export const RING_TIMEOUT_MS = 30_000;
+
 export type CallSessionApi = ReturnType<typeof useSipClient> & {
   /** Estado da sessão (máquina de `session.ts`). */
   session: CallSessionState;
@@ -225,6 +236,32 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     estadoRef.current = session;
   }, [session]);
+
+  /**
+   * T21 — o TTL do toque vive na MÁQUINA, não na UI.
+   *
+   * Enquanto a sessão está em `ringing_in`, arma o relógio do toque; ao expirar,
+   * despacha `TIMEOUT`, que a máquina aceita só a partir de `ringing_in` e fecha
+   * a sessão em `ended`/`endReason: 'timeout'` (e o restante do ciclo persiste).
+   *
+   * Cancelamento: o cleanup roda quando o status deixa de ser `ringing_in`
+   * (atendeu, recusou, o remoto cancelou) **e** no unmount — nenhum timer vaza e
+   * nenhum dispatch acontece depois de o provider sumir. A guarda `estadoRef`
+   * dentro do callback é a segunda linha de defesa: mesmo que algo escapasse ao
+   * cleanup, o `TIMEOUT` NÃO é despachado fora de `ringing_in` (não dependemos
+   * da rejeição da máquina).
+   *
+   * Depender de `session.status` (e não de `session`) mantém o mesmo timer vivo
+   * por todo o toque: eventos do motor não o reiniciam.
+   */
+  useEffect(() => {
+    if (session.status !== 'ringing_in') return;
+    const timer = setTimeout(() => {
+      if (estadoRef.current.status !== 'ringing_in') return;
+      dispatch({ type: 'TIMEOUT' });
+    }, RING_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [session.status]);
 
   /**
    * T17 (D8): `true` enquanto o estado terminal veio do fim FRACO (o default do

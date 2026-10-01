@@ -33,7 +33,8 @@ vi.mock('@/hooks/communication/useSipClient', () => ({
   },
 }));
 
-const { CallSessionProvider, useCallSession, VOIP_VIEW_SEARCH } = await import('../CallSessionProvider');
+const { CallSessionProvider, useCallSession, VOIP_VIEW_SEARCH, RING_TIMEOUT_MS } =
+  await import('../CallSessionProvider');
 const { INVALID_TRANSITION_PREFIX } = await import('@/lib/calls/session');
 
 function sipDuble(overrides: Record<string, unknown> = {}) {
@@ -602,5 +603,88 @@ describe('CallSessionProvider (T10)', () => {
     expect(texto('answeredAt')).toBe(atendidaEm);
     expect(transicoesInvalidas(aviso)).toEqual([]);
     aviso.mockRestore();
+  });
+});
+
+/**
+ * T21 — o TTL do toque é decisão da MÁQUINA, não da UI.
+ *
+ * O relógio que encerra uma chamada de ENTRADA que ninguém atende tem de viver
+ * no provider e fechar a sessão por `TIMEOUT` (→ `ended`/`timeout`, e a
+ * persistência segue daí). Antes esse `setTimeout` estava na tela
+ * (`IncomingCallAlert`): a UI decidia o fim. Aqui ele é observável e cancelável:
+ *  - armado só em `ringing_in`;
+ *  - cancelado quando o status muda (aceitou/recusou/o remoto cancelou);
+ *  - cancelado no unmount (sem vazar timer).
+ */
+describe('T21 — o TIMEOUT do toque vive na máquina', () => {
+  /** Leva a sessão a `ringing_in` (entrada tocando), como o motor reporta. */
+  function entradaTocando(): ReturnType<typeof render> {
+    const tela = montar();
+    h.value = sipDuble({ callStatus: 'ringing', callDirection: 'inbound', currentNumber: '5511988887777' });
+    remontar(tela);
+    expect(texto('status')).toBe('ringing_in');
+    return tela;
+  }
+
+  it('chamada ENTRADA que ninguém atende encerra sozinha pelo TIMEOUT da máquina', () => {
+    vi.useFakeTimers();
+    try {
+      entradaTocando();
+      expect(texto('status')).toBe('ringing_in');
+
+      // O relógio do toque expira sem ninguém atender.
+      act(() => { vi.advanceTimersByTime(RING_TIMEOUT_MS); });
+
+      expect(texto('status')).toBe('ended');
+      expect(texto('endReason')).toBe('timeout');
+      expect(texto('endedBy')).toBe('timeout');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('atender antes do estouro cancela o timer', () => {
+    vi.useFakeTimers();
+    try {
+      const tela = entradaTocando();
+
+      // Atende: `ringing_in` → `connecting` → (motor `active`) → `active`.
+      fireEvent.click(screen.getByText('aceitar'));
+      h.value = sipDuble({ callStatus: 'active', callDirection: 'inbound', currentNumber: '5511988887777' });
+      remontar(tela);
+      expect(texto('status')).toBe('active');
+
+      // Relógio avança MUITO além do TTL: o timer já foi cancelado e nada expira.
+      act(() => { vi.advanceTimersByTime(RING_TIMEOUT_MS * 3); });
+
+      expect(texto('status')).toBe('active');
+      expect(texto('endReason')).not.toBe('timeout');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('desmontar o provider não deixa timer vazando', () => {
+    vi.useFakeTimers();
+    try {
+      const agendar = vi.spyOn(globalThis, 'setTimeout');
+      const limpar = vi.spyOn(globalThis, 'clearTimeout');
+      const tela = entradaTocando();
+
+      // O relógio do toque foi armado com o TTL esperado…
+      const indice = agendar.mock.calls.findIndex((chamada) => chamada[1] === RING_TIMEOUT_MS);
+      expect(indice).toBeGreaterThanOrEqual(0);
+      const idDoToque = agendar.mock.results[indice]?.value as number;
+
+      limpar.mockClear();
+      tela.unmount();
+
+      // …e o unmount cancela EXATAMENTE aquele timer.
+      expect(limpar).toHaveBeenCalledWith(idDoToque);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
