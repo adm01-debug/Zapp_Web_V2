@@ -20,7 +20,7 @@ on:
       - 'supabase/migrations/**'
       - 'supabase/config.toml'
       - 'supabase/schema-*.json'
-      - 'supabase/deployment-manifest.json'
+      - 'supabase/deployment-manifest.json' # rastrea funcoes deployadas; relevante ao contrato DB
       - 'scripts/db-audit/**'
       - 'src/integrations/supabase/types.ts'
       - '.github/workflows/db-live-guard.yml'
