@@ -96,17 +96,23 @@ export async function collectStableAttestation({
         const old = pre.get(name);
         if (!old) continue;
         const current = byName.get(name);
+        // E08: ID diferente = slot de deployment diferente, ainda nao refletido
         if (old.id !== current.id) {
           throw new Error('Selected deployment not yet observed');
         }
-        // E08 (run 36560547941, 2026-09-29): versao null no baseline (API retornou
-        // version <= 0 ou nao-inteiro) impedia toda tentativa de estabilizacao por
-        // 24 min. Sem baseline de versao verificavel, aceitar a funcao se o id bate.
-        if (old.version === null) continue;
-        const versionBumped = current.version !== null && current.version > old.version;
+        // E09 (run 36601680272, 2026-09-29): Supabase Management API pode nao
+        // incrementar `version` em deploys via CLI — usar updated_at como evidencia
+        // alternativa. `old.version === null` (API sem version rastreada no baseline)
+        // nao deve bloquear: separado de `old.id !== current.id` para evitar throw
+        // cego que esgotava os 144 attempts sem chance de passar por timestampBumped.
+        const versionBumped = old.version !== null && current.version !== null && current.version > old.version;
         const legitimatelyUnchanged = unchangedSet.has(name) && current.version === old.version
           && old.ezbr_sha256 !== null && current.ezbr_sha256 === old.ezbr_sha256;
-        if (!versionBumped && !legitimatelyUnchanged) {
+        // updated_at mais recente confirma que a Management API registrou o deploy
+        // mesmo quando version nao foi incrementada (comportamento observado em prod)
+        const timestampBumped = !unchangedSet.has(name) && old.updated_at !== null
+          && current.updated_at !== null && current.updated_at > old.updated_at;
+        if (!versionBumped && !legitimatelyUnchanged && !timestampBumped) {
           throw new Error('Selected deployment not yet observed');
         }
       }
