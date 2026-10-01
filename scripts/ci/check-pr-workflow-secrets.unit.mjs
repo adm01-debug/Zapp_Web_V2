@@ -24,7 +24,7 @@ jobs:
   trusted-only:
     if: github.event_name == 'push'
     env:
-      DATABASE_URL: \${{ secrets.DESTINO_URL }}
+      DATABASE_URL: ${'$'}{{ secrets.DESTINO_URL }}
 `;
 
   assert.deepEqual(findPullRequestSecretLeaks(workflow, 'db.yml'), [
@@ -36,8 +36,8 @@ test('permite somente valores Supabase explicitamente publicos', () => {
   const workflow = `on:
   pull_request:
 env:
-  URL: \${{ secrets.VITE_SUPABASE_URL }}
-  KEY: \${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+  URL: ${'$'}{{ secrets.VITE_SUPABASE_URL }}
+  KEY: ${'$'}{{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 `;
 
   assert.deepEqual(findPullRequestSecretLeaks(workflow), []);
@@ -47,12 +47,12 @@ test('rejeita acesso dinamico e ao contexto completo de secrets', () => {
   const dynamicWorkflow = `on:
   pull_request_target:
 env:
-  VALUE: \${{ secrets[env.SECRET_NAME] }}
+  VALUE: ${'$'}{{ secrets[env.SECRET_NAME] }}
 `;
   const wholeContextWorkflow = `on:
   pull_request:
 steps:
-  - run: echo \${{ toJSON(secrets) }}
+  - run: echo ${'$'}{{ toJSON(secrets) }}
 `;
 
   assert.equal(findPullRequestSecretLeaks(dynamicWorkflow)[0]?.secret, 'dynamic secrets[...] access');
@@ -111,7 +111,7 @@ test('hasPushTriggerUnrestricted: push restrito a branches: ["main"] — seguro'
   assert.equal(hasPushTriggerUnrestricted(workflow), false);
 });
 
-test('hasPushTriggerUnrestricted: push restrito a branches: [\'main\'] — seguro', () => {
+test("hasPushTriggerUnrestricted: push restrito a branches: ['main'] — seguro", () => {
   const workflow = "on:\n  push:\n    branches: ['main']\n";
   assert.equal(hasPushTriggerUnrestricted(workflow), false);
 });
@@ -137,7 +137,7 @@ test('findPushSecretLeaks: push irrestrito com secret — detecta', () => {
   const workflow = `on:
   push:
 env:
-  DB: \${{ secrets.DESTINO_URL }}
+  DB: ${'$'}{{ secrets.DESTINO_URL }}
 `;
   assert.deepEqual(findPushSecretLeaks(workflow, 'bad.yml'), [
     { file: 'bad.yml', line: 4, secret: 'DESTINO_URL' },
@@ -149,7 +149,7 @@ test('findPushSecretLeaks: push restrito a main com secret — nao detecta', () 
   push:
     branches: [main]
 env:
-  DB: \${{ secrets.DESTINO_URL }}
+  DB: ${'$'}{{ secrets.DESTINO_URL }}
 `;
   assert.deepEqual(findPushSecretLeaks(workflow, 'e2e-logado.yml'), []);
 });
@@ -158,16 +158,43 @@ test('findPushSecretLeaks: permite secrets publicos mesmo em push irrestrito', (
   const workflow = `on:
   push:
 env:
-  URL: \${{ secrets.VITE_SUPABASE_URL }}
+  URL: ${'$'}{{ secrets.VITE_SUPABASE_URL }}
 `;
   assert.deepEqual(findPushSecretLeaks(workflow), []);
+});
+
+// --- secrets: inherit em reusable workflow call ---
+
+test('findPushSecretLeaks: secrets: inherit com push irrestrito → violação', () => {
+  const workflow = `on:
+  push:
+jobs:
+  call:
+    uses: org/repo/.github/workflows/callable.yml@main
+    secrets: inherit
+`;
+  const result = findPushSecretLeaks(workflow, 'workflow.yml');
+  assert.equal(result.length, 1);
+  assert.ok(result[0].secret.includes('inherit'));
+});
+
+test('findPushSecretLeaks: secrets: inherit com push restrito a [main] → sem violação', () => {
+  const workflow = `on:
+  push:
+    branches: [main]
+jobs:
+  call:
+    uses: org/repo/.github/workflows/callable.yml@main
+    secrets: inherit
+`;
+  assert.deepEqual(findPushSecretLeaks(workflow, 'workflow.yml'), []);
 });
 
 // --- dedup: pull_request + push irrestrito no mesmo workflow ---
 
 test('scanWorkflowDirectory nao duplica violations quando workflow tem pull_request e push', () => {
   // Simula dois chamadas que retornariam o mesmo violation
-  const source = `on:\n  push:\n  pull_request:\nenv:\n  DB: \${{ secrets.DESTINO_URL }}\n`;
+  const source = `on:\n  push:\n  pull_request:\nenv:\n  DB: ${{ secrets.DESTINO_URL }}\n`;
   const prLeaks = findPullRequestSecretLeaks(source, 'dup.yml');
   const pushLeaks = findPushSecretLeaks(source, 'dup.yml');
   // Ambos devem encontrar a mesma violacao
