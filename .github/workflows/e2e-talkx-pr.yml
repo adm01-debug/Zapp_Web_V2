@@ -22,6 +22,11 @@ on:
       - 'src/hooks/integrations/useTalkX*'
       - 'supabase/functions/talkx-*'
       - 'e2e/talkx.spec.ts'
+      - 'e2e/talkx-visual.spec.ts'
+      - 'e2e/fixtures/talkx-demo.ts'
+      - 'e2e/fixtures/talkx-demo/**'
+      - 'scripts/talkx/lado-a-lado.mjs'
+      - 'playwright.config.ts'
       - '.github/workflows/e2e-talkx-pr.yml'
   workflow_dispatch:
 
@@ -58,3 +63,18 @@ jobs:
         run: bun run test:e2e -- --project=chromium
         env:
           CI: true
+
+      - name: 🖼️ Régua visual Talk X (17 telas, deslogado)
+        run: bun run test:e2e -- --project=chromium-talkx-visual
+        env:
+          CI: true
+
+      - name: 📊 Gera régua lado a lado (mock vs captura)
+        run: node scripts/talkx/lado-a-lado.mjs --out .tmp/regua
+
+      - name: ⬆️ Upload régua visual
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: regua-visual-talkx
+          path: .tmp/regua/
+          retention-days: 14

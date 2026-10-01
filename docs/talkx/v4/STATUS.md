@@ -5,11 +5,11 @@
 
 ## Etapas concluídas
 
-**2 de 200** concluídas.
+**3 de 200** concluídas.
 
 | Fase | Concluídas | Total |
 |---|---|---|
-| 0 · Régua e governança | 2 | 5 |
+| 0 · Régua e governança | 3 | 5 |
 | 1 · Correções imediatas | 0 | 4 |
 | 2 · Motor seguro para o primeiro disparo | 0 | 14 |
 | 3 · Integridade, observabilidade e ensaio real | 0 | 12 |

@@ -154,3 +154,22 @@ do mock, KPI "Total de campanhas" = 24); as demais são esqueleto (`{}`) e serã
 preenchidas pelas etapas de cada tela. O spec roda no `e2e-logado.yml` via
 `chromium-authenticated` (mesmo `storageState` dos demais specs autenticados),
 mas nunca toca o banco de produção do módulo.
+
+## Régua visual lado a lado (plano V4 · X004)
+
+`e2e/talkx-visual.spec.ts` é a **régua informativa** do plano V4: percorre as
+17 telas do Talk X e captura cada uma em 1672×941 (tema escuro) para comparar
+com os mockups de `docs/talkx/references/NN_*.png`. Roda **deslogado** (sem
+`storageState`/secrets) no projeto `chromium-talkx-visual` — a sessão é
+injetada no localStorage por `installFakeSession(page)` de
+`e2e/fixtures/talkx-demo.ts`, que também mocka `profiles`, `user_roles`, a RPC
+`user_has_permission` e marca o onboarding como concluído (senão o
+`WelcomeModal` abre e intercepta os cliques).
+
+As telas **13/14/15** (pausa/retomada, relatório concluído, importação CRM360)
+ainda não existem no app: o spec grava `nao-existe-NN.txt` em vez de capturar.
+
+O artefato é montado por `scripts/talkx/lado-a-lado.mjs --out <dir>`, que copia
+mock + captura para `<dir>/img/{mock,captura}` e gera `<dir>/index.html` lado a
+lado. No CI, `e2e-talkx-pr.yml` roda o spec, monta a régua e sobe o HTML como
+artefato `regua-visual-talkx` (14 dias) — informativo, não bloqueia merge.
