@@ -104,7 +104,7 @@ export function QueuesView() {
           <AlertDialogHeader><AlertDialogTitle className="text-foreground">Excluir Fila</AlertDialogTitle><AlertDialogDescription>Tem certeza que deseja excluir a fila "{queueToDelete?.name}"? Esta ação não pode ser desfeita.</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="text-muted-foreground">Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { if (queueToDelete) { deleteQueue(queueToDelete.id); setQueueToDelete(null); setDeleteDialogOpen(false); } }} className="bg-destructive hover:bg-destructive/90">Excluir</AlertDialogAction>
+            <AlertDialogAction onClick={() => { if (queueToDelete) { void deleteQueue(queueToDelete.id); setQueueToDelete(null); setDeleteDialogOpen(false); } }} className="bg-destructive hover:bg-destructive/90">Excluir</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

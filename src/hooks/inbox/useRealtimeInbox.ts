@@ -100,7 +100,7 @@ export function useRealtimeInbox() {
       if (error) { log.error('Error loading selected fallback contact:', error); return; }
       if (data) setSelectedContactFallback({ contactId: selectedContactId, contact: data });
     };
-    loadSelectedContact();
+    void loadSelectedContact();
     return () => { cancelled = true; };
   }, [selectedContactId, selectedConversation]);
 
@@ -127,7 +127,7 @@ export function useRealtimeInbox() {
   const handleSelectConversation = useCallback((contactId: string) => {
     setSelectedContactId(contactId);
     setSelectedContact(contactId);
-    markAsRead(contactId);
+    void markAsRead(contactId);
   }, [setSelectedContactId, setSelectedContact, markAsRead]);
 
   const handleNotificationView = useCallback(() => {

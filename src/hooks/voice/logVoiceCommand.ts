@@ -14,7 +14,7 @@ interface VoiceCommandLogParams {
 
 export function logVoiceCommand(params: VoiceCommandLogParams) {
   // Fire-and-forget — never block UI
-  (async () => {
+  void (async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;

@@ -56,7 +56,7 @@ export function useOnboarding() {
       }
     };
 
-    checkOnboarding();
+    void checkOnboarding();
     return () => { isSubscribed = false; };
   }, [user]);
 

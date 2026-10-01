@@ -28,7 +28,7 @@ export function MFABackupCodes({ codes: initialCodes, onRegenerate, onClose }: M
   const [confirmed, setConfirmed] = useState(false);
 
   const handleCopyAll = () => {
-    navigator.clipboard.writeText(codes.join('\n'));
+    void navigator.clipboard.writeText(codes.join('\n'));
     setCopied(true);
     toast.success('Códigos copiados!');
     setTimeout(() => setCopied(false), 2000);

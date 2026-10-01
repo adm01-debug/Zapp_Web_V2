@@ -46,7 +46,7 @@ export function TranscriptionsHistoryView() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchTranscriptions(); }, []);
+  useEffect(() => { void fetchTranscriptions(); }, []);
 
   const filteredTranscriptions = useMemo(() => {
     let filtered = transcriptions;

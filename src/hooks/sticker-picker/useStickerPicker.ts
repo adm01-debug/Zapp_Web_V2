@@ -42,7 +42,7 @@ export function useStickerPicker(onSendSticker: (url: string) => void) {
 
   const handleDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true); }, []);
   const handleDragLeave = useCallback((e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(false); }, []);
-  const handleDrop = useCallback((e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(false); const file = e.dataTransfer.files?.[0]; if (file) processFile(file); }, []);
+  const handleDrop = useCallback((e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(false); const file = e.dataTransfer.files?.[0]; if (file) void processFile(file); }, []);
 
   const processFile = async (file: File) => {
     if (!file.type.startsWith('image/')) { toast.error('Arquivo não é uma imagem válida'); return; }
@@ -64,7 +64,7 @@ export function useStickerPicker(onSendSticker: (url: string) => void) {
     } catch { toast.error('Erro ao processar figurinha'); } finally { setUploading(false); if (fileInputRef.current) fileInputRef.current.value = ''; }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (file) processFile(file); };
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (file) void processFile(file); };
 
   const handleConfirmUpload = async (pending: PendingUpload) => {
     const { data: { user } } = await supabase.auth.getUser();

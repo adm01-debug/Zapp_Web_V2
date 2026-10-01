@@ -50,7 +50,7 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
   }, []);
 
   // eslint-disable-next-line react-hooks/immutability, react-hooks/exhaustive-deps
-  useEffect(() => { loadPurchases(); }, [contactId]);
+  useEffect(() => { void loadPurchases(); }, [contactId]);
 
   const loadPurchases = async () => {
     setLoading(true);
@@ -79,7 +79,7 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
       setDialogOpen(false);
       setTitle('');
       setAmount('');
-      loadPurchases();
+      void loadPurchases();
     }
   };
 

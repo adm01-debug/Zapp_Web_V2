@@ -102,7 +102,7 @@ function EditableField({ value, icon, onSave, placeholder, label }: EditableFiel
 export function ContactInfoSection({ contact, enrichedData }: ContactInfoSectionProps) {
   const queryClient = useQueryClient();
   const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
+    void navigator.clipboard.writeText(text);
     toast.success(`${label} copiado!`);
   };
 

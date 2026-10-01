@@ -138,7 +138,7 @@ export function MultiplixComposerDialog({ open, onOpenChange, selectedCompanyIds
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { setConfirmStartOpen(false); submit(true); }}>
+            <AlertDialogAction onClick={() => { setConfirmStartOpen(false); void submit(true); }}>
               Iniciar agora
             </AlertDialogAction>
           </AlertDialogFooter>

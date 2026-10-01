@@ -37,7 +37,7 @@ export function MonitoringWebhookPanel({ connections, webhookTest, webhookConfig
   const configuredEvents = webhookConfig?.events || [];
 
   const copyUrl = (url: string) => {
-    navigator.clipboard.writeText(url);
+    void navigator.clipboard.writeText(url);
     toast.success('URL copiada!');
   };
 

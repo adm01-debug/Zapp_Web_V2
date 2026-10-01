@@ -49,7 +49,7 @@ export function useMessagesReactions(messageIds: string[]) {
       }
     };
 
-    fetchReactions();
+    void fetchReactions();
   }, [messageIds.join(',')]);
 
   return { reactionsMap, isLoading };

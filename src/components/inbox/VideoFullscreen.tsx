@@ -82,7 +82,7 @@ export function VideoFullscreen({ url, onClose }: VideoFullscreenProps) {
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
             variant="secondary" size="icon" disabled className="opacity-50 cursor-not-allowed"
-            onClick={(e) => { e.stopPropagation(); import('sonner').then(({ toast }) => toast.error('🔒 Download bloqueado por política de segurança')); }}
+            onClick={(e) => { e.stopPropagation(); void import('sonner').then(({ toast }) => toast.error('🔒 Download bloqueado por política de segurança')); }}
           >
             <Download className="w-4 h-4" />
           </Button>
