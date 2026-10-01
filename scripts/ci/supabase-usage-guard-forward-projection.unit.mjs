@@ -189,3 +189,21 @@ test('usage guard detecta DROP ROUTINE de funcao', () => {
   assert.equal(result.status, 1, result.stdout + result.stderr);
   assert.match(result.stderr, /\.rpc\('fn'\)/);
 });
+
+test('usage guard mantem funcao recriada por DROP+CREATE na mesma migration', () => {
+  const result = runGuard({
+    migrations: {
+      '20260909210000_recria_assinatura.sql':
+        'DROP FUNCTION IF EXISTS public.search_contacts(text);\n'
+        + 'CREATE FUNCTION public.search_contacts(term text, include_legacy boolean DEFAULT false)'
+        + ' RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;\n',
+    },
+    callers: { 'c.ts': "supabase.rpc('search_contacts');\n" },
+  });
+  // DROP + CREATE do mesmo nome (troca de assinatura, padrao do repo para
+  // adicionar um parametro) deve MANTER a funcao: o CREATE vem depois no texto e
+  // vence. Sem a ordem textual (dois loops separados: CREATEs e depois DROPs), o
+  // DROP apagaria a funcao da projecao -> falso positivo "alvo nao existe".
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /projecao forward-only: 0 relacoes, 1 funcoes/);
+});

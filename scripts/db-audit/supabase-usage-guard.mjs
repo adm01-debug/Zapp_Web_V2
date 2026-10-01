@@ -91,17 +91,29 @@ function projectSchemaFromForwardMigrations(catalog) {
     // como texto (ex.: dentro do corpo de uma funcao) nao virarem DDL.
     const rawSql = fs.readFileSync(path.join(migrationsDir, filename), 'utf8');
     const sql = stripSqlComments(rawSql);
-    for (const match of sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?(?:FUNCTION|ROUTINE|PROCEDURE)\s+public\.([a-zA-Z0-9_]+)\s*\(/gi)) {
-      functions.add(match[1]);
+    // CREATE e DROP sao aplicados na ORDEM em que aparecem no texto. Rodar
+    // todos os CREATEs e depois todos os DROPs (em loops separados) inverte a
+    // ordem de uma migration que faz DROP + CREATE do mesmo nome para trocar a
+    // assinatura (padrao do repo, ex.: adicionar include_legacy): o DROP venceria
+    // e o objeto sumiria da projecao -> falso positivo "alvo nao existe".
+    const ops = [];
+    for (const m of sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?(?:FUNCTION|ROUTINE|PROCEDURE)\s+public\.([a-zA-Z0-9_]+)\s*\(/gi)) {
+      ops.push({ at: m.index, kind: 'fn', op: 'add', name: m[1] });
     }
-    for (const match of sql.matchAll(/DROP\s+(?:FUNCTION|ROUTINE|PROCEDURE)(?:\s+IF\s+EXISTS)?\s+public\.([a-zA-Z0-9_]+)\s*\(/gi)) {
-      functions.delete(match[1]);
+    for (const m of sql.matchAll(/DROP\s+(?:FUNCTION|ROUTINE|PROCEDURE)(?:\s+IF\s+EXISTS)?\s+public\.([a-zA-Z0-9_]+)\s*\(/gi)) {
+      ops.push({ at: m.index, kind: 'fn', op: 'del', name: m[1] });
     }
-    for (const match of sql.matchAll(/CREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?\s+public\.([a-zA-Z0-9_]+)/gi)) {
-      relations.add(match[1]);
+    for (const m of sql.matchAll(/CREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?\s+public\.([a-zA-Z0-9_]+)/gi)) {
+      ops.push({ at: m.index, kind: 'rel', op: 'add', name: m[1] });
     }
-    for (const match of sql.matchAll(/DROP\s+TABLE(?:\s+IF\s+EXISTS)?\s+public\.([a-zA-Z0-9_]+)/gi)) {
-      relations.delete(match[1]);
+    for (const m of sql.matchAll(/DROP\s+TABLE(?:\s+IF\s+EXISTS)?\s+public\.([a-zA-Z0-9_]+)/gi)) {
+      ops.push({ at: m.index, kind: 'rel', op: 'del', name: m[1] });
+    }
+    ops.sort((a, b) => a.at - b.at);
+    for (const change of ops) {
+      const target = change.kind === 'fn' ? functions : relations;
+      if (change.op === 'add') target.add(change.name);
+      else target.delete(change.name);
     }
   }
   return { functions, relations };
