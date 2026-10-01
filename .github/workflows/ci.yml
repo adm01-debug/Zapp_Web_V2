@@ -129,6 +129,13 @@ jobs:
       - name: 🔒 Verify PR workflow secret boundary
         run: node scripts/ci/check-pr-workflow-secrets.mjs
 
+      - name: 📋 Verify Talk X PR body (definição de pronto)
+        if: github.event_name == 'pull_request'
+        run: node scripts/ci/check-talkx-pr-body.mjs
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+
       - name: 🔬 Lint workflows (actionlint)
         run: |
           go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
