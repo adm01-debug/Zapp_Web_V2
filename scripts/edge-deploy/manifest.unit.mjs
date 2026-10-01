@@ -77,7 +77,7 @@ test('buildDeploymentManifest rejects config for a missing function', async (t) 
 });
 
 test('buildDeploymentManifest accepts config for a legacy unmanaged function', async (t) => {
-  // Orfas legadas rodam em producao com verify_jwt=false e nao tem fonte versionada.
+  // Fixture de uma funcao legada: roda em producao com verify_jwt=false sem fonte na arvore.
   // Declarar a excecao antes de trazer o fonte e o unico jeito de o proximo deploy nao
   // reverter a funcao para verify_jwt=true; a entrada continua fora de functions[].
   const root = await createFixture();
