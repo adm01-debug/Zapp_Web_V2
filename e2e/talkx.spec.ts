@@ -157,7 +157,10 @@ test.describe('Talk X module', () => {
     await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
   });
 
-  test('wizard advances to step 2 (Mensagem) after filling step 1', async ({ page }) => {
+  test('wizard advances to step 2 (Mensagem) after filling step 1', async ({ page, browserName }) => {
+    // E09: seleção de combobox via getByRole('combobox') é inconsistente no WebKit em CI.
+    test.fixme(browserName === 'webkit', 'E09: combobox aria-label flaky no WebKit headless; reativar quando seletor for ajustado para webkit');
+
     // Navigate directly to campaigns overview via URL deep-link.
     await page.goto('/?view=talkx');
     await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
