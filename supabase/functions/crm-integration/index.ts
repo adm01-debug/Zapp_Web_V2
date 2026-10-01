@@ -6,10 +6,48 @@ import {
   CRM_TABLE_ALLOWLIST, extractContact360Id, FILTER_OPERATORS, isExpectedExternalServerKey, isExpectedExternalUrl,
   normalizePhone, parseSyncResult, validateMutation, validateRpc, validIdentifier,
 } from '../_shared/crm-integration-contract.ts';
+import { normalizeSentiment, type Sentiment } from '../_shared/ai-vocabulary.ts';
 
 const TIMEOUT_MS = 12_000;
 const MAX_REQUEST_BYTES = 64 * 1024;
 const MAX_BATCH_SIZE = 10;
+
+/**
+ * Sentimento no domínio do CRM EXTERNO (inglês): a documentação do CRM 360°
+ * (docs/CRM360_TECHNICAL_DOCS.md) fala 'positive/neutral/negative' (e
+ * 'critical' no topo). O banco continua canônico em pt-BR
+ * ('positivo'/'neutro'/'negativo'/'critico'); a tradução PT→EN acontece SÓ
+ * aqui, na fronteira de saída.
+ */
+const CRM_SENTIMENT_BY_CANONICAL: Readonly<Record<Sentiment, string>> = {
+  positivo: 'positive',
+  neutro: 'neutral',
+  negativo: 'negative',
+  critico: 'critical',
+};
+
+/**
+ * Traduz o sentimento cru do payload do outbox para o domínio EN do CRM.
+ *
+ *   - canônico pt-BR conhecido → token EN do CRM;
+ *   - ausência (`null`/`undefined`/`''`/só espaços) → `null`;
+ *   - fora do vocabulário (lixo no banco) → `null` + log estruturado; não
+ *     inventa valor e não derruba a chamada.
+ *
+ * Antes: `payload.sentiment || 'neutral'` — fabricava 'neutral' quando não
+ * havia sentimento E mandava pt-BR cru quando havia. `normalizeSentiment`
+ * (módulo canônico, IA-021) reconhece também o legado em inglês, então um
+ * 'neutral' já gravado no banco continua significando 'neutral' — mas nunca é
+ * criado a partir do vazio.
+ */
+export function sentimentForExternalCrm(raw: unknown): string | null {
+  const match = normalizeSentiment(raw);
+  if (match.value !== null) return CRM_SENTIMENT_BY_CANONICAL[match.value];
+  const ausente = raw === null || raw === undefined ||
+    (typeof raw === 'string' && raw.trim() === '');
+  if (!ausente) console.warn(JSON.stringify({ event: 'crm_sentiment_out_of_vocabulary', raw_value: raw }));
+  return null;
+}
 
 function timingSafeEqual(left: string | null, right: string | null): boolean {
   if (left === null || right === null) return false;
@@ -168,7 +206,7 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
           p_assunto: payload.assunto || null,
           p_resumo: payload.resumo || null,
           p_conteudo: null,
-          p_sentiment: payload.sentiment || 'neutral',
+          p_sentiment: sentimentForExternalCrm(payload.sentiment),
           p_message_count: payload.message_count || 0,
           p_duration_seconds: payload.duration_seconds || null,
           p_agent_name: payload.agent_name || null,
