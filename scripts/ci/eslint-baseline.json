@@ -98,11 +98,11 @@
     },
     {
       "path": "src/components/calls/__tests__/DialPad.test.tsx",
-      "sha256": "f93ca117d81c655de48912b10af3dfbb81bfc65f7f27ad76855a2f12c1ec8b7a"
+      "sha256": "976cbf0cfb06957a186d6b4da0d79b9b3077f0ba698679769a50145d7750ab9a"
     },
     {
       "path": "src/components/calls/__tests__/VoIPPanel.test.tsx",
-      "sha256": "66934e09aff5b715bbbec32cd7dc623c7103a8f31fb17d9f4c0a15e7827ab3b4"
+      "sha256": "04db866d487d345740fb78f1b449b0444a9ab92bb21b66f82b960939e842cb83"
     },
     {
       "path": "src/components/campaigns/__tests__/CampaignsView.test.tsx",
@@ -154,11 +154,11 @@
     },
     {
       "path": "src/components/contacts/BulkActionsBar.tsx",
-      "sha256": "5782b93af83643aed92061e8260d933bd2dfb45f6d68c8aa6eb5b8bd00d6d620"
+      "sha256": "ef2bd478ef2a8fa243fc0d8957958f628027f45eec56b7b6a9033bd45f6b772d"
     },
     {
       "path": "src/components/contacts/ContactActivityTimeline.tsx",
-      "sha256": "35446ac8b81a1c61446c367da89e3061f375b10bfe59293e7ac57ee00dc200ed"
+      "sha256": "b425372e57132b48dcea26fd3dd4a523b12ce3622a334d7fc5ae3e36500986da"
     },
     {
       "path": "src/components/contacts/ContactBulkTagDialog.tsx",
@@ -174,27 +174,19 @@
     },
     {
       "path": "src/components/contacts/ContactKanbanView.tsx",
-      "sha256": "ba650f65ffcb2245558e27a7c4f4cc45b05f6c8f413b17c489add6e0cdf049b7"
+      "sha256": "030e4e60cbf9c4bf182bf6c2d538f2b9f62dfb0214ab227637b513f61e28951d"
     },
     {
       "path": "src/components/contacts/ContactNotes.tsx",
-      "sha256": "4076666f53b76eb7af06133cc54f1e0de81454803b733c295e4113659cbbdffc"
+      "sha256": "dedeffabafc20bcfd26b1868d821f4b8e01dd2a88065ceeef358c9201103f458"
     },
     {
       "path": "src/components/contacts/ContactPurchaseHistory.tsx",
-      "sha256": "404dde5bbd14a53a41bd0051b05a221439a268d81ecff75182bd841c5b4a7244"
+      "sha256": "91e3020a6cead9ec2ee7785bd4e9083686c76bc489be2c2b082d64a2cb914fa6"
     },
     {
       "path": "src/components/contacts/ContactSearchWithSuggestions.tsx",
-      "sha256": "e0e9237365440262a9fdbddaf013eb0baf1a9861de0a21c1b0548966caf0fc52"
-    },
-    {
-      "path": "src/components/contacts/ContactsTable.tsx",
-      "sha256": "3dc3c14d19e79540afb709288933f82d24262b8b11ae67e8b010dd9a6869f71e"
-    },
-    {
-      "path": "src/components/contacts/InlineEditCell.tsx",
-      "sha256": "6789270a6e76b53a1a997edf88089032cf68dd91d3aa27085d64bcfcbbb96eb6"
+      "sha256": "3a90e2f361b553223d4b2a38a72b4666691db1d4269e37d38c86843d79de64d1"
     },
     {
       "path": "src/components/contacts/useContactFormValidation.ts",
@@ -202,7 +194,7 @@
     },
     {
       "path": "src/components/contacts/useContactsCRUD.ts",
-      "sha256": "e0d4697f4836a3b01f35d535270321e9d0d90a2695bfc178b76726d51aaf5944"
+      "sha256": "562003e073d2df26abe8cf25c6d35b1ccc20ecb20b6939bae30c36acfc23c2f3"
     },
     {
       "path": "src/components/crm360/CompanyFormDialog.tsx",
@@ -346,7 +338,7 @@
     },
     {
       "path": "src/components/inbox/AudioMessagePlayer.tsx",
-      "sha256": "b8330f62352bbcf13fa0c50d213853db0a2b9e7331135e7149871101b120621e"
+      "sha256": "eeb5ce323f5dcf57ffbf8700ef331f3d1ad5644f934c9aaa3c9130b76055f91d"
     },
     {
       "path": "src/components/inbox/AudioRecorder.tsx",
@@ -390,7 +382,7 @@
     },
     {
       "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
-      "sha256": "458b2ac5c93be3516d7d3225c21dabbfc83e740d88d191d6f31c06e11d5e68ee"
+      "sha256": "29c9e42d4756e5a190e13e2fd90d25e0887b8b0d9cea35c80d346e5e0454224b"
     },
     {
       "path": "src/components/inbox/ChatPanel.tsx",
@@ -422,15 +414,11 @@
     },
     {
       "path": "src/components/inbox/contact-details/ContactInfoSection.tsx",
-      "sha256": "69c55b4ece6cf5d3b8ef62432ebd4ed1385565abc09e842daaf3277869bf76d2"
+      "sha256": "8e58cde92652a6635e93b3fa3295ef8ffaa4213c73a4f2afc5b37c165b3c3589"
     },
     {
       "path": "src/components/inbox/contact-details/EditContactDialog.tsx",
-      "sha256": "db68d34e8bd6f585b092cd91a5edc6636f635142b69c718c814f7a97d57d4a15"
-    },
-    {
-      "path": "src/components/inbox/contact-details/StoryViewer.tsx",
-      "sha256": "7ef4982af539fe3824b256d7d2b185913da8c5a6eb08b917dbae73e44570ba79"
+      "sha256": "5f81478c5a888543f9849004007f7c037caeff325ef39ba54334b7c2da9c97b6"
     },
     {
       "path": "src/components/inbox/ContactPurchasesPanel.tsx",
@@ -722,7 +710,7 @@
     },
     {
       "path": "src/components/security/AuditLogDashboard.tsx",
-      "sha256": "32235d88c7e9e1dfdeb4f8fcc7b0e7b925c227ee6c1dfbe651e349ae34d91368"
+      "sha256": "c6687e3e0f7b945279e662ee4d85c6228a2efdee5db1eb5ddaa9429c0bfd9d80"
     },
     {
       "path": "src/components/security/BlockedIPDialogs.tsx",
@@ -802,11 +790,11 @@
     },
     {
       "path": "src/components/settings/media-library/AIGenerateDialog.tsx",
-      "sha256": "7b84fbf24d4cbd7939129d602251be63facf86a48f0b4d9f3378d5bdb4b53f3c"
+      "sha256": "d54fb270daefe283513adc98216defdda36e428ecefc064c3c5d30b8a4068c7b"
     },
     {
       "path": "src/components/settings/media-library/useMediaLibrary.ts",
-      "sha256": "a859a4e8895a17245545eb8ce243a96b39e4e0f17f2c293e84bfb10f08620099"
+      "sha256": "1cdd8bc57c39026e51d405b190c0b7b79cf9f0351f0798140c38b961856a661d"
     },
     {
       "path": "src/components/settings/media-library/useMediaUpload.ts",
@@ -858,7 +846,7 @@
     },
     {
       "path": "src/components/theme/HighContrastToggle.tsx",
-      "sha256": "3b71d75eadf6ff62d0fb9f3ea59c3cdc012ae24a4cb26b8d0d6c0c0f2f91693c"
+      "sha256": "5f784f084837abf76fc7cc4e8e9f00771b438942ecec8882c4bc46681eacb4fa"
     },
     {
       "path": "src/components/transcriptions/TranscriptionsHistoryView.tsx",
@@ -962,11 +950,11 @@
     },
     {
       "path": "src/components/voice/ElevenLabsDialogue.tsx",
-      "sha256": "6c7db38bcd0d8d5fe96f0f463ed93fadf89bf4ff6fec42c99ff1ec09ccc024ba"
+      "sha256": "02939066ef9eab5e8db0305d8cec246a32981dd145e16e4ff905e10c1fcd6d4b"
     },
     {
       "path": "src/components/voice/ElevenLabsVoiceDesign.tsx",
-      "sha256": "8d801c4181f15befbb4446ae16f73ba79609232f51bbed5e438556598abccb30"
+      "sha256": "0e6650dd0471c2a856d2cda36ab9fa50be0af889f54d35e31ae95c6e552bf32a"
     },
     {
       "path": "src/components/voice/FloatingParticles.tsx",
@@ -1050,7 +1038,7 @@
     },
     {
       "path": "src/hooks/__tests__/useExternalCatalog.test.ts",
-      "sha256": "149e70e17948220e016818ca705a31460f627c7944fda00ff28eb4a45f8fe5eb"
+      "sha256": "2f445f01d6dde539ded67a3ae3035f02f5fc467c7960c4890f638e26cbdba46c"
     },
     {
       "path": "src/hooks/__tests__/useGlobalSettings.test.tsx",
@@ -1082,11 +1070,11 @@
     },
     {
       "path": "src/hooks/__tests__/useNotifications.test.tsx",
-      "sha256": "e70c1b1e71d30d02db2225f916241c00d887ac6d2392648fe8657ac76b0c0b00"
+      "sha256": "56be0a8f0e9afb4ce9997c5c02f90ca850fc540cbc7c502ca4b4a9b122a200f2"
     },
     {
       "path": "src/hooks/__tests__/useNotificationSettings.test.tsx",
-      "sha256": "c32383d8a73c1d7d1481cdecb68451502a8dd7ef40124aae56186cbece69a893"
+      "sha256": "5d99be32dfa9955d170eef1316cdcecd8fd7fc891c5d18b2cc15b70bda6d1779"
     },
     {
       "path": "src/hooks/__tests__/useOfflineCache.test.ts",
@@ -1150,7 +1138,7 @@
     },
     {
       "path": "src/hooks/__tests__/useSentimentAlerts.test.ts",
-      "sha256": "86fd9bdcd81914d3329422a934afca69763f452e4e4abc81f6a2aa8b5ce84b4a"
+      "sha256": "ece897507441d3552e4b2c11d144fd47bddd53de73cafb37de5c58d3c5519b40"
     },
     {
       "path": "src/hooks/__tests__/useSLAHistory.test.tsx",
@@ -1253,10 +1241,6 @@
       "sha256": "c054e1a02d7d286a80c8f287a6b88c2eb966631950347202265e6aea0c7f6963"
     },
     {
-      "path": "src/hooks/crm/useContactIntelligence.ts",
-      "sha256": "81accabd510bf6375d5a9edbd594e715ddc147caa6e767e2933662e616e7357e"
-    },
-    {
       "path": "src/hooks/evolution/useEvolutionApiCore.ts",
       "sha256": "346ad35e1d77c8cf75a186d1121a18681bd7f82e81f3b56852e6e69cbe8ef354"
     },
@@ -1354,7 +1338,7 @@
     },
     {
       "path": "src/hooks/system/useNotifications.ts",
-      "sha256": "a0172af99e40c372214874c76f112c0c0a46805895307b6c97dce134e0e4572a"
+      "sha256": "33f0c105bc1cab0fa5548163f213b2e1db89d33a61f6bb6aab077f6639b8e622"
     },
     {
       "path": "src/hooks/system/useOfflineCache.ts",
@@ -1383,10 +1367,6 @@
     {
       "path": "src/hooks/ui/useDeviceDetection.ts",
       "sha256": "9b47443cb056e34ac85cb83fc3ebba88033a8c3990215be05675eb94a5378fd8"
-    },
-    {
-      "path": "src/hooks/ui/useGlobalKeyboardShortcuts.ts",
-      "sha256": "0c91bd3deb7cec91a3bb835a8bb972c4401bc054df804c875001400280e67418"
     },
     {
       "path": "src/hooks/ui/useOnboarding.ts",
@@ -1561,10 +1541,6 @@
       "sha256": "21cdf66adc5bb9f1820f46936015a67a8b67748f94c13e118ece43fe77423108"
     },
     {
-      "path": "supabase/functions/ai-proxy/index.ts",
-      "sha256": "239dbfb0f92df892b72bee7c8ce22906fb309bb0b8da76bc5c51cad2455a5f6c"
-    },
-    {
       "path": "supabase/functions/ai-suggest-reply/index.ts",
       "sha256": "589fa4167dd0e644fa375c407a29104ed5c9ede2f493d4ed2107d49de01b47c4"
     },
@@ -1598,7 +1574,7 @@
     },
     {
       "path": "tailwind.config.ts",
-      "sha256": "18c1b02e4a8cf79fa9f0b5c0b187eb81271b9a7fd8f51340c3e36eb89c08f1b8"
+      "sha256": "4ed0e45405187deb5b5e74ae567715fa87fa3b96f1004294cf5837571cccfe0c"
     }
   ],
   "issues": [
@@ -2679,34 +2655,6 @@
       "spanHash": "1b6378821b7e0195e7c2c3ec296c25bf6595e72eb120c2539edd8182df6852db",
       "lineHash": "dc61204069fd311c0ddc6f2c825f0ee3096fdbb11eda6dcea5f880d964d72cab",
       "contextHash": "9ad1eda20b2f8ee45b6f8c9fe3ea2e19739cad53eab9425a14928f7e0c07b560"
-    },
-    {
-      "file": "src/components/contacts/ContactsTable.tsx",
-      "line": 39,
-      "column": 10,
-      "endLine": 39,
-      "endColumn": 28,
-      "severity": 1,
-      "ruleId": "react-refresh/only-export-components",
-      "messageId": "namedExport",
-      "message": "Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.",
-      "spanHash": "c6b8054210863bf36b2aa59db070f13b56eb6bf5fea2a220a7ed0e9195953d6f",
-      "lineHash": "37cff450d0489a6aa8a1c79780e7dcc30e55e666e0e8024022563cef3dabaec1",
-      "contextHash": "fe2199ad4749aa638b9176baeba3ad3882352df660b263523304222c180ad32a"
-    },
-    {
-      "file": "src/components/contacts/InlineEditCell.tsx",
-      "line": 4,
-      "column": 1,
-      "endLine": 4,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "b7d22cc74e6d5db7fc782e41cb0df20a8f695963e2441cdb690b133db536320a"
     },
     {
       "file": "src/components/contacts/useContactFormValidation.ts",
@@ -4177,20 +4125,6 @@
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "contextHash": "ad15c3e0580bb56fba26db5b524059bfdea7a86bfbdfb2b74d1b44d57d2566d6"
-    },
-    {
-      "file": "src/components/inbox/contact-details/StoryViewer.tsx",
-      "line": 113,
-      "column": 75,
-      "endLine": 113,
-      "endColumn": 78,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "c89ac1a9e2ffecec1b33edd6d04b863c772144f101570c71aaf36727aacb2d6e",
-      "contextHash": "6309f4ceb3e5bf8d65f0fa9c65a8488814dc2ee6cd19ef5096c52da8b3e3a1f7"
     },
     {
       "file": "src/components/inbox/ContactPurchasesPanel.tsx",
@@ -8016,9 +7950,9 @@
     },
     {
       "file": "src/components/theme/HighContrastToggle.tsx",
-      "line": 99,
+      "line": 109,
       "column": 17,
-      "endLine": 99,
+      "endLine": 109,
       "endColumn": 32,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -10662,9 +10596,9 @@
     },
     {
       "file": "src/hooks/__tests__/useSentimentAlerts.test.ts",
-      "line": 18,
+      "line": 21,
       "column": 36,
-      "endLine": 18,
+      "endLine": 21,
       "endColumn": 39,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -10676,9 +10610,9 @@
     },
     {
       "file": "src/hooks/__tests__/useSentimentAlerts.test.ts",
-      "line": 19,
+      "line": 22,
       "column": 21,
-      "endLine": 19,
+      "endLine": 22,
       "endColumn": 24,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -11599,20 +11533,6 @@
       "contextHash": "ba9ef1cf7af2fffe58d9c19990b12962cd1cfcd605d50ab8456ac5fb5c3fc5f1"
     },
     {
-      "file": "src/hooks/crm/useContactIntelligence.ts",
-      "line": 64,
-      "column": 32,
-      "endLine": 64,
-      "endColumn": 35,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "79d578521e950e48f449eb3efa5c6af1ae9ccfc98dbadcc4d81968d7af3253b1",
-      "contextHash": "c49e785cdb9a6ed0a5c9db9889fe81f44533ff063d1f2a9ff5038dcfac4e080f"
-    },
-    {
       "file": "src/hooks/evolution/useEvolutionApiCore.ts",
       "line": 11,
       "column": 50,
@@ -12090,14 +12010,14 @@
     },
     {
       "file": "src/hooks/system/useNotifications.ts",
-      "line": 61,
+      "line": 63,
       "column": 5,
-      "endLine": 61,
+      "endLine": 63,
       "endColumn": 23,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/system/useNotifications.ts:61:5 59 | 60 | useEffect(() => { > 61 | fetchNotifications(); | ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 62 | }, [fetchNotifications]); 63 | 64 | // Realtime subscription",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/system/useNotifications.ts:63:5 61 | 62 | useEffect(() => { > 63 | fetchNotifications(); | ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 64 | }, [fetchNotifications]); 65 | 66 | // Realtime subscription",
       "spanHash": "cc6a4002db73d731159bbed913d2645f2c6073b08d104987f41ae626b8c44d3a",
       "lineHash": "decb4c151f8cb8ff3f700dc245d5a05e53a21f8987051c839ea0eb939eb56002",
       "contextHash": "b1cc150f226070fcbede5bb6c97af3495f472a09b54acb0f92e38f0f2af41d17"
@@ -12213,20 +12133,6 @@
       "spanHash": "83dd6824eb123f163d435fddf83cdc4ec598c3414da08e5f7e5e03baf03f29fc",
       "lineHash": "2450e049a429a737eac784f5cac48c46a0af054c59cfc5198cb47dbc51b6d225",
       "contextHash": "9667fd564353854e3c99d8cdd36441c70db54938bbd0ecb10dbfed885baa98d0"
-    },
-    {
-      "file": "src/hooks/ui/useGlobalKeyboardShortcuts.ts",
-      "line": 58,
-      "column": 9,
-      "endLine": 58,
-      "endColumn": 40,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "The 'actions' object makes the dependencies of useCallback Hook (at line 97) change on every render. To fix this, wrap the initialization of 'actions' in its own useMemo() Hook.",
-      "spanHash": "556f17f0eb6e36727f42bcd11b2c0a104a3ba40f8c1c28a32ae71aca66d5e796",
-      "lineHash": "04766f8ca432d389447ccf8e69bba4b5c92efb8f20af6ae155c8ae16be09faa7",
-      "contextHash": "631fdb94aef0678cf0b5ad5b073d0b381630f58882399b89b62c2cf2afe0a2c6"
     },
     {
       "file": "src/hooks/ui/useOnboarding.ts",
@@ -14287,20 +14193,6 @@
       "contextHash": "6e9e9b1fda584c6eda40acac5e3bc2ca8d7507c200eb7b827bc2fb83aeef103d"
     },
     {
-      "file": "supabase/functions/ai-proxy/index.ts",
-      "line": 139,
-      "column": 52,
-      "endLine": 139,
-      "endColumn": 55,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "38b6959447880b405900f9ae34679dc75db55b4ddde544e24fb4c75b8920eab1",
-      "contextHash": "fcb3ca83d06200b8d11a818762beda2cd8a6f2d65bd983b09f91a78947763788"
-    },
-    {
       "file": "supabase/functions/ai-suggest-reply/index.ts",
       "line": 161,
       "column": 30,
@@ -14806,9 +14698,9 @@
     },
     {
       "file": "tailwind.config.ts",
-      "line": 429,
+      "line": 433,
       "column": 13,
-      "endLine": 429,
+      "endLine": 433,
       "endColumn": 43,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-require-imports",
