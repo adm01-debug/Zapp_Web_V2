@@ -27,7 +27,10 @@ export function hasPullRequestTrigger(source) {
 }
 
 export function hasPushTriggerUnrestricted(source) {
-  // Inline on: [push] — no branch restriction possible
+  // Scalar: on: push (single event, no branch restriction)
+  if (/^on:\s*push\s*(?:#.*)?$/mu.test(source)) return true;
+
+  // Inline array: on: [push] or on: [push, pull_request] etc.
   if (/^on:\s*\[[^\]]*\bpush\b[^\]]*\]/mu.test(source)) return true;
 
   const lines = source.replace(/\r\n?/gu, '\n').split('\n');
@@ -35,22 +38,30 @@ export function hasPushTriggerUnrestricted(source) {
   if (onIndex === -1) return false;
 
   let pushStart = -1;
+  let pushIndent = 0;
   let pushEnd = lines.length;
 
   for (let i = onIndex + 1; i < lines.length; i++) {
     const line = lines[i];
+    // Top-level key ends the 'on:' block
     if (/^[^\s#]/.test(line)) { pushEnd = i; break; }
-    if (/^\s{2}push:\s*(?:#.*)?$/.test(line)) { pushStart = i; continue; }
-    if (pushStart !== -1 && /^\s{2}[A-Za-z_-]/.test(line) && !/^\s{4}/.test(line)) {
-      pushEnd = i; break;
+    // Detect: push: (empty line) or push: {} (inline empty mapping)
+    const pushMatch = /^(\s+)push:\s*(?:\{\})?\s*(?:#.*)?$/.exec(line);
+    if (pushMatch) { pushStart = i; pushIndent = pushMatch[1].length; continue; }
+    // Inside push block: detect sibling key at same or lesser indent = end of push
+    if (pushStart !== -1) {
+      const indentMatch = /^(\s+)\S/.exec(line);
+      if (indentMatch && indentMatch[1].length <= pushIndent && !/^\s*#/.test(line)) {
+        pushEnd = i; break;
+      }
     }
   }
 
   if (pushStart === -1) return false;
 
-  // Restricted to main only = branches: [main] (inline form)
+  // Restricted to main only = branches: [main] or ['main'] or ["main"]
   for (let i = pushStart + 1; i < pushEnd; i++) {
-    if (/^\s{4}branches:\s*\[\s*(?:"main"|main)\s*\]\s*(?:#.*)?$/.test(lines[i])) {
+    if (/^\s+branches:\s*\[\s*(?:"main"|'main'|main)\s*\]\s*(?:#.*)?$/.test(lines[i])) {
       return false;
     }
   }
@@ -106,15 +117,22 @@ export function findPushSecretLeaks(source, file = 'workflow.yml') {
 }
 
 export function scanWorkflowDirectory(workflowsDirectory) {
+  const seen = new Set();
   return readdirSync(workflowsDirectory)
     .filter((file) => /\.ya?ml$/u.test(file))
     .sort()
     .flatMap((file) => {
       const source = readFileSync(path.join(workflowsDirectory, file), 'utf8');
-      return [
+      const violations = [
         ...findPullRequestSecretLeaks(source, file),
         ...findPushSecretLeaks(source, file),
       ];
+      return violations.filter((v) => {
+        const key = `${v.file}:${v.line}:${v.secret}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     });
 }
 
