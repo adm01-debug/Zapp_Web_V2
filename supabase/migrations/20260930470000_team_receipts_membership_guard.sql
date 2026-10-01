@@ -20,9 +20,9 @@
 --
 -- Classe: contrato (CREATE OR REPLACE FUNCTION) — aplicar apos o merge/deploy.
 --
--- rollback:
---   Reaplicar o corpo ANTERIOR, integral e identico ao que estava vigente (sem a checagem de
---   vinculo) — NAO truncar nada do corpo, sob pena de mutilar a funcao:
+-- rollback: reaplicar o corpo ANTERIOR integral num CREATE OR REPLACE FUNCTION
+--   public.mark_team_conversation_read(uuid) — sem a checagem de vinculo, exatamente como estava
+--   vigente antes deste PR. NAO truncar nada do corpo, sob pena de mutilar a funcao:
 --
 --   CREATE OR REPLACE FUNCTION public.mark_team_conversation_read(p_conversation_id uuid)
 --    RETURNS void
