@@ -154,6 +154,8 @@ export function ElevenLabsDialogue() {
         {audioUrl && (
           <div className="p-3 rounded-lg bg-muted/50 border border-border/50">
             <Label className="text-xs text-muted-foreground mb-2 block">Áudio Gerado</Label>
+            {/* E37 — isenta do controle de volume de mídia (`mediaVolumeStore`): áudio
+                gerado no laboratório de voz das Configurações, não mídia de conversa. */}
             <audio ref={audioRef} src={audioUrl} controls className="w-full h-10" />
           </div>
         )}

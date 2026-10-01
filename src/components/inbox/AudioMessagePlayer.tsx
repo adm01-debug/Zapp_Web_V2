@@ -23,6 +23,9 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [showTranscription, setShowTranscription] = useState(!!existingTranscription);
   const isMountedRef = useRef(true);
+  // E16 — escopo dos atalhos: ↑/↓ e `M` valem com o foco em qualquer parte do player
+  // (botão de play, barra de progresso, ...), não só no botão do volume.
+  const playerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -105,7 +108,7 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" ref={playerRef}>
       <audio ref={audioRef} src={resolvedUrl || undefined} preload="metadata" crossOrigin="anonymous" />
       <div className={cn('flex items-center gap-3 p-2 rounded-lg min-w-[200px]', isSent ? 'bg-primary-foreground/10' : 'bg-muted/50')}>
         <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
@@ -139,6 +142,7 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
               as variantes do balão (enviado usa primary-foreground, recebido usa primary). */}
           <MediaVolumeControl
             variant="bubble"
+            playerRef={playerRef}
             className={isSent ? 'text-primary-foreground/70 hover:text-primary-foreground' : 'text-muted-foreground hover:text-primary'}
           />
         </motion.div>

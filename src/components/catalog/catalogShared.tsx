@@ -4,7 +4,7 @@
  * Ponto único para evitar duplicação entre ExternalProductCard,
  * ProductDetailDialog e demais componentes de src/components/catalog/.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Package, type LucideIcon, X } from 'lucide-react';
 // CatalogStats vem de useExternalCatalog.ts (E24 — formato exato de
@@ -15,7 +15,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { FilterBarV2, type FilterDefinition } from '@/components/talkx/talkxShared';
+import { FilterBarV2, type FilterDefinition, TalkXDataUnavailableState, AlertCard } from '@/components/talkx/talkxShared';
+import { toast } from 'sonner';
 
 /** R$ 63,78 (pt-BR, BRL). */
 export const formatPrice = (price: number) =>
@@ -509,7 +510,8 @@ export function CatalogFilterBar({
   const filters: FilterDefinition[] = [
     {
       key: 'category', label: 'Categoria',
-      options: categories.map((c) => ({ value: c.id, label: c.name })),
+      // CT-60 — contagem real de ExternalCategory.products_count.
+      options: categories.map((c) => ({ value: c.id, label: countLabel(c.name, c.products_count) })),
     },
     {
       key: 'supplier', label: 'Fornecedor',
@@ -550,6 +552,102 @@ export function CatalogFilterBar({
         </div>
       }
     />
+  );
+}
+
+// ─── CT-59/CT-60 — contagem em rótulo + estado de erro por código ──────
+/**
+ * CT-60 — rótulo de option de filtro com contagem. `count` vem de
+ * `ExternalCategory.products_count` (única contagem real disponível);
+ * quando a fonte não traz número (ex.: fornecedor — ver comentário em
+ * ExternalProductManagement/ExternalProductCatalog), o rótulo é o nome puro,
+ * nunca um número inventado.
+ */
+export function countLabel(name: string, count: number | null | undefined): string {
+  return count != null ? `${name} (${count.toLocaleString('pt-BR')})` : name;
+}
+
+/**
+ * CT-59 — cooldown de 10 s depois de um 429 da edge: dispara o toast
+ * "Muitas requisições, aguarde 1 min" e mantém os botões de ação
+ * desabilitados até o fim da janela (a edge libera a cota em 60 s; 10 s é o
+ * bloqueio de UI pedido no plano, tempo suficiente para a rajada passar).
+ * O setState fica dentro de setTimeout(0) fora do corpo síncrono do efeito
+ * (react-hooks/set-state-in-effect) — mesmo padrão já usado em
+ * ExternalProductManagement (E78).
+ */
+export function useRateLimitCooldown(rateLimited: boolean, seconds = 10): boolean {
+  const [coolingDown, setCoolingDown] = useState(false);
+  useEffect(() => {
+    const start = setTimeout(() => {
+      if (!rateLimited) {
+        setCoolingDown(false);
+        return;
+      }
+      setCoolingDown(true);
+      toast.error('Muitas requisições, aguarde 1 min');
+    }, 0);
+    if (!rateLimited) return () => clearTimeout(start);
+    const stop = setTimeout(() => setCoolingDown(false), seconds * 1000);
+    return () => {
+      clearTimeout(start);
+      clearTimeout(stop);
+    };
+  }, [rateLimited, seconds]);
+  return coolingDown;
+}
+
+interface CatalogErrorStateProps {
+  /** Código do erro (CatalogErrorCode); null em falha sem código. */
+  code?: string | null;
+  /** Mensagem crua da edge, usada só no fallback genérico. */
+  message?: string | null;
+  onRetry?: () => void;
+  /** CT-59 — true durante o cooldown do 429: desabilita o "Tentar de novo". */
+  retryDisabled?: boolean;
+}
+
+/**
+ * CT-59 — estado de erro por código da edge:
+ * - CATALOG_UPSTREAM_ERROR → TalkXDataUnavailableState + "Tentar de novo";
+ * - CATALOG_NOT_CONFIGURED / CATALOG_CREDENTIALS_INVALID → aviso de admin
+ *   com o código visível (o agente não resolve credencial de PromoGifts);
+ * - 429 e demais falhas → mensagem crua + retry (o toast/cooldown do 429 é
+ *   responsabilidade de useRateLimitCooldown, chamado pelo componente pai).
+ */
+export function CatalogErrorState({ code, message, onRetry, retryDisabled }: CatalogErrorStateProps) {
+  const retryButton = onRetry && (
+    <Button variant="outline" size="sm" onClick={onRetry} disabled={retryDisabled} className="mt-2">
+      Tentar de novo
+    </Button>
+  );
+
+  if (code === 'CATALOG_UPSTREAM_ERROR') {
+    return (
+      <div className="space-y-3">
+        <TalkXDataUnavailableState what="O catálogo PromoGifts" />
+        {retryButton && <div className="flex justify-center">{retryButton}</div>}
+      </div>
+    );
+  }
+
+  if (code === 'CATALOG_NOT_CONFIGURED' || code === 'CATALOG_CREDENTIALS_INVALID') {
+    return (
+      <AlertCard tone="danger">
+        <p className="font-semibold">Catálogo PromoGifts indisponível para os agentes</p>
+        <p>
+          Fale com um administrador para revisar as credenciais de integração.
+          {' '}Código do erro: <code className="font-mono">{code}</code>.
+        </p>
+      </AlertCard>
+    );
+  }
+
+  return (
+    <AlertCard tone="danger">
+      {message}
+      {retryButton}
+    </AlertCard>
   );
 }
 

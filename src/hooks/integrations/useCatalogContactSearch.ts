@@ -11,14 +11,46 @@ import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 const log = getLogger('CatalogSendEvents');
 import type { ContactResult } from '@/components/catalog/useSendProduct';
 
-/** Sem `query`: 15 contatos mais recentes. Com `query`: nome ou telefone. */
-export async function fetchCatalogContactResults(query: string): Promise<ContactResult[]> {
+/** CT-43 — mínimo de caracteres para a busca sair do estado "recentes". */
+export const CONTACT_SEARCH_MIN_CHARS = 2;
+
+/** CT-43 — só os dígitos de um termo de busca. O usuário digita o telefone
+ * formatado ("+55 (41) 9 9999") e a coluna `contacts.phone` guarda outra
+ * máscara (ou só dígitos); comparar sem pontuação evita depender do formato
+ * exato da linha. */
+export function contactSearchDigits(raw: string): string {
+  return raw.replace(/\D/g, '');
+}
+
+/**
+ * CT-43 — monta o filtro `.or()` de nome/telefone para um termo de busca.
+ * Devolve `null` quando o termo tem menos de `CONTACT_SEARCH_MIN_CHARS`
+ * caracteres: um único caractere casa quase toda a base e o chamador cai na
+ * lista de recentes (comportamento anterior: 1 char já disparava a busca).
+ */
+export function buildContactSearchFilter(query: string): string | null {
   const trimmed = query.trim();
-  const request = trimmed
+  if (trimmed.length < CONTACT_SEARCH_MIN_CHARS) return null;
+
+  const clauses = [`name.ilike.${escapeOrFilterValue(`%${trimmed}%`)}`];
+  const digits = contactSearchDigits(trimmed);
+  // Sem dígitos no termo ("tom"), a cláusula de telefone casaria "%" — todo
+  // contato — e derrubaria a busca por nome. Só entra quando há dígito.
+  if (digits.length > 0) {
+    clauses.push(`phone.ilike.${escapeOrFilterValue(`%${digits}%`)}`);
+  }
+  return clauses.join(',');
+}
+
+/** Sem busca (ou termo curto demais): 15 contatos mais recentes.
+ * Com busca (≥ 2 chars): nome ou telefone (telefone só por dígitos). */
+export async function fetchCatalogContactResults(query: string): Promise<ContactResult[]> {
+  const filter = buildContactSearchFilter(query);
+  const request = filter
     ? supabase
         .from('contacts')
         .select('id, name, phone, avatar_url')
-        .or(`name.ilike.${escapeOrFilterValue(`%${trimmed}%`)},phone.ilike.${escapeOrFilterValue(`%${trimmed}%`)}`)
+        .or(filter)
         .limit(15)
     : supabase
         .from('contacts')

@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
 
@@ -128,8 +128,10 @@ let catalogStatsCache: { data: unknown; expiresAt: number } | null = null;
 const CATALOG_STATS_TTL_MS = 60_000;
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 60;
-const RATE_WINDOW_MS = 60_000;
+// CT-77: exportado para o teste de rate limit derivar o limite do próprio
+// módulo — quando o CT-19 subir para 120/min, o teste acompanha sem edição.
+export const RATE_LIMIT = 60;
+export const RATE_WINDOW_MS = 60_000;
 
 function checkRateLimit(userId: string): boolean {
   const now = Date.now();
@@ -161,7 +163,30 @@ function externalDatabaseErrorResponse(error: ExternalDatabaseError, req: Reques
   }, 503, req);
 }
 
-async function promogiftsCatalogHandler(req: Request): Promise<Response> {
+/** Client do catálogo externo. CT-77: extraído para o seam de teste aceitar um
+ * client injetado; `null` = secrets ausentes → 503 CATALOG_NOT_CONFIGURED. */
+function createExternalCatalogClient(url: string | undefined, key: string | undefined): SupabaseClient | null {
+  if (!url || !key) return null;
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+}
+
+/**
+ * CT-77 — seam de injeção para os testes Deno. Em produção `deps` não é
+ * passado e os dois clientes continuam sendo criados como antes (o handler
+ * segue recebendo só `req`); os testes passam clientes falsos para exercitar
+ * as 6 ações sem tocar no banco nem nos secrets.
+ */
+export interface CatalogHandlerDeps {
+  /** Substitui o client autenticado (auth.getUser) usado só para validar o JWT. */
+  localClient?: SupabaseClient;
+  /** Substitui o client do catálogo externo (PROMOGIFTS_*). */
+  extClient?: SupabaseClient;
+}
+
+export async function promogiftsCatalogHandler(
+  req: Request,
+  deps: CatalogHandlerDeps = {},
+): Promise<Response> {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
@@ -173,7 +198,7 @@ async function promogiftsCatalogHandler(req: Request): Promise<Response> {
       return jsonRes({ error: "Unauthorized" }, 401, req);
     }
 
-    const localClient = createClient(
+    const localClient = deps.localClient ?? createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } }
@@ -193,15 +218,15 @@ async function promogiftsCatalogHandler(req: Request): Promise<Response> {
     // is already protected by the canonical user's JWT, rate-limited and
     // read-only, so the cross-project credential belongs only in Edge secrets.
     const extKey = Deno.env.get("PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY");
-    if (!extUrl || !extKey) {
+    // CT-77 — quando o client externo é injetado (testes), os secrets deixam de
+    // ser exigidos; sem injeção o caminho abaixo é idêntico ao de produção.
+    const extClient = deps.extClient ?? createExternalCatalogClient(extUrl, extKey);
+    if (!extClient) {
       return jsonRes({
         error: "External DB not configured",
         code: "CATALOG_NOT_CONFIGURED",
       }, 503, req);
     }
-    const extClient = createClient(extUrl, extKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
 
     const rawBody = await req.json();
     const bodyParse = ActionSchema.safeParse(rawBody);
@@ -391,4 +416,6 @@ async function promogiftsCatalogHandler(req: Request): Promise<Response> {
   }
 }
 
-if (import.meta.main) Deno.serve(promogiftsCatalogHandler);
+// O handler aceita um 2º parâmetro opcional de injeção (CT-77); o wrapper
+// explícito evita que Deno.serve passe ServeHandlerInfo no lugar de `deps`.
+if (import.meta.main) Deno.serve((req) => promogiftsCatalogHandler(req));

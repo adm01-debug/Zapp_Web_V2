@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
-  useSendToContact, openContactChat, PHOTO_MIN_INTERVAL_MS, PHOTO_INTERVAL_JITTER_MS,
+  useSendToContact, useContactSearch, openContactChat, PHOTO_MIN_INTERVAL_MS, PHOTO_INTERVAL_JITTER_MS,
 } from '../useSendProduct';
 import { CATALOG_SEND_EVENTS_KEY } from '@/hooks/integrations/useCatalogRecentSends';
 
@@ -12,10 +12,14 @@ vi.mock('@/services/outbound-message.service', () => ({
   sendOutboundMessage: (...args: unknown[]) => mockSendOutboundMessage(...args),
 }));
 
+const mockFetchCatalogContacts = vi.hoisted(() => vi.fn());
 const mockLogCatalogSendEvent = vi.hoisted(() => vi.fn());
 vi.mock('@/hooks/integrations/useCatalogContactSearch', () => ({
-  fetchCatalogContactResults: vi.fn(),
+  fetchCatalogContactResults: (...args: unknown[]) => mockFetchCatalogContacts(...args),
   logCatalogSendEvent: (...args: unknown[]) => mockLogCatalogSendEvent(...args),
+  // CT-43 — useSendProduct importa esta constante do módulo real: sem ela no
+  // mock o gate de 2 caracteres vira `length >= undefined` (sempre falso).
+  CONTACT_SEARCH_MIN_CHARS: 2,
 }));
 
 // CT-06 — o módulo usa `sonner` (não `use-toast`) depois desta etapa.
@@ -36,6 +40,8 @@ function wrapper({ children }: { children: ReactNode }) {
 const resetSendMocks = () => {
   queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   mockSendOutboundMessage.mockReset();
+  mockFetchCatalogContacts.mockReset();
+  mockFetchCatalogContacts.mockResolvedValue([]);
   mockLogCatalogSendEvent.mockReset();
   mockLogCatalogSendEvent.mockResolvedValue(undefined);
   sonnerToast.success.mockReset();
@@ -171,6 +177,94 @@ describe('useSendToContact — CT-05: throttle e falha parcial', () => {
   });
 });
 
+describe('useSendToContact — CT-46: contador de progresso do envio', () => {
+  beforeEach(resetSendMocks);
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('reporta "feitas/total" a cada mensagem enviada', async () => {
+    vi.useFakeTimers();
+    // Cada envio só resolve quando o teste mandar: assim cada passo do
+    // contador é observado separadamente (com promises já resolvidas o React
+    // agrupa os estados intermediários num único commit).
+    const resolvers: Array<(value: { id: string }) => void> = [];
+    mockSendOutboundMessage.mockImplementation(() => new Promise((resolve) => { resolvers.push(resolve); }));
+
+    const { result } = renderHook(() => useSendToContact(vi.fn()), { wrapper });
+
+    let sending!: Promise<void>;
+    await act(async () => {
+      sending = result.current.sendProductToContact(CONTACT, 'mensagem', ['u1', 'u2']);
+    });
+    expect(result.current.sendProgress).toEqual({ done: 0, total: 2 });
+
+    await act(async () => {
+      resolvers[0]({ id: 'msg-1' });
+      for (let i = 0; i < 5; i++) await Promise.resolve();
+    });
+    expect(result.current.sendProgress).toEqual({ done: 1, total: 2 });
+
+    // A 2ª mensagem só começa depois do intervalo humano (CT-05).
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+    expect(mockSendOutboundMessage).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      resolvers[1]({ id: 'msg-2' });
+      await sending;
+    });
+    expect(result.current.sendProgress).toEqual({ done: 2, total: 2 });
+  });
+
+  it('sem foto o envio tem 1 mensagem no total', async () => {
+    mockSendOutboundMessage.mockResolvedValue({ id: 'msg' });
+    const { result } = renderHook(() => useSendToContact(vi.fn()), { wrapper });
+
+    expect(result.current.sendProgress).toBeNull();
+
+    await act(async () => {
+      await result.current.sendProductToContact(CONTACT, 'mensagem', []);
+    });
+
+    expect(result.current.sendProgress).toEqual({ done: 1, total: 1 });
+  });
+});
+
+describe('useContactSearch — CT-43: mínimo de 2 caracteres e debounce de 300 ms', () => {
+  beforeEach(() => {
+    resetSendMocks();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('1 caractere não espera debounce; 2+ caracteres só buscam depois de 300 ms', async () => {
+    const { result } = renderHook(() => useContactSearch('selectContact'), { wrapper });
+
+    // Montagem: sem termo, a lista de recentes é carregada na hora.
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(mockFetchCatalogContacts).toHaveBeenCalledWith('');
+    mockFetchCatalogContacts.mockClear();
+
+    // 1 caractere: sem debounce (o próprio fetch trata como "sem busca").
+    await act(async () => { result.current.setContactSearch('t'); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(mockFetchCatalogContacts).toHaveBeenCalledTimes(1);
+    mockFetchCatalogContacts.mockClear();
+
+    // 2 caracteres: nada em 299 ms, busca em 300 ms.
+    await act(async () => { result.current.setContactSearch('tom'); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(299); });
+    expect(mockFetchCatalogContacts).not.toHaveBeenCalled();
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+    expect(mockFetchCatalogContacts).toHaveBeenCalledWith('tom');
+  });
+});
+
 describe('useSendToContact — CT-06/CT-07: toast de sucesso e cache do rail', () => {
   beforeEach(resetSendMocks);
 
@@ -227,5 +321,71 @@ describe('useSendToContact — CT-06/CT-07: toast de sucesso e cache do rail', (
     expect(mockNavigateToView).toHaveBeenCalledWith('inbox');
     expect((window as Window & { __pendingOpenContactId?: string }).__pendingOpenContactId).toBe('c9');
     delete (window as Window & { __pendingOpenContactId?: string }).__pendingOpenContactId;
+  });
+});
+
+// CT-78 — a decisão de status (useSendProduct.ts, mesma fórmula em
+// CatalogBulkSendDialog.tsx): 0 falhas = sent, todas falharam = failed, o resto
+// = partial. Aqui os 3 casos são travados pelo status do evento logado.
+describe('useSendToContact — CT-78: status do evento de envio (sent/partial/failed)', () => {
+  beforeEach(resetSendMocks);
+
+  const PRODUCT = { id: 'p1', name: 'Caneta Azul', sku: 'PO-13153' };
+
+  const loggedStatus = (): string => {
+    const calls = mockLogCatalogSendEvent.mock.calls;
+    return (calls[calls.length - 1][0] as { status: string }).status;
+  };
+
+  it('todas as mensagens entregues → sent (todos os ids, nenhuma falha)', async () => {
+    mockSendOutboundMessage.mockResolvedValue({ id: 'msg-1' });
+    const { result } = renderHook(() => useSendToContact(vi.fn()), { wrapper });
+
+    await act(async () => {
+      await result.current.sendProductToContact(CONTACT, 'mensagem', ['u1'], PRODUCT, 'agent-1');
+    });
+    await act(async () => { await Promise.resolve(); });
+
+    expect(mockLogCatalogSendEvent).toHaveBeenCalledTimes(1);
+    expect(mockLogCatalogSendEvent).toHaveBeenCalledWith(expect.objectContaining({
+      productId: 'p1', contactId: 'c1', agentId: 'agent-1',
+      imagesCount: 1, messageLength: 'mensagem'.length,
+      status: 'sent', messageIds: ['msg-1'],
+    }));
+  });
+
+  it('parte das fotos falha → partial (só os ids entregues são logados)', async () => {
+    mockSendOutboundMessage
+      .mockResolvedValueOnce({ id: 'msg-1' })
+      .mockRejectedValueOnce(new Error('foto falhou'))
+      .mockResolvedValueOnce({ id: 'msg-3' });
+    const { result } = renderHook(() => useSendToContact(vi.fn()), { wrapper });
+
+    await act(async () => {
+      await result.current.sendProductToContact(CONTACT, 'mensagem', ['u1', 'u2', 'u3'], PRODUCT, 'agent-1');
+    });
+    await act(async () => { await Promise.resolve(); });
+
+    expect(loggedStatus()).toBe('partial');
+    expect(mockLogCatalogSendEvent).toHaveBeenCalledWith(expect.objectContaining({
+      status: 'partial', imagesCount: 3, messageIds: ['msg-1', 'msg-3'],
+    }));
+  });
+
+  it('nenhuma mensagem entregue → failed, sem messageIds e sem onSuccess', async () => {
+    mockSendOutboundMessage.mockRejectedValue(new Error('network down'));
+    const onSuccess = vi.fn();
+    const { result } = renderHook(() => useSendToContact(onSuccess), { wrapper });
+
+    await act(async () => {
+      await result.current.sendProductToContact(CONTACT, 'mensagem', ['u1'], PRODUCT, 'agent-1');
+    });
+    await act(async () => { await Promise.resolve(); });
+
+    expect(loggedStatus()).toBe('failed');
+    expect(mockLogCatalogSendEvent).toHaveBeenCalledWith(expect.objectContaining({
+      status: 'failed', imagesCount: 1, messageIds: [],
+    }));
+    expect(onSuccess).not.toHaveBeenCalled();
   });
 });

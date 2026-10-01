@@ -8,8 +8,9 @@ import { TasksEmptyState }      from '../TasksEmptyState';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import { groupUpcomingByDay }   from '@/hooks/tasks/workItemAggregates';
 import type { BucketsByDue, DayGroup } from '@/hooks/tasks/workItemAggregates';
+import type { WorkItemCardActions } from '../shared/cardActions';
 
-interface Props {
+interface Props extends WorkItemCardActions {
   byDue: BucketsByDue;
   isLoading: boolean;
   /** Texto da busca (compatibilidade com chamadas antigas do modo Lista). */
@@ -37,6 +38,9 @@ interface SectionProps {
   hint?: string;
   defaultOpen?: boolean;
   headingClass?: string;
+  /** Ações do card (Fase C2) — passadas ao `WorkItemCard` de cada item.
+   *  Opcional de propósito: a `Section` nunca quebra se o chamador não mandar. */
+  cardActions?: WorkItemCardActions;
   onOpen: Props['onOpen'];
   onToggleDone: Props['onToggleDone'];
   onMoveTo: Props['onMoveTo'];
@@ -44,7 +48,7 @@ interface SectionProps {
   hasMounted: React.MutableRefObject<boolean>;
 }
 
-function Section({ title, items, olderItems = [], groups, hint, defaultOpen = true, headingClass = '', onOpen, onToggleDone, onMoveTo, onDelete, hasMounted }: SectionProps) {
+function Section({ title, items, olderItems = [], groups, hint, defaultOpen = true, headingClass = '', cardActions, onOpen, onToggleDone, onMoveTo, onDelete, hasMounted }: SectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [showOlder, setShowOlder] = useState(false);
   // Etapa 50: com reduced-motion as animacoes (entrada e saida) viram instantaneas.
@@ -54,25 +58,37 @@ function Section({ title, items, olderItems = [], groups, hint, defaultOpen = tr
   if (items.length === 0 && olderItems.length === 0) return null;
   const Icon = open ? ChevronDown : ChevronRight;
   const visible = showOlder ? [...items, ...olderItems] : items;
-  const renderCard = (item: WorkItem, index: number) => (
-    <motion.div
-      key={item.id}
-      initial={hasMounted.current ? false : { opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, height: 0, transition: { duration: reduceMotion ? 0 : 0.2 } }}
-      transition={{ duration: reduceMotion ? 0 : 0.15, delay: reduceMotion ? 0 : Math.min(index, 12) * 0.02 }}
-      className="overflow-hidden"
-    >
-      <WorkItemCard
-        item={item}
-        mode="list"
-        onOpen={() => onOpen(item)}
-        onToggleDone={() => onToggleDone(item)}
-        onMoveTo={(to) => onMoveTo(item, to)}
-        onDelete={() => onDelete(item)}
-      />
-    </motion.div>
-  );
+  const renderCard = (item: WorkItem, index: number) => {
+    const { doingCount, onOpenContact, onRequestWaitingReason, onComplete, onReopen, onSnooze, onClearReminder, onOpenReminder } = cardActions ?? {};
+    return (
+      <motion.div
+        key={item.id}
+        initial={hasMounted.current ? false : { opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, height: 0, transition: { duration: reduceMotion ? 0 : 0.2 } }}
+        transition={{ duration: reduceMotion ? 0 : 0.15, delay: reduceMotion ? 0 : Math.min(index, 12) * 0.02 }}
+        className="overflow-hidden"
+      >
+        <WorkItemCard
+          item={item}
+          mode="list"
+          onOpen={() => onOpen(item)}
+          onToggleDone={() => onToggleDone(item)}
+          onMoveTo={(to) => onMoveTo(item, to)}
+          onDelete={() => onDelete(item)}
+          contactName={item.contact?.name ?? undefined}
+          onOpenContact={onOpenContact ? () => onOpenContact(item) : undefined}
+          onRequestWaitingReason={onRequestWaitingReason ? () => onRequestWaitingReason(item) : undefined}
+          doingCount={doingCount ?? 0}
+          onComplete={onComplete ? () => onComplete(item) : undefined}
+          onReopen={onReopen ? () => onReopen(item) : undefined}
+          onSnooze={onSnooze ? (minutes) => onSnooze(item, minutes) : undefined}
+          onClearReminder={onClearReminder ? () => onClearReminder(item) : undefined}
+          onOpenReminder={onOpenReminder ? () => onOpenReminder(item) : undefined}
+        />
+      </motion.div>
+    );
+  };
   return (
     <div className="space-y-1.5">
       <div className="flex items-center gap-1">
@@ -139,7 +155,10 @@ function Section({ title, items, olderItems = [], groups, hint, defaultOpen = tr
   );
 }
 
-export function TasksListMode({ byDue, isLoading, searchQuery, filtersActive, onOpen, onToggleDone, onMoveTo, onDelete, onClearFilter, hasMounted }: Props) {
+export function TasksListMode({
+  byDue, isLoading, searchQuery, filtersActive, onOpen, onToggleDone, onMoveTo, onDelete, onClearFilter, hasMounted,
+  doingCount, onOpenContact, onRequestWaitingReason, onComplete, onReopen, onSnooze, onClearReminder, onOpenReminder,
+}: Props) {
   if (isLoading) {
     return (
       <div className="space-y-1.5">
@@ -156,14 +175,19 @@ export function TasksListMode({ byDue, isLoading, searchQuery, filtersActive, on
     return <TasksEmptyState variant="all" />;
   }
 
+  // Ações do card (Fase C2) num objeto só — evita repetir 7 props nas 6 seções.
+  const cardActions: WorkItemCardActions = {
+    doingCount, onOpenContact, onRequestWaitingReason, onComplete, onReopen, onSnooze, onClearReminder, onOpenReminder,
+  };
+
   return (
     <div className="space-y-6 pb-8">
-      <Section title="Atrasadas"   items={byDue.overdue}   headingClass="text-destructive" defaultOpen onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
-      <Section title="Hoje"        items={byDue.today}     headingClass="text-warning"     defaultOpen onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
-      <Section title="Amanhã"     items={byDue.tomorrow}  defaultOpen onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
-      <Section title="Próximas"   items={byDue.upcoming}  groups={groupUpcomingByDay(byDue.upcoming)} hint="Ordenado por prazo, depois prioridade" defaultOpen onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
-      <Section title="Sem prazo"   items={byDue.noDue}    defaultOpen={byDue.noDue.length <= 10} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
-      <Section title="Concluídas (7 dias)" items={byDue.done7d} olderItems={byDue.doneOlder} headingClass="text-muted-foreground/60" defaultOpen={false} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
+      <Section title="Atrasadas"   items={byDue.overdue}   headingClass="text-destructive" defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
+      <Section title="Hoje"        items={byDue.today}     headingClass="text-warning"     defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
+      <Section title="Amanhã"     items={byDue.tomorrow}  defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
+      <Section title="Próximas"   items={byDue.upcoming}  groups={groupUpcomingByDay(byDue.upcoming)} hint="Ordenado por prazo, depois prioridade" defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
+      <Section title="Sem prazo"   items={byDue.noDue}    defaultOpen={byDue.noDue.length <= 10} cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
+      <Section title="Concluídas (7 dias)" items={byDue.done7d} olderItems={byDue.doneOlder} headingClass="text-muted-foreground/60" defaultOpen={false} cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
     </div>
   );
 }

@@ -315,6 +315,16 @@
   border-radius: var(--radius-lg);
   transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
 }
+
+/* CT-72 — cards abaixo da dobra: o browser adia o render (layout/paint) até
+   o card chegar perto do viewport. `contain-intrinsic-size: auto` faz o
+   placeholder usar a altura real medida no 1º render; 320px é só o palpite
+   para um card nunca pintado (evita CLS quando o browser não lembra do
+   tamanho). Mesmo padrão de .content-auto (accessibility.css). */
+.catalog-card--offscreen {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px;
+}
 .catalog-card:hover {
   border-color: hsl(var(--primary) / 0.4);
   box-shadow: var(--glow-primary-sm);

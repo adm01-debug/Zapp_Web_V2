@@ -22,12 +22,16 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
-const { updateSettingsSpy } = vi.hoisted(() => ({ updateSettingsSpy: vi.fn() }));
+const { updateSettingsSpy, settingsDeNotificacao } = vi.hoisted(() => ({
+  updateSettingsSpy: vi.fn(),
+  // E39 — o ganho do alerta tem de derivar DESTE valor, não de um literal no teste.
+  settingsDeNotificacao: { soundEnabled: true, soundVolume: 70 },
+}));
 
 // E38 — o controle de mídia não pode encostar nas configurações de notificação.
 vi.mock('@/hooks/system/useNotificationSettings', () => ({
   useNotificationSettings: () => ({
-    settings: { soundEnabled: true, soundVolume: 70 },
+    settings: settingsDeNotificacao,
     updateSettings: updateSettingsSpy,
     isSaving: false,
   }),
@@ -50,7 +54,17 @@ import { SOUND_CONFIGS } from '@/utils/soundConfigs';
 
 // ─── Grafo WebAudio falso: jsdom não tem WebAudio, e é justamente aqui que se
 // ─── prova que o caminho da mídia não encosta no caminho dos alertas (E38–E40).
-const grafo = { osciladores: 0, ganhos: 0, rampas: [] as number[] };
+const grafo = {
+  osciladores: 0,
+  ganhos: 0,
+  rampas: [] as number[],
+  /** E39 — destinos para onde algum nó fez `connect` (o gargalo da cadeia WebAudio). */
+  conexoes: [] as unknown[],
+  /** E10 — quantos `AudioContext.close()` foram chamados. */
+  contexteFechados: 0,
+  /** E39 — o `destination` de cada contexto criado, para saber a QUAL deles o nó foi ligado. */
+  destinos: [] as object[],
+};
 
 class FakeGainNode {
   gain = {
@@ -60,7 +74,9 @@ class FakeGainNode {
     }),
     exponentialRampToValueAtTime: vi.fn(),
   };
-  connect = vi.fn();
+  connect = vi.fn((destino?: unknown) => {
+    grafo.conexoes.push(destino);
+  });
   disconnect = vi.fn();
 }
 
@@ -79,7 +95,15 @@ class FakeOscillatorNode {
 class FakeAudioContext {
   state = 'running';
   currentTime = 0;
-  destination = {};
+  destination: object;
+  constructor() {
+    this.destination = { nome: 'destination' };
+    grafo.destinos.push(this.destination);
+  }
+  close() {
+    grafo.contexteFechados += 1;
+    return Promise.resolve();
+  }
   createOscillator() {
     return new FakeOscillatorNode();
   }
@@ -111,6 +135,9 @@ describe('volume das mídias — controle, aplicação e separação dos alertas
     grafo.osciladores = 0;
     grafo.ganhos = 0;
     grafo.rampas = [];
+    grafo.conexoes = [];
+    grafo.contexteFechados = 0;
+    grafo.destinos = [];
     window.localStorage.clear();
     setVolume(DEFAULT_MEDIA_VOLUME_STATE.volume);
     setMuted(DEFAULT_MEDIA_VOLUME_STATE.muted);
@@ -129,13 +156,23 @@ describe('volume das mídias — controle, aplicação e separação dos alertas
     setMuted(true);
 
     vi.useFakeTimers();
-    playNotificationSound('message', 'chime', 70);
+    playNotificationSound('message', 'chime', settingsDeNotificacao.soundVolume);
     vi.runAllTimers();
     vi.useRealTimers();
 
     const config = SOUND_CONFIGS.chime.message;
     expect(grafo.osciladores).toBe(config.frequencies.length);
-    expect(grafo.rampas[0]).toBeCloseTo(config.gains[0] * 0.7, 5);
+    expect(grafo.rampas[0]).toBeCloseTo(
+      config.gains[0] * (settingsDeNotificacao.soundVolume / 100),
+      5,
+    );
+
+    // E39 — a cadeia do alerta TERMINA num `ctx.destination` de verdade: é o que garante
+    // que o som sai (com a mídia muda, o volume da mídia em 0 e o store no chão).
+    expect(grafo.conexoes).toHaveLength(config.frequencies.length);
+    for (const destino of grafo.conexoes) {
+      expect(grafo.destinos).toContain(destino);
+    }
   });
 
   it('E40: mexer no volume da mídia não cria nem altera nó WebAudio dos alertas', () => {
@@ -192,7 +229,11 @@ describe('volume das mídias — controle, aplicação e separação dos alertas
       set: () => {},
     });
     const midia = await import('@/lib/mediaVolumeElement');
-    midia.applyMediaVolume(document.createElement('audio'), 0.5, false);
+    const elementoMidia = document.createElement('audio');
+    const desligar = midia.bindMediaVolume(elementoMidia, () => {});
+    // E10 — o contexto da mídia nasce no gesto de play, não no mount.
+    elementoMidia.dispatchEvent(new Event('play'));
+    desligar();
     if (descritorVolume) {
       Object.defineProperty(HTMLMediaElement.prototype, 'volume', descritorVolume);
     }
@@ -213,6 +254,9 @@ describe('volume das mídias — controle, aplicação e separação dos alertas
       expect(ler(arquivo), arquivo).toContain('ÂNCORA (não unificar)');
     }
     expect(ler('src/utils/notificationSounds.ts')).toContain('ÂNCORA (não unificar)');
+    // E41 — o toque da chamada é o módulo que mais tenta "unificar" os canais (o ganho
+    // dele também sai de settings.soundVolume): a âncora ali tem de estar pinada.
+    expect(ler('src/components/calls/IncomingCallAlert.tsx')).toContain('ÂNCORA (não unificar)');
     // o caminho da mídia nunca toca o gráfico dos alertas
     expect(ler('src/lib/mediaVolumeElement.ts')).not.toContain('createOscillator');
   });
@@ -354,22 +398,32 @@ describe('volume das mídias — controle, aplicação e separação dos alertas
     expect(getSnapshot().volume).toBe(100);
   });
 
-  it('E16: as setas e o M só agem com o foco no botão — não há captura global de teclado', () => {
+  it('E16: as setas e o M valem com o foco em qualquer parte do player — e não fora dele', () => {
     setVolume(50);
-    render(<MediaVolumeControl />);
+    const { container } = render(
+      <AudioMessagePlayer audioUrl="https://test.com/audio.webm" messageId="msg-e16" isSent={false} />,
+    );
+    const player = container.firstElementChild as HTMLElement;
+    const botaoPlay = player.querySelector('button') as HTMLButtonElement;
 
+    // Foco no botão de PLAY: qualquer parte do player serve (E16), não só o botão do volume.
+    fireEvent.keyDown(botaoPlay, { key: 'ArrowUp' });
+    expect(getSnapshot().volume).toBe(55);
+    fireEvent.keyDown(botaoPlay, { key: 'ArrowDown' });
+    expect(getSnapshot().volume).toBe(50);
+    fireEvent.keyDown(botaoPlay, { key: 'm' });
+    expect(getSnapshot().muted).toBe(true);
+    fireEvent.keyDown(botaoPlay, { key: 'm' });
+    expect(getSnapshot().muted).toBe(false);
+
+    // Fora do player o app não captura teclado (nenhum atalho global).
     fireEvent.keyDown(document.body, { key: 'ArrowUp' });
     expect(getSnapshot().volume).toBe(50);
 
-    const botao = labelAtual();
-    fireEvent.keyDown(botao, { key: 'ArrowUp' });
+    // Com o foco no PRÓPRIO botão do volume o mesmo teclado chega pelos dois caminhos
+    // (listener nativo do container + `onKeyDown` do React): tem de contar UMA vez.
+    fireEvent.keyDown(labelAtual(), { key: 'ArrowUp' });
     expect(getSnapshot().volume).toBe(55);
-
-    fireEvent.keyDown(botao, { key: 'ArrowDown' });
-    expect(getSnapshot().volume).toBe(50);
-
-    fireEvent.keyDown(botao, { key: 'm' });
-    expect(getSnapshot().muted).toBe(true);
   });
 
   it('E30/Sidebar: o botão do fone mostra indicador quando a mídia está muda ou baixa', () => {
@@ -402,5 +456,70 @@ describe('volume das mídias — controle, aplicação e separação dos alertas
     fireEvent.click(screen.getByRole('button', { name: 'Ajustar volume das mídias' }));
     expect(await screen.findByText('Vídeo sem áudio')).toBeInTheDocument();
     expect(screen.getByRole('slider', { name: 'Volume das mídias' })).toHaveAttribute('data-disabled');
+  });
+
+  // ─── E10: ciclo de vida do AudioContext da mídia ────────────────────────
+
+  /** Simula o iOS: `volume` é read-only, então o caminho do GainNode é o único. */
+  function semVolumeNativo<T>(corpo: () => T): T {
+    const descritor = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'volume');
+    Object.defineProperty(HTMLMediaElement.prototype, 'volume', {
+      configurable: true,
+      get: () => 1,
+      set: () => {},
+    });
+    try {
+      return corpo();
+    } finally {
+      if (descritor) Object.defineProperty(HTMLMediaElement.prototype, 'volume', descritor);
+    }
+  }
+
+  it('E10: o contexto da mídia nasce no primeiro play e fecha quando o último elemento solta', async () => {
+    vi.stubGlobal('AudioContext', FakeAudioContext);
+    vi.resetModules();
+    const midia = await import('@/lib/mediaVolumeElement');
+
+    semVolumeNativo(() => {
+      const elemento = document.createElement('audio');
+      const desligar = midia.bindMediaVolume(elemento, () =>
+        midia.applyMediaVolume(elemento, 0.5, false),
+      );
+
+      // No mount NADA de contexto: criado fora de um gesto o navegador o entrega
+      // suspenso, o áudio sai mudo e `resume()` não sai de `suspended`.
+      expect(grafo.ganhos).toBe(0);
+
+      // O play é o gesto: aí o contexto nasce e o ganho entra.
+      elemento.dispatchEvent(new Event('play'));
+      expect(grafo.ganhos).toBe(1);
+
+      desligar();
+      expect(grafo.contexteFechados).toBe(1);
+    });
+  });
+
+  it('E10: com dois players na tela o contexto só fecha quando o ÚLTIMO solta', async () => {
+    vi.stubGlobal('AudioContext', FakeAudioContext);
+    vi.resetModules();
+    const midia = await import('@/lib/mediaVolumeElement');
+
+    semVolumeNativo(() => {
+      const um = document.createElement('audio');
+      const dois = document.createElement('audio');
+      const soltarUm = midia.bindMediaVolume(um, () => midia.applyMediaVolume(um, 0.5, false));
+      const soltarDois = midia.bindMediaVolume(dois, () => midia.applyMediaVolume(dois, 0.5, false));
+
+      um.dispatchEvent(new Event('play'));
+      dois.dispatchEvent(new Event('play'));
+      expect(grafo.ganhos).toBe(2);
+
+      soltarUm();
+      // O outro continua na tela: fechar aqui emudeceria quem ainda está tocando.
+      expect(grafo.contexteFechados).toBe(0);
+
+      soltarDois();
+      expect(grafo.contexteFechados).toBe(1);
+    });
   });
 });

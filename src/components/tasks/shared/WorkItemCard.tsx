@@ -1,7 +1,15 @@
 import React from 'react';
 import { MoreVertical, MessageSquare } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { agingDays } from '@/hooks/tasks/workItemMachine';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import { PriorityChip }  from './PriorityChip';
@@ -9,6 +17,7 @@ import { DueChip }       from './DueChip';
 import { RemindChip }    from './RemindChip';
 import { ContactChip }   from './ContactChip';
 import { AgingDot }      from './AgingDot';
+import { MoveToMenu, MoveTargets } from '../board/MoveToMenu';
 
 interface Props {
   item: WorkItem;
@@ -16,23 +25,44 @@ interface Props {
   contactName?: string | null;
   onOpen?: () => void;
   onToggleDone?: () => void;
+  /** Kebab → "Concluir" (etapa 30). */
+  onComplete?: () => void;
+  /** Kebab → "Reabrir", quando o item já está concluído/cancelado. */
+  onReopen?: () => void;
   onMoveTo?: (status: WorkItemStatus) => void;
+  /** Kebab/MoveToMenu → "Aguardando" sem motivo: abre o Sheet (etapa 29). */
+  onRequestWaitingReason?: () => void;
+  /** Kebab → "Lembrar-me": adiar 15 min · 1 h · Amanhã 9h (etapa 30). */
+  onSnooze?: (minutes: number | 'tomorrow9') => void;
+  /** Kebab → "Lembrar-me → Remover alarme" e popover do RemindChip. */
+  onClearReminder?: () => void;
+  /** Kebab → "Lembrar-me → Escolher…" e popover do RemindChip. */
+  onOpenReminder?: () => void;
   onDelete?: () => void;
   onOpenContact?: () => void;
+  /** Contagem real de "Fazendo" — trava a opção cheia (etapa 29). */
+  doingCount?: number;
   isDragging?: boolean;
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
 }
 
 export const WorkItemCard = React.memo(function WorkItemCard({
-  item, mode, contactName, onOpen, onToggleDone, onMoveTo, onDelete, onOpenContact,
-  isDragging, dragHandleProps,
+  item, mode, contactName, onOpen, onToggleDone, onComplete, onReopen, onMoveTo,
+  onRequestWaitingReason, onSnooze, onClearReminder, onOpenReminder, onDelete,
+  onOpenContact, doingCount = 0, isDragging, dragHandleProps,
 }: Props) {
   const aging = ['doing','waiting'].includes(item.status) ? agingDays(item) : 0;
   const isDone = item.status === 'done' || item.status === 'cancelled';
   // Etapa 56: na Agenda o card é uma linha só, de 44px (h-11).
   const isAgenda = mode === 'agenda';
+  // Etapa 32: o contato vem do item quando o chamador não o monta.
+  const nomeContato = contactName ?? item.contact?.name ?? null;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Só atalhos do PRÓPRIO card: teclas disparadas por filhos (checkbox, kebab)
+    // não podem abrir/concluir o card — o Enter no kebab, por exemplo, abriria o
+    // Sheet junto com o menu.
+    if (e.target !== e.currentTarget) return;
     if (e.key === 'Enter') onOpen?.();
     if (e.key === 'x' || e.key === 'X') onToggleDone?.();
     if (e.key === 'Delete') onDelete?.();
@@ -58,15 +88,29 @@ export const WorkItemCard = React.memo(function WorkItemCard({
 
   const contexto = (
     <>
-      {contactName && <ContactChip contactName={contactName} onClick={onOpenContact} />}
+      {nomeContato && (
+        <ContactChip
+          contactName={nomeContato}
+          avatarUrl={item.contact?.avatar_url}
+          onClick={onOpenContact}
+        />
+      )}
       {item.due_date && !isDone && <DueChip dueDate={item.due_date} />}
       {item.remind_at && !isDone && (
-        <RemindChip remindAt={item.remind_at} notifiedAt={item.notified_at} />
+        <RemindChip
+          remindAt={item.remind_at}
+          notifiedAt={item.notified_at}
+          onSnooze={onSnooze}
+          onClearReminder={onClearReminder}
+          onOpenReminder={onOpenReminder}
+        />
       )}
       {aging > 0 && <AgingDot days={aging} />}
     </>
   );
 
+  // Etapa 30: kebab com os 5 grupos — Abrir · Concluir/Reabrir · Lembrar-me ▸ ·
+  // Mover para ▸ · Cancelar (D8: "Remover" virou "Cancelar", com undo).
   const kebab = (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -79,31 +123,42 @@ export const WorkItemCard = React.memo(function WorkItemCard({
           <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-44">
+      <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onOpen?.(); }}>Abrir</DropdownMenuItem>
-        {onMoveTo && (
-          <>
-            <DropdownMenuSeparator />
-            <span className="px-2 py-1 text-2xs text-muted-foreground">Mover para</span>
-            {KANBAN_COLUMNS
-              .filter(c => c.status !== item.status)
-              .map(c => (
-                <DropdownMenuItem
-                  key={c.status}
-                  onClick={(e) => { e.stopPropagation(); onMoveTo(c.status); }}
-                >
-                  {c.shortLabel}
-                </DropdownMenuItem>
-              ))
-            }
-          </>
-        )}
+        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); if (isDone) onReopen?.(); else onComplete?.(); }}>
+          {isDone ? 'Reabrir' : 'Concluir'}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>Lembrar-me</DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSnooze?.(15); }}>15 min</DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSnooze?.(60); }}>1 h</DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSnooze?.('tomorrow9'); }}>Amanhã 9h</DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onOpenReminder?.(); }}>Escolher…</DropdownMenuItem>
+            {item.remind_at && (
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onClearReminder?.(); }}>Remover alarme</DropdownMenuItem>
+            )}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+        <DropdownMenuSeparator />
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>Mover para</DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            <MoveTargets
+              item={item}
+              doingCount={doingCount}
+              onMoveTo={onMoveTo}
+              onRequestWaitingReason={onRequestWaitingReason}
+            />
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
           className="text-destructive focus:text-destructive"
         >
-          Remover
+          Cancelar
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -151,6 +206,13 @@ export const WorkItemCard = React.memo(function WorkItemCard({
             {checkbox}
             {titulo}
             <PriorityChip priority={item.priority} compact />
+            {/* Etapa 33/82: só existe sob ponteiro grosso; em desktop some. */}
+            <MoveToMenu
+              item={item}
+              doingCount={doingCount}
+              onMoveTo={onMoveTo}
+              onRequestWaitingReason={onRequestWaitingReason}
+            />
             {kebab}
           </div>
 
@@ -168,7 +230,7 @@ export const WorkItemCard = React.memo(function WorkItemCard({
           )}
 
           {/* Acoes rapidas (modo board, mobile) */}
-          {mode === 'board' && onOpenContact && contactName && (
+          {mode === 'board' && onOpenContact && nomeContato && (
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onOpenContact(); }}

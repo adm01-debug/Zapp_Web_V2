@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Edit2, Trash2, Copy, Eye, Search, FileText, Send, CheckCircle2, Clock, XCircle, Loader2, Variable } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
   useWhatsAppTemplates, TEMPLATE_CATEGORIES, TEMPLATE_LANGUAGES,
@@ -28,6 +28,9 @@ export function WhatsAppTemplatesManager() {
     isSaving, handleContentChange, handleSave, handleDelete, handleDuplicate,
     handlePreview, renderPreviewContent, openNew, openEdit,
   } = useWhatsAppTemplates();
+
+  // CT-70 — com "reduzir movimento" ligado, as linhas aparecem sem fade.
+  const prefersReducedMotion = useReducedMotion();
 
   return (
     <div className="space-y-4 md:space-y-6 w-full min-w-0">
@@ -88,7 +91,13 @@ export function WhatsAppTemplatesManager() {
                     const StatusIcon = STATUS_ICONS[statusInfo.iconName] || FileText;
                     const categoryInfo = TEMPLATE_CATEGORIES.find(c => c.value === template.category);
                     return (
-                      <motion.tr key={template.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="border-b border-border/50">
+                      <motion.tr
+                        key={template.id}
+                        initial={prefersReducedMotion ? false : { opacity: 0 }}
+                        animate={prefersReducedMotion ? undefined : { opacity: 1 }}
+                        exit={prefersReducedMotion ? undefined : { opacity: 0 }}
+                        className="border-b border-border/50"
+                      >
                         <TableCell><div><p className="font-medium">{template.name}</p><p className="text-xs text-muted-foreground truncate max-w-[200px]">{template.content}</p></div></TableCell>
                         <TableCell><Badge className={cn('text-xs', categoryInfo?.color)}>{categoryInfo?.label || template.category}</Badge></TableCell>
                         <TableCell><span className="text-sm">{TEMPLATE_LANGUAGES.find(l => l.value === template.language)?.label || template.language}</span></TableCell>

@@ -12,6 +12,13 @@ export interface UseVolumeRockerArgs {
   onToggleMute: () => void;
   /** Âncora onde a roda do mouse é ouvida (o <span> que embrulha o botão). */
   rootRef: RefObject<HTMLSpanElement | null>;
+  /**
+   * E16 — container do player. Os atalhos (setas, `M`, Enter) valem com o foco em
+   * QUALQUER parte do player, não só no botão do volume; fora dele seguem inertes
+   * (o app não captura teclado globalmente). O botão do volume continua funcionando
+   * sozinho quando não há player em volta (sidebar).
+   */
+  playerRef?: RefObject<HTMLElement | null>;
   /** Habilita clique/long-press/setas. Padrão: true. */
   enabled?: boolean;
   /** Habilita o ajuste por scroll (roda). Padrão: `enabled`. */
@@ -25,6 +32,63 @@ export interface VolumeRocker {
   handleTriggerClick: () => void;
   handlePointerDown: () => void;
   handleTriggerKeyDown: (event: KeyboardEvent<HTMLButtonElement>) => void;
+}
+
+/** O mínimo que os dois caminhos de teclado (botão e container) precisam do evento. */
+interface AtalhoDeVolume {
+  key: string;
+  target: EventTarget | null;
+  defaultPrevented: boolean;
+  preventDefault: () => void;
+}
+
+interface AcoesDoAtalho {
+  enabled: boolean;
+  step: number;
+  onAdjust: (delta: number) => void;
+  onToggleMute: () => void;
+  setOpen: Dispatch<SetStateAction<boolean>>;
+}
+
+/**
+ * Núcleo dos atalhos, compartilhado pelo `onKeyDown` do botão (evento do React) e pelo
+ * listener nativo do container (E16). Fonte única para os dois não divergirem.
+ */
+function aplicarAtalhoDeVolume(event: AtalhoDeVolume, acoes: AcoesDoAtalho): void {
+  const { enabled, step, onAdjust, onToggleMute, setOpen } = acoes;
+  if (!enabled) return;
+  // O mesmo teclado chega pelos dois caminhos quando o foco está no botão (o nativo no
+  // container roda antes do React, que escuta na raiz). Sem esta guarda, um ArrowUp
+  // andaria duas casas.
+  if (event.defaultPrevented) return;
+
+  // Não sequestrar as setas quando o foco está num campo de texto.
+  const target = event.target as HTMLElement | null;
+  if (
+    target &&
+    (target.isContentEditable ||
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement)
+  ) {
+    return;
+  }
+
+  if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    onAdjust(step);
+  } else if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    onAdjust(-step);
+  } else if (event.key === 'Enter') {
+    // Equivalente de teclado do clique longo: abre o slider. `preventDefault`
+    // impede o `click` nativo do botão (que alternaria o mudo) — mudo pelo
+    // teclado é Espaço ou `M`.
+    event.preventDefault();
+    setOpen(true);
+  } else if (event.key === 'm' || event.key === 'M') {
+    event.preventDefault();
+    onToggleMute();
+  }
 }
 
 /**
@@ -44,6 +108,7 @@ export function useVolumeRocker({
   onAdjust,
   onToggleMute,
   rootRef,
+  playerRef,
   enabled = true,
   wheelEnabled = enabled,
 }: UseVolumeRockerArgs): VolumeRocker {
@@ -73,6 +138,20 @@ export function useVolumeRocker({
     return () => element.removeEventListener('wheel', handleWheel);
   }, [rootRef, onAdjust, step, wheelEnabled]);
 
+  // E16 — atalhos com o foco em qualquer parte do player. Nativo (não `onKeyDown` do
+  // React) porque o alvo aqui é o container, e o teclado do React só chegaria ao nó
+  // com foco. `rootRef.current` NÃO serve de escopo: ele cobre só o próprio controle.
+  // Sem ref-espelho de propósito: escrever ref durante o render é proibido por
+  // `react-hooks/refs` (a mesma regra que motivou a assinatura deste hook).
+  useEffect(() => {
+    const player = playerRef?.current;
+    if (!player) return;
+    const aoTeclar = (event: globalThis.KeyboardEvent) =>
+      aplicarAtalhoDeVolume(event, { enabled, step, onAdjust, onToggleMute, setOpen });
+    player.addEventListener('keydown', aoTeclar);
+    return () => player.removeEventListener('keydown', aoTeclar);
+  }, [playerRef, enabled, step, onAdjust, onToggleMute, setOpen]);
+
   const handleTriggerClick = useCallback(() => {
     if (!enabled) return;
     if (longPressFiredRef.current) {
@@ -96,33 +175,13 @@ export function useVolumeRocker({
 
   const handleTriggerKeyDown = useCallback(
     (event: KeyboardEvent<HTMLButtonElement>) => {
-      if (!enabled) return;
-      // Não sequestrar as setas quando o foco está num campo de texto.
-      const target = event.target as HTMLElement | null;
-      if (
-        target &&
-        (target.isContentEditable ||
-          target instanceof HTMLInputElement ||
-          target instanceof HTMLTextAreaElement)
-      ) {
-        return;
-      }
-      if (event.key === 'ArrowUp') {
-        event.preventDefault();
-        onAdjust(step);
-      } else if (event.key === 'ArrowDown') {
-        event.preventDefault();
-        onAdjust(-step);
-      } else if (event.key === 'Enter') {
-        // Equivalente de teclado do clique longo: abre o slider. `preventDefault`
-        // impede o `click` nativo do botão (que alternaria o mudo) — mudo pelo
-        // teclado é Espaço ou `M`.
-        event.preventDefault();
-        setOpen(true);
-      } else if (event.key === 'm' || event.key === 'M') {
-        event.preventDefault();
-        onToggleMute();
-      }
+      aplicarAtalhoDeVolume(event, {
+        enabled,
+        step,
+        onAdjust,
+        onToggleMute,
+        setOpen,
+      });
     },
     [enabled, onAdjust, onToggleMute, step, setOpen],
   );

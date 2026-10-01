@@ -31,7 +31,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useExternalCatalog, useCatalogStats, useCatalogFavorites, ExternalProduct, type CatalogStats } from '@/hooks/integrations/useExternalCatalog';
 import { ExternalProductCard } from './ExternalProductCard';
 import { CatalogProductCardSkeleton } from './CatalogProductCard';
@@ -39,7 +39,7 @@ import { SendProductDialog } from './SendProductDialog';
 import { ModuleHeader, fmtAgo, AlertCard, TalkXPagination } from '@/components/talkx/talkxShared';
 import { CatalogRail } from './CatalogRail';
 import { useCatalogRecentSends } from '@/hooks/integrations/useCatalogRecentSends';
-import { CatalogKpiStrip, CategoryChips, AdvancedFilterChips, countAdvancedFilters, matchesAnySelected, DEFAULT_ADVANCED_FILTERS, type AdvancedFilters } from './catalogShared';
+import { CatalogKpiStrip, CategoryChips, AdvancedFilterChips, countAdvancedFilters, matchesAnySelected, DEFAULT_ADVANCED_FILTERS, CatalogErrorState, countLabel, useRateLimitCooldown, type AdvancedFilters } from './catalogShared';
 import { CatalogAdvancedFilters } from './CatalogAdvancedFilters';
 import { parseCatalogCategoryRoute, replaceCatalogCategoryRoute } from './catalogCategoryRoute';
 import { CatalogBulkBar } from './CatalogBulkBar';
@@ -87,14 +87,21 @@ export const ExternalProductManagement: React.FC = () => {
     suppliers,
     loading,
     error,
+    errorCode,
     fetchProducts,
     fetchCategories,
     fetchSuppliers,
     fetchProduct,
   } = useExternalCatalog();
 
+  // CT-59 — 429 da edge: toast + botões desabilitados por 10 s.
+  const coolingDown = useRateLimitCooldown(errorCode === 'CATALOG_RATE_LIMITED');
+
   // E56 — recentes/mais enviados do rail (catalog_send_events).
   const { recent: recentSends, topSent } = useCatalogRecentSends();
+
+  // CT-70 — com "reduzir movimento" ligado, nada entra animando.
+  const prefersReducedMotion = useReducedMotion();
 
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState<string>(
@@ -380,7 +387,10 @@ export const ExternalProductManagement: React.FC = () => {
       <TabsContent value="produtos">
     <div className="w-full min-w-0 xl:grid xl:grid-cols-[1fr_300px] 2xl:grid-cols-[1fr_320px] xl:gap-6">
     <div className="space-y-6 min-w-0">
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+      <motion.div
+        initial={prefersReducedMotion ? false : { opacity: 0, y: -10 }}
+        animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+      >
         {statsLoading ? (
           <div className="flex items-center gap-3.5">
             <Skeleton className="w-14 h-14 rounded-2xl shrink-0" />
@@ -398,7 +408,7 @@ export const ExternalProductManagement: React.FC = () => {
             right={(
               <>
                 <SyncStatusChip key={stats?.last_sync_at} lastSyncAt={stats?.last_sync_at} />
-                <Button variant="outline" size="sm" onClick={() => fetchProducts(buildFilters())}>
+                <Button variant="outline" size="sm" onClick={() => fetchProducts(buildFilters())} disabled={coolingDown}>
                   <RefreshCw className="w-4 h-4 mr-1" />
                   Atualizar
                 </Button>
@@ -449,7 +459,7 @@ export const ExternalProductManagement: React.FC = () => {
           )}
         </div>
 
-        <Select value={categoryId} onValueChange={handleCategoryChange}>
+        <Select value={categoryId} onValueChange={handleCategoryChange} disabled={coolingDown}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Categoria" />
           </SelectTrigger>
@@ -459,10 +469,12 @@ export const ExternalProductManagement: React.FC = () => {
               const subs = getSubcategories(cat.id);
               return (
                 <React.Fragment key={cat.id}>
-                  <SelectItem value={cat.id} className="font-semibold">{cat.name}</SelectItem>
+                  <SelectItem value={cat.id} className="font-semibold">
+                    {countLabel(cat.name, cat.products_count)}
+                  </SelectItem>
                   {subs.map((sub) => (
                     <SelectItem key={sub.id} value={sub.id} className="pl-6 text-sm">
-                      {sub.name}
+                      {countLabel(sub.name, sub.products_count)}
                     </SelectItem>
                   ))}
                 </React.Fragment>
@@ -471,12 +483,16 @@ export const ExternalProductManagement: React.FC = () => {
           </SelectContent>
         </Select>
 
-        <Select value={supplierId} onValueChange={setSupplierId}>
+        <Select value={supplierId} onValueChange={setSupplierId} disabled={coolingDown}>
           <SelectTrigger className="w-[170px]">
             <SelectValue placeholder="Fornecedor" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos fornecedores</SelectItem>
+            {/* CT-60 — fornecedor sem contagem: ExternalSupplier não tem campo
+                de contagem e a edge não devolve esse número (SUPPLIER_FIELDS em
+                promogifts-catalog/index.ts). Sem fonte real, o número não é
+                inventado — divergência registrada no relatório do CT-60. */}
             {suppliers.map((s) => (
               <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
             ))}
@@ -484,7 +500,7 @@ export const ExternalProductManagement: React.FC = () => {
         </Select>
 
         <div className="flex items-center gap-2">
-          <Switch id="stock-mgmt" checked={onlyInStock} onCheckedChange={setOnlyInStock} />
+          <Switch id="stock-mgmt" checked={onlyInStock} onCheckedChange={setOnlyInStock} disabled={coolingDown} />
           <Label htmlFor="stock-mgmt" className="text-sm cursor-pointer">Em estoque</Label>
         </div>
 
@@ -557,12 +573,12 @@ export const ExternalProductManagement: React.FC = () => {
       </div>
 
       {error && (
-        <AlertCard tone="danger">
-          {error}
-          <Button variant="link" size="sm" className="h-auto p-0 ml-2" onClick={() => fetchProducts(buildFilters())}>
-            Tentar de novo
-          </Button>
-        </AlertCard>
+        <CatalogErrorState
+          code={errorCode}
+          message={error}
+          onRetry={() => fetchProducts(buildFilters())}
+          retryDisabled={coolingDown}
+        />
       )}
 
       <div ref={gridRef}>
@@ -598,25 +614,27 @@ export const ExternalProductManagement: React.FC = () => {
         ) : (
           <AnimatePresence mode="popLayout">
             <motion.div
-              layout
+              layout={!prefersReducedMotion}
               className={
                 viewMode === 'grid'
                   ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4'
                   : 'space-y-2'
               }
             >
-              {visibleProducts.map((product) => (
+              {visibleProducts.map((product, index) => (
                 <motion.div
                   key={product.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
+                  layout={!prefersReducedMotion}
+                  initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.95 }}
+                  animate={prefersReducedMotion ? undefined : { opacity: 1, scale: 1 }}
+                  exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.95 }}
                 >
                   <ExternalProductCard
                     product={product}
                     onSend={handleSendProduct}
                     compact={viewMode === 'list'}
+                    /* CT-72 — as 4 capas acima da dobra saem eager + fetchpriority=high (mesma regra da grade do catálogo). */
+                    priority={index < 4}
                     isFavorite={isFav(product.id)}
                     onToggleFavorite={handleToggleFavorite}
                     isSelected={selectedIds.has(product.id)}

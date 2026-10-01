@@ -22,6 +22,7 @@ function tableProps(contact: Contact, onDelete = noop) {
     contacts: [contact],
     selectedIds: [] as string[],
     onSelectIds: noop,
+    onOpenDetails: noop,
     onOpenChat: noop,
     onEdit: noop,
     onDelete,
