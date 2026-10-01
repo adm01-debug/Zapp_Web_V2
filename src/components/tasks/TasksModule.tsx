@@ -14,6 +14,7 @@ import { TasksKpiStrip }    from './shared/TasksKpiStrip';
 import { TasksListMode }    from './list/TasksListMode';
 import { TasksBoardMode }   from './board/TasksBoardMode';
 import { TasksAgendaMode }  from './agenda/TasksAgendaMode';
+import { WorkItemSheet }    from './shared/WorkItemSheet';
 
 interface Props {
   defaultMode?: TaskMode;
@@ -30,6 +31,11 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
   // pelo usuario — visitar a rota nao reescreve a preferencia dele.
   const [mode, setModeState] = useState<TaskMode>(forceMode ? defaultMode : savedMode);
   const [selectedItem, setSelectedItem] = useState<WorkItem | null>(null);
+  /** Etapa 28 (B2): o Sheet aberto por DnD/kebab já vem pedindo o motivo. */
+  const [focusField, setFocusField] = useState<'waiting_reason' | undefined>(undefined);
+  /** Etapa 27: id lido da URL uma única vez, no primeiro render. */
+  const [idNaUrl] = useState(() => new URLSearchParams(window.location.search).get('task'));
+  const [linkConsumido, setLinkConsumido] = useState(false);
   const quickAddRef = useRef<HTMLInputElement>(null);
 
   const setMode = (m: TaskMode) => {
@@ -105,6 +111,31 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
     void move(item, to);
   }, [move]);
 
+  // Etapa 26 (B3): abrir e fechar o Sheet mantém a URL em sincronia (`?task=<id>`).
+  const abrirSheet = useCallback((item: WorkItem) => {
+    setLinkConsumido(true);
+    setSelectedItem(item);
+    const url = new URL(window.location.href);
+    url.searchParams.set('task', item.id);
+    window.history.replaceState(null, '', url.pathname + url.search);
+  }, []);
+
+  const fecharSheet = useCallback(() => {
+    setLinkConsumido(true);
+    setSelectedItem(null);
+    setFocusField(undefined);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('task');
+    window.history.replaceState(null, '', url.pathname + url.search);
+  }, []);
+
+  // Etapa 27: F5 com `?task=<id>` reabre o Sheet. Derivado (não é efeito):
+  // o item vem da URL e some assim que o usuário fecha o Sheet.
+  const itemDoLink = !linkConsumido && idNaUrl
+    ? hook.items.find(i => i.id === idNaUrl) ?? null
+    : null;
+  const itemAberto = selectedItem ?? itemDoLink;
+
   if (isError) {
     return (
       <div className="flex flex-col items-center gap-3 py-16 text-center">
@@ -165,7 +196,7 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
               isLoading={isLoading}
               searchQuery={filtros.filters.q}
               filtersActive={filtros.isActive}
-              onOpen={setSelectedItem}
+              onOpen={abrirSheet}
               onToggleDone={handleToggleDone}
               onMoveTo={handleMoveTo}
               onDelete={deleteItem}
@@ -180,7 +211,7 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
               doingCount={doingReal}
               onMove={move}
               onReorder={reorder}
-              onOpen={setSelectedItem}
+              onOpen={abrirSheet}
               onDelete={deleteItem}
               onCreate={create}
             />
@@ -192,7 +223,7 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
               isLoading={isLoading}
               onCreate={create}
               quickAddRef={quickAddRef}
-              onOpen={setSelectedItem}
+              onOpen={abrirSheet}
               onToggleDone={handleToggleDone}
               onMoveTo={handleMoveTo}
               onDelete={deleteItem}
@@ -200,6 +231,21 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
           )}
         </motion.div>
       </AnimatePresence>
+
+      {/* Etapa 26 (B3): clicar no card abre o Sheet de edição */}
+      <WorkItemSheet
+        item={itemAberto}
+        open={itemAberto !== null}
+        onOpenChange={(o) => { if (!o) fecharSheet(); }}
+        onSave={(it, patch) => { void hook.update(it.id, patch); }}
+        onMove={(it, to, waitingReason) => { void move(it, to, waitingReason ? { waitingReason } : undefined); }}
+        onSnooze={(it, minutes) => { void hook.snooze(it, minutes); }}
+        onSetReminder={(it, iso) => { void hook.setReminder(it, iso); }}
+        onCancel={(it) => { void hook.cancel(it); }}
+        contactOptions={contactOptions}
+        doingCount={doingReal}
+        focusField={focusField}
+      />
     </div>
   );
 }
