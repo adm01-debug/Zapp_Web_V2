@@ -7,6 +7,9 @@ const mockToastError = vi.fn();
 const mockSettings = {
   soundEnabled: true,
   slaBreachSound: true,
+  mentionSound: true,
+  mentionSoundType: 'bell',
+  soundVolume: 70,
   browserNotifications: false,
   sentimentAlertThreshold: 30,
   sentimentConsecutiveCount: 2,
@@ -43,11 +46,17 @@ vi.mock('@/lib/logger', () => ({
 
 import { useSentimentAlerts } from '@/hooks/inbox/useSentimentAlerts';
 import { claimNotificationEvent } from '@/lib/notificationDedupe';
+import { playNotificationSound } from '@/utils/notificationSounds';
+
+const mockPlaySound = vi.mocked(playNotificationSound);
 
 describe('useSentimentAlerts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     Object.assign(mockSettings, {
+      soundEnabled: true,
+      slaBreachSound: true,
+      mentionSound: true,
       sentimentAlertThreshold: 30,
       sentimentConsecutiveCount: 2,
       sentimentAlertEnabled: true,
@@ -221,5 +230,31 @@ describe('useSentimentAlerts', () => {
     const alerts = await result.current.getRecentAlerts();
     expect(alerts).toHaveLength(1);
     expect(alerts[0].contactId).toBe('c1');
+  });
+
+  it('toca o alerta de sentimento pela preferência de MENÇÃO, não pela de SLA', async () => {
+    // O som que sai aqui é o de MENÇÃO (`mention`/`mentionSoundType`). O portão estava em
+    // `slaBreachSound`, então desligar o som de SLA emudecia este alerta.
+    Object.assign(mockSettings, { soundEnabled: true, mentionSound: true, slaBreachSound: false });
+    mockFunctionsInvoke.mockResolvedValue({ data: { alerted: true, consecutiveLow: 3, emailSent: false }, error: null });
+    const { result } = renderHook(() => useSentimentAlerts());
+
+    await result.current.checkAndTriggerAlert({
+      contactId: 'c1', contactName: 'João', sentimentScore: 10, analysisId: 'a-portao-de-mencao',
+    });
+
+    expect(mockPlaySound).toHaveBeenCalledTimes(1);
+  });
+
+  it('cala o alerta quando o usuário desliga o som de menção', async () => {
+    Object.assign(mockSettings, { soundEnabled: true, mentionSound: false, slaBreachSound: true });
+    mockFunctionsInvoke.mockResolvedValue({ data: { alerted: true, consecutiveLow: 3, emailSent: false }, error: null });
+    const { result } = renderHook(() => useSentimentAlerts());
+
+    await result.current.checkAndTriggerAlert({
+      contactId: 'c1', contactName: 'João', sentimentScore: 10, analysisId: 'a-mencao-desligada',
+    });
+
+    expect(mockPlaySound).not.toHaveBeenCalled();
   });
 });
