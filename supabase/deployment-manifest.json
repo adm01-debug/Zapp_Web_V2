@@ -12,10 +12,6 @@
     "verify_jwt_true": 55,
     "verify_jwt_false": 12
   },
-  "orphan_allowlist": [
-    "sicoob-bridge",
-    "sicoob-bridge-reply"
-  ],
   "source_files": [
     {
       "path": "supabase/functions/_shared/ai-audio-authz.ts",
@@ -459,8 +455,8 @@
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "bytes": 31351,
-      "sha256": "fe59be633a548c05344c17a389fbf5e58396739f33199fc2d112bdc35e2758db"
+      "bytes": 32296,
+      "sha256": "2678f0fd1c6fdd7b594f3f2a1583befc536825024273e8f0617b7b622ab7aadd"
     },
     {
       "path": "supabase/functions/promogifts-catalog/index.ts",
@@ -1204,7 +1200,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "a50a111de920db96179b6ab3dd27e5957561c2f2fddb10104952c38089dd9597",
+      "source_sha256": "34eba2397cc94fc23f907be67b527278f0e50c2c8b506bc9c7336c0b7365d294",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1429,5 +1425,5 @@
       ]
     }
   ],
-  "manifest_sha256": "976ef48bed0170c2b7e6de82b69b5c38f00d7c3eeafbe137927c449d19b383b8"
+  "manifest_sha256": "590aad8490955b2ef07ded1adda78db65672ef8a8c7df7f75292376be649ec6d"
 }
