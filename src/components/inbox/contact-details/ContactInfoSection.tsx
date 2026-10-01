@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import type { TablesUpdate } from '@/integrations/supabase/types';
 import { EnrichedContactData } from '@/hooks/crm/useContactEnrichedData';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ContactInfoSectionProps {
   contact: {
@@ -99,6 +100,7 @@ function EditableField({ value, icon, onSave, placeholder, label }: EditableFiel
 }
 
 export function ContactInfoSection({ contact, enrichedData }: ContactInfoSectionProps) {
+  const queryClient = useQueryClient();
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     toast.success(`${label} copiado!`);
@@ -109,7 +111,9 @@ export function ContactInfoSection({ contact, enrichedData }: ContactInfoSection
     patch[field] = value;
     const { error } = await supabase.from('contacts').update(patch).eq('id', contact.id);
     if (error) throw error;
-  }, [contact.id]);
+    queryClient.invalidateQueries({ queryKey: ['contacts-search'] });
+    queryClient.invalidateQueries({ queryKey: ['contact-enriched', contact.id] });
+  }, [contact.id, queryClient]);
 
   return (
     <div className="space-y-0.5">
