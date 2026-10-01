@@ -390,3 +390,37 @@ node scripts/ci/check-workflow-pins.mjs         -> exit 0
 (`expected '' to contain 'q=liga'`). O diff nao toca `src/components/tasks` nem nada que o modulo importe, e o
 arquivo passa **3/3 isolado** sob a mesma config de cobertura. Mesmo padrao de flake de timing que ja apareceu
 no E2E de `auth.spec.ts` em 01/10.
+
+## Fase 1-B — T17 (01/10/2026 · executor: Hermes)
+
+**T17 — gate de microfone.** Antes de discar e de atender, o app sonda `getUserMedia({ audio: true })` e
+traduz a negativa em motivo operacional (`mic_blocked` / `mic_missing` / `mic_busy`, ids que já existiam em
+`capabilities.ts`). Antes disso a negativa caía no `catch` do adapter e virava "Erro ao ligar" genérico — o
+agente não sabia se era permissão, aparelho faltando ou outro programa usando o microfone.
+
+- O gate vive no funil real (`useSipClient.makeCall`/`acceptIncomingCall`), porque o painel VoIP chama o SIP
+  direto, sem passar pelo provider.
+- A sondagem **devolve as tracks** (`stop()`): sondar não é usar, e sem isso o microfone ficaria quente.
+- `ondevicechange` re-sonda **apenas quem tinha motivo** (não abre prompt de permissão a cada troca de aparelho).
+- **Ordem no provider:** o `dial` despachava `DIAL` antes de chamar o SIP; negativa de microfone deixaria a
+  máquina presa em `dialing`. O gate passou a ser aguardado **antes** do despacho.
+- **Orçamento preservado:** `useSipClient.ts` com **115 linhas** (aceite T09 pede < 120) — o bloco de
+  provisionamento saiu para `src/lib/calls/sipProvisioning.ts`.
+
+```
+npx tsc -b --force                              -> exit 0
+bun run test:coverage                           -> 379 arquivos, 4933 testes passando | 38 todo -> exit 0
+bun run test:contracts                          -> 27 arquivos, 758 testes passando -> exit 0
+node scripts/ci/typecheck-ratchet.mjs           -> nenhum novo erro de tipo -> exit 0
+node scripts/ci/lint-ratchet.mjs                -> nenhuma nova divida -> exit 0
+node scripts/ci/implicit-any-ratchet.mjs        -> 0 (baseline 0) -> exit 0
+node scripts/edge-deploy/generate-manifest.mjs --check  -> exit 0
+node scripts/ci/check-workflow-pins.mjs         -> exit 0
+```
+
+**Mutação (vermelho antes):** sem o gate no dial caem 3 testes; sem o gate no accept cai 1; sem o `stop()`
+das tracks cai 1; apagando o mapeamento do `NotFoundError` cai 1. Restaurado, 44/44 verdes.
+
+**Armadilha medida (registro):** guardar cópia de `.ts`/`.tsx` em `.tmp/` **dentro** da árvore do repo faz o
+`lint-ratchet` acusar a própria cópia como dívida nova (o eslint varre `.tmp`). Rascunho de código aqui só com
+sufixo `.bak`.

@@ -54,6 +54,8 @@ function sipDuble(overrides: Record<string, unknown> = {}) {
     sendDTMF: vi.fn(),
     acceptIncomingCall: vi.fn(async () => {}),
     rejectIncomingCall: vi.fn(async () => {}),
+    // T17: o provider confere o microfone antes de despachar o `DIAL`.
+    garantirMicrofone: vi.fn(async () => true),
     ...overrides,
   };
 }
@@ -125,9 +127,9 @@ function transicoesInvalidas(aviso: { mock: { calls: unknown[][] } }): string[] 
 }
 
 /** Leva o provider a `active`: disca e depois o motor reporta `active`. */
-function emChamadaAtiva(): ReturnType<typeof render> {
+async function emChamadaAtiva(): Promise<ReturnType<typeof render>> {
   const tela = montar();
-  fireEvent.click(screen.getByText('discar'));
+  await clicarDiscar();
   h.value = sipDuble({ callStatus: 'active', callDirection: 'outbound', currentNumber: '11999992048' });
   remontar(tela, `/${VOIP_VIEW_SEARCH}`);
   return tela;
@@ -137,13 +139,19 @@ beforeEach(() => {
   h.value = sipDuble();
 });
 
+/** T17: `dial` passou a ser assíncrono — o microfone é conferido ANTES do `DIAL`. */
+async function clicarDiscar() {
+  fireEvent.click(screen.getByText('discar'));
+  await act(async () => { await Promise.resolve(); });
+}
+
 describe('CallSessionProvider (T10)', () => {
-  it('aceite: `dial` navega para o dialer e mantém o estado da sessão', () => {
+  it('aceite: `dial` navega para o dialer e mantém o estado da sessão', async () => {
     montar();
     expect(texto('rota')).toBe('/');
     expect(texto('status')).toBe('idle');
 
-    fireEvent.click(screen.getByText('discar'));
+    await clicarDiscar();
 
     // navegou (MemoryRouter) para a view de telefonia…
     expect(texto('rota')).toBe(`/${VOIP_VIEW_SEARCH}`);
@@ -183,9 +191,9 @@ describe('CallSessionProvider (T10)', () => {
     expect(texto('callDirection')).toBe('inbound');
   });
 
-  it('o status do motor dirige a máquina, mantendo o mesmo sessionId', () => {
+  it('o status do motor dirige a máquina, mantendo o mesmo sessionId', async () => {
     const tela = montar();
-    fireEvent.click(screen.getByText('discar'));
+    await clicarDiscar();
     const sessaoDoDial = texto('sessao');
 
     // O motor estabelece: ESTABLISHED, sem trocar a sessão.
@@ -200,10 +208,10 @@ describe('CallSessionProvider (T10)', () => {
     expect(texto('status')).toBe('ended');
   });
 
-  it('`hangup` marca o encerramento local sem gerar transição inválida', () => {
+  it('`hangup` marca o encerramento local sem gerar transição inválida', async () => {
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
     montar();
-    fireEvent.click(screen.getByText('discar'));
+    await clicarDiscar();
     fireEvent.click(screen.getByText('desligar'));
 
     expect(texto('endedBy')).toBe('hangup_local');
@@ -285,9 +293,9 @@ describe('CallSessionProvider (T10)', () => {
    * usa como `p_id` das 3 gravações no banco. Se os dois divergirem, a linha da
    * chamada nunca é encontrada pelo resto do ciclo.
    */
-  it('T11: `dial` entrega o MESMO uuid ao evento DIAL e ao SIP', () => {
+  it('T11: `dial` entrega o MESMO uuid ao evento DIAL e ao SIP', async () => {
     montar();
-    fireEvent.click(screen.getByText('discar'));
+    await clicarDiscar();
 
     const sessao = texto('sessao');
     const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -302,14 +310,34 @@ describe('CallSessionProvider (T10)', () => {
    * `currentCallId` em mãos (chamada em curso no SIP), o provider adota esse
    * valor — e o evento `DIAL` e a chamada SIP recebem, os dois, o mesmo.
    */
-  it('T11: quando `currentCallId` já existe, DIAL e SIP usam esse mesmo id', () => {
+  it('T11: quando `currentCallId` já existe, DIAL e SIP usam esse mesmo id', async () => {
     const makeCall = vi.fn();
     h.value = sipDuble({ currentCallId: 'linha-em-curso', makeCall });
     montar();
-    fireEvent.click(screen.getByText('discar'));
+    await clicarDiscar();
 
     expect(texto('sessao')).toBe('linha-em-curso');
     expect(makeCall).toHaveBeenCalledWith('11999992048', 'linha-em-curso');
+  });
+
+  /**
+   * T17: com o microfone negado, o `DIAL` NÃO é despachado. O provider despachava
+   * primeiro e só então chamava o SIP — a negativa deixaria a máquina presa em
+   * `dialing`, com uma chamada fantasma na tela que nada encerrava.
+   */
+  it('T17: microfone negado não despacha o DIAL (não fica preso em dialing)', async () => {
+    const makeCall = vi.fn();
+    const garantirMicrofone = vi.fn(async () => false);
+    h.value = sipDuble({ makeCall, garantirMicrofone });
+    montar();
+
+    await clicarDiscar();
+    await act(async () => { await Promise.resolve(); });
+
+    expect(garantirMicrofone).toHaveBeenCalled();
+    expect(makeCall).not.toHaveBeenCalled();
+    expect(texto('status')).toBe('idle');
+    expect(texto('sessao')).toBe('-');
   });
 
   /**
@@ -338,12 +366,12 @@ describe('CallSessionProvider (T10)', () => {
    * gravações, então um id fora do formato mataria a persistência inteira
    * (`22P02`). Achado do agente DBA — o fallback antigo devolvia `local-…`.
    */
-  it('o id da sessão é sempre um uuid, mesmo sem `crypto.randomUUID`', () => {
+  it('o id da sessão é sempre um uuid, mesmo sem `crypto.randomUUID`', async () => {
     const original = globalThis.crypto;
     vi.stubGlobal('crypto', { getRandomValues: original.getRandomValues.bind(original) });
     try {
       montar();
-      fireEvent.click(screen.getByText('discar'));
+      await clicarDiscar();
       expect(texto('sessao')).toMatch(
         /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
       );
@@ -358,9 +386,9 @@ describe('CallSessionProvider (T10)', () => {
    * terminal. O clique em desligar continua fechando a sessão na hora, com
    * `HANGUP_LOCAL`.
    */
-  it('T12: desligamento local fecha a sessão como hangup_local (endReason, não só endedBy)', () => {
+  it('T12: desligamento local fecha a sessão como hangup_local (endReason, não só endedBy)', async () => {
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    emChamadaAtiva();
+    await emChamadaAtiva();
 
     act(() => { h.onEnd?.({ endedBy: 'hangup_local', sipCode: null }); });
 
@@ -371,9 +399,9 @@ describe('CallSessionProvider (T10)', () => {
     aviso.mockRestore();
   });
 
-  it('T12: fim informado pelo motor como remoto fecha a sessão como hangup_remote', () => {
+  it('T12: fim informado pelo motor como remoto fecha a sessão como hangup_remote', async () => {
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    emChamadaAtiva();
+    await emChamadaAtiva();
 
     act(() => { h.onEnd?.({ endedBy: 'hangup_remote', sipCode: 200 }); });
 
@@ -384,9 +412,9 @@ describe('CallSessionProvider (T10)', () => {
     aviso.mockRestore();
   });
 
-  it('T12: sem clique, o status `ended` do motor também fecha como hangup_remote', () => {
+  it('T12: sem clique, o status `ended` do motor também fecha como hangup_remote', async () => {
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const tela = emChamadaAtiva();
+    const tela = await emChamadaAtiva();
 
     h.value = sipDuble({ callStatus: 'ended', callDirection: 'outbound', currentNumber: '11999992048' });
     remontar(tela, `/${VOIP_VIEW_SEARCH}`);
@@ -397,9 +425,9 @@ describe('CallSessionProvider (T10)', () => {
     aviso.mockRestore();
   });
 
-  it('T12: o desfecho do hook NÃO reescreve um fim já decidido (guarda de terminal)', () => {
+  it('T12: o desfecho do hook NÃO reescreve um fim já decidido (guarda de terminal)', async () => {
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    emChamadaAtiva();
+    await emChamadaAtiva();
 
     fireEvent.click(screen.getByText('desligar'));
     expect(texto('endedBy')).toBe('hangup_local');
@@ -457,9 +485,9 @@ describe('CallSessionProvider (T10)', () => {
       aviso.mockRestore();
     });
 
-    it('falha técnica (`failure`) numa chamada ATENDIDA fecha em `failed`', () => {
+    it('falha técnica (`failure`) numa chamada ATENDIDA fecha em `failed`', async () => {
       const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      emChamadaAtiva();
+      await emChamadaAtiva();
 
       act(() => { h.onEnd?.({ endedBy: 'failure', sipCode: null }); });
 
@@ -515,10 +543,10 @@ describe('CallSessionProvider (T10)', () => {
    * depois, batia na guarda `isTerminal` e era descartado. Resultado: um 486 do
    * SIP ficava congelado como "não atendida" para sempre.
    */
-  it('T17 (D8): o `onEnd` real PREVALECE sobre o fim presumido que o status `ended` despacha antes', () => {
+  it('T17 (D8): o `onEnd` real PREVALECE sobre o fim presumido que o status `ended` despacha antes', async () => {
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const tela = montar();
-    fireEvent.click(screen.getByText('discar'));
+    await clicarDiscar();
     const sessao = texto('sessao');
 
     // 1) A ORDEM do defeito: o motor publica `ended` primeiro…

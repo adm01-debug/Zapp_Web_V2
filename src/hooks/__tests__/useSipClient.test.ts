@@ -200,6 +200,9 @@ describe('useSipClient', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    // T17: o gate instala um `navigator.mediaDevices` falso em alguns testes;
+    // sem isto o microfone (que falha) vazaria para os testes seguintes.
+    delete (navigator as { mediaDevices?: unknown }).mediaDevices;
   });
 
   // === CONNECTION TESTS ===
@@ -764,5 +767,90 @@ describe('useSipClient', () => {
     await act(async () => { liberarAnswered(); await escoar(20); });
     expect(concluidas).toEqual(['ringing', 'answered', 'ended']);
     expect(gravacoes().map(c => c.p_status)).toEqual(['ringing', 'answered', 'ended']);
+  });
+
+  // === T17: gate de microfone ===
+  // O gate roda ANTES de discar/atender: a negativa sai com o motivo
+  // operacional, e não como o "Erro ao ligar" genérico do catch do adapter.
+
+  /** Instala um `navigator.mediaDevices` cuja sondagem falha com este erro. */
+  function microfoneQueFalha(name: string) {
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia: vi.fn().mockRejectedValue(Object.assign(new Error('recusado'), { name })) },
+    });
+  }
+
+  it("T17: NotAllowedError não disca e diz 'Microfone bloqueado'", async () => {
+    microfoneQueFalha('NotAllowedError');
+    const { result } = await montarRegistrado();
+
+    await discar(result);
+
+    expect(toast.error).toHaveBeenCalledWith('Microfone bloqueado');
+    expect(result.current.micReason).toBe('mic_blocked');
+    expect(result.current.callStatus).toBe('idle');
+    expect(mockInvite).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it("T17: NotFoundError não disca e diz 'Nenhum microfone encontrado'", async () => {
+    microfoneQueFalha('NotFoundError');
+    const { result } = await montarRegistrado();
+
+    await discar(result);
+
+    expect(toast.error).toHaveBeenCalledWith('Nenhum microfone encontrado');
+    expect(result.current.micReason).toBe('mic_missing');
+    expect(mockInvite).not.toHaveBeenCalled();
+  });
+
+  it("T17: NotReadableError no ATENDER diz 'Microfone em uso por outro programa' e não atende", async () => {
+    // Este é o teste que pega um gate que só cobrisse a discagem: o microfone é
+    // conferido nos DOIS caminhos, e o painel VoIP chama o SIP direto.
+    const { result } = await montarConectado();
+    let invitation!: Invitation;
+    await act(async () => {
+      invitation = await createMockInvitation();
+      lastOnInvite?.(invitation);
+      await escoar();
+    });
+    microfoneQueFalha('NotReadableError');
+
+    await act(async () => {
+      await result.current.acceptIncomingCall();
+      await escoar();
+    });
+
+    expect(toast.error).toHaveBeenCalledWith('Microfone em uso por outro programa');
+    expect(result.current.micReason).toBe('mic_busy');
+    const accept = (invitation as unknown as { accept: ReturnType<typeof vi.fn> }).accept;
+    expect(accept).not.toHaveBeenCalled();
+  });
+
+  it('T17: sondagem OK disca e devolve as tracks (o microfone não fica quente)', async () => {
+    const stop = vi.fn();
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [{ stop }] }) },
+    });
+    const { result } = await montarRegistrado();
+
+    await discar(result);
+
+    // Sondar não é usar: sem o `stop()` a captura seguiria aberta (indicador do
+    // navegador aceso) durante toda a ligação.
+    expect(stop).toHaveBeenCalled();
+    expect(mockInvite).toHaveBeenCalled();
+    expect(result.current.micReason).toBeNull();
+  });
+
+  it('T17: sem mediaDevices o gate não bloqueia (jsdom/navegador antigo)', async () => {
+    const { result } = await montarRegistrado();
+
+    await discar(result);
+
+    expect(mockInvite).toHaveBeenCalled();
+    expect(result.current.micReason).toBeNull();
   });
 });
