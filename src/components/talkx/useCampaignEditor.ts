@@ -173,7 +173,7 @@ export function localToUTCInTimezone(localStr: string, tz: string): string {
 export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentId?: string; templateId?: string; step?: WizardStep }) {
   const { saveDraftCampaign, updateCampaign, replaceDraftRecipients, startCampaign } = useTalkX();
   const { segments } = useTalkXSegments();
-  const { templates, registerUse } = useTalkXTemplates();
+  const { templates } = useTalkXTemplates();
   const logEvent = useTalkXEventLogger();
 
   const [step, setStep] = useState<WizardStep>(() => initial?.step ?? initialWizardStep());
@@ -236,8 +236,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [sendWindowStart, setSendWindowStart] = useState(campaign?.send_window_start?.slice(0, 5) || '08:00');
   const [sendWindowEnd, setSendWindowEnd] = useState(campaign?.send_window_end?.slice(0, 5) || '18:00');
   const [businessHoursOnly, setBusinessHoursOnly] = useState(!!campaign?.business_hours_only);
-  const [respectSuppression, setRespectSuppression] = useState(true);
-  const [confirmConsent, setConfirmConsent] = useState(false);
+  const [respectSuppression, setRespectSuppression] = useState(campaign?.respect_suppression ?? true);
+  const [confirmConsent, setConfirmConsent] = useState(!!campaign?.confirm_consent);
   const [confirmContent, setConfirmContent] = useState(false);
   const [confirmSuppression, setConfirmSuppression] = useState(false);
 
@@ -516,7 +516,9 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     send_window_start: sendWindowEnabled ? `${sendWindowStart}:00` : null,
     send_window_end: sendWindowEnabled ? `${sendWindowEnd}:00` : null,
     business_hours_only: businessHoursOnly,
-  }), [name, description, objective, messageTemplate, audienceSource, companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter, contactSearch, segmentId, templateId, typingDelay, sendInterval, speedProfile, connectionId, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly]);
+    respect_suppression: respectSuppression,
+    confirm_consent: confirmConsent,
+  }), [name, description, objective, messageTemplate, audienceSource, companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter, contactSearch, segmentId, templateId, typingDelay, sendInterval, speedProfile, connectionId, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly, respectSuppression, confirmConsent]);
 
   /** Salva (rascunho/agendada) e, se `launch`, dispara imediatamente. Devolve o id da campanha. */
   const persistSave = useCallback(async (mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
@@ -569,24 +571,21 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
         }
       }
       await replaceDraftRecipients.mutateAsync({ campaignId: id, contactIds });
-      if (!persistedCampaignId && selectedTemplate) await registerUse(selectedTemplate.id, selectedTemplate.use_count);
 
       if (mode === 'schedule' && payload.scheduled_at) {
         await updateCampaign.mutateAsync({ id, status: 'scheduled' });
-        await logEvent(id, 'scheduled', `Agendada para ${utcToLocalInTimezone(payload.scheduled_at, scheduleTimezone)} (${scheduleTimezone})`);
       }
       if (mode === 'launch') {
-        // A trilha de auditoria só é gravada após a Edge Function confirmar a
-        // solicitação; isso impede um falso "iniciado" quando o invoke falha.
+        // V12: a trilha (started) é gravada pelo servidor na transição; o cliente
+        // não insere o evento para não duplicar.
         const started = await startCampaign(id);
         if (!started) throw new Error('A campanha não foi iniciada. Verifique a conexão e tente novamente.');
-        await logEvent(id, 'started', 'Envio iniciado manualmente');
       }
       return id;
     } finally {
       setSaving(false);
     }
-  }, [recipientSnapshotReady, canProceed, buildPayload, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, replaceDraftRecipients, selectedTemplate, registerUse, startCampaign, scheduleTimezone]);
+  }, [recipientSnapshotReady, canProceed, buildPayload, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, replaceDraftRecipients, startCampaign]);
 
   // Serializa autosave, salvar manual e lançamento. Uma falha não bloqueia a
   // próxima operação, mas nenhuma mutação posterior começa antes do término da

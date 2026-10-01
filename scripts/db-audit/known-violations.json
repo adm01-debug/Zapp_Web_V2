@@ -3,7 +3,8 @@
   "_gerado_em": "2026-08-27",
   "_contexto": "docs/audits/EXECUCAO_2026-08-27.md, secao 'Acoplamento quebrado'",
   "known": [
-    "from:department_whatsapp_configs:src/hooks/team-chat/useDepartmentManagement.ts"
+    "from:department_whatsapp_configs:src/hooks/team-chat/useDepartmentManagement.ts",
+    "rpc:retry_talkx_recipient:supabase/functions/talkx-send/index.ts"
   ],
   "_resolvido": {
     "store_reset_token": "DROP do subsistema de reset custom - migration 20260827170000; chamada removida do edge approve-password-reset",

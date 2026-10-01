@@ -6,7 +6,7 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
-import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talkx-window.ts";
+import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus, parseBusinessHours } from "../_shared/talkx-window.ts";
 import { pauseReasonForWindow } from "../_shared/talkx-resume-policy.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
@@ -127,6 +127,8 @@ export async function handleTalkxSend(
     const token = authHeader.slice(7);
     // Comparação constant-time: `===` retorna cedo no primeiro byte diferente e vaza timing.
     const isServiceKey = timingSafeEqual(token, serviceKey);
+    // V12: ator da transição — perfil do JWT (quando não é service key) ou null (worker).
+    let actorId: string | null = null;
     if (!isServiceKey) {
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);
       if (authError || !user) {
@@ -141,10 +143,11 @@ export async function handleTalkxSend(
       if (!roleData) {
         return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
       }
+      actorId = user.id;
     }
 
     const body = await req.json();
-    const { campaignId, action } = body;
+    const { campaignId, action, reason } = body;
 
     // E47: action test --- envia template de teste para um numero
     if (action === "test") {
@@ -209,6 +212,43 @@ export async function handleTalkxSend(
       }
     }
 
+    // V19: retry manual de um destinatário terminal (failed/outcome_unknown).
+    // Não reenvia cego: revalida a supressão e o RPC respeita attempt_count < 3.
+    if (action === "retry") {
+      const { recipientId } = body as { recipientId?: string };
+      if (!recipientId) {
+        return new Response(JSON.stringify({ error: "recipientId required" }), { status: 400, headers });
+      }
+      const { data: retryRecipient, error: retryLookupError } = await supabase
+        .from("talkx_recipients")
+        .select("id, contact_id, status, attempt_count")
+        .eq("id", recipientId)
+        .single();
+      if (retryLookupError || !retryRecipient) {
+        return new Response(JSON.stringify({ error: "Recipient not found" }), { status: 404, headers });
+      }
+      if (!["failed", "outcome_unknown"].includes(retryRecipient.status as string)) {
+        return new Response(JSON.stringify({ error: "Recipient not retryable" }), { status: 409, headers });
+      }
+      const { data: suppressed, error: suppressionError } = await supabase.rpc("talkx_recipient_is_suppressed", {
+        p_contact_id: retryRecipient.contact_id,
+        p_phone: null,
+      });
+      if (suppressionError) {
+        return new Response(JSON.stringify({ error: suppressionError.message }), { status: 500, headers });
+      }
+      if (suppressed === true) {
+        return new Response(JSON.stringify({ success: false, reason: "suppressed" }), { headers });
+      }
+      const { data: retried, error: retryError } = await supabase.rpc("retry_talkx_recipient", {
+        p_recipient_id: recipientId,
+      });
+      if (retryError) {
+        return new Response(JSON.stringify({ error: retryError.message }), { status: 409, headers });
+      }
+      return new Response(JSON.stringify({ success: retried === true }), { headers });
+    }
+
     if (!campaignId) {
       return new Response(JSON.stringify({ error: "campaignId required" }), { status: 400, headers });
     }
@@ -222,6 +262,8 @@ export async function handleTalkxSend(
       const { data, error } = await supabase.rpc("transition_talkx_campaign", {
         p_campaign_id: campaignId,
         p_action: campaignAction,
+        p_actor_id: actorId,
+        p_pause_reason: reason ?? null,
       });
       if (error) {
         return new Response(JSON.stringify({ error: error.message }), { status: 409, headers });
@@ -242,6 +284,39 @@ export async function handleTalkxSend(
       return new Response(JSON.stringify({ error: "Campaign not found" }), { status: 404, headers });
     }
     let campaign = initialCampaign;
+    // V20: horário comercial + limite diário por conexão (talkx_settings)
+    let businessHours: { start?: string; end?: string; days?: number[] } | null = null;
+    let dailyLimit = 0;
+    {
+      const { data: settingsRows, error: settingsErr } = await supabase
+        .from("talkx_settings").select("key, value")
+        .in("key", ["business_hours", "daily_limit_per_connection"]);
+      if (!settingsErr) {
+        for (const row of (settingsRows ?? []) as { key: string; value: string }[]) {
+          if (row.key === "business_hours") {
+            const parsed = parseBusinessHours(row.value);
+            if (parsed) businessHours = parsed;
+          } else if (row.key === "daily_limit_per_connection") {
+            const n = Number(row.value);
+            if (Number.isFinite(n) && n > 0) dailyLimit = n;
+          }
+        }
+      }
+    }
+    let sentTodayTotal = 0;
+    if (dailyLimit > 0) {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const { data: connCampaigns } = await supabase.from("talkx_campaigns")
+        .select("id").eq("whatsapp_connection_id", campaign.whatsapp_connection_id);
+      const connIds = ((connCampaigns ?? []) as { id: string }[]).map((c) => c.id);
+      if (connIds.length > 0) {
+        const { count } = await supabase.from("talkx_recipients")
+          .select("id", { count: "exact", head: true })
+          .in("campaign_id", connIds).gte("sent_at", todayStart.toISOString());
+        sentTodayTotal = typeof count === "number" ? count : 0;
+      }
+    }
     // Get WhatsApp connection instance
     const { data: connection } = await supabase
       .from("whatsapp_connections").select("status, instance_id")
@@ -257,13 +332,19 @@ export async function handleTalkxSend(
           p_pause_reason: "connection_lost",
         });
       } catch { /* já pausada ou outro estado — ignora */ }
+      // V19: evento connection_failed alimenta a timeline ("Falha de conexão").
+      await supabase.from("talkx_campaign_events").insert({
+        campaign_id: campaignId,
+        event_type: "connection_failed",
+        message: "Falha de conexão",
+      }).catch(() => {});
       return new Response(JSON.stringify({ error: "WhatsApp connection lost: campaign paused" }), { status: 409, headers });
     }
 
     // Enforce delivery limits in the selected IANA timezone before the locked
     // transition. An invalid legacy timezone fails closed instead of falling
     // back to Brasília and sending at an unintended local hour.
-    const windowStatus = deliveryWindowStatus(campaign);
+    const windowStatus = deliveryWindowStatus(campaign, undefined, businessHours);
     if (!windowStatus.allowed) {
       return new Response(JSON.stringify({ ok: false, reason: windowStatus.reason, next_window: windowStatus.next_window }), { headers });
     }
@@ -273,6 +354,7 @@ export async function handleTalkxSend(
     const { error: transitionError } = await supabase.rpc("transition_talkx_campaign", {
       p_campaign_id: campaignId,
       p_action: "start",
+      p_actor_id: actorId,
     });
     if (transitionError) {
       return new Response(JSON.stringify({ error: transitionError.message }), { status: 409, headers });
@@ -409,7 +491,7 @@ export async function handleTalkxSend(
       if (currentCampaignError) throw new Error(`talkx_campaign_state_lookup_failed: ${currentCampaignError.message}`);
       if (currentCampaign?.status !== "sending") break;
       campaign = { ...campaign, ...currentCampaign };
-      const currentWindowStatus = deliveryWindowStatus(campaign);
+      const currentWindowStatus = deliveryWindowStatus(campaign, undefined, businessHours);
       if (!currentWindowStatus.allowed) {
         // V03: grava POR QUE pausou — sem isso a retomada automática não tinha
         // como distinguir pausa da janela de pausa do operador.
@@ -419,6 +501,18 @@ export async function handleTalkxSend(
           p_pause_reason: pauseReasonForWindow(currentWindowStatus),
         });
         if (pauseError) throw new Error(`talkx_campaign_auto_pause_failed: ${pauseError.message}`);
+        break;
+      }
+
+      // V20: limite diário por conexão — pausa com motivo diário (scheduler
+      // retoma no dia seguinte via AUTO_RESUME_REASONS).
+      if (dailyLimit > 0 && sentTodayTotal >= dailyLimit) {
+        const { error: dlPauseError } = await supabase.rpc("transition_talkx_campaign", {
+          p_campaign_id: campaignId,
+          p_action: "pause",
+          p_pause_reason: "daily_limit",
+        });
+        if (dlPauseError) throw new Error(`talkx_daily_limit_pause_failed: ${dlPauseError.message}`);
         break;
       }
 
@@ -580,7 +674,7 @@ export async function handleTalkxSend(
           .select("status, send_window_start, send_window_end, business_hours_only, schedule_timezone")
           .eq("id", campaignId).single();
         if (beforeSendError) throw new Error(`talkx_campaign_state_lookup_failed: ${beforeSendError.message}`);
-        const beforeSendWindowStatus = beforeSend ? deliveryWindowStatus(beforeSend) : { allowed: false as const, reason: "campaign_not_found" };
+        const beforeSendWindowStatus = beforeSend ? deliveryWindowStatus(beforeSend, undefined, businessHours) : { allowed: false as const, reason: "campaign_not_found" };
         const { data: beforeSendConnection, error: beforeSendConnectionError } = await supabase
           .from("whatsapp_connections")
           .select("status, instance_id")
@@ -601,6 +695,13 @@ export async function handleTalkxSend(
               p_pause_reason: autoPauseReason,
             });
             if (pauseError) throw new Error(`talkx_campaign_auto_pause_failed: ${pauseError.message}`);
+            if (autoPauseReason === "connection_lost") {
+              await supabase.from("talkx_campaign_events").insert({
+                campaign_id: campaignId,
+                event_type: "connection_failed",
+                message: "Falha de conexão",
+              }).catch(() => {});
+            }
           }
           if (!beforeSendInstanceId) {
             log.warn("Campanha pausada: conexão WhatsApp indisponível antes do envio", { campaignId });
@@ -684,6 +785,7 @@ export async function handleTalkxSend(
         const providerMessageId = extractMessageId(sendResult);
         if (sendResponse.ok && !sendResult.error && providerMessageId && providerMessageId.length <= 512) {
           sentCount++;
+          sentTodayTotal++;
           const { error: completionError } = await supabase.rpc("record_talkx_recipient_sent", {
             p_recipient_id: recipient.id,
             p_claim_token: claim.claim_token,
@@ -730,6 +832,10 @@ export async function handleTalkxSend(
         // ao expirar o lease, isso permitiria um segundo POST ao mesmo número.
         if (providerPostAttempted) {
           const reason = err instanceof Error ? err.message : "request_failed";
+          const attemptSoFar = typeof (recipient as Record<string, unknown>).attempt_count === 'number'
+            ? (recipient as Record<string, unknown>).attempt_count as number
+            : 0;
+          log.warn("Destinatário em quarentena (outcome_unknown)", { campaignId, recipient_id: recipient.id, attempt: attemptSoFar });
           const { error: quarantineError } = await supabase.rpc("complete_talkx_recipient", {
             p_recipient_id: recipient.id,
             p_claim_token: claim.claim_token,
@@ -769,7 +875,7 @@ export async function handleTalkxSend(
           campaign = { ...campaign, ...fresh };
           // Recheck the campaign's own IANA window after configuration reload.
           // The locked transition preserves a concurrent manual pause/cancel.
-          const refreshedWindowStatus = deliveryWindowStatus(campaign);
+          const refreshedWindowStatus = deliveryWindowStatus(campaign, undefined, businessHours);
           if (!refreshedWindowStatus.allowed) {
             log.warn('Campanha pausada automaticamente: fora da janela de envio', { campaignId });
             const { error: pauseError } = await supabase.rpc("transition_talkx_campaign", {
@@ -792,7 +898,7 @@ export async function handleTalkxSend(
     );
     if (completionError) throw new Error(`talkx_campaign_completion_failed: ${completionError.message}`);
 
-    log.done(200, { sent: sentCount, failed: failedCount, outcomeUnknown: outcomeUnknownCount });
+    log.done(200, { campaignId, sent: sentCount, failed: failedCount, outcomeUnknown: outcomeUnknownCount });
 
     return new Response(
       JSON.stringify({

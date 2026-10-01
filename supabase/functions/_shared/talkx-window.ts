@@ -30,6 +30,25 @@ export type ScheduleGuardCampaign = {
 
 export type LocalClock = { hour: number; minute: number; weekday: number };
 
+// V20: horário comercial configurável — vem de talkx_settings.business_hours
+// (JSON {start,end,tz,days}); o default replica o 08:00–18:00 seg–sex anterior.
+export type BusinessHours = {
+  start?: string;   // "08:00"
+  end?: string;     // "18:00"
+  days?: number[];  // [1..5] = seg..sex
+};
+
+export function parseBusinessHours(value: unknown): BusinessHours | null {
+  if (typeof value !== "string" || value.trim() === "") return null;
+  try {
+    const parsed = JSON.parse(value) as BusinessHours;
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
 export function localClockInTimezone(timeZone: string, now = new Date()): LocalClock | null {
   try {
     const values = Object.fromEntries(
@@ -62,6 +81,7 @@ export function localClockInTimezone(timeZone: string, now = new Date()): LocalC
 export function deliveryWindowStatus(
   campaign: ScheduleGuardCampaign,
   now = new Date(),
+  businessHours?: BusinessHours | null,
 ): { allowed: true } | { allowed: false; reason: string; next_window?: string } {
   const timeZone = typeof campaign.schedule_timezone === "string"
     ? campaign.schedule_timezone
@@ -79,8 +99,21 @@ export function deliveryWindowStatus(
       return { allowed: false, reason: "outside_send_window", next_window: campaign.send_window_start };
     }
   }
-  if (campaign.business_hours_only && (clock.weekday === 0 || clock.weekday === 6 || clock.hour < 8 || clock.hour >= 18)) {
-    return { allowed: false, reason: "outside_business_hours" };
+  if (campaign.business_hours_only) {
+    const bhStart = businessHours?.start ?? "08:00";
+    const bhEnd = businessHours?.end ?? "18:00";
+    const bhDays = businessHours?.days ?? [1, 2, 3, 4, 5];
+    const [bhStartHour, bhStartMinute] = bhStart.split(":").map(Number);
+    const [bhEndHour, bhEndMinute] = bhEnd.split(":").map(Number);
+    const bhStartMin = bhStartHour * 60 + bhStartMinute;
+    const bhEndMin = bhEndHour * 60 + bhEndMinute;
+    if (
+      !bhDays.includes(clock.weekday) ||
+      currentMinutes < bhStartMin ||
+      currentMinutes >= bhEndMin
+    ) {
+      return { allowed: false, reason: "outside_business_hours", next_window: bhStart };
+    }
   }
   return { allowed: true };
 }

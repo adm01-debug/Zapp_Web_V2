@@ -28,6 +28,8 @@ export interface TalkXCampaign {
   sent_count: number;
   failed_count: number;
   delivered_count: number;
+  read_count?: number;
+  replied_count?: number;
   outcome_unknown_count?: number;
   whatsapp_connection_id: string | null;
   created_by: string | null;
@@ -53,6 +55,10 @@ export interface TalkXCampaign {
   business_hours_only?: boolean;
   speed_profile?: 'slow' | 'moderate' | 'fast';
   paused_at?: string | null;
+  respect_suppression?: boolean;
+  confirm_consent?: boolean;
+  launched_by?: string | null;
+  launched_at?: string | null;
   // Introduzido por 20260912130000. Opcional até o types-sync canônico após
   // aplicar a migration; o editor usa 1 como revisão de linhas legadas.
   revision?: number;
@@ -367,9 +373,9 @@ export function useTalkX() {
     }
   }, [queryClient]);
 
-  const pauseCampaign = useCallback(async (campaignId: string) => {
+  const pauseCampaign = useCallback(async (campaignId: string, reason?: string) => {
     const { data, error } = await supabase.functions.invoke('talkx-send', {
-      body: { campaignId, action: 'pause' },
+      body: { campaignId, action: 'pause', reason: reason ?? null },
     });
     if (error) throw error;
     assertTalkXActionAccepted(data);

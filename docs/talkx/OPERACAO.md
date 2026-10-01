@@ -185,6 +185,30 @@ Para esconder só "Campanhas" na interface:
 Seguir o fluxo padrão de rollback do projeto (seção 1 do `CLAUDE.md`):
 DDL reverso via `db_query` + registro no ledger, nunca `DROP` direto sem PR.
 
+### 8.4 Destinatários em `outcome_unknown` exigem decisão humana
+
+Quando o `talkx-send` faz o POST ao provedor (Evolution GO) e não consegue
+confirmar o resultado — HTTP 5xx, timeout, corpo inválido ou falha na gravação
+do recibo após o envio — o destinatário entra em quarentena com status
+`outcome_unknown`. **Não há reenvio automático** desse estado: refazer o POST
+sem um contrato de idempotência do provedor arrisca mensagem duplicada.
+
+Procedimento:
+
+1. Localizar os casos:
+   ```sql
+   SELECT id, campaign_id, contact_id, attempt_count, error_message
+     FROM talkx_recipients WHERE status = 'outcome_unknown';
+   ```
+2. Decidir **manualmente** por destinatário:
+   - **Reenviar** (só com certeza de que a mensagem NÃO chegou): action `retry {recipientId}`
+     da `talkx-send`, que reabre para `pending` via `retry_talkx_recipient` se
+     `attempt_count < 3` e o contato não está suprimido.
+   - **Descartar** (mensagem provavelmente chegou): manter para auditoria.
+3. O teto de 3 tentativas por destinatário é respeitado tanto pelo retry manual
+   (`retry_talkx_recipient`) quanto pelo backoff automático
+   (`reschedule_talkx_recipient`).
+
 ---
 
 ## 9. Histórico de versões

@@ -140,8 +140,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "bytes": 16378,
-      "sha256": "3c23f691bcf08d4d3a301cbed5ee9361b486bb73c46657137c41c8ab6e8d24a3"
+      "bytes": 17017,
+      "sha256": "0a100dd86b579216c697fa996c45e71f8cda934003c425bffb82b3f7bb6e8b0f"
     },
     {
       "path": "supabase/functions/_shared/gmail-helpers.ts",
@@ -185,18 +185,18 @@
     },
     {
       "path": "supabase/functions/_shared/talkx-reply.ts",
-      "bytes": 2944,
-      "sha256": "18e0dace02393de70bdff68c2e383dbaed1e73dad24c50983e80a99b1aef81d2"
+      "bytes": 4254,
+      "sha256": "f3cc4ff9d372ca5025f985d8094dbe988b7caf4925fc190839d9339c2e1e71fc"
     },
     {
       "path": "supabase/functions/_shared/talkx-resume-policy.ts",
-      "bytes": 5176,
-      "sha256": "6b29a7ecf8cfd962616fb25561b4add4027b1c98bab6e4d1d6d2ca8dba74634b"
+      "bytes": 5827,
+      "sha256": "043f7225977b1d726f362a76f263a356ff5751beea8821b95985daa5f44f45c4"
     },
     {
       "path": "supabase/functions/_shared/talkx-window.ts",
-      "bytes": 3860,
-      "sha256": "c7a7a164d69100e8081f4cc7a0516127283973b18c0bf3a3a961cf130a672dc5"
+      "bytes": 5007,
+      "sha256": "18833512cfb4500ff281be4c8d2ce61a82801c9bd66cecd514e929c52c3b6304"
     },
     {
       "path": "supabase/functions/_shared/validation.ts",
@@ -510,13 +510,13 @@
     },
     {
       "path": "supabase/functions/talkx-scheduler/index.ts",
-      "bytes": 8561,
-      "sha256": "eeee17bf7faec80b352263b3d0ac01792df699d6118528684f0317d409e11fce"
+      "bytes": 8572,
+      "sha256": "e0124d0e34ffe515eb4680f73a347fcfe7958a903adf41442e7f506224208daf"
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
-      "bytes": 42050,
-      "sha256": "2797d923b5e13bd057bb8a88485f19a206d1199f55d352f81768ecd0421189da"
+      "bytes": 47321,
+      "sha256": "8cf11511612d3cf10546a8a4cce8fa7932b513a1d31101ee1fa1e300bd1a310d"
     },
     {
       "path": "supabase/functions/voice-agent/index.ts",
@@ -1028,7 +1028,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "014ce426936cbd41b696be7c0c2edcff3a774c1ac8332f1613fadf209ad56668",
+      "source_sha256": "66b09b3c3ea177498ad791808fb8220a67144aeb28159904d73314cf068798aa",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -1206,7 +1206,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "34eba2397cc94fc23f907be67b527278f0e50c2c8b506bc9c7336c0b7365d294",
+      "source_sha256": "ea4042c021b2985a7b696624c0ec281ce70c3eee07a25ee891a8c9d3569362ea",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1331,7 +1331,7 @@
       "name": "talkx-scheduler",
       "entrypoint": "supabase/functions/talkx-scheduler/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d03bd2feff902d11fbed739b9c6f6006d4799b74da77b996c343c9f0b79b75b8",
+      "source_sha256": "55fba7931e1c894669e525582c292dbcbde83e85f1f480ba2a29abfa96719810",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/talkx-resume-policy.ts",
@@ -1344,7 +1344,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "f8b7c13d91809aa3ce02e0c8cbc04df7920b60257a6e5fb53d49688bd8f4c445",
+      "source_sha256": "bf62a8eedd4134e3e8099406d25d76948536ea31b40baa97cd7a8557173a6c6a",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1431,5 +1431,5 @@
       ]
     }
   ],
-  "manifest_sha256": "79adc9108bc9a07460ca7167ed75b69cb8921cd2a231951e06d9b91a44df9131"
+  "manifest_sha256": "e85af5ca774cd24a39f433b43c6e16c063641e1cf099bdcbfd984000492c4d48"
 }

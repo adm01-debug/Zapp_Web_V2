@@ -29,7 +29,7 @@ export function thenableQB(result: { data: unknown; error: unknown }): any {
     single: () => p,
     maybeSingle: () => p,
   };
-  for (const m of ["select","eq","neq","in","or","order","range","limit","is","not","update","insert","upsert","delete"]) {
+  for (const m of ["select","eq","neq","in","or","order","range","limit","is","not","update","insert","upsert","delete","gte","gt","lte","lt"]) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (self as any)[m] = () => self;
   }
