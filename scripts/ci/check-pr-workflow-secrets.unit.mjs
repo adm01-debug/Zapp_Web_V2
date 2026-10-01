@@ -71,6 +71,16 @@ test('hasPushTriggerUnrestricted: escalar on: push', () => {
   assert.equal(hasPushTriggerUnrestricted('on: push # comentario\n'), true);
 });
 
+test('hasPushTriggerUnrestricted: on: "push" e on: \'push\' (scalar com aspas) — irrestrito', () => {
+  assert.equal(hasPushTriggerUnrestricted('on: "push"\n'), true);
+  assert.equal(hasPushTriggerUnrestricted("on: 'push'\n"), true);
+});
+
+test('hasPushTriggerUnrestricted: push: &my-trigger (anchor YAML antes do valor vazio) — irrestrito', () => {
+  const workflow = 'on:\n  push: &my-trigger\n  workflow_dispatch:\n';
+  assert.equal(hasPushTriggerUnrestricted(workflow), true);
+});
+
 test('hasPushTriggerUnrestricted: array inline on: [push]', () => {
   assert.equal(hasPushTriggerUnrestricted('on: [push]\n'), true);
   assert.equal(hasPushTriggerUnrestricted('on: [push, pull_request]\n'), true);

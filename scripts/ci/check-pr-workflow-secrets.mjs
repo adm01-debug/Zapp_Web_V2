@@ -27,8 +27,8 @@ export function hasPullRequestTrigger(source) {
 }
 
 export function hasPushTriggerUnrestricted(source) {
-  // Scalar: on: push (single event, no branch restriction)
-  if (/^on:\s*push\s*(?:#.*)?$/mu.test(source)) return true;
+  // Scalar: on: push (single event, no branch restriction), including quoted forms
+  if (/^on:\s*(?:"push"|'push'|push)\s*(?:#.*)?$/mu.test(source)) return true;
 
   // Inline array: on: [push] or on: [push, pull_request] etc.
   if (/^on:\s*\[[^\]]*\bpush\b[^\]]*\]/mu.test(source)) return true;
@@ -46,7 +46,8 @@ export function hasPushTriggerUnrestricted(source) {
     // Top-level key ends the 'on:' block
     if (/^[^\s#]/.test(line)) { pushEnd = i; break; }
     // Detect: push: (empty), push: {} (inline empty mapping), push: null, push: Null, push: NULL, push: ~
-    const pushMatch = /^(\s+)push:\s*(?:\{\}|null|Null|NULL|~)?\s*(?:#.*)?$/.exec(line);
+    // Also handles YAML anchor form: push: &anchor-name (anchor before an implicit null value)
+    const pushMatch = /^(\s+)push:\s*(?:&[^\s[\]{},]+\s*)?(?:\{\}|null|Null|NULL|~)?\s*(?:#.*)?$/.exec(line);
     if (pushMatch) { pushStart = i; pushIndent = pushMatch[1].length; continue; }
     // Detect: push: { key: value } (nonempty inline mapping)
     const pushInlineMatch = /^(\s+)push:\s*(\{[^}]+\})\s*(?:#.*)?$/.exec(line);
