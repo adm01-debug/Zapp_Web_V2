@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Filter, AlertTriangle } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useMyWorkItems }   from '@/hooks/tasks/useMyWorkItems';
+import { openContactChat }  from '@/components/catalog/useSendProduct';
 import { applyFilters, bucketByDue, bucketByStatus, kpis } from '@/hooks/tasks/workItemAggregates';
 import { countDoing } from '@/hooks/tasks/workItemMachine';
 import { useTasksFilters }  from '@/hooks/tasks/useTasksFilters';
@@ -31,8 +32,9 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
   // pelo usuario — visitar a rota nao reescreve a preferencia dele.
   const [mode, setModeState] = useState<TaskMode>(forceMode ? defaultMode : savedMode);
   const [selectedItem, setSelectedItem] = useState<WorkItem | null>(null);
-  /** Etapa 28 (B2): o Sheet aberto por DnD/kebab já vem pedindo o motivo. */
-  const [focusField, setFocusField] = useState<'waiting_reason' | undefined>(undefined);
+  /** Etapa 28 (B2): o Sheet aberto por DnD/kebab já vem pedindo o motivo.
+   *  Etapa 31: o "Escolher…" do RemindChip abre focado no alarme. */
+  const [focusField, setFocusField] = useState<'waiting_reason' | 'remind_at' | undefined>(undefined);
   /** Etapa 27: id lido da URL uma única vez, no primeiro render. */
   const [idNaUrl] = useState(() => new URLSearchParams(window.location.search).get('task'));
   const [linkConsumido, setLinkConsumido] = useState(false);
@@ -46,7 +48,7 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
   // B13: uma unica query para os tres modos. A query ja traz `done` dos ultimos
   // 30 dias; o recorte de 7 dias da Lista e local. Trocar de modo nao gera request.
   const hook = useMyWorkItems();
-  const { isLoading, isError, create, move, reorder, complete, deleteItem } = hook;
+  const { isLoading, isError, create, move, reorder, complete, reopen, snooze, setReminder, deleteItem } = hook;
 
   // Etapa 45/46: a barra de filtros (estado no reducer, espelhado na URL) e o
   // recorte aplicado UMA vez, sobre os itens que a query única já carregou —
@@ -103,18 +105,17 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
   }, []);
 
   const handleToggleDone = useCallback(async (item: WorkItem) => {
-    if (item.status === 'done') await hook.reopen(item);
+    if (item.status === 'done') await reopen(item);
     else await complete(item);
-  }, [hook, complete]);
-
-  const handleMoveTo = useCallback((item: WorkItem, to: WorkItemStatus) => {
-    void move(item, to);
-  }, [move]);
+  }, [reopen, complete]);
 
   // Etapa 26 (B3): abrir e fechar o Sheet mantém a URL em sincronia (`?task=<id>`).
-  const abrirSheet = useCallback((item: WorkItem) => {
+  // Etapa 28/29/31: `focus` abre o Sheet já pedindo um campo — o motivo de espera
+  // (portão do Aguardando) ou o alarme ("Escolher…" do RemindChip).
+  const abrirSheet = useCallback((item: WorkItem, focus?: 'waiting_reason' | 'remind_at') => {
     setLinkConsumido(true);
     setSelectedItem(item);
+    setFocusField(focus);
     const url = new URL(window.location.href);
     url.searchParams.set('task', item.id);
     window.history.replaceState(null, '', url.pathname + url.search);
@@ -128,6 +129,32 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
     url.searchParams.delete('task');
     window.history.replaceState(null, '', url.pathname + url.search);
   }, []);
+
+  // Etapa 29 (B2): mover para Aguardando nunca escreve direto — o motivo é
+  // obrigatório, então o portão abre o Sheet pedindo (mesmo caminho do DnD).
+  const handleMoveTo = useCallback((item: WorkItem, to: WorkItemStatus) => {
+    if (to === 'waiting') { abrirSheet(item, 'waiting_reason'); return; }
+    void move(item, to);
+  }, [move, abrirSheet]);
+
+  // Etapa 28: o DnD cai no mesmo portão quando solta em Aguardando sem motivo.
+  const handleRequestWaitingReason = useCallback((item: WorkItem) => {
+    abrirSheet(item, 'waiting_reason');
+  }, [abrirSheet]);
+
+  // Etapa 32: clique no contato do item abre a conversa no inbox — mesmo
+  // mecanismo do produto (`open-contact-chat`, escutado em useRealtimeInbox).
+  const handleOpenContact = useCallback((item: WorkItem) => {
+    const contactId = item.contact?.id;
+    if (contactId) openContactChat(contactId);
+  }, []);
+
+  // Etapas 30/31: ações do kebab e do RemindChip ligadas às mutations do hook.
+  const handleComplete = useCallback((item: WorkItem) => { void complete(item); }, [complete]);
+  const handleReopen = useCallback((item: WorkItem) => { void reopen(item); }, [reopen]);
+  const handleSnooze = useCallback((item: WorkItem, minutes: number | 'tomorrow9') => { void snooze(item, minutes); }, [snooze]);
+  const handleClearReminder = useCallback((item: WorkItem) => { void setReminder(item, null); }, [setReminder]);
+  const handleOpenReminder = useCallback((item: WorkItem) => { abrirSheet(item, 'remind_at'); }, [abrirSheet]);
 
   // Etapa 27: F5 com `?task=<id>` reabre o Sheet. Derivado (não é efeito):
   // o item vem da URL e some assim que o usuário fecha o Sheet.
@@ -202,6 +229,14 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
               onDelete={deleteItem}
               onClearFilter={filtros.clear}
               hasMounted={hasMounted}
+              doingCount={doingReal}
+              onOpenContact={handleOpenContact}
+              onRequestWaitingReason={handleRequestWaitingReason}
+              onComplete={handleComplete}
+              onReopen={handleReopen}
+              onSnooze={handleSnooze}
+              onClearReminder={handleClearReminder}
+              onOpenReminder={handleOpenReminder}
             />
           )}
           {mode === 'board' && (
@@ -210,10 +245,18 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
               isLoading={isLoading}
               doingCount={doingReal}
               onMove={move}
+              onMoveTo={handleMoveTo}
+              onRequestWaitingReason={handleRequestWaitingReason}
               onReorder={reorder}
               onOpen={abrirSheet}
               onDelete={deleteItem}
               onCreate={create}
+              onOpenContact={handleOpenContact}
+              onComplete={handleComplete}
+              onReopen={handleReopen}
+              onSnooze={handleSnooze}
+              onClearReminder={handleClearReminder}
+              onOpenReminder={handleOpenReminder}
             />
           )}
           {mode === 'agenda' && (
@@ -227,6 +270,14 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
               onToggleDone={handleToggleDone}
               onMoveTo={handleMoveTo}
               onDelete={deleteItem}
+              doingCount={doingReal}
+              onOpenContact={handleOpenContact}
+              onRequestWaitingReason={handleRequestWaitingReason}
+              onComplete={handleComplete}
+              onReopen={handleReopen}
+              onSnooze={handleSnooze}
+              onClearReminder={handleClearReminder}
+              onOpenReminder={handleOpenReminder}
             />
           )}
         </motion.div>
