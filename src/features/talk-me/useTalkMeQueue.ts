@@ -15,6 +15,7 @@ const SELECTED_QUEUE_KEY = 'zapp:talk-me:selected-queue';
 const PAGE_SIZE = 50;
 const REALTIME_DEBOUNCE_MS = 350;
 const REALTIME_MAX_WAIT_MS = 2_000;
+const ELIGIBILITY_RECONCILE_INTERVAL_MS = 60_000;
 
 function mapQueue(row: {
   queue_id: string;
@@ -99,6 +100,7 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
   const itemsRef = useRef<TalkMeWaitingContact[]>([]);
   const loadingMoreRef = useRef(false);
   const reconcileGenerationRef = useRef(0);
+  const eligibilityReconcileInFlightRef = useRef(false);
   const claimingRef = useRef(false);
   const wasOpenRef = useRef(isOpen);
 
@@ -274,7 +276,33 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     refreshTimerRef.current = null;
     refreshBurstStartedAtRef.current = null;
+    eligibilityReconcileInFlightRef.current = false;
   }, [isOpen]);
+
+  const reconcileEligibility = useCallback(async () => {
+    if (!enabled || !isOpen || document.hidden || eligibilityReconcileInFlightRef.current) return;
+    eligibilityReconcileInFlightRef.current = true;
+    try {
+      await Promise.all([fetchQueues(), reconcileLoadedPages()]);
+    } finally {
+      eligibilityReconcileInFlightRef.current = false;
+    }
+  }, [enabled, fetchQueues, isOpen, reconcileLoadedPages]);
+
+  useEffect(() => {
+    if (!enabled || !isOpen) return;
+    const interval = window.setInterval(() => {
+      void reconcileEligibility();
+    }, ELIGIBILITY_RECONCILE_INTERVAL_MS);
+    const handleVisibilityChange = () => {
+      if (!document.hidden) void reconcileEligibility();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [enabled, isOpen, reconcileEligibility]);
 
   useEffect(() => () => {
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
@@ -282,6 +310,7 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
     queuesGenerationRef.current += 1;
     listGenerationRef.current += 1;
     reconcileGenerationRef.current += 1;
+    eligibilityReconcileInFlightRef.current = false;
     listAbortRef.current?.abort();
   }, []);
 
@@ -309,26 +338,6 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
     onAll: scheduleRealtimeRefresh,
     enabled: enabled && isOpen,
   });
-  useSupabaseRealtime({
-    channelName: 'talk-me-profiles',
-    table: 'profiles',
-    onAll: scheduleRealtimeRefresh,
-    enabled: enabled && isOpen,
-  });
-  useSupabaseRealtime({
-    channelName: 'talk-me-feature-flag',
-    table: 'feature_flags',
-    filter: 'key=eq.inbox.talk-me',
-    onAll: scheduleRealtimeRefresh,
-    enabled: enabled && isOpen,
-  });
-  useSupabaseRealtime({
-    channelName: 'talk-me-whatsapp-groups',
-    table: 'whatsapp_groups',
-    onAll: scheduleRealtimeRefresh,
-    enabled: enabled && isOpen,
-  });
-
   const setSearchSafely = useCallback((value: string) => {
     const nextNormalizedSearch = value.trim();
     const searchChanged = nextNormalizedSearch !== normalizedSearch;

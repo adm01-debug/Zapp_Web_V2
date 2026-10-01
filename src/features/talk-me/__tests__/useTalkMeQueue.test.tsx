@@ -51,10 +51,15 @@ function latestRealtimeSubscription(channelName: string) {
   return subscriptions[subscriptions.length - 1];
 }
 
+function setDocumentHidden(hidden: boolean) {
+  Object.defineProperty(document, 'hidden', { configurable: true, value: hidden });
+}
+
 describe('useTalkMeQueue', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.sessionStorage.clear();
+    setDocumentHidden(false);
     rpc.mockImplementation((name: string) => {
       if (name === 'talk_me_list_queues') return Promise.resolve({ data: queueRows, error: null });
       if (name === 'talk_me_list_waiting') return waitingRequest();
@@ -79,7 +84,7 @@ describe('useTalkMeQueue', () => {
     expect(result.current.queues).toEqual([]);
     expect(result.current.items).toEqual([]);
     expect(rpc).not.toHaveBeenCalled();
-    expect(useSupabaseRealtime.mock.calls.length).toBeGreaterThanOrEqual(7);
+    expect(useSupabaseRealtime.mock.calls.length).toBeGreaterThanOrEqual(4);
     expect(useSupabaseRealtime.mock.calls.every(([options]) => options.enabled === false)).toBe(true);
   });
 
@@ -303,21 +308,14 @@ describe('useTalkMeQueue', () => {
     expect(latestRealtimeSubscription('talk-me-messages')?.onAll).toBeTypeOf('function');
     expect(latestRealtimeSubscription('talk-me-queues')).toMatchObject({ table: 'queues', enabled: true });
     expect(latestRealtimeSubscription('talk-me-queue-members')).toMatchObject({ table: 'queue_members', enabled: true });
-    expect(latestRealtimeSubscription('talk-me-profiles')).toMatchObject({ table: 'profiles', enabled: true });
-    expect(latestRealtimeSubscription('talk-me-feature-flag')).toMatchObject({
-      table: 'feature_flags',
-      filter: 'key=eq.inbox.talk-me',
-      enabled: true,
-    });
-    expect(latestRealtimeSubscription('talk-me-whatsapp-groups')).toMatchObject({ table: 'whatsapp_groups', enabled: true });
+    expect(latestRealtimeSubscription('talk-me-profiles')).toBeUndefined();
+    expect(latestRealtimeSubscription('talk-me-feature-flag')).toBeUndefined();
+    expect(latestRealtimeSubscription('talk-me-whatsapp-groups')).toBeUndefined();
   });
 
   it.each([
     'talk-me-queues',
     'talk-me-queue-members',
-    'talk-me-profiles',
-    'talk-me-feature-flag',
-    'talk-me-whatsapp-groups',
   ])('reconcilia filas e lista após mudança de elegibilidade em %s', async (channelName) => {
     renderHook(() => useTalkMeQueue(true));
     await waitFor(() => expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_waiting')).toHaveLength(1));
@@ -330,6 +328,84 @@ describe('useTalkMeQueue', () => {
       await act(async () => { await vi.advanceTimersByTimeAsync(350); });
       expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_queues')).toHaveLength(queueCallsBefore + 1);
       expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_waiting')).toHaveLength(waitingCallsBefore + 1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('reconcilia mudanças raras de elegibilidade a cada 60 segundos enquanto aberto e visível', async () => {
+    const { rerender } = renderHook(({ open }) => useTalkMeQueue(open), { initialProps: { open: true } });
+    await waitFor(() => expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_waiting')).toHaveLength(1));
+
+    rerender({ open: false });
+    vi.useFakeTimers();
+    try {
+      rerender({ open: true });
+      await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+      const queueCallsBefore = rpc.mock.calls.filter(([name]) => name === 'talk_me_list_queues').length;
+      const waitingCallsBefore = rpc.mock.calls.filter(([name]) => name === 'talk_me_list_waiting').length;
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(59_999); });
+      expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_queues')).toHaveLength(queueCallsBefore);
+      expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_waiting')).toHaveLength(waitingCallsBefore);
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+      expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_queues')).toHaveLength(queueCallsBefore + 1);
+      expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_waiting')).toHaveLength(waitingCallsBefore + 1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('pausa a reconciliação periódica quando oculto ou fechado e atualiza ao voltar a ficar visível', async () => {
+    const { rerender } = renderHook(({ open }) => useTalkMeQueue(open), { initialProps: { open: true } });
+    await waitFor(() => expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_waiting')).toHaveLength(1));
+
+    rerender({ open: false });
+    setDocumentHidden(true);
+    vi.useFakeTimers();
+    try {
+      rerender({ open: true });
+      await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+      const hiddenQueueCalls = rpc.mock.calls.filter(([name]) => name === 'talk_me_list_queues').length;
+      const hiddenWaitingCalls = rpc.mock.calls.filter(([name]) => name === 'talk_me_list_waiting').length;
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(120_000); });
+      expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_queues')).toHaveLength(hiddenQueueCalls);
+      expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_waiting')).toHaveLength(hiddenWaitingCalls);
+
+      setDocumentHidden(false);
+      act(() => document.dispatchEvent(new Event('visibilitychange')));
+      await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+      expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_queues')).toHaveLength(hiddenQueueCalls + 1);
+      expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_waiting')).toHaveLength(hiddenWaitingCalls + 1);
+
+      rerender({ open: false });
+      const closedCalls = rpc.mock.calls.length;
+      await act(async () => { await vi.advanceTimersByTimeAsync(120_000); });
+      act(() => document.dispatchEvent(new Event('visibilitychange')));
+      expect(rpc.mock.calls).toHaveLength(closedCalls);
+    } finally {
+      setDocumentHidden(false);
+      vi.useRealTimers();
+    }
+  });
+
+  it('remove intervalo e listener de visibilidade ao desmontar', async () => {
+    const { rerender, unmount } = renderHook(({ open }) => useTalkMeQueue(open), { initialProps: { open: true } });
+    await waitFor(() => expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_waiting')).toHaveLength(1));
+
+    rerender({ open: false });
+    vi.useFakeTimers();
+    try {
+      rerender({ open: true });
+      await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+      unmount();
+      const callsBeforeCleanupCheck = rpc.mock.calls.length;
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(120_000); });
+      act(() => document.dispatchEvent(new Event('visibilitychange')));
+      expect(rpc.mock.calls).toHaveLength(callsBeforeCleanupCheck);
     } finally {
       vi.useRealTimers();
     }
