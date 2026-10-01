@@ -747,6 +747,7 @@
       "version": "20260930390000",
       "filename": "20260930390000_endurece_l5_contrato_e_jobs.sql",
       "file_sha256": "3ba508d732f942fdb7a2aecdd3f1dea2296c846a71e3384f5b0f5c5e7b9dd76e",
+      "ledger_name": "endurece_l5_contrato_e_jobs",
       "kind": "ledger-only/name-and-file-pinned",
       "justification": "O arquivo em main continha uma versao DML incorreta (DELETE FROM cron.job) que nunca foi aplicada. O conteudo correto — identico ao registrado no ledger (apply_zapp_cron_secrets_l5 com cron.unschedule) — foi aplicado via MCP em 2026-09-30 e agora o arquivo em disco e corrigido para refletir o que esta em producao. Commit 5ed2c20 na branch claude/gifted-mccarthy-vhdcce / PR 1389."
     }
