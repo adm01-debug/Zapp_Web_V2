@@ -95,6 +95,25 @@ describe('etapa 45 — useTasksFilters', () => {
     expect(window.location.search).toBe('');
   });
 
+  it('F3 (auditoria A1-1): mexer em OUTRO filtro dentro da janela do debounce não descarta a busca', () => {
+    const { result } = renderFiltros();
+
+    act(() => { result.current.setSearch('liga'); });
+    // Dentro dos 200ms do debounce, outro filtro muda — e o próprio hook reescreve
+    // `window.location.search` com `?prio=high`.
+    act(() => { result.current.setPrio('high'); });
+    act(() => { vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS); });
+
+    // O bug A1-1: a guarda `agora !== base` comparava `window.location.search` — a
+    // MESMA URL que este hook reescreve a cada filtro — então o timer via "a URL
+    // mudou" e retornava sem despachar. O campo mostrava "liga", o filtro ficava
+    // vazio e a URL nunca recebia `q`: a lista não recortava o que o campo prometia.
+    expect(result.current.filters.q).toBe('liga');
+    expect(result.current.filters.prio).toBe('high');
+    expect(new URLSearchParams(window.location.search).get('q')).toBe('liga');
+    expect(result.current.isActive).toBe(true);
+  });
+
   it('Fase F: deep-link que chega DEPOIS de montar reidrata os filtros (o router manda)', () => {
     let ir: (to: string) => void = () => {};
     const Espiao = () => { ir = useNavigate(); return null; };
