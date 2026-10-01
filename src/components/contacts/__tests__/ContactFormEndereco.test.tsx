@@ -5,7 +5,25 @@ vi.mock('@/hooks/crm/useExternalCargos', () => ({ useExternalCargos: () => ({ da
 vi.mock('@/hooks/crm/useExternalEmpresas', () => ({ useExternalEmpresas: () => ({ data: [] }) }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null }) }) }) }) } }));
 
-const h = vi.hoisted(() => ({ select: vi.fn(), suggestions: [] as unknown[], retrySuggest: vi.fn(), error: null as string | null }));
+const h = vi.hoisted(() => ({
+  select: vi.fn(),
+  suggestions: [] as unknown[],
+  retrySuggest: vi.fn(),
+  error: null as string | null,
+  // Padrões que devolvem PROMISE: o form chama `getMapboxToken().then(...)` e `searchPlaces(...)`
+  // em outros fluxos, então um mock que devolve `undefined` derruba o arquivo inteiro.
+  searchPlaces: vi.fn().mockResolvedValue({ ok: true, places: [] }),
+  getMapboxToken: vi.fn().mockResolvedValue('tok'),
+}));
+vi.mock('@/lib/mapboxGeocode', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/mapboxGeocode')>();
+  // E40: o botão "Recalcular" chama o `/forward` — o teste controla a resposta.
+  return { ...actual, searchPlaces: (...args: unknown[]) => h.searchPlaces(...args) };
+});
+vi.mock('@/lib/mapboxToken', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/mapboxToken')>();
+  return { ...actual, getMapboxToken: (...args: unknown[]) => h.getMapboxToken(...args) };
+});
 vi.mock('@/components/inbox/location-picker/useAddressAutocomplete', () => ({
   useAddressAutocomplete: () => ({
     query: '',
@@ -170,6 +188,63 @@ describe('ContactForm — autocomplete de endereço (E41)', () => {
 describe('ContactForm — coordenada possivelmente desatualizada (item 5, regra 3)', () => {
   const AVISO = /localização \(coordenada\) continua a anterior/i;
   const comCoordenada = { address: 'Av. Paulista', latitude: '-23.5613', longitude: '-46.6565' };
+
+  beforeEach(() => {
+    // E40: isolamento do botão "Recalcular" — limpa chamadas sem apagar os padrões que devolvem
+    // Promise (um `mockReset` aqui deixaria `getMapboxToken()` devolvendo `undefined`).
+    h.searchPlaces.mockClear();
+    h.getMapboxToken.mockClear();
+  });
+
+  it('E40: "Recalcular" faz 1 /forward pelo endereço do formulário e atualiza a coordenada', async () => {
+    h.getMapboxToken.mockResolvedValue('tok');
+    h.searchPlaces.mockResolvedValue({
+      ok: true,
+      places: [{ name: 'Rua Nova', address: 'Rua Nova, 100 - São Paulo', lat: -23.6, lng: -46.7 }],
+    });
+    const onChange = renderForm({
+      address: 'Rua Nova',
+      address_number: '100',
+      city: 'São Paulo',
+      state: 'SP',
+      latitude: '-23.5613',
+      longitude: '-46.6565',
+    });
+
+    // O form é CONTROLADO pelo pai: `fireEvent.change` dispara o onChange mas não muda `values`,
+    // então o aviso é provocado por um campo de endereço e o texto vem dos values do teste.
+    fireEvent.change(screen.getByLabelText('Bairro'), { target: { value: 'Bela Vista' } });
+    expect(screen.getByText(AVISO)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /recalcular/i }));
+
+    await waitFor(() => expect(h.searchPlaces).toHaveBeenCalledTimes(1));
+    // UMA busca, e com o endereço composto do formulário — não com o texto do autocomplete.
+    const consulta = String(h.searchPlaces.mock.calls[0][0]);
+    expect(consulta).toContain('Rua Nova');
+    expect(consulta).toContain('São Paulo');
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith('latitude', '-23.6');
+      expect(onChange).toHaveBeenCalledWith('longitude', '-46.7');
+    });
+    // coordenada nova em mãos: o aviso sai de cena
+    await waitFor(() => expect(screen.queryByText(AVISO)).not.toBeInTheDocument());
+  });
+
+  it('E40: quando o /forward não acha nada, o aviso CONTINUA (não apaga a coordenada antiga)', async () => {
+    h.getMapboxToken.mockResolvedValue('tok');
+    h.searchPlaces.mockResolvedValue({ ok: true, places: [] });
+    const onChange = renderForm(comCoordenada);
+
+    fireEvent.change(screen.getByLabelText('Logradouro'), { target: { value: 'Rua Nova' } });
+    fireEvent.click(screen.getByRole('button', { name: /recalcular/i }));
+
+    await waitFor(() => expect(h.searchPlaces).toHaveBeenCalledTimes(1));
+    expect(screen.getByText(AVISO)).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalledWith('latitude', expect.anything());
+    expect(onChange).not.toHaveBeenCalledWith('longitude', expect.anything());
+  });
 
   it('reescrever o endereço à mão com coordenada já gravada mostra o aviso', () => {
     renderForm(comCoordenada);

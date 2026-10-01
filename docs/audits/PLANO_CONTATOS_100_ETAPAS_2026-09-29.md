@@ -167,12 +167,12 @@
 
 | # | Decisão | Resposta | Data |
 |---|---|---|---|
-| D1 | Exclusão: soft-delete via RPC (rec.) ou policy DELETE | | |
-| D2 | Sicoob Bridge: desligar (rec., após etapa 2) ou reativar tipo | | |
-| D3 | Tipografia/geometria: Navy 38/48/108 (rec.) ou reduzir | | |
-| D4 | Legados/sintéticos: esconder por padrão com toggle (rec.) | | |
-| D5 | Enriquecimento via CRM externo (leitura) — fora deste plano, entra no Banco Único | | |
-| D6 | Apagar os 6 componentes órfãos (rec.) | | |
+| D1 | Exclusão: soft-delete via RPC (rec.) ou policy DELETE | **Soft-delete via RPC** (`deleted_at`), com o predicado `can_edit_contact` no servidor — implementado na série de exclusão | 2026-09-30 |
+| D2 | Sicoob Bridge: desligar (rec., após etapa 2) ou reativar tipo | **Desligar** — migration `20260929380000_disable_sicoob_bridge_trigger` no ledger (`DROP TRIGGER ... trg_sicoob_reply`), funções fora do ar e retiradas da `orphan_allowlist` (etapa 11) | 2026-09-30 |
+| D3 | Tipografia/geometria: Navy 38/48/108 (rec.) ou reduzir | **APROVADA a escala Navy 38/48/108 como definitiva do módulo Contatos** — desbloqueia a F2 (etapas 19–21); na etapa 20 seguir o ramo "D3 = Navy": mover `text-[38px]` de `PageHeader.tsx:147` para o token nomeado `text-page-title` e devolver o teto 1 de `violacoes.acima16px` | 2026-10-01 |
+| D4 | Legados/sintéticos: esconder por padrão com toggle (rec.) | **Esconder por padrão com toggle** — default esconde os legados (3.104 → ≈2.498 no E2E da etapa 98) | 2026-09-30 |
+| D5 | Enriquecimento via CRM externo (leitura) — fora deste plano, entra no Banco Único | **Fora do escopo deste plano** — as props `crmIntegrationEnabled`/`onOpenCRM` e o botão "CRM 360" não entram; só o gate de mesclagem permanece | 2026-10-01 |
+| D6 | Apagar os 6 componentes órfãos (rec.) | **Apagar apenas os que não têm nenhuma referência** — feitos 5 (`ContactBirthdayPanel`, `ContactPagination`, `ContactQuickPeek`, `CustomFieldsSection`, `InlineEditCell`); `ContactMergePanel.tsx` **fica** porque é referenciado pelo gate de Mesclagem | 2026-10-01 |
 
 ## Mapa de origem (para rastreabilidade)
 

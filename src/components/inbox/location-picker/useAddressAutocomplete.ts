@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 import type { KeyboardEvent } from 'react';
-import { suggestPlaces, retrievePlaceResult, searchPlaces } from '@/lib/mapboxGeocode';
+import { suggestPlaces, retrievePlaceResult, searchPlaces, getCachedSuggest } from '@/lib/mapboxGeocode';
 import type { GeoSuggestion, GeoFailureKind, GeoProximity, GeoSearchPlace } from '@/lib/mapboxGeocode';
-import { getSearchSession, noteSuggestCall, noteRetrieveCall, endSearchSession } from '@/lib/mapboxSession';
+import { getSearchSession, peekSearchSession, noteSuggestCall, noteRetrieveCall, endSearchSession } from '@/lib/mapboxSession';
 import { isSearchBudgetOk } from '@/lib/mapboxCostGuard';
 import { reportMapboxFailure } from '@/lib/mapboxToken';
 import type { MapboxFailureKind } from '@/lib/mapboxToken';
@@ -269,9 +269,23 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
   const runSuggest = useCallback((term: string) => {
     if (!token) return;
     // E38: 429 recente — não tenta de novo a cada tecla, espera o backoff passar.
-    if (state.rateLimitedUntil && Date.now() < state.rateLimitedUntil) return;
-    // E37: guarda de custo — mês estourou o teto, fica em silêncio (quem usa cai no /forward).
-    if (!isSearchBudgetOk()) return;
+    // E27 · item 1: pausa (429 ainda valendo ou teto de custo do mês) precisa de AVISO, não de
+    // silêncio. Antes o runSuggest saía calado: a tela ficava num esqueleto que nunca sai — ou num
+    // "Nada encontrado" que é mentira — e o operador não sabia que a espera era proposital.
+    if (state.rateLimitedUntil && Date.now() < state.rateLimitedUntil) {
+      dispatch({
+        type: 'SUGGEST_BLOCKED',
+        reason: 'rate_limited',
+        rateLimitedUntil: state.rateLimitedUntil,
+      });
+      return;
+    }
+    // E37/E27: teto de custo do mês estourado — pausa com motivo próprio ("pausadas este mês"),
+    // sem "Nada encontrado" e sem esqueleto.
+    if (!isSearchBudgetOk()) {
+      dispatch({ type: 'SUGGEST_BLOCKED', reason: 'cost_guard' });
+      return;
+    }
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -279,6 +293,16 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     // quando o operador já digitou outra coisa (ver o guard no `.then` abaixo).
     activeTermRef.current = term;
     dispatch({ type: 'SUGGEST_START' });
+    // E45 · o cache vem ANTES de abrir sessão: `peekSearchSession()` espia a sessão corrente sem
+    // criar nem renovar, e `getCachedSuggest` lê a entrada dela. Termo já cacheado entrega o
+    // resultado sem sessão nova e sem contar `/suggest` — abrir sessão para servir cache é cobrar
+    // um request que não existiu. De quebra, o E46 fica satisfeito: não se conta request sem sessão.
+    const peeked = peekSearchSession();
+    const fromCache = peeked === null ? undefined : getCachedSuggest(peeked, term);
+    if (fromCache !== undefined) {
+      dispatch({ type: 'SUGGEST_SUCCESS', suggestions: fromCache });
+      return;
+    }
     const session = getSearchSession(sessionSource);
     noteSuggestCall();
     suggestPlaces(term, token, { session, proximity, signal: controller.signal, types }).then(async (result) => {
@@ -295,6 +319,17 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
           dispatch({ type: 'SUGGEST_SUCCESS', suggestions: forward.places.map((place, index) => toForwardSuggestion(place, index)) });
           return;
         }
+        // E54 · 429 do `/forward`: a rede de proteção também pode estar limitada. Pausa com prazo —
+        // antes o 429 do `/forward` era descartado e o `/suggest` mandava o erro de ROTA dele
+        // (network/timeout/http), então a próxima tecla martelava a API de novo.
+        if (!forward.ok && forward.kind === 'rate_limited') {
+          dispatch({
+            type: 'SUGGEST_BLOCKED',
+            reason: 'rate_limited',
+            rateLimitedUntil: Date.now() + RATE_LIMIT_BACKOFF_MS,
+          });
+          return;
+        }
       }
 
       if (result.ok) {
@@ -309,8 +344,18 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
         const reported = MAPBOX_FAILURE_KIND[result.kind];
         if (reported) reportMapboxFailure(reported, 'suggest');
       }
-      const rateLimitedUntil = result.kind === 'rate_limited' ? Date.now() + RATE_LIMIT_BACKOFF_MS : undefined;
-      dispatch({ type: 'SUGGEST_ERROR', kind: result.kind, rateLimitedUntil });
+      // E27 · item 1: 429 não é "Falha ao buscar sugestões" — é pausa com prazo. Vai para o estado
+      // `paused` (aviso fixo com contagem regressiva), não para o estado de erro; o backoff
+      // anti-hammering continua valendo pelo `rateLimitedUntil`.
+      if (result.kind === 'rate_limited') {
+        dispatch({
+          type: 'SUGGEST_BLOCKED',
+          reason: 'rate_limited',
+          rateLimitedUntil: Date.now() + RATE_LIMIT_BACKOFF_MS,
+        });
+        return;
+      }
+      dispatch({ type: 'SUGGEST_ERROR', kind: result.kind });
     }).catch(() => {
       // Rejeição inesperada (ex.: o /forward da rede de proteção estourou) — não deixa a UI
       // presa em SUGGEST_START nem propaga um unhandled rejection (Sonar S6544). Consulta
@@ -401,6 +446,16 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     if (seq !== selectionSeqRef.current) return null;
     // O `/retrieve` fecha a sessão para o billing da Mapbox, sucesso ou falha.
     endSearchSession();
+    // E54 · 429 do `/forward` é limite de uso, não falha de rota: pausa com prazo, em vez de deixar
+    // a cascata seguir martelando uma API que já pediu para esperar.
+    if (!fallback.ok && fallback.kind === 'rate_limited') {
+      dispatch({
+        type: 'SUGGEST_BLOCKED',
+        reason: 'rate_limited',
+        rateLimitedUntil: Date.now() + RATE_LIMIT_BACKOFF_MS,
+      });
+      return null;
+    }
     const place = fallback.ok ? fallback.places[0] : undefined;
     if (place) {
       dispatch({ type: 'RETRIEVE_END' });
@@ -410,6 +465,16 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     // E17/E51: telemetria só na dupla falha — e `not_found`/`aborted` não são falha de rota.
     const reported = MAPBOX_FAILURE_KIND[result.kind];
     if (reported) reportMapboxFailure(reported, 'retrieve');
+    // E54 · 429 do `/retrieve` também é limite de uso: liga o backoff de 60 s. Antes ele ficava
+    // preso ao item e a próxima tecla voltava a martelar a API que acabara de dizer "espere".
+    if (result.kind === 'rate_limited') {
+      dispatch({
+        type: 'SUGGEST_BLOCKED',
+        reason: 'rate_limited',
+        rateLimitedUntil: Date.now() + RATE_LIMIT_BACKOFF_MS,
+      });
+      return null;
+    }
     dispatch({ type: 'RETRIEVE_ERROR', id: suggestion.id, kind: result.kind });
     return null;
   }, [state.suggestions, token, sessionSource, proximity]);

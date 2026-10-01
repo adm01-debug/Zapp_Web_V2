@@ -286,7 +286,11 @@ export const ExternalProductManagement: React.FC = () => {
     { label: 'Maior preço', order_by: 'sale_price', ascending: false },
     { label: 'Maior estoque', order_by: 'stock_quantity', ascending: false },
     { label: 'Mais recentes', order_by: 'created_at', ascending: false },
-    { label: 'Mais pedidos', order_by: 'order_count', ascending: false },
+    // CT-22 — "Mais pedidos" (order_by 'order_count') fica OCULTO de propósito: o
+    // PromoGifts ainda não expõe dado de pedido (falta `has_order_data` na RPC
+    // zapp_catalog_stats). Reexibir quando o responsável pelo PromoGifts entregar a
+    // flag — pendência registrada no plano. Não se faz DDL no banco externo (CLAUDE.md §1).
+    // Um sort antigo persistido em sessionStorage cai no fallback `?? SORT_OPTIONS[0]`.
   ];
   const sortKey = orderBy + ':' + String(ascending);
   const currentSort = SORT_OPTIONS.find((o) => o.order_by === orderBy && o.ascending === ascending) ?? SORT_OPTIONS[0];

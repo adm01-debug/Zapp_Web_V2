@@ -6,8 +6,10 @@ const h = vi.hoisted(() => ({
   suggestPlaces: vi.fn(),
   retrievePlaceResult: vi.fn(),
   searchPlaces: vi.fn(),
+  getCachedSuggest: vi.fn(),
   reportMapboxFailure: vi.fn(),
   getSearchSession: vi.fn(),
+  peekSearchSession: vi.fn(),
   noteSuggestCall: vi.fn(),
   noteRetrieveCall: vi.fn(),
   endSearchSession: vi.fn(),
@@ -23,6 +25,8 @@ vi.mock('@/lib/mapboxGeocode', async (importOriginal) => {
     retrievePlaceResult: (...args: unknown[]) => h.retrievePlaceResult(...args),
     // F2/E15: o fallback do /suggest é o /forward — precisa de mock para o teste controlar a rota.
     searchPlaces: (...args: unknown[]) => h.searchPlaces(...args),
+    // E45: o hook confere o cache ANTES de abrir sessão — o teste controla o que está cacheado.
+    getCachedSuggest: (...args: unknown[]) => h.getCachedSuggest(...args),
   };
 });
 vi.mock('@/lib/mapboxToken', async (importOriginal) => {
@@ -31,6 +35,7 @@ vi.mock('@/lib/mapboxToken', async (importOriginal) => {
 });
 vi.mock('@/lib/mapboxSession', () => ({
   getSearchSession: () => h.getSearchSession(),
+  peekSearchSession: () => h.peekSearchSession(),
   noteSuggestCall: () => h.noteSuggestCall(),
   noteRetrieveCall: () => h.noteRetrieveCall(),
   endSearchSession: () => h.endSearchSession(),
@@ -65,6 +70,10 @@ describe('useAddressAutocomplete', () => {
     // mantém o comportamento antigo (erro exposto) nos testes que não falam de fallback.
     h.searchPlaces.mockReset().mockResolvedValue({ ok: false, kind: 'not_found' });
     h.reportMapboxFailure.mockReset();
+    // E45: por padrão não há sessão espiada nem termo em cache — o fluxo segue o caminho da rede,
+    // que é o que os testes anteriores a esta etapa exercitam.
+    h.getCachedSuggest.mockReset().mockReturnValue(undefined);
+    h.peekSearchSession.mockReset().mockReturnValue(null);
     h.getSearchSession.mockReset().mockReturnValue('session-1');
     h.noteSuggestCall.mockReset();
     h.noteRetrieveCall.mockReset();
@@ -89,6 +98,164 @@ describe('useAddressAutocomplete', () => {
     await act(async () => { places.push(await result.current.select(0)); });
     return { result, place: places[0] ?? null };
   }
+
+  // E45 · A sessão nasce no primeiro request REAL. Termo que já está em cache é servido sem abrir
+  // sessão e sem contar `/suggest`: repetir um termo (ou voltar a um já buscado) gerava sessão de
+  // billing e evento de audit para um request que nunca saiu — custo e sessões medidos inflados.
+  describe('E45 — sessão só nasce no primeiro request real', () => {
+    it('mesmo termo 2×: o 2º sai do cache, sem sessão nova e sem contar /suggest', async () => {
+      // A rede devolve C; o cache de "Rua A" tem A — assim dá para provar de onde veio o resultado.
+      h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionC] });
+      const { result } = setup();
+      act(() => { result.current.setQuery('Rua A'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+      expect(h.getSearchSession).toHaveBeenCalledTimes(1);
+      expect(h.suggestPlaces).toHaveBeenCalledTimes(1);
+      expect(h.noteSuggestCall).toHaveBeenCalledTimes(1);
+
+      // A sessão segue viva e "Rua A" fica em cache (só ele; qualquer outro termo vai à rede).
+      h.peekSearchSession.mockReturnValue('session-1');
+      h.getCachedSuggest.mockImplementation((_s: string, t: string) =>
+        t === 'Rua A' ? [suggestionA] : undefined,
+      );
+
+      // Digitar outro termo e VOLTAR ao primeiro é o caso real (setQuery com o mesmo valor não
+      // re-renderiza no React, então o teste precisa passar por um termo diferente).
+      act(() => { result.current.setQuery('Rua B'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+      expect(h.getSearchSession).toHaveBeenCalledTimes(2);
+      expect(result.current.suggestions).toEqual([suggestionC]);
+
+      act(() => { result.current.setQuery('Rua A'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      expect(h.getCachedSuggest).toHaveBeenCalledWith('session-1', 'Rua A');
+      expect(h.getSearchSession).toHaveBeenCalledTimes(2); // termo cacheado: nenhuma sessão nova
+      expect(h.noteSuggestCall).toHaveBeenCalledTimes(2); // nem /suggest contado a mais
+      expect(h.suggestPlaces).toHaveBeenCalledTimes(2); // e nada saiu para a rede
+      expect(result.current.suggestions).toEqual([suggestionA]); // veio do cache, não da rede
+    });
+
+    it('termo em cache com sessão vencida: 0 sessões novas (peek não renova)', async () => {
+      h.peekSearchSession.mockReturnValue('session-velha');
+      h.getCachedSuggest.mockReturnValue([suggestionB]);
+      const { result } = setup();
+      act(() => { result.current.setQuery('Rua B'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      expect(h.getSearchSession).not.toHaveBeenCalled();
+      expect(h.noteSuggestCall).not.toHaveBeenCalled();
+      expect(h.suggestPlaces).not.toHaveBeenCalled();
+      expect(result.current.suggestions).toEqual([suggestionB]);
+    });
+
+    it('lista vazia cacheada (E19) também é servida sem sessão nova', async () => {
+      h.peekSearchSession.mockReturnValue('session-1');
+      h.getCachedSuggest.mockReturnValue([]);
+      const { result } = setup();
+      act(() => { result.current.setQuery('Rua Z'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      expect(h.getSearchSession).not.toHaveBeenCalled();
+      expect(h.suggestPlaces).not.toHaveBeenCalled();
+      expect(result.current.suggestions).toEqual([]);
+      expect(result.current.status).toBe('empty');
+    });
+  });
+
+  // E27 · Estado `paused` (429 / teto de custo) com aviso único, sem esqueleto e sem "Falha".
+  // O guard de 429 e o de custo existiam, mas o caminho principal saía CALADO: a tela ficava num
+  // esqueleto que nunca sai (ou num "Nada encontrado" que é mentira), e o operador não sabia que a
+  // espera era proposital. Aqui se mede o estado, não a intenção.
+  describe('E27 — pausa visível ao operador', () => {
+    it('429 deixa a tela em pausa com motivo, sem esqueleto e sem erro de falha', async () => {
+      h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'rate_limited' });
+      const { result } = setup();
+      act(() => { result.current.setQuery('rua a'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      expect(result.current.status).toBe('paused');
+      expect(result.current.blocked).toBe('rate_limited');
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.suggestions).toEqual([]);
+    });
+
+    it('teto de custo do mês pausa com motivo cost_guard e nem chama a rede', async () => {
+      h.isSearchBudgetOk.mockReturnValue(false);
+      const { result } = setup();
+      act(() => { result.current.setQuery('rua a'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      expect(result.current.status).toBe('paused');
+      expect(result.current.blocked).toBe('cost_guard');
+      expect(result.current.isLoading).toBe(false);
+      expect(h.suggestPlaces).not.toHaveBeenCalled();
+    });
+
+    it('digitar mais durante a pausa não apaga o aviso nem re-requesta', async () => {
+      h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'rate_limited' });
+      const { result } = setup();
+      act(() => { result.current.setQuery('rua a'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+      expect(result.current.status).toBe('paused');
+
+      act(() => { result.current.setQuery('rua ab'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      expect(result.current.status).toBe('paused');
+      expect(result.current.blocked).toBe('rate_limited');
+      expect(h.suggestPlaces).toHaveBeenCalledTimes(1); // backoff anti-hammering segura
+    });
+
+    it('Enter continua ativo na pausa: o hook não engole a tecla (quem usa cai no /forward)', async () => {
+      h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'rate_limited' });
+      const { result } = setup();
+      act(() => { result.current.setQuery('rua a'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+      expect(result.current.status).toBe('paused');
+
+      const enter = fakeKeyEvent('Enter');
+      act(() => { result.current.onKeyDown(enter); });
+
+      // Na pausa não há item destacado, então o hook não chama preventDefault: a tecla segue para
+      // a busca do consumidor (/forward, F2) — é o que garante "o operador nunca fica sem busca".
+      expect(enter.preventDefault).not.toHaveBeenCalled();
+      expect(h.retrievePlaceResult).not.toHaveBeenCalled(); // nada de /retrieve sem seleção
+      expect(result.current.status).toBe('paused'); // e a pausa continua de pé
+    });
+  });
+
+  // E54 · 429 não vem só do `/suggest`: `/retrieve` e `/forward` são endpoints da Mapbox e também
+  // devolvem 429. Antes só o `/suggest` ligava o backoff — o 429 do `/forward` morria como falha de
+  // rota (a cascata seguia) e o do `/retrieve` ficava preso ao item, então a próxima tecla
+  // martelava uma API que já tinha dito "espere".
+  describe('E54 — 429 do /retrieve e do /forward também pausam', () => {
+    it('/forward com 429 liga o backoff de 60 s', async () => {
+      // `/suggest` caiu por ROTA (não é limite): quem assume é o /forward — que responde 429.
+      h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'http' });
+      h.searchPlaces.mockResolvedValue({ ok: false, kind: 'rate_limited' });
+      const { result } = setup();
+      act(() => { result.current.setQuery('rua a'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      expect(result.current.status).toBe('paused');
+      expect(result.current.blocked).toBe('rate_limited');
+      expect(result.current.pausedUntil).not.toBeNull();
+    });
+
+    it('/retrieve com 429 liga o backoff de 60 s', async () => {
+      h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
+      h.retrievePlaceResult.mockResolvedValue({ ok: false, kind: 'rate_limited' });
+      const { result } = setup();
+      act(() => { result.current.setQuery('rua a'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+      await act(async () => { await result.current.select(0); });
+
+      expect(result.current.status).toBe('paused');
+      expect(result.current.blocked).toBe('rate_limited');
+      expect(result.current.pausedUntil).not.toBeNull();
+    });
+  });
 
   it('não faz nenhuma chamada enquanto enabled=false', async () => {
     const { result } = setup({ enabled: false });
@@ -289,7 +456,11 @@ describe('useAddressAutocomplete', () => {
     await act(async () => { vi.advanceTimersByTime(300); });
 
     expect(h.suggestPlaces).toHaveBeenCalledTimes(1);
-    expect(result.current.error).toBe('rate_limited');
+    // E27: o 429 entra em PAUSA (aviso fixo com prazo), não em estado de erro — o motivo vive em
+    // `blocked`. O que este teste protege continua igual: não re-requestar dentro da janela.
+    expect(result.current.status).toBe('paused');
+    expect(result.current.blocked).toBe('rate_limited');
+    expect(result.current.error).toBeNull();
 
     act(() => { result.current.setQuery('rua ab'); });
     await act(async () => { vi.advanceTimersByTime(300); });
@@ -307,11 +478,13 @@ describe('useAddressAutocomplete', () => {
     const { result } = setup();
     act(() => { result.current.setQuery('rua a'); });
     await act(async () => { vi.advanceTimersByTime(300); });
-    expect(result.current.status).toBe('error');
-    expect(result.current.error).toBe('rate_limited');
+    // E27: o 429 já entra em PAUSA (antes era 'error' com a mensagem de falha). O que o A3-04
+    // protege é o que vem depois: "Tentar novamente" não faz request novo e a espera, ao passar,
+    // TEM de tirar a tela da pausa (o aviso não fica preso em "0 s").
+    expect(result.current.status).toBe('paused');
+    expect(result.current.blocked).toBe('rate_limited');
 
-    // "Tentar novamente" durante a espera troca o erro pela PAUSA — é exatamente a tela que o
-    // operador via no bundle real (botão sumia, contador começava) e não faz request novo (E13)
+    // "Tentar novamente" durante a espera mantém a pausa e não faz request novo (E13)
     act(() => { result.current.retrySuggest(); });
     expect(result.current.status).toBe('paused');
     expect(result.current.blocked).toBe('rate_limited');

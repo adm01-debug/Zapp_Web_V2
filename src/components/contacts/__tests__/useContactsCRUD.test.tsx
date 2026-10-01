@@ -16,7 +16,9 @@ const mocks = vi.hoisted(() => ({
   setShowLegacy: vi.fn(),
   warning: vi.fn(),
   invalidateQueries: vi.fn(),
-  rpc: vi.fn((_fn: string, _args?: Record<string, unknown>) => Promise.resolve({ data: 'ok' as unknown, error: null as null | { message: string } })),
+  rpc: vi.fn((_fn: string, _args?: Record<string, unknown>) => {}),
+  /** Retorno configurável do `supabase.rpc` (default: sucesso). */
+  rpcResult: { data: 'ok', error: null } as { data: unknown; error: unknown },
   /** Liga o `onSuccess` do `withFeedback` (o mock padrão só roda a mutação). */
   callOnSuccess: false,
 }));
@@ -34,7 +36,10 @@ vi.mock('@/integrations/supabase/client', () => ({
       },
       delete: () => ({ eq: async () => ({ error: null }) }),
     }),
-    rpc: (fn: string, args?: Record<string, unknown>) => mocks.rpc(fn, args),
+    rpc: (fn: string, args?: Record<string, unknown>) => {
+      mocks.rpc(fn, args);
+      return Promise.resolve(mocks.rpcResult);
+    },
   },
 }));
 
@@ -126,6 +131,7 @@ describe('useContactsCRUD — edição não apaga endereço (C1)', () => {
     mocks.warning.mockReset();
     mocks.invalidateQueries.mockReset();
     mocks.callOnSuccess = false;
+    mocks.rpcResult = { data: 'ok', error: null };
   });
 
   it('E01 — editar só o nome preserva endereço e coordenada da linha completa', async () => {
@@ -306,6 +312,7 @@ describe('useContactsCRUD — exclusão via RPC (D1, etapa 80)', () => {
     mocks.invalidateQueries.mockReset();
     mocks.refetch.mockReset();
     mocks.rpc.mockClear();
+    mocks.rpcResult = { data: 'ok', error: null };
     mocks.callOnSuccess = true;
   });
 
@@ -323,12 +330,64 @@ describe('useContactsCRUD — exclusão via RPC (D1, etapa 80)', () => {
     ['null (nenhuma linha afetada)', { data: null, error: null }, 'Nenhum contato foi excluído'],
     ['erro do banco', { data: null, error: { message: 'permission denied' } }, 'permission denied'],
   ])('RPC devolvendo %s falha o fluxo: nada é invalidado', async (_name, response, message) => {
-    mocks.rpc.mockResolvedValueOnce(response);
+    mocks.rpcResult = response;
     const hook = mountHook();
     await act(async () => {
       await expect(hook.result.current.handleDeleteContact('c1')).rejects.toThrow(message);
     });
     expect(mocks.refetch).not.toHaveBeenCalled();
     expect(mocks.invalidateQueries).not.toHaveBeenCalled();
+  });
+});
+
+describe('useContactsCRUD — delete_contact devolvendo null (regressão P0 da etapa 80)', () => {
+  /**
+   * `delete_contact` devolve o uuid da linha apagada; a RPC atual no banco
+   * levanta `insufficient_privilege` (nunca devolve null), mas o app trata
+   * `null`/`undefined` como falha de propósito: um RPC que devolva "nada" não
+   * pode virar "Contato excluído com sucesso!" com o contato intacto — foi
+   * exatamente o P0 da auditoria de 29/09 (`.delete()` sem policy devolvia 0
+   * linhas sem erro e a UI anunciava sucesso). Este teste trava a defesa.
+   */
+  beforeEach(() => {
+    mocks.refetch.mockReset();
+    mocks.invalidateQueries.mockReset();
+    mocks.callOnSuccess = false;
+    mocks.rpcResult = { data: 'ok', error: null };
+  });
+
+  it('data === null → lança com mensagem de falha e NÃO roda o onSuccess (sem refetch/invalidate)', async () => {
+    mocks.callOnSuccess = true;
+    mocks.rpcResult = { data: null, error: null };
+    const hook = mountHook();
+
+    let caught: unknown;
+    await act(async () => {
+      try {
+        await hook.result.current.handleDeleteContact('c1');
+      } catch (error) {
+        caught = error;
+      }
+    });
+
+    expect(caught).toBeInstanceOf(Error);
+    expect((caught as Error).message).toBe(
+      'Nenhum contato foi excluído. Verifique se você tem permissão.',
+    );
+    expect(mocks.refetch).not.toHaveBeenCalled();
+    expect(mocks.invalidateQueries).not.toHaveBeenCalled();
+  });
+
+  it('data com o uuid → sucesso: roda o onSuccess e invalida os contadores', async () => {
+    mocks.callOnSuccess = true;
+    mocks.rpcResult = { data: 'c1', error: null };
+    const hook = mountHook();
+
+    await act(async () => {
+      await hook.result.current.handleDeleteContact('c1');
+    });
+
+    expect(mocks.refetch).toHaveBeenCalled();
+    expect(mocks.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['contacts-kpi'] });
   });
 });

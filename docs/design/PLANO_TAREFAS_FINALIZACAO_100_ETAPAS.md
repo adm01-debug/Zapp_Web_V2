@@ -109,14 +109,28 @@ Formato: `[ ] N. Ação — arquivo — DoD`. Marque `[x]` **só** com evidênci
 
 ### FASE D — QuickAdd completo e CSS dos chips (etapas 35–42) → CP-D
 
-- [ ] **35.** Branch `claude/feat-tarefas-d-quickadd-<carimbo>`. **B1:** criar em `src/styles/components.css` as classes `.chip-btn` (`inline-flex items-center gap-1 h-7 px-2.5 rounded-full border border-border bg-input text-[12px] font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors`) e `.chip-active` (`… bg-primary/15 border-primary/50 text-primary-glow`) via `@apply`. Verificar que `components.css` é importado em `src/index.css`. — DoD: chips com borda e fundo no screenshot.
-- [ ] **36.** Chips **sempre visíveis** (não só após digitar), à direita do campo em `≥ md`; abaixo em mobile; em `compact` viram um botão `⋯` que abre `Popover` com os mesmos chips. — DoD: layout nos dois tamanhos.
-- [ ] **37.** Chip **Data**: `Popover` + `Calendar` (shadcn, `locale ptBR`) + `Input type=time` opcional. Substitui o preset quando escolhido; o chip mostra "Sex 03/10". — DoD: cria com a data escolhida.
-- [ ] **38.** Chip **Lembrar**: `Popover` com presets (Em 1 h · Amanhã 9h · Próx. seg 9h) + data/hora livre. Validação inline: passado → borda `destructive` + "O alarme precisa ser no futuro" e o botão Criar desabilita. — DoD: erro inline; presets funcionam.
-- [ ] **39.** Chip **@ Contato**: `ContactCombobox` (mesmo da etapa 24) com busca por nome/telefone; chip mostra avatar + nome; `×` remove. Oculto quando `defaultContactId` vier (chat). — DoD: cria vinculada ao contato.
-- [ ] **40.** Chip **! Prioridade**: 4 opções (Baixa/Média/Alta/Urgente); default Média. — DoD: cria com a prioridade.
-- [ ] **41.** Parser leve **sem NLP** (G-5 mantido): só atalhos de teclado dentro do campo — `Ctrl+1/2/3` = Hoje/Amanhã/Próx. semana; `Ctrl+L` abre Lembrar; `Ctrl+@` abre contato. Documentar no `title` do campo. — DoD: 3 atalhos.
+- [x] **35.** Branch `claude/feat-tarefas-d-quickadd-<carimbo>`. **B1:** criar em `src/styles/components.css` as classes `.chip-btn` (`inline-flex items-center gap-1 h-7 px-2.5 rounded-full border border-border bg-input text-[12px] font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors`) e `.chip-active` (`… bg-primary/15 border-primary/50 text-primary-glow`) via `@apply`. Verificar que `components.css` é importado em `src/index.css`. — DoD: chips com borda e fundo no screenshot.
+- [x] **36.** Chips **sempre visíveis** (não só após digitar), à direita do campo em `≥ md`; abaixo em mobile; em `compact` viram um botão `⋯` que abre `Popover` com os mesmos chips. — DoD: layout nos dois tamanhos.
+- [x] **37.** Chip **Data**: `Popover` + `Calendar` (shadcn, `locale ptBR`) + `Input type=time` opcional. Substitui o preset quando escolhido; o chip mostra "Sex 03/10". — DoD: cria com a data escolhida.
+- [x] **38.** Chip **Lembrar**: `Popover` com presets (Em 1 h · Amanhã 9h · Próx. seg 9h) + data/hora livre. Validação inline: passado → borda `destructive` + "O alarme precisa ser no futuro" e o botão Criar desabilita. — DoD: erro inline; presets funcionam.
+- [x] **39.** Chip **@ Contato**: `ContactCombobox` (mesmo da etapa 24) com busca por nome/telefone; chip mostra avatar + nome; `×` remove. Oculto quando `defaultContactId` vier (chat). — DoD: cria vinculada ao contato.
+- [x] **40.** Chip **! Prioridade**: 4 opções (Baixa/Média/Alta/Urgente); default Média. — DoD: cria com a prioridade.
+- [x] **41.** Parser leve **sem NLP** (G-5 mantido): só atalhos de teclado dentro do campo — `Ctrl+1/2/3` = Hoje/Amanhã/Próx. semana; `Ctrl+L` abre Lembrar; `Ctrl+@` abre contato. Documentar no `title` do campo. — DoD: 3 atalhos.
 - [ ] **42.** Testes `src/components/tasks/__tests__/QuickAdd.test.tsx`: Enter cria; Escape limpa; chip Hoje preenche `dueDate`; Lembrar no passado bloqueia; `compact` mostra `⋯`. Commit `feat(tarefas): fase D — QuickAdd com Data, Lembrar, @Contato, !Prioridade e CSS dos chips (B1)`. PR, CI, merge, screenshot. — DoD: SHA.
+
+> **FASE D — executada em 2026-10-01 (PR da fase).** 35–41 fechadas com evidência:
+> `.chip-btn`/`.chip-active` em `src/styles/components.css` (o plano pedia `text-[12px]`,
+> trocado por `text-xs` — equivalente exato na escala; o gate de tipografia reprova o arbitrário);
+> 7 chips sempre visíveis com `⋯` no compact; chip Data (Calendar ptBR + hora); Lembrar com
+> presets e **bloqueio de passado**; @ Contato pelo `ContactCombobox` novo (oculto quando o
+> contato vem do chat); ! Prioridade com default Média; atalhos Ctrl+1/2/3 · Ctrl+L · Ctrl+@.
+> Testes: `QuickAdd.test.tsx` (11 casos) + `QuickAddCompacto.test.tsx` (2 casos, criado para
+> matar a mutação do `⋯` no compact) — 6/6 mutações mortas. **Lacuna real corrigida:** no compact
+> o `Ctrl+L` não abria o `⋯`, então o popover de Lembrar não tinha gatilho montado.
+> **Conflito de plano a resolver na FASE H:** a etapa 36 manda o compact virar `⋯` com os chips,
+> a etapa 79 manda o compacto do board ser "só título, sem chips". Segui a 36 (é a fase dona do
+> componente); na FASE H a 79 decide se o board passa a usar um modo sem chips.
+> **Pendente (não bloqueia):** screenshot da etapa 42, que depende do login de QA no cofre.
 
 **CP-D — Captura completa.** Gate: 7 chips estilizados e funcionais; validação de passado; teste verde.
 
