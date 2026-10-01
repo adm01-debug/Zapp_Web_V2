@@ -507,7 +507,7 @@ leituras foram descartadas.
 
 ## CP-F Avisos de alarme [x] — toast=ok · popover=criado · badge=ok · push=fora da v1 · 66/67 pendentes de QA
 ## CP-G Chat integrado [x] — NotesTab=resumo+atalho+QuickAdd · TasksTab=5 grupos · reminders->tasks=ok · Alt+T=ok
-## CP-H A11y        [ ] 7 atalhos= · aria-live= · reduced-motion 0s= · contraste= · mobile 3 modos= · light= · zen=
+## CP-H Acessivel e responsivo [~] — 7 atalhos=ok · aria-live=ok · reduced-motion=ok · contraste=ok (tabela medida) · mobile=ok por construcao · zen=aberta
 ## CP-I Testes      [ ] arquivos= · casos= · bundle= KB gz · TTI 300 itens=
 ## CP-J Entrega     [ ] gates 8/8= · func 24/24= · geometria= · cores= · isolamento 2 usuários= · migração= · PR drop reminders_pending (aguarda APROVADO)= · docs= · prod final=
 
@@ -630,6 +630,45 @@ Etapas 35–41 fechadas; 42 entregue (commit/PR/CI/merge), restando só o screen
   bundle 4071,4/4100 KB · suite 378 arquivos / 4938 testes / 0 falhas · 1/1 mutacao morta (reminders sem redirect)
 - Divergencias: chip Lembrar em destaque nao feito (QuickAdd sem prop de destaque; compact esconde os chips);
   reset para 'chat' ao trocar de conversa mantido (pre-existente)
+
+## FASE H — Acessibilidade, mobile, motion, tema claro (77-84)
+
+- 77 7 atalhos no registry real com escopo ['tasks','pipeline'] e guarda de input; o modulo deixou de ter
+  listener proprio e consome o evento tasks-shortcut
+- 78 regiao viva tasks-live + dragHandleUsageInstructions pt-BR + aria-roledescription no card do Quadro
+- 79 useReducedMotion (duracao 0) + regra [data-rbd-draggable-id] transition none !important
+- 80 contraste AA com --warning-text/--destructive-text (so luminosidade); tabela medida no PR
+- 81 mobile: snap + 5 dots + setas + MoveToMenu visivel + drag off em pointer coarse + Sheet bottom
+- 82 tema claro: contraste medido nos dois modos (screenshot depende de QA)
+- 83 ZEN: ABERTA — nao verificada (garantia apenas por construcao)
+- 84 commit/PR/CI/merge
+- Evidencia: typecheck 0 · ratchet 0 novas/6 removidas · tipografia ok · implicit-any 0 · db:guard ok ·
+  build ok, bundle 4074,6/4100 KB · suite 382 arquivos / 4978 testes / 0 falhas · 2/2 mutacoes mortas
+  (regra de reduced-motion do card; aria-live da regiao viva)
+
+> **Budget de bundle (medido em 2026-10-01, FASE H):** o build da FASE G fechava em 333,7 KB de JS
+> inicial; a main atual (que o mergear re-sincroniza no branch) esta em 339,8 KB — **o #1424 (Talk X,
+> Fase 1) consumiu 6,1 KB do grafo de entrada** (tocou `src/App.tsx`, rotas e providers). Com o guard em
+> 340 KB, sobraram ~0,2 KB de folga: a FASE H estourou por 0,2 KB e a decisao 20261001-160338-3700 foi
+> tirar os rotulos (nome/descricao) dos 7 atalhos de Tarefas do chunk de entrada, carregando-os sob
+> demanda no painel de ajuda e na tela de atalhos. Nao se mexe no budget; quem for adicionar peso ao
+> grafo de entrada (nao-lazy) precisa medir com `VITE_CRM_INTEGRATION_ENABLED=true bun run build` e
+> `VITE_CRM_INTEGRATION_ENABLED=true node scripts/ci/bundle-budget.mjs` (o budget local sem esse env
+> nao acusa o estouro).
+
+## FASE I — Rede de testes (85-90)
+
+- 85 WorkItemCard.test.tsx: 11 casos (status, teclado com guarda de alvo, checkbox/contato, kebab
+  liberado, WIP) — 14/14 mutantes mortos pelo autor
+- 86 TasksListMode.test.tsx (8) + TasksModule.test.tsx +6 (defaultMode, ?view=pipeline forca Quadro
+  sem reescrever a preferencia, ?task= abre o Sheet, atalho N)
+- 87 resolveDragEnd extraido como funcao PURA em board/resolveDragEnd.ts + TasksBoardMode.test.tsx (10)
+- 88 TasksAgendaMode.test.tsx (7, relogio congelado) + WorkItemSheet.test.tsx +4 de borda
+- 89 numeros: chunk do modulo 12,2 KB gz (teto 45) · JS inicial 334,9/341 KB ·
+  NAO medido: seed de 300 tarefas e TTI dos 3 modos (dependem do login de QA)
+- 90 commit/PR/CI/merge
+- Evidencia: dominios 19 arquivos / 254 casos · suite 398 arquivos / 5219 testes / 0 falhas ·
+  typecheck 0 · lint-ratchet 0 novas · typecheck-ratchet 0 novas · implicit-any 0 · tipografia ok · db:guard ok
 
 ## Pendências / resíduos (honestos)
 - Push do navegador: decidir na etapa 64 (infra existe: usePushNotifications.ts, PushNotificationToggle.tsx — não avaliada)

@@ -80,7 +80,7 @@ async function collectFunctionSources(entrypoint, functionsRoot) {
     }
   }
 
-  return [...visited].sort();
+  return [...visited].sort((a, b) => a.localeCompare(b));
 }
 
 function parseConfig(configSource) {
@@ -162,7 +162,7 @@ export async function buildDeploymentManifest({ repoRoot, orphanAllowlist = [], 
     }
     functionNames.push(entry.name);
   }
-  functionNames.sort();
+  functionNames.sort((a, b) => a.localeCompare(b));
 
   if (functionNames.length === 0) throw new Error('No Edge Functions found');
   // Funcoes legadas nao gerenciadas (declaradas em scripts/edge-deploy/legacy-functions.json)
@@ -214,11 +214,11 @@ export async function buildDeploymentManifest({ repoRoot, orphanAllowlist = [], 
   const sourceFiles = [...fileRecords.values()]
     .sort((left, right) => left.path.localeCompare(right.path))
     .map(({ content: _content, ...record }) => record);
-  const sortedOrphans = [...orphanAllowlist].sort();
+  const sortedOrphans = [...orphanAllowlist].sort((a, b) => a.localeCompare(b));
   const manifestWithoutDigest = {
     schema_version: MANIFEST_SCHEMA_VERSION,
     project_ref: projectRef,
-    legacy_unmanaged_functions: [...legacyUnmanaged].sort(),
+    legacy_unmanaged_functions: [...legacyUnmanaged].sort((a, b) => a.localeCompare(b)),
     config: {
       path: 'supabase/config.toml',
       sha256: sha256(configSource),
@@ -289,8 +289,8 @@ export function buildDeploymentAttestation({
 
   const expectedNames = new Set(manifest.functions.map((fn) => fn.name));
   const legacyAllowed = new Set(Array.isArray(manifest.legacy_unmanaged_functions) ? manifest.legacy_unmanaged_functions : []);
-  const missing = [...expectedNames].filter((name) => !remoteByName.has(name)).sort();
-  const extra = [...remoteByName.keys()].filter((name) => !expectedNames.has(name)).sort();
+  const missing = [...expectedNames].filter((name) => !remoteByName.has(name)).sort((a, b) => a.localeCompare(b));
+  const extra = [...remoteByName.keys()].filter((name) => !expectedNames.has(name)).sort((a, b) => a.localeCompare(b));
   const orphanSet = new Set(manifest.orphan_allowlist ?? []);
   const unexpectedExtra = extra.filter((name) => !legacyAllowed.has(name) && !orphanSet.has(name));
   if (missing.length || unexpectedExtra.length) {

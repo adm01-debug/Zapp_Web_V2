@@ -263,7 +263,7 @@ test('manifesto commitado tolera as orfas reais: sicoob-bridge/-reply SEGUEM NO 
     'utf8',
   ));
   assert.deepEqual(
-    [...(committed.orphan_allowlist ?? [])].sort(),
+    [...(committed.orphan_allowlist ?? [])].sort((a, b) => a.localeCompare(b)),
     ['sicoob-bridge', 'sicoob-bridge-reply'],
     'a orphan_allowlist tem de conter exatamente as duas orfas reais do remoto',
   );

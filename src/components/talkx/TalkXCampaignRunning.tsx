@@ -15,6 +15,7 @@ import {
 import { toast } from 'sonner';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime } from './talkxShared';
+import { msToSeconds, secondsToMs, intervalForProfile, isValidIntervalSeconds, LIMITS_MIN_S, LIMITS_MAX_S } from './talkxLimits';
 import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { supabase, invokeEdge } from '@/lib/supabaseHelpers';
@@ -152,7 +153,7 @@ function TabConfig({ c }: { c: TalkXCampaign }) {
     <RailCard title="Configurações da Campanha" color="amber" icon={Activity}>
       <div className="pt-1 space-y-0.5">
         <MetaRow label="Velocidade" value={SPEED_LABEL[c.speed_profile ?? ''] ?? c.speed_profile ?? '—'} />
-        <MetaRow label="Intervalo entre msgs" value={`${c.send_interval_min}s – ${c.send_interval_max}s`} />
+        <MetaRow label="Intervalo entre msgs" value={`${msToSeconds(c.send_interval_min)}s – ${msToSeconds(c.send_interval_max)}s`} />
         <MetaRow label="Delay de digitação" value={`${c.typing_delay_min}s – ${c.typing_delay_max}s`} />
         <MetaRow label="Janela de envio" value={c.send_window_start ? `${c.send_window_start?.slice(0, 5)} – ${c.send_window_end?.slice(0, 5)}` : 'Sem restrição'} />
         <MetaRow label="Horário comercial" value={c.business_hours_only ? 'Sim' : 'Não'} />
@@ -487,6 +488,13 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   const [lSaving, setLSaving] = useState(false);
   const [resuming, setResuming] = useState(false);
 
+  // X006: o select de velocidade mostra "Personalizado" quando o intervalo
+  // digitado à mão difere do intervalo do perfil escolhido (o perfil é mantido).
+  const intervaloCustomizado = useMemo(() => {
+    const [pMin, pMax] = intervalForProfile(lSpeed);
+    return lIntMin !== msToSeconds(pMin) || lIntMax !== msToSeconds(pMax);
+  }, [lSpeed, lIntMin, lIntMax]);
+
   // P2: deriva somente de campanhas ativas; sai da view quando concluir/cancelar
   const campaign = useMemo(() => sending.find((c) => c.id === selectedId) ?? null, [sending, selectedId]);
   // Auto-navegar de volta quando a campanha sair de sending/paused
@@ -538,8 +546,8 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   const handleOpenLimits = useCallback(() => {
     if (!campaign) return;
     setLSpeed(campaign.speed_profile ?? 'moderate');
-    setLIntMin(campaign.send_interval_min);
-    setLIntMax(campaign.send_interval_max);
+    setLIntMin(msToSeconds(campaign.send_interval_min));
+    setLIntMax(msToSeconds(campaign.send_interval_max));
     setLWinStart(campaign.send_window_start?.slice(0, 5) ?? '');
     setLWinEnd(campaign.send_window_end?.slice(0, 5) ?? '');
     setLBizHours(campaign.business_hours_only ?? false);
@@ -548,8 +556,8 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
 
   const handleSaveLimits = useCallback(async () => {
     if (!campaign) return;
-    if (!Number.isFinite(lIntMin) || lIntMin < 1 || !Number.isFinite(lIntMax) || lIntMax < 1) {
-      toast.error('Intervalos devem ser números inteiros positivos (mínimo: 1s).');
+    if (!isValidIntervalSeconds(lIntMin) || !isValidIntervalSeconds(lIntMax)) {
+      toast.error(`Intervalos devem ser inteiros entre ${LIMITS_MIN_S}s e ${LIMITS_MAX_S}s.`);
       return;
     }
     setLSaving(true);
@@ -559,15 +567,15 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
         expectedRevision: campaign.revision ?? null,
         limits: {
           speed_profile: lSpeed,
-          send_interval_min: lIntMin,
-          send_interval_max: Math.max(lIntMin, lIntMax),
+          send_interval_min: secondsToMs(lIntMin),
+          send_interval_max: secondsToMs(Math.max(lIntMin, lIntMax)),
           send_window_start: lWinStart ? `${lWinStart}:00` : null,
           send_window_end: lWinEnd ? `${lWinEnd}:00` : null,
           business_hours_only: lBizHours,
         },
       });
       setLimitsOpen(false);
-      toast.success('Limites atualizados. Aplicados no próximo lote de envios.');
+      toast.success('Limites atualizados. Vale a partir do próximo envio.');
     } catch (e) {
       const msg = e instanceof Error ? e.message : '';
       toast.error(msg.includes('stale_revision')
@@ -730,27 +738,36 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Editar Limites de Envio</AlertDialogTitle>
-            <AlertDialogDescription>Aplicados no próximo lote de 20 envios.</AlertDialogDescription>
+            <AlertDialogDescription>Vale a partir do próximo envio.</AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1">
               <label className="text-xs font-semibold text-foreground">Velocidade</label>
-              <select value={lSpeed} onChange={(e) => setLSpeed(e.target.value)}
+              <select value={intervaloCustomizado ? 'personalizado' : lSpeed}
+                onChange={(e) => {
+                  const p = e.target.value;
+                  if (p === 'personalizado') return;
+                  setLSpeed(p);
+                  const [minMs, maxMs] = intervalForProfile(p);
+                  setLIntMin(msToSeconds(minMs));
+                  setLIntMax(msToSeconds(maxMs));
+                }}
                 className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs focus:outline-none focus:ring-1 focus:ring-primary">
                 <option value="slow">Lento (seguro)</option>
                 <option value="moderate">Moderado</option>
                 <option value="fast">Rápido</option>
+                {intervaloCustomizado && <option value="personalizado">Personalizado</option>}
               </select>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-foreground">Intervalo mínimo (s)</label>
-                <input type="number" min={1} value={lIntMin} onChange={(e) => setLIntMin(Number(e.target.value))}
+                <input type="number" min={LIMITS_MIN_S} max={LIMITS_MAX_S} value={lIntMin} onChange={(e) => setLIntMin(Number(e.target.value))}
                   className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs focus:outline-none focus:ring-1 focus:ring-primary" />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-foreground">Intervalo máximo (s)</label>
-                <input type="number" min={lIntMin} value={lIntMax} onChange={(e) => setLIntMax(Number(e.target.value))}
+                <input type="number" min={LIMITS_MIN_S} max={LIMITS_MAX_S} value={lIntMax} onChange={(e) => setLIntMax(Number(e.target.value))}
                   className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs focus:outline-none focus:ring-1 focus:ring-primary" />
               </div>
             </div>
@@ -798,7 +815,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
           />
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handlePause} className="bg-amber-500 text-white hover:bg-amber-600">Pausar</AlertDialogAction>
+            <AlertDialogAction onClick={handlePause} className="bg-warning text-warning-foreground hover:bg-warning/90">Pausar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

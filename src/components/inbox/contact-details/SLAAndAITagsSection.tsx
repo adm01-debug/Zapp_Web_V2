@@ -64,7 +64,7 @@ export function SLAAndAITagsSection({ slaInfo, aiTags }: SLAAndAITagsSectionProp
       {/* AI Tags — color-coded by confidence */}
       {hasAITags && (
         <div className="space-y-2">
-          <div className="flex items-center gap-1.5 text-3xs text-muted-foreground/60">
+          <div className="flex items-center gap-1.5 text-3xs text-muted-foreground">
             <Zap className="w-3 h-3" />
             <span>Tags geradas por IA</span>
           </div>

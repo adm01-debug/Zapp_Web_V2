@@ -330,6 +330,14 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 - [ ] **CT-40** — Fechamento D: PR mergeada; `PARIDADE.md` seções "Detalhes" e "Enviar" (prints antes/depois); zerar
   `text-white`/`violet-500` restantes por tokens (`text-primary-foreground`, `--badge-new`). **Aceite:** grep de cores
   literais no módulo = 0 (exceção documentada: `bg-white` da mídia).
+  **✅ FRONT FEITO — provado em 01/10/2026 (PR ainda não mergeada).** Token `--badge-new` criado em
+  `tokens.css:194-201` (`268 83% 63%`, mesma família da `.catalog-badge--new` de `components.css`). Zerados os 7
+  `text-white` (→ `text-primary-foreground`) em `ProductDetailDialog.tsx:362,363,366` e
+  `CatalogProductCard.tsx:65,70,75,399`, e os 2 `bg-violet-500` (→ `bg-[hsl(var(--badge-new))]`) em
+  `ProductDetailDialog.tsx:366` e `CatalogProductCard.tsx:399`. Seções "Detalhes" e "Enviar" publicadas em
+  `docs/catalogo/PARIDADE.md`. Aceite por grep: `find src/components/catalog -name '*.tsx' -not -path '*/__tests__/*'`
+  → 0 hex, 0 `text-white`, 0 `bg-violet-500`; contrato travado em `__tests__/CT40_badgeTokens.test.tsx`. Falta só a
+  PR mergeada (fechamento real da etapa).
 
 ## FASE 4 — Passo "Selecionar contato" completo (CT-41–CT-50)
 *Bloco E — 1 PR de front + 1 migration (CT-48).*
@@ -384,9 +392,27 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   registrar na §10. **Aceite:** texto na §10.
 - [ ] **CT-52** — Botão "Enviar produto" no header do contato → `ExternalProductCatalog` com `presetContact` (CT-14).
   **Aceite:** evento em `catalog_send_events` com `contact_id` do perfil.
-- [ ] **CT-53** — Mesmo botão no CRM 360 (se a tela existir; senão registrar). **Aceite:** idem ou nota.
+- [x] **CT-53** — Mesmo botão no CRM 360 (se a tela existir; senão registrar). **Aceite:** idem ou nota.
+  **Nota (01/10/2026) — NÃO existe ponto de extensão; nada foi inventado.** O CRM 360 é um explorador
+  **somente-leitura de um banco CRM externo** (`useExternalTableBrowser` / `ExternalTableName`), não uma tela de perfil:
+  não há cabeçalho/detalhe de contato. A pasta `src/components/crm360/` contém só `CRM360ExplorerView.tsx` (header + abas +
+  `DataExplorerTable`), `CRM360StatsCards.tsx`, `DataExplorerTable.tsx` (tabela genérica), `CompanyFormDialog.tsx`,
+  `ContactFormDialog.tsx`, `crm360TabsConfig.ts` e `crm360TabsData.ts`. A aba "Contatos"
+  (`crm360TabsData.ts:26-37`) lista colunas do CRM (nome/cargo/departamento/estágio/score), **sem telefone/WhatsApp**, e o
+  clique na linha abre o `ContactFormDialog` (form de edição do CRM externo — `first_name`/`last_name`/`cpf`/…), que **não
+  carrega `contact_id` do Zapp nem telefone**. O envio de produto (`SendProductDialog`/`catalog_send_events`) exige um
+  contato do Zapp; adicionar o botão ali exigiria uma vinculação CRM→Zapp que não existe hoje. Portanto: **sem botão no
+  CRM 360** (não se inventa tela).
 - [ ] **CT-54** — Histórico "Produtos enviados" no perfil do contato (lista de `catalog_send_events` por `contact_id`,
   RLS já cobre). **Aceite:** teste RTL com mock.
+  **🟡 DECISÃO (Joaquim, 01/10/2026):** o histórico por contato será **por agente na v1**; a visão de equipe fica para
+  depois (exigiria **migration/policy nova**). **Motivo medido, policy real:** `catalog_send_events` é filtrada por
+  **`agent_id`**, não por `contact_id` — a policy `"Users can view own catalog send events"`
+  (`supabase/migrations/20260925130000_add_to_authenticated_catalog_send_events_favorites.sql:14-20`, criada em
+  `20260913122557_catalog_send_events.sql:36-41`) é
+  `agent_id IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid())`.
+  Ou seja: um agente comum vê **só os próprios envios** (ainda que para vários contatos); admin/supervisor vê o
+  conjunto que a policy já permite. A etapa segue `[ ]` (front pendente), mas **sem migration nova** nesta v1.
 - [ ] **CT-55** — Deep link `?view=catalog&product=<id>&send=1&contact=<id>` pré-seleciona contato. **Aceite:** teste.
 - [ ] **CT-56** — Fechamento F: PR mergeada; smoke em produção. **Aceite:** CI verde.
 
@@ -532,8 +558,11 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 - [ ] **CT-85** — Textos revisados (acentuação, "Qtd. mínima", "dias úteis") — lista em `PARIDADE.md`. **Aceite:** lista.
 - [ ] **CT-86** — `CHANGELOG_CATALOGO.md` completado com F6/F7 e correções (#577–#714) e com este plano por bloco.
   **Aceite:** toda PR de `catalog` desde 12/09 citada.
-- [ ] **CT-87** — `README.md` do módulo: remover a referência a `PARIDADE.md` até ela existir (CT-30 cria), apontar
-  para este plano e para a auditoria. **Aceite:** nenhum link quebrado.
+- [x] **CT-87** — `README.md` do módulo: a referência a `PARIDADE.md` **fica** (o arquivo existe agora) e aponta para o
+  caminho certo — [`./PARIDADE.md`](./PARIDADE.md) —, junto com a referência a este plano e à auditoria. **Aceite:**
+  nenhum link quebrado.
+  **✅ FEITO — provado em 01/10/2026.** `docs/catalogo/PARIDADE.md` criado; `README.md:12` agora linka
+  `[\`PARIDADE.md\`](./PARIDADE.md)` (antes era texto sem link, `PARIDADE.md` não existia).
 - [ ] **CT-88** — Fechamento I: 2 PRs mergeadas. **Aceite:** CI verde; e2e verde.
 
 ## FASE 9 — Paridade, hardening e release (CT-89–CT-100)

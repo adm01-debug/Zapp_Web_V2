@@ -71,7 +71,7 @@ export function compararManifestos(A, B) {
   for (const secao of MANIFEST_SECTIONS) {
     const SA = A[secao];
     const SB = B[secao];
-    const todos = [...new Set([...Object.keys(SA), ...Object.keys(SB)])].sort();
+    const todos = [...new Set([...Object.keys(SA), ...Object.keys(SB)])].sort((a, b) => a.localeCompare(b));
     const soEmA = todos.filter((chave) => !(chave in SB));
     const soEmB = todos.filter((chave) => !(chave in SA));
     const divergentes = todos.filter(

@@ -1,5 +1,11 @@
 import type { ShortcutBinding } from '@/hooks/ui/useCustomShortcuts';
 
+/**
+ * Etapa 77: rotas que montam o módulo de Tarefas (`?view=tasks` e `?view=pipeline`).
+ * É o escopo dos 7 atalhos abaixo — fora dessas views o registry os ignora.
+ */
+export const TASKS_VIEWS = ['tasks', 'pipeline'];
+
 export const DEFAULT_SHORTCUTS: ShortcutBinding[] = [
   // Chat shortcuts
   { id: 'send-message', name: 'Enviar mensagem', description: 'Envia a mensagem atual', defaultKey: 'Enter', defaultModifiers: { ctrlKey: true }, category: 'chat' },
@@ -30,4 +36,21 @@ export const DEFAULT_SHORTCUTS: ShortcutBinding[] = [
   { id: 'clear-selection', name: 'Limpar seleção', description: 'Remove a seleção atual', defaultKey: 'Escape', defaultModifiers: {}, category: 'selection' },
   { id: 'mark-read', name: 'Marcar como lido', description: 'Marca selecionados como lidos', defaultKey: 'r', defaultModifiers: {}, category: 'selection' },
   { id: 'bulk-archive', name: 'Arquivar selecionados', description: 'Arquiva todas as conversas selecionadas', defaultKey: 'e', defaultModifiers: { ctrlKey: true, shiftKey: true }, category: 'selection' },
+  // Task shortcuts (etapa 77) — valem só em `?view=tasks` e `?view=pipeline`.
+  // O módulo recebe o comando pelo evento `tasks-shortcut` (o registry não
+  // conhece o estado de tela do módulo); a guarda de input é a do handler
+  // global, que ignora qualquer um destes ids dentro de INPUT/TEXTAREA.
+  //
+  // Etapa 84: o `name`/`description` destes 7 NÃO entra aqui de propósito. Os
+  // textos vivem em `taskShortcutLabels.ts`, carregado sob demanda pelo painel
+  // de ajuda e pela tela de atalhos (`useTaskShortcutLabels`); mantê-los neste
+  // arquivo (eager) estourava o budget `initial-js` (340 KB). O que o registry
+  // precisa — id, tecla, modificadores, categoria e escopo — continua aqui.
+  { id: 'tasks-focus-quickadd', defaultKey: 'n', defaultModifiers: {}, category: 'actions', scope: TASKS_VIEWS },
+  { id: 'tasks-mode', defaultKey: '1', alternateKeys: ['2', '3'], defaultModifiers: {}, category: 'navigation', scope: TASKS_VIEWS },
+  { id: 'tasks-search', defaultKey: '/', defaultModifiers: {}, category: 'navigation', scope: TASKS_VIEWS },
+  { id: 'tasks-open-sheet', defaultKey: 'e', defaultModifiers: {}, category: 'actions', scope: TASKS_VIEWS },
+  { id: 'tasks-complete', defaultKey: 'x', defaultModifiers: {}, category: 'actions', scope: TASKS_VIEWS },
+  { id: 'tasks-cancel', defaultKey: 'Delete', defaultModifiers: {}, category: 'actions', scope: TASKS_VIEWS },
+  { id: 'tasks-help', defaultKey: '?', defaultModifiers: { shiftKey: true }, category: 'navigation', scope: TASKS_VIEWS },
 ];

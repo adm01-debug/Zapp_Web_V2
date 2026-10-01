@@ -98,6 +98,30 @@ function splitArgs(text) {
   return out;
 }
 
+// O catalogo guarda pg_get_function_identity_arguments, que vem SEMPRE na forma
+// canonica do PG (medido no PG 17): int4/int -> integer, varchar(50) ->
+// character varying, numeric(10,2) -> numeric (typmod sai), timestamptz ->
+// timestamp with time zone, timestamp -> timestamp without time zone, bool ->
+// boolean. A migration escreve a forma curta. Sem canonicalizar os DOIS lados, o
+// DROP de uma assinatura que existe nao casa e a funcao fica na projecao —
+// falso-negativo, e o oposto do que o ratchet precisa.
+const TYPE_ALIASES = new Map([
+  ['int', 'integer'], ['int2', 'smallint'], ['int4', 'integer'], ['int8', 'bigint'],
+  ['serial', 'integer'], ['smallserial', 'smallint'], ['bigserial', 'bigint'],
+  ['bool', 'boolean'], ['decimal', 'numeric'], ['float4', 'real'],
+  ['float8', 'double precision'], ['varchar', 'character varying'],
+  ['char', 'character'], ['timestamptz', 'timestamp with time zone'],
+  ['timestamp', 'timestamp without time zone'],
+  ['timetz', 'time with time zone'], ['time', 'time without time zone'],
+]);
+
+function canonTipo(t) {
+  const ehArray = /\[\s*\]$/.test(t);
+  const base = t.replace(/\s*\[\s*\]\s*$/, '');
+  const semTypmod = base.replace(/\s*\([\s\S]*\)$/, '').trim();
+  return (TYPE_ALIASES.get(semTypmod) || semTypmod) + (ehArray ? '[]' : '');
+}
+
 // Normaliza argumentos para TIPOS. pg_get_function_identity_arguments traz o
 // NOME do argumento (`p_queue_id uuid`) e as migrations normalmente o omitem
 // (`uuid`); sem remover o nome, a assinatura do catalogo e a do DROP nunca
@@ -105,12 +129,23 @@ function splitArgs(text) {
 function normArgs(argsText) {
   return splitArgs(argsText)
     .map((raw) => {
-      let t = raw.trim().replace(/\s+default\s+[\s\S]*$/i, '').trim();
-      t = t.replace(/^(?:in|out|inout|variadic)\s+/i, '');
+      // `OUT` NAO faz parte da identidade do DROP: o regprocedure de
+      // f(integer, OUT boolean) e f(integer) (medido no PG 17), mas
+      // pg_get_function_identity_arguments INCLUI o OUT. Manter o OUT deixaria a
+      // assinatura do catalogo maior que a do DROP e o DROP legitimo nao casaria.
+      // `INOUT` faz parte da identidade e continua.
+      if (/^\s*out\s/i.test(raw)) return null;
+      // O `DEFAULT` sai ANTES do trim: o lexer apaga o valor da string (e as
+      // proprias aspas) para tornar o literal opaco, entao o grupo chega como
+      // `p_a text DEFAULT` — sem espaco depois do DEFAULT, o `\s+default\s+`
+      // nao casaria e a assinatura viraria `text default` (nunca casando o DROP).
+      let t = raw.replace(/\s+default\b[\s\S]*$/i, '').trim();
+      t = t.replace(/^(?:in|inout|variadic)\s+/i, '');
       const words = t.split(/\s+/).filter(Boolean);
       if (words.length > 1 && !MULTIWORD_TYPE_START.has(words[0].toLowerCase())) words.shift();
-      return words.join(' ').toLowerCase().replace(/\s*\[\s*\]\s*/g, '[]');
+      return canonTipo(words.join(' ').toLowerCase());
     })
+    .filter((t) => t !== null)
     .join(',');
 }
 
@@ -122,17 +157,22 @@ function addSignature(map, key, sig) {
 function dropSignature(map, key, sig) {
   const set = map.get(key);
   if (!set) return;
-  // Uma unica assinatura conhecida: o DROP e dela, mesmo que a grafia do tipo
-  // divirja entre catalogo e migration (ex.: timestamptz x timestamp with time
-  // zone). Com varias assinaturas, um DROP que nao casa nenhuma e mantido
-  // (conservador: evita orfaos falsos num ratchet que bloqueia merge).
-  if (set.size <= 1) {
+  // Sem NENHUMA assinatura conhecida (catalogo sem `function_signatures`, ou
+  // funcao cujo CREATE o guard nao ve), o nome citado no DROP e a unica
+  // evidencia: remove, como antes.
+  if (set.size === 0) {
     map.delete(key);
     return;
   }
-  // Sobrou mais de uma assinatura: o DROP remove SO a assinatura citada e o nome
-  // continua na projecao enquanto existir qualquer outra.
+  // O DROP so remove o que ele REALMENTE atinge: `set.delete` de uma assinatura
+  // que nao esta no conjunto e no-op, exatamente como no PG — `DROP FUNCTION
+  // [IF EXISTS] f(...)` de assinatura inexistente nao derruba nada e a funcao
+  // SOBREVIVE (medido no PG 17: `NOTICE: function ... does not exist, skipping`,
+  // count=1 depois do DROP). Antes, um DROP com a assinatura errada (grafia
+  // divergente ou overload inexistente) apagava o NOME inteiro da projecao e o
+  // caller valido virava orfao — falso-positivo num ratchet que bloqueia merge.
   set.delete(sig);
+  if (set.size === 0) map.delete(key);
 }
 
 function projectSchemaFromForwardMigrations(catalog) {
@@ -180,17 +220,38 @@ function projectSchemaFromForwardMigrations(catalog) {
     // Qualquer schema (nao so public): o DDL real e qualificado e a chave e
     // montada como schema.nome, igual a projecao do catalogo e ao scan().
     const qual = (schema, name) => schema.toLowerCase() + '.' + name;
-    for (const m of sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?(?:FUNCTION|ROUTINE|PROCEDURE)\s+([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)/gi)) {
-      ops.push({ at: m.index, kind: 'fn', op: 'add', name: qual(m[1], m[2]), sig: normArgs(m[3]) });
+    // A migration roda com search_path public: DDL sem qualificacao (`DROP TABLE x;`)
+    // atinge public.x. Exigir o prefixo deixava esse DROP invisivel (fail-open: o
+    // caller de x seguia aprovado mesmo com a tabela derrubada).
+    const alvo = (schema, name) => qual(schema || 'public', name);
+    // VIEW entra em relations: 27 arquivos de migration criam view e views do
+    // catalogo sao derrubadas na janela (profiles_public, whatsapp_connections_public,
+    // password_reset_requests_safe, ...). Sem projetar o CREATE acusa falso positivo
+    // (a view recem-criada "nao existe") e o DROP passa invisivel (fail-open).
+    for (const m of sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?(?:MATERIALIZED\s+)?VIEW(?:\s+IF\s+NOT\s+EXISTS)?\s+(?:([a-zA-Z0-9_]+)\.)?([a-zA-Z0-9_]+)/gi)) {
+      ops.push({ at: m.index, kind: 'rel', op: 'add', name: alvo(m[1], m[2]) });
     }
-    for (const m of sql.matchAll(/DROP\s+(?:FUNCTION|ROUTINE|PROCEDURE)(?:\s+IF\s+EXISTS)?\s+([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)/gi)) {
-      ops.push({ at: m.index, kind: 'fn', op: 'del', name: qual(m[1], m[2]), sig: normArgs(m[3]) });
+    for (const m of sql.matchAll(/DROP\s+(?:MATERIALIZED\s+)?VIEW(?:\s+IF\s+EXISTS)?\s+(?:([a-zA-Z0-9_]+)\.)?([a-zA-Z0-9_]+)/gi)) {
+      ops.push({ at: m.index, kind: 'rel', op: 'del', name: alvo(m[1], m[2]) });
     }
-    for (const m of sql.matchAll(/CREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?\s+([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)/gi)) {
-      ops.push({ at: m.index, kind: 'rel', op: 'add', name: qual(m[1], m[2]) });
+    for (const m of sql.matchAll(/CREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?\s+(?:([a-zA-Z0-9_]+)\.)?([a-zA-Z0-9_]+)/gi)) {
+      ops.push({ at: m.index, kind: 'rel', op: 'add', name: alvo(m[1], m[2]) });
     }
-    for (const m of sql.matchAll(/DROP\s+TABLE(?:\s+IF\s+EXISTS)?\s+([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)/gi)) {
-      ops.push({ at: m.index, kind: 'rel', op: 'del', name: qual(m[1], m[2]) });
+    for (const m of sql.matchAll(/DROP\s+TABLE(?:\s+IF\s+EXISTS)?\s+(?:([a-zA-Z0-9_]+)\.)?([a-zA-Z0-9_]+)/gi)) {
+      ops.push({ at: m.index, kind: 'rel', op: 'del', name: alvo(m[1], m[2]) });
+    }
+    // RENAME TO muda a identidade do alvo: o nome antigo sai da projecao e o novo
+    // entra. Sem isso um caller do nome antigo fica invisivel ao guard (e um do
+    // nome novo vira falso positivo). O `+ 1` mantem o add depois do del na ordem.
+    for (const m of sql.matchAll(/ALTER\s+(?:MATERIALIZED\s+VIEW|TABLE|VIEW)(?:\s+IF\s+EXISTS)?\s+(?:ONLY\s+)?(?:([a-zA-Z0-9_]+)\.)?([a-zA-Z0-9_]+)\s+RENAME\s+TO\s+([a-zA-Z0-9_]+)/gi)) {
+      ops.push({ at: m.index, kind: 'rel', op: 'del', name: alvo(m[1], m[2]) });
+      ops.push({ at: m.index + 1, kind: 'rel', op: 'add', name: alvo(m[1], m[3]) });
+    }
+    for (const m of sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?(?:FUNCTION|ROUTINE|PROCEDURE)\s+(?:([a-zA-Z0-9_]+)\.)?([a-zA-Z0-9_]+)\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)/gi)) {
+      ops.push({ at: m.index, kind: 'fn', op: 'add', name: alvo(m[1], m[2]), sig: normArgs(m[3]) });
+    }
+    for (const m of sql.matchAll(/DROP\s+(?:FUNCTION|ROUTINE|PROCEDURE)(?:\s+IF\s+EXISTS)?\s+(?:([a-zA-Z0-9_]+)\.)?([a-zA-Z0-9_]+)\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)/gi)) {
+      ops.push({ at: m.index, kind: 'fn', op: 'del', name: alvo(m[1], m[2]), sig: normArgs(m[3]) });
     }
     ops.sort((a, b) => a.at - b.at);
     for (const change of ops) {

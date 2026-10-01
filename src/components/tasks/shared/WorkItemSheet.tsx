@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { BellRing, CalendarIcon, CheckCircle2, ChevronDown, PauseCircle, X } from 'lucide-react';
@@ -30,23 +30,11 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
 import { PRIORITY_LABELS } from '@/hooks/tasks/workItemLabels';
+import { useNarrowViewport } from './pointerMedia';
 import type { Priority, WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import type { WorkItemInput } from '@/hooks/tasks/useMyWorkItems';
 
-/** Abaixo de `md` o Sheet desce para a base (etapa 23). */
-function useIsNarrow(): boolean {
-  const [narrow, setNarrow] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
-  );
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)');
-    const on = (e: MediaQueryListEvent) => setNarrow(e.matches);
-    mq.addEventListener('change', on);
-    return () => mq.removeEventListener('change', on);
-  }, []);
-  return narrow;
-}
-
+/** Abaixo de `md` o Sheet desce para a base (etapa 23) — mesmo corte do quadro. */
 const PRIORIDADES: Priority[] = ['low', 'medium', 'high', 'urgent'];
 
 /** `yyyy-MM-dd` de um ISO, sem sofrer com fuso. */
@@ -99,7 +87,7 @@ interface SheetProps {
 
 export function WorkItemSheet(props: SheetProps) {
   const { item, open, onOpenChange, focusField } = props;
-  const narrow = useIsNarrow();
+  const narrow = useNarrowViewport();
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

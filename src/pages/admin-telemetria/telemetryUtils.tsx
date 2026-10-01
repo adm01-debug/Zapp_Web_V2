@@ -1,4 +1,6 @@
+import { startOfDay, subDays } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import type { TimeFilter } from './telemetryTypes';
 
 export function formatDuration(ms: number) {
   if (ms >= 1000) return `${(ms / 1000).toFixed(1)}s`;
@@ -37,4 +39,20 @@ export function computeTopOffenders(rows: { rpc_name: string | null; table_name:
     });
   }
   return [...tableStats.entries()].sort((a, b) => b[1].count - a[1].count).slice(0, 8);
+}
+
+/**
+ * Início do recorte de período da telemetria, como instante ISO.
+ *
+ * "1h"/"6h"/"24h" são janelas **corridas** (o rótulo promete horas: "Últimas 24h"). "7d" é um
+ * recorte em **dias de calendário** — hoje + 6 anteriores, o mesmo recorte do R3-06 na timeline
+ * do Histórico. Antes eram 168 h corridas: às 22h30 em São Paulo o período alcançava o 8º dia.
+ *
+ * Segue o fuso do navegador (consulta de quem está olhando), como o resto das telas.
+ */
+export function periodStartIso(timeFilter: TimeFilter, now: Date = new Date()): string {
+  const horasCorridas: Partial<Record<TimeFilter, number>> = { "1h": 1, "6h": 6, "24h": 24 };
+  const horas = horasCorridas[timeFilter];
+  if (horas) return new Date(now.getTime() - horas * 3_600_000).toISOString();
+  return startOfDay(subDays(now, 6)).toISOString();
 }

@@ -192,3 +192,69 @@ montado *apenas* a partir de `user_has_permission` sobre o `userId` do JWT
 (`index.ts:190-211`). Portanto um escopo forjado no body (ex.:
 `{"p_scope_permissions":["admin"]}`) é **ignorado** — é exatamente o que o F24 vai provar
 em `scripts/db-audit/multiplix-scope.test.sh` (plano, linha 52).
+
+## Testes e evidências (F24) — contas de escopo e execução medida
+
+### Contas de teste de escopo criadas no ZAPP (2026-10-01)
+
+Pré-requisito do F24 (plano, linha 50). Criadas via Admin API de auth + tabelas
+`profiles`/`user_roles`/`role_permissions` (matriz F25). **Senha aleatória, 28
+caracteres, gravada apenas em `~/.secrets/zapp-multiplix-escopo.env` (chmod 0600,
+fora do repo) — nunca em log, commit ou documento.**
+
+| Perfil de negócio | Papel (`app_role`) | E-mail | `user_roles.user_id` |
+|---|---|---|---|
+| Vendedor com carteira | `agent` | `comercial01@promobrindes.com.br` | `ce48bee0-8e75-42fa-9c84-af4c20a5de28` |
+| Compras | `supervisor` | `multiplix.compras@promobrindes.com.br` | `d2229ada-f924-4453-bb62-121eb52ead32` |
+| Logística | `supervisor` | `multiplix.logistica@promobrindes.com.br` | `ab2d4b9b-d748-41c9-9649-7c4b4f15b70c` |
+
+- O e-mail do vendedor é o de um **vendedor real do Singu** (`public.users` id 11,
+  `is_vendedor=true`) **de propósito**: o vínculo carteira↔usuário ZAPP é por e-mail
+  (ver acima) e o Singu está sob autorização **somente leitura** — não há como criar
+  um vendedor com carteira sem reusar um e-mail existente. Ele resolve pela RPC para
+  `vendedor_id=11`, cuja carteira tem clientes reais.
+- Cada conta tem **exatamente um papel**: o `agent` auto-provisionado pelo trigger
+  `handle_new_user_role` foi substituído pelo papel alvo (senão um `supervisor`
+  herdaria também `customers.own`, mudando o escopo).
+- Permissões efetivas medidas por `user_has_permission`: `comercial01` →
+  `customers.own` + `dispatch.create`; **as duas contas `supervisor`** →
+  `suppliers` + `carriers` + `customers.all` + `dispatch.create`.
+
+### O que `scripts/db-audit/multiplix-scope.test.sh` prova (e o que não prova)
+
+- **BLOCO 1 (estático, sempre roda no CI):** o schema do corpo da edge
+  (`RequestSchema`) só aceita `action` + `params`; `params` só carrega filtros de
+  audiência; a edge nunca lê `p_scope_*`/`scope`/`permission` de `params`; e
+  `scopePermissions` só é montado a partir de `user_has_permission`/`is_admin`.
+- **BLOCO 2 (ao vivo, PULA e sai 0 sem credenciais):** com as 3 contas reais, faz
+  login (JWT) e chama a edge `multiplix-audience` **deployada**, comparando cada
+  contagem com a RPC do Singu chamada direto com o mesmo escopo (dois caminhos
+  independentes), e manda **escopo forjado no corpo** (`p_scope_permissions:["admin"]`
+  em `params` e no topo, mais `scope`) exigindo que seja ignorado.
+- **Não prova:** o gate de nav/rota `/multiplix` (`multiplix.dispatch.create`), RLS de
+  tabela, nem varre todo o conteúdo das linhas de `search` (amostra).
+
+### Execução real (2026-10-01, edge + Singu reais)
+
+`bash scripts/db-audit/multiplix-scope.test.sh` → **39 asserções, 0 falhas** (BLOCO 1
+5/5; BLOCO 2 34/34). Contagens medidas (`count` da edge):
+
+| Perfil | sem filtro | cliente | fornecedor | transportadora |
+|---|---|---|---|---|
+| admin (referência direta) | 57.314 | 55.450 | 754 | 113 |
+| supervisor (Compras = Logística) | 55.930 | 55.450 | 754 | 113 |
+| vendedor (agent, carteira) | 5.319 | 5.319 | **0** | 1 ¹ |
+
+¹ O vendedor "vê" 1 transportadora porque ela **também está na carteira dele**
+(`customers_own`) — o ramo de escopo é a carteira, não `carriers`. O agente não tem
+`multiplix.audience.carriers` (a sonda de escopo admin direto devolve 113).
+
+Escopo forjado no corpo: o vendedor mandou `["admin"]` e continuou contando **5.319**
+(não os 55.450 de admin); o supervisor mandou `["customers_own"]` e continuou em
+**55.450** (não 0, que seria o resultado da carteira dele, inexistente). Forjado
+**ignorado** em ambos.
+
+> **Incerteza F25 agora medida:** Compras e Logística são ambos `supervisor` e as duas
+> contas devolvem **exatamente o mesmo** número para os 4 filtros — não há separação
+> fina entre os perfis com a matriz como está escrita (ver §3).
+

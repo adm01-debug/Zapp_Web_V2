@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Filter, AlertTriangle } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useMyWorkItems }   from '@/hooks/tasks/useMyWorkItems';
@@ -8,6 +8,8 @@ import { applyFilters, bucketByDue, bucketByStatus, kpis } from '@/hooks/tasks/w
 import { countDoing } from '@/hooks/tasks/workItemMachine';
 import { useTasksFilters }  from '@/hooks/tasks/useTasksFilters';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
+import { WIP_LIMITS, KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
+import type { WorkItemInput, MoveOpts } from '@/hooks/tasks/useMyWorkItems';
 import { ModeSwitcher, type TaskMode } from './shared/ModeSwitcher';
 import { QuickAdd }         from './shared/QuickAdd';
 import { TasksFilterBar }   from './shared/TasksFilterBar';
@@ -39,6 +41,14 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
   const [idNaUrl] = useState(() => new URLSearchParams(window.location.search).get('task'));
   const [linkConsumido, setLinkConsumido] = useState(false);
   const quickAddRef = useRef<HTMLInputElement>(null);
+  /** Etapa 78: região viva (sr-only) que narra o que aconteceu na tela. */
+  const [anuncio, setAnuncio] = useState('');
+
+  // Repetir a mesma frase não muda o texto da região e o leitor de tela não
+  // reanuncia; o espaço de largura zero força a troca sem mexer no que é lido.
+  const anunciar = useCallback((mensagem: string) => {
+    setAnuncio(prev => (prev === mensagem ? `${mensagem}\u200B` : mensagem));
+  }, []);
 
   const setMode = (m: TaskMode) => {
     setModeState(m);
@@ -87,27 +97,19 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
   const hasMounted = useRef(false);
   useEffect(() => { hasMounted.current = true; }, []);
 
-  // Atalho N → foca o QuickAdd
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement).tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || e.metaKey || e.ctrlKey) return;
-      if (e.key === 'n' || e.key === 'N') {
-        e.preventDefault();
-        quickAddRef.current?.focus();
-      }
-      if (e.key === '1') setMode('list');
-      if (e.key === '2') setMode('board');
-      if (e.key === '3') setMode('agenda');
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, []);
+  // Etapa 79: com movimento reduzido a troca de modo nao anima — o AnimatePresence
+  // continua montando/desmontando (o conteudo nao pode piscar), mas com 0s.
+  const reduceMotion = useReducedMotion() ?? false;
 
   const handleToggleDone = useCallback(async (item: WorkItem) => {
-    if (item.status === 'done') await reopen(item);
-    else await complete(item);
-  }, [reopen, complete]);
+    if (item.status === 'done') {
+      await reopen(item);
+      anunciar('Desfeito');
+    } else {
+      await complete(item);
+      anunciar('Concluída');
+    }
+  }, [reopen, complete, anunciar]);
 
   // Etapa 26 (B3): abrir e fechar o Sheet mantém a URL em sincronia (`?task=<id>`).
   // Etapa 28/29/31: `focus` abre o Sheet já pedindo um campo — o motivo de espera
@@ -130,12 +132,36 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
     window.history.replaceState(null, '', url.pathname + url.search);
   }, []);
 
+  // Etapa 77/78: "Movida para {coluna} ({n} de {limite})" — a contagem olha o
+  // recorte real do alvo (a coluna com WIP duro é a que importa).
+  const anunciarMovimento = useCallback((item: WorkItem, to: WorkItemStatus) => {
+    const coluna = KANBAN_COLUMNS.find(c => c.status === to)?.label ?? to;
+    const limite = WIP_LIMITS[to].hard;
+    if (!limite) { anunciar(`Movida para ${coluna}`); return; }
+    const n = Math.min(hook.items.filter(i => i.status === to && i.id !== item.id).length + 1, limite);
+    anunciar(`Movida para ${coluna} (${n} de ${limite})`);
+  }, [hook.items, anunciar]);
+
   // Etapa 29 (B2): mover para Aguardando nunca escreve direto — o motivo é
   // obrigatório, então o portão abre o Sheet pedindo (mesmo caminho do DnD).
   const handleMoveTo = useCallback((item: WorkItem, to: WorkItemStatus) => {
     if (to === 'waiting') { abrirSheet(item, 'waiting_reason'); return; }
+    anunciarMovimento(item, to);
     void move(item, to);
-  }, [move, abrirSheet]);
+  }, [move, abrirSheet, anunciarMovimento]);
+
+  // O DnD do Quadro chama `onMove` direto: o mesmo aviso vale para as duas portas.
+  const moverComAviso = useCallback((item: WorkItem, to: WorkItemStatus, opts?: MoveOpts) => {
+    anunciarMovimento(item, to);
+    void move(item, to, opts);
+  }, [move, anunciarMovimento]);
+
+  // Etapa 78: "Tarefa criada" cobre as três portas de captura (QuickAdd do
+  // cabeçalho, da coluna e da Agenda).
+  const criarComAviso = useCallback(async (input: WorkItemInput) => {
+    await create(input);
+    anunciar('Tarefa criada');
+  }, [create, anunciar]);
 
   // Etapa 28: o DnD cai no mesmo portão quando solta em Aguardando sem motivo.
   const handleRequestWaitingReason = useCallback((item: WorkItem) => {
@@ -150,11 +176,52 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
   }, []);
 
   // Etapas 30/31: ações do kebab e do RemindChip ligadas às mutations do hook.
-  const handleComplete = useCallback((item: WorkItem) => { void complete(item); }, [complete]);
-  const handleReopen = useCallback((item: WorkItem) => { void reopen(item); }, [reopen]);
+  const handleComplete = useCallback((item: WorkItem) => {
+    void complete(item).then(() => anunciar('Concluída'));
+  }, [complete, anunciar]);
+  const handleReopen = useCallback((item: WorkItem) => {
+    void reopen(item).then(() => anunciar('Desfeito'));
+  }, [reopen, anunciar]);
   const handleSnooze = useCallback((item: WorkItem, minutes: number | 'tomorrow9') => { void snooze(item, minutes); }, [snooze]);
   const handleClearReminder = useCallback((item: WorkItem) => { void setReminder(item, null); }, [setReminder]);
   const handleOpenReminder = useCallback((item: WorkItem) => { abrirSheet(item, 'remind_at'); }, [abrirSheet]);
+
+  // Etapa 77: os 7 atalhos do módulo vivem no registry global
+  // (`useGlobalKeyboardShortcuts` + `defaultShortcuts`), com escopo
+  // `view in ('tasks','pipeline')` e guarda de input. Aqui só chega o comando,
+  // pelo evento `tasks-shortcut` — o módulo não instala listener de teclado.
+  const aplicarAtalho = useCallback((id: string, key?: string) => {
+    if (id === 'tasks-focus-quickadd') { quickAddRef.current?.focus(); return; }
+    if (id === 'tasks-mode') {
+      setMode(key === '2' ? 'board' : key === '3' ? 'agenda' : 'list');
+      return;
+    }
+    if (id === 'tasks-search') {
+      document.querySelector<HTMLInputElement>('[aria-label="Buscar tarefa"]')?.focus();
+      return;
+    }
+    // `E`/`X`/`Delete` agem no card com foco (o mesmo contrato do próprio card).
+    const idDoCard = (document.activeElement as HTMLElement | null)
+      ?.closest?.('[data-testid="work-item-card"]')?.getAttribute('data-item-id');
+    const item = idDoCard ? hook.items.find(i => i.id === idDoCard) ?? null : null;
+    if (!item) return;
+    if (id === 'tasks-open-sheet') abrirSheet(item);
+    if (id === 'tasks-complete') void handleToggleDone(item);
+    if (id === 'tasks-cancel') void deleteItem(item);
+  }, [hook.items, abrirSheet, handleToggleDone, deleteItem]);
+
+  // O handler fica numa ref para o listener não se remontar a cada render e sair
+  // das deps do efeito (mesmo padrão do registry), sem `useEffect` + `setState`.
+  const atalhoRef = useRef(aplicarAtalho);
+  useEffect(() => { atalhoRef.current = aplicarAtalho; });
+  useEffect(() => {
+    const aoAtalhar = (e: Event) => {
+      const detail = (e as CustomEvent<{ id?: string; key?: string }>).detail;
+      if (detail?.id) atalhoRef.current(detail.id, detail.key);
+    };
+    document.addEventListener('tasks-shortcut', aoAtalhar);
+    return () => document.removeEventListener('tasks-shortcut', aoAtalhar);
+  }, []);
 
   // Etapa 27: F5 com `?task=<id>` reabre o Sheet. Derivado (não é efeito):
   // o item vem da URL e some assim que o usuário fecha o Sheet.
@@ -166,7 +233,7 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
   if (isError) {
     return (
       <div className="flex flex-col items-center gap-3 py-16 text-center">
-        <AlertTriangle className="h-8 w-8 text-destructive" />
+        <AlertTriangle className="h-8 w-8 text-[hsl(var(--destructive-text))]" />
         <p className="text-sm text-muted-foreground">Não foi possível carregar suas tarefas</p>
         <button type="button" onClick={() => hook.refetch()} className="text-sm text-primary hover:underline">Tentar novamente</button>
       </div>
@@ -175,6 +242,17 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
 
   return (
     <div data-testid="tasks-module" className="flex flex-col h-full gap-4">
+      {/* Etapa 78: região viva única do módulo — narra criar, concluir, mover e
+          desfazer sem roubar o foco de quem usa leitor de tela. */}
+      <div
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        data-testid="tasks-live"
+      >
+        {anuncio}
+      </div>
       <PageHeader
         variant="plain"
         title="Tarefas"
@@ -186,7 +264,7 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
       <TasksKpiStrip kpis={{ ...kpiData, doingCount: doingReal }} />
 
       {/* QuickAdd (etapa 57: a Agenda tem o seu, com o dia selecionado) */}
-      {mode !== 'agenda' && <QuickAdd ref={quickAddRef} onAdd={create} defaultStatus="backlog" />}
+      {mode !== 'agenda' && <QuickAdd ref={quickAddRef} onAdd={criarComAviso} defaultStatus="backlog" />}
 
       {/* Toolbar: barra de filtros (etapa 45) + troca de modo */}
       <div className="flex items-center gap-3 flex-wrap">
@@ -214,7 +292,7 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.12 }}
+          transition={{ duration: reduceMotion ? 0 : 0.12 }}
           className="flex-1 min-h-0 overflow-auto"
         >
           {mode === 'list' && (
@@ -244,13 +322,13 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
               byStatus={byStatus}
               isLoading={isLoading}
               doingCount={doingReal}
-              onMove={move}
+              onMove={moverComAviso}
               onMoveTo={handleMoveTo}
               onRequestWaitingReason={handleRequestWaitingReason}
               onReorder={reorder}
               onOpen={abrirSheet}
               onDelete={deleteItem}
-              onCreate={create}
+              onCreate={criarComAviso}
               onOpenContact={handleOpenContact}
               onComplete={handleComplete}
               onReopen={handleReopen}
@@ -264,7 +342,7 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
               items={items}
               overdue={byDue.overdue}
               isLoading={isLoading}
-              onCreate={create}
+              onCreate={criarComAviso}
               quickAddRef={quickAddRef}
               onOpen={abrirSheet}
               onToggleDone={handleToggleDone}

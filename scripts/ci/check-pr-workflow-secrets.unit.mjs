@@ -4,7 +4,9 @@ import { fileURLToPath } from 'node:url';
 
 import {
   findPullRequestSecretLeaks,
+  findPushSecretLeaks,
   hasPullRequestTrigger,
+  hasPushTriggerUnrestricted,
   scanWorkflowDirectory,
 } from './check-pr-workflow-secrets.mjs';
 
@@ -62,7 +64,210 @@ test('ignora comentarios e workflows sem trigger de PR', () => {
   assert.deepEqual(findPullRequestSecretLeaks('on:\n  workflow_dispatch:\nenv:\n  DB: ${{ secrets.DESTINO_URL }}\n'), []);
 });
 
-test('repositorio atual nao vincula secrets privilegiados a workflows de PR', () => {
+// --- hasPushTriggerUnrestricted ---
+
+test('hasPushTriggerUnrestricted: escalar on: push', () => {
+  assert.equal(hasPushTriggerUnrestricted('on: push\n'), true);
+  assert.equal(hasPushTriggerUnrestricted('on: push # comentario\n'), true);
+});
+
+test('hasPushTriggerUnrestricted: on: "push" e on: \'push\' (scalar com aspas) — irrestrito', () => {
+  assert.equal(hasPushTriggerUnrestricted('on: "push"\n'), true);
+  assert.equal(hasPushTriggerUnrestricted("on: 'push'\n"), true);
+});
+
+test('hasPushTriggerUnrestricted: push: &my-trigger (anchor YAML antes do valor vazio) — irrestrito', () => {
+  const workflow = 'on:\n  push: &my-trigger\n  workflow_dispatch:\n';
+  assert.equal(hasPushTriggerUnrestricted(workflow), true);
+});
+
+test('hasPushTriggerUnrestricted: array inline on: [push]', () => {
+  assert.equal(hasPushTriggerUnrestricted('on: [push]\n'), true);
+  assert.equal(hasPushTriggerUnrestricted('on: [push, pull_request]\n'), true);
+});
+
+test('hasPushTriggerUnrestricted: push: sem branches (irrestrito)', () => {
+  const workflow = 'on:\n  push:\n  workflow_dispatch:\n';
+  assert.equal(hasPushTriggerUnrestricted(workflow), true);
+});
+
+test('hasPushTriggerUnrestricted: push: {} (objeto vazio inline)', () => {
+  const workflow = 'on:\n  push: {}\n  workflow_dispatch:\n';
+  assert.equal(hasPushTriggerUnrestricted(workflow), true);
+});
+
+test('hasPushTriggerUnrestricted: push: null e push: ~ (irrestrito)', () => {
+  assert.equal(hasPushTriggerUnrestricted('on:\n  push: null\n'), true);
+  assert.equal(hasPushTriggerUnrestricted('on:\n  push: ~\n'), true);
+});
+
+test('hasPushTriggerUnrestricted: push: Null e push: NULL (irrestrito)', () => {
+  assert.equal(hasPushTriggerUnrestricted('on:\n  push: Null\n'), true);
+  assert.equal(hasPushTriggerUnrestricted('on:\n  push: NULL\n'), true);
+});
+
+test('hasPushTriggerUnrestricted: push com mapeamento inline nao-vazio (irrestrito)', () => {
+  assert.equal(hasPushTriggerUnrestricted('on:\n  push: { branches-ignore: [main] }\n'), true);
+  assert.equal(hasPushTriggerUnrestricted('on:\n  push: { branches: [main] }\n'), false);
+});
+
+test('hasPushTriggerUnrestricted: push restrito a branches: [main] — seguro', () => {
+  const workflow = 'on:\n  push:\n    branches: [main]\n';
+  assert.equal(hasPushTriggerUnrestricted(workflow), false);
+});
+
+test('hasPushTriggerUnrestricted: push restrito a branches: ["main"] — seguro', () => {
+  const workflow = 'on:\n  push:\n    branches: ["main"]\n';
+  assert.equal(hasPushTriggerUnrestricted(workflow), false);
+});
+
+test("hasPushTriggerUnrestricted: push restrito a branches: ['main'] — seguro", () => {
+  const workflow = "on:\n  push:\n    branches: ['main']\n";
+  assert.equal(hasPushTriggerUnrestricted(workflow), false);
+});
+
+test('hasPushTriggerUnrestricted: push restrito a branches-ignore (irrestrito)', () => {
+  const workflow = 'on:\n  push:\n    branches-ignore: [main]\n';
+  assert.equal(hasPushTriggerUnrestricted(workflow), true);
+});
+
+test('hasPushTriggerUnrestricted: sem trigger push', () => {
+  assert.equal(hasPushTriggerUnrestricted('on:\n  pull_request:\n'), false);
+  assert.equal(hasPushTriggerUnrestricted('on:\n  workflow_dispatch:\n'), false);
+});
+
+test('hasPushTriggerUnrestricted: push com branches: [main] mas tambem com tags — irrestrito', () => {
+  const workflow = 'on:\n  push:\n    branches: [main]\n    tags: ["v*"]\n';
+  assert.equal(hasPushTriggerUnrestricted(workflow), true);
+});
+
+// --- findPushSecretLeaks ---
+
+test('findPushSecretLeaks: push irrestrito com secret — detecta', () => {
+  const workflow = `on:
+  push:
+env:
+  DB: \${{ secrets.DESTINO_URL }}
+`;
+  assert.deepEqual(findPushSecretLeaks(workflow, 'bad.yml'), [
+    { file: 'bad.yml', line: 4, secret: 'DESTINO_URL' },
+  ]);
+});
+
+test('findPushSecretLeaks: push restrito a main com secret — nao detecta', () => {
+  const workflow = `on:
+  push:
+    branches: [main]
+env:
+  DB: \${{ secrets.DESTINO_URL }}
+`;
+  assert.deepEqual(findPushSecretLeaks(workflow, 'e2e-logado.yml'), []);
+});
+
+test('findPushSecretLeaks: permite secrets publicos mesmo em push irrestrito', () => {
+  const workflow = `on:
+  push:
+env:
+  URL: \${{ secrets.VITE_SUPABASE_URL }}
+`;
+  assert.deepEqual(findPushSecretLeaks(workflow), []);
+});
+
+// --- secrets: inherit em reusable workflow call ---
+
+test('findPullRequestSecretLeaks: secrets: inherit com pull_request → violação', () => {
+  const workflow = `on:
+  pull_request:
+jobs:
+  call:
+    uses: org/repo/.github/workflows/callable.yml@main
+    secrets: inherit
+`;
+  const result = findPullRequestSecretLeaks(workflow, 'workflow.yml');
+  assert.equal(result.length, 1);
+  assert.ok(result[0].secret.includes('inherit'));
+});
+
+test('findPullRequestSecretLeaks: secrets: inherit sem trigger de PR → sem violação', () => {
+  const workflow = `on:
+  workflow_dispatch:
+jobs:
+  call:
+    uses: org/repo/.github/workflows/callable.yml@main
+    secrets: inherit
+`;
+  assert.deepEqual(findPullRequestSecretLeaks(workflow, 'workflow.yml'), []);
+});
+
+test('findPushSecretLeaks: secrets: inherit com push irrestrito → violação', () => {
+  const workflow = `on:
+  push:
+jobs:
+  call:
+    uses: org/repo/.github/workflows/callable.yml@main
+    secrets: inherit
+`;
+  const result = findPushSecretLeaks(workflow, 'workflow.yml');
+  assert.equal(result.length, 1);
+  assert.ok(result[0].secret.includes('inherit'));
+});
+
+test('findPushSecretLeaks: secrets: inherit com push restrito a [main] → sem violação', () => {
+  const workflow = `on:
+  push:
+    branches: [main]
+jobs:
+  call:
+    uses: org/repo/.github/workflows/callable.yml@main
+    secrets: inherit
+`;
+  assert.deepEqual(findPushSecretLeaks(workflow, 'workflow.yml'), []);
+});
+
+test('findPushSecretLeaks: secrets inherit em forma quoted (aspas duplas/simples) → violação', () => {
+  const workflowDouble = `on:\n  push:\njobs:\n  call:\n    uses: org/repo/.github/workflows/callable.yml@main\n    secrets: "inherit"\n`;
+  const workflowSingle = `on:\n  push:\njobs:\n  call:\n    uses: org/repo/.github/workflows/callable.yml@main\n    secrets: 'inherit'\n`;
+  assert.equal(findPushSecretLeaks(workflowDouble, 'w.yml').length, 1);
+  assert.equal(findPushSecretLeaks(workflowSingle, 'w.yml').length, 1);
+});
+
+test('findPushSecretLeaks: secrets inherit em forma YAML anchor (secrets: &all inherit) → violação', () => {
+  const workflow = `on:\n  push:\njobs:\n  call:\n    uses: org/repo/.github/workflows/callable.yml@main\n    secrets: &all inherit\n`;
+  const result = findPushSecretLeaks(workflow, 'w.yml');
+  assert.equal(result.length, 1);
+  assert.ok(result[0].secret.includes('inherit'));
+});
+
+test('findPushSecretLeaks: secrets inherit em forma YAML anchor com hifen (secrets: &all-secrets inherit) → violação', () => {
+  const workflow = `on:\n  push:\njobs:\n  call:\n    uses: org/repo/.github/workflows/callable.yml@main\n    secrets: &all-secrets inherit\n`;
+  const result = findPushSecretLeaks(workflow, 'w.yml');
+  assert.equal(result.length, 1);
+  assert.ok(result[0].secret.includes('inherit'));
+});
+
+test('findPushSecretLeaks: secrets com chave inherit em linha separada nao dispara falso positivo', () => {
+  // P2: secrets: seguido de mapeamento YAML com chave `inherit` na linha seguinte
+  // nao deve ser confundido com o escalar `secrets: inherit`
+  const workflow = `on:\n  push:\njobs:\n  call:\n    uses: org/repo/.github/workflows/callable.yml@main\n    secrets:\n      inherit: yes\n`;
+  assert.deepEqual(findPushSecretLeaks(workflow, 'w.yml'), []);
+});
+
+// --- dedup: pull_request + push irrestrito no mesmo workflow ---
+
+test('scanWorkflowDirectory nao duplica violations quando workflow tem pull_request e push', () => {
+  // Simula dois chamadas que retornariam o mesmo violation
+  const source = `on:\n  push:\n  pull_request:\nenv:\n  DB: \${{ secrets.DESTINO_URL }}\n`;
+  const prLeaks = findPullRequestSecretLeaks(source, 'dup.yml');
+  const pushLeaks = findPushSecretLeaks(source, 'dup.yml');
+  // Ambos devem encontrar a mesma violacao
+  assert.equal(prLeaks.length, 1);
+  assert.equal(pushLeaks.length, 1);
+  assert.deepEqual(prLeaks[0], pushLeaks[0]);
+  // scanWorkflowDirectory deve desduplicar (teste indireto — o ultimo teste de integracao
+  // valida contra o diretorio real que tem ci.yml com ambos os triggers)
+});
+
+test('repositorio atual nao vincula secrets privilegiados a workflows de PR ou push irrestrito', () => {
   const workflowsDirectory = fileURLToPath(new URL('../../.github/workflows', import.meta.url));
   assert.deepEqual(scanWorkflowDirectory(workflowsDirectory), []);
 });

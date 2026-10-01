@@ -310,3 +310,141 @@ test('usage guard remove a funcao quando TODAS as assinaturas sao dropadas', () 
   assert.equal(result.status, 1, result.stdout + result.stderr);
   assert.match(result.stderr, /\.rpc\('f'\)/);
 });
+
+test('usage guard honra todas as formas de SET/RESET de standard_conforming_strings que o PG aceita', () => {
+  // Sonda identica a usada no PG 17.11: a migration liga/desliga o SCS e depois
+  // faz `SELECT 'a\';`. Com o SCS OFF a string fica ABERTA e o DROP seguinte e
+  // texto (o alvo continua na projecao -> exit 0); com o SCS ON a string fecha no
+  // \' e o DROP roda (o alvo sai -> exit 1).
+  const casos = [
+    ['SET standard_conforming_strings = off;', 0],
+    ['SET standard_conforming_strings = false;', 0], // false = off (medido)
+    ['SET standard_conforming_strings = 0;', 0],
+    ['SET standard_conforming_strings = no;', 0],
+    ["SET standard_conforming_strings = 'Off';", 0], // case-insensitive, citado
+    ['SET "standard_conforming_strings" = off;', 0], // nome do parametro citado
+    ['SET SESSION standard_conforming_strings = off;', 0],
+    ['SET standard_conforming_strings TO off;', 0],
+    ["SELECT set_config('standard_conforming_strings', 'off', false);", 0],
+    ['SET standard_conforming_strings = on;', 1],
+    ['SET standard_conforming_strings = true;', 1],
+    ['SET standard_conforming_strings = default;', 1],
+    ['SET standard_conforming_strings = 2;', 1], // PG rejeita -> continua on
+    ['SET standard_conforming_strings = off; RESET standard_conforming_strings;', 1],
+    ['SET standard_conforming_strings = off; RESET ALL;', 1],
+    ['SET standard_conforming_strings = off; DISCARD ALL;', 1],
+    ['SET LOCAL standard_conforming_strings = off;', 1], // fora de transacao nao vale
+    ['BEGIN;\nSET LOCAL standard_conforming_strings = off;\nCOMMIT;', 1], // revertido no COMMIT
+  ];
+  for (const [forma, esperado] of casos) {
+    const result = runGuard({
+      migrations: {
+        '20260909210000_scs.sql':
+          'CREATE TABLE public.t (id integer);\n'
+          + `${forma}\n`
+          + "SELECT 'a\\';\n"
+          + 'DROP TABLE public.t;\n',
+      },
+      callers: { 'c.ts': "supabase.from('t').select('*');\n" },
+    });
+    assert.equal(result.status, esperado, `${forma}\n${result.stdout}${result.stderr}`);
+  }
+});
+
+test('usage guard projeta VIEW (CREATE/DROP/MATERIALIZED) e RENAME TO', () => {
+  const casos = [
+    ['DROP VIEW de view catalogada usada por caller',
+      { '20260909210000_a.sql': 'DROP VIEW IF EXISTS public.v;\n' },
+      { 'c.ts': "supabase.from('v').select('*');\n" }, { views: ['v'] }, 1],
+    ['CREATE OR REPLACE VIEW na janela nao e falso positivo',
+      { '20260909210000_b.sql': 'CREATE OR REPLACE VIEW public.nova AS SELECT 1 AS x;\n' },
+      { 'c.ts': "supabase.from('nova').select('*');\n" }, {}, 0],
+    ['ALTER TABLE ... RENAME TO tira o nome antigo da projecao',
+      { '20260909210000_c.sql': 'ALTER TABLE public.x RENAME TO x_novo;\n' },
+      { 'c.ts': "supabase.from('x').select('*');\n" }, { tables: ['x'] }, 1],
+    ['DROP TABLE sem prefixo de schema (search_path = public)',
+      { '20260909210000_d.sql': 'DROP TABLE x;\n' },
+      { 'c.ts': "supabase.from('x').select('*');\n" }, { tables: ['x'] }, 1],
+    ['DROP MATERIALIZED VIEW',
+      { '20260909210000_e.sql': 'DROP MATERIALIZED VIEW public.mv;\n' },
+      { 'c.ts': "supabase.from('mv').select('*');\n" }, { views: ['mv'] }, 1],
+    ['ALTER TABLE RENAME TO com o nome novo mantem caller do nome novo',
+      { '20260909210000_f.sql':
+        'ALTER TABLE public.x RENAME TO x_novo;\n'
+        + 'ALTER VIEW public.w RENAME TO w_novo;\n' },
+      { 'c.ts': "supabase.from('x_novo').select('*');\nsupabase.from('w_novo').select('*');\n" },
+      { tables: ['x'], views: ['w'] }, 0],
+  ];
+  for (const [desc, migrations, callers, catalog, esperado] of casos) {
+    const result = runGuard({ migrations, callers, catalog });
+    assert.equal(result.status, esperado, `${desc}\n${result.stdout}${result.stderr}`);
+  }
+});
+
+test('usage guard compara assinatura na forma CANONICA do PG (alias, typmod, OUT)', () => {
+  // Sondas medidas no PG 17. O catalogo grava pg_get_function_identity_arguments,
+  // que sempre vem na forma canonica — int4 -> integer, varchar(50) -> character
+  // varying, numeric(10,2) -> numeric, timestamptz -> timestamp with time zone,
+  // timestamp -> timestamp without time zone, bool -> boolean — e INCLUI os
+  // argumentos OUT. O DROP, porem, usa a assinatura do regprocedure: f(integer,
+  // OUT boolean) e dropado por f(integer), e o OUT nao conta. INOUT conta.
+  // Sem canonicalizar, o DROP de uma assinatura que EXISTE nao casa e a funcao
+  // (com caller valido) fica na projecao — falso-negativo.
+  const casos = [
+    ['alias int4 no DROP x integer no catalogo',
+      { '20260909210000_a.sql': 'DROP FUNCTION public.f(int4);\nDROP FUNCTION public.f(text);\n' },
+      { functions: ['f'], function_signatures: ['f(p_a integer)->void|kind=f', 'f(p_b text)->void|kind=f'] }, 1],
+    ['typmod varchar(50) no DROP x character varying no catalogo',
+      { '20260909210000_b.sql': 'DROP FUNCTION public.g(varchar(50));\nDROP FUNCTION public.g(integer);\n' },
+      { functions: ['g'], function_signatures: ['g(p_a character varying)->void|kind=f', 'g(p_b integer)->void|kind=f'] }, 1],
+    ['numeric(10,2) no DROP x numeric no catalogo',
+      { '20260909210000_c.sql': 'DROP FUNCTION public.h(numeric(10,2));\nDROP FUNCTION public.h(integer);\n' },
+      { functions: ['h'], function_signatures: ['h(p_a numeric)->void|kind=f', 'h(p_b integer)->void|kind=f'] }, 1],
+    ['timestamptz no DROP x timestamp with time zone no catalogo',
+      { '20260909210000_d.sql': 'DROP FUNCTION public.i(timestamptz);\nDROP FUNCTION public.i(integer);\n' },
+      { functions: ['i'], function_signatures: ['i(p_a timestamp with time zone)->void|kind=f', 'i(p_b integer)->void|kind=f'] }, 1],
+    ['bool no DROP x boolean no catalogo',
+      { '20260909210000_e.sql': 'DROP FUNCTION public.j(bool);\nDROP FUNCTION public.j(integer);\n' },
+      { functions: ['j'], function_signatures: ['j(p_a boolean)->void|kind=f', 'j(p_b integer)->void|kind=f'] }, 1],
+    ['OUT nao faz parte da identidade do DROP (INOUT faz)',
+      { '20260909210000_f.sql': 'DROP FUNCTION public.k(integer);\nDROP FUNCTION public.k(text);\n' },
+      { functions: ['k'], function_signatures: ['k(p_a integer, OUT p_b boolean)->boolean|kind=f', 'k(p_c text)->void|kind=f'] }, 1],
+    ['INOUT continua na identidade do DROP',
+      { '20260909210000_g.sql': 'DROP FUNCTION public.l(integer, boolean);\nDROP FUNCTION public.l(text);\n' },
+      { functions: ['l'], function_signatures: ['l(p_a integer, INOUT p_b boolean)->boolean|kind=f', 'l(p_c text)->void|kind=f'] }, 1],
+    ['DEFAULT (valor apagado pelo lexer) nao entra na assinatura',
+      { '20260909210000_h.sql':
+        "CREATE FUNCTION public.m(p_a text DEFAULT 'x,y') RETURNS void LANGUAGE sql AS $$ SELECT 1 $$;\n"
+        + 'DROP FUNCTION public.m(text);\nDROP FUNCTION public.m(integer);\n' },
+      { functions: ['m'], function_signatures: ['m(p_a integer)->void|kind=f'] }, 1],
+  ];
+  for (const [desc, migrations, catalog, esperado] of casos) {
+    // O caller tem de citar SO a funcao do caso: um rpc de outra funcao geraria
+    // violacao por alvo inexistente e o teste passaria/falharia pelo motivo errado.
+    const caller = `supabase.rpc('${catalog.functions[0]}');\n`;
+    const result = runGuard({ migrations, callers: { 'c.ts': caller }, catalog });
+    assert.equal(result.status, esperado, `${desc}\n${result.stdout}${result.stderr}`);
+  }
+});
+
+test('usage guard nao trata DROP IF EXISTS de assinatura inexistente como remocao', () => {
+  // Medido no PG 17: `DROP FUNCTION IF EXISTS public.j(uuid, uuid)` sobre j(uuid)
+  // e NO-OP (NOTICE ... skipping) e a funcao SOBREVIVE. O guard nao pode retirar
+  // o nome da projecao so porque o nome casou — o DROP tem de casar a ASSINATURA.
+  const casos = [
+    ['IF EXISTS de assinatura que nao existe mantem a funcao (caller segue valido)',
+      { '20260909210000_a.sql': 'DROP FUNCTION IF EXISTS public.j(uuid, uuid);\n' },
+      { functions: ['j'], function_signatures: ['j(p_a uuid)->void|kind=f'] }, 0],
+    ['IF EXISTS da assinatura certa remove',
+      { '20260909210000_b.sql': 'DROP FUNCTION IF EXISTS public.k(uuid);\n' },
+      { functions: ['k'], function_signatures: ['k(p_a uuid)->void|kind=f'] }, 1],
+    ['DROP sem IF EXISTS de assinatura inexistente tambem e no-op',
+      { '20260909210000_c.sql': 'DROP FUNCTION public.l(uuid, uuid);\n' },
+      { functions: ['l'], function_signatures: ['l(p_a uuid)->void|kind=f'] }, 0],
+  ];
+  for (const [desc, migrations, catalog, esperado] of casos) {
+    const caller = `supabase.rpc('${catalog.functions[0]}');\n`;
+    const result = runGuard({ migrations, callers: { 'c.ts': caller }, catalog });
+    assert.equal(result.status, esperado, `${desc}\n${result.stdout}${result.stderr}`);
+  }
+});

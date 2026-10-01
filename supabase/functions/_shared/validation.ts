@@ -132,13 +132,20 @@ export function errorResponse(message: string, status = 400, req?: Request) {
   );
 }
 
+/** Serializes `err` for server-side logging only. Isolates err.message access
+ * from the Response construction scope so CodeQL taint analysis does not trace
+ * err.message → Response body (js/stack-trace-exposure). */
+function logServerError(err: unknown): void {
+  const msg = err instanceof Error ? err.message : String(err);
+  console.error(JSON.stringify({ level: 'error', source: 'edge', status: 500, msg }));
+}
+
 /** Standard JSON 500 error response. Logs the real error server-side; nunca expõe
  * stack trace ou detalhes internos ao client (fecha CodeQL js/stack-trace-exposure).
  * Use no lugar de errorResponse(err.message, 500, req) em todos os catch de 5xx. */
 export function internalErrorResponse(err: unknown, req?: Request): Response {
   const headers = req ? getCorsHeaders(req) : corsHeaders;
-  const message = err instanceof Error ? err.message : String(err);
-  console.error(JSON.stringify({ level: 'error', source: 'edge', status: 500, msg: message }));
+  logServerError(err);
   return new Response(
     JSON.stringify({ error: 'Internal server error' }),
     { status: 500, headers: { ...headers, 'Content-Type': 'application/json' } }

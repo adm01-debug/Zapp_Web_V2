@@ -74,7 +74,7 @@ export function TalkXHelp({ open, onOpenChange }: TalkXHelpProps) {
                       <span className={cn('w-1.5 h-1.5 rounded-full', toneDot[CAMPAIGN_STATUS[status].tone])} />
                       {CAMPAIGN_STATUS[status].label}
                     </Badge>
-                    {i < LIFECYCLE_ORDER.length - 1 && <span className="text-muted-foreground/60">→</span>}
+                    {i < LIFECYCLE_ORDER.length - 1 && <span className="text-muted-foreground">→</span>}
                   </span>
                 ))}
               </div>

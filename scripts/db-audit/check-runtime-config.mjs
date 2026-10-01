@@ -21,7 +21,7 @@ export function loadRealtimeBaseline() {
     || tables.some(table => typeof table !== 'string' || !/^public\.[a-z][a-z0-9_]*$/.test(table))) {
     throw new Error('Invalid Realtime publication table list');
   }
-  return tables.sort();
+  return tables.sort((a, b) => a.localeCompare(b));
 }
 
 export function evaluateRuntimeConfig(raw, realtimeBaseline = loadRealtimeBaseline()) {
@@ -41,7 +41,7 @@ export function evaluateRuntimeConfig(raw, realtimeBaseline = loadRealtimeBaseli
       || Number(tables[0].vacuum_scale_factor) !== 0.05 || Number(tables[0].analyze_scale_factor) !== 0.05) failures.push(`autovacuum ${name}`);
   }
   const realtimeTables = Array.isArray(data.realtime.tables)
-    ? data.realtime.tables.filter(table => typeof table === 'string').sort()
+    ? data.realtime.tables.filter(table => typeof table === 'string').sort((a, b) => a.localeCompare(b))
     : [];
   if (data.realtime.publication_present !== true
     || realtimeTables.length !== data.realtime.tables?.length

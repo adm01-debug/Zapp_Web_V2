@@ -23,6 +23,8 @@ import {
   SlidersHorizontal,
   CheckSquare,
   Heart,
+  Send,
+  Download,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -36,7 +38,7 @@ import { useExternalCatalog, useCatalogStats, useCatalogFavorites, ExternalProdu
 import { ExternalProductCard } from './ExternalProductCard';
 import { CatalogProductCardSkeleton } from './CatalogProductCard';
 import { SendProductDialog } from './SendProductDialog';
-import { ModuleHeader, fmtAgo, AlertCard, TalkXPagination } from '@/components/talkx/talkxShared';
+import { ModuleHeader, fmtAgo, AlertCard, TalkXPagination, TalkXTable, StatusPill, fmtDateTime, type TalkXColumn, type PillTone } from '@/components/talkx/talkxShared';
 import { CatalogRail, type CatalogRailFilterKey } from './CatalogRail';
 import { useCatalogRecentSends } from '@/hooks/integrations/useCatalogRecentSends';
 import { CatalogKpiStrip, CategoryChips, AdvancedFilterChips, countAdvancedFilters, matchesAnySelected, DEFAULT_ADVANCED_FILTERS, CatalogErrorState, countLabel, useRateLimitCooldown, type AdvancedFilters } from './catalogShared';
@@ -50,6 +52,17 @@ import { CatalogBulkSendDialog } from './CatalogBulkSendDialog';
 import { buildCatalogCsv, catalogExportFilename, triggerCsvDownload } from './catalogExport';
 import { CatalogFavoritesTab } from './CatalogFavoritesTab';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  useCatalogSendHistory,
+  buildSendHistoryCsv,
+  sendHistoryFilename,
+  type CatalogSendHistoryRow,
+} from '@/hooks/integrations/useCatalogSendHistory';
+import { fetchCatalogContactPreset } from '@/hooks/integrations/useCatalogContactPreset';
+import type { ContactResult } from './useSendProduct';
+// Guarda de WhatsApp do deep link: mesmo critério do painel do contato
+// (src/lib/calls/phone.ts), telefone inutilizável → null.
+import { normalizeE164BR } from '@/lib/calls/phone';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -81,6 +94,76 @@ function readPageParam(): number {
     const p = parseInt(new URLSearchParams(window.location.search).get('page') ?? '1', 10);
     return isNaN(p) || p < 1 ? 0 : p - 1;
   } catch { return 0; }
+}
+
+// ─── CT-57 — abas com deep link `?tab=` ────────────────────────
+const CATALOG_TABS = ['produtos', 'favoritos', 'enviados'] as const;
+type CatalogTab = typeof CATALOG_TABS[number];
+
+function isCatalogTab(value: string | null): value is CatalogTab {
+  return value !== null && (CATALOG_TABS as readonly string[]).includes(value);
+}
+
+/** Aba inicial vinda da URL; ausente ou desconhecida cai em "produtos". */
+function readTabParam(): CatalogTab {
+  try {
+    const value = new URLSearchParams(window.location.search).get('tab');
+    return isCatalogTab(value) ? value : 'produtos';
+  } catch { return 'produtos'; }
+}
+
+// ─── CT-57 — aba "Enviados" ────────────────────────────────────
+/** Rótulo + tom do status do envio (mesma API dos pills do TalkX). */
+const SEND_STATUS_META: Record<string, { label: string; tone: PillTone }> = {
+  sent: { label: 'Enviado', tone: 'success' },
+  partial: { label: 'Parcial', tone: 'warning' },
+  failed: { label: 'Falhou', tone: 'danger' },
+};
+
+const SEND_TEMPLATE_LABELS: Record<string, string> = {
+  formal: 'Formal',
+  informal: 'Informal',
+  promo: 'Promoção',
+  custom: 'Personalizada',
+};
+
+/**
+ * Colunas da tabela (ordem do plano: produto, contato, agente, modelo, fotos,
+ * status, data). Contato/agente vêm de embed e podem voltar null sob RLS: o
+ * fallback é "—", nunca a string "null".
+ */
+const SEND_HISTORY_TABLE_COLUMNS: TalkXColumn<CatalogSendHistoryRow>[] = [
+  {
+    key: 'product',
+    header: 'Produto',
+    render: (r) => (
+      <div className="min-w-0">
+        <p className="text-[13px] font-medium text-foreground truncate">{r.product_name}</p>
+        {r.product_sku && <p className="text-2xs text-muted-foreground">SKU: {r.product_sku}</p>}
+        {r.variant_label && <p className="text-2xs text-muted-foreground">Variação: {r.variant_label}</p>}
+      </div>
+    ),
+  },
+  { key: 'contact', header: 'Contato', render: (r) => r.contact_name ?? <span className="text-muted-foreground">—</span> },
+  { key: 'agent', header: 'Agente', render: (r) => r.agent_name ?? <span className="text-muted-foreground">—</span> },
+  {
+    key: 'template',
+    header: 'Modelo',
+    align: 'center',
+    render: (r) => (r.template ? (SEND_TEMPLATE_LABELS[r.template] ?? r.template) : '—'),
+  },
+  { key: 'images', header: 'Fotos', align: 'center', render: (r) => r.images_count ?? 0 },
+  { key: 'status', header: 'Status', render: (r) => <StatusPill status={r.status ?? ''} map={SEND_STATUS_META} /> },
+  { key: 'created', header: 'Data', render: (r) => fmtDateTime(r.created_at) },
+];
+
+/** CT-57 — contagem ao lado do rótulo da aba. */
+function TabCount({ value }: { value: number }) {
+  return (
+    <span className="ml-1 rounded-full bg-muted px-1.5 text-2xs tabular-nums text-muted-foreground">
+      {value.toLocaleString('pt-BR')}
+    </span>
+  );
 }
 
 export const ExternalProductManagement: React.FC = () => {
@@ -148,12 +231,64 @@ export const ExternalProductManagement: React.FC = () => {
     [products, advFilters.colors, advFilters.materials]
   );
 
-  // E43: favoritos Supabase
-  const { isFavorite: isFav, toggle } = useCatalogFavorites();
+  // E43: favoritos Supabase (o `favorites` alimenta a contagem da aba).
+  const { favorites, isFavorite: isFav, toggle } = useCatalogFavorites();
   const handleToggleFavorite = useCallback((id: string) => {
     const p = products.find((x) => x.id === id);
     if (p) toggle({ id, name: p.name, sku: p.sku, primary_image_url: p.primary_image_url });
   }, [products, toggle]);
+
+  // CT-57 — aba ativa dirigida pela URL (`?tab=`), não pelo estado interno do
+  // Radix: é o que faz o link abrir direto em "enviados" e a URL refletir a
+  // troca. Em "produtos" (a padrão) o parâmetro é removido, como `page`.
+  const [tab, setTab] = useState<CatalogTab>(readTabParam);
+  const handleTabChange = useCallback((value: string) => {
+    if (!isCatalogTab(value)) return;
+    setTab(value);
+    try {
+      const url = new URL(window.location.href);
+      if (value === 'produtos') url.searchParams.delete('tab');
+      else url.searchParams.set('tab', value);
+      history.replaceState(null, '', url.toString());
+    } catch { /* ignore */ }
+  }, []);
+
+  // CT-57 — histórico de envios. A RLS de catalog_send_events já recorta por
+  // agente (próprios envios) ou por admin/supervisor — o hook não refiltra,
+  // senão um supervisor deixaria de ver a equipe (mesma premissa do rail).
+  const { rows: sendHistoryRows, isLoading: sendHistoryLoading, error: sendHistoryError } = useCatalogSendHistory();
+  const [sentSearch, setSentSearch] = useState('');
+  const [sentStatus, setSentStatus] = useState<string>('all');
+  const [sentPage, setSentPage] = useState(1);
+  const [sentPageSize, setSentPageSize] = useState<number>(20);
+
+  const handleSentSearch = useCallback((value: string) => { setSentSearch(value); setSentPage(1); }, []);
+  const handleSentStatus = useCallback((value: string) => { setSentStatus(value); setSentPage(1); }, []);
+  const handleSentPageSize = useCallback((size: number) => { setSentPageSize(size); setSentPage(1); }, []);
+
+  const filteredSendRows = useMemo(() => {
+    const term = sentSearch.trim().toLowerCase();
+    return sendHistoryRows.filter((r) => {
+      if (sentStatus !== 'all' && r.status !== sentStatus) return false;
+      if (!term) return true;
+      return [r.product_name, r.product_sku, r.contact_name, r.agent_name]
+        .some((value) => (value ?? '').toLowerCase().includes(term));
+    });
+  }, [sendHistoryRows, sentSearch, sentStatus]);
+
+  const sentPageRows = useMemo(
+    () => filteredSendRows.slice((sentPage - 1) * sentPageSize, sentPage * sentPageSize),
+    [filteredSendRows, sentPage, sentPageSize],
+  );
+
+  /** CT-57 — CSV do que está na tela (filtro aplicado), como o CT-28 faz com a
+   * seleção. O builder é novo: o do CT-20 monta linha de PRODUTO do PromoGifts
+   * e não tem contato/agente/status. */
+  const handleExportSentHistory = useCallback(() => {
+    if (filteredSendRows.length === 0) return;
+    triggerCsvDownload(buildSendHistoryCsv(filteredSendRows), sendHistoryFilename(new Date()));
+    toast.success(`${filteredSendRows.length} envio(s) exportado(s) em CSV`);
+  }, [filteredSendRows]);
 
   // E47: seleção em massa
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -382,20 +517,25 @@ export const ExternalProductManagement: React.FC = () => {
     if (product && lastRequestedProductIdRef.current === productId) setSendProduct(product);
   }, [fetchProduct]);
 
-  // E78 — deep link ?product=<id>&send=1[&variant=<cor>] abre o dialog de
-  // envio direto ao carregar a página, sem precisar clicar em nada. O valor
-  // inicial de deepLinkVariant vem do lazy initializer (lido uma vez, na
+  // E78 — deep link ?product=<id>&send=1[&variant=<cor>][&contact=<id>] abre o
+  // dialog de envio direto ao carregar a página, sem precisar clicar em nada.
+  // O valor inicial de deepLinkVariant vem do lazy initializer (lido uma vez, na
   // primeira render) pra não precisar de um setState síncrono dentro do
   // efeito de mount abaixo.
   const [deepLinkVariant, setDeepLinkVariant] = useState<string | undefined>(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get('send') === '1' && params.get('product') ? (params.get('variant') ?? undefined) : undefined;
   });
+  // CT-55 — contato do deep link `?contact=<id>`. É o ContactResult completo
+  // (buscado por id), não só o id: o dialog precisa de nome/telefone/avatar
+  // para o card-resumo não abrir vazio.
+  const [deepLinkContact, setDeepLinkContact] = useState<ContactResult | null>(null);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const productId = params.get('product');
     const send = params.get('send');
     if (send === '1' && productId) {
+      const contactId = params.get('contact');
       // setTimeout(0) move o fetch inicial pra fora do corpo síncrono do
       // efeito, mesmo padrão já usado em RateLimitRealtimeAlerts.tsx (E62)
       // pra satisfazer react-hooks/set-state-in-effect. Não reusa
@@ -405,9 +545,28 @@ export const ExternalProductManagement: React.FC = () => {
       setTimeout(() => {
         void (async () => {
           lastRequestedProductIdRef.current = productId;
-          const product = await fetchProduct(productId);
+          // CT-55 — produto e contato em paralelo; o contato é opcional e a
+          // falha dele (id inexistente/sem permissão) devolve null, caindo no
+          // passo normal de seleção em vez de abrir um contato fantasma.
+          const [product, contact] = await Promise.all([
+            fetchProduct(productId),
+            contactId ? fetchCatalogContactPreset(contactId) : Promise.resolve(null),
+          ]);
           if (lastRequestedProductIdRef.current !== productId) return;
           if (product) {
+            // Guarda de WhatsApp: um contato do link sem telefone utilizável
+            // NÃO habilita o envio (mesmo critério do painel do contato), então
+            // não vira `presetContact` — o dialog abre no passo normal de
+            // seleção. O usuário é avisado de QUAL contato do link foi deixado
+            // de fora, em vez de o contato sumir em silêncio.
+            const contatoValido =
+              contact && normalizeE164BR(contact.phone) !== null ? contact : null;
+            if (contact && !contatoValido) {
+              toast.warning('Contato do link sem WhatsApp', {
+                description: `${contact.name} não tem um telefone válido. Selecione um contato com WhatsApp para enviar.`,
+              });
+            }
+            setDeepLinkContact(contatoValido);
             setSendProduct(product);
           } else {
             // Produto do deep link não existe mais (removido/id errado):
@@ -422,6 +581,9 @@ export const ExternalProductManagement: React.FC = () => {
         url.searchParams.delete('product');
         url.searchParams.delete('send');
         url.searchParams.delete('variant');
+        // CT-55 — `contact` sai junto: sem isso o parâmetro ficaria preso na
+        // URL (o efeito só roda no mount) e um refresh reabriria o dialog.
+        url.searchParams.delete('contact');
         history.replaceState(null, '', url.toString());
       } catch { /* ignore */ }
     }
@@ -429,15 +591,24 @@ export const ExternalProductManagement: React.FC = () => {
   }, []);
 
   return (
-    <Tabs defaultValue="produtos" className="w-full min-w-0">
+    <Tabs value={tab} onValueChange={handleTabChange} className="w-full min-w-0">
       <TabsList className="mb-4 h-9">
         <TabsTrigger value="produtos" className="gap-1.5 text-xs">
           <Package className="w-3.5 h-3.5" />
           Produtos
+          <TabCount value={totalProducts} />
         </TabsTrigger>
         <TabsTrigger value="favoritos" className="gap-1.5 text-xs">
           <Heart className="w-3.5 h-3.5" />
           Favoritos
+          <TabCount value={favorites.length} />
+        </TabsTrigger>
+        {/* CT-57 — envios do agente logado (admin/supervisor veem a equipe):
+            o recorte é a RLS de catalog_send_events, não um filtro da tela. */}
+        <TabsTrigger value="enviados" className="gap-1.5 text-xs">
+          <Send className="w-3.5 h-3.5" />
+          Enviados
+          <TabCount value={sendHistoryRows.length} />
         </TabsTrigger>
       </TabsList>
 
@@ -743,8 +914,10 @@ export const ExternalProductManagement: React.FC = () => {
           key={sendProduct.id}
           product={sendProduct}
           open={!!sendProduct}
-          onOpenChange={(open) => { if (!open) { setSendProduct(null); setDeepLinkVariant(undefined); } }}
+          onOpenChange={(open) => { if (!open) { setSendProduct(null); setDeepLinkVariant(undefined); setDeepLinkContact(null); } }}
           initialVariantColor={deepLinkVariant}
+          /* CT-55 — contato pré-selecionado vindo de `?contact=<id>`. */
+          presetContact={deepLinkContact}
         />
       )}
 
@@ -780,6 +953,75 @@ export const ExternalProductManagement: React.FC = () => {
 
       <TabsContent value="favoritos">
         <CatalogFavoritesTab />
+      </TabsContent>
+
+      {/* CT-57 — enviados: TalkXTable sobre catalog_send_events (a leitura já
+          vem recortada pela RLS por agente / admin-supervisor). Filtros e
+          paginação no cliente sobre o lote carregado pelo hook. */}
+      <TabsContent value="enviados">
+        <div className="space-y-4 min-w-0">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex-1 min-w-[220px] relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por produto, SKU, contato ou agente..."
+                value={sentSearch}
+                onChange={(e) => handleSentSearch(e.target.value)}
+                className="pl-9"
+              />
+              {sentSearch && (
+                <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => handleSentSearch('')}>
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+
+            <Select value={sentStatus} onValueChange={handleSentStatus}>
+              <SelectTrigger className="w-[170px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os status</SelectItem>
+                <SelectItem value="sent">Enviado</SelectItem>
+                <SelectItem value="partial">Parcial</SelectItem>
+                <SelectItem value="failed">Falhou</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={handleExportSentHistory} disabled={filteredSendRows.length === 0}>
+              <Download className="w-4 h-4" />
+              Exportar CSV
+            </Button>
+          </div>
+
+          {sendHistoryError ? (
+            <AlertCard tone="warning">Não foi possível carregar o histórico de envios agora.</AlertCard>
+          ) : sendHistoryLoading ? (
+            <div className="space-y-2">
+              {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-10 w-full rounded-lg" />)}
+            </div>
+          ) : (
+            <>
+              <TalkXTable
+                columns={SEND_HISTORY_TABLE_COLUMNS}
+                rows={sentPageRows}
+                getId={(r) => r.id}
+                stickyHeader
+                emptyState={sendHistoryRows.length === 0 ? 'Nenhum produto enviado ainda.' : 'Nenhum envio com esses filtros.'}
+              />
+              {filteredSendRows.length > 0 && (
+                <TalkXPagination
+                  page={sentPage}
+                  pageSize={sentPageSize}
+                  total={filteredSendRows.length}
+                  onPage={setSentPage}
+                  onPageSize={handleSentPageSize}
+                  noun="envio"
+                />
+              )}
+            </>
+          )}
+        </div>
       </TabsContent>
     </Tabs>
   );

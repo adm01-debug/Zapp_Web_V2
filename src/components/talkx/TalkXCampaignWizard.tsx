@@ -146,7 +146,7 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
           {step === 1 && <StepAudience ed={ed} />}
           {step === 2 && <StepMessage ed={ed} />}
           {step === 3 && <TalkXWizardDelivery ed={ed} />}
-          {step === 4 && <TalkXWizardReview ed={ed} campaign={campaign} onLaunched={(id, status) => onLaunched?.(id, status)} />}
+          {step === 4 && <TalkXWizardReview ed={ed} campaign={campaign} onLaunched={(id, status) => onLaunched?.(id, status)} onEditStep={requestStep} />}
 
           {/* Footer */}
           <div className="flex items-center justify-between gap-3 flex-wrap">

@@ -195,7 +195,7 @@ function TagsContent({ contact, conversation }: { contact: Contact; conversation
       {(contact.tags ?? []).length === 0 && conversation.tags.length === 0 && (
         <div className="flex flex-col items-center gap-1.5 w-full py-4 text-center">
           <div className="w-10 h-10 rounded-full bg-muted/20 flex items-center justify-center"><TagsIcon className="w-5 h-5 text-muted-foreground/30" /></div>
-          <p className="text-xs text-muted-foreground/60">Nenhuma tag adicionada</p>
+          <p className="text-xs text-muted-foreground">Nenhuma tag adicionada</p>
         </div>
       )}
       <Button variant="ghost" size="sm" className="h-6 text-xs hover:bg-primary/10 hover:text-primary border border-dashed border-border/40 hover:border-primary/30">

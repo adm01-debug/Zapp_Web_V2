@@ -57,6 +57,8 @@ export interface TalkXCampaign {
   paused_at?: string | null;
   respect_suppression?: boolean;
   confirm_consent?: boolean;
+  // V23 — passo do wizard persistido no rascunho (migration via hermes-db-migrar --nova).
+  draft_step?: number | null;
   launched_by?: string | null;
   launched_at?: string | null;
   // Introduzido por 20260912130000. Opcional até o types-sync canônico após

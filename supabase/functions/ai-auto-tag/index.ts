@@ -5,7 +5,8 @@ import {
   createAuthedClient,
 } from "../_shared/validation.ts";
 import { AiAutoTagSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
-import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
+import { extractUserIdFromRequest } from "../_shared/ai-usage.ts";
+import { generateWithRouting } from "../_shared/ai-generate.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { AutoTagOutput, buildAiEnvelope, parseModelOutput } from "../_shared/ai-response-contracts.ts";
 import { normalizeSentiment, normalizeOperationalPriority } from "../_shared/ai-vocabulary.ts";
@@ -36,7 +37,6 @@ Deno.serve(async (req) => {
     const { contactId, messages: inputMessages } = parsed.data;
     let validContactId = contactId && isValidUUID(contactId) ? contactId : null;
 
-    const LOVABLE_API_KEY = requireEnv("LOVABLE_API_KEY");
     const supabaseUrl = requireEnv("SUPABASE_URL");
     const supabaseKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -96,16 +96,11 @@ Deno.serve(async (req) => {
 
     log.info("Classifying conversation", { contactId: validContactId, msgCount: conversationMessages.length });
 
-    const { response, data } = await callAiWithTracking({
+    const { response, data } = await generateWithRouting({
+      purpose: 'tagging',
       functionName: 'ai-auto-tag',
       userId,
-      apiKey: LOVABLE_API_KEY,
-      body: {
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          {
-            role: "system",
-            content: `Você é um classificador avançado de conversas de atendimento ao cliente. Analise a conversa e retorne classificação completa.
+      system: `Você é um classificador avançado de conversas de atendimento ao cliente. Analise a conversa e retorne classificação completa.
 
 Categorias possíveis: suporte_tecnico, vendas, financeiro, reclamacao, elogio, duvida, urgente, cancelamento, troca, entrega, pagamento, produto, servico, feedback, agendamento, orcamento
 
@@ -123,12 +118,11 @@ Responda APENAS em JSON:
   "customer_intent": "o que o cliente quer resolver",
   "requires_immediate_attention": false,
   "escalation_reason": null
-}`
-          },
-          { role: "user", content: conversationText }
-        ],
-        temperature: 0.3,
-      },
+}`,
+      messages: [
+        { role: "user", content: conversationText },
+      ],
+      temperature: 0.3,
     });
 
     if (!response.ok || !data) {

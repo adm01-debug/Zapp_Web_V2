@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
   X, MessageSquare, Edit, Phone, Mail, Building, Briefcase,
-  Calendar, Tag, Clock, Zap,
+  Calendar, Tag, Clock, Zap, Package,
 } from 'lucide-react';
 import { ContactActivityTimeline } from './ContactActivityTimeline';
 import { ContactNotes } from './ContactNotes';
@@ -18,6 +18,13 @@ import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { ContactEngagementScore } from './ContactEngagementScore';
 import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
+// Guarda de WhatsApp: o mesmo critério que o resto do app usa para telefone
+// utilizável é o `normalizeE164BR` (src/lib/calls/phone.ts) — devolve `null`
+// quando não dá para extrair um E.164 brasileiro.
+import { normalizeE164BR } from '@/lib/calls/phone';
+// CT-51/CT-52 — o catálogo do chat reusado no painel do contato: abre o mesmo
+// Dialog de envio (CT-14), já com este contato como `presetContact`.
+import { ExternalProductCatalog } from '@/components/catalog/ExternalProductCatalog';
 interface ContactDetail {
   id: string;
   name: string;
@@ -56,6 +63,9 @@ export function ContactDetailPanel<T extends ContactDetail>({
 
   const avatarColors = getAvatarColor(contact.name);
   const typeConfig = CONTACT_TYPE_CONFIG[contact.contact_type || 'cliente'] || CONTACT_TYPE_CONFIG.cliente;
+  // Sem telefone utilizável (E.164 brasileiro) não há WhatsApp de destino, e
+  // sem destino não há envio de produto: o gatilho do catálogo fica bloqueado.
+  const hasWhatsApp = normalizeE164BR(contact.phone) !== null;
 
   const infoItems = [
     { icon: Phone, label: 'Telefone', value: contact.phone },
@@ -127,19 +137,60 @@ export function ContactDetailPanel<T extends ContactDetail>({
             />
           </div>
 
-          {/* Quick Actions */}
-          <div className="flex gap-2 mt-4">
-            <Button
-              className="flex-1 gap-2 bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground"
-              onClick={() => onOpenChat(contact.id)}
-            >
-              <MessageSquare className="w-4 h-4" />
-              Conversar
-            </Button>
-            <Button variant="outline" className="gap-2" onClick={() => onEdit(contact)}>
-              <Edit className="w-4 h-4" />
-              Editar
-            </Button>
+          {/* Quick Actions — CT-51: é AQUI o ponto de extensão das ações do
+              contato (o "header" do contato é este painel lateral, não um
+              cabeçalho de página). */}
+          <div className="flex flex-col gap-2 mt-4">
+            <div className="flex gap-2">
+              <Button
+                className="flex-1 gap-2 bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground"
+                onClick={() => onOpenChat(contact.id)}
+              >
+                <MessageSquare className="w-4 h-4" />
+                Conversar
+              </Button>
+              <Button variant="outline" className="gap-2" onClick={() => onEdit(contact)}>
+                <Edit className="w-4 h-4" />
+                Editar
+              </Button>
+            </div>
+
+            {/* CT-52 — envia um produto do catálogo com ESTE contato já
+                pré-selecionado; o envio grava `catalog_send_events` com o
+                contact_id do perfil (CT-14). O catálogo abre o mesmo Dialog do
+                chat (grade + filtros), não um picker compacto — divergência
+                registrada no relatório. */}
+            <ExternalProductCatalog
+              presetContact={{
+                id: contact.id,
+                name: contact.name,
+                phone: contact.phone,
+                avatar_url: contact.avatar_url ?? null,
+              }}
+              /* Sem WhatsApp o catálogo é forçado fechado (open controlado) e o
+                 gatilho vira um botão desabilitado com o motivo no `title`. O
+                 `title` fica no <span>: o botão desabilitado tem
+                 `disabled:pointer-events-none` e não receberia o hover, e um
+                 Tooltip (src/components/ui/tooltip) não pode ser o filho do
+                 `DialogTrigger asChild` do ExternalProductCatalog. */
+              open={hasWhatsApp ? undefined : false}
+              onOpenChange={hasWhatsApp ? undefined : () => {}}
+              trigger={
+                hasWhatsApp ? (
+                  <Button variant="outline" className="w-full gap-2">
+                    <Package className="w-4 h-4" />
+                    Enviar produto
+                  </Button>
+                ) : (
+                  <span className="block w-full" title="Contato sem WhatsApp">
+                    <Button variant="outline" className="w-full gap-2" disabled>
+                      <Package className="w-4 h-4" />
+                      Enviar produto
+                    </Button>
+                  </span>
+                )
+              }
+            />
           </div>
         </div>
 

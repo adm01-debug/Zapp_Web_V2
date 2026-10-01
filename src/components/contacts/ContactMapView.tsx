@@ -149,7 +149,7 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
                                 </Avatar>
                                 <span className="text-2xs truncate flex-1">{c.name}</span>
                                 {c.company && (
-                                  <span className="text-xs text-muted-foreground/60 truncate max-w-[80px]">{c.company}</span>
+                                  <span className="text-xs text-muted-foreground truncate max-w-[80px]">{c.company}</span>
                                 )}
                               </button>
                             );
