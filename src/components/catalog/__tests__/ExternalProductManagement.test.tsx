@@ -56,6 +56,9 @@ vi.mock('framer-motion', async (importOriginal) => {
 const mockUseExternalCatalog = vi.fn();
 // E32: ModuleHeader usa useCatalogStats (total real + status de sync).
 const mockUseCatalogStats = vi.fn();
+// CT-28 — a barra de seleção liga o toggle de favoritos da própria tela; sem
+// este mock o hook real bateria no Supabase durante o teste.
+const mockFavorites = vi.fn();
 vi.mock('@/hooks/integrations/useExternalCatalog', async () => {
   const actual = await vi.importActual<typeof import('@/hooks/integrations/useExternalCatalog')>(
     '@/hooks/integrations/useExternalCatalog'
@@ -64,7 +67,18 @@ vi.mock('@/hooks/integrations/useExternalCatalog', async () => {
     ...actual,
     useExternalCatalog: () => mockUseExternalCatalog(),
     useCatalogStats: () => mockUseCatalogStats(),
+    useCatalogFavorites: () => mockFavorites(),
   };
+});
+
+// CT-21/CT-28 — o "Exportar catálogo" do rail passa por exportCatalogCsv e o
+// "Exportar seleção" da barra desce até o download; ambos são observados sem
+// tocar na edge nem no DOM (buildCatalogCsv/catalogExportFilename seguem reais).
+const exportCatalogCsvMock = vi.hoisted(() => vi.fn());
+const triggerCsvDownloadMock = vi.hoisted(() => vi.fn());
+vi.mock('../catalogExport', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../catalogExport')>();
+  return { ...actual, exportCatalogCsv: exportCatalogCsvMock, triggerCsvDownload: triggerCsvDownloadMock };
 });
 
 function baseHookReturn(overrides: Record<string, unknown> = {}) {
@@ -99,11 +113,21 @@ function renderManagement() {
 
 describe('ExternalProductManagement', () => {
   beforeEach(() => {
+    exportCatalogCsvMock.mockReset();
+    triggerCsvDownloadMock.mockReset();
     mockUseExternalCatalog.mockReset();
     mockUseExternalCatalog.mockReturnValue(baseHookReturn());
     mockUseAuth.mockReset();
     mockUseAuth.mockReturnValue({ profile: { id: 'profile-1' } });
     toastError.mockReset();
+    mockFavorites.mockReset();
+    mockFavorites.mockReturnValue({
+      favorites: [],
+      favoriteIds: new Set<string>(),
+      isFavorite: () => false,
+      isLoading: false,
+      toggle: vi.fn(),
+    });
     mockUseCatalogStats.mockReset();
     mockUseCatalogStats.mockReturnValue({
       data: {
@@ -178,6 +202,63 @@ describe('ExternalProductManagement', () => {
     fireEvent.click(screen.getByText('Produtos no total'));
     await new Promise((r) => setTimeout(r, 350));
     expect(hookReturn.fetchProducts).not.toHaveBeenCalled();
+  });
+
+  it('CT-23: "Ver produtos com estoque baixo" no rail aplica low_stock=true na próxima busca', async () => {
+    const hookReturn = baseHookReturn();
+    mockUseExternalCatalog.mockReturnValue(hookReturn);
+    // low_stock > 0 é o que faz o alerta (e o botão) existirem; sem isso o
+    // rail nem renderiza o bloco (nada morto: botão só aparece com dado real).
+    mockUseCatalogStats.mockReturnValue({
+      data: { total: 2, low_stock: 7, last_sync_at: new Date().toISOString() },
+      isLoading: false,
+      error: null,
+    });
+    renderManagement();
+    await new Promise((r) => setTimeout(r, 350));
+    hookReturn.fetchProducts.mockClear();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver produtos com estoque baixo' }));
+
+    await new Promise((r) => setTimeout(r, 350));
+    const calls = (hookReturn.fetchProducts as ReturnType<typeof vi.fn>).mock.calls;
+    const lastCall = calls[calls.length - 1][0] as Record<string, unknown>;
+    expect(lastCall.low_stock).toBe(true);
+  });
+
+  it('CT-21: "Exportar catálogo" no rail exporta o filtro ativo (Em destaque → featured)', async () => {
+    const hookReturn = baseHookReturn();
+    mockUseExternalCatalog.mockReturnValue(hookReturn);
+    renderManagement();
+    await new Promise((r) => setTimeout(r, 350));
+
+    fireEvent.click(within(screen.getByTestId('catalog-kpi-strip')).getByText('Em destaque'));
+    await new Promise((r) => setTimeout(r, 350));
+
+    fireEvent.click(screen.getByRole('button', { name: /Exportar catálogo/ }));
+
+    await waitFor(() => expect(exportCatalogCsvMock).toHaveBeenCalled());
+    const options = exportCatalogCsvMock.mock.calls[0][0] as {
+      filterKey: string;
+      filters: Record<string, unknown>;
+    };
+    expect(options.filterKey).toBe('featured');
+    expect(options.filters).toEqual({ is_featured: true });
+  });
+
+  it('CT-21: sem filtro do rail ativo, o export sai como catálogo inteiro (todos)', async () => {
+    renderManagement();
+    await new Promise((r) => setTimeout(r, 350));
+
+    fireEvent.click(screen.getByRole('button', { name: /Exportar catálogo/ }));
+
+    await waitFor(() => expect(exportCatalogCsvMock).toHaveBeenCalled());
+    const options = exportCatalogCsvMock.mock.calls[0][0] as {
+      filterKey: string;
+      filters: Record<string, unknown>;
+    };
+    expect(options.filterKey).toBe('todos');
+    expect(options.filters).toEqual({});
   });
 
   it('E34: clicar no chip de categoria aplica o filtro e reflete na URL', async () => {
@@ -486,6 +567,49 @@ describe('ExternalProductManagement', () => {
       expect(labels).toContain('Nome A–Z');
       expect(labels).toContain('Maior estoque');
       expect(labels).toContain('Mais recentes');
+    });
+  });
+
+  describe('CT-28: barra de seleção em massa', () => {
+    const abrirBarra = () => fireEvent.click(screen.getByRole('button', { name: 'Selecionar' }));
+
+    it('selecionar a página abre a barra com envio, "Exportar seleção" e "Favoritar N"', () => {
+      renderManagement();
+
+      abrirBarra();
+
+      expect(screen.getByRole('button', { name: 'Enviar (2)' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Exportar seleção' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Favoritar 2' })).toBeInTheDocument();
+    });
+
+    it('"Exportar seleção" baixa CSV com cabeçalho + as linhas selecionadas', async () => {
+      renderManagement();
+      await new Promise((r) => setTimeout(r, 350));
+
+      abrirBarra();
+      fireEvent.click(screen.getByRole('button', { name: 'Exportar seleção' }));
+
+      expect(triggerCsvDownloadMock).toHaveBeenCalledTimes(1);
+      const [csv, filename] = triggerCsvDownloadMock.mock.calls[0] as [string, string];
+      expect(csv.split('\n')).toHaveLength(3); // cabeçalho + 2 produtos
+      expect(csv).toContain('CAN-001');
+      expect(filename).toContain('selecao');
+    });
+
+    it('"Favoritar N" favorita só os selecionados que ainda não são favoritos', () => {
+      const toggle = vi.fn();
+      mockFavorites.mockReturnValue({
+        favorites: [], favoriteIds: new Set(['p2']), isFavorite: (id: string) => id === 'p2',
+        isLoading: false, toggle,
+      });
+      renderManagement();
+
+      abrirBarra();
+      fireEvent.click(screen.getByRole('button', { name: 'Favoritar 2' }));
+
+      expect(toggle).toHaveBeenCalledTimes(1);
+      expect(toggle).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1', name: 'Caneta Plástica Azul' }));
     });
   });
 });

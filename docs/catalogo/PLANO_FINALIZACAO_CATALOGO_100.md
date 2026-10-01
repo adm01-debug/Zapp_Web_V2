@@ -121,12 +121,43 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 
 - [ ] **CT-19** — Edge: rate limit 120/min só para `list_products` (60 para o resto), como E26.3 pedia; `deploy-functions`
   disparado e aprovado. **Aceite:** 61 chamadas de `bootstrap` em 1 min → 429; 100 de `list_products` → 200.
-- [ ] **CT-20** — `catalogExport.ts`: CSV do filtro atual (reusa `esc()`/BOM de `talkxExport.ts`), paginação 100 em 100
+  **🟡 PARCIAL — código feito e provado em 01/10/2026; falta o deploy da edge, que o próprio aceite exige.** Cota **por ação**
+  ancorada no enum (`ACTION_RATE_LIMITS`, `supabase/functions/promogifts-catalog/index.ts:151`; `checkRateLimit` com balde
+  próprio `${userId}:${action}`, `:166-167`): `list_products` **120/min**, as outras 5 ações 60/min, e corpo inválido no teto
+  global de 60 (fail-closed). **Prova:** 7 `Deno.test` novos com prefixo CT-19 em `index.actions.test.ts` (`:386`, `:418`,
+  `:441`, `:455`, `:467`, `:481`, `:495`) — incluem os 2 aceites literais (60 `bootstrap` → a 61ª = 429; 100 `list_products` →
+  a 121ª = 429); arquivo inteiro rodado aqui: **25 passed | 0 failed (49ms)**.
+  **Divergência medida (ordem do handler):** o corpo passou a ser lido/validado **antes** do rate limit (`index.ts:251-270`),
+  porque a cota depende da ação. O 503 de configuração, porém, continua vindo **antes** do retorno do corpo inválido
+  (`:280-293`): sem secrets, JSON malformado segue **503**; com secrets, segue **500 `CATALOG_INTERNAL_ERROR`** — igual ao
+  código anterior (`git show HEAD:…/index.ts` faz `req.json()` depois do 503). A nota de execução que previa **500 em
+  ambiente sem secrets** **não se confirma** no arquivo.
+  **Pendente (dependência: Joaquim/CI):** `deploy-functions` por `workflow_dispatch` + aprovação no environment
+  `producao-edge-functions` e a medição em produção (60/`bootstrap`, 100/`list_products`) — a regra 4 do plano não deixa etapa
+  de edge fechar sem o deploy confirmado.
+- [x] **CT-20** — `catalogExport.ts`: CSV do filtro atual (reusa `esc()`/BOM de `talkxExport.ts`), paginação 100 em 100
   até 1.000, colunas do E29.3, nome `catalogo_<filtro>_<yyyymmdd>.csv`, `sonner` loading→success, aborta sem parcial.
   **Aceite:** teste do builder; arquivo abre no Excel com acentos.
-- [ ] **CT-21** — Rail "Ações rápidas": "Exportar catálogo" (CT-20), "Gerenciar no PromoGifts" (link, `ExternalLink`);
+  **✅ FEITO — provado em 01/10/2026.** `catalogExport.ts` novo (281 linhas): `esc()` (`:95`), BOM UTF-8 (`:23`), colunas do
+  E29.3 (`:30-44`), nome `catalogo_<filtro>_<yyyymmdd>.csv` (`:142`), coleta **100 em 100 até 1.000** (`:170-193`), fetcher da
+  edge em import dinâmico (`:204`) e toast loading→success que **não baixa nada** em erro (aborta sem parcial, `:256-281`).
+  Testes: **30** em `__tests__/catalogExport.test.ts` passando (suíte do módulo: **16 arquivos, 363 testes**, medidos aqui).
+  **Divergência 1:** `talkxExport.ts` **não existe** no repositório (`grep -rn talkxExport src/` só encontra o comentário do
+  próprio `catalogExport.ts:4`) — `esc()`/BOM foram escritos do zero, no contrato do único export CSV existente no repo.
+  **Divergência 2:** o `.order('id')` que o E29.2 pedia é **impossível**: a edge só aceita `order_by` do enum
+  `ALLOWED_ORDER_FIELDS` (`index.ts:12`), e `id` não está nele. Foi usado `order_by: 'name'` + **dedupe por `id`**
+  (`catalogExport.ts:177,184`), que resolve o mesmo problema (nenhuma linha repetida ou pulada entre páginas).
+  **Ressalva:** "abre no Excel com acentos" está provado pelo teste do BOM (`catalogExport.test.ts:76`), não abrindo o arquivo
+  num Excel real — não há Excel neste ambiente.
+- [x] **CT-21** — Rail "Ações rápidas": "Exportar catálogo" (CT-20), "Gerenciar no PromoGifts" (link, `ExternalLink`);
   "Importar planilha" e "Gerenciar categorias" **só** se houver URL pública confirmada, senão não entram (regra do
   plano: nada morto). **Aceite:** grep `RailAction` em `CatalogRail.tsx` ≥ 2; nenhum `href="#"`.
+  **✅ FEITO — provado em 01/10/2026.** `RailQuickActions` em `CatalogRail.tsx:341` com **2 `RailAction`** vivas: "Exportar
+  catálogo" (CT-20, `:346`) e "Gerenciar no PromoGifts" (`window.open` da URL pública, `:352`); aceite por grep:
+  `grep -c RailAction CatalogRail.tsx` = **4** (import + comentário + os 2 usos) e **0** ocorrências de `href="#"` no arquivo.
+  "Importar planilha"/"Gerenciar categorias" ficaram **fora** — sem URL pública confirmada. O export sai do **filtro atual**:
+  `activeRailFilter` (`ExternalProductManagement.tsx:369-370`) é passado em `:774` e vira `filterKeyToEdgeParams` no rail
+  (`:455-456`). Testes: 6 em `CatalogRail.test.tsx:189-235` + 2 em `ExternalProductManagement.test.tsx:229,249`.
 - [ ] **CT-22** — "Ordenar por": ocultar "Mais pedidos" enquanto `order_count` = 0 em todos (flag vinda do
   `catalog_stats`: adicionar `has_order_data boolean` à RPC `zapp_catalog_stats()` — migration aditiva no PromoGifts —
   e à ação `catalog_stats`). **Aceite:** opção some em produção; volta sozinha quando houver dado.
@@ -147,21 +178,73 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   `zapp_catalog_stats()` (migration aditiva **no PromoGifts**) e à ação `catalog_stats`. Só com a flag a opção pode
   "voltar sozinha quando houver dado" — hoje ela está oculta de forma incondicional, que é o máximo possível sem DDL
   externa. Quando a flag existir, reexibir são 2 linhas (os comentários no código marcam exatamente onde).
-- [ ] **CT-23** — Rail alertas: `AlertCard warning` "PromoGifts sem sincronizar há N dias" quando `last_sync_at` >
+- [x] **CT-23** — Rail alertas: `AlertCard warning` "PromoGifts sem sincronizar há N dias" quando `last_sync_at` >
   3 dias (hoje 24), `AlertCard info` "N produtos com estoque baixo" (clicável → filtro), ocultáveis por sessão.
   **Aceite:** com os dados de hoje, o alerta de sync aparece.
-- [ ] **CT-24** — `TipCard` com 5 dicas estáticas rotativas por dia (`getDate() % 5`, sem `Date.now()` no render — usar
+  **✅ FEITO — provado em 01/10/2026.** `RailAlerts` (`CatalogRail.tsx:376`) com o limiar exportado
+  `CATALOG_RAIL_SYNC_ALERT_DAYS = 3` (`:35`): warning de sync com a contagem de dias (`:393`), info de estoque baixo com botão
+  que aplica `low_stock` na edge (`:406`→`onApplyLowStock`→`ExternalProductManagement.tsx:357,775`); **sem o callback o alerta
+  aparece sem botão** (`:409`), para não ter botão morto. Dispensa por sessão em `sessionStorage` (`:432`, `:296-315`).
+  Testes: 12 em `CatalogRail.test.tsx:236-314` + `ExternalProductManagement.test.tsx:207` ("Ver produtos com estoque baixo"
+  aplica `low_stock=true`). **Premissa do aceite:** `last_sync_at` vem de `catalog_stats`, já repassado ao rail
+  (`ExternalProductManagement.tsx:766`); "com os dados de hoje" é a §0 do plano (sync parado desde 05/09 — mais de 3 dias,
+  então o alerta aparece). Nenhuma consulta ao PromoGifts foi feita aqui para remedir a data.
+- [x] **CT-24** — `TipCard` com 5 dicas estáticas rotativas por dia (`getDate() % 5`, sem `Date.now()` no render — usar
   inicializador de estado). **Aceite:** teste com data fixa.
-- [ ] **CT-25** — Card: `RowActionsMenu` (Ver detalhes, Enviar, Copiar SKU, Copiar link, Abrir no PromoGifts,
+  **✅ FEITO — provado em 01/10/2026.** `CATALOG_RAIL_TIPS` com 5 dicas (`CatalogRail.tsx:40-46`) e a rotação no
+  **inicializador de estado** — `useState(() => new Date().getDate() % CATALOG_RAIL_TIPS.length)` (`:439`), nunca no corpo do
+  render — renderizada pelo `TipCard` do talkx (`talkxShared.tsx:757`, usado em `CatalogRail.tsx:477`).
+  Testes com data fixa: `CatalogRail.test.tsx:335-362` (roda as 5 dicas pelo dia do mês e muda de dica no dia seguinte).
+- [x] **CT-25** — Card: `RowActionsMenu` (Ver detalhes, Enviar, Copiar SKU, Copiar link, Abrir no PromoGifts,
   Favoritar) no hover da grade e fixo na lista; teclado `Enter` abre, `e` envia. **Aceite:** teste RTL do menu e
   das teclas.
-- [ ] **CT-26** — Lista: cabeçalho de colunas sticky (`.talkx-table`), linha 72 px, `role="row"`. **Aceite:** teste RTL.
-- [ ] **CT-27** — Virtualização do modo lista com `@tanstack/react-virtual` quando `pageSize ≥ 48` (grade não).
+  **✅ FEITO — provado em 01/10/2026.** `RowActionsMenu` (componente já existente, `talkxShared.tsx:561`) montado em
+  `CatalogProductCard.tsx:226-244` e renderizado em `:258`: Ver detalhes, Enviar, Copiar SKU, Copiar link, Abrir no
+  PromoGifts e Favoritar/Remover (esta só quando o caller passa `onToggleFavorite`); as duas ações de link ficam
+  **desabilitadas sem slug** (`promogiftsProductUrl` vazio — nada morto). Posicionamento: **hover/focus na grade**
+  (`:407-415`, com `stopPropagation` para o clique não abrir o detalhe junto) e **fixo na lista** (`:337`). Teclado em
+  `handleCardKeyDown` (`:246-257`, ligado em `:271` e `:358`): `Enter` abre o detalhe, `e` envia, e tecla em campo/botão
+  interno é ignorada. Testes: **11** em `__tests__/CT25_cardActions.test.tsx` (menu, links, `Enter`/`e` e o card esgotado).
+- [x] **CT-26** — Lista: cabeçalho de colunas sticky (`.talkx-table`), linha 72 px, `role="row"`. **Aceite:** teste RTL.
+  **✅ FEITO — provado em 01/10/2026.** No modo lista, `ExternalProductCatalog.tsx:539-556`: tabela `.talkx-table`
+  (`components.css:263`) em 5 colunas com `<thead className="sticky top-0 z-10 bg-card">` (`:540`), linhas de **72 px**
+  (`LIST_ROW_HEIGHT = 72`, `:56`, aplicado em `:556`) e `role="row"` tanto no cabeçalho quanto no corpo (`:541`, `:556`).
+  Testes: 2 em `ExternalProductCatalog.test.tsx:329-380` — o de cabeçalho confere `.talkx-table`, o `sticky`, as 5 colunas, os
+  72 px e o `role="row"`; o outro confirma que a **grade não vira tabela**.
+- [x] **CT-27** — Virtualização do modo lista com `@tanstack/react-virtual` quando `pageSize ≥ 48` (grade não).
   **Aceite:** teste "renderiza só as visíveis"; medição antes/depois registrada em `PERF.md`.
-- [ ] **CT-28** — Bulk bar: "Exportar seleção" (CT-20 com ids), "Favoritar N", limite 10 por envio com mensagem clara.
+  **✅ FEITO — provado em 01/10/2026.** `useVirtualizer` (`ExternalProductCatalog.tsx:205-211`) armado só sob
+  `viewMode === 'list' && !favoritesOnly && pageSize >= VIRTUALIZE_MIN_PAGE_SIZE` (`:64`, `:200`), com `overscan: 6` e
+  espaçadores que preservam a altura total da lista (`:223-231`; render em `:546-574`); o `pageSize` virou estado e o select do
+  `TalkXPagination` deixou de ser no-op (`handlePageSize`, `:240-245`). **Medição registrada em `docs/catalogo/PERF.md`
+  (seção CT-27): 16 de 50 linhas no DOM** com `pageSize=50`/viewport de 720 px contra **50 de 50** no caminho não
+  virtualizado, com a altura total preservada. Teste: `ExternalProductCatalog.virtualizacao.test.tsx` — 3 testes
+  (`:139`, `:168`, `:179`). Suíte do módulo rodada aqui: **16 arquivos, 363 testes**.
+  **Divergências medidas (decisão registrada):** a **grade nunca** virtualiza (o card não tem altura de linha previsível — o
+  próprio plano já diz "grade não") e o **ramo de favoritos em modo lista não usa a tabela nem virtualiza**
+  (`:496-507`): com o chip "Meus favoritos" ligado, o modo lista continua renderizando o grid de cards.
+- [x] **CT-28** — Bulk bar: "Exportar seleção" (CT-20 com ids), "Favoritar N", limite 10 por envio com mensagem clara.
   **Aceite:** selecionar 11 → aviso; exportar 3 → CSV com 3 linhas.
+  **✅ FEITO — provado em 01/10/2026.** `CatalogBulkBar` ganhou "Exportar seleção" (`:90-96`) e "Favoritar {count}"
+  (`:99-104`), com o limite **`CATALOG_BULK_SEND_MAX = 10`** (`:19`) avisando na barra e **desabilitando o envio** acima dele
+  (`:52`, `:84-88`, `:107`). "Exportar seleção" reusa os builders puros do CT-20 com **exatamente os ids escolhidos**
+  (`ExternalProductCatalog.tsx:280-284`, `ExternalProductManagement.tsx:192-196`), sem tocar na edge. Fiação: modo seleção no
+  catálogo do chat (`ExternalProductCatalog.tsx:115`, barra em `:633-644`) e barra da tela de gestão
+  (`ExternalProductManagement.tsx:733-736`). Testes: **16** em `__tests__/CT28_bulkBar.test.tsx` — inclui os 2 aceites
+  literais (**11 selecionados → aviso e envio bloqueado**, `:144`; **exportar 3 → CSV com cabeçalho + 3 linhas**, `:221`) —
+  mais 4 casos de fiação em `:279-311` e 3 em `ExternalProductManagement.test.tsx:573-616`.
 - [ ] **CT-29** — Paginação sem flash: cards antigos com `opacity-60` + barra fina de progresso durante `isFetching`;
   prefetch da próxima página no hover de "Próxima". **Aceite:** teste: `isFetching` não mostra skeleton.
+  **🟡 PARCIAL — 01/10/2026: a metade do feedback de progresso está feita e provada; o prefetch não existe no hook.**
+  **FEITO:** o hook expõe `isInitialLoading` (`isLoading` puro) e `isFetching` (`useExternalCatalog.ts:317,319`) e o catálogo
+  usa os dois (`ExternalProductCatalog.tsx:190-192`): durante refetch os cards antigos ficam com **`opacity-60`** (`:536` na
+  lista, `:588` na grade) e aparece a **barra fina de progresso** (`:468-480`), com skeleton **só** na carga inicial (`:510`).
+  Testes: 4 em `ExternalProductCatalog.test.tsx:382-431` (nenhum skeleton com `isFetching`; carga inicial ainda mostra os
+  skeletons e nenhuma barra). Mensuração/registro em `docs/catalogo/PERF.md` (seção CT-29).
+  **PENDENTE (dependência: `useExternalCatalog`, hook fora dos arquivos deste bloco):** o **prefetch da próxima página no hover
+  de "Próxima"** não foi implementado — o hook **não expõe nenhuma função de prefetch** (só `productsQuery`, `fetchProducts`,
+  `fetchProduct`, `fetchCategories`, `fetchSuppliers`, `invalidate`) e chamar `fetchProducts` no hover trocaria o conteúdo
+  exibido, porque as `filters` são a `queryKey`. Está registrado como pendência medida em `docs/catalogo/PERF.md`.
 - [ ] **CT-30** — Responsivo: rail vira `Accordion` "Resumo do catálogo" acima da grade em `< xl`; detalhe/envio viram
   `Drawer` (vaul) em `< md`; prints 1280/1024/768/390 em `docs/catalogo/PARIDADE.md` (criado aqui, seção "Rail").
   **Aceite:** 4 prints commitados; Accordion e Drawer testados.
@@ -169,21 +252,70 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 ## FASE 3 — Ligar os órfãos da F1 no detalhe e no envio (CT-31–CT-40)
 *Bloco D — 1 PR de front. Não reabre o layout do mock B/C (decisão de 24/09).*
 
-- [ ] **CT-31** — `ProductDetailDialog.tsx`: Qtd. mínima / Prazo / Origem via `MetaTile` (grade 3 colunas).
+- [x] **CT-31** — `ProductDetailDialog.tsx`: Qtd. mínima / Prazo / Origem via `MetaTile` (grade 3 colunas).
   **Aceite:** `grep MetaTile ProductDetailDialog.tsx` ≥ 1; teste RTL.
-- [ ] **CT-32** — Descrição e Ficha técnica via `SectionCard`; ficha inclui material, capacidade, gravação
+  **✅ FEITO — provado em 01/10/2026.** Grade `grid grid-cols-3` com `MetaTile` para **Qtd. mínima**, **Prazo** e **Origem**
+  em `ProductDetailDialog.tsx:424-430` (cada tile só nasce se o campo existir; eram linhas soltas na ficha). Aceite por grep:
+  `grep -c MetaTile ProductDetailDialog.tsx` = **4** (import + 3 usos), ≥ 1. Testes:
+  `ProductDetailDialog.test.tsx:116-143` — 2 casos (os 3 tiles quando os campos existem; nenhum tile quando não existem).
+- [x] **CT-32** — Descrição e Ficha técnica via `SectionCard`; ficha inclui material, capacidade, gravação
   (`engraving_type/description`), embalagem (`has_gift_box`) — campos já no payload da E21. **Aceite:** produto
   `PO-13153` mostra LASER na ficha.
-- [ ] **CT-33** — Cores via `ColorSwatch` (hex de `color_swatches`) com estoque por cor (soma de `variants` por cor) e
+  **✅ FEITO — provado em 01/10/2026.** Descrição virou `SectionCard title="Descrição"` (`ProductDetailDialog.tsx:437`, com
+  fallback para `short_description`) e a ficha virou `SectionCard title="Ficha técnica"` (`:449`), agora com **Capacidade
+  (`capacity_ml`), Material (`materials`), Gravação (`engraving_type` + `engraving_description`) e Embalagem
+  (`has_gift_box`)** (`:449-497`) — Origem/Prazo saíram daqui e foram para os `MetaTile` do CT-31. Aceite: teste
+  `ProductDetailDialog.test.tsx:150` ("mostra LAZER na ficha técnica do PO-13153 (engraving_type)"), com o caso de
+  "descrição cai para `short_description`" em `:175` — 4 testes novos na seção (`:145-186`).
+- [x] **CT-33** — Cores via `ColorSwatch` (hex de `color_swatches`) com estoque por cor (soma de `variants` por cor) e
   clique que rola a galeria para a 1ª imagem da cor. **Aceite:** teste RTL com 2 cores.
-- [ ] **CT-34** — Variantes agrupadas por cor (reusa `groupVariantsByColor`), seleção que troca o CTA para "Enviar
+  **✅ FEITO — provado em 01/10/2026.** Cores via `ColorSwatch` (`ProductDetailDialog.tsx:523`) com **estoque somado das
+  variantes por cor** (`groupStock`, `:257-261`) e hex de `color_swatches` — a fonte preferida é `color_swatches`, com
+  fallback para as cores das variantes (hex do grupo) e depois para `colors` (só nome, sem hex) (`:268-281`). O clique chama
+  `selectColor` e **rola a galeria até a 1ª imagem da cor** (`selectColor` + `focusUrl/focusToken` na `ImageGallery`,
+  `:85-125`, `:242`). Testes: `ProductDetailDialog.test.tsx:188-221` — 2 casos (as 2 cores com o estoque somado; clique na cor
+  rola a galeria para a imagem dela).
+- [x] **CT-34** — Variantes agrupadas por cor (reusa `groupVariantsByColor`), seleção que troca o CTA para "Enviar
   variação"; miniaturas com `.catalog-gallery-thumb(--active)`. **Aceite:** classe com consumidor; teste RTL.
-- [ ] **CT-35** — Pills de tags/categoria no topo do detalhe (`full_path_readable` + `tags`). **Aceite:** teste RTL.
-- [ ] **CT-36** — Navegação ‹ › entre produtos do resultado atual dentro do Sheet, com `history.replaceState` do
+  **✅ FEITO — provado em 01/10/2026.** Variantes agrupadas com o helper já existente `groupVariantsByColor`
+  (`ProductDetailDialog.tsx:256`), um botão por cor com a thumb **`.catalog-gallery-thumb` + `--active` quando selecionada**
+  (`:561`; classe definida em `components.css:412-413` — agora com consumidor) e, com a cor escolhida, o CTA do rodapé vira
+  **"Enviar variação (<cor>)"** (`:611`) e manda a cor como 2º argumento do `onSend` (`:604`), que o
+  `ExternalProductCatalog` repassa como `initialVariantColor` (`:250`, `:660`). Testes: `ProductDetailDialog.test.tsx:222-263`
+  (2 grupos + CTA) e `CT28_bulkBar.test.tsx:280-294` (a cor escolhida chega ao `SendProductDialog`; sem cor não inventa
+  variante).
+- [x] **CT-35** — Pills de tags/categoria no topo do detalhe (`full_path_readable` + `tags`). **Aceite:** teste RTL.
+  **✅ FEITO — provado em 01/10/2026.** Pills (`catalog-chip`) no topo do detalhe com a **categoria e as tags**
+  (`ProductDetailDialog.tsx:374-389`), usando o **caminho completo** quando ele vem (`categoryLabel`,
+  `:305-309`) e caindo para o nome simples quando não vem — sem renderizar pill vazia. Testes:
+  `ProductDetailDialog.test.tsx:265-353` (5 casos: com pills, sem pills, com `full_path_readable`, fallback para o nome e
+  campos em branco).
+  **Divergência medida, solucionada de forma aditiva na edge:** `full_path_readable` **não chegava** no payload do produto —
+  o campo entrou no embed `categories:category_id(..., full_path_readable)` de `PRODUCT_RELATIONS`
+  (`supabase/functions/promogifts-catalog/index.ts:104`; já existia em `CATEGORY_FIELDS`, `:407`). Prova nos **dois
+  cenários**: front com e sem o campo (`ProductDetailDialog.test.tsx:293` e `:312`) e 2 `Deno.test` CT-35 que conferem que o
+  embed pede `full_path_readable` no `get_product` e no `list_products` (`index.actions.test.ts:530,543`).
+  **Dependência:** o caminho completo só aparece **em produção depois do deploy da edge**; até lá vale o fallback pelo nome.
+- [x] **CT-36** — Navegação ‹ › entre produtos do resultado atual dentro do Sheet, com `history.replaceState` do
   `product=`. **Aceite:** teste RTL; deep link continua funcionando.
-- [ ] **CT-37** — `SendProductDialog.tsx`: preview WhatsApp em `PhonePreview` (`catalogShared.tsx`) usando `.catalog-phone`;
+  **✅ FEITO — provado em 01/10/2026.** Dois botões ‹ › no cabeçalho do detalhe (`ProductDetailDialog.tsx:328-347`) trocam o
+  produto mostrado **dentro do Sheet** (`goToProduct`, `:286-292`, com estado `nav` sobre a ordem de `products`) e mantêm o
+  deep link em dia via `window.history.replaceState` do `product=` (`:290-291`); sem a prop `products` os botões nem aparecem
+  (`:294`, `:322`). A lista exibida chega do catálogo (`ExternalProductCatalog.tsx:499,563,600` →
+  `CatalogProductCard.tsx:341,469`). Testes: `ProductDetailDialog.test.tsx:366` (sem a prop não mostra botões), `:371`
+  (avança e reflete `?product=` na URL) e `:383` (volta). **Deep link:** o caminho que lê `?product=` na entrada
+  (`ExternalProductManagement.tsx:392-396`) não foi tocado por esta etapa e continua coberto pelos testes existentes do E78.
+- [x] **CT-37** — `SendProductDialog.tsx`: preview WhatsApp em `PhonePreview` (`catalogShared.tsx`) usando `.catalog-phone`;
   remover `#075E54/#dcf8c6/#e5ddd5/bg-white/text-white` — a bolha verde do WhatsApp vira token local documentado
   (`--wa-bubble`) em `tokens.css`. **Aceite:** `grep -c "#[0-9a-fA-F]\{6\}" SendProductDialog.tsx` = 0.
+  **✅ FEITO — provado em 01/10/2026.** O preview local (`WhatsAppPreview`, com os hex na mão) foi removido e o
+  `SendProductDialog` passou a usar o **`PhonePreview` extraído para `catalogShared.tsx:707`** (`:491`), montado com as partes
+  `.catalog-phone__header/__body/__bubble/__time/__tick` (`components.css:425-471`) sobre a moldura `.catalog-phone` (`:419`).
+  As cores da marca viraram tokens documentados em `tokens.css:182-186` — `--wa-header` (o `#075E54`), `--wa-background`
+  (o `#e5ddd5`), **`--wa-bubble` (o `#dcf8c6`)** — e nenhum componente repete hex. Aceite por grep, medido aqui:
+  `grep -c "#[0-9a-fA-F]\{6\}" SendProductDialog.tsx` = **0** e `grep -c "bg-white\|text-white" SendProductDialog.tsx` = **0**.
+  Testes: `catalogShared.test.tsx:624-660` (4 casos, incluindo "catalogShared.tsx não contém cor hexadecimal literal") e
+  `SendProductDialog.test.tsx:485-515` (2 casos, incluindo "não usa nenhuma cor hexadecimal literal nem bg-white/text-white").
 - [x] **CT-38** — Cards de variação com foto/cor/estoque (modo "Variação específica") e card de info do produto no
   modo completo. **Aceite:** teste RTL.
   **✅ FEITO — provado em 01/10/2026:** os cards de variação já traziam foto/cor/estoque; o que faltava era o **card de
