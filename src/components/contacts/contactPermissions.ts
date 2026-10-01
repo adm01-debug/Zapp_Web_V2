@@ -66,3 +66,27 @@ export function canDeleteSelectedContacts(
 export function canMergeContacts(adminAccess: boolean | null | undefined): boolean {
   return adminAccess !== false;
 }
+
+/**
+ * Decide se "Alterar tipo em massa" (barra de ações) fica habilitado.
+ *
+ * No banco, o UPDATE de `contacts` é governado pela policy "Users can update
+ * their assigned contacts", cujo predicado é `can_edit_contact(assigned_to,
+ * queue_id, ...)`: admin/supervisor OU responsável pelo contato (atribuído a um
+ * agente visível ou membro ativo da fila). É exatamente o mesmo predicado que a
+ * RPC `can_delete_contacts` já devolve por contato em `contact.can_delete` --
+ * por isso a decisão reusa o dado do servidor em vez de montar uma segunda
+ * cópia da regra no cliente (foi assim que "Editar" e "Excluir" divergiram,
+ * PR #1187).
+ *
+ * Semântica idêntica à série: basta UM selecionado conhecido com permissão para
+ * habilitar; seleção sem informação (id fora da página carregada) não bloqueia.
+ * `undefined` = a RPC ainda não respondeu -- mantém disponível para não
+ * "piscar" o botão (mesma semântica de `canDeleteSelectedContacts`).
+ */
+export function canChangeSelectedContactsType(
+  selectedIds: string[],
+  contacts: Pick<Contact, 'id' | 'can_delete'>[],
+): boolean | undefined {
+  return canDeleteSelectedContacts(selectedIds, contacts);
+}
