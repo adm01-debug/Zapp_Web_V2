@@ -131,3 +131,39 @@ Saída crua do passo de re-medição, com as expressões **copiadas verbatim** d
 3. **O PR #1336 corrigiu um defeito de leitura; existe um defeito de escrita da mesma família ainda no ar** (R3-01), além de R3-02/R3-03 ativos e R3-04 de alcance indeterminado.
 4. **Repositório, banco canônico e produção estão sincronizados** — nada a importar, nada a aplicar, nada a republicar.
 5. **Dois métodos de verificação usados antes estavam errados** (§1.1) e foram substituídos; nenhum resultado desta auditoria depende deles.
+
+---
+
+## 9. Verificação de produção do bundle servido (01/10/2026, somente leitura)
+
+Escopo pedido: provar que **R3-01 (#1380), R3-02 (#1392), R3-03 (#1397) e R3-06 (#1401)** estão **no ar** — mergeados não é o mesmo que servidos. Nada foi alterado: só `GET` no site e leitura do repositório.
+
+**Deploy medido.** `https://zapp-web-v2.vercel.app`, deploy de produção `b22b91f8` (2026-10-01T16:06:29Z) — **posterior** aos quatro merges. Ancestralidade conferida pela API (`compare main...<sha>` = `behind frente=0` para `927a5ff9d0`, `c7f870144d`, `824ea0c957` e `409e8fa5fb`): os quatro commits estão contidos na `main` **do commit que foi para produção**.
+
+**Bundle servido.** 385 chunks / 8,4 MB; `index.html` 6.196 B, sha256 `dfd68687ae3b144622720e60eb738ba1e793c1b4611b3cb14417abf03a6d6351`. Grafo fechado a partir do manifesto `m.f=[…]` do entry (build **rolldown**, runtime próprio) e das referências internas de cada chunk.
+
+**O util de data está no ar.** Chunk próprio **`localDay-Dr9m4ORa.js`**, 973 B, sha256 `e7f614bf46ef8b7ac4ad87f938ada4c259c76d704a4b71e669030fdb3b442ec0`, com **4 símbolos exportados** — o quarto (`localInstantFromDayAndTime`) é o que o R3-01 introduziu.
+
+**Consumidores do util — lista fechada, 6 chunks** (todos com `import … from "./localDay-Dr9m4ORa.js"`):
+
+| chunk servido | item | import observado |
+| --- | --- | --- |
+| `ScheduleMessageDialog-ksul1pLU.js` (4.488 B) | **R3-01** | `import{r as x}` — símbolo **diferente** dos de chave-de-dia |
+| `AuditLogDashboard-CWqKoAYw.js` (6.419 B) | **R3-02** | `import{n as O}` |
+| `RealtimeInboxView-DRKkSx0h.js` (131.587 B) | **R3-03** | `import{n as Lt}` |
+| `useConversationHistoryTimeline-qQoFsadf.js` (5.042 B) | **R3-06** | `import{n as i}` |
+| `NotesTab-CmsR55Ri.js` (11.478 B) | #1336 (D2) | `import{n as …}` |
+| `useMyWorkItems-DV_K5AMk.js` (13.505 B) | #1336 (D1) | `import{n as …}` |
+
+**R3-06, verbatim no servido.** `queryFn:async()=>{let e=i,c=a>0?n(r(new Date,a-1)).toISOString():null,…` — ou seja `startOfDay(subDays(new Date(), period - 1))`, aplicado como `gte('created_at', c)` nas **cinco** fontes (mensagens, eventos, notas, tarefas, negócios). A janela móvil antiga **não está** nesse chunk.
+
+**Ausência dos padrões antigos, no bundle inteiro (385 chunks):**
+
+- `setHours(new Date(` → **0 chunks** (a construção do R3-01 desapareceu do ar);
+- janela móvel `Date.now() - X*864e5` → **1 chunk**: `TalkXView-Cpv1Kz5O.js` (ver achado abaixo);
+- `.toISOString().split("T")` → **1 chunk**: `Index-…`, no `p=`${e.id}-${s}-${u.toISOString().split("T")[0]}`` — **dedupe de alerta por dia UTC**, que é o **R3-07 já registrado como latente** (`useGoalNotifications`), não um dos quatro itens.
+
+**Achado novo, mesma família, fora dos quatro — NÃO corrigido.** `src/hooks/integrations/useTalkXSegments.ts:101-108`: os operadores de segmento `in_last_days` / `not_in_last_days`, com rótulos **"nos últimos (dias)"** / **"há mais de (dias)"**, montam o filtro com `Date.now() - d * 86_400_000` — **horas corridas para um rótulo em dias**, exatamente o desencontro do R3-06, agora em **filtro de audiência** (pode incluir/excluir contato um dia fora). Varredura na fonte achou outras janelas móveis que **precisam de triagem** e não foram julgadas aqui: `SupervisorCopilot.tsx:41` e `useDiagnosticsData.ts:71` (24 h), `useAIStats.ts:118` (24 h), `ConversationHeatmap.tsx:62` (30 d), `AdminTelemetriaPage.tsx:66` (7 d), `usePerformanceSnapshots.ts:80` (7 d) — rótulo em **horas** está correto como está; rótulo em **dias** é o mesmo defeito.
+
+**Veredito da verificação.** As quatro correções estão **no ar**, cada uma no chunk da sua tela, consumindo o util compartilhado, e **nenhuma delas carrega o padrão antigo**. Fica aberto como candidato: o `in_last_days` do TalkX (filtro de audiência).
+
