@@ -135,6 +135,32 @@ vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
+// T20: a eleição de aba vem do `tabLeaderStore`. Aqui ele é MOCKADO (snapshot
+// trocável) para o teste dirigir a transição de papel sem os timers/heartbeat do
+// store REAL — o eleitor de verdade tem teste próprio com `vi.resetModules()` em
+// `src/lib/calls/__tests__/tabLeaderStore.test.ts`. `isLeader` deriva do MESMO
+// snapshot que `getSnapshot`, então o portão do `connect` e o papel observado
+// pelo hook nunca divergem.
+const { tabStore } = vi.hoisted(() => ({
+  tabStore: {
+    snapshot: {
+      role: 'leader' as 'leader' | 'follower',
+      leaderId: 'tab-propria' as string | null,
+      expiresAt: null as number | null,
+      tabId: 'tab-propria',
+    },
+  },
+}));
+
+vi.mock('@/lib/calls/tabLeaderStore', () => ({
+  CALL_SESSION_CHANNEL_NAME: 'zapp-call-session',
+  getSnapshot: () => tabStore.snapshot,
+  subscribe: () => () => {},
+  claimLeadership: vi.fn(),
+  releaseLeadership: vi.fn(),
+  isLeader: () => tabStore.snapshot.role === 'leader',
+}));
+
 import { useSipClient } from '../communication/useSipClient';
 import type { CallEndOutcome } from '@/lib/calls/callStatus';
 import { toast } from 'sonner';
@@ -191,6 +217,9 @@ function esperaRegistro(campos: Record<string, unknown>) {
 describe('useSipClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Snapshot novo a cada teste: um teste que deixou a aba como seguidora não
+    // pode envenenar o seguinte (o mock guarda estado no escopo do módulo).
+    tabStore.snapshot = { role: 'leader', leaderId: 'tab-propria', expiresAt: null, tabId: 'tab-propria' };
     mockStateChangeListeners.length = 0;
     mockRegisterStateListeners.length = 0;
     mockRpc.mockResolvedValue({ data: 'call-1', error: null });
@@ -852,5 +881,71 @@ describe('useSipClient', () => {
 
     expect(mockInvite).toHaveBeenCalled();
     expect(result.current.micReason).toBeNull();
+  });
+
+  // === T20: eleição de aba + 2ª chamada na linha ocupada ===
+
+  it('T20: virar aba SEGUIDORA solta o registro e expõe o motivo da linha', async () => {
+    const { result, rerender } = await montarRegistrado();
+    expect(result.current.sipStatus).toBe('registered');
+
+    await act(async () => {
+      tabStore.snapshot = { ...tabStore.snapshot, role: 'follower', leaderId: 'outra-aba' };
+      rerender();
+      await escoar(12);
+    });
+
+    expect(result.current.sipStatus).toBe('idle');
+    expect(result.current.sipReason).toBe('line_in_use_other_tab');
+  });
+
+  it('T20: virar aba LÍDER conecta com as credenciais provisionadas', async () => {
+    mockFunctionsInvoke.mockResolvedValue({
+      data: { server: 'sip.prov.com', user: 'phone9', wsPort: 5066, password: 'secret123', profileId: 'p1' },
+      error: null,
+    });
+    // Nasce seguidora (papel inicial do store real): o mount NÃO conecta.
+    tabStore.snapshot = { ...tabStore.snapshot, role: 'follower', leaderId: 'outra-aba' };
+    const { result, rerender } = renderHook(() => useSipClient());
+    expect(result.current.sipStatus).toBe('idle');
+
+    // A aba que segurava a linha saiu: esta assume.
+    await act(async () => {
+      tabStore.snapshot = { ...tabStore.snapshot, role: 'leader', leaderId: 'tab-propria' };
+      rerender();
+      await escoar(12);
+    });
+
+    expect(result.current.sipStatus).toBe('connecting');
+    expect(mockMakeURI).toHaveBeenCalledWith('sip:phone9@sip.prov.com');
+    expect(lastUserAgentOptions?.transportOptions?.server).toBe('wss://sip.prov.com:5066/ws');
+  });
+
+  it('T20: 2ª chamada com a linha ocupada vira missed/busy_here + toast, sem tocar a em curso', async () => {
+    const { result } = await montarConectado();
+
+    await act(async () => {
+      lastOnInvite?.(await createMockInvitation());
+      await escoar();
+    });
+    expect(result.current.callStatus).toBe('ringing');
+    const idDaPrimeira = gravacoes()[0]?.p_id;
+
+    // Segunda chamada chega com a linha ocupada: recusada (486) e registrada
+    // como `missed`/`busy_here`, com id PRÓPRIO.
+    await act(async () => {
+      lastOnInvite?.(await createMockInvitation());
+      await escoar();
+    });
+
+    const perdida = gravacoes().find((c) => c.p_status === 'missed');
+    expect(perdida).toMatchObject({
+      p_status: 'missed', p_end_reason: 'busy_here', p_direction: 'inbound', p_peer_number: '5511988887777',
+    });
+    expect(perdida?.p_id).not.toBe(idDaPrimeira);
+    expect(toast.info).toHaveBeenCalledWith('Você já está em uma ligação');
+    // A chamada em curso não foi afetada por nada disso.
+    expect(result.current.callStatus).toBe('ringing');
+    expect(result.current.currentNumber).toBe('5511988887777');
   });
 });

@@ -19,6 +19,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useCalls } from '@/hooks/communication/useCalls';
 import { useCallHistory, type CallHistoryRow as Call, type CallHistoryFilters, type CallResultFilter } from '@/hooks/communication/useCallHistory';
 import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
+import { claimLeadership } from '@/lib/calls/tabLeaderStore';
 
 const DIRECTION_OPTIONS: { value: 'all' | 'inbound' | 'outbound'; label: string }[] = [
   { value: 'all', label: 'Todas' },
@@ -44,6 +45,10 @@ const RESULT_OPTIONS: { value: 'all' | CallResultFilter; label: string }[] = [
 export function VoIPPanel() {
   const { profile } = useAuth();
   const sip = useCallSession();
+  // T20: o motivo da linha VoIP (é o `line_in_use_other_tab` que importa aqui)
+  // vem do `useSipClient` e é repassado pelo `CallSessionApi` — acesso direto,
+  // já tipado pelo domínio (`CapabilityReason | null`).
+  const sipReason = sip.sipReason ?? null;
   const { addCallNotes } = useCalls();
   const queryClient = useQueryClient();
 
@@ -58,6 +63,16 @@ export function VoIPPanel() {
   // E35 — gravação de chamada é mídia de conversa (não alerta): entra no volume global.
   const recordingAudioRef = useRef<HTMLAudioElement>(null);
   useMediaElementVolume(recordingAudioRef);
+
+  // T20: a eleição de aba líder COMEÇA aqui. Sem esta reivindicação nenhuma aba
+  // assume a sessão, `isLeader()` fica falso e o portão de `connect()`
+  // (useSipConnection) recusaria o REGISTER em TODAS elas — a telefonia nunca
+  // registraria a linha. Roda uma vez só: `claimLeadership()` é idempotente
+  // (o StrictMode monta duas vezes) e o cleanup NÃO solta a liderança — quem
+  // reivindica no boot não pode derrubar quem já segura a linha.
+  useEffect(() => {
+    claimLeadership();
+  }, []);
 
   useEffect(() => {
     const t = setTimeout(() => setSearchDebounced(search.trim()), 300);
@@ -345,6 +360,7 @@ export function VoIPPanel() {
                   isMuted={sip.isMuted}
                   currentNumber={sip.currentNumber}
                   callDirection={sip.callDirection}
+                  sipReason={sipReason}
                   onConnect={sip.connectWithStoredCredentials}
                   onDisconnect={sip.disconnect}
                   onCall={sip.makeCall}

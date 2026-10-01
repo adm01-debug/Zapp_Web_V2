@@ -45,6 +45,12 @@ export interface CallEngineSink {
   onTerminated(): void;
   onMuted(muted: boolean): void;
   onError(message: string): void;
+  /**
+   * Chegou uma segunda chamada com a linha já ocupada: ela foi recusada com
+   * 486 e deve ser registrada como perdida (`busy_here`) fora da máquina. O
+   * `number` é o remoto do convite (`adapter.remoteNumberOf`).
+   */
+  onBusyHere(number: string): void;
   /** Cria o registro da chamada e devolve o id (ou null em falha). */
   create(params: CreateCallParams): Promise<string | null>;
   onAnswered(callId: string): void;
@@ -71,6 +77,7 @@ const NOOP_SINK: CallEngineSink = {
   onTerminated: () => undefined,
   onMuted: () => undefined,
   onError: () => undefined,
+  onBusyHere: () => undefined,
   create: async () => null,
   onAnswered: () => undefined,
   onFinished: () => undefined,
@@ -122,7 +129,10 @@ export class CallEngine {
   /** Convite SIP recebido (delegate do UserAgent). */
   handleInvitation(invitation: Invitation): void {
     if (this.status !== 'idle') {
-      // Linha ocupada: recusa com 486 e não toca a sessão corrente.
+      // Linha ocupada: recusa com 486, avisa o dono do estado (a segunda
+      // chamada vira `missed`/`busy_here` FORA da máquina) e sai cedo — nada
+      // abaixo pode tocar a sessão da chamada em curso, que não pode cair.
+      this.sink.onBusyHere(this.adapter.remoteNumberOf(invitation));
       void this.adapter.reject(invitation, 486);
       return;
     }

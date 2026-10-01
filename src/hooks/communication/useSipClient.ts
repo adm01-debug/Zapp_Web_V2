@@ -1,15 +1,16 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { getLogger } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { useSipConnection } from '../sip/useSipConnection';
-import { novoCallId, desfechoDaChamada, criarFilaDePersistencia, type CallEndOutcome, type UpsertMyCallInput } from '@/lib/calls/persistence';
+import { criarFilaDePersistencia, type CallEndOutcome } from '@/lib/calls/persistence';
 import { phoneQueryVariants, pickUniquePhoneMatch } from '@/lib/calls/phone';
 import { SipCallAdapter } from '@/lib/calls/adapters/SipCallAdapter';
 import { provisionarSip } from '@/lib/calls/sipProvisioning';
 import { useMicrophoneGuard } from './useMicrophoneGuard';
+import { useTabLeaderRole } from './useTabLeaderRole';
+import { useCallEngineSink } from './useCallEngineSink';
 import { CallEngine } from '@/lib/calls/adapters/CallEngine';
-import type { CallEngineSink, EngineStatus } from '@/lib/calls/adapters/CallEngine';
+import type { EngineStatus } from '@/lib/calls/adapters/CallEngine';
 import type { AdapterDirection } from '@/lib/calls/adapters/CallAdapter';
 
 export type { SipStatus } from '../sip/useSipConnection';
@@ -48,42 +49,16 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
       return null;
     }
   }, []);
-  const sink: CallEngineSink = useMemo(() => {
-    const persistir = async (input: UpsertMyCallInput) => {
-      const { ok, error } = await filaDePersistencia.executar(input);
-      // Falha de banco nunca é silenciosa: log com o id da chamada + toast.
-      if (!ok) { log.error(`Falha ao gravar a chamada (id=${input.id})`, error); toast.error('Não foi possível salvar a ligação'); }
-    };
-    return {
-      onStatus: setCallStatus,
-      onSession: (direction, number) => { directionRef.current = direction; setCallDirection(direction); setCurrentNumber(number); },
-      onEstablished: startTimer,
-      onTerminated: stopTimer,
-      onMuted: setIsMuted,
-      onError: (message) => toast.error(message),
-      create: async (params) => {
-        const id = novoCallId(params.sessionId);
-        setCurrentCallId(id);
-        const contactId = await findContactByPhone(params.contactPhone);
-        await persistir({ id, direction: params.direction, status: 'ringing', channel: 'voip', peerNumber: params.contactPhone, contactId, providerCallId: params.providerCallId });
-        return id;
-      },
-      onAnswered: (callId) => {
-        void persistir({ id: callId, direction: directionRef.current ?? 'outbound', status: 'answered', answeredAt: new Date().toISOString() });
-      },
-      onFinished: (callId, talkSeconds, outcome) => {
-        const direction = directionRef.current ?? 'outbound';
-        setCurrentCallId(null); onEnd?.(outcome); // a próxima discagem não reaproveita a linha anterior
-        void persistir({ id: callId, direction, endedAt: new Date().toISOString(), talkSeconds, ...desfechoDaChamada(talkSeconds, direction, outcome) });
-      },
-    };
-  }, [startTimer, stopTimer, findContactByPhone, filaDePersistencia, onEnd]);
+  const sink = useCallEngineSink({
+    setCallStatus, setCallDirection, setCurrentNumber, setIsMuted, setCurrentCallId,
+    directionRef, startTimer, stopTimer, findContactByPhone, filaDePersistencia, onEnd,
+  });
 
   // Lazy init (não `useRef`): o motor é criado uma vez e nunca lido em render.
   const [engine] = useState(() => new CallEngine(new SipCallAdapter(log)));
   useEffect(() => { engine.bind(sink); }, [engine, sink]);
   const handleInvitation = useCallback((invitation: Parameters<CallEngine['handleInvitation']>[0]) => engine.handleInvitation(invitation), [engine]);
-  const { sipStatus, uaRef, connect, disconnect } = useSipConnection(handleInvitation);
+  const { sipStatus, sipReason, setSipReason, uaRef, connect, disconnect } = useSipConnection(handleInvitation);
 
   // T17: o microfone é conferido ANTES de discar E de atender — este é o funil
   // real dos dois caminhos (o painel VoIP chama o SIP direto, sem passar pelo
@@ -105,10 +80,18 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
     if (config) await connect(config);
   }, [connect]);
 
+  // T20: só a TRANSIÇÃO de papel age (o papel de nascença não conecta). Os
+  // callbacks vão numa ref dentro do hook — a identidade deles não agenda o
+  // efeito, então não há loop de disconnect a cada render.
+  useTabLeaderRole({
+    onBecameLeader: () => { void connectWithStoredCredentials(); },
+    onBecameFollower: () => { void disconnect().then(() => setSipReason('line_in_use_other_tab')); },
+  });
+
   useEffect(() => () => { stopTimer(); engine.dispose(); }, [stopTimer, engine]);
 
   return {
-    sipStatus, micReason, callStatus, callDuration, isMuted, currentNumber, callDirection, currentCallId,
+    sipStatus, sipReason, micReason, callStatus, callDuration, isMuted, currentNumber, callDirection, currentCallId,
     connect, connectWithStoredCredentials, disconnect, makeCall, hangUp, toggleMute, sendDTMF,
     acceptIncomingCall, rejectIncomingCall, garantirMicrofone,
   };

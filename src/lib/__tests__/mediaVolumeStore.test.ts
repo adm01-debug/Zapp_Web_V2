@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { FakeBroadcastChannel } from '@/test/fakeBroadcastChannel';
 
 /**
  * E43 — testes do store do volume de mídia: persistência, clamp, curva, mute/unmute
@@ -13,32 +14,6 @@ type StoreModule = typeof import('@/lib/mediaVolumeStore');
 async function freshStore(): Promise<StoreModule> {
   vi.resetModules();
   return import('@/lib/mediaVolumeStore');
-}
-
-/** `BroadcastChannel` de mentira que liga as "abas" que compartilham o mesmo nome. */
-class FakeBroadcastChannel {
-  static channels = new Map<string, Set<FakeBroadcastChannel>>();
-  onmessage: ((event: MessageEvent) => void) | null = null;
-  close = vi.fn();
-
-  constructor(private readonly name: string) {
-    const peers = FakeBroadcastChannel.channels.get(name) ?? new Set();
-    peers.add(this);
-    FakeBroadcastChannel.channels.set(name, peers);
-  }
-
-  postMessage(data: unknown) {
-    const peers: FakeBroadcastChannel[] = Array.from(
-      FakeBroadcastChannel.channels.get(this.name) ?? new Set<FakeBroadcastChannel>(),
-    );
-    for (const peer of peers) {
-      if (peer !== this) peer.onmessage?.({ data } as MessageEvent);
-    }
-  }
-
-  static reset() {
-    FakeBroadcastChannel.channels.clear();
-  }
 }
 
 describe('mediaVolumeStore', () => {
