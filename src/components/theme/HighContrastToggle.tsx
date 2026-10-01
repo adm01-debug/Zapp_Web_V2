@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
+import { applyThemePreset, loadThemeConfig } from '@/components/settings/theme/presets';
 
 interface HighContrastContextType {
   isHighContrast: boolean;
@@ -49,6 +50,15 @@ export function HighContrastProvider({ children }: { children: React.ReactNode }
       root.classList.remove('high-contrast');
     }
     localStorage.setItem('highContrast', String(isHighContrast));
+
+    // Reaplica a skin depois de mexer na classe: ligar o alto contraste precisa LIMPAR as
+    // vars de cor que o preset deixou inline no `<html>` (senão elas vencem a classe
+    // `.high-contrast` e o modo não faz efeito); desligar precisa devolvê-las. Sem isto o
+    // modo só passaria a valer na próxima troca de preset ou de modo de cor.
+    const cfg = loadThemeConfig();
+    applyThemePreset(cfg.preset, root.classList.contains('dark') ? 'dark' : 'light', {
+      persistCache: false,
+    });
   }, [isHighContrast]);
 
   useEffect(() => {
