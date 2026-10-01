@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Calendar, Clock, Paperclip, Send } from 'lucide-react';
 import { format, addDays, addHours, setHours, setMinutes } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { localInstantFromDayAndTime } from '@/lib/localDay';
 import { toast } from '@/hooks/ui/use-toast';
 
 interface ScheduleMessageDialogProps {
@@ -39,10 +40,9 @@ export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: Schedu
       toast({ title: 'Mensagem vazia', description: 'Digite uma mensagem para agendar', variant: 'destructive' });
       return;
     }
-    const [hours, minutes] = time.split(':').map(Number);
-    const scheduledDate = setMinutes(setHours(new Date(date), hours), minutes);
-    
-    if (scheduledDate <= new Date()) {
+    const scheduledDate = localInstantFromDayAndTime(date, time);
+
+    if (!scheduledDate || scheduledDate <= new Date()) {
       toast({ title: 'Data inválida', description: 'A data de agendamento deve ser no futuro', variant: 'destructive' });
       return;
     }
@@ -63,6 +63,8 @@ export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: Schedu
     setDate(format(scheduledDate, 'yyyy-MM-dd'));
     setTime(format(scheduledDate, 'HH:mm'));
   };
+
+  const previewDate = localInstantFromDayAndTime(date, time);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -170,16 +172,12 @@ export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: Schedu
           </div>
 
           {/* Preview */}
-          {date && time && (
+          {previewDate && (
             <div className="p-3 bg-muted/50 rounded-lg">
               <p className="text-sm text-muted-foreground">
                 A mensagem será enviada em{' '}
                 <span className="font-medium text-foreground">
-                  {format(
-                    setMinutes(setHours(new Date(date), parseInt(time.split(':')[0])), parseInt(time.split(':')[1])),
-                    "EEEE, dd 'de' MMMM 'às' HH:mm",
-                    { locale: ptBR }
-                  )}
+                  {format(previewDate, "EEEE, dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
                 </span>
               </p>
             </div>

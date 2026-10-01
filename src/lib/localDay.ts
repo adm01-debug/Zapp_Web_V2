@@ -52,3 +52,28 @@ export function calendarDayKey(value: string | null | undefined): string | null 
   const day = String(d.getUTCDate()).padStart(2, '0');
   return `${d.getUTCFullYear()}-${month}-${day}`;
 }
+
+/**
+ * `yyyy-MM-dd` + `HH:mm` -> instante no **fuso local** (o que o usuário escolheu no relógio dele).
+ *
+ * É o caminho inverso do `parseDayKey` e existe porque `new Date('2026-10-03')` é meia-noite UTC:
+ * em UTC-3, `setHours(9)` sobre ele agenda para 02/10 09:00 — **um dia antes** do escolhido — e
+ * uma data futura válida chega a ser recusada como passada.
+ *
+ * Devolve `null` para data/hora ausente ou inválida. Não altera nada do que está gravado: só
+ * monta o instante a ser enviado.
+ */
+export function localInstantFromDayAndTime(
+  dayKey: string | null | undefined,
+  time: string | null | undefined,
+): Date | null {
+  const d = parseDayKey(dayKey);
+  if (!d) return null;
+  const m = /^(\d{1,2}):(\d{2})/.exec((time ?? '').trim());
+  if (!m) return null;
+  const horas = Number(m[1]);
+  const minutos = Number(m[2]);
+  if (horas > 23 || minutos > 59) return null;
+  d.setHours(horas, minutos, 0, 0);
+  return d;
+}

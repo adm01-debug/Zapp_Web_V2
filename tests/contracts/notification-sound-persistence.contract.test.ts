@@ -32,7 +32,9 @@ describe('tipo de som por alerta — persistido no banco, nunca só em memória'
       ['transcriptionSoundType', 'transcription_sound_type'],
     ];
     for (const [campo, coluna] of pares) {
-      expect(hook, `leitura de ${coluna}`).toContain(`${campo}: (data.${coluna}`);
+      // A leitura passa por `toSoundType(...)`: além de cada categoria ler a SUA coluna, o valor
+      // é validado contra o vocabulário (um valor fora do conjunto fazia o alerta ficar mudo).
+      expect(hook, `leitura de ${coluna}`).toContain(`${campo}: toSoundType(data.${coluna}`);
       expect(hook, `gravacao de ${coluna}`).toContain(`dbUpdates.${coluna} = updates.${campo}`);
     }
   });
