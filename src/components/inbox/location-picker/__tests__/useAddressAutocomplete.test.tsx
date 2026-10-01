@@ -14,6 +14,7 @@ const h = vi.hoisted(() => ({
   noteRetrieveCall: vi.fn(),
   endSearchSession: vi.fn(),
   isSearchBudgetOk: vi.fn(),
+  logAudit: vi.fn(),
 }));
 
 vi.mock('@/lib/mapboxGeocode', async (importOriginal) => {
@@ -43,6 +44,7 @@ vi.mock('@/lib/mapboxSession', () => ({
 vi.mock('@/lib/mapboxCostGuard', () => ({
   isSearchBudgetOk: () => h.isSearchBudgetOk(),
 }));
+vi.mock('@/lib/audit', () => ({ logAudit: (...args: unknown[]) => h.logAudit(...args) }));
 
 import { useAddressAutocomplete } from '../useAddressAutocomplete';
 
@@ -149,6 +151,28 @@ describe('useAddressAutocomplete', () => {
       expect(result.current.suggestions).toEqual([suggestionB]);
     });
 
+    it('E49: a seleção registra searchbox_selected com a origem — é o medidor de custo do Searchbox', async () => {
+      // O evento responde: a escolha veio da sessão do Searchbox (paga) ou da rede de proteção
+      // `/forward`? Sem isso só se sabe quantas sessões foram ABERTAS, nunca quantas ENTREGARAM.
+      h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionC] });
+      h.retrievePlaceResult.mockResolvedValue({
+        ok: true,
+        place: { lat: -23.5613, lng: -46.6565, name: 'Avenida Paulista', address: 'Av. Paulista, São Paulo' },
+      });
+      const { result } = setup();
+      act(() => { result.current.setQuery('Rua A'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+    
+      await act(async () => { await result.current.select(0); });
+    
+      expect(h.logAudit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'searchbox_selected',
+          details: expect.objectContaining({ source: 'suggest', position: 0 }),
+        }),
+      );
+    });
+    
     it('lista vazia cacheada (E19) também é servida sem sessão nova', async () => {
       h.peekSearchSession.mockReturnValue('session-1');
       h.getCachedSuggest.mockReturnValue([]);

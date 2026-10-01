@@ -6,6 +6,7 @@ import { getSearchSession, peekSearchSession, noteSuggestCall, noteRetrieveCall,
 import { isSearchBudgetOk } from '@/lib/mapboxCostGuard';
 import { reportMapboxFailure } from '@/lib/mapboxToken';
 import type { MapboxFailureKind } from '@/lib/mapboxToken';
+import { logAudit } from '@/lib/audit';
 
 const DEBOUNCE_MS = 300;
 const MIN_QUERY_LENGTH = 3;
@@ -412,6 +413,7 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     // E15 item 3: sugestão do `/forward` já traz coordenada — sem `/retrieve` e sem gastar sessão.
     if (suggestion.coords) {
       endSearchSession();
+      void logAudit({ action: 'searchbox_selected', details: { source: 'forward', position: index } });
       return {
         lat: suggestion.coords.lat,
         lng: suggestion.coords.lng,
@@ -432,6 +434,7 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     if (result.ok) {
       dispatch({ type: 'RETRIEVE_END' });
       endSearchSession();
+      void logAudit({ action: 'searchbox_selected', details: { source: 'suggest', position: index } });
       return result.place;
     }
 
