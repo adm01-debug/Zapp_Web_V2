@@ -156,7 +156,7 @@ export const WorkItemCard = React.memo(function WorkItemCard({
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
-          className="text-destructive focus:text-destructive"
+          className="text-[hsl(var(--destructive-text))] focus:text-[hsl(var(--destructive-text))]"
         >
           Cancelar
         </DropdownMenuItem>
@@ -164,10 +164,15 @@ export const WorkItemCard = React.memo(function WorkItemCard({
     </DropdownMenu>
   );
 
+  // Etapa 78: no Quadro o card é a alça de arrasto — o leitor de tela anuncia
+  // "tarefa arrastável" em vez do "button" cru da lib de DnD.
+  const roleDescription = mode === 'board' ? { 'aria-roledescription': 'tarefa arrastável' } : {};
+
   return (
     <article
       data-testid="work-item-card"
       data-mode={mode}
+      data-item-id={item.id}
       tabIndex={0}
       role="article"
       aria-label={[item.title, item.status, item.due_date ? 'prazo ' + item.due_date : ''].filter(Boolean).join(', ')}
@@ -187,6 +192,7 @@ export const WorkItemCard = React.memo(function WorkItemCard({
             : 'border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]',
       ].join(' ')}
       {...(mode === 'board' && dragHandleProps ? dragHandleProps : {})}
+      {...roleDescription}
     >
       {isAgenda ? (
         /* Linha única (etapa 56): checkbox · título · chips à direita · kebab */
@@ -223,7 +229,7 @@ export const WorkItemCard = React.memo(function WorkItemCard({
 
           {/* Motivo de espera (a Agenda não mostra — etapa 56) */}
           {item.status === 'waiting' && item.waiting_reason && (
-            <p className="flex items-center gap-1 text-2xs text-warning/80 border-t border-border/30 pt-1.5 mt-0.5">
+            <p className="flex items-center gap-1 text-2xs text-[hsl(var(--warning-text))] border-t border-border/30 pt-1.5 mt-0.5">
               <span className="shrink-0">⏸</span>
               <span className="truncate">{item.waiting_reason}</span>
             </p>

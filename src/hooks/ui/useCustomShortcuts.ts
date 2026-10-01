@@ -4,8 +4,14 @@ import { DEFAULT_SHORTCUTS } from '@/hooks/shortcuts/defaultShortcuts';
 
 export interface ShortcutBinding {
   id: string;
-  name: string;
-  description: string;
+  /**
+   * Etapa 84: rótulo do atalho. Fica ausente nos 7 atalhos de Tarefas, cujo
+   * `name`/`description` é carregado sob demanda por `useTaskShortcutLabels`
+   * (chunk à parte) para não pesar no `initial-js`.
+   */
+  name?: string;
+  /** Etapa 84: ver `name` — mesma origem sob demanda nos atalhos de Tarefas. */
+  description?: string;
   defaultKey: string;
   defaultModifiers: {
     ctrlKey?: boolean;
@@ -19,6 +25,17 @@ export interface ShortcutBinding {
     altKey?: boolean;
   };
   category: 'chat' | 'navigation' | 'actions' | 'selection';
+  /**
+   * Etapa 77: views (`?view=`) em que o atalho vale. Ausente = global.
+   * O `useGlobalKeyboardShortcuts` ignora o atalho fora do escopo — é assim que
+   * os 7 atalhos de Tarefas ficam presos a `tasks`/`pipeline`.
+   */
+  scope?: string[];
+  /**
+   * Etapa 77: teclas equivalentes à `defaultKey`. Existe para o atalho único de
+   * modo das Tarefas responder a `1`, `2` e `3` sem virar três entradas.
+   */
+  alternateKeys?: string[];
 }
 
 const STORAGE_KEY = 'custom-keyboard-shortcuts';

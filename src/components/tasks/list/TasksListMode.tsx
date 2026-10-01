@@ -90,8 +90,8 @@ function Section({ title, items, olderItems = [], groups, hint, defaultOpen = tr
     );
   };
   return (
-    <div className="space-y-1.5">
-      <div className="flex items-center gap-1">
+    <div className="min-w-0 space-y-1.5">
+      <div className="flex min-w-0 items-center gap-1">
         <button
           type="button"
           onClick={() => setOpen(o => !o)}
@@ -123,7 +123,7 @@ function Section({ title, items, olderItems = [], groups, hint, defaultOpen = tr
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="overflow-hidden space-y-1.5"
+            className="min-w-0 overflow-hidden space-y-1.5"
           >
             {groups && groups.length > 0
               ? groups.map(g => (
@@ -161,7 +161,7 @@ export function TasksListMode({
 }: Props) {
   if (isLoading) {
     return (
-      <div className="space-y-1.5">
+      <div className="w-full min-w-0 space-y-1.5">
         {Array.from({ length: 6 }).map((_, i) => <WorkItemCardSkeleton key={i} />)}
       </div>
     );
@@ -181,7 +181,7 @@ export function TasksListMode({
   };
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="w-full min-w-0 space-y-6 pb-8">
       <Section title="Atrasadas"   items={byDue.overdue}   headingClass="text-destructive" defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
       <Section title="Hoje"        items={byDue.today}     headingClass="text-warning"     defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
       <Section title="Amanhã"     items={byDue.tomorrow}  defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
