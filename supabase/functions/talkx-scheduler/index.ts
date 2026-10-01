@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     // a query não deixa passar motivo manual, e a decisão revalida linha a linha.
     const { data: pausedCampaigns, error: pauseErr } = await supabase
       .from("talkx_campaigns")
-      .select("id, name, pause_reason, whatsapp_connection_id, schedule_timezone, send_window_start, send_window_end, business_hours_only")
+      .select("id, name, pause_reason, whatsapp_connection_id, schedule_timezone, send_window_start, send_window_end, business_hours_only, paused_at")
       .eq("status", "paused")
       .not("paused_at", "is", null) // pausadas com timestamp (não rascunhos)
       .in("pause_reason", [...AUTO_RESUME_REASONS]);

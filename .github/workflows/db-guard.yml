@@ -343,6 +343,26 @@ jobs:
           TALKX_SEND_INTERVAL_TETO_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-send-interval-teto-24h.test.sh
 
+      - name: Simular eventos do ciclo de vida gravados no servidor (V12)
+        env:
+          TALKX_V12_LIFECYCLE_EVENTS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-v12-lifecycle-events.test.sh
+
+      - name: Simular guard de replied_count e remoção da RPC de use_count (V15)
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-v15-replied-count-guard.test.sh
+
+      - name: Simular série horária contando sent + delivered (V16)
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-v16-time-series.test.sh
+
+      - name: Simular READ marcando read_at + read_count (V17)
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-v17-read-at.test.sh
+
+      - name: Simular retry manual de destinatário terminal (V19)
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-v19-retry-recipient.test.sh
+
+      - name: Simular flags de lançamento persistidas (V21)
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-v21-launch-flags.test.sh
+
       - name: Simular supressão de contato idempotente nos eixos phone e contact_id (V07b)
         env:
           TALKX_SUPPRESS_PHONE_TEST_POSTGRES_IMAGE: postgres:17-alpine
