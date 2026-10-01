@@ -464,8 +464,8 @@
     },
     {
       "path": "supabase/functions/multiplix-audience/index.ts",
-      "bytes": 17013,
-      "sha256": "de3608d397036fa4c08b7c9cc1d355b5efbe46450ac95984bd3329b1f3b144f1"
+      "bytes": 28202,
+      "sha256": "1ac16e5f3e2af371f72f9ea7869c2be9be6168207ffdf6e22901459818f0c358"
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
@@ -1204,7 +1204,7 @@
       "name": "multiplix-audience",
       "entrypoint": "supabase/functions/multiplix-audience/index.ts",
       "verify_jwt": true,
-      "source_sha256": "1ee563ba6ca44c20fb601780683216ecfd74da5cc04a7ea30c54567d6b81dc77",
+      "source_sha256": "6f6a6447621e635e52809b6f88e9e6355890bd603959a049af1a87f1a90a022d",
       "source_files": [
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1441,5 +1441,5 @@
       ]
     }
   ],
-  "manifest_sha256": "ab4c66258af7c9db5a499e6e024840b356c6fd4cc738dcc729f57fd355e72da3"
+  "manifest_sha256": "e82fe3f950496c9bd2cb6e5ede51dba92a60a53165143857850f3acc0316b218"
 }
