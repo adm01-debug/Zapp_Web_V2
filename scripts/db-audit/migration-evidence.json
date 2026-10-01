@@ -742,6 +742,13 @@
       "reason": "safer-replay",
       "related_migration": null,
       "justification": "Migration aplicada no banco com o SQL corrigido (search_contacts com as 23 colunas de retorno) depois de o gateway recusar 42P13 na primeira tentativa; o arquivo no repo preserva o replay anterior, de 17 colunas, porque migration ja aplicada e imutavel (guarda do db-guard). A versao 20260929370000 foi adicionada ja com o nome final (commit 41f66910, PR #1172); quem foi renomeada dentro daquele PR, de 20260929390000 para 20260929560000, foi a migration vizinha de conversation_status/grants (commit b1d38824), para liberar a versao. Conferido com git log --all --name-status em 29/09/2026 -- rastro tambem em docs/audits/DIAGNOSTICO_GUARDAS_HERMES_E_DIVERGENCIAS_2026-09-29.md. O conteudo correto e o do ledger; o replay fica fixado por hash proprio."
+    },
+    {
+      "version": "20260930390000",
+      "filename": "20260930390000_endurece_l5_contrato_e_jobs.sql",
+      "file_sha256": "3ba508d732f942fdb7a2aecdd3f1dea2296c846a71e3384f5b0f5c5e7b9dd76e",
+      "kind": "ledger-only/name-and-file-pinned",
+      "justification": "O arquivo em main continha uma versao DML incorreta (DELETE FROM cron.job) que nunca foi aplicada. O conteudo correto — identico ao registrado no ledger (apply_zapp_cron_secrets_l5 com cron.unschedule) — foi aplicado via MCP em 2026-09-30 e agora o arquivo em disco e corrigido para refletir o que esta em producao. Commit 5ed2c20 na branch claude/gifted-mccarthy-vhdcce / PR 1389."
     }
   ]
 }
