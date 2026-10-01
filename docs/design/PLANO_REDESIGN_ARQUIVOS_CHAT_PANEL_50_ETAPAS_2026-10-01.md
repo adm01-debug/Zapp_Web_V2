@@ -2,7 +2,7 @@
 
 **Data:** 01/10/2026.
 
-**Status:** planejamento; as 50 etapas estão pendentes. Este commit contém somente o documento.
+**Status:** plano aprovado para execução. As quatro decisões de negócio (D1–D4, seção 5) foram tomadas pelo Joaquim em 01/10/2026; não há pergunta pendente. As 50 etapas estão pendentes de execução. Este commit contém somente o documento.
 
 **Base consultada:** `adm01-debug/Zapp_Web_V2` em `762c7c2` (branch desta sessão, a partir de `main`) e `adm01-debug/Promo_Gifts_V4` em `92690bd8` (clone raso, leitura). Nenhuma das duas bases foi alterada. Nenhum cenário abaixo foi executado ou validado.
 
@@ -27,10 +27,10 @@
 
 | # | Achado | Evidência | Consequência no plano |
 |---|---|---|---|
-| G1 | **Encaminhar não existe em lugar nenhum do ZAPP.** O Codex (etapa 41) manda "reaproveitar o serviço de envio já usado pelo chat". Não há tal serviço: o handler do próprio chat também é um stub. | `src/components/inbox/chat/useChatPanelHandlers.ts:125` — `handleForwardToTargets` só faz `log.debug(...)`. O diálogo chama `onForward`, fecha e mostra "Mensagem encaminhada". | Encaminhar vira **nova funcionalidade** com envio real pela Evolution GO (custo, risco antispam). Entra como PR própria, atrás da decisão **D1**, nunca "no caminho" do redesign. |
+| G1 | **Encaminhar não existe em lugar nenhum do ZAPP.** O Codex (etapa 41) manda "reaproveitar o serviço de envio já usado pelo chat". Não há tal serviço: o handler do próprio chat também é um stub. | `src/components/inbox/chat/useChatPanelHandlers.ts:125` — `handleForwardToTargets` só faz `log.debug(...)`. O diálogo chama `onForward`, fecha e mostra "Mensagem encaminhada". | Encaminhar vira **nova funcionalidade** com envio real pela Evolution GO (custo, risco antispam). Entra como PR própria (PR G). **Decidido (D1, 01/10): sim, com limite de 10 destinos × 10 arquivos por lote.** |
 | G2 | **O ZAPP já tem Grid/Lista/Tabela com seletor de colunas** no módulo Contatos. O Codex ignora e manda portar tudo do Promo Gifts. Resultado seria dois controles de "Layout" diferentes no mesmo produto. | `src/components/contacts/ContactViewSwitcher.tsx` (segmentado Cards/Lista/Tabela + menu "Colunas" 3·4·5·6), `ContactContentArea.tsx:17-20` (mapa de classes por colunas), `ContactsTable.tsx:55` (`SortableHeader`), `ContactListItem.tsx:32` (linha `h-16`). | O **modelo de interação** é o do Promo Gifts (pedido do Joaquim: popover Layout + Selecionar), mas o **vocabulário visual** (altura de linha, cabeçalho ordenável, mapa de colunas, tokens) é reaproveitado de Contatos. Unificar os dois controles num componente só fica em "Próximos passos". |
 | G3 | **Mensagem "excluída" continua na galeria.** A exclusão só marca `is_deleted = true` e mantém `media_url`; o hook da galeria não filtra `is_deleted`, e o RPC de contagem da aba também não. Pelo código, após o toast "Mensagem removida" e o refetch, o item volta a aparecer. | `FileCard.tsx:39-44` (update), `src/hooks/chat/useContactMedia.ts:52-57` (sem filtro), `supabase/migrations/20260928140200_tab_counts_tasks_own.sql:41-44` (`files_total` sem filtro). | Confirmar ao vivo na etapa 01. Correção na etapa 09 (hook) e 42 (RPC, que é DDL → fluxo de migration e PR aberta para o Joaquim). |
-| G4 | **Política de mídia incoerente.** "Baixar" está bloqueado por `notifyDownloadBlocked`, mas "Copiar link" copia a URL **assinada** (válida 1 h) e o visualizador tem "abrir em nova aba" com a mesma URL; o `<audio>` não tem `controlsList="nodownload"` (o `<video>` tem). O Codex (42) cita, mas não força decisão. | `FileCard.tsx:28-35`, `FileDetailPanel.tsx:25-32`, `MediaPreviewDialog.tsx:36-40,52-53`. | Decisão **D2** antes da Fase 3. O plano implementa a política escolhida nos três modos e no visualizador, não "remove um botão". |
+| G4 | **Política de mídia incoerente.** "Baixar" está bloqueado por `notifyDownloadBlocked`, mas "Copiar link" copia a URL **assinada** (válida 1 h) e o visualizador tem "abrir em nova aba" com a mesma URL; o `<audio>` não tem `controlsList="nodownload"` (o `<video>` tem). O Codex (42) cita, mas não força decisão. | `FileCard.tsx:28-35`, `FileDetailPanel.tsx:25-32`, `MediaPreviewDialog.tsx:36-40,52-53`. | **Decidido (D2, 01/10): política fechada** — sem "Copiar link" e sem "abrir em nova aba"; o plano aplica isso nos três modos e no visualizador, não "remove um botão". |
 | G5 | **Custo real de abrir a aba é 1 assinatura de URL por arquivo**, não renderização. Cada `FileCard` chama `useResolvedStorageUrl` → até 200 `createSignedUrl` numa abertura. O Codex (46) propõe avaliar virtualização, que não resolve isso e é desnecessária com o teto de 200. | `FileCard.tsx:26`, `useResolvedStorageUrl.ts:48-57`, `useContactMedia.ts:57` (`limit(200)`). `@tanstack/react-virtual` já é dependência (`package.json:65`), mas o uso correto aqui é outro. | Etapa 10: assinar em **lote** no hook (`createSignedUrls`) e carregar miniaturas por visibilidade. Sem virtualização. |
 | G6 | **Capacidade de colunas nunca foi calculada.** O Codex manda "medir o contêiner" sem dizer o que cabe. Medido pelo código: sidebar 256 px (64 colapsada), conversas 350 px, detalhes do contato 323 px (colapsável), padding do painel 16+16. | `docs/design/DESIGN_SYSTEM_PROMO_GIFTS_STATUS.md` (`--sidebar-w 256px`, `64px`), `ConversationListSidebar.tsx:115`, `ContactDetails.tsx:99`, `ConversationTabContent.tsx:34` (`p-4`). | Tabela de capacidade na seção 3. Conclusão: as 5 opções (3·4·5·6·8) **são** alcançáveis em 1920×1080, mas só com cálculo por contêiner — `window.innerWidth` (Promo Gifts) daria 8 colunas num painel de 959 px. |
 | G7 | **Não há infraestrutura para container queries.** O Codex sugere consultas de contêiner; o Tailwind do ZAPP só tem `tailwindcss-animate`, não existe hook de medida, e o `ResizeObserver` só é stubado num mock específico, não no setup global do Vitest. | `tailwind.config.ts:429`, busca por `useResizeObserver|useElementSize` em `src/hooks` vazia, `src/test/volumeControlMocks.ts:26-29`. | Etapa 07 cria o hook de medida; etapa 46 cobre o stub de teste. Sem plugin novo de Tailwind (classes literais por mapa, etapa 16). |
@@ -84,7 +84,7 @@ Leitura: as cinco opções do Promo Gifts são legítimas no chat, mas **8 colun
 | D | 4 | Lista e Tabela | Autonomia | Vercel |
 | E | 5 | Miniaturas, mídia e visualizador | Autonomia | Vercel |
 | F | 6 | Detalhes, barra de seleção, exclusão | Autonomia | Vercel |
-| G | 7 | Encaminhar real (só com **D1 = sim**) | Autonomia no front; Evolution já em produção | Vercel |
+| G | 7 | Encaminhar real (D1 decidido: sim, com limite) | Autonomia no front; Evolution já em produção | Vercel |
 | H | 8 | Paginação, contagens, realtime | Front: autonomia. **RPC/DDL: PR fica aberta para o Joaquim** (regra 8 do fluxo Git) | Vercel + migration pelo fluxo da seção 1 do `CLAUDE.md` |
 | — | 0 e 9 | Diagnóstico, testes, E2E, homologação | Acompanham as PRs acima | — |
 
@@ -92,13 +92,14 @@ Ordem obrigatória: A → B → C → D → E → F; G e H podem entrar depois d
 
 ---
 
-## 5. Decisões que são do Joaquim (apresentar antes da PR indicada)
+## 5. Decisões de negócio (tomadas pelo Joaquim em 01/10/2026)
 
-| ID | Decisão | Opções e impacto | Recomendação | Trava a PR |
+| ID | Decisão | Opções consideradas | **Decisão** | Vale para a PR |
 |---|---|---|---|---|
-| **D1** | Encaminhar arquivos vai existir de verdade? | **Sim**: envio real pela Evolution GO para contatos/grupos, com limite por lote (custo de mensagens, risco de bloqueio antispam se abusado). **Não**: o botão sai da aba e do chat até existir serviço; nada de "Mensagem encaminhada" falso. | **Sim, com limite de 10 destinos × 10 arquivos por lote** e confirmação antes de enviar. O botão já está na tela e o cliente espera que funcione. | G |
-| **D2** | Política de link/abertura externa | **Fechada**: sem "Copiar link" e sem "abrir em nova aba"; visualizar só dentro do ZAPP (coerente com o bloqueio de download). **Aberta**: mantém copiar/abrir, assumindo que a URL assinada (1 h) sai do sistema. | **Fechada.** Hoje o bloqueio de download é só aparência: o mesmo arquivo sai por "Copiar link" em um clique. | C |
-| **D3** | Densidade inicial do Grid | 4 colunas (recomendado: cabe com todas as laterais abertas e lê bem prints de tabela) ou 5/6 (mais denso, miniaturas de ~160 px). | **4.** O operador sobe para 6/8 pelo popover quando recolher as laterais. | C |
+| **D1** | Encaminhar arquivos vai existir de verdade? | **Sim**: envio real pela Evolution GO para contatos/grupos, com limite por lote (custo de mensagens, risco de bloqueio antispam se abusado). **Não**: o botão sai da aba e do chat até existir serviço; nada de "Mensagem encaminhada" falso. | **Sim, com limite**: 10 destinos × 10 arquivos por operação, confirmação explícita acima de 20 envios. | G |
+| **D2** | Política de link/abertura externa | **Fechada**: sem "Copiar link" e sem "abrir em nova aba"; visualizar só dentro do ZAPP (coerente com o bloqueio de download). **Aberta**: mantém copiar/abrir, assumindo que a URL assinada (1 h) sai do sistema. | **Fechada**: sem "Copiar link", sem "abrir em nova aba"; arquivo só é visto dentro do ZAPP. | C, E |
+| **D3** | Densidade inicial do Grid | 4 colunas (recomendado: cabe com todas as laterais abertas e lê bem prints de tabela) ou 5/6 (mais denso, miniaturas de ~160 px). | **4 colunas**; o operador sobe para 6/8 pelo popover ao recolher as laterais. | A, C |
+| **D4** | Dados de produção que o plano toca | (a) 1 mensagem de mídia de teste no contato E2E já seedado; (b) migration no RPC `get_conversation_tab_counts` para excluir apagadas. | **Autorizados os dois.** A fixture é DML no contato de teste; a migration segue arquivo → PR → merge → ledger, com a PR H mergeada pelo Joaquim (regra 8 do fluxo Git). | H, 49 |
 
 ---
 
@@ -108,7 +109,7 @@ Ordem obrigatória: A → B → C → D → E → F; G e H podem entrar depois d
 - Unificar o seletor de Contatos com o de Arquivos (vai para "Próximos passos").
 - Reset diário de preferências do catálogo.
 - Mexer no Chat montado (`ConversationTabContent.tsx` só muda se a aba Arquivos precisar de contêiner; o bloco `hidden` do Chat fica como está).
-- Alterar edge functions. Se D1 exigir ajuste na edge de envio, é PR separada com deploy por `deploy-functions.yml` + aprovação (merge não deploya edge).
+- Alterar edge functions. Se o encaminhar (D1) exigir ajuste na edge de envio, é PR separada com deploy por `deploy-functions.yml` + aprovação (merge não deploya edge).
 - Trocar o visualizador por outro componente; é ajuste do `MediaPreviewDialog` existente.
 
 ---
@@ -121,7 +122,7 @@ Ordem obrigatória: A → B → C → D → E → F; G e H podem entrar depois d
 
 **02. Medir as larguras reais do painel central.** Playwright 1920×1080 logado, quatro combinações de laterais (sidebar expandida/colapsada × detalhes do contato aberto/fechado), lendo `getBoundingClientRect().width` do contêiner da aba Arquivos. **Aceite:** tabela da seção 3 substituída pelos números medidos; se a diferença for >24 px em qualquer linha, os limiares de capacidade da etapa 07 são recalculados antes de codar.
 
-**03. Apresentar D1, D2 e D3 ao Joaquim** no formato da seção 5 (custo, risco, impacto no cliente, recomendação). **Aceite:** três respostas registradas no topo deste documento, com data. Sem resposta a D1, a PR G não existe; sem D2 e D3, a PR C não abre.
+**03. Decisões de negócio registradas.** D1–D4 foram apresentadas e decididas em 01/10/2026 (seção 5); nenhuma etapa deste plano depende de resposta futura do Joaquim. Mudar uma dessas decisões depois exige editar a seção 5 e as etapas que a citam no mesmo commit. **Aceite:** cumprida — seção 5 sem coluna "pendente"; etapas 19, 25, 30, 32, 36–40, 42 e 49 escritas no condicional zero.
 
 **04. Matriz de preservação funcional com `data-testid`.** Para cada ação atual (visualizar, baixar-bloqueado, encaminhar, copiar link, excluir, abrir detalhes, filtrar, buscar, ordenar) registrar: componente, handler, estado real (funciona / bloqueado / stub) e o `data-testid` que a versão nova vai expor (`files-toolbar`, `files-layout-trigger`, `files-view-grid|list|table`, `files-columns-N`, `files-select-toggle`, `files-selection-bar`, `files-item-<id>`, `files-detail`). **Aceite:** matriz em `docs/design/evidence/arquivos-chat-2026-10/matriz-preservacao.md`; os testes das etapas 46 e 49 usam só esses ids.
 
@@ -129,7 +130,7 @@ Ordem obrigatória: A → B → C → D → E → F; G e H podem entrar depois d
 
 ### Fase 1 — Fundação de estado e dados (PR A)
 
-**06. `useFilesViewState`.** Estado único: `viewMode` (`grid|list|table`), `preferredColumns` (3|4|5|6|8), `sort` (`recent|old|biggest`), `typeFilter`, `search`. Persistir **só** `viewMode` e `preferredColumns` em `localStorage['zapp.inbox.files.view:<userId>']` como `{ v: 1, viewMode, columns }`; leitura com sanitização (valor fora do domínio → default); escrita em `try/catch`; indisponibilidade do storage não quebra a aba. Filtro, busca e ordenação ficam em memória por montagem (a aba desmonta ao sair; restaurar isso é a etapa 38). **Aceite:** teste unitário com storage inválido, storage ausente e troca de usuário no mesmo navegador; nenhuma chave `product-grid-columns`/`catalog-view-mode` lida ou escrita.
+**06. `useFilesViewState`.** Estado único: `viewMode` (`grid|list|table`), `preferredColumns` (3|4|5|6|8) — defaults `grid` e **4** (D3), `sort` (`recent|old|biggest`), `typeFilter`, `search`. Persistir **só** `viewMode` e `preferredColumns` em `localStorage['zapp.inbox.files.view:<userId>']` como `{ v: 1, viewMode, columns }`; leitura com sanitização (valor fora do domínio → default); escrita em `try/catch`; indisponibilidade do storage não quebra a aba. Filtro, busca e ordenação ficam em memória por montagem (a aba desmonta ao sair; restaurar isso é a etapa 38). **Aceite:** teste unitário com storage inválido, storage ausente e troca de usuário no mesmo navegador; nenhuma chave `product-grid-columns`/`catalog-view-mode` lida ou escrita.
 
 **07. `useFilesContainerColumns(ref, preferred)`.** `ResizeObserver` no contêiner do grid (não na janela). `capacity = max(1, floor((width + GAP) / (MIN_CARD + GAP)))` com `MIN_CARD = 168`, `GAP = 12`; `effective = min(preferred, capacity)`; devolve `{ effective, capacity, available: [3,4,5,6,8].map(n => ({ n, fits: n <= capacity })) }`. Debounce por `requestAnimationFrame`. **Aceite:** teste com larguras 683/959/1151/1474 devolvendo 3/5/6/8; redimensionar não altera `preferred`.
 
@@ -151,7 +152,7 @@ Ordem obrigatória: A → B → C → D → E → F; G e H podem entrar depois d
 
 **15. Botão Selecionar/Cancelar.** `variant` alterna `outline` → `default`; rótulo "Selecionar" → "Cancelar"; `aria-pressed`; contador em `Badge` **primária** (não `destructive`: seleção não é erro), sem animação de mola (respeitar `useReducedMotion`). `Esc` dentro da aba sai do modo seleção (sem efeito destrutivo). **Aceite:** teste: entrar → checkboxes visíveis nos três modos; `Esc` → modo sai e seleção zera.
 
-### Fase 3 — Grid e cartão (PR C; depende de D2 e D3)
+### Fase 3 — Grid e cartão (PR C)
 
 **16. Mapa literal de colunas.** `COLS: Record<1|2|3|4|5|6|7|8, string>` com classes literais `grid-cols-N` (Tailwind precisa das strings completas; nada de template). `effective` da etapa 07 escolhe a classe; sem breakpoints de viewport (`sm:`/`xl:`) — o contêiner decide. `gap-3`. **Aceite:** teste de snapshot da classe para `effective` 3/4/5/6/8; nenhuma classe `2xl:grid-cols-*` restante no `FilesTab`.
 
@@ -159,7 +160,7 @@ Ordem obrigatória: A → B → C → D → E → F; G e H podem entrar depois d
 
 **18. Identificação legível.** Linha 1: `displayName` (`text-[13px] font-semibold truncate`, `title` = nome técnico completo). Linha 2: "Imagem · 1,2 MB · 24/09 17:54" (`text-xs text-muted-foreground`, um só `<p>`); tamanho ausente → omitido, nunca "0 KB". Linha 3 (remetente com avatar) só quando `effective <= 4`; acima disso fica nos detalhes. **Aceite:** altura do rodapé do cartão ≤ 64 px em ≤ 4 colunas e ≤ 44 px acima; teste com `size: null` não renderiza "0".
 
-**19. Ações do cartão conforme D2.** Sempre: **Visualizar** (olho) e **Mais ações**. **Encaminhar** só se D1 = sim (senão o botão não existe; nada de stub). No menu: "Baixar" aparece **desabilitado** com cadeado e texto "Bloqueado pela política de segurança" (informa antes de frustrar, em vez de botão ativo que só mostra toast); "Copiar link" só se D2 = aberta; "Excluir mensagem" só para `sender === 'agent'` (mantido). Alvos 28×28 px (mínimo WCAG 2.5.8 é 24). **Aceite:** teste por combinação D1/D2 renderizando exatamente as ações previstas; nenhum botão que apenas dispara `notifyDownloadBlocked`.
+**19. Ações do cartão (política fechada, D2).** Três ações: **Visualizar** (olho), **Encaminhar** (ligado ao serviço real da Fase 7; até a PR G mergear, o botão fica desabilitado com `title="Disponível em breve"` — nunca um stub que fecha e diz "encaminhado") e **Mais ações**. No menu: "Baixar" aparece **desabilitado** com cadeado e texto "Bloqueado pela política de segurança" (informa antes de frustrar, em vez de botão ativo que só mostra toast); **"Copiar link" é removido** do cartão, dos detalhes e da lista/tabela; "Excluir mensagem" só para `sender === 'agent'` (mantido). Alvos 28×28 px (mínimo WCAG 2.5.8 é 24). **Aceite:** teste renderizando exatamente essas ações; `grep` por `clipboard.writeText` em `src/components/inbox/files/` vazio; nenhum botão que apenas dispara `notifyDownloadBlocked`.
 
 **20. Estrutura semântica do cartão.** `<article data-testid="files-item-<id>">`; a prévia é um `<button aria-label="Visualizar <displayName>">` (abre o visualizador); o nome é um `<button>` que abre detalhes; no modo seleção, um `<Checkbox>` real no canto superior esquerdo e o clique na prévia alterna a seleção (um só `onClick`, com `stopPropagation` apenas no grupo de ações). `focus-visible:ring-2 ring-ring`. Nenhum `<div onClick>` restante. **Aceite:** teste: `Tab` percorre prévia → nome → ações; `Enter` na prévia abre o visualizador; `Space` no checkbox alterna sem abrir nada.
 
@@ -173,7 +174,7 @@ Ordem obrigatória: A → B → C → D → E → F; G e H podem entrar depois d
 
 **24. Tabela no espaço do chat.** `table-fixed` com prioridades: < 720 px de contêiner esconde Remetente e Tamanho; < 560 px esconde Tipo (todos continuam nos detalhes). `overflow-x` só dentro da tabela, nunca no painel; a preferência "Tabela" nunca é trocada por "Lista" automaticamente. **Aceite:** com sidebar expandida + contato aberto + painel de detalhes (683 px), a tabela mostra Sel · Arquivo · Data · Ações sem rolagem horizontal do ZAPP.
 
-**25. `FilesContent` único.** Recebe `items` (já filtrados e ordenados), `selection`, `actions` (`onPreview`, `onOpenDetails`, `onForward?`, `onCopyLink?`, `onDelete`) e `viewMode`; escolhe o renderer; skeleton por modo (6 cartões / 6 linhas / 6 `TableRow`). Formatação de data/tamanho vem só de `fileDisplay.ts` (uma função `formatMeta(item)`), sem cópia nos renderers. **Aceite:** `grep` por `formatSmartDate|toFixed` em `src/components/inbox/files/` retorna só `fileDisplay.ts`; teste de paridade: mesma ação, mesmo handler nos três modos.
+**25. `FilesContent` único.** Recebe `items` (já filtrados e ordenados), `selection`, `actions` (`onPreview`, `onOpenDetails`, `onForward`, `onDelete`) e `viewMode`; escolhe o renderer; skeleton por modo (6 cartões / 6 linhas / 6 `TableRow`). Formatação de data/tamanho vem só de `fileDisplay.ts` (uma função `formatMeta(item)`), sem cópia nos renderers. **Aceite:** `grep` por `formatSmartDate|toFixed` em `src/components/inbox/files/` retorna só `fileDisplay.ts`; teste de paridade: mesma ação, mesmo handler nos três modos.
 
 ### Fase 5 — Miniaturas, mídia e visualizador (PR E)
 
@@ -185,13 +186,13 @@ Ordem obrigatória: A → B → C → D → E → F; G e H podem entrar depois d
 
 **29. Documento por extensão.** Ícone por família (`pdf`, `xls/xlsx/csv`, `doc/docx`, `ppt/pptx`, `zip/rar`, genérico) + `Badge` com a extensão em maiúsculas; sem prévia de conteúdo. **Aceite:** `contrato.pdf` → ícone PDF + "PDF"; extensão desconhecida → genérico sem badge; nada que prometa visualização nativa.
 
-**30. Visualizador único e navegável.** Manter `MediaPreviewDialog`; título = `displayName` (nome técnico no `DialogDescription` para leitor de tela); setas ← → e botões "Anterior/Próximo" percorrem a coleção filtrada atual; foco devolvido ao gatilho ao fechar; `controlsList="nodownload"` também no `<audio>`; "abrir em nova aba" conforme D2; `max-h-[80vh]`. **Aceite:** teste: abrir o 2º de 3 itens, `→` vai ao 3º, `←` volta; fechar devolve foco ao botão que abriu.
+**30. Visualizador único e navegável.** Manter `MediaPreviewDialog`; título = `displayName` (nome técnico no `DialogDescription` para leitor de tela); setas ← → e botões "Anterior/Próximo" percorrem a coleção filtrada atual; foco devolvido ao gatilho ao fechar; `controlsList="nodownload"` também no `<audio>`; **botão "abrir em nova aba" removido** (D2 fechada) e o de download do cabeçalho também; `max-h-[80vh]`. **Aceite:** teste: abrir o 2º de 3 itens, `→` vai ao 3º, `←` volta; fechar devolve foco ao botão que abriu.
 
 ### Fase 6 — Detalhes, seleção em lote e exclusão (PR F)
 
 **31. Detalhes sem roubar coluna.** Lado a lado (260 px) **só** quando a largura do contêiner ≥ 1100 px (sidebar colapsada); abaixo disso, `Sheet` (`ui/sheet`) à direita, sobreposta, com o mesmo conteúdo (prévia, `displayName`, nome técnico, tipo, tamanho, data completa, remetente, legenda, ações). Nunca substitui o painel cadastral do contato. **Aceite:** com 959 px, abrir detalhes não muda `effective` do grid; com 1474 px, abre lado a lado e o grid cai de 8 para 6.
 
-**32. Barra contextual de seleção.** Aparece no topo da área de arquivos quando `selectionMode`: "N selecionados" (`aria-live="polite"`), "Selecionar todos (M visíveis)", "Limpar", "Cancelar" e, se D1 = sim, "Encaminhar N". Sem ZIP, sem excluir em massa. **Aceite:** teste: texto da barra bate com `selectedIds.size`; nenhuma ação sem handler real.
+**32. Barra contextual de seleção.** Aparece no topo da área de arquivos quando `selectionMode`: "N selecionados" (`aria-live="polite"`), "Selecionar todos (M visíveis)", "Limpar", "Cancelar" e "Encaminhar N" (desabilitado até a PR G mergear, com o mesmo `title` da etapa 19). Sem ZIP, sem excluir em massa. **Aceite:** teste: texto da barra bate com `selectedIds.size`; nenhuma ação sem handler real.
 
 **33. "Selecionar todos" com alcance explícito.** Seleciona os ids de `filtered` (carregados e correspondentes ao filtro atual); checkbox geral com `indeterminate` quando parcial; ao trocar filtro, a barra mostra "k selecionados fora do filtro". **Aceite:** teste: 56 itens, filtro Vídeos, "Selecionar todos" → 2; voltar a Todos → "2 selecionados"; selecionar todos de novo → 56.
 
@@ -199,7 +200,7 @@ Ordem obrigatória: A → B → C → D → E → F; G e H podem entrar depois d
 
 **35. Exclusão com diálogo e efeito fiel.** `AlertDialog` no lugar de `window.confirm`. Texto a confirmar na etapa 01a com o efeito real (`is_deleted = true` + `content = '[Mensagem apagada]'`, visível só para o próprio ZAPP, não apaga no WhatsApp do cliente). Centralizar em `useFilesActions.deleteMessage(item)`: `update` → remover da seleção → invalidar `contactMediaKey` e `conversationTabCountsKey`. **Aceite:** teste com `update` rejeitado: toast de erro, item continua na lista e na seleção; com sucesso: item some sem refetch devolver (depende da etapa 09).
 
-### Fase 7 — Encaminhar de verdade (PR G; só com D1 = sim)
+### Fase 7 — Encaminhar de verdade (PR G; D1 decidido: sim, com limite)
 
 **36. `forwardMediaMessages(items, targets)`.** Serviço em `src/hooks/chat/useForwardMedia.ts` reutilizando o caminho de envio de mídia já existente em `src/components/inbox/useFileUploadLogic.ts:160-171` (envia `mediaUrl` como locator + `messageType`; **sem** re-upload do arquivo). Um envio por (arquivo × destino), sequencial, com `Promise.allSettled` por lote. **Aceite:** teste unitário com o cliente mockado: 2 arquivos × 2 destinos = 4 envios na ordem esperada; nenhuma leitura de `storage` para re-upload.
 
@@ -215,7 +216,7 @@ Ordem obrigatória: A → B → C → D → E → F; G e H podem entrar depois d
 
 **41. Paginação real.** `useInfiniteQuery` com cursor `(created_at, id)` e páginas de 60; "Carregar mais" ao fim + carga automática quando o sentinela entra na viewport do `Panel` (que é o contêiner de rolagem real, `ConversationTabContent.tsx:34`). Posição de rolagem e seleção preservadas entre páginas. **Aceite:** fixture com 201 itens: o 201º aparece após a 4ª página; `filtered` continua uma só lista; teste do sentinela.
 
-**42. Contagens de uma fonte só.** Chips passam a usar contagem por tipo direto do banco (5 consultas `select('id', { count: 'exact', head: true })` com `is_deleted = false` em paralelo; sem DDL). O `files_total` do RPC `get_conversation_tab_counts` precisa excluir `is_deleted` → **migration** pelo fluxo da seção 1 do `CLAUDE.md` (arquivo → PR → merge → registro no ledger; versão reservada via `reserve_migration_version`). Essa parte da PR H fica **aberta para o Joaquim** (regra 8). **Aceite:** chip "Todos" = badge da aba para o Esonic e para um contato com >200 mídias; `supabase-usage-guard.mjs` com `novas: 0`.
+**42. Contagens de uma fonte só.** (D4 autorizou a migration.) Chips passam a usar contagem por tipo direto do banco (5 consultas `select('id', { count: 'exact', head: true })` com `is_deleted = false` em paralelo; sem DDL). O `files_total` do RPC `get_conversation_tab_counts` precisa excluir `is_deleted` → **migration** pelo fluxo da seção 1 do `CLAUDE.md` (arquivo → PR → merge → registro no ledger; versão reservada via `reserve_migration_version`). Essa parte da PR H fica **aberta para o Joaquim** (regra 8). **Aceite:** chip "Todos" = badge da aba para o Esonic e para um contato com >200 mídias; `supabase-usage-guard.mjs` com `novas: 0`.
 
 **43. Busca e ordenação com alcance declarado.** Enquanto houver páginas não carregadas, a área mostra "Buscando entre os N carregados · Carregar tudo"; "Maiores" coloca tamanho desconhecido no fim (não como 0) e desempata por data e id. **Aceite:** teste de ordenação com `size: null` no fim; teste de invariante de sequência nos três modos mantido.
 
@@ -225,13 +226,13 @@ Ordem obrigatória: A → B → C → D → E → F; G e H podem entrar depois d
 
 ### Fase 9 — Qualidade, acessibilidade e homologação (acompanha as PRs)
 
-**46. Testes unitários por PR.** Stub global de `ResizeObserver` e `IntersectionObserver` no setup do Vitest (hoje só em `volumeControlMocks.ts`). Cobertura mínima: capacidade (07), sanitização de prefs (06), seleção (08, 33, 34), popover/colunas desabilitadas (12, 13), paridade de sequência (23, 43), estados (44), encaminhar (36–38 se D1). Os 6 testes atuais de `FilesTab.test.tsx` continuam passando (ajustar só o do empty state, etapa 44). **Aceite:** `npm run test -- files` verde; PR não abre com teste vermelho.
+**46. Testes unitários por PR.** Stub global de `ResizeObserver` e `IntersectionObserver` no setup do Vitest (hoje só em `volumeControlMocks.ts`). Cobertura mínima: capacidade (07), sanitização de prefs (06), seleção (08, 33, 34), popover/colunas desabilitadas (12, 13), paridade de sequência (23, 43), estados (44), encaminhar (36–39). Os 6 testes atuais de `FilesTab.test.tsx` continuam passando (ajustar só o do empty state, etapa 44). **Aceite:** `npm run test -- files` verde; PR não abre com teste vermelho.
 
 **47. Teclado e ARIA (checklist executado, não prometido).** `Tab`: busca → ordenação → Selecionar → Layout → chips → itens; popover: `Esc` fecha e devolve foco ao gatilho; radiogroup de colunas com setas; `aria-sort` na tabela; `aria-live` na barra de seleção; `Esc` nunca exclui nem envia. Executar com Playwright (`page.keyboard`) nas três visualizações. **Aceite:** fluxo "localizar → selecionar 2 → abrir detalhes → fechar" concluído só por teclado, gravado em `evidence/`.
 
 **48. Contraste, alvos e movimento.** Medir com Playwright (`getComputedStyle`) nos dois temas e no alto contraste: texto normal ≥ 4,5:1, texto de metadados ≥ 4,5:1, foco visível ≥ 3:1; nenhum `bg-black` literal (usar `bg-inbox-panel` se um painel precisar escurecer — lição de 25/09); `prefers-reduced-motion` desliga transições do popover e do contador. **Aceite:** tabela de contraste no relatório; zero valores abaixo do mínimo.
 
-**49. E2E logado.** Spec `e2e/files-tab.spec.ts` no `e2e-logado.yml`, usando o contato E2E seedado (`04dff4dc-c6b1-4283-ac22-bd8639804759`). Pré-requisito: **1 mensagem de mídia pública** seedada para esse contato (DML, não DDL; mesmo padrão dos fixtures do Talk X; não remover depois). Cenários: abrir aba, trocar para Lista e Tabela, entrar em seleção e selecionar 1, abrir e fechar detalhes, abrir visualizador. **Aceite:** spec verde em `chromium-authenticated`; fixture documentada em `e2e/README.md` e `e2e/fixtures/`.
+**49. E2E logado.** (D4 autorizou a fixture.) Spec `e2e/files-tab.spec.ts` no `e2e-logado.yml`, usando o contato E2E seedado (`04dff4dc-c6b1-4283-ac22-bd8639804759`). Pré-requisito: **1 mensagem de mídia pública** seedada para esse contato (DML, não DDL; mesmo padrão dos fixtures do Talk X; não remover depois). Cenários: abrir aba, trocar para Lista e Tabela, entrar em seleção e selecionar 1, abrir e fechar detalhes, abrir visualizador. **Aceite:** spec verde em `chromium-authenticated`; fixture documentada em `e2e/README.md` e `e2e/fixtures/`.
 
 **50. Homologação visual e entrega reversível.** Playwright 1920×1080 nas quatro combinações de laterais × três modos × colunas 4/6/8 (quando couber), light e dark; comparação com os prints enviados pelo Joaquim; relatório `docs/design/RELATORIO_REDESIGN_ARQUIVOS_CHAT_PANEL_2026-10.md` com o que foi verificado de verdade (request real, teste, print) e o que ficou pendente. Deploy confirmado por request à URL de produção após cada merge. Reversão = `revert` da PR correspondente (sem feature flag: cada PR é pequena e independente). **Aceite:** relatório publicado; nenhuma afirmação de "em produção" sem a request correspondente registrada.
 
