@@ -1,8 +1,6 @@
 {
     "note": "Regenerar apos qualquer GRANT/REVOKE e revisar o diff antes de commitar.",
     "anon_execute": [
-        "ai_is_canonical_churn_risk(p_value text)",
-        "ai_is_canonical_urgency(p_value text)"
     ],
     "generated_at": "2026-10-01",
     "anon_table_select": [
@@ -17,7 +15,6 @@
         "allowed_countries",
         "audio_meme_favorites",
         "audio_memes",
-        "audit_logs",
         "auto_close_config",
         "automations",
         "away_messages",
@@ -70,7 +67,6 @@
         "link_preview_cache_metrics",
         "message_reactions",
         "message_templates",
-        "messages",
         "meta_capi_events",
         "mfa_sessions",
         "notifications",
@@ -89,10 +85,8 @@
         "profiles_public",
         "query_telemetry",
         "queue_goals",
-        "queue_members",
         "queue_positions",
         "queue_skill_requirements",
-        "queues",
         "rate_limit_configs",
         "rate_limit_logs",
         "reminders",
@@ -132,11 +126,10 @@
         "whatsapp_connections_public",
         "whatsapp_connections_safe",
         "whatsapp_flows",
-        "whatsapp_groups",
         "whatsapp_templates",
         "whisper_messages"
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 222,
-    "authenticated_execute_count": 148
+    "service_role_execute_count": 220,
+    "authenticated_execute_count": 146
 }
