@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 import type { TelemetryRow, SeverityFilter, TimeFilter } from "./admin-telemetria/telemetryTypes";
-import { formatDuration, computeTopOffenders } from "./admin-telemetria/telemetryUtils";
+import { formatDuration, computeTopOffenders, periodStartIso } from "./admin-telemetria/telemetryUtils";
 import { TelemetryStatsCards } from "./admin-telemetria/TelemetryStatsCards";
 import { TelemetryTopOffenders } from "./admin-telemetria/TelemetryTopOffenders";
 import { TelemetryTable } from "./admin-telemetria/TelemetryTable";
@@ -31,11 +31,7 @@ export default function AdminTelemetriaPage() {
       endOfDay.setHours(23, 59, 59, 999);
       return { from: customDateFrom.toISOString(), to: endOfDay.toISOString() };
     }
-    const ms = timeFilter === "1h" ? 3600000
-      : timeFilter === "6h" ? 21600000
-      : timeFilter === "24h" ? 86400000
-      : 604800000;
-    return { from: new Date(now.getTime() - ms).toISOString(), to };
+    return { from: periodStartIso(timeFilter, now), to };
   };
 
   const { data: rows = [], isLoading, refetch, isRefetching } = useQuery<TelemetryRow[]>({
