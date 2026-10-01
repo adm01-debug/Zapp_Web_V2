@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useCustomShortcuts } from './useCustomShortcuts';
@@ -49,15 +49,26 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
     'quick-compose': () => {
       document.dispatchEvent(new CustomEvent('quick-compose'));
     },
+    'open-tasks-tab': () => {
+      // Etapa 74 — o RealtimeInboxView (dono da aba ativa) escuta este evento e
+      // leva o foco ao QuickAdd depois de montar a aba Tarefas (lazy).
+      document.dispatchEvent(new CustomEvent('inbox-open-tasks-tab'));
+    },
     'toggle-notifications': () => {
       document.dispatchEvent(new CustomEvent('toggle-notifications'));
     },
   };
 
-  // Merge custom actions with defaults
-  const actions = { ...defaultActions };
-  customActions?.forEach(({ id, action }) => {
-    actions[id] = action;
+  // A tabela de acoes mistura os defaults com `customActions`, que o provider
+  // recria a cada render. Guardada numa ref, ela deixa de invalidar o listener
+  // global a cada render e sai das deps do useCallback (gate do lint-ratchet).
+  const actionsRef = useRef<Record<string, () => void>>({});
+  useEffect(() => {
+    const merged = { ...defaultActions };
+    customActions?.forEach(({ id, action }) => {
+      merged[id] = action;
+    });
+    actionsRef.current = merged;
   });
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
@@ -66,7 +77,7 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
     const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
 
     // Allow Ctrl+K (global search) and Escape even in inputs
-    const allowedInInputs = ['global-search', 'clear-selection', 'show-shortcuts-help'];
+    const allowedInInputs = ['global-search', 'clear-selection', 'show-shortcuts-help', 'open-tasks-tab'];
 
     for (const shortcut of shortcuts) {
       const binding = getActiveBinding(shortcut);
@@ -85,7 +96,7 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
         }
 
         // Execute action if exists
-        const action = actions[shortcut.id];
+        const action = actionsRef.current[shortcut.id];
         if (action) {
           event.preventDefault();
           event.stopPropagation();
@@ -94,7 +105,7 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
         }
       }
     }
-  }, [shortcuts, getActiveBinding, actions]);
+  }, [shortcuts, getActiveBinding]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown, true);

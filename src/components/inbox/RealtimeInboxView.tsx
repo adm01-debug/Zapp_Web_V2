@@ -76,6 +76,17 @@ function TalkMeHeaderButton({ testId, count, loading, queueName, onClick }: Talk
   );
 }
 
+/**
+ * Etapa 74 — a aba Tarefas monta sob demanda (lazy + Suspense), então o QuickAdd
+ * ainda não existe no instante do atalho: tenta focar por alguns frames até ele
+ * aparecer no DOM.
+ */
+function focarQuickAdd(tentativas = 20): void {
+  const campo = document.querySelector<HTMLInputElement>('[data-testid="quick-add-input"]');
+  if (campo) { campo.focus(); return; }
+  if (tentativas > 0) window.requestAnimationFrame(() => focarQuickAdd(tentativas - 1));
+}
+
 export function RealtimeInboxView() {
   const isMobile = useIsMobile();
   const inbox = useRealtimeInbox();
@@ -102,13 +113,20 @@ export function RealtimeInboxView() {
   // sem efeito nem setState em cascata — manter 'Notas' aberto ao clicar noutro
   // contato seria desorientador.
   const [tabState, setTabState] = useState<{ contactId: string | null; tab: ConversationTab }>(
-    { contactId: null, tab: 'chat' }
+    // Etapa 73 — a aba persistida já chega normalizada ('reminders' → 'tasks').
+    () => ({ contactId: null, tab: inbox.conversationTab })
   );
   const activeTab: ConversationTab =
     tabState.contactId === inbox.selectedContactId ? tabState.tab : 'chat';
+  // `setConversationTab` desestruturado: chamá-lo como `inbox.setConversationTab`
+  // faria o exhaustive-deps exigir o objeto `inbox` inteiro (recriado a cada render).
+  const { setConversationTab } = inbox;
   const setActiveTab = useCallback(
-    (tab: ConversationTab) => setTabState({ contactId: inbox.selectedContactId, tab }),
-    [inbox.selectedContactId]
+    (tab: ConversationTab) => {
+      setTabState({ contactId: inbox.selectedContactId, tab });
+      setConversationTab(tab);
+    },
+    [inbox.selectedContactId, setConversationTab]
   );
   const { counts: tabCounts } = useConversationTabCounts(inbox.selectedContactId);
   // Badge da aba Pedidos vem do CRM 360° (client-side) — a RPC get_conversation_tab_counts não muda.
@@ -154,6 +172,17 @@ export function RealtimeInboxView() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [bulkActions]);
+
+  // Etapa 74 — Alt+T (atalho global 'open-tasks-tab') abre a aba Tarefas desta
+  // conversa e leva o foco para o QuickAdd assim que ele monta.
+  useEffect(() => {
+    const abrirTarefas = () => {
+      setActiveTab('tasks');
+      focarQuickAdd();
+    };
+    window.addEventListener('inbox-open-tasks-tab', abrirTarefas);
+    return () => window.removeEventListener('inbox-open-tasks-tab', abrirTarefas);
+  }, [setActiveTab]);
 
   const handleGlobalSearchResult = (result: SearchResult) => {
     if (result.contactId) inbox.handleSelectConversation(result.contactId);
