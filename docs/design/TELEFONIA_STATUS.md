@@ -605,3 +605,51 @@ manifesto de deploy                       -> exit 0
   etapa própria (e é o que fecha a Fase 1 junto com o T22).
 - **`setSinkId` continua inexistente**: o alto-falante volta a existir quando houver seleção de dispositivo
   de saída.
+
+
+## Fase 1 — T22 (fechamento da fase · 01/10/2026 · executor: Hermes)
+
+**Gates** (medidos no branch e conferidos pelo CI): `tsc -b --force` 0 · suíte completa verde · contratos
+verdes · bundle dentro do budget · ratchets de lint/typecheck/implicit-any com **0 novas**.
+
+**A tabela do aceite, obtida dos testes** — 8 linhas, uma por `PersistedStatus`, cada uma com o teste que a
+prova, todas ponta a ponta no caminho do motor SIP (evento SIP → gravação na RPC `upsert_my_call`):
+
+
+
+**Tabela do aceite — cenário → status/end_reason (8 linhas, uma por `PersistedStatus`), cada uma com o teste que a prova.** Todas ponta a ponta no caminho do motor SIP (evento SIP → gravação na RPC `upsert_my_call`), sem misturar com o produtor do WhatsApp:
+
+| # | cenário (o que aconteceu na chamada) | status | end_reason | teste que prova |
+|---|---|---|---|---|
+| 1 | em curso antes de atender: saída discada ou entrada recebida | `ringing` | — (não grava motivo) | `useSipClient.test.ts:380` (saída) e `:560` (entrada) |
+| 2 | atendida (`ESTABLISHED`) | `answered` | — (`answered_at` preenchido) | `useSipClient.test.ts:404` |
+| 3 | atendida e encerrada (local ou remoto) **ou** saída encerrada sem atendimento | `ended` | `hangup_local` / `hangup_remote` / `no_answer` | `useSipClient.test.ts:692`, `:706` e `:426` |
+| 4 | entrada que ninguém atendeu (watchdog) **ou** 2ª chamada com a linha ocupada | `missed` | `timeout` / `busy_here` | `useSipClient.test.ts:743` e `:924` |
+| 5 | saída cujo INVITE recebe resposta final **486** | `busy` | `busy` | `useSipClient.test.ts:958` **(novo neste fecho)** |
+| 6 | falha ao discar (o `invite` rejeita) | `failed` | `failed` | `useSipClient.test.ts:980` **(novo neste fecho)** |
+| 7 | desligada/cancelada antes de atender | `cancelled` | `cancelled` | `useSipClient.test.ts:719` |
+| 8 | recusada na entrada | `declined` | `declined` | `useSipClient.test.ts:609` |
+
+**Por que duas linhas nasceram aqui:** na auditoria do fecho, `busy` e `failed` só tinham as *metades* testadas no motor SIP (o `CallEngine` entregando o `outcome` e o `persistence.ts` mapeando o `outcome` → status, em testes separados); a prova ponta a ponta existia **apenas** pelo canal WhatsApp, que é outro produtor. As duas linhas foram fechadas com teste que parte do evento SIP e chega até o `p_status` gravado, com mutação provando que ele morde.
+
+
+### Duas descobertas na auditoria do fecho
+
+1. **O "toca `AppProviders`" não era ordem de mudança.** A eleição de aba já sobe globalmente:
+   `AppProviders:79` monta o `CallSessionProvider`, que chama `useSipClient:86` → `useTabLeaderRole` →
+   `tabLeaderStore:296` (`subscribe`/`startTick`) → `considerPromotion()`. A aba vira líder sozinha em até
+   ~3,1 s após o boot, **sem o painel de Telefonia nunca ter sido aberto**; o `claimLeadership()` no
+   `VoIPPanel` só antecipa isso para ~120 ms. Nada precisou mudar no `AppProviders` e o achado que eu havia
+   aberto no T20 fica **resolvido** — não virou um "achado eterno".
+2. **A Fase 1 não tinha as 8 linhas comprovadas: tinha 6.** `busy` e `failed` só tinham as *metades* testadas
+   no motor SIP (o `CallEngine` entregando o `outcome`; o `persistence.ts` mapeando o `outcome` → status, em
+   testes separados) — a prova ponta a ponta existia **apenas** pelo canal WhatsApp, que é outro produtor.
+   Um aceite "8 linhas obtidas dos testes" só se sustentaria misturando os dois produtores. **Os dois testes
+   que faltavam foram escritos neste fecho** (`useSipClient.test.ts:958` e `:980`), com mutação provando que
+   mordem.
+
+### Risco conhecido, não resolvido aqui
+
+**Nenhum teste unitário renderiza `AppProviders`/`App`** (verificado por busca): a rede que pegaria uma
+regressão nesses dois arquivos é o **E2E**, e não existe spec de VoIP/aba-líder. Fica registrado como risco
+da fase, não como surpresa futura.
