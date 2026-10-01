@@ -100,8 +100,6 @@ export function SuggestionList({
   const digitando = status === 'typing' || status === 'loading';
   return (
     <div
-      id={listboxId}
-      role="listbox"
       className="absolute z-20 mt-1 w-full rounded-lg border border-border bg-popover shadow-lg max-h-64 overflow-y-auto"
     >
       {digitando && (
@@ -126,21 +124,8 @@ export function SuggestionList({
       {status === 'empty' && (
         <p className="px-3 py-3 text-sm text-muted-foreground">Nada encontrado para &quot;{query}&quot;.</p>
       )}
-      {/* E57: quem usa leitor de tela não "vê" a lista aparecer. Região viva só com texto de
-          estado — o conteúdo dos itens já é lido pelo próprio listbox, repetir viraria eco. */}
-      <span aria-live="polite" role="status" className="sr-only" data-testid="sr-aviso">
-        {status === 'ok'
-          ? `${suggestions.length} sugestões disponíveis`
-          : status === 'empty'
-            ? 'Nenhuma sugestão'
-            : status === 'error'
-              ? 'Erro na busca de sugestões'
-              : status === 'paused'
-                ? 'Busca temporariamente indisponível'
-                : ''}
-      </span>
       {status === 'ok' && (
-        <div className="divide-y divide-border">
+        <div id={listboxId} role="listbox" aria-label="Sugestões de endereço" className="divide-y divide-border">
           {suggestions.map((suggestion, index) => {
             const Icon = SUGGESTION_ICON[suggestion.kind];
             const highlighted = index === highlightedIndex;
@@ -187,6 +172,19 @@ export function SuggestionList({
           Mapbox
         </a>
       </p>
+      {/* E57: quem usa leitor de tela não "vê" a lista aparecer. Região viva só com texto de
+          estado — o conteúdo dos itens já é lido pelo próprio listbox, repetir viraria eco. */}
+      <span aria-live="polite" role="status" className="sr-only" data-testid="sr-aviso">
+        {status === 'ok'
+          ? `${suggestions.length} sugestões disponíveis`
+          : status === 'empty'
+            ? 'Nenhuma sugestão'
+            : status === 'error'
+              ? 'Erro na busca de sugestões'
+              : status === 'paused'
+                ? 'Busca temporariamente indisponível'
+                : ''}
+      </span>
     </div>
   );
 }
