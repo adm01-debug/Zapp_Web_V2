@@ -27,25 +27,50 @@ test('late bundle changes reset stable streak even without changed source', asyn
   assert.equal(result.verification.samples.length, 9);
   assert.equal(result.functions[0].remote_version, 3);
 });
-test('unchanged pre-deploy inventory never attests success', async () => {
-  await assert.rejects(simulate([before.functions]), /NOT attested/);
+test('inventario identico ao baseline atesta pelo digest (deploy sem mudanca de bundle)', async () => {
+  // Mudanca de contrato (01/10/2026, run 36852598923): o CLI pula o deploy de uma
+  // funcao cujo bundle bate byte a byte com o publicado e NAO bumpa version. Antes
+  // exigiamos o sinal do log do CLI (knownUnchanged); quando o CLI passou a escrever
+  // "No change found" no stderr, o arquivo de unchanged vinha vazio, a lista nao
+  // chegava e a atestacao queimava 144 amostras (~24 min) para falhar. Agora o
+  // digest remoto identico ao baseline e o proprio sinal de "nada a publicar".
+  const result = await simulate([before.functions]);
+  assert.equal(result.function_count, manifest.functions.length);
+  assert.deepEqual(
+    [...result.verification.accepted_without_version_bump].sort(),
+    before.functions.map(fn => fn.slug).sort(),
+  );
 });
 test('funcao sinalizada pelo deploy como "No change found" nao exige bump de versao', async () => {
   // rows[0] fica na MESMA versao/digest do baseline (o CLI pulou por bundle
-  // identico); as demais seguem bumpadas como em "rows". So aceita porque o
-  // slug foi passado em knownUnchanged -- nunca por inferencia de digest.
+  // identico); as demais seguem bumpadas como em "rows". O sinal do log
+  // (knownUnchanged) continua valido e agora e redundante com a aceitacao por
+  // digest -- ver o teste da contradicao logo abaixo.
   const skipped = rows.map((fn, i) => (i === 0 ? { ...fn, version: 1 } : fn));
   const result = await simulate([skipped], { knownUnchanged: [rows[0].slug] });
   assert.equal(result.functions.find((fn) => fn.name === rows[0].slug).remote_version, 1);
   assert.equal(result.function_count, manifest.functions.length);
 });
-test('sem sinalizacao explicita do deploy, funcao sem bump continua rejeitada', async () => {
+test('sem sinalizacao do CLI, o digest remoto igual ao baseline atesta (o log nao e mais a unica fonte)', async () => {
+  // Cenario real do run 36852598923: o CLI escreveu "No change found" no stderr,
+  // o arquivo de unchanged saiu vazio e a funcao ficou na mesma versao/digest.
+  // O digest identico ao baseline e o sinal suficiente para atestar.
   const skipped = rows.map((fn, i) => (i === 0 ? { ...fn, version: 1 } : fn));
-  await assert.rejects(simulate([skipped]), /NOT attested/);
+  const result = await simulate([skipped]);
+  assert.equal(result.functions.find((fn) => fn.name === rows[0].slug).remote_version, 1);
+  assert.deepEqual(result.verification.accepted_without_version_bump, [rows[0].slug]);
 });
-test('funcao sinalizada como sem mudanca mas com digest divergente do baseline ainda e rejeitada', async () => {
+test('contradicao: CLI reportou sem mudanca e o digest remoto mudou desde o baseline falha na primeira amostra com a causa real', async () => {
+  // O CLI disse que pulou a funcao, mas o bundle remoto mudou desde o baseline:
+  // ou houve deploy concorrente, ou o sinal do CLI esta errado. Nao existe espera
+  // que resolva isso -- antes queimava 144 amostras e entregava a mensagem generica.
   const drifted = rows.map((fn, i) => (i === 0 ? { ...fn, version: 1, ezbr_sha256: 'c'.repeat(64) } : fn));
-  await assert.rejects(simulate([drifted], { knownUnchanged: [rows[0].slug] }), /NOT attested/);
+  let calls = 0;
+  await assert.rejects(
+    simulate([drifted], { knownUnchanged: [rows[0].slug], fetchInventory: async () => { calls += 1; return drifted; } }),
+    /reportou "No change found" e o bundle remoto mudou desde o baseline/,
+  );
+  assert.equal(calls, 1, 'a contradicao e determinista: nao ha o que esperar');
 });
 test('knownUnchanged invalido e rejeitado antes de qualquer chamada de rede', async () => {
   await assert.rejects(simulate([rows], { knownUnchanged: 'not-an-array' }), /policy/);
