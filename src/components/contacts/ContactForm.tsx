@@ -14,6 +14,8 @@ import { useContactFormValidation } from './useContactFormValidation';
 import { useAddressAutocomplete } from '@/components/inbox/location-picker/useAddressAutocomplete';
 import { SuggestionList } from '@/components/inbox/location-picker/SuggestionList';
 import { getMapboxToken } from '@/lib/mapboxToken';
+// E40: o botão "Recalcular" faz UMA busca no `/forward` pelo endereço que está no formulário.
+import { searchPlaces } from '@/lib/mapboxGeocode';
 import type { GeoSearchPlace } from '@/lib/mapboxGeocode';
 
 const ADDRESS_LISTBOX_ID = 'contact-form-address-listbox';
@@ -129,6 +131,39 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
     if (c?.postalCode) onChange('postal_code', c.postalCode.replace(/\D/g, ''));
     onChange('latitude', String(place.lat));
     onChange('longitude', String(place.lng));
+  };
+
+  // E40 · item 1: o operador editou o endereço à mão, então a coordenada guardada ficou a antiga —
+  // mas apagá-la sozinho seria pior (F1: melhor coordenada velha do que nenhuma). O aviso explica,
+  // e este botão resolve: UMA busca no `/forward` com o endereço que está no formulário, sem passar
+  // pelo autocomplete e sem reescrever o que o operador digitou (só a coordenada muda).
+  const [recalculandoCoordenada, setRecalculandoCoordenada] = useState(false);
+  const recalcularCoordenada = async () => {
+    const alvo = [
+      values.address,
+      values.address_number,
+      values.neighborhood,
+      values.city,
+      values.state,
+      values.postal_code,
+    ]
+      .filter(Boolean)
+      .join(', ');
+    if (!alvo.trim() || recalculandoCoordenada) return;
+    setRecalculandoCoordenada(true);
+    try {
+      const token = await getMapboxToken();
+      const busca = await searchPlaces(alvo, token);
+      const place = busca.ok ? busca.places[0] : undefined;
+      // Sem coordenada nova o aviso continua de pé — é melhor dizer "pode estar desatualizada" do
+      // que apagar a coordenada antiga em cima de uma falha de rede.
+      if (!place) return;
+      onChange('latitude', String(place.lat));
+      onChange('longitude', String(place.lng));
+      setCoordenadaPossivelmenteVelha(false);
+    } finally {
+      setRecalculandoCoordenada(false);
+    }
   };
 
   const handleSelectAddressSuggestion = async (index: number) => {
@@ -373,10 +408,23 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
           </div>
 
           {coordenadaPossivelmenteVelha && (
-            <p role="status" className="text-xs text-amber-600 dark:text-amber-500 flex items-center gap-1.5">
-              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-              O endereço foi alterado, mas a localização (coordenada) continua a anterior — ela pode estar desatualizada.
-            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p role="status" className="text-xs text-amber-600 dark:text-amber-500 flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                O endereço foi alterado, mas a localização (coordenada) continua a anterior — ela pode estar desatualizada.
+              </p>
+              {/* E40 · item 1: reconciliar sem depender do autocomplete — 1 `/forward` pelo endereço
+                  que está no formulário. Desabilitado durante a busca para não disparar em duplicidade. */}
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => void recalcularCoordenada()}
+                disabled={recalculandoCoordenada}
+              >
+                {recalculandoCoordenada ? 'Recalculando...' : 'Recalcular'}
+              </Button>
+            </div>
           )}
         </div>
 

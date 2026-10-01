@@ -47,16 +47,46 @@ export function getSearchSession(source: string = 'picker'): string {
   return session.token;
 }
 
-/** Conta um `/suggest` na sessão corrente (abre uma se ainda não houver). */
-export function noteSuggestCall(): void {
-  if (!session) session = createSession(Date.now(), 'picker');
-  session.suggestCount += 1;
+/**
+ * E46 · Contar um request sem sessão ativa é **erro de programação** — alguém chamou
+ * `noteSuggestCall()`/`noteRetrieveCall()` antes de `getSearchSession()` ou depois de
+ * `endSearchSession()`. A versão anterior inventava uma sessão com `source='picker'` fixo, o que
+ * inflava a contagem de sessões e sujava `audit_logs` com um evento de sessão que nunca existiu.
+ * Em DEV falha alto (para aparecer no teste); em produção avisa e não faz nada — o request já
+ * aconteceu, e contá-lo numa sessão inventada seria pior do que não contar.
+ */
+function activeSessionOrNull(caller: string): SessionState | null {
+  if (session) return session;
+  const message =
+    `${caller} chamado sem sessão ativa: abra a sessão com getSearchSession() antes de contar ` +
+    'o request (E46). Não vou criar uma sessão fantasma com source="picker".';
+  if (import.meta.env.DEV) throw new Error(message);
+  console.warn(message);
+  return null;
 }
 
-/** Marca que a sessão corrente já foi usada num `/retrieve` — força sessão nova na próxima busca. */
+/** E45 · Espia a sessão corrente **sem** criar, sem renovar e sem contar nada.
+ * É o que permite consultar o cache de `/suggest` antes de abrir sessão: termo já cacheado
+ * devolve resultado sem sessão nova (billing por sessão — sessão para servir cache é cobrança
+ * de request que não existiu). Devolve o token mesmo de sessão vencida: a entrada de cache dela
+ * ainda é servível e nada sai para a rede. */
+export function peekSearchSession(): string | null {
+  return session ? session.token : null;
+}
+
+/** Conta um `/suggest` na sessão corrente (E46: sem sessão ativa, erro em DEV e no-op em prod). */
+export function noteSuggestCall(): void {
+  const current = activeSessionOrNull('noteSuggestCall');
+  if (!current) return;
+  current.suggestCount += 1;
+}
+
+/** Marca que a sessão corrente já foi usada num `/retrieve` — força sessão nova na próxima busca
+ * (E46: mesma regra de sessão ativa que `noteSuggestCall`). */
 export function noteRetrieveCall(): void {
-  if (!session) session = createSession(Date.now(), 'picker');
-  session.retrieved = true;
+  const current = activeSessionOrNull('noteRetrieveCall');
+  if (!current) return;
+  current.retrieved = true;
 }
 
 /** Encerra a sessão explicitamente (após `/retrieve` bem-sucedido, ou ao fechar o picker). */
