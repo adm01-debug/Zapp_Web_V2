@@ -61,13 +61,18 @@ env:
 jobs:
   migrate:
     name: Migration oficial com preflight
-    if: github.ref == 'refs/heads/main'
     # Aprovacao humana obrigatoria antes de qualquer DDL tocar producao. Soma-se
     # ao dry-run + confirmacao de hash; nao substitui nenhum dos dois.
     environment: producao-ddl
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
+      - name: ✋ Somente executa na main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }})."
+          exit 1
+
       # E47 (auditoria de GitHub Actions, 2026-09-26) — considerado e
       # descartado: um passo dentro do job para detectar outro run
       # waiting/queued nunca executaria de fato aqui. A concurrency (group:
