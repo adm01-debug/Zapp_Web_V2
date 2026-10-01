@@ -1,5 +1,11 @@
 import type { ShortcutBinding } from '@/hooks/ui/useCustomShortcuts';
 
+/**
+ * Etapa 77: rotas que montam o módulo de Tarefas (`?view=tasks` e `?view=pipeline`).
+ * É o escopo dos 7 atalhos abaixo — fora dessas views o registry os ignora.
+ */
+export const TASKS_VIEWS = ['tasks', 'pipeline'];
+
 export const DEFAULT_SHORTCUTS: ShortcutBinding[] = [
   // Chat shortcuts
   { id: 'send-message', name: 'Enviar mensagem', description: 'Envia a mensagem atual', defaultKey: 'Enter', defaultModifiers: { ctrlKey: true }, category: 'chat' },
@@ -30,4 +36,15 @@ export const DEFAULT_SHORTCUTS: ShortcutBinding[] = [
   { id: 'clear-selection', name: 'Limpar seleção', description: 'Remove a seleção atual', defaultKey: 'Escape', defaultModifiers: {}, category: 'selection' },
   { id: 'mark-read', name: 'Marcar como lido', description: 'Marca selecionados como lidos', defaultKey: 'r', defaultModifiers: {}, category: 'selection' },
   { id: 'bulk-archive', name: 'Arquivar selecionados', description: 'Arquiva todas as conversas selecionadas', defaultKey: 'e', defaultModifiers: { ctrlKey: true, shiftKey: true }, category: 'selection' },
+  // Task shortcuts (etapa 77) — valem só em `?view=tasks` e `?view=pipeline`.
+  // O módulo recebe o comando pelo evento `tasks-shortcut` (o registry não
+  // conhece o estado de tela do módulo); a guarda de input é a do handler
+  // global, que ignora qualquer um destes ids dentro de INPUT/TEXTAREA.
+  { id: 'tasks-focus-quickadd', name: 'Nova tarefa', description: 'Foca o campo de nova tarefa', defaultKey: 'n', defaultModifiers: {}, category: 'actions', scope: TASKS_VIEWS },
+  { id: 'tasks-mode', name: 'Modo das Tarefas', description: 'Troca o modo: Lista (1), Quadro (2), Agenda (3)', defaultKey: '1', alternateKeys: ['2', '3'], defaultModifiers: {}, category: 'navigation', scope: TASKS_VIEWS },
+  { id: 'tasks-search', name: 'Buscar tarefa', description: 'Foca o campo de busca das Tarefas', defaultKey: '/', defaultModifiers: {}, category: 'navigation', scope: TASKS_VIEWS },
+  { id: 'tasks-open-sheet', name: 'Abrir tarefa focada', description: 'Abre o painel da tarefa em foco', defaultKey: 'e', defaultModifiers: {}, category: 'actions', scope: TASKS_VIEWS },
+  { id: 'tasks-complete', name: 'Concluir tarefa focada', description: 'Conclui — ou reabre — a tarefa em foco', defaultKey: 'x', defaultModifiers: {}, category: 'actions', scope: TASKS_VIEWS },
+  { id: 'tasks-cancel', name: 'Cancelar tarefa focada', description: 'Cancela a tarefa em foco, com desfazer', defaultKey: 'Delete', defaultModifiers: {}, category: 'actions', scope: TASKS_VIEWS },
+  { id: 'tasks-help', name: 'Ajuda de atalhos', description: 'Mostra o painel de atalhos', defaultKey: '?', defaultModifiers: { shiftKey: true }, category: 'navigation', scope: TASKS_VIEWS },
 ];

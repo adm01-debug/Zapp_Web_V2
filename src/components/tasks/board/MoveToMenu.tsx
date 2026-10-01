@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { KANBAN_COLUMNS, WIP_LIMITS } from '@/hooks/tasks/workItem.types';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
+import { useNarrowViewport, usePointerCoarse } from '../shared/pointerMedia';
 
 /** Limite duro de "Fazendo" (etapa 29/33) — o mesmo que trava o DnD. */
 const LIMITE_FAZENDO = WIP_LIMITS.doing.hard ?? 3;
@@ -64,19 +65,18 @@ export function MoveTargets({ item, doingCount = 0, onMoveTo, onRequestWaitingRe
   );
 }
 
-/** Ponteiro grosso (touch): onde o DnD não é confortável e o menu faz o trabalho. */
-function ponteiroGrosso(): boolean {
-  return typeof window !== 'undefined'
-    && typeof window.matchMedia === 'function'
-    && window.matchMedia('(pointer: coarse)').matches;
-}
+/** Ponteiro grosso (touch) ou tela estreita: onde o DnD não é confortável e o menu faz o trabalho. */
 
 /**
- * Etapa 33/82: botão `ArrowRightLeft` no card, SÓ sob `pointer: coarse` — em
- * ponteiro fino o arrasto já resolve e o menu não aparece. Abre as 5 colunas.
+ * Etapa 81: botão `ArrowRightLeft` no card — aparece sob `pointer: coarse` E sob
+ * viewport estreito (`< md`). São as duas situações em que o arrasto sai de cena
+ * (o Quadro desliga o DnD no ponteiro grosso; no celular o menu é o caminho para
+ * mover sem arrastar). Em desktop com ponteiro fino ele segue oculto.
  */
 export function MoveToMenu({ item, doingCount = 0, onMoveTo, onRequestWaitingReason }: Props) {
-  if (!ponteiroGrosso()) return null;
+  const ponteiroGrosso = usePointerCoarse();
+  const telaEstreita   = useNarrowViewport();
+  if (!ponteiroGrosso && !telaEstreita) return null;
 
   return (
     <DropdownMenu>

@@ -7,8 +7,8 @@
  *
  * O mock vem de `@/test/mocks/tarefas` (mesmo harness do teste do hook).
  */
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, cleanup, within, act } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import {
@@ -391,5 +391,188 @@ describe('TasksModule — etapa 44 (KPIs no padrão ContactKpiCard)', () => {
     expect(grid).toContain('grid-cols-2');
     expect(grid).toContain('md:grid-cols-3');
     expect(grid).toContain('xl:grid-cols-5');
+  });
+});
+
+/**
+ * Etapas 77/78 — o módulo não instala mais listener de teclado: o registry
+ * global (escopo `tasks`/`pipeline`, com guarda de input) é quem decide e avisa
+ * pelo evento `tasks-shortcut`. Estes testes exercitam a segunda metade do
+ * caminho — o que o módulo faz com cada comando — e a região viva que narra
+ * criar, concluir, mover e desfazer.
+ */
+describe('TasksModule — etapas 77/78 (atalhos do registry + aria-live)', () => {
+  beforeEach(() => {
+    cleanup();
+    resetSupabaseMock();
+    localStorage.clear();
+    window.history.replaceState(null, '', '/?view=tasks');
+  });
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
+    cleanup();
+  });
+
+  /** O registry avisa o módulo por este evento (ver useGlobalKeyboardShortcuts). */
+  function comandar(id: string, key?: string) {
+    act(() => {
+      document.dispatchEvent(new CustomEvent('tasks-shortcut', { detail: { id, key } }));
+    });
+  }
+
+  const regiaoViva = () => screen.getByTestId('tasks-live');
+
+  it('monta a região viva: sr-only, role=status, aria-live=polite', async () => {
+    setSelectResult({ data: [makeTaskRow()], error: null });
+    renderModule();
+    await screen.findByTestId('work-item-card');
+
+    const regiao = regiaoViva();
+    expect(regiao.getAttribute('aria-live')).toBe('polite');
+    expect(regiao.getAttribute('role')).toBe('status');
+    expect(regiao.getAttribute('aria-atomic')).toBe('true');
+    expect(regiao.className).toContain('sr-only');
+    expect(regiao.textContent).toBe('');
+  });
+
+  it('N foca o QuickAdd', async () => {
+    setSelectResult({ data: [makeTaskRow()], error: null });
+    renderModule();
+    await screen.findByTestId('work-item-card');
+
+    comandar('tasks-focus-quickadd');
+
+    expect(document.activeElement).toBe(screen.getByTestId('quick-add-input'));
+  });
+
+  it('o atalho único de modo responde a 1, 2 e 3', async () => {
+    setSelectResult({ data: [makeTaskRow()], error: null });
+    renderModule();
+    await screen.findByTestId('work-item-card');
+
+    comandar('tasks-mode', '2');
+    await waitFor(() => expect(modoAtual()).toBe('board'));
+    comandar('tasks-mode', '3');
+    await waitFor(() => expect(modoAtual()).toBe('agenda'));
+    comandar('tasks-mode', '1');
+    await waitFor(() => expect(modoAtual()).toBe('list'));
+  });
+
+  it('/ leva o foco para a busca', async () => {
+    setSelectResult({ data: [makeTaskRow()], error: null });
+    renderModule();
+    await screen.findByTestId('work-item-card');
+
+    comandar('tasks-search');
+
+    expect(document.activeElement).toBe(screen.getByRole('searchbox', { name: 'Buscar tarefa' }));
+  });
+
+  it('E abre o Sheet da tarefa em foco', async () => {
+    setSelectResult({ data: [makeTaskRow({ id: 't1', title: 'Ligar para o cliente' })], error: null });
+    renderModule();
+    const card = await screen.findByTestId('work-item-card');
+    card.focus();
+
+    comandar('tasks-open-sheet');
+
+    expect(await screen.findByTestId('work-item-sheet')).toBeTruthy();
+  });
+
+  it('sem card em foco, E/X/Delete não fazem nada (e não anunciam)', async () => {
+    setSelectResult({ data: [makeTaskRow({ id: 't1' })], error: null });
+    renderModule();
+    await screen.findByTestId('work-item-card');
+
+    (document.activeElement as HTMLElement | null)?.blur?.();
+    comandar('tasks-open-sheet');
+    comandar('tasks-complete');
+    comandar('tasks-cancel');
+
+    expect(screen.queryByTestId('work-item-sheet')).toBeNull();
+    expect(regiaoViva().textContent).toBe('');
+  });
+
+  it('X conclui a tarefa em foco e anuncia "Concluída"', async () => {
+    setSelectResult({ data: [makeTaskRow({ id: 't1', title: 'Ligar', status: 'todo' })], error: null });
+    renderModule();
+    const card = await screen.findByTestId('work-item-card');
+    card.focus();
+
+    comandar('tasks-complete');
+
+    await waitFor(() => expect(regiaoViva().textContent).toContain('Concluída'));
+    expect(h.update).toHaveBeenCalled();
+  });
+
+  it('Delete cancela a tarefa em foco com desfazer', async () => {
+    setSelectResult({ data: [makeTaskRow({ id: 't1', title: 'Ligar', status: 'todo' })], error: null });
+    renderModule();
+    const card = await screen.findByTestId('work-item-card');
+    card.focus();
+
+    comandar('tasks-cancel');
+
+    await waitFor(() => expect(h.undoToast).toHaveBeenCalled());
+  });
+
+  it('criar pelo QuickAdd anuncia "Tarefa criada"', async () => {
+    setSelectResult({ data: [makeTaskRow({ id: 't1' })], error: null });
+    renderModule();
+    await screen.findByTestId('work-item-card');
+
+    const campo = screen.getByTestId('quick-add-input');
+    fireEvent.change(campo, { target: { value: 'Comprar café' } });
+    fireEvent.keyDown(campo, { key: 'Enter' });
+
+    await waitFor(() => expect(regiaoViva().textContent).toContain('Tarefa criada'));
+  });
+
+  it('mover pelo kebab anuncia "Movida para {coluna} (n de limite)"', async () => {
+    setSelectResult({ data: [makeTaskRow({ id: 't1', title: 'Ligar', status: 'todo' })], error: null });
+    renderModule();
+    await screen.findByTestId('work-item-card');
+
+    fireEvent.keyDown(await screen.findByLabelText('Mais opções'), { key: 'Enter', code: 'Enter' });
+    const mover = await screen.findByRole('menuitem', { name: /Mover para/ });
+    mover.focus();
+    fireEvent.keyDown(mover, { key: 'ArrowRight', code: 'ArrowRight' });
+    fireEvent.click(await screen.findByRole('menuitem', { name: /Fazendo/ }));
+
+    await waitFor(() => expect(regiaoViva().textContent).toContain('Movida para Fazendo (1 de 3)'));
+  });
+
+  it('o Quadro publica as instruções de arrasto em pt-BR e marca o card', async () => {
+    setSelectResult({ data: [makeTaskRow({ id: 't1' })], error: null });
+    renderModule({ defaultMode: 'board', forceMode: true });
+    const card = await screen.findByTestId('work-item-card');
+
+    // `dragHandleUsageInstructions` do DragDropContext vira um texto oculto no body.
+    await waitFor(() => expect(document.body.textContent)
+      .toContain('Pressione espaço para pegar a tarefa'));
+    expect(card.getAttribute('aria-roledescription')).toBe('tarefa arrastável');
+    expect(card.getAttribute('data-item-id')).toBe('t1');
+  });
+
+  it('fora do Quadro o card não se diz arrastável (não é alça de arrasto)', async () => {
+    setSelectResult({ data: [makeTaskRow({ id: 't1' })], error: null });
+    renderModule();
+    const card = await screen.findByTestId('work-item-card');
+
+    expect(card.getAttribute('aria-roledescription')).toBeNull();
+    expect(card.getAttribute('data-item-id')).toBe('t1');
+  });
+
+  it('reabrir anuncia "Desfeito"', async () => {
+    // No Quadro a tarefa concluída fica na coluna Concluído (na Lista a seção
+    // "Concluídas (7 dias)" nasce fechada — o card só existe depois do clique).
+    setSelectResult({ data: [makeTaskRow({ id: 't1', title: 'Ligar', status: 'done', completed_at: new Date().toISOString() })], error: null });
+    renderModule({ defaultMode: 'board', forceMode: true });
+    const card = await screen.findByTestId('work-item-card');
+    card.focus();
+
+    comandar('tasks-complete');
+
+    await waitFor(() => expect(regiaoViva().textContent).toContain('Desfeito'));
   });
 });

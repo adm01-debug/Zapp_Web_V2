@@ -19,6 +19,17 @@ export interface ShortcutBinding {
     altKey?: boolean;
   };
   category: 'chat' | 'navigation' | 'actions' | 'selection';
+  /**
+   * Etapa 77: views (`?view=`) em que o atalho vale. Ausente = global.
+   * O `useGlobalKeyboardShortcuts` ignora o atalho fora do escopo — é assim que
+   * os 7 atalhos de Tarefas ficam presos a `tasks`/`pipeline`.
+   */
+  scope?: string[];
+  /**
+   * Etapa 77: teclas equivalentes à `defaultKey`. Existe para o atalho único de
+   * modo das Tarefas responder a `1`, `2` e `3` sem virar três entradas.
+   */
+  alternateKeys?: string[];
 }
 
 const STORAGE_KEY = 'custom-keyboard-shortcuts';

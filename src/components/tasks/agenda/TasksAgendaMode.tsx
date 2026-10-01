@@ -42,7 +42,7 @@ export function TasksAgendaMode({
   const weeks     = weekBuckets(items, startDate);
 
   if (isLoading) {
-    return <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <WorkItemCardSkeleton key={i} />)}</div>;
+    return <div className="w-full min-w-0 space-y-2">{Array.from({ length: 4 }).map((_, i) => <WorkItemCardSkeleton key={i} />)}</div>;
   }
 
   const dayData = weeks[selectedDay] ?? { reminders: [], dueTasks: [] };
@@ -76,10 +76,10 @@ export function TasksAgendaMode({
   });
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex w-full min-w-0 flex-col gap-4">
       {/* Atrasadas (expansível; colapsado por padrão quando passa de 3) */}
       {overdue.length > 0 && (
-        <div id="agenda-atrasadas" className="rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2">
+        <div id="agenda-atrasadas" className="min-w-0 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2">
           <button
             type="button"
             onClick={() => setMostraAtrasadas(v => !v)}
@@ -107,7 +107,7 @@ export function TasksAgendaMode({
       )}
 
       {/* Faixa de 7 dias: até 3 pontos por tipo de compromisso (etapa 55) */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1 snap-x">
+      <div className="flex w-full min-w-0 gap-1.5 overflow-x-auto pb-1 snap-x">
         {weeks.map((w, i) => {
           const weekend = isWeekend(w.date);
           const active  = selectedDay === i;
@@ -150,7 +150,7 @@ export function TasksAgendaMode({
       />
 
       {/* Lista do dia selecionado, em 3 grupos */}
-      <div className="space-y-3">
+      <div className="min-w-0 space-y-3">
         {noDia === 0 && (
           <p className="text-center text-[13px] text-muted-foreground py-8">Nenhuma tarefa neste dia</p>
         )}
@@ -158,12 +158,12 @@ export function TasksAgendaMode({
           const lista = grupos[g.id];
           if (lista.length === 0) return null;
           return (
-            <section key={g.id} aria-label={g.titulo} className="space-y-1.5">
+            <section key={g.id} aria-label={g.titulo} className="min-w-0 space-y-1.5">
               <h3 className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
                 {g.titulo} ({lista.length})
               </h3>
               {lista.map(item => g.id === 'alarmes' ? (
-                <div key={item.id} className="flex items-center gap-2">
+                <div key={item.id} className="flex min-w-0 items-center gap-2">
                   <span className="w-14 shrink-0 text-xs tabular-nums text-muted-foreground">
                     {item.remind_at ? format(new Date(item.remind_at), 'HH:mm') : ''}
                   </span>

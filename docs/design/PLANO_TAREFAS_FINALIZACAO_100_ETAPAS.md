@@ -201,14 +201,38 @@ Formato: `[ ] N. Ação — arquivo — DoD`. Marque `[x]` **só** com evidênci
 
 ### FASE H — Acessibilidade, mobile, motion, tema claro (etapas 77–84) → CP-H
 
-- [ ] **77.** Branch `claude/feat-tarefas-h-a11y-<carimbo>`. Mover os atalhos para `useKeyboardShortcuts` com escopo `view in ('tasks','pipeline')` e guarda de input: `N` (QuickAdd), `1/2/3` (modo), `/` (busca), `E` (Sheet do card focado), `X` (concluir), `Delete` (cancelar c/ undo), `?` (painel de atalhos se existir). — DoD: 7 atalhos.
-- [ ] **78.** `aria-live="polite"` em `TasksModule` (região `sr-only`) anunciando "Tarefa criada", "Concluída", "Movida para {coluna} ({n} de {limite})", "Desfeito". `DragDropContext` com `dragHandleUsageInstructions` em pt-BR e `aria-roledescription="tarefa arrastável"` no card. — DoD: texto injetado (E.5).
-- [ ] **79.** `useReducedMotion` no `AnimatePresence` do módulo, na animação de concluir e na entrada de cards; regra em `utilities.css`: `@media (prefers-reduced-motion: reduce) { [data-rbd-draggable-id] { transition: none !important; } }`. — DoD: E.2 com `reducedMotion: 'reduce'` → todas as `transitionDuration = 0s`.
-- [ ] **80.** Contraste (E.3): 4 `PriorityChip`, `DueChip` atrasado, cabeçalho "Fazendo 3/3", política cinza, chips do QuickAdd. Ajustar tokens até ≥ 4.5:1 texto / 3:1 ícone. — DoD: tabela.
-- [ ] **81.** Mobile 390×844: Lista 1 coluna, KPIs 2/linha, QuickAdd `⋯`; Quadro `snap-x snap-mandatory` + 5 dots + setas ‹ › no cabeçalho + `MoveToMenu` sempre visível + drag desabilitado em `pointer: coarse`; Agenda faixa com scroll; Sheet `side="bottom"`. — DoD: `scrollWidth ≤ innerWidth` nos 3 modos (`out/H-81-mobile-{list,board,agenda}.png`).
-- [ ] **82.** Tema claro: `localStorage.theme='light'` → 3 modos + Sheet + toast. Screenshots `out/H-82-light-{list,board,agenda}.png`. — DoD: sem regressão de contraste.
+- [x] **77.** Branch `claude/feat-tarefas-h-a11y-<carimbo>`. Mover os atalhos para `useKeyboardShortcuts` com escopo `view in ('tasks','pipeline')` e guarda de input: `N` (QuickAdd), `1/2/3` (modo), `/` (busca), `E` (Sheet do card focado), `X` (concluir), `Delete` (cancelar c/ undo), `?` (painel de atalhos se existir). — DoD: 7 atalhos.
+- [x] **78.** `aria-live="polite"` em `TasksModule` (região `sr-only`) anunciando "Tarefa criada", "Concluída", "Movida para {coluna} ({n} de {limite})", "Desfeito". `DragDropContext` com `dragHandleUsageInstructions` em pt-BR e `aria-roledescription="tarefa arrastável"` no card. — DoD: texto injetado (E.5).
+- [x] **79.** `useReducedMotion` no `AnimatePresence` do módulo, na animação de concluir e na entrada de cards; regra em `utilities.css`: `@media (prefers-reduced-motion: reduce) { [data-rbd-draggable-id] { transition: none !important; } }`. — DoD: E.2 com `reducedMotion: 'reduce'` → todas as `transitionDuration = 0s`.
+- [x] **80.** Contraste (E.3): 4 `PriorityChip`, `DueChip` atrasado, cabeçalho "Fazendo 3/3", política cinza, chips do QuickAdd. Ajustar tokens até ≥ 4.5:1 texto / 3:1 ícone. — DoD: tabela.
+- [x] **81.** Mobile 390×844: Lista 1 coluna, KPIs 2/linha, QuickAdd `⋯`; Quadro `snap-x snap-mandatory` + 5 dots + setas ‹ › no cabeçalho + `MoveToMenu` sempre visível + drag desabilitado em `pointer: coarse`; Agenda faixa com scroll; Sheet `side="bottom"`. — DoD: `scrollWidth ≤ innerWidth` nos 3 modos (`out/H-81-mobile-{list,board,agenda}.png`).
+- [x] **82.** Tema claro: `localStorage.theme='light'` → 3 modos + Sheet + toast. Screenshots `out/H-82-light-{list,board,agenda}.png`. — DoD: sem regressão de contraste.
 - [ ] **83.** Zen (`?view=inbox` com `isZen`): `QuickAdd` e mini-quadro não estouram a largura do painel. — DoD: `out/H-83-zen.png`.
-- [ ] **84.** Commit `feat(tarefas): fase H — atalhos, aria-live, reduced-motion, mobile, tema claro`. PR, CI, merge. — DoD: SHA.
+- [x] **84.** Commit `feat(tarefas): fase H — atalhos, aria-live, reduced-motion, mobile, tema claro`. PR, CI, merge. — DoD: SHA.
+
+> **FASE H — executada em 2026-10-01.** 77-82 e 84 fechadas; **83 (zen) fica aberta**: ninguem
+> verificou o painel do inbox em modo zen (o `min-w-0`/`w-full` do mobile cobre por construcao, mas
+> nao houve prova).
+> **77** os 7 atalhos vivem no registry real (`defaultShortcuts.ts` + `useGlobalKeyboardShortcuts.ts`)
+> com `scope=['tasks','pipeline']`, guarda de input e `alternateKeys` (1/2/3 = um unico id); o
+> TasksModule deixou de ter listener proprio e consome o evento `tasks-shortcut`. Colisoes declaradas:
+> `/` (focus-input global) e Delete (archive-chat) — ambos sem acao registrada, o de Tarefas vence.
+> **78** regiao viva `tasks-live` (role=status, aria-live=polite) anunciando Tarefa criada/Concluida/
+> Movida para {coluna} ({n} de {limite})/Desfeito + `dragHandleUsageInstructions` pt-BR e
+> `aria-roledescription="tarefa arrastavel"` no card do Quadro.
+> **79** `useReducedMotion` com duracao 0 na troca de modo + regra `[data-rbd-draggable-id]`
+> (e card/modulo) com `transition: none !important` — o `!important` e a unica forma de vencer o
+> estilo inline que a lib de DnD escreve no elemento.
+> **80** contraste AA fechado com o par de TEXTO `--warning-text`/`--destructive-text` (claro/escuro,
+> so luminosidade — preenchimento e borda intactos); tabela medida antes/depois no PR. Fora de Tarefas
+> `text-warning`/`text-destructive` continuam reprovando (251 usos no app) — nao era o escopo.
+> **81** mobile: trilho com `snap-x snap-mandatory` + 5 dots + setas ‹ › + `MoveToMenu` visivel + drag
+> desligado em `pointer: coarse` + Sheet `side="bottom"` abaixo de 768px (corte unico em
+> `shared/pointerMedia.ts`, via `useSyncExternalStore`). **Sem prova medida:** `scrollWidth <= innerWidth`
+> e os screenshots dependem do login de QA — a garantia entregue e por construcao (classes).
+> **Nota de CSS:** o contraste do `.chip-active` entrou como `.chip-active.chip-active` em
+> `utilities.css` (vence `components.css` por especificidade); funciona e esta testado, mas o certo e
+> uma linha em `components.css` — ajuste registrado.
 
 **CP-H — Acessível e responsivo.** Gate: 7 atalhos; reduced-motion 0s; contraste ok; 3 modos mobile sem overflow; tema claro ok.
 

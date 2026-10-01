@@ -156,6 +156,14 @@
     --info: 210 80% 55%;
     --info-foreground: 0 0% 100%;
 
+    /* Par de TEXTO dos estados (etapa 80 / E.3). `--warning`/`--destructive` são cores de
+       PREENCHIMENTO (tinta com alfa, fundo cheio e borda) — como TEXTO sobre o card claro o
+       âmbar L50 dava 2,1:1, abaixo dos 4,5:1 de texto e dos 3:1 de ícone. Só a luminosidade
+       se move (matiz e saturação intactos), na direção que o modo pede — o preenchimento não
+       muda, então o desenho medido pelo E.3 continua o mesmo. Dark: ver `.dark`. */
+    --warning-text: 38 92% 30%;
+    --destructive-text: 0 75% 40%;
+
     /* ===== GAMIFICAÇÓO ===== */
     --xp: 221 83% 34%;
     --xp-foreground: 0 0% 100%;
@@ -401,6 +409,13 @@
     --warning-foreground: 0 0% 8%;
     --info: 213 94% 62%;
     --info-foreground: 0 0% 100%;
+
+    /* Etapa 80: no escuro o vermelho de preenchimento (L40) como TEXTO sobre o card dava
+       2,6:1 — o par de texto clareia até 5,6:1 (e 4,9:1 sobre a própria tinta /15). O
+       âmbar já fechava (10:1) e o texto só repete o valor para o par ficar explícito. */
+    --warning-text: 40 91% 60%;
+    --destructive-text: 354 75% 68%;
+
     --xp: 221 83% 93%;
     --xp-foreground: 0 0% 100%;
     --coins: 42 100% 58%;
