@@ -60,6 +60,9 @@ import {
 } from '@/hooks/integrations/useCatalogSendHistory';
 import { fetchCatalogContactPreset } from '@/hooks/integrations/useCatalogContactPreset';
 import type { ContactResult } from './useSendProduct';
+// Guarda de WhatsApp do deep link: mesmo critério do painel do contato
+// (src/lib/calls/phone.ts), telefone inutilizável → null.
+import { normalizeE164BR } from '@/lib/calls/phone';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -551,7 +554,19 @@ export const ExternalProductManagement: React.FC = () => {
           ]);
           if (lastRequestedProductIdRef.current !== productId) return;
           if (product) {
-            setDeepLinkContact(contact);
+            // Guarda de WhatsApp: um contato do link sem telefone utilizável
+            // NÃO habilita o envio (mesmo critério do painel do contato), então
+            // não vira `presetContact` — o dialog abre no passo normal de
+            // seleção. O usuário é avisado de QUAL contato do link foi deixado
+            // de fora, em vez de o contato sumir em silêncio.
+            const contatoValido =
+              contact && normalizeE164BR(contact.phone) !== null ? contact : null;
+            if (contact && !contatoValido) {
+              toast.warning('Contato do link sem WhatsApp', {
+                description: `${contact.name} não tem um telefone válido. Selecione um contato com WhatsApp para enviar.`,
+              });
+            }
+            setDeepLinkContact(contatoValido);
             setSendProduct(product);
           } else {
             // Produto do deep link não existe mais (removido/id errado):
