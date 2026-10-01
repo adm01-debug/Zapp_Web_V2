@@ -160,10 +160,14 @@ function scanSqlSegments(input) {
 
     if (char === '$') {
       // Tag de dollar-quote segue dolq_start/dolq_cont do PostgreSQL (scan.l):
-      // aceita qualquer byte nao-ASCII (acentos e afins), nao so [A-Za-z_]. Sem
-      // isso `$ação$ ... $ação$` nao e reconhecido, o corpo vira tokens e um DROP
-      // citado como texto dentro dele e projetado como DDL (falso positivo).
-      const opening = source.slice(i).match(/^\$(?:[A-Za-z_\u0080-\uFFFF][A-Za-z0-9_\u0080-\uFFFF]*)?\$/u)?.[0];
+      // aceita qualquer byte nao-ASCII, nao so [A-Za-z_] — e o PG valida BYTE a
+      // byte, entao vale tambem FORA do plano basico (medido no PG 17: `$😀$`,
+      // `$a😀b$` e `$<U+10FFFF>$` sao tags validas e o corpo fica opaco). O
+      // intervalo vai ate U+10FFFF: `\uFFFF` sozinho cobria so o BMP, a tag astral
+      // nao era reconhecida, o corpo virava tokens e um DROP citado dentro dele era
+      // projetado como DDL (falso positivo — e um CREATE de mentira entrava na
+      // projecao, fail-open).
+      const opening = source.slice(i).match(/^\$(?:[A-Za-z_\u0080-\u{10FFFF}][A-Za-z0-9_\u0080-\u{10FFFF}]*)?\$/u)?.[0];
       if (opening) {
         const end = source.indexOf(opening, i + opening.length);
         if (end === -1) {
