@@ -98,10 +98,17 @@ function zonedParts(instantMs: number, timezone: string): LocalDateTimeParts & {
   }
 }
 
-function initialWizardStep(): WizardStep {
+function isWizardStep(value: number): boolean {
+  return Number.isInteger(value) && value >= 1 && value <= 4;
+}
+
+/** Passo inicial: a URL manda; sem passo válido nela, vale o salvo no rascunho (V23). */
+function initialWizardStep(savedStep?: number | null): WizardStep {
   const raw = new URLSearchParams(window.location.search).get('step');
   const step = Number(raw);
-  return step >= 1 && step <= 4 && Number.isInteger(step) ? step as WizardStep : 1;
+  if (isWizardStep(step)) return step as WizardStep;
+  const saved = Number(savedStep);
+  return isWizardStep(saved) ? saved as WizardStep : 1;
 }
 
 function newDraftCreationKey(): string {
@@ -176,7 +183,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const { templates } = useTalkXTemplates();
   const logEvent = useTalkXEventLogger();
 
-  const [step, setStep] = useState<WizardStep>(() => initial?.step ?? initialWizardStep());
+  const [step, setStep] = useState<WizardStep>(() => initial?.step ?? initialWizardStep(campaign?.draft_step));
   const [name, setName] = useState(campaign?.name || '');
   const [description, setDescription] = useState(campaign?.description || '');
   const [objective, setObjective] = useState(campaign?.objective || 'engajamento');
@@ -217,14 +224,18 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [draftCreationKey] = useState<string | null>(() => campaign?.id ? null : restoreOrCreateDraftCreationKey());
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const [showPreview, setShowPreview] = useState(true);
-  const [contactSearch, setContactSearch] = useState('');
+  // V23: reabrir um rascunho restaura o recorte salvo — antes tudo voltava para 'all'.
+  const savedFilters = (campaign?.audience_filters ?? {}) as Record<string, unknown>;
+  const savedFilter = (key: string, fallback: string) =>
+    typeof savedFilters[key] === 'string' ? (savedFilters[key] as string) : fallback;
+  const [contactSearch, setContactSearch] = useState(savedFilter('search', ''));
   const [saving, setSaving] = useState(false);
-  const [companyFilter, setCompanyFilter] = useState('all');
-  const [tagFilter, setTagFilter] = useState('all');
-  const [cityFilter, setCityFilter] = useState('all');      // E63
-  const [groupFilter, setGroupFilter] = useState('all');    // E63
-  const [inactiveFilter, setInactiveFilter] = useState(false); // E63: sem interacao nos ultimos N dias
-  const [birthdayFilter, setBirthdayFilter] = useState(''); // E63: 'this_month' | 'next_30d' | ''
+  const [companyFilter, setCompanyFilter] = useState(savedFilter('company', 'all'));
+  const [tagFilter, setTagFilter] = useState(savedFilter('tag', 'all'));
+  const [cityFilter, setCityFilter] = useState(savedFilter('city', 'all'));      // E63
+  const [groupFilter, setGroupFilter] = useState(savedFilter('group', 'all'));    // E63
+  const [inactiveFilter, setInactiveFilter] = useState(savedFilters.inactive === true); // E63: sem interacao nos ultimos N dias
+  const [birthdayFilter, setBirthdayFilter] = useState(savedFilter('birthday', '')); // E63: 'this_month' | 'next_30d' | ''
   const [mediaUrl, setMediaUrl] = useState(campaign?.media_url || '');
   const [mediaType, setMediaType] = useState(campaign?.media_type || '');
   const [hasMedia, setHasMedia] = useState(!!campaign?.media_url);
@@ -518,7 +529,9 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     business_hours_only: businessHoursOnly,
     respect_suppression: respectSuppression,
     confirm_consent: confirmConsent,
-  }), [name, description, objective, messageTemplate, audienceSource, companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter, contactSearch, segmentId, templateId, typingDelay, sendInterval, speedProfile, connectionId, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly, respectSuppression, confirmConsent]);
+    // V23: o passo atual do wizard é persistido para reabrir o rascunho no mesmo passo.
+    draft_step: step,
+  }), [name, description, objective, messageTemplate, audienceSource, companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter, contactSearch, segmentId, templateId, typingDelay, sendInterval, speedProfile, connectionId, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly, respectSuppression, confirmConsent, step]);
 
   /** Salva (rascunho/agendada) e, se `launch`, dispara imediatamente. Devolve o id da campanha. */
   const persistSave = useCallback(async (mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
@@ -614,6 +627,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     typingDelay, sendInterval, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly,
     isScheduled, scheduledAt, scheduleTimezone, respectSuppression, selectedContacts,
     companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter, contactSearch,
+    step, // V23: o passo do wizard entra no autosave — sair no passo 2 e reabrir volta ao passo 2.
   });
   const autosaveIsDirty = persistedAutosaveSnapshot !== null && persistedAutosaveSnapshot !== autosaveFields;
 

@@ -111,7 +111,12 @@ export default function TalkXView() {
   const openEdit = useCallback((c: TalkXCampaign) => {
     setLocalDraftRouteId(null);
     setEditingCampaign(c); setWizardInitial(undefined); setTopView('wizard');
-    writeWizardRoute({ campaignId: c.id, step: 1 });
+    // V23: reabre no passo em que o rascunho foi deixado (antes sempre voltava ao 1).
+    const savedStep = Number(c.draft_step);
+    const step: WizardStep = savedStep >= 1 && savedStep <= 4 && Number.isInteger(savedStep)
+      ? (savedStep as WizardStep)
+      : 1;
+    writeWizardRoute({ campaignId: c.id, step });
   }, [writeWizardRoute]);
   const openMonitor = useCallback((c: TalkXCampaign) => { setMonitorId(c.id); setTopView('monitor'); }, []);
   const openScheduled = useCallback((c: TalkXCampaign) => { setScheduledCampaignId(c.id); setTopView('scheduled'); }, []);
