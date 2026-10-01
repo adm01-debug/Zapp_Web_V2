@@ -175,7 +175,10 @@ export function derivedToConversationContact(dc: DerivedContact): ConversationCo
     // WhatsApp nao tem analise de IA associada.
     ai_projection_analysis_id: null,
     ai_projection_updated_at: null,
-    ai_priority: 'medium',
+    // Ausencia representavel: contato derivado do WhatsApp nao tem analise de
+    // IA, logo nao tem prioridade — 'medium' era valor fabricado (mascara de
+    // ausencia na tela). A coluna e nullable no schema.
+    ai_priority: null,
     consent_status: 'opt_in',
     lead_origin: null,
     lead_score: 0,
