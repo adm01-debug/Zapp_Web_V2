@@ -10,7 +10,7 @@ interface DashboardTopBarProps {
 
 /**
  * Não existe central de notificações no app — o sino abre a paleta de comandos
- * global, mesmo mecanismo de ContactsTopActions. ProfileMenuContent (usado pelo
+ * global (evento `open-command-palette`, escutado por GlobalKeyboardProvider). ProfileMenuContent (usado pelo
  * HeaderUserPill do AppHeader) exige estado (onStatusChange/onViewChange/onLogout/onClose)
  * que só o container do header possui — reaproveitar aqui duplicaria essa lógica,
  * então o chip de usuário navega para Configurações (fallback previsto na etapa 20 do plano).

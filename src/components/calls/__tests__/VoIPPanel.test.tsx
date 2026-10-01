@@ -50,7 +50,7 @@ vi.mock('@/hooks/communication/useCalls', () => ({
 
 vi.mock('@/providers/CallSessionProvider', () => ({
   useCallSession: () => ({
-    sipStatus: 'disconnected' as const,
+    sipStatus: 'idle' as const,
     callStatus: 'idle' as const,
     callDuration: 0,
     isMuted: false,

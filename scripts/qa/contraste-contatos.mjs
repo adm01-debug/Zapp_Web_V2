@@ -69,8 +69,62 @@ export function measure(themes) {
   );
 }
 
+/**
+ * Etapa 65: badges de `contactTypeConfig.tsx` (receitas literais `hsl(...)` no
+ * texto + `rgba(r,g,b,a)` no fundo, compostas sobre `--card`). O script lê as
+ * classes do próprio arquivo — se a receita mudar de forma, `parseBadges` lança
+ * em vez de medir silenciosamente o que não existe.
+ */
+const CONFIG_SRC = path.join(ROOT, 'src/components/contacts/contactTypeConfig.tsx');
+
+export function parseBadges(tsx) {
+  const entries = [
+    ...tsx.matchAll(/(\w+):\s*\{\s*\n\s*label:\s*'([^']+)'[\s\S]*?badgeClass:\s*'([^']+)'/g),
+  ].map(([, key, label, badgeClass]) => ({ key, label, badgeClass }));
+  if (entries.length === 0) throw new Error('nenhum badge encontrado em contactTypeConfig.tsx');
+
+  return entries.map(({ key, label, badgeClass }) => {
+    const light = badgeClass.match(/(?:^|\s)text-\[hsl\((\d+)_(\d+)%_(\d+)%\)\]/);
+    const dark = badgeClass.match(/ dark:text-\[hsl\((\d+)_(\d+)%_(\d+)%\)\]/);
+    const bg = badgeClass.match(/bg-\[rgba\((\d+),(\d+),(\d+),([\d.]+)\)\]/);
+    if (!light || !dark || !bg) {
+      throw new Error(
+        `badge ${key} sem receita esperada (texto claro+escuro e fundo rgba): ${badgeClass}`,
+      );
+    }
+    const hsl = (m) => [Number(m[1]), Number(m[2]), Number(m[3])];
+    return {
+      key,
+      label,
+      lightText: hsl(light),
+      darkText: hsl(dark),
+      bgRgb: [Number(bg[1]) / 255, Number(bg[2]) / 255, Number(bg[3]) / 255],
+      bgAlpha: Number(bg[4]),
+    };
+  });
+}
+
+export function measureBadges(themes, badges) {
+  return badges.flatMap((badge) =>
+    Object.entries(themes).map(([theme, vars]) => {
+      const card = hslToRgb(vars.card);
+      const bg = badge.bgRgb.map((c, i) => c * badge.bgAlpha + card[i] * (1 - badge.bgAlpha));
+      const text = theme === 'escuro' ? badge.darkText : badge.lightText;
+      return {
+        label: `Badge ${badge.label} (texto sobre bg-rgba/${badge.bgAlpha * 100})`,
+        theme,
+        ratio: contrast(hslToRgb(text), bg),
+      };
+    }),
+  );
+}
+
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const rows = measure(parseThemes(readFileSync(path.join(ROOT, 'src/styles/tokens.css'), 'utf8')));
+  const themes = parseThemes(readFileSync(path.join(ROOT, 'src/styles/tokens.css'), 'utf8'));
+  const rows = [
+    ...measure(themes),
+    ...measureBadges(themes, parseBadges(readFileSync(CONFIG_SRC, 'utf8'))),
+  ];
   console.log('| Par | Tema | Contraste | AA (4.5:1) |\n|---|---|---|---|');
   for (const r of rows) console.log(`| ${r.label} | ${r.theme} | ${r.ratio.toFixed(2)}:1 | ${r.ratio >= 4.5 ? 'ok' : 'FALHA'} |`);
   const fails = rows.filter((r) => r.ratio < 4.5).length;

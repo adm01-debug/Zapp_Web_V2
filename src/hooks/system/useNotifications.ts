@@ -1,8 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, createElement } from 'react';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '../auth/useAuth';
 import { log } from '@/lib/logger';
 import type { Json } from '@/integrations/supabase/types';
+import { ReminderToast } from '@/components/notifications/ReminderNotification';
 
 export interface Notification {
   id: string;
@@ -80,6 +82,15 @@ export function useNotifications() {
             const newNotification = payload.new as Notification;
             setNotifications(prev => [newNotification, ...prev]);
             setUnreadCount(prev => prev + 1);
+            // Fase F (etapa 61): o alarme de tarefa chega em tempo real pelo
+            // mesmo canal. Mostra o toast com as 3 ações do aviso. Sem som de
+            // propósito — o app não tem padrão sonoro para alarme de tarefa.
+            if (newNotification.type === 'reminder_due') {
+              toast.custom(
+                (toastId) => createElement(ReminderToast, { notification: newNotification, toastId }),
+                { duration: 15_000 }
+              );
+            }
           } else if (payload.eventType === 'UPDATE') {
             const updatedNotification = payload.new as Notification;
             setNotifications(prev => {

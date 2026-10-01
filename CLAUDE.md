@@ -445,6 +445,10 @@ não existe mais — próximas fases usam branch novo por fase, padrão `feat/ta
 
 ## Contatos — critério de contato visível (2026-10-01, F5 / decisão D4)
 
+- **Tipos canônicos**: 6 (`cliente`, `fornecedor`, `transportadora`, `colaborador`, `prestador_servico`, `parceiro`) — `CONTACT_TYPES` em `src/utils/whatsappFileTypes.ts` ≡ CHECK `chk_contact_type` (guard `scripts/db-audit/contact-types-contract.test.mjs`). `sicoob_gifts` e `lead` são extintos: a Sicoob Bridge é desligada (decisão D2), não reativar o tipo no CHECK.
+- **Ícone e cor por tipo** vivem só em `src/components/contacts/contactTypeConfig.tsx`; ordem e tipos válidos de aba/preset em `contactTypeOrder.ts`. Não criar mapa paralelo.
+- **Exclusão** é soft-delete pelas RPCs `delete_contact(p_id)` / `delete_contacts(p_ids)` (decisão D1). Nunca `.delete()` direto em `contacts` (RLS sem policy de DELETE devolve 0 linhas sem erro). RPC com erro ou `null` = falha na UI. Restaurar: `docs/runbooks/contatos-exclusao-e-legados.md`.
+
 - **Contato visível em Contatos** = `deleted_at IS NULL` + `is_lid_legacy = false` + `phone ~ '^[0-9]{10,15}$'`.
 - `search_contacts(..., include_legacy boolean DEFAULT false)` e `contacts_count_by_type(include_legacy boolean DEFAULT false)` aplicam o critério quando `include_legacy` é falso (migration `20260930450000`).
 - O front só envia `include_legacy: true` quando o toggle "Mostrar legados" está ligado (`localStorage` `contact-show-legacy`); `useContactsKpi(includeLegacy)` repete o filtro para KPI Total == aba "Todos".
