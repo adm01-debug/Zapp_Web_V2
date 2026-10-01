@@ -448,6 +448,19 @@ jobs:
           TEAM_CHAT_RPC_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-rpc-ambiguity.test.sh
 
+      # L11 da matriz IA-004 (IA-004-matriz-autorizacao.md:297): a ACL de ESCRITA de
+      # public.departments. O INSERT/UPDATE de NIVEL DE TABELA (privilegio default do schema
+      # public) nunca tinha sido revogado -- e um REVOKE por coluna NAO remove grant de tabela,
+      # entao qualquer usuario autenticado podia GRAVAR o segredo do WhatsApp pelo PostgREST.
+      # O harness reproduz o grant de TABELA + os grants de COLUNA medidos no banco canonico e
+      # prova: o furo ANTES (authenticated pode INSERT/UPDATE nas 2 colunas de segredo), o
+      # estado DEPOIS (has_column_privilege false nas 2 colunas de segredo e true nas colunas
+      # seguras) e a MUTACAO que remove o REVOKE de TABELA (o contrato tem de encerrar nao-zero).
+      - name: Simular ACL de escrita de departments (L11)
+        env:
+          L11_DEPARTMENTS_ACL_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/l11-departments-acl-escrita.test.sh
+
       # Auditoria Onda 3, achado 2: a RPC de recibo de leitura e SECURITY DEFINER e nao checava
       # vinculo — gravava recibo cross-team por RPC enquanto o insert direto era barrado pela RLS.
       # Bloco A prova o defeito no mesmo container, aplica a migration e o bloco B prova a correcao.
