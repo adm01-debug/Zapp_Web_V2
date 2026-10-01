@@ -165,6 +165,30 @@ env:
 
 // --- secrets: inherit em reusable workflow call ---
 
+test('findPullRequestSecretLeaks: secrets: inherit com pull_request → violação', () => {
+  const workflow = `on:
+  pull_request:
+jobs:
+  call:
+    uses: org/repo/.github/workflows/callable.yml@main
+    secrets: inherit
+`;
+  const result = findPullRequestSecretLeaks(workflow, 'workflow.yml');
+  assert.equal(result.length, 1);
+  assert.ok(result[0].secret.includes('inherit'));
+});
+
+test('findPullRequestSecretLeaks: secrets: inherit sem trigger de PR → sem violação', () => {
+  const workflow = `on:
+  workflow_dispatch:
+jobs:
+  call:
+    uses: org/repo/.github/workflows/callable.yml@main
+    secrets: inherit
+`;
+  assert.deepEqual(findPullRequestSecretLeaks(workflow, 'workflow.yml'), []);
+});
+
 test('findPushSecretLeaks: secrets: inherit com push irrestrito → violação', () => {
   const workflow = `on:
   push:

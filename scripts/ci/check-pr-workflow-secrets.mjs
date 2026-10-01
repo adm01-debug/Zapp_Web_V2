@@ -122,21 +122,21 @@ function _findSecretRefs(source, file) {
   return violations;
 }
 
+function _findInheritLeaks(source, file) {
+  const inheritMatch = /^(\s+)secrets:\s*inherit\b/mu.exec(source);
+  if (!inheritMatch) return [];
+  const lineNumber = source.slice(0, inheritMatch.index).split(/\r?\n/u).length;
+  return [{ file, line: lineNumber, secret: 'secrets:inherit (reusable workflow call)' }];
+}
+
 export function findPullRequestSecretLeaks(source, file = 'workflow.yml') {
-  if (!hasPullRequestTrigger(source)) return [];  
-  return _findSecretRefs(source, file);
+  if (!hasPullRequestTrigger(source)) return [];
+  return [..._findSecretRefs(source, file), ..._findInheritLeaks(source, file)];
 }
 
 export function findPushSecretLeaks(source, file = 'workflow.yml') {
   if (!hasPushTriggerUnrestricted(source)) return [];
-  const violations = _findSecretRefs(source, file);
-  // Detect `secrets: inherit` in reusable workflow calls — passes all repo secrets without any ${{ expression }}
-  const inheritMatch = /^(\s+)secrets:\s*inherit\b/mu.exec(source);
-  if (inheritMatch) {
-    const lineNumber = source.slice(0, inheritMatch.index).split(/\r?\n/u).length;
-    violations.push({ file, line: lineNumber, secret: 'secrets:inherit (reusable workflow call)' });
-  }
-  return violations;
+  return [..._findSecretRefs(source, file), ..._findInheritLeaks(source, file)];
 }
 
 export function scanWorkflowDirectory(workflowsDirectory) {
