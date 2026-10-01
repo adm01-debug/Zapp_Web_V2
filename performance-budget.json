@@ -1,8 +1,8 @@
 {
   "budgets": {
     "initial-js": {
-      "maxKB": 340,
-      "description": "Max initial JS bundle (excluding lazy chunks)"
+      "maxKB": 341,
+      "description": "Max initial JS bundle (excluding lazy chunks). +1KB em 2026-10-01 para o gate de microfone do T17: o hook useMicrophoneGuard entra no grafo inicial porque useSipClient e montado pelo CallSessionProvider (medido 340,2 KB gzip, 0,2 KB acima do teto anterior de 340). A Fase 3 do plano de telefonia (ViewRouter sem voip:34) deve devolver esta folga quando o dialer sair do grafo inicial."
     },
     "initial-css": {
       "maxKB": 80,
