@@ -146,7 +146,8 @@
     --success: 160 70% 42%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
+    /* Texto sobre o amarelo: escuro fecha 4,5:1 (branco dava 2,2:1). Nao tem outro consumidor. */
+    --warning-foreground: 30 90% 12%;
     --info: 210 80% 55%;
     --info-foreground: 0 0% 100%;
 
