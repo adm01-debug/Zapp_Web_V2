@@ -172,6 +172,11 @@ jobs:
         run: node scripts/db-audit/supabase-usage-guard.mjs
 
       - name: 🧾 Verify Talk X V4 placar freshness
+        # X006: só em PR. No push para a main, a PR de etapa acabou de entrar e o
+        # STATUS.md que ela commita reflete origin/main ANTES dela (não conta a si
+        # mesma — a etapa ainda não está em origin/main). Sem este `if`, o check
+        # rodava também no push e deixava a main vermelha por 1 etapa a cada merge.
+        if: github.event_name == 'pull_request'
         run: |
           # O checkout do job de lint é raso (fetch-depth padrão 1); o placar varre
           # `git log origin/main` atrás de títulos (X<NNN>), então precisa do histórico
