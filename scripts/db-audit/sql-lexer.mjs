@@ -23,6 +23,34 @@ function scanSqlSegments(input) {
   const segments = [];
   let i = 0;
 
+  // standard_conforming_strings: 'on' (padrao) trata backslash como LITERAL em
+  // string normal; 'off' faz o backslash ESCAPAR a aspa em string normal (o PG
+  // emite WARNING mas aceita — medido no PG 17.11: SELECT 'a\'b' devolve a'b).
+  // Uma migration pode ligar/desligar no meio do arquivo, entao o scanner
+  // acompanha `SET standard_conforming_strings = on|off|default` em vez de
+  // assumir o padrao. Sem isso o scanner fecha a string no \' e engole o SQL
+  // seguinte (fail-open: um DROP real deixa de ser projetado).
+  let scsOff = false;
+  const recent = []; // ultimos tokens significativos (deteccao do SET)
+  const emit = (seg) => {
+    segments.push(seg);
+    if (seg.type !== 'word' && seg.type !== 'symbol' && seg.type !== 'string') return;
+    recent.push(seg);
+    if (recent.length > 4) recent.shift();
+    if (recent.length < 4) return;
+    const [a, b, c, d] = recent;
+    const assign = (c.type === 'symbol' && c.text === '=')
+      || (c.type === 'word' && c.text.toLowerCase() === 'to');
+    const valor = d.type === 'word'
+      ? d.text.toLowerCase()
+      : (d.type === 'string' ? d.text.slice(1, -1).replace(/''/g, "'").toLowerCase() : '');
+    if (a.type === 'word' && a.text.toLowerCase() === 'set'
+      && b.type === 'word' && b.text.toLowerCase() === 'standard_conforming_strings'
+      && assign && ['on', 'off', 'default'].includes(valor)) {
+      scsOff = valor === 'off';
+    }
+  };
+
   while (i < source.length) {
     const char = source[i];
     const next = source[i + 1];
@@ -31,7 +59,7 @@ function scanSqlSegments(input) {
       const start = i;
       i += 1;
       while (i < source.length && /\s/u.test(source[i])) i += 1;
-      segments.push({ type: 'space', text: source.slice(start, i) });
+      emit({ type: 'space', text: source.slice(start, i) });
       continue;
     }
 
@@ -39,7 +67,7 @@ function scanSqlSegments(input) {
       const start = i;
       i += 2;
       while (i < source.length && source[i] !== '\n') i += 1;
-      segments.push({ type: 'line-comment', text: source.slice(start, i) });
+      emit({ type: 'line-comment', text: source.slice(start, i) });
       continue;
     }
 
@@ -58,19 +86,23 @@ function scanSqlSegments(input) {
           i += 1;
         }
       }
-      segments.push({ type: 'block-comment', text: source.slice(start, i) });
+      emit({ type: 'block-comment', text: source.slice(start, i) });
       continue;
     }
 
     if (char === '$') {
-      const opening = source.slice(i).match(/^\$(?:[A-Za-z_][A-Za-z0-9_]*)?\$/)?.[0];
+      // Tag de dollar-quote segue dolq_start/dolq_cont do PostgreSQL (scan.l):
+      // aceita qualquer byte nao-ASCII (acentos e afins), nao so [A-Za-z_]. Sem
+      // isso `$ação$ ... $ação$` nao e reconhecido, o corpo vira tokens e um DROP
+      // citado como texto dentro dele e projetado como DDL (falso positivo).
+      const opening = source.slice(i).match(/^\$(?:[A-Za-z_\u0080-\uFFFF][A-Za-z0-9_\u0080-\uFFFF]*)?\$/u)?.[0];
       if (opening) {
         const end = source.indexOf(opening, i + opening.length);
         if (end === -1) {
-          segments.push({ type: 'dollar', text: source.slice(i) });
+          emit({ type: 'dollar', text: source.slice(i) });
           break;
         }
-        segments.push({ type: 'dollar', text: source.slice(i, end + opening.length) });
+        emit({ type: 'dollar', text: source.slice(i, end + opening.length) });
         i = end + opening.length;
         continue;
       }
@@ -83,9 +115,7 @@ function scanSqlSegments(input) {
       // escape o scanner fecharia a string no \' errado e engoliria (ou exporia)
       // o restante do arquivo — um fail-open/falso-positivo no guard.
       const backslashEscapes = quote === "'"
-        && prev != null
-        && prev.type === 'word'
-        && /^[eE]$/.test(prev.text);
+        && ((prev != null && prev.type === 'word' && /^[eE]$/.test(prev.text)) || scsOff);
       const start = i;
       i += 1;
       while (i < source.length) {
@@ -107,7 +137,7 @@ function scanSqlSegments(input) {
       // aspa); aspas simples abrem STRING (opaca, pode conter SQL "falso").
       // O guard precisa do nome do identificador para casar DROP TABLE
       // public."x" / "public".x.
-      segments.push({ type: quote === '"' ? 'ident' : 'string', text: source.slice(start, i) });
+      emit({ type: quote === '"' ? 'ident' : 'string', text: source.slice(start, i) });
       continue;
     }
 
@@ -122,11 +152,11 @@ function scanSqlSegments(input) {
         if (numeric && source[i] === '$') break;
         i += 1;
       }
-      segments.push({ type: 'word', text: source.slice(start, i) });
+      emit({ type: 'word', text: source.slice(start, i) });
       continue;
     }
 
-    segments.push({ type: 'symbol', text: char });
+    emit({ type: 'symbol', text: char });
     i += 1;
   }
 

@@ -437,3 +437,13 @@
   -webkit-mask-repeat: repeat;
           mask-repeat: repeat;
 }
+
+/* ── Chips do QuickAdd de Tarefas (etapas 35/39) ─────────────────────────────
+   Usados pelo QuickAdd e pelo ContactCombobox. `.chip-active` é autossuficiente
+   (repete o layout base) porque aparece sozinho em elementos de status. */
+.chip-btn {
+  @apply inline-flex items-center gap-1 h-7 px-2.5 rounded-full border border-border bg-input text-xs font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors;
+}
+.chip-active {
+  @apply inline-flex items-center gap-1 h-7 px-2.5 rounded-full border border-primary/50 bg-primary/15 text-xs font-medium text-primary-glow transition-colors;
+}

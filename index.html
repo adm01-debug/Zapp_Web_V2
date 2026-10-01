@@ -30,7 +30,12 @@
             var c = JSON.parse(skin), root = document.documentElement;
             if (c.v === 6) {
               var mode = isDark ? 'dark' : 'light';
-              if (c.cssVarsCache && c.cacheMode === mode) {
+              // Alto contraste: as cores vêm da classe `.high-contrast` (accessibility.css).
+              // Escrever o cache inline aqui venceria a classe e anularia o modo (mesmo
+              // cuidado do applyThemePreset); a classe entra já no boot para não piscar.
+              var altoContraste = localStorage.getItem('highContrast') === 'true';
+              if (altoContraste) root.classList.add('high-contrast');
+              if (!altoContraste && c.cssVarsCache && c.cacheMode === mode) {
                 for (var k in c.cssVarsCache) root.style.setProperty('--' + k, c.cssVarsCache[k]);
               }
               if (typeof c.borderRadius === 'number' && isFinite(c.borderRadius)) {

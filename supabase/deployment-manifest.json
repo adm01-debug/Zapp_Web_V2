@@ -12,10 +12,6 @@
     "verify_jwt_true": 55,
     "verify_jwt_false": 12
   },
-  "orphan_allowlist": [
-    "sicoob-bridge",
-    "sicoob-bridge-reply"
-  ],
   "source_files": [
     {
       "path": "supabase/functions/_shared/ai-audio-authz.ts",
@@ -1429,5 +1425,5 @@
       ]
     }
   ],
-  "manifest_sha256": "5a8b4134f1ec1ab244f0bfe23a462714dd66682d5c1938dbcb17f4e8fedacbbf"
+  "manifest_sha256": "2c42828e0424c3b9b41c0d63b156ef1e4326e8dc44a8911dff9fa18b64840703"
 }

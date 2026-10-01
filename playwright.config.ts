@@ -22,6 +22,14 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
+      // Tema e acessibilidade na tela deslogada: o teste precisa de navegador real (a
+      // disputa é entre estilo INLINE no `<html>` e a classe `.high-contrast`) e não de
+      // sessão — então roda no job de PR, sem `setup` e sem secrets.
+      name: 'chromium-theme',
+      testMatch: /theme-alto-contraste\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
       // Login real (e2e/auth.setup.ts), executado só quando o projeto
       // "chromium-authenticated" ou "chromium-e2e-core" roda (via dependencies
       // abaixo) — nunca bloqueia o projeto "chromium" acima.
