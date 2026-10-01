@@ -29,6 +29,18 @@ const EXTS = new Set(['.ts', '.tsx', '.js', '.jsx']);
 // Receptores que NAO sao o banco principal deste projeto.
 const NON_MAIN = /(externalSupabase|getExternalSupabase\(\)|clientesSupabase|getClientesSupabase\(\)|extClient|externalClient|storage|Array)\s*\??\.?\s*$/;
 
+// Comentario de bloco ou de linha, para tratar como whitespace na cadeia.
+const COMENTARIO = String.raw`(?:\/\*[\s\S]*?\*\/|\/\/[^\n]*)`;
+// `.schema('ops')` pode estar separado do `.from(...)` por comentarios — e um
+// comentario pode estar DENTRO do `schema(...)`. Sem aceitar isso, o `before` nao
+// termina em `.schema(...)`, o guard assume o schema padrao `public` e compara o
+// alvo errado: falso positivo quando o objeto so existe no outro schema, e
+// fail-open quando existe um homonimo em public. Um comentario que CITA um
+// `.schema(...)` e ignorado (vale o ultimo que esta realmente no codigo).
+const SCHEMA_RE = new RegExp(
+  String.raw`\.schema\(\s*${COMENTARIO}?\s*['"\`]([a-zA-Z0-9_]+)['"\`]\s*\)\s*(?:${COMENTARIO}\s*)*$`,
+);
+
 function walk(dir, acc = []) {
   if (!fs.existsSync(dir)) return acc;
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -56,7 +68,7 @@ function scan() {
           // faz parte da identidade do alvo. Sem ele o guard compara 'x' com o
           // catalogo public e acusa alvo inexistente (ou deixa passar um alvo de
           // outro schema que nao existe). Sem `.schema(...)`, o padrao e public.
-          const schemaMatch = before.match(/\.schema\(\s*['"`]([a-zA-Z0-9_]+)['"`]\s*\)\s*$/);
+          const schemaMatch = before.match(SCHEMA_RE);
           found.push({
             kind,
             schema: (schemaMatch ? schemaMatch[1] : 'public').toLowerCase(),

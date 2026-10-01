@@ -16,7 +16,7 @@
 import { filterConfigBody, filterExtraBody, filterHeaders } from "./ai-routing.ts";
 
 export async function callLovableAI(params: {
-  messages: Array<{ role: string; content: string }>;
+  messages: Array<{ role: string; content: unknown }>;
   apiKey: string;
   model?: string;
   tools?: unknown;
@@ -58,7 +58,7 @@ export async function callLovableAI(params: {
 export async function callOpenAICompatible(params: {
   endpoint: string;
   apiKey: string;
-  messages: Array<{ role: string; content: string }>;
+  messages: Array<{ role: string; content: unknown }>;
   model?: string;
   tools?: unknown;
   toolChoice?: unknown;
@@ -111,7 +111,7 @@ export async function callOpenAICompatible(params: {
 export async function callCustomWebhook(params: {
   endpoint: string;
   apiKey?: string;
-  messages: Array<{ role: string; content: string }>;
+  messages: Array<{ role: string; content: unknown }>;
   config?: Record<string, unknown>;
 }): Promise<Response> {
   const config = params.config ?? {};

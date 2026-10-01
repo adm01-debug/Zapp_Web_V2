@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useReducer, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -166,6 +166,96 @@ function TabCount({ value }: { value: number }) {
   );
 }
 
+// ─── CT-62 — filtros num reducer único ─────────────────────────
+/**
+ * Estado dos filtros da listagem. Antes eram ~10 `useState` separados e o
+ * `buildFilters` fechava sobre todos eles, o que obrigava 4 supressões de
+ * `react-hooks/exhaustive-deps` para os efeitos não reagirem à identidade dele.
+ * Com um reducer há uma fonte de verdade só e os efeitos leem o estado atual
+ * via `buildFiltersRef`.
+ */
+interface CatalogFilterState {
+  search: string;
+  categoryId: string;
+  supplierId: string;
+  onlyInStock: boolean;
+  lowStock: boolean;
+  isFeatured: boolean;
+  isNew: boolean;
+  orderBy: string;
+  ascending: boolean;
+  advFilters: AdvancedFilters;
+}
+
+type CatalogFilterAction =
+  | { type: 'search'; value: string }
+  | { type: 'category'; id: string }
+  | { type: 'supplier'; id: string }
+  | { type: 'onlyInStock'; value: boolean }
+  | { type: 'lowStock'; value: boolean }
+  | { type: 'featured'; value: boolean }
+  | { type: 'isNew'; value: boolean }
+  | { type: 'sort'; orderBy: string; ascending: boolean }
+  | { type: 'advanced'; filters: AdvancedFilters }
+  | { type: 'clear' };
+
+/** Estado inicial: categoria vem da URL (`?cat=`), ordenação do sessionStorage. */
+function initialCatalogFilters(): CatalogFilterState {
+  return {
+    search: '',
+    categoryId: parseCatalogCategoryRoute(window.location.search).categoryId ?? 'all',
+    supplierId: 'all',
+    onlyInStock: false,
+    lowStock: false,
+    isFeatured: false,
+    isNew: false,
+    orderBy: sessionStorage.getItem('catalog.order_by') ?? 'name',
+    ascending: sessionStorage.getItem('catalog.ascending') !== 'false',
+    advFilters: { ...DEFAULT_ADVANCED_FILTERS },
+  };
+}
+
+function catalogFilterReducer(state: CatalogFilterState, action: CatalogFilterAction): CatalogFilterState {
+  switch (action.type) {
+    case 'search':
+      return { ...state, search: action.value };
+    case 'category':
+      return { ...state, categoryId: action.id };
+    case 'supplier':
+      return { ...state, supplierId: action.id };
+    case 'onlyInStock':
+      return { ...state, onlyInStock: action.value };
+    case 'lowStock':
+      return { ...state, lowStock: action.value };
+    case 'featured':
+      return { ...state, isFeatured: action.value };
+    case 'isNew':
+      return { ...state, isNew: action.value };
+    case 'sort':
+      return { ...state, orderBy: action.orderBy, ascending: action.ascending };
+    case 'advanced':
+      return { ...state, advFilters: action.filters };
+    // 'clear' é o reset explícito do "Limpar filtros": categoria volta a 'all'
+    // (não relê a URL — o clear antigo também não mexia no `?cat=`) e a
+    // ordenação volta ao padrão nome A–Z.
+    case 'clear':
+      return {
+        search: '',
+        categoryId: 'all',
+        supplierId: 'all',
+        onlyInStock: false,
+        lowStock: false,
+        isFeatured: false,
+        isNew: false,
+        orderBy: 'name',
+        ascending: true,
+        advFilters: { ...DEFAULT_ADVANCED_FILTERS },
+      };
+    default:
+      return state;
+  }
+}
+
 export const ExternalProductManagement: React.FC = () => {
   const { data: stats, isLoading: statsLoading, error: statsError } = useCatalogStats();
   const {
@@ -191,20 +281,15 @@ export const ExternalProductManagement: React.FC = () => {
   // CT-70 — com "reduzir movimento" ligado, nada entra animando.
   const prefersReducedMotion = useReducedMotion();
 
-  const [search, setSearch] = useState('');
-  const [categoryId, setCategoryId] = useState<string>(
-    () => parseCatalogCategoryRoute(window.location.search).categoryId ?? 'all'
-  );
+  // CT-62 — filtros num reducer único (busca/categoria/fornecedor/flags/
+  // ordenação/filtros avançados): uma fonte de verdade só.
+  const [filterState, dispatch] = useReducer(catalogFilterReducer, undefined, initialCatalogFilters);
+  const { search, categoryId, supplierId, onlyInStock, lowStock, isFeatured, isNew, orderBy, ascending, advFilters } = filterState;
 
   const handleCategoryChange = useCallback((id: string) => {
-    setCategoryId(id);
+    dispatch({ type: 'category', id });
     replaceCatalogCategoryRoute(id === 'all' ? null : id);
   }, []);
-  const [supplierId, setSupplierId] = useState<string>('all');
-  const [onlyInStock, setOnlyInStock] = useState(false);
-  const [lowStock, setLowStock] = useState(false);
-  const [isFeatured, setIsFeatured] = useState(false);
-  const [isNew, setIsNew] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(
     () => (localStorage.getItem('catalog.view') as 'grid' | 'list') ?? 'grid'
   );
@@ -213,11 +298,8 @@ export const ExternalProductManagement: React.FC = () => {
     const stored = parseInt(sessionStorage.getItem('catalog.page_size') ?? '24', 10);
     return (PAGE_SIZE_OPTIONS as readonly number[]).includes(stored) ? stored as PageSizeOption : 24;
   });
-  const [orderBy, setOrderBy] = useState<string>(() => sessionStorage.getItem('catalog.order_by') ?? 'name');
-  const [ascending, setAscending] = useState<boolean>(() => sessionStorage.getItem('catalog.ascending') !== 'false');
 
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [advFilters, setAdvFilters] = useState<AdvancedFilters>({ ...DEFAULT_ADVANCED_FILTERS });
   const advCount = countAdvancedFilters(advFilters);
 
   // E36-2: o edge promogifts-catalog (list_products) agora aceita array
@@ -399,12 +481,21 @@ export const ExternalProductManagement: React.FC = () => {
     return params;
   }, [page, pageSize, search, categoryId, supplierId, onlyInStock, lowStock, isFeatured, isNew, orderBy, ascending, advFilters]);
 
+  // CT-62 — `buildFilters` muda de identidade a cada render (fecha sobre o
+  // estado dos filtros); os efeitos abaixo o leem via ref para usar sempre a
+  // versão atual sem colocá-lo nas deps (o que reexecutaria o efeito de
+  // debounce/paginação em loop). Mesmo padrão de ExternalProductCatalog
+  // (doFetchRef).
+  const buildFiltersRef = useRef(buildFilters);
+  useEffect(() => {
+    buildFiltersRef.current = buildFilters;
+  });
+
   useEffect(() => {
     fetchCategories();
     fetchSuppliers();
-    fetchProducts(buildFilters());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    fetchProducts(buildFiltersRef.current());
+  }, [fetchCategories, fetchSuppliers, fetchProducts]);
 
   useEffect(() => {
     const parsed = parseCatalogCategoryRoute(window.location.search);
@@ -414,38 +505,29 @@ export const ExternalProductManagement: React.FC = () => {
   useEffect(() => {
     const t = setTimeout(() => {
       setPage(0);
-      fetchProducts(buildFilters(0));
+      fetchProducts(buildFiltersRef.current(0));
     }, 300);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, categoryId, supplierId, onlyInStock, lowStock, isFeatured, isNew, orderBy, ascending, advFilters, pageSize]);
+  }, [search, categoryId, supplierId, onlyInStock, lowStock, isFeatured, isNew, orderBy, ascending, advFilters, pageSize, fetchProducts, setPage]);
 
   useEffect(() => {
     if (page > 0) {
-      fetchProducts(buildFilters());
+      fetchProducts(buildFiltersRef.current());
       gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, fetchProducts]);
 
   const totalPages = Math.ceil(totalProducts / pageSize);
   const hasFilters = search || categoryId !== 'all' || supplierId !== 'all' || onlyInStock || lowStock || isFeatured || isNew || advCount > 0;
 
-  const clearFilters = () => {
-    setSearch('');
-    setCategoryId('all');
-    setSupplierId('all');
-    setOnlyInStock(false);
-    setLowStock(false);
-    setIsFeatured(false);
-    setIsNew(false);
-    setOrderBy('name');
-    setAscending(true);
+  // CT-62 — o reset vive no reducer (`clear`); aqui só a paginação e a
+  // limpeza da ordenação persistida saem do estado dos filtros.
+  const clearFilters = useCallback(() => {
+    dispatch({ type: 'clear' });
     setPage(0);
     sessionStorage.removeItem('catalog.order_by');
     sessionStorage.removeItem('catalog.ascending');
-    setAdvFilters({ ...DEFAULT_ADVANCED_FILTERS });
-  };
+  }, [setPage]);
 
   type SortOption = { label: string; order_by: string; ascending: boolean };
   const SORT_OPTIONS: SortOption[] = [
@@ -467,8 +549,7 @@ export const ExternalProductManagement: React.FC = () => {
   const applySort = (key: string) => {
     const opt = SORT_OPTIONS.find((o) => o.order_by + ':' + String(o.ascending) === key);
     if (!opt) return;
-    setOrderBy(opt.order_by);
-    setAscending(opt.ascending);
+    dispatch({ type: 'sort', orderBy: opt.order_by, ascending: opt.ascending });
     sessionStorage.setItem('catalog.order_by', opt.order_by);
     sessionStorage.setItem('catalog.ascending', String(opt.ascending));
     setPage(0);
@@ -483,13 +564,13 @@ export const ExternalProductManagement: React.FC = () => {
    * As chaves são `keyof CatalogStats`; só as que têm filtro booleano real na
    * listagem agem — o resto é no-op consciente (E33). */
   const handleKpiSelect = useCallback((key: keyof CatalogStats) => {
-    if (key === 'in_stock') setOnlyInStock(true);
-    else if (key === 'featured') setIsFeatured(true);
-    else if (key === 'new_30d') setIsNew(true);
+    if (key === 'in_stock') dispatch({ type: 'onlyInStock', value: true });
+    else if (key === 'featured') dispatch({ type: 'featured', value: true });
+    else if (key === 'new_30d') dispatch({ type: 'isNew', value: true });
     // CT-23 — filtro de estoque baixo (1..10): já existe na edge e em
     // CatalogFilters (`low_stock`); sem este branch o botão do alerta do rail
     // ficaria morto.
-    else if (key === 'low_stock') setLowStock(true);
+    else if (key === 'low_stock') dispatch({ type: 'lowStock', value: true });
   }, []);
 
   /** CT-23 — o alerta de estoque baixo do rail tem callback próprio
@@ -587,7 +668,37 @@ export const ExternalProductManagement: React.FC = () => {
         history.replaceState(null, '', url.toString());
       } catch { /* ignore */ }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchProduct]);
+
+  // CT-61 — atalhos do catálogo: `/` e Ctrl/Cmd+F focam a busca, Esc limpa a
+  // busca. O listener fica em CAPTURA no window: Ctrl/Cmd+F é atalho nativo do
+  // browser (abre o "localizar"), então só o `preventDefault` na captura impede
+  // o navegador de engolir o evento antes do app recebê-lo. `/` é ignorado
+  // quando o foco está num campo editável (não rouba o foco de quem digita).
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const isEditable = (target: EventTarget | null): boolean => {
+      const el = target as HTMLElement | null;
+      if (!el) return false;
+      return el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable;
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'f') {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+      if (event.key === '/' && !isEditable(event.target)) {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+      if (event.key === 'Escape') {
+        dispatch({ type: 'search', value: '' });
+      }
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
   }, []);
 
   return (
@@ -660,7 +771,7 @@ export const ExternalProductManagement: React.FC = () => {
 
       <AdvancedFilterChips
         filters={advFilters}
-        onChange={(next) => { setAdvFilters(next); setPage(0); }}
+        onChange={(next) => { dispatch({ type: 'advanced', filters: next }); setPage(0); }}
       />
 
       {parentCategories.length > 0 && (
@@ -675,13 +786,14 @@ export const ExternalProductManagement: React.FC = () => {
         <div className="flex-1 min-w-[250px] relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
+            ref={searchInputRef}
             placeholder="Buscar por nome, SKU ou marca..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => dispatch({ type: 'search', value: e.target.value })}
             className="pl-9"
           />
           {search && (
-            <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setSearch('')}>
+            <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => dispatch({ type: 'search', value: '' })}>
               <X className="w-4 h-4" />
             </Button>
           )}
@@ -711,7 +823,7 @@ export const ExternalProductManagement: React.FC = () => {
           </SelectContent>
         </Select>
 
-        <Select value={supplierId} onValueChange={setSupplierId} disabled={coolingDown}>
+        <Select value={supplierId} onValueChange={(v) => dispatch({ type: 'supplier', id: v })} disabled={coolingDown}>
           <SelectTrigger className="w-[170px]">
             <SelectValue placeholder="Fornecedor" />
           </SelectTrigger>
@@ -728,7 +840,7 @@ export const ExternalProductManagement: React.FC = () => {
         </Select>
 
         <div className="flex items-center gap-2">
-          <Switch id="stock-mgmt" checked={onlyInStock} onCheckedChange={setOnlyInStock} disabled={coolingDown} />
+          <Switch id="stock-mgmt" checked={onlyInStock} onCheckedChange={(v) => dispatch({ type: 'onlyInStock', value: v })} disabled={coolingDown} />
           <Label htmlFor="stock-mgmt" className="text-sm cursor-pointer">Em estoque</Label>
         </div>
 
@@ -807,6 +919,27 @@ export const ExternalProductManagement: React.FC = () => {
           onRetry={() => fetchProducts(buildFilters())}
           retryDisabled={coolingDown}
         />
+      )}
+
+      {/* CT-65 — chip da flag "Novidades": aparece só com `isNew` ligado (NÃO
+          com `hasFilters`, que agrega busca/categoria/fornecedor e faria o chip
+          surgir a cada letra digitada) e desliga o filtro num clique. Fica
+          acima da grade — o bloco "Mostrando X–Y de Z" continua sendo o
+          contador de paginação, não o chip. */}
+      {isNew && (
+        <div className="flex items-center gap-2" data-testid="catalog-flag-chip">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+            Mostrando só Novidades
+            <span aria-hidden="true" className="text-primary/50">·</span>
+            <button
+              type="button"
+              onClick={() => dispatch({ type: 'isNew', value: false })}
+              className="underline-offset-2 hover:underline"
+            >
+              limpar
+            </button>
+          </span>
+        </div>
       )}
 
       <div ref={gridRef}>
@@ -892,8 +1025,8 @@ export const ExternalProductManagement: React.FC = () => {
         onOpenChange={setAdvancedOpen}
         filters={advFilters}
         stats={stats}
-        onApply={(next) => { setAdvFilters(next); setPage(0); }}
-        onClear={() => { setAdvFilters({ ...DEFAULT_ADVANCED_FILTERS }); setPage(0); }}
+        onApply={(next) => { dispatch({ type: 'advanced', filters: next }); setPage(0); }}
+        onClear={() => { dispatch({ type: 'advanced', filters: { ...DEFAULT_ADVANCED_FILTERS } }); setPage(0); }}
       />
 
       {selectedIds.size > 0 && (
