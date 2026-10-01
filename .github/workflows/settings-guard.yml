@@ -1,0 +1,41 @@
+name: Settings Guard
+
+on:
+  schedule:
+    # Verifica configurações a cada 6h (00:15, 06:15, 12:15, 18:15 UTC)
+    - cron: '15 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: settings-guard
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    name: Verificar branch protection e allow_auto_merge
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🟩 Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: 🛡️ Verificar e restaurar configurações
+        # Política esperada: strict=true, allow_auto_merge=true.
+        # Se houver regressão: restaura via PATCH e abre/atualiza issue [settings-guard].
+        # Se OK: fecha a issue [settings-guard] se estiver aberta.
+        run: node scripts/ci/github-settings-guard.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
