@@ -18,6 +18,7 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
 vi.mock('@/hooks/integrations/useTalkXSegments', () => ({ useTalkXSegments: () => ({ segments: [] }) }));
 vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({ useTalkXTemplates: () => ({ templates: [] }) }));
 vi.mock('@/hooks/crm/useTeamProfiles', () => ({ useTeamProfiles: () => ({ data: [] }) }));
+vi.mock('@/hooks/crm/useContactCustomFields', () => ({ useContactCustomFields: () => ({ fields: [] }) }));
 vi.mock('@/components/talkx/TalkXCampaignWizard', () => ({
   TalkXCampaignWizard: ({ campaign, initial, onClose }: { campaign: { id?: string } | null; initial?: { step?: number }; onClose: () => void }) => (
     <section data-testid="wizard" data-campaign-id={campaign?.id ?? 'new'} data-step={initial?.step}>
@@ -37,6 +38,9 @@ vi.mock('@/components/talkx/TalkXCampaignScheduled', () => ({ TalkXCampaignSched
 vi.mock('@/components/talkx/TalkXCampaignRunning', () => ({ TalkXCampaignRunning: () => <div /> }));
 
 import TalkXView from '@/components/talkx/TalkXView';
+import { TalkXWizardReview } from '@/components/talkx/TalkXWizardDelivery';
+import { replaceTalkXWizardRoute } from '@/components/talkx/talkxWizardRoute';
+import type { WizardState } from '@/components/talkx/TalkXCampaignWizard';
 
 const draft = {
   id: 'draft_1', name: 'Rascunho seguro', status: 'draft', sent_count: 0,
@@ -105,5 +109,82 @@ describe('TalkXView wizard route integration', () => {
     });
 
     await waitFor(() => expect(screen.queryByTestId('wizard')).not.toBeInTheDocument());
+  });
+});
+
+/** `ed` mínimo só para renderizar a revisão (V22). */
+function reviewEd(overrides: Record<string, unknown> = {}) {
+  return {
+    name: 'Campanha V22', description: '', objective: 'sales',
+    audienceSource: 'contacts', selectedSegment: null,
+    selectedContacts: [], eligibleCount: 10, audienceTotal: 12,
+    respectSuppression: true, suppressedCount: 2,
+    selectedTemplate: null, messageTemplate: 'Oi {{nome}}',
+    speedProfile: 'normal', messagesPerMinute: 20, estimatedTime: '5 min',
+    isScheduled: false, scheduledAt: '', scheduleTimezone: 'America/Sao_Paulo',
+    sendWindowEnabled: false, sendWindowStart: '08:00', sendWindowEnd: '18:00',
+    businessHoursOnly: false,
+    connectionId: 'c1', connections: [{ id: 'c1', name: 'Conexão', phone_number: '5511999999999' }],
+    contacts: [],
+    confirmConsent: true, confirmContent: true, confirmSuppression: true,
+    canProceed: { 1: true, 2: true, 3: true, 4: true },
+    saving: false, hasMedia: false, mediaUrl: '', mediaType: null,
+    handleSave: vi.fn(), setStep: vi.fn(),
+    ...overrides,
+  } as unknown as WizardState;
+}
+
+// V22 — os botões "Editar" da revisão precisam navegar pela rota (onEditStep →
+// requestStep no wizard), nunca por ed.setStep: o efeito de rota do wizard
+// (TalkXCampaignWizard) reverte um passo que não tenha ido para a URL.
+describe('TalkXWizardReview — "Editar" respeita a rota (V22)', () => {
+  beforeEach(() => {
+    window.history.replaceState(null, '', '/?view=talkx&wizard=draft_1&step=4');
+  });
+
+  afterEach(() => vi.clearAllMocks());
+
+  it('navega pela rota com o passo da linha e a URL muda (sem tocar em ed.setStep)', async () => {
+    const setStep = vi.fn();
+    const onEditStep = vi.fn((step: 1 | 2 | 3 | 4) => {
+      replaceTalkXWizardRoute({ campaignId: 'draft_1', step });
+    });
+
+    render(
+      <TalkXWizardReview
+        ed={reviewEd({ setStep })}
+        campaign={draft as never}
+        onLaunched={() => {}}
+        onEditStep={onEditStep}
+      />
+    );
+
+    await act(async () => {
+      screen.getAllByRole('button', { name: /Editar/ })[0].click();
+    });
+
+    expect(setStep).not.toHaveBeenCalled();
+    expect(onEditStep).toHaveBeenCalledWith(1);
+    expect(new URLSearchParams(window.location.search).get('step')).toBe('1');
+  });
+
+  it('cada linha navega para o seu próprio passo (template → 2)', async () => {
+    const onEditStep = vi.fn();
+    render(
+      <TalkXWizardReview
+        ed={reviewEd()}
+        campaign={draft as never}
+        onLaunched={() => {}}
+        onEditStep={onEditStep}
+      />
+    );
+
+    // Ordem das linhas: 0 Nome(1), 1 Objetivo(1), 2 Público(1), 3 Supressão(3),
+    // 4 Template(2) — a 5ª linha.
+    await act(async () => {
+      screen.getAllByRole('button', { name: /Editar/ })[4].click();
+    });
+
+    expect(onEditStep).toHaveBeenCalledWith(2);
   });
 });
