@@ -93,3 +93,13 @@ export function agingDays(item: WorkItem, now: Date = new Date()): number {
   const changed = new Date(item.status_changed_at);
   return Math.floor((now.getTime() - changed.getTime()) / 86_400_000);
 }
+
+
+/** Etapa 28 (Fase C2): mover para Aguardando exige motivo. É a versão de UI da
+ *  regra que `canTransition` já aplica na escrita — pura para poder ser testada. */
+export function precisaMotivoDeEspera(
+  waitingReason: string | null | undefined,
+  to: WorkItemStatus,
+): boolean {
+  return to === 'waiting' && !waitingReason?.trim();
+}

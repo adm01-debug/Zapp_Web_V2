@@ -10,8 +10,9 @@ import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import type { WorkItemInput }   from '@/hooks/tasks/useMyWorkItems';
 import { WIP_LIMITS, KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
 import { splitDoneByRecency }   from '@/hooks/tasks/workItemAggregates';
+import type { WorkItemCardActions } from '../shared/cardActions';
 
-interface Props {
+interface Props extends WorkItemCardActions {
   status: WorkItemStatus;
   items: WorkItem[];
   isLoading: boolean;
@@ -24,7 +25,10 @@ interface Props {
   onCreate?: (input: WorkItemInput) => Promise<void>;
 }
 
-export function BoardColumn({ status, items, isLoading, doingCount, dragSourceStatus, onOpen, onMoveTo, onDelete, onCreate }: Props) {
+export function BoardColumn({
+  status, items, isLoading, doingCount, dragSourceStatus, onOpen, onMoveTo, onDelete, onCreate,
+  onOpenContact, onRequestWaitingReason, onComplete, onReopen, onSnooze, onClearReminder, onOpenReminder,
+}: Props) {
   const col   = KANBAN_COLUMNS.find(c => c.status === status)!;
   const limit = WIP_LIMITS[status];
   const hardFull  = limit.hard != null && doingCount >= limit.hard;
@@ -105,6 +109,15 @@ export function BoardColumn({ status, items, isLoading, doingCount, dragSourceSt
                       onOpen={() => onOpen(item)}
                       onMoveTo={(to) => onMoveTo(item, to)}
                       onDelete={() => onDelete(item)}
+                      contactName={item.contact?.name ?? undefined}
+                      onOpenContact={onOpenContact ? () => onOpenContact(item) : undefined}
+                      onRequestWaitingReason={onRequestWaitingReason ? () => onRequestWaitingReason(item) : undefined}
+                      doingCount={doingCount}
+                      onComplete={onComplete ? () => onComplete(item) : undefined}
+                      onReopen={onReopen ? () => onReopen(item) : undefined}
+                      onSnooze={onSnooze ? (minutes) => onSnooze(item, minutes) : undefined}
+                      onClearReminder={onClearReminder ? () => onClearReminder(item) : undefined}
+                      onOpenReminder={onOpenReminder ? () => onOpenReminder(item) : undefined}
                     />
                   </div>
                 )}
