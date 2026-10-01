@@ -28,6 +28,7 @@ export interface TalkXCampaign {
   sent_count: number;
   failed_count: number;
   delivered_count: number;
+  read_count?: number;
   outcome_unknown_count?: number;
   whatsapp_connection_id: string | null;
   created_by: string | null;

@@ -37,9 +37,10 @@ export function TalkXAnalytics({ campaigns }: Props) {
     const sent = filtered.reduce((a, c) => a + c.sent_count, 0);
     const failed = filtered.reduce((a, c) => a + c.failed_count, 0);
     const delivered = filtered.reduce((a, c) => a + c.delivered_count, 0);
+    const read = filtered.reduce((a, c) => a + (c.read_count ?? 0), 0);
     const outcomeUnknown = filtered.reduce((a, c) => a + (c.outcome_unknown_count ?? 0), 0);
     const total = sent + failed + outcomeUnknown;
-    return { sent, failed, delivered, outcomeUnknown, total, successRate: total > 0 ? Math.round((sent / total) * 1000) / 10 : 0 };
+    return { sent, failed, delivered, read, outcomeUnknown, total, successRate: total > 0 ? Math.round((sent / total) * 1000) / 10 : 0 };
   }, [filtered]);
 
   const { data: hourlyData } = useQuery({
@@ -169,11 +170,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
     return [
       { name: 'Enviadas', value: stats.sent, reported: true, fill: 'hsl(var(--primary))' },
       { name: 'Entregues', value: stats.delivered, reported: true, fill: 'hsl(var(--dash-green))' },
-      // A base atual não registra confirmação de leitura nem atribuição de
-      // conversão. Exibir uma projeção como se fosse telemetria induziria uma
-      // decisão comercial errada; estes estágios só serão numéricos quando
-      // houver eventos canônicos para eles.
-      { name: 'Lidas', value: null, reported: false, fill: 'hsl(var(--dash-violet))' },
+      { name: 'Lidas', value: stats.read, reported: true, fill: 'hsl(var(--dash-violet))' },
       { name: 'Conversões', value: null, reported: false, fill: 'hsl(var(--dash-amber))' },
     ];
   }, [stats]);
