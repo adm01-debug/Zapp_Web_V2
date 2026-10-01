@@ -392,7 +392,17 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   registrar na §10. **Aceite:** texto na §10.
 - [ ] **CT-52** — Botão "Enviar produto" no header do contato → `ExternalProductCatalog` com `presetContact` (CT-14).
   **Aceite:** evento em `catalog_send_events` com `contact_id` do perfil.
-- [ ] **CT-53** — Mesmo botão no CRM 360 (se a tela existir; senão registrar). **Aceite:** idem ou nota.
+- [x] **CT-53** — Mesmo botão no CRM 360 (se a tela existir; senão registrar). **Aceite:** idem ou nota.
+  **Nota (01/10/2026) — NÃO existe ponto de extensão; nada foi inventado.** O CRM 360 é um explorador
+  **somente-leitura de um banco CRM externo** (`useExternalTableBrowser` / `ExternalTableName`), não uma tela de perfil:
+  não há cabeçalho/detalhe de contato. A pasta `src/components/crm360/` contém só `CRM360ExplorerView.tsx` (header + abas +
+  `DataExplorerTable`), `CRM360StatsCards.tsx`, `DataExplorerTable.tsx` (tabela genérica), `CompanyFormDialog.tsx`,
+  `ContactFormDialog.tsx`, `crm360TabsConfig.ts` e `crm360TabsData.ts`. A aba "Contatos"
+  (`crm360TabsData.ts:26-37`) lista colunas do CRM (nome/cargo/departamento/estágio/score), **sem telefone/WhatsApp**, e o
+  clique na linha abre o `ContactFormDialog` (form de edição do CRM externo — `first_name`/`last_name`/`cpf`/…), que **não
+  carrega `contact_id` do Zapp nem telefone**. O envio de produto (`SendProductDialog`/`catalog_send_events`) exige um
+  contato do Zapp; adicionar o botão ali exigiria uma vinculação CRM→Zapp que não existe hoje. Portanto: **sem botão no
+  CRM 360** (não se inventa tela).
 - [ ] **CT-54** — Histórico "Produtos enviados" no perfil do contato (lista de `catalog_send_events` por `contact_id`,
   RLS já cobre). **Aceite:** teste RTL com mock.
   **🟡 DECISÃO (Joaquim, 01/10/2026):** o histórico por contato será **por agente na v1**; a visão de equipe fica para
