@@ -4,29 +4,12 @@
  * Cobre: grade/lista reusando CatalogProductCard, paginação TalkXPagination,
  * estados de vazio/erro do Talk X e o chip "Meus favoritos" (catalog_favorites).
  */
+import { toastError } from './catalogMocks';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ExternalProductCatalog } from '../ExternalProductCatalog';
 import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
-
-// CT-59 — o 429 dispara toast do sonner; sem mock o módulo real tentaria
-// montar o Toaster e o teste não conseguiria inspecionar a chamada.
-const toastError = vi.hoisted(() => vi.fn());
-vi.mock('sonner', () => ({
-  toast: Object.assign(vi.fn(), { error: toastError, success: vi.fn() }),
-}));
-
-// Radix Select (usado nos filtros) mede o trigger com ResizeObserver, API que
-// o jsdom não implementa — mesmo polyfill já usado em
-// ExternalProductManagement.test.tsx para conseguir abrir os selects.
-if (typeof window.ResizeObserver === 'undefined') {
-  window.ResizeObserver = class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  };
-}
 
 const mockCatalog = vi.hoisted(() => vi.fn());
 const mockFavorites = vi.hoisted(() => vi.fn());

@@ -1,22 +1,9 @@
+import { toastError } from './catalogMocks';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ExternalProductManagement } from '../ExternalProductManagement';
 import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
-
-// E36: a Sheet de filtros avançados agora tem um Slider real de preço
-// (@radix-ui/react-slider), que usa ResizeObserver (via @radix-ui/react-
-// use-size, no Thumb) pra medir o próprio tamanho — API que o jsdom não
-// implementa e o setup global de testes (src/test/setup.ts) não faz
-// polyfill dela (só de IntersectionObserver). Sem isso, os testes abaixo
-// que abrem a Sheet quebrariam o render.
-if (typeof window.ResizeObserver === 'undefined') {
-  window.ResizeObserver = class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  };
-}
 
 const mockProduct = (overrides: Partial<ExternalProduct> = {}): ExternalProduct => ({
   id: 'p1', name: 'Caneta Plástica Azul', description: null, short_description: 'Caneta azul',
@@ -36,12 +23,6 @@ const mockProduct = (overrides: Partial<ExternalProduct> = {}): ExternalProduct 
 const mockUseAuth = vi.fn();
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: (...args: unknown[]) => mockUseAuth(...args),
-}));
-
-// CT-59 — o 429 dispara toast do sonner.
-const toastError = vi.hoisted(() => vi.fn());
-vi.mock('sonner', () => ({
-  toast: Object.assign(vi.fn(), { error: toastError, success: vi.fn() }),
 }));
 
 // CT-70 — o componente lê `useReducedMotion`; aqui só esse hook do

@@ -10,6 +10,7 @@
  *     e confere que a entrada animada dos cards some, renderizando o estado
  *     final. Sem a flag, o contrário: a entrada animada volta.
  */
+import { toastError } from './catalogMocks';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -30,19 +31,6 @@ vi.mock('framer-motion', async (importOriginal) => {
   const actual = await importOriginal<typeof import('framer-motion')>();
   return { ...actual, useReducedMotion: () => reduceMotion.value };
 });
-
-const toastError = vi.hoisted(() => vi.fn());
-vi.mock('sonner', () => ({
-  toast: Object.assign(vi.fn(), { error: toastError, success: vi.fn() }),
-}));
-
-if (typeof window.ResizeObserver === 'undefined') {
-  window.ResizeObserver = class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  };
-}
 
 const mockCatalog = vi.hoisted(() => vi.fn());
 const mockFavorites = vi.hoisted(() => vi.fn());
