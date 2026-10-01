@@ -1,16 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 
 /**
  * O toque da chamada é o único alerta que cria o `AudioContext` na mão. Como a chamada
  * chega pelo Realtime (e não por um clique), o navegador entrega o contexto **suspenso** —
- * e um contexto suspenso não emite som nenhum, sem erro nenhum. Os outros dois caminhos
- * (`notificationSounds`, chat interno) já chamavam `resume()`; este não chamava.
+ * e um contexto suspenso não emite som nenhum, sem erro nenhum.
  *
- * O fake abaixo imita o comportamento do navegador (nasce `suspended`) e conta os
- * `resume()`: sem a correção, o teste fica vermelho.
+ * O fake abaixo imita o navegador de verdade, não a suposição: `resume()` só sai de
+ * `suspended` se a aba já tiver recebido um gesto do usuário (`ativacaoDoUsuario`).
+ * Com o fake antigo (que sempre virava `running`) o teste passava sem provar nada.
  */
-const ctxs: Array<{ state: string; estadoInicial: string; resume: ReturnType<typeof vi.fn> }> = [];
+const ctxs: FakeAudioContext[] = [];
 
 class FakeGainNode {
   gain = { value: 0 };
@@ -27,12 +27,13 @@ class FakeOscillatorNode {
 }
 
 class FakeAudioContext {
-  /** Como o navegador entrega o contexto quando não houve gesto do usuário. */
+  /** Sem interação do usuário, o navegador ignora o `resume()`. */
+  static ativacaoDoUsuario = false;
   estadoInicial = 'suspended';
   state = 'suspended';
   destination = {};
   resume = vi.fn(() => {
-    this.state = 'running';
+    if (FakeAudioContext.ativacaoDoUsuario) this.state = 'running';
     return Promise.resolve();
   });
   close = vi.fn();
@@ -43,7 +44,7 @@ class FakeAudioContext {
     return new FakeGainNode();
   }
   constructor() {
-    ctxs.push(this as never);
+    ctxs.push(this);
   }
 }
 
@@ -94,16 +95,43 @@ import { IncomingCallAlert } from '../IncomingCallAlert';
 describe('IncomingCallAlert — toque da chamada', () => {
   beforeEach(() => {
     ctxs.length = 0;
+    FakeAudioContext.ativacaoDoUsuario = false;
   });
 
   it('retoma o AudioContext suspenso — senão o toque de chamada é mudo', () => {
+    FakeAudioContext.ativacaoDoUsuario = true; // aba já usada: o navegador atende o resume
     render(<IncomingCallAlert />);
 
     expect(ctxs).toHaveLength(1);
-    // o contexto nasce suspenso (sem gesto do usuário)…
     expect(ctxs[0].estadoInicial).toBe('suspended');
-    // …e o componente precisa retomá-lo, senão o toque não sai
     expect(ctxs[0].resume).toHaveBeenCalledTimes(1);
     expect(ctxs[0].state).toBe('running');
+  });
+
+  it('sem nenhuma interação na aba, o toque sai no primeiro gesto do usuário', () => {
+    // Recém-carregada e sem clique: aqui o navegador IGNORA o resume do mount e o toque
+    // ficaria mudo até o usuário encostar em algo. O primeiro gesto é a única janela.
+    render(<IncomingCallAlert />);
+
+    expect(ctxs).toHaveLength(1);
+    expect(ctxs[0].state).toBe('suspended');
+
+    FakeAudioContext.ativacaoDoUsuario = true; // o usuário encostou na tela
+    fireEvent.pointerDown(document);
+
+    expect(ctxs[0].state).toBe('running');
+  });
+
+  it('para de escutar o gesto quando o alerta sai de cena', () => {
+    const { unmount } = render(<IncomingCallAlert />);
+    const ctx = ctxs[0];
+    const aposMontar = ctx.resume.mock.calls.length;
+
+    unmount();
+    FakeAudioContext.ativacaoDoUsuario = true;
+    fireEvent.pointerDown(document);
+    fireEvent.keyDown(document, { key: 'a' });
+
+    expect(ctx.resume.mock.calls.length).toBe(aposMontar);
   });
 });
