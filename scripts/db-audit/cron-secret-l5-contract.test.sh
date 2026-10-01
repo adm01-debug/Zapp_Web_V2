@@ -27,7 +27,7 @@
 #   arquivo do repo NAO e editado -- o proprio teste confere isso), num banco
 #   limpo, a assercao de ACL FALHA e o vazamento do segredo volta para a anon.
 #
-# BLOCO D (mutacao, follow-up): aplica 20260930390000_endurece_l5_contrato_e_jobs e
+# BLOCO D (mutacao, follow-up): aplica 20260930400000_cron_sem_dml_direto e
 #   prova, assercao a assercao, os furos medidos no contrato antigo MAIS a idempotencia --
 #   cada uma com uma MUTACAO em COPIA temporaria que a derruba e cuja mensagem crua sai
 #   rotulada [EVIDENCIA] (padrao do BLOCO C):
@@ -76,7 +76,7 @@ else
 fi
 migration_secrets="$migrations_dir/20260930240000_cron_secret_dedicado_l5.sql"
 migration_reschedule="$migrations_dir/20260930250000_reschedule_cron_secrets_l5.sql"
-migration_endurece="$migrations_dir/20260930390000_endurece_l5_contrato_e_jobs.sql"
+migration_endurece="$migrations_dir/20260930400000_cron_sem_dml_direto.sql"
 postgres_image="${CRON_SECRET_L5_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-cron-secret-l5-test-$$"
 
@@ -618,7 +618,7 @@ grep -qE '\^\[0-9a-f\]\{64\}\$' <<< "$sql_norm" \
   || fail 'o arquivo do repo perdeu a checagem de formato ^[0-9a-f]{64}$ do segredo'
 grep -qE 'REVOKE ALL ON FUNCTION public\.apply_zapp_cron_secrets_l5\(\) FROM PUBLIC, anon, authenticated, service_role' <<< "$sql_norm" \
   || fail 'o REVOKE do arquivo do repo tem de cobrir PUBLIC, anon, authenticated e service_role (mesmo com o REVOKE em duas linhas)'
-printf '[PASS] %s\n' 'D0 o arquivo do repo (20260930390000) esta intacto; toda mutacao e COPIA em $tmp_dir'
+printf '[PASS] %s\n' 'D0 o arquivo do repo (20260930400000) esta intacto; toda mutacao e COPIA em $tmp_dir'
 
 # ── assercao de ARQUIVO (E3.2): a migration NAO pode conter DML direto em cron.job ──
 # Por que: medido em producao, cron.job pertence a supabase_admin e as funcoes do pg_cron
