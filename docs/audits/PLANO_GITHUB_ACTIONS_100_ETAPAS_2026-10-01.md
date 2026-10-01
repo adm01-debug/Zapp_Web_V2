@@ -31,7 +31,7 @@ artifacts, PRs abertas, issues de alerta, check-runs do HEAD). Toda afirmação 
 | Environment `producao-edge-functions` | **sem `required_reviewers`** (só `branch_policy`) | CLAUDE.md ("Environments com aprovação humana") diz o contrário; o cabeçalho do `deploy-functions.yml` diz o certo |
 | Repo | `allow_auto_merge: false` | `auto-update-pr-branch.yml` filtra `autoMergeRequest != null` → **nunca** encontra PR; código morto desde sempre |
 | Secrets | 17 no repo, **0 em environments**; `VITE_CLIENTES_SUPABASE_URL`/`_ANON_KEY` não referenciados por nenhum workflow nem pelo `src/` | `SUPABASE_SERVICE_ROLE_KEY` (repo, 28/09) no mesmo job de um `bun install` **sem** `--ignore-scripts` (`e2e-logado.yml:58`) |
-| Apps de terceiros com check/comentário em PR | SonarCloud, CodeRabbit, cubic, Copilot, Vercel (2), Mermaid Sync, ECC Tools, Supabase | **SonarCloud Quality Gate ❌ na `main`** (5,1 % duplicação, Reliability D); ECC Tools posta 2 comentários por push com "Check publication was denied"; nenhum está inventariado no CLAUDE.md |
+| Apps de terceiros com check/comentário em PR | SonarCloud, CodeRabbit, cubic, Copilot, Vercel (2), Mermaid Sync, ECC Tools, Supabase, Greptile | **SonarCloud Quality Gate ❌ na `main`** (5,1 % duplicação, Reliability D); ECC Tools posta 2 comentários por push com "Check publication was denied"; nenhum está inventariado no CLAUDE.md |
 | Cache do Actions | 8 caches · 1,03 GB | Resolvido vs 27/09 (10 GB); restam 4 overlays CodeQL de 230 MB da `main` (27–28/09) |
 | Artifacts | **2.333** | `playwright-report`/`coverage-report`/`dist` a cada PR; ninguém consome `dist` nem `coverage-report` |
 | Code Scanning | 1 alerta aberto (#13, `validation.ts:143`, medium) há 26 dias | mesmo de 27/09 |
@@ -104,7 +104,7 @@ F-31 (skip-verde), F-32 (`SUPABASE_PROJECT_REF` como secret), F-35 (sem actionli
 Apps externos com check/comentário no HEAD da `main` e na PR #1343: **SonarCloud** (❌ Quality Gate na `main`),
 **Supabase Preview** (skipped em todo push), **CodeRabbit** (status), **cubic** (neutral), **Copilot reviewer**
 (dinâmico), **Vercel** (deploy + "Vercel Agent Review" + "Vercel Preview Comments"), **Mermaid Diagram Sync Assistant**
-(skipped), **ECC Tools** (2 comentários por push, sem permissão de check).
+(skipped), **ECC Tools** (2 comentários por push, sem permissão de check), **Greptile** (trial expirado: posta "Your trial has ended" como review em toda PR — visto na #1389), **Vercel Agent Review** ("Skipped because of insufficient Credit" em toda PR), **CodeRabbit** avisando "não conseguimos cobrar há mais de 72 h".
 
 ---
 
@@ -567,8 +567,8 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 
 ### Fase 7 — Governança, observabilidade e documentação (E89–E100)
 
-- [ ] **E89** · D ⚠️ · G-08/G-16 · Inventariar e decidir os 8 GitHub Apps: manter SonarCloud (com E10), CodeRabbit
-  **ou** cubic **ou** Copilot (não os 3 — 96 comentários em #1343), Vercel (necessário); **remover** ECC Tools (2
+- [ ] **E89** · D ⚠️ · G-08/G-16 · Inventariar e decidir os 9 GitHub Apps: manter SonarCloud (com E10), CodeRabbit
+  **ou** cubic **ou** Copilot (não os 3 — 96 comentários em #1343), Vercel (necessário); **remover** Greptile (trial expirado, só posta aviso), ECC Tools (2
   comentários por push, sem permissão de check, zero valor) e Mermaid Sync (skipped sempre) e Supabase for GitHub
   (G-34). Registrar a lista final no CLAUDE.md. Verificação: PR nova recebe ≤ 3 comentários de bot.
 - [ ] **E90** · B · G-23 · Notificação de falha na `main` por WhatsApp via N8N (webhook `workflow_run` →
