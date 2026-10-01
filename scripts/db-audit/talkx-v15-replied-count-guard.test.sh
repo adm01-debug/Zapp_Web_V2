@@ -103,7 +103,7 @@ fi
 psql_test -Atqc "UPDATE public.talkx_campaigns SET replied_count = 0 WHERE id='20000000-0000-0000-0000-000000000001'" >/dev/null
 
 # ---- GREEN: migration V15 protege replied_count + dropa a RPC ----
-psql_test < "$repo_root/supabase/migrations/20260930590000_talkx_v15_replied_count_guard_and_drop_increment.sql" >/dev/null \
+psql_test < "$repo_root/supabase/migrations/20260930660000_talkx_v15_replied_count_guard_and_drop_increment.sql" >/dev/null \
   || fail 'migration V15 nao aplicou (GREEN)'
 
 green_err="$(psql_test -Atqc "BEGIN; SET LOCAL request.jwt.claim.role='authenticated'; SET LOCAL request.jwt.claim.sub='10000000-0000-0000-0000-000000000001'; UPDATE public.talkx_campaigns SET replied_count = replied_count + 1 WHERE id='20000000-0000-0000-0000-000000000001'; COMMIT;" 2>&1 || true)"

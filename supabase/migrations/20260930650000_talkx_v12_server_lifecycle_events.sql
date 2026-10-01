@@ -1,5 +1,6 @@
 -- talkx_v12_server_lifecycle_events
--- versão 20260930570000 reservada para hermes-talkx-fase1-v12-v21-2610011215c53b em 2026-10-01T12:19:30-03:00 (hermes-db-migrar --nova)
+-- versão 20260930650000 reservada para hermes-talkx-fase1-v12-v21-2610011215c53b (renumerada de 20260930570000 por colisão de versão com outro chat)
+-- nomes-antigos-conferidos: transition_talkx_campaign — o DROP remove só a assinatura de 3 args; o código chama a de 4 args — evita PGRST203 de ambiguidade.
 -- rollback: 1) recrie a transition_talkx_campaign sem o INSERT de evento (corpo da 20260916210000, 3 args); 2) recrie complete_talkx_campaign_if_drained sem o INSERT de evento (corpo da 20260911170000); 3) V14: recrie a CHECK talkx_recipients_status_check sem 'cancelled' e remova o UPDATE de destinatários no caso 'cancel'.
 --
 -- V12 do PLANO_TALKX_V3_100_ETAPAS_2026-09-29.

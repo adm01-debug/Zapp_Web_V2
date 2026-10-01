@@ -1,5 +1,5 @@
 -- talkx_v15_replied_count_guard_and_drop_increment
--- versão 20260930590000 reservada para hermes-talkx-fase1-v12-v21-2610011215c53b (hermes-db-migrar --nova)
+-- versão 20260930660000 reservada para hermes-talkx-fase1-v12-v21-2610011215c53b (renumerada de 20260930590000 por colisão de versão com outro chat)
 -- rollback: 1) recrie a enforce_talkx_campaign_mutability() SEM 'replied_count' (corpo da 20260930360000);
 --           2) recrie a increment_talkx_template_use(uuid) e os GRANT/REVOKE (corpo da 20260909210000).
 --

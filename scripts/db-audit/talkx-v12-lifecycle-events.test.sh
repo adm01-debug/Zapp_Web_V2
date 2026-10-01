@@ -94,7 +94,7 @@ CREATE TABLE public.talkx_campaign_events (
 );
 SQL
 
-migration="$repo_root/supabase/migrations/20260930570000_talkx_v12_server_lifecycle_events.sql"
+migration="$repo_root/supabase/migrations/20260930650000_talkx_v12_server_lifecycle_events.sql"
 [[ -f "$migration" ]] || fail 'migration V12 nao existe'
 
 # ---- RED: transição ANTIGA (sem INSERT de evento) deixa 0 eventos ----

@@ -2,7 +2,7 @@
 -- versão 20260930640000 reservada para hermes-talkx-fase1-v12-v21-2610011215c53b em 2026-10-01 (hermes-db-migrar --nova)
 -- rollback: 1) ALTER TABLE ... DROP COLUMN launched_by, launched_at, respect_suppression, confirm_consent;
 --           2) recrie save_talkx_campaign_draft sem as flags (corpo da 20260912130000);
---           3) recrie transition_talkx_campaign sem launched_by/at (corpo da 20260930570000).
+--           3) recrie transition_talkx_campaign sem launched_by/at (corpo da 20260930650000).
 --
 -- V21 do PLANO_TALKX_V3_100_ETAPAS_2026-09-29.
 -- Fazer: flags de lançamento persistidas — respect_suppression / confirm_consent

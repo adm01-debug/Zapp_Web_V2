@@ -107,7 +107,7 @@ mesmos arquivos (`talkxShared.tsx` é o ponto de colisão — quem mexer nele ab
 **Hoje:** `talkx-send`/`scheduler` não gravam `started/paused/resumed/cancelled/completed`; timeline depende do cliente (Running e lista pausam sem evento).
 **Fazer:** dentro de `transition_talkx_campaign` (RPC) inserir o evento com `actor_id` (perfil do JWT ou `null` para worker) e `message` (motivo); `complete_talkx_campaign_if_drained` grava `completed`; remover os inserts duplicados do cliente (`TalkXLiveMonitor.tsx:223-231`, `useCampaignEditor.ts:574-584`).
 **Aceite:** teste SQL: sequência start→pause→resume→cancel gera 4 eventos com ator; Running/Monitor/lista mostram a mesma timeline.
-**✅ FEITO 2026-10-01:** migration `20260930570000_talkx_v12_server_lifecycle_events.sql` (transition 4-arg com `p_actor_id`/`p_pause_reason` + eventos started/resumed/paused/cancelled/completed, DROP do overload 3-arg); `logEvent` do cliente removido (Monitor/Editor); harness `scripts/db-audit/talkx-v12-lifecycle-events.test.sh` verde (red-first, 4 eventos com ator).
+**✅ FEITO 2026-10-01:** migration `20260930650000_talkx_v12_server_lifecycle_events.sql` (transition 4-arg com `p_actor_id`/`p_pause_reason` + eventos started/resumed/paused/cancelled/completed, DROP do overload 3-arg); `logEvent` do cliente removido (Monitor/Editor); harness `scripts/db-audit/talkx-v12-lifecycle-events.test.sh` verde (red-first, 4 eventos com ator).
 
 ### V13 · Pausa com motivo, retomada idempotente
 **Hoje:** action `pause` não repassa `reason` (`talkx-send/index.ts:218-222`); `resume` em `sending` = 409; modal sem textarea.
@@ -124,18 +124,18 @@ mesmos arquivos (`talkxShared.tsx` é o ponto de colisão — quem mexer nele ab
 ### V15 · Contadores íntegros: `replied_count` protegido, `use_count` único (P2-7, P2-4)
 **Fazer:** migration adiciona `replied_count` ao guard de `enforce_talkx_campaign_mutability`; remover chamadas de `increment_talkx_template_use` do front (`useCampaignEditor.ts:572`, `useTalkXTemplates.ts:151`) — o trigger E86 basta; `DROP FUNCTION increment_talkx_template_use` + `REVOKE`.
 **Aceite:** update direto de `replied_count` como authenticated → erro; lançar campanha com template incrementa `use_count` exatamente 1.
-**✅ FEITO 2026-10-01:** migration `20260930590000_talkx_v15_replied_count_guard_and_drop_increment.sql` (guard `replied_count` 42501 + DROP `increment_talkx_template_use`); front sem `registerUse` (`useCampaignEditor.ts`/`useTalkXTemplates.ts`); harness `scripts/db-audit/talkx-v15-replied-count-guard.test.sh` verde (red-first).
+**✅ FEITO 2026-10-01:** migration `20260930660000_talkx_v15_replied_count_guard_and_drop_increment.sql` (guard `replied_count` 42501 + DROP `increment_talkx_template_use`); front sem `registerUse` (`useCampaignEditor.ts`/`useTalkXTemplates.ts`); harness `scripts/db-audit/talkx-v15-replied-count-guard.test.sh` verde (red-first).
 
 ### V16 · Séries temporais contam `sent` + `delivered` (P2-5)
 **Fazer:** `talkx_campaign_report` CTE `hourly` e `TalkXAnalytics.tsx:96` usam `status in ('sent','delivered')` (ou `sent_at is not null`); série diária fixa em 7 dias em `talkx_overview_stats`; `contacts_reached` = `count(distinct contact_id)`.
 **Aceite:** teste SQL com 3 sent + 2 delivered → série = 5; contract test atualizado.
-**✅ FEITO 2026-10-01:** migration `20260930600000_talkx_v16_time_series_sent_delivered.sql` (hourly `status in ('sent','delivered')` + `count(distinct contact_id)` + zero-fill diário); `TalkXAnalytics.tsx` trocou `.eq('status','sent')`→`.in('status',['sent','delivered'])` (2 pontos); harness `talkx-v16-time-series.test.sh` verde (3+2=5).
+**✅ FEITO 2026-10-01:** migration `20260930670000_talkx_v16_time_series_sent_delivered.sql` (hourly `status in ('sent','delivered')` + `count(distinct contact_id)` + zero-fill diário); `TalkXAnalytics.tsx` trocou `.eq('status','sent')`→`.in('status',['sent','delivered'])` (2 pontos); harness `talkx-v16-time-series.test.sh` verde (3+2=5).
 
 ### V17 · Lidas reais (`read_at`) e KPI liberado
 **Hoje:** `read_at` não existe; READ só atualiza `messages`; contract test força "Lidas" = `null`.
 **Fazer:** migration `talkx_recipients add read_at timestamptz` + índice; `record_talkx_recipient_delivered` ganha `p_event ('delivered'|'read')`; webhook `READ/PLAYED` chama a RPC; `talkx_campaign_report` e Analytics expõem `read_count`; **inverter** o contract test (Lidas ≠ null quando há `read_at`).
 **Aceite:** teste Deno com webhook sintético READ → `read_at` preenchido; KPI "Lidas" aparece com número real.
-**✅ FEITO 2026-10-01:** migration `20260930610000_talkx_v17_read_at.sql` (`read_at`+índice, RPC `p_event ('delivered'|'read')`, `read_count` no report); webhook READ/PLAYED chama a RPC (`evolution-webhook-msg-handlers.ts`); contract test invertido (Lidas=`stats.read`, reported=true); harness `talkx-v17-read-at.test.sh` verde (read_at+read_count idempotente, red-first).
+**✅ FEITO 2026-10-01:** migration `20260930680000_talkx_v17_read_at.sql` (`read_at`+índice, RPC `p_event ('delivered'|'read')`, `read_count` no report); webhook READ/PLAYED chama a RPC (`evolution-webhook-msg-handlers.ts`); contract test invertido (Lidas=`stats.read`, reported=true); harness `talkx-v17-read-at.test.sh` verde (read_at+read_count idempotente, red-first).
 
 ### V18 · Respostas: janela configurável, tempo médio, sem recálculo no cliente
 **Hoje:** 72h fixo em `talkx-reply.ts:13`; Analytics recalcula com 24h/limite 5000.

@@ -1,5 +1,5 @@
 -- talkx_v16_time_series_sent_delivered
--- versão 20260930600000 reservada para hermes-talkx-fase1-v12-v21-2610011215c53b (hermes-db-migrar --nova)
+-- versão 20260930670000 reservada para hermes-talkx-fase1-v12-v21-2610011215c53b (renumerada de 20260930600000 por colisão de versão com outro chat)
 -- rollback: recrie talkx_campaign_report com o FILTER antigo (status='sent') e
 --           talkx_overview_stats com SUM(total_recipients) + série diária sem zero-fill
 --           (corpos da 20260916190000 e 20260916180000, respectivamente).
