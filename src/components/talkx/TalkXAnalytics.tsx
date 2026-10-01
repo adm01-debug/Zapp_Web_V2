@@ -46,7 +46,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
     queryKey: ['talkx-hourly-stats', period],
     queryFn: async () => {
       const { data } = await fromTable('talkx_recipients')
-        .select('sent_at, status').eq('status', 'sent')
+        .select('sent_at, status').in('status', ['sent', 'delivered'])
         .gte('sent_at', cutoff.toISOString()).not('sent_at', 'is', null);
       const heatmap: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
       const hourTotals: number[] = Array(24).fill(0);
@@ -93,7 +93,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
       if (sentCampaignIds.length === 0) return { replied: 0, sent: 0 };
       const { data: recips } = await fromTable('talkx_recipients')
         .select('contact_id, sent_at').in('campaign_id', sentCampaignIds)
-        .eq('status', 'sent').not('sent_at', 'is', null).limit(5000);
+        .in('status', ['sent', 'delivered']).not('sent_at', 'is', null).limit(5000);
       if (!recips?.length) return { replied: 0, sent: 0 };
       // Guarda TODOS os sent_at de cada contato (multiplas campanhas)
       const recipMap = new Map<string, number[]>();

@@ -351,6 +351,9 @@ jobs:
       - name: Simular guard de replied_count e remoção da RPC de use_count (V15)
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-v15-replied-count-guard.test.sh
 
+      - name: Simular série horária contando sent + delivered (V16)
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-v16-time-series.test.sh
+
       - name: Simular supressão de contato idempotente nos eixos phone e contact_id (V07b)
         env:
           TALKX_SUPPRESS_PHONE_TEST_POSTGRES_IMAGE: postgres:17-alpine
