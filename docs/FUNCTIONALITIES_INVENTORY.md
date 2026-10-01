@@ -183,6 +183,7 @@ VirtualizedMessageList, VirtualizedRealtimeList, VoiceSelector
 | Comparação de Filas | Custom | `src/components/queues/QueuesComparisonDashboard.tsx` |
 | Relatórios Avançados | Custom | `src/components/reports/AdvancedReportsView.tsx` |
 | PDF de diagnóstico | jsPDF ^4.2.1 | `src/components/monitoring/MonitoringDiagnosticPanel.tsx` |
+| PDF da auditoria (script) | jsPDF + jspdf-autotable | `generate_audit_pdf.ts` (checado por `scripts/ci/check-audit-pdf-determinism.mjs`) |
 | Indicador de Tendência | Custom | `src/components/dashboard/TrendIndicator.tsx` |
 
 ---
