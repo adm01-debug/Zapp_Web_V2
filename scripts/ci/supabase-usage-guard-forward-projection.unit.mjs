@@ -207,3 +207,31 @@ test('usage guard mantem funcao recriada por DROP+CREATE na mesma migration', ()
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.match(result.stdout, /projecao forward-only: 0 relacoes, 1 funcoes/);
 });
+
+test('usage guard projeta e valida objeto de outro schema (supabase.schema)', () => {
+  const result = runGuard({
+    migrations: {
+      '20260909210000_ops_audit.sql':
+        'CREATE TABLE ops.audit_log (id integer);\n'
+        + 'CREATE FUNCTION ops.log_event(p text) RETURNS void LANGUAGE sql AS $$ SELECT $$;\n',
+    },
+    callers: {
+      'c.ts': "supabase.schema('ops').from('audit_log').select('*');\n"
+        + "supabase.schema('ops').rpc('log_event', { p: 'x' });\n",
+    },
+  });
+  // O caller aponta para ops.audit_log / ops.log_event e a migration da janela
+  // criou exatamente esses objetos: sem o schema no scan e na projecao, o guard
+  // compararia 'audit_log' com o catalogo public e acusaria alvo inexistente.
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /projecao forward-only: 1 relacoes, 1 funcoes/);
+});
+
+test('usage guard ainda acusa alvo ausente em schema nao-public', () => {
+  const result = runGuard({
+    migrations: { '20260909210000_ops.sql': 'CREATE TABLE ops.existe (id integer);\n' },
+    callers: { 'c.ts': "supabase.schema('ops').from('nao_existe').select('*');\n" },
+  });
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stderr, /\('nao_existe'\)/);
+});

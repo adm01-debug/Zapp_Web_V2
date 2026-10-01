@@ -50,10 +50,16 @@ function scan() {
       ]) {
         let m;
         while ((m = re.exec(src))) {
-          const before = src.slice(Math.max(0, m.index - 90), m.index);
+          const before = src.slice(Math.max(0, m.index - 150), m.index);
           if (NON_MAIN.test(before)) continue;
+          // `supabase.schema('ops').from('x')` aponta para outro schema: o schema
+          // faz parte da identidade do alvo. Sem ele o guard compara 'x' com o
+          // catalogo public e acusa alvo inexistente (ou deixa passar um alvo de
+          // outro schema que nao existe). Sem `.schema(...)`, o padrao e public.
+          const schemaMatch = before.match(/\.schema\(\s*['"`]([a-zA-Z0-9_]+)['"`]\s*\)\s*$/);
           found.push({
             kind,
+            schema: (schemaMatch ? schemaMatch[1] : 'public').toLowerCase(),
             name: m[1],
             file: file.split(path.sep).join('/'),
             line: src.slice(0, m.index).split('\n').length,
@@ -73,8 +79,12 @@ function projectSchemaFromForwardMigrations(catalog) {
   // restauraria — e o guard aprovaria o DROP de uma tabela/funcao existente
   // ainda usada por um caller. Partindo do catalogo, o DROP remove tanto
   // objetos novos da janela quanto os ja catalogados.
-  const functions = new Set(catalog.functions);
-  const relations = new Set([...catalog.tables, ...catalog.views]);
+  // Chave QUALIFICADA (schema.nome). O catalogo cobre so o schema public, mas a
+  // janela forward-only pode criar/remover objetos em qualquer schema (ex.:
+  // supabase_migrations.reserve_migration_version). Guardar so o nome faria um
+  // objeto de outro schema colidir com um homonimo de public.
+  const functions = new Set(catalog.functions.map((n) => 'public.' + n));
+  const relations = new Set([...catalog.tables, ...catalog.views].map((n) => 'public.' + n));
   const migrationsDir = path.join(ROOT, 'supabase/migrations');
   if (!/^\d{8}$/.test(cutoff) || !fs.existsSync(migrationsDir)) return { functions, relations };
 
@@ -97,17 +107,20 @@ function projectSchemaFromForwardMigrations(catalog) {
     // assinatura (padrao do repo, ex.: adicionar include_legacy): o DROP venceria
     // e o objeto sumiria da projecao -> falso positivo "alvo nao existe".
     const ops = [];
-    for (const m of sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?(?:FUNCTION|ROUTINE|PROCEDURE)\s+public\.([a-zA-Z0-9_]+)\s*\(/gi)) {
-      ops.push({ at: m.index, kind: 'fn', op: 'add', name: m[1] });
+    // Qualquer schema (nao so public): o DDL real e qualificado e a chave e
+    // montada como schema.nome, igual a projecao do catalogo e ao scan().
+    const qual = (schema, name) => schema.toLowerCase() + '.' + name;
+    for (const m of sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?(?:FUNCTION|ROUTINE|PROCEDURE)\s+([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\s*\(/gi)) {
+      ops.push({ at: m.index, kind: 'fn', op: 'add', name: qual(m[1], m[2]) });
     }
-    for (const m of sql.matchAll(/DROP\s+(?:FUNCTION|ROUTINE|PROCEDURE)(?:\s+IF\s+EXISTS)?\s+public\.([a-zA-Z0-9_]+)\s*\(/gi)) {
-      ops.push({ at: m.index, kind: 'fn', op: 'del', name: m[1] });
+    for (const m of sql.matchAll(/DROP\s+(?:FUNCTION|ROUTINE|PROCEDURE)(?:\s+IF\s+EXISTS)?\s+([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\s*\(/gi)) {
+      ops.push({ at: m.index, kind: 'fn', op: 'del', name: qual(m[1], m[2]) });
     }
-    for (const m of sql.matchAll(/CREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?\s+public\.([a-zA-Z0-9_]+)/gi)) {
-      ops.push({ at: m.index, kind: 'rel', op: 'add', name: m[1] });
+    for (const m of sql.matchAll(/CREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?\s+([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)/gi)) {
+      ops.push({ at: m.index, kind: 'rel', op: 'add', name: qual(m[1], m[2]) });
     }
-    for (const m of sql.matchAll(/DROP\s+TABLE(?:\s+IF\s+EXISTS)?\s+public\.([a-zA-Z0-9_]+)/gi)) {
-      ops.push({ at: m.index, kind: 'rel', op: 'del', name: m[1] });
+    for (const m of sql.matchAll(/DROP\s+TABLE(?:\s+IF\s+EXISTS)?\s+([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)/gi)) {
+      ops.push({ at: m.index, kind: 'rel', op: 'del', name: qual(m[1], m[2]) });
     }
     ops.sort((a, b) => a.at - b.at);
     for (const change of ops) {
@@ -132,14 +145,19 @@ function main() {
     ? new Set(JSON.parse(fs.readFileSync(BASELINE, 'utf8')).known)
     : new Set();
 
-  const violations = scan().filter((h) =>
-    h.kind === 'from' ? !relations.has(h.name) : !functions.has(h.name),
-  );
+  const violations = scan().filter((h) => {
+    const alvo = h.schema + '.' + h.name;
+    return h.kind === 'from' ? !relations.has(alvo) : !functions.has(alvo);
+  });
 
   const seen = new Set();
   const novas = [];
   for (const v of violations) {
-    const key = v.kind + ':' + v.name + ':' + v.file;
+    // Chave do ratchet: o schema public fica implicito para nao invalidar o
+    // baseline existente (todo ele em public); alvo de outro schema entra
+    // qualificado, para nao confundir com um homonimo de public.
+    const alvo = v.schema === 'public' ? v.name : v.schema + '.' + v.name;
+    const key = v.kind + ':' + alvo + ':' + v.file;
     seen.add(key);
     if (!baseline.has(key)) novas.push({ ...v, key });
   }

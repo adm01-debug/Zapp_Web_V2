@@ -495,6 +495,24 @@ Deno.test("F06: manage_all inicia disparo de outro dono → permitido", async ()
   assert(start, "esperava a transicao de start com manage_all");
 });
 
+Deno.test("F06 (bug 01/10/2026): admin COM multiplix.dispatch.manage_all inicia disparo de OUTRO dono → permitido", async () => {
+  // Regressao medida: a permissao nomeada era consultada SO quando
+  // is_admin_or_supervisor era falso. Um admin que TINHA a permissao nunca
+  // era reconhecido — o gate de papel passava, hasManageAll continuava false e
+  // o start no disparo alheio voltava 403.
+  const { ctx, status } = await runWithJwt(startRequestOpts({
+    authUser: { id: "user-006" },
+    isAdminOrSupervisor: true,
+    manageAll: true,
+    dispatch: dispatchRow({ status: "draft", created_by: "profile-outro" }),
+  }));
+  assert(status === 200, `esperado 200 (admin com manage_all), recebido ${status}`);
+  assert(
+    rpcs(ctx, "transition_multiplix_dispatch").some((call) => call.args.p_action === "start"),
+    "esperava a transicao de start do disparo alheio com manage_all",
+  );
+});
+
 // ------------------------------------------------------------------- F09 (opt-out)
 
 Deno.test("F09: destinatário na lista negra vira 'skipped' com motivo, sem POST ao provedor", async () => {
@@ -517,17 +535,24 @@ Deno.test("F09: destinatário na lista negra vira 'skipped' com motivo, sem POST
 
 // ------------------------------------------------------------------- F11a (lote)
 
-Deno.test("F11a: fila maior que o lote drena em passadas de MULTIPLIX_BATCH_SIZE", async () => {
+Deno.test("F11a: uma invocacao processa UM lote (MULTIPLIX_BATCH_SIZE) e devolve a vez ao cron", async () => {
+  // Contrato alterado em 01/10/2026: antes o `passLoop: for(;;)` drenava o
+  // publico inteiro numa unica invocacao — a edge ficava aberta por horas (e
+  // estourava o limite de tempo). Agora cada invocacao processa UM lote e
+  // retorna; o cron `multiplix-send-trigger` (a cada 2 min) reinvoca.
   const opts = batchSendingOpts("551190000");
   const ctx = newCtx(opts);
   const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
   const body = await res.json();
   assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-  assert(body.total === 25, `total esperado 25, veio ${body.total}`);
-  assert(ctx.completions.length === 25, `esperava 25 conclusoes, recebeu ${ctx.completions.length}`);
-  // 25 itens / lote 20 = 2 passadas cheias + 1 selecao vazia que encerra o laco.
-  assert(ctx.limits.length === 3, `esperava 2 passadas cheias + 1 vazia, houve ${ctx.limits.length} selecoes limitadas`);
-  assert(ctx.limits.every((n) => n === 20), `lote default deveria ser 20, veio ${JSON.stringify(ctx.limits)}`);
+  assert(body.total === 20, `total esperado 20 (um lote de 25 disponiveis), veio ${body.total}`);
+  assert(ctx.completions.length === 20, `esperava 20 conclusoes, recebeu ${ctx.completions.length}`);
+  assert(ctx.limits.length === 1, `esperava 1 unica selecao limitada, houve ${ctx.limits.length}`);
+  assert(ctx.limits[0] === 20, `lote default deveria ser 20, veio ${JSON.stringify(ctx.limits)}`);
+  // Nao afirmamos body.completed aqui: o mock devolve true fixo para
+  // complete_multiplix_dispatch_if_drained — quem decide "concluido" e a funcao
+  // SQL, coberta pelos testes da F13. O que prova o lote unico e o teto de 20
+  // conclusoes acima, com 25 itens disponiveis na fila.
 });
 
 Deno.test("F11a: MULTIPLIX_BATCH_SIZE muda o tamanho do lote", async () => {
@@ -540,10 +565,9 @@ Deno.test("F11a: MULTIPLIX_BATCH_SIZE muda o tamanho do lote", async () => {
   } finally {
     Deno.env.delete("MULTIPLIX_BATCH_SIZE");
   }
-  assert(ctx.completions.length === 25, `esperava 25 conclusoes, recebeu ${ctx.completions.length}`);
-  // 25 itens / lote 5 = 5 passadas cheias + 1 selecao vazia que encerra o laco.
-  assert(ctx.limits.length === 6, `com lote 5 e 25 itens esperava 5 passadas + 1 vazia, houve ${ctx.limits.length}`);
-  assert(ctx.limits.every((n) => n === 5), `lote esperado 5, veio ${JSON.stringify(ctx.limits)}`);
+  assert(ctx.completions.length === 5, `esperava 5 conclusoes (um lote), recebeu ${ctx.completions.length}`);
+  assert(ctx.limits.length === 1, `esperava 1 unica selecao limitada, houve ${ctx.limits.length}`);
+  assert(ctx.limits[0] === 5, `lote esperado 5, veio ${JSON.stringify(ctx.limits)}`);
 });
 
 // ---------------------------------------------------------- F17 (cota diária)

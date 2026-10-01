@@ -1,4 +1,4 @@
-import { handleTalkxSend, personalize } from './index.ts';
+import { handleTalkxSend, personalize, randomBetween } from './index.ts';
 import {
   TEST_SERVICE_KEY, CAMPAIGN_ID, makePost,
   makeCampaign, makeConnection,
@@ -90,6 +90,27 @@ Deno.test('personalize does not leak an inherited Object.prototype property for 
   // vez de cair no fallback "[variavel]".
   const result = personalize('X: {{constructor}}', contact, {});
   assert(result === 'X: [constructor]', `unexpected result: ${result}`);
+});
+
+// ---------------------------------------------------------------------------
+// V09 — limites de envio (send_interval_min/max) respeitados
+// ---------------------------------------------------------------------------
+// O intervalo entre destinatários é sorteado dentro de [min, max] por
+// randomBetween (index.ts:88). O teto de 24h (86.400.000 ms) foi fechado pela
+// CHECK talkx_campaigns_send_interval_max_check (A2); este teste trava que o
+// sorteio nunca extrapola os limites — inclusive quando min === max.
+
+Deno.test('randomBetween respeita os limites inclusive min..max (V09)', () => {
+  for (let i = 0; i < 500; i++) {
+    const v = randomBetween(5000, 8000);
+    assert(v >= 5000 && v <= 8000, `fora dos limites [5000..8000]: ${v}`);
+    assert(Number.isInteger(v), `não é inteiro: ${v}`);
+  }
+});
+
+Deno.test('randomBetween devolve exatamente o valor quando min === max (teto 24h)', () => {
+  assert(randomBetween(86400000, 86400000) === 86400000, 'teto de 24h deve ser respeitado');
+  assert(randomBetween(0, 0) === 0, 'limite zero deve ser respeitado');
 });
 
 // ---------------------------------------------------------------------------
