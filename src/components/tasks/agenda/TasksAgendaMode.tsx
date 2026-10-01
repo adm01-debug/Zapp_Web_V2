@@ -46,7 +46,9 @@ export function TasksAgendaMode({ items, overdue, isLoading, onCreate, quickAddR
   const noDia   = new Set([...grupos.alarmes, ...grupos.prazos, ...grupos.semHora].map(i => i.id)).size;
 
   // Etapa 57: o dia selecionado vai pré-preenchido no QuickAdd (fim do dia, como
-  // os chips "Hoje/Amanhã" já faziam). O `key` remonta o campo ao trocar de dia.
+  // os chips "Hoje/Amanhã" já faziam). Fase F2 (auditoria): sem `key` — trocar de
+  // dia reaplica o prazo por dentro do campo (ajuste no render) e o rascunho
+  // digitado sobrevive à troca.
   const diaSelecionado = weeks[selectedDay]?.date ?? startDate;
   const dueDoDia = new Date(diaSelecionado);
   dueDoDia.setHours(23, 59, 0, 0);
@@ -64,11 +66,12 @@ export function TasksAgendaMode({ items, overdue, isLoading, onCreate, quickAddR
     <div className="flex flex-col gap-4">
       {/* Atrasadas (expansível; colapsado por padrão quando passa de 3) */}
       {overdue.length > 0 && (
-        <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2">
+        <div id="agenda-atrasadas" className="rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2">
           <button
             type="button"
             onClick={() => setMostraAtrasadas(v => !v)}
             aria-expanded={mostraAtrasadas}
+            aria-controls="agenda-atrasadas"
             className="flex w-full items-center gap-2 text-left"
           >
             <AlertCircle className="h-4 w-4 text-destructive" />
@@ -126,7 +129,6 @@ export function TasksAgendaMode({ items, overdue, isLoading, onCreate, quickAddR
 
       {/* QuickAdd do dia selecionado (etapa 57) */}
       <QuickAdd
-        key={selectedDay}
         ref={quickAddRef}
         onAdd={onCreate}
         defaultStatus="todo"

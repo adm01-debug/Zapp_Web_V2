@@ -1,5 +1,13 @@
 import { test, expect } from '@playwright/test';
 import {
+  MEDIA_VOLUME_LABEL,
+  MEDIA_VOLUME_LABEL_MUTED,
+  MEDIA_VOLUME_SLIDER_LABEL,
+  SOUND_VOLUME_LABEL,
+  SOUND_VOLUME_LABEL_MUTED,
+} from '../src/lib/volumeLabels';
+import { MEDIA_VOLUME_STORAGE_KEYS } from '../src/lib/mediaVolumeStore';
+import {
   E2E_FIXTURE_CONTACT_DISPLAY_NAME,
   ensureFixtureConversationOpen,
   cleanupFixtureMessages,
@@ -21,9 +29,11 @@ import {
 //   inventado em produção). Essa parte é coberta por
 //   `src/components/inbox/__tests__/MediaVolume.test.tsx` (E07/E12/E44) e pelo
 //   teste do elemento em `src/lib/__tests__/mediaVolumeElement.test.ts`.
-const LABEL_VOLUME = 'Volume dos áudios e vídeos';
-const LABEL_MUDO = 'Áudios e vídeos mudos';
-const CHAVE_VOLUME = 'zapp.media.volume';
+const LABEL_VOLUME = MEDIA_VOLUME_LABEL;
+const LABEL_MUDO = MEDIA_VOLUME_LABEL_MUTED;
+const LABEL_SLIDER = MEDIA_VOLUME_SLIDER_LABEL;
+const LABEL_ALERTA = new RegExp(`${SOUND_VOLUME_LABEL}|${SOUND_VOLUME_LABEL_MUTED}`);
+const CHAVE_VOLUME = MEDIA_VOLUME_STORAGE_KEYS.volume;
 
 test.describe('Volume das mídias de conversa', () => {
   test.beforeEach(async ({ page }) => {
@@ -60,7 +70,7 @@ test.describe('Volume das mídias de conversa', () => {
     await page.waitForTimeout(500);
     await page.mouse.up();
 
-    const slider = page.getByRole('slider', { name: 'Volume das mídias' });
+    const slider = page.getByRole('slider', { name: LABEL_SLIDER });
     await expect(slider).toBeVisible();
 
     // Determinismo (o teste era flaky e só passava no retry):
@@ -99,7 +109,7 @@ test.describe('Volume das mídias de conversa', () => {
     await page.waitForTimeout(500);
     await page.mouse.up();
 
-    await expect(page.getByRole('slider', { name: 'Volume das mídias' })).toHaveAttribute(
+    await expect(page.getByRole('slider', { name: LABEL_SLIDER })).toHaveAttribute(
       'aria-valuenow',
       String(valorEsperado),
     );
@@ -108,7 +118,7 @@ test.describe('Volume das mídias de conversa', () => {
   test('mudo da mídia não silencia os alertas e persiste no reload', async ({ page, browserName }) => {
     test.skip(browserName !== 'chromium', 'spec roda no project chromium-authenticated');
 
-    const alerta = page.getByRole('button', { name: /Volume dos alertas|Sons de alerta mudos/ });
+    const alerta = page.getByRole('button', { name: LABEL_ALERTA });
     const rotuloAlertaAntes = await alerta.getAttribute('aria-label');
 
     await page.getByRole('button', { name: LABEL_VOLUME }).click();
@@ -128,7 +138,13 @@ test.describe('Volume das mídias de conversa', () => {
     await expect(page.getByRole('button', { name: LABEL_VOLUME })).toBeVisible();
   });
 
-  test('se a conversa do fixture tiver áudio, o elemento nasce no volume escolhido', async ({ page, browserName }) => {
+  // `test.fixme` em vez de `test.skip(true, ...)` no CORPO: o fixture não garante mensagem
+  // de áudio, então este caso quase sempre pulava no meio da execução — um "verde" que
+  // nunca assertava nada. Declarado assim, o estado é honesto (aparece como fixme no
+  // relatório) e reabilitar é trocar `fixme` por `test` quando o fixture tiver áudio.
+  // A aplicação no elemento segue coberta por src/components/inbox/__tests__/MediaVolume.test.tsx
+  // e src/lib/__tests__/mediaVolumeElement.test.ts.
+  test.fixme('se a conversa do fixture tiver áudio, o elemento nasce no volume escolhido', async ({ page, browserName }) => {
     test.skip(browserName !== 'chromium', 'spec roda no project chromium-authenticated');
 
     await page.evaluate((chave) => window.localStorage.setItem(chave, '40'), CHAVE_VOLUME);
@@ -137,13 +153,6 @@ test.describe('Volume das mídias de conversa', () => {
     await page.locator('[data-testid="conversation-item"]').first().click();
 
     const audio = page.locator('audio').first();
-    if ((await audio.count()) === 0) {
-      test.skip(
-        true,
-        'conversa do fixture não tem mensagem de áudio — a aplicação no elemento é coberta por ' +
-          'src/components/inbox/__tests__/MediaVolume.test.tsx e src/lib/__tests__/mediaVolumeElement.test.ts',
-      );
-    }
 
     // 40% → ganho perceptual (40/100)² = 0.16
     await expect

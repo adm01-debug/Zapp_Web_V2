@@ -145,11 +145,15 @@ describe('VoIPPanel', () => {
 
   it('opens the call detail panel on row click and hides the dialer', async () => {
     const { supabase } = await import('@/integrations/supabase/client');
+    // T16 (D7): a linha traz as DUAS colunas, como o banco devolve hoje —
+    // `notes` é metadado do provedor (T66) e `agent_notes` é a anotação humana
+    // (T13, gravada por `set_call_agent_notes`). O campo tem de mostrar a segunda.
     const page = [{
       id: 'call-1', contact_id: 'contact-1', agent_id: 'profile-1', whatsapp_connection_id: null,
       direction: 'inbound', status: 'ended', started_at: new Date().toISOString(),
       answered_at: new Date().toISOString(), ended_at: new Date().toISOString(),
-      duration_seconds: 42, recording_url: null, notes: 'nota antiga',
+      duration_seconds: 42, recording_url: null,
+      notes: 'metadado do provedor', agent_notes: 'nota antiga',
       contact: { name: 'Maria Souza', phone: '5511999999999' },
     }];
     supabase.from.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: page, error: null } }));
@@ -161,6 +165,8 @@ describe('VoIPPanel', () => {
 
     expect(screen.getByText('Detalhe da chamada')).toBeInTheDocument();
     expect(screen.getByDisplayValue('nota antiga')).toBeInTheDocument();
+    // Prova do defeito: o metadado do provedor NÃO é a anotação do agente.
+    expect(screen.queryByDisplayValue('metadado do provedor')).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Digite o número')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByLabelText('Fechar detalhe'));
@@ -174,7 +180,7 @@ describe('VoIPPanel', () => {
       id: 'call-1', contact_id: 'contact-1', agent_id: 'profile-1', whatsapp_connection_id: null,
       direction: 'inbound', status: 'ended', started_at: new Date().toISOString(),
       answered_at: new Date().toISOString(), ended_at: new Date().toISOString(),
-      duration_seconds: 42, recording_url: null, notes: null,
+      duration_seconds: 42, recording_url: null, notes: null, agent_notes: null,
       contact: { name: 'Maria Souza', phone: '5511999999999' },
     }];
     supabase.from.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: page, error: null } }));
@@ -191,6 +197,61 @@ describe('VoIPPanel', () => {
     await waitFor(() => {
       expect(mockAddCallNotes).toHaveBeenCalledWith('call-1', 'Cliente pediu retorno amanhã');
     });
+  });
+
+  /**
+   * T16 (D7) — o ciclo que a auditoria mediu num probe de componente: salvar →
+   * fechar → reabrir a MESMA chamada deixava o campo VAZIO. Duas causas: o
+   * painel lia `notes` (metadado do provedor, T66) em vez de `agent_notes`
+   * (onde o T13 grava) e o histórico não era invalidado depois do save.
+   *
+   * Aqui a "linha do banco" começa sem anotação e o RPC passa a devolvê-la
+   * gravada em `agent_notes` — é a assimetria real entre a escrita do T13 e a
+   * leitura da UI.
+   */
+  it('D7: a anotação salva em `agent_notes` reaparece ao fechar e reabrir a mesma chamada', async () => {
+    const { supabase } = await import('@/integrations/supabase/client');
+    let linhas = [{
+      id: 'call-1', contact_id: 'contact-1', agent_id: 'profile-1', whatsapp_connection_id: null,
+      direction: 'inbound', status: 'ended', started_at: new Date().toISOString(),
+      answered_at: new Date().toISOString(), ended_at: new Date().toISOString(),
+      duration_seconds: 42, recording_url: null,
+      notes: 'metadado do provedor', agent_notes: null as string | null,
+      contact: { name: 'Maria Souza', phone: '5511999999999' },
+    }];
+    const builder = makeCallsQueryBuilder();
+    builder.range = vi.fn(() => Promise.resolve({ data: [...linhas], error: null }));
+    supabase.from.mockReturnValue(builder);
+    mockAddCallNotes.mockImplementation(async () => {
+      linhas = [{ ...linhas[0], agent_notes: 'Cliente pediu retorno amanhã' }];
+      return true;
+    });
+
+    renderWithProviders(<VoIPPanel />);
+    await waitFor(() => expect(screen.getByText('Maria Souza')).toBeInTheDocument());
+
+    const campoAnotacao = () => screen.getByPlaceholderText('Adicionar anotação sobre esta chamada...') as HTMLTextAreaElement;
+
+    // 1) Abre a chamada: o campo reflete `agent_notes` (vazio), nunca `notes`.
+    fireEvent.click(screen.getByText('Maria Souza'));
+    // Sonda (evidência crua do antes/depois): console.warn é o único permitido pelo
+    // `no-console` do projeto.
+    console.warn('[D7-antes] campo ao abrir:', JSON.stringify(campoAnotacao().value));
+
+    // 2) Escreve e salva (o RPC do T13 grava em `agent_notes`).
+    fireEvent.change(campoAnotacao(), { target: { value: 'Cliente pediu retorno amanhã' } });
+    fireEvent.click(screen.getByText('Salvar'));
+    await waitFor(() => expect(mockAddCallNotes).toHaveBeenCalledWith('call-1', 'Cliente pediu retorno amanhã'));
+    // O save invalida o histórico → a linha do banco é relida já com a anotação.
+    await waitFor(() => expect(builder.range.mock.calls.length).toBeGreaterThanOrEqual(2));
+
+    // 3) Fecha o detalhe e reabre a MESMA chamada.
+    fireEvent.click(screen.getByLabelText('Fechar detalhe'));
+    expect(screen.queryByText('Detalhe da chamada')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('Maria Souza'));
+
+    console.warn('[D7-depois] campo ao reabrir:', JSON.stringify(campoAnotacao().value));
+    expect(campoAnotacao().value).toBe('Cliente pediu retorno amanhã');
   });
 
   it('delegates the connect button to the shared call session (credential fetch lives in useSipClient)', async () => {

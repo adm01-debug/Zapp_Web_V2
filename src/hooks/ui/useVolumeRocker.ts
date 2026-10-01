@@ -30,7 +30,9 @@ export interface VolumeRocker {
 /**
  * Lógica de interação compartilhada dos controles de volume (alertas e mídias):
  * clique = mudo/desmudo (com dedup do clique longo), clique longo = abre o slider,
- * scroll = ajuste ±step, setas ↑/↓ = ajuste ±step, tecla M = mudo.
+ * scroll = ajuste ±step, setas ↑/↓ = ajuste ±step, Enter = abre o slider
+ * (equivalente de teclado do clique longo — sem ele, o popover era inalcançável
+ * por teclado nas variantes sem chevron), tecla M = mudo.
  *
  * Extraído para não duplicar o mesmo código nos dois controles (a duplicação
  * derruba o Quality Gate do SonarCloud: ≤ 3%). O `rootRef` entra como argumento e
@@ -111,12 +113,18 @@ export function useVolumeRocker({
       } else if (event.key === 'ArrowDown') {
         event.preventDefault();
         onAdjust(-step);
+      } else if (event.key === 'Enter') {
+        // Equivalente de teclado do clique longo: abre o slider. `preventDefault`
+        // impede o `click` nativo do botão (que alternaria o mudo) — mudo pelo
+        // teclado é Espaço ou `M`.
+        event.preventDefault();
+        setOpen(true);
       } else if (event.key === 'm' || event.key === 'M') {
         event.preventDefault();
         onToggleMute();
       }
     },
-    [enabled, onAdjust, onToggleMute, step],
+    [enabled, onAdjust, onToggleMute, step, setOpen],
   );
 
   return {

@@ -54,8 +54,15 @@ export class SipCallAdapter implements CallAdapter {
     return new Inviter(ua, target, { sessionDescriptionHandlerOptions: MEDIA_CONSTRAINTS });
   }
 
-  async invite(inviter: Inviter): Promise<void> {
-    await inviter.invite();
+  async invite(inviter: Inviter, onFinalReject?: (statusCode: number | undefined) => void): Promise<void> {
+    // O código SIP final NÃO fica no `Inviter` (sip.js 0.21 não expõe
+    // `lastResponse`): ele só passa pelo delegate da transação — `onReject`
+    // recebe a resposta 4xx/5xx/6xx e o número está em `response.message`.
+    await inviter.invite({
+      requestDelegate: {
+        onReject: (response) => onFinalReject?.(response.message.statusCode),
+      },
+    });
   }
 
   remoteNumberOf(session: Session): string {

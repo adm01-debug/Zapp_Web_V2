@@ -37,8 +37,13 @@ export interface CallAdapter {
   /** Cria o `Inviter` do destino. Não dispara o INVITE. */
   createInviter(ua: UserAgent, number: string): Promise<Inviter>;
 
-  /** Dispara o INVITE. */
-  invite(inviter: Inviter): Promise<void>;
+  /**
+   * Dispara o INVITE. `onFinalReject` recebe o código SIP da resposta final
+   * negativa (4xx/5xx/6xx) — é ele que diz 486 (ocupado) de 480 (não atendida);
+   * `undefined` quando a resposta veio sem código. Sem o callback, nenhuma
+   * resposta é observada.
+   */
+  invite(inviter: Inviter, onFinalReject?: (statusCode: number | undefined) => void): Promise<void>;
 
   /** Número remoto de uma sessão/convite de entrada. */
   remoteNumberOf(session: Session): string;

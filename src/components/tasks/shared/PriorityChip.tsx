@@ -8,15 +8,18 @@ const PRIORITY_STYLES: Record<Priority, string> = {
   urgent: 'bg-destructive/15 text-destructive border-destructive/40',
 };
 
-interface Props { priority: Priority; compact?: boolean; }
+/** Fase F2 (auditoria): prioridade nula ou fora do mapa não pode derrubar o card
+ *  nem imprimir "undefined" — cai no padrão do banco (`medium`). */
+interface Props { priority: Priority | null | undefined; compact?: boolean; }
 
 export function PriorityChip({ priority, compact = false }: Props) {
+  const p: Priority = priority != null && PRIORITY_LABELS[priority] ? priority : 'medium';
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-2xs font-semibold leading-none ${PRIORITY_STYLES[priority]}`}
-      title={`Prioridade: ${PRIORITY_LABELS[priority]}`}
+      className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-2xs font-semibold leading-none ${PRIORITY_STYLES[p]}`}
+      title={`Prioridade: ${PRIORITY_LABELS[p]}`}
     >
-      {compact ? PRIORITY_LABELS[priority][0] : PRIORITY_LABELS[priority]}
+      {compact ? PRIORITY_LABELS[p][0] : PRIORITY_LABELS[p]}
     </span>
   );
 }

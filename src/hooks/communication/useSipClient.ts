@@ -3,8 +3,7 @@ import { getLogger } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useSipConnection } from '../sip/useSipConnection';
-import { upsertMyCall, novoCallId, desfechoDaChamada } from '@/lib/calls/persistence';
-import type { UpsertMyCallInput } from '@/lib/calls/persistence';
+import { novoCallId, desfechoDaChamada, criarFilaDePersistencia, type CallEndOutcome, type UpsertMyCallInput } from '@/lib/calls/persistence';
 import { phoneQueryVariants, pickUniquePhoneMatch } from '@/lib/calls/phone';
 import { SipCallAdapter } from '@/lib/calls/adapters/SipCallAdapter';
 import { CallEngine } from '@/lib/calls/adapters/CallEngine';
@@ -23,9 +22,9 @@ const SIP_WS_PORT = 8089;
 
 /**
  * T09: estado espelhado do motor, cronômetro, toast e conexão. T11: o banco é
- * gravado por `upsert_my_call` (mesmo id nas 3 gravações) — `useCalls` sai.
+ * gravado por `upsert_my_call` (mesmo id nas 3 gravações) — `useCalls` sai. T12: `onEnd` recebe o desfecho fino do fim (quem encerrou + o código SIP).
  */
-export function useSipClient() {
+export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
   const [callStatus, setCallStatus] = useState<CallStatus>('idle');
   const [callDuration, setCallDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
@@ -34,6 +33,7 @@ export function useSipClient() {
   // T11: a linha no banco (= `sessionId` da máquina) e a direção fora do estado
   // (o sink é memoizado: `directionRef` evita closure velha).
   const [currentCallId, setCurrentCallId] = useState<string | null>(null);
+  const [filaDePersistencia] = useState(() => criarFilaDePersistencia()); // D3: ordem de chamada = ordem de gravação
   const directionRef = useRef<CallDirection | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stopTimer = useCallback(() => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } }, []);
@@ -52,7 +52,7 @@ export function useSipClient() {
   }, []);
   const sink: CallEngineSink = useMemo(() => {
     const persistir = async (input: UpsertMyCallInput) => {
-      const { ok, error } = await upsertMyCall(input);
+      const { ok, error } = await filaDePersistencia.executar(input);
       // Falha de banco nunca é silenciosa: log com o id da chamada + toast.
       if (!ok) { log.error(`Falha ao gravar a chamada (id=${input.id})`, error); toast.error('Não foi possível salvar a ligação'); }
     };
@@ -73,13 +73,13 @@ export function useSipClient() {
       onAnswered: (callId) => {
         void persistir({ id: callId, direction: directionRef.current ?? 'outbound', status: 'answered', answeredAt: new Date().toISOString() });
       },
-      onFinished: (callId, talkSeconds) => {
+      onFinished: (callId, talkSeconds, outcome) => {
         const direction = directionRef.current ?? 'outbound';
-        setCurrentCallId(null); // a próxima discagem não reaproveita a linha anterior
-        void persistir({ id: callId, direction, endedAt: new Date().toISOString(), talkSeconds, ...desfechoDaChamada(talkSeconds, direction) });
+        setCurrentCallId(null); onEnd?.(outcome); // a próxima discagem não reaproveita a linha anterior
+        void persistir({ id: callId, direction, endedAt: new Date().toISOString(), talkSeconds, ...desfechoDaChamada(talkSeconds, direction, outcome) });
       },
     };
-  }, [startTimer, stopTimer, findContactByPhone]);
+  }, [startTimer, stopTimer, findContactByPhone, filaDePersistencia, onEnd]);
 
   // Lazy init (não `useRef`): o motor é criado uma vez e nunca lido em render.
   const [engine] = useState(() => new CallEngine(new SipCallAdapter(log)));

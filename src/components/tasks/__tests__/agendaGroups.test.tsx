@@ -73,7 +73,7 @@ describe('TasksAgendaMode — etapa 57 (QuickAdd no dia selecionado)', () => {
     expect(prazo.getMinutes()).toBe(59);
   });
 
-  it('ao trocar de dia o campo remonta e passa a criar no dia novo', async () => {
+  it('F2 (auditoria): ao trocar de dia o rascunho SOBREVIVE e o prazo passa a ser o do dia novo', async () => {
     const onCreate = renderAgenda([]);
     fireEvent.change(screen.getByTestId('quick-add-input'), { target: { value: 'Rascunho' } });
 
@@ -81,13 +81,51 @@ describe('TasksAgendaMode — etapa 57 (QuickAdd no dia selecionado)', () => {
     fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${amanha.getDate()} de`, 'i') }));
 
     const campo = screen.getByTestId('quick-add-input');
-    expect((campo as HTMLInputElement).value).toBe('');
+    // Antes (etapa 57) o `key={selectedDay}` do pai remontava o campo e o texto
+    // digitado era DESCARTADO; agora o prazo é reaplicado por dentro do campo.
+    expect((campo as HTMLInputElement).value).toBe('Rascunho');
 
-    fireEvent.change(campo, { target: { value: 'Para amanhã' } });
     fireEvent.keyDown(campo, { key: 'Enter' });
 
     await waitFor(() => expect(onCreate).toHaveBeenCalledTimes(1));
     expect(new Date(onCreate.mock.calls[0][0].dueDate).getDate()).toBe(amanha.getDate());
+  });
+
+  it('F2 (auditoria): o 2º create seguido nasce COM prazo (antes vinha sem prazo e sumia da Agenda)', async () => {
+    const onCreate = renderAgenda([]);
+
+    fireEvent.change(screen.getByTestId('quick-add-input'), { target: { value: 'Primeira' } });
+    fireEvent.keyDown(screen.getByTestId('quick-add-input'), { key: 'Enter' });
+    await waitFor(() => expect(onCreate).toHaveBeenCalledTimes(1));
+
+    fireEvent.change(screen.getByTestId('quick-add-input'), { target: { value: 'Segunda' } });
+    fireEvent.keyDown(screen.getByTestId('quick-add-input'), { key: 'Enter' });
+    await waitFor(() => expect(onCreate).toHaveBeenCalledTimes(2));
+
+    const segunda = onCreate.mock.calls[1][0];
+    expect(segunda.title).toBe('Segunda');
+    expect(segunda.dueDate).not.toBeNull();
+    const prazo = new Date(segunda.dueDate);
+    expect(prazo.getDate()).toBe(new Date().getDate());
+    expect(prazo.getHours()).toBe(23);
+    expect(prazo.getMinutes()).toBe(59);
+  });
+
+  it('F2 (auditoria): o botão "Atrasadas" aponta para a REGIÃO que controla (`aria-controls`)', () => {
+    renderAgenda([], [makeItem({ title: 'Velha', due_date: asHoje(-3) })]);
+
+    const botao = screen.getByRole('button', { name: /atrasada/i });
+    const regiao = document.getElementById('agenda-atrasadas');
+
+    expect(botao.getAttribute('aria-controls')).toBe('agenda-atrasadas');
+    expect(regiao).toBeTruthy();
+    // F4 (auditoria M17): o alvo tem de ser a REGIÃO das atrasadas, não o próprio
+    // gatilho. Com o `id` no botão (mutação M17) o `aria-controls` vira
+    // auto-referente, aponta para um botão e não para o conteúdo que ele abre —
+    // o leitor de tela perde a relação. As duas linhas abaixo matam a mutação.
+    expect(regiao).not.toBe(botao);
+    expect(regiao!.tagName).not.toBe('BUTTON');
+    expect(regiao!.textContent).toContain('Velha');
   });
 });
 

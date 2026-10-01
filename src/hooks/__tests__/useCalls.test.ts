@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 
+// O mock do `supabase` precisa do `rpc`: `addCallNotes` grava pela RPC
+// `set_call_agent_notes` (T13) e, sem ele, a chamada lança e o teste falha.
+// A referência é preguiçosa de propósito (o factory do `vi.mock` roda antes da
+// inicialização das consts do módulo).
+const mockRpc = vi.fn().mockResolvedValue({ error: null });
+
 vi.mock('@/integrations/supabase/client', () => {
   const mockFrom = vi.fn().mockImplementation(() => ({
     insert: vi.fn().mockReturnValue({
@@ -21,6 +27,7 @@ vi.mock('@/integrations/supabase/client', () => {
   return {
     supabase: {
       from: mockFrom,
+      rpc: (...args: unknown[]) => mockRpc(...args),
       auth: { getUser: vi.fn() },
     },
   };
@@ -41,7 +48,10 @@ vi.mock('@/lib/logger', () => ({
 import { useCalls } from '../communication/useCalls';
 
 describe('useCalls', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRpc.mockResolvedValue({ error: null });
+  });
 
   it('should initialize with null currentCallId', () => {
     const { result } = renderHook(() => useCalls());
@@ -96,11 +106,16 @@ describe('useCalls', () => {
       success = await result.current.addCallNotes('call-1', 'Test note');
     });
     expect(success).toBe(true);
+    // T13: a anotação sai pela RPC, nunca por escrita de coluna em `calls`.
+    expect(mockRpc).toHaveBeenCalledWith('set_call_agent_notes', {
+      p_call_id: 'call-1',
+      p_notes: 'Test note',
+    });
   });
 
   it('should get contact calls', async () => {
     const { result } = renderHook(() => useCalls());
-    let calls: any[] = [];
+    let calls: unknown[] = [];
     await act(async () => {
       calls = await result.current.getContactCalls('contact-1');
     });
@@ -137,5 +152,10 @@ describe('useCalls', () => {
       success = await result.current.addCallNotes('call-1', '');
     });
     expect(success).toBe(true);
+    // Anotação vazia também vai pela RPC (a RPC decide o que fazer com isso).
+    expect(mockRpc).toHaveBeenCalledWith('set_call_agent_notes', {
+      p_call_id: 'call-1',
+      p_notes: '',
+    });
   });
 });

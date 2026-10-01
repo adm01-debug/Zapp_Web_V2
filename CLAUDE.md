@@ -431,3 +431,10 @@ já mergeadas em `main` (Fase 1 via PR #370, branch `feat/catalog-f1-design`). `
 não existe mais — próximas fases usam branch novo por fase, padrão `feat/talkx-f{N}-*`.
 - Plano completo: `docs/talkx/PLANO_IMPLEMENTACAO_TALKX_100.md`
 - **NUNCA** imprimir tokens ou secrets no output.
+
+## Contatos — critério de contato visível (2026-10-01, F5 / decisão D4)
+
+- **Contato visível em Contatos** = `deleted_at IS NULL` + `is_lid_legacy = false` + `phone ~ '^[0-9]{10,15}$'`.
+- `search_contacts(..., include_legacy boolean DEFAULT false)` e `contacts_count_by_type(include_legacy boolean DEFAULT false)` aplicam o critério quando `include_legacy` é falso (migration `20260930390000`).
+- O front só envia `include_legacy: true` quando o toggle "Mostrar legados" está ligado (`localStorage` `contact-show-legacy`); `useContactsKpi(includeLegacy)` repete o filtro para KPI Total == aba "Todos".
+- Mudar o critério = mudar os três juntos (migration + `CONTACT_VISIBLE_PHONE_PATTERN` em `src/hooks/crm/contactsAggregates.ts` + `scripts/db-audit/contacts-legacy-visibility.test.sh`).

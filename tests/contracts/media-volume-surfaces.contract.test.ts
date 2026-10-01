@@ -58,7 +58,7 @@ describe('volume de mídia — isenções explícitas, não silenciosas', () => 
   const isentas: Array<[string, string]> = [
     ['alerta de rate limit', 'src/utils/securityAlertSound.ts'],
     ['alerta de war room', 'src/hooks/business/useWarRoomAlerts.ts'],
-    ['alerta do chat interno', 'src/hooks/team-chat/useTeamChatNotifications.ts'],
+    ['alerta do chat interno', 'src/hooks/chat/useTeamChatNotifications.ts'],
   ];
 
   it.each(isentas)('%s não usa o controle e diz por quê', (_nome, arquivo) => {

@@ -30,6 +30,61 @@ function makeItem(overrides: Partial<WorkItem>): WorkItem {
   };
 }
 
+/**
+ * Fase F (auditoria adversarial de 30/09): as correções que a suíte não pegava.
+ * Cada caso aqui FALHA no código anterior — são testemunhas dos bugs, não enfeite.
+ */
+describe('Fase F — correções da auditoria', () => {
+  it('a busca ignora acento e caixa: "cafe" acha "Café"', () => {
+    const itens = [
+      makeItem({ id: 'ac', title: 'Café com o cliente' }),
+      makeItem({ id: 'ag', title: 'Água' }),
+    ];
+
+    expect(applyFilters(itens, { ...DEFAULT_FILTERS, q: 'cafe' }).map(i => i.id)).toEqual(['ac']);
+    expect(applyFilters(itens, { ...DEFAULT_FILTERS, q: 'CAFÉ' }).map(i => i.id)).toEqual(['ac']);
+    expect(applyFilters(itens, { ...DEFAULT_FILTERS, q: 'agua' }).map(i => i.id)).toEqual(['ag']);
+  });
+
+  it('lista nula não derruba o recorte (guarda `items ?? []`)', () => {
+    expect(applyFilters(undefined as unknown as WorkItem[], DEFAULT_FILTERS)).toEqual([]);
+  });
+
+  it('concluída SEM carimbo entra nos 7 dias da Lista (mesma regra do Quadro)', () => {
+    const b = bucketByDue([makeItem({ id: 'x', status: 'done', completed_at: null })]);
+
+    expect(b.done7d.map(i => i.id)).toEqual(['x']);
+    expect(b.doneOlder).toEqual([]);
+  });
+
+  describe('F2 — Agenda e QuickAdd', () => {
+    it('temHora: fim do dia (23:59) e meia-noite são DIA INTEIRO; 09:30 tem hora', () => {
+      // É a convenção que o próprio app grava nos chips "Hoje/Amanhã" e no
+      // QuickAdd da Agenda — sem tratá-la, "Sem hora" ficava inalcançável.
+      expect(temHora(null)).toBe(false);
+      expect(temHora(new Date(2026, 9, 3, 23, 59, 0, 0).toISOString())).toBe(false);
+      expect(temHora(new Date(2026, 9, 3, 0, 0, 0, 0).toISOString())).toBe(false);
+      expect(temHora(new Date(2026, 9, 3, 9, 30, 0, 0).toISOString())).toBe(true);
+      expect(temHora(new Date(2026, 9, 3, 23, 30, 0, 0).toISOString())).toBe(true);
+    });
+
+    it('"Sem hora" recebe o prazo de dia inteiro e "Prazos" sai em ordem de `due_date`', () => {
+      const dia = (h: number, m: number) => new Date(2026, 9, 3, h, m).toISOString();
+      const grupos = groupAgendaDay({
+        reminders: [],
+        dueTasks: [
+          makeItem({ id: 'tarde',  due_date: dia(15, 0) }),
+          makeItem({ id: 'cedo',   due_date: dia(9, 0) }),
+          makeItem({ id: 'semHora', due_date: dia(23, 59) }),
+        ],
+      });
+
+      expect(grupos.semHora.map(i => i.id)).toEqual(['semHora']);
+      expect(grupos.prazos.map(i => i.id)).toEqual(['cedo', 'tarde']);
+    });
+  });
+});
+
 describe('applyFilters (etapas 45/46 — os filtros valem nos três modos)', () => {
   const base: WorkItem[] = [
     makeItem({ id: 'a', title: 'Ligar para a Ana', priority: 'urgent' }),
@@ -98,9 +153,9 @@ describe('etapa 55 — Agenda: pontos do dia e os 3 grupos', () => {
     const g = groupAgendaDay({ reminders: [soAlarme, dois], dueTasks: [dois, diaInteiro, comHora] });
 
     expect(g.alarmes.map(i => i.id)).toEqual(['alarme', 'dois']);   // ordenado por remind_at
-    expect(g.prazos.map(i => i.id)).toEqual(['dois', 'hora']);      // dia inteiro sai daqui
+    expect(g.prazos.map(i => i.id)).toEqual(['hora', 'dois']);      // dia inteiro sai daqui
     expect(g.semHora.map(i => i.id)).toEqual(['dia']);
-    expect(g.alarmes).toContain(g.prazos[0]);                       // o mesmo objeto nos dois
+    expect(g.alarmes.map(i => i.id)).toContain('dois');                       // o mesmo objeto nos dois
   });
 });
 

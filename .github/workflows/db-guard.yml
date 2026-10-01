@@ -212,6 +212,11 @@ jobs:
           CONTACTS_F1_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/contacts-soft-delete-and-status.test.sh
 
+      - name: Simular contatos legados fora por padrão (include_legacy)
+        env:
+          CONTACTS_F5_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/contacts-legacy-visibility.test.sh
+
       - name: Simular autorização de status de conversa e etiquetas de WhatsApp
         env:
           WA_TAG_AUTHZ_TEST_POSTGRES_IMAGE: postgres:17-alpine
@@ -302,6 +307,31 @@ jobs:
         env:
           TALKX_UPDATE_LIMITS_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-update-limits-rpc.test.sh
+
+      - name: Simular correção da janela de envio via RPC Talk X (V09b)
+        env:
+          TALKX_UPDATE_LIMITS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-update-limits-send-window.test.sh
+
+      - name: Simular endurecimento de casts na RPC Talk X (V09c)
+        env:
+          TALKX_UPDATE_LIMITS_CASTS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-update-limits-casts.test.sh
+
+      - name: Simular correção do vazamento 22009 na RPC Talk X (V09e)
+        env:
+          TALKX_UPDATE_LIMITS_22009_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-update-limits-22009.test.sh
+
+      - name: Simular autenticação do escape hatch de limites Talk X (V09d)
+        env:
+          TALKX_ESCAPE_HATCH_AUTH_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-escape-hatch-auth.test.sh
+
+      - name: Simular supressão de contato idempotente nos eixos phone e contact_id (V07b)
+        env:
+          TALKX_SUPPRESS_PHONE_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-suppress-phone-axis.test.sh
 
       - name: Simular vazamento e correção da view de métricas Talk X
         env:

@@ -18,9 +18,9 @@
  */
 
 import { sipCodeToEndReason } from './callStatus';
-import type { EndReason, PersistedStatus } from './callStatus';
+import type { CallEndOutcome, EndReason, EndedBy, PersistedStatus } from './callStatus';
 
-export type { EndReason, PersistedStatus };
+export type { CallEndOutcome, EndReason, EndedBy, PersistedStatus };
 export { sipCodeToEndReason };
 
 /** Estados do ciclo de vida da chamada (Apêndice C). */
@@ -42,14 +42,8 @@ export type SessionChannel = 'voip' | 'whatsapp';
 
 // `EndReason` vem de ./callStatus (dono canônico do contrato — etapa 10).
 
-/** Como a chamada terminou do nosso ponto de vista (origem do encerramento). */
-export type EndedBy =
-  | 'hangup_local'
-  | 'hangup_remote'
-  | 'reject'
-  | 'cancel_remote'
-  | 'timeout'
-  | 'failure';
+// `EndedBy`/`CallEndOutcome` (T12) vêm do MESMO dono: a origem do encerramento
+// e o código SIP final são contrato de `./callStatus`; aqui só se reexporta.
 
 // `PersistedStatus` também vem de ./callStatus (mesma união da seção 2.7).
 
@@ -194,12 +188,15 @@ export function persistedStatusOf(state: CallSessionState): PersistedStatus | nu
 export function endReasonFor(state: CallSessionState, event: CallSessionEvent): EndReason | null {
   switch (event.type) {
     case 'HANGUP_LOCAL':
-      if (state.status === 'active') return 'completed';
+      // C3 (T12): na chamada ATENDIDA o motivo é QUEM encerrou — o desfecho
+      // `ended` da UI vem de `answered_at` (`closedResult`), então dizer
+      // `completed` aqui só escondia a origem do encerramento.
+      if (state.status === 'active') return 'hangup_local';
       if (state.status === 'ending') return state.endReason ?? 'cancelled';
       return isPreAnswer(state.status) ? 'cancelled' : null;
 
     case 'HANGUP_REMOTE':
-      if (state.status === 'active') return 'completed';
+      if (state.status === 'active') return 'hangup_remote';
       if (state.status === 'ending') return state.endReason ?? 'no_answer';
       if (isPreAnswer(state.status)) {
         return event.code === undefined ? 'no_answer' : sipCodeToEndReason(event.code);

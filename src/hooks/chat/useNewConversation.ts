@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
 import { escapeOrFilterValue } from '@/lib/postgrestFilters';
+import { invalidateContactsAggregates } from '@/hooks/crm/contactsAggregates';
 
 interface ContactResult {
   id: string;
@@ -102,8 +103,7 @@ export function useNewConversation(
         }
         contactId = newContact.id;
         // Criar contato no chat muda a quantidade (e o tipo default "cliente") dos contadores.
-        queryClient.invalidateQueries({ queryKey: ['contacts-kpi'] });
-        queryClient.invalidateQueries({ queryKey: ['contacts-type-counts'] });
+        invalidateContactsAggregates(queryClient);
         await supabase.functions.invoke('batch-fetch-avatars');
       }
       if (!contactId) { toast.error('Selecione um contato'); setIsSending(false); return; }

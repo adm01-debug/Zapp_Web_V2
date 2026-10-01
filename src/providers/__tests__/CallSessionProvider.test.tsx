@@ -12,17 +12,25 @@
  *    inválida por evento duplicado.
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CallSessionApi } from '../CallSessionProvider';
+import { useNavigationHistory } from '@/hooks/system/useNavigationHistory';
 
 /** O hook de SIP é o transporte — aqui ele é dublê, controlado pelo teste. */
-const h = vi.hoisted(() => ({ value: {} as Record<string, unknown> }));
+const h = vi.hoisted(() => ({
+  value: {} as Record<string, unknown>,
+  // T12: o callback de fim que o provider passa ao hook (`useSipClient(onEnd)`).
+  onEnd: undefined as ((outcome: unknown) => void) | undefined,
+}));
 
 vi.mock('@/hooks/communication/useSipClient', () => ({
-  useSipClient: () => h.value,
+  useSipClient: (onEnd?: (outcome: unknown) => void) => {
+    h.onEnd = onEnd;
+    return h.value;
+  },
 }));
 
 const { CallSessionProvider, useCallSession, VOIP_VIEW_SEARCH } = await import('../CallSessionProvider');
@@ -72,6 +80,7 @@ function Sonda() {
       <span data-testid="callDirection">{String(api.callDirection)}</span>
       <span data-testid="answeredAt">{api.session.answeredAt ?? '-'}</span>
       <span data-testid="endReason">{api.session.endReason ?? '-'}</span>
+      <span data-testid="sipCode">{api.session.sipCode ?? '-'}</span>
       <button onClick={() => { api.dial('11999992048'); }}>discar</button>
       <button onClick={() => { api.hangup(); }}>desligar</button>
       <button onClick={() => { void api.accept(); }}>aceitar</button>
@@ -81,12 +90,18 @@ function Sonda() {
   );
 }
 
+function SondaNav() {
+  const { currentView } = useNavigationHistory('inbox');
+  return <span data-testid="nav-view">{currentView}</span>;
+}
+
 function Harness({ rota = '/' }: { rota?: string }) {
   return (
     <MemoryRouter initialEntries={[rota]}>
       <CallSessionProvider>
         <RotaAtual />
         <Sonda />
+        <SondaNav />
       </CallSessionProvider>
     </MemoryRouter>
   );
@@ -101,6 +116,22 @@ function remontar(tela: ReturnType<typeof render>, rota = '/') {
 }
 
 const texto = (id: string) => screen.getByTestId(id).textContent;
+
+/** Warnings de transição inválida registrados (o esperado é nenhum). */
+function transicoesInvalidas(aviso: { mock: { calls: unknown[][] } }): string[] {
+  return aviso.mock.calls
+    .filter((linha) => String(linha[0]).includes(INVALID_TRANSITION_PREFIX))
+    .map((linha) => String(linha[0]));
+}
+
+/** Leva o provider a `active`: disca e depois o motor reporta `active`. */
+function emChamadaAtiva(): ReturnType<typeof render> {
+  const tela = montar();
+  fireEvent.click(screen.getByText('discar'));
+  h.value = sipDuble({ callStatus: 'active', callDirection: 'outbound', currentNumber: '11999992048' });
+  remontar(tela, `/${VOIP_VIEW_SEARCH}`);
+  return tela;
+}
 
 beforeEach(() => {
   h.value = sipDuble();
@@ -120,6 +151,17 @@ describe('CallSessionProvider (T10)', () => {
     expect(texto('status')).toBe('dialing');
     expect(texto('telefone')).toBe('11999992048');
     expect(texto('sessao')).not.toBe('-');
+  });
+
+  it('openDialer emite zapp:navigate e sincroniza useNavigationHistory para voip', () => {
+    montar();
+    expect(texto('nav-view')).toBe('inbox');
+
+    fireEvent.click(screen.getByText('abrir'));
+
+    // A view de telefonia é navegada via react-router, mas o hook precisa
+    // acompanhar pelo evento `zapp:navigate` — é o que esconde a ActiveCallBar.
+    expect(texto('nav-view')).toBe('voip');
   });
 
   it('mantém os campos que a UI antiga consome (VoIPPanel/DialPad/ActiveCallBar)', () => {
@@ -167,8 +209,7 @@ describe('CallSessionProvider (T10)', () => {
     expect(texto('endedBy')).toBe('hangup_local');
     expect(texto('status')).toBe('ended');
     // O efeito não repete o encerramento depois que o estado já é terminal.
-    const invalidas = aviso.mock.calls.filter((linha) => String(linha[0]).includes(INVALID_TRANSITION_PREFIX));
-    expect(invalidas).toEqual([]);
+    expect(transicoesInvalidas(aviso)).toEqual([]);
     aviso.mockRestore();
   });
 
@@ -213,10 +254,7 @@ describe('CallSessionProvider (T10)', () => {
     remontar(tela);
     expect(texto('status')).toBe('ended');
     expect(texto('endReason')).toBe('cancelled_remote');
-    const invalidas = aviso.mock.calls.filter((linha) =>
-      String(linha[0]).includes(INVALID_TRANSITION_PREFIX),
-    );
-    expect(invalidas).toEqual([]);
+    expect(transicoesInvalidas(aviso)).toEqual([]);
     aviso.mockRestore();
   });
 
@@ -237,10 +275,7 @@ describe('CallSessionProvider (T10)', () => {
     remontar(tela);
     expect(texto('status')).toBe('active');
     expect(texto('answeredAt')).not.toBe('-');
-    const invalidas = aviso.mock.calls.filter((linha) =>
-      String(linha[0]).includes(INVALID_TRANSITION_PREFIX),
-    );
-    expect(invalidas).toEqual([]);
+    expect(transicoesInvalidas(aviso)).toEqual([]);
     aviso.mockRestore();
   });
 
@@ -315,5 +350,229 @@ describe('CallSessionProvider (T10)', () => {
     } finally {
       vi.stubGlobal('crypto', original);
     }
+  });
+
+  /**
+   * T12 — o desfecho fino do fim (quem encerrou + código SIP) chega pelo `onEnd`
+   * do hook e é despachado num PONTO ÚNICO (`despacharFim`), com guarda de estado
+   * terminal. O clique em desligar continua fechando a sessão na hora, com
+   * `HANGUP_LOCAL`.
+   */
+  it('T12: desligamento local fecha a sessão como hangup_local (endReason, não só endedBy)', () => {
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    emChamadaAtiva();
+
+    act(() => { h.onEnd?.({ endedBy: 'hangup_local', sipCode: null }); });
+
+    expect(texto('status')).toBe('ended');
+    expect(texto('endReason')).toBe('hangup_local');
+    expect(texto('endedBy')).toBe('hangup_local');
+    expect(transicoesInvalidas(aviso)).toEqual([]);
+    aviso.mockRestore();
+  });
+
+  it('T12: fim informado pelo motor como remoto fecha a sessão como hangup_remote', () => {
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    emChamadaAtiva();
+
+    act(() => { h.onEnd?.({ endedBy: 'hangup_remote', sipCode: 200 }); });
+
+    expect(texto('status')).toBe('ended');
+    expect(texto('endReason')).toBe('hangup_remote');
+    expect(texto('endedBy')).toBe('hangup_remote');
+    expect(transicoesInvalidas(aviso)).toEqual([]);
+    aviso.mockRestore();
+  });
+
+  it('T12: sem clique, o status `ended` do motor também fecha como hangup_remote', () => {
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const tela = emChamadaAtiva();
+
+    h.value = sipDuble({ callStatus: 'ended', callDirection: 'outbound', currentNumber: '11999992048' });
+    remontar(tela, `/${VOIP_VIEW_SEARCH}`);
+
+    expect(texto('status')).toBe('ended');
+    expect(texto('endedBy')).toBe('hangup_remote');
+    expect(transicoesInvalidas(aviso)).toEqual([]);
+    aviso.mockRestore();
+  });
+
+  it('T12: o desfecho do hook NÃO reescreve um fim já decidido (guarda de terminal)', () => {
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    emChamadaAtiva();
+
+    fireEvent.click(screen.getByText('desligar'));
+    expect(texto('endedBy')).toBe('hangup_local');
+
+    // O `onEnd` do remoto chega DEPOIS do clique (e duas vezes): a guarda de
+    // terminal ignora os dois — sem duplo dispatch e sem warn de transição.
+    act(() => { h.onEnd?.({ endedBy: 'hangup_remote', sipCode: 200 }); });
+    act(() => { h.onEnd?.({ endedBy: 'hangup_remote', sipCode: 200 }); });
+
+    expect(texto('endedBy')).toBe('hangup_local');
+    expect(texto('status')).toBe('ended');
+    expect(transicoesInvalidas(aviso)).toEqual([]);
+    aviso.mockRestore();
+  });
+
+  /**
+   * T16 (D5) — o `despacharFim` colapsava TODO desfecho em `HANGUP_REMOTE`
+   * (só `hangup_local` escapava), então uma recusa virava "Cancelada por quem
+   * ligou" e uma falha técnica virava "Encerrada pelo outro lado". Cada caso
+   * abaixo é uma linha da tabela de `session.ts` que a auditoria mediu errada.
+   */
+  describe('T16 (D5) — o desfecho do motor vira a ação certa da máquina', () => {
+    /** Entrada ainda tocando (`ringing_in`), como o motor reporta hoje. */
+    function entradaTocando() {
+      const tela = montar();
+      h.value = sipDuble({ callStatus: 'ringing', callDirection: 'inbound', currentNumber: '5511988887777' });
+      remontar(tela);
+      expect(texto('status')).toBe('ringing_in');
+      return tela;
+    }
+
+    it('recusa (`reject`) fecha em `declined`, não em `cancelled_remote`', () => {
+      const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      entradaTocando();
+
+      act(() => { h.onEnd?.({ endedBy: 'reject', sipCode: 603 }); });
+
+      expect(texto('status')).toBe('ended');
+      expect(texto('endReason')).toBe('declined');
+      expect(texto('endedBy')).toBe('reject');
+      expect(texto('sipCode')).toBe('603');
+      expect(transicoesInvalidas(aviso)).toEqual([]);
+      aviso.mockRestore();
+    });
+
+    it('expiração (`timeout`) fecha em `timeout`, não em `cancelled_remote`', () => {
+      const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      entradaTocando();
+
+      act(() => { h.onEnd?.({ endedBy: 'timeout', sipCode: null }); });
+
+      expect(texto('endReason')).toBe('timeout');
+      expect(texto('endedBy')).toBe('timeout');
+      expect(transicoesInvalidas(aviso)).toEqual([]);
+      aviso.mockRestore();
+    });
+
+    it('falha técnica (`failure`) numa chamada ATENDIDA fecha em `failed`', () => {
+      const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      emChamadaAtiva();
+
+      act(() => { h.onEnd?.({ endedBy: 'failure', sipCode: null }); });
+
+      expect(texto('status')).toBe('ended');
+      expect(texto('endReason')).toBe('failed');
+      expect(texto('endedBy')).toBe('failure');
+      expect(transicoesInvalidas(aviso)).toEqual([]);
+      aviso.mockRestore();
+    });
+
+    it('cancelamento do remoto numa entrada continua `cancelled_remote` (tabela respeitada)', () => {
+      const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      entradaTocando();
+
+      act(() => { h.onEnd?.({ endedBy: 'cancel_remote', sipCode: 487 }); });
+
+      expect(texto('endReason')).toBe('cancelled_remote');
+      expect(texto('endedBy')).toBe('cancel_remote');
+      expect(transicoesInvalidas(aviso)).toEqual([]);
+      aviso.mockRestore();
+    });
+  });
+
+  /**
+   * T16 (D6) — "Desligar" numa chamada de ENTRADA que ainda toca despachava
+   * `HANGUP_LOCAL`, transição INVÁLIDA a partir de `ringing_in`: a máquina só
+   * logava warn e a chamada ficava presa. Desligar ali É recusar.
+   */
+  it('T16 (D6): desligar uma chamada de ENTRADA que ainda toca recusa (`declined`) sem transição inválida', () => {
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const tela = montar();
+    h.value = sipDuble({ callStatus: 'ringing', callDirection: 'inbound', currentNumber: '5511988887777' });
+    remontar(tela);
+    expect(texto('status')).toBe('ringing_in');
+
+    fireEvent.click(screen.getByText('desligar'));
+
+    expect(texto('status')).toBe('ended');
+    expect(texto('endReason')).toBe('declined');
+    expect(texto('endedBy')).toBe('reject');
+    // O SIP continua sendo desligado de fato.
+    expect(h.value.hangUp).toHaveBeenCalledTimes(1);
+    expect(transicoesInvalidas(aviso)).toEqual([]);
+    aviso.mockRestore();
+  });
+
+  /**
+   * T17 (D8) — o desfecho REAL engolido pela guarda de terminal.
+   *
+   * Medido com React real: o motor fecha `callStatus` ANTES de entregar o
+   * `onEnd`, o efeito vê `ended` com o estado ainda aberto e despacha o default
+   * hardcoded (`hangup_remote` sem código) — e o `onEnd` verdadeiro, que chega
+   * depois, batia na guarda `isTerminal` e era descartado. Resultado: um 486 do
+   * SIP ficava congelado como "não atendida" para sempre.
+   */
+  it('T17 (D8): o `onEnd` real PREVALECE sobre o fim presumido que o status `ended` despacha antes', () => {
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const tela = montar();
+    fireEvent.click(screen.getByText('discar'));
+    const sessao = texto('sessao');
+
+    // 1) A ORDEM do defeito: o motor publica `ended` primeiro…
+    h.value = sipDuble({ callStatus: 'ended', callDirection: 'outbound', currentNumber: '11999992048' });
+    remontar(tela, `/${VOIP_VIEW_SEARCH}`);
+    expect(texto('status')).toBe('ended');
+    expect(texto('endReason')).toBe('no_answer'); // desfecho presumido, sem código
+
+    // 2) …e só DEPOIS entrega o desfecho real (486 do SIP = ocupado).
+    act(() => { h.onEnd?.({ endedBy: 'hangup_remote', sipCode: 486 }); });
+
+    expect(texto('status')).toBe('ended');
+    expect(texto('endReason')).toBe('busy'); // 486, e não `no_answer`
+    expect(texto('sipCode')).toBe('486');
+    expect(texto('endedBy')).toBe('hangup_remote');
+    // A correção reconstrói a sessão sem perder a identidade.
+    expect(texto('sessao')).toBe(sessao);
+    expect(texto('telefone')).toBe('11999992048');
+    expect(transicoesInvalidas(aviso)).toEqual([]);
+    aviso.mockRestore();
+  });
+
+  /**
+   * O mesmo caminho numa chamada de ENTRADA ATENDIDA: a reconstrução precisa
+   * passar por `ACCEPT` (o `ESTABLISHED` só é válido a partir de `connecting`) e
+   * preservar o `answeredAt` original — e o motivo pedido é `failed`, que numa
+   * atendida só sai pelo evento `FAILED`.
+   */
+  it('T17 (D8): a correção reconstrói uma ENTRADA atendida sem perder `answeredAt`', () => {
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const tela = montar();
+    h.value = sipDuble({ callStatus: 'ringing', callDirection: 'inbound', currentNumber: '5511988887777' });
+    remontar(tela);
+    fireEvent.click(screen.getByText('aceitar'));
+    h.value = sipDuble({ callStatus: 'active', callDirection: 'inbound', currentNumber: '5511988887777' });
+    remontar(tela);
+    expect(texto('status')).toBe('active');
+    const sessao = texto('sessao');
+    const atendidaEm = texto('answeredAt');
+    expect(atendidaEm).not.toBe('-');
+
+    // Motor publica `ended` → fim presumido…
+    h.value = sipDuble({ callStatus: 'ended', callDirection: 'inbound', currentNumber: '5511988887777' });
+    remontar(tela);
+    expect(texto('endReason')).toBe('hangup_remote');
+
+    // …e o `onEnd` real chega depois com a falha técnica do SIP.
+    act(() => { h.onEnd?.({ endedBy: 'failure', sipCode: 500 }); });
+
+    expect(texto('endReason')).toBe('failed');
+    expect(texto('endedBy')).toBe('failure');
+    expect(texto('sessao')).toBe(sessao);
+    expect(texto('answeredAt')).toBe(atendidaEm);
+    expect(transicoesInvalidas(aviso)).toEqual([]);
+    aviso.mockRestore();
   });
 });

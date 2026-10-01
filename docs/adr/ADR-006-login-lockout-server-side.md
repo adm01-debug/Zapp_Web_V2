@@ -61,9 +61,13 @@ estado do lock. A reautenticação também diferencia indisponibilidade de senha
 passa a sair do IP da edge; para a equipe atual isso é folga de ordens de grandeza, mas é o
 teto a lembrar se o volume crescer.
 
-`record-failed-login` e `check-account-lock` permanecem inventariados como superfícies legadas;
-nenhum fluxo de login da aplicação deve chamá-los. Sua remoção só pode ocorrer após confirmar que
-não existem consumidores externos legítimos.
+`record-failed-login` e `check-account-lock` foram **removidas de produção em 01/10/2026**. A
+remoção foi autorizada depois de confirmar que não há consumidor: nenhum arquivo de código do
+repositório as chama (`src/`, `supabase/functions/`, `e2e/` — as únicas menções vivem em
+documentação) e `login_attempts` nunca registrou travamento (0 linhas com `locked_until`), o que
+mostra que o decisor de lockout em uso é o `auth-login` via RPC. O fonte publicado continua
+arquivado, só como histórico, em `docs/edge-functions-recovered/`; o login foi verificado antes e
+depois da remoção (mesma resposta 200 do `auth-login`).
 
 ## Consequências
 
@@ -83,5 +87,7 @@ password grant), validada antes de qualquer mudança no provedor de identidade.
 ## Referências
 
 - ADR-004 (gates), `docs/audits/AUDITORIA_TECNICA_22_DIMENSOES_2026-09-05.md` (Autenticação)
-- `supabase/functions/record-failed-login/index.ts`, `supabase/functions/check-account-lock/index.ts`
+- `docs/edge-functions-recovered/record-failed-login/index.ts.txt` e
+  `docs/edge-functions-recovered/check-account-lock/index.ts.txt` (fonte publicado, arquivado;
+  as funções foram removidas de produção em 01/10/2026)
 - `supabase/migrations/20260905010000_lockout_hardening.sql`

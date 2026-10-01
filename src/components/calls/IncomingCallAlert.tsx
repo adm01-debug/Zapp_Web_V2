@@ -26,6 +26,10 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
     if (incomingCall && !showDialog && soundAllowed) {
       try {
         const ctx = new AudioContext();
+        // A chamada chega pelo Realtime, não por um gesto do usuário: o navegador cria
+        // o AudioContext SUSPENSO e o toque fica MUDO, sem erro nenhum. Os outros dois
+        // caminhos de alerta (`notificationSounds`, chat interno) já retomam — aqui faltava.
+        if (ctx.state === 'suspended') void ctx.resume();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';

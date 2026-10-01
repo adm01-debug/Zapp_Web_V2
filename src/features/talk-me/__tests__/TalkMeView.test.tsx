@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { TalkMeQueueController } from '../useTalkMeQueue';
 import type { TalkMeWaitingContact } from '../types';
@@ -60,9 +61,12 @@ function controller(overrides: Partial<TalkMeQueueController> = {}): TalkMeQueue
     claimingContactId: null,
     queuesError: null,
     itemsError: null,
+    loadMoreError: null,
+    reconciling: false,
+    searchPending: false,
     totalCount: 2,
     hasMore: false,
-    loadMore: vi.fn(async () => undefined),
+    loadMore: vi.fn(async () => false),
     refresh: vi.fn(async () => undefined),
     claim: vi.fn(async (contactId: string) => ({
       contactId,
@@ -86,25 +90,32 @@ function renderView(ctrl = controller(), onAccepted = vi.fn(async () => undefine
 }
 
 describe('TalkMeView', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    HTMLElement.prototype.scrollTo = vi.fn();
+    HTMLElement.prototype.scrollBy = vi.fn();
+  });
 
   it('mostra os dados reais e mantém o atendimento mais antigo selecionado', () => {
     renderView();
-    expect(screen.getByText('Acme')).toBeInTheDocument();
-    expect(screen.getByText('Compradora')).toBeInTheDocument();
-    expect(screen.getByText('Preciso de cem caixas')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Ana Compras, aguardando/ })).toHaveAttribute('tabindex', '0');
-    expect(screen.getByText('2 mensagens aguardando resposta')).toBeInTheDocument();
+    const activeCard = screen.getByRole('button', { name: 'Ana Compras' });
+    expect(within(activeCard).getByText('Acme')).toBeInTheDocument();
+    expect(within(activeCard).getByText('Compradora')).toBeInTheDocument();
+    expect(within(activeCard).getByText('Preciso de cem caixas')).toBeInTheDocument();
+    expect(activeCard).toHaveAttribute('tabindex', '0');
+    expect(within(activeCard).getByText('2 mensagens aguardando resposta')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Selecionar Ana Compras' })).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('navega manualmente sem autoplay e oferece fallback para áudio e cadastro incompleto', () => {
     renderView();
     fireEvent.click(screen.getByRole('button', { name: 'Próximo atendimento' }));
 
-    expect(screen.getByRole('button', { name: /Bruno Financeiro, aguardando/ })).toHaveAttribute('tabindex', '0');
-    expect(screen.getByText('Empresa não informada')).toBeInTheDocument();
-    expect(screen.getByText('Cargo não informado')).toBeInTheDocument();
-    expect(screen.getByText('Mensagem de áudio')).toBeInTheDocument();
+    const activeCard = screen.getByRole('button', { name: 'Bruno Financeiro' });
+    expect(activeCard).toHaveAttribute('tabindex', '0');
+    expect(within(activeCard).getByText('Empresa não informada')).toBeInTheDocument();
+    expect(within(activeCard).getByText('Cargo não informado')).toBeInTheDocument();
+    expect(within(activeCard).getByText('Mensagem de áudio')).toBeInTheDocument();
   });
 
   it('aceita uma única identidade e só abre o chat depois da confirmação do servidor', async () => {
@@ -141,5 +152,154 @@ describe('TalkMeView', () => {
     renderView(ctrl);
     fireEvent.change(screen.getByLabelText('Buscar na fila TALK ME'), { target: { value: 'Acme' } });
     expect(ctrl.setSearch).toHaveBeenCalledWith('Acme');
+  });
+
+  it('move a seleção e o foco juntos ao navegar pelo cartão com o teclado', async () => {
+    renderView();
+    const ana = screen.getByRole('button', { name: 'Ana Compras' });
+    ana.focus();
+
+    fireEvent.keyDown(ana, { key: 'ArrowRight' });
+
+    const bruno = await screen.findByRole('button', { name: 'Bruno Financeiro' });
+    await waitFor(() => expect(bruno).toHaveFocus());
+    expect(bruno).toHaveAttribute('aria-current', 'true');
+    expect(bruno).toHaveAccessibleDescription(/Empresa não informada[\s\S]*Cargo não informado[\s\S]*Mensagem de áudio/);
+  });
+
+  it('não usa as setas do seletor de departamento para mover o carrossel', () => {
+    renderView();
+    const department = screen.getByRole('combobox', { name: 'Departamento' });
+    department.focus();
+    fireEvent.keyDown(department, { key: 'ArrowRight' });
+
+    expect(screen.getByRole('button', { name: 'Ana Compras' })).toHaveAttribute('aria-current', 'true');
+  });
+
+  it('bloqueia o aceite enquanto a busca nova ainda não foi reconciliada', () => {
+    renderView(controller({ search: 'novo termo', searchPending: true }));
+    expect(screen.queryByRole('button', { name: 'Aceitar e conversar' })).not.toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Carregando atendimentos' })).toBeInTheDocument();
+  });
+
+  it('sincroniza a seleção da faixa inferior com o cartão principal sem aceitar o contato', () => {
+    const ctrl = controller();
+    renderView(ctrl);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Selecionar Bruno Financeiro' }));
+
+    expect(screen.getByRole('button', { name: 'Bruno Financeiro' })).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByRole('button', { name: 'Selecionar Bruno Financeiro' })).toHaveAttribute('aria-pressed', 'true');
+    expect(ctrl.claim).not.toHaveBeenCalled();
+  });
+
+  it('aceita exatamente o contato selecionado na faixa inferior', async () => {
+    const ctrl = controller();
+    renderView(ctrl);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Selecionar Bruno Financeiro' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Aceitar e conversar' }));
+
+    await waitFor(() => expect(ctrl.claim).toHaveBeenCalledWith('contact-2'));
+    expect(ctrl.claim).not.toHaveBeenCalledWith('contact-1');
+  });
+
+  it('seleciona o próximo contato disponível quando o atual sai da fila', async () => {
+    const { rerender } = render(
+      <TooltipProvider>
+        <TalkMeView open onOpenChange={vi.fn()} controller={controller()} onAccepted={vi.fn()} />
+      </TooltipProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Selecionar Bruno Financeiro' }));
+
+    rerender(
+      <TooltipProvider>
+        <TalkMeView
+          open
+          onOpenChange={vi.fn()}
+          controller={controller({ items: [first], totalCount: 1, hasMore: false })}
+          onAccepted={vi.fn()}
+        />
+      </TooltipProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Ana Compras' })).toHaveAttribute('aria-current', 'true'));
+    expect(screen.getByRole('button', { name: 'Selecionar Ana Compras' })).toHaveAttribute('aria-pressed', 'true');
+    expect(toast.info).toHaveBeenCalledWith('O atendimento anterior saiu da fila. Exibimos o próximo disponível.');
+  });
+
+  it('congela seleção e navegação enquanto o aceite está em andamento', () => {
+    renderView(controller({ claimingContactId: 'contact-1' }));
+
+    expect(screen.getByRole('button', { name: 'Atendimento anterior' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Próximo atendimento' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Selecionar Bruno Financeiro' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Assumindo…' })).toBeDisabled();
+  });
+
+  it('desloca a faixa inferior sem alterar o contato pronto para aceite', () => {
+    renderView();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver próximos contatos na fila' }));
+
+    expect(HTMLElement.prototype.scrollBy).toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Ana Compras' })).toHaveAttribute('aria-current', 'true');
+  });
+
+  it('permite arrastar a faixa sem selecionar o cartão sob o ponteiro', () => {
+    renderView();
+    const viewport = screen.getByLabelText('Contatos aguardando atendimento');
+
+    fireEvent.pointerDown(viewport, { pointerId: 1, isPrimary: true, clientX: 240, clientY: 100 });
+    fireEvent.pointerMove(viewport, { pointerId: 1, isPrimary: true, clientX: 120, clientY: 104 });
+    fireEvent.pointerUp(viewport, { pointerId: 1, isPrimary: true, clientX: 120, clientY: 104 });
+    fireEvent.click(screen.getByRole('button', { name: 'Selecionar Bruno Financeiro' }));
+
+    expect(viewport.scrollLeft).toBe(120);
+    expect(screen.getByRole('button', { name: 'Ana Compras' })).toHaveAttribute('aria-current', 'true');
+  });
+
+  it('carrega a página seguinte quando o usuário avança além do último cartão carregado', () => {
+    const loadMore = vi.fn(async () => false);
+    renderView(controller({ items: [first], totalCount: 51, hasMore: true, loadMore }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Próximo atendimento' }));
+
+    expect(loadMore).toHaveBeenCalledTimes(1);
+  });
+
+  it('conclui a intenção de avanço quando o próximo cartão chega pela paginação', async () => {
+    function PaginatedHarness() {
+      const [items, setItems] = useState([first]);
+      const loadMore = vi.fn(async () => {
+        setItems([first, second]);
+        return true;
+      });
+      return (
+        <TooltipProvider>
+          <TalkMeView
+            open
+            onOpenChange={vi.fn()}
+            controller={controller({ items, totalCount: 2, hasMore: items.length < 2, loadMore })}
+            onAccepted={vi.fn()}
+          />
+        </TooltipProvider>
+      );
+    }
+    render(<PaginatedHarness />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Próximo atendimento' }));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Bruno Financeiro' })).toHaveAttribute('aria-current', 'true'));
+  });
+
+  it('mantém a fila visível e permite repetir quando apenas a próxima página falha', () => {
+    const loadMore = vi.fn(async () => true);
+    renderView(controller({ loadMoreError: 'Não foi possível carregar mais atendimentos.', loadMore }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Não foi possível carregar mais atendimentos.');
+    expect(screen.getByRole('button', { name: 'Ana Compras' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+    expect(loadMore).toHaveBeenCalledTimes(1);
   });
 });

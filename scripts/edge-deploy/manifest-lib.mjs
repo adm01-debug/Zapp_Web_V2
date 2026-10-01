@@ -136,6 +136,16 @@ function manifestDigest(manifestWithoutDigest) {
   return sha256(`zapp-edge-deployment-manifest-v1\0${JSON.stringify(manifestWithoutDigest)}`);
 }
 
+// Falha que nao se resolve esperando: configuracao do repo (config.toml,
+// manifesto, allowlists) ou bundle publicado divergente. O coletor pos-deploy
+// (stable-inventory.mjs) so aborta na hora para erros marcados assim; os
+// demais seguem tratados como propagacao lenta da Management API.
+function permanentError(message) {
+  const error = new Error(message);
+  error.permanent = true;
+  return error;
+}
+
 export async function buildDeploymentManifest({ repoRoot, orphanAllowlist = [], legacyUnmanaged = [] }) {
   const absoluteRepoRoot = path.resolve(repoRoot);
   const functionsRoot = path.join(absoluteRepoRoot, 'supabase', 'functions');
@@ -155,8 +165,17 @@ export async function buildDeploymentManifest({ repoRoot, orphanAllowlist = [], 
   functionNames.sort();
 
   if (functionNames.length === 0) throw new Error('No Edge Functions found');
+  // Funcoes legadas nao gerenciadas (declaradas em scripts/edge-deploy/legacy-functions.json)
+  // cobrem o caso de uma funcao que roda em producao sem fonte na arvore de deploy: sem esta
+  // tolerancia nao existe ordem possivel para declarar o verify_jwt dela - a excecao antes do
+  // fonte e recusada aqui, e o fonte sem a excecao faz o proximo deploy reverter a funcao para
+  // verify_jwt=true (default do CLI), quebrando quem a chama antes de existir sessao.
+  // Em 01/10/2026 a lista esta vazia (as duas ultimas, de lockout do login, foram removidas de
+  // producao): o mecanismo fica dormente ate existir outra funcao nessa condicao. Funcoes desta
+  // lista seguem fora de functions[], logo nao entram em deploy, hash de closure nem atestacao.
+  const legacyUnmanagedSet = new Set(legacyUnmanaged);
   for (const configuredName of settings.keys()) {
-    if (!functionNames.includes(configuredName)) {
+    if (!functionNames.includes(configuredName) && !legacyUnmanagedSet.has(configuredName)) {
       throw new Error(`Function configured but missing entrypoint: ${configuredName}`);
     }
   }
@@ -275,18 +294,26 @@ export function buildDeploymentAttestation({
   const orphanSet = new Set(manifest.orphan_allowlist ?? []);
   const unexpectedExtra = extra.filter((name) => !legacyAllowed.has(name) && !orphanSet.has(name));
   if (missing.length || unexpectedExtra.length) {
-    throw new Error(`Remote function set mismatch; missing=[${missing.join(',')}], extra=[${unexpectedExtra.join(',')}]`);
+    // Funcao remota nao declarada e configuracao (manifesto x allowlists), nao
+    // propagacao: esperar nao cria nem apaga funcao. Sem a marca, o passo
+    // pos-deploy queimava 144 amostras (~24 min) para terminar com
+    // "Remote inventory did not stabilize", escondendo a causa real.
+    // `missing` continua transitorio de proposito: a lista remota pode estar
+    // propagando a criacao de uma funcao recem-publicada.
+    const failure = new Error(`Remote function set mismatch; missing=[${missing.join(',')}], extra=[${unexpectedExtra.join(',')}]`);
+    if (unexpectedExtra.length > 0) failure.permanent = true;
+    throw failure;
   }
 
   const functions = manifest.functions.map((expected) => {
     const remote = remoteByName.get(expected.name);
     if (remote.verify_jwt !== expected.verify_jwt) {
-      throw new Error(
+      throw permanentError(
         `${expected.name}: verify_jwt mismatch; expected=${expected.verify_jwt}, remote=${remote.verify_jwt}`,
       );
     }
     if (!/^[a-f0-9]{64}$/.test(remote.ezbr_sha256 ?? '')) {
-      throw new Error(`${expected.name}: remote bundle digest is missing`);
+      throw permanentError(`${expected.name}: remote bundle digest is missing`);
     }
     if (remote.status !== 'ACTIVE' || !Number.isInteger(remote.version) || remote.version < 1) {
       throw new Error(`${expected.name}: remote function must be ACTIVE with a positive version`);

@@ -94,7 +94,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 ## CP-C Sheet       [ ] WorkItemSheet= · ?task= · Aguardando por DnD/kebab/menu= · kebab 5 grupos= · RemindChip popover= · ContactChip=
 ## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
-## CP-E Telas       [~] etapas 43, 44, 45 e 46, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8), 53, 55, 56 e 57 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos: ok (barra de 5 filtros, estado na URL por replaceState, recorte único) · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos: ok (3 grupos, ponto por tipo, atrasadas expansível) · card agenda: ok (h-11, 1 linha, checkbox) · QuickAdd no dia: ok (pré-preenchido) · 0 requests na troca= · modo por rota: ok
+## CP-E Telas       [~] etapas 43, 44, 45 e 46, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8), 53, 55, 56 e 57 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos: ok (barra de 5 filtros, estado na URL por replaceState, recorte único) · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos: ok (3 grupos, ponto por tipo, atrasadas expansível) · card agenda: ok (h-11, 1 linha, checkbox) · QuickAdd no dia: ok (pré-preenchido) · 0 requests na troca= · modo por rota: ok · auditoria F1: ok (7 correções; 9 mutações mortas) · auditoria F2: ok (7 correções; 7 mutações mortas) · auditoria F3: ok (A4 16/16 mutações mortas; A1-1 corrigido; 3 achados do A2 na fila) · cenários F4: ok (7 sobreviventes da F3 cobertos; 5/5 mutações mortas)
 
 ## Etapa 47 (B7) — modo por rota (Fase E) — evidências
 
@@ -373,13 +373,137 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 | `src/components/tasks/TasksModule.tsx` | o QuickAdd do cabeçalho **não** aparece no modo Agenda (lá quem manda é o da Agenda, com o dia); a Agenda recebe `onCreate` e `quickAddRef`, então o atalho **N** continua focando o campo certo |
 | testes | 2 casos na Agenda (nasce no dia / remonta ao trocar o dia) + 1 no módulo (um único QuickAdd na Agenda, com o placeholder do dia) |
 
-**Decisão declarada:** o prazo do dia selecionado é gravado às **23:59 locais** — a mesma convenção dos chips "Hoje/Amanhã/Próx. semana" do próprio QuickAdd. Assim `temHora` (etapa 55) o classifica em "Prazos" e a faixa hoje→+6 do D7 continua valendo.
+**Decisão declarada:** o prazo do dia selecionado é gravado às **23:59 locais** — a mesma convenção dos chips "Hoje/Amanhã/Próx. semana" do próprio QuickAdd. Assim a faixa hoje→+6 do D7 continua valendo. *(Fase F2: 23:59 passou a ser lido como **dia inteiro**, e não como "Prazos" — ver a FASE F2; era a única leitura que tornava o grupo "Sem hora" alcançável.)*
 
 **Teste de mutação (3, árvore restaurada entre cada; base verde = 25 casos):** M1 o QuickAdd ignora o `defaultDueDate` 2 vermelhos; M2 sem a `key` (não remonta ao trocar o dia) 1 vermelho; M3 o módulo também renderiza o QuickAdd na Agenda (dois na tela) 1 vermelho.
 
 **Nota honesta sobre a suíte:** **4517 testes verdes / 0 falhas**, mas o runner acusa **1 erro não tratado (2 ocorrências)** em `src/components/catalog/__tests__/useSendProduct.test.tsx` ("window is not defined"). O arquivo **passa isolado (9/9)** e nada do meu diff o toca — é flake de carga (vários chats rodando em paralelo nesta máquina). O check `🧪 Unit Tests` do CI é a autoridade.
 
 **Gates:** `typecheck` ✓ · guard-rail de tipografia ✓ · `lint-ratchet` 0 novas ✓ · `implicit-any` 0 ✓ · `db:guard` ✓ · suíte 4517 verdes (flake de catálogo declarado) · `build` ✓ · bundle 4033,4/4100 KB ✓
+
+## FASE F — correções da auditoria adversarial (30/09/2026) — evidências
+
+**Origem:** auditoria adversarial das etapas 43–57 (5 frentes independentes + reprodução do
+coordenador; relatório em `~/auditorias/fase-e-260930/RELATORIO-CONSOLIDADO.md`). Nenhuma
+entrega era mentira: os sete achados eram comportamento errado que a suíte não pegava — cada
+um com saída crua de reprodução.
+
+**Mudanças (7 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/hooks/tasks/useTasksFilters.ts` | (a) `clear` **cancela** o debounce pendente (o filtro voltava sozinho 200ms depois, campo vazio e `?q=` na URL); (b) a URL volta a ser fonte da verdade **depois** da montagem — quem sinaliza é o `search` do ROUTER, por ajuste no render (sem efeito de sincronização, sem dívida de lint); (c) a mesma base de URL na leitura e na escrita |
+| `src/hooks/tasks/workItemAggregates.ts` | `applyFilters` ignora acento e caixa; guarda `items ?? []`; `bucketByDue` passa a contar concluída **sem carimbo** na janela de 7 dias (a mesma regra que o `splitDoneByRecency` do Quadro já documentava) |
+| `src/components/tasks/list/TasksListMode.tsx` | o vazio da Lista deixa de olhar só a busca: **qualquer** filtro ativo oferece "Limpar filtros" (`filtersActive`) |
+| `src/components/tasks/board/BoardColumn.tsx` | coluna com concluídas atrás do rodapé não diz mais "Coluna vazia" |
+| `src/components/tasks/TasksModule.tsx` | contagem do cabeçalho, card "Fazendo" e trava de WIP passam a olhar a lista **real** (filtro é recorte de tela) |
+| `src/components/tasks/board/TasksBoardMode.tsx` | prop `doingCount?` (com fallback) para a trava de WIP receber a contagem real |
+| `src/components/tasks/shared/TasksFilterBar.tsx` | contato sem nome → "Sem nome"; id fora da lista → "Contato indisponível" (o `??` deixava o gatilho em branco) |
+
+**Testes:** 9 casos novos (124 → 133 nos arquivos de Tarefas) — cada um **falha** no código anterior.
+
+**Teste de mutação (9, árvore restaurada entre cada):** **9/9 mortas** — M1 `clear` sem cancelar o
+debounce · M2 sem reidratação do router · M3 Lista decidindo o vazio pela busca · M4 cabeçalho
+contando o recorte · M5 coluna vazia ignorando o rodapé · M6 busca exigindo acento · M7 concluída
+sem carimbo sumindo da Lista · M8 sem guarda de lista nula · M9 rótulo de contato antigo.
+
+**Gates:** `typecheck` ✓ · guard-rail de tipografia ✓ · `lint-ratchet` 0 novas (23 removidas) ✓ ·
+suíte completa **345 arquivos / 4549 testes, 0 erro não tratado** ✓ · `build` ✓ · bundle
+**4049,8/4100 KB** ✓
+
+**Próximo (F2, PR separado):** o 2º `create` seguido na Agenda (prazo perdido após o 1º envio), a
+ordenação de "Prazos" por `due_date`, o grupo "Sem hora" (fim do dia 23:59/00:00 = dia inteiro),
+o rascunho preservado ao trocar de dia, `aria-controls` no "Atrasadas" e a blindagem do
+`PriorityChip` com prioridade nula.
+
+## FASE F2 — Agenda e QuickAdd (correções da auditoria) — evidências
+
+**Origem:** os achados de severidade ALTA/MÉDIA da mesma auditoria que sobraram do F1.
+
+**Mudanças (4 arquivos):**
+
+| arquivo | o que muda |
+|---|---|
+| `src/components/tasks/shared/QuickAdd.tsx` | o envio (e o Esc) volta ao prazo **padrão do campo**, não a `null` — o 2º create seguido na Agenda nascia sem prazo e sumia do dia; e trocar de dia reaplica o prazo por **ajuste no render**, sem remontar o campo |
+| `src/components/tasks/agenda/TasksAgendaMode.tsx` | sai o `key={selectedDay}` (o rascunho digitado deixa de ser descartado) e o botão de "Atrasadas" ganha `aria-controls` para a região que ele abre |
+| `src/hooks/tasks/workItemAggregates.ts` | `temHora`: fim do dia (23:59) e meia-noite contam como **dia inteiro** — "Sem hora" deixa de ser inalcançável; `groupAgendaDay` ordena "Prazos" por `due_date` |
+| `src/components/tasks/shared/PriorityChip.tsx` | prioridade nula/desconhecida cai em `medium` (antes o card imprimia "undefined") |
+
+**Testes:** 5 novos + 2 atualizados (o da etapa 57 afirmava o **descarte** do rascunho; o da etapa 55 afirmava a ordem bruta da query). Suíte da Tarefas 133 → 138.
+
+**Mutação (7, árvore restaurada entre cada):** **7/7 mortas** — M1 submit apagando o prazo · M2 sem o ajuste no render · M3 `temHora` exigindo hora ≠ 23:59 · M4 "Prazos" sem ordenação · M5 o pai remontando o campo · M6 sem `aria-controls` · M7 chip sem blindagem.
+
+**Gates:** `typecheck` ✓ · tipografia ✓ · `lint-ratchet` 0 novas ✓ · suíte completa **345 arquivos / 4554 testes** ✓ · `build` ✓ · bundle **4050,2/4100 KB** ✓
+
+## FASE F3 — auditoria adversarial das correções F1/F2 (30/09–01/10/2026) — evidências
+
+**Método:** 5 frentes independentes, cada uma em cópia descartável com `node_modules` compartilhado
+(precisavam MUTAR e rodar de verdade) + reprodução do coordenador. HEAD auditado: `826fa148` — o
+MESMO commit que a produção servia no momento da auditoria.
+
+**Veredito por frente:**
+
+| frente | escopo | resultado |
+|---|---|---|
+| A1 | filtros, URL, debounce, busca | **1 achado ALTA (A1-1, regressão minha)** — corrigido neste PR |
+| A2 | contagens reais × filtradas, estados vazios, `bucketByDue` | 3 probes vermelhos (A2-11, A2-12, A2-30) → fila, PR próprio |
+| A3 | Agenda/QuickAdd (23:59, ordem, 2º create, rascunho) | sem defeito ALTO: os comportamentos declarados resistiram |
+| A4 | força dos testes novos (mutação independente) + a11y + contratos | **16/16 mutações mortas**; 7 mutações de cenário (M17–M27) previstas sobreviventes → cobertura estreita, fila |
+| A5 | integridade de entrega (repo, produção, banco, ledger) | **#1325 e #1334 mergeados**; produção `buildId 826fa148` == topo do `main`; **0 migrations** do tema (692 aplicadas, última de outra frente); build+bundle dentro do budget |
+
+**A1-1 (ALTA) — a busca era descartada em silêncio:** a guarda `if (agora !== base) return` do debounce
+comparava `window.location.search`, que é reescrito pelo próprio hook a cada mudança de filtro. Digitar
+e mexer em outro filtro dentro dos 200 ms → campo com texto, `filters.q` vazio e `?q=` fora da URL.
+Reprodução crua do auditor: `{aposDigitar:{q:'',textoDaBusca:'liga'}, aposPrio:{prio:'high'},
+aposDebounce:{q:''}}`. **Correção:** remover a guarda (o `clear` já cancela o timer; navegação é
+coberta pela reidratação pelo `search` do router).
+
+**Testes/gates deste PR:** red-first (`expected '' to be 'liga'`) → verde (8/8) → mutação que
+reintroduz a guarda **mata** o teste; `typecheck` ✓ · tipografia ✓ · `lint-ratchet` 0 novas
+(26 removidas) ✓ · `implicit-any` 0 ✓ · `db:guard` 0 novas ✓ · suíte completa **348 arquivos /
+4638 testes, 0 falhas** ✓ · `build` ✓ · bundle **4051,0/4100 KB** ✓
+
+**Limites declarados:** A1-1 residual (digitar e navegar dentro dos 200 ms → o texto digitado vence,
+caso raro); a frente A4 não concluiu a agregação do próprio script (as 16 primeiras mutações foram
+lidas das saídas cruas `res1/res2.json`); A2 ainda não corrigido; RLS/PostgREST real seguem não
+provados (fora do escopo desta mudança de frontend).
+
+**Relatório completo (fora do repo):** `~/auditorias/fase-f-260930/` — árvores `a1`…`a5` com as
+sondas, `res1/res2.json` das mutações e os logs crus.
+
+## FASE F4 — cenários das mutações que sobreviveram à F3 (01/10/2026) — evidências
+
+**Origem:** as 7 mutações que a frente A4 da F3 registrou como **sobreviventes** (a suíte não pegava
+a mudança). Nenhuma é defeito de comportamento: são **lacunas de cobertura** em decisões já tomadas.
+Este PR **não muda comportamento** — acrescenta os testes que faltavam.
+
+**Decisão que os testes protegem (Joaquim, 01/10/2026, sobre a `20261001-071945`):** filtro é recorte
+de **tela** — KPIs e colunas seguem o filtrado; **subtítulo do módulo, card de KPI "Fazendo" e trava
+de WIP do Quadro** seguem o dado real (lista não filtrada). A leitura "tudo segue o filtro" foi
+revista e **não** vale.
+
+**Arquivos:** `src/components/tasks/__tests__/contagensReaisVsFiltradas.test.tsx` (novo: subtítulo/KPI
+e coluna do Quadro, com filtro `?prio=urgent` sobre 6 itens — 1 urgente, 2 médios com prazo hoje e 3
+"fazendo") e `agendaGroups.test.tsx` (caso do `aria-controls` endurecido: o alvo tem de ser a REGIÃO
+das atrasadas, não o próprio gatilho).
+
+**Mutação (5 conjuntos, cada um isolado, restauração exigida por `git diff --quiet`):** **5/5 mortas** —
+M17 `aria-controls` auto-referente (1 teste vermelho) · M19/M20/M27 `TasksBoardMode` sem a prop
+`doingCount` (1) · M23 "para hoje" do cabeçalho com o recorte (1) · M24 KPI "Fazendo" com o recorte (1)
+· M25 `doingReal` sobre a lista filtrada (2). Baseline do ciclo: 141 testes verdes.
+
+**Gates:** `typecheck` ✓ · tipografia ✓ · `lint-ratchet` 0 novas (26 removidas) ✓ · `implicit-any` 0 ✓ ·
+`db:guard` 0 novas (694 migrations válidas) ✓ · suíte completa **350 arquivos / 4674 testes, 0 falhas** ✓ ·
+`build` ✓ (4,77s) · bundle **4054,7/4100 KB** ✓
+
+**Erro do próprio auditor, registrado:** a v1 do script de mutação copiava o backup **depois** de
+editar; a "restauração" devolvia o código mutado e as mutações seguintes rodavam contaminadas (os
+vereditos de M24/M25 saíram com M23 ainda aplicado). Corrigido — backup antes da escrita + `git diff
+--quiet` obrigatório após cada restauração — e as 5 mutações foram re-medidas isoladas; as primeiras
+leituras foram descartadas.
+
+**Limite declarado:** prova com componentes reais e dados mockados; não substitui a olhada logada
+(etapas 54/58, que dependem do login de QA no cofre).
 
 ## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
 ## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=

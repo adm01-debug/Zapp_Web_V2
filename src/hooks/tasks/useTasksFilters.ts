@@ -25,6 +25,7 @@ type Action =
   | { type: 'contact'; value: string | null }
   | { type: 'toggleAlarm' }
   | { type: 'toggleDone' }
+  | { type: 'hydrate'; value: TasksFilters }
   | { type: 'clear' };
 
 export const SEARCH_DEBOUNCE_MS = 200;
@@ -36,29 +37,49 @@ function reducer(state: TasksFilters, action: Action): TasksFilters {
     case 'contact':     return { ...state, contact: action.value };
     case 'toggleAlarm': return { ...state, alarm: !state.alarm };
     case 'toggleDone':  return { ...state, done: !state.done };
+    case 'hydrate':     return action.value;
     case 'clear':       return DEFAULT_FILTERS;
   }
 }
 
 export function useTasksFilters() {
   const location = useLocation();
-  const [filters, dispatch] = useReducer(reducer, undefined, () =>
-    // O `search` do router é a fonte (em produção ele é o próprio
-    // `window.location.search`); o fallback cobre o router em memória dos testes.
-    filtersFromSearch(
-      typeof window === 'undefined' ? '' : (location.search || window.location.search)
-    )
-  );
+  // Fase F (auditoria): a MESMA base de URL na leitura e na escrita. O `search`
+  // do router é a fonte em produção; o fallback cobre o router em memória dos testes.
+  const searchAtual = typeof window === 'undefined' ? '' : (location.search || window.location.search);
+  const [filters, dispatch] = useReducer(reducer, undefined, () => filtersFromSearch(searchAtual));
 
   // Busca com debounce: o texto digitado vai para um estado local e só depois de
   // 200ms vira filtro — a URL e o recorte acompanham o valor debounced.
   const [textoDaBusca, setTextoDaBusca] = useState(filters.q);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Fase F (auditoria): a URL voltou a ser fonte da verdade DEPOIS da montagem.
+  // Quem sinaliza navegação é o `search` do ROUTER — não o `window.location`, que
+  // este hook reescreve a cada mudança de filtro (reidratar nesse caso seria laço).
+  // É ajuste durante o render — o padrão do React para "o dado de fora mudou" — e
+  // não um efeito de sincronização.
+  const [searchDoRouter, setSearchDoRouter] = useState(location.search);
+  if (location.search !== searchDoRouter) {
+    setSearchDoRouter(location.search);
+    const hidratado = filtersFromSearch(
+      location.search || (typeof window === 'undefined' ? '' : window.location.search)
+    );
+    setTextoDaBusca(hidratado.q);
+    dispatch({ type: 'hydrate', value: hidratado });
+  }
+
   const setSearch = useCallback((value: string) => {
     setTextoDaBusca(value);
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => dispatch({ type: 'q', value }), SEARCH_DEBOUNCE_MS);
+    // F3 (auditoria A1-1): NÃO se compara a URL aqui. `window.location` é reescrito
+    // por este MESMO hook a cada mudança de filtro, então "a URL mudou" não
+    // distingue navegação de escrita própria — a guarda antiga descartava a busca
+    // em silêncio (campo com texto, filtro vazio e `?q=` fora da URL). Quem cobre
+    // navegação é a reidratação pelo `search` do router, acima.
+    timeoutRef.current = setTimeout(() => {
+      dispatch({ type: 'q', value });
+    }, SEARCH_DEBOUNCE_MS);
   }, []);
 
   useEffect(() => () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); }, []);
@@ -66,11 +87,11 @@ export function useTasksFilters() {
   // Estado → URL, sem empilhar histórico. O `view` da rota é preservado.
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const qs = searchWithFilters(location.search, filters);
+    const qs = searchWithFilters(searchAtual, filters);
     const atual = `${window.location.pathname}${window.location.search}`;
     const novo = `${window.location.pathname}${qs}`;
     if (atual !== novo) window.history.replaceState(null, '', novo);
-  }, [filters, location.search]);
+  }, [filters, searchAtual]);
 
   return {
     filters,
@@ -80,8 +101,13 @@ export function useTasksFilters() {
     setContact:     (value: string | null) => dispatch({ type: 'contact', value }),
     toggleAlarm:    () => dispatch({ type: 'toggleAlarm' }),
     toggleDone:     () => dispatch({ type: 'toggleDone' }),
-    // "Limpar" zera o texto JUNTO com o filtro — sem efeito de sincronização.
-    clear:          () => { setTextoDaBusca(''); dispatch({ type: 'clear' }); },
+    // "Limpar" zera o texto JUNTO com o filtro — e CANCELA o debounce pendente,
+    // que senão ressurge 200ms depois com o filtro antigo (Fase F/auditoria).
+    clear:          () => {
+      if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
+      setTextoDaBusca('');
+      dispatch({ type: 'clear' });
+    },
     isActive:       isFilterActive(filters),
   };
 }

@@ -95,3 +95,57 @@ test('usage guard ignora DDL dentro de corpo dollar-quoted', () => {
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.match(result.stdout, /projecao forward-only: 1 relacoes, 1 funcoes/);
 });
+
+test('usage guard ignora comentario de bloco ANINHADO com DROP TABLE', () => {
+  const result = runGuard({
+    migrations: {
+      '20260909210000_nested_block_comment.sql':
+        '/* outer /* inner */ DROP TABLE public.t */\n'
+        + 'CREATE TABLE public.t (id integer);\n',
+    },
+  });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /projecao forward-only: 1 relacoes, 0 funcoes/);
+});
+
+test('usage guard preserva tokens quando comentario fica entre keywords sem espaco', () => {
+  const result = runGuard({
+    migrations: {
+      '20260909210000_inline_comment.sql':
+        'CREATE/* c */FUNCTION public.f() RETURNS void LANGUAGE sql AS $$ SELECT 1 $$;\n',
+    },
+  });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /projecao forward-only: 0 relacoes, 1 funcoes/);
+});
+
+test('usage guard nao engole SQL apos E-string com backslash-escape (fail-open)', () => {
+  const result = runGuard({
+    migrations: {
+      '20260909210000_escape_string.sql':
+        'CREATE TABLE public.t (id integer);\n'
+        + "INSERT INTO public.audit(note) VALUES (E'\\'');\n"
+        + 'DROP TABLE public.t;\n',
+    },
+    callers: { 'c.ts': "supabase.from('t').select('*');\n" },
+  });
+  // E'\'' e uma unica string; o DROP TABLE seguinte e DDL real e deixa t fora da
+  // projecao, orfando o caller -> violacao (exit != 0).
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout + result.stderr, /\.from\('t'\)/);
+});
+
+test('usage guard nao trata texto de E-string com escape como DDL (falso positivo)', () => {
+  const result = runGuard({
+    migrations: {
+      '20260909210000_escape_string_text.sql':
+        'CREATE TABLE public.t (id integer);\n'
+        + "INSERT INTO public.audit(note) VALUES (E'temos, e\\' nao use DROP TABLE public.t aqui');\n",
+    },
+    callers: { 'c.ts': "supabase.from('t').select('*');\n" },
+  });
+  // O "DROP TABLE public.t" e TEXTO dentro de um E-string; nao e DDL. A projecao
+  // mantem t e o caller fica atendido -> sem violacao (exit 0).
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /projecao forward-only: 1 relacoes, 0 funcoes/);
+});

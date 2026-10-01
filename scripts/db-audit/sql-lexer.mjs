@@ -12,9 +12,10 @@
  *  - sqlTokens(): base do canonicalSql() de check-migration-drift.mjs
  *    (comparacao arquivo <-> ledger), que normaliza case e espacos.
  *  - stripSqlComments(): base da projecao forward-only do
- *    supabase-usage-guard.mjs, que remove comentarios e torna strings/corpos
- *    dollar-quoted opacos para que os regex de CREATE/DROP nao casem dentro
- *    deles.
+ *    supabase-usage-guard.mjs, que substitui comentarios por espaco (no SQL,
+ *    comentario vale como whitespace — nao pode colar tokens adjacentes) e
+ *    torna strings/corpos dollar-quoted opacos para que os regex de CREATE/DROP
+ *    nao casem dentro deles.
  */
 
 function scanSqlSegments(input) {
@@ -77,9 +78,21 @@ function scanSqlSegments(input) {
 
     if (char === "'" || char === '"') {
       const quote = char;
+      const prev = segments.length > 0 ? segments[segments.length - 1] : null;
+      // E'...' (escape string) usa backslash para escapar a aspa; sem honrar o
+      // escape o scanner fecharia a string no \' errado e engoliria (ou exporia)
+      // o restante do arquivo — um fail-open/falso-positivo no guard.
+      const backslashEscapes = quote === "'"
+        && prev != null
+        && prev.type === 'word'
+        && /^[eE]$/.test(prev.text);
       const start = i;
       i += 1;
       while (i < source.length) {
+        if (backslashEscapes && source[i] === '\\' && i + 1 < source.length) {
+          i += 2;
+          continue;
+        }
         if (source[i] === quote) {
           if (source[i + 1] === quote) {
             i += 2;
@@ -97,7 +110,14 @@ function scanSqlSegments(input) {
     if (/[A-Za-z0-9_$]/u.test(char)) {
       const start = i;
       i += 1;
-      while (i < source.length && /[A-Za-z0-9_$]/u.test(source[i])) i += 1;
+      const numeric = /[0-9]/.test(char);
+      // Um token que comeca por digito e NUMERICO: o PostgreSQL nao deixa '$'
+      // logo apos numero (1$q$X$q$ e erro), entao '$' nao pode ser engolido
+      // como parte do word — ele deve abrir um dollar-quote/identificador.
+      while (i < source.length && /[A-Za-z0-9_$]/u.test(source[i])) {
+        if (numeric && source[i] === '$') break;
+        i += 1;
+      }
       segments.push({ type: 'word', text: source.slice(start, i) });
       continue;
     }
@@ -120,7 +140,11 @@ export function sqlTokens(input) {
 export function stripSqlComments(input) {
   return scanSqlSegments(input)
     .map((seg) => {
-      if (seg.type === 'line-comment' || seg.type === 'block-comment') return '';
+      // No SQL um comentario vale como whitespace: substituir por espaco (nao
+      // remover) preserva a separacao entre tokens adjacentes — CREATE/*c*/FUNCTION
+      // continua sendo CREATE FUNCTION, e dois '-' separados por comentario nao
+      // colam num '--'.
+      if (seg.type === 'line-comment' || seg.type === 'block-comment') return ' ';
       if (seg.type === 'dollar' || seg.type === 'quoted') return ' ';
       return seg.text;
     })

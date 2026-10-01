@@ -40,3 +40,35 @@ test('rollback deploy is pinned to a historical ancestor and attests deployed SH
   assert.match(workflow, /git merge-base --is-ancestor "\$DEPLOYED_GIT_SHA" "\$GITHUB_SHA"/);
   assert.equal((workflow.match(/--git-sha "\$DEPLOYED_GIT_SHA"/g) || []).length, 2);
 });
+
+test('concurrency e por funcao: dispatch de uma funcao nao cancela o pendente de outra', () => {
+  // Grupo unico fazia o GitHub cancelar o pendente de OUTRA funcao a cada dispatch
+  // (30/09/2026: 11 cancelados em 16 runs; 3 funcoes do #1240 nunca publicaram).
+  const block = workflow.match(/^concurrency:\n((?:  .*\n)+)/m);
+  assert.ok(block, 'bloco concurrency de topo ausente');
+  assert.match(block[1], /^  group: deploy-edge-functions-\$\{\{ inputs\.function_name \|\| 'all' \}\}$/m);
+  assert.match(block[1], /^  cancel-in-progress: false$/m);
+});
+
+test('escopo all e serializado contra deploys por funcao antes do Deploy', () => {
+  // Grupos diferentes (all x funcao) rodariam juntos: rollback por source_ref ou SHAs
+  // diferentes publicariam bundles distintos da mesma funcao (review do #1315).
+  assert.match(workflow, /^run-name: Deploy Edge Functions \(\$\{\{ inputs\.function_name \|\| 'all' \}\}\)$/m);
+  assert.match(workflow, /^      actions: read$/m);
+  const gate = workflow.indexOf('- name: Serializar escopo TODAS contra deploys por funcao');
+  const deploy = workflow.indexOf('- name: Deploy\n');
+  assert.ok(gate > 0 && deploy > gate, 'gate precisa vir antes do Deploy');
+  assert.match(workflow.slice(gate, deploy), /edge-tooling\/scripts\/edge-deploy\/serialize-scope\.mjs/);
+});
+
+test('tag de deploy e unica por run (deploys paralelos no mesmo segundo)', () => {
+  assert.match(workflow, /TAG="edge-deploy\/[^"\n]*\$\{GITHUB_RUN_ID\}"/);
+});
+
+test('timeout do job cobre a espera maxima do gate mais um deploy completo', async () => {
+  // Com 60 min e espera de ate 40, sobravam ~20 para setup + deploy + coletor de ~24 min.
+  const { MAX_WAIT_MINUTES } = await import('../edge-deploy/serialize-scope.mjs');
+  const timeout = Number(/^    timeout-minutes: (\d+)$/m.exec(workflow)?.[1]);
+  assert.ok(timeout >= MAX_WAIT_MINUTES + 60, `timeout-minutes=${timeout} < ${MAX_WAIT_MINUTES} + 60`);
+});
+

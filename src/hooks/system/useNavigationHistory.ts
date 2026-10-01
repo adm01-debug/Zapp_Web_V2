@@ -110,7 +110,8 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
 
   const currentView = state.entries[state.index]?.viewId ?? defaultView;
 
-  // Sync ?view= → state on browser back/forward (popstate fires for pushState/replaceState).
+  // Sync ?view= → state on browser back/forward. NOTA: pushState/replaceState NÃO
+  // disparam popstate — navegação programática emite `zapp:navigate` (veja syncView).
   const onPopState = useCallback(() => {
     const viewId = getViewFromUrl(defaultView);
     setState(prev => {
@@ -189,6 +190,9 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
 
   const syncView = useCallback((viewId: string, replace = false) => {
     setViewParam(viewId, replace);
+    // Fonte única de navegação: navigateTo/goBack/goForward emitem o evento,
+    // para que instâncias paralelas do hook (ActiveCallBar) acompanhem a view.
+    window.dispatchEvent(new CustomEvent('zapp:navigate', { detail: { view: viewId } }));
   }, []);
 
   const navigateTo = useCallback((viewId: string) => {

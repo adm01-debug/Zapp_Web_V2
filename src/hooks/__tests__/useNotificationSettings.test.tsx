@@ -26,6 +26,10 @@ vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
+// O hook avisa quando a gravação falha; aqui só interessa SE avisou.
+const toastMock = vi.hoisted(() => vi.fn());
+vi.mock('@/hooks/ui/use-toast', () => ({ toast: toastMock }));
+
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 
 const createWrapper = () => {
@@ -196,6 +200,122 @@ describe('useNotificationSettings', () => {
       const result = await carregar();
       await result.current.resetSettings();
       expect(upsert.mock.calls[0][0]).toMatchObject({ sound_volume: 70 });
+    });
+
+    it('o valor OTIMISTA também é clampado (não mostra 500 enquanto o banco guarda 100)', async () => {
+      comLinha(null);
+      const result = await carregar();
+
+      await result.current.updateSettings({ soundVolume: 5000 });
+
+      // antes do fix, a tela ficava com 5000 (o upsert clampava só no banco)
+      await waitFor(() => expect(result.current.settings.soundVolume).toBe(100));
+    });
+
+    it('avisa o usuário quando a gravação falha (em vez de o controle voltar calado)', async () => {
+      const upsert = vi.fn().mockResolvedValue({ error: new Error('falha de rede') });
+      mockFrom.mockReturnValue(montarCadeia(null, upsert));
+      const result = await carregar();
+
+      await result.current.updateSettings({ soundVolume: 35 });
+
+      expect(upsert).toHaveBeenCalled();
+      expect(toastMock).toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));
+    });
+  });
+
+  // ========== HORÁRIO DE SILÊNCIO (isQuietHours) ==========
+  // A lógica tem uma virada de dia (22:00 -> 08:00) e duas bordas ASSIMÉTRICAS
+  // (início inclusivo, fim exclusivo). Nada disso estava coberto: um `>` trocado
+  // por `>=` (ou a janela invertida) silenciava alerta em pleno expediente sem
+  // nenhum teste reclamar.
+  describe('isQuietHours', () => {
+    const comJanela = (start: string, end: string, enabled = true) => {
+      mockFrom.mockReturnValue(
+        montarCadeia({
+          sound_enabled: true,
+          quiet_hours_enabled: enabled,
+          quiet_hours_start: start,
+          quiet_hours_end: end,
+        }),
+      );
+    };
+
+    /** Fixa o relógio em HH:mm (só o Date é falsificado — `waitFor` segue real). */
+    const as = (hhmm: string) => {
+      const [h, m] = hhmm.split(':').map(Number);
+      vi.setSystemTime(new Date(2026, 8, 30, h, m, 0));
+    };
+
+    const carregar = async () => {
+      const { result } = renderHook(() => useNotificationSettings(), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      return result;
+    };
+
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('desligado, nunca é horário de silêncio — nem às 23h', async () => {
+      comJanela('22:00', '08:00', false);
+      as('23:00');
+      const result = await carregar();
+
+      expect(result.current.isQuietHours()).toBe(false);
+    });
+
+    it('janela noturna (22:00→08:00): silencia 22:00, 23:00 e 07:59; libera 08:00, 21:59 e 12:00', async () => {
+      comJanela('22:00', '08:00');
+      const result = await carregar();
+
+      as('22:00');
+      expect(result.current.isQuietHours()).toBe(true);
+      as('23:00');
+      expect(result.current.isQuietHours()).toBe(true);
+      as('07:59');
+      expect(result.current.isQuietHours()).toBe(true);
+      // bordas: o fim é EXCLUSIVO, o início é INCLUSIVO
+      as('08:00');
+      expect(result.current.isQuietHours()).toBe(false);
+      as('21:59');
+      expect(result.current.isQuietHours()).toBe(false);
+      as('12:00');
+      expect(result.current.isQuietHours()).toBe(false);
+    });
+
+    it('janela no mesmo dia (09:00→17:00): início inclusivo, fim exclusivo', async () => {
+      comJanela('09:00', '17:00');
+      const result = await carregar();
+
+      as('08:59');
+      expect(result.current.isQuietHours()).toBe(false);
+      as('09:00');
+      expect(result.current.isQuietHours()).toBe(true);
+      as('16:59');
+      expect(result.current.isQuietHours()).toBe(true);
+      as('17:00');
+      expect(result.current.isQuietHours()).toBe(false);
+    });
+
+    it('janela degenerada (início igual ao fim) não silencia nada', async () => {
+      comJanela('10:00', '10:00');
+      as('10:00');
+      const result = await carregar();
+
+      expect(result.current.isQuietHours()).toBe(false);
+    });
+
+    it('acompanha a janela do painel, não uma faixa cravada', async () => {
+      comJanela('00:00', '23:59');
+      as('03:00');
+      const result = await carregar();
+
+      expect(result.current.isQuietHours()).toBe(true);
     });
   });
 });

@@ -9243,6 +9243,7 @@ export type Database = {
       ai_is_canonical_sentiment: { Args: { p_value: string }; Returns: boolean }
       ai_is_canonical_urgency: { Args: { p_value: string }; Returns: boolean }
       ai_text_array: { Args: { p_value: Json }; Returns: string[] }
+      apply_zapp_cron_secrets_l5: { Args: never; Returns: undefined }
       calculate_level: { Args: { xp_amount: number }; Returns: number }
       can_delete_contacts: {
         Args: { p_ids: string[] }
@@ -9519,7 +9520,7 @@ export type Database = {
         }[]
       }
       contacts_count_by_type: {
-        Args: never
+        Args: { include_legacy?: boolean }
         Returns: {
           contact_type: string
           count: number
@@ -9799,6 +9800,7 @@ export type Database = {
         Args: { p_meme_id: string }
         Returns: boolean
       }
+      get_avatars_refresh_cron_secret: { Args: never; Returns: string }
       get_channel_credentials: {
         Args: { _connection_id: string }
         Returns: Json
@@ -9807,6 +9809,7 @@ export type Database = {
         Args: { p_channel_id: string }
         Returns: Json
       }
+      get_connection_health_check_cron_secret: { Args: never; Returns: string }
       get_connection_instance: {
         Args: { _connection_id: string }
         Returns: string
@@ -10329,6 +10332,7 @@ export type Database = {
           company_filter?: string
           contact_type_filter?: string
           date_from?: string
+          include_legacy?: boolean
           job_title_filter?: string
           page_offset?: number
           page_size?: number
@@ -10474,6 +10478,25 @@ export type Database = {
           contact_id: string
           conversation_status: string
           queue_id: string
+        }[]
+      }
+      talk_me_eligible_waiting_contacts: {
+        Args: { p_contact_id?: string; p_queue_id?: string }
+        Returns: {
+          avatar_url: string
+          company: string
+          contact_id: string
+          contact_name: string
+          job_title: string
+          last_message_at: string
+          last_message_caption: string
+          last_message_content: string
+          last_message_id: string
+          last_message_media_url: string
+          last_message_type: string
+          pending_message_count: number
+          queue_id: string
+          waiting_since: string
         }[]
       }
       talk_me_list_queues: {

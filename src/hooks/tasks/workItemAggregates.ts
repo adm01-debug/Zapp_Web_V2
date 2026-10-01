@@ -2,6 +2,7 @@ import { isBefore, startOfDay, addDays, formatDistanceToNowStrict } from 'date-f
 import { ptBR } from 'date-fns/locale';
 import type { WorkItem, WorkItemStatus } from './workItem.types';
 import type { TasksFilters } from './workItemFilters';
+import { localDayKey } from '@/lib/localDay';
 
 /** Peso de prioridade (menor = primeiro) — usado na ordenacao por prazo (etapa 49) e por coluna. */
 const PRIORITY_WEIGHT: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
@@ -33,14 +34,18 @@ export function bucketByDue(items: WorkItem[], now: Date = new Date()): BucketsB
   const thirtyDaysAgo  = new Date(now.getTime() - 30 * 86_400_000);
 
   const active = items.filter(i => i.status !== 'done' && i.status !== 'cancelled');
-  const done = items.filter(i => i.status === 'done' && i.completed_at != null);
-  const done7d = done.filter(i => new Date(i.completed_at!) >= sevenDaysAgo);
+  const done = items.filter(i => i.status === 'done');
+  // Fase F (auditoria): concluída SEM carimbo entra na janela recente — a MESMA
+  // regra do `splitDoneByRecency` do Quadro ("tarefa nunca fica escondida por
+  // falta de dado"). Antes ela sumia da Lista e aparecia no Quadro.
+  const done7d = done.filter(i => i.completed_at == null || new Date(i.completed_at) >= sevenDaysAgo);
   // Etapa 48 (B4): a Lista mostra 7 dias e revela o resto da janela de 30 dias
   // (a query do hook ja traz 30d) no rodape "ver mais (30 dias)". Aqui fica o
   // recorte de 8 a 30 dias — o que a secao recolhida nao mostra.
   const doneOlder = done.filter(i =>
-    isBefore(new Date(i.completed_at!), sevenDaysAgo) &&
-    !isBefore(new Date(i.completed_at!), thirtyDaysAgo)
+    i.completed_at != null &&
+    isBefore(new Date(i.completed_at), sevenDaysAgo) &&
+    !isBefore(new Date(i.completed_at), thirtyDaysAgo)
   );
 
   const overdue: WorkItem[]   = [];
@@ -61,32 +66,48 @@ export function bucketByDue(items: WorkItem[], now: Date = new Date()): BucketsB
   return { overdue, today, tomorrow, upcoming, noDue, done7d, doneOlder };
 }
 
+/** Fase F (auditoria): busca que ignora acento e caixa — "cafe" acha "Café". */
+function normalizarBusca(texto: string): string {
+  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
 /**
  * Etapa 45/46: o recorte da barra de filtros, aplicado nos três modos (Lista,
  * Quadro e Agenda). Função pura: recebe os itens que a query única já carregou e
  * devolve o subconjunto — nenhum modo, e nenhum filtro, gera request novo.
  *
  * `done` é o único filtro que olha o estado terminal do item; `q` casa só o
- * título (o mesmo recorte que a busca sempre fez).
+ * título (o mesmo recorte que a busca sempre fez, agora sem acento).
  */
 export function applyFilters(items: WorkItem[], f: TasksFilters): WorkItem[] {
-  const termo = f.q.trim().toLowerCase();
+  const termo = normalizarBusca(f.q).trim();
+  const base  = items ?? [];
 
-  return items.filter(item => {
+  return base.filter(item => {
     if (!f.done && item.status === 'done') return false;
     if (f.prio !== 'all' && item.priority !== f.prio) return false;
     if (f.contact !== null && item.contact?.id !== f.contact) return false;
     if (f.alarm && item.remind_at === null) return false;
-    if (termo !== '' && !item.title.toLowerCase().includes(termo)) return false;
+    if (termo !== '' && !normalizarBusca(item.title).includes(termo)) return false;
     return true;
   });
 }
 
-/** `due_date` gravado só com o dia (meia-noite local) não tem hora marcada. */
+/**
+ * `due_date` gravado como dia inteiro não tem hora marcada. O app grava **23:59
+ * local** nos chips "Hoje/Amanhã/Próx. semana" e no QuickAdd da Agenda — então
+ * fim do dia conta como dia inteiro; `00:00` idem, pela convenção oposta.
+ * (Fase F2/auditoria: sem isso o grupo "Sem hora" da etapa 55 era inalcançável —
+ * toda tarefa criada na interface caía em "Prazos".)
+ */
 export function temHora(iso: string | null): boolean {
   if (iso === null) return false;
   const d = new Date(iso);
-  return d.getHours() !== 0 || d.getMinutes() !== 0;
+  const h = d.getHours();
+  const m = d.getMinutes();
+  const fimDoDia = h === 23 && m >= 59;
+  const meiaNoite = h === 0 && m === 0;
+  return !fimDoDia && !meiaNoite;
 }
 
 /**
@@ -119,9 +140,13 @@ export interface AgendaDayGroups {
  */
 export function groupAgendaDay(day: { reminders: WorkItem[]; dueTasks: WorkItem[] }): AgendaDayGroups {
   const porAlarme = (a: WorkItem, b: WorkItem) => (a.remind_at ?? '').localeCompare(b.remind_at ?? '');
+  // Fase F2 (auditoria): dentro de "Prazos" a ordem é por `due_date` (ISO ordena
+  // cronologicamente) — antes vinha a ordem bruta da query e a lista do dia
+  // aparecia embaralhada.
+  const porPrazo  = (a: WorkItem, b: WorkItem) => (a.due_date ?? '').localeCompare(b.due_date ?? '');
   return {
     alarmes: [...day.reminders].sort(porAlarme),
-    prazos:  day.dueTasks.filter(t => temHora(t.due_date)),
+    prazos:  day.dueTasks.filter(t => temHora(t.due_date)).sort(porPrazo),
     semHora: day.dueTasks.filter(t => !temHora(t.due_date)),
   };
 }
@@ -177,22 +202,6 @@ export function dueLabel(
   const dayName  = due.toLocaleDateString('pt-BR', { weekday: 'short' });
   const dayMonth = due.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
   return { label: dayName.replace('.', '') + ' ' + dayMonth, overdue: false };
-}
-
-/**
- * Chave de dia no fuso LOCAL (`AAAA-MM-DD`) — o MESMO dia que a Lista
- * (`bucketByDue`), o Quadro e os cabecalhos da Agenda ja usam (`setHours(0,0,0,0)`
- * + `format`). Fatiar o ISO em UTC (`toISOString().slice(0, 10)`) jogava a tarefa
- * das 23:59 locais no dia seguinte da Agenda. Devolve `null` para valor ausente ou
- * invalido, em vez de estourar dentro do filtro.
- */
-function localDayKey(value: string | Date | null): string | null {
-  if (!value) return null;
-  const d = typeof value === 'string' ? new Date(value) : value;
-  if (Number.isNaN(d.getTime())) return null;
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day   = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${month}-${day}`;
 }
 
 export function weekBuckets(

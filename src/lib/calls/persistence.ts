@@ -19,7 +19,14 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-import type { CallDirection, EndReason, PersistedStatus } from './callStatus';
+import { sipCodeToEndReason } from './callStatus';
+import { persistedStatusForEndReason } from './session';
+import type { CallDirection, CallEndOutcome, EndReason, PersistedStatus } from './callStatus';
+
+// Reexportado daqui para quem consome a persistência (`useSipClient`): o
+// desfecho fino do T12 sai por este módulo e um import a mais no hook
+// estouraria o orçamento de linhas do T09 (<120).
+export type { CallEndOutcome };
 
 /** Entrada de `upsertMyCall` em nomes de domínio; o mapa `p_*` é interno. */
 export interface UpsertMyCallInput {
@@ -105,22 +112,67 @@ export function novoCallId(sessionId?: string | null): string {
 }
 
 /**
- * Desfecho a persistir no fim da chamada: atendida → `ended`/`completed`;
- * não atendida → `ended` (saída) ou `missed` (entrada), sempre `no_answer`.
+ * Motivo do fim de uma chamada **atendida**: falha técnica > encerramento pelo
+ * outro lado > encerramento local (o default, inclusive para o legado sem
+ * `outcome` — até o T12 toda atendida encerrada virava `completed`, o que não
+ * dizia quem desligou).
+ */
+function motivoAtendida(outcome?: CallEndOutcome | null): EndReason {
+  if (outcome?.endedBy === 'failure') return 'failed';
+  if (outcome?.endedBy === 'hangup_remote') return 'hangup_remote';
+  return 'hangup_local';
+}
+
+/**
+ * Motivo do fim de uma chamada **não atendida**: quem encerrou manda; sem
+ * origem (legado), o código SIP final decide — e sem código, `no_answer`.
  *
- * `persistedStatusForEndReason` (session.ts) não serve aqui: ela mapeia
+ * `hangup_local` aqui FORÇA `cancelled` mesmo com código 200: na corrida do
+ * CANCEL o servidor pode responder 200 ao INVITE já cancelado, e o usuário que
+ * desligou antes do atendimento não pode ver "Concluída".
+ */
+function motivoNaoAtendida(outcome?: CallEndOutcome | null): EndReason {
+  switch (outcome?.endedBy) {
+    case 'reject':
+      return 'declined';
+    case 'hangup_local':
+      return 'cancelled';
+    case 'cancel_remote':
+      return 'cancelled_remote';
+    case 'timeout':
+      return 'timeout';
+    // Falha local/transporte antes de atender: NÃO é "não atendida" — espelha
+    // `motivoAtendida`, senão uma falha do discar era gravada como no_answer.
+    case 'failure':
+      return 'failed';
+    default: {
+      const sipCode = outcome?.sipCode ?? null;
+      return sipCode === null ? 'no_answer' : sipCodeToEndReason(sipCode);
+    }
+  }
+}
+
+/**
+ * Desfecho a persistir no fim da chamada (T12).
+ *
+ * Atendida → `ended` (só `failure` vira `failed`). Não atendida → o motivo vem
+ * do `outcome` (código SIP e quem encerrou); entrada perdida continua virando
+ * `missed` e o resto sai de `persistedStatusForEndReason`.
+ *
+ * `persistedStatusForEndReason` (session.ts) sozinha não serve: ela mapeia
  * `no_answer` → `ended`, o que é correto para a máquina de sessão — o `missed`
  * da entrada é regra de **persistência** (T11), não do estado.
  */
 export function desfechoDaChamada(
   talkSeconds: number | null,
   direction: CallDirection | null,
+  outcome?: CallEndOutcome | null,
 ): { status: PersistedStatus; endReason: EndReason } {
-  if (talkSeconds !== null) return { status: 'ended', endReason: 'completed' };
-  return {
-    status: direction === 'inbound' ? 'missed' : 'ended',
-    endReason: 'no_answer',
-  };
+  const endReason = talkSeconds !== null ? motivoAtendida(outcome) : motivoNaoAtendida(outcome);
+  const status = endReason === 'no_answer' && direction === 'inbound'
+    ? 'missed'
+    : persistedStatusForEndReason(endReason) ?? 'ended';
+  return { status, endReason };
 }
 
 /** Mapa 1:1 com os parâmetros `p_*` da RPC. */
@@ -158,4 +210,31 @@ export async function upsertMyCall(input: UpsertMyCallInput): Promise<UpsertMyCa
     }
   }
   return { ok: false, error: erro };
+}
+
+/** Contrato da fila: quem chama na ordem, chega na ordem. */
+export interface FilaDePersistencia {
+  executar(input: UpsertMyCallInput): Promise<UpsertMyCallResult>;
+}
+
+/**
+ * Fila de persistência (D3): encadeia as gravações numa promise única, de modo
+ * que a ORDEM DE CHAMADA vire a ordem de chegada à RPC. Sem ela, o `upsert` de
+ * `answered` (assíncrono) podia completar DEPOIS do `finished` e regravar
+ * `status='answered'` sobre o desfecho — a linha terminava "atendida" para
+ * sempre.
+ *
+ * A falha de uma gravação não trava as seguintes: `upsertMyCall` nunca lança
+ * (devolve `{ ok:false }`), e o `.catch` defensivo garante que a corrente siga
+ * mesmo se algum caminho futuro rejeitar.
+ */
+export function criarFilaDePersistencia(): FilaDePersistencia {
+  let corrente: Promise<unknown> = Promise.resolve();
+  return {
+    executar(input) {
+      const proxima = corrente.then(() => upsertMyCall(input));
+      corrente = proxima.catch(() => undefined);
+      return proxima;
+    },
+  };
 }

@@ -15,6 +15,8 @@
 # =================================================
 
 name: Deploy Edge Functions
+# O escopo no titulo e lido por scripts/edge-deploy/serialize-scope.mjs.
+run-name: Deploy Edge Functions (${{ inputs.function_name || 'all' }})
 
 on:
   workflow_dispatch:
@@ -33,8 +35,20 @@ on:
 permissions:
   contents: read
 
+# Um grupo POR FUNCAO. O GitHub Actions guarda no maximo 1 run em execucao e
+# 1 pendente por grupo, e um novo dispatch CANCELA o pendente anterior do
+# mesmo grupo (cancel-in-progress: false so protege o que ja esta rodando).
+# Com um grupo unico, o dispatch de uma funcao cancelava o de outra: em
+# 30/09/2026 foram 11 cancelados em 16 runs e 3 funcoes do PR #1240 nunca
+# publicaram. Por funcao, dispatches de funcoes diferentes nao se anulam;
+# redisparar a MESMA funcao so troca o pendente dela (mesma main, ok).
+# Deploys paralelos de funcoes DIFERENTES nao quebram a atestacao: mudanca
+# fora do escopo e so registrada (changed_outside_scope). Ja o escopo `all`
+# tambem publica cada funcao, entao NAO pode rodar junto de um deploy por
+# funcao: o passo "Serializar escopo TODAS contra deploys por funcao" faz essa
+# exclusao dentro do job (a concurrency do GitHub nao a exprime).
 concurrency:
-  group: deploy-edge-functions
+  group: deploy-edge-functions-${{ inputs.function_name || 'all' }}
   cancel-in-progress: false
 
 env:
@@ -43,30 +57,33 @@ env:
 jobs:
   deploy:
     name: Deploy Edge Functions
-    # Aprovacao humana obrigatoria: sem isto um workflow_dispatch promovia edge
-    # functions para producao sem nenhum gate alem de estar na main.
+    # O environment `producao-edge-functions` tem SO branch policy (branches
+    # protegidas) — NAO tem revisor obrigatorio (conferido em 30/09/2026 pela API
+    # de environments). O gate real de producao e o merge na main (CI obrigatorio);
+    # este job so publica codigo da main ou, em rollback, um ancestral dela (passo
+    # "Provar checkout imutavel"). Revisor obrigatorio so vira controle de verdade
+    # com identidades separadas: hoje agentes e humano operam pela mesma conta, que
+    # aprovaria a si mesma (ou travaria tudo com "Prevent self-review").
     environment: producao-edge-functions
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    # 60 min de deploy completo (setup + deploy + coletor pos-deploy de ate ~24 min
+    # + smokes) somados ao teto de espera do passo de serializacao (MAX_WAIT_MINUTES=40
+    # em scripts/edge-deploy/serialize-scope.mjs). Pinado em deploy-functions-workflow.unit.mjs.
+    timeout-minutes: 100
     # GITHUB_TOKEN elevado a contents:write apenas neste job, para o passo de
     # tag de rastreabilidade — dispensa PAT (DEPLOY_FUNCTIONS_TOKEN).
     permissions:
       contents: write
+      # Leitura dos runs deste workflow para o passo de serializacao do escopo `all`.
+      actions: read
     steps:
-      # E09 (auditoria de GitHub Actions, 2026-09-26) — considerado e
-      # descartado: um passo dentro do job para detectar outro run
-      # waiting/queued (mesma ideia do E47 em db-migrate.yml) NUNCA
-      # executaria de fato aqui. A concurrency (group: deploy-edge-functions,
-      # cancel-in-progress: false) ja impede um 2o job do mesmo grupo de
-      # iniciar qualquer step enquanto o 1o estiver waiting/in_progress — o
-      # 2o dispatch fica preso em "queued" pelo proprio GitHub Actions ANTES
-      # de rodar qualquer coisa, inclusive um passo de deteccao. Os runs
-      # 36265179129/36265412081 (cancelled) em 26/09 foram exatamente isso:
-      # a concorrencia funcionou, alguem so cancelou por impaciencia com a
-      # fila. Mitigacao real: checar a aba Actions antes de um novo dispatch
-      # (nenhum outro run deste workflow em waiting/queued/in_progress); se
-      # um "Waiting" antigo nao for mais necessario, cancele-o em vez de
-      # empilhar outro por cima.
+      # E09 (auditoria de GitHub Actions, 2026-09-26), corrigido em 30/09/2026:
+      # a concurrency NAO enfileira mais de um dispatch — ela mantem 1 em
+      # execucao + 1 pendente por grupo e cancela o pendente anterior a cada
+      # novo dispatch do mesmo grupo. Os cancelados de 26/09 e 30/09 vieram
+      # disso, nao de alguem cancelando por impaciencia. Por isso o grupo e
+      # por funcao (ver o bloco `concurrency` acima). Antes de redisparar a
+      # MESMA funcao, confira se ja nao ha um run dela pendente/em execucao.
       - name: Exigir ref confiavel da main
         run: |
           if [ "$GITHUB_REF" != "refs/heads/main" ]; then
@@ -103,6 +120,13 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/edge-tooling"
           git archive "$GITHUB_SHA" scripts/edge-deploy | tar -x -C "$RUNNER_TEMP/edge-tooling"
+
+      - name: Serializar escopo TODAS contra deploys por funcao
+        # Roda com a ferramenta fixada do GITHUB_SHA (vale tambem em rollback).
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SCOPE: ${{ inputs.function_name || 'all' }}
+        run: node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/serialize-scope.mjs"
 
       - name: Validar gerador e manifesto de deployment
         run: |
@@ -351,7 +375,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="edge-deploy/$(date -u +%Y%m%d-%H%M%S)-${DEPLOYED_GIT_SHA:0:8}"
+          # run_id no nome: com deploys paralelos, dois runs podem terminar no mesmo segundo.
+          TAG="edge-deploy/$(date -u +%Y%m%d-%H%M%S)-${DEPLOYED_GIT_SHA:0:8}-${GITHUB_RUN_ID}"
           git -c user.name="github-actions[bot]" \
               -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
               tag -a "$TAG" "$DEPLOYED_GIT_SHA" \
