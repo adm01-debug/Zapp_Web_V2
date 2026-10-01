@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -60,11 +60,25 @@ const NOTIFICATION_SETTINGS_QUERY_KEY = 'notification-settings';
 const SOUND_VOLUME_MIN = 10;
 const SOUND_VOLUME_MAX = 100;
 
+// Uma rajada de falhas (arrastar o slider com a rede caída) é UM problema, não dezoito.
+const INTERVALO_MINIMO_DE_AVISO_MS = 5000;
+
 // O volume dos alertas vem do banco: qualquer valor fora da faixa do controle ou nao numerico cai no
 // default, para nao propagar valor invalido (nem mudo acidental) para playNotificationSound.
 function clampSoundVolume(valor: unknown): number {
   if (typeof valor !== 'number' || !Number.isFinite(valor)) return DEFAULT_SETTINGS.soundVolume;
   return Math.min(SOUND_VOLUME_MAX, Math.max(SOUND_VOLUME_MIN, Math.round(valor)));
+}
+
+// O vocabulário é fechado ('beep'|'chime'|'bell'|'alert'|'soft') e o banco também o exige (CHECK
+// na migration de integridade). Mesmo assim o app não deve confiar no que chega: um valor fora do
+// conjunto virava `SOUND_CONFIGS[x]` undefined → throw → alerta MUDO.
+const SOUND_TYPES: readonly SoundTypeOption[] = ['beep', 'chime', 'bell', 'alert', 'soft'];
+
+function toSoundType(valor: unknown, padrao: SoundTypeOption): SoundTypeOption {
+  return typeof valor === 'string' && (SOUND_TYPES as readonly string[]).includes(valor)
+    ? (valor as SoundTypeOption)
+    : padrao;
 }
 
 function mapDbToSettings(data: Record<string, unknown>): NotificationSettings {
@@ -80,17 +94,18 @@ function mapDbToSettings(data: Record<string, unknown>): NotificationSettings {
     sentimentAlertThreshold: (data.sentiment_alert_threshold as number) ?? DEFAULT_SETTINGS.sentimentAlertThreshold,
     sentimentConsecutiveCount: (data.sentiment_consecutive_count as number) ?? DEFAULT_SETTINGS.sentimentConsecutiveCount,
     transcriptionNotificationEnabled: (data.transcription_notification_enabled as boolean) ?? DEFAULT_SETTINGS.transcriptionNotificationEnabled,
-    messageSoundType: (data.message_sound_type as SoundTypeOption) ?? DEFAULT_SETTINGS.messageSoundType,
-    mentionSoundType: (data.mention_sound_type as SoundTypeOption) ?? DEFAULT_SETTINGS.mentionSoundType,
-    slaSoundType: (data.sla_sound_type as SoundTypeOption) ?? DEFAULT_SETTINGS.slaSoundType,
-    goalSoundType: (data.goal_sound_type as SoundTypeOption) ?? DEFAULT_SETTINGS.goalSoundType,
-    transcriptionSoundType: (data.transcription_sound_type as SoundTypeOption) ?? DEFAULT_SETTINGS.transcriptionSoundType,
+    messageSoundType: toSoundType(data.message_sound_type, DEFAULT_SETTINGS.messageSoundType),
+    mentionSoundType: toSoundType(data.mention_sound_type, DEFAULT_SETTINGS.mentionSoundType),
+    slaSoundType: toSoundType(data.sla_sound_type, DEFAULT_SETTINGS.slaSoundType),
+    goalSoundType: toSoundType(data.goal_sound_type, DEFAULT_SETTINGS.goalSoundType),
+    transcriptionSoundType: toSoundType(data.transcription_sound_type, DEFAULT_SETTINGS.transcriptionSoundType),
   };
 }
 
 export const useNotificationSettings = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const ultimoAvisoDeErroRef = useRef(0);
 
   const { data: settings = DEFAULT_SETTINGS, isLoading } = useQuery({
     queryKey: [NOTIFICATION_SETTINGS_QUERY_KEY, user?.id],
@@ -165,12 +180,16 @@ export const useNotificationSettings = () => {
     } catch (error) {
       log.warn('Failed to save notification settings:', error);
       // A tela já mostrava o valor novo: sem avisar, o controle "pula de volta" sozinho e
-      // o usuário não entende por quê.
-      toast({
-        title: 'Não foi possível salvar',
-        description: 'A preferência voltou para o valor gravado. Tente novamente.',
-        variant: 'destructive',
-      });
+      // o usuário não entende por quê. Arrastar o slider dispara uma gravação por passo — e
+      // com a rede caída isso virava uma pilha de toasts idênticos. Um aviso por rajada.
+      if (Date.now() - ultimoAvisoDeErroRef.current >= INTERVALO_MINIMO_DE_AVISO_MS) {
+        ultimoAvisoDeErroRef.current = Date.now();
+        toast({
+          title: 'Não foi possível salvar',
+          description: 'A preferência voltou para o valor gravado. Tente novamente.',
+          variant: 'destructive',
+        });
+      }
       // Rollback optimistic update
       queryClient.invalidateQueries({ queryKey: [NOTIFICATION_SETTINGS_QUERY_KEY, user.id] });
     }
