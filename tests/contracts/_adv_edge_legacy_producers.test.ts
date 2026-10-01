@@ -16,6 +16,8 @@
  *  - 149: Bloco 04 (IA-036) — `_shared/ai-capabilities.ts` (módulo de fonte novo: entra na contagem
  *    de arquivos .ts, mas NÃO produz token legado — verificado pelo próprio mapa INVENTARIO).
  *  - 150: Bloco 04 (IA-032) — `_shared/ai-generate.ts` (despacho central; também não produz token legado).
+ *  - 151: Bloco 04 (IA-033) — `_shared/ai-image-input.ts` (baixa o objeto do Storage privado e embute a
+ *    imagem como data URL base64; não produz token legado, é transporte de entrada).
  * O mapa INVENTARIO e o total de ocorrências (3) permanecem idênticos.
  *  - 152: Bloco C do Multiplix (01/10/2026) — `_shared/multiplix-eligibility.ts` (mapa tipado de
  *    elegibilidade PT↔EN, a fronteira com o Singu) e `_shared/__tests__/multiplix-eligibility.test.ts`.
@@ -95,8 +97,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('152 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(152);
+  it('151 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(151);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );
