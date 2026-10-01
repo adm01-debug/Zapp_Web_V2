@@ -116,7 +116,7 @@ então esse caminho nunca foi executável por agente de qualquer forma.
 
 ---
 
-*Atualizado em 2026-09-27. Se algo aqui divergir do banco/infra real, corrija ESTE arquivo no mesmo commit do fix.*
+*Atualizado em 2026-10-01. Se algo aqui divergir do banco/infra real, corrija ESTE arquivo no mesmo commit do fix.*
 
 ## Auditoria e plano de correções (2026-09-16)
 
@@ -164,6 +164,8 @@ Estado dos achados após re-auditoria de 2026-09-17:
   merge retorna 405 "N of N expected" com CI totalmente verde — o diagnóstico correto é
   verificar `strict` ao vivo com `github_get_branch_protection`, não retentar o merge.
 
+  **Correção de 2026-10-01:** `strict` voltou a `true` pela terceira vez (sintoma idêntico ao de 27/09: PR #1375 com os 6 checks verdes e merge 405 "6 of 6 expected"; a `main` avançava a cada poucos minutos e a PR voltava a `BEHIND` antes de o CI de 6 min terminar). Restaurado para `false` com `github_update_required_status_checks` (PATCH só do campo — o PUT completo `github_update_branch_protection` devolveu 500 e não alterou nada). Autor da regressão **não identificável por API**: nenhum workflow nem script do repo toca branch protection (`grep` em `.github/`, `scripts/`), nada no `/workspace` da VPS, e conta do tipo `User` não tem audit log via API — o único registro é o **Security log** da conta (Settings → Security log, filtrar `protected_branch`), que só o Joaquim consegue abrir. Hipótese mais provável: alguma sessão fazendo PUT completo de proteção (todo PUT precisa mandar `strict` explicitamente) para mexer em outro campo. Antes de qualquer `github_update_branch_protection`, ler o estado com `github_get_branch_protection` e repetir `strict: false`.
+
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
 Auditoria dos 13 workflows + 3 dinâmicos (16 total), da branch protection, dos secrets e dos environments. O que passou a
@@ -177,7 +179,7 @@ valer (confira antes de propor mudança de CI, para não refazer o que já exist
 Updates, Dependency Graph, Copilot reviewer) — 16 no total. Plano completo em
 `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-26.md`.
 
-**Required checks da `main`** (6; `strict` está `false` ao vivo — ver correções em 25/09 e 27/09 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
+**Required checks da `main`** (6; `strict` está `false` ao vivo — ver correções em 25/09, 27/09 e 01/10 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
 `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline` e
 `🎭 E2E Tests (Playwright)` — este último passou a ser obrigatório em 25/09; antes rodava em PR
 sem bloquear merge. `🔬 CodeQL (javascript-typescript)` roda em CI mas **não** é required check
@@ -228,7 +230,7 @@ primeiros rodavam ambos às 06:00 e disputavam o banco no mesmo minuto.
 **Repo:** `sha_pinning_required` ligado no GitHub (além do `check-workflow-pins.mjs`).
 
 **Fila de merge (merge queue) é IMPOSSÍVEL neste repo — não tente de novo.** Em 25/09, com `strict`
-ligado (hoje está `false` ao vivo — ver correções em 25/09 e 27/09 acima, seção "Branch protection sem `Contrato DB
+ligado (hoje está `false` ao vivo — ver correções em 25/09, 27/09 e 01/10 acima, seção "Branch protection sem `Contrato DB
 vivo`"), e várias sessões mergeando, toda PR que não entra primeiro volta para `BEHIND`, o
 `auto-update-pr-branch` recria o head e o CI (~6 min) recomeça; em 25/09 três PRs verdes ficaram
 ~40 min nesse ciclo. A fila do GitHub resolveria isso, e os gatilhos `merge_group` já foram
