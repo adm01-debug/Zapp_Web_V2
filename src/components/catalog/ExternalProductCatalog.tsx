@@ -182,6 +182,37 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
     if (isOpenRef.current && page > 0) doFetchRef.current();
   }, [page]);
 
+  // CT-61 — mesmos atalhos da tela de Catálogo, válidos só com o dialog aberto
+  // (o catálogo do chat fica montado mesmo fechado): `/` e Ctrl/Cmd+F focam a
+  // busca, Esc limpa. O listener fica em CAPTURA no window por causa do
+  // Ctrl/Cmd+F nativo do browser (ver comentário em ExternalProductManagement).
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const isEditable = (target: EventTarget | null): boolean => {
+      const el = target as HTMLElement | null;
+      if (!el) return false;
+      return el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable;
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'f') {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+      if (event.key === '/' && !isEditable(event.target)) {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+      if (event.key === 'Escape') {
+        setSearch('');
+      }
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
+  }, [isOpen]);
+
   // CT-29 — o skeleton só pode aparecer na carga inicial. O `loading` do hook é
   // `isLoading || isFetching` (useExternalCatalog.ts:315), então durante a
   // paginação ele também ficava true e os cards davam lugar a 8 skeletons: era
@@ -350,6 +381,7 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
               <div className="flex-1 min-w-[200px] relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
+                  ref={searchInputRef}
                   placeholder="Buscar por nome, SKU ou marca..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
