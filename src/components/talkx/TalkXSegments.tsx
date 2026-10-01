@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Copy, Shield,
-  Check, RefreshCw, ChevronDown, ChevronUp, Info, Database, Search, Sliders,
+  Check, RefreshCw, ChevronDown, ChevronUp, Database, Search, Sliders,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -172,10 +172,6 @@ export function TalkXSegments({ onUseCampaign }: Props) {
             <p className="text-xs text-foreground-secondary">Os segmentos permitem direcionar suas campanhas para grupos específicos de contatos com base em regras de comportamento e dados do CRM.</p>
           </RailCard>
         )}
-        <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4 flex items-start gap-3">
-          <IconTile icon={Info} size={36} color="blue" />
-          <div><p className="text-[13px] font-bold text-foreground">Sugestão de IA</p><p className="text-xs text-foreground-secondary leading-snug">Segmentos maiores concentram público semelhante; revise antes de enviar.</p></div>
-        </div>
       </div>
 
       <TalkXConfirmDialog
