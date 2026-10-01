@@ -116,7 +116,8 @@ describe('ContactSelectionStep — CT-41 (2 colunas, header e card-resumo)', () 
     expect(thumb).toHaveClass('w-24', 'h-24');
     expect(thumb).toHaveAttribute('src', 'https://x/produto.jpg');
     expect(screen.getAllByText('Açucareiro em bambu').length).toBeGreaterThan(0);
-    expect(screen.getByText('Modelo Informal')).toBeInTheDocument();
+    expect(screen.getByText('Modelo')).toBeInTheDocument();
+    expect(screen.getByText('Informal')).toBeInTheDocument();
     expect(screen.getByText('3 foto(s)')).toBeInTheDocument();
 
     // Layout de 2 colunas (1fr + 300px no breakpoint md).
@@ -235,5 +236,51 @@ describe('ContactSelectionStep — CT-46 (progresso real do envio)', () => {
 
     const btn = screen.getByText('Enviando 2/4...').closest('button');
     expect(btn).toBeDisabled();
+  });
+});
+
+describe('ContactSelectionStep — CT-44 (rail de resumo e aviso de prontidão)', () => {
+  it('mostra o RailCard "Resumo do envio" com as 4 linhas do envio', () => {
+    render(
+      <Dialog open>
+        <ContactSelectionStep {...baseProps} variantLabel="Azul" selectedImagesCount={3} />
+      </Dialog>
+    );
+
+    expect(screen.getByText('Resumo do envio')).toBeInTheDocument();
+    expect(screen.getByText('Produto')).toBeInTheDocument();
+    expect(screen.getByText('Modelo')).toBeInTheDocument();
+    expect(screen.getByText('Variação')).toBeInTheDocument();
+    expect(screen.getByText('Azul')).toBeInTheDocument();
+    expect(screen.getByText('Fotos')).toBeInTheDocument();
+    expect(screen.getByText('3 foto(s)')).toBeInTheDocument();
+  });
+
+  it('sem contato, não anuncia "Pronto para enviar!"', () => {
+    renderStep({ ...baseProps });
+
+    expect(screen.queryByText('Pronto para enviar!')).not.toBeInTheDocument();
+  });
+
+  it('com contato, anuncia "Pronto para enviar!" numa região aria-live', () => {
+    render(
+      <Dialog open>
+        <ContactSelectionStep {...baseProps} selectedContact={contact} />
+      </Dialog>
+    );
+
+    const aviso = screen.getByText('Pronto para enviar!');
+    expect(aviso.closest('[aria-live="polite"]')).not.toBeNull();
+  });
+
+  it('com bloqueio pré-envio, não anuncia prontidão (não duplica o aviso de bloqueio)', () => {
+    render(
+      <Dialog open>
+        <ContactSelectionStep {...baseProps} selectedContact={contact} sendBlockedReason="Sem conexão ativa" />
+      </Dialog>
+    );
+
+    expect(screen.queryByText('Pronto para enviar!')).not.toBeInTheDocument();
+    expect(screen.getByText('Sem conexão ativa')).toBeInTheDocument();
   });
 });

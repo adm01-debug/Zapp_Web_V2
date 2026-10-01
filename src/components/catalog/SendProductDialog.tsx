@@ -26,10 +26,10 @@ import { toast } from 'sonner';
 import { useCatalogSendReadiness } from '@/hooks/integrations/useCatalogSendReadiness';
 import { cn } from '@/lib/utils';
 import {
-  type MessageTemplate, type SendMode, buildMessage, collectAllImages,
+  type MessageTemplate, type SendMode, buildMessage, collectAllImages, downloadImageAsBlob,
 } from './sendProductUtils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { AlertCard } from '@/components/talkx/talkxShared';
+import { AlertCard, personalizePreview } from '@/components/talkx/talkxShared';
 import { useContactSearch, useSendToContact, type ContactResult } from './useSendProduct';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { ContactSelectionStep } from './ContactSelectionStep';
@@ -218,7 +218,14 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
     setSelectedImages(new Set(visibleImages.map((i) => i.url)));
   }
 
-  const message = isEditing ? customMessage : buildMessage(fullProduct, template, sendMode === 'variant' ? activeGroup : null);
+  // CT-45 — a mensagem (do modelo ou editada à mão) é personalizada com o
+  // contato selecionado: {{nome}}/{{empresa}} resolvem aqui e o preview
+  // acompanha a troca de contato. Sem contato, cada caminho devolve o texto
+  // cru — chamar o helper com `null` cairia no contato de exemplo
+  // ("João Silva"/"Sua Empresa") e mostraria dados que não existem.
+  const message = isEditing
+    ? (selectedContact ? personalizePreview(customMessage, selectedContact) : customMessage)
+    : buildMessage(fullProduct, template, sendMode === 'variant' ? activeGroup : null, selectedContact);
   const messageTooLong = message.length > MAX_MESSAGE_LENGTH;
   const selectedImagesList = useMemo(
     () => visibleImages.filter((i) => selectedImages.has(i.url)),
@@ -255,14 +262,24 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
     } catch { toast.error('Erro ao copiar link'); }
   };
 
-  const handleDownloadImages = () => {
+  const handleDownloadImages = async () => {
     const urls = Array.from(selectedImages);
     if (urls.length === 0) { toast.error('Nenhuma foto selecionada'); return; }
-    urls.forEach((url, i) => {
-      const a = document.createElement('a'); a.href = url; a.download = `${fullProduct.name.replace(/\s+/g, '_')}_${i + 1}.jpg`;
-      a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    });
-    toast.success('📥 Download iniciado', { description: `${urls.length} foto(s)` });
+    const baseName = fullProduct.name.replace(/\s+/g, '_');
+    // CT-39 — sem JSZip/fflate/archiver no bundle (nenhuma dependência nova é
+    // autorizada), o "zip" do plano vira o download individual previsto no
+    // fallback. Cada foto desce como Blob (o `download` do <a> é ignorado em
+    // URL cross-origin, imagedelivery.net) e o toast só promete o que saiu de
+    // verdade.
+    const results = await Promise.all(
+      urls.map((url, i) => downloadImageAsBlob(url, `${baseName}_${i + 1}.jpg`))
+    );
+    const downloaded = results.filter(Boolean).length;
+    if (downloaded === 0) {
+      toast.error('Não foi possível baixar as fotos', { description: 'Abra cada foto em uma nova aba.' });
+      return;
+    }
+    toast.success('📥 Download iniciado', { description: `${downloaded} de ${urls.length} foto(s)` });
   };
 
   const handleSend = () => {
@@ -434,6 +451,11 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
 
                 <Separator />
 
+                {/* CT-39 — "Adicionar fotos" (plano) NÃO foi criado: o picker já
+                    lista todas as fotos visíveis do produto/variante
+                    (collectAllImages) e as marca por padrão — o toggle
+                    "Selecionar todas/Desmarcar" abaixo cobre o mesmo caso. Um
+                    botão extra só duplicaria o controle existente. */}
                 {visibleImages.length > 0 && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
