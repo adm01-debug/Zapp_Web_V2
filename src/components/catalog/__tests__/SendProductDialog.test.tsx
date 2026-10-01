@@ -177,7 +177,7 @@ describe('SendProductDialog — Fase 7 (E72-E75 parcial)', () => {
     expect(screen.getAllByText(/Olha esse produto/).length).toBe(2);
 
     fireEvent.click(screen.getByRole('button', { name: 'Formal' }));
-    expect(screen.getAllByText(/Prezado\(a\)/).length).toBe(2);
+    expect(screen.getAllByText(/segue informações do produto/i).length).toBe(2);
   });
 });
 
