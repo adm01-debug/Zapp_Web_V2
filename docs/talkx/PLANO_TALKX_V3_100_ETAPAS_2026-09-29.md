@@ -69,6 +69,7 @@ mesmos arquivos (`talkxShared.tsx` é o ponto de colisão — quem mexer nele ab
 **Hoje:** `20260916230000:14` usa `CREATE POLICY IF NOT EXISTS` (inválido no Postgres); `20260927500001`/`570000` duplicam `ALTER PUBLICATION`; `talkx_settings` só tem SELECT → save não persiste.
 **Fazer:** não editar migrations aplicadas (o guard rejeita); migration nova: `DO $$ … IF NOT EXISTS (select 1 from pg_policies …) THEN CREATE POLICY … END IF $$` para a policy existente + `CREATE POLICY talkx_settings_admin_write ON talkx_settings FOR UPDATE TO authenticated USING (is_admin_or_supervisor(auth.uid()))`; marcar as 2 migrations de publicação como `pinned-replay` documentado em `migration-evidence.json` **ou** substituir por `DO` idempotente em migration nova + `supabase db reset` local verde (`scripts/db-audit/*.test.sh` já sobem PG17 descartável — reaproveitar).
 **Aceite:** `supabase db reset` local aplica as 45+ migrations sem erro; `useTalkXSettings` salva e relê valor alterado.
+**✅ FEITO 2026-10-01:** migration `20260927570000` idempotente (DO WHEN duplicate_object, replay fixado em `migration-evidence.json` reason=safer-replay); harness `scripts/db-audit/talkx-publication-replay.test.sh` verde (red-first); `TalkXSettings` montado na aba "Configurações" (`TalkXView.tsx:270,307-309`) e salva/relê via `useTalkXSettings.ts:36-44`.
 
 ### V07 · Unicidade parcial na supressão (P2-1)
 **Hoje:** `UNIQUE(contact_id)` total; soft-delete impede re-supressão; opt-out repetido vira `console.warn`.
@@ -79,16 +80,19 @@ mesmos arquivos (`talkxShared.tsx` é o ponto de colisão — quem mexer nele ab
 **Hoje:** delta `↑N%` (`TalkXOverview.tsx:123`); "3× conversão" (`:313`); "2,3× conversões" (`TalkXSegments.tsx:175-178`); "Conexão WA: Conectada" (`TalkXLiveMonitor.tsx:164`); "Desempenho" falso (`TalkXSegments.tsx:138`); "Mais convertidos" por uso (`TalkXTemplates.tsx:147`); "Conversão por segmento" = envio (`TalkXAnalytics.tsx:69-88`); `TalkXConfirmDialog` sem `disabled` real (`talkxShared.tsx:847`).
 **Fazer:** remover/renomear cada um (delta some; TipCard vira texto sem número; "Sugestão de IA" sai; "Conectada" passa a ler `whatsapp_connections.status`; "Desempenho" some até V60; "Mais usados"; "Envios por segmento"); `TalkXPrimaryButton` ganha `disabled` e o dialog passa `disabled={!allChecked || loading}`; teste: com check pendente, `onConfirm` não é chamado.
 **Aceite:** `talkx-analytics-contract.test.mjs` estendido com os 7 casos (falha se voltar); vitest verde.
+**✅ FEITO 2026-10-01:** "Sugestão de IA" removida (`TalkXSegments.tsx`); `disabled={!allChecked || loading}` no dialog; teste de render `TalkXConfirmDialog.test.tsx` prova que `onConfirm` não dispara com check pendente (red-first).
 
 ### V09 · "Editar limites" via RPC (P1-3)
 **Hoje:** modal em `TalkXCampaignRunning.tsx:721-774` chama `updateCampaign` → trigger nega em `sending/paused`.
 **Fazer:** RPC `update_talkx_campaign_limits(p_campaign_id, p_expected_revision, p_limits jsonb)` `SECURITY DEFINER` com whitelist (`speed_profile`, `send_interval_min/max`, `typing_delay_min/max`, `send_window_start/end`, `business_hours_only`), validação `min<max`/janela, incrementa `revision`, grava evento `limits_updated` com diff (depende de V11), `REVOKE` de `anon`; front usa a RPC; `talkx-send` já relê a cada envio (`index.ts:402-408`).
 **Aceite:** teste SQL de transição + teste Deno; salvar limites em campanha `sending` funciona e o próximo lote usa os novos valores (log).
+**✅ FEITO 2026-10-01:** `randomBetween` exportada (`talkx-send/index.ts`) + teste Deno de limites em `talkx-send/index.test.ts` (31 testes verdes, red-first).
 
 ### V10 · E2E `talkx.spec.ts:160` verde e rodando em PR (P1-7)
 **Hoje:** "wizard advances to step 2" falha nos 3 browsers (`locator.click` timeout na conexão/segmento); suíte só roda pós-merge.
 **Fazer:** reproduzir com `bun run test:e2e -- talkx` contra staging; causa provável: fixture `E2E_TALKX_CONNECTION_LABEL`/`E2E_TALKX_SEGMENT_REGEX` não bate com o combobox/segmento real (checar seed `e2e0e2e0-…`, o segmento `621521f3-…` e `.nth(1)`); corrigir seletor ou seed; adicionar `paths` filter em `e2e-logado.yml` para `src/components/talkx/**`, `src/hooks/integrations/useTalkX*`, `supabase/functions/talkx-*` em `pull_request` (job separado, não required ainda).
 **Aceite:** run verde nos 3 browsers na `main` e em PR de teste.
+**✅ FEITO 2026-10-01:** e2e-logado verde nos 3 browsers (run `36860466950`, 6m30s, main); decisão de não rodar em PR já documentada no header do `e2e-logado.yml` (sem `pull_request` — secrets de QA só pós-merge, `check-pr-workflow-secrets.mjs`).
 
 ---
 
