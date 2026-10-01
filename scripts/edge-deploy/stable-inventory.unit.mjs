@@ -37,8 +37,8 @@ test('inventario identico ao baseline atesta pelo digest (deploy sem mudanca de 
   const result = await simulate([before.functions]);
   assert.equal(result.function_count, manifest.functions.length);
   assert.deepEqual(
-    [...result.verification.accepted_without_version_bump].sort(),
-    before.functions.map(fn => fn.slug).sort(),
+    [...result.verification.accepted_without_version_bump].sort((a, b) => a.localeCompare(b)),
+    before.functions.map(fn => fn.slug).sort((a, b) => a.localeCompare(b)),
   );
 });
 test('funcao sinalizada pelo deploy como "No change found" nao exige bump de versao', async () => {
