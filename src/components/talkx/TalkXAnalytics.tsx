@@ -10,24 +10,24 @@ import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCa
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { Database } from '@/integrations/supabase/types';
-import { IconTile, TalkXEmptyState, InsightCard, barsByDay, fmtDateTime, fmtInt, fmtPct, pct } from './talkxShared';
+import { IconTile, TalkXEmptyState, TalkXErrorState, TalkXSkeletonRows, InsightCard, barsByDay, fmtDateTime, fmtInt, fmtPct, pct } from './talkxShared';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
 import { CHART_TICK_FONT_SIZE, CHART_TICK_FONT_SIZE_SM, CHART_TOOLTIP_FONT_SIZE, CHART_LABEL_FONT_SIZE } from '@/lib/chart-theme';
 
-interface Props { campaigns: TalkXCampaign[] }
+interface Props { campaigns: TalkXCampaign[]; isLoading?: boolean; isError?: boolean }
 type Period = '7d' | '30d' | '90d';
 const PERIOD_LABELS: Record<Period, string> = { '7d': 'Últimos 7 dias', '30d': 'Últimos 30 dias', '90d': 'Últimos 90 dias' };
 const DAYS: Record<Period, number> = { '7d': 7, '30d': 30, '90d': 90 };
 const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
-export function TalkXAnalytics({ campaigns }: Props) {
+export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
   const [period, setPeriod] = useState<Period>('30d');
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null); // E74
   const days = DAYS[period];
   // pageLoadTime captured once via lazy init (outside render); cutoff derived stably
   const [pageLoadTime] = useState<number>(() => Date.now());
   const cutoff = useMemo(() => new Date(pageLoadTime - days * 86_400_000), [pageLoadTime, days]);
-  const filtered = useMemo(() => campaigns.filter((c) => !c.started_at || new Date(c.started_at) >= cutoff), [campaigns, cutoff]);
+  const filtered = useMemo(() => campaigns.filter((c) => c.started_at && new Date(c.started_at) >= cutoff), [campaigns, cutoff]);
 
   const stats = useMemo(() => {
     const sent = filtered.reduce((a, c) => a + c.sent_count, 0);
@@ -157,15 +157,19 @@ export function TalkXAnalytics({ campaigns }: Props) {
     return { hour: h, day: bestDay && bestDay.dw >= 0 ? DAY_LABELS[bestDay.dw] : null, count: max };
   }, [hourlyData]);
 
-  if (campaigns.length === 0) return <TalkXEmptyState icon={BarChart3} title="Nenhuma campanha para analisar" description="Execute pelo menos uma campanha para ver os analytics." />;
-
-  // E94: insights heurísticos
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+  // E94: insights heurísticos — hook SEMPRE antes do return antecipado (regra dos
+  // hooks); chamar depois dele causava "Rendered more hooks" quando a lista ia de
+  // 0 para 1 campanha.
   const { data: insights } = useTalkXInsights();
 
+  if (isError) return <TalkXErrorState />;
+  if (isLoading) return <TalkXSkeletonRows rows={6} />;
+  if (campaigns.length === 0) return <TalkXEmptyState icon={BarChart3} title="Nenhuma campanha para analisar" description="Execute pelo menos uma campanha para ver os analytics." />;
+
   return (
-    <div className="space-y-4 min-w-0">
-      <div className="flex items-center gap-2 flex-wrap">
+    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-4 min-w-0">
+      <div className="min-w-0 space-y-4">
+        <div className="flex items-center gap-2 flex-wrap">
         {(['7d', '30d', '90d'] as Period[]).map((p) => (
           <button key={p} type="button" onClick={() => setPeriod(p)} className={cn('h-8 px-3.5 rounded-lg text-xs font-medium border transition-colors', period === p ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 bg-input/40 text-foreground-secondary hover:bg-muted/50')}>{PERIOD_LABELS[p]}</button>
         ))}
@@ -321,7 +325,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
                     <td className="px-3 py-2.5"><button type="button" onClick={() => setSelectedCampaignId((prev) => prev === c.id ? null : c.id)} className="text-left hover:text-primary transition-colors"><p className="text-[13px] font-semibold text-foreground truncate max-w-[240px]">{c.name}</p></button></td>
                     <td className="px-3 py-2.5"><span className="text-xs text-whatsapp">WhatsApp</span></td>
                     <td className="px-3 py-2.5 text-[13px] font-semibold text-foreground">{fmtInt(c.sent_count)}</td>
-                    <td className="px-3 py-2.5 text-[13px] text-dash-green font-semibold">{c.sent_count + c.failed_count > 0 ? fmtPct(c.sent_count, c.sent_count + c.failed_count) : '—'}</td>
+                    <td className="px-3 py-2.5 text-[13px] text-dash-green font-semibold">{c.sent_count > 0 ? fmtPct(c.delivered_count, c.sent_count) : '—'}</td>
                     <td className="px-3 py-2.5 text-[13px] text-foreground-secondary">{c.failed_count > 0 ? fmtInt(c.failed_count) : '—'}</td>
                   </tr>
                 ))}
@@ -415,9 +419,11 @@ export function TalkXAnalytics({ campaigns }: Props) {
         </section>
       )}
 
-      {/* E94: Insights heurísticos */}
-      {insights && insights.length > 0 && (
-        <section className="space-y-3">
+        </div>
+        <div className="space-y-4 min-w-0">
+          {/* E94: Insights heurísticos */}
+          {insights && insights.length > 0 && (
+            <section className="space-y-3">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-primary" />
             <h3 className="text-sm font-semibold text-foreground">Insights</h3>
@@ -437,6 +443,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
           </div>
         </section>
       )}
+        </div>
     </div>
   );
 }
