@@ -28,6 +28,35 @@ export function getMonthlySessionLimit(): number {
 }
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
 
+/**
+ * E47 — o aviso de degradação sai UMA vez por mês, não a cada carregamento. `budgetOk` nasce `true`
+ * a cada reload, então sem esta marca quem recarregasse a página depois de estourar o teto emitiria
+ * o evento de novo. A marca é por mês (UTC, o mesmo critério de `count_searchbox_sessions_this_month`).
+ */
+const NOTIFICADO_PREFIX = 'searchbox_cost_guard_notified:';
+
+function mesAtual(): string {
+  return new Date().toISOString().slice(0, 7); // AAAA-MM
+}
+
+function jaAvisouEsteMes(): boolean {
+  try {
+    return localStorage.getItem(NOTIFICADO_PREFIX + mesAtual()) !== null;
+  } catch {
+    // Storage bloqueado (modo restrito/privado): prefere emitir o evento a ficar calado — o
+    // objetivo do evento é observabilidade, e um aviso repetido custa menos que um aviso perdido.
+    return false;
+  }
+}
+
+function marcarAvisoDoMes(): void {
+  try {
+    localStorage.setItem(NOTIFICADO_PREFIX + mesAtual(), new Date().toISOString());
+  } catch {
+    // idem: sem storage, o pior caso é repetir o evento, nunca perdê-lo.
+  }
+}
+
 let budgetOk = true;
 let lastCheckedAt = 0;
 let inFlight: Promise<void> | null = null;
@@ -41,10 +70,11 @@ async function refresh(): Promise<void> {
     const wasOk = budgetOk;
     const limit = getMonthlySessionLimit();
     budgetOk = count < limit;
-    if (wasOk && !budgetOk) {
+    if (wasOk && !budgetOk && !jaAvisouEsteMes()) {
+      marcarAvisoDoMes();
       void logAudit({
         action: 'searchbox_cost_guard',
-        details: { event: 'degraded', limit, count },
+        details: { event: 'degraded', limit, count, month: mesAtual() },
       });
     }
   } catch {
