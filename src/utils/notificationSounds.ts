@@ -1,6 +1,6 @@
 import { log } from '@/lib/logger';
 import { SOUND_CONFIGS } from './soundConfigs';
-import type { SoundType, NotificationType } from './soundConfigs';
+import type { SoundType, NotificationType, SoundConfig } from './soundConfigs';
 
 // ÂNCORA (não unificar): ALERTAS do sistema = WebAudio (oscilador → gain → destination),
 // com ganho vindo exclusivamente de `settings.soundVolume`. MÍDIA de conversa (áudio e
@@ -27,7 +27,14 @@ export const playNotificationSound = (
     const ctx = getAudioContext();
     if (ctx.state === 'suspended') ctx.resume();
 
-    const config = SOUND_CONFIGS[soundType][notificationType];
+    // O acesso direto `SOUND_CONFIGS[soundType]` estoura quando o valor vem fora do vocabulário
+    // (preferência antiga, cache otimista): o erro caía no catch lá embaixo e o alerta ficava
+    // MUDO, com um warn no log que ninguém lê. Silêncio é o pior resultado possível para um
+    // alerta; o som padrão é a resposta certa.
+    const variacoes = SOUND_CONFIGS as Record<string, Record<string, SoundConfig>>;
+    const variacao = variacoes[soundType];
+    if (!variacao) log.warn(`Tipo de som "${soundType}" fora do vocabulário — tocando o padrão.`);
+    const config = variacao?.[notificationType] ?? SOUND_CONFIGS.chime.message;
     const volumeMultiplier = volume / 100;
 
     config.frequencies.forEach((freq, index) => {
