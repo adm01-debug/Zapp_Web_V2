@@ -49,6 +49,11 @@ BEGIN
   END IF;
   CASE p_action
     WHEN 'start' THEN
+      IF v_campaign.status = 'sending' THEN
+        -- V13: retomada idempotente — já enviando, a transição é no-op (não 55000).
+        RETURN QUERY SELECT p_campaign_id, 'sending', 'sending';
+        RETURN;
+      END IF;
       IF v_campaign.status NOT IN ('draft', 'scheduled', 'paused') THEN
         RAISE EXCEPTION 'talkx_campaign_start_denied_from_%', v_campaign.status USING ERRCODE = '55000';
       END IF;

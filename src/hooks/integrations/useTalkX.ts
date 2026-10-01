@@ -367,9 +367,9 @@ export function useTalkX() {
     }
   }, [queryClient]);
 
-  const pauseCampaign = useCallback(async (campaignId: string) => {
+  const pauseCampaign = useCallback(async (campaignId: string, reason?: string) => {
     const { data, error } = await supabase.functions.invoke('talkx-send', {
-      body: { campaignId, action: 'pause' },
+      body: { campaignId, action: 'pause', reason: reason ?? null },
     });
     if (error) throw error;
     assertTalkXActionAccepted(data);

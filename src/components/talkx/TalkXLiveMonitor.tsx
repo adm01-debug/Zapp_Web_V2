@@ -36,6 +36,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [elapsedSec, setElapsedSec] = useState(0);
   const [confirmPause, setConfirmPause] = useState(false);
+  const [pauseReason, setPauseReason] = useState('');
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [confirmResume, setConfirmResume] = useState(false);
 
@@ -223,7 +224,8 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
 
       <AlertDialog open={confirmPause} onOpenChange={setConfirmPause}>
         <AlertDialogContent className="rounded-2xl border-border/70"><AlertDialogHeader><AlertDialogTitle>Pausar campanha?</AlertDialogTitle><AlertDialogDescription>Os envios em andamento serão concluídos, mas novos envios não serão iniciados.</AlertDialogDescription></AlertDialogHeader>
-        <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-dash-amber hover:bg-dash-amber/90 text-black" onClick={async(ev: React.MouseEvent)=>{ev.preventDefault(); try { await pauseCampaign(campaignId); setConfirmPause(false); } catch(e: unknown) { toast.error(`Erro ao pausar: ${e instanceof Error ? (e as Error).message : 'Erro'}`); }}}>Pausar agora</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+        <textarea className="w-full min-h-[64px] rounded-md border border-border bg-background px-3 py-2 text-sm" placeholder="Motivo da pausa (opcional)" value={pauseReason} onChange={(e)=>setPauseReason(e.target.value)} />
+        <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-dash-amber hover:bg-dash-amber/90 text-black" onClick={async(ev: React.MouseEvent)=>{ev.preventDefault(); try { await pauseCampaign(campaignId, pauseReason.trim() || undefined); setPauseReason(''); setConfirmPause(false); } catch(e: unknown) { toast.error(`Erro ao pausar: ${e instanceof Error ? (e as Error).message : 'Erro'}`); }}}>Pausar agora</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
       </AlertDialog>
       <AlertDialog open={confirmCancel} onOpenChange={setConfirmCancel}>
         <AlertDialogContent className="rounded-2xl border-border/70"><AlertDialogHeader><AlertDialogTitle>Cancelar campanha?</AlertDialogTitle><AlertDialogDescription>O envio será interrompido e contatos pendentes não receberão mensagens.</AlertDialogDescription></AlertDialogHeader>

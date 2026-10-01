@@ -147,7 +147,7 @@ export async function handleTalkxSend(
     }
 
     const body = await req.json();
-    const { campaignId, action } = body;
+    const { campaignId, action, reason } = body;
 
     // E47: action test --- envia template de teste para um numero
     if (action === "test") {
@@ -226,6 +226,7 @@ export async function handleTalkxSend(
         p_campaign_id: campaignId,
         p_action: campaignAction,
         p_actor_id: actorId,
+        p_pause_reason: reason ?? null,
       });
       if (error) {
         return new Response(JSON.stringify({ error: error.message }), { status: 409, headers });

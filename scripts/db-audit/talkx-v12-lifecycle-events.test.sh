@@ -165,6 +165,16 @@ types="$(psql_test -Atqc "SELECT string_agg(event_type, ',' ORDER BY created_at)
 pause_msg="$(psql_test -Atqc "SELECT message FROM public.talkx_campaign_events WHERE event_type='paused'")"
 [[ "$pause_msg" == 'motivo x' ]] || fail "GREEN: mensagem da pausa nao foi gravada (got $pause_msg)"
 
+# ---- GREEN (V13): start em 'sending' é no-op (retomada dupla não erra, não duplica evento) ----
+psql_test >/dev/null <<'SQL'
+UPDATE public.talkx_campaigns SET status = 'sending'
+  WHERE id = '20000000-0000-0000-0000-000000000001';
+SQL
+noop_status="$(psql_test -Atqc "BEGIN; SET LOCAL request.jwt.claim.role = 'service_role'; SELECT current_status FROM public.transition_talkx_campaign('20000000-0000-0000-0000-000000000001', 'start'); COMMIT;")"
+[[ "$noop_status" == 'sending' ]] || fail "V13: start em sending nao foi no-op (got $noop_status)"
+noop_events="$(psql_test -Atqc "SELECT count(*) FROM public.talkx_campaign_events")"
+[[ "$noop_events" == '4' ]] || fail "V13: start em sending duplicou evento (esperava 4, got $noop_events)"
+
 # ---- GREEN: complete_talkx_campaign_if_drained grava 'completed' ----
 psql_test >/dev/null <<'SQL'
 UPDATE public.talkx_campaigns SET status = 'sending'
