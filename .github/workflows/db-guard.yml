@@ -328,6 +328,16 @@ jobs:
           TALKX_ESCAPE_HATCH_AUTH_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-escape-hatch-auth.test.sh
 
+      - name: Simular guards fail-closed do Talk X (MAPA)
+        env:
+          TALKX_GUARDS_FAIL_CLOSED_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-guards-fail-closed.test.sh
+
+      - name: Simular replay idempotente do talkx_settings (R2-01)
+        env:
+          TALKX_SETTINGS_REPLAY_IDEMPOTENT_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-settings-replay-idempotent.test.sh
+
       - name: Simular supressão de contato idempotente nos eixos phone e contact_id (V07b)
         env:
           TALKX_SUPPRESS_PHONE_TEST_POSTGRES_IMAGE: postgres:17-alpine
