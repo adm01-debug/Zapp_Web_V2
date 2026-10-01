@@ -4,6 +4,7 @@ import {
   END_REASON_LABEL,
   RESULT_LABEL,
   RESULT_TONE,
+  isFinishedStatus,
   normalizeDirection,
   normalizeStatus,
   sipCodeToEndReason,
@@ -313,5 +314,36 @@ describe('EndedBy / CallEndOutcome (T12)', () => {
     expect(comCodigo).toEqual({ endedBy: 'hangup_remote', sipCode: 486 });
     expect(semCodigo.sipCode).toBeNull();
     expect(DESCRICAO[comCodigo.endedBy]).toBe('o outro lado desligou');
+  });
+});
+
+// ─── T19 — linha que já não pode mais ser atendida ──────────────────
+
+describe('isFinishedStatus', () => {
+  const TODOS: PersistedStatus[] = [
+    'ringing',
+    'answered',
+    'ended',
+    'missed',
+    'busy',
+    'failed',
+    'cancelled',
+    'declined',
+  ];
+
+  it('marca os três do plano e os três terminais que faltavam', () => {
+    expect(TODOS.filter(isFinishedStatus)).toEqual([
+      'ended',
+      'missed',
+      'busy',
+      'failed',
+      'cancelled',
+      'declined',
+    ]);
+  });
+
+  it('ringing e answered NÃO são fim de linha (o T20 cuida da chamada em andamento)', () => {
+    expect(isFinishedStatus('ringing')).toBe(false);
+    expect(isFinishedStatus('answered')).toBe(false);
   });
 });

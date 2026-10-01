@@ -11,7 +11,7 @@
     --radius-2xl: 1.5rem;   /* 24px — modais */
     --radius-full: 9999px;  /* pills/avatars */
 
-    /* ===== ELEVATESCALE — superfícies por profundidade ===== */
+    /* ===== ELEVATESCALE — superfícies por profundidade ===== */
     --elev-0: none;
     --elev-1: 0 1px 2px hsl(221 20% 12% / 0.05);
     --elev-2: 0 2px 4px hsl(221 20% 12% / 0.06), 0 1px 2px hsl(221 20% 12% / 0.04);
@@ -116,36 +116,30 @@
     --inbox-panel-bg: 0 0% 100%;
 
     /* ===== PRIMARY — Corporate Blue ===== */
-    /* WCAG AA (achado do E18): as bolhas usam --primary-foreground COM ALFA (70%/50%)
-       sobre bg-primary-foreground/10; alfa derruba a razão, então a primária do claro é
-       escura (texto branco) e a trilha do slider (--secondary) fica clara. O aplicador
-       (applyThemePreset + contrasteAA.ts) faz o mesmo para cada skin. */
-    --primary: 221 83% 34%;
+    --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
     --primary-glow: 230 83% 63%;
 
     /* ===== SECONDARY ===== */
-    --secondary: 215 70% 62%;
-    --secondary-foreground: 222 25% 10%;
+    --secondary: 215 70% 55%;
+    --secondary-foreground: 210 40% 92%;
 
     /* ===== MUTED ===== */
     --muted: 221 15% 92%;
-    --muted-foreground: 221 10% 42%;
+    --muted-foreground: 221 10% 45%;
 
     /* ===== ACCENT ===== */
     --accent: 221 55% 95%;
     --accent-foreground: 221 83% 45%;
 
     /* ===== DESTRUCTIVE ===== */
-    /* WCAG AA (achado do A11Y/E18): o aviso de conexão usa texto branco sobre este token
-       (e branco a 80% no subtítulo) — 60% de luminosidade dava 3,78:1. */
-    --destructive: 0 75% 40%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     /* ===== BORDARE EIINPUTS ===== */
     --border: 221 15% 90%;
     --input: 221 15% 93%;
-    --ring: 221 83% 34%;
+    --ring: 221 83% 53%;
     --radius: 0.875rem; /* 14px — Promo Gifts default */
 
     /* ===== ESTADOS ===== */
@@ -157,7 +151,7 @@
     --info-foreground: 0 0% 100%;
 
     /* ===== GAMIFICAÇÓO ===== */
-    --xp: 221 83% 34%;
+    --xp: 221 83% 53%;
     --xp-foreground: 0 0% 100%;
     --coins: 45 93% 50%;
     --coins-foreground: 0 0% 10%;
@@ -194,15 +188,15 @@
     /* ===== Sidebar ===== */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 221 20% 12%;
-    --sidebar-primary: 221 83% 34%;
+    --sidebar-primary: 221 83% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 221 50% 96%;
     --sidebar-accent-foreground: 221 83% 45%;
     --sidebar-border: 221 15% 92%;
-    --sidebar-ring: 221 83% 34%;
+    --sidebar-ring: 221 83% 53%;
 
     /* ===== Chat Specific ===== */
-    --chat-bubble-sent: 221 83% 34%;
+    --chat-bubble-sent: 221 83% 53%;
     --chat-bubble-sent-foreground: 0 0% 100%;
     --chat-bubble-received: 221 15% 95%;
     --chat-bubble-received-foreground: 221 20% 15%;
@@ -210,7 +204,7 @@
     --chat-input-bg: 0 0% 100%;
 
     /* ===== Status Colors ===== */
-    --status-open: 221 83% 34%;
+    --status-open: 221 83% 53%;
     --status-pending: 45 90% 50%;
     --status-resolved: 160 70% 42%;
     --status-waiting: 210 80% 55%;
@@ -221,15 +215,15 @@
     --priority-low: 210 25% 48%;
 
     /* ===== GRADIENTS ===== */
-    --gradient-primary: linear-gradient(135deg, hsl(221 83% 34%), hsl(230 83% 63%));
-    --gradient-secondary: linear-gradient(135deg, hsl(215 70% 62%), hsl(215 70% 65%));
+    --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(230 83% 63%));
+    --gradient-secondary: linear-gradient(135deg, hsl(215 70% 55%), hsl(215 70% 65%));
     --gradient-success: linear-gradient(135deg, hsl(160 70% 42%), hsl(160 70% 52%));
-    --gradient-xp: linear-gradient(90deg, hsl(221 83% 34%), hsl(230 83% 63%));
+    --gradient-xp: linear-gradient(90deg, hsl(221 83% 53%), hsl(230 83% 63%));
     --gradient-gold: linear-gradient(135deg, hsl(45 93% 50%), hsl(38 92% 55%));
     --gradient-surface: linear-gradient(180deg, hsl(221 20% 97%), hsl(221 15% 95%));
     --gradient-divider: linear-gradient(90deg, transparent, hsl(221 15% 88% / 0.5), transparent);
-    --gradient-vibrant: linear-gradient(135deg, hsl(221 83% 34%), hsl(230 95% 62%), hsl(230 83% 63%));
-    --gradient-purple-green: linear-gradient(135deg, hsl(221 83% 34%), hsl(160 70% 42%));
+    --gradient-vibrant: linear-gradient(135deg, hsl(221 83% 53%), hsl(230 95% 62%), hsl(230 83% 63%));
+    --gradient-purple-green: linear-gradient(135deg, hsl(221 83% 53%), hsl(160 70% 42%));
 
     /* ===== SHAOWS ===== */
     --shadow-xs: 0 1px 2px hsl(221 20% 12% / 0.04);
@@ -237,11 +231,11 @@
     --shadow-md: 0 4px 6px -1px hsl(221 20% 12% / 0.07), 0 2px 4px -2px hsl(221 20% 12% / 0.05);
     --shadow-lg: 0 10px 15px -3px hsl(221 20% 12% / 0.08), 0 4px 6px -4px hsl(221 20% 12% / 0.05);
     --shadow-xl: 0 20px 25px -5px hsl(221 20% 12% / 0.1), 0 8px 10px -6px hsl(221 20% 12% / 0.06);
-    --shadow-glow-primary: 0 4px 14px hsl(221 83% 34% / 0.25);
-    --shadow-glow-secondary: 0 4px 14px hsl(215 70% 62% / 0.2);
+    --shadow-glow-primary: 0 4px 14px hsl(221 83% 53% / 0.25);
+    --shadow-glow-secondary: 0 4px 14px hsl(215 70% 55% / 0.2);
     --shadow-glow-success: 0 4px 14px hsl(160 70% 42% / 0.2);
     --shadow-glow-accent: 0 4px 14px hsl(230 83% 63% / 0.25);
-    --shadow-glow-purple: 0 4px 14px hsl(221 83% 34% / 0.3);
+    --shadow-glow-purple: 0 4px 14px hsl(221 83% 53% / 0.3);
     --shadow-header: 0 1px 3px hsl(221 20% 12% / 0.06);
 
     /* ===== Glow scale ===== */
@@ -274,7 +268,7 @@
     --elevated: 0 0% 100%;
     --elevated-hover: 221 20% 97%;
 
-    /* ===== SPACIL�G ===== */
+    /* ===== SPACIL G ===== */
     --spacing-card: 1.5rem;
     --spacing-card-sm: 1rem;
     --spacing-card-lg: 2rem;
@@ -282,7 +276,7 @@
     --spacing-section-lg: 3rem;
 
     /* ===== CHART PALETTE ===== */
-    --chart-1: 221 83% 34%;
+    --chart-1: 221 83% 53%;
     --chart-2: 210 80% 55%;
     --chart-3: 160 70% 42%;
     --chart-4: 45 93% 50%;
@@ -295,7 +289,7 @@
     --chart-status-resolved: 160 70% 42%;
     --chart-status-pending: 45 93% 50%;
     --chart-status-waiting: 210 80% 55%;
-    --chart-status-open: 221 83% 34%;
+    --chart-status-open: 221 83% 53%;
     --chart-sentiment-positive: 160 70% 42%;
     --chart-sentiment-neutral: 220 10% 50%;
     --chart-sentiment-negative: 0 84% 60%;
@@ -308,10 +302,10 @@
     /* ===== PROMO GIFTS SYSTEM — surface, motion, focus ===== */
     --surface: 240 5% 9%;
     --surface-hover: 240 5% 12%;
-    --border-strong: 221 83% 34% / 0.55;
+    --border-strong: 221 83% 53% / 0.55;
     --divider: 240 4% 20%;
-    --primary-hover: 221 83% 29%;
-    --primary-active: 221 83% 24%;
+    --primary-hover: 221 83% 48%;
+    --primary-active: 221 83% 43%;
     --shadow-glow-focus: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary) / 0.5);
     --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
     --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -322,8 +316,8 @@
     --layout-max-content: 72rem;
 
     /* ===== KPI TILES (Promo Gifts — charcoal dark) ===== */
-    --kpi-tile-blue: 221 83% 34% / 0.13;
-    --kpi-tile-blue-fg: 221 83% 34%;
+    --kpi-tile-blue: 221 83% 53% / 0.13;
+    --kpi-tile-blue-fg: 221 83% 72%;
     --kpi-tile-green: 142 71% 45% / 0.13;
     --kpi-tile-green-fg: 142 76% 55%;
     --kpi-tile-purple: 258 90% 62% / 0.13;
@@ -392,8 +386,8 @@
     --popover: 240 5% 10%;
     --popover-foreground: 210 40% 98%;
     --inbox-panel-bg: 0 0% 0%;
-    --primary: 221 83% 93%;
-    --primary-foreground: 222 25% 10%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
     --primary-glow: 230 83% 63%;
     --secondary: 240 5% 16%;
     --secondary-foreground: 0 0% 100%;
@@ -401,18 +395,18 @@
     --muted-foreground: 215 20% 75%;
     --accent: 240 5% 16%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 354 75% 40%;
+    --destructive: 354 100% 68%;
     --destructive-foreground: 0 0% 100%;
     --border: 240 4% 18%;
     --input: 240 5% 14%;
-    --ring: 221 83% 93%;
+    --ring: 221 83% 53%;
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
     --warning: 40 91% 60%;
     --warning-foreground: 0 0% 8%;
     --info: 213 94% 62%;
     --info-foreground: 0 0% 100%;
-    --xp: 221 83% 93%;
+    --xp: 221 83% 53%;
     --xp-foreground: 0 0% 100%;
     --coins: 42 100% 58%;
     --coins-foreground: 0 0% 8%;
@@ -432,50 +426,50 @@
     --unread: 0 90% 60%;
     --sidebar-background: 240 6% 5%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 221 83% 93%;
+    --sidebar-primary: 221 83% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 5% 12%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 240 4% 14%;
-    --sidebar-ring: 221 83% 93%;
-    --chat-bubble-sent: 221 83% 93%;
+    --sidebar-ring: 221 83% 53%;
+    --chat-bubble-sent: 221 83% 53%;
     --chat-bubble-sent-foreground: 0 0% 100%;
     --chat-bubble-received: 240 4% 18%;
     --chat-bubble-received-foreground: 0 0% 97%;
     --chat-header: 240 5% 10%;
     --chat-input-bg: 240 5% 9%;
-    --status-open: 221 83% 93%;
+    --status-open: 221 83% 53%;
     --status-pending: 42 100% 58%;
     --status-resolved: 155 80% 50%;
     --status-waiting: 210 95% 62%;
     --priority-high: 0 90% 60%;
     --priority-medium: 38 100% 58%;
     --priority-low: 210 35% 60%;
-    --gradient-primary: linear-gradient(135deg, hsl(221 83% 93%), hsl(230 83% 63%));
+    --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(230 83% 63%));
     --gradient-secondary: linear-gradient(135deg, hsl(215 70% 55%), hsl(215 70% 65%));
     --gradient-success: linear-gradient(135deg, hsl(155 80% 50%), hsl(165 75% 55%));
-    --gradient-xp: linear-gradient(90deg, hsl(221 83% 93%), hsl(230 83% 63%));
+    --gradient-xp: linear-gradient(90deg, hsl(221 83% 53%), hsl(230 83% 63%));
     --gradient-gold: linear-gradient(135deg, hsl(42 100% 58%), hsl(35 95% 52%));
     --gradient-surface: linear-gradient(180deg, hsl(240 5% 10%), hsl(240 6% 6%));
     --gradient-divider: linear-gradient(90deg, transparent, hsl(221 50% 40% / 0.15), transparent);
-    --gradient-vibrant: linear-gradient(135deg, hsl(221 83% 93%), hsl(230 95% 62%), hsl(230 83% 63%));
-    --gradient-purple-green: linear-gradient(135deg, hsl(221 83% 93%), hsl(155 80% 50%));
+    --gradient-vibrant: linear-gradient(135deg, hsl(221 83% 53%), hsl(230 95% 62%), hsl(230 83% 63%));
+    --gradient-purple-green: linear-gradient(135deg, hsl(221 83% 53%), hsl(155 80% 50%));
     --shadow-xs: 0 1px 2px hsl(0 0% 0% / 0.5);
     --shadow-sm: 0 1px 3px hsl(0 0% 0% / 0.6), 0 1px 2px hsl(0 0% 0% / 0.5);
     --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.6), 0 2px 4px -2px hsl(0 0% 0% / 0.5);
-    --shadow-lg: 0 10px 15px -3px hsl(225 20% 2% / 0.7), 0 4px 6px -4px hsl(225 20% 2% / 0.5), 0 0 20px hsl(221 83% 93% / 0.04);
-    --shadow-xl: 0 20px 25px -5px hsl(225 20% 2% / 0.8), 0 8px 10px -6px hsl(225 20% 2% / 0.6), 0 0 30px hsl(221 83% 93% / 0.06);
-    --shadow-glow-primary: 0 0 30px hsl(221 83% 93% / 0.4), 0 0 60px hsl(221 83% 93% / 0.15);
+    --shadow-lg: 0 10px 15px -3px hsl(225 20% 2% / 0.7), 0 4px 6px -4px hsl(225 20% 2% / 0.5), 0 0 20px hsl(221 83% 53% / 0.04);
+    --shadow-xl: 0 20px 25px -5px hsl(225 20% 2% / 0.8), 0 8px 10px -6px hsl(225 20% 2% / 0.6), 0 0 30px hsl(221 83% 53% / 0.06);
+    --shadow-glow-primary: 0 0 30px hsl(221 83% 53% / 0.4), 0 0 60px hsl(221 83% 53% / 0.15);
     --shadow-glow-secondary: 0 4px 24px hsl(215 70% 55% / 0.4);
     --shadow-glow-success: 0 0 25px hsl(142 71% 45% / 0.35);
     --shadow-glow-accent: 0 4px 24px hsl(230 83% 63% / 0.4);
-    --shadow-glow-purple: 0 4px 24px hsl(221 83% 93% / 0.5);
-    --shadow-header: 0 1px 3px hsl(225 20% 2% / 0.7), 0 0 20px hsl(221 83% 93% / 0.03), inset 0 1px 0 hsl(225 15% 18% / 0.3);
+    --shadow-glow-purple: 0 4px 24px hsl(221 83% 53% / 0.5);
+    --shadow-header: 0 1px 3px hsl(225 20% 2% / 0.7), 0 0 20px hsl(221 83% 53% / 0.03), inset 0 1px 0 hsl(225 15% 18% / 0.3);
     --glass-bg: 240 6% 8% / 0.85;
     --glass-border: 221 30% 30% / 0.15;
     --elevated: 240 5% 12%;
     --elevated-hover: 240 5% 15%;
-    --chart-1: 221 83% 93%;
+    --chart-1: 221 83% 53%;
     --chart-2: 210 95% 64%;
     --chart-3: 155 80% 52%;
     --chart-4: 42 100% 62%;
@@ -488,17 +482,11 @@
     --chart-status-resolved: 155 80% 52%;
     --chart-status-pending: 42 100% 62%;
     --chart-status-waiting: 210 95% 64%;
-    --chart-status-open: 221 83% 93%;
+    --chart-status-open: 221 83% 53%;
     --chart-sentiment-positive: 155 80% 52%;
     --chart-sentiment-neutral: 220 25% 65%;
     --chart-sentiment-negative: 0 85% 62%;
 
     --chat-pattern-rgb: 148 163 184;
     --chat-pattern-opacity: 0.122;
-  /* Derivações da primária no escuro (mesmo delta do ajuste de contraste AA). */
-  --primary-hover: 221 83% 88%;
-  --primary-active: 221 83% 83%;
-  --border-strong: 221 83% 93% / 0.55;
-  --kpi-tile-blue: 221 83% 93% / 0.13;
-  --kpi-tile-blue-fg: 221 83% 100%;
 }

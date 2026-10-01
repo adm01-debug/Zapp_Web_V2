@@ -67,10 +67,26 @@ describe('useIncomingCallListener', () => {
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
           single: vi.fn().mockResolvedValue({ data: null, error: null }),
+          // T19: consulta de status da chamada — sem linha visível, o alerta
+          // toca (fail-open).
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
         }),
       }),
     });
   });
+
+  /** T19: resposta do banco para a consulta de status da chamada do `call_id`. */
+  function mockCallsStatus(status: string | null, error: { message: string } | null = null) {
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi
+            .fn()
+            .mockResolvedValue({ data: status === null ? null : { status }, error }),
+        }),
+      }),
+    });
+  }
 
   it('subscribes to notifications scoped to the authenticated user', () => {
     const on = vi.fn().mockReturnThis();
@@ -289,5 +305,112 @@ describe('useIncomingCallListener', () => {
     const { unmount } = renderHook(() => useIncomingCallListener());
     unmount();
     expect(mockRemoveChannel).toHaveBeenCalled();
+  });
+
+  // === T19: identidade por `call_id` e chamada já encerrada ===
+
+  function metadataComCallId(extra: Record<string, unknown> = {}) {
+    return {
+      contact_id: 'contact-1',
+      contact_name: 'Maria',
+      phone: '5511999999999',
+      call_status: 'ringing',
+      call_id: 'call-42',
+      ...extra,
+    };
+  }
+
+  it('T19: duas notificações do mesmo call_id (event_ids diferentes) viram UM alerta', async () => {
+    // É o caso real do provedor: reenvia a mesma chamada com `event_id` novo.
+    // Antes, a chave da deduplicação era só o `event_id` — tocava duas vezes.
+    const { result } = renderHook(() => useIncomingCallListener());
+
+    await act(async () => {
+      await realtimeCallback?.(
+        incomingNotification({
+          id: 'notification-a',
+          metadata: metadataComCallId({ event_id: 'provider-event-1' }),
+        }),
+      );
+    });
+    act(() => result.current.dismissCall());
+    await act(async () => {
+      await realtimeCallback?.(
+        incomingNotification({
+          id: 'notification-b',
+          metadata: metadataComCallId({ event_id: 'provider-event-2' }),
+        }),
+      );
+    });
+
+    expect(result.current.incomingCall).toBeNull();
+    expect(mockLogInfo).toHaveBeenCalledTimes(1);
+  });
+
+  it('T19: chamada já encerrada no banco não toca alerta', async () => {
+    mockCallsStatus('ended');
+    const { result } = renderHook(() => useIncomingCallListener());
+
+    await act(async () => {
+      await realtimeCallback?.(incomingNotification({ metadata: metadataComCallId() }));
+    });
+
+    // A consulta é pelo id da chamada (não pelo id da notificação).
+    expect(mockFrom).toHaveBeenCalledWith('calls');
+    expect(mockFrom.mock.results[0].value.select).toHaveBeenCalledWith('status');
+    expect(mockFrom.mock.results[0].value.select.mock.results[0].value.eq).toHaveBeenCalledWith(
+      'id',
+      'call-42',
+    );
+    expect(result.current.incomingCall).toBeNull();
+    expect(mockLogInfo).not.toHaveBeenCalled();
+  });
+
+  it.each(['missed', 'failed', 'cancelled', 'declined', 'busy'])(
+    'T19: status terminal %s também não toca alerta',
+    async (status) => {
+      mockCallsStatus(status);
+      const { result } = renderHook(() => useIncomingCallListener());
+
+      await act(async () => {
+        await realtimeCallback?.(incomingNotification({ metadata: metadataComCallId() }));
+      });
+
+      expect(result.current.incomingCall).toBeNull();
+    },
+  );
+
+  it('T19: chamada viva (ringing) continua tocando o alerta', async () => {
+    mockCallsStatus('ringing');
+    const { result } = renderHook(() => useIncomingCallListener());
+
+    await act(async () => {
+      await realtimeCallback?.(incomingNotification({ metadata: metadataComCallId() }));
+    });
+
+    expect(result.current.incomingCall?.callId).toBe('call-42');
+  });
+
+  it('T19: erro ao consultar o status não engole a ligação (fail-open)', async () => {
+    mockCallsStatus(null, { message: 'permission denied' });
+    const { result } = renderHook(() => useIncomingCallListener());
+
+    await act(async () => {
+      await realtimeCallback?.(incomingNotification({ metadata: metadataComCallId() }));
+    });
+
+    expect(result.current.incomingCall?.callId).toBe('call-42');
+    expect(mockLogInfo).toHaveBeenCalledTimes(1);
+  });
+
+  it('T19: sem call_id não consulta o banco (legado segue como antes)', async () => {
+    const { result } = renderHook(() => useIncomingCallListener());
+
+    await act(async () => {
+      await realtimeCallback?.(incomingNotification());
+    });
+
+    expect(mockFrom).not.toHaveBeenCalled();
+    expect(result.current.incomingCall?.id).toBe('notification-1');
   });
 });

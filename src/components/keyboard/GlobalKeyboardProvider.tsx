@@ -1,9 +1,13 @@
-import React, { useEffect, useState, createContext, useContext, useCallback, useRef } from 'react';
+import React, { useEffect, useState, createContext, useContext, useCallback, useRef, Suspense } from 'react';
 import { useGlobalKeyboardShortcuts } from '@/hooks/ui/useGlobalKeyboardShortcuts';
-import { useCatalogQuickSearch } from '@/hooks/integrations/useCatalogQuickSearch';
-import { useTalkXCommandItems } from '@/hooks/integrations/useTalkXCommandItems';
 import { KeyboardShortcutsDialog } from './KeyboardShortcutsDialog';
-import { CommandPalette } from '@/components/ui/command-palette';
+import { lazyWithRetry } from '@/lib/lazyWithRetry';
+
+// O palette do ⌘K (com os hooks de dados de catálogo e Talk X) é carregado em
+// lazy: só baixa na primeira vez que o usuário abre o ⌘K, fora do chunk de entrada.
+const CommandPaletteHost = lazyWithRetry(() =>
+  import('./CommandPaletteHost').then((m) => ({ default: m.CommandPaletteHost }))
+);
 
 interface GlobalKeyboardContextType {
   openCommandPalette: () => void;
@@ -34,10 +38,17 @@ interface GlobalKeyboardProviderProps {
 }
 
 export function GlobalKeyboardProvider({ children, customActions }: GlobalKeyboardProviderProps) {
-  const searchCatalogProducts = useCatalogQuickSearch();
   const [showHelp, setShowHelp] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [paletteMounted, setPaletteMounted] = useState(false);
   const navigationHandlerRef = useRef<((view: string) => void) | null>(null);
+
+  // Monta o palette lazy só na primeira abertura do ⌘K (depois fica montado para
+  // preservar a animação de saída do Dialog).
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- monta o lazy na 1ª abertura e o mantém montado (animação de saída do Dialog).
+    if (showCommandPalette) setPaletteMounted(true);
+  }, [showCommandPalette]);
 
   // Initialize global shortcuts
   useGlobalKeyboardShortcuts([
@@ -97,8 +108,6 @@ export function GlobalKeyboardProvider({ children, customActions }: GlobalKeyboa
     setShowCommandPalette(false);
   }, []);
 
-  const talkxCommands = useTalkXCommandItems(handleNavigate);
-
   const registerNavigationHandler = useCallback((handler: (view: string) => void) => {
     navigationHandlerRef.current = handler;
   }, []);
@@ -118,14 +127,15 @@ export function GlobalKeyboardProvider({ children, customActions }: GlobalKeyboa
     <GlobalKeyboardContext.Provider value={contextValue}>
       {children}
       <KeyboardShortcutsDialog open={showHelp} onOpenChange={setShowHelp} />
-      <CommandPalette
-        open={showCommandPalette}
-        onOpenChange={setShowCommandPalette}
-        onNavigate={handleNavigate}
-        onSearch={searchCatalogProducts}
-        customCommands={talkxCommands}
-        placeholder="Buscar ou digitar comando... (⌘K)"
-      />
+      {paletteMounted && (
+        <Suspense fallback={null}>
+          <CommandPaletteHost
+            open={showCommandPalette}
+            onOpenChange={setShowCommandPalette}
+            onNavigate={handleNavigate}
+          />
+        </Suspense>
+      )}
     </GlobalKeyboardContext.Provider>
   );
 }

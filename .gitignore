@@ -66,6 +66,8 @@ playwright-report/
 playwright/.cache/
 # storageState de sessão real gerado por e2e/auth.setup.ts (project "setup") — nunca commitar
 e2e/.auth/
+# capturas da régua visual (talkx-visual.spec.ts) geradas por CI/locais — nunca commitar
+e2e/talkx-visual/
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json.example

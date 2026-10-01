@@ -135,3 +135,41 @@ habilitado e o wizard avança para o step 2. Isso dispara o autosave do
 real em produção. O `afterAll` do arquivo chama `cleanupE2EDraftCampaigns()`
 (também em `e2e/fixtures/e2e-talkx.ts`) para remover todos os drafts com
 nome iniciando em `[E2E]` após cada run — mantendo o banco limpo.
+
+## Fixture de demonstração determinística (plano V4 · X003)
+
+`e2e/talkx-demo.spec.ts` renderiza o módulo Talk X com dados fake — sem gravar
+nem enviar nada em produção. `e2e/fixtures/talkx-demo.ts` exporta
+`mockTalkXBackend(page, tela)`, que carrega `e2e/fixtures/talkx-demo/<tela>.json`
+e intercepta via `page.route` as chamadas `rest/v1/talkx_*`,
+`rest/v1/rpc/talkx_*` e `functions/v1/talkx-*`: GET devolve a fixture, e
+qualquer escrita é bloqueada com 403 `"escrita não prevista"`. Criadores
+(`get_team_profiles`) e contatos (insights) respondem vazios para o demo não
+ler produção. O relógio é fixado com `page.clock`.
+
+A fixture **cresce junto com cada etapa de tela**: a etapa que cria uma
+tabela/RPC Talk X acrescenta a resposta dela no JSON da tela correspondente.
+Hoje só a tela 01 (`01-campanhas-visao-geral.json`) tem dados (as 24 campanhas
+do mock, KPI "Total de campanhas" = 24); as demais são esqueleto (`{}`) e serão
+preenchidas pelas etapas de cada tela. O spec roda no `e2e-logado.yml` via
+`chromium-authenticated` (mesmo `storageState` dos demais specs autenticados),
+mas nunca toca o banco de produção do módulo.
+
+## Régua visual lado a lado (plano V4 · X004)
+
+`e2e/talkx-visual.spec.ts` é a **régua informativa** do plano V4: percorre as
+17 telas do Talk X e captura cada uma em 1672×941 (tema escuro) para comparar
+com os mockups de `docs/talkx/references/NN_*.png`. Roda **deslogado** (sem
+`storageState`/secrets) no projeto `chromium-talkx-visual` — a sessão é
+injetada no localStorage por `installFakeSession(page)` de
+`e2e/fixtures/talkx-demo.ts`, que também mocka `profiles`, `user_roles`, a RPC
+`user_has_permission` e marca o onboarding como concluído (senão o
+`WelcomeModal` abre e intercepta os cliques).
+
+As telas **13/14/15** (pausa/retomada, relatório concluído, importação CRM360)
+ainda não existem no app: o spec grava `nao-existe-NN.txt` em vez de capturar.
+
+O artefato é montado por `scripts/talkx/lado-a-lado.mjs --out <dir>`, que copia
+mock + captura para `<dir>/img/{mock,captura}` e gera `<dir>/index.html` lado a
+lado. No CI, `e2e-talkx-pr.yml` roda o spec, monta a régua e sobe o HTML como
+artefato `regua-visual-talkx` (14 dias) — informativo, não bloqueia merge.

@@ -129,6 +129,25 @@ jobs:
       - name: 🔒 Verify PR workflow secret boundary
         run: node scripts/ci/check-pr-workflow-secrets.mjs
 
+      - name: 📋 Verify Talk X PR body (definição de pronto)
+        if: github.event_name == 'pull_request'
+        run: node scripts/ci/check-talkx-pr-body.mjs
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+
+      - name: 🔬 Lint workflows (actionlint)
+        run: |
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+          actionlint -shellcheck ''
+
+      - name: 🛡️ Audit workflow security (zizmor)
+        run: |
+          python3 -m pip install --quiet --break-system-packages zizmor==0.9.0
+          # Aceitar apenas exit 11-13 (info/low/medium); falhar em qualquer outro
+          # código, inclusive 1 (parse/erro interno) e 14-15 (high/error).
+          zizmor --persona regular .github/workflows/ || { rc=$?; [ "$rc" -ge 11 ] && [ "$rc" -le 13 ] || exit "$rc"; }
+
       - name: 🧾 Verify Edge deployment manifest freshness
         run: node scripts/edge-deploy/generate-manifest.mjs --check
 
