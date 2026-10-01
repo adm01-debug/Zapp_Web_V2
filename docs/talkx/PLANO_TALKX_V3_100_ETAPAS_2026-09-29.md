@@ -107,44 +107,53 @@ mesmos arquivos (`talkxShared.tsx` é o ponto de colisão — quem mexer nele ab
 **Hoje:** `talkx-send`/`scheduler` não gravam `started/paused/resumed/cancelled/completed`; timeline depende do cliente (Running e lista pausam sem evento).
 **Fazer:** dentro de `transition_talkx_campaign` (RPC) inserir o evento com `actor_id` (perfil do JWT ou `null` para worker) e `message` (motivo); `complete_talkx_campaign_if_drained` grava `completed`; remover os inserts duplicados do cliente (`TalkXLiveMonitor.tsx:223-231`, `useCampaignEditor.ts:574-584`).
 **Aceite:** teste SQL: sequência start→pause→resume→cancel gera 4 eventos com ator; Running/Monitor/lista mostram a mesma timeline.
+**✅ FEITO 2026-10-01:** migration `20260930650000_talkx_v12_server_lifecycle_events.sql` (transition 4-arg com `p_actor_id`/`p_pause_reason` + eventos started/resumed/paused/cancelled/completed, DROP do overload 3-arg); `logEvent` do cliente removido (Monitor/Editor); harness `scripts/db-audit/talkx-v12-lifecycle-events.test.sh` verde (red-first, 4 eventos com ator).
 
 ### V13 · Pausa com motivo, retomada idempotente
 **Hoje:** action `pause` não repassa `reason` (`talkx-send/index.ts:218-222`); `resume` em `sending` = 409; modal sem textarea.
 **Fazer:** `pause` aceita `{reason}` → `p_pause_reason`; `resume` em `sending` retorna 200 `{noop:true}`; modais de pausa (Overview, Monitor, Running) com textarea opcional; `pause_reason`/`paused_at` na interface `TalkXCampaign`.
 **Aceite:** teste Deno: pause com motivo grava `pause_reason`; resume duplo não erra; UI mostra "Pausada por <ator>: <motivo>".
+**✅ FEITO 2026-10-01:** `pause` repassa `reason`→`p_pause_reason` (`talkx-send/index.ts`, `useTalkX.ts` `pauseCampaign(campaignId, reason?)`); `resume` em `sending` vira no-op **no RPC** (migration V12) — não na edge (teste Deno mocka 'sending' p/ dispatch); modais com textarea em `TalkXCampaignRunning.tsx`/`TalkXLiveMonitor.tsx`; harness V12 prova resume-em-sending=noop.
 
 ### V14 · Cancelar marca pendentes e estados terminais consistentes
 **Hoje:** `cancel` não toca destinatários; status `cancelled` de recipient não existe.
 **Fazer:** migration: `talkx_recipients.status` ganha `cancelled`; `transition_talkx_campaign('cancel')` faz `update talkx_recipients set status='cancelled' where status='pending'` na mesma transação; `RECIPIENT_STATUS` + pill; relatório (V37) mostra "Cancelados".
 **Aceite:** teste SQL com 5 pendentes → 5 `cancelled`; `complete_talkx_campaign_if_drained` não vira `completed` uma campanha cancelada.
+**✅ FEITO 2026-10-01:** migration V12 (seção V14) adiciona `cancelled` à CHECK de `talkx_recipients.status` + `update pending→cancelled` no `cancel` (mesma transação); `RECIPIENT_STATUS.cancelled` (tone muted) em `talkxShared.tsx`; harness V12 (seed 5 pendentes → 5 cancelled).
 
 ### V15 · Contadores íntegros: `replied_count` protegido, `use_count` único (P2-7, P2-4)
 **Fazer:** migration adiciona `replied_count` ao guard de `enforce_talkx_campaign_mutability`; remover chamadas de `increment_talkx_template_use` do front (`useCampaignEditor.ts:572`, `useTalkXTemplates.ts:151`) — o trigger E86 basta; `DROP FUNCTION increment_talkx_template_use` + `REVOKE`.
 **Aceite:** update direto de `replied_count` como authenticated → erro; lançar campanha com template incrementa `use_count` exatamente 1.
+**✅ FEITO 2026-10-01:** migration `20260930660000_talkx_v15_replied_count_guard_and_drop_increment.sql` (guard `replied_count` 42501 + DROP `increment_talkx_template_use`); front sem `registerUse` (`useCampaignEditor.ts`/`useTalkXTemplates.ts`); harness `scripts/db-audit/talkx-v15-replied-count-guard.test.sh` verde (red-first).
 
 ### V16 · Séries temporais contam `sent` + `delivered` (P2-5)
 **Fazer:** `talkx_campaign_report` CTE `hourly` e `TalkXAnalytics.tsx:96` usam `status in ('sent','delivered')` (ou `sent_at is not null`); série diária fixa em 7 dias em `talkx_overview_stats`; `contacts_reached` = `count(distinct contact_id)`.
 **Aceite:** teste SQL com 3 sent + 2 delivered → série = 5; contract test atualizado.
+**✅ FEITO 2026-10-01:** migration `20260930670000_talkx_v16_time_series_sent_delivered.sql` (hourly `status in ('sent','delivered')` + `count(distinct contact_id)` + zero-fill diário); `TalkXAnalytics.tsx` trocou `.eq('status','sent')`→`.in('status',['sent','delivered'])` (2 pontos); harness `talkx-v16-time-series.test.sh` verde (3+2=5).
 
 ### V17 · Lidas reais (`read_at`) e KPI liberado
 **Hoje:** `read_at` não existe; READ só atualiza `messages`; contract test força "Lidas" = `null`.
 **Fazer:** migration `talkx_recipients add read_at timestamptz` + índice; `record_talkx_recipient_delivered` ganha `p_event ('delivered'|'read')`; webhook `READ/PLAYED` chama a RPC; `talkx_campaign_report` e Analytics expõem `read_count`; **inverter** o contract test (Lidas ≠ null quando há `read_at`).
 **Aceite:** teste Deno com webhook sintético READ → `read_at` preenchido; KPI "Lidas" aparece com número real.
+**✅ FEITO 2026-10-01:** migration `20260930680000_talkx_v17_read_at.sql` (`read_at`+índice, RPC `p_event ('delivered'|'read')`, `read_count` no report); webhook READ/PLAYED chama a RPC (`evolution-webhook-msg-handlers.ts`); contract test invertido (Lidas=`stats.read`, reported=true); harness `talkx-v17-read-at.test.sh` verde (read_at+read_count idempotente, red-first).
 
 ### V18 · Respostas: janela configurável, tempo médio, sem recálculo no cliente
 **Hoje:** 72h fixo em `talkx-reply.ts:13`; Analytics recalcula com 24h/limite 5000.
 **Fazer:** `attributeTalkXReply` lê `talkx_settings.reply_window_hours` (cache 5 min); RPC de relatório devolve `avg(replied_at - sent_at)`; Analytics/Monitor/Running usam `replied_count`/RPC.
 **Aceite:** alterar setting para 48h muda a atribuição no teste Deno; Analytics sem `.from('talkx_recipients')` para respostas.
+**✅ FEITO 2026-10-01:** `attributeTalkXReply` lê `talkx_settings.reply_window_hours` (cache 5 min, default 72h — `talkx-reply.ts`); report devolve `avg_reply_secs` (`avg(replied_at-sent_at)` na migration V16); Analytics usa `replied_count` (sem re-query de `talkx_recipients`/`messages`, sem janela 24h fixa); teste Deno `_shared/__tests__/talkx-reply-window.test.ts` (48h vs 72h) + contract test 8/8.
 
 ### V19 · Retry manual, política de `outcome_unknown` e eventos de conexão
 **Hoje:** 5xx/timeout → `outcome_unknown` sem retry; sem action `retry`; sem `connection_failed`; Logger sem `recipient_id/attempt`.
 **Fazer:** action `retry {recipientId}` (só `failed`/`outcome_unknown`, respeita `attempt_count` ≤ 3, revalida supressão, gera nova tentativa via `reschedule_talkx_recipient`); perda de conexão mid-loop grava `pause_reason='connection_lost'` + evento `connection_failed`; scheduler emite `resumed_auto` (V03); Logger com `campaign_id, recipient_id, attempt`; documentar em `OPERACAO.md` que `outcome_unknown` exige decisão humana (não reenvio cego).
 **Aceite:** teste Deno 500→retry manual→200; timeline mostra "Falha de conexão".
+**✅ FEITO 2026-10-01:** action `retry {recipientId}` na `talkx-send` (revalida supressão + RPC `retry_talkx_recipient` respeita `attempt_count < 3` — migration `20260930630000`); evento `connection_failed` (message "Falha de conexão") gravado nos 2 pontos de perda de conexão; Logger com `campaign_id`/`recipient_id`/`attempt`; `docs/talkx/OPERACAO.md` §8.4 documenta que `outcome_unknown` exige decisão humana; testes Deno (33, incl. retry→success e retry→suppressed) + harness `talkx-v19-retry-recipient.test.sh` verdes.
 
 ### V20 · Limite diário por conexão e horário comercial configurável
 **Hoje:** `daily_limit_per_connection` e `business_hours` semeados mas nunca lidos; 08–18 seg–sex fixo em `talkx-window.ts:82` e no front.
 **Fazer:** `talkx-send` conta `sent_at::date = today` por `whatsapp_connection_id` e pausa com `pause_reason='daily_limit'` (scheduler retoma no dia seguinte — V03); `deliveryWindowStatus` lê `talkx_settings.business_hours`; front exibe o mesmo (via `useTalkXSettings`).
 **Aceite:** teste Deno: limite 3 → 4º envio pausa; mudar `business_hours` muda `allowed`.
+**✅ FEITO 2026-10-01:** `talkx-send` lê `talkx_settings.daily_limit_per_connection` (conta `sent_at::date=today` por conexão e pausa com `pause_reason='daily_limit'`); `deliveryWindowStatus(campaign, now, businessHours)` lê `talkx_settings.business_hours` via `parseBusinessHours` (default 08–18 seg–sex); `AUTO_RESUME_REASONS` ganha `daily_limit` com guarda de "só retoma no dia seguinte" (evita loop de churn); scheduler SELECT ganha `paused_at`. Front já exibe/edita via `useTalkXSettings` (genérico). Testes: `_shared/__tests__/talkx-v20-window-business-hours.test.ts` (3) + `talkx-send/v20-daily-limit.test.ts` (integração "limite 3 → pausa sem 4º envio"); Deno 410, typecheck 0, build/test ✓.
 
 ---
 
@@ -153,6 +162,7 @@ mesmos arquivos (`talkxShared.tsx` é o ponto de colisão — quem mexer nele ab
 ### V21 · Flags de lançamento persistidas
 **Fazer:** migration `talkx_campaigns add respect_suppression bool not null default true, confirm_consent bool not null default false, launched_by uuid references profiles(id), launched_at timestamptz`; `save_talkx_campaign_draft` aceita as flags; `launch()` grava `launched_by/at` via `transition_talkx_campaign`; checks do passo 3 gravam `respect_suppression`; `respect_suppression=false` só admin + confirmação; KPI "Campanhas protegidas" (V72) passa a ter fonte.
 **Aceite:** hidratação restaura as flags; agente não consegue desmarcar.
+**✅ FEITO 2026-10-01:** migration `20260930640000` adiciona `respect_suppression bool default true`, `confirm_consent bool default false`, `launched_by uuid→profiles`, `launched_at timestamptz`; `transition_talkx_campaign` grava `launched_by`/`launched_at` no `start` (COALESCE preserva o primeiro lançamento); `save_talkx_campaign_draft` aceita as flags no payload + guarda admin (`respect_suppression=false` → 42501 `talkx_respect_suppression_admin_only`); front: `useCampaignEditor` hidrata `respectSuppression`/`confirmConsent` de `campaign.*` e `buildPayload` envia as flags; tipo `TalkXCampaign` ganha os 4 campos. Harness `talkx-v21-launch-flags.test.sh` (colunas+defaults, launched_by/at, guarda 42501, flags persist true:true). typecheck 0, build ✓, test 4827.
 
 ### V22 · Botões "Editar" da revisão respeitam a rota
 **Hoje:** `ed.setStep` (`TalkXWizardDelivery.tsx:154`) é revertido pelo efeito de rota (`TalkXCampaignWizard.tsx:74-79`).

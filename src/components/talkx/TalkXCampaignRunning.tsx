@@ -474,6 +474,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   const [selectedId, setSelectedId] = useState<string | null>(initialCampaignId ?? sending[0]?.id ?? null);
   const [activeTab, setActiveTab] = useState<RunTab>('overview');
   const [pauseOpen, setPauseOpen] = useState(false);
+  const [pauseReason, setPauseReason] = useState('');
   const [cancelOpen, setCancelOpen] = useState(false);
   const [limitsOpen, setLimitsOpen] = useState(false);
   // E78: limites editaveis
@@ -581,12 +582,13 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
     if (!campaign) return;
     setPauseOpen(false);
     try {
-      await pauseCampaign(campaign.id);
+      await pauseCampaign(campaign.id, pauseReason.trim() || undefined);
+      setPauseReason('');
       toast.info('Campanha pausada.');
     } catch {
       toast.error('Erro ao pausar a campanha.');
     }
-  }, [campaign, pauseCampaign]);
+  }, [campaign, pauseCampaign, pauseReason]);
 
   const handleCancel = useCallback(async () => {
     if (!campaign) return;
@@ -788,6 +790,12 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
               O envio será interrompido até você retomar. Mensagens em voo continuarão sendo entregues.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <textarea
+            className="w-full min-h-[64px] rounded-md border border-border bg-background px-3 py-2 text-sm"
+            placeholder="Motivo da pausa (opcional)"
+            value={pauseReason}
+            onChange={(e) => setPauseReason(e.target.value)}
+          />
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handlePause} className="bg-amber-500 text-white hover:bg-amber-600">Pausar</AlertDialogAction>

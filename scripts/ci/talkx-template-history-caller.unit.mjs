@@ -10,6 +10,10 @@ const component = readFileSync(
   new URL('../../src/components/talkx/TalkXTemplateEditor.tsx', import.meta.url),
   'utf8',
 );
+const e86Trigger = readFileSync(
+  new URL('../../supabase/migrations/20260916130000_talkx_e86_rpcs_indexes_trigger.sql', import.meta.url),
+  'utf8',
+);
 
 const updateMutation = source.slice(
   source.indexOf('const updateTemplate = useMutation'),
@@ -41,7 +45,9 @@ test('Talk X update errors are localized without exposing database messages', ()
   assert.doesNotMatch(updateMutation, /e\.message/);
 });
 
-test('Talk X usage counter uses its atomic RPC instead of table UPDATE', () => {
-  assert.match(source, /rpc\('increment_talkx_template_use'/);
+test('Talk X usage counter is incremented atomically by trigger E86 (no front RPC/UPDATE)', () => {
+  assert.match(e86Trigger, /trg_talkx_increment_template_use_count/);
+  assert.match(e86Trigger, /use_count = COALESCE\(use_count, 0\) \+ 1/);
+  assert.doesNotMatch(source, /rpc\('increment_talkx_template_use'/);
   assert.doesNotMatch(source, /fromTable\('talkx_templates'\)\.update/);
 });

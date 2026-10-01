@@ -39,6 +39,7 @@ export const RECIPIENT_STATUS: Record<string, { label: string; tone: PillTone }>
   failed: { label: 'Falha', tone: 'danger' },
   outcome_unknown: { label: 'Confirmação pendente', tone: 'warning' },
   skipped: { label: 'Suprimido', tone: 'muted' },
+  cancelled: { label: 'Cancelado', tone: 'muted' },
 };
 
 export const OBJECTIVES = [
