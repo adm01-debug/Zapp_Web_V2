@@ -219,6 +219,55 @@ describe('useCampaignEditor — draft integrity', () => {
     }));
   });
 
+  it('reabre o rascunho com os filtros salvos em audience_filters (V23)', async () => {
+    const campaign = {
+      id: 'draft-1', name: 'Rascunho', status: 'draft', audience_source: 'contacts',
+      audience_filters: { company: 'Acme', tag: 'VIP', city: 'Recife', group: 'Grupo A', inactive: true, birthday: 'this_month', search: 'ana' },
+    };
+    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+    await act(async () => {});
+
+    expect(result.current.companyFilter).toBe('Acme');
+    expect(result.current.tagFilter).toBe('VIP');
+    expect(result.current.cityFilter).toBe('Recife');
+    expect(result.current.groupFilter).toBe('Grupo A');
+    expect(result.current.inactiveFilter).toBe(true);
+    expect(result.current.birthdayFilter).toBe('this_month');
+    expect(result.current.contactSearch).toBe('ana');
+  });
+
+  it('persiste o passo do wizard no payload do rascunho (V23)', async () => {
+    const campaign = { id: 'draft-1', name: 'Rascunho', status: 'draft' };
+    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+    await act(async () => {});
+    f.update.mockClear();
+
+    act(() => result.current.setStep(2));
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+
+    expect(f.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'draft-1', draft_step: 2 }));
+  });
+
+  it('round-trip: sair no passo 2 com filtro e reabrir no mesmo passo com o mesmo filtro (V23)', async () => {
+    const first = renderHook(() => useCampaignEditor({ id: 'draft-1', name: 'Rascunho', status: 'draft', audience_source: 'contacts' } as never, vi.fn()));
+    await act(async () => {});
+    act(() => { first.result.current.setStep(2); first.result.current.setCityFilter('Recife'); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+    const calls = f.update.mock.calls;
+    const saved = calls[calls.length - 1]?.[0] as { draft_step?: number; audience_filters?: Record<string, unknown> };
+    first.unmount();
+
+    const second = renderHook(() => useCampaignEditor({
+      id: 'draft-1', name: 'Rascunho', status: 'draft', audience_source: 'contacts',
+      draft_step: saved.draft_step, audience_filters: saved.audience_filters,
+    } as never, vi.fn()));
+    await act(async () => {});
+
+    expect(saved.draft_step).toBe(2);
+    expect(second.result.current.step).toBe(2);
+    expect(second.result.current.cityFilter).toBe('Recife');
+  });
+
   it('reports a failed autosave and only marks the latest snapshot saved after a confirmed retry', async () => {
     f.create.mockRejectedValueOnce(new Error('rede indisponível')).mockResolvedValueOnce({ id: 'draft-recovered' });
     const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
