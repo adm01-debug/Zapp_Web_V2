@@ -63,6 +63,11 @@ const ActionSchema = z.object({
   params: z.record(z.unknown()).optional().default({}),
 });
 
+/** CT-19 — união derivada do schema. O mapa de cotas por ação usa este tipo,
+ * então incluir uma ação nova no enum sem definir sua cota quebra o typecheck
+ * (fail-closed: ação nova nunca cai no fallback por acidente). */
+type CatalogAction = z.infer<typeof ActionSchema>["action"];
+
 function sanitizeSearch(input: string): string {
   // Vírgula é o separador de cláusulas do OR-expr do PostgREST (.or("a,b"));
   // um valor com vírgula literal quebra o parsing da expressão (ver
@@ -96,7 +101,7 @@ export function buildTagOrExpr(column: "colors" | "materials", values: string[])
   return clauses.length > 0 ? clauses.join(",") : null;
 }
 
-const PRODUCT_RELATIONS = `categories:category_id(id, name, slug, parent_id),
+const PRODUCT_RELATIONS = `categories:category_id(id, name, slug, parent_id, full_path_readable),
   suppliers:supplier_id(id, name)`;
 
 // Payload do card (grade/lista): só o que a UI mostra por item.
@@ -129,19 +134,46 @@ const CATALOG_STATS_TTL_MS = 60_000;
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 // CT-77: exportado para o teste de rate limit derivar o limite do próprio
-// módulo — quando o CT-19 subir para 120/min, o teste acompanha sem edição.
+// módulo em vez de fixar o número.
+// CT-19: RATE_LIMIT virou o TETO GLOBAL, usado como fallback quando a ação não
+// é conhecida (corpo inválido/malformado). O limite efetivo está por ação, em
+// ACTION_RATE_LIMITS.
 export const RATE_LIMIT = 60;
 export const RATE_WINDOW_MS = 60_000;
 
-function checkRateLimit(userId: string): boolean {
+/**
+ * CT-19 (E26.3) — limite POR AÇÃO. `list_products` é a ação que abre a tela e
+ * refaz a consulta a cada busca/página, por isso 120/min (o dobro das demais);
+ * as outras 5 ações ficam no teto global de 60/min. O `Record` é ancorado no
+ * enum do ActionSchema — ação nova sem cota falha no typecheck em vez de cair
+ * silenciosamente no fallback.
+ */
+export const ACTION_RATE_LIMITS: Record<CatalogAction, number> = {
+  list_products: 120,
+  get_product: RATE_LIMIT,
+  list_categories: RATE_LIMIT,
+  list_suppliers: RATE_LIMIT,
+  catalog_stats: RATE_LIMIT,
+  bootstrap: RATE_LIMIT,
+};
+
+/**
+ * CT-19 — cota por usuário E por ação: cada ação tem o próprio balde, então uma
+ * rajada de `list_products` não consome (nem afrouxa) a cota de `bootstrap`.
+ * `action = null` (corpo inválido/malformado) cai no teto global como fallback:
+ * preserva o comportamento antigo e não abre bypass a requisição inválida.
+ */
+function checkRateLimit(userId: string, action: CatalogAction | null): boolean {
+  const limit = action ? ACTION_RATE_LIMITS[action] : RATE_LIMIT;
+  const key = `${userId}:${action ?? "global"}`;
   const now = Date.now();
-  const entry = rateLimitMap.get(userId);
+  const entry = rateLimitMap.get(key);
   if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(userId, { count: 1, resetAt: now + RATE_WINDOW_MS });
+    rateLimitMap.set(key, { count: 1, resetAt: now + RATE_WINDOW_MS });
     return true;
   }
   entry.count++;
-  return entry.count <= RATE_LIMIT;
+  return entry.count <= limit;
 }
 
 interface ExternalDatabaseError {
@@ -209,7 +241,31 @@ export async function promogiftsCatalogHandler(
       return jsonRes({ error: "Unauthorized" }, 401, req);
     }
 
-    if (!checkRateLimit(userData.user.id)) {
+    // CT-19 — a cota é POR AÇÃO (list_products 120/min; demais 60/min), então a
+    // ação precisa ser conhecida ANTES de checar o limite. O corpo é lido e
+    // validado aqui (antes era lido só depois do 503 de configuração) e a cota
+    // só é cobrada em seguida — daí a inversão da ordem antiga, que checava o
+    // teto fixo de 60/min antes de saber qual ação estava sendo chamada.
+    // Corpo inválido/malformado continua consumindo cota (agora no teto global
+    // RATE_LIMIT, como fallback) e devolve o mesmo 400/500 de antes.
+    let action: CatalogAction | null = null;
+    let params: Record<string, unknown> = {};
+    let bodyResponse: Response | null = null;
+
+    try {
+      const bodyParse = ActionSchema.safeParse(await req.json());
+      if (bodyParse.success) {
+        action = bodyParse.data.action;
+        params = bodyParse.data.params;
+      } else {
+        bodyResponse = jsonRes({ error: "Invalid request", details: bodyParse.error.flatten().fieldErrors }, 400, req);
+      }
+    } catch (err) {
+      log.error("Error", { error: err instanceof Error ? err.message : String(err) });
+      bodyResponse = jsonRes({ error: "Internal catalog error", code: "CATALOG_INTERNAL_ERROR" }, 500, req);
+    }
+
+    if (!checkRateLimit(userData.user.id, action)) {
       return jsonRes({ error: "Too many requests. Try again in 1 minute." }, 429, req);
     }
 
@@ -228,12 +284,13 @@ export async function promogiftsCatalogHandler(
       }, 503, req);
     }
 
-    const rawBody = await req.json();
-    const bodyParse = ActionSchema.safeParse(rawBody);
-    if (!bodyParse.success) {
-      return jsonRes({ error: "Invalid request", details: bodyParse.error.flatten().fieldErrors }, 400, req);
+    // CT-19 — o corpo já foi lido/validado acima (antes do rate limit, para a
+    // cota ser por ação). Requisição sem ação conhecida: devolve o 400 de
+    // schema ou o 500 de JSON malformado, depois do 503 de configuração, para
+    // não alterar o comportamento de ambiente sem secrets.
+    if (action === null || bodyResponse) {
+      return bodyResponse ?? jsonRes({ error: "Invalid request" }, 400, req);
     }
-    const { action, params } = bodyParse.data;
     const startTime = performance.now();
 
     if (action === "list_products") {

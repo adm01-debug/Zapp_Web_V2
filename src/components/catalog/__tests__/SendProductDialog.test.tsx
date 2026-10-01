@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { ReactNode } from 'react';
 import { render, screen, fireEvent, act, waitFor, within } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SendProductDialog } from '../SendProductDialog';
 import type { ExternalProduct, ExternalProductVariant } from '@/hooks/integrations/useExternalCatalog';
@@ -477,5 +479,36 @@ describe('SendProductDialog — CT-38 (card de info do produto no modo completo)
 
     expect(screen.getByTestId('product-info-card')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Enviar para Cliente/i })).toBeInTheDocument();
+  });
+});
+
+describe('SendProductDialog — CT-37 (PhonePreview reutilizável, zero cor literal)', () => {
+  beforeEach(() => {
+    setupDialogMocks();
+    sessionStorage.clear();
+  });
+
+  it('renderiza a prévia com a classe .catalog-phone e a mensagem atual dentro da bolha', () => {
+    renderDialog();
+
+    // O Dialog usa portal (Radix), então a prévia não vive no container do
+    // render e sim em document.body.
+    const phone = document.querySelector('.catalog-phone');
+    expect(phone).not.toBeNull();
+
+    const bubble = phone!.querySelector('.catalog-phone__bubble');
+    expect(bubble).not.toBeNull();
+    expect(within(bubble as HTMLElement).getByText(/Olha esse produto/)).toBeInTheDocument();
+
+    // A foto selecionada continua aparecendo no mock (E74 preservado).
+    expect(within(phone as HTMLElement).getByAltText('Prévia')).toHaveAttribute('src', 'https://x/a.jpg');
+  });
+
+  it('não usa nenhuma cor hexadecimal literal nem bg-white/text-white (aceite CT-37)', () => {
+    const fonte = readFileSync(path.resolve(__dirname, '..', 'SendProductDialog.tsx'), 'utf8');
+
+    expect(fonte.match(/#[0-9a-fA-F]{6}\b/g)).toBeNull();
+    expect(fonte).not.toMatch(/\bbg-white\b/);
+    expect(fonte).not.toMatch(/\btext-white\b/);
   });
 });

@@ -1,16 +1,27 @@
 import React, { useState } from 'react';
-import { Send, Eye, Heart, Star, Sparkles, TrendingUp, Tag, Check } from 'lucide-react';
+import { Send, Eye, Heart, Star, Sparkles, TrendingUp, Tag, Check, Copy, Link2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 import { formatPrice, ProductThumb } from './catalogShared';
 import { ProductDetailDialog } from './ProductDetailDialog';
+// CT-25 — menu de ações do card (menu real do Talk X, já usado no repo).
+import { RowActionsMenu, type RowAction } from '@/components/talkx/talkxShared';
+// CT-25 — "Copiar link"/"Abrir no PromoGifts" reusam o mesmo builder de URL
+// do export CSV (CT-20), em vez de montar a URL de novo aqui.
+import { promogiftsProductUrl } from './catalogExport';
+import { toast } from 'sonner';
 
 // ── tipos ─────────────────────────────────────────────────────
 export interface CatalogProductCardProps {
   product: ExternalProduct;
-  onSend?: (p: ExternalProduct) => void;
+  /**
+   * CT-34 — o 2º argumento (cor selecionada) só existe no `onSend` vindo do
+   * `ProductDetailDialog`; quem abre o `SendProductDialog` é o caller, que
+   * repassa a cor como `initialVariantColor`.
+   */
+  onSend?: (p: ExternalProduct, variantColor?: string) => void;
   /** grade = card quadrado; list = linha densa */
   mode?: 'grade' | 'list';
   /** E43: favoritos via Supabase */
@@ -19,6 +30,11 @@ export interface CatalogProductCardProps {
   /** E47: seleção em massa */
   isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
+  /**
+   * CT-36 — produtos do resultado atual, na ordem exibida, repassados ao
+   * `ProductDetailDialog` para a navegação ‹ › dentro do Sheet.
+   */
+  products?: ExternalProduct[];
   /**
    * CT-72 — capa acima da dobra: sai com `loading="eager"` +
    * `fetchpriority="high"` (o `priority` do ProductThumb). Só as 4 primeiras
@@ -189,11 +205,58 @@ export function CatalogProductCard({
   onToggleFavorite,
   isSelected = false,
   onToggleSelect,
+  products,
   priority = false,
   sizes,
 }: CatalogProductCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const stockout = product.is_stockout || product.stock_quantity === 0;
+
+  // ── CT-25: ações do card (RowActionsMenu) ────────────────────────────────
+  const openDetails = () => setShowDetails(true);
+  // "Copiar link"/"Abrir no PromoGifts" precisam do slug: sem ele a URL sai
+  // vazia e as duas ações ficam desabilitadas (nada morto no menu).
+  const promoUrl = promogiftsProductUrl(product.slug);
+  const copyToClipboard = (value: string, okMessage: string) => {
+    void navigator.clipboard.writeText(value).then(
+      () => toast.success(okMessage),
+      () => toast.error('Erro ao copiar'),
+    );
+  };
+  const actions: RowAction[] = [
+    { label: 'Ver detalhes', icon: Eye, onSelect: openDetails },
+    { label: 'Enviar', icon: Send, onSelect: () => onSend?.(product), disabled: !onSend || stockout },
+    { label: 'Copiar SKU', icon: Copy, onSelect: () => copyToClipboard(product.sku, '✅ SKU copiado'), disabled: !product.sku },
+    { label: 'Copiar link', icon: Link2, onSelect: () => copyToClipboard(promoUrl, '✅ Link copiado'), disabled: !promoUrl },
+    { label: 'Abrir no PromoGifts', icon: ExternalLink, onSelect: () => window.open(promoUrl, '_blank', 'noopener,noreferrer'), disabled: !promoUrl },
+  ];
+  if (onToggleFavorite) {
+    actions.push({
+      label: isFavorite ? 'Remover dos favoritos' : 'Favoritar',
+      icon: Heart,
+      onSelect: () => onToggleFavorite(product.id),
+    });
+  }
+
+  /**
+   * CT-25 — teclado no card: `Enter` abre o detalhe, `e` envia. Só reage ao
+   * próprio card (eventos de inputs/botões internos sobem com outro target),
+   * então digitar num campo de busca não dispara envio.
+   */
+  const handleCardKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget) return;
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      openDetails();
+    } else if ((e.key === 'e' || e.key === 'E') && onSend && !stockout) {
+      e.preventDefault();
+      onSend(product);
+    }
+  };
+  // CT-25 — menu fixo na lista, revelado no hover/focus na grade.
+  const cardActionsMenu = (
+    <RowActionsMenu actions={actions} label={`Ações do produto ${product.name}`} />
+  );
 
   // ── modo lista ────────────────────────────────────────────────────────
   if (mode === 'list') {
@@ -205,6 +268,8 @@ export function CatalogProductCard({
             isSelected && 'bg-primary/5 border-primary/20'
           )}
           onClick={() => !onToggleSelect && setShowDetails(true)}
+          onKeyDown={handleCardKeyDown}
+          tabIndex={0}
         >
           {/* E47: checkbox no modo lista */}
           {onToggleSelect && (
@@ -269,9 +334,11 @@ export function CatalogProductCard({
                 <Heart className={cn('w-4 h-4', isFavorite && 'fill-current')} />
               </Button>
             )}
+            {/* CT-25 — na lista o menu de ações fica fixo (sem hover) */}
+            {cardActionsMenu}
           </div>
         </div>
-        <ProductDetailDialog product={product} open={showDetails} onOpenChange={setShowDetails} onSend={onSend} />
+        <ProductDetailDialog product={product} products={products} open={showDetails} onOpenChange={setShowDetails} onSend={onSend} />
       </>
     );
   }
@@ -288,6 +355,8 @@ export function CatalogProductCard({
           !priority && 'catalog-card--offscreen',
           isSelected && 'border-primary/50 bg-primary/5 shadow-sm shadow-primary/10'
         )}
+        onKeyDown={handleCardKeyDown}
+        tabIndex={0}
       >
         {/* mídia */}
         <div
@@ -335,6 +404,15 @@ export function CatalogProductCard({
           {onToggleFavorite && (
             <FavoriteButton active={isFavorite} onToggle={onToggleFavorite} productId={product.id} />
           )}
+
+          {/* CT-25 — menu de ações: revelado no hover (ou com foco do teclado)
+              da grade. stopPropagation para o clique no menu não abrir o detalhe. */}
+          <div
+            className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {cardActionsMenu}
+          </div>
         </div>
 
         {/* corpo */}
@@ -388,7 +466,7 @@ export function CatalogProductCard({
           </div>
         </div>
       </div>
-      <ProductDetailDialog product={product} open={showDetails} onOpenChange={setShowDetails} onSend={onSend} />
+      <ProductDetailDialog product={product} products={products} open={showDetails} onOpenChange={setShowDetails} onSend={onSend} />
     </>
   );
 }
