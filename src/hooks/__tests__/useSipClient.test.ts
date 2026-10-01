@@ -678,4 +678,64 @@ describe('useSipClient', () => {
 
     expect(result.current.callStatus).toBe('ended');
   });
+
+  // === D1: INVITE sem resposta final não pode travar a linha ===
+
+  it('watchdog: INVITE sem resposta final encerra em timeout e libera a linha', async () => {
+    vi.useFakeTimers();
+    const { result } = await montarRegistrado();
+
+    await act(async () => {
+      await result.current.makeCall('5511999999999', 'sessao-wd');
+      await escoar();
+    });
+    act(() => mockStateChangeListeners.forEach(fn => fn('Establishing')));
+    expect(result.current.callStatus).toBe('ringing');
+
+    // Nenhum `Terminated` chega: só o watchdog pode encerrar.
+    await act(async () => { vi.advanceTimersByTime(40000); await escoar(); });
+
+    const chamadas = gravacoes();
+    expect(chamadas[chamadas.length - 1]).toMatchObject({ p_status: 'missed', p_end_reason: 'timeout' });
+    expect(result.current.callStatus).toBe('ended');
+
+    await act(async () => { vi.advanceTimersByTime(2000); });
+    expect(result.current.callStatus).toBe('idle'); // a linha aceita discar de novo
+    vi.useRealTimers();
+  });
+
+  // === D3: a fila mantém a ordem de chegada ao banco ===
+
+  it('D3: com o banco lento na 1ª gravação, o fim NÃO ultrapassa o ringing', async () => {
+    // Controla a ordem de CONCLUSÃO das RPCs (é o que o banco coalesce vê):
+    // a 1ª (`ringing`) é liberada sob comando e a 2ª (`answered`) só conclui
+    // depois dela — cenário em que, sem fila, o `ended` passaria na frente.
+    const concluidas: string[] = [];
+    let liberarRinging!: () => void;
+    let liberarAnswered!: () => void;
+    mockRpc.mockImplementation((_nome, args) => {
+      const status = (args as { p_status?: string }).p_status ?? '?';
+      const pendente = status === 'ringing'
+        ? new Promise((resolve) => { liberarRinging = () => resolve({ data: 'ok', error: null }); })
+        : status === 'answered'
+          ? new Promise((resolve) => { liberarAnswered = () => resolve({ data: 'ok', error: null }); })
+          : Promise.resolve({ data: 'ok', error: null });
+      return pendente.then((resultado) => { concluidas.push(status); return resultado; });
+    });
+    const { result } = await montarRegistrado();
+
+    await act(async () => { await result.current.makeCall('123'); await escoar(); });
+    expect(mockRpc).toHaveBeenCalledTimes(1); // só o `ringing` saiu (pendente)
+
+    await evento('Established');
+    await evento('Terminated');
+    // Sem a fila, `answered` e `ended` sairiam juntos e o fim poderia concluir
+    // primeiro — o `answered` atrasado regravaria status='answered'.
+    expect(mockRpc).toHaveBeenCalledTimes(1);
+
+    await act(async () => { liberarRinging(); await escoar(20); });
+    await act(async () => { liberarAnswered(); await escoar(20); });
+    expect(concluidas).toEqual(['ringing', 'answered', 'ended']);
+    expect(gravacoes().map(c => c.p_status)).toEqual(['ringing', 'answered', 'ended']);
+  });
 });
