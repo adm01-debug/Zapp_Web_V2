@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,6 +15,8 @@ import {
   Settings, Moon, RefreshCw, PanelLeft
 } from 'lucide-react';
 import { useCustomShortcuts, type ShortcutBinding } from '@/hooks/ui/useCustomShortcuts';
+import { aplicarRotulos } from '@/hooks/shortcuts/shortcutLabels';
+import { TASK_SHORTCUT_LABELS } from '@/hooks/shortcuts/taskShortcutLabels';
 import { cn } from '@/lib/utils';
 
 interface KeyboardShortcutsDialogProps {
@@ -139,12 +142,17 @@ function CategorySection({
 
 export function KeyboardShortcutsDialog({ open, onOpenChange }: KeyboardShortcutsDialogProps) {
   const { shortcuts } = useCustomShortcuts();
+  // Etapa 84: os rótulos dos 7 atalhos de Tarefas vivem em `taskShortcutLabels`,
+  // que entra junto com este painel (chunk sob demanda) — fora do grafo de
+  // entrada. Sem `TASK_SHORTCUT_LABELS` aqui, os textos voltam para o
+  // `initial-js` e o budget de 340 KB estoura.
+  const rotulados = useMemo(() => aplicarRotulos(shortcuts, TASK_SHORTCUT_LABELS), [shortcuts]);
 
   const groupedShortcuts = {
-    chat: shortcuts.filter(s => s.category === 'chat'),
-    navigation: shortcuts.filter(s => s.category === 'navigation'),
-    actions: shortcuts.filter(s => s.category === 'actions'),
-    selection: shortcuts.filter(s => s.category === 'selection'),
+    chat: rotulados.filter(s => s.category === 'chat'),
+    navigation: rotulados.filter(s => s.category === 'navigation'),
+    actions: rotulados.filter(s => s.category === 'actions'),
+    selection: rotulados.filter(s => s.category === 'selection'),
   };
 
   return (

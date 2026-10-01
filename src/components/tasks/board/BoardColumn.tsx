@@ -19,6 +19,8 @@ interface Props extends WorkItemCardActions {
   doingCount: number;
   /** Etapa 52 (B8): coluna de origem do arrasto em curso (null = nenhum). */
   dragSourceStatus: WorkItemStatus | null;
+  /** Etapa 81: ponteiro grosso desliga o arrasto — quem move é o `MoveToMenu`. */
+  dragDisabled?: boolean;
   onOpen: (item: WorkItem) => void;
   onMoveTo: (item: WorkItem, to: WorkItemStatus) => void;
   onDelete: (item: WorkItem) => void;
@@ -26,7 +28,7 @@ interface Props extends WorkItemCardActions {
 }
 
 export function BoardColumn({
-  status, items, isLoading, doingCount, dragSourceStatus, onOpen, onMoveTo, onDelete, onCreate,
+  status, items, isLoading, doingCount, dragSourceStatus, dragDisabled = false, onOpen, onMoveTo, onDelete, onCreate,
   onOpenContact, onRequestWaitingReason, onComplete, onReopen, onSnooze, onClearReminder, onOpenReminder,
 }: Props) {
   const col   = KANBAN_COLUMNS.find(c => c.status === status)!;
@@ -35,7 +37,8 @@ export function BoardColumn({
   const softOver  = limit.soft != null && items.length > limit.soft;
   // Etapa 52 (B8): a coluna cheia continua aceitando o que veio dela mesma
   // (reorganizar dentro de "Fazendo" com 3/3), e recusa o que vem de fora.
-  const isDropDisabled = hardFull && dragSourceStatus !== status;
+  // Etapa 81: em ponteiro grosso o arrasto não existe — nada entra por drop.
+  const isDropDisabled = dragDisabled || (hardFull && dragSourceStatus !== status);
 
   // Etapa 51 (B5): a coluna Concluído mostra os 7 dias e revela o resto da janela
   // de 30 dias no rodapé "Ver mais antigas (30 dias)" (filtro local, sem query nova).
@@ -50,14 +53,14 @@ export function BoardColumn({
     : visibleItems.length > 0 ? String(visibleItems.length) : '';
 
   return (
-    <div className="flex flex-col min-w-[232px] xl:min-w-[260px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start">
+    <div className="flex flex-col shrink-0 min-w-[232px] xl:min-w-[260px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start">
       {/* cabeçalho sticky */}
       <div className={[
-        'flex items-center gap-2 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur',
+        'flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur',
         hardFull ? 'text-destructive' : softOver ? 'text-warning' : 'text-foreground',
         hardFull ? 'ring-1 ring-destructive/40' : '',
       ].join(' ')}>
-        <span className="flex-1 text-[13px] font-semibold">{col.label}</span>
+        <span className="flex-1 min-w-0 truncate text-[13px] font-semibold">{col.label}</span>
         {headerCount && (
           <span className={`text-xs font-bold tabular-nums ${hardFull ? 'text-destructive' : ''}`}>
             {headerCount}
@@ -88,7 +91,7 @@ export function BoardColumn({
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className={`flex-1 overflow-y-auto p-2 space-y-1.5 min-h-[80px] ${snapshot.isDraggingOver ? 'bg-primary/5' : ''}`}
+            className={`flex-1 min-w-0 overflow-y-auto p-2 space-y-1.5 min-h-[80px] ${snapshot.isDraggingOver ? 'bg-primary/5' : ''}`}
           >
             {isLoading && <BoardColumnSkeleton />}
             {/* Fase F (auditoria): com concluídas de 8 a 30 dias atrás do rodapé a
@@ -98,7 +101,7 @@ export function BoardColumn({
               <TasksEmptyState variant="column" policy={col.policy} />
             )}
             {!isLoading && visibleItems.map((item, index) => (
-              <Draggable key={item.id} draggableId={item.id} index={index}>
+              <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={dragDisabled}>
                 {(drag, snap) => (
                   <div ref={drag.innerRef} {...drag.draggableProps}>
                     <WorkItemCard

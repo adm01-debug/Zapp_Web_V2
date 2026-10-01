@@ -5,7 +5,18 @@ import { useCustomShortcuts } from './useCustomShortcuts';
 
 interface GlobalShortcutAction {
   id: string;
-  action: () => void;
+  action: (event: KeyboardEvent) => void;
+}
+
+/** Etapa 77: as ações do módulo de Tarefas vivem na tela, não aqui — o registry
+ *  só recorta escopo/guarda e avisa. O `TasksModule` escuta `tasks-shortcut`. */
+function avisarTarefas(id: string, key?: string) {
+  document.dispatchEvent(new CustomEvent('tasks-shortcut', { detail: { id, key } }));
+}
+
+/** View corrente lida da URL canônica (`?view=`), a mesma que o app usa. */
+function viewAtual(): string {
+  return new URLSearchParams(window.location.search).get('view') ?? 'inbox';
 }
 
 export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[]) {
@@ -14,7 +25,7 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
   const { shortcuts, getActiveBinding } = useCustomShortcuts();
 
   // Default global actions
-  const defaultActions: Record<string, () => void> = {
+  const defaultActions: Record<string, (event: KeyboardEvent) => void> = {
     'global-search': () => {
       document.dispatchEvent(new CustomEvent('open-global-search'));
     },
@@ -57,12 +68,24 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
     'toggle-notifications': () => {
       document.dispatchEvent(new CustomEvent('toggle-notifications'));
     },
+    // Etapa 77 — 7 atalhos do módulo de Tarefas (escopo em `defaultShortcuts`).
+    // O registry só recorta escopo/guarda de input e avisa a tela; quem sabe o
+    // que fazer com cada um é o `TasksModule`.
+    'tasks-focus-quickadd': () => avisarTarefas('tasks-focus-quickadd'),
+    'tasks-mode': (event) => avisarTarefas('tasks-mode', event.key),
+    'tasks-search': () => avisarTarefas('tasks-search'),
+    'tasks-open-sheet': () => avisarTarefas('tasks-open-sheet'),
+    'tasks-complete': () => avisarTarefas('tasks-complete'),
+    'tasks-cancel': () => avisarTarefas('tasks-cancel'),
+    'tasks-help': () => {
+      document.dispatchEvent(new CustomEvent('show-shortcuts-help'));
+    },
   };
 
   // A tabela de acoes mistura os defaults com `customActions`, que o provider
   // recria a cada render. Guardada numa ref, ela deixa de invalidar o listener
   // global a cada render e sai das deps do useCallback (gate do lint-ratchet).
-  const actionsRef = useRef<Record<string, () => void>>({});
+  const actionsRef = useRef<Record<string, (event: KeyboardEvent) => void>>({});
   useEffect(() => {
     const merged = { ...defaultActions };
     customActions?.forEach(({ id, action }) => {
@@ -79,12 +102,19 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
     // Allow Ctrl+K (global search) and Escape even in inputs
     const allowedInInputs = ['global-search', 'clear-selection', 'show-shortcuts-help', 'open-tasks-tab'];
 
+    // Etapa 77: view corrente — atalho com `scope` só vale na view dele.
+    const view = viewAtual();
+
     for (const shortcut of shortcuts) {
+      if (shortcut.scope && !shortcut.scope.includes(view)) continue;
+
       const binding = getActiveBinding(shortcut);
       
       // Check if keys match
       if (!binding.key || !event.key) continue;
-      const keyMatches = event.key.toLowerCase() === binding.key.toLowerCase();
+      // Etapa 77: `alternateKeys` deixa um único atalho responder a 1, 2 e 3.
+      const keyMatches = [binding.key, ...(shortcut.alternateKeys ?? [])]
+        .some(key => key.toLowerCase() === event.key.toLowerCase());
       const ctrlMatches = !!event.ctrlKey === !!binding.modifiers.ctrlKey;
       const shiftMatches = !!event.shiftKey === !!binding.modifiers.shiftKey;
       const altMatches = !!event.altKey === !!binding.modifiers.altKey;
@@ -100,7 +130,7 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
         if (action) {
           event.preventDefault();
           event.stopPropagation();
-          action();
+          action(event);
           return;
         }
       }

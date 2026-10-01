@@ -30,7 +30,10 @@ describe('useCustomShortcuts', () => {
     const { result } = renderHook(() => useCustomShortcuts());
     result.current.shortcuts.forEach(shortcut => {
       expect(shortcut.id).toBeTruthy();
-      expect(shortcut.name).toBeTruthy();
+      // Etapa 84: os 7 atalhos de Tarefas não carregam `name` inline — o rótulo
+      // vem do chunk sob demanda (ver useTaskShortcutLabels.test.tsx). Os
+      // globais continuam obrigados a ter nome.
+      if (!shortcut.scope) expect(shortcut.name).toBeTruthy();
       expect(shortcut.defaultKey).toBeTruthy();
       expect(shortcut.category).toBeTruthy();
     });

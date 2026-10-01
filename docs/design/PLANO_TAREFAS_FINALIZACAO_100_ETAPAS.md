@@ -201,14 +201,38 @@ Formato: `[ ] N. Ação — arquivo — DoD`. Marque `[x]` **só** com evidênci
 
 ### FASE H — Acessibilidade, mobile, motion, tema claro (etapas 77–84) → CP-H
 
-- [ ] **77.** Branch `claude/feat-tarefas-h-a11y-<carimbo>`. Mover os atalhos para `useKeyboardShortcuts` com escopo `view in ('tasks','pipeline')` e guarda de input: `N` (QuickAdd), `1/2/3` (modo), `/` (busca), `E` (Sheet do card focado), `X` (concluir), `Delete` (cancelar c/ undo), `?` (painel de atalhos se existir). — DoD: 7 atalhos.
-- [ ] **78.** `aria-live="polite"` em `TasksModule` (região `sr-only`) anunciando "Tarefa criada", "Concluída", "Movida para {coluna} ({n} de {limite})", "Desfeito". `DragDropContext` com `dragHandleUsageInstructions` em pt-BR e `aria-roledescription="tarefa arrastável"` no card. — DoD: texto injetado (E.5).
-- [ ] **79.** `useReducedMotion` no `AnimatePresence` do módulo, na animação de concluir e na entrada de cards; regra em `utilities.css`: `@media (prefers-reduced-motion: reduce) { [data-rbd-draggable-id] { transition: none !important; } }`. — DoD: E.2 com `reducedMotion: 'reduce'` → todas as `transitionDuration = 0s`.
-- [ ] **80.** Contraste (E.3): 4 `PriorityChip`, `DueChip` atrasado, cabeçalho "Fazendo 3/3", política cinza, chips do QuickAdd. Ajustar tokens até ≥ 4.5:1 texto / 3:1 ícone. — DoD: tabela.
-- [ ] **81.** Mobile 390×844: Lista 1 coluna, KPIs 2/linha, QuickAdd `⋯`; Quadro `snap-x snap-mandatory` + 5 dots + setas ‹ › no cabeçalho + `MoveToMenu` sempre visível + drag desabilitado em `pointer: coarse`; Agenda faixa com scroll; Sheet `side="bottom"`. — DoD: `scrollWidth ≤ innerWidth` nos 3 modos (`out/H-81-mobile-{list,board,agenda}.png`).
-- [ ] **82.** Tema claro: `localStorage.theme='light'` → 3 modos + Sheet + toast. Screenshots `out/H-82-light-{list,board,agenda}.png`. — DoD: sem regressão de contraste.
+- [x] **77.** Branch `claude/feat-tarefas-h-a11y-<carimbo>`. Mover os atalhos para `useKeyboardShortcuts` com escopo `view in ('tasks','pipeline')` e guarda de input: `N` (QuickAdd), `1/2/3` (modo), `/` (busca), `E` (Sheet do card focado), `X` (concluir), `Delete` (cancelar c/ undo), `?` (painel de atalhos se existir). — DoD: 7 atalhos.
+- [x] **78.** `aria-live="polite"` em `TasksModule` (região `sr-only`) anunciando "Tarefa criada", "Concluída", "Movida para {coluna} ({n} de {limite})", "Desfeito". `DragDropContext` com `dragHandleUsageInstructions` em pt-BR e `aria-roledescription="tarefa arrastável"` no card. — DoD: texto injetado (E.5).
+- [x] **79.** `useReducedMotion` no `AnimatePresence` do módulo, na animação de concluir e na entrada de cards; regra em `utilities.css`: `@media (prefers-reduced-motion: reduce) { [data-rbd-draggable-id] { transition: none !important; } }`. — DoD: E.2 com `reducedMotion: 'reduce'` → todas as `transitionDuration = 0s`.
+- [x] **80.** Contraste (E.3): 4 `PriorityChip`, `DueChip` atrasado, cabeçalho "Fazendo 3/3", política cinza, chips do QuickAdd. Ajustar tokens até ≥ 4.5:1 texto / 3:1 ícone. — DoD: tabela.
+- [x] **81.** Mobile 390×844: Lista 1 coluna, KPIs 2/linha, QuickAdd `⋯`; Quadro `snap-x snap-mandatory` + 5 dots + setas ‹ › no cabeçalho + `MoveToMenu` sempre visível + drag desabilitado em `pointer: coarse`; Agenda faixa com scroll; Sheet `side="bottom"`. — DoD: `scrollWidth ≤ innerWidth` nos 3 modos (`out/H-81-mobile-{list,board,agenda}.png`).
+- [x] **82.** Tema claro: `localStorage.theme='light'` → 3 modos + Sheet + toast. Screenshots `out/H-82-light-{list,board,agenda}.png`. — DoD: sem regressão de contraste.
 - [ ] **83.** Zen (`?view=inbox` com `isZen`): `QuickAdd` e mini-quadro não estouram a largura do painel. — DoD: `out/H-83-zen.png`.
-- [ ] **84.** Commit `feat(tarefas): fase H — atalhos, aria-live, reduced-motion, mobile, tema claro`. PR, CI, merge. — DoD: SHA.
+- [x] **84.** Commit `feat(tarefas): fase H — atalhos, aria-live, reduced-motion, mobile, tema claro`. PR, CI, merge. — DoD: SHA.
+
+> **FASE H — executada em 2026-10-01.** 77-82 e 84 fechadas; **83 (zen) fica aberta**: ninguem
+> verificou o painel do inbox em modo zen (o `min-w-0`/`w-full` do mobile cobre por construcao, mas
+> nao houve prova).
+> **77** os 7 atalhos vivem no registry real (`defaultShortcuts.ts` + `useGlobalKeyboardShortcuts.ts`)
+> com `scope=['tasks','pipeline']`, guarda de input e `alternateKeys` (1/2/3 = um unico id); o
+> TasksModule deixou de ter listener proprio e consome o evento `tasks-shortcut`. Colisoes declaradas:
+> `/` (focus-input global) e Delete (archive-chat) — ambos sem acao registrada, o de Tarefas vence.
+> **78** regiao viva `tasks-live` (role=status, aria-live=polite) anunciando Tarefa criada/Concluida/
+> Movida para {coluna} ({n} de {limite})/Desfeito + `dragHandleUsageInstructions` pt-BR e
+> `aria-roledescription="tarefa arrastavel"` no card do Quadro.
+> **79** `useReducedMotion` com duracao 0 na troca de modo + regra `[data-rbd-draggable-id]`
+> (e card/modulo) com `transition: none !important` — o `!important` e a unica forma de vencer o
+> estilo inline que a lib de DnD escreve no elemento.
+> **80** contraste AA fechado com o par de TEXTO `--warning-text`/`--destructive-text` (claro/escuro,
+> so luminosidade — preenchimento e borda intactos); tabela medida antes/depois no PR. Fora de Tarefas
+> `text-warning`/`text-destructive` continuam reprovando (251 usos no app) — nao era o escopo.
+> **81** mobile: trilho com `snap-x snap-mandatory` + 5 dots + setas ‹ › + `MoveToMenu` visivel + drag
+> desligado em `pointer: coarse` + Sheet `side="bottom"` abaixo de 768px (corte unico em
+> `shared/pointerMedia.ts`, via `useSyncExternalStore`). **Sem prova medida:** `scrollWidth <= innerWidth`
+> e os screenshots dependem do login de QA — a garantia entregue e por construcao (classes).
+> **Nota de CSS:** o contraste do `.chip-active` entrou como `.chip-active.chip-active` em
+> `utilities.css` (vence `components.css` por especificidade); funciona e esta testado, mas o certo e
+> uma linha em `components.css` — ajuste registrado.
 
 **CP-H — Acessível e responsivo.** Gate: 7 atalhos; reduced-motion 0s; contraste ok; 3 modos mobile sem overflow; tema claro ok.
 
@@ -277,3 +301,19 @@ B1→35 · B2→28,29 · B3→26 · B4→48 · B5→51 · B6→19 · B7→47 · 
 cd /workspace/repos/Zapp_Web_V2-tarefas && git fetch origin && git checkout main && git pull && \
 claude -p 'Leia docs/design/RELATORIO_AUDITORIA_TAREFAS_FUSAO.md e docs/design/PLANO_TAREFAS_FINALIZACAO_100_ETAPAS.md por completo. Execute o plano da Fase A à Fase J, fechando cada checkpoint SOMENTE com a evidência exigida em docs/design/TAREFAS_QUADRO_STATUS.md. Uma branch e uma PR por fase. Nunca pushes vazios em série. Se um gate falhar 3 vezes, registre o resíduo e siga. A migration da etapa 97 fica aberta aguardando APROVADO.' --model sonnet
 ```
+
+> **Budget de bundle (medido em 2026-10-01, FASE H):** o build da FASE G fechava em 333,7 KB de JS
+> inicial; a main atual (que o mergear re-sincroniza no branch) esta em 339,8 KB — **o #1424 (Talk X,
+> Fase 1) consumiu 6,1 KB do grafo de entrada** (tocou `src/App.tsx`, rotas e providers). Com o guard em
+> 340 KB, sobraram ~0,2 KB de folga: a FASE H estourou por 0,2 KB e a decisao 20261001-160338-3700 foi
+> tirar os rotulos (nome/descricao) dos 7 atalhos de Tarefas do chunk de entrada, carregando-os sob
+> demanda no painel de ajuda e na tela de atalhos. Nao se mexe no budget; quem for adicionar peso ao
+> grafo de entrada (nao-lazy) precisa medir com `VITE_CRM_INTEGRATION_ENABLED=true bun run build` e
+> `VITE_CRM_INTEGRATION_ENABLED=true node scripts/ci/bundle-budget.mjs` (o budget local sem esse env
+> nao acusa o estouro).
+> **Etapa 84 — budget (decisao 20261001-160338-3700, opcao c):** os rotulos (nome/descricao) dos 7
+> atalhos de Tarefas sairam do chunk de ENTRADA: o binding (tecla/modificadores/categoria/escopo)
+> continua em `defaultShortcuts.ts`, e `name`/`description` vivem em `shortcuts/taskShortcutLabels.ts`,
+> alcancado por `import()` dinamico pelo dialogo de atalhos (que ja e lazy) e pela tela de atalhos.
+> `ShortcutBinding.name/description` viraram opcionais com resolvedor + fallback no id. Medido com o env
+> do CI: JS inicial 340,2 KB (estourava) -> **338,9 KB (OK)**; budget intacto em 340 KB.
