@@ -98,7 +98,7 @@ describe('mediaVolumeElement — volume no elemento de mídia', () => {
     expect(el.isMediaVolumeControllable()).toBe(false);
   });
 
-  it('E10: no iOS o ganho sai por GainNode dedicado da mídia, reaproveitado em novas mudanças', async () => {
+  it('E10: no iOS o ganho sai por GainNode dedicado da mídia — e só depois do gesto de play', async () => {
     simularIOS();
     vi.stubGlobal('AudioContext', FakeAudioContext);
     const { el } = await fresh();
@@ -108,10 +108,20 @@ describe('mediaVolumeElement — volume no elemento de mídia', () => {
 
     el.applyMediaVolume(audio, 0.25, true);
 
+    // E10 — sem gesto não existe contexto: criado aqui, o navegador o entregaria
+    // SUSPENSO e o áudio sairia mudo. O mute, que é do próprio elemento, entra igual.
+    expect(grafo.sources).toBe(0);
+    expect(grafo.ganhos).toHaveLength(0);
+    expect(audio.muted).toBe(true);
+
+    const detach = el.attachMediaVolume(audio);
+    audio.dispatchEvent(new Event('play'));
+
     expect(grafo.sources).toBe(1);
     expect(grafo.ganhos).toHaveLength(1);
+
+    el.applyMediaVolume(audio, 0.25, true);
     expect(grafo.ganhos[0].gain.value).toBeCloseTo(0.25, 5);
-    expect(audio.muted).toBe(true);
 
     // `createMediaElementSource` só pode ser chamado uma vez por elemento: a segunda
     // aplicação tem de reusar o nó, não criar outro.
@@ -119,6 +129,8 @@ describe('mediaVolumeElement — volume no elemento de mídia', () => {
     expect(grafo.sources).toBe(1);
     expect(grafo.ganhos[0].gain.value).toBeCloseTo(0.5, 5);
     expect(audio.muted).toBe(false);
+
+    detach();
   });
 
   it('E07/E44: attachMediaVolume aplica agora, acompanha o store e reaplica quando a URL renova', async () => {
