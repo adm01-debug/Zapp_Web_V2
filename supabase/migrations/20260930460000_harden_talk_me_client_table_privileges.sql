@@ -45,7 +45,7 @@ REVOKE ALL PRIVILEGES ON TABLE
   public.queue_members,
   public.feature_flags,
   public.whatsapp_groups
-FROM authenticated;
+FROM authenticated, service_role;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
   public.contacts,
@@ -54,7 +54,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
   public.queue_members,
   public.feature_flags,
   public.whatsapp_groups
-TO authenticated;
+TO authenticated, service_role;
 
 -- Usuarios leem auditoria apenas quando a policy administrativa permite. Toda
 -- escrita direta permanece fechada; funcoes SECURITY DEFINER escrevem como o
@@ -67,30 +67,17 @@ GRANT SELECT ON TABLE public.audit_logs TO authenticated;
 
 -- Edge Functions e jobs precisam de DML, nunca de DDL de tabela. audit_logs e
 -- append-only para service_role: leitura e insercao, sem reescrita ou exclusao.
-REVOKE ALL PRIVILEGES ON TABLE
-  public.contacts,
-  public.messages,
-  public.queues,
-  public.queue_members,
-  public.feature_flags,
-  public.whatsapp_groups
-FROM service_role;
-
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
-  public.contacts,
-  public.messages,
-  public.queues,
-  public.queue_members,
-  public.feature_flags,
-  public.whatsapp_groups
-TO service_role;
-
 REVOKE ALL PRIVILEGES ON TABLE public.audit_logs FROM service_role;
 GRANT SELECT, INSERT ON TABLE public.audit_logs TO service_role;
 
-CREATE OR REPLACE FUNCTION public.prevent_contact_queue_hijack()
-RETURNS trigger
+-- Resolve uma unica vez o ator efetivo usado pelos guards de contacts. NULL e
+-- reservado aos dois contextos internos autorizados: service_role real sem uid
+-- e conexao direta de superusuario. Qualquer sessao com uid continua sendo
+-- tratada como usuario, ainda que tente alegar role=service_role no JWT.
+CREATE OR REPLACE FUNCTION public.resolve_contact_guard_actor()
+RETURNS uuid
 LANGUAGE plpgsql
+STABLE
 SECURITY DEFINER
 SET search_path = ''
 AS $function$
@@ -108,6 +95,9 @@ BEGIN
   END;
 
   v_user_id := auth.uid();
+  IF v_user_id IS NOT NULL THEN
+    RETURN v_user_id;
+  END IF;
 
   v_claim_role := COALESCE(
     v_claims ->> 'role',
@@ -116,26 +106,35 @@ BEGIN
 
   -- O bypass exige o JWT E o papel PostgreSQL service_role. Assim, alterar apenas
   -- request.jwt.claims nao transforma uma sessao authenticated em service_role.
-  -- Jobs internos sem JWT so passam quando a conexao pertence a um superusuario.
-  -- Se houver uid, as restricoes de usuario sempre prevalecem.
-  IF v_user_id IS NULL THEN
-    IF v_claim_role = 'service_role' AND v_database_role = 'service_role' THEN
-      RETURN NEW;
-    END IF;
-
-    IF EXISTS (
-      SELECT 1
-      FROM pg_catalog.pg_roles role_row
-      WHERE role_row.rolname = SESSION_USER
-        AND role_row.rolsuper IS TRUE
-    ) THEN
-      RETURN NEW;
-    END IF;
-
-    RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501';
+  IF v_claim_role = 'service_role' AND v_database_role = 'service_role' THEN
+    RETURN NULL;
   END IF;
 
-  IF NEW.queue_id IS NOT NULL
+  -- Jobs internos sem JWT so passam quando a conexao pertence a um superusuario.
+  IF EXISTS (
+    SELECT 1
+    FROM pg_catalog.pg_roles role_row
+    WHERE role_row.rolname = SESSION_USER
+      AND role_row.rolsuper IS TRUE
+  ) THEN
+    RETURN NULL;
+  END IF;
+
+  RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501';
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.prevent_contact_queue_hijack()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+DECLARE
+  v_user_id uuid := public.resolve_contact_guard_actor();
+BEGIN
+  IF v_user_id IS NOT NULL
+     AND NEW.queue_id IS NOT NULL
      AND NOT public.is_admin_or_supervisor(v_user_id)
      AND NOT EXISTS (
        SELECT 1
@@ -160,43 +159,10 @@ SECURITY DEFINER
 SET search_path = ''
 AS $function$
 DECLARE
-  v_user_id uuid;
-  v_claims jsonb;
-  v_claim_role text;
-  v_database_role text := NULLIF(pg_catalog.current_setting('role', true), '');
+  v_user_id uuid := public.resolve_contact_guard_actor();
 BEGIN
-  BEGIN
-    v_claims := NULLIF(pg_catalog.current_setting('request.jwt.claims', true), '')::jsonb;
-  EXCEPTION
-    WHEN invalid_text_representation THEN
-      RAISE EXCEPTION 'invalid_auth_context' USING ERRCODE = '42501';
-  END;
-
-  v_user_id := auth.uid();
-
-  v_claim_role := COALESCE(
-    v_claims ->> 'role',
-    NULLIF(pg_catalog.current_setting('request.jwt.claim.role', true), '')
-  );
-
-  IF v_user_id IS NULL THEN
-    IF v_claim_role = 'service_role' AND v_database_role = 'service_role' THEN
-      RETURN NEW;
-    END IF;
-
-    IF EXISTS (
-      SELECT 1
-      FROM pg_catalog.pg_roles role_row
-      WHERE role_row.rolname = SESSION_USER
-        AND role_row.rolsuper IS TRUE
-    ) THEN
-      RETURN NEW;
-    END IF;
-
-    RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501';
-  END IF;
-
-  IF NEW.assigned_to IS NOT NULL
+  IF v_user_id IS NOT NULL
+     AND NEW.assigned_to IS NOT NULL
      AND NOT public.is_admin_or_supervisor(v_user_id)
   THEN
     IF NEW.queue_id IS NOT NULL THEN
@@ -221,7 +187,9 @@ BEGIN
 END;
 $function$;
 
--- Funcoes de trigger nao precisam de EXECUTE direto para disparar.
+-- Funcoes internas nao precisam de EXECUTE direto pelos papeis da API.
+REVOKE ALL ON FUNCTION public.resolve_contact_guard_actor()
+  FROM PUBLIC, anon, authenticated, service_role;
 REVOKE ALL ON FUNCTION public.prevent_contact_queue_hijack()
   FROM PUBLIC, anon, authenticated, service_role;
 REVOKE ALL ON FUNCTION public.prevent_contact_assignee_hijack()
@@ -231,5 +199,7 @@ COMMENT ON FUNCTION public.prevent_contact_queue_hijack() IS
   'Impede usuario autenticado de mover contato para fila fora do seu escopo; service_role sem identidade permanece autorizado.';
 COMMENT ON FUNCTION public.prevent_contact_assignee_hijack() IS
   'Impede usuario autenticado de atribuir contato a perfil invalido; service_role sem identidade permanece autorizado.';
+COMMENT ON FUNCTION public.resolve_contact_guard_actor() IS
+  'Resolve o auth.uid dos guards de contacts; retorna NULL apenas para contextos internos autorizados.';
 
 COMMIT;

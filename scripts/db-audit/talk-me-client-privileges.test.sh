@@ -204,10 +204,15 @@ expect_value 'A7 RLS esta habilitada nas sete tabelas' 't' \
      'public.queues'::regclass,'public.queue_members'::regclass,
      'public.feature_flags'::regclass,'public.whatsapp_groups'::regclass,
      'public.audit_logs'::regclass]);"
-expect_value 'A8 funcoes de trigger nao sao executaveis por papeis cliente' 't' \
+expect_value 'A8 funcoes internas nao sao executaveis por papeis cliente' 't' \
   "SELECT bool_and(NOT has_function_privilege(role_name,function_name,'EXECUTE'))
    FROM unnest(ARRAY['anon','authenticated','service_role']) role_name
-   CROSS JOIN unnest(ARRAY['public.prevent_contact_queue_hijack()','public.prevent_contact_assignee_hijack()']) function_name;"
+   CROSS JOIN unnest(ARRAY['public.resolve_contact_guard_actor()','public.prevent_contact_queue_hijack()','public.prevent_contact_assignee_hijack()']) function_name;"
+expect_error 'A8b authenticated nao chama o helper diretamente' 'permission denied for function resolve_contact_guard_actor' \
+  "SET SESSION AUTHORIZATION authenticator; SET ROLE authenticated; SELECT public.resolve_contact_guard_actor();"
+expect_value 'A8c helper resolve o uid para seu owner' '10000000-0000-0000-0000-000000000001' \
+  "SELECT set_config('request.jwt.claims','{\"sub\":\"10000000-0000-0000-0000-000000000001\",\"role\":\"authenticated\"}',false);
+   SELECT public.resolve_contact_guard_actor();"
 expect_value 'A9 os dois triggers continuam anexados e ativos' '2' \
   "SELECT count(*) FROM pg_trigger WHERE tgrelid='public.contacts'::regclass
    AND tgname IN ('trg_prevent_contact_queue_hijack','trg_prevent_contact_assignee_hijack')
