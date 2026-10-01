@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+// (a marca do mes vive em localStorage — o ambiente de src/lib e node por padrao)
 /**
  * E47 — o evento de degradação do orçamento (`searchbox_cost_guard`) tem de sair UMA vez por mês.
  *
