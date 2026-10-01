@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { BellRing, CalendarIcon, CheckCircle2, PauseCircle, X } from 'lucide-react';
+import { BellRing, CalendarIcon, CheckCircle2, ChevronDown, PauseCircle, X } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -21,6 +21,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Calendar } from '@/components/ui/calendar';
 import { KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
 import { PRIORITY_LABELS } from '@/hooks/tasks/workItemLabels';
@@ -58,6 +64,20 @@ function horaLocal(iso: string): string {
 function compor(dia: string | null, hora: string): string | null {
   if (!dia) return null;
   return `${dia}T${hora || '23:59'}:00`;
+}
+
+/**
+ * Etapa 65: espelha o cálculo de `snooze` do hook só para o Sheet refletir o
+ * novo alarme na hora (a prop `item` não é reconstruída após adiar).
+ */
+function quandoAdiar(minutes: number | 'tomorrow9'): Date {
+  if (minutes === 'tomorrow9') {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(9, 0, 0, 0);
+    return d;
+  }
+  return new Date(Date.now() + Math.max(1, minutes) * 60_000);
 }
 
 interface SheetProps {
@@ -132,6 +152,9 @@ function Formulario({
     item.remind_at ? diaLocal(item.remind_at) : null
   );
   const [alarmeHora, setAlarmeHora] = useState(item.remind_at ? horaLocal(item.remind_at) : '09:00');
+  // Etapa 65: o "Avisado em" some quando o "Adiar" rearma o alarme — `snooze`
+  // zera `notified_at` no banco, mas a prop `item` não é reconstruída no Sheet.
+  const [avisadoEm, setAvisadoEm] = useState<string | null>(item.notified_at);
   const [mostraDescricao, setMostraDescricao] = useState(Boolean(item.description));
   const [erro, setErro] = useState<string | null>(null);
 
@@ -155,6 +178,15 @@ function Formulario({
     title, description, prioridade, contactId, status, motivo,
     dia, hora, alarmeDia, alarmeHora, item,
   ]);
+
+  /** Etapa 65: adia e reflete o novo alarme no Sheet. */
+  function adiar(minutes: number | 'tomorrow9') {
+    onSnooze(item, minutes);
+    const quando = quandoAdiar(minutes);
+    setAlarmeDia(diaLocal(quando.toISOString()));
+    setAlarmeHora(horaLocal(quando.toISOString()));
+    setAvisadoEm(null);
+  }
 
   function salvar() {
     if (motivoObrigatorio && !motivo.trim()) {
@@ -326,7 +358,7 @@ function Formulario({
                   autoFocus={focusField === 'remind_at'}
                   className="flex-1 justify-start bg-input/40 border-border/70 font-normal"
                 >
-                  {item.notified_at && item.remind_at
+                  {avisadoEm && alarmeDia
                     ? <BellRing className="mr-2 h-4 w-4 text-destructive" />
                     : <CalendarIcon className="mr-2 h-4 w-4" />}
                   {alarmeDia
@@ -353,25 +385,29 @@ function Formulario({
                 </div>
               </PopoverContent>
             </Popover>
-            <Button
-              variant="ghost"
-              size="sm"
-              data-testid="sheet-adiar"
-              onClick={() => onSnooze(item, 15)}
-            >
-              Adiar 15 min
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" data-testid="sheet-adiar" className="shrink-0 gap-1">
+                  Adiar <ChevronDown className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem data-testid="sheet-adiar-15" onClick={() => adiar(15)}>15 min</DropdownMenuItem>
+                <DropdownMenuItem data-testid="sheet-adiar-60" onClick={() => adiar(60)}>1 hora</DropdownMenuItem>
+                <DropdownMenuItem data-testid="sheet-adiar-amanha" onClick={() => adiar('tomorrow9')}>Amanhã 9h</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          {item.notified_at && (
+          {avisadoEm && (
             <p data-testid="sheet-avisado" className="mt-1 text-2xs text-muted-foreground">
-              Avisado em {format(new Date(item.notified_at), 'dd/MM HH:mm', { locale: ptBR })}
+              Avisado em {format(new Date(avisadoEm), 'dd/MM HH:mm', { locale: ptBR })}
             </p>
           )}
-          {item.remind_at && (
+          {alarmeDia && (
             <button
               type="button"
               data-testid="sheet-remover-alarme"
-              onClick={() => { setAlarmeDia(null); onSetReminder(item, null); }}
+              onClick={() => { setAlarmeDia(null); setAvisadoEm(null); onSetReminder(item, null); }}
               className="mt-1 text-2xs text-muted-foreground hover:text-destructive"
             >
               Remover alarme

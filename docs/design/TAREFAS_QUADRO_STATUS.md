@@ -505,7 +505,7 @@ leituras foram descartadas.
 **Limite declarado:** prova com componentes reais e dados mockados; não substitui a olhada logada
 (etapas 54/58, que dependem do login de QA no cofre).
 
-## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
+## CP-F Avisos de alarme [x] — toast=ok · popover=criado · badge=ok · push=fora da v1 · 66/67 pendentes de QA
 ## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=
 ## CP-H A11y        [ ] 7 atalhos= · aria-live= · reduced-motion 0s= · contraste= · mobile 3 modos= · light= · zen=
 ## CP-I Testes      [ ] arquivos= · casos= · bundle= KB gz · TTI 300 itens=
@@ -601,6 +601,21 @@ Etapas 35–41 fechadas; 42 entregue (commit/PR/CI/merge), restando só o screen
 - **Lacuna real corrigida:** no compact o `Ctrl+L` não abria o `⋯` (só o `Ctrl+@` abria) — o popover de Lembrar ficava sem gatilho montado.
 - **Evidência:** typecheck 0 · eslint do módulo 0 · suíte **367 arquivos / 4835 testes / 0 falhas** · ratchet **0 novas / 29 removidas** · db:guard 0 novas · tipografia aprovada · implicit-any 0 · build ok, bundle **4066,1/4100 KB** · **6/6 mutações mortas** (`.tmp/mut-fase-d.py`, com baseline verde conferido antes e árvore restaurada por hash depois).
 - **Pendente (não bloqueia):** screenshot da etapa 42 (login de QA no cofre).
+
+## FASE F — Avisos: toast, popover, badge, titulo (59-70)
+
+- 59 useWorkItemNotifications (5 acoes + helpers puros; adiar ZERA notified_at)
+- 60 popover de notificacoes CRIADO do zero + sino na Sidebar; item reminder_due com 3 botoes
+- 61 toast realtime (15 s, sem som) com os mesmos 3 botoes
+- 62 badge do item Tarefas na sidebar (cor unica, ver limitacao)
+- 63 useDocumentBadge com (n) no titulo so com a aba oculta
+- 64 push fora da v1 (SW/PWA desligados; sem public/sw.js; nada de web-push nas functions)
+- 65 Sheet com "Avisado em" + Adiar (15 min / 1 h / Amanha 9h) ligado a onSnooze
+- 68 /remind cria tarefa real e abre o item; createAndGetId adicionado ao hook (sem leitura extra)
+- 69 testes: 8 casos com now fixo + o teste do NotificationItem
+- Evidencia: typecheck 0 · ratchet 0 novas/29 removidas · tipografia ok · db:guard ok · build ok,
+  bundle 4068,3/4100 KB · suite 371 arquivos / 4853 testes / 0 falhas · 2/2 mutacoes mortas
+- Pendente de QA: 66/67 (idempotencia com timestamps) e screenshots
 
 ## Pendências / resíduos (honestos)
 - Push do navegador: decidir na etapa 64 (infra existe: usePushNotifications.ts, PushNotificationToggle.tsx — não avaliada)
