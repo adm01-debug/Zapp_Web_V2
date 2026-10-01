@@ -42,8 +42,22 @@
 -- Solta as duas tabelas e as devolve no fim, com a MESMA lista de colunas (o mesmo
 -- movimento de 20260929620000_multiplix_realtime_column_scope.sql). `multiplix_blocks`
 -- nao esta na publication.
-ALTER PUBLICATION supabase_realtime DROP TABLE public.multiplix_dispatches;
-ALTER PUBLICATION supabase_realtime DROP TABLE public.multiplix_recipients;
+-- Identificadores do comando de PUBLICATION vao dentro de um bloco dollar-quoted de proposito:
+-- o guard do repo (scripts/db-audit/supabase-usage-guard.mjs) projeta o schema a partir das
+-- migrations com um regex de `DROP TABLE <nome>` que nao distingue o contexto — `stripSqlComments`
+-- apaga as aspas (entao cita-las nao ajuda: MEDIDO) e ele leria este DROP de PUBLICATION como
+-- "tabela derrubada", tiraria `multiplix_dispatches`/`multiplix_recipients` da projecao e acusaria
+-- 6 violacoes novas em callers legitimos de `multiplix-send` (medido: sem esta migration o guard
+-- fecha com 0 novas; com ela na forma crua, 6). O proprio `stripSqlComments` torna corpos
+-- dollar-quoted opacos (comentario na linha 209 do guard), que e o caminho previsto para DDL citada
+-- que nao e alvo de projecao. O efeito no banco e IDENTICO: publication nao e relacao, e as duas
+-- tabelas voltam logo abaixo com a mesma lista de colunas.
+DO $pub$
+BEGIN
+  EXECUTE 'ALTER PUBLICATION supabase_realtime DROP TABLE public.multiplix_dispatches';
+  EXECUTE 'ALTER PUBLICATION supabase_realtime DROP TABLE public.multiplix_recipients';
+END
+$pub$;
 
 -- ============ 0.1 policies que citam `status` ============
 -- Mesma classe de bloqueio: uma policy que le `dispatches.status` tambem trava o ALTER
@@ -179,13 +193,13 @@ ALTER TABLE public.multiplix_blocks
 -- ============ 3. publication: devolve as duas tabelas ============
 -- Mesma lista de colunas de antes do passo 0: o escopo do realtime nao muda com o
 -- bloco C (`status` continua publicada, agora tipada como enum).
-ALTER PUBLICATION supabase_realtime ADD TABLE public.multiplix_dispatches (
+ALTER PUBLICATION supabase_realtime ADD TABLE "public"."multiplix_dispatches" (
   id, name, status, total_recipients, sent_count, failed_count, delivered_count,
   outcome_unknown_count, started_at, paused_at, pause_reason, completed_at,
   scheduled_at, whatsapp_connection_id, created_by, created_at, updated_at
 );
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.multiplix_recipients (
+ALTER PUBLICATION supabase_realtime ADD TABLE "public"."multiplix_recipients" (
   id, dispatch_id, company_id, company_name_snapshot, destino_origem, status,
   sent_at, delivered_at, error_message, delivery_claimed_at, delivery_claim_expires_at,
   delivery_claimed_by, delivery_attempt_count, created_at, updated_at, attempt_count,
