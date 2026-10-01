@@ -235,3 +235,38 @@ test('usage guard ainda acusa alvo ausente em schema nao-public', () => {
   assert.equal(result.status, 1, result.stdout + result.stderr);
   assert.match(result.stderr, /\('nao_existe'\)/);
 });
+
+test('usage guard honra SET standard_conforming_strings = off (backslash escapa em string normal)', () => {
+  const result = runGuard({
+    catalog: { tables: ['t'] },
+    migrations: {
+      '20260909210000_scs_off.sql':
+        'SET standard_conforming_strings = off;\n'
+        + "SELECT 'a\\'b' AS x;\n"
+        + 'DROP TABLE public.t;\n',
+    },
+    callers: { 'c.ts': "supabase.from('t').select('*');\n" },
+  });
+  // Com SCS=off o backslash escapa a aspa em string NORMAL (medido no PG 17.11:
+  // psql -f aplica o SET num statement separado e SELECT 'a\'b' devolve a'b, so
+  // com WARNING). O DROP seguinte e DDL real e tira t da projecao. Sem honrar o
+  // SET, o scanner fecha a string no \' e engole o DROP -> fail-open.
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stderr, /\.from\('t'\)/);
+});
+
+test('usage guard reconhece dollar-quote com tag nao-ASCII', () => {
+  const result = runGuard({
+    migrations: {
+      '20260909210000_dollar_unicode.sql':
+        'CREATE TABLE public.t (id integer);\n'
+        + 'SELECT $ação$ DROP TABLE public.t; $ação$;\n',
+    },
+    callers: { 'c.ts': "supabase.from('t').select('*');\n" },
+  });
+  // O DROP esta DENTRO do dollar-quote (texto, nao DDL) e a tag nao-ASCII e
+  // valida no PG (medido: $ação$ ... $ação$ e aceito e devolve x). Sem reconhecer
+  // a tag, o conteudo vira tokens e o DROP falso remove t -> falso positivo.
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /projecao forward-only: 1 relacoes, 0 funcoes/);
+});
