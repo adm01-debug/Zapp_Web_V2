@@ -1,9 +1,13 @@
 # Fontes recuperados: edge functions que rodam em produção sem fonte versionada
 
-Estas quatro funções estão **no ar** mas não têm fonte no repositório. O texto em cada
-`index.ts.txt` foi recuperado do **bundle publicado** (Management API → corpo `ESZIP2.3` → source
-map embutido → `sourcesContent`), sem republicar nada. É cópia fiel do `index.ts` que está em
-produção; o `sha256` abaixo é o do arquivo salvo aqui, para conferência.
+Estas funções **não têm fonte no repositório**. O texto em cada `index.ts.txt` foi recuperado do
+**bundle publicado** (Management API → corpo `ESZIP2.3` → source map embutido → `sourcesContent`),
+sem republicar nada. É cópia fiel do `index.ts` que estava em produção; o `sha256` abaixo é o do
+arquivo salvo aqui, para conferência.
+
+**Situação em 01/10/2026:** as duas do Sicoob seguem **no ar**; as duas de lockout foram
+**removidas de produção** (junto com as declarações em `supabase/config.toml` e em
+`scripts/edge-deploy/legacy-functions.json`) e os arquivos desta pasta ficam como histórico.
 
 | função | versão publicada | publicado em (UTC) | `verify_jwt` | sha256 do fonte | módulo no bundle |
 |---|---|---|---|---|---|
@@ -25,20 +29,23 @@ diretório com `index.ts` vira função gerenciada**, entra em `functions[]` do 
 publicada no próximo deploy de escopo `all`. Trazer estes fontes para lá republicaria as funções
 sem que ninguém tenha pedido — por isso a recuperação vive aqui, fora da árvore de deploy.
 
-As duas de lockout estão na allowlist legada (`scripts/edge-deploy/legacy-functions.json`) e têm a
-exceção de `verify_jwt = false` declarada em `supabase/config.toml` (elas são chamadas no fluxo de
-login, antes de existir sessão). As duas do Sicoob **não** aparecem em `functions[]` nem em
-`legacy_unmanaged_functions`/`orphan_allowlist` — a atestação pós-deploy filtra o excedente
-justamente por essas listas (`manifest-lib.mjs`), então há divergência entre o que as listas cobrem
-e o que produção tem.
+As duas do Sicoob estão declaradas em `orphan_allowlist` no `supabase/deployment-manifest.json`:
+elas rodam sem fonte versionada e a atestação pós-deploy filtra o excedente remoto por essa lista
+(`manifest-lib.mjs`). Sem a declaração, **toda** publicação reprovava em
+`Remote function set mismatch` e o passo pós-deploy queimava 144 amostras (~24 min). As duas de
+lockout foram removidas de produção em 01/10/2026 e saíram das listas: `legacy-functions.json`
+ficou vazio e as exceções de `verify_jwt` saíram do `config.toml`.
 
 ## Como restaurar (se for decidido)
 
 1. `git mv docs/edge-functions-recovered/<slug>/index.ts.txt supabase/functions/<slug>/index.ts`
 2. As duas de lockout: os oito símbolos que elas importam de `_shared/validation.ts` **existem
    hoje** (`handleCors`, `errorResponse`, `jsonResponse`, `requireEnv`, `Logger`, `enforceRateLimit`,
-   `getClientIP`, `sanitizeString`), e a exceção de `verify_jwt` já está declarada — a restauração
-   é direta.
+   `getClientIP`, `sanitizeString`). Como as funções foram removidas de produção em 01/10/2026,
+   restaurá-las é trazê-las para `supabase/functions/` — lá viram funções gerenciadas, com deploy e
+   atestação próprios (o `manifesto` passa a exigir version bump e `verify_jwt` conferido); a
+   exceção de `verify_jwt = false` volta a ser necessária se elas forem chamadas antes de existir
+   sessão.
 3. As duas do Sicoob: os schemas `SicoobBridgeNewMessageSchema`, `SicoobBridgeMarkReadSchema` e
    `SicoobBridgeReplySchema` **não existem mais** em `_shared/schemas.ts` (removidos no desligamento
    do Sicoob). Restaurar exige recriá-los, e religar o Sicoob é decisão de negócio.

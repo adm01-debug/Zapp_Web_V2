@@ -26,7 +26,7 @@ quando alguém abre Diagnóstico/Monitoramento — `useDiagnosticsData.ts:151`,
 | Webhook inbound aceito | 99,5 % das entregas com 2xx | logs da edge `evolution-webhook` (status ≠ 2xx / total), Supabase Dashboard → Edge Functions → Logs |
 | Mensagem inbound visível | p95 < 5 s entre `messages.created_at` (timestamp do WhatsApp) e `now()` no INSERT | `ingest_inbound_message` grava `created_at` do provedor; comparar com `clock_timestamp()` numa view diária |
 | Instância WhatsApp conectada | 99 % do tempo por instância | `connection_health_logs` (amostras `healthy` / total) — exige o cron abaixo |
-| Login funcional | 99,9 % | `login_attempts` + `check-account-lock`/`record-failed-login` sem 5xx nos logs |
+| Login funcional | 99,9 % | logs da edge `auth-login` (sem 5xx) + `login_attempts` (linhas com `locked_until`). As edges `check-account-lock`/`record-failed-login` foram removidas em 01/10/2026 |
 | Schema sem drift | 100 % dos dias com `DB Live Guard` verde | GitHub Actions, workflow `db-live-guard.yml` |
 
 Error budget de 99,9 % em 30 dias = **43 min**. Estourou o budget → congela feature e prioriza
