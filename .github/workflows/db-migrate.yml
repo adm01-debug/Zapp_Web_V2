@@ -103,15 +103,15 @@ jobs:
       - name: Instalar cliente PostgreSQL
         run: bash scripts/ci/install-postgresql-client.sh
 
-      - name: Provar identidade e validar confirmacoes
+      - name: Provar identidade, TLS e validar confirmacoes
         env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+          DESTINO_URL_RAW: ${{ secrets.DESTINO_URL }}
           TARGET_VERSION: ${{ inputs.migration_version }}
           CONFIRM_PROJECT_REF: ${{ inputs.confirm_project_ref }}
           CONFIRM_RUNTIME_SHA256: ${{ inputs.confirm_runtime_sha256 }}
           APPLY: ${{ inputs.apply }}
         run: |
-          if [ -z "$DESTINO_URL" ]; then
+          if [ -z "$DESTINO_URL_RAW" ]; then
             echo "::error::DESTINO_URL ausente."
             exit 1
           fi
@@ -130,13 +130,22 @@ jobs:
           node --input-type=module <<'NODE'
           import {
             carregarIdentidadeEsperada,
+            endurecerDestinoTls,
             validarDestino,
+            validarSupabaseCa,
           } from './scripts/db-audit/database-identity.mjs';
+          import { appendFileSync } from 'node:fs';
           const identidade = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
-          const erros = validarDestino(process.env.DESTINO_URL, identidade);
+          const erros = validarDestino(process.env.DESTINO_URL_RAW, identidade);
+          erros.push(...validarSupabaseCa());
+          const tls = endurecerDestinoTls(process.env.DESTINO_URL_RAW);
+          erros.push(...tls.erros);
           for (const erro of erros) console.error('ERRO: ' + erro);
           if (erros.length) process.exit(1);
-          console.log('OK: destino oficial comprovado por fingerprint.');
+          console.log(`::add-mask::${tls.connectionString}`);
+          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${tls.connectionString}\n`);
+          appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
+          console.log('OK: endpoint oficial, TLS verify-full e CA pinada.');
           NODE
 
       - name: Exigir alvo unico ou bundle atomico conhecido
@@ -1142,17 +1151,17 @@ jobs:
       - name: Dry-run oficial do Supabase CLI
         if: steps.preflight.outputs.needs_apply == 'true'
         env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+          SUPABASE_DB_URL: ${{ env.DESTINO_URL }}
         run: >-
-          supabase db push --db-url "$DESTINO_URL" --include-all
+          supabase db push --include-all
           --skip-vault --dry-run --yes
 
       - name: Aplicar alvo unico ou bundle ordenado autorizado
         if: inputs.apply == true && steps.preflight.outputs.needs_apply == 'true'
         env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+          SUPABASE_DB_URL: ${{ env.DESTINO_URL }}
         run: >-
-          supabase db push --db-url "$DESTINO_URL" --include-all
+          supabase db push --include-all
           --skip-vault --yes
 
       - name: Validar registro no ledger
