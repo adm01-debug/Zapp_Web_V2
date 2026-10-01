@@ -11,12 +11,12 @@
 --    b) messageType/msgId.ext (caminho legado — todos os arquivos existentes + incoming)
 
 CREATE INDEX IF NOT EXISTS idx_messages_media_url_trgm
-  ON public.messages USING gin (media_url gin_trgm_ops)
+  ON public.messages USING gin (media_url extensions.gin_trgm_ops)
   WHERE media_url IS NOT NULL;
 
 DROP POLICY IF EXISTS "Users can read assigned whatsapp media" ON storage.objects;
 CREATE POLICY "Users can read assigned whatsapp media"
-  ON storage.objects FOR SELECT USING (
+  ON storage.objects FOR SELECT TO authenticated USING (
     bucket_id = 'whatsapp-media'
     AND (
       is_admin_or_supervisor(auth.uid())
@@ -40,7 +40,7 @@ CREATE POLICY "Users can read assigned whatsapp media"
 
 DROP POLICY IF EXISTS "Users can read assigned audio messages" ON storage.objects;
 CREATE POLICY "Users can read assigned audio messages"
-  ON storage.objects FOR SELECT USING (
+  ON storage.objects FOR SELECT TO authenticated USING (
     bucket_id = 'audio-messages'
     AND (
       is_admin_or_supervisor(auth.uid())
