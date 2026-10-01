@@ -3908,7 +3908,7 @@
         "f:mark_first_response(p_contact_id uuid)": "6c3f2cd95473e183b75da7c3e5dcbd6e",
         "f:prevent_profile_privilege_escalation()": "0737629a6ee63336298242afdef0e369",
         "f:talkx_campaign_report(p_campaign uuid)": "da750f60ff74098eae1cf7e32348a74f",
-        "f:trigger_pending_multiplix_dispatches()": "79c6193068785ba2bddbbfa544b61b8e",
+        "f:trigger_pending_multiplix_dispatches()": "e925a72dc7e11116179b79a1213d93a1",
         "f:ai_is_canonical_sentiment(p_value text)": "1afcdf1cae4bd1eb622095ff18606987",
         "f:enforce_multiplix_dispatch_mutability()": "f93102dd080a023e066d2a94f04f8dbc",
         "f:guard_conversation_closure_request_id()": "91ed44c407c337b25e8204bbe5ad9dcd",
@@ -3948,7 +3948,7 @@
         "f:mcp_exec_many(statements text[], max_rows integer)": "c32c9e6fe314663723f01e2f34781aa9",
         "f:require_contact_edit_permission(p_contact_id uuid)": "9d50f3c7b9f71f7268d7bfb3fc78d6f7",
         "f:set_call_agent_notes(p_call_id uuid, p_notes text)": "9641e9917ac24291a1f7a23aebe74f9b",
-        "f:mark_team_conversation_read(p_conversation_id uuid)": "773235dff2502ed9066c6c4168cd21cf",
+        "f:mark_team_conversation_read(p_conversation_id uuid)": "3f32fbc79fec6ad9cce4f90de563d4f7",
         "f:can_edit_contact(p_assigned_to uuid, p_queue_id uuid)": "8d9c02444340bf90664df3858ba12ec1",
         "f:claim_crm_sync_outbox(p_worker text, p_limit integer)": "98298355b0c6251527710cf01f3f3f2c",
         "f:claim_crm_sync_outbox_by_id(p_id uuid, p_worker text)": "9b90879326c46c7189cd99dbdf4fce9a",
@@ -4627,7 +4627,7 @@
         "e:public.talkx_blacklist_reason|PUBLIC|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.talkx_blacklist_reason|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-10-01T14:11:51Z",
+    "generated_at": "2026-10-01T18:38:28Z",
     "column_grants": {
         "r:public.departments.id|authenticated|INSERT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.departments.id|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
