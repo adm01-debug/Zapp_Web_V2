@@ -49,6 +49,36 @@ export function sentimentForExternalCrm(raw: unknown): string | null {
   return null;
 }
 
+/**
+ * Monta os argumentos da RPC externa `sync_interaction_from_zapp` (11 parâmetros nomeados).
+ *
+ * `p_sentiment` é OMITIDO quando não há sentimento. A função vive no banco do CRM, fora
+ * deste repositório, e daqui não há como provar que ela aceita `NULL`: mandar `null`
+ * significaria sobrescrever a coluna com "sem valor" e ainda derrubaria a chamada se o
+ * parâmetro fosse `NOT NULL`. Omitindo, quem decide o que "não informado" significa é o
+ * próprio CRM (o default dele). Ausência continua nunca virando token inventado.
+ * Decisão do dono: card 20260930-193937-f9f4 (item 1) e ordem de 01/10 12h50.
+ */
+export function buildSyncInteractionArgs(
+  row: { normalized_phone: string | null; idempotency_key: string },
+  payload: Record<string, unknown>,
+): Record<string, unknown> {
+  const sentimento = sentimentForExternalCrm(payload.sentiment);
+  return {
+    p_phone: row.normalized_phone,
+    p_channel: payload.channel || 'whatsapp',
+    p_direction: payload.direction || 'inbound',
+    p_assunto: payload.assunto || null,
+    p_resumo: payload.resumo || null,
+    p_conteudo: null,
+    ...(sentimento === null ? {} : { p_sentiment: sentimento }),
+    p_message_count: payload.message_count || 0,
+    p_duration_seconds: payload.duration_seconds || null,
+    p_agent_name: payload.agent_name || null,
+    p_zapp_conversation_id: row.idempotency_key,
+  };
+}
+
 function timingSafeEqual(left: string | null, right: string | null): boolean {
   if (left === null || right === null) return false;
   const a = new TextEncoder().encode(left);
@@ -199,19 +229,7 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
           }
         }
         const payload = row.payload || {};
-        const result = await withTimeout(externalClient.rpc('sync_interaction_from_zapp', {
-          p_phone: row.normalized_phone,
-          p_channel: payload.channel || 'whatsapp',
-          p_direction: payload.direction || 'inbound',
-          p_assunto: payload.assunto || null,
-          p_resumo: payload.resumo || null,
-          p_conteudo: null,
-          p_sentiment: sentimentForExternalCrm(payload.sentiment),
-          p_message_count: payload.message_count || 0,
-          p_duration_seconds: payload.duration_seconds || null,
-          p_agent_name: payload.agent_name || null,
-          p_zapp_conversation_id: row.idempotency_key,
-        }));
+        const result = await withTimeout(externalClient.rpc('sync_interaction_from_zapp', buildSyncInteractionArgs(row, payload)));
         if (result.error) throw new Error(`CRM_SYNC:${result.error.code || 'unknown'}`);
         const value = parseSyncResult(result.data);
         if (stableLink && stableLink.external_contact_id !== value.contact_id) throw new Error('CRM_IDENTITY_MISMATCH');
