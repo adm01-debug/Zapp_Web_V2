@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { CONTACTS_AGGREGATE_QUERY_OPTIONS } from './contactsAggregates';
+import { CONTACTS_AGGREGATE_QUERY_OPTIONS, CONTACT_VISIBLE_PHONE_PATTERN } from './contactsAggregates';
 
 type Row = { created_at: string; contact_type: string | null; company: string | null };
 const DAY = 86_400_000;
@@ -43,9 +43,22 @@ export function aggregateKpi(rows: Row[], now = new Date()) {
   const fornecedores = rows.filter(r => r.contact_type === 'fornecedor');
   const fornecedores30 = fornecedores.filter(r => inLast(r, 30)).length;
   const fornecedoresPrev30 = fornecedores.filter(r => between(r, 30, 60)).length;
-  const empresasDistinct = new Set(rows.map(r => r.company?.toLowerCase().trim()).filter(Boolean)).size;
+  const companyKey = (r: Row) => r.company?.toLowerCase().trim() || null;
+  const empresasDistinct = new Set(rows.map(companyKey).filter(Boolean)).size;
 
-  const prevTotal = Math.max(rows.length - novos30, 1);
+  /** Empresas distintas acumuladas até o fim de cada semana — mesma grandeza do valor do card. */
+  const empresasCumulative12w = Array.from({ length: 12 }, (_, i) => {
+    const endDaysAgo = (11 - i) * 7;
+    return new Set(
+      rows
+        .filter(r => t - Date.parse(r.created_at) >= endDaysAgo * DAY)
+        .map(companyKey)
+        .filter(Boolean),
+    ).size;
+  });
+
+  /** Base real de 30 dias atrás: contatos que já existiam naquela data. */
+  const prevTotal = rows.filter(r => !inLast(r, 30)).length;
 
   return {
     novos30,
@@ -58,19 +71,21 @@ export function aggregateKpi(rows: Row[], now = new Date()) {
     deltaFornecedoresPct: pctOrNull(fornecedores30, fornecedoresPrev30),
     seriesTotalCumulative12w: cumulative(weekly(() => true), olderThan12w),
     seriesNovosDaily30: bucket7,
-    seriesEmpresasWeekly12: weekly(r => !!r.company),
+    seriesEmpresasCumulative12w: empresasCumulative12w,
     seriesFornecedoresWeekly12: weekly(r => r.contact_type === 'fornecedor'),
   };
 }
 
 export type ContactsKpi = ReturnType<typeof aggregateKpi>;
 
-export function useContactsKpi(filterLidLegacy: boolean) {
+export function useContactsKpi(includeLegacy: boolean) {
   return useQuery({
-    queryKey: ['contacts-kpi', filterLidLegacy],
+    queryKey: ['contacts-kpi', includeLegacy],
     queryFn: async () => {
-      let q = supabase.from('contacts').select('created_at, contact_type, company');
-      if (filterLidLegacy) q = q.eq('is_lid_legacy', false);
+      let q = supabase.from('contacts').select('created_at, contact_type, company').is('deleted_at', null);
+      if (!includeLegacy) {
+        q = q.eq('is_lid_legacy', false).filter('phone', 'match', CONTACT_VISIBLE_PHONE_PATTERN);
+      }
       const { data, error } = await q;
       if (error) throw error;
       return aggregateKpi((data ?? []) as Row[]);
