@@ -1,6 +1,4 @@
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useDepartmentAuditLogs } from '@/hooks/team-chat/useDepartmentManagement';
@@ -17,34 +15,8 @@ const ACTION_LABELS: Record<string, { label: string; variant: 'default' | 'secon
   save_whatsapp: { label: 'WhatsApp', variant: 'secondary' },
 };
 
-function escapeCsv(value: string): string {
-  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
-
 export function DepartmentAuditView({ departmentId }: Props) {
   const { data: logs = [], isLoading } = useDepartmentAuditLogs(departmentId);
-
-  const handleExportCsv = () => {
-    const header = 'Ação,Colaborador,Detalhes,Data';
-    const rows = logs.map(log => {
-      const actionLabel = ACTION_LABELS[log.action]?.label ?? log.action;
-      const actorName = (log.details?.profile_name as string | undefined) ?? '';
-      const details = JSON.stringify(log.details ?? {});
-      const date = format(new Date(log.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR });
-      return [actionLabel, actorName, details, date].map(escapeCsv).join(',');
-    });
-    const csv = '﻿' + [header, ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `auditoria-departamento-${format(new Date(), 'yyyyMMdd')}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   if (isLoading) {
     return <div className="p-6 text-center text-sm text-muted-foreground">Carregando...</div>;
@@ -52,17 +24,9 @@ export function DepartmentAuditView({ departmentId }: Props) {
 
   return (
     <div className="p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-          {logs.length} registro{logs.length !== 1 ? 's' : ''}
-        </p>
-        {logs.length > 0 && (
-          <Button size="sm" variant="outline" onClick={handleExportCsv}>
-            <Download className="w-4 h-4 mr-1.5" />
-            Exportar CSV
-          </Button>
-        )}
-      </div>
+      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+        {logs.length} registro{logs.length !== 1 ? 's' : ''}
+      </p>
 
       {logs.length === 0 ? (
         <div className="text-center py-8 text-sm text-muted-foreground">

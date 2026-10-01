@@ -10,7 +10,7 @@
  *  - Powered by useScheduledReports() hook (from @/hooks/chat/useScheduledReports)
  *    ↳ imports REPORT_TYPES, FREQUENCIES, FORMATS constants from the hook
  *  - Actions: create + edit + delete + toggle + send now  ← full CRUD
- *  - Format field: pdf / csv / etc.  ← NOT present in dashboard version
+ *  - Format field: pdf / excel  ← NOT present in dashboard version
  *  - next_send_at displayed with locale date formatting
  *  - Recipients: chip/badge UI with add-by-Enter + per-chip remove button
  *    ← NOT a plain-text comma-separated Input like in dashboard version
