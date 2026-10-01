@@ -46,7 +46,14 @@ BEGIN
           ELSE 0
         END, 1
       ) AS delivery_rate_pct,
-      EXTRACT(EPOCH FROM (COALESCE(c.completed_at, NOW()) - c.started_at))::int AS duration_secs
+      EXTRACT(EPOCH FROM (COALESCE(c.completed_at, NOW()) - c.started_at))::int AS duration_secs,
+      (
+        SELECT EXTRACT(EPOCH FROM AVG(r.replied_at - r.sent_at))::int
+        FROM public.talkx_recipients r
+        WHERE r.campaign_id = p_campaign
+          AND r.replied_at IS NOT NULL
+          AND r.sent_at IS NOT NULL
+      ) AS avg_reply_secs
     FROM camp c
   ),
   hourly AS (

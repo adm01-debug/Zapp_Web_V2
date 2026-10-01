@@ -47,7 +47,8 @@ CREATE TABLE public.talkx_recipients (
   variant_id uuid,
   status text NOT NULL DEFAULT 'pending',
   sent_at timestamptz,
-  delivered_at timestamptz
+  delivered_at timestamptz,
+  replied_at timestamptz
 );
 CREATE TABLE public.talkx_template_variants (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -92,13 +93,13 @@ $$;
 
 INSERT INTO public.talkx_campaigns (id, status, total_recipients, sent_count, delivered_count, started_at)
   VALUES ('20000000-0000-0000-0000-000000000001', 'completed', 5, 5, 2, now() - interval '1 hour');
-INSERT INTO public.talkx_recipients (campaign_id, contact_id, status, sent_at, delivered_at)
+INSERT INTO public.talkx_recipients (campaign_id, contact_id, status, sent_at, delivered_at, replied_at)
   VALUES
-    ('20000000-0000-0000-0000-000000000001', gen_random_uuid(), 'sent',      now() - interval '30 min', NULL),
-    ('20000000-0000-0000-0000-000000000001', gen_random_uuid(), 'sent',      now() - interval '30 min', NULL),
-    ('20000000-0000-0000-0000-000000000001', gen_random_uuid(), 'sent',      now() - interval '30 min', NULL),
-    ('20000000-0000-0000-0000-000000000001', gen_random_uuid(), 'delivered', now() - interval '30 min', now() - interval '25 min'),
-    ('20000000-0000-0000-0000-000000000001', gen_random_uuid(), 'delivered', now() - interval '30 min', now() - interval '25 min');
+    ('20000000-0000-0000-0000-000000000001', gen_random_uuid(), 'sent',      now() - interval '30 min', NULL, NULL),
+    ('20000000-0000-0000-0000-000000000001', gen_random_uuid(), 'sent',      now() - interval '30 min', NULL, NULL),
+    ('20000000-0000-0000-0000-000000000001', gen_random_uuid(), 'sent',      now() - interval '30 min', NULL, NULL),
+    ('20000000-0000-0000-0000-000000000001', gen_random_uuid(), 'delivered', now() - interval '30 min', now() - interval '25 min', now() - interval '20 min'),
+    ('20000000-0000-0000-0000-000000000001', gen_random_uuid(), 'delivered', now() - interval '30 min', now() - interval '25 min', NULL);
 SQL
 
 red_sent="$(psql_test -Atqc "SELECT COALESCE(SUM((h->>'sent')::int),0) FROM jsonb_array_elements(public.talkx_campaign_report('20000000-0000-0000-0000-000000000001')->'hourly_series') h")"
@@ -111,4 +112,8 @@ psql_test < "$repo_root/supabase/migrations/20260930600000_talkx_v16_time_series
 green_sent="$(psql_test -Atqc "SELECT COALESCE(SUM((h->>'sent')::int),0) FROM jsonb_array_elements(public.talkx_campaign_report('20000000-0000-0000-0000-000000000001')->'hourly_series') h")"
 [[ "$green_sent" == '5' ]] || fail "GREEN: serie horaria deveria contar 5 (got $green_sent)"
 
-echo '[OK] Talk X V16: serie horaria conta sent + delivered (3 sent + 2 delivered = 5).'
+# V18: avg(replied_at - sent_at) presente no kpis quando há resposta
+green_avg="$(psql_test -Atqc "SELECT (public.talkx_campaign_report('20000000-0000-0000-0000-000000000001')->'kpis'->>'avg_reply_secs') IS NOT NULL")"
+[[ "$green_avg" == 't' ]] || fail "GREEN: avg_reply_secs deveria existir no kpis (V18)"
+
+echo '[OK] Talk X V16: serie horaria conta sent + delivered (3 sent + 2 delivered = 5) + avg_reply_secs (V18).'

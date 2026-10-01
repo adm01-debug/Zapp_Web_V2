@@ -16,10 +16,6 @@ import { CHART_TICK_FONT_SIZE, CHART_TICK_FONT_SIZE_SM, CHART_TOOLTIP_FONT_SIZE,
 
 interface Props { campaigns: TalkXCampaign[] }
 type Period = '7d' | '30d' | '90d';
-type TalkXRecipientReplyRow = Pick<
-  Database['public']['Tables']['talkx_recipients']['Row'],
-  'contact_id' | 'sent_at'
->;
 const PERIOD_LABELS: Record<Period, string> = { '7d': 'Últimos 7 dias', '30d': 'Últimos 30 dias', '90d': 'Últimos 90 dias' };
 const DAYS: Record<Period, number> = { '7d': 7, '30d': 30, '90d': 90 };
 const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -88,43 +84,12 @@ export function TalkXAnalytics({ campaigns }: Props) {
       .slice(0, 3);
   }, [filtered, allSegments]);
 
-  const { data: replyData, isLoading: replyLoading } = useQuery({
-    queryKey: ['talkx-reply-rate', period, sentCampaignIds.join(',')],
-    queryFn: async () => {
-      if (sentCampaignIds.length === 0) return { replied: 0, sent: 0 };
-      const { data: recips } = await fromTable('talkx_recipients')
-        .select('contact_id, sent_at').in('campaign_id', sentCampaignIds)
-        .in('status', ['sent', 'delivered']).not('sent_at', 'is', null).limit(5000);
-      if (!recips?.length) return { replied: 0, sent: 0 };
-      // Guarda TODOS os sent_at de cada contato (multiplas campanhas)
-      const recipMap = new Map<string, number[]>();
-      (recips as TalkXRecipientReplyRow[]).forEach((r) => {
-        if (!r.contact_id || !r.sent_at) return;
-        const ts = new Date(r.sent_at).getTime();
-        if (!recipMap.has(r.contact_id)) recipMap.set(r.contact_id, []);
-        recipMap.get(r.contact_id)!.push(ts);
-      });
-      const contactIds = Array.from(recipMap.keys());
-      const { data: msgs } = await supabase.from('messages')
-        .select('contact_id, created_at').in('contact_id', contactIds)
-        .eq('sender', 'contact').gte('created_at', cutoff.toISOString()).limit(5000);
-      const replied = new Set<string>();
-      const WINDOW = 24 * 3_600_000;
-      (msgs ?? []).forEach((m: { contact_id: string | null; created_at: string }) => {
-        if (!m.contact_id) return;
-        const sentTimes = recipMap.get(m.contact_id);
-        if (!sentTimes) return;
-        const mt = new Date(m.created_at).getTime();
-        // Conta se a resposta esta dentro de 24h de QUALQUER envio do contato
-        if (sentTimes.some((st) => mt - st >= 0 && mt - st <= WINDOW)) replied.add(m.contact_id);
-      });
-      return { replied: replied.size, sent: contactIds.length, repliedIds: Array.from(replied) };
-    },
-    enabled: sentCampaignIds.length > 0,
-    staleTime: 120_000,
-  });
-  const replyRate = replyData && replyData.sent > 0
-    ? Math.round((replyData.replied / replyData.sent) * 1000) / 10 : null;
+  // V18: taxa de resposta calculada no servidor (replied_count / sent_count),
+  // sem re-query de talkx_recipients/messages no cliente.
+  const repliedTotal = filtered.reduce((a, c) => a + (c.replied_count ?? 0), 0);
+  const sentTotal = filtered.reduce((a, c) => a + c.sent_count, 0);
+  const replyRate = sentTotal > 0
+    ? Math.round((repliedTotal / sentTotal) * 1000) / 10 : null;
 
   // E74: recipients do painel lateral
   const { data: panelRecipients, isLoading: panelLoading } = useQuery({
@@ -209,7 +174,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
       <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3">
         <DashboardKpiCard size="hero" index={0} label="Campanhas enviadas" value={fmtInt(filtered.length)} delta={null} tile="blue" icon={Zap} bars={barsByDay(filtered.map((c) => c.started_at))} barsColor="blue" />
         <DashboardKpiCard size="hero" index={1} label="Taxa de envio" value={stats.total > 0 ? `${String(stats.successRate).replace('.', ',')}%` : '—'} delta={null} tile="green" icon={CheckCircle2} bars={null} barsColor="green" chart="none" />
-        <DashboardKpiCard size="hero" index={2} label="Taxa de resposta" value={replyRate !== null ? `${String(replyRate).replace('.', ',')}%` : '—'} delta={replyLoading ? { text: 'calculando…', tone: 'muted' } : replyData && replyData.sent > 0 ? { text: `${replyData.replied} de ${replyData.sent} responderam`, tone: 'muted' } : { text: 'sem envios no período', tone: 'muted' }} tile="violet" icon={Users} bars={null} barsColor="violet" chart="none" />
+        <DashboardKpiCard size="hero" index={2} label="Taxa de resposta" value={replyRate !== null ? `${String(replyRate).replace('.', ',')}%` : '—'} delta={sentTotal > 0 ? { text: `${repliedTotal} de ${sentTotal} responderam`, tone: 'muted' } : { text: 'sem envios no período', tone: 'muted' }} tile="violet" icon={Users} bars={null} barsColor="violet" chart="none" />
         <DashboardKpiCard size="hero" index={3}
           label="Envio por segmento"
           value={top3Segments.length > 0 ? `${top3Segments[0].rate.toString().replace('.', ',')}%` : '—'}
@@ -221,18 +186,8 @@ export function TalkXAnalytics({ campaigns }: Props) {
         <DashboardKpiCard size="hero" index={5} label="Falhas" value={fmtInt(stats.failed)} delta={stats.total > 0 ? { pct: -Math.round((stats.failed / stats.total) * 100), invert: true } : null} tile="red" icon={XCircle} bars={null} barsColor="red" chart="none" />
       </div>
 
-      {/* E75: segmentacao de respondentes */}
-      {replyData && (replyData.repliedIds ?? []).length > 0 && (
-        <section className="rounded-2xl bg-card border border-dash-violet/30 p-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <IconTile icon={Users} color="violet" size={36} />
-            <div>
-              <p className="text-sm font-bold text-foreground">{replyData.replied} contatos responderam</p>
-              <p className="text-xs text-foreground-secondary">dentro de 24h de uma mensagem da campanha</p>
-            </div>
-          </div>
-        </section>
-      )}
+      {/* E75: respondentes agora derivam de replied_count no servidor (V18); a
+          segmentação individual de respondentes deixa de ser consultada aqui. */}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {barData.length > 0 && (

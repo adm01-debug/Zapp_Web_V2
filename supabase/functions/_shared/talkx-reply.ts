@@ -10,7 +10,43 @@
  * Não deve ser chamado para keywords de opt-out (verificar antes).
  */
 
-const REPLY_WINDOW_HOURS = 72;
+// V18: janela de atribuição configurável via talkx_settings.reply_window_hours
+// (cache de 5 min). O default é 72 h — mesmo comportamento de antes.
+const DEFAULT_REPLY_WINDOW_HOURS = 72;
+let cachedReplyWindowHours: number | null = null;
+let cachedReplyWindowAt = 0;
+
+// deno-lint-ignore no-explicit-any
+async function getReplyWindowHours(supabase: any): Promise<number> { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const now = Date.now();
+  if (cachedReplyWindowHours !== null && now - cachedReplyWindowAt < 5 * 60 * 1000) {
+    return cachedReplyWindowHours;
+  }
+  try {
+    const { data } = await supabase
+      .from('talkx_settings')
+      .select('value')
+      .eq('key', 'reply_window_hours')
+      .maybeSingle();
+    const parsed = Number(data?.value);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      cachedReplyWindowHours = parsed;
+      cachedReplyWindowAt = now;
+      return parsed;
+    }
+  } catch {
+    // cai no default
+  }
+  cachedReplyWindowHours = DEFAULT_REPLY_WINDOW_HOURS;
+  cachedReplyWindowAt = now;
+  return DEFAULT_REPLY_WINDOW_HOURS;
+}
+
+// Só para teste: reseta o cache de 5 min (o teste prova que a janela muda).
+export function __resetReplyWindowCache(): void {
+  cachedReplyWindowHours = null;
+  cachedReplyWindowAt = 0;
+}
 
 /**
  * Fonte unica das keywords de opt-out. Era duplicada verbatim entre o
@@ -41,8 +77,9 @@ export async function attributeTalkXReply(
   messageId: string,
 ): Promise<void> {
   try {
+    const windowHours = await getReplyWindowHours(supabase);
     const cutoff = new Date(
-      Date.now() - REPLY_WINDOW_HOURS * 60 * 60 * 1000,
+      Date.now() - windowHours * 60 * 60 * 1000,
     ).toISOString();
 
     const { data: candidate } = await supabase
