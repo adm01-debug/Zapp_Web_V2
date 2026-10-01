@@ -4,7 +4,9 @@
 # Executa somente por workflow_dispatch na main. O dry-run e obrigatorio
 # antes de uma aplicacao: ele comprova o destino, exige uma migration local
 # ou um bundle explicitamente autorizado e publica apenas hashes estruturais.
-# Somente alvos com contrato runtime explicito neste arquivo sao aceitos. Para
+# Desde o PR #695 (2026-09-25), migrations sem contrato dedicado caem no
+# contrato generico (scripts/db-audit/generic-migration-runtime.sql), que
+# prova apenas que o schema public nao mudou entre dry-run e apply. Para
 # aplicar, o operador confirma o hash integral do dry-run; o workflow consulta
 # o runtime novamente para fechar a janela TOCTOU.
 #

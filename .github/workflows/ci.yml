@@ -2,7 +2,7 @@
 # ZAPP-WEB CI/CD Pipeline
 # =================================================
 # Triggered on: push to main, pull requests
-# Jobs: lint, typecheck, test, build
+# Jobs: lint-and-typecheck, test, build, security, e2e
 # Runtime: bun (o repo usa bun.lock, nao package-lock.json)
 # =================================================
 
@@ -97,6 +97,7 @@ jobs:
           supabase/functions/webhook-diagnostic/diagnostic.test.ts
           supabase/functions/talkx-report/index.test.ts
           supabase/functions/multiplix-send/index.test.ts
+          supabase/functions/get-sip-password/index.test.ts
           supabase/functions/_shared/__tests__/cron-secret-authz-l5.test.ts
           supabase/functions/_shared/__tests__/talkx-resume-policy.test.ts
           supabase/functions/_shared/__tests__/webhook-signature.test.ts
