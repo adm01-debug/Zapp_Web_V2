@@ -77,3 +77,52 @@ export function localInstantFromDayAndTime(
   d.setHours(horas, minutos, 0, 0);
   return d;
 }
+
+/**
+ * Deslocamento do fuso (ms) no instante informado, lido do proprio `Intl` — sem dependencia nova.
+ * Só serve a `zonedDayStartISO`; nao exportado.
+ */
+function timeZoneOffsetMs(timeZone: string, at: Date): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).formatToParts(at);
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
+  const naParede = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour') % 24, get('minute'), get('second'));
+  return naParede - at.getTime();
+}
+
+/**
+ * Início (00:00) do dia de calendário **em um fuso IANA**, N dias atrás, como instante ISO.
+ *
+ * Os helpers acima resolvem exibição e agrupamento no fuso do **navegador**. Este resolve o caso
+ * oposto: um recorte que **não pode** depender de quem está olhando. Um filtro de segmento é
+ * gravado como string e reusado por qualquer usuário (e por contagens no servidor), então "nos
+ * últimos 7 dias" precisa significar os mesmos 7 dias de calendário para todos.
+ *
+ * Existe porque `Date.now() - d * 86_400_000` é uma janela de d*24h: as 22h30 em São Paulo
+ * (UTC-3) os "7 dias" alcançavam o 8º dia de calendário — o mesmo defeito corrigido no R3-06
+ * (timeline do Histórico), aqui num filtro de audiência.
+ *
+ * O deslocamento é lido em duas passadas para acertar mudança de horário (DST) de qualquer fuso.
+ */
+export function zonedDayStartISO(timeZone: string, daysAgo = 0, now: Date = new Date()): string {
+  const diaLocal = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now); // en-CA devolve yyyy-MM-dd
+  const [ano, mes, dia] = diaLocal.split('-').map(Number);
+  // Aritmética em UTC sobre a chave do dia: pura subtração de calendário, sem horas envolvidas.
+  const alvo = new Date(Date.UTC(ano, mes - 1, dia) - daysAgo * 86_400_000).toISOString().slice(0, 10);
+  const meiaNoiteUtc = Date.parse(`${alvo}T00:00:00.000Z`);
+  const primeira = meiaNoiteUtc - timeZoneOffsetMs(timeZone, new Date(meiaNoiteUtc));
+  return new Date(meiaNoiteUtc - timeZoneOffsetMs(timeZone, new Date(primeira))).toISOString();
+}

@@ -14,6 +14,8 @@ export interface ContactResult {
   name: string;
   phone: string;
   avatar_url: string | null;
+  /** CT-45 — alimenta {{empresa}} na personalização da mensagem. */
+  company?: string | null;
 }
 
 /** CT-46 — contador de mensagens do envio em andamento ("Enviando 2/4..."). */
