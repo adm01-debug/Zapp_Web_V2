@@ -8,7 +8,7 @@
 
 **Implementação integrada:** PR [#1352](https://github.com/adm01-debug/Zapp_Web_V2/pull/1352), commit `c4d7d03d2412ba9d4c1b6a014a5e594bf2dbd897`.
 
-**Versão publicada:** `https://zapp-web-v2.vercel.app/version.json`, resposta HTTP 200 com `buildId` igual ao commit integrado.
+**Validação do deploy da implementação:** antes da integração deste relatório, `https://zapp-web-v2.vercel.app/version.json` respondeu HTTP 200 com `buildId` igual a `c4d7d03d2412ba9d4c1b6a014a5e594bf2dbd897`. Commits documentais posteriores alteram o `buildId` sem alterar o código validado.
 
 ## Resultado entregue
 
@@ -102,7 +102,7 @@ A seleção usa `contactId` e o escopo formado por departamento e busca. O avan�
 | CI da PR | Build, unidade, E2E, segurança, contrato, lint/typecheck, CodeQL e Sonar aprovados. |
 | Acessibilidade | axe sem violações e revisão de foco, teclado e contraste concluída. |
 | Multibrowser | Chromium, Firefox e WebKit aprovados. |
-| Publicação | Vercel aprovado; `buildId` público igual a `c4d7d03d2412ba9d4c1b6a014a5e594bf2dbd897`. |
+| Publicação | Vercel aprovado; o deploy da implementação apresentou `buildId` `c4d7d03d2412ba9d4c1b6a014a5e594bf2dbd897`. |
 
 O comando de lint global continua apontando 945 ocorrências históricas fora dos quatro arquivos desta entrega. O lint restrito e o ratchet passaram, portanto a mudança não ampliou essa dívida.
 
