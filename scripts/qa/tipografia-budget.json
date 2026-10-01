@@ -1,30 +1,30 @@
 {
-  "geradoEm": "2026-09-27T14:30:00.000Z",
-  "commit": "876bd002",
+  "geradoEm": "2026-10-01T01:17:39.576Z",
+  "commit": "bd8a4975",
   "escala": {
     "3xs": {
       "fontSizePx": 10,
       "lineHeightPx": 13,
       "lineHeightDeclarado": "0.8125rem",
-      "usos": 590
+      "usos": 582
     },
     "2xs": {
       "fontSizePx": 11,
       "lineHeightPx": 14,
       "lineHeightDeclarado": "0.875rem",
-      "usos": 328
+      "usos": 334
     },
     "xs": {
       "fontSizePx": 12,
       "lineHeightPx": 16,
       "lineHeightDeclarado": "1rem",
-      "usos": 1706
+      "usos": 1761
     },
     "sm": {
       "fontSizePx": 14,
       "lineHeightPx": 20,
       "lineHeightDeclarado": "1.25rem",
-      "usos": 1105
+      "usos": 1127
     },
     "base": {
       "fontSizePx": 16,
@@ -36,19 +36,19 @@
       "fontSizePx": 18,
       "lineHeightPx": 28,
       "lineHeightDeclarado": "1.75rem",
-      "usos": 186
+      "usos": 188
     },
     "xl": {
       "fontSizePx": 20,
       "lineHeightPx": 28,
       "lineHeightDeclarado": "1.75rem",
-      "usos": 73
+      "usos": 79
     },
     "2xl": {
       "fontSizePx": 24,
       "lineHeightPx": 32,
       "lineHeightDeclarado": "2rem",
-      "usos": 129
+      "usos": 130
     },
     "3xl": {
       "fontSizePx": 30,
@@ -91,6 +91,12 @@
       "lineHeightPx": 128,
       "lineHeightDeclarado": "1",
       "usos": 0
+    },
+    "kpi-value": {
+      "fontSizePx": 34,
+      "lineHeightPx": 34,
+      "lineHeightDeclarado": "1",
+      "usos": 1
     }
   },
   "arbitrarios": {
@@ -112,21 +118,21 @@
       "fontSizePx": 9,
       "lineHeightPx": 13.5,
       "lineHeightOrigem": "herdado (preflight 1.5)",
-      "usos": 103,
+      "usos": 102,
       "equivalenteNaEscala": null
     },
     "13": {
       "fontSizePx": 13,
       "lineHeightPx": 19.5,
       "lineHeightOrigem": "herdado (preflight 1.5)",
-      "usos": 155,
+      "usos": 160,
       "equivalenteNaEscala": null
     },
     "15": {
       "fontSizePx": 15,
       "lineHeightPx": 22.5,
       "lineHeightOrigem": "herdado (preflight 1.5)",
-      "usos": 28,
+      "usos": 30,
       "equivalenteNaEscala": null
     },
     "38": {
@@ -145,9 +151,9 @@
     }
   },
   "totais": {
-    "usosNomeados": 4281,
-    "usosArbitrarios": 306,
-    "arquivosAnalisados": 1454
+    "usosNomeados": 4371,
+    "usosArbitrarios": 308,
+    "arquivosAnalisados": 1608
   },
   "violacoes": {
     "meiaMedida": 0,
@@ -155,7 +161,7 @@
     "comEquivalenteExato": 0,
     "cssMeiaMedida": 0,
     "cssFontFamilyLiteral": 0,
-    "tsxFontSizeInline": 2,
+    "tsxFontSizeInline": 1,
     "tsxFontFamilyLiteral": 0,
     "pesoOrfao": 0
   },
@@ -163,12 +169,12 @@
     "halfStep": [],
     "above16": [
       {
-        "where": "src/pages/NotFound.tsx:27",
-        "px": 120
-      },
-      {
         "where": "src/components/layout/PageHeader.tsx:147",
         "px": 38
+      },
+      {
+        "where": "src/pages/NotFound.tsx:27",
+        "px": 120
       }
     ],
     "hasExactEquivalent": [],
@@ -178,10 +184,6 @@
       {
         "where": "src/components/catalog/catalogShared.tsx:74",
         "px": 10
-      },
-      {
-        "where": "src/pages/AdminTelemetriaPage.tsx:108",
-        "px": 7
       }
     ],
     "tsxFontFamilyLiteral": [],

@@ -205,8 +205,8 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
                       {getInitials(note.author_name || '')}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-3xs font-medium text-foreground">{note.author_name}</span>
-                  <span className="text-3xs text-muted-foreground ml-auto">
+                  <span className="text-xs font-medium text-foreground">{note.author_name}</span>
+                  <span className="text-caption ml-auto">
                     {formatDistanceToNow(new Date(note.created_at), { addSuffix: true, locale: ptBR })}
                   </span>
                 </div>

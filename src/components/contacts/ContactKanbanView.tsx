@@ -6,8 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  MessageSquare, Users, UserCheck, Truck, Wrench,
-  Handshake, GripVertical, Package,
+  MessageSquare,
+  GripVertical,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { invalidateContactsAggregates } from '@/hooks/crm/contactsAggregates';
 import { toast } from 'sonner';
+import { ORDERED_CONTACT_TYPE_CONFIGS } from './contactTypeOrder';
 
 interface KanbanContact {
   id: string;
@@ -33,14 +34,9 @@ interface ContactKanbanViewProps {
   onContactClick: (id: string) => void;
 }
 
-const KANBAN_COLUMNS = [
-  { type: 'cliente', label: 'Clientes', color: 'hsl(217, 91%, 60%)', icon: Users },
-  { type: 'fornecedor', label: 'Fornecedores', color: 'hsl(270, 60%, 60%)', icon: Truck },
-  { type: 'transportadora', label: 'Transportadoras', color: 'hsl(25, 90%, 50%)', icon: Package },
-  { type: 'parceiro', label: 'Parceiros', color: 'hsl(142, 71%, 45%)', icon: Handshake },
-  { type: 'colaborador', label: 'Colaboradores', color: 'hsl(190, 70%, 50%)', icon: UserCheck },
-  { type: 'prestador_servico', label: 'Prestadores', color: 'hsl(340, 65%, 55%)', icon: Wrench },
-];
+const KANBAN_COLUMNS = ORDERED_CONTACT_TYPE_CONFIGS.map(c => ({
+  type: c.type, label: c.pluralLabel, color: c.color, icon: c.Icon,
+}));
 
 export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanViewProps) {
   const queryClient = useQueryClient();
@@ -179,7 +175,7 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
                     <div className="flex items-center gap-2">
                       <div
                         className="w-7 h-7 rounded-lg flex items-center justify-center"
-                        style={{ backgroundColor: `${column.color}20` }}
+                        style={{ backgroundColor: `color-mix(in srgb, ${column.color} 12%, transparent)` }}
                       >
                         <Icon className="w-3.5 h-3.5" style={{ color: column.color }} />
                       </div>
@@ -237,7 +233,7 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
                                           {contact.name} {contact.surname || ''}
                                         </p>
                                         {contact.company && (
-                                          <p className="text-3xs text-muted-foreground truncate">
+                                          <p className="text-caption truncate">
                                             {contact.company}
                                           </p>
                                         )}

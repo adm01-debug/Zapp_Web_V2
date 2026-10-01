@@ -135,7 +135,7 @@ export function ContactKpiCard({ label, value, deltaPct, tile, icon: Icon, serie
             <CountUp value={value} />
           </p>
           {!noData && !flat && (
-            <span className={cn('flex items-center gap-0.5 text-sm font-semibold shrink-0', deltaPct! > 0 ? 'text-success' : 'text-destructive')}>
+            <span className={cn('flex items-center gap-0.5 text-xs font-semibold shrink-0', deltaPct! > 0 ? 'text-success' : 'text-destructive')}>
               {deltaPct! > 0 ? <TrendingUp className="w-[14px] h-[14px]" /> : <TrendingDown className="w-[14px] h-[14px]" />}
               {deltaPct! > 0 ? '+' : ''}{deltaPct}%
             </span>
