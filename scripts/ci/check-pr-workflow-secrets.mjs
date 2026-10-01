@@ -123,7 +123,10 @@ function _findSecretRefs(source, file) {
 }
 
 function _findInheritLeaks(source, file) {
-  const inheritMatch = /^(\s+)secrets:\s*(?:"inherit"|'inherit'|inherit)\b/mu.exec(source);
+  // Match all three YAML scalar forms: inherit, "inherit", 'inherit'.
+  // \b is placed inside the bare-inherit alternative only because after a closing quote
+  // there is no word boundary (both quote and surrounding whitespace are non-word chars).
+  const inheritMatch = /^(\s+)secrets:\s*(?:"inherit"|'inherit'|inherit\b)/mu.exec(source);
   if (!inheritMatch) return [];
   const lineNumber = source.slice(0, inheritMatch.index).split(/\r?\n/u).length;
   return [{ file, line: lineNumber, secret: 'secrets:inherit (reusable workflow call)' }];
