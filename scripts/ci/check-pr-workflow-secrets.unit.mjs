@@ -146,9 +146,6 @@ env:
 // --- dedup: pull_request + push irrestrito no mesmo workflow ---
 
 test('scanWorkflowDirectory nao duplica violations quando workflow tem pull_request e push', () => {
-  // Este teste usa o diretorio real; ja coberto pelo ultimo teste de integracao.
-  // Validacao direta via flatMap com Set interno:
-  const { scanWorkflowDirectory: scan } = await import('./check-pr-workflow-secrets.mjs');
   // Simula dois chamadas que retornariam o mesmo violation
   const source = `on:\n  push:\n  pull_request:\nenv:\n  DB: \${{ secrets.DESTINO_URL }}\n`;
   const prLeaks = findPullRequestSecretLeaks(source, 'dup.yml');
