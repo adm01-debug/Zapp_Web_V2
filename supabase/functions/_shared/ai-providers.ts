@@ -5,6 +5,12 @@
  * Ele entra sempre pelos filtros de ./ai-routing.ts, que removem as chaves
  * reservadas (model/messages/headers/...). Modelo, mensagens e cabeçalhos de
  * autenticação são decididos pelo servidor e não podem ser sobrescritos.
+ *
+ * IA-040: `callLovableAI` e `callOpenAICompatible` aceitam `options.timeoutMs`
+ * opcional (AbortController, timer limpo no `finally`). Sem `timeoutMs` nada
+ * muda para os consumidores atuais — nenhum timer é criado e nenhum `signal`
+ * novo chega ao fetch. Com `timeoutMs`, o estouro vira AbortError (erro de
+ * rede/abort reconhecível), nunca uma resposta de outro serviço.
  */
 
 import { filterConfigBody, filterExtraBody, filterHeaders } from "./ai-routing.ts";
@@ -16,6 +22,8 @@ export async function callLovableAI(params: {
   tools?: unknown;
   toolChoice?: unknown;
   stream?: boolean;
+  /** Teto de tempo opcional da requisição (ms). Ausente = comportamento de hoje. */
+  options?: { timeoutMs?: number };
 }): Promise<Response> {
   const body: Record<string, unknown> = {
     model: params.model || 'google/gemini-3-flash-preview',
@@ -25,14 +33,26 @@ export async function callLovableAI(params: {
   if (params.toolChoice) body.tool_choice = params.toolChoice;
   if (params.stream) body.stream = true;
 
-  return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${params.apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
+  // Só com `timeoutMs` existe timer/signal: sem ele a chamada é idêntica à de antes.
+  const timeoutMs = params.options?.timeoutMs;
+  const controller = new AbortController();
+  const timer = typeof timeoutMs === 'number' && timeoutMs > 0
+    ? setTimeout(() => controller.abort(), timeoutMs)
+    : null;
+
+  try {
+    return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${params.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      ...(timer !== null ? { signal: controller.signal } : {}),
+    });
+  } finally {
+    if (timer !== null) clearTimeout(timer);
+  }
 }
 
 export async function callOpenAICompatible(params: {
@@ -44,6 +64,8 @@ export async function callOpenAICompatible(params: {
   toolChoice?: unknown;
   stream?: boolean;
   config?: Record<string, unknown>;
+  /** Teto de tempo opcional da requisição (ms). Ausente = comportamento de hoje. */
+  options?: { timeoutMs?: number };
 }): Promise<Response> {
   const config = params.config ?? {};
 
@@ -67,11 +89,23 @@ export async function callOpenAICompatible(params: {
     "Content-Type": "application/json",
   };
 
-  return fetch(params.endpoint, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
-  });
+  // Mesma regra do lovable: sem `timeoutMs` nenhum timer/signal é criado.
+  const timeoutMs = params.options?.timeoutMs;
+  const controller = new AbortController();
+  const timer = typeof timeoutMs === 'number' && timeoutMs > 0
+    ? setTimeout(() => controller.abort(), timeoutMs)
+    : null;
+
+  try {
+    return await fetch(params.endpoint, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+      ...(timer !== null ? { signal: controller.signal } : {}),
+    });
+  } finally {
+    if (timer !== null) clearTimeout(timer);
+  }
 }
 
 export async function callCustomWebhook(params: {
