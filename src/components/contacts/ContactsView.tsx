@@ -19,7 +19,7 @@ import { ContactContentArea } from './ContactContentArea';
 import { ContactResultsSummary } from './ContactResultsSummary';
 import { ContactCRMDialog } from './ContactCRMDialog';
 import { useContactsViewState } from './useContactsViewState';
-import { canDeleteSelectedContacts, canMergeContacts } from './contactPermissions';
+import { canChangeSelectedContactsType, canDeleteSelectedContacts, canMergeContacts } from './contactPermissions';
 export function ContactsView() {
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
   const {
@@ -72,6 +72,18 @@ export function ContactsView() {
    */
   const canDeleteSelection = useMemo(
     () => canDeleteSelectedContacts(selectedIds, filteredContacts),
+    [filteredContacts, selectedIds],
+  );
+
+  /**
+   * "Alterar tipo em massa" usa o mesmo predicado do banco que a exclusão
+   * (`can_edit_contact`: admin/supervisor OU responsável pelo contato) — o
+   * UPDATE de `contacts` é governado pela policy "Users can update their
+   * assigned contacts". Mesma semântica da exclusão em lote: um conhecido com
+   * permissão habilita; seleção sem informação não bloqueia.
+   */
+  const canChangeTypeSelection = useMemo(
+    () => canChangeSelectedContactsType(selectedIds, filteredContacts),
     [filteredContacts, selectedIds],
   );
 
@@ -232,6 +244,7 @@ export function ContactsView() {
         availableTags={uniqueTags}
         canDeleteSelection={canDeleteSelection}
         canChangeType={isSupervisor}
+        canChangeTypeSelection={canChangeTypeSelection}
       />
     </div>
     </MotionConfig>
