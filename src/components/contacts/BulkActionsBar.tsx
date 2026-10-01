@@ -32,6 +32,8 @@ interface BulkActionsBarProps {
    * todos -- o lote devolve erro só quando NENHUM pôde ser excluído.
    */
   canDeleteSelection?: boolean;
+  /** Alterar tipo em massa é restrito a admin/supervisor. */
+  canChangeType?: boolean;
 }
 
 export function BulkActionsBar({
@@ -42,6 +44,7 @@ export function BulkActionsBar({
   availableTags = [],
   availableAgents = [],
   canDeleteSelection = true,
+  canChangeType = false,
 }: BulkActionsBarProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const count = selectedIds.length;
@@ -120,8 +123,7 @@ export function BulkActionsBar({
       // Exclusao em massa pelo RPC auditado (soft-delete). `.delete().in('id', ...)` nao
       // tinha policy de DELETE em `contacts`: devolvia 0 linhas sem erro e o toast
       // anunciava "N contatos removidos" (auditoria de 29/09, §3.1).
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC de 20260929370000; types.ts sincroniza no types-sync
-      const { data, error } = await (supabase as any).rpc('delete_contacts', { p_ids: selectedIds });
+      const { data, error } = await supabase.rpc('delete_contacts', { p_ids: selectedIds });
 
       if (error) throw error;
       if (typeof data !== 'number' || data <= 0) {
@@ -204,21 +206,23 @@ export function BulkActionsBar({
         </DropdownMenu>
 
         {/* Type */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="sm" variant="secondary" disabled={isProcessing}>
-              <Star className="w-3.5 h-3.5 mr-1" />
-              Tipo
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {CONTACT_TYPES.map(({ value, label }) => (
-              <DropdownMenuItem key={value} onClick={() => handleBulkType(value)}>
-                {label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {canChangeType && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="secondary" disabled={isProcessing}>
+                <Star className="w-3.5 h-3.5 mr-1" />
+                Tipo
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {CONTACT_TYPES.map(({ value, label }) => (
+                <DropdownMenuItem key={value} onClick={() => handleBulkType(value)}>
+                  {label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
 
         {/* Delete */}
         <Button

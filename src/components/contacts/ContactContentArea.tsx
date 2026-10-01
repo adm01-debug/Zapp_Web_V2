@@ -34,6 +34,7 @@ interface ContactContentAreaProps {
   activeFiltersCount: number;
   onToggleSelect: (id: string, selected: boolean) => void;
   onContactClick: (id: string) => void;
+  onOpenChat: (id: string) => void;
   onEdit: (contact: Contact) => void;
   onDelete: (contact: Contact) => void;
   onSelectIds: (ids: string[]) => void;
@@ -46,7 +47,7 @@ interface ContactContentAreaProps {
 export function ContactContentArea({
   loading, contacts, viewMode, gridColumns, groupByCompany,
   selectedIds, search, activeFiltersCount,
-  onToggleSelect, onContactClick, onEdit, onDelete, onSelectIds,
+  onToggleSelect, onContactClick, onOpenChat, onEdit, onDelete, onSelectIds,
   onAddContact, onClearSearch, onClearFilters, getCRMData,
 }: ContactContentAreaProps) {
   // Cards entram com fade+slide só na primeira pintura da página — paginar/filtrar não re-anima.
@@ -87,9 +88,8 @@ export function ContactContentArea({
               contact={contact}
               isSelected={selectedIds.includes(contact.id)}
               onToggleSelect={onToggleSelect}
-              onOpenChat={onContactClick}
+              onOpenDetails={onContactClick} onOpenChat={onOpenChat}
               onEdit={onEdit} onDelete={onDelete} index={index}
-              companyLogo={getCRMData(contact.phone)?.logo_url}
               companyName={getCRMData(contact.phone)?.company_name}
               searchQuery={search}
             />
@@ -101,7 +101,7 @@ export function ContactContentArea({
     content = (
       <ContactGroupedList
         contacts={contacts} selectedIds={selectedIds}
-        onToggleSelect={onToggleSelect} onOpenChat={onContactClick}
+        onToggleSelect={onToggleSelect} onOpenDetails={onContactClick} onOpenChat={onOpenChat}
         onEdit={onEdit} onDelete={onDelete}
         getCRMData={(phone) => getCRMData(phone) ?? undefined} searchQuery={search}
       />
@@ -114,9 +114,8 @@ export function ContactContentArea({
             key={contact.id} contact={contact}
             isSelected={selectedIds.includes(contact.id)}
             onToggleSelect={onToggleSelect}
-            onOpenChat={onContactClick}
+            onOpenDetails={onContactClick} onOpenChat={onOpenChat}
             onEdit={onEdit} onDelete={onDelete} index={index}
-            companyLogo={getCRMData(contact.phone)?.logo_url}
             companyName={getCRMData(contact.phone)?.company_name}
             searchQuery={search}
           />
@@ -134,7 +133,7 @@ export function ContactContentArea({
       <Card><CardContent className="p-0">
         <ContactsTable
           contacts={contacts} selectedIds={selectedIds}
-          onSelectIds={onSelectIds} onOpenChat={onContactClick}
+          onSelectIds={onSelectIds} onOpenDetails={onContactClick} onOpenChat={onOpenChat}
           onEdit={onEdit} onDelete={onDelete}
           getCRMData={(phone) => getCRMData(phone) ?? undefined} searchQuery={search}
         />

@@ -19,7 +19,29 @@ export interface CatalogProductCardProps {
   /** E47: seleção em massa */
   isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
+  /**
+   * CT-72 — capa acima da dobra: sai com `loading="eager"` +
+   * `fetchpriority="high"` (o `priority` do ProductThumb). Só as 4 primeiras
+   * capas da grade recebem isso; o resto continua lazy.
+   */
+  priority?: boolean;
+  /** CT-72 — largura real do card no breakpoint, para o srcSet do CF Images. */
+  sizes?: string;
 }
+
+/**
+ * CT-72 — largura do card em grade, medida no grid real (`grid-cols-2
+ * md:grid-cols-3 lg:grid-cols-4` do catálogo do chat e `... xl:grid-cols-5`
+ * com rail de 300px no de gestão):
+ *   <768px  → 2 colunas  (~171px, 50vw)
+ *   768px   → 3 colunas  (~235px, 33vw)
+ *   1024px  → 4 colunas  (~236px, 25vw)  ← o default antigo caía no 33vw do `md`
+ *   1280px+ → 4/5 colunas com rail (~172-283px, 220px)
+ * Sem o degrau de 1024px o browser escolhia a variante de 400w onde a de
+ * 300w bastava.
+ */
+export const CATALOG_GRADE_SIZES =
+  '(min-width: 1280px) 220px, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw';
 
 // ── badge de destaque (top-left) ───────────────────────────────────────────
 function ProductBadge({ product }: { product: ExternalProduct }) {
@@ -167,6 +189,8 @@ export function CatalogProductCard({
   onToggleFavorite,
   isSelected = false,
   onToggleSelect,
+  priority = false,
+  sizes,
 }: CatalogProductCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const stockout = product.is_stockout || product.stock_quantity === 0;
@@ -258,6 +282,10 @@ export function CatalogProductCard({
       <div
         className={cn(
           'catalog-card group rounded-xl border border-border/30 overflow-hidden bg-card hover:border-primary/30 hover:shadow-sm transition-all flex flex-col h-full',
+          // CT-72 — as 4 capas acima da dobra são pintadas normalmente; nos
+          // demais o browser adia layout/paint até o card se aproximar do
+          // viewport (content-visibility: auto em components.css).
+          !priority && 'catalog-card--offscreen',
           isSelected && 'border-primary/50 bg-primary/5 shadow-sm shadow-primary/10'
         )}
       >
@@ -271,6 +299,8 @@ export function CatalogProductCard({
             fallbackSrc={product.primary_image_fallback_url}
             alt={product.name}
             iconSize="w-12 h-12"
+            priority={priority}
+            sizes={sizes ?? CATALOG_GRADE_SIZES}
           />
           {/* overlay esgotado */}
           {stockout && (

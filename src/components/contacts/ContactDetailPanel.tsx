@@ -33,19 +33,18 @@ interface ContactDetail {
   created_at: string;
 }
 
-interface ContactDetailPanelProps {
-  contact: ContactDetail | null;
+interface ContactDetailPanelProps<T extends ContactDetail> {
+  contact: T | null;
   onClose: () => void;
   onOpenChat: (id: string) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onEdit: (contact: any) => void;
+  onEdit: (contact: T) => void;
   messageCount?: number;
   lastMessageAt?: string | null;
 }
 
-export function ContactDetailPanel({
+export function ContactDetailPanel<T extends ContactDetail>({
   contact, onClose, onOpenChat, onEdit, messageCount = 0, lastMessageAt,
-}: ContactDetailPanelProps) {
+}: ContactDetailPanelProps<T>) {
   useEffect(() => {
     if (!contact) return;
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -192,7 +191,7 @@ export function ContactDetailPanel({
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-muted/30 p-3 text-center">
                   <p className="text-lg font-bold text-foreground">{messageCount}</p>
-                  <p className="text-3xs text-muted-foreground">Mensagens</p>
+                  <p className="text-caption">Mensagens</p>
                 </div>
                 <div className="rounded-lg bg-muted/30 p-3 text-center">
                   <p className="text-sm font-medium text-foreground">
@@ -200,7 +199,7 @@ export function ContactDetailPanel({
                       ? format(new Date(lastMessageAt), 'dd/MM', { locale: ptBR })
                       : '—'}
                   </p>
-                  <p className="text-3xs text-muted-foreground">Última msg</p>
+                  <p className="text-caption">Última msg</p>
                 </div>
               </div>
             </div>

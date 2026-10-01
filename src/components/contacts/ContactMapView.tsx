@@ -29,13 +29,13 @@ interface ContactMapViewProps {
 }
 
 const REGION_COLORS = [
-  'bg-primary/15 text-primary',
-  'bg-[hsl(200_80%_92%)] text-[hsl(200_80%_35%)]',
-  'bg-[hsl(340_70%_92%)] text-[hsl(340_70%_40%)]',
-  'bg-[hsl(160_60%_90%)] text-[hsl(160_60%_30%)]',
-  'bg-[hsl(30_80%_90%)] text-[hsl(30_80%_35%)]',
-  'bg-[hsl(280_60%_92%)] text-[hsl(280_60%_40%)]',
-];
+  { icon: 'bg-primary/15', bar: 'bg-primary/40' },
+  { icon: 'bg-info/15', bar: 'bg-info/40' },
+  { icon: 'bg-success/15', bar: 'bg-success/40' },
+  { icon: 'bg-warning/15', bar: 'bg-warning/40' },
+  { icon: 'bg-destructive/15', bar: 'bg-destructive/40' },
+  { icon: 'bg-muted-foreground/15', bar: 'bg-muted-foreground/40' },
+] as const;
 
 export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps) {
   const [expandedRegion, setExpandedRegion] = useState<string | null>(null);
@@ -86,7 +86,7 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
         {regions.map(([region, members], i) => {
           const isExpanded = expandedRegion === region;
           const percentage = Math.round((members.length / maxCount) * 100);
-          const colorClass = REGION_COLORS[i % REGION_COLORS.length];
+          const regionColor = REGION_COLORS[i % REGION_COLORS.length];
 
           return (
             <motion.div
@@ -104,12 +104,12 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
               >
                 <CardContent className="p-3 space-y-2">
                   <div className="flex items-center gap-2">
-                    <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center shrink-0', colorClass.split(' ')[0])}>
-                      <MapPin className={cn('w-4 h-4', colorClass.split(' ')[1])} />
+                    <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center shrink-0', regionColor.icon)}>
+                      <MapPin className="w-4 h-4 text-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold truncate">{region}</p>
-                      <p className="text-3xs text-muted-foreground">{members.length} contato{members.length !== 1 ? 's' : ''}</p>
+                      <p className="text-caption">{members.length} contato{members.length !== 1 ? 's' : ''}</p>
                     </div>
                     <Badge variant="secondary" className="text-3xs h-5 shrink-0">{percentage}%</Badge>
                   </div>
@@ -120,7 +120,7 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
                       initial={{ width: 0 }}
                       animate={{ width: `${percentage}%` }}
                       transition={{ delay: i * 0.04 + 0.2, duration: 0.5 }}
-                      className={cn('h-full rounded-full', colorClass.split(' ')[0].replace('/15', '/40').replace('/90', '/60').replace('/92', '/60'))}
+                      className={cn('h-full rounded-full', regionColor.bar)}
                     />
                   </div>
 
@@ -149,7 +149,7 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
                                 </Avatar>
                                 <span className="text-2xs truncate flex-1">{c.name}</span>
                                 {c.company && (
-                                  <span className="text-3xs text-muted-foreground/60 truncate max-w-[80px]">{c.company}</span>
+                                  <span className="text-xs text-muted-foreground/60 truncate max-w-[80px]">{c.company}</span>
                                 )}
                               </button>
                             );

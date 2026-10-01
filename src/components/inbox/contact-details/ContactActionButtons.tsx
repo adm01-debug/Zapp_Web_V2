@@ -15,6 +15,7 @@ import { useSyncToCRM } from '@/hooks/integrations/useSyncToCRM';
 import type { Conversation } from '@/types/chat';
 import { RealtimeCollaboration } from '../RealtimeCollaboration';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
+import { useFeatureFlag } from '@/hooks/system/useFeatureFlag';
 
 interface ContactActionButtonsProps {
   contact: { id: string; name: string; phone: string; email?: string };
@@ -108,6 +109,7 @@ export function ContactActionButtons({
   contact, conversation, hasExpandedSections, onCollapseAll, onQuickAction, onStartCall,
 }: ContactActionButtonsProps) {
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
+  const videoCallEnabled = useFeatureFlag('video_call', false);
   const handleTransfer = () => {
     window.dispatchEvent(new CustomEvent('open-transfer-dialog', { detail: { contactId: contact.id } }));
   };
@@ -131,12 +133,14 @@ export function ContactActionButtons({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Tile
-          icon={<Video className="w-[18px] h-[18px]" />}
-          label="Vídeo"
-          title="Videochamada"
-          onClick={() => toast.info('Em breve', { description: 'Videochamada estará disponível em breve.' })}
-        />
+        {videoCallEnabled && (
+          <Tile
+            icon={<Video className="w-[18px] h-[18px]" />}
+            label="Vídeo"
+            title="Videochamada"
+            onClick={() => toast.info('Em breve', { description: 'Videochamada estará disponível em breve.' })}
+          />
+        )}
 
         <Tile
           icon={<Mail className="w-[18px] h-[18px]" />}

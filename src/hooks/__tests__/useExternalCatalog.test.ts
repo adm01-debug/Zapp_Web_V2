@@ -1026,12 +1026,19 @@ describe('Security Gaps Audit', () => {
     expect(dangerousSearch).toBeDefined();
   });
 
-  it('no rate limiting on edge function', () => {
-    // FINDING: No rate limiting implementation in the edge function
-    // An attacker with a valid token could flood the external DB with requests
-    const hasRateLimit = false;
-    expect(hasRateLimit).toBe(false);
-    // RECOMMENDATION: Add rate limiting per user_id
+  it('edge has per-user rate limiting (60 req/min → 429)', () => {
+    // CORRIGIDO (CT-59): o achado antigo ("no rate limiting on edge function",
+    // hasRateLimit = false) era FALSO — a edge promogifts-catalog tem
+    // checkRateLimit por user_id desde o endurecimento: RATE_LIMIT = 60 numa
+    // janela de 60 s e resposta 429 quando estoura. O teste agora lê o código
+    // real da edge em vez de afirmar uma constante inventada.
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../../supabase/functions/promogifts-catalog/index.ts'),
+      'utf8',
+    );
+    expect(source).toContain('export const RATE_LIMIT = 60');
+    expect(source).toMatch(/checkRateLimit\(userData\.user\.id\)/);
+    expect(source).toMatch(/Too many requests[^"]*"\s*\},\s*429/);
   });
 
   it('external elevated credential remains confined to the authenticated read-only edge', () => {
@@ -1194,5 +1201,119 @@ describe('Product Display Logic', () => {
 
     const p3 = mockProduct({ description: null, short_description: null });
     expect(p3.description || p3.short_description).toBeNull();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// CT-59 — ERRO POR CÓDIGO DA EDGE
+// ═══════════════════════════════════════════════════════════════════
+describe('useExternalCatalog — CT-59 (error.code da edge)', () => {
+  /**
+   * Resposta não-2xx do supabase-js: `invoke` devolve `error` como
+   * FunctionsHttpError, cujo `context` é a Response crua (o corpo
+   * `{ error, code }` mora ali). Reproduzimos o contrato real: `status` +
+   * `clone().json()`.
+   */
+  const httpError = (status: number, body: Record<string, unknown>) => ({
+    data: null,
+    error: {
+      name: 'FunctionsHttpError',
+      message: 'Edge Function returned a non-2xx status code',
+      context: { status, clone: () => ({ json: async () => body }) },
+    },
+  });
+
+  const renderCatalog = () => renderHook(() => useExternalCatalog(), { wrapper: createWrapper() });
+
+  beforeEach(() => {
+    mockInvoke.mockReset();
+  });
+
+  it('CATALOG_UPSTREAM_ERROR (503): preserva code e status', async () => {
+    mockInvoke.mockResolvedValue(
+      httpError(503, { error: 'Catalog database is temporarily unavailable', code: 'CATALOG_UPSTREAM_ERROR' }),
+    );
+    const { result } = renderCatalog();
+    act(() => { result.current.fetchProducts(); });
+
+    await waitFor(() => {
+      expect(result.current.errorCode).toBe('CATALOG_UPSTREAM_ERROR');
+    }, { timeout: 10000 });
+    expect(result.current.errorStatus).toBe(503);
+    expect(result.current.error).toBe('Catalog database is temporarily unavailable');
+  });
+
+  it('CATALOG_NOT_CONFIGURED (503): preserva o código da edge', async () => {
+    mockInvoke.mockResolvedValue(
+      httpError(503, { error: 'Catalog is not configured', code: 'CATALOG_NOT_CONFIGURED' }),
+    );
+    const { result } = renderCatalog();
+    act(() => { result.current.fetchProducts(); });
+
+    await waitFor(() => {
+      expect(result.current.errorCode).toBe('CATALOG_NOT_CONFIGURED');
+    }, { timeout: 10000 });
+    expect(result.current.errorStatus).toBe(503);
+  });
+
+  it('CATALOG_CREDENTIALS_INVALID (503): preserva o código real (o plano escreve CREDENTIALS_INVALID)', async () => {
+    mockInvoke.mockResolvedValue(
+      httpError(503, {
+        error: 'Catalog credentials are not authorized for the requested resource',
+        code: 'CATALOG_CREDENTIALS_INVALID',
+      }),
+    );
+    const { result } = renderCatalog();
+    act(() => { result.current.fetchProducts(); });
+
+    await waitFor(() => {
+      expect(result.current.errorCode).toBe('CATALOG_CREDENTIALS_INVALID');
+    }, { timeout: 10000 });
+    expect(result.current.errorStatus).toBe(503);
+  });
+
+  it('429: status 429 vira CATALOG_RATE_LIMITED (a edge não manda code no 429)', async () => {
+    mockInvoke.mockResolvedValue(
+      httpError(429, { error: 'Too many requests. Try again in 1 minute.' }),
+    );
+    const { result } = renderCatalog();
+    act(() => { result.current.fetchProducts(); });
+
+    await waitFor(() => {
+      expect(result.current.errorCode).toBe('CATALOG_RATE_LIMITED');
+    }, { timeout: 10000 });
+    expect(result.current.errorStatus).toBe(429);
+    // sem retry: o 429 não deve ser reenviado (retry do react-query desligado);
+    // o bootstrap ainda dispara 1× (ação diferente), então contamos só list_products.
+    const productCalls = mockInvoke.mock.calls.filter(
+      ([, opts]) => (opts as { body?: { action?: string } })?.body?.action === 'list_products',
+    );
+    expect(productCalls).toHaveLength(1);
+  });
+
+  it('erro em envelope 200 ({ error, code }) também preserva o código', async () => {
+    mockInvoke.mockResolvedValue({
+      data: { error: 'Catalog database is temporarily unavailable', code: 'CATALOG_UPSTREAM_ERROR' },
+      error: null,
+    });
+    const { result } = renderCatalog();
+    act(() => { result.current.fetchProducts(); });
+
+    await waitFor(() => {
+      expect(result.current.errorCode).toBe('CATALOG_UPSTREAM_ERROR');
+    }, { timeout: 10000 });
+    expect(result.current.errorStatus).toBeNull();
+  });
+
+  it('falha sem código (rejeição de rede) mantém error e não inventa code', async () => {
+    mockInvoke.mockRejectedValue(new Error('Network error'));
+    const { result } = renderCatalog();
+    act(() => { result.current.fetchProducts(); });
+
+    await waitFor(() => {
+      expect(result.current.error).toBe('Network error');
+    }, { timeout: 10000 });
+    expect(result.current.errorCode).toBeNull();
+    expect(result.current.errorStatus).toBeNull();
   });
 });

@@ -2171,7 +2171,7 @@ export type Database = {
           period_days: number | null
           relationship_type: string | null
           sales_opportunity: string | null
-          sentiment: string
+          sentiment: string | null
           sentiment_score: number | null
           status: string
           summary: string
@@ -2197,7 +2197,7 @@ export type Database = {
           period_days?: number | null
           relationship_type?: string | null
           sales_opportunity?: string | null
-          sentiment?: string
+          sentiment?: string | null
           sentiment_score?: number | null
           status?: string
           summary: string
@@ -2223,7 +2223,7 @@ export type Database = {
           period_days?: number | null
           relationship_type?: string | null
           sales_opportunity?: string | null
-          sentiment?: string
+          sentiment?: string | null
           sentiment_score?: number | null
           status?: string
           summary?: string
@@ -10314,6 +10314,7 @@ export type Database = {
         }
         Returns: Json
       }
+      resolve_contact_guard_actor: { Args: never; Returns: string }
       save_talkx_campaign_draft: {
         Args: {
           p_campaign_id: string

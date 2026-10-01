@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { localDayKey } from '@/lib/localDay';
+import { startOfDay, subDays } from 'date-fns';
 
 export type TimelineEventKind =
   | 'message_in' | 'message_out' | 'note' | 'transfer' | 'assign' | 'file' | 'task' | 'deal' | 'close' | 'reopen';
@@ -263,7 +264,9 @@ export function useConversationHistoryTimeline(
     queryKey: conversationHistoryKey(contactId, period, type, limit),
     queryFn: async () => {
       const cid = contactId as string;
-      const sinceIso = period > 0 ? new Date(Date.now() - period * 24 * 60 * 60 * 1000).toISOString() : null;
+      // 'Ultimos 7 dias' = 7 dias de CALENDARIO no fuso do navegador (dias 24..30 de 30/09),
+      // nao 168 h para tras — que alcancavam 23/09 22:30 e entregavam 8 dias parciais.
+      const sinceIso = period > 0 ? startOfDay(subDays(new Date(), period - 1)).toISOString() : null;
 
       const messagesQuery = supabase
         .from('messages')

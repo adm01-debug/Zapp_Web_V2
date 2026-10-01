@@ -69,6 +69,14 @@ describe('ContactStatsCards', () => {
     expect(empresasCard.textContent).not.toContain('sem alteração');
   });
 
+  it('trava a geometria Navy do KPI (card 108px, tile 60px, valor text-kpi-value)', () => {
+    mockUseContactsKpi.mockReturnValue({ data: baseKpi(), isLoading: false });
+    render(<ContactStatsCards totalAll={1516} fornecedoresAll={7} />);
+    for (const card of screen.getAllByTestId('kpi-card')) expect(card).toHaveClass('h-[108px]');
+    for (const tile of screen.getAllByTestId('kpi-tile')) expect(tile).toHaveClass('w-[60px]', 'h-[60px]');
+    for (const value of screen.getAllByTestId('kpi-value')) expect(value).toHaveClass('text-kpi-value');
+  });
+
   it('repassa o toggle "Mostrar legados" para o KPI (mesmo critério da lista e das abas)', () => {
     mockUseContactsKpi.mockReturnValue({ data: baseKpi(), isLoading: false });
     render(<ContactStatsCards totalAll={1516} fornecedoresAll={7} />);

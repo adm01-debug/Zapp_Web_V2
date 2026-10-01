@@ -8,8 +8,10 @@
  * atualizar o mapa — que é a lista de trabalho da revisão.
  *
  * Medição de origem: 139 arquivos .ts em supabase/functions, 5 ocorrências.
- * 01/10 (T15): 143 — o +1 é o `get-sip-password/index.test.ts` (teste da
- * função), que não produz nenhum token legado nem usa o regex antigo.
+ * Recontagem em 01/10/2026: 144 arquivos — dois arquivos de TESTE entraram
+ * no mesmo dia: `promogifts-catalog/index.actions.test.ts` (CT-77) e
+ * `get-sip-password/index.test.ts` (T15). O mapa INVENTARIO e o total de
+ * ocorrencias (3) permanecem identicos: nenhum produtor novo entrou.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -84,8 +86,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('143 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(143);
+  it('144 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(144);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );

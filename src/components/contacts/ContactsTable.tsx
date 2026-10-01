@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -10,9 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   MessageSquare, Edit, Trash2, MoreVertical, Phone, Mail,
-  Briefcase, Calendar, Tag, Users, Truck, UserCheck,
-  Wrench, Star, Handshake, MoreHorizontal, Package,
-  ArrowUp, ArrowDown, ArrowUpDown,
+  Briefcase, Calendar, Tag, ArrowUp, ArrowDown, ArrowUpDown,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -25,19 +23,6 @@ import type { Contact } from './types';
 import { canDeleteContact } from './contactPermissions';
 import type { CRMBatchResult } from '@/hooks/crm/useExternalContact360Batch';
 
-const CONTACT_TYPE_ICONS: Record<string, React.ReactNode> = {
-  cliente: <Users className="w-4 h-4" />,
-  fornecedor: <Truck className="w-4 h-4" />,
-  transportadora: <Package className="w-4 h-4" />,
-  colaborador: <UserCheck className="w-4 h-4" />,
-  prestador_servico: <Wrench className="w-4 h-4" />,
-  lead: <Star className="w-4 h-4" />,
-  parceiro: <Handshake className="w-4 h-4" />,
-  outros: <MoreHorizontal className="w-4 h-4" />,
-};
-
-export { CONTACT_TYPE_ICONS };
-
 type SortField = 'name' | 'type' | 'phone' | 'email' | 'company' | 'job_title' | 'created_at';
 type SortDir = 'asc' | 'desc';
 
@@ -45,6 +30,7 @@ interface ContactsTableProps {
   contacts: Contact[];
   selectedIds: string[];
   onSelectIds: (ids: string[]) => void;
+  onOpenDetails: (id: string) => void;
   onOpenChat: (id: string) => void;
   onEdit: (contact: Contact) => void;
   onDelete: (contact: Contact) => void;
@@ -75,7 +61,7 @@ function SortableHeader({ label, field, sortField, sortDir, onSort }: {
 }
 
 export function ContactsTable({
-  contacts, selectedIds, onSelectIds, onOpenChat, onEdit, onDelete, getCRMData, searchQuery,
+  contacts, selectedIds, onSelectIds, onOpenDetails, onOpenChat, onEdit, onDelete, getCRMData, searchQuery,
 }: ContactsTableProps) {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>('asc');
@@ -144,7 +130,7 @@ export function ContactsTable({
                   "h-14 border-b border-border/60 last:border-0 hover:bg-muted/30 transition-all duration-150 cursor-pointer group",
                   selectedIds.includes(contact.id) && "bg-primary/5 border-l-2 border-l-primary"
                 )}
-                onClick={() => onOpenChat(contact.id)}
+                onClick={() => onOpenDetails(contact.id)}
               >
                 <td className="p-3" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
@@ -169,7 +155,7 @@ export function ContactsTable({
                       )} />
                     </div>
                     <div className="min-w-0">
-                      <HighlightText text={`${contact.name} ${contact.surname || ''}`.trim()} highlight={searchQuery} className="font-medium text-sm block truncate" />
+                      <HighlightText text={`${contact.name} ${contact.surname || ''}`.trim()} highlight={searchQuery} className="font-semibold text-sm block truncate" />
                       {contact.nickname && <span className="text-2xs text-muted-foreground">({contact.nickname})</span>}
                     </div>
                   </div>

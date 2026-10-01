@@ -85,7 +85,7 @@ async function pickVariant(supabase: SupabaseClient, templateId: string): Promis
   return variants[variants.length - 1];
 }
 
-function randomBetween(min: number, max: number): number {
+export function randomBetween(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 

@@ -43,10 +43,6 @@ export class ContactService {
     return supabase.from('contacts').select('*').eq('id', id).maybeSingle();
   }
 
-  static async update(id: string, updates: Database['public']['Tables']['contacts']['Update']) {
-    return supabase.from('contacts').update(updates).eq('id', id).select().single();
-  }
-
   /**
    * Retorna a data da última mensagem para cada contact_id da lista.
    * Usa a RPC get_last_message_dates (GROUP BY contact_id, MAX created_at)

@@ -59,6 +59,15 @@ describe('volume de mídia — isenções explícitas, não silenciosas', () => 
     ['alerta de rate limit', 'src/utils/securityAlertSound.ts'],
     ['alerta de war room', 'src/hooks/business/useWarRoomAlerts.ts'],
     ['alerta do chat interno', 'src/hooks/chat/useTeamChatNotifications.ts'],
+    // E37 — mídia que NÃO é de conversa: o laboratório de voz (preview de voz e diálogo
+    // TTS, ambos nas Configurações) e a biblioteca de mídia do admin (gestão de arquivo).
+    // Nesses `<audio controls>`/`new Audio()` quem manda no volume é o próprio elemento
+    // nativo, e ninguém no atendimento depende deles para ouvir o cliente. A isenção é
+    // registrada no plano (docs/plans/PLANO_VOLUME_MIDIA_50_ETAPAS_2026-09-27.md, E37).
+    ['preview de voz (laboratório)', 'src/components/voice/ElevenLabsVoiceDesign.tsx'],
+    ['diálogo TTS (laboratório)', 'src/components/voice/ElevenLabsDialogue.tsx'],
+    ['geração de SFX (biblioteca do admin)', 'src/components/settings/media-library/AIGenerateDialog.tsx'],
+    ['prévia da biblioteca do admin', 'src/components/settings/media-library/useMediaLibrary.ts'],
   ];
 
   it.each(isentas)('%s não usa o controle e diz por quê', (_nome, arquivo) => {

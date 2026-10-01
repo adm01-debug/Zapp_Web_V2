@@ -88,6 +88,7 @@ jobs:
           supabase/functions/_shared/__tests__/gmail-send-schema.test.ts
           supabase/functions/crm-integration/index.test.ts
           supabase/functions/promogifts-catalog/index.test.ts
+          supabase/functions/promogifts-catalog/index.actions.test.ts
           supabase/functions/message-delivery/index.test.ts
           supabase/functions/sentiment-alert/index.test.ts
           supabase/functions/talkx-send/index.test.ts
