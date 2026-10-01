@@ -95,3 +95,12 @@ Gates completos rodados de novo pos-reconciliacao antes do push.
 
 ### Não implementado nesta leva (e por quê)
 - **E54 · "Sincronizar catálogo"** — **inexequível como especificado**. A edge `promogifts-catalog` expõe apenas `list_products / get_product / list_categories / list_suppliers / catalog_stats / bootstrap`; não há ação de sincronização e o catálogo é somente-leitura no ZAPP. Implementar o botão criaria um controle que não faz nada. Precisa de decisão de escopo antes.
+
+## Finalização — CT-20..CT-24 (2026-10-01)
+
+- CT-21/CT-23 · Fiação do rail no pai (`ExternalProductManagement.tsx`) · 2026-10-01
+  - `exportFilter={activeRailFilter}` — o "Exportar catálogo" do rail (CT-20/CT-21) passa a exportar **o filtro do rail ativo** (`in_stock` / `featured` / `new_30d`) em vez do catálogo inteiro. A chave é derivada dos estados que a tela já mantinha (`onlyInStock` / `isFeatured` / `isNew`, nessa precedência); sem filtro ativo continua `null` → `catalogo_todos_*.csv` (o comportamento honesto de antes, agora só quando não há filtro).
+  - `onApplyLowStock={handleApplyLowStock}` — o alerta de estoque baixo (CT-23) passa a ter o botão "Ver produtos com estoque baixo"; antes o callback não chegava ao rail e o botão simplesmente não era renderizado.
+  - `handleKpiSelect` ganhou o branch `low_stock` (o filtro `low_stock: true` já existia na edge e em `CatalogFilters` desde a E22, mas nenhum caminho de UI o acionava). Novo estado `lowStock` entra em `buildFilters`, no efeito de debounce, em `hasFilters` e em `clearFilters` — sem os quatro o botão filtraria só na primeira vez ou deixaria "Limpar filtros" incompleto.
+  - 3 testes novos em `__tests__/ExternalProductManagement.test.tsx`: (1) botão do alerta aplica `low_stock=true` na busca; (2) com "Em destaque" ativo, "Exportar catálogo" chama `exportCatalogCsv` com `filterKey: 'featured'` + `{ is_featured: true }`; (3) sem filtro ativo, `filterKey: 'todos'` + `{}`. O módulo `catalogExport` é mockado (o fetcher real da edge não roda em teste).
+  - Toca também `CHANGELOG.md` (raiz) — ver a entrada de 01/10/2026 lá.

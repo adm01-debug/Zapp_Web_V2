@@ -412,12 +412,62 @@
 }
 .catalog-gallery-thumb--active { border-color: hsl(var(--primary) / 0.6); }
 
-/* ── Moldura do preview de WhatsApp (Enviar Produto) ── */
+/* ── Preview de WhatsApp (CT-37 — PhonePreview em catalogShared.tsx) ──
+   As cores da marca vêm dos tokens --wa-* (tokens.css): nenhum hex/rgb/hsl
+   literal nos componentes. .catalog-phone é a moldura, o resto são as partes
+   internas do mock (cabeçalho, avatar, fundo, bolha, hora e ticks). */
 .catalog-phone {
   background: hsl(var(--card-elevated));
   border: 1px solid hsl(var(--border) / 0.6);
   border-radius: 28px;
   overflow: hidden;
+}
+.catalog-phone__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: hsl(var(--wa-header));
+  color: hsl(var(--wa-header-foreground));
+}
+.catalog-phone__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-full);
+  background: hsl(var(--wa-header-foreground) / 0.2);
+}
+.catalog-phone__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: hsl(var(--wa-background));
+}
+.catalog-phone__bubble {
+  align-self: flex-end;
+  max-width: 85%;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  background: hsl(var(--wa-bubble));
+  color: hsl(var(--wa-bubble-foreground));
+}
+.catalog-phone__time {
+  margin-right: 0.25rem;
+  color: hsl(var(--wa-bubble-foreground) / 0.5);
+}
+.catalog-phone__tick { color: hsl(var(--info)); }
+.catalog-phone__counter {
+  position: absolute;
+  bottom: 0.25rem;
+  right: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--radius-xs);
+  background: hsl(var(--wa-header) / 0.6);
+  color: hsl(var(--wa-header-foreground));
 }
 
 /* Padrão de brindes no fundo do painel de chat.
