@@ -129,9 +129,13 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
       .eq('id', draggableId);
 
     // Todo update que o banco aceitou muda o tipo, mesmo se superado por um drag
-    // posterior (que pode falhar e deixar este como o valor final): KPIs e
-    // contadores por tipo precisam refletir, entao invalida antes do token.
-    if (!error) invalidateContactsAggregates(queryClient);
+    // posterior (que pode falhar e deixar este como o valor final): KPIs,
+    // contadores por tipo e a lista (contacts-search) precisam refletir, entao
+    // invalida antes do token.
+    if (!error) {
+      invalidateContactsAggregates(queryClient);
+      queryClient.invalidateQueries({ queryKey: ['contacts-search'] });
+    }
 
     // Se outro drag do mesmo contato comecou depois deste, ele e a verdade:
     // ignora resultado e rollback desta operacao ja superada.
