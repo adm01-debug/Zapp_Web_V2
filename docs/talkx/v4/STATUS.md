@@ -5,12 +5,12 @@
 
 ## Etapas concluídas
 
-**7 de 200** concluídas.
+**8 de 200** concluídas.
 
 | Fase | Concluídas | Total |
 |---|---|---|
 | 0 · Régua e governança | 5 | 5 |
-| 1 · Correções imediatas | 1 | 4 |
+| 1 · Correções imediatas | 2 | 4 |
 | 2 · Motor seguro para o primeiro disparo | 0 | 14 |
 | 3 · Integridade, observabilidade e ensaio real | 1 | 12 |
 | 4 · Dados comerciais e vínculo com o CRM | 0 | 6 |
@@ -29,7 +29,7 @@
 
 ## Elementos do mock por tela
 
-**217 de 1135** elementos fechados.
+**228 de 1135** elementos fechados.
 
 | Tela | Fechados | Total |
 |---|---|---|
@@ -38,8 +38,8 @@
 | 03 · Segmentos · criar e editar | 20 | 102 |
 | 04 · Templates · biblioteca | 16 | 54 |
 | 05 · Templates · criar e editar | 20 | 77 |
-| 06 · Lista de supressão | 11 | 73 |
-| 07 · Analytics | 12 | 84 |
+| 06 · Lista de supressão | 14 | 73 |
+| 07 · Analytics | 20 | 84 |
 | 08 · Nova campanha | 28 | 65 |
 | 09 · Revisão final e confirmação | 19 | 50 |
 | 10 · Campanha agendada | 12 | 46 |
