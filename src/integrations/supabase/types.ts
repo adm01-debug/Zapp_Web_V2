@@ -10314,6 +10314,7 @@ export type Database = {
         }
         Returns: Json
       }
+      resolve_contact_guard_actor: { Args: never; Returns: string }
       save_talkx_campaign_draft: {
         Args: {
           p_campaign_id: string
