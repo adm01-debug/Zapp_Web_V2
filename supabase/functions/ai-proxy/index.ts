@@ -64,7 +64,7 @@ const AiProxySchema = z.object({
 const TEST_TIMEOUT_MS = 15_000;
 
 /** Mensagem no formato aceito pelos helpers de chamada (`_shared/ai-providers.ts`). */
-type ProxyMessage = { role: string; content: string };
+type ProxyMessage = { role: string; content: unknown };
 
 /** Códigos do diagnóstico de teste (IA-040) — taxonomia fechada do desenho. */
 type TestCode = 'ROUTING' | 'CAPABILITY' | 'MISSING_KEY' | 'QUOTA' | 'CONTRACT' | 'NETWORK';
