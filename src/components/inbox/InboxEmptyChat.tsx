@@ -36,17 +36,17 @@ export function InboxEmptyChat() {
           <div className="flex items-center gap-1">
             <kbd className="px-1.5 py-0.5 rounded-md bg-muted text-3xs font-mono text-muted-foreground border border-border/40 shadow-sm">↑</kbd>
             <kbd className="px-1.5 py-0.5 rounded-md bg-muted text-3xs font-mono text-muted-foreground border border-border/40 shadow-sm">↓</kbd>
-            <span className="text-2xs text-muted-foreground/60 ml-1">navegar</span>
+            <span className="text-2xs text-muted-foreground ml-1">navegar</span>
           </div>
           <div className="w-px h-3 bg-border/40" />
           <div className="flex items-center gap-1">
             <kbd className="px-2 py-0.5 rounded-md bg-muted text-3xs font-mono text-muted-foreground border border-border/40 shadow-sm">Enter</kbd>
-            <span className="text-2xs text-muted-foreground/60 ml-1">abrir</span>
+            <span className="text-2xs text-muted-foreground ml-1">abrir</span>
           </div>
           <div className="w-px h-3 bg-border/40" />
           <div className="flex items-center gap-1">
             <kbd className="px-2 py-0.5 rounded-md bg-muted text-3xs font-mono text-muted-foreground border border-border/40 shadow-sm">⌘K</kbd>
-            <span className="text-2xs text-muted-foreground/60 ml-1">buscar</span>
+            <span className="text-2xs text-muted-foreground ml-1">buscar</span>
           </div>
         </div>
       </motion.div>

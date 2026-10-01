@@ -81,7 +81,7 @@ const ObjectionCard = memo(forwardRef<HTMLDivElement, {
           <p className="text-[13px] text-foreground font-medium leading-snug pr-4">{obj.objection}</p>
           <ConfidenceBadge confidence={obj.confidence} />
         </div>
-        <div className="shrink-0 mt-1 text-muted-foreground/60">{expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div>
+        <div className="shrink-0 mt-1 text-muted-foreground">{expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div>
       </button>
       <AnimatePresence>
         {expanded && (

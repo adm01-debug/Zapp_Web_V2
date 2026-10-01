@@ -77,7 +77,7 @@ export function NotificationItem({ notification, onMarkRead }: NotificationItemP
           {isUnread && <span className="w-2 h-2 rounded-full bg-primary shrink-0" />}
         </div>
         <p className="text-2xs text-muted-foreground mt-0.5 line-clamp-2">{notification.message}</p>
-        <p className="text-3xs text-muted-foreground/60 mt-1">{when}</p>
+        <p className="text-3xs text-muted-foreground mt-1">{when}</p>
         {isReminder && (
           <div className="mt-2">
             <ReminderNotificationActions notification={notification} />

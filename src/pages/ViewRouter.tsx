@@ -225,7 +225,7 @@ function FallbackView({ currentView }: { currentView: string }) {
           Este módulo está em desenvolvimento e será disponibilizado em breve.
         </p>
 
-        <div className="flex items-center justify-center gap-1.5 mt-6 text-xs text-muted-foreground/60">
+        <div className="flex items-center justify-center gap-1.5 mt-6 text-xs text-muted-foreground">
           <Construction className="w-3.5 h-3.5" />
           <span>Em construção</span>
         </div>
