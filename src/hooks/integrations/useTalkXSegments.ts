@@ -6,6 +6,14 @@ import { toast } from 'sonner';
 import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
 import { CONVERSATION_STATUSES } from '@/types/chat';
 import { OPERATIONAL_PRIORITY_VALUES, SENTIMENT_VALUES } from '@/lib/ai-vocabulary';
+import { zonedDayStartISO } from '@/lib/localDay';
+
+/**
+ * Fuso do filtro de segmento. O segmento e gravado como string de filtro e reusado por
+ * qualquer usuario (e por contagens no servidor), entao o recorte precisa ser o mesmo para
+ * todos: dias de calendario em Sao Paulo, e nao o fuso do navegador de quem montou a regra.
+ */
+const SEGMENT_TIMEZONE = 'America/Sao_Paulo';
 
 /* ------------------------------------------------------------------ */
 /* Modelo de regras                                                   */
@@ -98,13 +106,16 @@ function ruleToFilter(r: SegmentRule): string | null {
   switch (r.op) {
     case 'is_set': return def.kind === 'array' ? `${r.field}.not.is.null` : `${r.field}.not.is.null`;
     case 'is_empty': return def.kind === 'array' ? `or(${r.field}.is.null,${r.field}.eq.{})` : `or(${r.field}.is.null,${r.field}.eq.)`;
+    // "nos ultimos (dias)" / "ha mais de (dias)" sao DIAS DE CALENDARIO no fuso do produto, nao
+    // uma janela de d*24h: as 22h30 em SP a janela de 7 dias alcancava o 8o dia de calendario e a
+    // audiencia saia um dia mais larga. Mesma semantica de dias de calendario do R3-06 (timeline).
     case 'in_last_days': {
       const d = Number(v); if (!d) return null;
-      return `${r.field}.gte.${new Date(Date.now() - d * 86_400_000).toISOString()}`;
+      return `${r.field}.gte.${zonedDayStartISO(SEGMENT_TIMEZONE, d - 1)}`;
     }
     case 'not_in_last_days': {
       const d = Number(v); if (!d) return null;
-      return `${r.field}.lt.${new Date(Date.now() - d * 86_400_000).toISOString()}`;
+      return `${r.field}.lt.${zonedDayStartISO(SEGMENT_TIMEZONE, d - 1)}`;
     }
     default: break;
   }
