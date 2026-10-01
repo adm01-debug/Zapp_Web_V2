@@ -127,7 +127,8 @@ function _findInheritLeaks(source, file) {
   // Restricts to horizontal whitespace ([ \t]*) to prevent crossing line boundaries,
   // and anchors to end-of-line ($) so a mapping key named `inherit` on the next line
   // is never mistaken for the inherit scalar.
-  const inheritMatch = /^([ \t]+)secrets:[ \t]*(?:&\w+[ \t]+)?(?:"inherit"|'inherit'|inherit)(?:[ \t]*(?:#.*)?)?$/mu.exec(source);
+  // Uses [^\s\[\]{},]+ for anchor names to cover YAML-valid names with hyphens (e.g. &all-secrets).
+  const inheritMatch = /^([ \t]+)secrets:[ \t]*(?:&[^\s\[\]{},]+[ \t]+)?(?:"inherit"|'inherit'|inherit)(?:[ \t]*(?:#.*)?)?$/mu.exec(source);
   if (!inheritMatch) return [];
   const lineNumber = source.slice(0, inheritMatch.index).split(/\r?\n/u).length;
   return [{ file, line: lineNumber, secret: 'secrets:inherit (reusable workflow call)' }];

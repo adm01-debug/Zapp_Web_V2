@@ -228,6 +228,13 @@ test('findPushSecretLeaks: secrets inherit em forma YAML anchor (secrets: &all i
   assert.ok(result[0].secret.includes('inherit'));
 });
 
+test('findPushSecretLeaks: secrets inherit em forma YAML anchor com hifen (secrets: &all-secrets inherit) → violação', () => {
+  const workflow = `on:\n  push:\njobs:\n  call:\n    uses: org/repo/.github/workflows/callable.yml@main\n    secrets: &all-secrets inherit\n`;
+  const result = findPushSecretLeaks(workflow, 'w.yml');
+  assert.equal(result.length, 1);
+  assert.ok(result[0].secret.includes('inherit'));
+});
+
 test('findPushSecretLeaks: secrets com chave inherit em linha separada nao dispara falso positivo', () => {
   // P2: secrets: seguido de mapeamento YAML com chave `inherit` na linha seguinte
   // nao deve ser confundido com o escalar `secrets: inherit`

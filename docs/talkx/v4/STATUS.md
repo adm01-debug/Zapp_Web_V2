@@ -1,5 +1,6 @@
-STATUS.md gerado: 5/200 etapas, 217/1135 elementos.
-or `scripts/talkx/v4-status.mjs`. Não editar à mão — o CI confere com `--check`.
+# STATUS — Talk X · Plano V4 (placar)
+
+> Gerado por `scripts/talkx/v4-status.mjs`. Não editar à mão — o CI confere com `--check`.
 > Etapas concluídas = commits em `origin/main` cujo título contém `(X<NNN>)`.
 
 ## Etapas concluídas
