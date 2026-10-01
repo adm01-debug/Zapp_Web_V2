@@ -205,7 +205,7 @@
 | Fase | Etapas | Tipo | Gate | PR | Merge/apply |
 |---|---|---|---|---|---|
 | 0 | T01–T08 | docs + script + DML (T03) | CI verde; T03 com `RETURNING` | **#1181** | merge pelo `hermes-tarefa-mergear` (sem DDL pendente) |
-| 1 | T09–T22 | motor (toca `AppProviders`, Edge) | **Aguarda Joaquim** (T22) | **#1193, #1246, #1285, #1328, #1365, #1384, #1431, #1440, #1449, #1476, #1488** (T09–T21 mergeados e provados na main) + **#(PR a abrir)** (T22) | T22 aguarda o Joaquim: o plano diz "PR aberta chamando Joaquim" |
+| 1 | T09–T22 | motor (toca `AppProviders`, Edge) | **Aguarda Joaquim** (T22) | **#1193, #1246, #1285, #1328, #1365, #1384, #1431, #1440, #1449, #1476, #1488** (T09–T21 mergeados e provados na main) + **#1494** (T22) | T22 aguarda o Joaquim: o plano diz "PR aberta chamando Joaquim" |
 | 2 | T23–T32 | canais + webhook + inbox | **Aguarda Joaquim** (Edge) | — | — |
 | 3 | T33–T42 | shell/header/KPIs | CI verde | — | — |
 | 4 | T43–T54 | histórico | CI verde | — | — |
