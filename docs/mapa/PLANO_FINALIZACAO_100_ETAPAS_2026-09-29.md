@@ -296,8 +296,8 @@ A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`)
 ### E42 · Mapa de contatos: legenda + contagem
 **Arquivos:** `CRM:211-222`, `ContactMapView.tsx`
 1. Legenda mostra a contagem "N com endereço confirmado · M aproximados pelo DDD".
-2. Contato só com cidade (sem lat/lng) vira ponto na sede da cidade (já existe `contactRegionGeo.ts`) — verificar que a prioridade é lat/lng > cidade > DDD.
-**Checklist:** [ ] contagem · [ ] 3 níveis de precisão · [ ] teste
+2. Precisão em **2 níveis** — decisão `20261001-125229-6392` = **(a)**, tomada depois de medir o repo: endereço confirmado (lat/lng do contato) ou região pelo DDD (`contactRegionGeo.ts`). O nível intermediário por cidade **não existe e não será criado**: `REGION_COORDINATES` mapeia DDD → cidade-sede, não há fonte de coordenada por cidade no repositório, e criar uma tabela de cidades ampliaria escopo e superfície sem pedido do produto. A prioridade efetiva é lat/lng > DDD; região sem ponto conhecido não entra no mapa e aparece na nota "N regiões sem ponto conhecido ficam só nos cartões abaixo".
+**Checklist:** [x] contagem (M dos aproximados, `ContactRegionMap.tsx`, #1412) · [x] 2 níveis de precisão (medido: lat/lng e DDD — ver decisão `20261001-125229-6392`) · [x] teste (`ContactRegionMap.test.tsx`, com mutação)
 
 ### E43 · Testes da Fase 4
 1. `ContactFormEndereco.test.tsx`: flag off → sem hook; proximity; toggle POI; UF sigla.
