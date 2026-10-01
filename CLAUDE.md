@@ -164,6 +164,8 @@ Estado dos achados após re-auditoria de 2026-09-17:
   merge retorna 405 "N of N expected" com CI totalmente verde — o diagnóstico correto é
   verificar `strict` ao vivo com `github_get_branch_protection`, não retentar o merge.
 
+  **Correção de 2026-10-01:** `strict` voltou a `true` pela terceira vez (sintoma idêntico ao de 27/09: PR #1375 com os 6 checks verdes e merge 405 "6 of 6 expected"; a `main` avançava a cada poucos minutos e a PR voltava a `BEHIND` antes de o CI de 6 min terminar). Restaurado para `false` com `github_update_required_status_checks` (PATCH só do campo — o PUT completo `github_update_branch_protection` devolveu 500 e não alterou nada). Autor da regressão **não identificável por API**: nenhum workflow nem script do repo toca branch protection (`grep` em `.github/`, `scripts/`), nada no `/workspace` da VPS, e conta do tipo `User` não tem audit log via API — o único registro é o **Security log** da conta (Settings → Security log, filtrar `protected_branch`), que só o Joaquim consegue abrir. Hipótese mais provável: alguma sessão fazendo PUT completo de proteção (todo PUT precisa mandar `strict` explicitamente) para mexer em outro campo. Antes de qualquer `github_update_branch_protection`, ler o estado com `github_get_branch_protection` e repetir `strict: false`.
+
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
 Auditoria dos 13 workflows + 3 dinâmicos (16 total), da branch protection, dos secrets e dos environments. O que passou a
