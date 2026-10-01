@@ -185,6 +185,14 @@
     --wa-bubble: 94 78% 87%;
     --wa-bubble-foreground: 0 0% 0%;
 
+    /* ===== Catálogo — badge de destaque "Novo/Kit" (CT-40) =====
+       Cor de destaque das badges do módulo do catálogo (`src/components/catalog/`).
+       Substitui o `bg-violet-500` que estava solto em `ProductDetailDialog.tsx`
+       e `CatalogProductCard.tsx`. Mesma família de matiz (268 83%) já usada pela
+       `.catalog-badge--new` de `components.css`; o texto da badge usa
+       `text-primary-foreground`. Não duplicar este valor em outro arquivo. */
+    --badge-new: 268 83% 63%;
+
     /* ===== Sidebar ===== */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 221 20% 12%;
