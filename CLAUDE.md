@@ -179,7 +179,7 @@ valer (confira antes de propor mudança de CI, para não refazer o que já exist
 Updates, Dependency Graph, Copilot reviewer) — 16 no total. Plano completo em
 `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-26.md`.
 
-**Required checks da `main`** (6; `strict` está `false` ao vivo — ver correções em 25/09 e 27/09 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
+**Required checks da `main`** (6; `strict` está `false` ao vivo — ver correções em 25/09, 27/09 e 01/10 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
 `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline` e
 `🎭 E2E Tests (Playwright)` — este último passou a ser obrigatório em 25/09; antes rodava em PR
 sem bloquear merge. `🔬 CodeQL (javascript-typescript)` roda em CI mas **não** é required check
@@ -230,7 +230,7 @@ primeiros rodavam ambos às 06:00 e disputavam o banco no mesmo minuto.
 **Repo:** `sha_pinning_required` ligado no GitHub (além do `check-workflow-pins.mjs`).
 
 **Fila de merge (merge queue) é IMPOSSÍVEL neste repo — não tente de novo.** Em 25/09, com `strict`
-ligado (hoje está `false` ao vivo — ver correções em 25/09 e 27/09 acima, seção "Branch protection sem `Contrato DB
+ligado (hoje está `false` ao vivo — ver correções em 25/09, 27/09 e 01/10 acima, seção "Branch protection sem `Contrato DB
 vivo`"), e várias sessões mergeando, toda PR que não entra primeiro volta para `BEHIND`, o
 `auto-update-pr-branch` recria o head e o CI (~6 min) recomeça; em 25/09 três PRs verdes ficaram
 ~40 min nesse ciclo. A fila do GitHub resolveria isso, e os gatilhos `merge_group` já foram

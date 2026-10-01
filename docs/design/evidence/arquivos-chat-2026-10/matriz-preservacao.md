@@ -18,4 +18,4 @@ Estado real de cada ação hoje e o `data-testid` que a versão nova expõe. Os 
 | Layout (Grid/Lista/Tabela) | — | — | **não existe** (grid fixo `grid-cols-2 2xl:grid-cols-3`, `FilesTab.tsx:121`) | novo (etapas 06–08, 21–26) | `files-toolbar`, `files-layout-trigger`, `files-view-grid\|list\|table`, `files-columns-N` |
 | Selecionar / ações em lote | — | — | **não existe** | novo (etapas 33–35, 38) | `files-select-toggle`, `files-selection-bar` |
 
-`data-testid` já existentes e mantidos: `files-tab` (raiz), `file-card`, `file-detail-panel` (usado em `__tests__/FilesTab.test.tsx`).
+`data-testid` já existentes e mantidos: `files-tab` (raiz), `file-card`, `file-detail-panel` (usado em `src/components/inbox/tabs/__tests__/FilesTab.test.tsx`).

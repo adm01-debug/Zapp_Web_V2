@@ -16,7 +16,7 @@
 
 - G1 Encaminhar é stub: `FilesTab.tsx:162` passa `onForward={() => {}}`.
 - G3 Apagadas voltam: `useContactMedia.ts:53-57` seleciona sem filtro de `is_deleted` e com `limit(200)`; `FileCard.tsx:41` só marca `is_deleted = true`.
-- G4 Copiar link entrega a URL assinada: `FileCard.tsx:28` e `FileDetailPanel.tsx:25` escrevem `resolvedUrl || item.url` no clipboard.
+- G4 Copiar link entrega a URL assinada: `FileCard.tsx:31` e `FileDetailPanel.tsx:27` escrevem `resolvedUrl || item.url` no clipboard.
 - G5 Uma assinatura por card: cada `FileCard` e o `FileDetailPanel` chamam `useResolvedStorageUrl(item.url)` individualmente.
 
 ## Efeito colateral observado da degradação (mesmo dia)
