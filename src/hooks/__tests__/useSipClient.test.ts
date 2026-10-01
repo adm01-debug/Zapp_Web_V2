@@ -206,7 +206,7 @@ describe('useSipClient', () => {
 
   it('should start with disconnected status', () => {
     const { result } = renderHook(() => useSipClient());
-    expect(result.current.sipStatus).toBe('disconnected');
+    expect(result.current.sipStatus).toBe('idle');
     expect(result.current.callStatus).toBe('idle');
     expect(result.current.isMuted).toBe(false);
     expect(result.current.callDuration).toBe(0);
@@ -235,7 +235,7 @@ describe('useSipClient', () => {
     act(() => {
       mockRegisterStateListeners.forEach(fn => fn('Unregistered'));
     });
-    expect(result.current.sipStatus).toBe('disconnected');
+    expect(result.current.sipStatus).toBe('idle');
   });
 
   it('should disconnect properly', async () => {
@@ -248,7 +248,7 @@ describe('useSipClient', () => {
     await act(async () => {
       await result.current.disconnect();
     });
-    expect(result.current.sipStatus).toBe('disconnected');
+    expect(result.current.sipStatus).toBe('idle');
   });
 
   // === CREDENTIAL FETCH (connectWithStoredCredentials) ===
@@ -275,7 +275,7 @@ describe('useSipClient', () => {
       await result.current.connectWithStoredCredentials();
     });
     expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('desatualizada'));
-    expect(result.current.sipStatus).toBe('disconnected');
+    expect(result.current.sipStatus).toBe('idle');
     expect(mockMakeURI).not.toHaveBeenCalled();
   });
 
@@ -289,7 +289,7 @@ describe('useSipClient', () => {
       await result.current.connectWithStoredCredentials();
     });
     expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('SIP_PASSWORD'));
-    expect(result.current.sipStatus).toBe('disconnected');
+    expect(result.current.sipStatus).toBe('idle');
   });
 
   it('shows a generic session toast for non-config invoke errors (401)', async () => {
@@ -302,7 +302,7 @@ describe('useSipClient', () => {
       await result.current.connectWithStoredCredentials();
     });
     expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('sessão'));
-    expect(result.current.sipStatus).toBe('disconnected');
+    expect(result.current.sipStatus).toBe('idle');
   });
 
   it('shows SIP_PASSWORD config toast when invoke returns no error but no password', async () => {
@@ -312,7 +312,7 @@ describe('useSipClient', () => {
       await result.current.connectWithStoredCredentials();
     });
     expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('SIP_PASSWORD'));
-    expect(result.current.sipStatus).toBe('disconnected');
+    expect(result.current.sipStatus).toBe('idle');
   });
 
   // === OUTBOUND CALL TESTS ===

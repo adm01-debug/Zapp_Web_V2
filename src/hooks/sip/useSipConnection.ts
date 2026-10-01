@@ -6,7 +6,15 @@ import { REASON_LABEL, type CapabilityReason } from '@/lib/calls/capabilities';
 
 const log = getLogger('SipConnection');
 
-export type SipStatus = 'disconnected' | 'connecting' | 'registered' | 'error';
+// T16: estados explicitos no lugar de `disconnected|connecting|registered|error`.
+// - `reconnecting`: ha um retry agendado (antes a tela dizia "Desconectado"
+//   enquanto o app tentava voltar, e o agente clicava em Conectar por cima).
+// - `unavailable`: a linha nao volta sozinha (6a falha seguida) ou o REGISTER
+//   foi recusado. So sai daí com um `connect()` novo, do usuario.
+export type SipStatus = 'idle' | 'connecting' | 'registered' | 'reconnecting' | 'unavailable';
+
+const MAX_RECONNECT_ATTEMPTS = 5;
+const MAX_BACKOFF_MS = 30_000;
 
 interface SipConfig {
   server: string;
@@ -16,16 +24,27 @@ interface SipConfig {
 }
 
 export function useSipConnection(onIncomingInvitation?: (invitation: Invitation) => void) {
-  const [sipStatus, setSipStatus] = useState<SipStatus>('disconnected');
+  const [sipStatus, setSipStatus] = useState<SipStatus>('idle');
   // T15: motivo operacional do estado (ex.: linha em uso por outro usuário).
   const [sipReason, setSipReason] = useState<CapabilityReason | null>(null);
   const uaRef = useRef<UserAgent | null>(null);
   const registererRef = useRef<Registerer | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const maxReconnectAttempts = 5;
   const onIncomingInvitationRef = useRef(onIncomingInvitation);
   useEffect(() => { onIncomingInvitationRef.current = onIncomingInvitation; }, [onIncomingInvitation]);
+
+  // T16: depois do unmount ninguem mais conecta. Sem isto o retry agendado
+  // criava um UserAgent orfao — registrando a linha de um painel que nao existe
+  // mais, e o servidor so aceita um ramal por vez.
+  const unmountedRef = useRef(false);
+  useEffect(() => () => {
+    unmountedRef.current = true;
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+  }, []);
 
   const clearReconnectTimer = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -35,6 +54,9 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
   }, []);
 
   const connect = useCallback(async (config: SipConfig) => {
+    // T16: um UA por vez. Sem a guarda, dois cliques (ou um retry sobre um UA
+    // vivo) criavam dois registros da MESMA linha — e o servidor devolvia 403.
+    if (uaRef.current) return;
     try {
       clearReconnectTimer();
       setSipStatus('connecting');
@@ -59,28 +81,37 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
       });
 
       ua.transport.onDisconnect = () => {
-        setSipStatus('disconnected');
         clearReconnectTimer();
-        if (reconnectAttemptsRef.current < maxReconnectAttempts) {
+        if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
           reconnectAttemptsRef.current++;
-          const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
-          toast.info(`Conexão perdida. Reconectando em ${delay / 1000}s... (tentativa ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`);
+          const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), MAX_BACKOFF_MS);
+          setSipStatus('reconnecting');
+          toast.info(`Conexão perdida. Reconectando em ${delay / 1000}s... (tentativa ${reconnectAttemptsRef.current}/${MAX_RECONNECT_ATTEMPTS})`);
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectTimeoutRef.current = null;
+            if (unmountedRef.current) return;
+            // O UA anterior morreu junto com o transporte: limpar os refs e o
+            // que permite o retry passar pela guarda de `connect`.
+            uaRef.current = null;
+            registererRef.current = null;
             // eslint-disable-next-line react-hooks/immutability -- retry recursivo: só executa depois que connect() já terminou de ser atribuído.
             connect(config);
           }, delay);
         } else {
+          // T16: 6a falha seguida — para de tentar e diz isso na tela.
+          setSipStatus('unavailable');
           toast.error('Não foi possível reconectar ao servidor VoIP.');
-          reconnectAttemptsRef.current = 0;
         }
       };
 
       await ua.start();
       const registerer = new Registerer(ua);
+      // T16: o REGISTER pode ser recusado (403) antes de `register()` resolver,
+      // entao o motivo e guardado localmente para decidir o que fazer depois.
+      let registroRecusado = false;
       registerer.stateChange.addListener((state) => {
         if (state === 'Registered') { setSipStatus('registered'); setSipReason(null); reconnectAttemptsRef.current = 0; toast.success('VoIP conectado!'); }
-        else if (state === 'Unregistered' || state === 'Terminated') setSipStatus('disconnected');
+        else if (state === 'Unregistered' || state === 'Terminated') setSipStatus('idle');
       });
       await registerer.register({
         requestDelegate: {
@@ -89,28 +120,37 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
           // Sem isso o agente via "Erro ao conectar VoIP" e não entendia nada.
           onReject: (response) => {
             if (response.message.statusCode !== 403) return;
-            setSipStatus('error');
+            registroRecusado = true;
+            setSipStatus('unavailable');
             setSipReason('line_in_use_other_user');
             toast.error(REASON_LABEL.line_in_use_other_user);
           },
         },
       });
+      // T16: num 403 nao deixo UA vivo: a guarda de `connect` transformaria o
+      // botao "Conectar SIP" em botao morto depois que a linha fosse liberada.
+      if (registroRecusado) {
+        try { await ua.stop(); } catch { /* transporte ja encerrado */ }
+        return;
+      }
       uaRef.current = ua;
       registererRef.current = registerer;
     } catch (err: unknown) {
       log.error('SIP connection error:', err);
-      setSipStatus('error');
+      uaRef.current = null;
+      registererRef.current = null;
+      setSipStatus('unavailable');
       toast.error(`Erro ao conectar VoIP: ${err instanceof Error ? err.message : 'Falha na conexão'}`);
     }
   }, [clearReconnectTimer]);
 
   const disconnect = useCallback(async () => {
     try {
-      reconnectAttemptsRef.current = maxReconnectAttempts;
+      reconnectAttemptsRef.current = MAX_RECONNECT_ATTEMPTS;
       clearReconnectTimer();
       if (registererRef.current) await registererRef.current.unregister();
       if (uaRef.current) { uaRef.current.transport.onDisconnect = () => {}; await uaRef.current.stop(); }
-      setSipStatus('disconnected');
+      setSipStatus('idle');
       reconnectAttemptsRef.current = 0;
     } catch (err) { log.error('SIP disconnect error:', err); }
   }, [clearReconnectTimer]);
