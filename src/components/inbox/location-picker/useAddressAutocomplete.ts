@@ -319,6 +319,17 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
           dispatch({ type: 'SUGGEST_SUCCESS', suggestions: forward.places.map((place, index) => toForwardSuggestion(place, index)) });
           return;
         }
+        // E54 · 429 do `/forward`: a rede de proteção também pode estar limitada. Pausa com prazo —
+        // antes o 429 do `/forward` era descartado e o `/suggest` mandava o erro de ROTA dele
+        // (network/timeout/http), então a próxima tecla martelava a API de novo.
+        if (!forward.ok && forward.kind === 'rate_limited') {
+          dispatch({
+            type: 'SUGGEST_BLOCKED',
+            reason: 'rate_limited',
+            rateLimitedUntil: Date.now() + RATE_LIMIT_BACKOFF_MS,
+          });
+          return;
+        }
       }
 
       if (result.ok) {
@@ -435,6 +446,16 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     if (seq !== selectionSeqRef.current) return null;
     // O `/retrieve` fecha a sessão para o billing da Mapbox, sucesso ou falha.
     endSearchSession();
+    // E54 · 429 do `/forward` é limite de uso, não falha de rota: pausa com prazo, em vez de deixar
+    // a cascata seguir martelando uma API que já pediu para esperar.
+    if (!fallback.ok && fallback.kind === 'rate_limited') {
+      dispatch({
+        type: 'SUGGEST_BLOCKED',
+        reason: 'rate_limited',
+        rateLimitedUntil: Date.now() + RATE_LIMIT_BACKOFF_MS,
+      });
+      return null;
+    }
     const place = fallback.ok ? fallback.places[0] : undefined;
     if (place) {
       dispatch({ type: 'RETRIEVE_END' });
@@ -444,6 +465,16 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     // E17/E51: telemetria só na dupla falha — e `not_found`/`aborted` não são falha de rota.
     const reported = MAPBOX_FAILURE_KIND[result.kind];
     if (reported) reportMapboxFailure(reported, 'retrieve');
+    // E54 · 429 do `/retrieve` também é limite de uso: liga o backoff de 60 s. Antes ele ficava
+    // preso ao item e a próxima tecla voltava a martelar a API que acabara de dizer "espere".
+    if (result.kind === 'rate_limited') {
+      dispatch({
+        type: 'SUGGEST_BLOCKED',
+        reason: 'rate_limited',
+        rateLimitedUntil: Date.now() + RATE_LIMIT_BACKOFF_MS,
+      });
+      return null;
+    }
     dispatch({ type: 'RETRIEVE_ERROR', id: suggestion.id, kind: result.kind });
     return null;
   }, [state.suggestions, token, sessionSource, proximity]);

@@ -225,6 +225,38 @@ describe('useAddressAutocomplete', () => {
     });
   });
 
+  // E54 · 429 não vem só do `/suggest`: `/retrieve` e `/forward` são endpoints da Mapbox e também
+  // devolvem 429. Antes só o `/suggest` ligava o backoff — o 429 do `/forward` morria como falha de
+  // rota (a cascata seguia) e o do `/retrieve` ficava preso ao item, então a próxima tecla
+  // martelava uma API que já tinha dito "espere".
+  describe('E54 — 429 do /retrieve e do /forward também pausam', () => {
+    it('/forward com 429 liga o backoff de 60 s', async () => {
+      // `/suggest` caiu por ROTA (não é limite): quem assume é o /forward — que responde 429.
+      h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'http' });
+      h.searchPlaces.mockResolvedValue({ ok: false, kind: 'rate_limited' });
+      const { result } = setup();
+      act(() => { result.current.setQuery('rua a'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      expect(result.current.status).toBe('paused');
+      expect(result.current.blocked).toBe('rate_limited');
+      expect(result.current.pausedUntil).not.toBeNull();
+    });
+
+    it('/retrieve com 429 liga o backoff de 60 s', async () => {
+      h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
+      h.retrievePlaceResult.mockResolvedValue({ ok: false, kind: 'rate_limited' });
+      const { result } = setup();
+      act(() => { result.current.setQuery('rua a'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+      await act(async () => { await result.current.select(0); });
+
+      expect(result.current.status).toBe('paused');
+      expect(result.current.blocked).toBe('rate_limited');
+      expect(result.current.pausedUntil).not.toBeNull();
+    });
+  });
+
   it('não faz nenhuma chamada enquanto enabled=false', async () => {
     const { result } = setup({ enabled: false });
     act(() => { result.current.setQuery('rua augusta'); });
