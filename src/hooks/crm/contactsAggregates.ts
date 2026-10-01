@@ -35,7 +35,7 @@ export const CONTACTS_AGGREGATE_QUERY_OPTIONS = { refetchOnMount: 'always' } as 
 /**
  * Contato visível em Contatos = `is_lid_legacy = false` e telefone numérico de 10 a 15
  * dígitos. Mesmo critério de `search_contacts`/`contacts_count_by_type` quando
- * `include_legacy` é falso (migration 20260930390000); os KPIs aplicam o mesmo filtro
+ * `include_legacy` é falso (migration 20260930450000); os KPIs aplicam o mesmo filtro
  * para o Total bater com a aba "Todos".
  */
 export const CONTACT_VISIBLE_PHONE_PATTERN = '^[0-9]{10,15}$';

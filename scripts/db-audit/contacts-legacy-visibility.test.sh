@@ -10,7 +10,7 @@
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-migration="$repo_root/supabase/migrations/20260930390000_contacts_include_legacy_filter.sql"
+migration="$repo_root/supabase/migrations/20260930450000_contacts_include_legacy_filter.sql"
 postgres_image="${CONTACTS_F5_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-contacts-f5-test-$$"
 tmp_dir="$(mktemp -d /tmp/zapp-v2-contacts-f5-test.XXXXXX)"
