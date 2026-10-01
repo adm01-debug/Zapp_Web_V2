@@ -171,7 +171,7 @@ export function AIProviderHealthPanel() {
                       {log.model}
                     </span>
                   )}
-                  <span className="text-muted-foreground/60 shrink-0">
+                  <span className="text-muted-foreground shrink-0">
                     {log.duration_ms}ms
                   </span>
                   <span className="text-muted-foreground/40 shrink-0">
@@ -187,7 +187,7 @@ export function AIProviderHealthPanel() {
               <Sparkles className="w-8 h-8 text-primary/40" />
             </div>
             <p className="text-sm font-medium text-muted-foreground">Nenhuma chamada registrada</p>
-            <p className="text-xs text-muted-foreground/60 mt-1 max-w-[280px]">
+            <p className="text-xs text-muted-foreground mt-1 max-w-[280px]">
               As métricas aparecerão aqui assim que funcionalidades de IA forem utilizadas.
             </p>
           </div>

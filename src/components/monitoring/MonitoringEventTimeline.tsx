@@ -160,7 +160,7 @@ export function MonitoringEventTimeline() {
             <div className="flex flex-col items-center justify-center h-[280px] text-muted-foreground">
               <Radio className="w-10 h-10 mb-2 opacity-20" />
               <p className="text-sm font-medium">Nenhuma atividade</p>
-              <p className="text-2xs text-muted-foreground/60 mt-1">Eventos aparecerão aqui em tempo real</p>
+              <p className="text-2xs text-muted-foreground mt-1">Eventos aparecerão aqui em tempo real</p>
             </div>
           ) : (
             <div className="relative space-y-0" role="log" aria-label="Feed de eventos em tempo real">

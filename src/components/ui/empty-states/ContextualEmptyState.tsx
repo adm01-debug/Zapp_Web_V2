@@ -77,7 +77,7 @@ export function ContextualEmptyState({
         )}
       </motion.div>
       {showHelp && config.helpText && !compact && (
-        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="text-xs text-muted-foreground/60 mt-6 flex items-center gap-1">
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="text-xs text-muted-foreground mt-6 flex items-center gap-1">
           <HelpCircle className="w-3 h-3" />{config.helpText}
         </motion.p>
       )}

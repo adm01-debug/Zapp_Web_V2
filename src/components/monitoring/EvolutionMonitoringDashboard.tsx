@@ -54,7 +54,7 @@ function LastUpdatedBadge() {
     return () => clearInterval(t);
   }, []);
   return (
-    <span className="text-3xs text-muted-foreground/60 tabular-nums hidden md:inline-flex items-center gap-1">
+    <span className="text-3xs text-muted-foreground tabular-nums hidden md:inline-flex items-center gap-1">
       <Clock className="w-3 h-3" />
       {now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
     </span>
@@ -108,7 +108,7 @@ export function EvolutionMonitoringDashboard() {
             </div>
             <p className="text-sm text-muted-foreground">
               Status, webhook e health checks em tempo real
-              <span className="hidden sm:inline text-3xs ml-2 text-muted-foreground/60">[R] health check · [1-5] período</span>
+              <span className="hidden sm:inline text-3xs ml-2 text-muted-foreground">[R] health check · [1-5] período</span>
             </p>
           </div>
         </div>

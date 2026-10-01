@@ -184,7 +184,7 @@ export function ContactAdvancedFilters({
               step={5}
               className="py-1"
             />
-            <div className="flex justify-between text-3xs text-muted-foreground/60">
+            <div className="flex justify-between text-3xs text-muted-foreground">
               <span>Frio (0)</span>
               <span>Quente (100)</span>
             </div>

@@ -139,7 +139,7 @@ export function SatisfactionMetrics() {
                   {/* Eixos desenhados mesmo sem dado (mockup) */}
                   <div className="absolute inset-0 flex">
                     <div className="w-10 flex flex-col justify-between py-2 text-2xs text-muted-foreground/70 text-right pr-2 relative">
-                      <span className="absolute -left-4 top-1/2 -rotate-90 origin-center text-2xs text-muted-foreground/60 whitespace-nowrap">Pontuação</span>
+                      <span className="absolute -left-4 top-1/2 -rotate-90 origin-center text-2xs text-muted-foreground whitespace-nowrap">Pontuação</span>
                       {[100, 75, 50, 25, 0].map((v) => <span key={v}>{v}</span>)}
                     </div>
                     <div className="flex-1 border-l border-b border-border/50 relative">

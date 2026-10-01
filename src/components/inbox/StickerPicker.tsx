@@ -94,7 +94,7 @@ export function StickerPicker({ onSendSticker, disabled }: StickerPickerProps) {
                 {showRecent && ' · Mais usadas'}{showFavorites && ' · Favoritas'}{activeCategory && ` · ${CATEGORY_LABELS[activeCategory]?.label}`}
               </span>
               <div className="flex items-center gap-2">
-                <span className="text-[9px] text-muted-foreground/60">Arraste uma imagem ou</span>
+                <span className="text-[9px] text-muted-foreground">Arraste uma imagem ou</span>
                 <Button variant="ghost" size="sm" className="h-6 text-3xs text-muted-foreground hover:text-primary gap-1" onClick={() => fileInputRef.current?.click()} disabled={uploading || !!pendingUpload}>
                   <Upload className="w-3 h-3" />Upload
                 </Button>

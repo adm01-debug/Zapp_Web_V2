@@ -79,7 +79,7 @@ export function EvolutionDisconnectBanner() {
               ? `⚠️ Conexão "${disconnected[0].instance_id}" está desconectada!`
               : `⚠️ ${disconnected.length} conexões estão desconectadas!`}
           </span>
-          <span className="text-xs opacity-80 hidden sm:inline">
+          <span className="text-xs hidden sm:inline">
             Mensagens não serão enviadas/recebidas.
           </span>
           {disconnected.length === 1 && (
