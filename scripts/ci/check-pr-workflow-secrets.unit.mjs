@@ -194,7 +194,7 @@ jobs:
 
 test('scanWorkflowDirectory nao duplica violations quando workflow tem pull_request e push', () => {
   // Simula dois chamadas que retornariam o mesmo violation
-  const source = `on:\n  push:\n  pull_request:\nenv:\n  DB: ${{ secrets.DESTINO_URL }}\n`;
+  const source = `on:\n  push:\n  pull_request:\nenv:\n  DB: ${'$'}{{ secrets.DESTINO_URL }}\n`;
   const prLeaks = findPullRequestSecretLeaks(source, 'dup.yml');
   const pushLeaks = findPushSecretLeaks(source, 'dup.yml');
   // Ambos devem encontrar a mesma violacao
