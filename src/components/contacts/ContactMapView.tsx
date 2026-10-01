@@ -29,13 +29,13 @@ interface ContactMapViewProps {
 }
 
 const REGION_COLORS = [
-  'bg-primary/15',
-  'bg-info/15',
-  'bg-success/15',
-  'bg-warning/15',
-  'bg-destructive/15',
-  'bg-muted-foreground/15',
-];
+  { icon: 'bg-primary/15', bar: 'bg-primary/40' },
+  { icon: 'bg-info/15', bar: 'bg-info/40' },
+  { icon: 'bg-success/15', bar: 'bg-success/40' },
+  { icon: 'bg-warning/15', bar: 'bg-warning/40' },
+  { icon: 'bg-destructive/15', bar: 'bg-destructive/40' },
+  { icon: 'bg-muted-foreground/15', bar: 'bg-muted-foreground/40' },
+] as const;
 
 export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps) {
   const [expandedRegion, setExpandedRegion] = useState<string | null>(null);
@@ -86,7 +86,7 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
         {regions.map(([region, members], i) => {
           const isExpanded = expandedRegion === region;
           const percentage = Math.round((members.length / maxCount) * 100);
-          const colorClass = REGION_COLORS[i % REGION_COLORS.length];
+          const regionColor = REGION_COLORS[i % REGION_COLORS.length];
 
           return (
             <motion.div
@@ -104,7 +104,7 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
               >
                 <CardContent className="p-3 space-y-2">
                   <div className="flex items-center gap-2">
-                    <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center shrink-0', colorClass)}>
+                    <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center shrink-0', regionColor.icon)}>
                       <MapPin className="w-4 h-4 text-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -120,7 +120,7 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
                       initial={{ width: 0 }}
                       animate={{ width: `${percentage}%` }}
                       transition={{ delay: i * 0.04 + 0.2, duration: 0.5 }}
-                      className={cn('h-full rounded-full', colorClass.replace('/15', '/40'))}
+                      className={cn('h-full rounded-full', regionColor.bar)}
                     />
                   </div>
 
