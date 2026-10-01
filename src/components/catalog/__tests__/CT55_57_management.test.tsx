@@ -25,7 +25,7 @@ import type { ContactResult } from '../useSendProduct';
 import type { CatalogSendHistoryRow } from '@/hooks/integrations/useCatalogSendHistory';
 
 vi.mock('sonner', () => ({
-  toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
+  toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn(), warning: vi.fn(), info: vi.fn() }),
 }));
 
 const reduceMotion = vi.hoisted(() => ({ value: false }));
@@ -276,5 +276,35 @@ describe('CT-55 — deep link ?contact=<id>', () => {
 
     await screen.findByTestId('send-dialog');
     await waitFor(() => expect(hookReturn.fetchProduct).toHaveBeenCalledWith('p1'));
+  });
+
+  // Guarda de WhatsApp (mesmo critério do painel do contato: normalizeE164BR):
+  // contato do link sem telefone utilizável não pode habilitar o envio.
+  it('contato do link SEM WhatsApp (telefone inválido) não é pré-selecionado', async () => {
+    mockFetchContactPreset.mockResolvedValue({
+      id: 'c9', name: 'Sem Fone', phone: '123', avatar_url: null,
+    });
+    window.history.replaceState(null, '', '/?view=catalog&product=p1&send=1&contact=c9');
+
+    renderManagement();
+
+    const dialog = await screen.findByTestId('send-dialog');
+    // não vira presetContact: o dialog abre no passo normal de seleção
+    expect(dialog).toHaveAttribute('data-contact-id', '');
+    expect(dialog).toHaveAttribute('data-contact-name', '');
+    expect(dialog).toHaveAttribute('data-contact-phone', '');
+  });
+
+  it('contato do link com telefone válido continua pré-selecionado', async () => {
+    mockFetchContactPreset.mockResolvedValue({
+      id: 'c9', name: 'Cliente Deep Link', phone: '5541999990000', avatar_url: null,
+    });
+    window.history.replaceState(null, '', '/?view=catalog&product=p1&send=1&contact=c9');
+
+    renderManagement();
+
+    const dialog = await screen.findByTestId('send-dialog');
+    expect(dialog).toHaveAttribute('data-contact-id', 'c9');
+    expect(dialog).toHaveAttribute('data-contact-phone', '5541999990000');
   });
 });
