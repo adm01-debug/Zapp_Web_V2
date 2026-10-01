@@ -2,7 +2,7 @@ import { toast } from 'sonner';
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   Zap, Plus, FileText, ShieldBan, BarChart3, ArrowLeft,
-  LayoutDashboard, Users, HelpCircle,
+  LayoutDashboard, Users, HelpCircle, Settings,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTalkX, TalkXCampaign } from '@/hooks/integrations/useTalkX';
@@ -19,6 +19,7 @@ import { TalkXSegments } from './TalkXSegments';
 import { TalkXTemplates } from './TalkXTemplates';
 import { TalkXSuppression } from './TalkXSuppression';
 import { TalkXAnalytics } from './TalkXAnalytics';
+import { TalkXSettings } from './TalkXSettings';
 import { TalkXCampaignScheduled } from './TalkXCampaignScheduled';
 import { TalkXCampaignRunning } from './TalkXCampaignRunning';
 import { duplicateTalkXCampaignDraft } from './talkxCampaignDraft';
@@ -269,6 +270,7 @@ export default function TalkXView() {
               ['templates',   'Templates',   FileText],
               ['suppression', 'Lista de supressão', ShieldBan],
               ['analytics',   'Analytics',   BarChart3],
+              ['settings',    'Configurações', Settings],
             ] as const).map(([v, label, Icon]) => (
               <TabsTrigger key={v} value={v}
                 className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5
@@ -304,6 +306,9 @@ export default function TalkXView() {
         </TabsContent>
         <TabsContent value="analytics" className="mt-4">
           <TalkXAnalytics campaigns={campaigns} />
+        </TabsContent>
+        <TabsContent value="settings" className="mt-4">
+          <TalkXSettings />
         </TabsContent>
       </Tabs>
     </div>
