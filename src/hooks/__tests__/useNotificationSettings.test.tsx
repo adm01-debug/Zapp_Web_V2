@@ -224,6 +224,53 @@ describe('useNotificationSettings', () => {
     });
   });
 
+  // ========== VOCABULÁRIO DE SOM VINDO DO BANCO ==========
+  // O banco tem CHECK para ('beep'|'chime'|'bell'|'alert'|'soft'), mas o app não deve confiar
+  // nisso: um valor fora do conjunto virava `SOUND_CONFIGS[x]` undefined → throw engolido pelo
+  // catch → alerta MUDO, sem sintoma nenhum além de um warn no log.
+  describe('vocabulário de som', () => {
+    const comLinha = (data: unknown) => mockFrom.mockReturnValue(montarCadeia(data));
+
+    const carregar = async () => {
+      const { result } = renderHook(() => useNotificationSettings(), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      return result;
+    };
+
+    it('tipo fora do vocabulário cai no default em vez de emudecer o alerta', async () => {
+      comLinha({ sound_enabled: true, message_sound_type: 'quiet', mention_sound_type: 'pop' });
+      const result = await carregar();
+
+      expect(result.current.settings.messageSoundType).toBe('chime');
+      expect(result.current.settings.mentionSoundType).toBe('bell');
+    });
+
+    it('tipo válido continua sendo respeitado', async () => {
+      comLinha({ sound_enabled: true, message_sound_type: 'soft' });
+      const result = await carregar();
+
+      expect(result.current.settings.messageSoundType).toBe('soft');
+    });
+
+    it('avisa UMA vez por rajada de falhas, e volta a avisar numa rajada nova', async () => {
+      const upsert = vi.fn().mockResolvedValue({ error: new Error('falha de rede') });
+      mockFrom.mockReturnValue(montarCadeia(null, upsert));
+      const result = await carregar();
+
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(2026, 9, 1, 9, 0, 0));
+      await result.current.updateSettings({ soundVolume: 35 });
+      await result.current.updateSettings({ soundVolume: 40 });
+      await result.current.updateSettings({ soundVolume: 45 });
+      vi.setSystemTime(new Date(2026, 9, 1, 9, 0, 10));
+      await result.current.updateSettings({ soundVolume: 50 });
+      vi.useRealTimers();
+
+      expect(upsert).toHaveBeenCalledTimes(4);
+      expect(toastMock).toHaveBeenCalledTimes(2);
+    });
+  });
+
   // ========== HORÁRIO DE SILÊNCIO (isQuietHours) ==========
   // A lógica tem uma virada de dia (22:00 -> 08:00) e duas bordas ASSIMÉTRICAS
   // (início inclusivo, fim exclusivo). Nada disso estava coberto: um `>` trocado
