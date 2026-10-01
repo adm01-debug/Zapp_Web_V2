@@ -676,10 +676,19 @@ export function applyThemePreset(
 
   const colors = preset[mode];
   const cache: Record<string, string> = {};
+  // Alto contraste manda nas CORES (`.high-contrast`, em src/styles/accessibility.css).
+  // Escrever os tokens do preset aqui — inline, no mesmo `<html>` — venceria a classe e
+  // anularia o modo; então, com o HC ligado, a cor sai do inline e fica só na classe.
+  // A ORIGEM é a mesma coisa que o boot inline do index.html faz.
+  const altoContraste = root.classList.contains('high-contrast');
   for (const key of CSS_VARS_TO_APPLY) {
     const value = colors[key];
-    root.style.setProperty(`--${key}`, value);
     cache[key] = value;
+    if (altoContraste) {
+      root.style.removeProperty(`--${key}`);
+      continue;
+    }
+    root.style.setProperty(`--${key}`, value);
   }
 
   if (preset.borderRadius !== undefined) {
