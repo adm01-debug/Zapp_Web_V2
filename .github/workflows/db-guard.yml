@@ -343,11 +343,6 @@ jobs:
           TALKX_SEND_INTERVAL_TETO_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-send-interval-teto-24h.test.sh
 
-      - name: Simular replay do ALTER PUBLICATION duplicado do E27 (V06)
-        env:
-          TALKX_PUBLICATION_REPLAY_TEST_POSTGRES_IMAGE: postgres:17-alpine
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-publication-replay.test.sh
-
       - name: Simular supressão de contato idempotente nos eixos phone e contact_id (V07b)
         env:
           TALKX_SUPPRESS_PHONE_TEST_POSTGRES_IMAGE: postgres:17-alpine

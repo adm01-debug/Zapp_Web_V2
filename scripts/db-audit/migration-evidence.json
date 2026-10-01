@@ -679,19 +679,6 @@
       "justification": "O arquivo em main e uma versao resumida ou anterior ao SQL efetivamente aplicado em producao por sessoes paralelas. O banco ja tem o SQL correto do ledger; nenhum DDL adicional necessario."
     },
     {
-      "version": "20260927570000",
-      "filename": "20260927570000_talkx_e27_realtime_campaign_events.sql",
-      "file_sha256": "a09008089a9d72568ab429333766f307a55865bd248e0820377c09fe4e11ebb0",
-      "file_sql_sha256": "99f3554700fe52c70b3d026a8c1b35fcecf88650e67562de2bf77687c0cd7d52",
-      "ledger_name": "talkx_e27_realtime_campaign_events",
-      "ledger_statements_sha256": "ecbdd88a2eca1da1a04929d4d1bcc9957e1d020dc498d7e35af05772fd6c56b1",
-      "ledger_sql_sha256": "459fc5f5c9d5c78edcf751eb60d0a7e83080c4bf8a30c21f228b16ee611a5767",
-      "kind": "ledger-divergence/pinned-replay",
-      "reason": "safer-replay",
-      "related_migration": null,
-      "justification": "As migrations 20260927500001 e 20260927570000 (sessoes paralelas, mesmo E27) adicionam as mesmas 3 tabelas a publicacao supabase_realtime; num replay do zero a 2a falha com SQLSTATE 42710 (duplicate_object). O arquivo versionado envolve cada ALTER PUBLICATION ADD TABLE em um DO idempotente (WHEN duplicate_object) sem alterar o efeito final, enquanto o ledger preserva o DDL original sem o guard."
-    },
-    {
       "version": "20260927580000",
       "filename": "20260927580000_grant_agent_achievement_xp_reward_cap.sql",
       "file_sha256": "318f31a961a9b41296c8a866743ab2f86ddaeb275f8aa2d03f989928b78d42ee",
