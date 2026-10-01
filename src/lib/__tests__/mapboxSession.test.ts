@@ -88,4 +88,59 @@ describe('mapboxSession', () => {
       details: { source: 'picker' },
     });
   });
+
+  // E46 · `noteSuggestCall` sem sessão = erro de programação, não sessão fantasma.
+  // A sessão nasce em `getSearchSession()`; contar um `/suggest` sem sessão significa que alguém
+  // chamou `noteSuggestCall()` antes de abrir a sessão (ou depois de `endSearchSession()`), e a
+  // versão antiga criava uma sessão nova com `source='picker'` fixo — inflando sessão e audit.
+  describe('E46 — contar request sem sessão ativa', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      vi.restoreAllMocks();
+    });
+
+    it('em DEV lança erro de programação em noteSuggestCall', () => {
+      vi.stubEnv('DEV', true);
+      expect(() => noteSuggestCall()).toThrow(/sess[aã]o/i);
+    });
+
+    it('em DEV lança erro de programação em noteRetrieveCall', () => {
+      vi.stubEnv('DEV', true);
+      expect(() => noteRetrieveCall()).toThrow(/sess[aã]o/i);
+    });
+
+    it('em DEV não cria sessão fantasma nem registra audit', () => {
+      vi.stubEnv('DEV', true);
+      expect(() => noteSuggestCall()).toThrow();
+      expect(logAudit).not.toHaveBeenCalled();
+      // e o estado não foi criado: a próxima sessão de verdade nasce limpa
+      const token = getSearchSession('picker');
+      expect(logAudit).toHaveBeenCalledTimes(1);
+      expect(logAudit).toHaveBeenCalledWith({
+        action: 'searchbox_session',
+        details: { source: 'picker' },
+      });
+      expect(token).toBeTruthy();
+    });
+
+    it('em PROD é no-op com console.warn (nunca lança) e não inventa sessão', () => {
+      vi.stubEnv('DEV', false);
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      expect(() => noteSuggestCall()).not.toThrow();
+      expect(warn).toHaveBeenCalled();
+      expect(logAudit).not.toHaveBeenCalled();
+    });
+
+    it('em PROD o no-op não conta para o teto de 50 /suggest', () => {
+      vi.stubEnv('DEV', false);
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      for (let i = 0; i < 60; i += 1) noteSuggestCall();
+      expect(warn).toHaveBeenCalledTimes(60);
+      const first = getSearchSession('picker');
+      noteSuggestCall(); // agora existe sessão: conta de verdade
+      noteRetrieveCall();
+      const second = getSearchSession('picker');
+      expect(second).not.toBe(first); // 1 suggest + retrieve fecha, não 61 suggests
+    });
+  });
 });

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 import type { KeyboardEvent } from 'react';
-import { suggestPlaces, retrievePlaceResult, searchPlaces } from '@/lib/mapboxGeocode';
+import { suggestPlaces, retrievePlaceResult, searchPlaces, getCachedSuggest } from '@/lib/mapboxGeocode';
 import type { GeoSuggestion, GeoFailureKind, GeoProximity, GeoSearchPlace } from '@/lib/mapboxGeocode';
-import { getSearchSession, noteSuggestCall, noteRetrieveCall, endSearchSession } from '@/lib/mapboxSession';
+import { getSearchSession, peekSearchSession, noteSuggestCall, noteRetrieveCall, endSearchSession } from '@/lib/mapboxSession';
 import { isSearchBudgetOk } from '@/lib/mapboxCostGuard';
 import { reportMapboxFailure } from '@/lib/mapboxToken';
 import type { MapboxFailureKind } from '@/lib/mapboxToken';
@@ -279,6 +279,16 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     // quando o operador já digitou outra coisa (ver o guard no `.then` abaixo).
     activeTermRef.current = term;
     dispatch({ type: 'SUGGEST_START' });
+    // E45 · o cache vem ANTES de abrir sessão: `peekSearchSession()` espia a sessão corrente sem
+    // criar nem renovar, e `getCachedSuggest` lê a entrada dela. Termo já cacheado entrega o
+    // resultado sem sessão nova e sem contar `/suggest` — abrir sessão para servir cache é cobrar
+    // um request que não existiu. De quebra, o E46 fica satisfeito: não se conta request sem sessão.
+    const peeked = peekSearchSession();
+    const fromCache = peeked === null ? undefined : getCachedSuggest(peeked, term);
+    if (fromCache !== undefined) {
+      dispatch({ type: 'SUGGEST_SUCCESS', suggestions: fromCache });
+      return;
+    }
     const session = getSearchSession(sessionSource);
     noteSuggestCall();
     suggestPlaces(term, token, { session, proximity, signal: controller.signal, types }).then(async (result) => {

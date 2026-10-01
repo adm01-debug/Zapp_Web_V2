@@ -6,8 +6,10 @@ const h = vi.hoisted(() => ({
   suggestPlaces: vi.fn(),
   retrievePlaceResult: vi.fn(),
   searchPlaces: vi.fn(),
+  getCachedSuggest: vi.fn(),
   reportMapboxFailure: vi.fn(),
   getSearchSession: vi.fn(),
+  peekSearchSession: vi.fn(),
   noteSuggestCall: vi.fn(),
   noteRetrieveCall: vi.fn(),
   endSearchSession: vi.fn(),
@@ -23,6 +25,8 @@ vi.mock('@/lib/mapboxGeocode', async (importOriginal) => {
     retrievePlaceResult: (...args: unknown[]) => h.retrievePlaceResult(...args),
     // F2/E15: o fallback do /suggest é o /forward — precisa de mock para o teste controlar a rota.
     searchPlaces: (...args: unknown[]) => h.searchPlaces(...args),
+    // E45: o hook confere o cache ANTES de abrir sessão — o teste controla o que está cacheado.
+    getCachedSuggest: (...args: unknown[]) => h.getCachedSuggest(...args),
   };
 });
 vi.mock('@/lib/mapboxToken', async (importOriginal) => {
@@ -31,6 +35,7 @@ vi.mock('@/lib/mapboxToken', async (importOriginal) => {
 });
 vi.mock('@/lib/mapboxSession', () => ({
   getSearchSession: () => h.getSearchSession(),
+  peekSearchSession: () => h.peekSearchSession(),
   noteSuggestCall: () => h.noteSuggestCall(),
   noteRetrieveCall: () => h.noteRetrieveCall(),
   endSearchSession: () => h.endSearchSession(),
@@ -65,6 +70,10 @@ describe('useAddressAutocomplete', () => {
     // mantém o comportamento antigo (erro exposto) nos testes que não falam de fallback.
     h.searchPlaces.mockReset().mockResolvedValue({ ok: false, kind: 'not_found' });
     h.reportMapboxFailure.mockReset();
+    // E45: por padrão não há sessão espiada nem termo em cache — o fluxo segue o caminho da rede,
+    // que é o que os testes anteriores a esta etapa exercitam.
+    h.getCachedSuggest.mockReset().mockReturnValue(undefined);
+    h.peekSearchSession.mockReset().mockReturnValue(null);
     h.getSearchSession.mockReset().mockReturnValue('session-1');
     h.noteSuggestCall.mockReset();
     h.noteRetrieveCall.mockReset();
@@ -89,6 +98,70 @@ describe('useAddressAutocomplete', () => {
     await act(async () => { places.push(await result.current.select(0)); });
     return { result, place: places[0] ?? null };
   }
+
+  // E45 · A sessão nasce no primeiro request REAL. Termo que já está em cache é servido sem abrir
+  // sessão e sem contar `/suggest`: repetir um termo (ou voltar a um já buscado) gerava sessão de
+  // billing e evento de audit para um request que nunca saiu — custo e sessões medidos inflados.
+  describe('E45 — sessão só nasce no primeiro request real', () => {
+    it('mesmo termo 2×: o 2º sai do cache, sem sessão nova e sem contar /suggest', async () => {
+      // A rede devolve C; o cache de "Rua A" tem A — assim dá para provar de onde veio o resultado.
+      h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionC] });
+      const { result } = setup();
+      act(() => { result.current.setQuery('Rua A'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+      expect(h.getSearchSession).toHaveBeenCalledTimes(1);
+      expect(h.suggestPlaces).toHaveBeenCalledTimes(1);
+      expect(h.noteSuggestCall).toHaveBeenCalledTimes(1);
+
+      // A sessão segue viva e "Rua A" fica em cache (só ele; qualquer outro termo vai à rede).
+      h.peekSearchSession.mockReturnValue('session-1');
+      h.getCachedSuggest.mockImplementation((_s: string, t: string) =>
+        t === 'Rua A' ? [suggestionA] : undefined,
+      );
+
+      // Digitar outro termo e VOLTAR ao primeiro é o caso real (setQuery com o mesmo valor não
+      // re-renderiza no React, então o teste precisa passar por um termo diferente).
+      act(() => { result.current.setQuery('Rua B'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+      expect(h.getSearchSession).toHaveBeenCalledTimes(2);
+      expect(result.current.suggestions).toEqual([suggestionC]);
+
+      act(() => { result.current.setQuery('Rua A'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      expect(h.getCachedSuggest).toHaveBeenCalledWith('session-1', 'Rua A');
+      expect(h.getSearchSession).toHaveBeenCalledTimes(2); // termo cacheado: nenhuma sessão nova
+      expect(h.noteSuggestCall).toHaveBeenCalledTimes(2); // nem /suggest contado a mais
+      expect(h.suggestPlaces).toHaveBeenCalledTimes(2); // e nada saiu para a rede
+      expect(result.current.suggestions).toEqual([suggestionA]); // veio do cache, não da rede
+    });
+
+    it('termo em cache com sessão vencida: 0 sessões novas (peek não renova)', async () => {
+      h.peekSearchSession.mockReturnValue('session-velha');
+      h.getCachedSuggest.mockReturnValue([suggestionB]);
+      const { result } = setup();
+      act(() => { result.current.setQuery('Rua B'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      expect(h.getSearchSession).not.toHaveBeenCalled();
+      expect(h.noteSuggestCall).not.toHaveBeenCalled();
+      expect(h.suggestPlaces).not.toHaveBeenCalled();
+      expect(result.current.suggestions).toEqual([suggestionB]);
+    });
+
+    it('lista vazia cacheada (E19) também é servida sem sessão nova', async () => {
+      h.peekSearchSession.mockReturnValue('session-1');
+      h.getCachedSuggest.mockReturnValue([]);
+      const { result } = setup();
+      act(() => { result.current.setQuery('Rua Z'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      expect(h.getSearchSession).not.toHaveBeenCalled();
+      expect(h.suggestPlaces).not.toHaveBeenCalled();
+      expect(result.current.suggestions).toEqual([]);
+      expect(result.current.status).toBe('empty');
+    });
+  });
 
   it('não faz nenhuma chamada enquanto enabled=false', async () => {
     const { result } = setup({ enabled: false });
