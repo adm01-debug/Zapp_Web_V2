@@ -8,6 +8,9 @@
  * atualizar o mapa — que é a lista de trabalho da revisão.
  *
  * Medição de origem: 139 arquivos .ts em supabase/functions, 5 ocorrências.
+ * Recontagem em 01/10/2026: 143 arquivos — o CT-77 acrescentou o arquivo de
+ * TESTE `promogifts-catalog/index.actions.test.ts`. O mapa INVENTARIO e o
+ * total de ocorrências (3) permanecem idênticos: nenhum produtor novo entrou.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -82,8 +85,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('142 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(142);
+  it('143 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(143);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );

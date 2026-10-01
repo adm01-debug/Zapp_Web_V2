@@ -1,8 +1,14 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { formatPrice, formatStock, resolveProductBadge, ColorChips, ColorSwatch, PriceTag, StockPill, LowStockPill, ProductThumb, FavoriteButton, CatalogKpiStrip, CategoryChips, CatalogFilterBar, MetaTile, SectionCard, AdvancedFilterChips, countAdvancedFilters, DEFAULT_ADVANCED_FILTERS, matchesAnySelected, TagMultiSelectChips, type AdvancedFilters } from '../catalogShared';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, renderHook, act } from '@testing-library/react';
+import { formatPrice, formatStock, resolveProductBadge, ColorChips, ColorSwatch, PriceTag, StockPill, LowStockPill, ProductThumb, FavoriteButton, CatalogKpiStrip, CategoryChips, CatalogFilterBar, MetaTile, SectionCard, AdvancedFilterChips, countAdvancedFilters, DEFAULT_ADVANCED_FILTERS, matchesAnySelected, TagMultiSelectChips, countLabel, CatalogErrorState, useRateLimitCooldown, type AdvancedFilters } from '../catalogShared';
 import type { CatalogStats } from '@/hooks/integrations/useExternalCatalog';
 import { Layers } from 'lucide-react';
+
+// CT-59 — useRateLimitCooldown dispara toast do sonner no 429.
+const toastError = vi.hoisted(() => vi.fn());
+vi.mock('sonner', () => ({
+  toast: Object.assign(vi.fn(), { error: toastError, success: vi.fn() }),
+}));
 
 describe('catalogShared', () => {
   it('formatPrice formata em BRL pt-BR', () => {
@@ -516,5 +522,83 @@ describe('TagMultiSelectChips (E36)', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Azul' }));
     expect(onChange).toHaveBeenCalledWith([]);
+  });
+});
+
+describe('catalogShared — CT-59/CT-60', () => {
+  beforeEach(() => {
+    toastError.mockReset();
+  });
+
+  describe('countLabel', () => {
+    it('mostra a contagem entre parênteses quando existe', () => {
+      expect(countLabel('Brindes', 42)).toBe('Brindes (42)');
+      expect(countLabel('Canecas', 1234)).toBe('Canecas (1.234)');
+      expect(countLabel('Vazia', 0)).toBe('Vazia (0)');
+    });
+
+    it('sem contagem na fonte, não inventa número', () => {
+      expect(countLabel('Spot', null)).toBe('Spot');
+      expect(countLabel('Spot', undefined)).toBe('Spot');
+    });
+  });
+
+  describe('useRateLimitCooldown', () => {
+    it('dispara o toast no 429 e libera os botões só depois de 10 s', () => {
+      vi.useFakeTimers();
+      try {
+        const { result, rerender } = renderHook(
+          ({ rateLimited }: { rateLimited: boolean }) => useRateLimitCooldown(rateLimited),
+          { initialProps: { rateLimited: false } },
+        );
+        expect(result.current).toBe(false);
+
+        rerender({ rateLimited: true });
+        act(() => { vi.advanceTimersByTime(0); });
+        expect(result.current).toBe(true);
+        expect(toastError).toHaveBeenCalledWith('Muitas requisições, aguarde 1 min');
+
+        act(() => { vi.advanceTimersByTime(9_000); });
+        expect(result.current).toBe(true);
+
+        act(() => { vi.advanceTimersByTime(1_000); });
+        expect(result.current).toBe(false);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('sem 429 não dispara toast nem bloqueia', () => {
+      vi.useFakeTimers();
+      try {
+        const { result } = renderHook(() => useRateLimitCooldown(false));
+        act(() => { vi.advanceTimersByTime(1_000); });
+        expect(result.current).toBe(false);
+        expect(toastError).not.toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
+  describe('CatalogErrorState', () => {
+    it('CATALOG_UPSTREAM_ERROR usa TalkXDataUnavailableState e chama onRetry', () => {
+      const onRetry = vi.fn();
+      render(<CatalogErrorState code="CATALOG_UPSTREAM_ERROR" onRetry={onRetry} />);
+      expect(screen.getByText('Dados indisponíveis')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
+      expect(onRetry).toHaveBeenCalled();
+    });
+
+    it('cooldown do 429 desabilita o "Tentar de novo"', () => {
+      render(<CatalogErrorState code="CATALOG_RATE_LIMITED" message="Too many requests" retryDisabled onRetry={vi.fn()} />);
+      expect(screen.getByText('Too many requests')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Tentar de novo' })).toBeDisabled();
+    });
+
+    it('códigos de configuração/credencial mostram o código ao admin', () => {
+      render(<CatalogErrorState code="CATALOG_NOT_CONFIGURED" />);
+      expect(screen.getByText('CATALOG_NOT_CONFIGURED')).toBeInTheDocument();
+    });
   });
 });

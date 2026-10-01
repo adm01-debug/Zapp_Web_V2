@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { ReactNode } from 'react';
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SendProductDialog } from '../SendProductDialog';
 import type { ExternalProduct, ExternalProductVariant } from '@/hooks/integrations/useExternalCatalog';
@@ -36,6 +36,9 @@ const mockFetchContacts = vi.hoisted(() => vi.fn());
 vi.mock('@/hooks/integrations/useCatalogContactSearch', () => ({
   fetchCatalogContactResults: (...args: unknown[]) => mockFetchContacts(...args),
   logCatalogSendEvent: vi.fn().mockResolvedValue(undefined),
+  // CT-43 — useSendProduct importa esta constante do módulo real; ela precisa
+  // existir no mock, senão o import estoura ao montar o dialog.
+  CONTACT_SEARCH_MIN_CHARS: 2,
 }));
 
 const mockSendOutboundMessage = vi.hoisted(() => vi.fn());
@@ -412,5 +415,67 @@ describe('SendProductDialog — CT-17 (contato da conversa pré-selecionado)', (
 
     expect(screen.getByText(/Nenhuma conexão de WhatsApp ativa/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Enviar para Cliente da Conversa/i })).toBeDisabled();
+  });
+});
+
+describe('SendProductDialog — CT-38 (card de info do produto no modo completo)', () => {
+  beforeEach(() => {
+    setupDialogMocks();
+    sessionStorage.clear();
+  });
+
+  const variantProduct = (o: Partial<ExternalProduct> = {}) => mockProduct({
+    variants: [mockVariant({
+      id: 'v1', color_name: 'Azul', color_hex: '#0000ff',
+      selected_thumbnail: 'https://x/azul.jpg', stock_quantity: 7,
+    })],
+    ...o,
+  });
+
+  it('mostra thumb, nome, modelo e contagem de fotos no modo completo', () => {
+    renderDialog({ product: mockProduct({ name: 'Caneta Bambu Eco' }) });
+
+    const card = screen.getByTestId('product-info-card');
+    expect(within(card).getByText('Caneta Bambu Eco')).toBeInTheDocument();
+    expect(within(card).getByAltText('Caneta Bambu Eco')).toHaveAttribute('src', 'https://x/a.jpg');
+    expect(within(card).getByText('1 foto(s) · Modelo Informal')).toBeInTheDocument();
+  });
+
+  it('atualiza o modelo do card ao trocar o template da mensagem', () => {
+    renderDialog();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Formal' }));
+
+    const card = screen.getByTestId('product-info-card');
+    expect(within(card).getByText('1 foto(s) · Modelo Formal')).toBeInTheDocument();
+  });
+
+  it('não mostra o card no modo "Variação Específica" e mantém os cards de variação com foto/cor/estoque', () => {
+    renderDialog({ product: variantProduct() });
+    expect(screen.getByTestId('product-info-card')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Variação Específica/i }));
+
+    expect(screen.queryByTestId('product-info-card')).not.toBeInTheDocument();
+
+    const variantCard = screen.getByText('Azul').closest('button')!;
+    expect(within(variantCard).getByAltText('Azul')).toHaveAttribute('src', 'https://x/azul.jpg');
+    expect(within(variantCard).getByText('1 foto · 7 un.')).toBeInTheDocument();
+  });
+
+  it('mantém o card visível no modo completo quando o produto tem variantes', () => {
+    renderDialog({ product: variantProduct() });
+
+    expect(screen.getByTestId('product-info-card')).toBeInTheDocument();
+    expect(within(screen.getByTestId('product-info-card')).getByText('Caneta Bambu')).toBeInTheDocument();
+  });
+
+  it('convive com o contato pré-selecionado, sem quebrar o modo presetContact (CT-17)', () => {
+    renderDialog({
+      presetContact: { id: 'c1', name: 'Cliente', phone: '5511999990000', avatar_url: null },
+    });
+
+    expect(screen.getByTestId('product-info-card')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Enviar para Cliente/i })).toBeInTheDocument();
   });
 });
