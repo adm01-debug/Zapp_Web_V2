@@ -206,6 +206,23 @@ describe('useAddressAutocomplete', () => {
       expect(result.current.blocked).toBe('rate_limited');
       expect(h.suggestPlaces).toHaveBeenCalledTimes(1); // backoff anti-hammering segura
     });
+
+    it('Enter continua ativo na pausa: o hook não engole a tecla (quem usa cai no /forward)', async () => {
+      h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'rate_limited' });
+      const { result } = setup();
+      act(() => { result.current.setQuery('rua a'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+      expect(result.current.status).toBe('paused');
+
+      const enter = fakeKeyEvent('Enter');
+      act(() => { result.current.onKeyDown(enter); });
+
+      // Na pausa não há item destacado, então o hook não chama preventDefault: a tecla segue para
+      // a busca do consumidor (/forward, F2) — é o que garante "o operador nunca fica sem busca".
+      expect(enter.preventDefault).not.toHaveBeenCalled();
+      expect(h.retrievePlaceResult).not.toHaveBeenCalled(); // nada de /retrieve sem seleção
+      expect(result.current.status).toBe('paused'); // e a pausa continua de pé
+    });
   });
 
   it('não faz nenhuma chamada enquanto enabled=false', async () => {
