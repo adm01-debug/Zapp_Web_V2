@@ -49,11 +49,11 @@ export const KANBAN_COLUMNS: Array<{
   shortLabel: string;
   policy: string;
 }> = [
-  { status: 'backlog', label: 'Caixa de entrada', shortLabel: 'Entrada',    policy: 'Tudo que voce capturou e ainda nao decidiu.' },
+  { status: 'backlog', label: 'Caixa de entrada', shortLabel: 'Entrada',    policy: 'Tudo que você capturou e ainda não decidiu.' },
   { status: 'todo',    label: 'A fazer',           shortLabel: 'A fazer',   policy: 'Decidido: vai ser feito.' },
-  { status: 'doing',   label: 'Fazendo',           shortLabel: 'Fazendo',   policy: 'O que esta nas suas maos agora. Tres e o limite.' },
-  { status: 'waiting', label: 'Aguardando',        shortLabel: 'Aguardando',policy: 'Parou por causa de alguem ou algo. Escreva o motivo.' },
-  { status: 'done',    label: 'Concluido',         shortLabel: 'Concluido', policy: 'Feito. Fica 7 dias a vista.' },
+  { status: 'doing',   label: 'Fazendo',           shortLabel: 'Fazendo',   policy: 'O que está nas suas mãos agora. Três é o limite.' },
+  { status: 'waiting', label: 'Aguardando',        shortLabel: 'Aguardando',policy: 'Parou por causa de alguém ou algo. Escreva o motivo.' },
+  { status: 'done',    label: 'Concluído',         shortLabel: 'Concluído', policy: 'Feito. Fica 7 dias à vista.' },
 ];
 
 export const WIP_LIMITS: Record<WorkItemStatus, { hard: number | null; soft: number | null }> = {
