@@ -49,7 +49,7 @@ function tokensDoBloco(css: string, seletor: string): Record<string, Rgb> {
   if (inicio < 0) throw new Error(`seletor ${seletor} não encontrado em tokens.css`);
   const corpo = css.slice(inicio, css.indexOf('}', inicio));
   const tokens: Record<string, Rgb> = {};
-  for (const m of Array.from(corpo.matchAll(/--([\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g))) {
+  for (const m of Array.from(corpo.matchAll(/--(\w[\w-]*):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g))) {
     tokens[m[1]] = hslParaRgb(Number(m[2]), Number(m[3]), Number(m[4]));
   }
   return tokens;
@@ -57,7 +57,7 @@ function tokensDoBloco(css: string, seletor: string): Record<string, Rgb> {
 
 const TOKENS_CSS = readFileSync('src/styles/tokens.css', 'utf8');
 const CLARO = tokensDoBloco(TOKENS_CSS, ':root');
-const ESCURO = tokensDoBloco(TOKENS_CSS, '.dark');
+const ESCURO = tokensDoBloco(TOKENS_CSS, '.dark {');
 
 function parede(tokens: Record<string, Rgb>, nome: string): Rgb {
   const cor = tokens[nome];
