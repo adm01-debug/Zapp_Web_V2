@@ -188,3 +188,58 @@
     transform: none;
   }
 }
+
+/* ===== ETAPA 79 — MOVIMENTO REDUZIDO NAS TAREFAS =====
+   `@hello-pangea/dnd` escreve a transição do arrasto INLINE no elemento arrastável
+   (`[data-rbd-draggable-id]`). O global de `accessibility.css` já corta as durações para
+   0,01ms, mas o E.2 do plano mede 0s de verdade — daí `none` + `!important`, que é a
+   única forma de vencer um estilo inline. O card e o módulo entram junto: o card porque
+   também vive no mini-quadro do chat (fora do módulo) e é ele que a animação de concluir
+   move entre as seções; o módulo (e o que está dentro) porque o DoD pede TODAS as
+   `transitionDuration` em 0s nas telas de Tarefas, não só a do arrasto. */
+@media (prefers-reduced-motion: reduce) {
+  [data-rbd-draggable-id],
+  [data-testid="work-item-card"],
+  [data-testid="work-item-card"] *,
+  [data-testid="tasks-module"],
+  [data-testid="tasks-module"] * {
+    transition: none !important;
+  }
+}
+
+/* ===== ETAPA 80 — CONTRASTE AA DOS ESTADOS (E.3) =====
+   `--warning` e `--destructive` são cores de PREENCHIMENTO (tinta com alfa, fundo cheio e
+   borda): como TEXTO caíam para 2,1:1 (âmbar no card claro) e 2,6:1 (vermelho no card
+   escuro). O par de texto dos dois modos está em `tokens.css` (`--warning-text` /
+   `--destructive-text`, ≥4,5:1 sobre o card E sobre a própria tinta /15). Nada de
+   preenchimento, borda ou tamanho muda — o desenho medido pelo E.3 segue o mesmo.
+
+   As regras são do MÓDULO de Tarefas (não de um componente) para fechar também os
+   arquivos do domínio que não pertencem a esta etapa (cabeçalhos da Lista/Agenda, chips de
+   alarme/idade, KPIs). O seletor do módulo é o que vence o `text-warning`/`text-destructive`
+   do Tailwind por especificidade, sem `!important`. */
+[data-testid="tasks-module"] .text-warning,
+[data-testid="tasks-module"] .text-warning\/80 {
+  color: hsl(var(--warning-text));
+}
+
+[data-testid="tasks-module"] .text-destructive {
+  color: hsl(var(--destructive-text));
+}
+
+/* Texto de apoio: `muted-foreground` COM alfa (a política da coluna vazia, o "Coluna
+   vazia", o atalho N e o cabeçalho de Concluídas) sobre o card caía a 3,0:1 e 2,5:1. O tom
+   cheio do modo mantém a hierarquia — 5,7:1 no claro e 9,3:1 no escuro — e segue mais
+   apagado que o `text-foreground`. */
+[data-testid="tasks-module"] :is(.text-muted-foreground\/70, .text-muted-foreground\/60) {
+  color: hsl(var(--muted-foreground));
+}
+
+/* Chips do QuickAdd (etapas 35/39/40): `.chip-active` escreve em `--primary-glow` —
+   4,4:1 no claro e 4,0:1 no escuro, abaixo dos 4,5:1 de texto. A primária do próprio modo
+   fecha (7,4:1 / 14,3:1). A regra é global porque os chips nascem em PORTAL (popover do ⋯
+   e combobox), fora do `[data-testid="tasks-module"]`; `.chip-active` só existe nas
+   Tarefas. A classe repetida é o que vence `components.css`, que é importado depois. */
+.chip-active.chip-active {
+  color: hsl(var(--primary));
+}
