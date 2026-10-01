@@ -57,18 +57,18 @@ test.describe('Volume das mídias de conversa', () => {
   });
 
   test('o controle da sidebar muda o volume e o valor sobrevive ao reload', async ({ page, browserName }) => {
-    // O clique longo (`pointerdown` + 400 ms) é o caminho não-visual do slider;
-    // no CI ele é estável no Chromium (mouse real). Firefox/WebKit não rodam este
-    // spec (project `chromium-authenticated`), a guarda é só documental.
+    // O slider abre pelo teclado (`Enter` = equivalente de teclado do clique longo,
+    // documentado em `useVolumeRocker`). O clique longo com `mouse.down()/up()` reais
+    // era instável no CI: o timer de 400 ms é cancelado por qualquer `pointerleave`
+    // (`VolumeTriggerButton.tsx:40-42`), e as runs do `e2e-logado` de 30/09 e 01/10
+    // apareciam como *flaky* (1ª tentativa vermelha, retry verde).
     test.skip(browserName !== 'chromium', 'spec roda no project chromium-authenticated');
 
     const controle = page.getByRole('button', { name: new RegExp(`${LABEL_VOLUME}|${LABEL_MUDO}`) });
     await expect(controle).toBeVisible();
 
-    await controle.hover();
-    await page.mouse.down();
-    await page.waitForTimeout(500);
-    await page.mouse.up();
+    await controle.focus();
+    await controle.press('Enter');
 
     const slider = page.getByRole('slider', { name: LABEL_SLIDER });
     await expect(slider).toBeVisible();
@@ -104,10 +104,8 @@ test.describe('Volume das mídias de conversa', () => {
     await page.locator('[data-testid="conversation-item"]').first().click();
 
     const controleDepois = page.getByRole('button', { name: new RegExp(`${LABEL_VOLUME}|${LABEL_MUDO}`) });
-    await controleDepois.hover();
-    await page.mouse.down();
-    await page.waitForTimeout(500);
-    await page.mouse.up();
+    await controleDepois.focus();
+    await controleDepois.press('Enter');
 
     await expect(page.getByRole('slider', { name: LABEL_SLIDER })).toHaveAttribute(
       'aria-valuenow',
