@@ -72,11 +72,12 @@ export function useTasksFilters() {
   const setSearch = useCallback((value: string) => {
     setTextoDaBusca(value);
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    // Se a URL mudar entre digitar e aplicar (navegação no meio do debounce), a URL vence.
-    const base = typeof window === 'undefined' ? '' : window.location.search;
+    // F3 (auditoria A1-1): NÃO se compara a URL aqui. `window.location` é reescrito
+    // por este MESMO hook a cada mudança de filtro, então "a URL mudou" não
+    // distingue navegação de escrita própria — a guarda antiga descartava a busca
+    // em silêncio (campo com texto, filtro vazio e `?q=` fora da URL). Quem cobre
+    // navegação é a reidratação pelo `search` do router, acima.
     timeoutRef.current = setTimeout(() => {
-      const agora = typeof window === 'undefined' ? '' : window.location.search;
-      if (agora !== base) return;
       dispatch({ type: 'q', value });
     }, SEARCH_DEBOUNCE_MS);
   }, []);

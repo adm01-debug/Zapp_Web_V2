@@ -212,6 +212,11 @@ jobs:
           CONTACTS_F1_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/contacts-soft-delete-and-status.test.sh
 
+      - name: Simular contatos legados fora por padrão (include_legacy)
+        env:
+          CONTACTS_F5_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/contacts-legacy-visibility.test.sh
+
       - name: Simular autorização de status de conversa e etiquetas de WhatsApp
         env:
           WA_TAG_AUTHZ_TEST_POSTGRES_IMAGE: postgres:17-alpine
@@ -312,6 +317,11 @@ jobs:
         env:
           TALKX_UPDATE_LIMITS_CASTS_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-update-limits-casts.test.sh
+
+      - name: Simular correção do vazamento 22009 na RPC Talk X (V09e)
+        env:
+          TALKX_UPDATE_LIMITS_22009_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-update-limits-22009.test.sh
 
       - name: Simular autenticação do escape hatch de limites Talk X (V09d)
         env:

@@ -94,7 +94,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 ## CP-C Sheet       [ ] WorkItemSheet= · ?task= · Aguardando por DnD/kebab/menu= · kebab 5 grupos= · RemindChip popover= · ContactChip=
 ## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
-## CP-E Telas       [~] etapas 43, 44, 45 e 46, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8), 53, 55, 56 e 57 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos: ok (barra de 5 filtros, estado na URL por replaceState, recorte único) · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos: ok (3 grupos, ponto por tipo, atrasadas expansível) · card agenda: ok (h-11, 1 linha, checkbox) · QuickAdd no dia: ok (pré-preenchido) · 0 requests na troca= · modo por rota: ok · auditoria F1: ok (7 correções; 9 mutações mortas) · auditoria F2: ok (7 correções; 7 mutações mortas)
+## CP-E Telas       [~] etapas 43, 44, 45 e 46, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8), 53, 55, 56 e 57 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos: ok (barra de 5 filtros, estado na URL por replaceState, recorte único) · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos: ok (3 grupos, ponto por tipo, atrasadas expansível) · card agenda: ok (h-11, 1 linha, checkbox) · QuickAdd no dia: ok (pré-preenchido) · 0 requests na troca= · modo por rota: ok · auditoria F1: ok (7 correções; 9 mutações mortas) · auditoria F2: ok (7 correções; 7 mutações mortas) · auditoria F3: ok (A4 16/16 mutações mortas; A1-1 corrigido; 3 achados do A2 na fila)
 
 ## Etapa 47 (B7) — modo por rota (Fase E) — evidências
 
@@ -434,6 +434,42 @@ o rascunho preservado ao trocar de dia, `aria-controls` no "Atrasadas" e a blind
 **Mutação (7, árvore restaurada entre cada):** **7/7 mortas** — M1 submit apagando o prazo · M2 sem o ajuste no render · M3 `temHora` exigindo hora ≠ 23:59 · M4 "Prazos" sem ordenação · M5 o pai remontando o campo · M6 sem `aria-controls` · M7 chip sem blindagem.
 
 **Gates:** `typecheck` ✓ · tipografia ✓ · `lint-ratchet` 0 novas ✓ · suíte completa **345 arquivos / 4554 testes** ✓ · `build` ✓ · bundle **4050,2/4100 KB** ✓
+
+## FASE F3 — auditoria adversarial das correções F1/F2 (30/09–01/10/2026) — evidências
+
+**Método:** 5 frentes independentes, cada uma em cópia descartável com `node_modules` compartilhado
+(precisavam MUTAR e rodar de verdade) + reprodução do coordenador. HEAD auditado: `826fa148` — o
+MESMO commit que a produção servia no momento da auditoria.
+
+**Veredito por frente:**
+
+| frente | escopo | resultado |
+|---|---|---|
+| A1 | filtros, URL, debounce, busca | **1 achado ALTA (A1-1, regressão minha)** — corrigido neste PR |
+| A2 | contagens reais × filtradas, estados vazios, `bucketByDue` | 3 probes vermelhos (A2-11, A2-12, A2-30) → fila, PR próprio |
+| A3 | Agenda/QuickAdd (23:59, ordem, 2º create, rascunho) | sem defeito ALTO: os comportamentos declarados resistiram |
+| A4 | força dos testes novos (mutação independente) + a11y + contratos | **16/16 mutações mortas**; 7 mutações de cenário (M17–M27) previstas sobreviventes → cobertura estreita, fila |
+| A5 | integridade de entrega (repo, produção, banco, ledger) | **#1325 e #1334 mergeados**; produção `buildId 826fa148` == topo do `main`; **0 migrations** do tema (692 aplicadas, última de outra frente); build+bundle dentro do budget |
+
+**A1-1 (ALTA) — a busca era descartada em silêncio:** a guarda `if (agora !== base) return` do debounce
+comparava `window.location.search`, que é reescrito pelo próprio hook a cada mudança de filtro. Digitar
+e mexer em outro filtro dentro dos 200 ms → campo com texto, `filters.q` vazio e `?q=` fora da URL.
+Reprodução crua do auditor: `{aposDigitar:{q:'',textoDaBusca:'liga'}, aposPrio:{prio:'high'},
+aposDebounce:{q:''}}`. **Correção:** remover a guarda (o `clear` já cancela o timer; navegação é
+coberta pela reidratação pelo `search` do router).
+
+**Testes/gates deste PR:** red-first (`expected '' to be 'liga'`) → verde (8/8) → mutação que
+reintroduz a guarda **mata** o teste; `typecheck` ✓ · tipografia ✓ · `lint-ratchet` 0 novas
+(26 removidas) ✓ · `implicit-any` 0 ✓ · `db:guard` 0 novas ✓ · suíte completa **348 arquivos /
+4638 testes, 0 falhas** ✓ · `build` ✓ · bundle **4051,0/4100 KB** ✓
+
+**Limites declarados:** A1-1 residual (digitar e navegar dentro dos 200 ms → o texto digitado vence,
+caso raro); a frente A4 não concluiu a agregação do próprio script (as 16 primeiras mutações foram
+lidas das saídas cruas `res1/res2.json`); A2 ainda não corrigido; RLS/PostgREST real seguem não
+provados (fora do escopo desta mudança de frontend).
+
+**Relatório completo (fora do repo):** `~/auditorias/fase-f-260930/` — árvores `a1`…`a5` com as
+sondas, `res1/res2.json` das mutações e os logs crus.
 
 ## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
 ## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=

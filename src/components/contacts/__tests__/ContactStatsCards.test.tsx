@@ -19,7 +19,7 @@ function baseKpi(overrides: Partial<ReturnType<typeof mockUseContactsKpi>> = {})
     deltaFornecedoresPct: -20,
     seriesTotalCumulative12w: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     seriesNovosDaily30: [1, 2, 3, 4, 5, 6, 7],
-    seriesEmpresasWeekly12: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    seriesEmpresasCumulative12w: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     seriesFornecedoresWeekly12: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     ...overrides,
   };
@@ -60,12 +60,20 @@ describe('ContactStatsCards', () => {
   });
 
   it('KPI Empresas não tem delta calculado (null) e não renderiza sparkline quando a série é zerada', () => {
-    mockUseContactsKpi.mockReturnValue({ data: baseKpi({ empresasDistinct: 0, seriesEmpresasWeekly12: Array(12).fill(0) }), isLoading: false });
+    mockUseContactsKpi.mockReturnValue({ data: baseKpi({ empresasDistinct: 0, seriesEmpresasCumulative12w: Array(12).fill(0) }), isLoading: false });
     render(<ContactStatsCards totalAll={1516} fornecedoresAll={7} />);
     const empresasCard = screen.getByText('Empresas').closest('[data-testid="kpi-card"]') as HTMLElement;
     // Só o ícone do tile é um svg — sem o segundo svg (sparkline) quando a série é zerada.
     expect(empresasCard.querySelectorAll('svg')).toHaveLength(1);
     // deltaPct=null (noData) → subtitle oculto, 'sem alteração' não aparece
     expect(empresasCard.textContent).not.toContain('sem alteração');
+  });
+
+  it('repassa o toggle "Mostrar legados" para o KPI (mesmo critério da lista e das abas)', () => {
+    mockUseContactsKpi.mockReturnValue({ data: baseKpi(), isLoading: false });
+    render(<ContactStatsCards totalAll={1516} fornecedoresAll={7} />);
+    expect(mockUseContactsKpi).toHaveBeenLastCalledWith(false);
+    render(<ContactStatsCards totalAll={2498} fornecedoresAll={7} includeLegacy />);
+    expect(mockUseContactsKpi).toHaveBeenLastCalledWith(true);
   });
 });

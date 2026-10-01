@@ -141,6 +141,10 @@ function motivoNaoAtendida(outcome?: CallEndOutcome | null): EndReason {
       return 'cancelled_remote';
     case 'timeout':
       return 'timeout';
+    // Falha local/transporte antes de atender: NÃO é "não atendida" — espelha
+    // `motivoAtendida`, senão uma falha do discar era gravada como no_answer.
+    case 'failure':
+      return 'failed';
     default: {
       const sipCode = outcome?.sipCode ?? null;
       return sipCode === null ? 'no_answer' : sipCodeToEndReason(sipCode);
@@ -206,4 +210,31 @@ export async function upsertMyCall(input: UpsertMyCallInput): Promise<UpsertMyCa
     }
   }
   return { ok: false, error: erro };
+}
+
+/** Contrato da fila: quem chama na ordem, chega na ordem. */
+export interface FilaDePersistencia {
+  executar(input: UpsertMyCallInput): Promise<UpsertMyCallResult>;
+}
+
+/**
+ * Fila de persistência (D3): encadeia as gravações numa promise única, de modo
+ * que a ORDEM DE CHAMADA vire a ordem de chegada à RPC. Sem ela, o `upsert` de
+ * `answered` (assíncrono) podia completar DEPOIS do `finished` e regravar
+ * `status='answered'` sobre o desfecho — a linha terminava "atendida" para
+ * sempre.
+ *
+ * A falha de uma gravação não trava as seguintes: `upsertMyCall` nunca lança
+ * (devolve `{ ok:false }`), e o `.catch` defensivo garante que a corrente siga
+ * mesmo se algum caminho futuro rejeitar.
+ */
+export function criarFilaDePersistencia(): FilaDePersistencia {
+  let corrente: Promise<unknown> = Promise.resolve();
+  return {
+    executar(input) {
+      const proxima = corrente.then(() => upsertMyCall(input));
+      corrente = proxima.catch(() => undefined);
+      return proxima;
+    },
+  };
 }

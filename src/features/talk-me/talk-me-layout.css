@@ -1,0 +1,88 @@
+/* Keep the complete queue and claim action visible at normal desktop zoom.
+   Short/mobile viewports retain natural scrolling so content remains reachable. */
+.talk-me-view {
+  --talk-me-card-height: 352px;
+  --talk-me-queue-height: 211px;
+}
+
+.talk-me-view .talk-me-track {
+  height: calc(var(--talk-me-card-height) + 16px);
+}
+
+.talk-me-view .talk-me-main-card {
+  height: var(--talk-me-card-height);
+}
+
+.talk-me-view .talk-me-queue-card {
+  height: var(--talk-me-queue-height);
+}
+
+@media (min-width: 1024px) {
+  .talk-me-view {
+    --talk-me-card-height: clamp(280px, calc(100dvh - 520px), 352px);
+    --talk-me-queue-height: clamp(184px, calc(100dvh - 584px), 211px);
+  }
+
+  .talk-me-view .talk-me-avatar {
+    width: clamp(48px, calc(100dvh - 780px), 80px);
+    height: clamp(48px, calc(100dvh - 780px), 80px);
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 872px) {
+  .talk-me-view .talk-me-avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .talk-me-view .talk-me-identity {
+    padding: 8px 12px;
+  }
+
+  .talk-me-view .talk-me-identity-text {
+    margin-top: 6px;
+  }
+
+  .talk-me-view .talk-me-identity-text h3 {
+    font-size: 16px;
+    line-height: 20px;
+  }
+
+  .talk-me-view .talk-me-details {
+    padding: 10px 12px;
+  }
+
+  .talk-me-view .talk-me-queue-avatar {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* On short laptop screens, place identity and message side by side. */
+@media (min-width: 1024px) and (max-height: 767px) {
+  .talk-me-view {
+    --talk-me-card-height: 160px;
+  }
+
+  .talk-me-view .talk-me-main-card {
+    width: 440px;
+  }
+
+  .talk-me-view .talk-me-contact {
+    flex-direction: row;
+  }
+
+  .talk-me-view .talk-me-identity {
+    width: 45%;
+    flex: none;
+  }
+
+  .talk-me-view .talk-me-details {
+    display: flex;
+    width: 55%;
+    flex-direction: column;
+    justify-content: center;
+    border-top: 0;
+    border-left: 1px solid hsl(var(--border) / 0.7);
+  }
+}
