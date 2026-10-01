@@ -173,7 +173,7 @@ export function TeamConversationList({
                     </span>
                     <div className="flex items-center gap-1 shrink-0">
                       {conv.last_message && (
-                        <span className="text-xs text-muted-foreground/60 tabular-nums">
+                        <span className="text-xs text-muted-foreground tabular-nums">
                           {formatDistanceToNow(new Date(conv.last_message.created_at), { addSuffix: false, locale: ptBR })}
                         </span>
                       )}

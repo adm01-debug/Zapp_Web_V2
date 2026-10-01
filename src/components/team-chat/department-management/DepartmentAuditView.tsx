@@ -42,7 +42,7 @@ export function DepartmentAuditView({ departmentId }: Props) {
               <div key={log.id} className="flex items-center gap-3 py-2 px-1 text-sm">
                 <Badge variant={meta.variant} className="shrink-0 text-xs">{meta.label}</Badge>
                 <span className="flex-1 text-muted-foreground truncate">{actorName}</span>
-                <span className="text-xs text-muted-foreground/60 shrink-0 tabular-nums">{date}</span>
+                <span className="text-xs text-muted-foreground shrink-0 tabular-nums">{date}</span>
               </div>
             );
           })}

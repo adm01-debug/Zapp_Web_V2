@@ -107,7 +107,7 @@ function Section({ title, items, olderItems = [], groups, hint, defaultOpen = tr
               <button
                 type="button"
                 aria-label={hint}
-                className="rounded p-0.5 text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
+                className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <Info className="h-3.5 w-3.5" />
               </button>
@@ -187,7 +187,7 @@ export function TasksListMode({
       <Section title="Amanhã"     items={byDue.tomorrow}  defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
       <Section title="Próximas"   items={byDue.upcoming}  groups={groupUpcomingByDay(byDue.upcoming)} hint="Ordenado por prazo, depois prioridade" defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
       <Section title="Sem prazo"   items={byDue.noDue}    defaultOpen={byDue.noDue.length <= 10} cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
-      <Section title="Concluídas (7 dias)" items={byDue.done7d} olderItems={byDue.doneOlder} headingClass="text-muted-foreground/60" defaultOpen={false} cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
+      <Section title="Concluídas (7 dias)" items={byDue.done7d} olderItems={byDue.doneOlder} headingClass="text-muted-foreground" defaultOpen={false} cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
     </div>
   );
 }
