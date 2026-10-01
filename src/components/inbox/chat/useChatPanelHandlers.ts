@@ -8,6 +8,8 @@ import { SlashCommand } from '../SlashCommands';
 import { toast } from '@/hooks/ui/use-toast';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
+import { useMyWorkItems, tomorrowAtNine } from '@/hooks/tasks/useMyWorkItems';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
 
 interface UseChatPanelHandlersOptions {
   conversationId: string;
@@ -50,6 +52,12 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   // Ações reais (favoritar, adiar) para os comandos de barra — mesmo hook usado em
   // RealtimeInboxView/ContactHeaderSection; múltiplas instâncias ficam em sync via _favBus.
   const { isFavorite, favoriteContact, unfavoriteContact, snoozeConversation } = useConversationActions();
+
+  // Etapa 68 (B10): `/remind` grava uma tarefa real com alarme pelo mesmo hook do
+  // módulo de Tarefas (nada de insert cru). O ref mantém o callback de comandos
+  // estável, como os demais handlers de mensagem.
+  const { createAndGetId } = useMyWorkItems({ contactId });
+  const criarTarefaRef = useLatest(createAndGetId);
 
   // ── Refs for stable callbacks (avoid re-renders on every keystroke) ──
   const inputValueRef = useLatest(inputValue);
@@ -188,14 +196,48 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
         })();
         break;
       }
-      case 'remind': toast({ title: '🔔 Lembrete Criado', description: 'Um lembrete foi criado para esta conversa.' }); break;
+      // Etapa 68 (B10): o lembrete vira tarefa real (alarme amanhã 9h) e abre a aba
+      // Tarefas já no item criado, pelo deep-link `?task=<id>` da etapa 27.
+      case 'remind': {
+        void (async () => {
+          const quando = tomorrowAtNine();
+          const { data: contato } = await supabase
+            .from('contacts')
+            .select('name')
+            .eq('id', contactId)
+            .maybeSingle();
+          const nome = contato?.name?.trim();
+          const titulo = nome ? `Lembrete: ${nome}` : 'Lembrete';
+          let novoId: string | null = null;
+          try {
+            novoId = await criarTarefaRef.current({ title: titulo, remindAt: quando.toISOString(), contactId, status: 'todo' });
+          } catch (err) {
+            log.error('Failed to create reminder task:', err);
+            toast({ title: 'Erro ao criar lembrete', description: 'Não foi possível criar a tarefa.', variant: 'destructive' });
+            return;
+          }
+          // `createAndGetId` devolve o id da tarefa criada: sem leitura extra para
+          // descobrir qual linha acabou de nascer.
+          if (novoId) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('task', novoId);
+            window.history.replaceState(null, '', url.pathname + url.search);
+          }
+          navigateToView('tasks');
+          toast({
+            title: '🔔 Lembrete criado',
+            description: `Tarefa com alarme para ${quando.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}.`,
+          });
+        })();
+        break;
+      }
       // Reaproveita o popover de respostas rápidas já ligado a dialogs.quickReplies em ChatPanel.
       case 'quick': openDialog('quickReplies'); break;
       case 'summary': handleSetActiveTool('aiAssistant'); break;
       case 'produto': openDialog('catalogDirect'); break;
       default: toast({ title: `Comando: ${command.label}`, description: command.description }); break;
     }
-  }, [closeDialog, openDialog, handleSetActiveTool, contactId, isFavorite, favoriteContact, unfavoriteContact, snoozeConversation]);
+  }, [closeDialog, openDialog, handleSetActiveTool, contactId, isFavorite, favoriteContact, unfavoriteContact, snoozeConversation, criarTarefaRef]);
 
   const handleSendInteractiveMessage = useCallback((interactive: InteractiveMessage) => {
     toast({ title: 'Mensagem interativa enviada!', description: `Mensagem com ${interactive.buttons?.length || 0} botões enviada.` });

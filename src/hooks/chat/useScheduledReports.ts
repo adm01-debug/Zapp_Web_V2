@@ -188,5 +188,4 @@ export const FREQUENCIES = [
 export const FORMATS = [
   { value: 'pdf', label: 'PDF' },
   { value: 'excel', label: 'Excel' },
-  { value: 'csv', label: 'CSV' },
 ] as const;

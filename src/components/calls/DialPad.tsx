@@ -73,17 +73,19 @@ export function DialPad({
   }, [number, onCall]);
 
   const statusColor = {
-    disconnected: 'bg-muted text-muted-foreground',
+    idle: 'bg-muted text-muted-foreground',
     connecting: 'bg-warning/20 text-warning',
     registered: 'bg-success/20 text-success',
-    error: 'bg-destructive/20 text-destructive',
+    reconnecting: 'bg-warning/20 text-warning',
+    unavailable: 'bg-destructive/20 text-destructive',
   };
 
   const statusLabel = {
-    disconnected: 'Desconectado',
+    idle: 'Desconectado',
     connecting: 'Conectando...',
     registered: 'Conectado',
-    error: 'Erro',
+    reconnecting: 'Reconectando...',
+    unavailable: 'Indisponível',
   };
 
   return (

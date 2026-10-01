@@ -11,6 +11,7 @@ const mockAddNote = vi.fn();
 const mockDeleteNote = vi.fn();
 const mockToggleNoteDone = vi.fn();
 const mockCreateTask = vi.fn();
+const mockOnTabChange = vi.fn();
 
 vi.mock('@/hooks/crm/useContactNotes', async () => {
   const actual = await vi.importActual<typeof import('@/hooks/crm/useContactNotes')>('@/hooks/crm/useContactNotes');
@@ -44,7 +45,7 @@ function renderTab(notes: ContactNote[] = NOTES, openTasks: Array<{ id: string; 
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <NotesTab contactId="c1" />
+      <NotesTab contactId="c1" onTabChange={mockOnTabChange} />
     </QueryClientProvider>
   );
 }
@@ -95,22 +96,33 @@ describe('NotesTab', () => {
     expect(screen.getByText('30/09/2026')).toBeTruthy();
   });
 
-  it('pendências vazias mostram o empty state honesto', () => {
+  it('sem tarefas abertas mostra o resumo honesto (sem lista duplicada)', () => {
     renderTab([], []);
-    expect(screen.getByText('Nenhuma pendência')).toBeInTheDocument();
+    expect(screen.getByTestId('tasks-summary')).toHaveTextContent('Nenhuma tarefa aberta com este contato');
+    expect(screen.queryByText('Ligar amanhã')).not.toBeInTheDocument();
   });
 
-  it('adicionar uma pendência chama createTask com o contato', () => {
-    renderTab([], []);
-    const pendCard = screen.getByText('Pendências').closest('section') as HTMLElement;
-    fireEvent.click(within(pendCard).getByText('+ Adicionar'));
-    fireEvent.change(within(pendCard).getByPlaceholderText('Nova pendência...'), { target: { value: 'Ligar amanhã' } });
-    fireEvent.click(within(pendCard).getByText('Salvar'));
-    expect(mockCreateTask).toHaveBeenCalledWith({ title: 'Ligar amanhã', contactId: 'c1' });
+  it('o resumo conta as tarefas abertas com este contato', () => {
+    renderTab([], [
+      { id: 't1', title: 'Ligar amanhã', due_date: null },
+      { id: 't2', title: 'Enviar proposta', due_date: null },
+    ]);
+    expect(screen.getByTestId('tasks-summary')).toHaveTextContent('2 tarefas abertas com este contato');
+    // A lista não é duplicada aqui — o título só existe na aba Tarefas.
+    expect(screen.queryByText('Ligar amanhã')).not.toBeInTheDocument();
   });
 
-  it('lista as pendências que o hook devolve', () => {
-    renderTab([], [{ id: 't1', title: 'Ligar amanhã', due_date: null }]);
-    expect(screen.getByText('Ligar amanhã')).toBeInTheDocument();
+  it('"Ver na aba Tarefas" chama onTabChange("tasks")', () => {
+    renderTab([], []);
+    fireEvent.click(screen.getByText('Ver na aba Tarefas'));
+    expect(mockOnTabChange).toHaveBeenCalledWith('tasks');
+  });
+
+  it('criar uma pendência pelo QuickAdd usa o contato fixo', () => {
+    renderTab([], []);
+    const input = screen.getByPlaceholderText(/nova tarefa para este contato/i);
+    fireEvent.change(input, { target: { value: 'Ligar amanhã' } });
+    fireEvent.click(screen.getByText('Criar'));
+    expect(mockCreateTask).toHaveBeenCalledWith(expect.objectContaining({ title: 'Ligar amanhã', contactId: 'c1' }));
   });
 });

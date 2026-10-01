@@ -93,7 +93,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
   D17: `bun run lint` (eslint cru, que NAO e gate do CI) acusa 956 problemas legados; o gate real e o lint-ratchet, que passa (0 novas).
 
 ## CP-C Sheet       [x] WorkItemSheet=ok (23–27, C1) · ?task=ok · Abrir pelo card=ok (B3) · Aguardando por DnD/kebab/menu=ok (28/29, C2; DnD e kebab) · kebab 5 grupos=ok (30, C2) · RemindChip popover=ok (31, C2) · ContactChip=ok (32, C2) · MoveToMenu=ok (33, C2, em board/) · screenshot C-34=pendente (login de QA)
-## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
+## CP-D QuickAdd [x] — chip-btn CSS=ok · 7 chips=ok · validação passado=ok · teste=11+2+6 mutações
 ## CP-E Telas       [~] etapas 43, 44, 45 e 46, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8), 53, 55, 56 e 57 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos: ok (barra de 5 filtros, estado na URL por replaceState, recorte único) · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos: ok (3 grupos, ponto por tipo, atrasadas expansível) · card agenda: ok (h-11, 1 linha, checkbox) · QuickAdd no dia: ok (pré-preenchido) · 0 requests na troca= · modo por rota: ok · auditoria F1: ok (7 correções; 9 mutações mortas) · auditoria F2: ok (7 correções; 7 mutações mortas) · auditoria F3: ok (A4 16/16 mutações mortas; A1-1 corrigido; 3 achados do A2 na fila) · cenários F4: ok (7 sobreviventes da F3 cobertos; 5/5 mutações mortas) · rótulos pt-BR do módulo: ok (Média, Concluído e as políticas das colunas acentuados)
 
 ## Etapa 47 (B7) — modo por rota (Fase E) — evidências
@@ -505,8 +505,8 @@ leituras foram descartadas.
 **Limite declarado:** prova com componentes reais e dados mockados; não substitui a olhada logada
 (etapas 54/58, que dependem do login de QA no cofre).
 
-## CP-F Avisos      [ ] useWorkItemNotifications= · popover Sidebar 3 botões= · toast= · badge sidebar= · título aba= · push decisão= · idempotência 1→2→done= · /remind real=
-## CP-G Chat        [ ] NotesTab resumo= · TasksTab mini-quadro= · redirect reminders→tasks= · Alt+T= · testes inbox=
+## CP-F Avisos de alarme [x] — toast=ok · popover=criado · badge=ok · push=fora da v1 · 66/67 pendentes de QA
+## CP-G Chat integrado [x] — NotesTab=resumo+atalho+QuickAdd · TasksTab=5 grupos · reminders->tasks=ok · Alt+T=ok
 ## CP-H A11y        [ ] 7 atalhos= · aria-live= · reduced-motion 0s= · contraste= · mobile 3 modos= · light= · zen=
 ## CP-I Testes      [ ] arquivos= · casos= · bundle= KB gz · TTI 300 itens=
 ## CP-J Entrega     [ ] gates 8/8= · func 24/24= · geometria= · cores= · isolamento 2 usuários= · migração= · PR drop reminders_pending (aguarda APROVADO)= · docs= · prod final=
@@ -585,6 +585,51 @@ Branch `hermes/fase-c2-card-2610011102404a`, sobre `e6739afc` (o merge da C1).
   passou a valer com baseline verde — registrado por transparência.
 - Gates: `typecheck` 0 · `implicit-any` 0 · `db:guard` 0 novas (705 migrations) · tipografia aprovada ·
   `lint-ratchet` 944 atual / 27 removidas / **0 novas** · build 5,19s · bundle **4060,3 KB gzip (budget 4100)**.
+
+## FASE D — QuickAdd completo e CSS dos chips (35-42)
+
+Etapas 35–41 fechadas; 42 entregue (commit/PR/CI/merge), restando só o screenshot logado.
+
+- **35** `.chip-btn`/`.chip-active` em `src/styles/components.css` via `@apply`, importado por `src/index.css`. Divergência declarada: o plano pede `text-[12px]`, que **tem equivalente exato** (`text-xs`) e por isso reprovava o gate de tipografia — usei `text-xs`.
+- **36** 7 chips **sempre visíveis** (à direita em ≥md, abaixo em mobile); no `compact` viram o botão `⋯` (`quick-add-more`) com os mesmos chips.
+- **37** chip Data: `Popover` + `Calendar` (ptBR) + hora opcional (`quick-add-date-time`); o prazo vale o dia inteiro quando não há hora.
+- **38** chip Lembrar: presets Em 1 h / Amanhã 9h / Próx. seg 9h + data/hora livre; passado → `quick-add-remind-error` com "O alarme precisa ser no futuro" e botão Criar desabilitado.
+- **39** chip @ Contato sobre o **`ContactCombobox` novo** (busca por nome/telefone via `useContactsSearch`, avatar 18px, `×` remove); oculto quando `defaultContactId` vem do chat.
+- **40** chip ! Prioridade com Baixa/Média/Alta/Urgente (`PRIORITY_LABELS`), default **Média**.
+- **41** atalhos no campo (parser leve, sem NLP): Ctrl+1/2/3, Ctrl+L, Ctrl+@, documentados no `title`.
+- **42** `QuickAdd.test.tsx` (11 casos: 9 do subagente + 2 meus para os chips Data e Prioridade) e `QuickAddCompacto.test.tsx` (2 casos).
+- **Lacuna real corrigida:** no compact o `Ctrl+L` não abria o `⋯` (só o `Ctrl+@` abria) — o popover de Lembrar ficava sem gatilho montado.
+- **Evidência:** typecheck 0 · eslint do módulo 0 · suíte **367 arquivos / 4835 testes / 0 falhas** · ratchet **0 novas / 29 removidas** · db:guard 0 novas · tipografia aprovada · implicit-any 0 · build ok, bundle **4066,1/4100 KB** · **6/6 mutações mortas** (`.tmp/mut-fase-d.py`, com baseline verde conferido antes e árvore restaurada por hash depois).
+- **Pendente (não bloqueia):** screenshot da etapa 42 (login de QA no cofre).
+
+## FASE F — Avisos: toast, popover, badge, titulo (59-70)
+
+- 59 useWorkItemNotifications (5 acoes + helpers puros; adiar ZERA notified_at)
+- 60 popover de notificacoes CRIADO do zero + sino na Sidebar; item reminder_due com 3 botoes
+- 61 toast realtime (15 s, sem som) com os mesmos 3 botoes
+- 62 badge do item Tarefas na sidebar (cor unica, ver limitacao)
+- 63 useDocumentBadge com (n) no titulo so com a aba oculta
+- 64 push fora da v1 (SW/PWA desligados; sem public/sw.js; nada de web-push nas functions)
+- 65 Sheet com "Avisado em" + Adiar (15 min / 1 h / Amanha 9h) ligado a onSnooze
+- 68 /remind cria tarefa real e abre o item; createAndGetId adicionado ao hook (sem leitura extra)
+- 69 testes: 8 casos com now fixo + o teste do NotificationItem
+- Evidencia: typecheck 0 · ratchet 0 novas/29 removidas · tipografia ok · db:guard ok · build ok,
+  bundle 4068,3/4100 KB · suite 371 arquivos / 4853 testes / 0 falhas · 2/2 mutacoes mortas
+- Pendente de QA: 66/67 (idempotencia com timestamps) e screenshots
+
+## FASE G — Chat: Notas, redirecionamento, atalho, mini-quadro (71-76)
+
+- 71 NotesTab: lista duplicada virou resumo '{n} tarefas abertas com este contato' + botao 'Ver na aba Tarefas'
+  (onTabChange) + QuickAdd compact com o contato
+- 72 TasksTab reescrito: mini-quadro vertical (Fazendo, A fazer, Aguardando, Caixa de entrada colapsaveis com
+  contador) + 'Concluidas (7d)' colapsada; QuickAdd compact no topo
+- 73 aba ativa passou a ser persistida, com redirect 'reminders' -> 'tasks' na hidratacao (normalizeConversationTab)
+- 74 Alt+T abre a aba Tarefas e foca o QuickAdd; registry real, sem conflito
+- 75 testes: NotesTab 10 + TasksTab 10 + ConversationTabs 13 (inbox/hooks: 519 casos verdes)
+- Evidencia: typecheck 0 · ratchet 0 novas/30 removidas · tipografia ok · db:guard ok · build ok,
+  bundle 4071,4/4100 KB · suite 378 arquivos / 4938 testes / 0 falhas · 1/1 mutacao morta (reminders sem redirect)
+- Divergencias: chip Lembrar em destaque nao feito (QuickAdd sem prop de destaque; compact esconde os chips);
+  reset para 'chat' ao trocar de conversa mantido (pre-existente)
 
 ## Pendências / resíduos (honestos)
 - Push do navegador: decidir na etapa 64 (infra existe: usePushNotifications.ts, PushNotificationToggle.tsx — não avaliada)

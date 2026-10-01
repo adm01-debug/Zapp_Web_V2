@@ -40,6 +40,28 @@ const INDEX_HTML = path.join(ROOT, 'index.html');
 // line-height herdado quando a classe nao declara um (preflight do Tailwind).
 const INHERITED_LH_RATIO = 1.5;
 
+// Etapa 21 (PLANO_CONTATOS_100_ETAPAS, achado P1 da auditoria 29/09): a brecha
+// era o guard so olhar `text-[Npx]` arbitrario — um token nomeado custom como
+// `text-kpi-value` (34px) escapava por definicao. Agora tokens nomeados que
+// passam de 1rem TAMBEM contam. A rampa modular (xs..9xl) e a escala
+// sancionada do design system e nao conta; o que passa de 16px e nao esta na
+// rampa nem na allowlist `allowAbove16` do budget e violacao. Assim o
+// `text-page-title` (38px) e o `text-kpi-value` (34px) ficam explicitos como
+// excecao nomeada, e criar um `text-huge` de 40px sem excecao reprova o check.
+const MODULAR_SCALE = new Set([
+  'xs', 'sm', 'base', 'lg', 'xl',
+  '2xl', '3xl', '4xl', '5xl', '6xl', '7xl', '8xl', '9xl',
+]);
+
+function isNamedAbove16(token, px, allowAbove16) {
+  return (
+    px != null &&
+    px > 16 &&
+    !MODULAR_SCALE.has(token) &&
+    !(allowAbove16 && allowAbove16.has(token))
+  );
+}
+
 function parseScale() {
   const src = fs.readFileSync(CONFIG, 'utf8');
   const block = src.match(/fontSize:\s*\{([\s\S]*?)\n      \}/);
@@ -197,6 +219,15 @@ function scanOrphanWeights(stylesDir = STYLES, indexHtmlPath = INDEX_HTML) {
 function main() {
   const scale = parseScale();
   const named = Object.keys(scale);
+
+  // Etapa 21: a lista de excecoes (tokens nomeados que podem passar de 16px)
+  // vive no budget, nao no codigo. Sem budget, nenhuma excecao.
+  const budgetPath = path.join(ROOT, 'scripts/qa/tipografia-budget.json');
+  let budget = null;
+  if (fs.existsSync(budgetPath)) {
+    try { budget = JSON.parse(fs.readFileSync(budgetPath, 'utf8')); } catch { budget = null; }
+  }
+  const allowAbove16 = new Set((budget && budget.allowAbove16) || []);
   // so tokens de tamanho; evita text-primary / text-foreground (cores)
   // Escapa TODOS os meta-caracteres de regex do nome do token, nao so o
   // hifen (js/incomplete-sanitization) — hoje named vem de parseScale() sem
@@ -223,8 +254,17 @@ function main() {
     let m;
     namedRe.lastIndex = 0;
     while ((m = namedRe.exec(txt))) {
-      usage.named[m[1]] = (usage.named[m[1]] || 0) + 1;
+      const token = m[1];
+      usage.named[token] = (usage.named[token] || 0) + 1;
       (byFile[rel] ||= { named: 0, arbitrary: 0 }).named++;
+      // Etapa 21: token nomeado acima de 16px (fora da rampa modular e da
+      // allowlist do budget) conta como violacao — fecha a brecha do
+      // `text-kpi-value`/`text-page-title`.
+      const tokenPx = toPx(scale[token] && scale[token].fontSize);
+      if (isNamedAbove16(token, tokenPx, allowAbove16)) {
+        const nline = txt.slice(0, m.index).split('\n').length;
+        violations.above16.push({ where: `${rel}:${nline}`, px: tokenPx, fonte: `text-${token}` });
+      }
     }
     arbRe.lastIndex = 0;
     while ((m = arbRe.exec(txt))) {
@@ -273,6 +313,9 @@ function main() {
   const report = {
     geradoEm: new Date().toISOString(),
     commit: process.env.GIT_SHA || null,
+    // Etapa 21: excecoes nomeadas que podem passar de 16px. Preservadas no
+    // round-trip do --json para a lista nao sumir ao regenerar o budget.
+    allowAbove16: [...allowAbove16].sort(),
     escala: resolved,
     arbitrarios: arbitraryResolved,
     totais: {
@@ -332,12 +375,10 @@ function main() {
   console.log(`\n  totais: ${totalNamed} nomeados / ${totalArb} arbitrarios em ${files.length} arquivos`);
 
   if (process.argv.includes('--check')) {
-    const budgetPath = path.join(ROOT, 'scripts/qa/tipografia-budget.json');
-    if (!fs.existsSync(budgetPath)) {
+    if (!budget) {
       console.error('\nERRO: budget ausente. Gere com --json scripts/qa/tipografia-budget.json');
       process.exit(2);
     }
-    const budget = JSON.parse(fs.readFileSync(budgetPath, 'utf8'));
     let failed = false;
     const checked = [
       'meiaMedida', 'acima16px', 'comEquivalenteExato',
@@ -357,6 +398,6 @@ function main() {
   }
 }
 
-module.exports = { parseScale, toPx, walk, walkCss, scanCss, scanTsxInline, parseLoadedWeights, scanOrphanWeights, main };
+module.exports = { parseScale, toPx, walk, walkCss, scanCss, scanTsxInline, parseLoadedWeights, scanOrphanWeights, isNamedAbove16, MODULAR_SCALE, main };
 
 if (require.main === module) main();

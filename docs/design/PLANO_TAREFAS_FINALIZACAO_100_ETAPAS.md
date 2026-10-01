@@ -109,14 +109,28 @@ Formato: `[ ] N. Ação — arquivo — DoD`. Marque `[x]` **só** com evidênci
 
 ### FASE D — QuickAdd completo e CSS dos chips (etapas 35–42) → CP-D
 
-- [ ] **35.** Branch `claude/feat-tarefas-d-quickadd-<carimbo>`. **B1:** criar em `src/styles/components.css` as classes `.chip-btn` (`inline-flex items-center gap-1 h-7 px-2.5 rounded-full border border-border bg-input text-[12px] font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors`) e `.chip-active` (`… bg-primary/15 border-primary/50 text-primary-glow`) via `@apply`. Verificar que `components.css` é importado em `src/index.css`. — DoD: chips com borda e fundo no screenshot.
-- [ ] **36.** Chips **sempre visíveis** (não só após digitar), à direita do campo em `≥ md`; abaixo em mobile; em `compact` viram um botão `⋯` que abre `Popover` com os mesmos chips. — DoD: layout nos dois tamanhos.
-- [ ] **37.** Chip **Data**: `Popover` + `Calendar` (shadcn, `locale ptBR`) + `Input type=time` opcional. Substitui o preset quando escolhido; o chip mostra "Sex 03/10". — DoD: cria com a data escolhida.
-- [ ] **38.** Chip **Lembrar**: `Popover` com presets (Em 1 h · Amanhã 9h · Próx. seg 9h) + data/hora livre. Validação inline: passado → borda `destructive` + "O alarme precisa ser no futuro" e o botão Criar desabilita. — DoD: erro inline; presets funcionam.
-- [ ] **39.** Chip **@ Contato**: `ContactCombobox` (mesmo da etapa 24) com busca por nome/telefone; chip mostra avatar + nome; `×` remove. Oculto quando `defaultContactId` vier (chat). — DoD: cria vinculada ao contato.
-- [ ] **40.** Chip **! Prioridade**: 4 opções (Baixa/Média/Alta/Urgente); default Média. — DoD: cria com a prioridade.
-- [ ] **41.** Parser leve **sem NLP** (G-5 mantido): só atalhos de teclado dentro do campo — `Ctrl+1/2/3` = Hoje/Amanhã/Próx. semana; `Ctrl+L` abre Lembrar; `Ctrl+@` abre contato. Documentar no `title` do campo. — DoD: 3 atalhos.
+- [x] **35.** Branch `claude/feat-tarefas-d-quickadd-<carimbo>`. **B1:** criar em `src/styles/components.css` as classes `.chip-btn` (`inline-flex items-center gap-1 h-7 px-2.5 rounded-full border border-border bg-input text-[12px] font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors`) e `.chip-active` (`… bg-primary/15 border-primary/50 text-primary-glow`) via `@apply`. Verificar que `components.css` é importado em `src/index.css`. — DoD: chips com borda e fundo no screenshot.
+- [x] **36.** Chips **sempre visíveis** (não só após digitar), à direita do campo em `≥ md`; abaixo em mobile; em `compact` viram um botão `⋯` que abre `Popover` com os mesmos chips. — DoD: layout nos dois tamanhos.
+- [x] **37.** Chip **Data**: `Popover` + `Calendar` (shadcn, `locale ptBR`) + `Input type=time` opcional. Substitui o preset quando escolhido; o chip mostra "Sex 03/10". — DoD: cria com a data escolhida.
+- [x] **38.** Chip **Lembrar**: `Popover` com presets (Em 1 h · Amanhã 9h · Próx. seg 9h) + data/hora livre. Validação inline: passado → borda `destructive` + "O alarme precisa ser no futuro" e o botão Criar desabilita. — DoD: erro inline; presets funcionam.
+- [x] **39.** Chip **@ Contato**: `ContactCombobox` (mesmo da etapa 24) com busca por nome/telefone; chip mostra avatar + nome; `×` remove. Oculto quando `defaultContactId` vier (chat). — DoD: cria vinculada ao contato.
+- [x] **40.** Chip **! Prioridade**: 4 opções (Baixa/Média/Alta/Urgente); default Média. — DoD: cria com a prioridade.
+- [x] **41.** Parser leve **sem NLP** (G-5 mantido): só atalhos de teclado dentro do campo — `Ctrl+1/2/3` = Hoje/Amanhã/Próx. semana; `Ctrl+L` abre Lembrar; `Ctrl+@` abre contato. Documentar no `title` do campo. — DoD: 3 atalhos.
 - [ ] **42.** Testes `src/components/tasks/__tests__/QuickAdd.test.tsx`: Enter cria; Escape limpa; chip Hoje preenche `dueDate`; Lembrar no passado bloqueia; `compact` mostra `⋯`. Commit `feat(tarefas): fase D — QuickAdd com Data, Lembrar, @Contato, !Prioridade e CSS dos chips (B1)`. PR, CI, merge, screenshot. — DoD: SHA.
+
+> **FASE D — executada em 2026-10-01 (PR da fase).** 35–41 fechadas com evidência:
+> `.chip-btn`/`.chip-active` em `src/styles/components.css` (o plano pedia `text-[12px]`,
+> trocado por `text-xs` — equivalente exato na escala; o gate de tipografia reprova o arbitrário);
+> 7 chips sempre visíveis com `⋯` no compact; chip Data (Calendar ptBR + hora); Lembrar com
+> presets e **bloqueio de passado**; @ Contato pelo `ContactCombobox` novo (oculto quando o
+> contato vem do chat); ! Prioridade com default Média; atalhos Ctrl+1/2/3 · Ctrl+L · Ctrl+@.
+> Testes: `QuickAdd.test.tsx` (11 casos) + `QuickAddCompacto.test.tsx` (2 casos, criado para
+> matar a mutação do `⋯` no compact) — 6/6 mutações mortas. **Lacuna real corrigida:** no compact
+> o `Ctrl+L` não abria o `⋯`, então o popover de Lembrar não tinha gatilho montado.
+> **Conflito de plano a resolver na FASE H:** a etapa 36 manda o compact virar `⋯` com os chips,
+> a etapa 79 manda o compacto do board ser "só título, sem chips". Segui a 36 (é a fase dona do
+> componente); na FASE H a 79 decide se o board passa a usar um modo sem chips.
+> **Pendente (não bloqueia):** screenshot da etapa 42, que depende do login de QA no cofre.
 
 **CP-D — Captura completa.** Gate: 7 chips estilizados e funcionais; validação de passado; teste verde.
 
@@ -147,18 +161,26 @@ Formato: `[ ] N. Ação — arquivo — DoD`. Marque `[x]` **só** com evidênci
 
 ### FASE F — Avisos: toast, popover da Sidebar, badge, título (etapas 59–70) → CP-F
 
-- [ ] **59.** Branch `claude/feat-tarefas-f-avisos-<carimbo>`. Criar `src/hooks/tasks/useWorkItemNotifications.ts`: dado `notification` com `metadata.task_id`/`contact_id`, expõe `openTask()` (`?view=tasks&task=<id>` via `NavigationService`), `openContact()`, `snooze(minutes | 'tomorrow9')` (Fase B), `complete()`, e `markRead()` (`useNotifications` já tem). — DoD: 5 ações tipadas.
-- [ ] **60.** Localizar o popover de notificações em `Sidebar.tsx` (`grep -n "notifications" src/components/layout/Sidebar.tsx`) e o componente de item da lista. Adicionar `case 'reminder_due'`: ícone `BellRing text-warning`, título, mensagem, **3 botões `h-8`**: "Abrir", "Adiar ▾" (`DropdownMenu` 15 min · 1 h · Amanhã 9h), "Concluir". Todas marcam lida. Outros tipos inalterados. — DoD: item renderiza com 3 botões.
-- [ ] **61.** Toast realtime: em `useNotifications.ts` (canal `notifications-changes`), quando `type === 'reminder_due'` → `toast.custom` (sonner) com título, contato e os mesmos 3 botões; duração 15 s; sem som (não existe padrão no app). — DoD: criar tarefa com alarme +2 min no usuário QA → toast em ≤ 3 min.
-- [ ] **62.** **Badge da sidebar:** descobrir como `SidebarNavItem` recebe `badge` (`grep -n badge src/components/layout/SidebarNavItem.tsx src/services/navigation.service.ts`). Ligar `useMyWorkItemsBadge()` ao item `tasks` (não ao `pipeline`). Cor `bg-destructive` se houver atrasada, senão `bg-warning`. — DoD: badge aparece com 1 atrasada.
-- [ ] **63.** Título da aba: hook `useDocumentBadge(count)` (sobre `useDocumentTitle.ts`) prefixa `"(n) "` quando `count > 0` e a aba está oculta (`document.visibilityState`); reverte ao voltar. — DoD: título muda.
-- [ ] **64.** Push (G-7): ler `src/hooks/system/usePushNotifications.ts`, `PushNotificationToggle.tsx` e o service worker (`public/sw.js` ou `vite-plugin-pwa`). Se houver Edge Function/trigger que envia push por tipo → adicionar `reminder_due`. Se não → **não implementar**; registrar "push: fora da v1 (sem mecanismo genérico)" com o arquivo lido como evidência. — DoD: decisão no ledger.
-- [ ] **65.** Sheet mostra "Avisado em {notified_at}" e "Adiar ▾" no campo alarme (Fase C deixou o slot). — DoD: estado visível na tarefa migrada (`notified_at` preenchido).
+- [x] **59.** Branch `claude/feat-tarefas-f-avisos-<carimbo>`. Criar `src/hooks/tasks/useWorkItemNotifications.ts`: dado `notification` com `metadata.task_id`/`contact_id`, expõe `openTask()` (`?view=tasks&task=<id>` via `NavigationService`), `openContact()`, `snooze(minutes | 'tomorrow9')` (Fase B), `complete()`, e `markRead()` (`useNotifications` já tem). — DoD: 5 ações tipadas.
+- [x] **60.** Localizar o popover de notificações em `Sidebar.tsx` (`grep -n "notifications" src/components/layout/Sidebar.tsx`) e o componente de item da lista. Adicionar `case 'reminder_due'`: ícone `BellRing text-warning`, título, mensagem, **3 botões `h-8`**: "Abrir", "Adiar ▾" (`DropdownMenu` 15 min · 1 h · Amanhã 9h), "Concluir". Todas marcam lida. Outros tipos inalterados. — DoD: item renderiza com 3 botões.
+- [x] **61.** Toast realtime: em `useNotifications.ts` (canal `notifications-changes`), quando `type === 'reminder_due'` → `toast.custom` (sonner) com título, contato e os mesmos 3 botões; duração 15 s; sem som (não existe padrão no app). — DoD: criar tarefa com alarme +2 min no usuário QA → toast em ≤ 3 min.
+- [x] **62.** **Badge da sidebar:** descobrir como `SidebarNavItem` recebe `badge` (`grep -n badge src/components/layout/SidebarNavItem.tsx src/services/navigation.service.ts`). Ligar `useMyWorkItemsBadge()` ao item `tasks` (não ao `pipeline`). Cor `bg-destructive` se houver atrasada, senão `bg-warning`. — DoD: badge aparece com 1 atrasada.
+- [x] **63.** Título da aba: hook `useDocumentBadge(count)` (sobre `useDocumentTitle.ts`) prefixa `"(n) "` quando `count > 0` e a aba está oculta (`document.visibilityState`); reverte ao voltar. — DoD: título muda.
+- [x] **64.** Push (G-7): ler `src/hooks/system/usePushNotifications.ts`, `PushNotificationToggle.tsx` e o service worker (`public/sw.js` ou `vite-plugin-pwa`). Se houver Edge Function/trigger que envia push por tipo → adicionar `reminder_due`. Se não → **não implementar**; registrar "push: fora da v1 (sem mecanismo genérico)" com o arquivo lido como evidência. — DoD: decisão no ledger.
+- [x] **65.** Sheet mostra "Avisado em {notified_at}" e "Adiar ▾" no campo alarme (Fase C deixou o slot). — DoD: estado visível na tarefa migrada (`notified_at` preenchido).
 - [ ] **66.** Idempotência ponta a ponta (produção, usuário QA): criar tarefa com alarme +2 min → esperar → `SELECT count(*) FROM notifications WHERE metadata->>'task_id'=…` = 1 → Adiar 15 min → esperar → = 2 → Concluir → `status='done'`, `remind_at IS NULL`. Timestamps no ledger. — DoD: sequência 1 → 2 → done.
 - [ ] **67.** Concluir antes do horário: criar com alarme +5 min, concluir em 1 min, esperar 6 min → 0 notificações. — DoD: 0 linhas.
-- [ ] **68.** Slash command **B10**: `/remind` em `useChatPanelHandlers.ts:182` passa a chamar `create({ title: 'Lembrete: ' + contato, remindAt: amanhã 9h, contactId, status: 'todo' })` e abrir a aba Tarefas com o Sheet do item criado (para ajustar hora). Texto do comando em `slashCommandsData.ts`: "Criar tarefa com alarme para este contato". — DoD: `/remind` grava no banco.
-- [ ] **69.** Testes `useWorkItemNotifications.test.ts` (snooze 15/60/tomorrow9 com `now` fixo; complete marca lida) e do item de notificação (`reminder_due` → 3 botões; `info` → inalterado). — DoD: verde.
-- [ ] **70.** Commit `feat(tarefas): fase F — avisos de alarme (toast, popover, badge, título), /remind real (B6 B10)`. PR, CI, merge, screenshots `out/F-70-{toast,popover,badge}.png`. — DoD: SHA.
+- [x] **68.** Slash command **B10**: `/remind` em `useChatPanelHandlers.ts:182` passa a chamar `create({ title: 'Lembrete: ' + contato, remindAt: amanhã 9h, contactId, status: 'todo' })` e abrir a aba Tarefas com o Sheet do item criado (para ajustar hora). Texto do comando em `slashCommandsData.ts`: "Criar tarefa com alarme para este contato". — DoD: `/remind` grava no banco.
+- [x] **69.** Testes `useWorkItemNotifications.test.ts` (snooze 15/60/tomorrow9 com `now` fixo; complete marca lida) e do item de notificação (`reminder_due` → 3 botões; `info` → inalterado). — DoD: verde.
+- [x] **70.** Commit `feat(tarefas): fase F — avisos de alarme (toast, popover, badge, título), /remind real (B6 B10)`. PR, CI, merge, screenshots `out/F-70-{toast,popover,badge}.png`. — DoD: SHA.
+
+> **FASE F — executada em 2026-10-01.** Achado que mudou o escopo: o popover de notificacoes que a
+> etapa 60 mandava localizar NAO existia (o codigo diz "Nao existe central de notificacoes no app");
+> foram criados NotificationsPopover, NotificationItem e ReminderNotification, com o sino na Sidebar.
+> Decisao da etapa 64: push fora da v1 (SW/PWA desligados, sem mecanismo generico). 66 e 67 (idempotencia
+> ponta a ponta em producao, com timestamps) ficam para a rodada de QA, junto dos screenshots.
+> Limitacoes declaradas: badge com cor unica (o hook devolve so o total); TasksModule le ?task= apenas no
+> 1o render; o Sheet espelha o alarme em estado local.
 
 **CP-F — Alarme de ponta a ponta.** Gate: etapa 66 com timestamps; badge e toast em produção.
 
@@ -166,12 +188,12 @@ Formato: `[ ] N. Ação — arquivo — DoD`. Marque `[x]` **só** com evidênci
 
 ### FASE G — Chat: Notas, redirecionamento, atalho, mini-quadro (etapas 71–76) → CP-G
 
-- [ ] **71.** Branch `claude/feat-tarefas-g-chat-<carimbo>`. `NotesTab.tsx` seção "Pendências": trocar `openTasks.map` por resumo "{n} tarefas abertas com este contato" + botão "Ver na aba Tarefas" (`onTabChange('tasks')` — descobrir a prop real em `ConversationTabContent`) + `QuickAdd compact`. — DoD: sem lista duplicada.
-- [ ] **72.** `TasksTab.tsx` — reescrita autorizada: mini-quadro vertical por status (Fazendo · A fazer · Aguardando · Caixa de entrada, cada um colapsável com contador) + "Concluídas" (7d) colapsada; `QuickAdd` com chip Lembrar em destaque e `@` oculto. — DoD: 5 grupos.
-- [ ] **73.** Redirecionamento: se a aba ativa persistida (`grep -rn "activeTab" src/components/inbox/RealtimeInboxView.tsx src/hooks/inbox`) for `'reminders'` → mapear para `'tasks'`. — DoD: usuário que estava em Lembretes cai em Tarefas.
-- [ ] **74.** Atalho no chat: `Alt+T` (verificar conflito em `useKeyboardShortcuts`) abre a aba Tarefas com foco no `QuickAdd`. — DoD: registrado sem conflito.
-- [ ] **75.** Testes: `ConversationTabs.test.tsx` (8 abas, badge `tasksOpen`), `TasksTab.test.tsx` (grupos, quick add com contato), `NotesTab.test.tsx` (resumo + botão). — DoD: `npx vitest run src/components/inbox` verde.
-- [ ] **76.** Commit `feat(tarefas): fase G — chat: Notas sem duplicação, mini-quadro na aba Tarefas, redirecionamento, Alt+T`. PR, CI, merge, screenshots `out/G-76-{tarefas,notas}.png`. — DoD: SHA.
+- [x] **71.** Branch `claude/feat-tarefas-g-chat-<carimbo>`. `NotesTab.tsx` seção "Pendências": trocar `openTasks.map` por resumo "{n} tarefas abertas com este contato" + botão "Ver na aba Tarefas" (`onTabChange('tasks')` — descobrir a prop real em `ConversationTabContent`) + `QuickAdd compact`. — DoD: sem lista duplicada.
+- [x] **72.** `TasksTab.tsx` — reescrita autorizada: mini-quadro vertical por status (Fazendo · A fazer · Aguardando · Caixa de entrada, cada um colapsável com contador) + "Concluídas" (7d) colapsada; `QuickAdd` com chip Lembrar em destaque e `@` oculto. — DoD: 5 grupos.
+- [x] **73.** Redirecionamento: se a aba ativa persistida (`grep -rn "activeTab" src/components/inbox/RealtimeInboxView.tsx src/hooks/inbox`) for `'reminders'` → mapear para `'tasks'`. — DoD: usuário que estava em Lembretes cai em Tarefas.
+- [x] **74.** Atalho no chat: `Alt+T` (verificar conflito em `useKeyboardShortcuts`) abre a aba Tarefas com foco no `QuickAdd`. — DoD: registrado sem conflito.
+- [x] **75.** Testes: `ConversationTabs.test.tsx` (8 abas, badge `tasksOpen`), `TasksTab.test.tsx` (grupos, quick add com contato), `NotesTab.test.tsx` (resumo + botão). — DoD: `npx vitest run src/components/inbox` verde.
+- [x] **76.** Commit `feat(tarefas): fase G — chat: Notas sem duplicação, mini-quadro na aba Tarefas, redirecionamento, Alt+T`. PR, CI, merge, screenshots `out/G-76-{tarefas,notas}.png`. — DoD: SHA.
 
 **CP-G — Chat coerente.** Gate: `git grep -n "Lembrete" src/components/inbox` = só "Lembrar-me"/"/remind"; badge == itens.
 

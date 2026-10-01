@@ -92,7 +92,7 @@ export function ContactToolbar({
         />
 
         <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-[150px] h-11 rounded-xl bg-input border-border text-sm font-medium gap-2 shrink-0">
+          <SelectTrigger aria-label="Ordenar por" className="w-[150px] h-11 rounded-xl bg-input border-border text-sm font-medium gap-2 shrink-0">
             <ArrowUpDown className="w-[18px] h-[18px]" />
             <SelectValue />
           </SelectTrigger>

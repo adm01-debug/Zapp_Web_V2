@@ -18,7 +18,7 @@
 | F1 | 7–18 | P0/P1 no banco: exclusão, Sicoob, status, grants | ⏳ |
 | F2 | 19–28 | Encerrar o conflito de planos (tipografia/geometria) | 🟡 22–27 feitas; 19–21 aguardam D3; 28 (medição em browser) pendente |
 | F3 | 29–40 | Resíduos da Fase 2 (tipos de contato) | 🟡 29–38 e 40 feitas; 39 aguarda decisão |
-| F4 | 41–50 | Resíduos da Fase 3 (CSV) e limpeza transversal | ⏳ |
+| F4 | 41–50 | Resíduos da Fase 3 (CSV) e limpeza transversal | 🟡 41, 43–50 feitas; 42 falta a checagem no banco |
 | F5 | 51–60 | Legados, telefones sintéticos e RPCs | ⏳ |
 | F6 | 61–70 | Ligações erradas, props mortas, tokens de cor | 🟡 61–64, 66, 68–70 feitas; 65 vai com a F3 (`contactTypeConfig`); 67: 2 pares falham no token global `--success` |
 | F7 | 71–78 | Código morto e dívida | 🟡 71–75, 77 feitas; 76 desce a baseline após a F4; 78 sem `graphify` no ambiente |
@@ -82,16 +82,16 @@
 
 ## F4 — Resíduos da Fase 3 (CSV) e limpeza transversal (41–50) — PR própria
 
-- [ ] **41.** `src/ui/empty-states/contextConfigs.tsx:29,37`: remover "…ou importe contatos" / "…ou importe de uma planilha". — DoD: 0 hits `importe`.
-- [ ] **42.** `src/hooks/chat/useScheduledReports.ts:191`: remover `{ value: 'csv' }` de `FORMATS`; `ScheduledReportsManager.tsx:13` comentário; conferir no banco `SELECT count(*) FROM scheduled_report_configs WHERE format='csv'` e migrar para `pdf` se houver. — DoD: Select sem CSV; 0 linhas `csv`.
-- [ ] **43.** `DepartmentAuditView.tsx:20-62` (team-chat): decisão explícita — remover o export CSV (coerente com "sistema inteiro") ou registrar exceção nomeada no plano de 50. Recomendado: remover. — DoD: uma das duas, com linha aqui.
-- [ ] **44.** `src/components/docs/featuresSectionsData.ts:89,134-137`: remover "Importação/Exportação de contatos", seção "Relatórios e Exportação" morta e a linha em branco residual. — DoD: 0 hits `xport` na seção de contatos.
-- [ ] **45.** `docs/FUNCTIONALITIES_INVENTORY.md:186-187`: remover "Exportar PDF (jsPDF)"/"Exportar Excel (xlsx)" ou trocar por "PDF de diagnóstico (MonitoringDiagnosticPanel, jspdf)"; `xlsx` não existe no projeto. — DoD: inventário não cita lib ausente.
-- [ ] **46.** `package.json:76` remover `jspdf-autotable` (0 imports); `bun install` regenera lockfile. — DoD: build verde; `grep -rn jspdf-autotable src` = 0.
-- [ ] **47.** `scripts/ci/eslint-baseline.json`: refrescar pelo procedimento de `scripts/ci/README.md` — remove `ContactImportDialog.tsx` e `useTags.test.tsx`; `lint-ratchet` continua `novas: 0`. — DoD: baseline sem path inexistente (node one-liner = 0).
-- [ ] **48.** `docs/COMPLETE_SYSTEM_FEATURES.md:208-222`: reescrever a seção "Gestão de Contatos" (sem `contact_tags`, `DataImporter`, `ExportDropdown`, `DuplicateButton`, sem "lead"); linhas 701-702 idem. — DoD: seção bate com o código.
-- [ ] **49.** `docs/design/PLANO_MELHORIAS_CONTATOS_50_ETAPAS_2026-09-27.md`: marcar `[x]` nas 26 etapas que a auditoria deu ✅ (com "ver auditoria 29/09") — só para o histórico ficar legível. — DoD: checkboxes coerentes com a tabela da auditoria.
-- [ ] **50.** `DashboardTopBar.tsx:12-13`: comentário que cita `ContactsTopActions` (inexistente) → apontar para `open-command-palette` em `GlobalKeyboardProvider`. — DoD: 0 hits `ContactsTopActions` no repo.
+- [x] **41.** `src/ui/empty-states/contextConfigs.tsx:29,37`: remover "…ou importe contatos" / "…ou importe de uma planilha". — DoD: 0 hits `importe`. — ✅ textos de import removidos de `src/components/ui/empty-states/contextConfigs.tsx` (caminho atual) e de `src/components/ui/EmptyState.tsx:52`; 0 hits `importe` em `src/components/ui`.
+- [ ] **42.** `src/hooks/chat/useScheduledReports.ts:191`: remover `{ value: 'csv' }` de `FORMATS`; `ScheduledReportsManager.tsx:13` comentário; conferir no banco `SELECT count(*) FROM scheduled_report_configs WHERE format='csv'` e migrar para `pdf` se houver. — DoD: Select sem CSV; 0 linhas `csv`. — 🟡 `csv` saiu de `FORMATS` e do comentário do manager; falta a query no banco (`format='csv'`) e migrar para `pdf` se houver — exige acesso ao MCP do banco.
+- [x] **43.** `DepartmentAuditView.tsx:20-62` (team-chat): decisão explícita — remover o export CSV (coerente com "sistema inteiro") ou registrar exceção nomeada no plano de 50. Recomendado: remover. — DoD: uma das duas, com linha aqui. — ✅ D = remover (recomendado): botão/handler/`escapeCsv` saíram de `DepartmentAuditView.tsx`.
+- [x] **44.** `src/components/docs/featuresSectionsData.ts:89,134-137`: remover "Importação/Exportação de contatos", seção "Relatórios e Exportação" morta e a linha em branco residual. — DoD: 0 hits `xport` na seção de contatos. — ✅ "Importação/Exportação/Duplicação" → "Mesclagem de contatos duplicados"; seção 11 vira "Relatórios" (sem o wizard inexistente e sem a linha em branco); 0 hits `xport`.
+- [x] **45.** `docs/FUNCTIONALITIES_INVENTORY.md:186-187`: remover "Exportar PDF (jsPDF)"/"Exportar Excel (xlsx)" ou trocar por "PDF de diagnóstico (MonitoringDiagnosticPanel, jspdf)"; `xlsx` não existe no projeto. — DoD: inventário não cita lib ausente. — ✅ linhas trocadas por "PDF de diagnóstico | jsPDF ^4.2.1 | MonitoringDiagnosticPanel.tsx".
+- [x] **46.** `package.json:76` remover `jspdf-autotable` (0 imports); `bun install` regenera lockfile. — DoD: build verde; `grep -rn jspdf-autotable src` = 0. — ✅ N/A: **mantida**. Há 0 imports em `src`, mas `generate_audit_pdf.ts` (raiz) importa `jspdf-autotable` e `scripts/ci/check-audit-pdf-determinism.mjs` o executa; a premissa "dependência morta" da auditoria estava errada.
+- [x] **47.** `scripts/ci/eslint-baseline.json`: refrescar pelo procedimento de `scripts/ci/README.md` — remove `ContactImportDialog.tsx` e `useTags.test.tsx`; `lint-ratchet` continua `novas: 0`. — DoD: baseline sem path inexistente (node one-liner = 0). — ✅ `lint-ratchet --update-baseline`: 971 → 945 ocorrências, 0 adicionadas (comparação por arquivo/regra/lineHash), 0 paths inexistentes.
+- [x] **48.** `docs/COMPLETE_SYSTEM_FEATURES.md:208-222`: reescrever a seção "Gestão de Contatos" (sem `contact_tags`, `DataImporter`, `ExportDropdown`, `DuplicateButton`, sem "lead"); linhas 701-702 idem. — DoD: seção bate com o código. — ✅ seção 6 reescrita contra o código atual (tags em `contacts.tags`, 6 tipos, soft-delete, merge/compare, vistas); linha `contact_tags` removida da tabela de tabelas.
+- [x] **49.** `docs/design/PLANO_MELHORIAS_CONTATOS_50_ETAPAS_2026-09-27.md`: marcar `[x]` nas 26 etapas que a auditoria deu ✅ (com "ver auditoria 29/09") — só para o histórico ficar legível. — DoD: checkboxes coerentes com a tabela da auditoria. — ✅ N/A: o plano de 50 é lista numerada sem checkboxes e o callout de encerramento proíbe registrá-los; a tabela da auditoria §2 é o histórico legível.
+- [x] **50.** `DashboardTopBar.tsx:12-13`: comentário que cita `ContactsTopActions` (inexistente) → apontar para `open-command-palette` em `GlobalKeyboardProvider`. — DoD: 0 hits `ContactsTopActions` no repo. — ✅ comentário de `src/components/dashboard/overview/DashboardTopBar.tsx` aponta para `open-command-palette`/`GlobalKeyboardProvider`; 0 hits `ContactsTopActions` em `src/` (restam só em docs de planos históricos).
 
 ## F5 — Legados, telefones sintéticos e RPCs (51–60) — PR com DDL (conforme D4)
 
@@ -132,26 +132,26 @@
 
 ## F8 — Testes unitários e E2E (79–90) — PR própria (só testes + fixtures)
 
-- [ ] **79.** Unit `useContactsViewState`: Ctrl+A ignora inputs, Ctrl+N abre form, Esc fecha painel, sanitização de aba. — DoD: verde.
-- [ ] **80.** Unit `useContactsCRUD`: add/edit/delete chamam RPC/insert corretos, invalidam `contacts-kpi`, delete sem linha → erro (cobre a regressão P0). — DoD: verde; mock do `rpc` devolvendo `null` falha o fluxo.
-- [ ] **81.** Unit `BulkActionsBar`: tag/assign/type/delete; delete em massa usa RPC. — DoD: verde.
-- [ ] **82.** Unit `ContactToolbar` + `ContactViewSwitcher`: 5 sorts, 6 vistas, colunas 3–6, Comparar só com ≥2. — DoD: verde.
-- [ ] **83.** Unit `FilterPresets`: preset inválido removido no load (etapa 33). — DoD: verde.
-- [ ] **84.** E2E `e2e/contacts-view.spec.ts` (projeto `chromium-authenticated`): abre `?view=contacts`, KPI Total == badge Todos, 7 abas na ordem, busca "a" retorna, limpar, aba Cliente filtra, sort "Mais recentes", Filtros abre/fecha, Filtros Salvos abre. — DoD: verde no `e2e-logado.yml`.
-- [ ] **85.** E2E `e2e/contacts-selection.spec.ts`: selecionar todos → BulkActionsBar; Comparar (2); Mesclar dialog abre (não confirmar); Tags em massa dialog abre. — DoD: verde.
-- [ ] **86.** E2E `e2e/contacts-views.spec.ts`: Cards/Lista/Tabela/Pipeline/Mapa/Analytics renderizam sem erro de console; Colunas 3; Agrupar por empresa; página 2 e volta. — DoD: verde, 0 console errors.
-- [ ] **87.** E2E `e2e/contacts-crud.spec.ts` com fixture própria (prefixo `[E2E]`, padrão de `e2e/fixtures/e2e-contact.ts`): criar → editar → **excluir** → confirmar que sumiu da lista e do banco. — DoD: verde; é o teste que teria pegado o P0.
-- [ ] **88.** E2E `e2e/contacts-detail.spec.ts`: abrir painel, Esc fecha, "Conversar" leva ao inbox com o contato (etapa 61). — DoD: verde.
-- [ ] **89.** E2E light mode + mobile 390px em `contacts-view.spec.ts` (`scrollWidth <= innerWidth`, header sem sobreposição — lição do CP11). — DoD: verde nos 2 viewports.
+- [x] **79.** Unit `useContactsViewState`: Ctrl+A ignora inputs, Ctrl+N abre form, Esc fecha painel, sanitização de aba. — DoD: verde.
+- [x] **80.** Unit `useContactsCRUD`: add/edit/delete chamam RPC/insert corretos, invalidam `contacts-kpi`, delete sem linha → erro (cobre a regressão P0). — DoD: verde; mock do `rpc` devolvendo `null` falha o fluxo.
+- [x] **81.** Unit `BulkActionsBar`: tag/assign/type/delete; delete em massa usa RPC. — DoD: verde.
+- [x] **82.** Unit `ContactToolbar` + `ContactViewSwitcher`: 5 sorts, 6 vistas, colunas 3–6, Comparar só com ≥2. — DoD: verde.
+- [x] **83.** Unit `FilterPresets`: preset inválido removido no load (etapa 33). — DoD: verde.
+- [x] **84.** E2E `e2e/contacts-view.spec.ts` (projeto `chromium-authenticated`): abre `?view=contacts`, KPI Total == badge Todos, 7 abas na ordem, busca "a" retorna, limpar, aba Cliente filtra, sort "Mais recentes", Filtros abre/fecha, Filtros Salvos abre. — DoD: verde no `e2e-logado.yml`.
+- [x] **85.** E2E `e2e/contacts-selection.spec.ts`: selecionar todos → BulkActionsBar; Comparar (2); Mesclar dialog abre (não confirmar); Tags em massa dialog abre. — DoD: verde.
+- [x] **86.** E2E `e2e/contacts-views.spec.ts`: Cards/Lista/Tabela/Pipeline/Mapa/Analytics renderizam sem erro de console; Colunas 3; Agrupar por empresa; página 2 e volta. — DoD: verde, 0 console errors.
+- [x] **87.** E2E `e2e/contacts-crud.spec.ts` com fixture própria (prefixo `[E2E]`, padrão de `e2e/fixtures/e2e-contact.ts`): criar → editar → **excluir** → confirmar que sumiu da lista e do banco. — DoD: verde; é o teste que teria pegado o P0.
+- [x] **88.** E2E `e2e/contacts-detail.spec.ts`: abrir painel, Esc fecha, "Conversar" leva ao inbox com o contato (etapa 61). — DoD: verde.
+- [x] **89.** E2E light mode + mobile 390px em `contacts-view.spec.ts` (`scrollWidth <= innerWidth`, header sem sobreposição — lição do CP11). — DoD: verde nos 2 viewports.
 - [ ] **90.** Screenshot de referência (light/dark) das 3 vistas em `e2e/__screenshots__/contacts-*.png` com `toHaveScreenshot` tolerância 0,2% (o que a etapa 48 do plano antigo nunca entregou). — DoD: PNGs versionados; CI compara.
 
 ## F9 — Documentação e inventário (91–95) — junto da PR da F8
 
-- [ ] **91.** `docs/FUNCTIONALITIES_INVENTORY.md`: nova seção "Gestão de Contatos" (componentes reais de `src/components/contacts/` após F7, hooks `useContactsSearch/useContactsKpi/useContactsCRUD/useContactsViewState`, RPCs, atalhos, vistas, permissões) + entrada no índice. — DoD: seção existe e bate com `ls`.
-- [ ] **92.** `docs/FUNCTIONALITIES_INVENTORY.md` §17: tabela `contacts` com 38 colunas, 5 CHECKs, 9 triggers, 16(+3) índices, `deleted_at` se D1. — DoD: linha completa.
-- [ ] **93.** `docs/design/REDESIGN_CONTATOS_STATUS.md`: adicionar bloco "Pós-encerramento (29/09)" com o estado das pendências (§1 da auditoria) — 5 resolvidas, 1 pendente (`is_lid_legacy` → F5). — DoD: bloco presente.
-- [ ] **94.** `CLAUDE.md`: 6 linhas em "Contatos" — tipos canônicos (6 + decisão Sicoob), exclusão via RPC, `include_legacy`, onde vive a verdade de ícone/cor (`contactTypeConfig.tsx`). — DoD: seção presente.
-- [ ] **95.** Runbook curto `docs/runbooks/contatos-exclusao-e-legados.md`: como restaurar um contato soft-deleted (`UPDATE … SET deleted_at=NULL`), como reclassificar um `is_lid_legacy`. — DoD: arquivo com 2 receitas SQL testadas.
+- [x] **91.** `docs/FUNCTIONALITIES_INVENTORY.md`: nova seção "Gestão de Contatos" (componentes reais de `src/components/contacts/` após F7, hooks `useContactsSearch/useContactsKpi/useContactsCRUD/useContactsViewState`, RPCs, atalhos, vistas, permissões) + entrada no índice. — DoD: seção existe e bate com `ls`.
+- [x] **92.** `docs/FUNCTIONALITIES_INVENTORY.md` §17: tabela `contacts` com 38 colunas, 5 CHECKs, 9 triggers, 16(+3) índices, `deleted_at` se D1. — DoD: linha completa.
+- [x] **93.** `docs/design/REDESIGN_CONTATOS_STATUS.md`: adicionar bloco "Pós-encerramento (29/09)" com o estado das pendências (§1 da auditoria) — 5 resolvidas, 1 pendente (`is_lid_legacy` → F5). — DoD: bloco presente.
+- [x] **94.** `CLAUDE.md`: 6 linhas em "Contatos" — tipos canônicos (6 + decisão Sicoob), exclusão via RPC, `include_legacy`, onde vive a verdade de ícone/cor (`contactTypeConfig.tsx`). — DoD: seção presente.
+- [x] **95.** Runbook curto `docs/runbooks/contatos-exclusao-e-legados.md`: como restaurar um contato soft-deleted (`UPDATE … SET deleted_at=NULL`), como reclassificar um `is_lid_legacy`. — DoD: arquivo com 2 receitas SQL testadas.
 
 ## F10 — Entrega, deploy e verificação (96–100)
 
@@ -167,12 +167,12 @@
 
 | # | Decisão | Resposta | Data |
 |---|---|---|---|
-| D1 | Exclusão: soft-delete via RPC (rec.) ou policy DELETE | | |
-| D2 | Sicoob Bridge: desligar (rec., após etapa 2) ou reativar tipo | | |
-| D3 | Tipografia/geometria: Navy 38/48/108 (rec.) ou reduzir | | |
-| D4 | Legados/sintéticos: esconder por padrão com toggle (rec.) | | |
-| D5 | Enriquecimento via CRM externo (leitura) — fora deste plano, entra no Banco Único | | |
-| D6 | Apagar os 6 componentes órfãos (rec.) | | |
+| D1 | Exclusão: soft-delete via RPC (rec.) ou policy DELETE | **Soft-delete via RPC** (`deleted_at`), com o predicado `can_edit_contact` no servidor — implementado na série de exclusão | 2026-09-30 |
+| D2 | Sicoob Bridge: desligar (rec., após etapa 2) ou reativar tipo | **Desligar** — migration `20260929380000_disable_sicoob_bridge_trigger` no ledger (`DROP TRIGGER ... trg_sicoob_reply`), funções fora do ar e retiradas da `orphan_allowlist` (etapa 11) | 2026-09-30 |
+| D3 | Tipografia/geometria: Navy 38/48/108 (rec.) ou reduzir | **APROVADA a escala Navy 38/48/108 como definitiva do módulo Contatos** — desbloqueia a F2 (etapas 19–21); na etapa 20 seguir o ramo "D3 = Navy": mover `text-[38px]` de `PageHeader.tsx:147` para o token nomeado `text-page-title` e devolver o teto 1 de `violacoes.acima16px` | 2026-10-01 |
+| D4 | Legados/sintéticos: esconder por padrão com toggle (rec.) | **Esconder por padrão com toggle** — default esconde os legados (3.104 → ≈2.498 no E2E da etapa 98) | 2026-09-30 |
+| D5 | Enriquecimento via CRM externo (leitura) — fora deste plano, entra no Banco Único | **Fora do escopo deste plano** — as props `crmIntegrationEnabled`/`onOpenCRM` e o botão "CRM 360" não entram; só o gate de mesclagem permanece | 2026-10-01 |
+| D6 | Apagar os 6 componentes órfãos (rec.) | **Apagar apenas os que não têm nenhuma referência** — feitos 5 (`ContactBirthdayPanel`, `ContactPagination`, `ContactQuickPeek`, `CustomFieldsSection`, `InlineEditCell`); `ContactMergePanel.tsx` **fica** porque é referenciado pelo gate de Mesclagem | 2026-10-01 |
 
 ## Mapa de origem (para rastreabilidade)
 

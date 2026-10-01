@@ -23,6 +23,47 @@ async function withTimeout<T>(operation: PromiseLike<T>): Promise<T> {
   }
 }
 
+// F26 (Bloco B): ramos e ufs mudam pouco e o seletor de audiencia os pede a
+// cada abertura. Cache por isolate (Map + TTL de 5 min), um Map por conjunto —
+// sem Redis/DB: dados de ate 5 min de idade saem mais baratos que um round-trip
+// ao Singu em cada request. Erro da RPC NUNCA entra no cache (nao envenena o
+// isolate apos um timeout/solucao momentanea).
+export const AUDIENCE_CACHE_TTL_MS = 5 * 60_000;
+
+type AudienceListKind = 'ramos' | 'ufs';
+
+interface AudienceListCacheEntry {
+  data: unknown;
+  expiresAt: number;
+}
+
+const audienceListCache: Record<AudienceListKind, Map<string, AudienceListCacheEntry>> = {
+  ramos: new Map(),
+  ufs: new Map(),
+};
+
+// Serve a lista do cache enquanto ela nao vence; senao consulta a RPC e guarda
+// o resultado. Devolve junto o rotulo do header x-cache (HIT = veio do Map,
+// MISS = a RPC foi chamada). O relogio vem de _injected.now (teste) ou Date.now.
+export async function fetchAudienceList(
+  kind: AudienceListKind,
+  rpcName: string,
+  callRpc: () => PromiseLike<{ data: unknown; error: unknown }>,
+  _injected?: { now?: () => number },
+): Promise<{ data: unknown; cache: 'HIT' | 'MISS' }> {
+  const now = _injected?.now?.() ?? Date.now();
+  const cached = audienceListCache[kind].get(rpcName);
+  if (cached && now < cached.expiresAt) return { data: cached.data, cache: 'HIT' };
+
+  const result = await withTimeout(callRpc());
+  if (result.error) {
+    const code = (result.error as { code?: string } | null)?.code;
+    throw new Error(`MULTIPLIX_RPC:${code || 'unknown'}`);
+  }
+  audienceListCache[kind].set(rpcName, { data: result.data, expiresAt: now + AUDIENCE_CACHE_TTL_MS });
+  return { data: result.data, cache: 'MISS' };
+}
+
 const AudienceRole = z.enum(['cliente', 'fornecedor', 'transportadora']);
 
 const FiltersSchema = z.object({
@@ -92,7 +133,15 @@ export function mapResolvedRecipients(rows: Array<Record<string, unknown>>): Mul
     }));
 }
 
-export async function handleMultiplixAudienceRequest(req: Request): Promise<Response> {
+export interface MultiplixAudienceInjected {
+  /** Relogio injetavel (F26): o teste controla o TTL sem esperar 5 min reais. */
+  now?: () => number;
+}
+
+export async function handleMultiplixAudienceRequest(
+  req: Request,
+  _injected?: MultiplixAudienceInjected,
+): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
   if (req.method !== 'POST') return errorResponse('Method not allowed', 405, req);
@@ -179,18 +228,25 @@ export async function handleMultiplixAudienceRequest(req: Request): Promise<Resp
   if (!parsed.success) return errorResponse('Invalid request', 400, req);
   const { action, params } = parsed.data;
   const started = performance.now();
+  // F26: so list_ramos/list_ufs tem cache; as demais acoes ficam com o header
+  // ausente (null nao vira header).
+  let cacheStatus: 'HIT' | 'MISS' | null = null;
 
   try {
     let data: unknown;
 
     if (action === 'list_ramos') {
-      const result = await withTimeout(externalClient.rpc('multiplix_list_ramos'));
-      if (result.error) throw new Error(`MULTIPLIX_RPC:${result.error.code || 'unknown'}`);
+      const result = await fetchAudienceList(
+        'ramos', 'multiplix_list_ramos', () => externalClient.rpc('multiplix_list_ramos'), _injected,
+      );
       data = result.data;
+      cacheStatus = result.cache;
     } else if (action === 'list_ufs') {
-      const result = await withTimeout(externalClient.rpc('multiplix_list_ufs'));
-      if (result.error) throw new Error(`MULTIPLIX_RPC:${result.error.code || 'unknown'}`);
+      const result = await fetchAudienceList(
+        'ufs', 'multiplix_list_ufs', () => externalClient.rpc('multiplix_list_ufs'), _injected,
+      );
       data = result.data;
+      cacheStatus = result.cache;
     } else if (action === 'search') {
       const filters = SearchParamsSchema.safeParse(params);
       if (!filters.success) return errorResponse('Invalid search parameters', 400, req);
@@ -302,12 +358,17 @@ export async function handleMultiplixAudienceRequest(req: Request): Promise<Resp
 
     const duration = Math.round(performance.now() - started);
     console.warn(JSON.stringify({
-      event: 'multiplix_audience', action, user_id: userId, scope: scopePermissions, duration_ms: duration, ok: true,
+      event: 'multiplix_audience', action, user_id: userId, scope: scopePermissions, duration_ms: duration,
+      cache: cacheStatus, ok: true,
     }));
-    return jsonResponse({
+    const response = jsonResponse({
       data,
       meta: { record_count: Array.isArray(data) ? data.length : data == null ? 0 : 1, duration_ms: duration },
     }, 200, req);
+    // F26: HIT|MISS so nas respostas que serviram ramos/ufs; o log acima registra
+    // o segundo request em 5 min como cache HIT sem novo round-trip ao Singu.
+    if (cacheStatus) response.headers.set('x-cache', cacheStatus);
+    return response;
   } catch (error) {
     const code = error instanceof Error ? error.message.split(':')[0] : 'MULTIPLIX_UNKNOWN';
     const status = code === 'MULTIPLIX_TIMEOUT' ? 504 : 502;
@@ -316,4 +377,4 @@ export async function handleMultiplixAudienceRequest(req: Request): Promise<Resp
   }
 }
 
-if (import.meta.main) Deno.serve(handleMultiplixAudienceRequest);
+if (import.meta.main) Deno.serve((req) => handleMultiplixAudienceRequest(req));

@@ -26,7 +26,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   { id: 'snooze', command: '/snooze', label: 'Adiar', description: 'Adiar conversa para depois', icon: Clock, category: 'actions', color: 'text-muted-foreground', shortcut: 'S', subCommands: [{ id: '1h', label: 'Em 1 hora', value: '1h' }, { id: '3h', label: 'Em 3 horas', value: '3h' }, { id: 'tomorrow', label: 'Amanhã', value: 'tomorrow' }, { id: 'nextweek', label: 'Próxima semana', value: 'nextweek' }] },
   { id: 'star', command: '/star', label: 'Favoritar', description: 'Marcar conversa como favorita', icon: Star, category: 'actions', color: 'text-warning', shortcut: 'F' },
   { id: 'archive', command: '/archive', label: 'Arquivar', description: 'Arquivar esta conversa', icon: Archive, category: 'actions', color: 'text-muted-foreground', shortcut: 'Q' },
-  { id: 'remind', command: '/remind', label: 'Lembrete', description: 'Criar lembrete para esta conversa', icon: Bell, category: 'actions', color: 'text-destructive', shortcut: 'L' },
+  { id: 'remind', command: '/remind', label: 'Lembrete', description: 'Criar tarefa com alarme para este contato', icon: Bell, category: 'actions', color: 'text-destructive', shortcut: 'L' },
   { id: 'quick', command: '/quick', label: 'Resposta Rápida', description: 'Usar uma resposta rápida salva', icon: Zap, category: 'templates', color: 'text-success', shortcut: 'K' },
   { id: 'summary', command: '/summary', label: 'Resumo IA', description: 'Gerar resumo da conversa com IA', icon: MessageSquare, category: 'actions', color: 'text-accent', shortcut: 'I' },
   { id: 'produto', command: '/produto', label: 'Catálogo', description: 'Buscar e enviar produto do catálogo', icon: Package, category: 'actions', color: 'text-success', shortcut: 'C' },

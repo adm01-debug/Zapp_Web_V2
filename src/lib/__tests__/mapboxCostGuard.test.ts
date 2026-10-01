@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+// (E47: a marca do aviso mensal vive em localStorage; o ambiente padrao de src/lib e node)
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const mockRpc = vi.fn();
@@ -22,6 +24,7 @@ describe('mapboxCostGuard', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     resetSearchBudgetGuardForTests();
+    localStorage.clear(); // E47: a marca do mes nao pode vazar de um teste para o outro
     mockRpc.mockReset();
     vi.mocked(logAudit).mockClear();
   });
@@ -46,10 +49,18 @@ describe('mapboxCostGuard', () => {
     await forceSearchBudgetRefreshForTests();
     expect(isSearchBudgetOk()).toBe(false);
     expect(logAudit).toHaveBeenCalledTimes(1);
-    expect(logAudit).toHaveBeenCalledWith({
-      action: 'searchbox_cost_guard',
-      details: { event: 'degraded', limit: MONTHLY_SESSION_LIMIT, count: MONTHLY_SESSION_LIMIT + 5 },
-    });
+    // E47: os `details` passaram a levar o `month` (dedupe do lado da observabilidade), entao a
+    // assercao deixa de exigir a forma exata e passa a exigir o que importa do evento.
+    expect(logAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'searchbox_cost_guard',
+        details: expect.objectContaining({
+          event: 'degraded',
+          limit: MONTHLY_SESSION_LIMIT,
+          count: MONTHLY_SESSION_LIMIT + 5,
+        }),
+      }),
+    );
   });
 
   it('continuar acima do teto em checagens seguintes não gera novo evento', async () => {

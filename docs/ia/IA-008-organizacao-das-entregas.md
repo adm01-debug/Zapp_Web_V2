@@ -26,7 +26,7 @@ interface e integrações quando necessário."
 | PR | Bloco (etapas) | Prioridade do plano | Depende de | Classe de banco esperada | Exige autorização humana? |
 |---|---|---|---|---|---|
 | 01 | Bloco 01 — Escopo e evidências (IA-001..010) | P1 preparação | — | nenhuma | não |
-| 02 | Bloco 02 — Autenticação e privacidade (IA-011..020) | **P0** | IA-001, IA-004, IA-010 | provável aditiva (grants/observação) | **sim** — deploy de Edge Function é manual com aprovação |
+| 02 | Bloco 02 — Autenticação e privacidade (IA-011..020) | **P0** | IA-001, IA-004, IA-010 | provável aditiva (grants/observação) | **não** — deploy de Edge Function é automático no merge na `main` |
 | 03 | Bloco 03 — Contratos e integridade (IA-021..030) | P0/P1 | IA-002, IA-004, IA-011, IA-015 | aditiva + contrato (enum/colunas) | não p/ DDL aditiva; contrato aplica pós-merge |
 | 04 | Bloco 04 — Camada de provedores (IA-031..040) | P1 | IA-011, IA-016, IA-017, IA-021, IA-025 | aditiva | não |
 | 05 | Bloco 05 — Filas e consumo (IA-041..050) | P1 (limites P0) | IA-025, IA-031 | aditiva (reserva/ledger) | **sim** se exigir chamada paga em ensaio |

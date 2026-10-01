@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  Sparkles, FileText, Lightbulb, XCircle, Handshake, Clock, BarChart3, Trash2, type LucideIcon,
+  Sparkles, FileText, Lightbulb, XCircle, Handshake, Clock, BarChart3, Trash2, CheckSquare, type LucideIcon,
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -13,9 +13,13 @@ import { useMyWorkItems } from '@/hooks/tasks/useMyWorkItems';
 import { useContactSummaryNote } from '@/hooks/crm/useContactSummaryNote';
 import { SectionCard } from './SectionCard';
 import type { KpiTone } from './KpiStrip';
+import { QuickAdd } from '@/components/tasks/shared/QuickAdd';
+import type { ConversationTab } from '../chat/ConversationTabs';
 
 interface NotesTabProps {
   contactId: string;
+  /** Troca de aba no chat (origem: ConversationTabContent). "Ver na aba Tarefas" usa `onTabChange('tasks')`. */
+  onTabChange?: (tab: ConversationTab) => void;
 }
 
 function AddInline({ placeholder, withDueDate, onSave, onCancel }: {
@@ -169,21 +173,14 @@ function PromiseItem({ note, onToggle, onDelete, canDelete }: { note: ContactNot
   );
 }
 
-function isTaskDueSoon(dueDate: string) {
-  const d = new Date(dueDate);
-  const now = new Date();
-  return d.getTime() < now.getTime() || (d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate());
-}
-
 /** Aba Notas (2.8) — 6 cards de CRUD por categoria + pendências (tarefas) + resumo comercial (contacts.notes). */
-export function NotesTab({ contactId }: NotesTabProps) {
+export function NotesTab({ contactId, onTabChange }: NotesTabProps) {
   const { allNotes, addNote, deleteNote, toggleNoteDone, currentProfileId } = useContactNotes(contactId);
   const { byDue, create: createTask } = useMyWorkItems({ contactId });
   const openTasks = [...byDue.overdue, ...byDue.today, ...byDue.tomorrow, ...byDue.upcoming, ...byDue.noDue];
   const summaryNote = useContactSummaryNote(contactId);
   const [editingSummary, setEditingSummary] = useState(false);
   const [summaryDraft, setSummaryDraft] = useState('');
-  const [addingTask, setAddingTask] = useState(false);
 
   const byCategory = (category: ContactNoteCategory) => allNotes.filter((n) => n.category === category);
 
@@ -226,26 +223,24 @@ export function NotesTab({ contactId }: NotesTabProps) {
           renderItem={(note) => <PromiseItem note={note} onToggle={toggleNoteDone} onDelete={deleteNote} canDelete={note.author_id === currentProfileId} />}
         />
 
-        <SectionCard
-          icon={Clock} title="Pendências" tone="blue" count={openTasks.length}
-          action={!addingTask ? { label: '+ Adicionar', onClick: () => setAddingTask(true), variant: 'pill' } : undefined}
-        >
-          {addingTask && (
-            <AddInline placeholder="Nova pendência..." onCancel={() => setAddingTask(false)} onSave={(content) => { createTask({ title: content, contactId }); setAddingTask(false); }} />
-          )}
-          <ul className="space-y-2 max-h-[240px] overflow-y-auto scrollbar-thin">
-            {openTasks.length === 0 && !addingTask && <p className="text-sm text-muted-foreground py-2">Nenhuma pendência</p>}
-            {openTasks.map((task) => (
-              <li key={task.id} data-testid="note-card" className="rounded-lg border border-border bg-muted/20 p-2.5 flex items-center justify-between gap-2">
-                <p className="text-sm text-foreground truncate">{task.title}</p>
-                {task.due_date && (
-                  <span className={cn('text-xs shrink-0', isTaskDueSoon(task.due_date) ? 'text-destructive' : 'text-muted-foreground')}>
-                    {format(new Date(task.due_date), 'dd/MM/yyyy', { locale: ptBR })}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
+        <SectionCard icon={Clock} title="Pendências" tone="blue" count={openTasks.length}>
+          {/* Etapa 71: sem lista duplicada — resumo + atalho para a aba Tarefas + criação rápida. */}
+          <p className="text-sm text-muted-foreground" data-testid="tasks-summary">
+            {openTasks.length === 0
+              ? 'Nenhuma tarefa aberta com este contato'
+              : `${openTasks.length} ${openTasks.length > 1 ? 'tarefas abertas' : 'tarefa aberta'} com este contato`}
+          </p>
+          <Button variant="outline" size="sm" className="h-8 text-xs self-start" onClick={() => onTabChange?.('tasks')}>
+            <CheckSquare className="w-3.5 h-3.5" />
+            Ver na aba Tarefas
+          </Button>
+          <QuickAdd
+            onAdd={createTask}
+            defaultStatus="todo"
+            defaultContactId={contactId}
+            placeholder="Nova tarefa para este contato…"
+            compact
+          />
         </SectionCard>
 
         <SectionCard

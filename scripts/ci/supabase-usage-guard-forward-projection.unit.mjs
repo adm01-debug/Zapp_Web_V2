@@ -235,3 +235,78 @@ test('usage guard ainda acusa alvo ausente em schema nao-public', () => {
   assert.equal(result.status, 1, result.stdout + result.stderr);
   assert.match(result.stderr, /\('nao_existe'\)/);
 });
+
+test('usage guard honra SET standard_conforming_strings = off (backslash escapa em string normal)', () => {
+  const result = runGuard({
+    catalog: { tables: ['t'] },
+    migrations: {
+      '20260909210000_scs_off.sql':
+        'SET standard_conforming_strings = off;\n'
+        + "SELECT 'a\\'b' AS x;\n"
+        + 'DROP TABLE public.t;\n',
+    },
+    callers: { 'c.ts': "supabase.from('t').select('*');\n" },
+  });
+  // Com SCS=off o backslash escapa a aspa em string NORMAL (medido no PG 17.11:
+  // psql -f aplica o SET num statement separado e SELECT 'a\'b' devolve a'b, so
+  // com WARNING). O DROP seguinte e DDL real e tira t da projecao. Sem honrar o
+  // SET, o scanner fecha a string no \' e engole o DROP -> fail-open.
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stderr, /\.from\('t'\)/);
+});
+
+test('usage guard reconhece dollar-quote com tag nao-ASCII', () => {
+  const result = runGuard({
+    migrations: {
+      '20260909210000_dollar_unicode.sql':
+        'CREATE TABLE public.t (id integer);\n'
+        + 'SELECT $ação$ DROP TABLE public.t; $ação$;\n',
+    },
+    callers: { 'c.ts': "supabase.from('t').select('*');\n" },
+  });
+  // O DROP esta DENTRO do dollar-quote (texto, nao DDL) e a tag nao-ASCII e
+  // valida no PG (medido: $ação$ ... $ação$ e aceito e devolve x). Sem reconhecer
+  // a tag, o conteudo vira tokens e o DROP falso remove t -> falso positivo.
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /projecao forward-only: 1 relacoes, 0 funcoes/);
+});
+
+test('usage guard mantem funcao quando outra assinatura (overload) sobrevive', () => {
+  const result = runGuard({
+    catalog: {
+      functions: ['can_edit_contact'],
+      function_signatures: [
+        'can_edit_contact(p_assigned_to uuid, p_queue_id uuid)->boolean|kind=f',
+        'can_edit_contact(p_assigned_to uuid, p_queue_id uuid, p_visible_agent_ids uuid[],'
+          + ' p_profile_id uuid, p_is_admin boolean)->boolean|kind=f',
+      ],
+    },
+    migrations: {
+      '20260909210000_drop_uma_assinatura.sql':
+        'DROP FUNCTION public.can_edit_contact(uuid, uuid);\n',
+    },
+    callers: { 'c.ts': "supabase.rpc('can_edit_contact');\n" },
+  });
+  // Sobrou a assinatura de 5 argumentos: rpc('can_edit_contact') continua valido.
+  // Remover o NOME inteiro no DROP de UMA assinatura seria falso positivo.
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /projecao forward-only: 0 relacoes, 1 funcoes/);
+});
+
+test('usage guard remove a funcao quando TODAS as assinaturas sao dropadas', () => {
+  const result = runGuard({
+    catalog: {
+      functions: ['f'],
+      function_signatures: ['f(a integer)->void|kind=f', 'f(b text)->void|kind=f'],
+    },
+    migrations: {
+      '20260909210000_drop_todas.sql':
+        'DROP FUNCTION public.f(integer);\n'
+        + 'DROP FUNCTION public.f(text);\n',
+    },
+    callers: { 'c.ts': "supabase.rpc('f');\n" },
+  });
+  // Sem assinatura sobrando, o nome sai da projecao e o caller fica orfao.
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stderr, /\.rpc\('f'\)/);
+});

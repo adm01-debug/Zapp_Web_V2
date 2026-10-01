@@ -32,8 +32,22 @@ interface BulkActionsBarProps {
    * todos -- o lote devolve erro só quando NENHUM pôde ser excluído.
    */
   canDeleteSelection?: boolean;
-  /** Alterar tipo em massa é restrito a admin/supervisor. */
+  /**
+   * Gate de papel do "Alterar tipo em massa": alterar tipo em massa é restrito a
+   * admin/supervisor, e o dado vem do usuário logado (`useUserRole`). Quando o
+   * resultado por contato (`canChangeTypeSelection`) é conhecido, ele tem
+   * precedência — é o dado do banco, não uma segunda cópia da regra.
+   */
   canChangeType?: boolean;
+  /**
+   * Se ao menos um dos contatos selecionados pode ter o tipo alterado. Mesmo
+   * predicado do banco para UPDATE em `contacts` (`can_edit_contact`: admin/
+   * supervisor OU responsável pelo contato), exposto por `contact.can_delete`
+   * via `canChangeSelectedContactsType`. Sem o gate o dropdown "Tipo" aparecia
+   * para qualquer um e a recusa só surgia no clique (RLS). `undefined` (RPC
+   * ainda não respondeu) deixa a decisão com o gate de papel.
+   */
+  canChangeTypeSelection?: boolean;
 }
 
 export function BulkActionsBar({
@@ -45,9 +59,21 @@ export function BulkActionsBar({
   availableAgents = [],
   canDeleteSelection = true,
   canChangeType = false,
+  canChangeTypeSelection,
 }: BulkActionsBarProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const count = selectedIds.length;
+
+  /**
+   * Gate único do "Alterar tipo em massa". Duas entradas convergem aqui:
+   * - `canChangeType` (papel admin/supervisor) decide se o dropdown é oferecido;
+   * - `canChangeTypeSelection` (permissão por contato, do banco) tem precedência
+   *   quando conhecido: `true` libera, `false` mostra o botão desabilitado com o
+   *   motivo, em vez de sumir sem explicação.
+   */
+  const typePermission =
+    canChangeTypeSelection !== undefined ? canChangeTypeSelection : canChangeType;
+  const showTypeAction = canChangeType || canChangeTypeSelection !== undefined;
 
   const handleBulkTag = useCallback(async (tag: string) => {
     if (isWhatsAppTag(tag)) return;
@@ -206,10 +232,15 @@ export function BulkActionsBar({
         </DropdownMenu>
 
         {/* Type */}
-        {canChangeType && (
+        {showTypeAction && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="secondary" disabled={isProcessing}>
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={isProcessing || !typePermission}
+                title={typePermission ? undefined : 'Você não pode alterar o tipo destes contatos'}
+              >
                 <Star className="w-3.5 h-3.5 mr-1" />
                 Tipo
               </Button>

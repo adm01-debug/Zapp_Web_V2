@@ -141,7 +141,9 @@ describe('ContactRegionMap', () => {
     expect(preciseMarker!.lngLat).toEqual([-46.63, -23.55]);
 
     expect(screen.getByText('Endereço confirmado (1)')).toBeInTheDocument();
-    expect(screen.getByText('Aproximado pelo DDD')).toBeInTheDocument();
+    // E42 · item 1: a legenda dos aproximados passou a trazer o M (40 + 10 contatos das regiões)
+    // — antes não havia número nenhum, então não dava para saber quanto do mapa era palpite.
+    expect(screen.getByText('Aproximado pelo DDD (50)')).toBeInTheDocument();
     // Contato sem coordenada (todo o resto de `regions`) não some: as bolhas de DDD continuam lá.
     expect(FakeMarker.instances.some((m) => m.getElement().textContent === '40')).toBe(true);
     expect(FakeMarker.instances.some((m) => m.getElement().textContent === '10')).toBe(true);
@@ -149,6 +151,14 @@ describe('ContactRegionMap', () => {
 
   it('sem contato com endereço confirmado, a legenda de duas fontes não aparece', () => {
     render(<ContactRegionMap regions={regions} selectedRegion={null} onSelectRegion={vi.fn()} />);
+    expect(screen.queryByText(/Endereço confirmado/)).not.toBeInTheDocument();
+  });
+
+  it('E42: só com contatos aproximados, a legenda ainda mostra a contagem do DDD', () => {
+    // Antes a legenda só existia se houvesse endereço confirmado — um mapa 100 % aproximado não
+    // dizia quantos contatos estavam ali por palpite. O E42 pede as duas contagens.
+    render(<ContactRegionMap regions={regions} selectedRegion={null} onSelectRegion={vi.fn()} />);
+    expect(screen.getByText('Aproximado pelo DDD (50)')).toBeInTheDocument();
     expect(screen.queryByText(/Endereço confirmado/)).not.toBeInTheDocument();
   });
 

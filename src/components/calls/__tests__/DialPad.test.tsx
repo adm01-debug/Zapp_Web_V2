@@ -4,7 +4,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { DialPad } from '../DialPad';
 
 const defaultProps = {
-  sipStatus: 'disconnected' as const,
+  sipStatus: 'idle' as const,
   callStatus: 'idle' as const,
   callDuration: 0,
   isMuted: false,
@@ -73,9 +73,14 @@ describe('DialPad', () => {
     expect(screen.getByText('Conectando...')).toBeInTheDocument();
   });
 
-  it('shows Erro badge on error', () => {
-    render(<DialPad {...defaultProps} sipStatus="error" />);
-    expect(screen.getByText('Erro')).toBeInTheDocument();
+  it('shows Indisponível badge when a linha não volta (unavailable)', () => {
+    render(<DialPad {...defaultProps} sipStatus="unavailable" />);
+    expect(screen.getByText('Indisponível')).toBeInTheDocument();
+  });
+
+  it('shows Reconectando... badge while há retry agendado (T16)', () => {
+    render(<DialPad {...defaultProps} sipStatus="reconnecting" />);
+    expect(screen.getByText('Reconectando...')).toBeInTheDocument();
   });
 
   // === INTERACTION TESTS ===

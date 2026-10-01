@@ -19,14 +19,24 @@ vi.mock('@/hooks/ui/useSidebarCollapse', () => ({
 }));
 
 let mockRoles: string[] = ['supervisor'];
+/**
+ * F25 (Bloco B): a entrada do Multiplix deixou de seguir o papel (STAFF_ROLES) e
+ * passa a seguir a permissao nomeada `multiplix.dispatch.create`. O componente
+ * le as permissoes do mesmo hook de acesso que ja entrega os papeis
+ * (useUserRole -> RoleService.checkPermission -> RPC user_has_permission).
+ * Por isso o mock agora tambem injeta as permissoes que o hook entregaria.
+ */
+let mockPermissions: string[] = ['multiplix.dispatch.create'];
 vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: () => ({
     roles: mockRoles,
+    permissions: mockPermissions,
     isAdmin: mockRoles.includes('admin'),
     isSupervisor: mockRoles.includes('supervisor') || mockRoles.includes('admin'),
     isSpecialAgent: mockRoles.includes('special_agent'),
     hasRole: (r: string) => mockRoles.includes(r),
     loading: false,
+    permissionsLoading: false,
     refetch: vi.fn(),
   }),
 }));
@@ -45,6 +55,11 @@ vi.mock('@/hooks/ui/useSidebarFavorites', () => ({
 vi.mock('@/components/notifications/PushNotificationToggle', () => ({ PushNotificationToggle: () => null }));
 vi.mock('@/components/notifications/ScreenProtectionToggle', () => ({ ScreenProtectionToggle: () => null }));
 vi.mock('@/components/notifications/SoundVolumeControl', () => ({ SoundVolumeControl: () => null }));
+// Fase F: o popover de notificações consome `useNotifications` (useAuth/supabase)
+// e o badge de Tarefas consome `useMyWorkItemsBadge` (useAuth/useQuery). Este teste
+// é sobre a estrutura de navegação, então os dois entram mockados.
+vi.mock('@/components/notifications/NotificationsPopover', () => ({ NotificationsPopover: () => null }));
+vi.mock('@/hooks/tasks/useMyWorkItems', () => ({ useMyWorkItemsBadge: () => 0 }));
 vi.mock('@/components/layout/SidebarUserPill', () => ({ SidebarUserPill: () => null }));
 vi.mock('@/components/layout/SidebarBackButton', () => ({ SidebarBackButton: () => null }));
 
@@ -65,6 +80,7 @@ function renderSidebar(props = baseProps()) {
 
 beforeEach(() => {
   mockRoles = ['supervisor'];
+  mockPermissions = ['multiplix.dispatch.create'];
   mockFavorites = [];
   mockToggleFavorite.mockClear();
 });
@@ -95,8 +111,30 @@ describe('Sidebar — nav primária e grupos compartilham uma única área de ro
     expect(scrollArea).toContainElement(chatbotButton as HTMLElement);
   });
 
-  it('agente comum não vê Multiplix na nav primária', () => {
+  /**
+   * Gate do Multiplix: ANTES era por papel (STAFF_ROLES = admin/supervisor) e o
+   * agente nunca via o item. AGORA (F25) é pela permissão nomeada
+   * `multiplix.dispatch.create` — o papel não decide mais; staff sem a permissão
+   * perde a entrada e agente com a permissão ganha. Os dois casos são testados
+   * abaixo de propósito, porque a intenção do gate mudou.
+   */
+  it('staff SEM a permissão nomeada não vê Multiplix na nav primária (papel não basta — F25)', () => {
+    mockRoles = ['supervisor', 'admin'];
+    mockPermissions = [];
+    const { container } = renderSidebar();
+    expect(container.querySelector('[data-tour="multiplix"]')).toBeNull();
+  });
+
+  it('agente COM a permissão nomeada vê Multiplix na nav primária (F25)', () => {
     mockRoles = ['agent'];
+    mockPermissions = ['multiplix.dispatch.create'];
+    const { container } = renderSidebar();
+    expect(container.querySelector('[data-tour="multiplix"]')).not.toBeNull();
+  });
+
+  it('agente SEM a permissão nomeada continua sem ver Multiplix na nav primária', () => {
+    mockRoles = ['agent'];
+    mockPermissions = [];
     const { container } = renderSidebar();
     expect(container.querySelector('[data-tour="multiplix"]')).toBeNull();
   });

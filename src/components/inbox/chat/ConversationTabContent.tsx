@@ -109,7 +109,8 @@ export function ConversationTabContent({
 
       {activeTab === 'notes' && (
         <Panel name="Notas">
-          <NotesTab contactId={contactId} />
+          {/* `onTabChange` é obrigatório aqui: sem ele o "Ver na aba Tarefas" fica inerte. */}
+          <NotesTab contactId={contactId} onTabChange={onTabChange} />
         </Panel>
       )}
 

@@ -169,3 +169,20 @@ describe('CatalogAdvancedFilters — Limpar', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });
+
+describe('CatalogAdvancedFilters — CT-22: destaque "Mais pedidos" removido', () => {
+  it('não renderiza o switch de destaques nem o rótulo "Mais pedidos"', () => {
+    // stats.bestseller existe (a RPC até expõe a contagem), mas o controle que
+    // ativava o filtro foi removido de propósito: sem `has_order_data` não há
+    // dado de pedido por produto para filtrar de verdade.
+    renderFilters({ stats: mockStats({ bestseller: 20 }) });
+
+    // O único Switch da Sheet era o de destaques — agora não há switch nenhum.
+    expect(screen.queryAllByRole('switch')).toHaveLength(0);
+    // O id do switch removido não existe em lugar nenhum do documento (o
+    // conteúdo do Sheet Radix vive num portal, fora do `container` do render).
+    expect(document.getElementById('adv-bestseller')).toBeNull();
+    expect(screen.queryByText(/mais pedidos/i)).toBeNull();
+    expect(screen.queryByText('Destaques')).toBeNull();
+  });
+});

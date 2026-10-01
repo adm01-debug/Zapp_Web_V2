@@ -52,6 +52,8 @@ consistente entre provedores (mesmo desenho que já isolou o áudio no Bloco 02/
 
 **Bloco 02 (P0) — em andamento:** o lote de contenção (IA-011/012/013/014) está em
 [`IA-011-a-IA-020-contencao-P0.md`](./IA-011-a-IA-020-contencao-P0.md), com as etapas de política
-apontadas para os blocos 03/04/05. O que ainda **depende de você** para chegar a produção: aprovar o
-deploy das Edge Functions e criar o secret `ELEVENLABS_WEBHOOK_SECRET` (a verificação de assinatura é
+apontadas para os blocos 03/04/05. O deploy das Edge Functions **não** depende de aprovação: o merge na
+`main` dispara o `deploy-functions.yml` (o environment `producao-edge-functions` tem só branch policy — medido:
+nenhum card de aprovação aparece). O que ainda **depende de você** para chegar a produção: criar o
+secret `ELEVENLABS_WEBHOOK_SECRET` (a verificação de assinatura é
 falha fechada: sem o secret, o webhook da ElevenLabs recusa os eventos).

@@ -2,7 +2,7 @@
 # ZAPP-WEB CI/CD Pipeline
 # =================================================
 # Triggered on: push to main, pull requests
-# Jobs: lint, typecheck, test, build
+# Jobs: lint-and-typecheck, test, build, security, e2e
 # Runtime: bun (o repo usa bun.lock, nao package-lock.json)
 # =================================================
 
@@ -61,7 +61,7 @@ jobs:
           bun-version: '1.4.0'
 
       - name: 📚 Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🦕 Setup Deno
         uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
@@ -97,6 +97,7 @@ jobs:
           supabase/functions/webhook-diagnostic/diagnostic.test.ts
           supabase/functions/talkx-report/index.test.ts
           supabase/functions/multiplix-send/index.test.ts
+          supabase/functions/get-sip-password/index.test.ts
           supabase/functions/_shared/__tests__/cron-secret-authz-l5.test.ts
           supabase/functions/_shared/__tests__/talkx-resume-policy.test.ts
           supabase/functions/_shared/__tests__/webhook-signature.test.ts
@@ -171,7 +172,7 @@ jobs:
           bun-version: '1.4.0'
 
       - name: 📚 Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🧪 Run Vitest (cobertura com piso em src/lib + src/services)
         run: bun run test:coverage
@@ -217,7 +218,7 @@ jobs:
           bun-version: '1.4.0'
 
       - name: 📚 Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🏗️ Build for production
         run: bun run build
@@ -272,7 +273,7 @@ jobs:
           bun-version: '1.4.0'
 
       - name: 📚 Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install --frozen-lockfile --ignore-scripts
 
       # Um unico "bun audit": o relatorio completo (inclui devDependencies) sai sempre,
       # e o gate bloqueante le o mesmo arquivo em vez de consultar o registry de novo.
@@ -313,7 +314,7 @@ jobs:
           bun-version: '1.4.0'
 
       - name: 📚 Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
         run: bunx playwright install --with-deps chromium firefox webkit
@@ -323,7 +324,7 @@ jobs:
       # referenciar esses secrets (scripts/ci/check-pr-workflow-secrets.mjs), então
       # o login real roda em .github/workflows/e2e-logado.yml, depois do merge na main.
       - name: 🧪 Run Playwright E2E (chromium + firefox + webkit, sem autenticação)
-        run: bun run test:e2e -- --project=chromium --project=firefox-auth --project=webkit-auth
+        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=firefox-auth --project=webkit-auth
         env:
           CI: true
 
