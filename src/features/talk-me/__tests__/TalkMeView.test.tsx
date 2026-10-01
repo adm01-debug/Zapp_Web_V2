@@ -104,7 +104,11 @@ describe('TalkMeView', () => {
     expect(within(activeCard).getByText('Preciso de cem caixas')).toBeInTheDocument();
     expect(activeCard).toHaveAttribute('tabindex', '0');
     expect(within(activeCard).getByText('2 mensagens aguardando resposta')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Selecionar Ana Compras' })).toHaveAttribute('aria-pressed', 'true');
+    const queueCard = screen.getByRole('button', { name: 'Selecionar Ana Compras' });
+    expect(queueCard).toHaveAttribute('aria-pressed', 'true');
+    expect(queueCard).toHaveAccessibleDescription(/Empresa: Acme[\s\S]*Cargo: Compradora[\s\S]*Última mensagem: Preciso de cem caixas/);
+    const fallback = activeCard.querySelector('.bg-zinc-950.text-white');
+    expect(fallback).toHaveTextContent('AC');
   });
 
   it('navega manualmente sem autoplay e oferece fallback para áudio e cadastro incompleto', () => {
@@ -167,11 +171,33 @@ describe('TalkMeView', () => {
     expect(bruno).toHaveAccessibleDescription(/Empresa não informada[\s\S]*Cargo não informado[\s\S]*Mensagem de áudio/);
   });
 
-  it('não usa as setas do seletor de departamento para mover o carrossel', () => {
+  it('move a seleção e o foco juntos ao navegar pela faixa inferior com o teclado', async () => {
     renderView();
-    const department = screen.getByRole('combobox', { name: 'Departamento' });
-    department.focus();
-    fireEvent.keyDown(department, { key: 'ArrowRight' });
+    const ana = screen.getByRole('button', { name: 'Selecionar Ana Compras' });
+    ana.focus();
+
+    fireEvent.keyDown(ana, { key: 'ArrowRight' });
+
+    const bruno = screen.getByRole('button', { name: 'Selecionar Bruno Financeiro' });
+    await waitFor(() => expect(bruno).toHaveFocus());
+    expect(bruno).toHaveAttribute('aria-pressed', 'true');
+    expect(bruno).toHaveAccessibleDescription(/Empresa: Empresa não informada[\s\S]*Cargo: Cargo não informado[\s\S]*Última mensagem: Mensagem de áudio/);
+  });
+
+  it('não usa as setas de busca, departamento ou ações para mover o carrossel', () => {
+    renderView();
+    const controls = [
+      screen.getByRole('combobox', { name: 'Departamento' }),
+      screen.getByRole('textbox', { name: 'Buscar na fila TALK ME' }),
+      screen.getByRole('button', { name: 'Atualizar fila' }),
+      screen.getByRole('button', { name: 'Aceitar e conversar' }),
+    ];
+
+    for (const control of controls) {
+      control.focus();
+      fireEvent.keyDown(control, { key: 'ArrowRight' });
+      fireEvent.keyDown(control, { key: 'ArrowLeft' });
+    }
 
     expect(screen.getByRole('button', { name: 'Ana Compras' })).toHaveAttribute('aria-current', 'true');
   });
@@ -211,6 +237,8 @@ describe('TalkMeView', () => {
       </TooltipProvider>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Selecionar Bruno Financeiro' }));
+    const bruno = screen.getByRole('button', { name: 'Bruno Financeiro' });
+    bruno.focus();
 
     rerender(
       <TooltipProvider>
@@ -224,6 +252,7 @@ describe('TalkMeView', () => {
     );
 
     await waitFor(() => expect(screen.getByRole('button', { name: 'Ana Compras' })).toHaveAttribute('aria-current', 'true'));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Ana Compras' })).toHaveFocus());
     expect(screen.getByRole('button', { name: 'Selecionar Ana Compras' })).toHaveAttribute('aria-pressed', 'true');
     expect(toast.info).toHaveBeenCalledWith('O atendimento anterior saiu da fila. Exibimos o próximo disponível.');
   });
