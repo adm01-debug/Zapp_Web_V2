@@ -180,6 +180,17 @@
     --offline: 0 0% 60%;
     --unread: 221 83% 53%;
 
+    /* ===== WhatsApp — prévia de envio do Catálogo (PhonePreview, CT-37) =====
+       Único lugar com as cores oficiais do WhatsApp que estavam soltas como
+       hex em SendProductDialog.tsx: #075E54 (cabeçalho), #e5ddd5 (fundo da
+       conversa), #dcf8c6 (bolha enviada). Os componentes usam hsl(var(--wa-*));
+       não duplicar esses valores em outro arquivo. */
+    --wa-header: 173 86% 20%;
+    --wa-header-foreground: 0 0% 100%;
+    --wa-background: 30 24% 87%;
+    --wa-bubble: 94 78% 87%;
+    --wa-bubble-foreground: 0 0% 0%;
+
     /* ===== Sidebar ===== */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 221 20% 12%;

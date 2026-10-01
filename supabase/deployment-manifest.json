@@ -465,8 +465,8 @@
     },
     {
       "path": "supabase/functions/promogifts-catalog/index.ts",
-      "bytes": 20853,
-      "sha256": "59e188612cc920ad98db1511d32f49a4de9da11b7b3bfadbbd57faece8a204dc"
+      "bytes": 23801,
+      "sha256": "d237ffd40cb9d73d419871f0a3a9ecc058423d15cd148742ad093b6ecbb35ed0"
     },
     {
       "path": "supabase/functions/public-api/index.ts",
@@ -1222,7 +1222,7 @@
       "name": "promogifts-catalog",
       "entrypoint": "supabase/functions/promogifts-catalog/index.ts",
       "verify_jwt": true,
-      "source_sha256": "53520ea80b677d4e3d2dec9894ecaeca8191bb9fdb3b7c44aa26fed0df241b7b",
+      "source_sha256": "a49aeadef454bf5e51b5102706fdd814848878a41cc8bc6c8351a05e5a38a585",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1431,5 +1431,5 @@
       ]
     }
   ],
-  "manifest_sha256": "71e40ffdf238e4c56d21500195a926f8db451c102e33ff4befff66dfeb127237"
+  "manifest_sha256": "bf4f22094ab45158413454bc267f84c42b65819c6f45a3c6a41676933c480cf2"
 }
