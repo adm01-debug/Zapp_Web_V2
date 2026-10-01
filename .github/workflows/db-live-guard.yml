@@ -42,7 +42,6 @@ env:
 jobs:
   live-contract:
     name: Contrato DB vivo
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     # issues: write para abrir/comentar o alerta em falha e fechar apos
@@ -67,6 +66,12 @@ jobs:
       # (3 x 3 = 9 execucoes de psql, ~47s de espera acumulada) em vez de somar.
       LEDGER_RETRY_DELAYS_MS: ""
     steps:
+      - name: ✋ Somente executa na main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }})."
+          exit 1
+
       - name: Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

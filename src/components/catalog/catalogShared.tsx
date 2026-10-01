@@ -34,7 +34,7 @@ export const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
 // ProductImage removido na E15 — substituído por ProductThumb (skeleton + srcSet real + fallback em cascata).
 
 // ─── ProductBadge (E12) ─────────────────────────────────────────
-import { Check, Flame, Sparkles, Star, XCircle } from 'lucide-react';
+import { Check, Flame, Sparkles, Star, User, XCircle } from 'lucide-react';
 import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 
 export type ProductBadgeKind = 'out' | 'bestseller' | 'new' | 'featured' | 'instock';
@@ -677,6 +677,67 @@ export function SectionCard({ title, children }: { title: string; children: Reac
     <div className="rounded-xl border border-border/60 bg-card p-4">
       <h4 className="text-[13px] font-semibold text-foreground mb-2">{title}</h4>
       {children}
+    </div>
+  );
+}
+
+// ── CT-37: PhonePreview (prévia estilo WhatsApp) ──────────────────────────
+export interface PhonePreviewImage {
+  url: string;
+  label: string;
+}
+
+interface PhonePreviewProps {
+  message: string;
+  images: PhonePreviewImage[];
+  /** Nome exibido no cabeçalho do mock; padrão "Cliente". */
+  title?: string;
+}
+
+/**
+ * Prévia visual estilo WhatsApp da mensagem/fotos selecionadas (E74),
+ * extraída do SendProductDialog para virar primitivo reutilizável do módulo.
+ *
+ * - a moldura e as partes internas usam as classes `.catalog-phone*`
+ *   (src/styles/components.css), cujas cores saem dos tokens `--wa-*`
+ *   (tokens.css) — nenhum hex/rgb/hsl literal neste arquivo;
+ * - os ícones são decorativos (aria-hidden) e o texto alternativo da foto
+ *   continua em pt-BR.
+ */
+export function PhonePreview({ message, images, title = 'Cliente' }: PhonePreviewProps) {
+  const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const firstImage = images[0];
+  return (
+    <div className="space-y-2">
+      <span className="text-sm text-muted-foreground">Pré-visualização</span>
+      <div className="catalog-phone">
+        <div className="catalog-phone__header">
+          <div className="catalog-phone__avatar">
+            <User className="w-4 h-4" aria-hidden="true" />
+          </div>
+          <span className="text-sm font-medium">{title}</span>
+        </div>
+        <div className="catalog-phone__body">
+          {firstImage && (
+            <div className="relative inline-block rounded-lg overflow-hidden max-w-[70%] align-top">
+              <img src={firstImage.url} alt="Prévia" className="w-full h-auto max-h-40 object-cover" />
+              {images.length > 1 && (
+                <span className="catalog-phone__counter text-3xs leading-none">
+                  1/{images.length}
+                </span>
+              )}
+            </div>
+          )}
+          <div className="catalog-phone__bubble">
+            <p className="text-sm whitespace-pre-line">{message}</p>
+            <div className="flex items-center justify-end gap-0.5 mt-1">
+              <span className="catalog-phone__time text-3xs">{time}</span>
+              <Check className="catalog-phone__tick w-3 h-3" aria-hidden="true" />
+              <Check className="catalog-phone__tick w-3 h-3 -ml-2" aria-hidden="true" />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
