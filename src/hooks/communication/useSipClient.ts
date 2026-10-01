@@ -3,8 +3,7 @@ import { getLogger } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useSipConnection } from '../sip/useSipConnection';
-import { upsertMyCall, novoCallId, desfechoDaChamada } from '@/lib/calls/persistence';
-import type { CallEndOutcome, UpsertMyCallInput } from '@/lib/calls/persistence';
+import { novoCallId, desfechoDaChamada, criarFilaDePersistencia, type CallEndOutcome, type UpsertMyCallInput } from '@/lib/calls/persistence';
 import { phoneQueryVariants, pickUniquePhoneMatch } from '@/lib/calls/phone';
 import { SipCallAdapter } from '@/lib/calls/adapters/SipCallAdapter';
 import { CallEngine } from '@/lib/calls/adapters/CallEngine';
@@ -34,6 +33,7 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
   // T11: a linha no banco (= `sessionId` da máquina) e a direção fora do estado
   // (o sink é memoizado: `directionRef` evita closure velha).
   const [currentCallId, setCurrentCallId] = useState<string | null>(null);
+  const [filaDePersistencia] = useState(() => criarFilaDePersistencia()); // D3: ordem de chamada = ordem de gravação
   const directionRef = useRef<CallDirection | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stopTimer = useCallback(() => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } }, []);
@@ -52,7 +52,7 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
   }, []);
   const sink: CallEngineSink = useMemo(() => {
     const persistir = async (input: UpsertMyCallInput) => {
-      const { ok, error } = await upsertMyCall(input);
+      const { ok, error } = await filaDePersistencia.executar(input);
       // Falha de banco nunca é silenciosa: log com o id da chamada + toast.
       if (!ok) { log.error(`Falha ao gravar a chamada (id=${input.id})`, error); toast.error('Não foi possível salvar a ligação'); }
     };
@@ -79,7 +79,7 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
         void persistir({ id: callId, direction, endedAt: new Date().toISOString(), talkSeconds, ...desfechoDaChamada(talkSeconds, direction, outcome) });
       },
     };
-  }, [startTimer, stopTimer, findContactByPhone, onEnd]);
+  }, [startTimer, stopTimer, findContactByPhone, filaDePersistencia, onEnd]);
 
   // Lazy init (não `useRef`): o motor é criado uma vez e nunca lido em render.
   const [engine] = useState(() => new CallEngine(new SipCallAdapter(log)));
