@@ -139,15 +139,20 @@ $$;
 -- A publication realtime existe vazia; a 20260926230000 adiciona as tabelas.
 CREATE PUBLICATION supabase_realtime;
 
--- Atores: A = admin dono; B = supervisor nao-dono; C = operador sem papel de staff.
+-- Atores: A = admin dono; B = supervisor nao-dono; C = operador sem papel de staff
+-- (agent que nunca criou nada); D = dono NAO-staff (special_agent que criou um
+-- disparo quando era staff e hoje so enxerga o proprio — cobre o ramo "dono" da
+-- policy de SELECT, que nao exige papel).
 INSERT INTO public.profiles (id, user_id) VALUES
   ('10000000-0000-0000-0000-00000000000a', '20000000-0000-0000-0000-00000000000a'),
   ('10000000-0000-0000-0000-00000000000b', '20000000-0000-0000-0000-00000000000b'),
-  ('10000000-0000-0000-0000-00000000000c', '20000000-0000-0000-0000-00000000000c');
+  ('10000000-0000-0000-0000-00000000000c', '20000000-0000-0000-0000-00000000000c'),
+  ('10000000-0000-0000-0000-00000000000d', '20000000-0000-0000-0000-00000000000d');
 INSERT INTO public.user_roles (user_id, role) VALUES
   ('20000000-0000-0000-0000-00000000000a', 'admin'),
   ('20000000-0000-0000-0000-00000000000b', 'supervisor'),
-  ('20000000-0000-0000-0000-00000000000c', 'agent');
+  ('20000000-0000-0000-0000-00000000000c', 'agent'),
+  ('20000000-0000-0000-0000-00000000000d', 'special_agent');
 GRANT ALL ON public.profiles, public.user_roles, public.role_permissions, public.permissions TO authenticated;
 SQL
 
@@ -178,9 +183,11 @@ GRANT SELECT ON public.talkx_settings, public.talkx_campaigns, public.talkx_reci
 INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, whatsapp_connection_id) VALUES
   ('30000000-0000-0000-0000-000000000001', 'Disparo do A', 'Oi {{empresa}}', 'sending', '10000000-0000-0000-0000-00000000000a', 1, '70000000-0000-0000-0000-000000000001'),
   ('30000000-0000-0000-0000-000000000002', 'Rascunho do A', 'Oi {{empresa}}', 'draft', '10000000-0000-0000-0000-00000000000a', 0, NULL),
-  ('30000000-0000-0000-0000-000000000003', 'Rascunho do B', 'Oi {{empresa}}', 'draft', '10000000-0000-0000-0000-00000000000b', 0, NULL);
+  ('30000000-0000-0000-0000-000000000003', 'Rascunho do B', 'Oi {{empresa}}', 'draft', '10000000-0000-0000-0000-00000000000b', 0, NULL),
+  ('30000000-0000-0000-0000-000000000004', 'Rascunho do D', 'Oi {{empresa}}', 'draft', '10000000-0000-0000-0000-00000000000d', 1, NULL);
 INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, company_name_snapshot, destino_e164, status) VALUES
-  ('40000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', 'Empresa 1', '+5511990000001', 'pending');
+  ('40000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', 'Empresa 1', '+5511990000001', 'pending'),
+  ('40000000-0000-0000-0000-00000000000d', '30000000-0000-0000-0000-000000000004', '50000000-0000-0000-0000-00000000000d', 'Empresa do D', NULL, 'pending');
 INSERT INTO public.multiplix_blocks (dispatch_id, block_order, block_type, template_text) VALUES
   ('30000000-0000-0000-0000-000000000002', 0, 'text', 'bloco do A'),
   ('30000000-0000-0000-0000-000000000003', 0, 'text', 'bloco do B');
@@ -196,6 +203,10 @@ migration "20260929620000_multiplix_realtime_column_scope.sql"
 migration "20260929630000_multiplix_create_draft.sql"
 migration "20260929640000_multiplix_dispatch_manage_all_permission.sql"
 migration "20260930300000_multiplix_guards_fail_closed.sql"
+# F17b/F17c: substitui o corpo de trigger_pending_multiplix_dispatches() pela
+# versao com guard de conexao e retomada por cota — e a version mais alta da
+# tarefa e tem de entrar depois das demais do bloco DDL.
+migration "20260930560000_f17b_f17c_conexao_unica_e_cota.sql"
 
 # A revogacao da escrita direta em multiplix_recipients (F08, segunda metade) so
 # existe depois que a edge que cria o disparo esta DEPLOYADA — ela entra no PR de
@@ -215,6 +226,7 @@ supervisor_b="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'
 agent_c="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='20000000-0000-0000-0000-00000000000c';"
 service_session="SET ROLE service_role; SET request.jwt.claim.role='service_role';"
 anon_session="SET ROLE anon; SET request.jwt.claim.role='anon';"
+owner_d="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='20000000-0000-0000-0000-00000000000d';"
 
 # ── F01/F02: anon fora, sem TRUNCATE, FORCE RLS ligado ─────────────────────────
 [[ "$(psql_test -Atqc "SELECT count(*) FROM information_schema.role_table_grants WHERE table_schema='public' AND table_name LIKE 'multiplix%' AND grantee='anon'")" == '0' ]] \
@@ -236,6 +248,32 @@ anon_read="$(psql_test -Atqc "$anon_session SELECT count(*) FROM public.multipli
   || fail 'supervisor (staff) deveria ler os blocos de todos os disparos'
 agent_insert_blocks="$(psql_test -Atqc "$agent_c INSERT INTO public.multiplix_blocks (dispatch_id, block_order, block_type, template_text) VALUES ('30000000-0000-0000-0000-000000000003', 5, 'text', 'invasao') RETURNING 1;" 2>&1 || true)"
 [[ "$agent_insert_blocks" != '1' ]] || fail 'agent inseriu bloco em rascunho alheio'
+
+# ── F20: leitura escopada ao dono (agent sem disparo lê zero; dono não-staff só o próprio)
+# A policy de SELECT tem dois ramos permissivos: "Admins can view all dispatches"
+# (staff-wide, via is_admin_or_supervisor: admin/supervisor) e "Users can view own
+# dispatches" (dono, sem exigir papel). O ramo staff-wide já tem controle positivo em
+# F03 (supervisor lê os blocos de todos os disparos); aqui se prova o ramo do dono:
+# quem NÃO é staff enxerga SOMENTE o disparo que criou — o disparo de OUTRO criador
+# devolve zero linhas nas duas tabelas.
+agent_rows_dispatches="$(psql_test -Atqc "$agent_c SELECT count(*) FROM public.multiplix_dispatches;" 2>&1 || true)"
+[[ "$agent_rows_dispatches" == '0' ]] || fail "agent (sem disparo proprio) leu multiplix_dispatches (F20): $agent_rows_dispatches"
+agent_rows_recipients="$(psql_test -Atqc "$agent_c SELECT count(*) FROM public.multiplix_recipients;" 2>&1 || true)"
+[[ "$agent_rows_recipients" == '0' ]] || fail "agent (sem disparo proprio) leu multiplix_recipients (F20): $agent_rows_recipients"
+agent_truncate="$(psql_test -v VERBOSITY=verbose -c "$agent_c TRUNCATE public.multiplix_recipients;" 2>&1 || true)"
+[[ "$agent_truncate" == *permission*denied* ]] || fail 'agent truncou a fila do Multiplix (F20)'
+
+# Dono NÃO-staff (D): o disparo do colega A devolve zero nas duas tabelas...
+owner_d_other_dispatches="$(psql_test -Atqc "$owner_d SELECT count(*) FROM public.multiplix_dispatches WHERE created_by='10000000-0000-0000-0000-00000000000a';" 2>&1 || true)"
+[[ "$owner_d_other_dispatches" == '0' ]] || fail "dono não-staff leu o disparo de outro criador (F20): $owner_d_other_dispatches"
+owner_d_other_recipients="$(psql_test -Atqc "$owner_d SELECT count(*) FROM public.multiplix_recipients r JOIN public.multiplix_dispatches d ON d.id = r.dispatch_id WHERE d.created_by='10000000-0000-0000-0000-00000000000a';" 2>&1 || true)"
+[[ "$owner_d_other_recipients" == '0' ]] || fail "dono não-staff leu destinatario de outro criador (F20): $owner_d_other_recipients"
+# ...e o próprio continua visível (controle positivo: sem ele a asserção acima passaria
+# só por a RLS estar negando tudo).
+owner_d_own_dispatches="$(psql_test -Atqc "$owner_d SELECT count(*) FROM public.multiplix_dispatches;" 2>&1 || true)"
+[[ "$owner_d_own_dispatches" == '1' ]] || fail "dono não-staff não viu o proprio disparo (F20): $owner_d_own_dispatches"
+owner_d_own_recipients="$(psql_test -Atqc "$owner_d SELECT count(*) FROM public.multiplix_recipients;" 2>&1 || true)"
+[[ "$owner_d_own_recipients" == '1' ]] || fail "dono não-staff não viu os proprios destinatarios (F20): $owner_d_own_recipients"
 
 # ── F04: replay limpo nao termina com policy TO public ─────────────────────────
 # (9 nascem TO authenticated; 7 sobrevivem quando a revogacao de F08 ja existe.)
@@ -403,8 +441,21 @@ SELECT public.trigger_pending_multiplix_dispatches();
 SQL
 [[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='30000000-0000-0000-0000-000000000020'")" == 'sending' ]] \
   || fail 'disparo agendado nao foi promovido pelo cron (F10a)'
+# F10b + F17b: a retomada por janela exige que NAO haja outro dispatch enviando —
+# o candidato ...021 e de conexao NULL, e NULL e coringa nos DOIS sentidos (o worker
+# resolve NULL para "primeira conexao conectada", que pode ser justamente a conexao
+# do ...020, promovido no mesmo tick pelo F10a). Encerrando o ...020, a retomada por
+# janela acontece no tick seguinte — que e o que a F10b quer provar.
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+UPDATE public.multiplix_dispatches SET status='cancelled' WHERE id='30000000-0000-0000-0000-000000000020';
+SQL
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+SELECT public.trigger_pending_multiplix_dispatches();
+SQL
 [[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='30000000-0000-0000-0000-000000000021'")" == 'sending' ]] \
-  || fail 'disparo pausado por janela nao retomou com a janela aberta (F10b)'
+  || fail 'disparo pausado por janela nao retomou com a janela aberta e nenhum envio em curso (F10b/F17b)'
 [[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='30000000-0000-0000-0000-000000000022'")" == 'paused' ]] \
   || fail 'disparo retomou com a janela fechada'
 [[ "$(psql_test -Atqc "SELECT count(DISTINCT url) FROM net.requests")" == '1' ]] \
@@ -419,6 +470,156 @@ usage="$(psql_test -Atqc "$service_session WITH uso AS (SELECT public.multiplix_
   || fail 'helper de janela nao abriu com send_window nulo'
 [[ "$(psql_test -Atqc "SELECT public.multiplix_dispatch_window_is_open('30000000-0000-0000-0000-000000000022')")" == 'f' ]] \
   || fail 'helper de janela abriu com start = end'
+
+# ── F17b: no maximo UM 'sending' por conexao por tick (o fan-out ja deduplicava
+# o POST; o que a F17b fecha e o ESTADO — duas linhas 'sending' na mesma conexao
+# significam duas edges na MESMA instancia do WhatsApp). A prova e do guard de
+# estado: com dois agendados vencidos na mesma conexao, so o primeiro promove.
+c1='70000000-0000-0000-0000-0000000000c1'
+# O guard trata QUALQUER 'sending' como bloqueio (inclusive os que os casos
+# anteriores deixaram, e.g. 020/021): a suite parte de estado limpo.
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+UPDATE public.multiplix_dispatches SET status='cancelled' WHERE status='sending';
+INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, scheduled_at, whatsapp_connection_id) VALUES
+  ('30000000-0000-0000-0000-0000000000b1', 'F17b S1', 'Oi', 'scheduled', '10000000-0000-0000-0000-00000000000a', 1, statement_timestamp() - interval '2 minutes', '70000000-0000-0000-0000-0000000000c1'),
+  ('30000000-0000-0000-0000-0000000000b2', 'F17b S2', 'Oi', 'scheduled', '10000000-0000-0000-0000-00000000000a', 1, statement_timestamp() - interval '1 minute', '70000000-0000-0000-0000-0000000000c1');
+INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, status) VALUES
+  ('40000000-0000-0000-0000-0000000000b1', '30000000-0000-0000-0000-0000000000b1', '50000000-0000-0000-0000-0000000000b1', 'pending'),
+  ('40000000-0000-0000-0000-0000000000b2', '30000000-0000-0000-0000-0000000000b2', '50000000-0000-0000-0000-0000000000b2', 'pending');
+SQL
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+SELECT public.trigger_pending_multiplix_dispatches();
+SQL
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_dispatches WHERE whatsapp_connection_id='$c1' AND status='sending'")" == '1' ]] \
+  || fail 'F17b: dois agendados vencidos na MESMA conexao viraram dois sending no mesmo tick'
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_dispatches WHERE whatsapp_connection_id='$c1' AND status='scheduled'")" == '1' ]] \
+  || fail 'F17b: o segundo agendado da mesma conexao nao ficou em scheduled'
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='30000000-0000-0000-0000-0000000000b1'")" == 'sending' ]] \
+  || fail 'F17b: o agendado mais antigo (primeiro da fila) nao foi o promovido'
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='30000000-0000-0000-0000-0000000000b2'")" == 'scheduled' ]] \
+  || fail 'F17b: o segundo agendado promoveu a despeito do sending na mesma conexao'
+
+# F17b — NULL e coringa de proposito: o composer nao oferece escolha de conexao
+# (whatsapp_connection_id nasce NULL) e o worker resolve NULL para "primeira
+# conexao conectada", que pode ser a conexao de OUTRO dispatch. Um 'sending' de
+# conexao NULL tem de bloquear QUALQUER candidato; e nenhum candidato entra
+# enquanto existir esse 'sending' NULL.
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+UPDATE public.multiplix_dispatches SET status='cancelled' WHERE id='30000000-0000-0000-0000-0000000000b2';
+INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, scheduled_at, whatsapp_connection_id) VALUES
+  ('30000000-0000-0000-0000-0000000000b3', 'F17b sending NULL', 'Oi', 'sending', '10000000-0000-0000-0000-00000000000a', 1, NULL, NULL),
+  ('30000000-0000-0000-0000-0000000000b5', 'F17b cand C2', 'Oi', 'scheduled', '10000000-0000-0000-0000-00000000000a', 1, statement_timestamp() - interval '3 minutes', '70000000-0000-0000-0000-0000000000c2'),
+  ('30000000-0000-0000-0000-0000000000b4', 'F17b cand NULL', 'Oi', 'scheduled', '10000000-0000-0000-0000-00000000000a', 1, statement_timestamp() - interval '1 minute', NULL);
+INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, status) VALUES
+  ('40000000-0000-0000-0000-0000000000b3', '30000000-0000-0000-0000-0000000000b3', '50000000-0000-0000-0000-0000000000b3', 'pending'),
+  ('40000000-0000-0000-0000-0000000000b4', '30000000-0000-0000-0000-0000000000b4', '50000000-0000-0000-0000-0000000000b4', 'pending'),
+  ('40000000-0000-0000-0000-0000000000b5', '30000000-0000-0000-0000-0000000000b5', '50000000-0000-0000-0000-0000000000b5', 'pending');
+SQL
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+SELECT public.trigger_pending_multiplix_dispatches();
+SQL
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='30000000-0000-0000-0000-0000000000b4'")" == 'scheduled' ]] \
+  || fail 'F17b: candidato de conexao NULL entrou havendo um sending de conexao NULL ativo (NULL nao foi coringa)'
+# O candidato de C2 NAO pode ser explicado pela igualdade de conexao (C2 <> C1 do
+# dispatch b1 que tambem esta 'sending'): so a clausula do NULL o bloqueia.
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='30000000-0000-0000-0000-0000000000b5'")" == 'scheduled' ]] \
+  || fail 'F17b: candidato em conexao C2 entrou havendo um sending de conexao NULL (o NULL nao foi wildcard)'
+# Controle positivo: removido o sending NULL, o candidato de C2 promove — sem isto
+# a recusa anterior poderia ser por qualquer outro motivo do candidato.
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+UPDATE public.multiplix_dispatches SET status='cancelled' WHERE id='30000000-0000-0000-0000-0000000000b3';
+SQL
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+SELECT public.trigger_pending_multiplix_dispatches();
+SQL
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='30000000-0000-0000-0000-0000000000b5'")" == 'sending' ]] \
+  || fail 'F17b: candidato de C2 nao promoveu depois de removido o sending NULL (a recusa anterior nao provava o wildcard)'
+
+# F17b — o coringa tem de valer nos DOIS sentidos. Achado do agente de teste em
+# 01/10/2026: a primeira versao da migration comparava com IS NOT DISTINCT FROM, o
+# que bloqueia um candidato NULL apenas quando existe um 'sending' tambem NULL. Um
+# candidato NULL contra um 'sending' de conexao CONCRETA passava — e o worker
+# resolve NULL para "primeira conexao conectada", que pode ser justamente essa
+# conexao. Aqui ha dois 'sending' concretos (b1 em C1, b5 em C2): o candidato NULL
+# vencido nao pode promover.
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, scheduled_at, whatsapp_connection_id) VALUES
+  ('30000000-0000-0000-0000-0000000000b6', 'F17b cand NULL vs concretos', 'Oi', 'scheduled', '10000000-0000-0000-0000-00000000000a', 1, statement_timestamp() - interval '4 minutes', NULL);
+INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, status) VALUES
+  ('40000000-0000-0000-0000-0000000000b6', '30000000-0000-0000-0000-0000000000b6', '50000000-0000-0000-0000-0000000000b6', 'pending');
+SQL
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+SELECT public.trigger_pending_multiplix_dispatches();
+SQL
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_dispatches WHERE status='sending'")" == '2' ]] \
+  || fail 'F17b: um candidato de conexao NULL promoveu havendo sending de conexao concreta (guard assimetrico)'
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='30000000-0000-0000-0000-0000000000b6'")" == 'scheduled' ]] \
+  || fail 'F17b: candidato de conexao NULL contra sending concreto nao ficou em scheduled'
+
+# Encerra os candidatos vencidos que sobraram (b4 e b6): eles seguem com scheduled_at
+# no passado e seriam promovidos no primeiro tick depois que a base ficasse sem
+# 'sending' — virando um 'sending' NULL que, pelo coringa dos dois sentidos, bloquearia
+# os casos de cota/janela seguintes. Estado limpo entre blocos.
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+UPDATE public.multiplix_dispatches SET status='cancelled'
+ WHERE id IN ('30000000-0000-0000-0000-0000000000b4', '30000000-0000-0000-0000-0000000000b6');
+SQL
+
+# ── F17c: pausa por daily_limit volta quando ha cota ──────────────────────────
+# Antes so pause_reason='outside_window' retomava. A pausa por cota (auto-pausa
+# do worker) ficava parada para SEMPRE, mesmo com a cota virando no dia seguinte.
+# A retomada usa a MESMA medicao do worker (multiplix_connection_daily_usage).
+cd_open='70000000-0000-0000-0000-0000000000d1'
+cd_zero='70000000-0000-0000-0000-0000000000d2'
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+UPDATE public.multiplix_dispatches SET status='cancelled' WHERE status='sending';
+INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, pause_reason, whatsapp_connection_id, send_window_start, send_window_end) VALUES
+  ('30000000-0000-0000-0000-0000000000e1', 'F17c cota disponivel', 'Oi', 'paused', '10000000-0000-0000-0000-00000000000a', 1, 'daily_limit', '70000000-0000-0000-0000-0000000000d1', NULL, NULL),
+  ('30000000-0000-0000-0000-0000000000e2', 'F17c cota esgotada', 'Oi', 'paused', '10000000-0000-0000-0000-00000000000a', 1, 'daily_limit', '70000000-0000-0000-0000-0000000000d2', NULL, NULL),
+  ('30000000-0000-0000-0000-0000000000e3', 'F17c janela fechada', 'Oi', 'paused', '10000000-0000-0000-0000-00000000000a', 1, 'daily_limit', '70000000-0000-0000-0000-0000000000d3', '00:00', '00:00');
+INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, status) VALUES
+  ('40000000-0000-0000-0000-0000000000e1', '30000000-0000-0000-0000-0000000000e1', '50000000-0000-0000-0000-0000000000e1', 'pending'),
+  ('40000000-0000-0000-0000-0000000000e2', '30000000-0000-0000-0000-0000000000e2', '50000000-0000-0000-0000-0000000000e2', 'pending'),
+  ('40000000-0000-0000-0000-0000000000e3', '30000000-0000-0000-0000-0000000000e3', '50000000-0000-0000-0000-0000000000e3', 'pending');
+-- Esgota a cota de cd_zero: 500 enviados hoje com limit=500 -> remaining 0.
+INSERT INTO public.multiplix_recipients (dispatch_id, company_id, status, sent_at)
+SELECT '30000000-0000-0000-0000-0000000000e2', gen_random_uuid(), 'sent', statement_timestamp()
+  FROM generate_series(1, 500);
+SQL
+cota_zero="$(psql_test -Atqc "$service_session WITH u AS (SELECT public.multiplix_connection_daily_usage('$cd_zero') AS j) SELECT (j ->> 'limit') || ':' || (j ->> 'sent') || ':' || (j ->> 'remaining') FROM u;")"
+[[ "$cota_zero" == '500:500:0' ]] || fail "F17c: pre-condicao de cota esgotada divergiu: $cota_zero"
+cota_open="$(psql_test -Atqc "$service_session WITH u AS (SELECT public.multiplix_connection_daily_usage('$cd_open') AS j) SELECT (j ->> 'limit') || ':' || (j ->> 'sent') || ':' || (j ->> 'remaining') FROM u;")"
+[[ "$cota_open" == '500:0:500' ]] || fail "F17c: pre-condicao de cota disponivel divergiu: $cota_open"
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+SELECT public.trigger_pending_multiplix_dispatches();
+SQL
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='30000000-0000-0000-0000-0000000000e1'")" == 'sending' ]] \
+  || fail 'F17c: pausa por daily_limit nao retomou apesar de remaining > 0 e janela aberta'
+[[ "$(psql_test -Atqc "SELECT status || ':' || coalesce(pause_reason, 'null') FROM public.multiplix_dispatches WHERE id='30000000-0000-0000-0000-0000000000e2'")" == 'paused:daily_limit' ]] \
+  || fail 'F17c: pausa por daily_limit retomou (ou perdeu o motivo) com a cota esgotada — controle negativo'
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='30000000-0000-0000-0000-0000000000e3'")" == 'paused' ]] \
+  || fail 'F17c: pausa por daily_limit retomou com a janela fechada (start = end)'
+
+# Higiene de estado: o guard da F17b bloqueia retomada/promocao enquanto existir
+# QUALQUER 'sending' (NULL e coringa nos dois sentidos), entao os casos de janela
+# que vem depois precisam de uma base sem 'sending' — mesmo cuidado que os blocos
+# da F17b ja tomam ao comecar. Sem isto o caso F10b (pre-existente) falha por
+# contaminacao de estado, nao por regressao.
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+UPDATE public.multiplix_dispatches SET status='cancelled' WHERE status='sending';
+SQL
 
 # ── F06: permissao nova criada e atribuida a admin ────────────────────────────
 [[ "$(psql_test -Atqc "SELECT count(*) FROM public.permissions WHERE name='multiplix.dispatch.manage_all'")" == '1' ]] \
@@ -466,4 +667,4 @@ staff_com_claim="$(psql_test -v VERBOSITY=verbose -c "$admin_a UPDATE public.mul
 [[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$dispatch_alvo';")" == 'draft' ]] \
   || fail '#1267: status final inesperado'
 
-printf 'PASS: Multiplix hardening — anon sem acesso, FORCE RLS, policies TO authenticated no replay limpo, guarda de mutabilidade (fail-closed por papel real desde #1267), criacao transacional idempotente com teto, fila (retry_after/sweeper/cancel/parcial) e scheduler por janela e por conexao\n'
+printf 'PASS: Multiplix hardening — anon sem acesso, FORCE RLS, policies TO authenticated no replay limpo, guarda de mutabilidade (fail-closed por papel real desde #1267), criacao transacional idempotente com teto, fila (retry_after/sweeper/cancel/parcial), escopo de leitura (agent sem disparo lê zero; dono não-staff só o próprio) e scheduler por janela, cota e ritmo por conexao (F17b/F17c)\n'
