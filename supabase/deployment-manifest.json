@@ -59,8 +59,8 @@
     },
     {
       "path": "supabase/functions/_shared/ai-routing.ts",
-      "bytes": 11344,
-      "sha256": "85bfc4a83c9d6fd2d0792ea8e9bca525f3498b66b180b2dedccbe489ce88751a"
+      "bytes": 11372,
+      "sha256": "ff2f0aa4464480cb4fa2e251b4142acd9b5efa7871793b37182932543cea3a43"
     },
     {
       "path": "supabase/functions/_shared/ai-usage.ts",
@@ -659,7 +659,7 @@
       "name": "ai-proxy",
       "entrypoint": "supabase/functions/ai-proxy/index.ts",
       "verify_jwt": true,
-      "source_sha256": "6c672838d57cc04ca1c2276a5530f86ef1afcec1b61d26a1582a10f19c531a97",
+      "source_sha256": "0194eb02f8f69d106572b7b3bb9368bb93ea0d706de5510a9a89b617938a3270",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-guards.ts",
@@ -1441,5 +1441,5 @@
       ]
     }
   ],
-  "manifest_sha256": "e82fe3f950496c9bd2cb6e5ede51dba92a60a53165143857850f3acc0316b218"
+  "manifest_sha256": "8a1f6af24063ce6fc0d2346a4fd5f4b17249d01e719e56d8437a8eb72bf8fafa"
 }
