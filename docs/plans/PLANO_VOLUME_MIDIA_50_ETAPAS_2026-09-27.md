@@ -261,7 +261,7 @@ tocar só um player por vez.
 | **E18** | Conferido — e **reprovado em 6 pares**, todos por token/estilo do app, nenhum por cor literal no controle. Ver 7.2. | medição no Chromium (7.2) |
 | **E37** | As 4 superfícies de mídia que **não** são de conversa (laboratório de voz e biblioteca do admin) passam a ter isenção **explícita** no código e no contrato — como já era o caso dos alertas. | comentários em `src/components/voice/ElevenLabsVoiceDesign.tsx:149`, `src/components/voice/ElevenLabsDialogue.tsx:157`, `src/components/settings/media-library/AIGenerateDialog.tsx:32`, `src/components/settings/media-library/useMediaLibrary.ts:221` · `tests/contracts/media-volume-surfaces.contract.test.ts:64-71` · mutações E37a/E37b |
 | **E39** | O teste do alerta lê `settings.soundVolume` (não um literal) e confere que a cadeia termina num `ctx.destination` de verdade. | `src/components/inbox/__tests__/MediaVolume.test.tsx` (caso E38/E39) · mutação E39 |
-| **E41** | A âncora `ÂNCORA (não unificar)` também no toque da chamada entrante — o módulo que mais tenta "consolidar" os canais, porque o ganho dele igualmente sai de `settings.soundVolume` — agora pinada por teste. | `src/components/calls/IncomingCallAlert.tsx:14-26` · asserção no caso E41 de `MediaVolume.test.tsx` · mutação E41 |
+| **E41** | A âncora `ÂNCORA (não unificar)` também no toque da chamada entrante — o módulo que mais tenta "consolidar" os canais, porque o ganho dele igualmente sai de `settings.soundVolume` — agora pinada por teste. (A linha correspondente no `CLAUDE.md` foi **decidida como não acrescentada** — ver 7.6.) | `src/components/calls/IncomingCallAlert.tsx:14-26` · asserção no caso E41 de `MediaVolume.test.tsx` · mutação E41 |
 | **E45/E48** | O spec de volume do E2E logado perdeu a flake: o clique longo posicional (timer de 400 ms cancelado por qualquer `pointerleave`) deu lugar a `focus()` + `Enter`, o equivalente de teclado do mesmo `setOpen(true)`. **A causa citada pela auditoria (`media-volume.spec.ts:49`) era linha obsoleta** — nas runs o spec aparece como *flaky* (1ª tentativa vermelha, retry verde), e o `beforeEach` nunca falhou. | `e2e/media-volume.spec.ts:59-71` e `:106-108` · diagnóstico com 42 runs em `~/evidencias/plano-volume-50/e45-e48-e2e.md` |
 | **E46** | Checklist de navegadores registrado com o que é prova e o que depende de aparelho. Ver 7.3. | `~/evidencias/plano-volume-50/e46-navegadores.md` |
 | **E31/E47/E49** | Branch, PR e validação em produção. Ver 7.4. | 7.4 |
@@ -336,20 +336,23 @@ cross-origin o `createMediaElementSource` pode lançar, o `catch` cai num `eleme
   contato, **não** nos "Controles rápidos" da sidebar (`Sidebar.tsx:210-226`); já está MERGED, então
   não há colisão pendente.
 - **E49:** a validação em produção é o próprio **`e2e-logado`** na `main` depois do merge — é o CI
-  autenticado rodando contra produção, e é ele que exercita o volume persistindo no reload e o botão
-  de alertas intocado com a mídia muda. _Run registrado em 7.5._
+  autenticado (`--project=chromium-authenticated` inclui `e2e/media-volume.spec.ts`), e é ele que
+  exercita o volume persistindo no reload e o botão de alertas intocado com a mídia muda.
+  **Merge:** `1bab14c9` em 2026-10-01T11:30:23-03:00, `deploy:production=success`, `DDL_POS_MERGE=nenhum`;
+  **run de validação:** [`36882291819`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36882291819)
+  (disparado pelo push na `main` que já contém o merge).
 
 ### 7.5 E50 — persistência do volume dos ALERTAS
 
 - **Código (leitura + escrita):** `useNotificationSettings.ts:88` lê `data.sound_volume` e `:154`
   grava `dbUpdates.sound_volume = clampSoundVolume(updates.soundVolume)` — a coluna entrou pela
   migration `supabase/migrations/20260929800000_user_settings_sound_volume.sql`.
-- **Banco canônico (`tnnnlkbymytvtqngbbqh`), medido nesta sessão:** `sound_volume` **NOT NULL**, 5
-  CHECKs de vocabulário validadas, migration `20260930350000` no ledger e 2 linhas em
-  `user_settings` (a verificação de 01/10 10:0x, via gateway de leitura).
-- **Ressalva honesta:** a re-medição feita no fechamento (01/10 ~10:50) **não completou** — o gateway
-  de leitura do banco respondeu **timeout/HTTP 520** e ele não é meu para mexer. O que está acima é a
-  medição anterior desta mesma sessão, não uma inferência.
+- **Banco canônico (`tnnnlkbymytvtqngbbqh`), medido AO VIVO em 01/10 12:14** (gateway de leitura,
+  após o banco voltar): `select count(*), count(sound_volume), min(sound_volume), max(sound_volume)
+  from user_settings` → **2 linhas, 2 com `sound_volume`, mínimo = máximo = 70**. O valor persiste e
+  está dentro da faixa dos CHECKs.
+- Nota de método: a primeira re-medição do fechamento deu **timeout/HTTP 520** no gateway de leitura
+  (ele não é meu para mexer); o banco voltou e a medição acima é a definitiva.
 
 ### 7.6 Contagem 50/50
 
@@ -360,14 +363,18 @@ cross-origin o `createMediaElementSource` pode lançar, o `catch` cai num `eleme
 
 **Pendências explícitas (nenhuma delas é "etapa não feita"):**
 
-1. **Mensagem de ÁUDIO no contato de fixture (E45)** — exige gravar objeto + linha em
-   `messages` no **banco de produção** (tenant real). Não faço escrita em produção fora de migration
-   sem a sua decisão: ver a pergunta que segue no chat. Enquanto isso o caso segue `test.fixme`, com
-   o motivo escrito no próprio spec.
+1. **Mensagem de ÁUDIO no contato de fixture (E45)** — **BLOQUEADO POR DECISÃO (Joaquim,
+   2026-10-01 11h55): não autorizado.** O caminho exigiria gravar objeto no bucket `whatsapp-media`
+   E linha em `messages` no **banco de produção** (tenant real — histórico de cliente fabricado,
+   limpeza não garantida se o job morrer, efeito em badge/SLA/alerta). O caso segue `test.fixme` com
+   o motivo escrito no próprio spec; caminho completo e riscos em
+   `~/evidencias/plano-volume-50/e45-e48-e2e.md`.
 2. **E18 em alto-contraste** — bloqueado pelo defeito do tema (7.2, item 1), que é anterior a este
-   plano.
-3. **Linha no `CLAUDE.md` (E41)** — `CLAUDE.md` é arquivo protegido; a escrita pediu aprovação e o
-   card expirou. A âncora no código está no lugar e pinada por teste.
+   plano. **Tarefa separada autorizada (Joaquim, 2026-10-01 11h55)**: abrir logo depois deste PR,
+   com teste vermelho-antes.
+3. **Linha no `CLAUDE.md` (E41)** — **DECIDIDO NÃO ACRESCENTAR (Joaquim, 2026-10-01 11h55)**: a
+   lição fica neste plano e na âncora `ÂNCORA (não unificar)` já presente no código e pinada por
+   teste. Nada a fazer.
 
 **Divergências do enunciado encontradas e resolvidas com o código real** (registradas para a próxima
 sessão não repetir): (a) os caminhos do E37 são `src/components/voice/ElevenLabs*.tsx` e
