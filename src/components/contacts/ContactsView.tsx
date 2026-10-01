@@ -38,6 +38,7 @@ export function ContactsView() {
     activeTab, setActiveTab, filterCompany, setFilterCompany,
     filterJobTitle, setFilterJobTitle, filterTag, setFilterTag,
     filterDateRange, setFilterDateRange, sortBy, setSortBy,
+    showLegacy, setShowLegacy,
     activeFiltersCount, clearFilters, page, setPage, pageSize,
     loadMore, loadPrevious, refetch,
     profile, scrollContainerRef,
@@ -129,13 +130,18 @@ export function ContactsView() {
         onComplete={() => { setSelectedIds([]); refetch(); }}
       />
 
-      <ContactStatsCards totalAll={contactCountByType['all'] ?? 0} fornecedoresAll={contactCountByType['fornecedor'] ?? 0} />
+      <ContactStatsCards
+        totalAll={contactCountByType['all'] ?? 0}
+        fornecedoresAll={contactCountByType['fornecedor'] ?? 0}
+        includeLegacy={showLegacy}
+      />
 
       <ContactTypeTabs activeTab={activeTab} setActiveTab={setActiveTab} contactCountByType={contactCountByType} />
 
       <ContactToolbar
         searchInput={searchInput} onSearchChange={handleSearchChange}
         sortBy={sortBy} setSortBy={setSortBy}
+        showLegacy={showLegacy} setShowLegacy={setShowLegacy}
         showFilters={showFilters} setShowFilters={setShowFilters}
         activeFiltersCount={activeFiltersCount} clearFilters={clearFilters}
         activeTab={activeTab}

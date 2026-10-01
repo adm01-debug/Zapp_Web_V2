@@ -9520,7 +9520,7 @@ export type Database = {
         }[]
       }
       contacts_count_by_type: {
-        Args: never
+        Args: { include_legacy?: boolean }
         Returns: {
           contact_type: string
           count: number
@@ -10332,6 +10332,7 @@ export type Database = {
           company_filter?: string
           contact_type_filter?: string
           date_from?: string
+          include_legacy?: boolean
           job_title_filter?: string
           page_offset?: number
           page_size?: number

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -77,7 +77,7 @@ test('buildDeploymentManifest rejects config for a missing function', async (t) 
 });
 
 test('buildDeploymentManifest accepts config for a legacy unmanaged function', async (t) => {
-  // Orfas legadas rodam em producao com verify_jwt=false e nao tem fonte versionada.
+  // Fixture de uma funcao legada: roda em producao com verify_jwt=false sem fonte na arvore.
   // Declarar a excecao antes de trazer o fonte e o unico jeito de o proximo deploy nao
   // reverter a funcao para verify_jwt=true; a entrada continua fora de functions[].
   const root = await createFixture();
@@ -245,4 +245,27 @@ test('buildDeploymentManifest without orphanAllowlist produces no orphan_allowli
   const manifest = await buildDeploymentManifest({ repoRoot: root });
   assert.equal(manifest.orphan_allowlist, undefined);
   assert.equal(verifyManifestDigest(manifest), true);
+});
+
+test('manifesto commitado declara as funcoes orfas que rodam em producao sem fonte', async () => {
+  // sicoob-bridge e sicoob-bridge-reply estao ACTIVE em producao e nao tem
+  // fonte versionada (desligamento do Sicoob). Sem declara-las, a atestacao
+  // pos-deploy reprova TODA publicacao ("Remote function set mismatch") e o
+  // alarme que sempre toca deixa de ser alarme. Lista fixada de proposito:
+  // mudar quem e orfao tem de ser decisao consciente, nao efeito colateral.
+  const committed = JSON.parse(await readFile(
+    new URL('../../supabase/deployment-manifest.json', import.meta.url),
+    'utf8',
+  ));
+  assert.deepEqual(committed.orphan_allowlist, ['sicoob-bridge', 'sicoob-bridge-reply']);
+
+  // As duas listas de tolerancia nunca podem sobrepor functions[]: funcao com
+  // fonte versionada e gerenciada, nao orfa (dupla classificacao esconderia a
+  // funcao do deploy, do hash de closure e da atestacao).
+  const managed = new Set(committed.functions.map((fn) => fn.name));
+  const allowlisted = [...(committed.orphan_allowlist ?? []), ...(committed.legacy_unmanaged_functions ?? [])];
+  for (const name of allowlisted) {
+    assert.ok(!managed.has(name), `${name} nao pode estar em functions[] e numa allowlist ao mesmo tempo`);
+  }
+  assert.equal(verifyManifestDigest(committed), true);
 });

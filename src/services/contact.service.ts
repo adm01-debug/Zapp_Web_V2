@@ -14,6 +14,7 @@ export interface SearchContactsParams {
   sort_direction?: string;
   page_size?: number;
   page_offset?: number;
+  include_legacy?: boolean;
 }
 
 export class ContactService {
@@ -29,11 +30,13 @@ export class ContactService {
       sort_direction: params.sort_direction || 'asc',
       page_size: params.page_size || 50,
       page_offset: params.page_offset || 0,
+      // Só enviado quando verdadeiro: sem ele a RPC usa o default (legados fora).
+      ...(params.include_legacy ? { include_legacy: true } : {}),
     });
   }
 
-  static async getCountsByType() {
-    return supabase.rpc('contacts_count_by_type');
+  static async getCountsByType(includeLegacy = false) {
+    return supabase.rpc('contacts_count_by_type', includeLegacy ? { include_legacy: true } : {});
   }
 
   static async getById(id: string) {

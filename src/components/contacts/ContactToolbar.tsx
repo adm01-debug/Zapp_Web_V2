@@ -1,5 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -26,6 +28,9 @@ interface ContactToolbarProps {
   onSearchChange: (val: string) => void;
   sortBy: string;
   setSortBy: (val: string) => void;
+  /** D4: contatos legados (LID/telefone não numérico) ficam fora por padrão. */
+  showLegacy: boolean;
+  setShowLegacy: (val: boolean) => void;
   showFilters: boolean;
   setShowFilters: (val: boolean) => void;
   activeFiltersCount: number;
@@ -65,7 +70,7 @@ interface ContactToolbarProps {
 }
 
 export function ContactToolbar({
-  searchInput, onSearchChange, sortBy, setSortBy,
+  searchInput, onSearchChange, sortBy, setSortBy, showLegacy, setShowLegacy,
   showFilters, setShowFilters, activeFiltersCount, clearFilters,
   activeTab, filterCompany, setFilterCompany, filterJobTitle, setFilterJobTitle,
   filterTag, setFilterTag, filterDateRange, setFilterDateRange,
@@ -119,6 +124,18 @@ export function ContactToolbar({
             <X className="w-4 h-4 mr-1" />Limpar
           </Button>
         )}
+
+        <div className="flex items-center gap-2 h-11 px-3 rounded-xl bg-input border border-border shrink-0">
+          <Switch
+            id="contact-show-legacy"
+            checked={showLegacy}
+            onCheckedChange={setShowLegacy}
+            data-testid="contact-show-legacy"
+          />
+          <Label htmlFor="contact-show-legacy" className="text-sm font-medium cursor-pointer">
+            Mostrar legados
+          </Label>
+        </div>
 
         <FilterPresets
           currentFilters={{ type: activeTab, company: filterCompany, jobTitle: filterJobTitle, tag: filterTag, dateRange: filterDateRange }}

@@ -1,13 +1,10 @@
 {
   "schema_version": 1,
   "project_ref": "tnnnlkbymytvtqngbbqh",
-  "legacy_unmanaged_functions": [
-    "check-account-lock",
-    "record-failed-login"
-  ],
+  "legacy_unmanaged_functions": [],
   "config": {
     "path": "supabase/config.toml",
-    "sha256": "0ace24a6b298e1a7749cabdf0c4a6a9b96bde564d04f0f4356c729845b8a9f84"
+    "sha256": "4ce1acb56ca0cd8efb82cc269a4942c306e1863b79ed9b887e784b7ca8c70375"
   },
   "summary": {
     "function_count": 67,
@@ -15,6 +12,10 @@
     "verify_jwt_true": 55,
     "verify_jwt_false": 12
   },
+  "orphan_allowlist": [
+    "sicoob-bridge",
+    "sicoob-bridge-reply"
+  ],
   "source_files": [
     {
       "path": "supabase/functions/_shared/ai-audio-authz.ts",
@@ -1427,5 +1428,5 @@
       ]
     }
   ],
-  "manifest_sha256": "01f2aed2f627e1702201763048b35e6f0892918a26e45ebd59783e642aeeb9a7"
+  "manifest_sha256": "5fcfefb409cdcf11ed13bcdbc2af1383c8ba06edc021b0f48eb16a61e11b47d6"
 }

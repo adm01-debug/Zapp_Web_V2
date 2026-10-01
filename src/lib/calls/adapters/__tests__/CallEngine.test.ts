@@ -14,7 +14,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Invitation, Inviter, Session, UserAgent } from 'sip.js';
 
 import { CallEngine } from '../CallEngine';
-import type { CallEngineSink } from '../CallEngine';
+import type { CallEngineSink, EngineStatus } from '../CallEngine';
 import { SipCallAdapter } from '../SipCallAdapter';
 
 function fakeAudioTrack(enabled = true) {
@@ -515,5 +515,122 @@ describe('CallEngine — desfecho do fim (T12)', () => {
 
     expect(sink.onFinished).toHaveBeenCalledWith('call-1', expect.any(Number), { endedBy: 'hangup_local', sipCode: null });
     vi.unstubAllGlobals();
+  });
+});
+
+// ─── D1: watchdog do INVITE sem resposta final ─────────────────────────────
+
+describe('CallEngine — watchdog do INVITE (D1)', () => {
+  /** Deixa a cadeia do sink (`callIdPromise.then`) rodar. */
+  async function escoar(voltas = 5): Promise<void> {
+    for (let i = 0; i < voltas; i += 1) await Promise.resolve();
+  }
+
+  function sessaoCancelavel() {
+    return { ...sessionWithTrack(fakeAudioTrack(true)), cancel: vi.fn() };
+  }
+
+  /** Adapter que não toca em mídia (o watchdog não é sobre áudio). */
+  class AdapterSemMidia extends TestAdapter {
+    override attachRemoteAudio(): null { return null; }
+  }
+
+  it('sem Terminated, o watchdog encerra em timeout e libera a linha', async () => {
+    vi.useFakeTimers();
+    try {
+      const adapter = new TestAdapter();
+      adapter.inviter = sessaoCancelavel();
+      const sink = fakeSink();
+      const engine = new CallEngine(adapter, sink);
+
+      await engine.makeCall('11999992048', fakeUa(), true, 'sessao-1');
+      expect(engine.isBusy).toBe(true);
+
+      // O INVITE nunca recebe resposta final: nada dispara onFinished sozinho.
+      vi.advanceTimersByTime(40000);
+      await escoar();
+
+      expect(sink.onFinished).toHaveBeenCalledWith('call-1', null, { endedBy: 'timeout', sipCode: null });
+      expect(sink.onStatus).toHaveBeenCalledWith('ended');
+
+      // IDLE_RESET_MS depois: a linha volta a aceitar discagem.
+      vi.advanceTimersByTime(2000);
+      await escoar();
+      expect(engine.isBusy).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('um Terminated tardio após o watchdog não reemite onFinished', async () => {
+    vi.useFakeTimers();
+    try {
+      const adapter = new TestAdapter();
+      const sessao = sessaoCancelavel();
+      adapter.inviter = sessao;
+      const sink = fakeSink();
+      const engine = new CallEngine(adapter, sink);
+
+      await engine.makeCall('11999992048', fakeUa(), true, 'sessao-1');
+      vi.advanceTimersByTime(40000);
+      await escoar();
+      expect(sink.onFinished).toHaveBeenCalledTimes(1);
+
+      engine.handleStateChange('Terminated', sessao as unknown as Session, '11999992048', 'outbound');
+      await escoar();
+      expect(sink.onFinished).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('a resposta final (Established) desarma o watchdog: conversa longa não é derrubada', async () => {
+    vi.useFakeTimers();
+    try {
+      const adapter = new AdapterSemMidia();
+      const sessao = sessaoCancelavel();
+      adapter.inviter = sessao;
+      const sink = fakeSink();
+      const engine = new CallEngine(adapter, sink);
+
+      await engine.makeCall('11999992048', fakeUa(), true, 'sessao-1');
+      engine.handleStateChange('Established', sessao as unknown as Session, '11999992048', 'outbound');
+
+      vi.advanceTimersByTime(60000);
+      await escoar();
+
+      expect(sink.onFinished).not.toHaveBeenCalled();
+      expect(sink.onTerminated).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+// ─── D4: ordem do desfecho (onFinished antes de setStatus('ended')) ─────────
+
+describe('CallEngine — ordem do desfecho (D4)', () => {
+  async function escoar(voltas = 5): Promise<void> {
+    for (let i = 0; i < voltas; i += 1) await Promise.resolve();
+  }
+
+  it('onFinished chega ANTES de setStatus(ended)', async () => {
+    const ordem: string[] = [];
+    const sink = fakeSink({
+      onStatus: vi.fn((status: EngineStatus) => { ordem.push(`status:${status}`); }),
+      onFinished: vi.fn(() => { ordem.push('onFinished'); }),
+    });
+    const adapter = new TestAdapter();
+    const sessao = { ...sessionWithTrack(fakeAudioTrack(true)), cancel: vi.fn() };
+    adapter.inviter = sessao;
+    const engine = new CallEngine(adapter, sink);
+
+    await engine.makeCall('11999992048', fakeUa(), true, 'sessao-1');
+    engine.handleStateChange('Terminated', sessao as unknown as Session, '11999992048', 'outbound');
+    await escoar();
+
+    expect(ordem).toContain('onFinished');
+    expect(ordem).toContain('status:ended');
+    expect(ordem.indexOf('onFinished')).toBeLessThan(ordem.indexOf('status:ended'));
   });
 });

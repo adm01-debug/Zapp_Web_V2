@@ -304,8 +304,15 @@ export function useContactsCRUD() {
     setEditingContact(prev => prev ? { ...prev, [field]: value } as Contact : null);
   }, []);
 
+  const { setShowLegacy: setSearchShowLegacy } = searchHook;
+  const setShowLegacy = useCallback((value: boolean) => {
+    setSelectedIds([]);
+    setSearchShowLegacy(value);
+  }, [setSearchShowLegacy]);
+
   return {
     ...searchHook,
+    setShowLegacy,
     profile, feedback, scrollContainerRef,
     isSubmitting, deleteTarget, setDeleteTarget,
     showSuccess, setShowSuccess,
