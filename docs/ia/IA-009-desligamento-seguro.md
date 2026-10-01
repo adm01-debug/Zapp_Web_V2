@@ -10,13 +10,13 @@ provedor, com desligamento imediato de efeitos automáticos e manutenção do at
 |---|---|---|
 | Tabela `feature_flags` (+ hook `src/hooks/system/useFeatureFlag.ts`, query única com revalidação de 5 min) | banco canônico + **frontend** | **NÃO** — `grep -rn "feature_flags" supabase/functions` não retorna nada: as Edge Functions não leem flag nenhuma. Desligar a flag esconde o botão no cliente, mas quem chamar a função direto continua sendo atendido. |
 | `public-api` respondendo `410` (kill switch de endpoint legado) | `supabase/config.toml` + função | **SIM**, mas para um único endpoint. |
-| `verify_jwt` por função (10 exceções declaradas em `supabase/config.toml`, 59 funções com `true` no manifesto) | gateway do Supabase + `deploy-functions.yml` (manual, com aprovação no environment `producao-edge-functions`) | **SIM** — porém é tudo-ou-nada por função, não por capacidade, e exige deploy. |
+| `verify_jwt` por função (10 exceções declaradas em `supabase/config.toml`, 59 funções com `true` no manifesto) | gateway do Supabase + `deploy-functions.yml` (automático no merge na `main`; o environment `producao-edge-functions` tem branch policy e **nenhuma** aprovação humana) | **SIM** — porém é tudo-ou-nada por função, não por capacidade, e exige deploy. |
 | `chatbot_flows` (fluxo ativo por conexão) | banco | **SIM** para o bot, se a função validar o fluxo ativo. |
 | `is_enabled` de configurações (`AutoCloseSettings`, `CSATAutoConfig`, business hours, `away` por conexão) | banco + frontend | **SIM** onde a função confere a configuração antes de agir. |
 | RLS/grants | banco | **SIM** para leitura/escrita de dados, não para consumo de provedor. |
 
 **Lacuna central:** não existe hoje (a) flag de capacidade lida **no servidor** nem (b) flag de
-provedor. O caminho hoje para parar tudo é deploy de Edge Function, que é manual e exige aprovação — ou
+provedor. O caminho hoje para parar tudo é deploy de Edge Function, que é automático no merge na `main` — ou
 seja, o desligamento de emergência não é imediato.
 
 ## 2. Desenho proposto
