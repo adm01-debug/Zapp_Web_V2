@@ -798,7 +798,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
           />
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handlePause} className="bg-amber-500 text-white hover:bg-amber-600">Pausar</AlertDialogAction>
+            <AlertDialogAction onClick={handlePause} className="bg-warning text-warning-foreground hover:bg-warning/90">Pausar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

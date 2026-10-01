@@ -195,7 +195,7 @@ export function ContactAnalyticsDashboard({ contacts, className }: ContactAnalyt
                   {analytics.topTags.map(([tag, count]) => (
                     <Badge key={tag} variant="outline" className="text-3xs gap-1">
                       {tag}
-                      <span className="text-muted-foreground/60">{count}</span>
+                      <span className="text-muted-foreground">{count}</span>
                     </Badge>
                   ))}
                 </div>

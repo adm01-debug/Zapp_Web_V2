@@ -542,7 +542,7 @@ const ConversationRow = memo(({
                 <button
                   aria-label="Resolver conversa"
                   onClick={(e) => handleAction(e, onResolve, 'Resolver')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-emerald-500 hover:bg-emerald-500/10 active:scale-90 transition-all duration-150"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10 active:scale-90 transition-all duration-150"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
                 </button>
@@ -554,7 +554,7 @@ const ConversationRow = memo(({
                 <button
                   aria-label="Transferir conversa"
                   onClick={(e) => handleAction(e, onTransfer, 'Transferir')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-primary hover:bg-primary/10 active:scale-90 transition-all duration-150"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 active:scale-90 transition-all duration-150"
                 >
                   <UserCheck className="w-3.5 h-3.5" />
                 </button>
@@ -566,7 +566,7 @@ const ConversationRow = memo(({
                 <button
                   aria-label="Fixar conversa"
                   onClick={(e) => handleAction(e, onPin, 'Fixar')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-amber-500 hover:bg-amber-500/10 active:scale-90 transition-all duration-150"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 active:scale-90 transition-all duration-150"
                 >
                   <Pin className="w-3.5 h-3.5" />
                 </button>
@@ -580,7 +580,7 @@ const ConversationRow = memo(({
                     <button
                       aria-label="Adiar conversa"
                       onClick={(e) => { e.stopPropagation(); if (!onSnooze) { toast.info('Adiar: em breve'); setSnoozeOpen(false); } }}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-sky-500 hover:bg-sky-500/10 active:scale-90 transition-all duration-150"
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-sky-500 hover:bg-sky-500/10 active:scale-90 transition-all duration-150"
                     >
                       <AlarmClock className="w-3.5 h-3.5" />
                     </button>
@@ -607,7 +607,7 @@ const ConversationRow = memo(({
                 <button
                   aria-label="Arquivar conversa"
                   onClick={(e) => handleAction(e, onArchive, 'Arquivar')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 active:scale-90 transition-all duration-150"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:scale-90 transition-all duration-150"
                 >
                   <Archive className="w-3.5 h-3.5" />
                 </button>

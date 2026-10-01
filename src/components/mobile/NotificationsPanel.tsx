@@ -158,7 +158,7 @@ export function NotificationsPanel({
                           <p className="text-2xs text-muted-foreground mt-0.5 line-clamp-2">
                             {notification.description}
                           </p>
-                          <p className="text-3xs text-muted-foreground/60 mt-1">
+                          <p className="text-3xs text-muted-foreground mt-1">
                             {formatDistanceToNow(notification.timestamp, { addSuffix: true, locale: ptBR })}
                           </p>
                         </div>

@@ -315,7 +315,7 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
         {/* Endereço */}
         <div className="space-y-3 pt-2 border-t border-border/30">
           <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5" /> Endereço <span className="text-muted-foreground/60">(opcional)</span>
+            <MapPin className="w-3.5 h-3.5" /> Endereço <span className="text-muted-foreground">(opcional)</span>
           </p>
 
           <div className="grid grid-cols-3 gap-4">

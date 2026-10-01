@@ -54,7 +54,7 @@ export function BorderRadiusControl({ value: borderRadius, onChange }: BorderRad
 
         {/* Slider */}
         <div className="flex items-center gap-3">
-          <span className="text-3xs text-muted-foreground/60 font-mono w-4">0</span>
+          <span className="text-3xs text-muted-foreground font-mono w-4">0</span>
           <Slider
             value={[borderRadius]}
             onValueChange={(v) => onChange(v[0])}
@@ -64,7 +64,7 @@ export function BorderRadiusControl({ value: borderRadius, onChange }: BorderRad
             thumbLabel="Raio da borda em pixels"
             className="flex-1"
           />
-          <span className="text-3xs text-muted-foreground/60 font-mono w-5">20</span>
+          <span className="text-3xs text-muted-foreground font-mono w-5">20</span>
         </div>
 
         {/* Live preview */}

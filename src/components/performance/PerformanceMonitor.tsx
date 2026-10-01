@@ -182,7 +182,7 @@ export function PerformanceMonitor() {
                  overallScore >= 50 ? 'Razoável. Há oportunidades de otimização.' :
                  'Atenção! Performance precisa de melhorias.'}
               </p>
-              <p className="text-xs text-muted-foreground/60 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 <Clock className="w-3 h-3 inline mr-1" />
                 {dbHistory.length} snapshots no período selecionado
               </p>

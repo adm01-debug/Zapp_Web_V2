@@ -20,7 +20,7 @@
              'border backdrop-blur-sm shadow-sm',
              isZen
                ? 'px-3 bg-primary/15 border-primary/30 text-primary hover:bg-primary/25 hover:border-primary/50 shadow-primary/10'
-               : 'px-2.5 bg-card/80 border-border/40 text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 hover:border-border/70'
+               : 'px-2.5 bg-card/80 border-border/40 text-muted-foreground hover:text-foreground hover:bg-muted/60 hover:border-border/70'
            )}
            aria-label={isZen ? 'Sair do modo zen' : 'Modo zen'}
          >

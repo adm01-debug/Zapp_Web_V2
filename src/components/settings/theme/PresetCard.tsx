@@ -92,7 +92,7 @@ export function PresetCard({ preset, isActive, onSelect }: PresetCardProps) {
                     <Check className="h-3 w-3 text-primary-foreground" />
                   </motion.div>
                 ) : (
-                  <Eye className="h-4 w-4 shrink-0 text-muted-foreground/0 transition-colors group-hover:text-muted-foreground/60" />
+                  <Eye className="h-4 w-4 shrink-0 text-muted-foreground/0 transition-colors group-hover:text-muted-foreground" />
                 )}
               </AnimatePresence>
             </div>

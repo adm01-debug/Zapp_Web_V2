@@ -23,7 +23,7 @@ function CategorySelector({ value, onChange, size = 'sm' }: { value: string; onC
       <PopoverTrigger asChild>
         <button className={cn('flex items-center gap-1 rounded-md border border-border/50 transition-colors hover:bg-muted/60', size === 'xs' ? 'px-1.5 py-0.5 text-3xs' : 'px-2 py-1 text-xs')} onClick={(e) => e.stopPropagation()}>
           <span>{info.emoji}</span><span className="text-muted-foreground">{info.label}</span>
-          <ChevronDown className={cn(size === 'xs' ? 'w-2.5 h-2.5' : 'w-3 h-3', 'text-muted-foreground/60')} />
+          <ChevronDown className={cn(size === 'xs' ? 'w-2.5 h-2.5' : 'w-3 h-3', 'text-muted-foreground')} />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-1.5 max-h-[240px] overflow-y-auto" align="start" side="bottom" sideOffset={4} onClick={(e) => e.stopPropagation()}>
