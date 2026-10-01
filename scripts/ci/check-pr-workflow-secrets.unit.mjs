@@ -86,6 +86,11 @@ test('hasPushTriggerUnrestricted: push: {} (objeto vazio inline)', () => {
   assert.equal(hasPushTriggerUnrestricted(workflow), true);
 });
 
+test('hasPushTriggerUnrestricted: push: null e push: ~ (irrestrito)', () => {
+  assert.equal(hasPushTriggerUnrestricted('on:\n  push: null\n'), true);
+  assert.equal(hasPushTriggerUnrestricted('on:\n  push: ~\n'), true);
+});
+
 test('hasPushTriggerUnrestricted: push restrito a branches: [main] — seguro', () => {
   const workflow = 'on:\n  push:\n    branches: [main]\n';
   assert.equal(hasPushTriggerUnrestricted(workflow), false);
