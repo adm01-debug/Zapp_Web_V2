@@ -96,7 +96,7 @@ red_err="$(psql_test -Atqc "BEGIN; SET LOCAL request.jwt.claim.role='service_rol
   || fail "RED: assinatura de 3 args deveria nao existir antes da V17 (got $red_err)"
 
 # ---- GREEN: migration V17 grava read_at + read_count ----
-psql_test < "$repo_root/supabase/migrations/20260930730000_talkx_v17_read_at.sql" >/dev/null \
+psql_test < "$repo_root/supabase/migrations/20260930680000_talkx_v17_read_at.sql" >/dev/null \
   || fail 'migration V17 nao aplicou (GREEN)'
 
 # marca delivered primeiro (para o read depender de delivered_at)

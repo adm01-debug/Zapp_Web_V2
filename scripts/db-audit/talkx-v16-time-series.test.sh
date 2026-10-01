@@ -106,7 +106,7 @@ red_sent="$(psql_test -Atqc "SELECT COALESCE(SUM((h->>'sent')::int),0) FROM json
 [[ "$red_sent" == '3' ]] || fail "RED: report antigo deveria contar 3 (got $red_sent)"
 
 # ---- GREEN: migration V16 conta 5 ----
-psql_test < "$repo_root/supabase/migrations/20260930720000_talkx_v16_time_series_sent_delivered.sql" >/dev/null \
+psql_test < "$repo_root/supabase/migrations/20260930670000_talkx_v16_time_series_sent_delivered.sql" >/dev/null \
   || fail 'migration V16 nao aplicou (GREEN)'
 
 green_sent="$(psql_test -Atqc "SELECT COALESCE(SUM((h->>'sent')::int),0) FROM jsonb_array_elements(public.talkx_campaign_report('20000000-0000-0000-0000-000000000001')->'hourly_series') h")"

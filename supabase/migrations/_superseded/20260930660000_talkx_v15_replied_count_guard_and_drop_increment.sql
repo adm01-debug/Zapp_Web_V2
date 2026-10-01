@@ -1,5 +1,5 @@
 -- talkx_v15_replied_count_guard_and_drop_increment
--- versão 20260930710000 reservada para hermes-talkx-fase1-v12-v21-2610011215c53b (renumerada de 20260930660000 por colisão de reserva com o MAPA; REVOKE antes do DROP)
+-- versão 20260930660000 reservada para hermes-talkx-fase1-v12-v21-2610011215c53b (renumerada de 20260930590000 por colisão de versão com outro chat)
 -- rollback: 1) recrie a enforce_talkx_campaign_mutability() SEM 'replied_count' (corpo da 20260930360000);
 --           2) recrie a increment_talkx_template_use(uuid) e os GRANT/REVOKE (corpo da 20260909210000).
 --
@@ -11,8 +11,8 @@
 -- Classe: contrato (DROP FUNCTION + CREATE OR REPLACE FUNCTION) -> aplicada após o merge/deploy.
 
 -- 1) use_count: remove a RPC redundante (o trigger E86 de 20260916130000 basta) ----
-REVOKE ALL ON FUNCTION public.increment_talkx_template_use(uuid) FROM PUBLIC, anon, authenticated, service_role;
 DROP FUNCTION IF EXISTS public.increment_talkx_template_use(uuid);
+REVOKE ALL ON FUNCTION public.increment_talkx_template_use(uuid) FROM PUBLIC, anon, authenticated, service_role;
 
 -- 2) replied_count entra no guard de imutabilidade (P2-7) -------------------------
 CREATE OR REPLACE FUNCTION public.enforce_talkx_campaign_mutability()

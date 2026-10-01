@@ -1,9 +1,9 @@
 -- talkx_v17_read_at
--- versão 20260930730000 reservada para hermes-talkx-fase1-v12-v21-2610011215c53b (renumerada de 20260930680000 por colisão de reserva com o MAPA)
+-- versão 20260930680000 reservada para hermes-talkx-fase1-v12-v21-2610011215c53b (renumerada de 20260930610000 por colisão de versão com outro chat)
 -- nomes-antigos-conferidos: record_talkx_recipient_delivered — o DROP remove só a assinatura de 2 args; o código chama a de 3 args (p_event) — evita PGRST203 de ambiguidade.
 -- rollback: 1) DROP INDEX idx_talkx_recipients_read_at + ALTER TABLE talkx_recipients DROP COLUMN read_at;
 --           2) recrie record_talkx_recipient_delivered(text,uuid) sem p_event (corpo da 20260912110000);
---           3) recrie talkx_campaign_report sem read_count (corpo da 20260930720000).
+--           3) recrie talkx_campaign_report sem read_count (corpo da 20260930670000).
 --
 -- V17 do PLANO_TALKX_V3_100_ETAPAS_2026-09-29.
 -- Hoje: read_at não existe; READ/PLAYED só atualiza a tabela messages; o KPI
