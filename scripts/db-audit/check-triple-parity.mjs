@@ -74,7 +74,7 @@ function psqlFile(file) {
 function canon(valor) {
   if (Array.isArray(valor)) return valor.map(canon);
   if (valor && typeof valor === 'object') {
-    return Object.fromEntries(Object.keys(valor).sort().map((k) => [k, canon(valor[k])]));
+    return Object.fromEntries(Object.keys(valor).sort((a, b) => a.localeCompare(b)).map((k) => [k, canon(valor[k])]));
   }
   return valor;
 }
@@ -84,7 +84,7 @@ function localVersions() {
   const files = fs.readdirSync(MIGRATIONS_DIR, { withFileTypes: true })
     .filter((entry) => entry.isFile() && entry.name.endsWith('.sql')).map((entry) => entry.name);
   for (const file of files) if (!FILE_NAME_RE.test(file)) fail('migration com nome invalido');
-  const versions = files.filter((file) => FILE_NAME_RE.test(file)).map((file) => file.slice(0, 14)).sort();
+  const versions = files.filter((file) => FILE_NAME_RE.test(file)).map((file) => file.slice(0, 14)).sort((a, b) => a.localeCompare(b));
   if (!versions.length) fail('nenhuma migration local');
   if (new Set(versions).size !== versions.length) fail('versao de migration duplicada');
   return versions;
@@ -127,8 +127,8 @@ function checkEdges() {
       .filter((e) => e.isDirectory() && !e.name.startsWith('_'))
       .map((e) => e.name),
   );
-  const soManifesto = [...nomesManifesto].filter((n) => !dirs.has(n)).sort();
-  const soDisco = [...dirs].filter((n) => !nomesManifesto.has(n)).sort();
+  const soManifesto = [...nomesManifesto].filter((n) => !dirs.has(n)).sort((a, b) => a.localeCompare(b));
+  const soDisco = [...dirs].filter((n) => !nomesManifesto.has(n)).sort((a, b) => a.localeCompare(b));
   console.log(`[edges] manifesto=${nomesManifesto.size} diretorios=${dirs.size}`);
   if (soManifesto.length) fail(`edges so no manifesto: ${soManifesto.join(', ')}`);
   if (soDisco.length) fail(`edges so em disco (fora do manifesto): ${soDisco.join(', ')}`);

@@ -356,7 +356,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       if (c.company) companySet.add(c.company);
       if (c.tags && Array.isArray(c.tags)) c.tags.forEach((t: string) => tagSet.add(t));
     });
-    return { companies: Array.from(companySet).sort(), tags: Array.from(tagSet).sort() };
+    return { companies: Array.from(companySet).sort((a, b) => a.localeCompare(b)), tags: Array.from(tagSet).sort((a, b) => a.localeCompare(b)) };
   }, [contacts]);
 
   const filteredContacts = useMemo(() => {

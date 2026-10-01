@@ -228,7 +228,7 @@ export function useMediaLibrary(type: MediaType) {
     setPlayingId(item.id);
   };
 
-  const existingCategories = [...new Set(items.map(i => i.category))].sort();
+  const existingCategories = [...new Set(items.map(i => i.category))].sort((a, b) => a.localeCompare(b));
 
   return {
     items, loading, search, setSearch,

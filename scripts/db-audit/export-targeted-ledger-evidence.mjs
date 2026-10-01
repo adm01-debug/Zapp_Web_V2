@@ -27,7 +27,7 @@ export function parseTargetVersions(input) {
   if (new Set(versions).size !== versions.length) {
     throw new Error('TARGET_VERSIONS possui duplicatas');
   }
-  return versions.sort();
+  return versions.sort((a, b) => a.localeCompare(b));
 }
 
 export function buildLedgerQuery(versions) {
