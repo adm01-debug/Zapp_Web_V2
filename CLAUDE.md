@@ -166,6 +166,15 @@ Estado dos achados após re-auditoria de 2026-09-17:
 
   **Correção de 2026-10-01:** `strict` voltou a `true` pela terceira vez (sintoma idêntico ao de 27/09: PR #1375 com os 6 checks verdes e merge 405 "6 of 6 expected"; a `main` avançava a cada poucos minutos e a PR voltava a `BEHIND` antes de o CI de 6 min terminar). Restaurado para `false` com `github_update_required_status_checks` (PATCH só do campo — o PUT completo `github_update_branch_protection` devolveu 500 e não alterou nada). Autor da regressão **não identificável por API**: nenhum workflow nem script do repo toca branch protection (`grep` em `.github/`, `scripts/`), nada no `/workspace` da VPS, e conta do tipo `User` não tem audit log via API — o único registro é o **Security log** da conta (Settings → Security log, filtrar `protected_branch`), que só o Joaquim consegue abrir. Hipótese mais provável: alguma sessão fazendo PUT completo de proteção (todo PUT precisa mandar `strict` explicitamente) para mexer em outro campo. Antes de qualquer `github_update_branch_protection`, ler o estado com `github_get_branch_protection` e repetir `strict: false`.
 
+  **Correção estrutural posterior de 2026-10-01:** `required_status_checks.strict` voltou a ser **`true`** como
+  política permanente. O repositório agora permite auto-merge e o workflow
+  `auto-update-pr-branch.yml` voltou a executar em cada push na `main`: PRs com auto-merge que
+  ficarem `BEHIND` são atualizadas e têm os checks obrigatórios reiniciados automaticamente. Isso
+  preserva os seis checks contra a base mais recente sem depender de rebases manuais. A fila de
+  merge nativa não foi adotada porque este repositório público pertence a uma conta pessoal; a
+  disponibilidade documentada pelo GitHub exige repositório público de organização ou organização
+  com GitHub Enterprise Cloud para repositórios privados.
+
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
 Auditoria dos 13 workflows + 3 dinâmicos (16 total), da branch protection, dos secrets e dos environments. O que passou a
@@ -179,7 +188,7 @@ valer (confira antes de propor mudança de CI, para não refazer o que já exist
 Updates, Dependency Graph, Copilot reviewer) — 16 no total. Plano completo em
 `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-26.md`.
 
-**Required checks da `main`** (6; `strict` está `false` ao vivo — ver correções em 25/09, 27/09 e 01/10 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
+**Required checks da `main`** (6; `strict` está `true` ao vivo — ver correção de 01/10 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
 `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline` e
 `🎭 E2E Tests (Playwright)` — este último passou a ser obrigatório em 25/09; antes rodava em PR
 sem bloquear merge. `🔬 CodeQL (javascript-typescript)` roda em CI mas **não** é required check

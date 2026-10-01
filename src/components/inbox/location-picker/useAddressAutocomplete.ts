@@ -311,6 +311,12 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
       }
       const rateLimitedUntil = result.kind === 'rate_limited' ? Date.now() + RATE_LIMIT_BACKOFF_MS : undefined;
       dispatch({ type: 'SUGGEST_ERROR', kind: result.kind, rateLimitedUntil });
+    }).catch(() => {
+      // Rejeição inesperada (ex.: o /forward da rede de proteção estourou) — não deixa a UI
+      // presa em SUGGEST_START nem propaga um unhandled rejection (Sonar S6544). Consulta
+      // abortada/velha também não vira estado aqui.
+      if (controller.signal.aborted || activeTermRef.current !== term) return;
+      dispatch({ type: 'SUGGEST_ERROR', kind: 'network' });
     });
   }, [token, proximity, types, sessionSource, state.rateLimitedUntil]);
 
