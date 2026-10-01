@@ -1,11 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
 import { useContactsCRUD } from './useContactsCRUD';
 import type { ContactViewMode } from './ContactViewSwitcher';
 import type { FilterPreset } from './FilterPresets';
-
-const VALID_TAB_TYPES = new Set(['all', ...CONTACT_TYPES.map(t => t.value)]);
+import { VALID_TAB_TYPES } from './contactTypeOrder';
 
 export function useContactsViewState() {
   const crud = useContactsCRUD();
@@ -25,9 +23,9 @@ export function useContactsViewState() {
 
   const handleApplyPreset = useCallback((preset: FilterPreset) => {
     if (preset.filters.type) {
-    // Sanitize: preset salvo com tipo extinto (lead, sicoob_gifts, outros) → fallback 'all'
-    setActiveTab(VALID_TAB_TYPES.has(preset.filters.type) ? preset.filters.type : 'all');
-  }
+      // Sanitize: preset salvo com tipo extinto (lead, sicoob_gifts, outros) → fallback 'all'
+      setActiveTab(VALID_TAB_TYPES.has(preset.filters.type) ? preset.filters.type : 'all');
+    }
     if (preset.filters.company) setFilterCompany(preset.filters.company);
     if (preset.filters.jobTitle) setFilterJobTitle(preset.filters.jobTitle);
     if (preset.filters.tag) setFilterTag(preset.filters.tag);

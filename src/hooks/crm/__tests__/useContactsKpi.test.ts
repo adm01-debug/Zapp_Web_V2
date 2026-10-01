@@ -101,7 +101,7 @@ describe('aggregateKpi', () => {
     expect(kpi.novos30).toBe(0);
     expect(kpi.empresasDistinct).toBe(0);
     expect(kpi.fornecedoresTotal).toBe(0);
-    expect(kpi.seriesEmpresasWeekly12.every(v => v === 0)).toBe(true);
+    expect(kpi.seriesEmpresasCumulative12w.every(v => v === 0)).toBe(true);
     expect(kpi.seriesFornecedoresWeekly12.every(v => v === 0)).toBe(true);
   });
 
@@ -139,4 +139,66 @@ describe('aggregateKpi', () => {
     expect(kpi.deltaTotalPct).toBe(120); // pct(220, 100) = +120%
   });
 
+  it('empresasDistinct apara espaços nas pontas (Apple / apple / "Apple ")', () => {
+    const rows = [
+      row(1, 'cliente', 'Apple'), row(2, 'cliente', 'apple'),
+      row(3, 'cliente', 'Apple '), row(4, 'cliente', 'Google'),
+    ];
+    expect(aggregateKpi(rows, NOW).empresasDistinct).toBe(2);
+  });
+
+  it('contato criado agora conta em novos30', () => {
+    const rows = [{ created_at: NOW.toISOString(), contact_type: 'cliente', company: null }];
+    expect(aggregateKpi(rows, NOW).novos30).toBe(1);
+  });
+
+  it('contato criado exatamente 30d atrás cai em novosPrev30 (fronteira exclusiva)', () => {
+    const kpi = aggregateKpi([row(30)], NOW);
+    expect(kpi.novos30).toBe(0);
+    expect(kpi.novosPrev30).toBe(1);
+  });
+
+  it('último ponto da série cumulativa semanal = total de contatos', () => {
+    const rows = [
+      ...Array.from({ length: 5 }, (_, i) => row(100 + i)),
+      ...Array.from({ length: 12 }, (_, i) => row(i * 7 + 3)),
+    ];
+    expect(aggregateKpi(rows, NOW).seriesTotalCumulative12w[11]).toBe(rows.length);
+  });
+
+  // ── F5 (etapas 56–57): série de Empresas e delta do Total honestos ─────────────
+
+  it('série de Empresas = empresas distintas acumuladas por semana; último ponto = valor do card', () => {
+    const rows = [
+      row(80, 'cliente', 'Acme'),
+      row(40, 'cliente', 'acme '),
+      row(20, 'cliente', 'Globex'),
+      row(3, 'cliente', 'Initech'),
+      row(2, 'cliente', null),
+    ];
+    const kpi = aggregateKpi(rows, NOW);
+    const s = kpi.seriesEmpresasCumulative12w;
+    expect(s).toHaveLength(12);
+    expect(s[0]).toBe(1); // até 77d atrás: só Acme
+    expect(s[11]).toBe(kpi.empresasDistinct);
+    expect(kpi.empresasDistinct).toBe(3);
+    for (let i = 1; i < 12; i++) expect(s[i]).toBeGreaterThanOrEqual(s[i - 1]);
+  });
+
+  it('deltaTotalPct compara com a base que existia 30 dias atrás', () => {
+    // 60 antigos (31-90d) + 30 novos (0-29d): base = 60, total = 90 -> +50%
+    const rows = [
+      ...Array.from({ length: 60 }, (_, i) => row(31 + i)),
+      ...Array.from({ length: 30 }, (_, i) => row(i)),
+    ];
+    expect(aggregateKpi(rows, NOW).deltaTotalPct).toBe(50);
+  });
+
+  it('deltaTotalPct não conta contato criado há exatamente 30d como novo', () => {
+    const rows = [
+      ...Array.from({ length: 60 }, () => row(30)),
+      ...Array.from({ length: 6 }, (_, i) => row(i + 1)),
+    ];
+    expect(aggregateKpi(rows, NOW).deltaTotalPct).toBe(10);
+  });
 });

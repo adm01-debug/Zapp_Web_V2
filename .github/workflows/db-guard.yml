@@ -212,6 +212,11 @@ jobs:
           CONTACTS_F1_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/contacts-soft-delete-and-status.test.sh
 
+      - name: Simular contatos legados fora por padrão (include_legacy)
+        env:
+          CONTACTS_F5_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/contacts-legacy-visibility.test.sh
+
       - name: Simular autorização de status de conversa e etiquetas de WhatsApp
         env:
           WA_TAG_AUTHZ_TEST_POSTGRES_IMAGE: postgres:17-alpine
@@ -313,10 +318,30 @@ jobs:
           TALKX_UPDATE_LIMITS_CASTS_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-update-limits-casts.test.sh
 
+      - name: Simular correção do vazamento 22009 na RPC Talk X (V09e)
+        env:
+          TALKX_UPDATE_LIMITS_22009_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-update-limits-22009.test.sh
+
       - name: Simular autenticação do escape hatch de limites Talk X (V09d)
         env:
           TALKX_ESCAPE_HATCH_AUTH_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-escape-hatch-auth.test.sh
+
+      - name: Simular guards fail-closed do Talk X (MAPA)
+        env:
+          TALKX_GUARDS_FAIL_CLOSED_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-guards-fail-closed.test.sh
+
+      - name: Simular replay idempotente do talkx_settings (R2-01)
+        env:
+          TALKX_SETTINGS_REPLAY_IDEMPOTENT_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-settings-replay-idempotent.test.sh
+
+      - name: Simular teto de send_interval_max em 24h (A2)
+        env:
+          TALKX_SEND_INTERVAL_TETO_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-send-interval-teto-24h.test.sh
 
       - name: Simular supressão de contato idempotente nos eixos phone e contact_id (V07b)
         env:
@@ -427,3 +452,24 @@ jobs:
         env:
           TEAM_CHAT_RPC_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-rpc-ambiguity.test.sh
+
+      # L11 da matriz IA-004 (IA-004-matriz-autorizacao.md:297): a ACL de ESCRITA de
+      # public.departments. O INSERT/UPDATE de NIVEL DE TABELA (privilegio default do schema
+      # public) nunca tinha sido revogado -- e um REVOKE por coluna NAO remove grant de tabela,
+      # entao qualquer usuario autenticado podia GRAVAR o segredo do WhatsApp pelo PostgREST.
+      # O harness reproduz o grant de TABELA + os grants de COLUNA medidos no banco canonico e
+      # prova: o furo ANTES (authenticated pode INSERT/UPDATE nas 2 colunas de segredo), o
+      # estado DEPOIS (has_column_privilege false nas 2 colunas de segredo e true nas colunas
+      # seguras) e a MUTACAO que remove o REVOKE de TABELA (o contrato tem de encerrar nao-zero).
+      - name: Simular ACL de escrita de departments (L11)
+        env:
+          L11_DEPARTMENTS_ACL_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/l11-departments-acl-escrita.test.sh
+
+      # Auditoria Onda 3, achado 2: a RPC de recibo de leitura e SECURITY DEFINER e nao checava
+      # vinculo — gravava recibo cross-team por RPC enquanto o insert direto era barrado pela RLS.
+      # Bloco A prova o defeito no mesmo container, aplica a migration e o bloco B prova a correcao.
+      - name: Simular vinculo obrigatorio no recibo de leitura do team chat (auditoria Onda 3)
+        env:
+          TEAM_RECEIPTS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-receipts-membership.test.sh

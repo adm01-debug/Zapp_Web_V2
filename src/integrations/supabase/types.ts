@@ -8092,7 +8092,7 @@ export type Database = {
           sentiment_consecutive_count: number | null
           sla_sound_type: string | null
           sound_enabled: boolean | null
-          sound_volume: number | null
+          sound_volume: number
           theme: string | null
           transcription_notification_enabled: boolean | null
           transcription_sound_type: string | null
@@ -8129,7 +8129,7 @@ export type Database = {
           sentiment_consecutive_count?: number | null
           sla_sound_type?: string | null
           sound_enabled?: boolean | null
-          sound_volume?: number | null
+          sound_volume?: number
           theme?: string | null
           transcription_notification_enabled?: boolean | null
           transcription_sound_type?: string | null
@@ -8166,7 +8166,7 @@ export type Database = {
           sentiment_consecutive_count?: number | null
           sla_sound_type?: string | null
           sound_enabled?: boolean | null
-          sound_volume?: number | null
+          sound_volume?: number
           theme?: string | null
           transcription_notification_enabled?: boolean | null
           transcription_sound_type?: string | null
@@ -9520,7 +9520,7 @@ export type Database = {
         }[]
       }
       contacts_count_by_type: {
-        Args: never
+        Args: { include_legacy?: boolean }
         Returns: {
           contact_type: string
           count: number
@@ -10314,6 +10314,7 @@ export type Database = {
         }
         Returns: Json
       }
+      resolve_contact_guard_actor: { Args: never; Returns: string }
       save_talkx_campaign_draft: {
         Args: {
           p_campaign_id: string
@@ -10332,6 +10333,7 @@ export type Database = {
           company_filter?: string
           contact_type_filter?: string
           date_from?: string
+          include_legacy?: boolean
           job_title_filter?: string
           page_offset?: number
           page_size?: number

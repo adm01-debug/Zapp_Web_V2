@@ -103,7 +103,11 @@ function scanSqlSegments(input) {
         }
         i += 1;
       }
-      segments.push({ type: 'quoted', text: source.slice(start, i) });
+      // Aspas duplas abrem IDENTIFICADOR (nome de objeto; dobra "" escapa a
+      // aspa); aspas simples abrem STRING (opaca, pode conter SQL "falso").
+      // O guard precisa do nome do identificador para casar DROP TABLE
+      // public."x" / "public".x.
+      segments.push({ type: quote === '"' ? 'ident' : 'string', text: source.slice(start, i) });
       continue;
     }
 
@@ -145,7 +149,13 @@ export function stripSqlComments(input) {
       // continua sendo CREATE FUNCTION, e dois '-' separados por comentario nao
       // colam num '--'.
       if (seg.type === 'line-comment' || seg.type === 'block-comment') return ' ';
-      if (seg.type === 'dollar' || seg.type === 'quoted') return ' ';
+      if (seg.type === 'dollar' || seg.type === 'string') return ' ';
+      if (seg.type === 'ident') {
+        // Identificador "..." e um NOME de objeto (nao uma string): expor o
+        // conteudo (sem as aspas, com a dobra "" desfeita) para os regex de
+        // CREATE/DROP casarem public."x" e "public".x.
+        return seg.text.slice(1, -1).replace(/""/g, '"');
+      }
       return seg.text;
     })
     .join('');
