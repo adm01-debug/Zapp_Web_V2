@@ -38,6 +38,7 @@ import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { TalkMeConflictError, type TalkMeWaitingContact } from './types';
 import type { TalkMeQueueController } from './useTalkMeQueue';
+import './talk-me-layout.css';
 
 interface TalkMeViewProps {
   open: boolean;
@@ -90,12 +91,12 @@ function TalkMeCard({ item, active, onSelect, buttonRef, onMove }: {
       aria-describedby={`${companyId} ${jobTitleId} ${detailsId}`}
       aria-current={active ? 'true' : undefined}
       className={cn(
-        'flex h-full w-full flex-col overflow-hidden rounded-[28px] border text-left shadow-2xl',
+        'talk-me-contact flex h-full w-full flex-col overflow-hidden rounded-[22px] border text-left shadow-2xl',
         'bg-card/95 backdrop-blur-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
         active ? 'border-primary/50 shadow-primary/10' : 'border-border/70',
       )}
     >
-      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-4 py-3 text-center sm:px-6 sm:py-7">
+      <div className="talk-me-identity relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-4 py-2 text-center">
         <div
           aria-hidden="true"
           className="absolute inset-0 opacity-70"
@@ -103,15 +104,15 @@ function TalkMeCard({ item, active, onSelect, buttonRef, onMove }: {
             background: `radial-gradient(circle at 50% 10%, ${item.queueColor ?? '#2563eb'}33, transparent 52%)`,
           }}
         />
-        <Avatar className="relative h-16 w-16 border-2 border-white/20 shadow-2xl sm:h-32 sm:w-32">
+        <Avatar className="talk-me-avatar relative h-16 w-16 shrink-0 border-2 border-white/20 shadow-2xl sm:h-20 sm:w-20">
           <AvatarImage src={item.avatarUrl ?? undefined} alt="" className="object-cover" />
           <AvatarFallback className={cn('text-2xl font-bold', colors.bg, colors.text)}>
             {getInitials(item.name || '?')}
           </AvatarFallback>
         </Avatar>
-        <div className="relative mt-3 min-w-0 max-w-full sm:mt-5">
-          <h3 id={nameId} className="truncate text-base font-black tracking-tight text-foreground sm:text-2xl">{item.name || 'Contato sem nome'}</h3>
-          <p id={companyId} className="mt-1 flex items-center justify-center gap-1.5 truncate text-xs font-medium text-muted-foreground sm:text-sm">
+        <div className="talk-me-identity-text relative mt-2 min-w-0 max-w-full">
+          <h3 id={nameId} className="truncate text-base font-black tracking-tight text-foreground sm:text-xl">{item.name || 'Contato sem nome'}</h3>
+          <p id={companyId} className="mt-1 flex items-center justify-center gap-1.5 truncate text-xs font-medium text-muted-foreground">
             <Building2 className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span className="truncate">{item.company || 'Empresa não informada'}</span>
           </p>
@@ -119,24 +120,24 @@ function TalkMeCard({ item, active, onSelect, buttonRef, onMove }: {
         </div>
       </div>
 
-      <div id={detailsId} className="relative border-t border-border/70 bg-background/75 p-3 sm:p-5">
-        <div className="mb-2 flex items-center justify-between gap-3 text-xs sm:mb-3">
+      <div id={detailsId} className="talk-me-details relative shrink-0 border-t border-border/70 bg-background/75 p-3 sm:p-4">
+        <div className="mb-2 flex items-center justify-between gap-2 text-xs">
           <span className="inline-flex items-center gap-1.5 font-semibold text-foreground">
             <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
             Aguardando há {waitingLabel(item.waitingSince)}
           </span>
           <span className="text-foreground">#{item.position}</span>
         </div>
-        <div className="rounded-2xl border border-border/60 bg-muted/35 p-2.5 sm:p-3">
+        <div className="rounded-2xl border border-border/60 bg-muted/35 p-2">
           <div className="mb-1.5 flex items-center gap-1.5 text-2xs font-bold uppercase tracking-wider text-foreground">
             {isAudio ? <Volume2 className="h-3.5 w-3.5" /> : <MessageCircleMore className="h-3.5 w-3.5" />}
             Última mensagem
           </div>
-          <p className="line-clamp-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground sm:line-clamp-4">
+          <p className="line-clamp-2 whitespace-pre-wrap break-words text-xs leading-5 text-foreground">
             {messagePreview(item)}
           </p>
           {item.pendingMessageCount > 1 && (
-            <p className="mt-2 text-xs font-semibold text-foreground">
+            <p className="mt-1 text-xs font-semibold text-foreground">
               {item.pendingMessageCount} mensagens aguardando resposta
             </p>
           )}
@@ -154,7 +155,6 @@ function TalkMeQueueCard({ item, active, disabled, onSelect, onMove, buttonRef }
   onMove: (direction: -1 | 1) => void;
   buttonRef: (node: HTMLButtonElement | null) => void;
 }) {
-  const colors = getAvatarColor(item.name || '?');
   const nameId = `talk-me-queue-name-${item.contactId}`;
   const detailsId = `talk-me-queue-details-${item.contactId}`;
 
@@ -172,30 +172,30 @@ function TalkMeQueueCard({ item, active, disabled, onSelect, onMove, buttonRef }
       aria-describedby={detailsId}
       aria-pressed={active}
       className={cn(
-        'group relative flex h-[230px] w-[204px] shrink-0 snap-center flex-col overflow-hidden rounded-3xl border bg-black text-left shadow-lg',
+        'talk-me-queue-card group relative flex h-[211px] w-[173px] shrink-0 snap-center flex-col overflow-hidden rounded-[20px] border bg-black text-left shadow-lg',
         'transition-[border-color,box-shadow,transform] duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80',
-        'motion-reduce:transition-none sm:h-[264px] sm:w-[216px]',
+        'motion-reduce:transition-none',
         active
           ? 'border-white/80 shadow-[0_0_0_2px_rgba(255,255,255,0.16),0_20px_45px_rgba(0,0,0,0.45)]'
           : 'border-white/15 hover:-translate-y-1 hover:border-white/40',
       )}
     >
-      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-4 py-4 text-center">
+      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-3 py-2 text-center">
         <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.12),transparent_60%)]" />
-        <Avatar className="relative h-16 w-16 border border-white/25 shadow-xl sm:h-20 sm:w-20">
+        <Avatar className="talk-me-queue-avatar relative h-16 w-16 shrink-0 border border-white/25 shadow-xl">
           <AvatarImage src={item.avatarUrl ?? undefined} alt="" loading="lazy" decoding="async" className="object-cover grayscale" />
-          <AvatarFallback className={cn('grayscale', colors.bg, colors.text)}>
+          <AvatarFallback className="bg-zinc-200 text-zinc-900">
             {getInitials(item.name || '?')}
           </AvatarFallback>
         </Avatar>
-        <h3 id={nameId} className="relative mt-3 w-full truncate text-sm font-black text-white sm:text-base">
+        <h3 id={nameId} className="relative mt-2 w-full truncate text-sm font-black text-white">
           {item.name || 'Contato sem nome'}
         </h3>
         <p className="relative mt-1 w-full truncate text-xs text-zinc-400">
           {item.company || 'Empresa não informada'}
         </p>
       </div>
-      <div id={detailsId} className="border-t border-white/10 bg-zinc-950 px-3 py-3">
+      <div id={detailsId} className="shrink-0 border-t border-white/10 bg-zinc-950 px-2.5 py-2">
         <div className="flex items-center justify-between gap-2 text-2xs font-semibold text-zinc-300">
           <span className="inline-flex min-w-0 items-center gap-1">
             <Clock3 className="h-3 w-3 shrink-0" aria-hidden="true" />
@@ -377,7 +377,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
         size="full"
         showCloseButton={false}
         aria-describedby="talk-me-description"
-        className="h-[calc(100dvh-16px)] max-h-none w-[calc(100vw-16px)] max-w-none overflow-hidden rounded-2xl border-border/70 bg-background/96 p-0 sm:h-[calc(100dvh-32px)] sm:w-[calc(100vw-32px)] sm:rounded-[28px]"
+        className="talk-me-view h-[calc(100dvh-16px)] max-h-none w-[calc(100vw-16px)] max-w-none overflow-hidden rounded-2xl border-border/70 bg-background/96 p-0 sm:h-[calc(100dvh-32px)] sm:w-[calc(100vw-32px)] sm:rounded-[28px]"
       >
         <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden opacity-35">
@@ -385,16 +385,16 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
             <div className="absolute -bottom-56 -right-40 h-[560px] w-[560px] rounded-full bg-violet-500/20 blur-3xl" />
           </div>
 
-          <header className="relative z-20 flex shrink-0 flex-col gap-4 border-b border-border/70 bg-background/70 px-4 py-4 backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between lg:px-7">
+          <header className="relative z-20 flex shrink-0 flex-col gap-2 border-b border-border/70 bg-background/70 px-4 py-2 backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between lg:px-5 lg:py-1">
             <div className="flex min-w-0 items-center gap-3">
-              <Button variant="outline" size="icon" onClick={() => onOpenChange(false)} className="h-10 w-10 shrink-0 rounded-full" aria-label="Voltar para o Inbox">
+              <Button variant="outline" size="icon" onClick={() => onOpenChange(false)} className="h-8 w-8 shrink-0 rounded-full" aria-label="Voltar para o Inbox">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div className="min-w-0">
-                <DialogTitle className="truncate text-2xl font-black tracking-tight sm:text-3xl">
+                <DialogTitle className="truncate text-2xl font-black leading-7 tracking-tight">
                   TALK <span className="text-primary">ME</span>
                 </DialogTitle>
-                <DialogDescription id="talk-me-description" className="truncate text-xs sm:text-sm">
+                <DialogDescription id="talk-me-description" className="truncate text-xs leading-4">
                   Escolha um contato aguardando e assuma a conversa com segurança.
                 </DialogDescription>
               </div>
@@ -402,7 +402,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
 
             <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex sm:flex-row lg:max-w-3xl lg:justify-end">
               <Select value={selectedQueueId ?? undefined} onValueChange={setSelectedQueueId} disabled={queuesLoading || queues.length === 0}>
-                <SelectTrigger className="h-10 min-w-0 rounded-xl bg-background/80 sm:w-56" aria-label="Departamento">
+                <SelectTrigger className="h-8 min-w-0 rounded-xl bg-background/80 text-xs sm:w-44" aria-label="Departamento">
                   <SelectValue placeholder="Selecione o departamento" />
                 </SelectTrigger>
                 <SelectContent>
@@ -420,16 +420,16 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Buscar nome, empresa ou mensagem…"
                   aria-label="Buscar na fila TALK ME"
-                  className="h-10 rounded-xl bg-background/80 pl-9"
+                  className="h-8 rounded-xl bg-background/80 pl-9 text-xs"
                 />
               </div>
-              <Button variant="outline" size="icon" onClick={() => void refresh()} disabled={showInitialLoading} className="col-start-2 row-start-1 h-10 w-10 shrink-0 rounded-xl sm:col-auto sm:row-auto" aria-label="Atualizar fila">
+              <Button variant="outline" size="icon" onClick={() => void refresh()} disabled={showInitialLoading} className="col-start-2 row-start-1 h-8 w-8 shrink-0 rounded-xl sm:col-auto sm:row-auto" aria-label="Atualizar fila">
                 <RefreshCw className={cn('h-4 w-4', showInitialLoading && 'animate-spin motion-reduce:animate-none')} />
               </Button>
             </div>
           </header>
 
-          <main className="relative z-10 flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-3 sm:px-5 sm:py-4">
+          <main className="relative z-10 flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-2 sm:px-4">
             <div className="sr-only" aria-live="polite" aria-atomic="true">
               {activeItem ? `${activeItem.name}, atendimento ${activeItem.position} de ${totalCount}` : ''}
             </div>
@@ -443,7 +443,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
               </div>
             ) : showInitialLoading ? (
               <div role="status" aria-live="polite" aria-label="Carregando atendimentos" className="m-auto flex w-full max-w-sm flex-col items-center">
-                <Skeleton className="h-[430px] w-full rounded-[28px]" />
+                <Skeleton className="h-[min(344px,40dvh)] w-full rounded-[22px]" />
                 <Skeleton className="mt-5 h-11 w-52 rounded-full" />
               </div>
             ) : queues.length === 0 ? (
@@ -461,25 +461,25 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                 </p>
               </div>
             ) : (
-              <div className="mx-auto flex w-full max-w-[1480px] flex-col gap-4 pb-2">
+              <div className="mx-auto flex w-full max-w-[1184px] shrink-0 flex-col gap-3">
                 <section
                   data-testid="talk-me-main-stage"
                   aria-label="Atendimento em destaque"
-                  className="relative isolate overflow-hidden rounded-[30px] border border-white/10 bg-[#050507] px-2 pb-4 pt-3 shadow-[0_30px_90px_rgba(0,0,0,0.55)] sm:px-5 sm:pb-5"
+                  className="relative isolate overflow-hidden rounded-3xl border border-white/10 bg-[#050507] px-2 pb-3 pt-2 shadow-[0_30px_90px_rgba(0,0,0,0.55)] sm:px-4"
                 >
                   <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
                     <div className="absolute -left-28 -top-36 h-80 w-80 rounded-full bg-blue-600/10 blur-3xl" />
                     <div className="absolute -bottom-48 -right-20 h-96 w-96 rounded-full bg-violet-600/10 blur-3xl" />
                   </div>
 
-                  <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-2 text-xs text-zinc-400 sm:text-sm">
+                  <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3 px-2 text-xs text-zinc-400">
                     <span aria-live="polite">
                       {selectedQueue ? <><strong className="text-white">{totalCount}</strong> aguardando em {selectedQueue.name}</> : 'Nenhum departamento disponível'}
                     </span>
                     {activeItem && <span>Atendimento {activeItem.position} de {totalCount}</span>}
                   </div>
 
-                  <div className="relative mx-auto mt-1 flex h-[390px] w-full max-w-6xl items-start justify-center overflow-hidden pt-2 [perspective:1200px] sm:h-[460px] [@media(max-height:700px)]:h-[340px]">
+                  <div className="talk-me-track relative mx-auto mt-1 flex w-full max-w-5xl items-start justify-center overflow-hidden pt-2 [perspective:1200px]">
                     {items.map((item, index) => {
                         const offset = index - safeIndex;
                         if (Math.abs(offset) > 1) return null;
@@ -498,7 +498,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                             }}
                             transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 230, damping: 28 }}
                             aria-hidden={!active}
-                            className="absolute h-[370px] w-[min(330px,calc(100%-76px))] sm:h-[440px] sm:w-[360px] [@media(max-height:700px)]:h-[320px]"
+                            className="talk-me-main-card absolute w-[min(288px,calc(100%-76px))]"
                           >
                             <TalkMeCard
                               item={item}
@@ -522,12 +522,12 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                     </Button>
                   </div>
 
-                  <div className="mx-auto mt-2 flex w-full max-w-md justify-center px-3">
+                  <div className="mx-auto mt-1.5 flex w-full max-w-[360px] justify-center px-3">
                     <Button
                       size="lg"
                       onClick={() => void handleClaim()}
                       disabled={!activeItem || !!claimingContactId || itemsLoading || searchPending || reconciling}
-                      className="h-12 w-full rounded-full px-7 font-bold shadow-lg shadow-primary/20"
+                      className="h-10 w-full rounded-full px-5 text-xs font-bold shadow-lg shadow-primary/20"
                     >
                       {isClaiming ? <Loader2 className="mr-2 h-5 w-5 animate-spin motion-reduce:animate-none" /> : <MessageCircleMore className="mr-2 h-5 w-5" />}
                       {isClaiming ? 'Assumindo…' : 'Aceitar e conversar'}
@@ -538,11 +538,11 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                 <section
                   data-testid="talk-me-waiting-strip"
                   aria-labelledby="talk-me-waiting-title"
-                  className="rounded-[28px] border border-white/10 bg-[#070709] px-2 py-4 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:px-4"
+                  className="rounded-[22px] border border-white/10 bg-[#070709] px-2 py-3 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:px-3"
                 >
-                  <div className="mb-3 flex items-center justify-between gap-3 px-2 sm:px-12">
+                  <div className="mb-2 flex items-center justify-between gap-3 px-2 sm:px-12">
                     <div>
-                      <h2 id="talk-me-waiting-title" className="text-sm font-black text-white sm:text-base">Aguardando atendimento</h2>
+                      <h2 id="talk-me-waiting-title" className="text-sm font-black text-white">Aguardando atendimento</h2>
                       <p className="text-xs text-zinc-400">Selecione um contato para revisar os dados acima.</p>
                     </div>
                     <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-zinc-300">
@@ -603,7 +603,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                         const remaining = viewport.scrollWidth - viewport.clientWidth - viewport.scrollLeft;
                         if (remaining <= viewport.clientWidth && hasMore && !loadingMore && !claimingContactId && !reconciling) void loadMore();
                       }}
-                      className="flex min-w-0 flex-1 cursor-grab snap-x snap-mandatory touch-pan-y select-none gap-3 overflow-x-auto px-1 pb-2 pt-1 active:cursor-grabbing scrollbar-none"
+                      className="flex min-w-0 flex-1 cursor-grab snap-x snap-mandatory touch-pan-y select-none gap-2.5 overflow-x-auto px-1 pb-2 pt-1 active:cursor-grabbing scrollbar-none"
                       aria-label="Contatos aguardando atendimento"
                     >
                       {items.map((item, index) => (
@@ -621,7 +621,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                         />
                       ))}
                       {loadingMore && (
-                        <div role="status" aria-label="Carregando mais atendimentos" className="flex h-[230px] w-28 shrink-0 items-center justify-center text-zinc-400 sm:h-[264px]">
+                        <div role="status" aria-label="Carregando mais atendimentos" className="talk-me-queue-card flex w-24 shrink-0 items-center justify-center text-zinc-400">
                           <Loader2 className="h-6 w-6 animate-spin motion-reduce:animate-none" />
                         </div>
                       )}
