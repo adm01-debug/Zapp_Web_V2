@@ -1,0 +1,47 @@
+name: Talk X V4 placar regen (push)
+
+# Regenera docs/talkx/v4/STATUS.md sempre que a main anda, e commita se mudou.
+#
+# Por quê: uma etapa (X<NNN>) commita o STATUS.md com a contagem de origin/main
+# ANTES de si mesma (ela ainda não está lá). Quando a etapa é mergeada, o arquivo
+# fica 1 passo atrás — e, sem isto, a main ficaria com o placar defasado a cada
+# merge (foi o que travou os merges em 2026-10-01).
+#
+# Sem loop: o push usa o GITHUB_TOKEN, e o GitHub NÃO dispara novos workflows em
+# push feito com GITHUB_TOKEN — o commit do bot não re-dispara este workflow nem
+# o ci.yml de push.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  regen:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout (histórico completo)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Regenera STATUS.md
+        run: |
+          git fetch origin main --quiet
+          node scripts/talkx/v4-status.mjs
+
+      - name: Commita se mudou
+        run: |
+          if git diff --quiet -- docs/talkx/v4/STATUS.md; then
+            echo "STATUS.md já atualizado — nada a fazer."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add docs/talkx/v4/STATUS.md
+            git commit -m "chore(talkx): regenera STATUS.md (placar)"
+            git push
+          fi

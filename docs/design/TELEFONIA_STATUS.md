@@ -536,3 +536,72 @@ manifesto de deploy + workflow-pins       -> exit 0
   com 2+ seguidoras, assumir na hora criaria duas líderes.
 - **`LEADER_TTL_MS`/`HEARTBEAT`/`JITTER` exportados** para o teste poder medir o TTL em vez de dormir 10 s.
 - **Não foi tocado**: `AppProviders`, `App.tsx`, `CallDialog`/`IncomingCallAlert` (T21), RLS, banco.
+
+## Fase 1-B — T21 (01/10/2026 · executor: Hermes)
+
+**T21 — o diálogo de chamada para de escrever no banco e passa a consumir o provider.**
+
+O `CallDialog` inseria uma linha em `calls` a cada abertura (`startCall` → `.from('calls').insert`) e
+mantinha o mudo como estado local que não silenciava nada. Agora ele não escreve: quem registra é o motor,
+pela RPC `upsert_my_call` (T11).
+
+- **Diálogo**: `dial(contact.phone)` no lugar do insert; estado visual de `session.status`; cronômetro de
+  `callDuration` (timer local removido); **Mudo real** (`isMuted` + `toggleMute()`); Encerrar → `hangup()`;
+  Atender → `accept()`. Guarda de discagem única (`discouRef`).
+- **Alto-falante removido**: o plano condiciona o botão a `setSinkId`, que **não existe em nenhum lugar de
+  `src/`** — o botão era cosmético. Fica comentado no arquivo para voltar quando a função existir.
+- **Alerta de chamada recebida**: Atender → `accept()`, Recusar → `reject()` (persiste `declined`), Ignorar
+  segue só silenciando.
+- **Timeout do toque vai para a máquina**: `RING_TIMEOUT_MS = 30_000` armado em `ringing_in`, com cleanup ao
+  sair do estado e no unmount.
+
+### Aceite do plano, verificado
+
+1. **"Abrir o diálogo → 0 inserts"** — medido: o arquivo tem **zero** ocorrências de
+   `useCalls`/`startCall`/`.insert(`/`.upsert(`. O teste espiona os quatro caminhos legados e o
+   `supabase.from('calls').insert`: todos com zero chamadas, e ainda há um teste que lê o **fonte** para
+   garantir que o arquivo não volta a falar com o banco.
+2. **"Recusar → linha `declined`"** — a cadeia foi conferida elo por elo antes de eu aceitar o trabalho:
+   `motivoNaoAtendida({endedBy:'reject'})` → `declined` (`persistence.ts:136-137`) ·
+   `persistedStatusForEndReason('declined')` → `declined` (`session.ts:152-153`, tem caso próprio e **não**
+   cai no `?? 'ended'`) · `calls_status_check` aceita `declined` · e o payload real da persistência já é
+   asserido em `useSipClient.test.ts:627`.
+
+### Decisões do executor
+
+- **`TIMEOUT` da máquina persiste `missed`, não `timeout`** (`session.ts:149-151`). É o desfecho correto: uma
+  chamada recebida que ninguém atendeu é perdida. Não mudei a máquina — ela já estava pronta e testada.
+- **`whatsappConnectionId` mantida na interface como `@deprecated`** para não quebrar os dois chamadores
+  (`ChatDialogs`, `ContactHeaderSection`) fora do escopo desta etapa.
+- **"Ignorar" não é um botão separado** neste componente: é o `dismissCall` do próprio alerta, e continua sem
+  escrever desfecho nenhum.
+- **A máquina não foi tocada** (`session.ts` intacto): o T21 só liga quem faltava ligar.
+
+```
+npx tsc -b --force                        -> exit 0
+bun run test:coverage                     -> 400 arquivos, 5233 testes -> exit 0
+bun run test:contracts                    -> 33 arquivos, 733 testes -> exit 0
+bun run build + bundle-budget.mjs         -> 336,3 KB de 341 KB -> exit 0
+typecheck/lint/implicit-any ratchet       -> 0 novas -> exit 0
+manifesto de deploy                       -> exit 0
+```
+
+### Prova por mutação (medida pelo executor, com restauração provada)
+
+| Quebra aplicada | Teste que cai |
+|---|---|
+| remover `dial(contact.phone)` | "disca pelo provider e não toca em nenhum caminho de escrita da tabela `calls`" (+1) |
+| remover `accept()` no Atender | "Atender chama accept() do provider e NÃO chama mais o legado answerCall" |
+| remover `reject()` no Recusar | "Recusar chama reject() do provider e NÃO chama mais missCall" |
+| remover `dispatch({type:'TIMEOUT'})` | "chamada ENTRADA que ninguém atende encerra sozinha pelo TIMEOUT da máquina" |
+
+## Achados fora do escopo (NÃO corrigidos)
+
+- **Split-brain de discagem ainda existe fora desta etapa**: `VoIPPanel.tsx:366-370` passa ao `DialPad` os
+  métodos **crus** do `useSipClient` (`makeCall`, `hangUp`, `acceptIncomingCall`, `toggleMute`, `sendDTMF`),
+  e `ActiveCallBar.tsx:51,61,72` faz o mesmo. Ou seja: discar pelo painel **não** passa pela máquina (não
+  despacha `DIAL`, não cria sessão) enquanto discar pelo diálogo passa — as duas entradas divergem. O texto do
+  T21 nomeia apenas `CallDialog` e `IncomingCallAlert`, então não toquei nesses arquivos; isso precisa de
+  etapa própria (e é o que fecha a Fase 1 junto com o T22).
+- **`setSinkId` continua inexistente**: o alto-falante volta a existir quando houver seleção de dispositivo
+  de saída.

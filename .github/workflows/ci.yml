@@ -171,12 +171,15 @@ jobs:
       - name: 🛡️ Run Supabase usage guard
         run: node scripts/db-audit/supabase-usage-guard.mjs
 
-      - name: 🧾 Verify Talk X V4 placar freshness
-        # X006: só em PR. No push para a main, a PR de etapa acabou de entrar e o
-        # STATUS.md que ela commita reflete origin/main ANTES dela (não conta a si
-        # mesma — a etapa ainda não está em origin/main). Sem este `if`, o check
-        # rodava também no push e deixava a main vermelha por 1 etapa a cada merge.
+      - name: 🧾 Verify Talk X V4 placar freshness (aviso)
+        # O placar compara o STATUS.md commitado com os títulos (X<NNN>) já em
+        # origin/main. Uma etapa recém-mergeada deixa o arquivo 1 passo atrás (o
+        # gerador não conta a própria etapa antes do merge) — então o check NÃO pode
+        # bloquear: `continue-on-error` avisa sem derrubar o job. Quem corrige é o
+        # workflow `talkx-status-regen.yml`, que roda no push e commita o STATUS.md
+        # regenerado (bot via GITHUB_TOKEN, sem loop).
         if: github.event_name == 'pull_request'
+        continue-on-error: true
         run: |
           # O checkout do job de lint é raso (fetch-depth padrão 1); o placar varre
           # `git log origin/main` atrás de títulos (X<NNN>), então precisa do histórico
