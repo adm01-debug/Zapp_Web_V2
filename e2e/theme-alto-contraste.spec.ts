@@ -13,10 +13,8 @@ import { test, expect, type Page } from '@playwright/test';
  * `ThemeInitializer` e o `HighContrastProvider`, que é onde o defeito vive.
  */
 
-/** Paleta de alto contraste no tema claro — `src/styles/accessibility.css:4-25`.
- * A luminosidade mudou na tarefa de contraste AA (era 45%): com 45% o texto das bolhas
- * (que usa `--primary-foreground` COM ALFA) reprovava 2,39:1 no chip ativo. */
-const HC_PRIMARY_CLARO = '258 100% 38%';
+/** Paleta de alto contraste no tema claro — `src/styles/accessibility.css:4-25`. */
+const HC_PRIMARY_CLARO = '258 100% 45%';
 const HC_BACKGROUND_CLARO = '0 0% 100%';
 
 async function ligarAltoContraste(page: Page): Promise<void> {

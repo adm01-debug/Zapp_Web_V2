@@ -19,6 +19,24 @@ Documento principal: [`../PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md`](../PLANO_TAL
 6. Corpo da PR (verificado a partir da X005): `## Etapa`, `## Fecha`, `## Evidência`, `## Print` (etapa de tela), `## Banco`, `## Edge`. Título terminando em `(X<NNN>)`.
 7. Depois do merge: aplicar a migration e registrar no ledger; pedir o deploy da edge; conferir; atualizar o placar.
 
+## Definição de pronto no corpo da PR (X005)
+
+Toda PR de etapa (título terminando em `(X<NNN>)`) é verificada pelo
+`scripts/ci/check-talkx-pr-body.mjs` no job `lint-and-typecheck` do `ci.yml`
+(`pull_request`, sem secrets). Se uma seção obrigatória faltar, a PR falha.
+
+| Seção | Exigida | Conteúdo |
+|---|---|---|
+| `## Etapa` | sempre | `<id>` e o título **iguais aos do plano** (`etapas.json`). |
+| `## Fecha` | sempre | os mesmos IDs do campo **Fecha** da etapa (ou a justificativa de cada um que ficou de fora); `—` quando a etapa não fecha elemento. |
+| `## Evidência` | sempre | nome do teste que falhava antes e passa agora, ou a query com o resultado. |
+| `## Print` | quando a etapa tem tela (01–17) | nome do artefato da régua (`regua-visual-talkx`). |
+| `## Banco` | sempre | versão da migration + se foi aplicada e registrada no ledger, ou `sem DDL`. |
+| `## Edge` | sempre | id do run de `deploy-functions.yml`, ou `sem edge`, ou `aguardando aprovação do deploy`. |
+
+Um título sem `(X<NNN>)` faz o verificador **não se aplicar** (PRs que não são
+de etapa passam sem essas seções).
+
 ## Identificadores
 
 - `X001`…`X200` — etapas, na ordem de execução.

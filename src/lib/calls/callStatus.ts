@@ -163,6 +163,28 @@ export function normalizeStatus(raw: unknown): PersistedStatus | null {
 }
 
 /**
+ * A ligação já não pode mais ser atendida? Notificação que chega com a linha
+ * nesse estado é replay atrasado do provedor: tocar o alerta abriria uma
+ * chamada fantasma — o T19 existe exatamente para matar isso.
+ *
+ * O plano lista `ended|missed|failed`; completei com `cancelled`, `declined` e
+ * `busy`, que também são fim de linha — deixá-los de fora produziria o mesmo
+ * alerta fantasma. `answered` fica **de fora de propósito**: chamada em
+ * andamento é assunto do T20 (aba líder), e alerta a mais o agente cancela,
+ * enquanto alerta a menos perde ligação.
+ */
+export function isFinishedStatus(status: PersistedStatus): boolean {
+  return (
+    status === 'ended' ||
+    status === 'missed' ||
+    status === 'failed' ||
+    status === 'cancelled' ||
+    status === 'declined' ||
+    status === 'busy'
+  );
+}
+
+/**
  * Normaliza a direção. Devolve `null` quando o valor não é reconhecido
  * (linha sem direção informada).
  */

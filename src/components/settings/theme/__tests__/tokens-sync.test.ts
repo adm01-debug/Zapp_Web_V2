@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { CSS_VARS_TO_APPLY, getPresetById } from '../presets';
-import { coresComContrasteAA } from '../contrasteAA';
 
 const cssPath = path.resolve(__dirname, '../../../../styles/tokens.css');
 const css = fs.readFileSync(cssPath, 'utf8');
@@ -42,21 +41,15 @@ const KNOWN_DIVERGENCES = new Set<string>([]);
 
 describe('§25 sincronia tokens.css ↔ corporate', () => {
   const corporate = getPresetById('corporate')!;
-  // O que vai para o `<html>` é a paleta depois do ajuste de contraste AA (o aplicador
-  // escurece a primária no claro e clareia no escuro para o texto das bolhas — que usa
-  // `--primary-foreground` COM ALFA — fechar AA). O tokens.css é a fonte do primeiro
-  // quadro, então ele tem de ser igual à paleta EFETIVA, não à crua.
-  const efetiva = (modo: 'light' | 'dark') =>
-    coresComContrasteAA(corporate[modo] as unknown as Record<string, string>, modo);
 
   it.each(CSS_VARS_TO_APPLY.map((k) => [k] as const))('%s (light) bate com :root', (key) => {
     if (KNOWN_DIVERGENCES.has(`light:${key}`)) return;
-    expect(normalize(efetiva('light')[key])).toBe(normalize(root[key]));
+    expect(normalize(corporate.light[key])).toBe(normalize(root[key]));
   });
 
   it.each(CSS_VARS_TO_APPLY.map((k) => [k] as const))('%s (dark) bate com .dark', (key) => {
     if (KNOWN_DIVERGENCES.has(`dark:${key}`)) return;
     const darkValue = dark[key] !== undefined ? dark[key] : root[key];
-    expect(normalize(efetiva('dark')[key])).toBe(normalize(darkValue));
+    expect(normalize(corporate.dark[key])).toBe(normalize(darkValue));
   });
 });

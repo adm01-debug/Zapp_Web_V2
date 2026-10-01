@@ -424,3 +424,38 @@ das tracks cai 1; apagando o mapeamento do `NotFoundError` cai 1. Restaurado, 44
 **Armadilha medida (registro):** guardar cópia de `.ts`/`.tsx` em `.tmp/` **dentro** da árvore do repo faz o
 `lint-ratchet` acusar a própria cópia como dívida nova (o eslint varre `.tmp`). Rascunho de código aqui só com
 sufixo `.bak`.
+
+## Fase 1-B — T19 (01/10/2026 · executor: Hermes)
+
+**T19 — identidade da notificação e alerta de chamada encerrada.**
+
+Dois defeitos reais, ambos produzindo o mesmo sintoma (alerta tocando para uma ligação que não existe
+mais):
+
+1. **Identidade era o `event_id`.** O provedor reenvia a MESMA chamada com `event_id` novo; como a
+   chave de deduplicação era só o `event_id`, cada reenvio tocava um alerta novo. Agora a chave é o
+   `call_id`, com `event_id` só como fallback de quem ainda emite sem ele.
+2. **Nada perguntava se a chamada ainda existia.** Notificação entregue com atraso (fila/replay do
+   provedor) tocava o alerta de uma ligação já encerrada. Agora o hook consulta `calls.status` pelo
+   `call_id` e descarta a notificação quando a linha já terminou.
+
+- A regra de "chamada acabada" virou `isFinishedStatus` em `src/lib/calls/callStatus.ts` — módulo puro,
+  sem React e sem Supabase, que até aqui tinha zero consumidores reais.
+- **Fail-open por decisão:** sem linha visível à RLS, `id` fora do formato uuid ou erro de consulta → o
+  alerta **toca**. Perder ligação é pior que mostrar uma a mais.
+- Sem `call_id` no metadata (notificação legada), **nada muda**: não consulta o banco e o comportamento
+  antigo é preservado (pinado por teste).
+
+```
+npx tsc -b --force                              -> exit 0
+bun run test:coverage                           -> 381 arquivos, 4978 testes passando | 38 todo -> exit 0
+bun run test:contracts                          -> 797 testes passando -> exit 0
+bun run build + bundle-budget.mjs               -> 340,4 KB de 341 KB -> exit 0
+node scripts/ci/typecheck-ratchet.mjs           -> nenhum novo erro de tipo -> exit 0
+node scripts/ci/lint-ratchet.mjs                -> nenhuma nova divida -> exit 0
+node scripts/ci/implicit-any-ratchet.mjs        -> 0 (baseline 0) -> exit 0
+```
+
+**Mutação (vermelho antes):** chave de volta para `event_id` derruba 1 · sem o filtro de chamada
+encerrada caem 6 · `isFinishedStatus` esquecendo `cancelled` derruba 2 · consultar sem a guarda de
+`call_id` derruba 5 · invertendo o fail-open caem 3. Restaurado, suíte limpa.
