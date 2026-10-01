@@ -58,6 +58,9 @@ export function ContactRegionMap({ regions, preciseContacts = [], selectedRegion
 
   const plotted = regions.filter((r) => regionCoordinates(r.region) !== null);
   const hidden = regions.length - plotted.length;
+  // E42 · item 1: quantos CONTATOS estão no mapa só por aproximação de DDD (soma das regiões
+  // plotadas) — é o M da legenda "N confirmados · M aproximados".
+  const approxCount = regions.reduce((total, r) => total + r.count, 0);
   const maxCount = plotted.reduce((max, r) => Math.max(max, r.count), 0);
   // Assinatura das bolhas + pontos precisos: só redesenha quando algo realmente muda.
   const signature =
@@ -208,16 +211,23 @@ export function ContactRegionMap({ regions, preciseContacts = [], selectedRegion
         Posição aproximada pela região do DDD, não pelo endereço do cliente.
         {hidden > 0 && ` ${hidden} região${hidden !== 1 ? 'ões' : ''} sem ponto conhecido ficam só nos cartões abaixo.`}
       </p>
-      {preciseContacts.length > 0 && (
+      {/* E42 · item 1: a legenda dá as DUAS contagens. Antes só o "Endereço confirmado" tinha
+          número — os aproximados apareciam sem quantidade, então não dava para saber quanto do
+          mapa é palpite. `regions` já traz a contagem de contatos por região. */}
+      {(preciseContacts.length > 0 || approxCount > 0) && (
         <div className="flex items-center gap-3 text-3xs text-muted-foreground/70">
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-success shrink-0" aria-hidden="true" />
-            Endereço confirmado ({preciseContacts.length})
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-primary/80 shrink-0" aria-hidden="true" />
-            Aproximado pelo DDD
-          </span>
+          {preciseContacts.length > 0 && (
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block w-2.5 h-2.5 rounded-full bg-success shrink-0" aria-hidden="true" />
+              Endereço confirmado ({preciseContacts.length})
+            </span>
+          )}
+          {approxCount > 0 && (
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block w-2.5 h-2.5 rounded-full bg-primary/80 shrink-0" aria-hidden="true" />
+              Aproximado pelo DDD ({approxCount})
+            </span>
+          )}
         </div>
       )}
     </div>
