@@ -163,6 +163,51 @@ describe('useAddressAutocomplete', () => {
     });
   });
 
+  // E27 · Estado `paused` (429 / teto de custo) com aviso único, sem esqueleto e sem "Falha".
+  // O guard de 429 e o de custo existiam, mas o caminho principal saía CALADO: a tela ficava num
+  // esqueleto que nunca sai (ou num "Nada encontrado" que é mentira), e o operador não sabia que a
+  // espera era proposital. Aqui se mede o estado, não a intenção.
+  describe('E27 — pausa visível ao operador', () => {
+    it('429 deixa a tela em pausa com motivo, sem esqueleto e sem erro de falha', async () => {
+      h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'rate_limited' });
+      const { result } = setup();
+      act(() => { result.current.setQuery('rua a'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      expect(result.current.status).toBe('paused');
+      expect(result.current.blocked).toBe('rate_limited');
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.suggestions).toEqual([]);
+    });
+
+    it('teto de custo do mês pausa com motivo cost_guard e nem chama a rede', async () => {
+      h.isSearchBudgetOk.mockReturnValue(false);
+      const { result } = setup();
+      act(() => { result.current.setQuery('rua a'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      expect(result.current.status).toBe('paused');
+      expect(result.current.blocked).toBe('cost_guard');
+      expect(result.current.isLoading).toBe(false);
+      expect(h.suggestPlaces).not.toHaveBeenCalled();
+    });
+
+    it('digitar mais durante a pausa não apaga o aviso nem re-requesta', async () => {
+      h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'rate_limited' });
+      const { result } = setup();
+      act(() => { result.current.setQuery('rua a'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+      expect(result.current.status).toBe('paused');
+
+      act(() => { result.current.setQuery('rua ab'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      expect(result.current.status).toBe('paused');
+      expect(result.current.blocked).toBe('rate_limited');
+      expect(h.suggestPlaces).toHaveBeenCalledTimes(1); // backoff anti-hammering segura
+    });
+  });
+
   it('não faz nenhuma chamada enquanto enabled=false', async () => {
     const { result } = setup({ enabled: false });
     act(() => { result.current.setQuery('rua augusta'); });
@@ -362,7 +407,11 @@ describe('useAddressAutocomplete', () => {
     await act(async () => { vi.advanceTimersByTime(300); });
 
     expect(h.suggestPlaces).toHaveBeenCalledTimes(1);
-    expect(result.current.error).toBe('rate_limited');
+    // E27: o 429 entra em PAUSA (aviso fixo com prazo), não em estado de erro — o motivo vive em
+    // `blocked`. O que este teste protege continua igual: não re-requestar dentro da janela.
+    expect(result.current.status).toBe('paused');
+    expect(result.current.blocked).toBe('rate_limited');
+    expect(result.current.error).toBeNull();
 
     act(() => { result.current.setQuery('rua ab'); });
     await act(async () => { vi.advanceTimersByTime(300); });
@@ -380,11 +429,13 @@ describe('useAddressAutocomplete', () => {
     const { result } = setup();
     act(() => { result.current.setQuery('rua a'); });
     await act(async () => { vi.advanceTimersByTime(300); });
-    expect(result.current.status).toBe('error');
-    expect(result.current.error).toBe('rate_limited');
+    // E27: o 429 já entra em PAUSA (antes era 'error' com a mensagem de falha). O que o A3-04
+    // protege é o que vem depois: "Tentar novamente" não faz request novo e a espera, ao passar,
+    // TEM de tirar a tela da pausa (o aviso não fica preso em "0 s").
+    expect(result.current.status).toBe('paused');
+    expect(result.current.blocked).toBe('rate_limited');
 
-    // "Tentar novamente" durante a espera troca o erro pela PAUSA — é exatamente a tela que o
-    // operador via no bundle real (botão sumia, contador começava) e não faz request novo (E13)
+    // "Tentar novamente" durante a espera mantém a pausa e não faz request novo (E13)
     act(() => { result.current.retrySuggest(); });
     expect(result.current.status).toBe('paused');
     expect(result.current.blocked).toBe('rate_limited');

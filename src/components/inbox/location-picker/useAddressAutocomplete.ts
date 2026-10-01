@@ -269,9 +269,23 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
   const runSuggest = useCallback((term: string) => {
     if (!token) return;
     // E38: 429 recente — não tenta de novo a cada tecla, espera o backoff passar.
-    if (state.rateLimitedUntil && Date.now() < state.rateLimitedUntil) return;
-    // E37: guarda de custo — mês estourou o teto, fica em silêncio (quem usa cai no /forward).
-    if (!isSearchBudgetOk()) return;
+    // E27 · item 1: pausa (429 ainda valendo ou teto de custo do mês) precisa de AVISO, não de
+    // silêncio. Antes o runSuggest saía calado: a tela ficava num esqueleto que nunca sai — ou num
+    // "Nada encontrado" que é mentira — e o operador não sabia que a espera era proposital.
+    if (state.rateLimitedUntil && Date.now() < state.rateLimitedUntil) {
+      dispatch({
+        type: 'SUGGEST_BLOCKED',
+        reason: 'rate_limited',
+        rateLimitedUntil: state.rateLimitedUntil,
+      });
+      return;
+    }
+    // E37/E27: teto de custo do mês estourado — pausa com motivo próprio ("pausadas este mês"),
+    // sem "Nada encontrado" e sem esqueleto.
+    if (!isSearchBudgetOk()) {
+      dispatch({ type: 'SUGGEST_BLOCKED', reason: 'cost_guard' });
+      return;
+    }
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -319,8 +333,18 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
         const reported = MAPBOX_FAILURE_KIND[result.kind];
         if (reported) reportMapboxFailure(reported, 'suggest');
       }
-      const rateLimitedUntil = result.kind === 'rate_limited' ? Date.now() + RATE_LIMIT_BACKOFF_MS : undefined;
-      dispatch({ type: 'SUGGEST_ERROR', kind: result.kind, rateLimitedUntil });
+      // E27 · item 1: 429 não é "Falha ao buscar sugestões" — é pausa com prazo. Vai para o estado
+      // `paused` (aviso fixo com contagem regressiva), não para o estado de erro; o backoff
+      // anti-hammering continua valendo pelo `rateLimitedUntil`.
+      if (result.kind === 'rate_limited') {
+        dispatch({
+          type: 'SUGGEST_BLOCKED',
+          reason: 'rate_limited',
+          rateLimitedUntil: Date.now() + RATE_LIMIT_BACKOFF_MS,
+        });
+        return;
+      }
+      dispatch({ type: 'SUGGEST_ERROR', kind: result.kind });
     }).catch(() => {
       // Rejeição inesperada (ex.: o /forward da rede de proteção estourou) — não deixa a UI
       // presa em SUGGEST_START nem propaga um unhandled rejection (Sonar S6544). Consulta
