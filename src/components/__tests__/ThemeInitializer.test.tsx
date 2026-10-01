@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, act } from '@testing-library/react';
 import { ThemeInitializer } from '../ThemeInitializer';
 import { STORAGE_KEY } from '../settings/theme/presets';
+import { coresComContrasteAA } from '@/components/settings/theme/contrasteAA';
+import { getPresetById } from '@/components/settings/theme/presets';
 
 let mockResolvedTheme: 'light' | 'dark' = 'dark';
 vi.mock('@/hooks/ui/useTheme', () => ({
@@ -10,6 +12,14 @@ vi.mock('@/hooks/ui/useTheme', () => ({
 
 function getVar(name: string) {
   return getComputedStyle(document.documentElement).getPropertyValue(`--${name}`).trim();
+}
+
+
+/** A cor que vai para o `<html>` é a paleta EFETIVA (ajuste de contraste AA aplicado). */
+function primariaEfetiva(presetId: string, modo: 'light' | 'dark'): string {
+  const preset = getPresetById(presetId)!;
+  const efetiva = coresComContrasteAA(preset[modo] as unknown as Record<string, string>, modo);
+  return efetiva.primary;
 }
 
 describe('ThemeInitializer', () => {
@@ -22,7 +32,8 @@ describe('ThemeInitializer', () => {
 
   it('mount sem storage aplica corporate dark e grava v6', () => {
     render(<ThemeInitializer />);
-    expect(getVar('primary')).toBe('221 83% 53%');
+    // WCAG AA: a primária do escuro é clara (o texto das bolhas usa alfa sobre ela).
+    expect(getVar('primary')).toBe(primariaEfetiva('corporate', 'dark'));
     expect(document.documentElement.dataset.presetId).toBe('corporate');
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)!);
     expect(stored.v).toBe(6);
@@ -51,7 +62,7 @@ describe('ThemeInitializer', () => {
         }),
       );
     });
-    expect(getVar('primary')).toBe('113 70% 51%');
+    expect(getVar('primary')).toBe(primariaEfetiva('gx-razer', 'dark'));
     expect(document.documentElement.dataset.presetId).toBe('gx-razer');
     expect(setItemSpy).not.toHaveBeenCalled();
     setItemSpy.mockRestore();
