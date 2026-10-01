@@ -8,12 +8,6 @@ const CommandPaletteHost = lazyWithRetry(() =>
   import('./CommandPaletteHost').then((m) => ({ default: m.CommandPaletteHost }))
 );
 
-// Etapa 84: o painel de ajuda tambem sai do chunk de entrada — e junto dele vao os
-// rotulos dos 7 atalhos de Tarefas (`taskShortcutLabels`).
-const KeyboardShortcutsDialog = lazyWithRetry(() =>
-  import('./KeyboardShortcutsDialog').then((m) => ({ default: m.KeyboardShortcutsDialog }))
-);
-
 /**
  * Etapa 84: o painel de ajuda saiu do grafo de entrada.
  *
@@ -23,8 +17,8 @@ const KeyboardShortcutsDialog = lazyWithRetry(() =>
  * estourava o budget `initial-js` de 340 KB. O registry de teclado continua
  * eager: só a UI do painel virou chunk sob demanda.
  */
-const KeyboardShortcutsDialog = lazy(() =>
-  import('./KeyboardShortcutsDialog').then((mod) => ({ default: mod.KeyboardShortcutsDialog })),
+const KeyboardShortcutsDialog = lazyWithRetry(() =>
+  import('./KeyboardShortcutsDialog').then((m) => ({ default: m.KeyboardShortcutsDialog })),
 );
 
 interface GlobalKeyboardContextType {

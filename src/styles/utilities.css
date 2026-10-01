@@ -236,10 +236,12 @@
 }
 
 /* Chips do QuickAdd (etapas 35/39/40): `.chip-active` escreve em `--primary-glow` —
-   4,4:1 no claro e 4,0:1 no escuro, abaixo dos 4,5:1 de texto. A primária do próprio modo
-   fecha (7,4:1 / 14,3:1). A regra é global porque os chips nascem em PORTAL (popover do ⋯
+   4,4:1 no claro e 4,0:1 no escuro, abaixo dos 4,5:1 de texto. A primária de preenchimento
+   também não fecha como texto (3,4:1 sobre o popover branco), então o chip usa o par de
+   TEXTO `--primary-text` (6,4:1 / 8:1) — só luminosidade, o preenchimento não muda.
+   A regra é global porque os chips nascem em PORTAL (popover do ⋯
    e combobox), fora do `[data-testid="tasks-module"]`; `.chip-active` só existe nas
    Tarefas. A classe repetida é o que vence `components.css`, que é importado depois. */
 .chip-active.chip-active {
-  color: hsl(var(--primary));
+  color: hsl(var(--primary-text));
 }

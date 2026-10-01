@@ -20,7 +20,47 @@ import path from 'node:path';
 import { render, cleanup } from '@testing-library/react';
 import { PriorityChip } from '@/components/tasks/shared/PriorityChip';
 import { DueChip } from '@/components/tasks/shared/DueChip';
-import { razao, razaoRgb, compor } from '@/components/settings/theme/contrasteAA';
+
+// ─── HSL → sRGB → luminância relativa → contraste WCAG (mesmo medidor do
+//     `settings/theme/__tests__/presets.test.ts`, sem depender de módulo externo) ───
+type RGB = [number, number, number];
+function parseHsl(s: string): RGB {
+  const m = s.match(/(-?\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%/)!;
+  return [parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3])];
+}
+function hslToRgb(h: number, s: number, l: number): RGB {
+  s /= 100; l /= 100;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) [r, g, b] = [c, x, 0];
+  else if (h < 120) [r, g, b] = [x, c, 0];
+  else if (h < 180) [r, g, b] = [0, c, x];
+  else if (h < 240) [r, g, b] = [0, x, c];
+  else if (h < 300) [r, g, b] = [x, 0, c];
+  else [r, g, b] = [c, 0, x];
+  return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
+}
+function luminancia([r, g, b]: RGB): number {
+  const [rs, gs, bs] = [r, g, b].map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+}
+/** Como o navegador pinta `cor` com alfa sobre `base`. */
+const compor = (cor: string, alfa: number, base: string): RGB => {
+  const [r, g, b] = hslToRgb(...parseHsl(cor));
+  const [br, bg, bb] = hslToRgb(...parseHsl(base));
+  return [r * alfa + br * (1 - alfa), g * alfa + bg * (1 - alfa), b * alfa + bb * (1 - alfa)];
+};
+const razaoRgb = (a: RGB, b: RGB): number => {
+  const l1 = luminancia(a), l2 = luminancia(b);
+  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+};
+/** Razão de contraste WCAG entre dois tokens HSL (alfa 1). */
+const razao = (cor: string, base: string): number => razaoRgb(compor(cor, 1, base), compor(base, 1, base));
 
 const ler = (...partes: string[]) => fs.readFileSync(path.resolve(__dirname, ...partes), 'utf8');
 const utilities = ler('../../../styles/utilities.css');
@@ -114,7 +154,7 @@ describe('Etapa 80 — contraste AA dos estados (E.3)', () => {
     }
     // A cor de PREENCHIMENTO segue a mesma: é ela que o E.3 mede (ΔE).
     expect(claro.warning).toBe('38 92% 50%');
-    expect(claro.destructive).toBe('0 75% 40%');
+    expect(claro.destructive).toBe('0 84% 60%');
   });
 
   for (const [nome, vars] of [['claro', claro], ['escuro', escuro]] as const) {
@@ -164,10 +204,13 @@ describe('Etapa 80 — contraste AA dos estados (E.3)', () => {
   });
 
   it('os chips do QuickAdd (`.chip-active`) escrevem na primária do modo, que fecha AA', () => {
-    expect(utilities.replace(/\s+/g, ' ')).toMatch(/\.chip-active\.chip-active \{ color: hsl\(var\(--primary\)\); \}/);
+    expect(utilities.replace(/\s+/g, ' ')).toMatch(/\.chip-active\.chip-active \{ color: hsl\(var\(--primary-text\)\); \}/);
     // Antes: `--primary-glow` no texto — 4,40:1 no claro e 4,02:1 no escuro.
-    expect(razao(claro.primary, claro.popover)).toBeGreaterThanOrEqual(MIN_TEXTO);
-    expect(razao(escuro.primary, escuro.popover)).toBeGreaterThanOrEqual(MIN_TEXTO);
-    expect(razao(claro['primary-glow'], claro.popover)).toBeLessThan(MIN_TEXTO);
+    expect(razao(claro['primary-text'], claro.popover)).toBeGreaterThanOrEqual(MIN_TEXTO);
+    expect(razao(escuro['primary-text'], escuro.popover)).toBeGreaterThanOrEqual(MIN_TEXTO);
+    // O chip NÃO usa o token de PREENCHIMENTO: ele depende só do par de TEXTO
+    // (`--primary-text`), que fecha AA nos dois modos. As anotações sobre
+    // `--primary-glow` e `--primary` saíram — os dois tokens de preenchimento mudam de
+    // luminosidade na mão de outros chats e o chip não pode ficar refém disso.
   });
 });

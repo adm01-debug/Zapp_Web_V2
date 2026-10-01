@@ -119,6 +119,9 @@
     --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
     --primary-glow: 230 83% 63%;
+    /* Etapa 80: no claro a primaria (L53) como TEXTO sobre popover branco dava 3,4:1 —
+       o par de texto escurece ate 6,4:1 sem mexer no preenchimento. */
+    --primary-text: 221 83% 35%;
 
     /* ===== SECONDARY ===== */
     --secondary: 215 70% 55%;
@@ -397,6 +400,8 @@
     --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
     --primary-glow: 230 83% 63%;
+    /* Etapa 80: no escuro o par de texto clareia ate 8:1 sobre o popover. */
+    --primary-text: 221 83% 78%;
     --secondary: 240 5% 16%;
     --secondary-foreground: 0 0% 100%;
     --muted: 240 4% 18%;
