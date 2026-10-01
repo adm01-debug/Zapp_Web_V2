@@ -225,7 +225,7 @@ export function useUserSettings() {
     setSettings((prev) => {
       const workDays = prev.work_days.includes(day)
         ? prev.work_days.filter((d) => d !== day)
-        : [...prev.work_days, day].sort();
+        : [...prev.work_days, day].sort((a, b) => a - b);
       return { ...prev, work_days: workDays };
     });
   }, []);

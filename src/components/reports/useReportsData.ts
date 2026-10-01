@@ -97,7 +97,7 @@ export function useReportsData() {
     if (!contactsData) return [];
     const tagSet = new Set<string>();
     contactsData.forEach(c => (c.tags || []).forEach((t: string) => tagSet.add(t)));
-    return [...tagSet].sort().map(name => ({ id: name, name }));
+    return [...tagSet].sort((a, b) => a.localeCompare(b)).map(name => ({ id: name, name }));
   }, [contactsData]);
 
   // Process data for charts

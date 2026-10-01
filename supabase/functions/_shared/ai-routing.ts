@@ -199,7 +199,7 @@ export function resolveProvider(
 
   if (candidates.length > 1) {
     // Ordena só para a mensagem: o resultado não pode depender da ordem do banco.
-    const ids = candidates.map((row) => row.id).sort().join(', ');
+    const ids = candidates.map((row) => row.id).sort((a, b) => a.localeCompare(b)).join(', ');
     throw new AiRoutingError(
       'AMBIGUOUS_PROVIDER',
       `Mais de um provedor padrão para a finalidade "${purpose}": ${ids}. Desative/remova o padrão duplicado.`,

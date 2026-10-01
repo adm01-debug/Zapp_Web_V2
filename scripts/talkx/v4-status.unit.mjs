@@ -120,5 +120,5 @@ test('detectDoneSteps: lê commits de um repositório de fixture', (t) => {
     return;
   }
   const done = detectDoneSteps('HEAD', new Set(['X001', 'X002']), dir);
-  assert.deepEqual([...done].sort(), ['X001', 'X002']);
+  assert.deepEqual([...done].sort((a, b) => a.localeCompare(b)), ['X001', 'X002']);
 });

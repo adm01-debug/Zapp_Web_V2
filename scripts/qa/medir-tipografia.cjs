@@ -315,7 +315,7 @@ function main() {
     commit: process.env.GIT_SHA || null,
     // Etapa 21: excecoes nomeadas que podem passar de 16px. Preservadas no
     // round-trip do --json para a lista nao sumir ao regenerar o budget.
-    allowAbove16: [...allowAbove16].sort(),
+    allowAbove16: [...allowAbove16].sort((a, b) => a.localeCompare(b)),
     escala: resolved,
     arbitrarios: arbitraryResolved,
     totais: {

@@ -33,7 +33,7 @@ export function extractInitialAssets(html) {
     if (rel === "modulepreload") js.add(href);
     if (rel === "stylesheet") css.add(href);
   }
-  return { js: [...js].sort(), css: [...css].sort() };
+  return { js: [...js].sort((a, b) => a.localeCompare(b)), css: [...css].sort((a, b) => a.localeCompare(b)) };
 }
 
 export function gzipKB(buffer) {

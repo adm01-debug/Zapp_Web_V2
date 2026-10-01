@@ -62,7 +62,7 @@ export function useGlobalSearchData(open: boolean) {
         if (data) {
           const tagSet = new Set<string>();
           data.forEach(c => (c.tags || []).forEach((t: string) => tagSet.add(t)));
-          setAllTags([...tagSet].sort().map(name => ({ id: name, name, color: '#6366f1' })));
+          setAllTags([...tagSet].sort((a, b) => a.localeCompare(b)).map(name => ({ id: name, name, color: '#6366f1' })));
         }
       });
     }

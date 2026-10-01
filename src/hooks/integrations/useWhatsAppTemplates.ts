@@ -77,7 +77,7 @@ export function useWhatsAppTemplates() {
 
   const extractVariables = (text: string): string[] => {
     const matches = text.match(/\{\{(\d+)\}\}/g);
-    return matches ? [...new Set(matches)].sort() : [];
+    return matches ? [...new Set(matches)].sort((a, b) => a.localeCompare(b)) : [];
   };
 
   const handleContentChange = useCallback((content: string) => {
