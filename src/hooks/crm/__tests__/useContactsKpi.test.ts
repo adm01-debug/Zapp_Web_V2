@@ -139,6 +139,32 @@ describe('aggregateKpi', () => {
     expect(kpi.deltaTotalPct).toBe(120); // pct(220, 100) = +120%
   });
 
+  it('empresasDistinct apara espaços nas pontas (Apple / apple / "Apple ")', () => {
+    const rows = [
+      row(1, 'cliente', 'Apple'), row(2, 'cliente', 'apple'),
+      row(3, 'cliente', 'Apple '), row(4, 'cliente', 'Google'),
+    ];
+    expect(aggregateKpi(rows, NOW).empresasDistinct).toBe(2);
+  });
+
+  it('contato criado agora conta em novos30', () => {
+    const rows = [{ created_at: NOW.toISOString(), contact_type: 'cliente', company: null }];
+    expect(aggregateKpi(rows, NOW).novos30).toBe(1);
+  });
+
+  it('contato criado exatamente 30d atrás cai em novosPrev30 (fronteira exclusiva)', () => {
+    const kpi = aggregateKpi([row(30)], NOW);
+    expect(kpi.novos30).toBe(0);
+    expect(kpi.novosPrev30).toBe(1);
+  });
+
+  it('último ponto da série cumulativa semanal = total de contatos', () => {
+    const rows = [
+      ...Array.from({ length: 5 }, (_, i) => row(100 + i)),
+      ...Array.from({ length: 12 }, (_, i) => row(i * 7 + 3)),
+    ];
+    expect(aggregateKpi(rows, NOW).seriesTotalCumulative12w[11]).toBe(rows.length);
+  });
 
   // ── F5 (etapas 56–57): série de Empresas e delta do Total honestos ─────────────
 
