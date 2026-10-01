@@ -12,12 +12,15 @@ name: DB Live Guard
 on:
   push:
     branches: [main]
-    # Auditoria 2026-09-26 (E13): antes disparava em QUALQUER push na main,
-    # abrindo conexao com o banco oficial mesmo para merges so de src/. Filtra
-    # para o que este guarda de fato compara — schedule e workflow_dispatch
-    # continuam sem filtro de proposito (cobrem drift indireto).
+    # E13: antes disparava em QUALQUER push na main. E41: `supabase/**` foi
+    # refinado para excluir `supabase/functions/**` — merge apenas de edge
+    # nao deve abrir conexao com o banco (o guarda nao verifica funcoes).
+    # schedule e workflow_dispatch continuam sem filtro (cobrem drift indireto).
     paths:
-      - 'supabase/**'
+      - 'supabase/migrations/**'
+      - 'supabase/config.toml'
+      - 'supabase/schema-*.json'
+      - 'supabase/deployment-manifest.json'
       - 'scripts/db-audit/**'
       - 'src/integrations/supabase/types.ts'
       - '.github/workflows/db-live-guard.yml'
@@ -34,7 +37,10 @@ permissions:
 
 concurrency:
   group: db-live-guard-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'push' }}
+  # E42: false para que o run agendado nunca seja cancelado por um push
+  # concorrente. GitHub mantem apenas 1 pendente por grupo — um push durante
+  # o schedule enfileira, nao cancela.
+  cancel-in-progress: false
 
 env:
   SUPABASE_CLI_VERSION: '2.116.0'
