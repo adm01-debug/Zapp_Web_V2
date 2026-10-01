@@ -68,7 +68,7 @@ describe('SuggestionList — pausa de 429 (A3-04)', () => {
   it('E57: a mudança de estado também é anunciada — "nada encontrado"', () => {
     render(<SuggestionList {...props({ status: 'empty' })} />);
     const viva = [...document.querySelectorAll('[aria-live]')].map((e) => e.textContent ?? '').join(' ');
-    expect(viva.toLowerCase()).toContain('nada encontrado');
+    expect(viva.toLowerCase()).toMatch(/nenhuma sugestão/i);
   });
   
   it('teto de custo (não transitório) NÃO oferece botão de nova tentativa', () => {

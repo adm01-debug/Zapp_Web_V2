@@ -132,11 +132,11 @@ export function SuggestionList({
         {status === 'ok'
           ? `${suggestions.length} sugestões disponíveis`
           : status === 'empty'
-            ? `Nada encontrado para "${query}"`
+            ? 'Nenhuma sugestão'
             : status === 'error'
-              ? 'Falha ao buscar sugestões'
+              ? 'Erro na busca de sugestões'
               : status === 'paused'
-                ? 'Busca pausada'
+                ? 'Busca temporariamente indisponível'
                 : ''}
       </span>
       {status === 'ok' && (
