@@ -65,9 +65,9 @@ Largura útil do painel central em 1920 px = 1920 − sidebar − conversas (350
 
 | Laterais | Largura útil | Colunas que cabem | Com painel de detalhes do arquivo lado a lado (−276 = painel 260 px + `gap-4` de 16 px, `FilesTab.tsx:113`) |
 |---|---|---|---|
-| Sidebar expandida + contato aberto | 959 px | 5 | 683 px → 3 |
+| Sidebar expandida + contato aberto | 959 px | 5 | não se aplica: abaixo de 1100 px os detalhes abrem em `Sheet` sobreposta (etapa 31), grid continua com 5 |
 | Sidebar colapsada + contato aberto | 1151 px | 6 | 875 px → 4 |
-| Sidebar expandida + contato fechado | 1282 px | 7 → oferece 6 | 1006 px → 5 |
+| Sidebar expandida + contato fechado | 1282 px | capacidade 7 → efetivo 6 | 1006 px → 5 |
 | Sidebar colapsada + contato fechado | 1474 px | 8 | 1198 px → 6 |
 
 Leitura: as cinco opções do Promo Gifts são legítimas no chat, mas **8 colunas só existe com as duas laterais recolhidas**. Por isso o seletor mostra as 5 opções sempre e desabilita (com motivo) as que não cabem agora, em vez de escondê-las — o operador entende o que precisa recolher para ganhar densidade.
@@ -131,9 +131,9 @@ Ordem obrigatória: A → B → C → D → E → F; G e H podem entrar depois d
 
 ### Fase 1 — Fundação de estado e dados (PR A)
 
-**06. `useFilesViewState`.** Estado único: `viewMode` (`grid|list|table`), `preferredColumns` (3|4|5|6|8) — defaults `grid` e **4** (D3), `sort` (`recent|old|biggest`), `typeFilter`, `search`. Persistir **só** `viewMode` e `preferredColumns` em `localStorage['zapp.inbox.files.view:<userId>']` como `{ v: 1, viewMode, columns }`; leitura com sanitização (valor fora do domínio → default); escrita em `try/catch`; indisponibilidade do storage não quebra a aba. Filtro, busca e ordenação ficam em memória por montagem (a aba desmonta ao sair; restaurar isso é a etapa 38). **Aceite:** teste unitário com storage inválido, storage ausente e troca de usuário no mesmo navegador; nenhuma chave `product-grid-columns`/`catalog-view-mode` lida ou escrita.
+**06. `useFilesViewState`.** Estado único: `viewMode` (`grid|list|table`), `preferredColumns` (3|4|5|6|8) — defaults `grid` e **4** (D3), `sort` (`recent|old|biggest|alpha` — `alpha` entra aqui porque a Tabela da etapa 23 ordena por nome), `typeFilter`, `search`. Persistir **só** `viewMode` e `preferredColumns` em `localStorage['zapp.inbox.files.view:<userId>']` como `{ v: 1, viewMode, columns }`; leitura com sanitização (valor fora do domínio → default); escrita em `try/catch`; indisponibilidade do storage não quebra a aba. Filtro, busca e ordenação ficam em memória por montagem (a aba desmonta ao sair; restaurar isso é a etapa 38). **Aceite:** teste unitário com storage inválido, storage ausente e troca de usuário no mesmo navegador; nenhuma chave `product-grid-columns`/`catalog-view-mode` lida ou escrita.
 
-**07. `useFilesContainerColumns(ref, preferred)`.** `ResizeObserver` no contêiner do grid (não na janela). `capacity = max(1, floor((width + GAP) / (MIN_CARD + GAP)))` com `MIN_CARD = 168`, `GAP = 12`; `effective = min(preferred, capacity)`; devolve `{ effective, capacity, available: [3,4,5,6,8].map(n => ({ n, fits: n <= capacity })) }`. Debounce por `requestAnimationFrame`. **Aceite:** teste com larguras 683/959/1151/1474 devolvendo 3/5/6/8; redimensionar não altera `preferred`.
+**07. `useFilesContainerColumns(ref, preferred)`.** `ResizeObserver` no contêiner do grid (não na janela). `capacity = max(1, floor((width + GAP) / (MIN_CARD + GAP)))` com `MIN_CARD = 168`, `GAP = 12`; `effective = maior opção de [3,4,5,6,8] que seja ≤ min(preferred, capacity)` (capacidade 7 com preferência 8 → 6, nunca 7, que não é opção); abaixo de 3, `effective = capacity` (1 ou 2, adaptação automática em painel estreito); devolve `{ effective, capacity, available: [3,4,5,6,8].map(n => ({ n, fits: n <= capacity })) }`. Debounce por `requestAnimationFrame`. **Aceite:** teste com larguras 683/959/1151/1282/1474 e preferência 8 devolvendo 3/5/6/6/8; com preferência 4 e 1474 px devolve 4; redimensionar não altera `preferred`.
 
 **08. `useFilesSelection(items)`.** `selectionMode: boolean`, `selectedIds: Set<string>`, `toggle`, `selectAllVisible(ids)`, `clear`, `exit()` (limpa e sai). Limpa ao sair do modo, ao trocar `contactId` e na desmontagem; **não** limpa em erro de ação. `selectedOutsideFilter = selectedIds − visibleIds` exposto para a barra contextual. **Aceite:** teste: selecionar, trocar filtro, voltar filtro → seleção intacta e contagem "fora do filtro" correta; trocar contato → vazio.
 
