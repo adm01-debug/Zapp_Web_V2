@@ -466,4 +466,28 @@ describe('EditContactDialog', () => {
       expect(screen.getByText('Salvar').closest('button')).not.toBeDisabled();
     });
   });
+
+  // ========== INVALIDAÇÃO PÓS-EDIÇÃO (auditoria: invalidava a chave morta
+  // ['contacts'] — o prefixo de array não casa com 'contacts-search'; a lista e
+  // os agregados ficavam velhos até remontar) ==========
+  it('após salvar, invalida contacts-search e os agregados, não a chave morta contacts', async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    qc.setQueryData(['contacts-kpi', false], { total: 1 });
+    qc.setQueryData(['contacts-type-counts', false], [{ contact_type: 'cliente', count: 1 }]);
+    qc.setQueryData(['contacts-search'], [{ id: 'c1' }]);
+    qc.setQueryData(['contacts'], [{ id: 'c1' }]);
+    render(
+      <QueryClientProvider client={qc}>
+        <EditContactDialog open={true} onOpenChange={vi.fn()} contact={baseContact} />
+      </QueryClientProvider>
+    );
+    fireEvent.change(screen.getByDisplayValue('John Doe'), { target: { value: 'John Doe Jr' } });
+    fireEvent.click(screen.getByText('Salvar'));
+
+    await waitFor(() => expect(mockUpdate).toHaveBeenCalled());
+    expect(qc.getQueryState(['contacts-kpi', false])?.isInvalidated).toBe(true);
+    expect(qc.getQueryState(['contacts-type-counts', false])?.isInvalidated).toBe(true);
+    expect(qc.getQueryState(['contacts-search'])?.isInvalidated).toBe(true);
+    expect(qc.getQueryState(['contacts'])?.isInvalidated).toBe(false);
+  });
 });
