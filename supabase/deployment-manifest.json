@@ -8,7 +8,7 @@
   },
   "summary": {
     "function_count": 67,
-    "source_file_count": 109,
+    "source_file_count": 110,
     "verify_jwt_true": 55,
     "verify_jwt_false": 12
   },
@@ -166,6 +166,11 @@
       "path": "supabase/functions/_shared/hmac-validation.ts",
       "bytes": 15388,
       "sha256": "f6a785a3da09e2b11a9d074ac8827295f8d32c0eec535547c5a6c08d367434da"
+    },
+    {
+      "path": "supabase/functions/_shared/multiplix-eligibility.ts",
+      "bytes": 6105,
+      "sha256": "4132b1b0e0748b19b698d7136ed782bd211fb78d9501df163d30fed7e78804a3"
     },
     {
       "path": "supabase/functions/_shared/notification-events.ts",
@@ -469,8 +474,8 @@
     },
     {
       "path": "supabase/functions/multiplix-audience/index.ts",
-      "bytes": 28202,
-      "sha256": "1ac16e5f3e2af371f72f9ea7869c2be9be6168207ffdf6e22901459818f0c358"
+      "bytes": 29151,
+      "sha256": "73a0ca771064f9319cc27e2fa1daa426dfed0ad04b27887066fcb4a857722d9c"
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
@@ -1233,10 +1238,11 @@
       "name": "multiplix-audience",
       "entrypoint": "supabase/functions/multiplix-audience/index.ts",
       "verify_jwt": true,
-      "source_sha256": "996d93c28ddc19b673d296e61061751819f9b0d16e7b934f6cba3f0e318a2831",
+      "source_sha256": "08ff3e3214403d59e713b3e307b0868075590848e477d5185add71f2fd110bb2",
       "source_files": [
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/multiplix-eligibility.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/multiplix-audience/index.ts"
       ]
@@ -1470,5 +1476,5 @@
       ]
     }
   ],
-  "manifest_sha256": "a3604d075d7fb153ac88c9ceb5d53cda1f34e0927e6349e55b131d4fcea56cac"
+  "manifest_sha256": "fbe08fcf2703d95ab64c5d78595e78dbf7beb6f5c3aec0f06e27b3bab678ffed"
 }
