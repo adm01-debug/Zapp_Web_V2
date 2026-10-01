@@ -111,6 +111,11 @@ test('hasPushTriggerUnrestricted: sem trigger push', () => {
   assert.equal(hasPushTriggerUnrestricted('on:\n  workflow_dispatch:\n'), false);
 });
 
+test('hasPushTriggerUnrestricted: push com branches: [main] mas tambem com tags — irrestrito', () => {
+  const workflow = 'on:\n  push:\n    branches: [main]\n    tags: ["v*"]\n';
+  assert.equal(hasPushTriggerUnrestricted(workflow), true);
+});
+
 // --- findPushSecretLeaks ---
 
 test('findPushSecretLeaks: push irrestrito com secret — detecta', () => {

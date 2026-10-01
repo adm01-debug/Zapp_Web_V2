@@ -59,9 +59,13 @@ export function hasPushTriggerUnrestricted(source) {
 
   if (pushStart === -1) return false;
 
-  // Restricted to main only = branches: [main] or ['main'] or ["main"]
+  // Restricted to main only = branches: [main] (or quoted), without any tags: filter.
+  // A tags: filter alongside branches: [main] means tag pushes bypass the branch restriction.
   for (let i = pushStart + 1; i < pushEnd; i++) {
-    if (/^\s+branches:\s*\[\s*(?:"main"|'main'|main)\s*\]\s*(?:#.*)?$/.test(lines[i])) {
+    if (
+      /^\s+branches:\s*\[\s*(?:"main"|'main'|main)\s*\]\s*(?:#.*)?$/.test(lines[i]) &&
+      !lines.slice(pushStart + 1, pushEnd).some((line) => /^\s+tags(?:-ignore)?:/.test(line))
+    ) {
       return false;
     }
   }
