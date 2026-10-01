@@ -4,8 +4,14 @@ import { DEFAULT_SHORTCUTS } from '@/hooks/shortcuts/defaultShortcuts';
 
 export interface ShortcutBinding {
   id: string;
-  name: string;
-  description: string;
+  /**
+   * Etapa 84: rótulo do atalho. Fica ausente nos 7 atalhos de Tarefas, cujo
+   * `name`/`description` é carregado sob demanda por `useTaskShortcutLabels`
+   * (chunk à parte) para não pesar no `initial-js`.
+   */
+  name?: string;
+  /** Etapa 84: ver `name` — mesma origem sob demanda nos atalhos de Tarefas. */
+  description?: string;
   defaultKey: string;
   defaultModifiers: {
     ctrlKey?: boolean;

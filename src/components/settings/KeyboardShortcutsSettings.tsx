@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Keyboard, RotateCcw, AlertTriangle, Check, X, MessageSquare, Navigation, Zap, MousePointerClick } from 'lucide-react';
 import { useCustomShortcuts, type ShortcutBinding } from '@/hooks/ui/useCustomShortcuts';
+import { aplicarRotulos } from '@/hooks/shortcuts/shortcutLabels';
+import { TASK_SHORTCUT_LABELS } from '@/hooks/shortcuts/taskShortcutLabels';
 import { toast } from 'sonner';
 
 const categoryConfig = {
@@ -53,7 +55,9 @@ function ShortcutRow({ shortcut }: { shortcut: ShortcutBinding }) {
 
   const handleConfirm = () => {
     if (conflict) {
-      toast.error(`Conflito com "${conflict.name}". Escolha outro atalho.`);
+      // Etapa 84: o conflito pode ser um atalho de Tarefas sem rótulo carregado
+      // ainda — cai no id para a mensagem nunca sair "undefined".
+      toast.error(`Conflito com "${conflict.name ?? conflict.id}". Escolha outro atalho.`);
       return;
     }
     stopRecording();
@@ -189,13 +193,17 @@ function ShortcutCategory({ category, shortcuts }: { category: keyof typeof cate
 
 export function KeyboardShortcutsSettings() {
   const { shortcuts, resetAllShortcuts } = useCustomShortcuts();
+  // Etapa 84: esta tela é uma rota lazy de Configurações; os rótulos dos 7
+  // atalhos de Tarefas entram no mesmo chunk, de `taskShortcutLabels`, e nunca
+  // no grafo de entrada.
+  const rotulados = useMemo(() => aplicarRotulos(shortcuts, TASK_SHORTCUT_LABELS), [shortcuts]);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const groupedShortcuts = {
-    chat: shortcuts.filter(s => s.category === 'chat'),
-    navigation: shortcuts.filter(s => s.category === 'navigation'),
-    actions: shortcuts.filter(s => s.category === 'actions'),
-    selection: shortcuts.filter(s => s.category === 'selection'),
+    chat: rotulados.filter(s => s.category === 'chat'),
+    navigation: rotulados.filter(s => s.category === 'navigation'),
+    actions: rotulados.filter(s => s.category === 'actions'),
+    selection: rotulados.filter(s => s.category === 'selection'),
   };
 
   const customizedCount = shortcuts.filter(s => s.customKey).length;

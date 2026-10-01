@@ -40,11 +40,17 @@ export const DEFAULT_SHORTCUTS: ShortcutBinding[] = [
   // O módulo recebe o comando pelo evento `tasks-shortcut` (o registry não
   // conhece o estado de tela do módulo); a guarda de input é a do handler
   // global, que ignora qualquer um destes ids dentro de INPUT/TEXTAREA.
-  { id: 'tasks-focus-quickadd', name: 'Nova tarefa', description: 'Foca o campo de nova tarefa', defaultKey: 'n', defaultModifiers: {}, category: 'actions', scope: TASKS_VIEWS },
-  { id: 'tasks-mode', name: 'Modo das Tarefas', description: 'Troca o modo: Lista (1), Quadro (2), Agenda (3)', defaultKey: '1', alternateKeys: ['2', '3'], defaultModifiers: {}, category: 'navigation', scope: TASKS_VIEWS },
-  { id: 'tasks-search', name: 'Buscar tarefa', description: 'Foca o campo de busca das Tarefas', defaultKey: '/', defaultModifiers: {}, category: 'navigation', scope: TASKS_VIEWS },
-  { id: 'tasks-open-sheet', name: 'Abrir tarefa focada', description: 'Abre o painel da tarefa em foco', defaultKey: 'e', defaultModifiers: {}, category: 'actions', scope: TASKS_VIEWS },
-  { id: 'tasks-complete', name: 'Concluir tarefa focada', description: 'Conclui — ou reabre — a tarefa em foco', defaultKey: 'x', defaultModifiers: {}, category: 'actions', scope: TASKS_VIEWS },
-  { id: 'tasks-cancel', name: 'Cancelar tarefa focada', description: 'Cancela a tarefa em foco, com desfazer', defaultKey: 'Delete', defaultModifiers: {}, category: 'actions', scope: TASKS_VIEWS },
-  { id: 'tasks-help', name: 'Ajuda de atalhos', description: 'Mostra o painel de atalhos', defaultKey: '?', defaultModifiers: { shiftKey: true }, category: 'navigation', scope: TASKS_VIEWS },
+  //
+  // Etapa 84: o `name`/`description` destes 7 NÃO entra aqui de propósito. Os
+  // textos vivem em `taskShortcutLabels.ts`, carregado sob demanda pelo painel
+  // de ajuda e pela tela de atalhos (`useTaskShortcutLabels`); mantê-los neste
+  // arquivo (eager) estourava o budget `initial-js` (340 KB). O que o registry
+  // precisa — id, tecla, modificadores, categoria e escopo — continua aqui.
+  { id: 'tasks-focus-quickadd', defaultKey: 'n', defaultModifiers: {}, category: 'actions', scope: TASKS_VIEWS },
+  { id: 'tasks-mode', defaultKey: '1', alternateKeys: ['2', '3'], defaultModifiers: {}, category: 'navigation', scope: TASKS_VIEWS },
+  { id: 'tasks-search', defaultKey: '/', defaultModifiers: {}, category: 'navigation', scope: TASKS_VIEWS },
+  { id: 'tasks-open-sheet', defaultKey: 'e', defaultModifiers: {}, category: 'actions', scope: TASKS_VIEWS },
+  { id: 'tasks-complete', defaultKey: 'x', defaultModifiers: {}, category: 'actions', scope: TASKS_VIEWS },
+  { id: 'tasks-cancel', defaultKey: 'Delete', defaultModifiers: {}, category: 'actions', scope: TASKS_VIEWS },
+  { id: 'tasks-help', defaultKey: '?', defaultModifiers: { shiftKey: true }, category: 'navigation', scope: TASKS_VIEWS },
 ];
