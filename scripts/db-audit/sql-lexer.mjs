@@ -27,28 +27,96 @@ function scanSqlSegments(input) {
   // string normal; 'off' faz o backslash ESCAPAR a aspa em string normal (o PG
   // emite WARNING mas aceita — medido no PG 17.11: SELECT 'a\'b' devolve a'b).
   // Uma migration pode ligar/desligar no meio do arquivo, entao o scanner
-  // acompanha `SET standard_conforming_strings = on|off|default` em vez de
-  // assumir o padrao. Sem isso o scanner fecha a string no \' e engole o SQL
-  // seguinte (fail-open: um DROP real deixa de ser projetado).
+  // acompanha o estado em vez de assumir o padrao. Sem isso o scanner fecha a
+  // string no \' e engole o SQL seguinte (fail-open: um DROP real deixa de ser
+  // projetado) — ou o inverso (falso positivo).
+  //
+  // Formas que o PG 17.11 REALMENTE aceita (todas medidas com sonda:
+  // CREATE canario; <forma>; SELECT 'a\'; DROP TABLE canario):
+  //   SET [SESSION] scs {=|TO} <bool>   com bool em on/off/true/false/1/0/yes/no
+  //                                     (case-insensitive, com ou sem aspas)
+  //   SET "scs" = <bool>                (nome do parametro citado)
+  //   SET scs = default                 -> on
+  //   RESET scs | RESET ALL | DISCARD ALL -> on
+  //   SELECT set_config('scs', <bool>, false)
+  //   SET LOCAL scs = off               -> so dentro de transacao explicita
+  //   SET scs = 2                       -> ERROR (requires a Boolean value)
   let scsOff = false;
-  const recent = []; // ultimos tokens significativos (deteccao do SET)
+  let tx = null; // { scsOffNoInicio } enquanto houver BEGIN sem COMMIT/ROLLBACK
+  let stmt = []; // tokens significativos do statement corrente (ate o ';')
+  const nomeToken = (tok) => {
+    if (!tok) return '';
+    if (tok.type === 'ident') return tok.text.slice(1, -1).replace(/""/g, '"').toLowerCase();
+    return tok.text.toLowerCase();
+  };
+  const lido = (tok) => {
+    if (!tok) return null;
+    if (tok.type === 'string') return tok.text.slice(1, -1).replace(/''/g, "'").toLowerCase();
+    if (tok.type === 'ident') return tok.text.slice(1, -1).replace(/""/g, '"').toLowerCase();
+    return tok.text.toLowerCase();
+  };
+  const booleano = (tok) => {
+    const t = lido(tok);
+    if (t === null) return null;
+    if (['on', 'true', 'yes', '1', 'default'].includes(t)) return 'on';
+    if (['off', 'false', 'no', '0'].includes(t)) return 'off';
+    return null;
+  };
+  const fimDeTransacao = () => {
+    if (tx) { scsOff = tx.scsOffNoInicio; tx = null; }
+  };
+  const aplicarStatement = (tokens) => {
+    if (tokens.length === 0) return;
+    const head = nomeToken(tokens[0]);
+    if (head === 'begin' || (head === 'start' && nomeToken(tokens[1]) === 'transaction')) {
+      if (!tx) tx = { scsOffNoInicio: scsOff };
+      return;
+    }
+    if (head === 'commit' || head === 'rollback' || head === 'end') { fimDeTransacao(); return; }
+    if ((head === 'reset' || head === 'discard') && nomeToken(tokens[1]) === 'all') {
+      scsOff = false;
+      return;
+    }
+    if (head === 'reset' && nomeToken(tokens[1]) === 'standard_conforming_strings') {
+      scsOff = false;
+      return;
+    }
+    if (head === 'set') {
+      let i = 1;
+      let local = false;
+      const escopo = nomeToken(tokens[i]);
+      if (escopo === 'session' || escopo === 'local') { local = escopo === 'local'; i += 1; }
+      if (nomeToken(tokens[i]) !== 'standard_conforming_strings') return;
+      i += 1;
+      const op = nomeToken(tokens[i]);
+      if (op !== '=' && op !== 'to') return;
+      const v = booleano(tokens[i + 1]);
+      if (v === null) return;
+      // SET LOCAL so vale dentro da transacao corrente: fora dela o PG descarta no
+      // fim do proprio statement (medido), entao nao pode mudar o estado do lexer.
+      if (local && !tx) return;
+      scsOff = v === 'off';
+      return;
+    }
+    for (let i = 0; i + 4 < tokens.length; i += 1) {
+      if (nomeToken(tokens[i]) !== 'set_config') continue;
+      if (!(tokens[i + 1].type === 'symbol' && tokens[i + 1].text === '(')) continue;
+      if (lido(tokens[i + 2]) !== 'standard_conforming_strings') continue;
+      const v = booleano(tokens[i + 4]);
+      if (v !== null) scsOff = v === 'off';
+      return;
+    }
+  };
   const emit = (seg) => {
     segments.push(seg);
-    if (seg.type !== 'word' && seg.type !== 'symbol' && seg.type !== 'string') return;
-    recent.push(seg);
-    if (recent.length > 4) recent.shift();
-    if (recent.length < 4) return;
-    const [a, b, c, d] = recent;
-    const assign = (c.type === 'symbol' && c.text === '=')
-      || (c.type === 'word' && c.text.toLowerCase() === 'to');
-    const valor = d.type === 'word'
-      ? d.text.toLowerCase()
-      : (d.type === 'string' ? d.text.slice(1, -1).replace(/''/g, "'").toLowerCase() : '');
-    if (a.type === 'word' && a.text.toLowerCase() === 'set'
-      && b.type === 'word' && b.text.toLowerCase() === 'standard_conforming_strings'
-      && assign && ['on', 'off', 'default'].includes(valor)) {
-      scsOff = valor === 'off';
+    if (seg.type !== 'word' && seg.type !== 'symbol'
+      && seg.type !== 'string' && seg.type !== 'ident') return;
+    if (seg.type === 'symbol' && seg.text === ';') {
+      aplicarStatement(stmt);
+      stmt = [];
+      return;
     }
+    stmt.push(seg);
   };
 
   while (i < source.length) {
