@@ -149,3 +149,61 @@ test('usage guard nao trata texto de E-string com escape como DDL (falso positiv
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.match(result.stdout, /projecao forward-only: 1 relacoes, 0 funcoes/);
 });
+
+test('usage guard detecta DROP de tabela ja catalogada (uniao nao restaura)', () => {
+  const result = runGuard({
+    catalog: { tables: ['playbooks'] },
+    migrations: {
+      '20260909210000_drop_cataloged_table.sql': 'DROP TABLE public.playbooks;\n',
+    },
+    callers: { 'c.ts': "supabase.from('playbooks').select('*');\n" },
+  });
+  // DROP de tabela do catalogo deve sair da projecao e orfar o caller.
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stderr, /\.from\('playbooks'\)/);
+});
+
+test('usage guard detecta DROP com identificador entre aspas (public."t")', () => {
+  const result = runGuard({
+    migrations: {
+      '20260909210000_drop_quoted_ident.sql':
+        'CREATE TABLE public.t (id integer);\n'
+        + 'DROP TABLE public."t";\n',
+    },
+    callers: { 'c.ts': "supabase.from('t').select('*');\n" },
+  });
+  // "t" e identificador (nome de objeto), nao string: o DROP deve casar.
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stderr, /\.from\('t'\)/);
+});
+
+test('usage guard detecta DROP ROUTINE de funcao', () => {
+  const result = runGuard({
+    migrations: {
+      '20260909210000_drop_routine.sql':
+        'CREATE FUNCTION public.fn() RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;\n'
+        + 'DROP ROUTINE public.fn();\n',
+    },
+    callers: { 'c.ts': "supabase.rpc('fn');\n" },
+  });
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stderr, /\.rpc\('fn'\)/);
+});
+
+test('usage guard mantem funcao recriada por DROP+CREATE na mesma migration', () => {
+  const result = runGuard({
+    migrations: {
+      '20260909210000_recria_assinatura.sql':
+        'DROP FUNCTION IF EXISTS public.search_contacts(text);\n'
+        + 'CREATE FUNCTION public.search_contacts(term text, include_legacy boolean DEFAULT false)'
+        + ' RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;\n',
+    },
+    callers: { 'c.ts': "supabase.rpc('search_contacts');\n" },
+  });
+  // DROP + CREATE do mesmo nome (troca de assinatura, padrao do repo para
+  // adicionar um parametro) deve MANTER a funcao: o CREATE vem depois no texto e
+  // vence. Sem a ordem textual (dois loops separados: CREATEs e depois DROPs), o
+  // DROP apagaria a funcao da projecao -> falso positivo "alvo nao existe".
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /projecao forward-only: 0 relacoes, 1 funcoes/);
+});
