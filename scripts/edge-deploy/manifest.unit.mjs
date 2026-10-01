@@ -247,22 +247,30 @@ test('buildDeploymentManifest without orphanAllowlist produces no orphan_allowli
   assert.equal(verifyManifestDigest(manifest), true);
 });
 
-test('manifesto commitado declara as funcoes orfas que rodam em producao sem fonte', async () => {
-  // sicoob-bridge e sicoob-bridge-reply estao ACTIVE em producao e nao tem
-  // fonte versionada (desligamento do Sicoob). Sem declara-las, a atestacao
-  // pos-deploy reprova TODA publicacao ("Remote function set mismatch") e o
-  // alarme que sempre toca deixa de ser alarme. Lista fixada de proposito:
-  // mudar quem e orfao tem de ser decisao consciente, nao efeito colateral.
+test('manifesto commitado nao lista orfas: sicoob-bridge/-reply sairam do ar', async () => {
+  // sicoob-bridge e sicoob-bridge-reply ficaram ACTIVE em producao sem fonte
+  // versionada durante o desligamento do Sicoob (docs/edge-functions-recovered).
+  // Em 2026-10-01 o inventario remoto confirmou que as duas nao existem mais, e
+  // a lista de tolerancia foi esvaziada. Mante-la faria a atestacao pos-deploy
+  // tolerar para sempre funcoes que nunca voltam -- e o alarme de "Remote
+  // function set mismatch" passaria a esconder uma funcao extra de verdade.
+  // Lista fixada de proposito: mudar quem e orfao tem de ser decisao consciente,
+  // nao efeito colateral.
   const committed = JSON.parse(await readFile(
     new URL('../../supabase/deployment-manifest.json', import.meta.url),
     'utf8',
   ));
-  assert.deepEqual(committed.orphan_allowlist, ['sicoob-bridge', 'sicoob-bridge-reply']);
+  assert.equal(committed.orphan_allowlist, undefined);
 
-  // As duas listas de tolerancia nunca podem sobrepor functions[]: funcao com
+  // As duas tambem nao podem reaparecer como funcao gerenciada (elas nao tem
+  // fonte versionada): se o diretorio voltar, este teste cai antes do deploy.
+  const managed = new Set(committed.functions.map((fn) => fn.name));
+  assert.ok(!managed.has('sicoob-bridge'), 'sicoob-bridge nao tem fonte e nao pode voltar ao manifesto');
+  assert.ok(!managed.has('sicoob-bridge-reply'), 'sicoob-bridge-reply nao tem fonte e nao pode voltar ao manifesto');
+
+  // As listas de tolerancia nunca podem sobrepor functions[]: funcao com
   // fonte versionada e gerenciada, nao orfa (dupla classificacao esconderia a
   // funcao do deploy, do hash de closure e da atestacao).
-  const managed = new Set(committed.functions.map((fn) => fn.name));
   const allowlisted = [...(committed.orphan_allowlist ?? []), ...(committed.legacy_unmanaged_functions ?? [])];
   for (const name of allowlisted) {
     assert.ok(!managed.has(name), `${name} nao pode estar em functions[] e numa allowlist ao mesmo tempo`);
