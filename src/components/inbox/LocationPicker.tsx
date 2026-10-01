@@ -15,6 +15,7 @@ import { searchFailureText } from './location-picker/searchErrors';
 import { useLocationPicker } from './location-picker/useLocationPicker';
 import { useAddressAutocomplete } from './location-picker/useAddressAutocomplete';
 import type { GeoSuggestion } from '@/lib/mapboxGeocode';
+import { logAudit } from '@/lib/audit';
 
 
 interface LocationPickerProps {
@@ -111,6 +112,9 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
       await onSend({
         latitude: selectedLocation.lat, longitude: selectedLocation.lng, name: selectedLocation.name, address: selectedLocation.address,
       });
+      // E50: funil fechado — só booleanos, nunca endereço/coordenada do cliente. Envio
+      // que falha mantém o diálogo aberto e não chega aqui.
+      void logAudit({ action: 'location_sent', details: { hasName: Boolean(selectedLocation.name), hasAddress: Boolean(selectedLocation.address) } });
       handleClose();
     } catch {
       // The handler owns the user-facing error; preserve the selected point so

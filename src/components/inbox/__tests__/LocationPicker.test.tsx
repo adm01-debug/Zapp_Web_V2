@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 
 const h = vi.hoisted(() => ({
+  logAudit: vi.fn(),
   hook: vi.fn(),
   autocomplete: vi.fn(),
   // F3/E26: o aviso da falha de `/retrieve` sai por toast — precisa ser observável no teste.
@@ -10,6 +11,7 @@ const h = vi.hoisted(() => ({
 
 vi.mock('../location-picker/useLocationPicker', () => ({ useLocationPicker: (...args: unknown[]) => h.hook(...args) }));
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: (...args: unknown[]) => h.toast(...args) }));
+vi.mock('@/lib/audit', () => ({ logAudit: (...args: unknown[]) => h.logAudit(...args) }));
 vi.mock('../location-picker/useAddressAutocomplete', () => ({ useAddressAutocomplete: (...args: unknown[]) => h.autocomplete(...args) }));
 
 import { LocationPicker } from '../LocationPicker';
@@ -110,6 +112,32 @@ describe('LocationPicker', () => {
     expect(state.reset).toHaveBeenCalled();
   });
 
+  it('E50: o envio registra location_sent com a qualidade da escolha (sem dado do cliente)', async () => {
+    // O funil do Searchbox terminava sem medir o desfecho: dava para saber quantas buscas e
+    // selecoes houve, nunca quantas viraram uma localizacao de fato ENVIADA — e se ela tinha
+    // endereco (ajuda real) ou era so um pino no mapa. So booleanos: endereco e coordenada de
+    // cliente nao entram no evento.
+    const state = hookState({ lat: -23.5, lng: -46.6, name: 'Rua A', address: 'Rua A, São Paulo' });
+    h.hook.mockReturnValue(state);
+    h.autocomplete.mockReturnValue(autocompleteState());
+    render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn().mockResolvedValue(undefined)} />);
+  
+    fireEvent.click(screen.getByRole('button', { name: /Enviar Localização/ }));
+  
+    await waitFor(() =>
+      expect(h.logAudit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'location_sent',
+          details: expect.objectContaining({ hasName: true, hasAddress: true }),
+        }),
+      ),
+    );
+    // Nada de endereco/coordenada no evento.
+    const detalhes = h.logAudit.mock.calls[0][0].details;
+    expect(JSON.stringify(detalhes)).not.toContain('Rua A');
+    expect(JSON.stringify(detalhes)).not.toContain('-23.5');
+  });
+  
   it('se o envio falha, mantém o diálogo aberto e a seleção para nova tentativa', async () => {
     const state = hookState({ lat: -23.5, lng: -46.6 });
     h.hook.mockReturnValue(state);
