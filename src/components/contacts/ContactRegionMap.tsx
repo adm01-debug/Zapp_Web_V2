@@ -58,9 +58,10 @@ export function ContactRegionMap({ regions, preciseContacts = [], selectedRegion
 
   const plotted = regions.filter((r) => regionCoordinates(r.region) !== null);
   const hidden = regions.length - plotted.length;
-  // E42 · item 1: quantos CONTATOS estão no mapa só por aproximação de DDD (soma das regiões
-  // plotadas) — é o M da legenda "N confirmados · M aproximados".
-  const approxCount = regions.reduce((total, r) => total + r.count, 0);
+  // E42 · item 1: quantos CONTATOS estão no mapa só por aproximação de DDD — é o M da legenda
+  // "N confirmados · M aproximados". Conta só as regiões PLOTADAS: as sem ponto conhecido não
+  // entram no mapa (elas aparecem na nota "N regiões sem ponto conhecido ficam só nos cartões").
+  const approxCount = plotted.reduce((total, r) => total + r.count, 0);
   const maxCount = plotted.reduce((max, r) => Math.max(max, r.count), 0);
   // Assinatura das bolhas + pontos precisos: só redesenha quando algo realmente muda.
   const signature =
