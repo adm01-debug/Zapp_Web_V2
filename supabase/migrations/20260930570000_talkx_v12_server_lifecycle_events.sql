@@ -1,6 +1,6 @@
 -- talkx_v12_server_lifecycle_events
 -- versão 20260930570000 reservada para hermes-talkx-fase1-v12-v21-2610011215c53b em 2026-10-01T12:19:30-03:00 (hermes-db-migrar --nova)
--- rollback: 1) recrie a transition_talkx_campaign sem o INSERT de evento (corpo da 20260916210000, 3 args); 2) recrie complete_talkx_campaign_if_drained sem o INSERT de evento (corpo da 20260911170000).
+-- rollback: 1) recrie a transition_talkx_campaign sem o INSERT de evento (corpo da 20260916210000, 3 args); 2) recrie complete_talkx_campaign_if_drained sem o INSERT de evento (corpo da 20260911170000); 3) V14: recrie a CHECK talkx_recipients_status_check sem 'cancelled' e remova o UPDATE de destinatários no caso 'cancel'.
 --
 -- V12 do PLANO_TALKX_V3_100_ETAPAS_2026-09-29.
 -- Hoje: started/paused/resumed/cancelled/completed só são gravados pelo CLIENTE
@@ -10,6 +10,14 @@
 -- UPDATE de status, com actor_id (perfil do JWT, ou null quando o ator é o
 -- worker) e message (motivo da pausa). O cliente para de inserir o evento
 -- duplicado (TalkXLiveMonitor.tsx / useCampaignEditor.ts).
+
+-- 0) V14: status 'cancelled' em talkx_recipients ---------------------------------
+--     Cancelar uma campanha deve marcar os destinatários pendentes como
+--     cancelados (estado terminal consistente), e o relatório passa a exibir
+--     "Cancelados". A CHECK atual (20260409000457) não contempla 'cancelled'.
+ALTER TABLE public.talkx_recipients DROP CONSTRAINT talkx_recipients_status_check;
+ALTER TABLE public.talkx_recipients ADD CONSTRAINT talkx_recipients_status_check
+  CHECK (status = ANY (ARRAY['pending','sending','sent','delivered','failed','skipped','outcome_unknown','cancelled']));
 
 -- 1) transition_talkx_campaign grava started/resumed/paused/cancelled ----------
 --    Substitui a assinatura de 3 args (uuid,text,text) pela de 4 (uuid,text,text,uuid).
@@ -84,6 +92,11 @@ BEGIN
       v_next_status := 'cancelled';
       v_event_type := 'cancelled';
       v_event_msg := NULL;
+      -- V14: marca pendentes como cancelados na MESMA transação (estado terminal).
+      UPDATE public.talkx_recipients AS recipient
+      SET status = 'cancelled'
+      WHERE recipient.campaign_id = p_campaign_id
+        AND recipient.status = 'pending';
   END CASE;
   UPDATE public.talkx_campaigns AS campaign
   SET status       = v_next_status,

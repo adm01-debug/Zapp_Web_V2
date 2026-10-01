@@ -76,7 +76,9 @@ CREATE TABLE public.talkx_campaigns (
 CREATE TABLE public.talkx_recipients (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   campaign_id uuid NOT NULL REFERENCES public.talkx_campaigns(id) ON DELETE CASCADE,
-  status text NOT NULL DEFAULT 'pending',
+  status text NOT NULL DEFAULT 'pending'
+    CONSTRAINT talkx_recipients_status_check
+    CHECK (status = ANY (ARRAY['pending','sending','sent','delivered','failed','skipped','outcome_unknown'])),
   created_at timestamptz NOT NULL DEFAULT statement_timestamp()
 );
 
@@ -119,12 +121,17 @@ END;
 $$;
 SQL
 
-# seed: campanha + 1 destinatário
+# seed: campanha + 5 destinatários pendentes
 psql_test >/dev/null <<'SQL'
 INSERT INTO public.talkx_campaigns (id, status, message_template, total_recipients)
-  VALUES ('20000000-0000-0000-0000-000000000001', 'draft', 'ola', 1);
+  VALUES ('20000000-0000-0000-0000-000000000001', 'draft', 'ola', 5);
 INSERT INTO public.talkx_recipients (campaign_id, status)
-  VALUES ('20000000-0000-0000-0000-000000000001', 'pending');
+  VALUES
+    ('20000000-0000-0000-0000-000000000001', 'pending'),
+    ('20000000-0000-0000-0000-000000000001', 'pending'),
+    ('20000000-0000-0000-0000-000000000001', 'pending'),
+    ('20000000-0000-0000-0000-000000000001', 'pending'),
+    ('20000000-0000-0000-0000-000000000001', 'pending');
 SQL
 
 run_seq() {
@@ -164,6 +171,18 @@ types="$(psql_test -Atqc "SELECT string_agg(event_type, ',' ORDER BY created_at)
 
 pause_msg="$(psql_test -Atqc "SELECT message FROM public.talkx_campaign_events WHERE event_type='paused'")"
 [[ "$pause_msg" == 'motivo x' ]] || fail "GREEN: mensagem da pausa nao foi gravada (got $pause_msg)"
+
+# ---- GREEN (V14): cancel marca os 5 pendentes como 'cancelled' ----
+cancel_count="$(psql_test -Atqc "SELECT count(*) FROM public.talkx_recipients WHERE campaign_id='20000000-0000-0000-0000-000000000001' AND status='cancelled'")"
+[[ "$cancel_count" == '5' ]] || fail "V14: cancel nao marcou os 5 pendentes como cancelled (got $cancel_count)"
+
+# ---- GREEN (V14): campanha cancelada nao vira 'completed' ----
+psql_test >/dev/null <<'SQL'
+UPDATE public.talkx_recipients SET status = 'delivered'
+  WHERE campaign_id = '20000000-0000-0000-0000-000000000001';
+SQL
+completed_cancelled="$(psql_test -Atqc "BEGIN; SET LOCAL request.jwt.claim.role='service_role'; SELECT public.complete_talkx_campaign_if_drained('20000000-0000-0000-0000-000000000001'); COMMIT;")"
+[[ "$completed_cancelled" == 'f' ]] || fail "V14: campanha cancelada virou completed (esperava f, got $completed_cancelled)"
 
 # ---- GREEN (V13): start em 'sending' é no-op (retomada dupla não erra, não duplica evento) ----
 psql_test >/dev/null <<'SQL'

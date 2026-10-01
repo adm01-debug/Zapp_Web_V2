@@ -147,10 +147,8 @@ export function useTalkXTemplates() {
   });
 
   /** Incrementa o contador de uso quando um template vira campanha (best-effort). */
-  const registerUse = async (id: string, _current: number) => {
-    await supabase.rpc('increment_talkx_template_use', { p_template_id: id });
-    invalidate();
-  };
+  // V15: removido — o trigger E86 (trg_talkx_increment_template_use_count) já conta
+  // o uso exatamente 1 vez ao lançar a campanha; a RPC no front causava dobro (P2-4).
 
 
 
@@ -222,7 +220,7 @@ export function useTalkXTemplates() {
     isError: query.isError,
     error: query.error as Error | null,
     refetch: query.refetch,
-    createTemplate, updateTemplate, deleteTemplate, duplicateTemplate, registerUse,
+    createTemplate, updateTemplate, deleteTemplate, duplicateTemplate,
     testTemplate,
     fetchVersionHistory,
     fetchVariants, saveVariant, deleteVariant, countVariantRecipients,

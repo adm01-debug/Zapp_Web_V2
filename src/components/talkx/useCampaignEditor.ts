@@ -173,7 +173,7 @@ export function localToUTCInTimezone(localStr: string, tz: string): string {
 export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentId?: string; templateId?: string; step?: WizardStep }) {
   const { saveDraftCampaign, updateCampaign, replaceDraftRecipients, startCampaign } = useTalkX();
   const { segments } = useTalkXSegments();
-  const { templates, registerUse } = useTalkXTemplates();
+  const { templates } = useTalkXTemplates();
   const logEvent = useTalkXEventLogger();
 
   const [step, setStep] = useState<WizardStep>(() => initial?.step ?? initialWizardStep());
@@ -569,7 +569,6 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
         }
       }
       await replaceDraftRecipients.mutateAsync({ campaignId: id, contactIds });
-      if (!persistedCampaignId && selectedTemplate) await registerUse(selectedTemplate.id, selectedTemplate.use_count);
 
       if (mode === 'schedule' && payload.scheduled_at) {
         await updateCampaign.mutateAsync({ id, status: 'scheduled' });
@@ -584,7 +583,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     } finally {
       setSaving(false);
     }
-  }, [recipientSnapshotReady, canProceed, buildPayload, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, replaceDraftRecipients, selectedTemplate, registerUse, startCampaign]);
+  }, [recipientSnapshotReady, canProceed, buildPayload, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, replaceDraftRecipients, startCampaign]);
 
   // Serializa autosave, salvar manual e lançamento. Uma falha não bloqueia a
   // próxima operação, mas nenhuma mutação posterior começa antes do término da
