@@ -22,7 +22,7 @@ import { deliveryWindowStatus, type ScheduleGuardCampaign } from "./talkx-window
 /** Motivos que autorizam retomada automática. Qualquer outro valor (texto livre
  *  do usuário, nulo, motivo desconhecido) significa pausa manual/diagnóstica e
  *  NUNCA é retomado por robô. */
-export const AUTO_RESUME_REASONS = ["send_window", "business_hours", "connection_lost"] as const;
+export const AUTO_RESUME_REASONS = ["send_window", "business_hours", "connection_lost", "daily_limit"] as const;
 export type AutoResumeReason = (typeof AUTO_RESUME_REASONS)[number];
 
 /**
@@ -43,6 +43,7 @@ export type PausedCampaignRow = ScheduleGuardCampaign & {
   name?: string | null;
   pause_reason?: string | null;
   whatsapp_connection_id?: string | null;
+  paused_at?: string | null;
 };
 
 export type ResumeDecision = {
@@ -111,6 +112,18 @@ export function selectResumableCampaigns(
         };
       }
       return { ...base, resume: true, because: "conexão restabelecida" };
+    }
+
+    if (pauseReason === "daily_limit") {
+      // V20: limite diário só retoma quando a pausa foi num dia anterior —
+      // retomar no MESMO dia re-pausaria imediatamente (loop de churn).
+      const pausedAt = typeof campaign.paused_at === "string" ? new Date(campaign.paused_at) : null;
+      const todayUtc = new Date(now);
+      todayUtc.setUTCHours(0, 0, 0, 0);
+      if (pausedAt && pausedAt.getTime() >= todayUtc.getTime()) {
+        return { ...base, resume: false, because: "limite diário já atingido hoje — retoma amanhã" };
+      }
+      // cai para a checagem de janela abaixo
     }
 
     if (!deliveryWindowStatus(campaign, now).allowed) {

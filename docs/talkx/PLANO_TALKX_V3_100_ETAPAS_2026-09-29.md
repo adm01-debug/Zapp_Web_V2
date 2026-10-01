@@ -153,6 +153,7 @@ mesmos arquivos (`talkxShared.tsx` é o ponto de colisão — quem mexer nele ab
 **Hoje:** `daily_limit_per_connection` e `business_hours` semeados mas nunca lidos; 08–18 seg–sex fixo em `talkx-window.ts:82` e no front.
 **Fazer:** `talkx-send` conta `sent_at::date = today` por `whatsapp_connection_id` e pausa com `pause_reason='daily_limit'` (scheduler retoma no dia seguinte — V03); `deliveryWindowStatus` lê `talkx_settings.business_hours`; front exibe o mesmo (via `useTalkXSettings`).
 **Aceite:** teste Deno: limite 3 → 4º envio pausa; mudar `business_hours` muda `allowed`.
+**✅ FEITO 2026-10-01:** `talkx-send` lê `talkx_settings.daily_limit_per_connection` (conta `sent_at::date=today` por conexão e pausa com `pause_reason='daily_limit'`); `deliveryWindowStatus(campaign, now, businessHours)` lê `talkx_settings.business_hours` via `parseBusinessHours` (default 08–18 seg–sex); `AUTO_RESUME_REASONS` ganha `daily_limit` com guarda de "só retoma no dia seguinte" (evita loop de churn); scheduler SELECT ganha `paused_at`. Front já exibe/edita via `useTalkXSettings` (genérico). Testes: `_shared/__tests__/talkx-v20-window-business-hours.test.ts` (3) + `talkx-send/v20-daily-limit.test.ts` (integração "limite 3 → pausa sem 4º envio"); Deno 410, typecheck 0, build/test ✓.
 
 ---
 
