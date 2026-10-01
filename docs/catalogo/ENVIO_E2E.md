@@ -46,3 +46,43 @@ Sem patch necessário no código (a lógica já está correta — item 2 acima).
 de código, é de **cobertura empírica zero** para mediaUrl externo. Fica registrado como item de
 atenção para a E85 (primeiro envio de catálogo em produção, com throttle) e para quando o
 acesso de login/EVO estiver disponível para um teste ao vivo.
+
+---
+
+## Primeiro envio real (CT-10) — procedimento
+
+**Estado da evidência: 🟡 AINDA NÃO COLETADA.** Esta seção descreve **como fazer** o primeiro envio
+real pela UI em produção. Nenhum resultado foi medido por agente: os ids, o horário e as linhas de
+`messages`/`catalog_send_events` só entram aqui **depois** do envio, que depende do Joaquim fazer o
+envio de verdade (não há exemplo preenchido nem número estimado abaixo).
+
+Passo a passo, como o usuário faz na tela:
+
+1. **Conectar o WhatsApp:** abra **Conexões**, escolha o número e conecte (ler o QR Code no celular)
+   até o status virar **Conectado**. Sem conexão ativa o envio fica bloqueado com a explicação na
+   tela (checagem pré-envio, CT-08).
+2. **Abrir o catálogo:** vá em **Catálogo**. Confirme que a lista carregou — o rail mostra as
+   contagens e, hoje, o alerta "PromoGifts sem sincronizar há N dias" (CT-23).
+3. **Escolher produto + 2 fotos + modelo Informal:** clique no produto para abrir **Detalhes**,
+   **Selecione** 2 fotos e, no passo de envio, escolha o modelo **Informal**. A pré-visualização
+   estilo WhatsApp (`PhonePreview`) atualiza com o texto e a 1ª foto.
+4. **Selecionar Contato:** clique em **Selecionar Contato** e escolha o número de teste da Promo
+   Brindes (busca por nome ou por telefone, mínimo 2 dígitos). O botão do rodapé vira **Enviar agora**.
+5. **Enviar agora:** clique em **Enviar agora** e acompanhe o progresso **real** no botão —
+   **"Enviando 1/2…"** e depois **"Enviando 2/2…"** (uma mensagem por foto, com a legenda só na 1ª).
+   No fim aparece o toast de sucesso.
+
+Conferência **depois** do envio (é o que fecha a CT-10): `messages` com 2 linhas `image`,
+`media_url` em `imagedelivery.net` e a 1ª com `caption`; `catalog_send_events` com 1 linha `sent`
+contendo os 2 `message_ids`; e as 2 imagens recebidas no WhatsApp do número de teste.
+
+Campos a preencher **só quando houver envio** (hoje: não coletado):
+
+| campo | valor |
+|---|---|
+| data/hora do envio | *(evidência ainda não coletada — depende do envio do Joaquim)* |
+| `catalog_send_events.id` | *(idem)* |
+| `messages.id` (1ª foto / 2ª foto) | *(idem)* |
+| `status` em `messages` após ~30 s | *(idem)* |
+| recebido no WhatsApp de teste | *(idem)* |
+| mensagens de teste marcadas `is_deleted` | *(idem)* |

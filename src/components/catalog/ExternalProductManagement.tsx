@@ -37,16 +37,21 @@ import { ExternalProductCard } from './ExternalProductCard';
 import { CatalogProductCardSkeleton } from './CatalogProductCard';
 import { SendProductDialog } from './SendProductDialog';
 import { ModuleHeader, fmtAgo, AlertCard, TalkXPagination } from '@/components/talkx/talkxShared';
-import { CatalogRail } from './CatalogRail';
+import { CatalogRail, type CatalogRailFilterKey } from './CatalogRail';
 import { useCatalogRecentSends } from '@/hooks/integrations/useCatalogRecentSends';
 import { CatalogKpiStrip, CategoryChips, AdvancedFilterChips, countAdvancedFilters, matchesAnySelected, DEFAULT_ADVANCED_FILTERS, CatalogErrorState, countLabel, useRateLimitCooldown, type AdvancedFilters } from './catalogShared';
 import { CatalogAdvancedFilters } from './CatalogAdvancedFilters';
 import { parseCatalogCategoryRoute, replaceCatalogCategoryRoute } from './catalogCategoryRoute';
 import { CatalogBulkBar } from './CatalogBulkBar';
 import { CatalogBulkSendDialog } from './CatalogBulkSendDialog';
+// CT-28 — "Exportar seleção" reusa os builders puros do CSV (CT-20), como no
+// catálogo do chat: as linhas são exatamente os produtos selecionados na tela
+// (nada é buscado na edge; o export do filtro inteiro é o do rail).
+import { buildCatalogCsv, catalogExportFilename, triggerCsvDownload } from './catalogExport';
 import { CatalogFavoritesTab } from './CatalogFavoritesTab';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 function SyncStatusChip({ lastSyncAt }: { lastSyncAt: string | null | undefined }) {
   const [isFresh] = useState(() => {
@@ -114,6 +119,7 @@ export const ExternalProductManagement: React.FC = () => {
   }, []);
   const [supplierId, setSupplierId] = useState<string>('all');
   const [onlyInStock, setOnlyInStock] = useState(false);
+  const [lowStock, setLowStock] = useState(false);
   const [isFeatured, setIsFeatured] = useState(false);
   const [isNew, setIsNew] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(
@@ -178,6 +184,30 @@ export const ExternalProductManagement: React.FC = () => {
   }, [visibleProducts, selectedIds]);
   const allPageSelected = visibleProducts.length > 0 && visibleProducts.every((p) => selectedIds.has(p.id));
 
+  /** CT-28 — produtos selecionados da página atual (mesma fonte da barra). */
+  const selectedProducts = useMemo(
+    () => visibleProducts.filter((p) => selectedIds.has(p.id)),
+    [visibleProducts, selectedIds]
+  );
+
+  /** CT-28 — "Exportar seleção": CSV com exatamente os produtos escolhidos,
+   * reusando os builders puros do CT-20 (sem tocar na edge). */
+  const handleExportSelection = useCallback(() => {
+    if (selectedProducts.length === 0) return;
+    triggerCsvDownload(buildCatalogCsv(selectedProducts), catalogExportFilename('selecao', new Date()));
+    toast.success(`${selectedProducts.length} produto(s) exportado(s) em CSV`);
+  }, [selectedProducts]);
+
+  /** CT-28 — "Favoritar N": favorita só os selecionados que ainda não são
+   * favoritos, com o mesmo `toggle` do hook de favoritos da tela. */
+  const handleFavoriteSelection = useCallback(() => {
+    const toFavorite = selectedProducts.filter((p) => !isFav(p.id));
+    toFavorite.forEach((p) => {
+      void toggle({ id: p.id, name: p.name, sku: p.sku, primary_image_url: p.primary_image_url });
+    });
+    if (toFavorite.length > 0) toast.success(`${toFavorite.length} produto(s) adicionado(s) aos favoritos`);
+  }, [selectedProducts, isFav, toggle]);
+
   const [bulkSendOpen, setBulkSendOpen] = useState(false);
   const handleBulkSend = useCallback(() => { setBulkSendOpen(true); }, []);
 
@@ -218,6 +248,9 @@ export const ExternalProductManagement: React.FC = () => {
     if (supplierId !== 'all') params.supplier_id = supplierId;
     if (isFeatured) params.is_featured = true;
     if (isNew) params.is_new = true;
+    // CT-23 — estoque baixo (1..10 unidades), filtro que já existe na edge
+    // (CatalogFilters.low_stock) e faltava nesta fiação.
+    if (lowStock) params.low_stock = true;
     const effectiveOrder = search ? orderBy : (orderBy === 'name' ? 'name' : orderBy);
     params.order_by = effectiveOrder;
     params.ascending = ascending;
@@ -229,7 +262,7 @@ export const ExternalProductManagement: React.FC = () => {
     if (advFilters.colors.length > 0) params.color = advFilters.colors;
     if (advFilters.materials.length > 0) params.material = advFilters.materials;
     return params;
-  }, [page, pageSize, search, categoryId, supplierId, onlyInStock, isFeatured, isNew, orderBy, ascending, advFilters]);
+  }, [page, pageSize, search, categoryId, supplierId, onlyInStock, lowStock, isFeatured, isNew, orderBy, ascending, advFilters]);
 
   useEffect(() => {
     fetchCategories();
@@ -250,7 +283,7 @@ export const ExternalProductManagement: React.FC = () => {
     }, 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, categoryId, supplierId, onlyInStock, isFeatured, isNew, orderBy, ascending, advFilters, pageSize]);
+  }, [search, categoryId, supplierId, onlyInStock, lowStock, isFeatured, isNew, orderBy, ascending, advFilters, pageSize]);
 
   useEffect(() => {
     if (page > 0) {
@@ -261,13 +294,14 @@ export const ExternalProductManagement: React.FC = () => {
   }, [page]);
 
   const totalPages = Math.ceil(totalProducts / pageSize);
-  const hasFilters = search || categoryId !== 'all' || supplierId !== 'all' || onlyInStock || isFeatured || isNew || advCount > 0;
+  const hasFilters = search || categoryId !== 'all' || supplierId !== 'all' || onlyInStock || lowStock || isFeatured || isNew || advCount > 0;
 
   const clearFilters = () => {
     setSearch('');
     setCategoryId('all');
     setSupplierId('all');
     setOnlyInStock(false);
+    setLowStock(false);
     setIsFeatured(false);
     setIsNew(false);
     setOrderBy('name');
@@ -310,11 +344,30 @@ export const ExternalProductManagement: React.FC = () => {
     localStorage.setItem('catalog.view', mode);
   };
 
-  const handleKpiSelect = (key: keyof CatalogStats) => {
+  /** Aplica o filtro do indicador clicado (KPIs do topo e contagens do rail).
+   * As chaves são `keyof CatalogStats`; só as que têm filtro booleano real na
+   * listagem agem — o resto é no-op consciente (E33). */
+  const handleKpiSelect = useCallback((key: keyof CatalogStats) => {
     if (key === 'in_stock') setOnlyInStock(true);
     else if (key === 'featured') setIsFeatured(true);
     else if (key === 'new_30d') setIsNew(true);
-  };
+    // CT-23 — filtro de estoque baixo (1..10): já existe na edge e em
+    // CatalogFilters (`low_stock`); sem este branch o botão do alerta do rail
+    // ficaria morto.
+    else if (key === 'low_stock') setLowStock(true);
+  }, []);
+
+  /** CT-23 — o alerta de estoque baixo do rail tem callback próprio
+   * (`onApplyLowStock`) em vez de `onApplyFilter`; reusa handleKpiSelect para
+   * não duplicar a regra. */
+  const handleApplyLowStock = useCallback(() => { handleKpiSelect('low_stock'); }, [handleKpiSelect]);
+
+  /** CT-21 — chave do filtro do rail ativo agora, para o "Exportar catálogo"
+   * exportar o filtro atual em vez do catálogo inteiro. A precedência só
+   * importa com 2+ filtros ligados ao mesmo tempo; todas as chaves são as que
+   * o builder do CSV sabe traduzir para a edge (filterKeyToEdgeParams). */
+  const activeRailFilter: CatalogRailFilterKey | null =
+    onlyInStock ? 'in_stock' : isFeatured ? 'featured' : isNew ? 'new_30d' : null;
 
   const [sendProduct, setSendProduct] = useState<ExternalProduct | null>(null);
   const handleSendProduct = (product: ExternalProduct) => { setSendProduct(product); };
@@ -680,6 +733,8 @@ export const ExternalProductManagement: React.FC = () => {
           onToggleSelectAll={toggleSelectAll}
           onClear={clearSelection}
           onSend={handleBulkSend}
+          onExport={handleExportSelection}
+          onFavorite={handleFavoriteSelection}
         />
       )}
 
@@ -704,7 +759,10 @@ export const ExternalProductManagement: React.FC = () => {
     <aside className="catalog-rail sticky top-4 hidden xl:block">
       {/* E51-E53: o rail nasceu vazio na E31 (layout). onApplyFilter reusa
           handleKpiSelect — as chaves do rail são keyof CatalogStats de
-          propósito, pra não duplicar a lógica de aplicar filtro. */}
+          propósito, pra não duplicar a lógica de aplicar filtro.
+          CT-21/CT-23: exportFilter = filtro do rail ativo agora (o export sai
+          do filtro atual, não do catálogo inteiro) e onApplyLowStock liga o
+          botão do alerta de estoque baixo. */}
       <CatalogRail
         stats={stats}
         loading={statsLoading}
@@ -713,6 +771,8 @@ export const ExternalProductManagement: React.FC = () => {
         recentSends={recentSends}
         topSent={topSent}
         onOpenProduct={handleOpenProductFromRail}
+        exportFilter={activeRailFilter}
+        onApplyLowStock={handleApplyLowStock}
       />
     </aside>
     </div>

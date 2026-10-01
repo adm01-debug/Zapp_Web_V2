@@ -11,7 +11,7 @@
  * Sem imports de `std/assert`: o lock do CI é `--frozen`, então as asserções
  * são locais (mesmo padrão de index.test.ts / crm-integration/index.test.ts).
  */
-import { promogiftsCatalogHandler, RATE_LIMIT, type CatalogHandlerDeps } from './index.ts';
+import { promogiftsCatalogHandler, RATE_LIMIT, ACTION_RATE_LIMITS, type CatalogHandlerDeps } from './index.ts';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -383,8 +383,176 @@ Deno.test('CT-77 rate limit: as RATE_LIMIT primeiras requisições do mesmo usu�
   assertEquals(body.error, 'Too many requests. Try again in 1 minute.');
 });
 
-Deno.test('CT-77 rate limit: o limite do módulo é o alvo atual (60) ou o alvo do CT-19 (120) — teste pronto para a troca', async () => {
-  // Não trava o valor: quando o CT-19 subir para 120/min este teste continua
-  // válido, e o teste de borda acima acompanha sozinho (deriva de RATE_LIMIT).
-  assert(RATE_LIMIT === 60 || RATE_LIMIT === 120, `limite inesperado: ${RATE_LIMIT} (esperado 60 agora, 120 após CT-19)`);
+Deno.test('CT-19 limites por ação: list_products 120/min e as demais no teto global de 60/min', () => {
+  // Trava a tabela do E26.3: o CT-19 é POR AÇÃO, não só um 60→120 global.
+  assertEquals(ACTION_RATE_LIMITS.list_products, 120);
+  assertEquals(RATE_LIMIT, 60, 'o teto global (fallback de corpo inválido) continua 60');
+  const demais = ['get_product', 'list_categories', 'list_suppliers', 'catalog_stats', 'bootstrap'] as const;
+  for (const acao of demais) {
+    assertEquals(ACTION_RATE_LIMITS[acao], RATE_LIMIT, `${acao} deve ficar no teto global de 60/min`);
+  }
+  assertEquals(demais.length + 1, 6, 'as 6 ações do schema precisam ter cota declarada');
+});
+
+// ─── CT-19: rate limit por ação ─────────────────────────────────
+
+/** Request cru (corpo não-JSON), para exercitar o caminho de JSON malformado. */
+function rawRequest(body: string, token: string | null = 'Bearer test-token'): Request {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token !== null) headers.Authorization = token;
+  return new Request('https://edge.invalid/promogifts-catalog', { method: 'POST', headers, body });
+}
+
+async function invokeRaw(
+  body: string,
+  deps: CatalogHandlerDeps,
+): Promise<{ status: number; body: Record<string, unknown> }> {
+  const response = await promogiftsCatalogHandler(rawRequest(body), deps);
+  return { status: response.status, body: await response.json() as Record<string, unknown> };
+}
+
+function novoUsuario(prefixo: string): string {
+  return `${prefixo}-${crypto.randomUUID()}`;
+}
+
+Deno.test('CT-19 list_products: 100 chamadas em 1 min passam (cota da ação = 120) e a 121ª devolve 429', async () => {
+  const ext = new MockCatalogClient();
+  const d = deps(ext, novoUsuario('ct19-list'));
+  const body = { action: 'list_products', params: { limit: 1, offset: 0 } };
+
+  // 100 chamadas é o aceite do plano: se o limite voltar a ser checado ANTES do
+  // parse (isto é, sem saber a ação) a cota cai para o teto global de 60 e a
+  // 61ª já devolveria 429 — este laço falha e prova a mutação.
+  for (let i = 0; i < 100; i++) {
+    const { status } = await invoke(body, d);
+    assertEquals(status, 200, `requisição ${i + 1}/100 deveria passar (cota da ação = ${ACTION_RATE_LIMITS.list_products})`);
+  }
+
+  for (let i = 100; i < ACTION_RATE_LIMITS.list_products; i++) {
+    const { status } = await invoke(body, d);
+    assertEquals(status, 200, `requisição ${i + 1}/${ACTION_RATE_LIMITS.list_products} ainda deveria passar`);
+  }
+
+  const { status, body: erro } = await invoke(body, d);
+  assertEquals(status, 429, `a requisição ${ACTION_RATE_LIMITS.list_products + 1} deveria estourar a cota de list_products`);
+  assertEquals(erro.error, 'Too many requests. Try again in 1 minute.');
+});
+
+Deno.test('CT-19 bootstrap: as 60 primeiras passam e a 61ª devolve 429 (aceite do plano)', async () => {
+  const ext = new MockCatalogClient({}, { zapp_catalog_stats: [] });
+  const d = deps(ext, novoUsuario('ct19-bootstrap'));
+
+  for (let i = 0; i < RATE_LIMIT; i++) {
+    const { status } = await invoke({ action: 'bootstrap' }, d);
+    assertEquals(status, 200, `bootstrap ${i + 1}/${RATE_LIMIT} deveria passar`);
+  }
+
+  const { status, body } = await invoke({ action: 'bootstrap' }, d);
+  assertEquals(status, 429);
+  assertEquals(body.error, 'Too many requests. Try again in 1 minute.');
+});
+
+Deno.test('CT-19 cotas por ação são independentes: estourar bootstrap não bloqueia list_products', async () => {
+  const ext = new MockCatalogClient({}, { zapp_catalog_stats: [] });
+  const d = deps(ext, novoUsuario('ct19-isolado'));
+
+  for (let i = 0; i < RATE_LIMIT; i++) await invoke({ action: 'bootstrap' }, d);
+  const bloqueado = await invoke({ action: 'bootstrap' }, d);
+  assertEquals(bloqueado.status, 429, 'bootstrap estourou a própria cota');
+
+  const list = await invoke({ action: 'list_products', params: { limit: 1 } }, d);
+  assertEquals(list.status, 200, 'a cota de list_products não pode ser consumida pelo balde de bootstrap');
+});
+
+Deno.test('CT-19 fail-closed: corpo com ação inexistente consome o teto global e a 61ª vira 429', async () => {
+  const ext = new MockCatalogClient();
+  const d = deps(ext, novoUsuario('ct19-corpo-invalido'));
+
+  for (let i = 0; i < RATE_LIMIT; i++) {
+    const { status, body } = await invoke({ action: 'nao_existe' }, d);
+    assertEquals(status, 400, `corpo inválido ${i + 1}/${RATE_LIMIT} deveria devolver 400`);
+    assertEquals(body.error, 'Invalid request');
+  }
+
+  const { status } = await invoke({ action: 'nao_existe' }, d);
+  assertEquals(status, 429, 'corpo inválido não pode ficar fora do rate limit (bypass)');
+});
+
+Deno.test('CT-19 fail-closed: JSON malformado devolve 500, consome o teto global e a 61ª vira 429', async () => {
+  const ext = new MockCatalogClient();
+  const d = deps(ext, novoUsuario('ct19-json-malformado'));
+
+  for (let i = 0; i < RATE_LIMIT; i++) {
+    const { status, body } = await invokeRaw('{ "action": ', d);
+    assertEquals(status, 500, `JSON malformado ${i + 1}/${RATE_LIMIT} deveria devolver 500`);
+    assertEquals(body.code, 'CATALOG_INTERNAL_ERROR');
+  }
+
+  const { status } = await invokeRaw('{ "action": ', d);
+  assertEquals(status, 429, 'JSON malformado não pode ficar fora do rate limit (bypass)');
+});
+
+Deno.test('CT-19 ordem: ação válida acima do teto global continua passando; inválida abaixo dele devolve 400', async () => {
+  const ext = new MockCatalogClient({}, { zapp_catalog_stats: [] });
+  const d = deps(ext, novoUsuario('ct19-ordem'));
+
+  // 61 list_products (estoura o teto global de 60, dentro da cota da ação)...
+  for (let i = 0; i < RATE_LIMIT + 1; i++) {
+    const { status } = await invoke({ action: 'list_products', params: { limit: 1 } }, d);
+    assertEquals(status, 200, `list_products ${i + 1} deveria passar com a cota por ação`);
+  }
+  // ...e o corpo inválido do MESMO usuário segue no balde global, com 60/min.
+  const invalido = await invoke({ action: 'nao_existe' }, d);
+  assertEquals(invalido.status, 400, 'o balde global (corpo inválido) é separado do balde de list_products');
+});
+
+// ─── CT-35: full_path_readable no embed de categorias do produto ─────
+
+/**
+ * O detalhe (get_product) e as listas (list_products, compact ou não)
+ * embutem a categoria via `categories:category_id(...)`. O CT-35 exige que
+ * as pills de categoria usem `full_path_readable`, então o select do produto
+ * precisa pedir essa coluna no embed — sem isso o campo não chega no payload.
+ * Aqui travamos a STRING do select (a fonte que vira a query do PostgREST).
+ */
+function assertCategoriaEmbedComFullPath(selectExpr: unknown, contexto: string): void {
+  assert(typeof selectExpr === 'string' && selectExpr.length > 0, `${contexto}: select do produto precisa ser uma string de colunas`);
+  assert(
+    selectExpr.includes('categories:category_id('),
+    `${contexto}: o produto precisa embutir a relação de categorias — select=${selectExpr}`,
+  );
+  assert(
+    selectExpr.includes('full_path_readable'),
+    `${contexto}: o embed de categories precisa pedir full_path_readable (CT-35) — select=${selectExpr}`,
+  );
+}
+
+Deno.test('CT-35 get_product pede full_path_readable no embed de categories', async () => {
+  const ext = new MockCatalogClient({
+    products: [{ data: { id: PRODUCT_ID, name: 'Caneca' }, error: null }],
+    product_variants: [{ data: [], error: null }],
+  });
+  const { status } = await invoke({ action: 'get_product', params: { product_id: PRODUCT_ID } }, deps(ext));
+  assertEquals(status, 200);
+
+  const productsCall = ext.calls.find((c) => c.table === 'products');
+  assertExists(productsCall, 'get_product precisa consultar a tabela products');
+  assertCategoriaEmbedComFullPath(argOf(productsCall, 'select', 0), 'get_product');
+});
+
+Deno.test('CT-35 list_products (compact e completo) pede full_path_readable no embed de categories', async () => {
+  for (const compact of [true, false]) {
+    const ext = new MockCatalogClient({
+      products: [{ data: [{ id: 'p1', name: 'Caneca' }], error: null, count: 1 }],
+    });
+    const { status } = await invoke(
+      { action: 'list_products', params: { limit: 10, offset: 0, compact } },
+      deps(ext),
+    );
+    assertEquals(status, 200);
+
+    const productsCall = ext.calls.find((c) => c.table === 'products');
+    assertExists(productsCall, `list_products (compact=${compact}) precisa consultar products`);
+    assertCategoriaEmbedComFullPath(argOf(productsCall, 'select', 0), `list_products compact=${compact}`);
+  }
 });
