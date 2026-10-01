@@ -361,7 +361,7 @@ logDelete(entityType, entityId, details)
 | `profiles` | Perfis de usuário | id, user_id, name, email, role, access_level |
 | `user_roles` | Roles RBAC | id, user_id, role (enum) |
 | `user_settings` | Configurações | theme, notifications, business_hours, etc. |
-| `contacts` | Contatos WhatsApp | name, phone, email, assigned_to, queue_id |
+| `contacts` | Contatos WhatsApp (41 colunas; soft-delete por `deleted_at`) | name, phone, email, assigned_to, queue_id, contact_type, company, conversation_status, is_lid_legacy, deleted_at. CHECKs: `chk_contact_type`, `chk_conversation_status_values`, `contacts_email_format`, `contacts_phone_not_empty`, `contacts_ai_*_canonical`. Tipos canônicos: 6 (CHECK `chk_contact_type` ≡ `CONTACT_TYPES`) |
 | `messages` | Mensagens | content, sender, contact_id, status, media_url |
 | `message_reactions` | Reações | message_id, emoji, user_id |
 | `message_templates` | Templates | title, content, category, shortcut |

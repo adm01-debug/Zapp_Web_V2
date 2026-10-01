@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Bookmark, Plus, X, Filter, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { VALID_TAB_TYPES } from './contactTypeOrder';
 
 export interface FilterPreset {
   id: string;
@@ -37,12 +38,16 @@ function isValidPreset(p: unknown): p is FilterPreset {
   return filterKeys.every(k => f[k] === undefined || typeof f[k] === 'string');
 }
 
-function getPresets(): FilterPreset[] {
+const hasValidType = (p: FilterPreset) => p.filters.type === undefined || VALID_TAB_TYPES.has(p.filters.type);
+
+/** Lê os presets salvos; `dropped` conta os malformados ou com tipo de contato extinto. */
+function readPresets(): { presets: FilterPreset[]; dropped: number } {
   try {
-    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isValidPreset);
-  } catch { return []; }
+    const parsed: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    if (!Array.isArray(parsed)) return { presets: [], dropped: 0 };
+    const presets = parsed.filter(isValidPreset).filter(hasValidType);
+    return { presets, dropped: parsed.length - presets.length };
+  } catch { return { presets: [], dropped: 0 }; }
 }
 
 function savePresets(presets: FilterPreset[]) {
@@ -50,7 +55,18 @@ function savePresets(presets: FilterPreset[]) {
 }
 
 export function FilterPresets({ onApplyPreset, currentFilters }: FilterPresetsProps) {
-  const [presets, setPresets] = useState<FilterPreset[]>(getPresets);
+  const [initial] = useState(readPresets);
+  const [presets, setPresets] = useState<FilterPreset[]>(initial.presets);
+
+  useEffect(() => {
+    if (initial.dropped === 0) return;
+    savePresets(initial.presets);
+    toast.info(
+      initial.dropped === 1
+        ? '1 filtro salvo inválido foi removido'
+        : `${initial.dropped} filtros salvos inválidos foram removidos`,
+    );
+  }, [initial]);
   const [saving, setSaving] = useState(false);
   const [newName, setNewName] = useState('');
 

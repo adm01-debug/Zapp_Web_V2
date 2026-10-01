@@ -101,7 +101,7 @@ export function ContactPurchaseHistory({ contactId, className }: ContactPurchase
             <p className="text-lg font-bold text-foreground">
               R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
-            <p className="text-3xs text-muted-foreground">Valor total</p>
+            <p className="text-caption">Valor total</p>
           </div>
         </div>
       )}
@@ -126,7 +126,7 @@ export function ContactPurchaseHistory({ contactId, className }: ContactPurchase
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-foreground truncate">{purchase.title}</p>
                     {purchase.purchase_type && (
-                      <p className="text-3xs text-muted-foreground">{purchase.purchase_type}</p>
+                      <p className="text-caption">{purchase.purchase_type}</p>
                     )}
                   </div>
                   {purchase.amount != null && (
@@ -140,7 +140,7 @@ export function ContactPurchaseHistory({ contactId, className }: ContactPurchase
                     {purchase.status === 'completed' ? 'Concluída' : purchase.status === 'pending' ? 'Pendente' : purchase.status || 'N/A'}
                   </Badge>
                   {purchase.purchased_at && (
-                    <span className="text-3xs text-muted-foreground flex items-center gap-1">
+                    <span className="text-caption flex items-center gap-1">
                       <Calendar className="w-2.5 h-2.5" />
                       {format(new Date(purchase.purchased_at), 'dd/MM/yyyy', { locale: ptBR })}
                     </span>
