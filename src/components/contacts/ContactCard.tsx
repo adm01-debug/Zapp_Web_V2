@@ -20,7 +20,7 @@ import { canDeleteContact } from './contactPermissions';
 import type { ContactItemProps } from './types';
 
 export function ContactCard({
-  contact, isSelected, onToggleSelect, onOpenChat, onEdit, onDelete, index, companyName, searchQuery,
+  contact, isSelected, onToggleSelect, onOpenDetails, onOpenChat, onEdit, onDelete, index, companyName, searchQuery,
 }: ContactItemProps) {
   const typeConfig = CONTACT_TYPE_CONFIG[contact.contact_type || 'cliente'] || CONTACT_TYPE_CONFIG.cliente;
   const avatarColors = getAvatarColor(contact.name);
@@ -42,7 +42,7 @@ export function ContactCard({
           ? "ring-1 ring-primary border-primary/60 bg-primary/5"
           : "border-border/70"
       )}
-      onClick={() => onOpenChat(contact.id)}
+      onClick={() => onOpenDetails(contact.id)}
     >
       {/* Selection checkbox */}
       <div
@@ -144,7 +144,7 @@ export function ContactCard({
             <Mail className="w-[15px] h-[15px] shrink-0 text-muted-foreground" />
             <a
               href={`mailto:${contact.email}`}
-              className="truncate text-[hsl(215_30%_78%)] hover:text-primary transition-colors"
+              className="truncate text-muted-foreground hover:text-primary transition-colors"
             >
               {contact.email}
             </a>

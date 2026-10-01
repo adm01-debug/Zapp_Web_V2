@@ -21,6 +21,7 @@ function itemProps(contact: Contact, onDelete = noop) {
     contact,
     isSelected: false,
     onToggleSelect: noop,
+    onOpenDetails: noop,
     onOpenChat: noop,
     onEdit: noop,
     onDelete,

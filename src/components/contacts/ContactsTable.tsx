@@ -45,6 +45,7 @@ interface ContactsTableProps {
   contacts: Contact[];
   selectedIds: string[];
   onSelectIds: (ids: string[]) => void;
+  onOpenDetails: (id: string) => void;
   onOpenChat: (id: string) => void;
   onEdit: (contact: Contact) => void;
   onDelete: (contact: Contact) => void;
@@ -75,7 +76,7 @@ function SortableHeader({ label, field, sortField, sortDir, onSort }: {
 }
 
 export function ContactsTable({
-  contacts, selectedIds, onSelectIds, onOpenChat, onEdit, onDelete, getCRMData, searchQuery,
+  contacts, selectedIds, onSelectIds, onOpenDetails, onOpenChat, onEdit, onDelete, getCRMData, searchQuery,
 }: ContactsTableProps) {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>('asc');
@@ -144,7 +145,7 @@ export function ContactsTable({
                   "h-14 border-b border-border/60 last:border-0 hover:bg-muted/30 transition-all duration-150 cursor-pointer group",
                   selectedIds.includes(contact.id) && "bg-primary/5 border-l-2 border-l-primary"
                 )}
-                onClick={() => onOpenChat(contact.id)}
+                onClick={() => onOpenDetails(contact.id)}
               >
                 <td className="p-3" onClick={(e) => e.stopPropagation()}>
                   <Checkbox

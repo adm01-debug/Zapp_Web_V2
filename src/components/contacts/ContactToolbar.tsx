@@ -102,7 +102,7 @@ export function ContactToolbar({
           onClick={() => setShowFilters(!showFilters)}
           className={cn(
             "h-11 px-4 rounded-xl text-sm font-medium gap-2 shrink-0",
-            showFilters ? "bg-primary text-white hover:bg-primary/90 border border-primary" : "bg-input border border-border text-foreground hover:bg-muted"
+            showFilters ? "bg-primary text-primary-foreground hover:bg-primary/90 border border-primary" : "bg-input border border-border text-foreground hover:bg-muted"
           )}
           aria-expanded={showFilters}
           aria-controls="contact-filters-panel"

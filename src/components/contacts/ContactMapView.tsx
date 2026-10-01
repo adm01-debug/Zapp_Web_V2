@@ -29,12 +29,12 @@ interface ContactMapViewProps {
 }
 
 const REGION_COLORS = [
-  'bg-primary/15 text-primary',
-  'bg-[hsl(200_80%_92%)] text-[hsl(200_80%_35%)]',
-  'bg-[hsl(340_70%_92%)] text-[hsl(340_70%_40%)]',
-  'bg-[hsl(160_60%_90%)] text-[hsl(160_60%_30%)]',
-  'bg-[hsl(30_80%_90%)] text-[hsl(30_80%_35%)]',
-  'bg-[hsl(280_60%_92%)] text-[hsl(280_60%_40%)]',
+  'bg-primary/15',
+  'bg-info/15',
+  'bg-success/15',
+  'bg-warning/15',
+  'bg-destructive/15',
+  'bg-muted-foreground/15',
 ];
 
 export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps) {
@@ -104,8 +104,8 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
               >
                 <CardContent className="p-3 space-y-2">
                   <div className="flex items-center gap-2">
-                    <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center shrink-0', colorClass.split(' ')[0])}>
-                      <MapPin className={cn('w-4 h-4', colorClass.split(' ')[1])} />
+                    <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center shrink-0', colorClass)}>
+                      <MapPin className="w-4 h-4 text-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold truncate">{region}</p>
@@ -120,7 +120,7 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
                       initial={{ width: 0 }}
                       animate={{ width: `${percentage}%` }}
                       transition={{ delay: i * 0.04 + 0.2, duration: 0.5 }}
-                      className={cn('h-full rounded-full', colorClass.split(' ')[0].replace('/15', '/40').replace('/90', '/60').replace('/92', '/60'))}
+                      className={cn('h-full rounded-full', colorClass.replace('/15', '/40'))}
                     />
                   </div>
 

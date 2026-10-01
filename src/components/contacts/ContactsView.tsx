@@ -5,6 +5,7 @@ import { useCRMAdminAccess } from '@/hooks/crm/useCRMAdminAccess';
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
 import { useLayoutScroll } from '@/contexts/LayoutScrollContext';
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
+import { useUserRole } from '@/hooks/system/useUserRole';
 import { BulkActionsBar } from '@/components/contacts/BulkActionsBar';
 import { ContactStatsCards } from './ContactStatsCards';
 import { ContactTypeTabs } from './ContactTypeTabs';
@@ -54,6 +55,7 @@ export function ContactsView() {
     invalidateContactAggregates,
   } = crud;
 
+  const { isSupervisor } = useUserRole();
   const crmContacts = useMemo(() => filteredContacts.map(c => ({ id: c.id, phone: c.phone })), [filteredContacts]);
   const { lookup } = useExternalContact360Batch(crmContacts);
   const getCRMData = (phone: string) => lookup(phone) ?? null;
@@ -187,6 +189,7 @@ export function ContactsView() {
         activeFiltersCount={activeFiltersCount}
         onToggleSelect={handleToggleSelect}
         onContactClick={handleContactClick}
+        onOpenChat={openContactChat}
         onEdit={openEditDialog}
         onDelete={setDeleteTarget}
         onSelectIds={setSelectedIds}
@@ -222,6 +225,7 @@ export function ContactsView() {
         onCountersChanged={invalidateContactAggregates}
         availableTags={uniqueTags}
         canDeleteSelection={canDeleteSelection}
+        canChangeType={isSupervisor}
       />
     </div>
     </MotionConfig>

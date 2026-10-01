@@ -61,7 +61,7 @@ export interface BestTime {
 export interface ChurnData {
   churn_probability: number;
   risk_level: string;
-  risk_factors: Record<string, any> | null;
+  risk_factors: Record<string, unknown> | null;
   recommended_actions: string[] | null;
 }
 

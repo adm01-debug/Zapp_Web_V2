@@ -33,19 +33,18 @@ interface ContactDetail {
   created_at: string;
 }
 
-interface ContactDetailPanelProps {
-  contact: ContactDetail | null;
+interface ContactDetailPanelProps<T extends ContactDetail> {
+  contact: T | null;
   onClose: () => void;
   onOpenChat: (id: string) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onEdit: (contact: any) => void;
+  onEdit: (contact: T) => void;
   messageCount?: number;
   lastMessageAt?: string | null;
 }
 
-export function ContactDetailPanel({
+export function ContactDetailPanel<T extends ContactDetail>({
   contact, onClose, onOpenChat, onEdit, messageCount = 0, lastMessageAt,
-}: ContactDetailPanelProps) {
+}: ContactDetailPanelProps<T>) {
   useEffect(() => {
     if (!contact) return;
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
