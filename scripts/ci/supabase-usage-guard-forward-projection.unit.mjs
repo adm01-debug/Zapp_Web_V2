@@ -448,3 +448,38 @@ test('usage guard nao trata DROP IF EXISTS de assinatura inexistente como remoca
     assert.equal(result.status, esperado, `${desc}\n${result.stdout}${result.stderr}`);
   }
 });
+
+test('usage guard honra .schema() separado do .from()/.rpc() por comentario', () => {
+  // O scan procura `.schema('x')` nos 150 caracteres antes do `.from(...)`. Se o
+  // reconhecimento exigir que ele seja o ULTIMO trecho (um `/* ... */` no meio
+  // conta como codigo), o guard cai no schema padrao `public` e compara o alvo
+  // errado — falso positivo quando o objeto so existe no outro schema, e
+  // fail-open quando existe um homonimo em public.
+  const MIG = { '20260909210000_ops.sql': 'CREATE TABLE ops.x (id integer);\n' };
+  const casos = [
+    ['adjacente (baseline)', "supabase.schema('ops').from('x').select('*');\n", 0],
+    ['quebra de linha entre os metodos', "supabase\n  .schema('ops')\n  .from('x')\n  .select('*');\n", 0],
+    ['comentario de bloco entre', "supabase.schema('ops') /* ops */ .from('x').select('*');\n", 0],
+    ['comentario de linha entre', "supabase.schema('ops') // ops\n  .from('x').select('*');\n", 0],
+    ['comentario de bloco dentro do schema()', "supabase.schema(/* ops */ 'ops').from('x').select('*');\n", 0],
+    ['comentario de linha dentro do schema()', "supabase.schema(// ops\n  'ops').from('x').select('*');\n", 0],
+    ['comentario que CITA outro .schema() e ignorado', "supabase.schema('ops') /* .schema('public') */ .from('x').select('*');\n", 0],
+    ['comentario de linha citando outro schema', "supabase.schema('ops') // .schema('public')\n  .from('x').select('*');\n", 0],
+  ];
+  for (const [desc, caller, esperado] of casos) {
+    const result = runGuard({ migrations: MIG, callers: { 'c.ts': caller } });
+    assert.equal(result.status, esperado, `${desc}\n${result.stdout}${result.stderr}`);
+  }
+});
+
+test('usage guard nao deixa passar alvo de outro schema escondido por comentario', () => {
+  // `public.x` existe (criado na janela) e `ops.x` NAO. O alvo real do caller e
+  // ops.x, entao o guard tem de acusar; se o comentario fizer o `public` voltar,
+  // ele aprova um alvo que nao existe — fail-open.
+  const result = runGuard({
+    migrations: { '20260909210000_pub.sql': 'CREATE TABLE public.x (id integer);\n' },
+    callers: { 'c.ts': "supabase.schema('ops') /* ops */ .from('x').select('*');\n" },
+  });
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stderr, /ops\.x/);
+});
