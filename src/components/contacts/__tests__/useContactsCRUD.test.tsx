@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   setShowLegacy: vi.fn(),
   warning: vi.fn(),
   invalidateQueries: vi.fn(),
+  rpc: vi.fn((_fn: string, _args?: Record<string, unknown>) => Promise.resolve({ data: 'ok' as unknown, error: null as null | { message: string } })),
   /** Liga o `onSuccess` do `withFeedback` (o mock padrão só roda a mutação). */
   callOnSuccess: false,
 }));
@@ -33,7 +34,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       },
       delete: () => ({ eq: async () => ({ error: null }) }),
     }),
-    rpc: () => Promise.resolve({ data: 'ok', error: null }),
+    rpc: (fn: string, args?: Record<string, unknown>) => mocks.rpc(fn, args),
   },
 }));
 
@@ -297,5 +298,37 @@ describe('useContactsCRUD — toggle de legados', () => {
 
     expect(result.current.selectedIds).toEqual([]);
     expect(mocks.setShowLegacy).toHaveBeenCalledWith(false);
+  });
+});
+
+describe('useContactsCRUD — exclusão via RPC (D1, etapa 80)', () => {
+  beforeEach(() => {
+    mocks.invalidateQueries.mockReset();
+    mocks.refetch.mockReset();
+    mocks.rpc.mockClear();
+    mocks.callOnSuccess = true;
+  });
+
+  it('chama delete_contact com o id e só então atualiza lista e agregados', async () => {
+    const hook = mountHook();
+    await act(async () => {
+      await hook.result.current.handleDeleteContact('c1');
+    });
+    expect(mocks.rpc).toHaveBeenCalledWith('delete_contact', { p_id: 'c1' });
+    expect(mocks.refetch).toHaveBeenCalled();
+    expect(mocks.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['contacts-kpi'] });
+  });
+
+  it.each([
+    ['null (nenhuma linha afetada)', { data: null, error: null }, 'Nenhum contato foi excluído'],
+    ['erro do banco', { data: null, error: { message: 'permission denied' } }, 'permission denied'],
+  ])('RPC devolvendo %s falha o fluxo: nada é invalidado', async (_name, response, message) => {
+    mocks.rpc.mockResolvedValueOnce(response);
+    const hook = mountHook();
+    await act(async () => {
+      await expect(hook.result.current.handleDeleteContact('c1')).rejects.toThrow(message);
+    });
+    expect(mocks.refetch).not.toHaveBeenCalled();
+    expect(mocks.invalidateQueries).not.toHaveBeenCalled();
   });
 });
