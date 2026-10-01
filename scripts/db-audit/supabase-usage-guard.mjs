@@ -71,6 +71,70 @@ function scan() {
   return found;
 }
 
+// Assinaturas de funcao. O guard compara por NOME (rpc('x') nao carrega tipos),
+// mas precisa saber se AINDA existe alguma assinatura depois de um DROP:
+// `DROP FUNCTION public.f(uuid)` remove UMA assinatura de f, e o nome so pode
+// sair da projecao quando TODAS as assinaturas conhecidas forem dropadas —
+// senao o DROP de um overload orfana falsamente callers que continuam validos.
+const MULTIWORD_TYPE_START = new Set([
+  'timestamp', 'time', 'double', 'character', 'bit', 'national', 'interval',
+]);
+
+function splitArgs(text) {
+  const out = [];
+  let depth = 0;
+  let cur = '';
+  for (const ch of text) {
+    if (ch === '(') depth += 1;
+    else if (ch === ')') depth -= 1;
+    if (ch === ',' && depth === 0) {
+      out.push(cur);
+      cur = '';
+      continue;
+    }
+    cur += ch;
+  }
+  if (cur.trim()) out.push(cur);
+  return out;
+}
+
+// Normaliza argumentos para TIPOS. pg_get_function_identity_arguments traz o
+// NOME do argumento (`p_queue_id uuid`) e as migrations normalmente o omitem
+// (`uuid`); sem remover o nome, a assinatura do catalogo e a do DROP nunca
+// casariam e o DROP de um overload deixaria de ser reconhecido.
+function normArgs(argsText) {
+  return splitArgs(argsText)
+    .map((raw) => {
+      let t = raw.trim().replace(/\s+default\s+[\s\S]*$/i, '').trim();
+      t = t.replace(/^(?:in|out|inout|variadic)\s+/i, '');
+      const words = t.split(/\s+/).filter(Boolean);
+      if (words.length > 1 && !MULTIWORD_TYPE_START.has(words[0].toLowerCase())) words.shift();
+      return words.join(' ').toLowerCase().replace(/\s*\[\s*\]\s*/g, '[]');
+    })
+    .join(',');
+}
+
+function addSignature(map, key, sig) {
+  if (!map.has(key)) map.set(key, new Set());
+  map.get(key).add(sig);
+}
+
+function dropSignature(map, key, sig) {
+  const set = map.get(key);
+  if (!set) return;
+  // Uma unica assinatura conhecida: o DROP e dela, mesmo que a grafia do tipo
+  // divirja entre catalogo e migration (ex.: timestamptz x timestamp with time
+  // zone). Com varias assinaturas, um DROP que nao casa nenhuma e mantido
+  // (conservador: evita orfaos falsos num ratchet que bloqueia merge).
+  if (set.size <= 1) {
+    map.delete(key);
+    return;
+  }
+  // Sobrou mais de uma assinatura: o DROP remove SO a assinatura citada e o nome
+  // continua na projecao enquanto existir qualquer outra.
+  set.delete(sig);
+}
+
 function projectSchemaFromForwardMigrations(catalog) {
   const cutoff = String(catalog.generated_at || '').replace(/\D/g, '').slice(0, 8);
   // Base = estado do catalogo no snapshot. A janela forward-only pode ADICIONAR
@@ -83,7 +147,13 @@ function projectSchemaFromForwardMigrations(catalog) {
   // janela forward-only pode criar/remover objetos em qualquer schema (ex.:
   // supabase_migrations.reserve_migration_version). Guardar so o nome faria um
   // objeto de outro schema colidir com um homonimo de public.
-  const functions = new Set(catalog.functions.map((n) => 'public.' + n));
+  const functions = new Map();
+  for (const n of catalog.functions) functions.set('public.' + n, new Set());
+  for (const raw of catalog.function_signatures || []) {
+    const m = /^([A-Za-z0-9_]+)\((.*)\)->/s.exec(String(raw));
+    if (!m) continue;
+    addSignature(functions, 'public.' + m[1], normArgs(m[2]));
+  }
   const relations = new Set([...catalog.tables, ...catalog.views].map((n) => 'public.' + n));
   const migrationsDir = path.join(ROOT, 'supabase/migrations');
   if (!/^\d{8}$/.test(cutoff) || !fs.existsSync(migrationsDir)) return { functions, relations };
@@ -110,11 +180,11 @@ function projectSchemaFromForwardMigrations(catalog) {
     // Qualquer schema (nao so public): o DDL real e qualificado e a chave e
     // montada como schema.nome, igual a projecao do catalogo e ao scan().
     const qual = (schema, name) => schema.toLowerCase() + '.' + name;
-    for (const m of sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?(?:FUNCTION|ROUTINE|PROCEDURE)\s+([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\s*\(/gi)) {
-      ops.push({ at: m.index, kind: 'fn', op: 'add', name: qual(m[1], m[2]) });
+    for (const m of sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?(?:FUNCTION|ROUTINE|PROCEDURE)\s+([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)/gi)) {
+      ops.push({ at: m.index, kind: 'fn', op: 'add', name: qual(m[1], m[2]), sig: normArgs(m[3]) });
     }
-    for (const m of sql.matchAll(/DROP\s+(?:FUNCTION|ROUTINE|PROCEDURE)(?:\s+IF\s+EXISTS)?\s+([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\s*\(/gi)) {
-      ops.push({ at: m.index, kind: 'fn', op: 'del', name: qual(m[1], m[2]) });
+    for (const m of sql.matchAll(/DROP\s+(?:FUNCTION|ROUTINE|PROCEDURE)(?:\s+IF\s+EXISTS)?\s+([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)/gi)) {
+      ops.push({ at: m.index, kind: 'fn', op: 'del', name: qual(m[1], m[2]), sig: normArgs(m[3]) });
     }
     for (const m of sql.matchAll(/CREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?\s+([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)/gi)) {
       ops.push({ at: m.index, kind: 'rel', op: 'add', name: qual(m[1], m[2]) });
@@ -124,9 +194,14 @@ function projectSchemaFromForwardMigrations(catalog) {
     }
     ops.sort((a, b) => a.at - b.at);
     for (const change of ops) {
-      const target = change.kind === 'fn' ? functions : relations;
-      if (change.op === 'add') target.add(change.name);
-      else target.delete(change.name);
+      if (change.kind === 'fn') {
+        if (change.op === 'add') addSignature(functions, change.name, change.sig);
+        else dropSignature(functions, change.name, change.sig);
+      } else if (change.op === 'add') {
+        relations.add(change.name);
+      } else {
+        relations.delete(change.name);
+      }
     }
   }
   return { functions, relations };

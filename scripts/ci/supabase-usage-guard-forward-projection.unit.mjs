@@ -270,3 +270,43 @@ test('usage guard reconhece dollar-quote com tag nao-ASCII', () => {
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.match(result.stdout, /projecao forward-only: 1 relacoes, 0 funcoes/);
 });
+
+test('usage guard mantem funcao quando outra assinatura (overload) sobrevive', () => {
+  const result = runGuard({
+    catalog: {
+      functions: ['can_edit_contact'],
+      function_signatures: [
+        'can_edit_contact(p_assigned_to uuid, p_queue_id uuid)->boolean|kind=f',
+        'can_edit_contact(p_assigned_to uuid, p_queue_id uuid, p_visible_agent_ids uuid[],'
+          + ' p_profile_id uuid, p_is_admin boolean)->boolean|kind=f',
+      ],
+    },
+    migrations: {
+      '20260909210000_drop_uma_assinatura.sql':
+        'DROP FUNCTION public.can_edit_contact(uuid, uuid);\n',
+    },
+    callers: { 'c.ts': "supabase.rpc('can_edit_contact');\n" },
+  });
+  // Sobrou a assinatura de 5 argumentos: rpc('can_edit_contact') continua valido.
+  // Remover o NOME inteiro no DROP de UMA assinatura seria falso positivo.
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /projecao forward-only: 0 relacoes, 1 funcoes/);
+});
+
+test('usage guard remove a funcao quando TODAS as assinaturas sao dropadas', () => {
+  const result = runGuard({
+    catalog: {
+      functions: ['f'],
+      function_signatures: ['f(a integer)->void|kind=f', 'f(b text)->void|kind=f'],
+    },
+    migrations: {
+      '20260909210000_drop_todas.sql':
+        'DROP FUNCTION public.f(integer);\n'
+        + 'DROP FUNCTION public.f(text);\n',
+    },
+    callers: { 'c.ts': "supabase.rpc('f');\n" },
+  });
+  // Sem assinatura sobrando, o nome sai da projecao e o caller fica orfao.
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stderr, /\.rpc\('f'\)/);
+});
