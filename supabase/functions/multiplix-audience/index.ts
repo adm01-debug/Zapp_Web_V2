@@ -4,6 +4,7 @@ import {
   enforceRateLimit, errorResponse, getClientIP, handleCors, jsonResponse, requireAuth, requireEnv,
 } from '../_shared/validation.ts';
 import { isExpectedExternalServerKey, isExpectedExternalUrl } from '../_shared/crm-integration-contract.ts';
+import { fromSinguEligibility, type MultiplixEligibility } from '../_shared/multiplix-eligibility.ts';
 
 // Ponte Singu do Multiplix (ADR-007 D1 / docs/multiplix/PERMISSOES.md). Reusa os
 // mesmos secrets EXTERNAL_SUPABASE_URL/EXTERNAL_SUPABASE_SERVICE_ROLE_KEY do
@@ -300,23 +301,29 @@ export interface MultiplixDraftRecipient {
   company_name: string | null;
   destino_e164: string | null;
   destino_origem: string | null;
-  elegibilidade: string | null;
+  elegibilidade: MultiplixEligibility;
 }
 
 // Converte a resposta de multiplix_resolve_recipients no que a RPC
-// multiplix_create_draft aceita. So entra quem o servidor classificou como
-// 'apto' e quem tem company_id: linha marcada como fora de escopo/invalida
-// nunca vira destinatario (era isso que o composer decidia no navegador e que
-// o navegador podia ignorar).
+// multiplix_create_draft aceita. Esta e a FRONTEIRA PT->EN: o Singu devolve a
+// elegibilidade em portugues ('apto'|'destino_invalido'|'fora_do_escopo') e o
+// banco do Zapp fala o enum ingles. A traducao passa SO por
+// fromSinguEligibility (mapa unico em _shared/multiplix-eligibility.ts) — nao ha
+// literal PT solto aqui. So entra quem o servidor classificou como 'eligible' e
+// quem tem company_id: linha marcada como fora de escopo/invalida, ou com valor
+// que o mapa nao reconhece (fallback 'out_of_scope'), nunca vira destinatario
+// (era isso que o composer decidia no navegador e que o navegador podia
+// ignorar). O valor emitido ja sai canonico em ingles — o payload nao carrega
+// mais PT para o banco.
 export function mapResolvedRecipients(rows: Array<Record<string, unknown>>): MultiplixDraftRecipient[] {
   return rows
-    .filter((row) => String(row?.elegibilidade ?? 'apto') === 'apto' && Boolean(row?.company_id))
+    .filter((row) => fromSinguEligibility(row?.elegibilidade) === 'eligible' && Boolean(row?.company_id))
     .map((row) => ({
       company_id: String(row.company_id),
       company_name: row.company_name == null ? null : String(row.company_name),
       destino_e164: row.destino_e164 == null ? null : String(row.destino_e164),
       destino_origem: row.destino_origem == null ? null : String(row.destino_origem),
-      elegibilidade: row.elegibilidade == null ? null : String(row.elegibilidade),
+      elegibilidade: fromSinguEligibility(row?.elegibilidade),
     }));
 }
 
@@ -503,7 +510,7 @@ export async function handleMultiplixAudienceRequest(
       const p = resolveParams.data;
       // F27: o pedido pode ter ate RESOLVE_POLICY_MAX_IDS ids; a edge fatia em
       // lotes de 1.000 (teto medido do PostgREST) e concatena na mesma resposta.
-      data = await resolveRecipientsInBatches(
+      const resolvedRows = await resolveRecipientsInBatches(
         p.company_ids,
         p.contact_ids,
         (batch) => externalClient.rpc('multiplix_resolve_recipients', {
@@ -513,6 +520,13 @@ export async function handleMultiplixAudienceRequest(
           p_scope_vendedor_email: vendedorEmail,
         }, { count: 'exact' }),
       );
+      // FRONTEIRA PT->EN tambem aqui: o front consome o MESMO enum canonico do
+      // banco (`MultiplixResolvedRecipient.elegibilidade`), entao a resposta do
+      // 'resolve' nao vaza o literal PT do Singu — o mapa e a unica traducao.
+      data = resolvedRows.map((row) => ({
+        ...row,
+        elegibilidade: fromSinguEligibility(row?.elegibilidade),
+      }));
     } else if (action === 'create_draft') {
       const draftParams = CreateDraftParamsSchema.safeParse(params);
       if (!draftParams.success) return errorResponse('Invalid create_draft parameters', 400, req);
