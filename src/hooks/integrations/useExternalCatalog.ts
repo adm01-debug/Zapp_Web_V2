@@ -151,12 +151,65 @@ export interface CatalogFilters {
 }
 
 // ─── API invoke ───────────────────────────────────────────────
+/**
+ * CT-59 — códigos de erro da edge `promogifts-catalog`. Os três primeiros
+ * (e CATALOG_INTERNAL_ERROR) vêm no corpo da resposta; `CATALOG_RATE_LIMITED`
+ * NÃO existe na edge: o 429 volta só com HTTP status + `{ error }`
+ * (supabase/functions/promogifts-catalog/index.ts:429) e o front sintetiza
+ * este código a partir do status, para a UI poder tratar por código.
+ */
+export type CatalogErrorCode =
+  | 'CATALOG_UPSTREAM_ERROR'
+  | 'CATALOG_NOT_CONFIGURED'
+  | 'CATALOG_CREDENTIALS_INVALID'
+  | 'CATALOG_INTERNAL_ERROR'
+  | 'CATALOG_RATE_LIMITED';
+
+/** Erro da edge com `code` + status HTTP preservados (o front descartava os dois). */
+export class CatalogEdgeError extends Error {
+  readonly code: string | null;
+  readonly status: number | null;
+  constructor(message: string, code: string | null = null, status: number | null = null) {
+    super(message);
+    this.name = 'CatalogEdgeError';
+    this.code = code;
+    this.status = status;
+  }
+}
+
+interface EdgeErrorBody {
+  error?: string;
+  code?: string;
+}
+
+/**
+ * O corpo `{ error, code }` de uma resposta não-2xx vive em `error.context`
+ * (Response) — sem lê-lo o usuário só veria "Edge Function returned a non-2xx
+ * status code". Mesmo padrão de useMultiplixAudience.ts.
+ */
+async function readEdgeErrorBody(context: unknown): Promise<EdgeErrorBody | null> {
+  const response = context as Response | undefined;
+  if (!response || typeof response.clone !== 'function') return null;
+  try {
+    return (await response.clone().json()) as EdgeErrorBody;
+  } catch {
+    return null;
+  }
+}
+
 async function invokeAction<T = unknown>(action: string, params: Record<string, unknown> = {}): Promise<T> {
   const { data, error } = await supabase.functions.invoke('promogifts-catalog', {
     body: { action, params },
   });
-  if (error) throw new Error(error.message);
-  if (data?.error) throw new Error(data.error);
+  if (error) {
+    const status = (error as { context?: { status?: number } }).context?.status ?? null;
+    const body = await readEdgeErrorBody((error as { context?: unknown }).context);
+    const code = body?.code ?? (status === 429 ? 'CATALOG_RATE_LIMITED' : null);
+    throw new CatalogEdgeError(body?.error || error.message, code, status);
+  }
+  if (data?.error) {
+    throw new CatalogEdgeError(data.error, data.code ?? null, null);
+  }
   return data as T;
 }
 
@@ -188,7 +241,12 @@ export function useExternalCatalog() {
     enabled: ready,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    retry: 2,
+    // CT-59 — não insistir num 429: a edge já estourou a cota de 60 req/min,
+    // retentar só consome a mesma janela e atrasa o aviso ao usuário.
+    retry: (failureCount, err) => {
+      if ((err as CatalogEdgeError | null)?.code === 'CATALOG_RATE_LIMITED') return false;
+      return failureCount < 2;
+    },
     // E26 — mantém a página anterior visível durante a paginação/troca de
     // filtro, em vez de piscar o skeleton a cada refetch.
     placeholderData: keepPreviousData,
@@ -260,6 +318,10 @@ export function useExternalCatalog() {
     /** true durante qualquer fetch, incl. paginacao/refetch - use para indicador discreto de progresso. */
     isFetching: productsQuery.isFetching,
     error: productsQuery.error?.message || null,
+    /** CT-59 — código da edge (ver CatalogErrorCode) ou null. 429 → 'CATALOG_RATE_LIMITED'. */
+    errorCode: (productsQuery.error as CatalogEdgeError | null)?.code ?? null,
+    /** CT-59 — status HTTP (429, 500, 503…) quando a falha veio de resposta não-2xx. */
+    errorStatus: (productsQuery.error as CatalogEdgeError | null)?.status ?? null,
     fetchProducts,
     fetchProduct,
     fetchCategories,

@@ -110,7 +110,7 @@ export function StoryViewer({ messages, initialIndex, open, onClose, pushName }:
     const loadMedia = async () => {
       setCarregandoMidia({ index, loading: true });
       try {
-        const instanceName = (typeof window !== 'undefined' && (window as any).__activeInstance__) || '';
+        const instanceName = (typeof window !== 'undefined' && window.__activeInstance__) || '';
         if (!instanceName) return;
         const response = await getMediaBase64(instanceName, current, mediaType === 'video') as { base64?: string; mimetype?: string } | null;
         if (cancelled) return;

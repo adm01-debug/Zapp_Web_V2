@@ -21,7 +21,7 @@ import { canDeleteContact } from './contactPermissions';
 import type { ContactItemProps } from './types';
 
 export function ContactListItem({
-  contact, isSelected, onToggleSelect, onOpenChat, onEdit, onDelete, index, companyLogo, companyName, searchQuery,
+  contact, isSelected, onToggleSelect, onOpenDetails, onOpenChat, onEdit, onDelete, index, companyName, searchQuery,
 }: ContactItemProps) {
   const typeConfig = CONTACT_TYPE_CONFIG[contact.contact_type || 'cliente'] || CONTACT_TYPE_CONFIG.cliente;
   const avatarColors = getAvatarColor(contact.name);
@@ -33,7 +33,7 @@ export function ContactListItem({
         "hover:bg-muted/40 hover:border-primary/30 transition-all duration-150 cursor-pointer",
         isSelected && "bg-primary/5 border-primary/60"
       )}
-      onClick={() => onOpenChat(contact.id)}
+      onClick={() => onOpenDetails(contact.id)}
     >
       {/* Checkbox */}
       <div onClick={(e) => e.stopPropagation()}>

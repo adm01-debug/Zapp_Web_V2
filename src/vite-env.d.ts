@@ -2,4 +2,5 @@
 
 interface Window {
   __ZAPP_MARK_APP_MOUNTED__?: () => void;
+  __activeInstance__?: string;
 }

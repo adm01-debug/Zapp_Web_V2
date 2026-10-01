@@ -8,8 +8,9 @@ import { WorkItemCardSkeleton } from '../shared/WorkItemCardSkeleton';
 import { QuickAdd } from '../shared/QuickAdd';
 import type { WorkItemInput } from '@/hooks/tasks/useMyWorkItems';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
+import type { WorkItemCardActions } from '../shared/cardActions';
 
-interface Props {
+interface Props extends WorkItemCardActions {
   items: WorkItem[];
   overdue: WorkItem[];
   isLoading: boolean;
@@ -29,7 +30,10 @@ const GRUPOS = [
   { id: 'semHora', titulo: 'Sem hora' },
 ] as const;
 
-export function TasksAgendaMode({ items, overdue, isLoading, onCreate, quickAddRef, onOpen, onToggleDone, onMoveTo, onDelete }: Props) {
+export function TasksAgendaMode({
+  items, overdue, isLoading, onCreate, quickAddRef, onOpen, onToggleDone, onMoveTo, onDelete,
+  doingCount, onOpenContact, onRequestWaitingReason, onComplete, onReopen, onSnooze, onClearReminder, onOpenReminder,
+}: Props) {
   const [selectedDay, setSelectedDay] = useState(0); // offset desde hoje
   // Etapa 55: o bloco "Atrasadas" nasce colapsado quando passa de 3.
   const [mostraAtrasadas, setMostraAtrasadas] = useState(overdue.length <= 3);
@@ -60,6 +64,15 @@ export function TasksAgendaMode({ items, overdue, isLoading, onCreate, quickAddR
     onToggleDone: () => onToggleDone(item),
     onMoveTo:     (to: WorkItemStatus) => onMoveTo(item, to),
     onDelete:     () => onDelete(item),
+    contactName:  item.contact?.name ?? undefined,
+    onOpenContact: onOpenContact ? () => onOpenContact(item) : undefined,
+    onRequestWaitingReason: onRequestWaitingReason ? () => onRequestWaitingReason(item) : undefined,
+    doingCount:   doingCount ?? 0,
+    onComplete:   onComplete ? () => onComplete(item) : undefined,
+    onReopen:     onReopen ? () => onReopen(item) : undefined,
+    onSnooze:     onSnooze ? (minutes: number | 'tomorrow9') => onSnooze(item, minutes) : undefined,
+    onClearReminder: onClearReminder ? () => onClearReminder(item) : undefined,
+    onOpenReminder:  onOpenReminder ? () => onOpenReminder(item) : undefined,
   });
 
   return (

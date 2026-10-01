@@ -85,6 +85,8 @@ Formato: `[ ] N. Ação — arquivo — DoD`. Marque `[x]` **só** com evidênci
 ---
 
 ### FASE C — Sheet de edição, Aguardando, ações do card (etapas 23–34)
+> Executor: Hermes (2026-10-01), branch `hermes/fase-c-sheet-2610011018cb68` (C1) e `hermes/fase-c2-card-2610011102404a` (C2).
+> Etapas 23–27 fechadas na sub-fase C1; 28–33 na sub-fase C2 — evidência no ledger `TAREFAS_QUADRO_STATUS.md` → `## FASE C1` e `## FASE C2`. A 34 aguarda o screenshot logado.
 > Executor: Hermes (2026-10-01), branch `hermes/fase-c-sheet-2610011018cb68` (o plano citava `claude/feat-tarefas-c-sheet-<carimbo>`; a guarda só permite `hermes/*`).
 > Etapas 23–27 fechadas na sub-fase C1 — evidência no ledger `TAREFAS_QUADRO_STATUS.md` → `## FASE C1`. → CP-C
 
@@ -93,13 +95,13 @@ Formato: `[ ] N. Ação — arquivo — DoD`. Marque `[x]` **só** com evidênci
 - [x] **25.** Rodapé do Sheet: "Salvar" (`bg-primary`), "Cancelar tarefa" (ghost destructive, undo), "Concluir" (`bg-success`). Salvar desabilitado sem mudança. `Ctrl+Enter` salva. — DoD: 3 ações ligadas às mutations da Fase B.
 - [x] **26.** **B3:** `TasksModule` renderiza `<WorkItemSheet item={selectedItem} …/>`; `onOpen` do card seta o item. — DoD: clicar no card abre o Sheet com os dados certos.
 - [x] **27.** Deep-link `?task=<id>`: `TasksModule` lê `URLSearchParams` no mount; se houver id e o item existir (ou buscar por id se não estiver no cache), abre o Sheet; ao abrir/fechar, `history.replaceState` adiciona/remove `task`. — DoD: F5 com `?task=…` reabre; fechar limpa a URL.
-- [ ] **28.** **B2 (DnD):** em `TasksBoardMode.handleDragEnd`, quando destino = `waiting` e o item não tem `waiting_reason`: **não** chamar `move`; chamar `onRequestWaitingReason(item)` → `TasksModule` abre o Sheet com `focusField='waiting_reason'` e estado pré-selecionado "Aguardando"; ao salvar, `move(item,'waiting',{waitingReason})`. O card volta à origem enquanto isso (comportamento da lib). — DoD: arrastar para Aguardando → Sheet → salvar → card aparece em Aguardando.
-- [ ] **29.** **B2 (kebab e MoveToMenu):** mesma regra — "Mover para → Aguardando" abre o Sheet pedindo o motivo. "Mover para → Fazendo" desabilitado com tooltip "Fazendo está cheio (3/3)" quando cheio. — DoD: 2 caminhos testados.
-- [ ] **30.** Kebab completo: **Abrir · Concluir/Reabrir · Lembrar-me ▾ (15 min · 1 h · Amanhã 9h · Escolher… → abre Sheet no campo alarme · Remover alarme) · Mover para ▸ · Cancelar (undo)**. Decisão D8: "Remover" vira "Cancelar". — DoD: 5 grupos no menu; todos ligados.
-- [ ] **31.** `RemindChip`: vira `Popover` com Adiar 15 min · 1 h · Amanhã 9h · Remover (chama `snooze`/`setReminder(null)`); vencido + `notified_at` → `BellRing text-destructive`. `stopPropagation`. — DoD: popover funciona no card e no Sheet.
-- [ ] **32.** `ContactChip`: avatar 18px com `getAvatarColor` (`@/lib/avatar-colors`) ou `avatar_url`; clique → `openContact(id)` (`?view=inbox&contact=<id>` — confirmar o parâmetro real com `grep -rn "selectedContactId\|contact=" src/hooks/inbox src/pages`). Passar `item.contact` do hook para o card. — DoD: chip aparece na tarefa migrada e abre o chat.
-- [ ] **33.** Criar `src/components/tasks/board/MoveToMenu.tsx`: botão `ArrowRightLeft` 16px no card (visível em `pointer: coarse`; hover em desktop) com as 5 opções, mesmas regras de WIP/motivo. — DoD: em 390×844 move sem arrastar.
-- [ ] **34.** Commit `feat(tarefas): fase C — Sheet de edição, Aguardando com motivo, deep-link ?task=, kebab completo, RemindChip/ContactChip (B2 B3)`. PR, CI verde, merge, screenshot `out/C-34-sheet.png`. — DoD: SHA + screenshot.
+- [x] **28.** **B2 (DnD):** em `TasksBoardMode.handleDragEnd`, quando destino = `waiting` e o item não tem `waiting_reason`: **não** chamar `move`; chamar `onRequestWaitingReason(item)` → `TasksModule` abre o Sheet com `focusField='waiting_reason'` e estado pré-selecionado "Aguardando"; ao salvar, `move(item,'waiting',{waitingReason})`. O card volta à origem enquanto isso (comportamento da lib). — DoD: arrastar para Aguardando → Sheet → salvar → card aparece em Aguardando.
+- [x] **29.** **B2 (kebab e MoveToMenu):** mesma regra — "Mover para → Aguardando" abre o Sheet pedindo o motivo. "Mover para → Fazendo" desabilitado com tooltip "Fazendo está cheio (3/3)" quando cheio. — DoD: 2 caminhos testados.
+- [x] **30.** Kebab completo: **Abrir · Concluir/Reabrir · Lembrar-me ▾ (15 min · 1 h · Amanhã 9h · Escolher… → abre Sheet no campo alarme · Remover alarme) · Mover para ▸ · Cancelar (undo)**. Decisão D8: "Remover" vira "Cancelar". — DoD: 5 grupos no menu; todos ligados.
+- [x] **31.** `RemindChip`: vira `Popover` com Adiar 15 min · 1 h · Amanhã 9h · Remover (chama `snooze`/`setReminder(null)`); vencido + `notified_at` → `BellRing text-destructive`. `stopPropagation`. — DoD: popover funciona no card e no Sheet.
+- [x] **32.** `ContactChip`: avatar 18px com `getAvatarColor` (`@/lib/avatar-colors`) ou `avatar_url`; clique → `openContact(id)` (`?view=inbox&contact=<id>` — confirmar o parâmetro real com `grep -rn "selectedContactId\|contact=" src/hooks/inbox src/pages`). Passar `item.contact` do hook para o card. — DoD: chip aparece na tarefa migrada e abre o chat.
+- [x] **33.** Criar `src/components/tasks/board/MoveToMenu.tsx`: botão `ArrowRightLeft` 16px no card (visível em `pointer: coarse`; hover em desktop) com as 5 opções, mesmas regras de WIP/motivo. — DoD: em 390×844 move sem arrastar.
+- [ ] **34.** (faltam commit/PR/merge deste PR + screenshot `out/C-34-sheet.png`, que depende do login de QA no cofre) Commit `feat(tarefas): fase C — Sheet de edição, Aguardando com motivo, deep-link ?task=, kebab completo, RemindChip/ContactChip (B2 B3)`. PR, CI verde, merge, screenshot `out/C-34-sheet.png`. — DoD: SHA + screenshot.
 
 **CP-C — Editar e Aguardando funcionam.** Gate: Sheet edita 8 campos; Aguardando recebe cartão por DnD, kebab e menu; `?task=` reabre.
 

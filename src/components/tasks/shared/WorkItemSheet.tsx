@@ -72,8 +72,9 @@ interface SheetProps {
   onCancel: (item: WorkItem) => void;
   contactOptions: Array<{ id: string; name: string }>;
   doingCount: number;
-  /** Etapa 28 (B2): o DnD/kebab abre o Sheet já pedindo o motivo. */
-  focusField?: 'waiting_reason';
+  /** Etapa 28 (B2): o DnD/kebab abre o Sheet já pedindo o motivo.
+   *  Etapa 31: "Lembrar-me → Escolher…" abre no campo alarme. */
+  focusField?: 'waiting_reason' | 'remind_at';
 }
 
 export function WorkItemSheet(props: SheetProps) {
@@ -119,7 +120,11 @@ function Formulario({
   const [description, setDescription] = useState(item.description ?? '');
   const [prioridade, setPrioridade] = useState<Priority>(item.priority);
   const [contactId, setContactId] = useState<string>(item.contact_id ?? '');
-  const [status, setStatus] = useState<WorkItemStatus>(item.status);
+  // Etapa 28 (B2): quem abre o Sheet pelo portão do Aguardando (DnD/kebab) já
+  // entra com o estado em "Aguardando", para o campo de motivo aparecer pedido.
+  const [status, setStatus] = useState<WorkItemStatus>(
+    focusField === 'waiting_reason' ? 'waiting' : item.status
+  );
   const [motivo, setMotivo] = useState(item.waiting_reason ?? '');
   const [dia, setDia] = useState<string | null>(item.due_date ? diaLocal(item.due_date) : null);
   const [hora, setHora] = useState(item.due_date ? horaLocal(item.due_date) : '');
@@ -190,7 +195,7 @@ function Formulario({
           <Input
             id="sheet-titulo"
             data-testid="sheet-titulo"
-            autoFocus
+            autoFocus={focusField !== 'remind_at'}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="mt-1.5 bg-input/40 border-border/70"
@@ -318,6 +323,7 @@ function Formulario({
                 <Button
                   variant="outline"
                   data-testid="sheet-alarme"
+                  autoFocus={focusField === 'remind_at'}
                   className="flex-1 justify-start bg-input/40 border-border/70 font-normal"
                 >
                   {item.notified_at && item.remind_at

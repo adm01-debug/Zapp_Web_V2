@@ -117,10 +117,6 @@
       "sha256": "768199559e32149c643f70821b16a3f1b655ee9f95bfc539097692c83a0e501d"
     },
     {
-      "path": "src/components/catalog/ExternalProductCatalog.tsx",
-      "sha256": "e37c9d711f0b18d16775f86a2169cb9e6b4cf89a6cbdcfbb4e33e8695072a7aa"
-    },
-    {
       "path": "src/components/chatbot/ChatbotExecutionsDashboard.tsx",
       "sha256": "7bd0b64a3e5ccef585c09d086092257cf7e8aaaa2ae120584cc3a989ffb0b9d2"
     },
@@ -2467,34 +2463,6 @@
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "contextHash": "eeb5c123cc8bf9c4b7c52830dcf62729982e4707973b020cc86da60c2eba4b48"
-    },
-    {
-      "file": "src/components/catalog/ExternalProductCatalog.tsx",
-      "line": 119,
-      "column": 6,
-      "endLine": 119,
-      "endColumn": 12,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has missing dependencies: 'doFetch' and 'isOpen'. Either include them or remove the dependency array.",
-      "spanHash": "9ac80c1431a21f37a17d43de8b21dc179888a81a8935137e7f74c213fbc7e22f",
-      "lineHash": "38b5e0274e1540e512e5b416471ec7285d54803c4ac85a743d10d083e1312107",
-      "contextHash": "54b161e647787a16a759ba98dd70e17ed8faa9b699a0b19b349c9688bb6c1334"
-    },
-    {
-      "file": "src/components/catalog/ExternalProductCatalog.tsx",
-      "line": 94,
-      "column": 6,
-      "endLine": 94,
-      "endColumn": 14,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has missing dependencies: 'doFetch', 'fetchCategories', and 'fetchSuppliers'. Either include them or remove the dependency array.",
-      "spanHash": "94a017696a89a5ac7af887cc0ffc7ca5b0d7d256ce6fd8f5297fecd8fa333220",
-      "lineHash": "977b375c9ab2b617eca46dc749d62f0c3d8af9f3f621a275b482d0b032fd1c0e",
-      "contextHash": "56ccdcb18b4be26d041fd0a6d382cfb69320152a0bdf1174f23998d4fb5c38ec"
     },
     {
       "file": "src/components/chatbot/ChatbotExecutionsDashboard.tsx",

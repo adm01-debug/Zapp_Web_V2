@@ -12,10 +12,6 @@
     "verify_jwt_true": 55,
     "verify_jwt_false": 12
   },
-  "orphan_allowlist": [
-    "sicoob-bridge",
-    "sicoob-bridge-reply"
-  ],
   "source_files": [
     {
       "path": "supabase/functions/_shared/ai-audio-authz.ts",
@@ -464,8 +460,8 @@
     },
     {
       "path": "supabase/functions/promogifts-catalog/index.ts",
-      "bytes": 19350,
-      "sha256": "d0bca6af663658cc3b3fc5d1253618315244f533f850a9f531af79ea4b4848b2"
+      "bytes": 20853,
+      "sha256": "59e188612cc920ad98db1511d32f49a4de9da11b7b3bfadbbd57faece8a204dc"
     },
     {
       "path": "supabase/functions/public-api/index.ts",
@@ -1220,7 +1216,7 @@
       "name": "promogifts-catalog",
       "entrypoint": "supabase/functions/promogifts-catalog/index.ts",
       "verify_jwt": true,
-      "source_sha256": "1e5a25eabc23eb0074992ccc61209137740bacaa20266aad124f9b1d18a91c64",
+      "source_sha256": "53520ea80b677d4e3d2dec9894ecaeca8191bb9fdb3b7c44aa26fed0df241b7b",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1429,5 +1425,5 @@
       ]
     }
   ],
-  "manifest_sha256": "db0385647c57c663afeebf526a3fed033fdb1f22637ee58455e73b864bddbf54"
+  "manifest_sha256": "8149dd420ef9cdee3fcafed1d556e02e70a7581e79c63a8287814916fd9d742b"
 }

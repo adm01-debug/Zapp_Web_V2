@@ -17,7 +17,7 @@ function CountBadge({ count, active }: { count: number; active: boolean }) {
       data-testid="tab-count"
       className={cn(
         'h-6 min-w-[24px] px-2 rounded-full text-xs font-semibold tabular-nums flex items-center justify-center shrink-0',
-        active ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
+        active ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
       )}
     >
       {count.toLocaleString('pt-BR')}

@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { getLogger } from '@/lib/logger';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
-import { fetchCatalogContactResults, logCatalogSendEvent, type CatalogSendTemplate } from '@/hooks/integrations/useCatalogContactSearch';
+import { fetchCatalogContactResults, logCatalogSendEvent, CONTACT_SEARCH_MIN_CHARS, type CatalogSendTemplate } from '@/hooks/integrations/useCatalogContactSearch';
 import { CATALOG_SEND_EVENTS_KEY } from '@/hooks/integrations/useCatalogRecentSends';
 
 const log = getLogger('useSendProduct');
@@ -14,6 +14,14 @@ export interface ContactResult {
   name: string;
   phone: string;
   avatar_url: string | null;
+}
+
+/** CT-46 — contador de mensagens do envio em andamento ("Enviando 2/4..."). */
+export interface SendProgress {
+  /** Mensagens já concluídas (enviadas ou falhadas). */
+  done: number;
+  /** Total de mensagens que este envio vai disparar. */
+  total: number;
 }
 
 /** Versão mínima (ms) entre duas fotos do mesmo envio — humanização (CT-05). */
@@ -87,6 +95,9 @@ export function useContactSearch(
   useEffect(() => {
     let cancelled = false;
     const query = contactSearch.trim();
+    // CT-43 — debounce de 300 ms e mínimo de 2 caracteres: um único caractere
+    // casa quase a base inteira e não vale nem a digitação nem a consulta.
+    const hasQuery = query.length >= CONTACT_SEARCH_MIN_CHARS;
     const timeout = setTimeout(async () => {
       if (step !== 'selectContact') {
         setContactResults([]);
@@ -100,7 +111,7 @@ export function useContactSearch(
         setContactResults(data);
         setSearchingContacts(false);
       }
-    }, query ? 300 : 0);
+    }, hasQuery ? 300 : 0);
     return () => {
       cancelled = true;
       clearTimeout(timeout);
@@ -131,6 +142,11 @@ export interface SendEventProductInfo {
 
 export function useSendToContact(onSuccess: () => void, onRetry?: () => void) {
   const [isSending, setIsSending] = useState(false);
+  // CT-46 — contador real de mensagens do envio em andamento. Guardado junto
+  // do booleano porque o botão precisa dizer "Enviando 2/4...", não só
+  // "Enviando...". Reiniciado a cada envio; não é limpo no fim para que o
+  // último estado não pisque de volta para 0/0 durante o fechamento.
+  const [sendProgress, setSendProgress] = useState<SendProgress | null>(null);
   const queryClient = useQueryClient();
 
   const sendProductToContact = useCallback(async (
@@ -150,6 +166,8 @@ export function useSendToContact(onSuccess: () => void, onRetry?: () => void) {
       let failed = 0;
       const messageIds: string[] = [];
       const hasImages = imageUrls.length > 0;
+      const total = hasImages ? imageUrls.length : 1;
+      setSendProgress({ done: 0, total });
 
       for (let i = 0; i < imageUrls.length; i++) {
         // CT-05 — ritmo humano entre fotos: sem isso as N imagens saem no
@@ -174,6 +192,7 @@ export function useSendToContact(onSuccess: () => void, onRetry?: () => void) {
           // anterior): o resultado agregado é que fica `partial`.
           failed++;
         }
+        setSendProgress({ done: i + 1, total });
       }
 
       if (!hasImages) {
@@ -181,9 +200,10 @@ export function useSendToContact(onSuccess: () => void, onRetry?: () => void) {
           const result = await sendOutboundMessage({ contactId: contact.id, content: message, messageType: 'text' });
           messageIds.push(result.id);
         } catch { failed++; }
+        setSendProgress({ done: 1, total });
       }
 
-      const totalAttempted = hasImages ? imageUrls.length : 1;
+      const totalAttempted = total;
       const status = failed === 0 ? 'sent' : failed === totalAttempted ? 'failed' : 'partial';
 
       if (product) {
@@ -243,5 +263,5 @@ export function useSendToContact(onSuccess: () => void, onRetry?: () => void) {
     }
   }, [onSuccess, onRetry, queryClient]);
 
-  return { isSending, sendProductToContact };
+  return { isSending, sendProgress, sendProductToContact };
 }

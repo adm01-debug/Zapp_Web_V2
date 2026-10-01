@@ -11,6 +11,7 @@ interface ContactGroupedListProps {
   contacts: Contact[];
   selectedIds: string[];
   onToggleSelect: (id: string, selected: boolean) => void;
+  onOpenDetails: (id: string) => void;
   onOpenChat: (id: string) => void;
   onEdit: (contact: Contact) => void;
   onDelete: (contact: Contact) => void;
@@ -19,7 +20,7 @@ interface ContactGroupedListProps {
 }
 
 export function ContactGroupedList({
-  contacts, selectedIds, onToggleSelect, onOpenChat, onEdit, onDelete, getCRMData, searchQuery,
+  contacts, selectedIds, onToggleSelect, onOpenDetails, onOpenChat, onEdit, onDelete, getCRMData, searchQuery,
 }: ContactGroupedListProps) {
   const groups = useMemo(() => {
     const map = new Map<string, Contact[]>();
@@ -100,11 +101,11 @@ export function ContactGroupedList({
                         contact={contact}
                         isSelected={selectedIds.includes(contact.id)}
                         onToggleSelect={onToggleSelect}
+                        onOpenDetails={onOpenDetails}
                         onOpenChat={onOpenChat}
                         onEdit={onEdit}
                         onDelete={onDelete}
                         index={index}
-                        companyLogo={getCRMData?.(contact.phone)?.logo_url}
                         companyName={getCRMData?.(contact.phone)?.company_name}
                         searchQuery={searchQuery}
                       />

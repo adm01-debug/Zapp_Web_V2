@@ -10,6 +10,8 @@ vi.mock('@/hooks/integrations/useSyncToCRM', () => ({
   useSyncToCRM: () => ({ syncConversationAsync: vi.fn(), isSyncing: false, isConfigured: false }),
 }));
 const navigateToView = vi.fn();
+let videoCallFlag = false;
+vi.mock('@/hooks/system/useFeatureFlag', () => ({ useFeatureFlag: (key: string, fallback = false) => (key === 'video_call' ? videoCallFlag : fallback) }));
 vi.mock('@/hooks/system/useNavigationHistory', () => ({ navigateToView: (...args: unknown[]) => navigateToView(...args) }));
 
 const baseContact = { id: 'c1', name: 'Maria Silva', phone: '+5511999999999', email: 'maria@test.com' };
@@ -26,6 +28,7 @@ function openViaPointer(el: Element) {
 describe('ContactActionButtons', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    videoCallFlag = false;
   });
 
   it('abre o dropdown de "Ligar" com as opções de chamada', () => {
@@ -91,5 +94,18 @@ describe('ContactActionButtons', () => {
     for (const tile of screen.getAllByTestId('contact-action-tile')) {
       expect(tile).not.toHaveAttribute('title');
     }
+  });
+
+  it('esconde a videochamada por padrão (flag video_call desligada)', () => {
+    render(<ContactActionButtons contact={baseContact} onStartCall={onStartCall} />);
+    const tiles = screen.getAllByTestId('contact-action-tile');
+    expect(tiles.find(t => t.querySelector('svg.lucide-video'))).toBeUndefined();
+  });
+
+  it('mostra a videochamada quando a flag video_call está ligada', () => {
+    videoCallFlag = true;
+    render(<ContactActionButtons contact={baseContact} onStartCall={onStartCall} />);
+    const tiles = screen.getAllByTestId('contact-action-tile');
+    expect(tiles.find(t => t.querySelector('svg.lucide-video'))).toBeDefined();
   });
 });

@@ -12,6 +12,7 @@ vi.mock('@/hooks/crm/useExternalContact360', () => ({
 vi.mock('@/integrations/supabase/externalClient', () => ({
   isExternalConfigured: false,
 }));
+vi.mock('@/hooks/system/useFeatureFlag', () => ({ useFeatureFlag: (_key: string, fallback = false) => fallback }));
 vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => true }));
 
 vi.mock('sonner', () => ({
