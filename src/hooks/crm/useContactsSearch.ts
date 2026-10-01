@@ -2,7 +2,11 @@ import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ContactService, Contact } from '@/services/contact.service';
 import { filterCustomTags } from '@/lib/tags';
-import { CONTACTS_AGGREGATE_QUERY_OPTIONS } from './contactsAggregates';
+import {
+  CONTACTS_AGGREGATE_QUERY_OPTIONS,
+  readShowLegacyPreference,
+  writeShowLegacyPreference,
+} from './contactsAggregates';
 
 const PAGE_SIZE = 50;
 
@@ -26,6 +30,7 @@ export function useContactsSearch() {
   const [filterDateRange, setFilterDateRange] = useState('all');
   const [sortBy, setSortBy] = useState('name_asc');
   const [page, setPage] = useState(0);
+  const [showLegacy, setShowLegacyState] = useState(readShowLegacyPreference);
   const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const handleSearchChange = useCallback((value: string) => {
@@ -47,6 +52,11 @@ export function useContactsSearch() {
   const handleTagChange = useCallback((v: string) => { setFilterTag(v); setPage(0); }, []);
   const handleDateRangeChange = useCallback((v: string) => { setFilterDateRange(v); setPage(0); }, []);
   const handleSortChange = useCallback((v: string) => { setSortBy(v); setPage(0); }, []);
+  const handleShowLegacyChange = useCallback((v: boolean) => {
+    writeShowLegacyPreference(v);
+    setShowLegacyState(v);
+    setPage(0);
+  }, []);
 
   const dateFrom = useMemo(() => {
     const now = new Date();
@@ -73,6 +83,7 @@ export function useContactsSearch() {
     sortField,
     sortDirection,
     page,
+    showLegacy,
   ];
 
   const { data, isLoading, error, refetch } = useQuery({
@@ -89,6 +100,7 @@ export function useContactsSearch() {
         sort_direction: sortDirection,
         page_size: PAGE_SIZE,
         page_offset: page * PAGE_SIZE,
+        include_legacy: showLegacy,
       });
       if (error) throw error;
       return data as (Contact & { total_count: number })[];
@@ -103,9 +115,9 @@ export function useContactsSearch() {
   const hasMore = (page + 1) * PAGE_SIZE < totalCount;
 
   const { data: typeCounts } = useQuery({
-    queryKey: ['contacts-type-counts'],
+    queryKey: ['contacts-type-counts', showLegacy],
     queryFn: async () => {
-      const { data, error } = await ContactService.getCountsByType();
+      const { data, error } = await ContactService.getCountsByType(showLegacy);
       if (error) throw error;
       return (data as { contact_type: string; count: number }[]) ?? [];
     },
@@ -222,6 +234,8 @@ export function useContactsSearch() {
     setFilterDateRange: handleDateRangeChange,
     sortBy,
     setSortBy: handleSortChange,
+    showLegacy,
+    setShowLegacy: handleShowLegacyChange,
     activeFiltersCount,
     clearFilters,
     page,

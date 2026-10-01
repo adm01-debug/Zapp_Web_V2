@@ -111,12 +111,21 @@ describe('TasksAgendaMode — etapa 57 (QuickAdd no dia selecionado)', () => {
     expect(prazo.getMinutes()).toBe(59);
   });
 
-  it('F2 (auditoria): o botão "Atrasadas" aponta para a região que controla (`aria-controls`)', () => {
+  it('F2 (auditoria): o botão "Atrasadas" aponta para a REGIÃO que controla (`aria-controls`)', () => {
     renderAgenda([], [makeItem({ title: 'Velha', due_date: asHoje(-3) })]);
 
     const botao = screen.getByRole('button', { name: /atrasada/i });
+    const regiao = document.getElementById('agenda-atrasadas');
+
     expect(botao.getAttribute('aria-controls')).toBe('agenda-atrasadas');
-    expect(document.getElementById('agenda-atrasadas')).toBeTruthy();
+    expect(regiao).toBeTruthy();
+    // F4 (auditoria M17): o alvo tem de ser a REGIÃO das atrasadas, não o próprio
+    // gatilho. Com o `id` no botão (mutação M17) o `aria-controls` vira
+    // auto-referente, aponta para um botão e não para o conteúdo que ele abre —
+    // o leitor de tela perde a relação. As duas linhas abaixo matam a mutação.
+    expect(regiao).not.toBe(botao);
+    expect(regiao!.tagName).not.toBe('BUTTON');
+    expect(regiao!.textContent).toContain('Velha');
   });
 });
 

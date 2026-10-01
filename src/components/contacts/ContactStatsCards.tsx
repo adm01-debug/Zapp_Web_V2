@@ -5,10 +5,12 @@ import { ContactKpiCard } from './ContactKpiCard';
 interface ContactStatsCardsProps {
   totalAll: number;
   fornecedoresAll: number;
+  /** Mesmo estado do toggle "Mostrar legados" que alimenta lista e abas. */
+  includeLegacy?: boolean;
 }
 
-export function ContactStatsCards({ totalAll, fornecedoresAll }: ContactStatsCardsProps) {
-  const { data: kpi, isLoading } = useContactsKpi(false);
+export function ContactStatsCards({ totalAll, fornecedoresAll, includeLegacy = false }: ContactStatsCardsProps) {
+  const { data: kpi, isLoading } = useContactsKpi(includeLegacy);
 
   if (isLoading || !kpi) {
     return (
@@ -46,7 +48,7 @@ export function ContactStatsCards({ totalAll, fornecedoresAll }: ContactStatsCar
         deltaPct={null}
         tile="purple"
         icon={Building2}
-        series={kpi.seriesEmpresasWeekly12}
+        series={kpi.seriesEmpresasCumulative12w}
         chart="line"
       />
       <ContactKpiCard
