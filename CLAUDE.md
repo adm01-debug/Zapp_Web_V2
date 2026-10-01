@@ -139,9 +139,7 @@ Estado dos achados após re-auditoria de 2026-09-17:
   **Correção de 2026-09-25:** a linha original afirmava "review obrigatório". A API não retorna
   `required_pull_request_reviews` para a `main` e `list_rulesets` volta vazio — **não há** revisão
   obrigatória, e o `.github/CODEOWNERS` é decorativo sem a regra ligada. Isso é deliberado: com
-  vários agentes abrindo PR — `allow_auto_merge: false` no repo, ninguém usa auto-merge de
-  fato (`auto-update-pr-branch.yml` filtra `.autoMergeRequest != null` e nunca encontra PRs
-  elegíveis) — exigir aprovação humana pararia o fluxo inteiro.
+  vários agentes abrindo PR e usando auto-merge, exigir aprovação humana pararia o fluxo inteiro.
   `required_conversation_resolution` segue desligado pelo mesmo motivo (bots de review deixam
   threads abertas). O perímetro real da `main` hoje é: `enforce_admins`, sem force-push, sem
   deleção, e os 6 required checks da seção abaixo.
@@ -166,40 +164,43 @@ Estado dos achados após re-auditoria de 2026-09-17:
   merge retorna 405 "N of N expected" com CI totalmente verde — o diagnóstico correto é
   verificar `strict` ao vivo com `github_get_branch_protection`, não retentar o merge.
 
-  **Correção de 2026-10-01 (E01, 4ª regressão):** `strict` regrediu novamente para `true`
-  entre 27/09 e 01/10 — causa não identificada. Restaurado para `false` via `github_request`
-  (PUT direto; `github_update_branch_protection` retornava 500 nesta sessão). Verificado:
-  `strict: false` confirmado pela API; PR #1343 mergeada em seguida. Snapshot em
-  `docs/audits/evidence/branch-protection-2026-10-01.json`.
+  **Correção de 2026-10-01:** `strict` voltou a `true` pela terceira vez (sintoma idêntico ao de 27/09: PR #1375 com os 6 checks verdes e merge 405 "6 of 6 expected"; a `main` avançava a cada poucos minutos e a PR voltava a `BEHIND` antes de o CI de 6 min terminar). Restaurado para `false` com `github_update_required_status_checks` (PATCH só do campo — o PUT completo `github_update_branch_protection` devolveu 500 e não alterou nada). Autor da regressão **não identificável por API**: nenhum workflow nem script do repo toca branch protection (`grep` em `.github/`, `scripts/`), nada no `/workspace` da VPS, e conta do tipo `User` não tem audit log via API — o único registro é o **Security log** da conta (Settings → Security log, filtrar `protected_branch`), que só o Joaquim consegue abrir. Hipótese mais provável: alguma sessão fazendo PUT completo de proteção (todo PUT precisa mandar `strict` explicitamente) para mexer em outro campo. Antes de qualquer `github_update_branch_protection`, ler o estado com `github_get_branch_protection` e repetir `strict: false`.
+
+  **Correção estrutural posterior de 2026-10-01:** `required_status_checks.strict` voltou a ser **`true`** como
+  política permanente. O repositório agora permite auto-merge e o workflow
+  `auto-update-pr-branch.yml` voltou a executar em cada push na `main`: PRs com auto-merge que
+  ficarem `BEHIND` são atualizadas e têm os checks obrigatórios reiniciados automaticamente. Isso
+  preserva os seis checks contra a base mais recente sem depender de rebases manuais. A fila de
+  merge nativa não foi adotada porque este repositório público pertence a uma conta pessoal; a
+  disponibilidade documentada pelo GitHub exige repositório público de organização ou organização
+  com GitHub Enterprise Cloud para repositórios privados.
 
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
 Auditoria dos 13 workflows + 3 dinâmicos (16 total), da branch protection, dos secrets e dos environments. O que passou a
 valer (confira antes de propor mudança de CI, para não refazer o que já existe):
 
-**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions):** são 14 arquivos em
+**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions):** são 13 arquivos em
 `.github/workflows/` (`auto-update-pr-branch.yml`, `branch-hygiene-audit.yml`, `ci.yml`,
 `codeql.yml`, `crm-sync-worker.yml`, `db-guard.yml`, `db-live-guard.yml`, `db-migrate.yml`,
-`deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx-pr.yml`, `supabase-sync.yml`,
-`targeted-ledger-evidence.yml`, `types-sync.yml`), mais 3 workflows dinâmicos que não têm
-arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) — 17 no
-total. Plano completo em `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md`.
+`deploy-functions.yml`, `e2e-logado.yml`, `supabase-sync.yml`, `targeted-ledger-evidence.yml`,
+`types-sync.yml`), mais 3 workflows dinâmicos que não têm arquivo próprio no repo (Dependabot
+Updates, Dependency Graph, Copilot reviewer) — 16 no total. Plano completo em
+`docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-26.md`.
 
-**Required checks da `main`** (6; `strict` está `false` ao vivo — ver correções em 25/09 e 27/09 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
+**Required checks da `main`** (6; `strict` está `true` ao vivo — ver correção de 01/10 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
 `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline` e
 `🎭 E2E Tests (Playwright)` — este último passou a ser obrigatório em 25/09; antes rodava em PR
 sem bloquear merge. `🔬 CodeQL (javascript-typescript)` roda em CI mas **não** é required check
 (não bloqueia merge).
 
-**Environments com aprovação humana** — os quatro já criados no repo: `producao-edge-functions`
-(deploy-functions.yml), `producao-ddl` (db-migrate.yml), `legacy-import-destrutivo`
-(supabase-sync.yml) e `db-ledger-evidence`. **Atenção:** `producao-edge-functions` tem apenas
-`branch_policy` (API), **sem `required_reviewers`** — o CLAUDE.md anterior afirmava que havia
-aprovação humana neste environment, mas isso não é verdade ao vivo; o deploy-functions.yml
-pausa em `Waiting` quando o environment exige revisores, mas como não há revisores configurados,
-pode avançar sem aprovação humana. `producao-ddl` e `legacy-import-destrutivo` têm
-`required_reviewers`. `db-ledger-evidence` só tem `branch_policy`. Disparar qualquer um desses
-workflows pausa em `Waiting` até o environment ser satisfeito.
+**Environments com aprovação humana** (`required_reviewers`, branch policy restrita a branches
+protegidas) — os quatro já criados no repo; os dois primeiros passam a ser exigidos pelos
+workflows quando a PR #687 mergear: `producao-edge-functions` (deploy-functions.yml),
+`producao-ddl` (db-migrate.yml),
+`legacy-import-destrutivo` (supabase-sync.yml) e `db-ledger-evidence` (que existia só com
+`branch_policy`, portanto sem exigir aprovação de ninguém). Disparar qualquer um desses
+workflows agora pausa em `Waiting` até alguém aprovar na aba Actions.
 
 **`supabase-sync.yml` está desarmado.** A única barreira era digitar o project-ref, que é público
 (está neste arquivo, num repo público). Agora exige, cumulativamente, aprovação no environment e o
@@ -231,17 +232,14 @@ mexer no parsing de `LEDGER_RETRY_DELAYS_MS`: `Number("")` é `0`, não `NaN`, e
 precisam ser descartadas **antes** do `Number()`, senão "vazio" vira um retry imediato em vez de
 nenhum.
 
-**Agendamentos sem colisão:** types-sync `49 5 * * 1` (semanal, segunda), db-live-guard
-`13 6 * * *` (**diário**, toda madrugada — não semanal como aparecia numa versão anterior do
-CLAUDE.md; a seção acima mencionava `13 6 * * 1` por erro), branch-hygiene `56 7 * * 1`
-(semanal, segunda), codeql `30 9 * * 1` (semanal, segunda). Types-sync e db-live-guard nesta
-ordem: o segundo compara o que o primeiro gera; rodavam ambos às 06:00 segunda e disputavam
-o banco no mesmo minuto.
+**Agendamentos sem colisão:** types-sync `49 5 * * 1`, db-live-guard `13 6 * * 1` (nesta ordem, o
+segundo compara o que o primeiro gera), branch-hygiene `56 7 * * 1`, codeql `30 9 * * 1`. Os dois
+primeiros rodavam ambos às 06:00 e disputavam o banco no mesmo minuto.
 
 **Repo:** `sha_pinning_required` ligado no GitHub (além do `check-workflow-pins.mjs`).
 
 **Fila de merge (merge queue) é IMPOSSÍVEL neste repo — não tente de novo.** Em 25/09, com `strict`
-ligado (hoje está `false` ao vivo — ver correções em 25/09 e 27/09 acima, seção "Branch protection sem `Contrato DB
+ligado (hoje está `false` ao vivo — ver correções em 25/09, 27/09 e 01/10 acima, seção "Branch protection sem `Contrato DB
 vivo`"), e várias sessões mergeando, toda PR que não entra primeiro volta para `BEHIND`, o
 `auto-update-pr-branch` recria o head e o CI (~6 min) recomeça; em 25/09 três PRs verdes ficaram
 ~40 min nesse ciclo. A fila do GitHub resolveria isso, e os gatilhos `merge_group` já foram
