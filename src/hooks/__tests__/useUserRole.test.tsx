@@ -12,10 +12,12 @@ function createWrapper() {
 }
 
 const mockFrom = vi.fn();
+const mockRpc = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: (...args: any[]) => mockFrom(...args),
+    from: (...args: unknown[]) => mockFrom(...args),
+    rpc: (...args: unknown[]) => mockRpc(...args),
     auth: {
       onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
       getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
@@ -137,5 +139,71 @@ describe('useUserRole', () => {
 
     expect(result.current.isSupervisor).toBe(true);
     expect(result.current.isAdmin).toBe(false);
+  });
+
+  /**
+   * F25 (Bloco B): o gate do Multiplix deixou de ser por papel e passou a ser a
+   * permissao nomeada `multiplix.dispatch.create`. A fonte usada pelo cliente e a
+   * MESMA do ProtectedRoute (src/components/auth/ProtectedRoute.tsx): a RPC
+   * `user_has_permission` (SECURITY DEFINER) via RoleService.checkPermission.
+   * A injecao aqui e na fonte (supabase.rpc) — leitura direta de role_permissions
+   * nao serve: a RLS so libera admin/supervisor, agente receberia zero linhas.
+   */
+  it('resolve a permissao exigida pela nav na RPC user_has_permission, independente do papel (F25)', async () => {
+    mockUseAuth.mockReturnValue({
+      user: { id: 'agent-1' },
+      session: {},
+      profile: null,
+      loading: false,
+    });
+
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({
+          data: [{ id: '1', user_id: 'agent-1', role: 'agent' }],
+          error: null,
+        }),
+      }),
+    });
+    mockRpc.mockResolvedValue({ data: true, error: null });
+
+    const { result } = renderHook(() => useUserRole(), { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.permissions).toContain('multiplix.dispatch.create');
+    });
+
+    expect(result.current.roles).toEqual(['agent']);
+    expect(mockRpc).toHaveBeenCalledWith('user_has_permission', {
+      _user_id: 'agent-1',
+      _permission_name: 'multiplix.dispatch.create',
+    });
+  });
+
+  it('nao entrega a permissao quando a RPC responde false, mesmo sendo staff (F25)', async () => {
+    mockUseAuth.mockReturnValue({
+      user: { id: 'sup-1' },
+      session: {},
+      profile: null,
+      loading: false,
+    });
+
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({
+          data: [{ id: '1', user_id: 'sup-1', role: 'supervisor' }],
+          error: null,
+        }),
+      }),
+    });
+    mockRpc.mockResolvedValue({ data: false, error: null });
+
+    const { result } = renderHook(() => useUserRole(), { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.permissionsLoading).toBe(false);
+    });
+
+    expect(result.current.permissions).toEqual([]);
   });
 });

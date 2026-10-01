@@ -34,7 +34,7 @@ function pushRecent(id: string) {
 }
 
  export function CommandPalette({ onNavigate }: CommandPaletteProps) {
-   const { roles } = useUserRole();
+   const { roles, permissions } = useUserRole();
  
    const filteredGroups = useMemo(() => {
      const groups = [
@@ -44,9 +44,9 @@ function pushRecent(id: string) {
      ];
      return groups.map(g => ({
        ...g,
-       items: NavigationService.filterNavItems(g.items, roles)
+       items: NavigationService.filterNavItems(g.items, roles, permissions)
      })).filter(g => g.items.length > 0);
-   }, [roles]);
+   }, [roles, permissions]);
  
    const allItems = useMemo(() => filteredGroups.flatMap(g => g.items), [filteredGroups]);
  

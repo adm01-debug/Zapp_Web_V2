@@ -16,6 +16,12 @@ export interface NavItem {
   icon: LucideIcon;
   label: string;
   roles?: AppRole[];
+  /**
+   * Permissao NOMEADA exigida pela entrada (ex.: 'multiplix.dispatch.create').
+   * Quando presente, ela e o gate — `roles` nao e consultado. Quem resolve o
+   * valor e o dono do usuario logado (ver useUserRole: RPC user_has_permission,
+   * SECURITY DEFINER, mesmo caminho do ProtectedRoute).
+   */
   permission?: string;
   /** 'full' = view manages its own layout (no ViewContainer scroll wrapper) */
   layout?: 'full' | 'scroll';
@@ -34,6 +40,10 @@ export interface NavGroup {
 const STAFF_ROLES: AppRole[] = ['admin', 'supervisor'];
 const ADMIN_ONLY: AppRole[] = ['admin'];
 
+// F25 (Bloco B): o Multiplix nao e mais gated por papel — a entrada exige a
+// permissao nomeada abaixo (multi-admin/multi-supervisor/agent que a receberem).
+const MULTIPLIX_DISPATCH_CREATE = 'multiplix.dispatch.create';
+
 export class NavigationService {
   static getPrimaryNav(): NavItem[] {
     return [
@@ -41,7 +51,7 @@ export class NavigationService {
       { id: 'team-chat', icon: MessagesSquare, label: 'Teams', layout: 'full', shortcut: 'Alt+M' },
       { id: 'email-chat', icon: Mail, label: 'Email', layout: 'full', shortcut: 'Alt+L' },
       { id: 'contacts', icon: User, label: 'Contatos', shortcut: 'Alt+O' },
-      { id: 'multiplix', icon: Send, label: 'Multiplix', roles: STAFF_ROLES },
+      { id: 'multiplix', icon: Send, label: 'Multiplix', permission: MULTIPLIX_DISPATCH_CREATE },
       { id: 'catalog', icon: Package, label: 'Catálogo', shortcut: 'Alt+A' },
       { id: 'voip', icon: PhoneCall, label: 'Telefonia', shortcut: 'Alt+T' },
       { id: 'pipeline', icon: Kanban, label: 'Quadro', layout: 'full', shortcut: 'Alt+P' },
@@ -144,19 +154,35 @@ export class NavigationService {
     ];
   }
 
-  static filterNavItems(items: NavItem[], userRoles: AppRole[]): NavItem[] {
+  static filterNavItems(items: NavItem[], userRoles: AppRole[], userPermissions: string[] = []): NavItem[] {
     return items.filter(item => {
+      if (item.permission && !userPermissions.includes(item.permission)) return false;
       if (item.roles && !item.roles.some(role => userRoles.includes(role))) return false;
       return true;
     });
   }
 
   /**
+   * Permissoes nomeadas exigidas pelos itens de navegacao — derivadas do proprio
+   * metadata (nenhuma lista hardcoded). O dono do usuario logado usa isso para
+   * resolver, no maximo uma vez por sessao, quais dessas permissoes ele possui.
+   */
+  static getRequiredPermissions(): string[] {
+    const all = [
+      ...this.getPrimaryNav(),
+      ...this.getGroups().flatMap(g => g.items),
+      ...this.getAdvancedNav(),
+    ];
+    return [...new Set(all.map(item => item.permission).filter((p): p is string => Boolean(p)))];
+  }
+
+  /**
    * Autorização por id de view — usada pelo ViewRouter para bloquear acesso
    * direto via ?view= mesmo quando o item está escondido do menu.
-   * Id desconhecido = negado (nunca autoriza por omissão).
+   * Id desconhecido = negado (nunca autoriza por omissão). Item com `permission`
+   * exige a permissao nomeada; item com `roles` exige o papel; sem nenhum, libera.
    */
-  static canAccess(viewId: string, userRoles: AppRole[]): boolean {
+  static canAccess(viewId: string, userRoles: AppRole[], userPermissions: string[] = []): boolean {
     const all = [
       ...this.getPrimaryNav(),
       ...this.getGroups().flatMap(g => g.items),
@@ -164,6 +190,7 @@ export class NavigationService {
     ];
     const item = all.find(i => i.id === viewId);
     if (!item) return false;
+    if (item.permission) return userPermissions.includes(item.permission);
     if (!item.roles) return true;
     return item.roles.some(role => userRoles.includes(role));
   }
