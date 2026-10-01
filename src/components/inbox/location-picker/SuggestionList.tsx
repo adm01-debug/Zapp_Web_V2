@@ -126,6 +126,19 @@ export function SuggestionList({
       {status === 'empty' && (
         <p className="px-3 py-3 text-sm text-muted-foreground">Nada encontrado para &quot;{query}&quot;.</p>
       )}
+      {/* E57: quem usa leitor de tela não "vê" a lista aparecer. Região viva só com texto de
+          estado — o conteúdo dos itens já é lido pelo próprio listbox, repetir viraria eco. */}
+      <span aria-live="polite" role="status" className="sr-only" data-testid="sr-aviso">
+        {status === 'ok'
+          ? `${suggestions.length} sugestões disponíveis`
+          : status === 'empty'
+            ? `Nada encontrado para "${query}"`
+            : status === 'error'
+              ? 'Falha ao buscar sugestões'
+              : status === 'paused'
+                ? 'Busca pausada'
+                : ''}
+      </span>
       {status === 'ok' && (
         <div className="divide-y divide-border">
           {suggestions.map((suggestion, index) => {
