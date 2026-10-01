@@ -61,7 +61,7 @@ describe('ContactKanbanView — agregados após mover de coluna', () => {
     let done!: Promise<void>;
     act(() => { done = mocks.onDragEnd!(drag('fornecedor')); });
     await act(async () => { mocks.pending[0].resolve({ error: null }); await done; });
-    expect(invalidatedKeys()).toEqual(expect.arrayContaining(['contacts-kpi', 'contacts-type-counts']));
+    expect(invalidatedKeys()).toEqual(expect.arrayContaining(['contacts-kpi', 'contacts-type-counts', 'contacts-search']));
   });
 
   it('drag superado que o banco aceitou invalida mesmo se o drag seguinte falhar', async () => {
@@ -75,7 +75,7 @@ describe('ContactKanbanView — agregados após mover de coluna', () => {
     await act(async () => { mocks.pending[0].resolve({ error: null }); await first; });
     await act(async () => { mocks.pending[1].resolve({ error: { message: 'falhou' } }); await second; });
 
-    expect(invalidatedKeys()).toEqual(expect.arrayContaining(['contacts-kpi', 'contacts-type-counts']));
+    expect(invalidatedKeys()).toEqual(expect.arrayContaining(['contacts-kpi', 'contacts-type-counts', 'contacts-search']));
   });
 
   it('move que falhou não invalida', async () => {
