@@ -6,6 +6,10 @@
 > (mensagem nova, menção, SLA, meta, chamada entrando).
 >
 > Este documento é **plano**. Nenhuma linha de código foi alterada.
+>
+> **Atualização de 2026-10-01:** o plano foi **executado e fechado** — a evidência etapa por etapa
+> está na seção "7. Estado de execução". O texto abaixo é o plano original, preservado como
+> registro da intenção (onde ele diz "nenhuma linha de código foi alterada", vale para 2026-09-27).
 
 ---
 
@@ -238,3 +242,135 @@ uma refatoração futura não quebre a separação em silêncio.
 Volume por conversa; volume separado para enviados e recebidos; normalização/boost de áudio baixo;
 equalizador; persistência do volume no banco; correção do `soundVolume` não persistido dos alertas;
 tocar só um player por vez.
+
+---
+
+## 7. Estado de execução (fechamento — 2026-10-01)
+
+> O plano virou execução. Cada etapa fechada nesta rodada traz a evidência medida
+> (`arquivo:linha`, teste ou run). As etapas conferidas antes desta rodada têm a evidência por
+> etapa em `docs/audits/AUDITORIA_ENTREGAS_HERMES_2026-09-30.md` (auditoria do Claude na
+> `main` `a1ddaafe`).
+
+### 7.1 Etapas fechadas nesta rodada
+
+| Etapa | O que ficou de fato | Evidência |
+|---|---|---|
+| **E10** | O `AudioContext` da mídia nasce no **primeiro play** (gesto do usuário) e é liberado no unmount: `disconnect` no ganho do elemento e `close` no contexto quando o **último** player solta (contagem — fechar sempre emudeceria quem continua na tela). Antes ele nascia no mount: o navegador entrega o contexto SUSPENSO, o áudio sai mudo e `resume()` não sai de `suspended` sem interação. | `src/lib/mediaVolumeElement.ts:113-137` (gate do gesto), `:160-186` (release + close), `:194-208` (`bindMediaVolume`) · `src/hooks/communication/useMediaElementVolume.ts:44-78` · testes `MediaVolume.test.tsx` ("o contexto da mídia nasce no primeiro play…" e "…só fecha quando o ÚLTIMO solta") + `mediaVolumeElement.test.ts:101` · mutações E10a/E10b/E10c |
+| **E16** | ↑/↓ e `M` valem com o foco em **qualquer parte do player** (botão de play, barra de progresso, ...), não só no botão do volume; o mesmo teclado chegando pelos dois caminhos conta **uma vez** (dedup por `defaultPrevented`); e o ajuste passou a ler o valor atual do store (com o valor do render, a contagem dupla era invisível). | `src/hooks/ui/useVolumeRocker.ts:57-100` (núcleo + dedup) e `:141-153` (listener no container) · `MediaVolumeControl.tsx:57-70` · escopo do player em `AudioMessagePlayer.tsx:26,108,143` e `VideoFullscreen.tsx:20,57,68` · teste E16 · mutações E16a/E16b |
+| **E18** | Conferido — e **reprovado em 6 pares**, todos por token/estilo do app, nenhum por cor literal no controle. Ver 7.2. | medição no Chromium (7.2) |
+| **E37** | As 4 superfícies de mídia que **não** são de conversa (laboratório de voz e biblioteca do admin) passam a ter isenção **explícita** no código e no contrato — como já era o caso dos alertas. | comentários em `src/components/voice/ElevenLabsVoiceDesign.tsx:149`, `src/components/voice/ElevenLabsDialogue.tsx:157`, `src/components/settings/media-library/AIGenerateDialog.tsx:32`, `src/components/settings/media-library/useMediaLibrary.ts:221` · `tests/contracts/media-volume-surfaces.contract.test.ts:64-71` · mutações E37a/E37b |
+| **E39** | O teste do alerta lê `settings.soundVolume` (não um literal) e confere que a cadeia termina num `ctx.destination` de verdade. | `src/components/inbox/__tests__/MediaVolume.test.tsx` (caso E38/E39) · mutação E39 |
+| **E41** | A âncora `ÂNCORA (não unificar)` também no toque da chamada entrante — o módulo que mais tenta "consolidar" os canais, porque o ganho dele igualmente sai de `settings.soundVolume` — agora pinada por teste. | `src/components/calls/IncomingCallAlert.tsx:14-26` · asserção no caso E41 de `MediaVolume.test.tsx` · mutação E41 |
+| **E45/E48** | O spec de volume do E2E logado perdeu a flake: o clique longo posicional (timer de 400 ms cancelado por qualquer `pointerleave`) deu lugar a `focus()` + `Enter`, o equivalente de teclado do mesmo `setOpen(true)`. **A causa citada pela auditoria (`media-volume.spec.ts:49`) era linha obsoleta** — nas runs o spec aparece como *flaky* (1ª tentativa vermelha, retry verde), e o `beforeEach` nunca falhou. | `e2e/media-volume.spec.ts:59-71` e `:106-108` · diagnóstico com 42 runs em `~/evidencias/plano-volume-50/e45-e48-e2e.md` |
+| **E46** | Checklist de navegadores registrado com o que é prova e o que depende de aparelho. Ver 7.3. | `~/evidencias/plano-volume-50/e46-navegadores.md` |
+| **E31/E47/E49** | Branch, PR e validação em produção. Ver 7.4. | 7.4 |
+| **E50** | Cabeçalho deste arquivo corrigido + persistência do volume dos ALERTAS conferida com o código em mãos. Ver 7.5. | 7.5 |
+| **D6** | O `SoundMuteToggle` — que esta decisão dizia intocado — foi substituído pelo `SoundVolumeControl` (com slider) em etapa anterior; o controle de MÍDIA entrou ao lado como `MediaVolumeToggle`, com ícone distinto (fone). **Decisão mantida, não revertida** (D6 descrevia o estado de 27/09; a UI evoluiu com a própria etapa do volume de alertas). | `src/components/layout/Sidebar.tsx:221` (alertas) e `:224` (mídia) |
+
+### 7.2 E18 — contraste medido (e reprovado)
+
+Método: CSS real compilado (`tailwindcss -c tailwind.config.ts -i src/index.css`), DOM montado com
+as strings de classe dos componentes e `getComputedStyle` lido no **Chromium** (Playwright); o fundo
+é a **cadeia real de `background-color` até o primeiro opaco** — é assim que `bg-muted/50` compõe.
+Vars de tema aplicadas inline no `<html>`, como o app faz (preset `corporate`). Medição em repouso,
+com transições desligadas.
+
+| Par (fg × bg) | Claro | Escuro | Alto-contraste |
+|---|---|---|---|
+| sidebar, ícone ativo (`--primary` sobre `--muted/50`) | 4,71 ✅ | **3,29 ❌** | 4,71 ✅ |
+| sidebar, ícone mudo | 4,60 ✅ | 8,96 ✅ | 4,60 ✅ |
+| overlay do fullscreen (`--secondary-foreground` sobre `--secondary`) | **3,30 ❌** | 14,88 ✅ | **3,30 ❌** |
+| balão RECEBIDO (`--muted-foreground` sobre `--muted/50`) | **4,17 ❌** | 7,33 ✅ | **4,17 ❌** |
+| balão ENVIADO (`--primary-foreground/70` sobre `--primary-foreground/10`) | **2,94 ❌** | **2,94 ❌** | **2,94 ❌** |
+| popover: título/rodapé (`--muted-foreground`) e valor (`--popover-foreground`) sobre `--popover` | 5,06 / 17,05 ✅ | 9,34 / 16,93 ✅ | 5,06 / 17,05 ✅ |
+| botão "Mudo" do popover (`--primary-foreground` sobre `--primary`) | 5,17 ✅ | 5,17 ✅ | 5,17 ✅ |
+| slider: trilha × range (`--primary` × `--secondary`) — 1.4.11 pede 3:1 | **1,30 ❌** | **2,88 ❌** | **1,30 ❌** |
+
+**Três defeitos que a medição revelou — nenhum corrigido aqui (fora do escopo desta etapa):**
+
+1. **O alto-contraste não chega ao app.** `applyThemePreset` grava `--primary/--muted/--secondary/...`
+   **inline no `<html>`** (`src/lib/theme/presets.ts`) e estilo inline vence a classe
+   `.high-contrast` (`src/styles/accessibility.css`). Com o toggle ligado, `--primary` continua
+   `221 83% 53%` (corporate) — por isso a coluna de HC sai idêntica à do claro. Consequência dupla:
+   **o E18 não é conferível em alto-contraste enquanto isto existir**, e todo usuário de
+   alto-contraste está sem os tokens dele.
+2. **O balão enviado reprova até o limiar de ícone (3:1)**, nos três temas: `--primary-foreground/70`
+   sobre `bg-primary-foreground/10` (`AudioMessagePlayer.tsx:113` e `:146`). Subir para 100% chega a
+   4,36; só passa (5,20) removendo o overlay `primary-foreground/10` da faixa de controles.
+3. **Tokens que reprovam fora daqui**: `--muted-foreground` no claro (4,17 no balão recebido) e
+   `--secondary` no claro (3,30 no overlay). Mexer neles atinge o app inteiro — é mudança de design
+   system, decisão separada.
+
+### 7.3 E46 — checklist de navegadores
+
+Registrado em `~/evidencias/plano-volume-50/e46-navegadores.md` (24 linhas, no formato
+`plataforma | passo exato | critério de aprovação | status | evidência`). O que ficou **provado** e o
+que **depende de aparelho**:
+
+- **Provado por teste**: caminho nativo (`element.volume` gravável) sem criar contexto —
+  `src/lib/__tests__/mediaVolumeElement.test.ts:79`; iOS read-only caindo no `GainNode`, com o nó
+  reusado (`createMediaElementSource` uma vez por elemento) — `:93`, `:101`, `:111`; teclado com o
+  foco no player e sem captura global — `MediaVolume.test.tsx` (E16); roda do mouse, persistência no
+  reload e sincronização entre abas.
+- **Decidido por código**: sondas de faixa de áudio por motor (`mozHasAudio`, `webkitAudioDecodedByteCount`,
+  `audioTracks`), `webkitAudioContext`, e a guarda de `input/textarea/contentEditable`
+  (`useVolumeRocker.ts:100-109`).
+- **PENDENTE — precisa de aparelho**: Edge (o Playwright só tem chromium/firefox/webkit — paridade com
+  o Chrome é esperada por motor, não medida); autoplay real; **Safari iOS inteiro**; teclado no
+  fullscreen nativo; troca de vídeo no preview.
+
+**Achados que o checklist levanta e que NÃO foram corrigidos aqui:** `VideoFullscreen.tsx:94` está
+sem `crossOrigin` (o `<audio>` do player tem: `AudioMessagePlayer.tsx:109`) — em URL assinada
+cross-origin o `createMediaElementSource` pode lançar, o `catch` cai num `element.volume` que no iOS
+é no-op silencioso e **o caminho do E10 deixa de valer no vídeo**; e o mesmo elemento está sem
+`playsInline`, o que no iOS entrega o vídeo ao player nativo.
+
+### 7.4 E31/E47/E49 — branch, PR e produção
+
+- **Branch:** `hermes/plano-volume-50-etapas-finalizacao-2610011018e48d`.
+- **PR:** [#1395](https://github.com/adm01-debug/Zapp_Web_V2/pull/1395) — `feat(midia): fecha as
+  etapas pendentes do plano de volume de mídia (E10/E16/E37/E39/E41/E45)`, 3 commits: as etapas de
+  código, o spec do E2E e este plano.
+- **E31 (conflito de UI):** conferido — a PR **#1040** mexeu no header do chat e na sidebar do
+  contato, **não** nos "Controles rápidos" da sidebar (`Sidebar.tsx:210-226`); já está MERGED, então
+  não há colisão pendente.
+- **E49:** a validação em produção é o próprio **`e2e-logado`** na `main` depois do merge — é o CI
+  autenticado rodando contra produção, e é ele que exercita o volume persistindo no reload e o botão
+  de alertas intocado com a mídia muda. _Run registrado em 7.5._
+
+### 7.5 E50 — persistência do volume dos ALERTAS
+
+- **Código (leitura + escrita):** `useNotificationSettings.ts:88` lê `data.sound_volume` e `:154`
+  grava `dbUpdates.sound_volume = clampSoundVolume(updates.soundVolume)` — a coluna entrou pela
+  migration `supabase/migrations/20260929800000_user_settings_sound_volume.sql`.
+- **Banco canônico (`tnnnlkbymytvtqngbbqh`), medido nesta sessão:** `sound_volume` **NOT NULL**, 5
+  CHECKs de vocabulário validadas, migration `20260930350000` no ledger e 2 linhas em
+  `user_settings` (a verificação de 01/10 10:0x, via gateway de leitura).
+- **Ressalva honesta:** a re-medição feita no fechamento (01/10 ~10:50) **não completou** — o gateway
+  de leitura do banco respondeu **timeout/HTTP 520** e ele não é meu para mexer. O que está acima é a
+  medição anterior desta mesma sessão, não uma inferência.
+
+### 7.6 Contagem 50/50
+
+| Etapas | Situação |
+|---|---|
+| E01–E09, E11–E15, E17, E19–E30, E32–E36, E38, E40, E42–E44 | **FEITAS** — conferidas na auditoria de 2026-09-30 (evidência por etapa no doc da auditoria) |
+| E10, E16, E18, E31, E37, E39, E41, E45, E46, E47, E48, E49, E50 | **FEITAS nesta rodada** — evidência nas seções 7.1 a 7.5 |
+
+**Pendências explícitas (nenhuma delas é "etapa não feita"):**
+
+1. **Mensagem de ÁUDIO no contato de fixture (E45)** — exige gravar objeto + linha em
+   `messages` no **banco de produção** (tenant real). Não faço escrita em produção fora de migration
+   sem a sua decisão: ver a pergunta que segue no chat. Enquanto isso o caso segue `test.fixme`, com
+   o motivo escrito no próprio spec.
+2. **E18 em alto-contraste** — bloqueado pelo defeito do tema (7.2, item 1), que é anterior a este
+   plano.
+3. **Linha no `CLAUDE.md` (E41)** — `CLAUDE.md` é arquivo protegido; a escrita pediu aprovação e o
+   card expirou. A âncora no código está no lugar e pinada por teste.
+
+**Divergências do enunciado encontradas e resolvidas com o código real** (registradas para a próxima
+sessão não repetir): (a) os caminhos do E37 são `src/components/voice/ElevenLabs*.tsx` e
+`src/components/settings/media-library/*` — não `src/components/settings/ElevenLabs*` nem
+`src/hooks/settings/useMediaLibrary.ts`; (b) `media-volume.spec.ts:49` citado pela auditoria era
+**linha obsoleta** (o `beforeEach` não falhava; o problema era flake no clique longo).

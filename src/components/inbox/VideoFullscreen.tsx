@@ -17,6 +17,8 @@ export function VideoFullscreen({ url, onClose }: VideoFullscreenProps) {
   const [playbackRate, setPlaybackRate] = useState(1.0);
   const [hasAudio, setHasAudio] = useState<boolean | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  // E16 — mesmo escopo de atalhos do player do balão, agora em tela cheia.
+  const playerRef = useRef<HTMLDivElement>(null);
   // E21 — abre no volume global (não mais em `muted` fixo): aqui o mute e o volume são
   // os MESMOS do resto do app (D2). O botão de mute local que existia nesta barra foi
   // substituído pelo `MediaVolumeControl` (E22) para não haver dois controles do mesmo.
@@ -52,6 +54,7 @@ export function VideoFullscreen({ url, onClose }: VideoFullscreenProps) {
   // dentro da própria mensagem em vez de cobrir a tela.
   return createPortal(
     <motion.div
+      ref={playerRef}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -62,6 +65,7 @@ export function VideoFullscreen({ url, onClose }: VideoFullscreenProps) {
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <MediaVolumeControl
             variant="overlay"
+            playerRef={playerRef}
             disabled={hasNoAudio}
             disabledReason="Vídeo sem áudio"
           />

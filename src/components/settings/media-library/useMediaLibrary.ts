@@ -218,6 +218,8 @@ export function useMediaLibrary(type: MediaType) {
     audioRef.current?.pause();
     audioRef.current = null;
     if (!item.audio_url) { toast.error('URL do áudio não encontrada'); return; }
+    // E37 — isenta do controle de volume de mídia (`mediaVolumeStore`): prévia da
+    // BIBLIOTECA do admin (gestão de arquivo, fora do escopo do plano), não da conversa.
     const audio = new Audio(item.audio_url);
     audio.onended = () => setPlayingId(null);
     audio.onerror = () => { setPlayingId(null); toast.error('Erro ao reproduzir áudio'); };
