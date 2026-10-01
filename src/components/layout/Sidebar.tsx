@@ -42,19 +42,19 @@ export const Sidebar = React.memo(function Sidebar({
   const isDark = resolvedTheme === 'dark';
   const { collapsed, toggle } = useSidebarCollapse();
   const { favorites, toggleFavorite, isFavorite } = useSidebarFavorites();
-  const { roles } = useUserRole();
+  const { roles, permissions } = useUserRole();
 
   const filteredPrimaryNav = useMemo(() =>
-    NavigationService.filterNavItems(primaryNav, roles),
-    [roles]
+    NavigationService.filterNavItems(primaryNav, roles, permissions),
+    [roles, permissions]
   );
 
   const filteredGroups = useMemo(() =>
     sidebarGroups.map(group => ({
       ...group,
-      items: NavigationService.filterNavItems(group.items, roles)
+      items: NavigationService.filterNavItems(group.items, roles, permissions)
     })).filter(group => group.items.length > 0),
-    [roles]
+    [roles, permissions]
   );
 
   const allNavItems = useMemo(() =>
@@ -72,8 +72,8 @@ export const Sidebar = React.memo(function Sidebar({
     favorites
       .map(id => allNavItems.find(item => item.id === id))
       .filter(Boolean)
-      .filter(item => !primaryNavIds.has(item!.id) && NavigationService.canAccess(item!.id, roles)) as typeof allNavItems,
-    [favorites, allNavItems, primaryNavIds, roles]
+      .filter(item => !primaryNavIds.has(item!.id) && NavigationService.canAccess(item!.id, roles, permissions)) as typeof allNavItems,
+    [favorites, allNavItems, primaryNavIds, roles, permissions]
   );
 
   return (
