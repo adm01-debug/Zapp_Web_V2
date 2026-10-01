@@ -268,4 +268,37 @@ Cada agente recebeu a ordem de **derrubar** as afirmações deste ledger. Result
   Depois de reverter: 12/12 e 28/28 verdes, árvore limpa.
 - **TLS do snapshot FECHADO.** `telefonia-snapshot.mjs` validava a identidade do banco mas repassava `sslmode`/`sslrootcert` da URL direto ao libpq (o próprio `psql-environment.mjs` documenta que validar TLS é dever do chamador). Prova antes/depois, com a identidade correta e credencial falsa: **antes**, `?sslmode=disable` era aceito e o psql **ia à rede** ("psql falhou"); **depois**, recusa com "tenta reduzir sslmode" e "tenta substituir a CA Supabase pinada". Sem parâmetro TLS o script segue fixando `verify-full` e chega ao psql — ou seja, não há falso positivo. Artefato `pos-fase-0.json` intacto.
 
-Pendente da lista do usuário: **T12** em diante (T10 e T11 entregues em 30/09/2026 — as linhas 64-65 são as corretas; esta nota estava desatualizada).
+## Auditoria adversarial pós-merge do T12/T13 — 01/10 (5 agentes, falsificação)
+
+Rodada sobre o que já estava em produção (#1285/T11 e #1328/T12+T13). Ela **achou 8 defeitos reais meus** — não gaps de teste — e esta etapa os corrige antes de seguir para a Fase 1-B.
+
+**O que resistiu (confirmado, com prova):**
+- **Zero combinações violam os CHECKs de `calls`.** Enumerado o espaço inteiro do T12 (216 combos de `endedBy × talkSeconds × direction × sipCode`), rodando a função real contra o PostgreSQL descartável **e** a RPC real: `PersistedStatus` (8) == `calls_status_check` (8) e `EndReason` (11) == `calls_end_reason_check` (11) — violar é **estruturalmente impossível**.
+- `requestDelegate.onReject` cobre **toda** resposta final 4xx/5xx/6xx (e o próprio sip.js sintetiza 408 no timeout de transação e 503 na falha de transporte); `onFinished` **nunca** dispara duas vezes.
+- O id do T13 é a **linha certa** de `calls` (nem `provider_call_id` nem id de sessão gravam nada — provado no descartável); `p_call_id` inexistente levanta `P0002`, não há sucesso silencioso.
+- Merge do #1328 intacto; o payload dos 5 cenários do aceite bate 1:1; as asserções **aumentaram** (`useSipClient` +12, `calls-access` +13).
+
+**Os 8 defeitos corrigidos (cada um com mutação provada):**
+
+| # | Defeito (medido) | Correção |
+|---|---|---|
+| D1 | **INVITE sem resposta final travava o usuário para sempre**: sem `Terminated`, o `onFinished` nunca disparava, `isBusy` ficava `true` e a linha presa em `ringing` (sem watchdog) | watchdog de 40s no `CallEngine` que encerra por `{endedBy:'timeout'}` (revive o ramo `timeout`, até então código morto); desarmado no `Established` — Timer B é do INVITE, uma conversa longa não pode ser derrubada |
+| D2 | `failure` gravava **`no_answer`** em vez de `failed` (falha local/transporte aparecia como "não atendida") | `case 'failure'` em `motivoNaoAtendida` |
+| D3 | Os 3 upserts eram *fire-and-forget*: o `answered` atrasado **regravava `status='answered'`** sobre o desfecho final | `criarFilaDePersistencia()` no `persistence.ts` — ordem de chamada = ordem de gravação (o `useSipClient` ficou **neutro em linhas**: 119, aceite T09 <120) |
+| D4 | A ordem `setStatus('ended')` → `onFinished` entregava à máquina um desfecho **presumido** | `encerrar(outcome)` emite o `onFinished` **antes** do `setStatus` |
+| D5 | `despacharFim` colapsava tudo em `hangup_remote`: recusa virava *"Cancelada por quem ligou"*, falha virava encerramento remoto | `eventoDeFim` mapeia o `endedBy` completo respeitando a tabela `VALIDAS` (nunca despacha inválido) |
+| D6 | "Desligar" chamada de entrada era **transição inválida** (`HANGUP_LOCAL` a partir de `ringing_in`, com warn) | `hangup()` despacha `REJECT` em `ringing_in` (→ `declined`) |
+| D7 | A anotação do T13 **desaparecia da tela**: o painel lia `notes` enquanto a RPC gravava `agent_notes` | `VoIPPanel` lê `agent_notes` + `invalidateQueries(['calls-history'])` no save |
+| D8 | O desfecho real era **engolido** pela guarda de terminal (486 virava `no_answer` na sessão) | defesa em profundidade: `fimFracoRef` marca o fim presumido e só ele pode ser corrigido pela reconstrução com os mesmos carimbos |
+
+**Achados NÃO corrigidos aqui (registrados para o Claude planejar):**
+- `busy_here` é **código morto** — o CHECK permite, o doc e o nome do teste prometem, nenhum caller produz (a 2ª chamada na linha ocupada é recusada por 486 e **nenhuma linha nasce**).
+- **Armadilha armada no `p_status`**: `coalesce(p_status,'ringing')` no `VALUES` faz `excluded.status` nunca ser NULL, então **qualquer gravação que omita `p_status` sobrescreve o desfecho com `ringing`**. Hoje só não dispara porque os 3 call sites mandam explícito.
+- O motor **nunca** emite `cancel_remote`/`timeout` — o aceite "entrada cancelada → `missed`/`cancelled_remote`" só existe no reducer, não na cadeia que grava.
+- `hangUp()` é engolido na janela do `createInviter` (o clique some e a ligação segue).
+- `talkSeconds='undefined'` cai no ramo "atendida" (hoje inalcançável, mas é borda).
+- **SonarCloud da `main` está VERMELHO** (`new_reliability_rating=3`, duplicação 4,4%) e **não é required** — por isso os merges passam. Não é deste escopo, fica registrado.
+
+**Evidência**: suíte completa **348 arquivos, 4668 passed | 38 todo, zero falhas**; `tsc -b --force` exit 0; cada D com mutação vermelha e restauração por `sha256`; a mutação do D2 refeita por mim.
+
+Pendente da lista do usuário: **T15** em diante (T01-T14 e T18 entregues; o T10-T13 passou por esta auditoria em 01/10).

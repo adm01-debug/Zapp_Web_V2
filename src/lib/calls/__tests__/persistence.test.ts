@@ -16,7 +16,7 @@ const { mockRpc } = vi.hoisted(() => ({ mockRpc: vi.fn() }));
 
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc: mockRpc } }));
 
-import { UPSERT_MY_CALL_RPC, desfechoDaChamada, novoCallId, upsertMyCall, uuidV4 } from '../persistence';
+import { UPSERT_MY_CALL_RPC, criarFilaDePersistencia, desfechoDaChamada, novoCallId, upsertMyCall, uuidV4 } from '../persistence';
 import type { CallDirection, CallEndOutcome, EndReason, PersistedStatus } from '../callStatus';
 
 /** Argumentos da n-ésima chamada a `upsert_my_call` (0 = primeira). */
@@ -250,6 +250,16 @@ describe('desfechoDaChamada com outcome (T12)', () => {
       esperado: { status: 'failed', endReason: 'failed' },
     },
     {
+      // D2: o único produtor de `failure` é o catch do `makeCall` (falha
+      // local/transporte, `sipCode: null`). Sem o `case 'failure'` isto caía no
+      // default e era gravado como `no_answer` — "não atendida" para uma falha.
+      nome: 'falha local ao discar (antes de atender) → failed/failed, não no_answer',
+      talkSeconds: null,
+      direction: 'outbound',
+      outcome: { endedBy: 'failure', sipCode: null },
+      esperado: { status: 'failed', endReason: 'failed' },
+    },
+    {
       nome: '603 na saída antes de atender → declined/declined',
       talkSeconds: null,
       direction: 'outbound',
@@ -304,5 +314,66 @@ describe('novoCallId/uuidV4 — o id é SEMPRE um uuid válido', () => {
     } finally {
       vi.stubGlobal('crypto', original);
     }
+  });
+});
+
+/**
+ * D2 — a falha local/transporte antes de atender NÃO é "não atendida":
+ * `{ endedBy: 'failure', sipCode: null }` tem de sair `failed`/`failed` no
+ * payload (antes o `default` gravava `no_answer`).
+ */
+describe('desfechoDaChamada — falha local ao discar (D2)', () => {
+  it('failure com sipCode null → failed/failed (não no_answer)', () => {
+    expect(desfechoDaChamada(null, 'outbound', { endedBy: 'failure', sipCode: null }))
+      .toEqual({ status: 'failed', endReason: 'failed' });
+  });
+});
+
+/**
+ * D3 — a fila existe para que a ORDEM DE CHAMADA vire a ordem de chegada à
+ * RPC. Sem ela, o `answered` (assíncrono) podia completar depois do `finished`
+ * e regravar `status='answered'` sobre o desfecho — a linha terminava atendida.
+ */
+describe('criarFilaDePersistencia (D3)', () => {
+  it('serializa: a 2ª só dispara a RPC depois da 1ª assentar (banco lento na 1ª)', async () => {
+    let liberarPrimeira!: () => void;
+    mockRpc.mockImplementationOnce(() => new Promise((resolve) => {
+      liberarPrimeira = () => resolve({ data: 'ok', error: null });
+    }));
+    mockRpc.mockResolvedValue({ data: 'ok', error: null });
+    const fila = criarFilaDePersistencia();
+
+    const primeira = fila.executar({ id: 'id-1', direction: 'outbound', status: 'ringing' });
+    const segunda = fila.executar({ id: 'id-1', direction: 'outbound', status: 'answered' });
+    const terceira = fila.executar({ id: 'id-1', direction: 'outbound', status: 'ended' });
+
+    await Promise.resolve();
+    await Promise.resolve();
+    // Com a 1ª pendente, SÓ ela saiu: sem a fila as 3 teriam disparado já, e o
+    // `answered`/`ended` fora de ordem regravariam o desfecho.
+    expect(mockRpc).toHaveBeenCalledTimes(1);
+
+    liberarPrimeira();
+    await Promise.all([primeira, segunda, terceira]);
+
+    expect(mockRpc).toHaveBeenCalledTimes(3);
+    expect(mockRpc.mock.calls.map(([, args]) => (args as { p_status: string }).p_status))
+      .toEqual(['ringing', 'answered', 'ended']);
+  });
+
+  it('a falha de uma gravação não trava as seguintes', async () => {
+    mockRpc
+      .mockResolvedValueOnce({ data: null, error: { message: 'timeout' } })
+      .mockResolvedValueOnce({ data: null, error: { message: 'timeout' } })
+      .mockResolvedValueOnce({ data: null, error: { message: 'timeout' } })
+      .mockResolvedValue({ data: 'ok', error: null });
+    const fila = criarFilaDePersistencia();
+
+    const ruim = await fila.executar({ id: 'id-falha', direction: 'outbound', status: 'ringing' });
+    const boa = await fila.executar({ id: 'id-falha', direction: 'outbound', status: 'ended' });
+
+    expect(ruim.ok).toBe(false);
+    expect(boa.ok).toBe(true);
+    expect(mockRpc).toHaveBeenCalledTimes(4); // 3 tentativas da 1ª + 1 da 2ª
   });
 });

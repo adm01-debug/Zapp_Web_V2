@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,7 @@ export function VoIPPanel() {
   const { profile } = useAuth();
   const sip = useCallSession();
   const { addCallNotes } = useCalls();
+  const queryClient = useQueryClient();
 
   const [search, setSearch] = useState('');
   const [searchDebounced, setSearchDebounced] = useState('');
@@ -74,9 +76,12 @@ export function VoIPPanel() {
   const selectedCall = calls.find(c => c.id === selectedCallId) ?? null;
 
   useEffect(() => {
+    // T16 (D7): a anotação do agente mora em `agent_notes` (T13 grava ali, via
+    // RPC); `notes` é metadado do provedor — ler `notes` deixava o campo vazio
+    // no ciclo salvar → fechar → reabrir.
     // eslint-disable-next-line react-hooks/set-state-in-effect -- carrega o rascunho da anotação só quando a chamada selecionada muda, não a cada render.
-    setNoteDraft(selectedCall?.notes ?? '');
-  }, [selectedCall?.id, selectedCall?.notes]);
+    setNoteDraft(selectedCall?.agent_notes ?? '');
+  }, [selectedCall?.id, selectedCall?.agent_notes]);
 
   const resetSelection = () => setSelectedCallId(null);
 
@@ -129,8 +134,11 @@ export function VoIPPanel() {
   const handleSaveNote = async () => {
     if (!selectedCall) return;
     setNoteSaving(true);
-    await addCallNotes(selectedCall.id, noteDraft);
+    const salvou = await addCallNotes(selectedCall.id, noteDraft);
     setNoteSaving(false);
+    // T16 (D7): sem invalidar, o detalhe reaberto lê o cache antigo (anotação
+    // vazia). T83 do plano: `set_call_agent_notes` → `invalidateQueries(['calls'])`.
+    if (salvou) await queryClient.invalidateQueries({ queryKey: ['calls-history'] });
   };
 
   return (

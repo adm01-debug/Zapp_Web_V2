@@ -14,7 +14,10 @@ export interface CallHistoryRow {
   ended_at: string | null;
   duration_seconds: number | null;
   recording_url: string | null;
+  /** Metadado do provedor (T66) — somente leitura, nunca a anotação do agente. */
   notes: string | null;
+  /** Anotação HUMANA da chamada (T13): gravada pela RPC `set_call_agent_notes`. */
+  agent_notes: string | null;
   contact: { name: string | null; phone: string | null } | null;
 }
 
