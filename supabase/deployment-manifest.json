@@ -459,8 +459,8 @@
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "bytes": 31351,
-      "sha256": "fe59be633a548c05344c17a389fbf5e58396739f33199fc2d112bdc35e2758db"
+      "bytes": 32296,
+      "sha256": "2678f0fd1c6fdd7b594f3f2a1583befc536825024273e8f0617b7b622ab7aadd"
     },
     {
       "path": "supabase/functions/promogifts-catalog/index.ts",
@@ -1204,7 +1204,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "a50a111de920db96179b6ab3dd27e5957561c2f2fddb10104952c38089dd9597",
+      "source_sha256": "34eba2397cc94fc23f907be67b527278f0e50c2c8b506bc9c7336c0b7365d294",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1429,5 +1429,5 @@
       ]
     }
   ],
-  "manifest_sha256": "1090a2b984f6c594fe5e4690930eef0076e7559d77886c43a398a0d286802abb"
+  "manifest_sha256": "37c1e91f802dc1bcc6297bdc15bd122fce43e58a46662a830a574215ba8d750b"
 }

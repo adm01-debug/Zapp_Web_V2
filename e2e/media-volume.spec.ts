@@ -142,6 +142,13 @@ test.describe('Volume das mídias de conversa', () => {
   // relatório) e reabilitar é trocar `fixme` por `test` quando o fixture tiver áudio.
   // A aplicação no elemento segue coberta por src/components/inbox/__tests__/MediaVolume.test.tsx
   // e src/lib/__tests__/mediaVolumeElement.test.ts.
+  //
+  // BLOQUEADO POR DECISÃO (2026-10-01): criar a mensagem de áudio do fixture exige gravar um
+  // objeto no bucket `whatsapp-media` E uma linha em `messages` no banco de PRODUÇÃO (tenant
+  // real) — e escrever em produção fora de migration não foi autorizado. O caminho completo
+  // (tabela/bucket/coluna) e os riscos estão em
+  // ~/evidencias/plano-volume-50/e45-e48-e2e.md. Reabilitar = `fixme` → `test` quando existir
+  // fixture de áudio (ou um contato/tenant dedicado de E2E).
   test.fixme('se a conversa do fixture tiver áudio, o elemento nasce no volume escolhido', async ({ page, browserName }) => {
     test.skip(browserName !== 'chromium', 'spec roda no project chromium-authenticated');
 

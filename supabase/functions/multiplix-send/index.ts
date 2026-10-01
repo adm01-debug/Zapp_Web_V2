@@ -114,14 +114,19 @@ export async function handleMultiplixSend(
         if (roleError) {
           return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
         }
-        if (isAdminOrSupervisor !== true) {
-          const { data: manageAll, error: permissionError } = await supabase.rpc("user_has_permission", {
-            _user_id: user.id, _permission_name: "multiplix.dispatch.manage_all",
-          });
-          hasManageAll = !permissionError && manageAll === true;
-          if (!hasManageAll) {
-            return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
-          }
+        // F06 (corrigido em 01/10/2026): a permissao nomeada agora e avaliada
+        // SEMPRE, inclusive para admin/supervisor. Antes ela so era consultada
+        // quando is_admin_or_supervisor era falso, e como o gate de papel ja
+        // barrava quem nao tem papel, na pratica a permissao nunca valia para
+        // admin/supervisor: um admin COM multiplix.dispatch.manage_all levava
+        // 403 ao mexer no disparo de outro dono. O gate continua sendo
+        // papel OU permissao (quem tem so a permissao, sem papel, ja passava).
+        const { data: manageAll, error: permissionError } = await supabase.rpc("user_has_permission", {
+          _user_id: user.id, _permission_name: "multiplix.dispatch.manage_all",
+        });
+        hasManageAll = !permissionError && manageAll === true;
+        if (isAdminOrSupervisor !== true && !hasManageAll) {
+          return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
         }
       }
     }
@@ -312,7 +317,13 @@ export async function handleMultiplixSend(
       }
     };
 
-    passLoop: for (;;) {
+    // F11a (01/10/2026): UMA passada por invocacao. O `for(;;)` antigo repetia
+    // ate drenar o publico inteiro aqui dentro — a edge ficava aberta por horas
+    // e podia estourar o limite de tempo, derrubando o disparo no meio. O cron
+    // `multiplix-send-trigger` roda a cada 2 min e reinvoca, entao a fila
+    // continua andando, com cada invocacao processando no maximo
+    // MULTIPLIX_BATCH_SIZE (default 20).
+    passLoop: {
       const { data: recipients, error: recipientsError } = await supabase
         .from("multiplix_recipients")
         .select("*")
@@ -322,9 +333,8 @@ export async function handleMultiplixSend(
         .order("created_at")
         .limit(batchSize);
       if (recipientsError) throw new Error(`multiplix_recipients_lookup_failed: ${recipientsError.message}`);
-      if (!recipients || recipients.length === 0) break;
+      if (!recipients || recipients.length === 0) break passLoop;
       selectedTotal += recipients.length;
-      let claimedInPass = 0;
 
       for (const recipient of recipients) {
         const { data: currentDispatch, error: currentDispatchError } = await supabase
@@ -360,7 +370,6 @@ export async function handleMultiplixSend(
         if (claimError) throw new Error(`multiplix_recipient_claim_failed: ${claimError.message}`);
         const claim = Array.isArray(claimRows) ? claimRows[0] : null;
         if (!claim?.claim_token) continue;
-        claimedInPass++;
 
         // F09: opt-out conferido assim que o destinatario e reivindicado. Quem
         // esta na lista negra vira 'skipped' com motivo (nao volta para a fila).
@@ -601,9 +610,10 @@ export async function handleMultiplixSend(
         await sleep(sendInterval);
       }
 
-      // Nenhum item reivindicado nesta passada: a fila esta com outro worker ou
-      // com os leases vencendo — repetir agora seria passada vazia.
-      if (claimedInPass === 0) break;
+      // F11a: encerra depois de UMA passada (o lote). Se ainda houver fila, o
+      // cron reinvoca em ate 2 min — drenar aqui sustentava a edge aberta por
+      // horas e podia estourar o limite de tempo no meio do disparo.
+      break passLoop;
     }
     const { data: completed, error: completionError } = await supabase.rpc(
       "complete_multiplix_dispatch_if_drained", { p_dispatch_id: dispatchId },
