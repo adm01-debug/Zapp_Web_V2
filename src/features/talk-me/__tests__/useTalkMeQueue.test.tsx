@@ -38,10 +38,61 @@ const waitingRows = [{
   queue_position: 1,
 }];
 
+const claimRows = [{
+  contact_id: 'contact-1',
+  queue_id: 'queue-1',
+  assigned_to: 'profile-1',
+  conversation_status: 'open',
+  claimed_at: '2026-09-30T12:10:00.000Z',
+}];
+
+const rpcNames = {
+  queues: 'talk_me_list_queues',
+  waiting: 'talk_me_list_waiting',
+  claim: 'talk_me_claim',
+} as const;
+
+type RpcHandler = () => unknown;
+type RpcHandlers = Partial<Record<keyof typeof rpcNames, RpcHandler>>;
+
 function waitingRequest(data = waitingRows) {
   return {
     abortSignal: vi.fn(async () => ({ data, error: null })),
   };
+}
+
+function installRpcHandlers(overrides: RpcHandlers = {}) {
+  const handlers: Record<keyof typeof rpcNames, RpcHandler> = {
+    queues: () => Promise.resolve({ data: queueRows, error: null }),
+    waiting: () => waitingRequest(),
+    claim: () => Promise.resolve({ data: claimRows, error: null }),
+    ...overrides,
+  };
+
+  rpc.mockImplementation((name: string) => {
+    const entry = Object.entries(rpcNames).find(([, rpcName]) => rpcName === name);
+    if (!entry) throw new Error(`RPC inesperada: ${name}`);
+    return handlers[entry[0] as keyof typeof rpcNames]();
+  });
+}
+
+function rpcCallCount(name: typeof rpcNames[keyof typeof rpcNames]) {
+  return rpc.mock.calls.filter(([calledName]) => calledName === name).length;
+}
+
+function expectQueueAndWaitingCalls(queueCount: number, waitingCount: number) {
+  expect(rpcCallCount(rpcNames.queues)).toBe(queueCount);
+  expect(rpcCallCount(rpcNames.waiting)).toBe(waitingCount);
+}
+
+async function advanceTimers(milliseconds: number) {
+  await act(async () => { await vi.advanceTimersByTimeAsync(milliseconds); });
+}
+
+async function renderLoadedQueue() {
+  const rendered = renderHook(() => useTalkMeQueue(true));
+  await waitFor(() => expect(rendered.result.current.items).toHaveLength(1));
+  return rendered;
 }
 
 function latestRealtimeSubscription(channelName: string) {
@@ -60,21 +111,7 @@ describe('useTalkMeQueue', () => {
     vi.clearAllMocks();
     window.sessionStorage.clear();
     setDocumentHidden(false);
-    rpc.mockImplementation((name: string) => {
-      if (name === 'talk_me_list_queues') return Promise.resolve({ data: queueRows, error: null });
-      if (name === 'talk_me_list_waiting') return waitingRequest();
-      if (name === 'talk_me_claim') return Promise.resolve({
-        data: [{
-          contact_id: 'contact-1',
-          queue_id: 'queue-1',
-          assigned_to: 'profile-1',
-          conversation_status: 'open',
-          claimed_at: '2026-09-30T12:10:00.000Z',
-        }],
-        error: null,
-      });
-      throw new Error(`RPC inesperada: ${name}`);
-    });
+    installRpcHandlers();
   });
 
   it('não consulta as RPCs enquanto a feature flag está desabilitada', async () => {
@@ -109,57 +146,29 @@ describe('useTalkMeQueue', () => {
   it('bloqueia duplo clique local enquanto o primeiro aceite aguarda o servidor', async () => {
     let resolveClaim!: (value: unknown) => void;
     const deferred = new Promise((resolve) => { resolveClaim = resolve; });
-    rpc.mockImplementation((name: string) => {
-      if (name === 'talk_me_list_queues') return Promise.resolve({ data: queueRows, error: null });
-      if (name === 'talk_me_list_waiting') return waitingRequest();
-      if (name === 'talk_me_claim') return deferred;
-      throw new Error(`RPC inesperada: ${name}`);
-    });
-    const { result } = renderHook(() => useTalkMeQueue(true));
-    await waitFor(() => expect(result.current.items).toHaveLength(1));
+    installRpcHandlers({ claim: () => deferred });
+    const { result } = await renderLoadedQueue();
 
     let firstClaim!: Promise<unknown>;
     act(() => { firstClaim = result.current.claim('contact-1'); });
     await expect(result.current.claim('contact-1')).rejects.toBeInstanceOf(TalkMeConflictError);
 
-    resolveClaim({
-      data: [{
-        contact_id: 'contact-1',
-        queue_id: 'queue-1',
-        assigned_to: 'profile-1',
-        conversation_status: 'open',
-        claimed_at: '2026-09-30T12:10:00.000Z',
-      }],
-      error: null,
-    });
+    resolveClaim({ data: claimRows, error: null });
     await act(async () => { await firstClaim; });
-    expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_claim')).toHaveLength(1);
+    expect(rpcCallCount(rpcNames.claim)).toBe(1);
   });
 
   it('libera a conversa assim que o aceite confirma sem aguardar a atualização secundária do badge', async () => {
     let resolveQueueRefresh!: (value: unknown) => void;
     const queueRefresh = new Promise((resolve) => { resolveQueueRefresh = resolve; });
     let queueCall = 0;
-    rpc.mockImplementation((name: string) => {
-      if (name === 'talk_me_list_queues') {
+    installRpcHandlers({
+      queues: () => {
         queueCall += 1;
         return queueCall === 1 ? Promise.resolve({ data: queueRows, error: null }) : queueRefresh;
-      }
-      if (name === 'talk_me_list_waiting') return waitingRequest();
-      if (name === 'talk_me_claim') return Promise.resolve({
-        data: [{
-          contact_id: 'contact-1',
-          queue_id: 'queue-1',
-          assigned_to: 'profile-1',
-          conversation_status: 'open',
-          claimed_at: '2026-09-30T12:10:00.000Z',
-        }],
-        error: null,
-      });
-      throw new Error(`RPC inesperada: ${name}`);
+      },
     });
-    const { result } = renderHook(() => useTalkMeQueue(true));
-    await waitFor(() => expect(result.current.items).toHaveLength(1));
+    const { result } = await renderLoadedQueue();
 
     let claimResult;
     await act(async () => { claimResult = await result.current.claim('contact-1'); });
@@ -173,28 +182,15 @@ describe('useTalkMeQueue', () => {
 
   it('mantém o aceite confirmado mesmo se a atualização secundária do badge falhar', async () => {
     let queueCall = 0;
-    rpc.mockImplementation((name: string) => {
-      if (name === 'talk_me_list_queues') {
+    installRpcHandlers({
+      queues: () => {
         queueCall += 1;
         return queueCall === 1
           ? Promise.resolve({ data: queueRows, error: null })
           : Promise.reject(new Error('rede indisponível'));
-      }
-      if (name === 'talk_me_list_waiting') return waitingRequest();
-      if (name === 'talk_me_claim') return Promise.resolve({
-        data: [{
-          contact_id: 'contact-1',
-          queue_id: 'queue-1',
-          assigned_to: 'profile-1',
-          conversation_status: 'open',
-          claimed_at: '2026-09-30T12:10:00.000Z',
-        }],
-        error: null,
-      });
-      throw new Error(`RPC inesperada: ${name}`);
+      },
     });
-    const { result } = renderHook(() => useTalkMeQueue(true));
-    await waitFor(() => expect(result.current.items).toHaveLength(1));
+    const { result } = await renderLoadedQueue();
 
     let claimResult;
     await act(async () => { claimResult = await result.current.claim('contact-1'); });
@@ -318,16 +314,15 @@ describe('useTalkMeQueue', () => {
     'talk-me-queue-members',
   ])('reconcilia filas e lista após mudança de elegibilidade em %s', async (channelName) => {
     renderHook(() => useTalkMeQueue(true));
-    await waitFor(() => expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_waiting')).toHaveLength(1));
-    const queueCallsBefore = rpc.mock.calls.filter(([name]) => name === 'talk_me_list_queues').length;
-    const waitingCallsBefore = rpc.mock.calls.filter(([name]) => name === 'talk_me_list_waiting').length;
+    await waitFor(() => expect(rpcCallCount(rpcNames.waiting)).toBe(1));
+    const queueCallsBefore = rpcCallCount(rpcNames.queues);
+    const waitingCallsBefore = rpcCallCount(rpcNames.waiting);
 
     vi.useFakeTimers();
     try {
       act(() => latestRealtimeSubscription(channelName)?.onAll());
-      await act(async () => { await vi.advanceTimersByTimeAsync(350); });
-      expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_queues')).toHaveLength(queueCallsBefore + 1);
-      expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_waiting')).toHaveLength(waitingCallsBefore + 1);
+      await advanceTimers(350);
+      expectQueueAndWaitingCalls(queueCallsBefore + 1, waitingCallsBefore + 1);
     } finally {
       vi.useRealTimers();
     }
@@ -335,23 +330,21 @@ describe('useTalkMeQueue', () => {
 
   it('reconcilia mudanças raras de elegibilidade a cada 60 segundos enquanto aberto e visível', async () => {
     const { rerender } = renderHook(({ open }) => useTalkMeQueue(open), { initialProps: { open: true } });
-    await waitFor(() => expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_waiting')).toHaveLength(1));
+    await waitFor(() => expect(rpcCallCount(rpcNames.waiting)).toBe(1));
 
     rerender({ open: false });
     vi.useFakeTimers();
     try {
       rerender({ open: true });
-      await act(async () => { await vi.advanceTimersByTimeAsync(0); });
-      const queueCallsBefore = rpc.mock.calls.filter(([name]) => name === 'talk_me_list_queues').length;
-      const waitingCallsBefore = rpc.mock.calls.filter(([name]) => name === 'talk_me_list_waiting').length;
+      await advanceTimers(0);
+      const queueCallsBefore = rpcCallCount(rpcNames.queues);
+      const waitingCallsBefore = rpcCallCount(rpcNames.waiting);
 
-      await act(async () => { await vi.advanceTimersByTimeAsync(59_999); });
-      expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_queues')).toHaveLength(queueCallsBefore);
-      expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_waiting')).toHaveLength(waitingCallsBefore);
+      await advanceTimers(59_999);
+      expectQueueAndWaitingCalls(queueCallsBefore, waitingCallsBefore);
 
-      await act(async () => { await vi.advanceTimersByTimeAsync(1); });
-      expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_queues')).toHaveLength(queueCallsBefore + 1);
-      expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_waiting')).toHaveLength(waitingCallsBefore + 1);
+      await advanceTimers(1);
+      expectQueueAndWaitingCalls(queueCallsBefore + 1, waitingCallsBefore + 1);
     } finally {
       vi.useRealTimers();
     }
