@@ -247,20 +247,26 @@ test('buildDeploymentManifest without orphanAllowlist produces no orphan_allowli
   assert.equal(verifyManifestDigest(manifest), true);
 });
 
-test('manifesto commitado nao lista orfas: sicoob-bridge/-reply sairam do ar', async () => {
-  // sicoob-bridge e sicoob-bridge-reply ficaram ACTIVE em producao sem fonte
-  // versionada durante o desligamento do Sicoob (docs/edge-functions-recovered).
-  // Em 2026-10-01 o inventario remoto confirmou que as duas nao existem mais, e
-  // a lista de tolerancia foi esvaziada. Mante-la faria a atestacao pos-deploy
-  // tolerar para sempre funcoes que nunca voltam -- e o alarme de "Remote
-  // function set mismatch" passaria a esconder uma funcao extra de verdade.
+test('manifesto commitado tolera as orfas reais: sicoob-bridge/-reply SEGUEM NO AR', async () => {
+  // CORRECAO de 2026-10-01: a premissa anterior (de que as duas funcoes haviam
+  // saido do ar) veio de uma medicao MAL ATRIBUIDA -- o numero das 08h37 era das
+  // funcoes de lockout, nao das sicoob. O inventario remoto prova o contrario:
+  // o job "Deploy Edge Functions" passou a reprovar na main (run 36906530462)
+  // com  "Remote function set mismatch; missing=[], extra=[sicoob-bridge,
+  // sicoob-bridge-reply]" -- ou seja, elas existem no remoto e nao tem fonte
+  // versionada. Esvaziar a tolerancia derruba TODO deploy de Edge da main, entao
+  // as duas voltaram para a orphan_allowlist.
   // Lista fixada de proposito: mudar quem e orfao tem de ser decisao consciente,
   // nao efeito colateral.
   const committed = JSON.parse(await readFile(
     new URL('../../supabase/deployment-manifest.json', import.meta.url),
     'utf8',
   ));
-  assert.equal(committed.orphan_allowlist, undefined);
+  assert.deepEqual(
+    [...(committed.orphan_allowlist ?? [])].sort(),
+    ['sicoob-bridge', 'sicoob-bridge-reply'],
+    'a orphan_allowlist tem de conter exatamente as duas orfas reais do remoto',
+  );
 
   // As duas tambem nao podem reaparecer como funcao gerenciada (elas nao tem
   // fonte versionada): se o diretorio voltar, este teste cai antes do deploy.

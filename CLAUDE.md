@@ -436,10 +436,13 @@ prática (execução de 2026-09-15 12:00 falhou; nenhuma outra até 2026-09-17) 
 como única via de atualização.
 
 ## Talk X / Campanhas
-Módulo em desenvolvimento ativo. Fase 0 (saneamento, E01–E10) e Fase 1 (design system, E11–E20)
-já mergeadas em `main` (Fase 1 via PR #370, branch `feat/catalog-f1-design`). `feat/talkx-f0-remaining`
-não existe mais — próximas fases usam branch novo por fase, padrão `feat/talkx-f{N}-*`.
-- Plano completo: `docs/talkx/PLANO_IMPLEMENTACAO_TALKX_100.md`
+Módulo em desenvolvimento ativo. **Plano vigente:** `docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md`
+(200 etapas X001–X200). Os planos anteriores (`PLANO_IMPLEMENTACAO_TALKX_100.md`,
+`PLANO_RECUPERACAO_100_ETAPAS_2026-09-11.md`, `PLANO_TALKX_V3_100_ETAPAS_2026-09-29.md` e
+`PARIDADE.md`) estão marcados como SUBSTITUÍDO — não executar.
+- Convenção V4: uma etapa = uma PR; branch `<agente>/<tipo>-talkx-x<NNN>-<slug>-<AAMMDD-HHMM>`; título de
+  PR terminando em `(X<NNN>)`. Etapa do V3 em curso (PR aberta) termina pelo número V4 equivalente da tabela
+  "V3 → V4" do plano.
 - **NUNCA** imprimir tokens ou secrets no output.
 
 ## Contatos — critério de contato visível (2026-10-01, F5 / decisão D4)

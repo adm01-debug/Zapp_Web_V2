@@ -1,3 +1,5 @@
+> **SUBSTITUÍDO pelo V4 em 2026-10-01 — não executar.**
+
 # Campanhas / Talk X — plano de recuperação e implementação em 100 etapas
 
 Versão 2 · 12/09/2026 · Estado: EM EXECUÇÃO, COM GAPS EXPLÍCITOS.

@@ -1,3 +1,5 @@
+> **SUBSTITUÍDO pelo V4 em 2026-10-01 — não executar.**
+
 # PARIDADE.md — Talk X / Campanhas
 
 > **⚠️ DESATUALIZADO (auditoria de 2026-09-29).** Dezenas de ✅ abaixo foram refutados no código: E29 (`talkxExport.ts`

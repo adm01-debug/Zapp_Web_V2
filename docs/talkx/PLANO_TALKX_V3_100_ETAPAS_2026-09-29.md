@@ -1,3 +1,5 @@
+> **SUBSTITUÍDO pelo V4 em 2026-10-01 — não executar.**
+
 # Talk X · Campanhas — Plano V3: 100 etapas para finalizar a implantação
 
 **Gerado:** 2026-09-29 · **Base:** `main` `a0002bb` · **Origem:** [`AUDITORIA_PLANO_TALKX_2026-09-29.md`](./AUDITORIA_PLANO_TALKX_2026-09-29.md)
