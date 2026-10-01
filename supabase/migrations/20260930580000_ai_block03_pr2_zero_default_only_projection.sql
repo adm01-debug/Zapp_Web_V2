@@ -1,5 +1,5 @@
 -- ai_block03_pr2_zero_default_only_projection
--- versão 20260930540000 reservada para hermes-ia-bloco-03-pr2-zero-default-only-2610010946e3a2 em 2026-10-01T09:46:29-03:00 (hermes-db-migrar --nova)
+-- versão 20260930580000 reservada para hermes-ia-bloco-03-pr2-zero-default-only-2610010946e3a2 em 2026-10-01T12:20:11-03:00 (hermes-db-migrar --nova)
 -- Classe: aditiva (sem DDL; UPDATE com WHERE). SENSIVEL: altera dado de ~3.106 linhas.
 -- rollback: restaurar da antes-imagem (CSV gerado imediatamente antes do apply, com sha256 e
 --           contagem de linhas registrados no relatorio/PR) com o trigger LIGADO, apenas as
