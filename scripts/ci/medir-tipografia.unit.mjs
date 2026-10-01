@@ -9,6 +9,8 @@ import {
   scanTsxInline,
   parseLoadedWeights,
   scanOrphanWeights,
+  isNamedAbove16,
+  MODULAR_SCALE,
 } from "../qa/medir-tipografia.cjs";
 
 // F8 do PLANO_AUDITORIA_FONTES_100_ETAPAS_2026-09-24 — as 4 checagens que
@@ -108,4 +110,28 @@ test("scanOrphanWeights: faixa variavel cobrindo o peso pedido nao acusa nada", 
     const orphan = scanOrphanWeights(path.join(dir, "styles"), path.join(dir, "index.html"));
     assert.equal(orphan.length, 0);
   });
+});
+
+// Etapa 21 (PLANO_CONTATOS_100_ETAPAS_2026-09-29; achado P1 da auditoria 29/09):
+// fecha a brecha em que o guard so via `text-[Npx]` arbitrario e um token
+// nomeado custom (`text-kpi-value`, 34px) escapava por definicao.
+test("isNamedAbove16: token custom >16px sem excecao e violacao (prova o DoD da etapa 21)", () => {
+  const allow = new Set(["kpi-value", "page-title"]);
+  // `text-huge` de 40px sem excecao: reprova.
+  assert.equal(isNamedAbove16("huge", 40, allow), true);
+  // as excecoes nomeadas do budget passam.
+  assert.equal(isNamedAbove16("page-title", 38, allow), false);
+  assert.equal(isNamedAbove16("kpi-value", 34, allow), false);
+  // sem a excecao, o mesmo token reprova.
+  assert.equal(isNamedAbove16("kpi-value", 34, new Set()), true);
+});
+
+test("isNamedAbove16: rampa modular e tokens <=16px nao contam", () => {
+  const allow = new Set(["kpi-value", "page-title"]);
+  assert.ok(MODULAR_SCALE.has("lg"));
+  assert.equal(isNamedAbove16("lg", 18, allow), false); // rampa sancionada
+  assert.equal(isNamedAbove16("9xl", 128, allow), false); // rampa sancionada
+  assert.equal(isNamedAbove16("base", 16, allow), false); // nao passa de 16px
+  assert.equal(isNamedAbove16("3xs", 10, allow), false);
+  assert.equal(isNamedAbove16("fluid-3xl", null, allow), false); // px indeterminado (var)
 });
