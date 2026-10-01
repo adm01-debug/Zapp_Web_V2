@@ -4,6 +4,7 @@ import { InboxFiltersState } from '@/components/inbox/InboxFilters';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 import { filterByContactType } from '@/components/inbox/ContactTypeFilter';
 import { isAfter, isBefore, startOfDay, endOfDay, parseISO } from 'date-fns';
+import { localDayKey } from '@/lib/localDay';
 import { MainTab, SubTab, ChipTab } from '@/components/inbox/TicketTabs';
 import { useFeatureFlag } from '@/hooks/system/useFeatureFlag';
 
@@ -66,8 +67,8 @@ export function useInboxFilters({ conversations, profileId }: UseInboxFiltersPro
       status: newFilters.status,
       tags: newFilters.tags,
       agentId: newFilters.agentId,
-      dateFrom: newFilters.dateRange.from?.toISOString().split('T')[0] || null,
-      dateTo: newFilters.dateRange.to?.toISOString().split('T')[0] || null,
+      dateFrom: localDayKey(newFilters.dateRange.from),
+      dateTo: localDayKey(newFilters.dateRange.to),
     });
   }, [setUrlFilters]);
 
