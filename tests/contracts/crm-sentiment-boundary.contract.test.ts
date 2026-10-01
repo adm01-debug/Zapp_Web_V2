@@ -26,7 +26,7 @@ vi.mock('https://esm.sh/@supabase/supabase-js@2.87.1', () => ({
   createClient: () => ({ rpc: async () => ({ data: null, error: null }) }),
 }));
 
-const { sentimentForExternalCrm } = await import(
+const { sentimentForExternalCrm, buildSyncInteractionArgs } = await import(
   '../../supabase/functions/crm-integration/index.ts'
 );
 
@@ -90,9 +90,11 @@ describe('ausência não vira token — nunca inventa sentimento', () => {
     }
   });
 
-  it('o valor já ausente (undefined) vira NULL no parâmetro, nunca a chave omitida com default do CRM', () => {
-    // A RPC externa é chamada com parâmetros NOMEADOS; passar `null` explícito
-    // é a forma segura de "sem sentimento" (a chave sempre existe na chamada).
+  it('o valor ausente resolve para null e a CHAVE é OMITIDA no parâmetro do CRM', () => {
+    // A resolução continua devolvendo `null` (ausência representável no nosso lado).
+    // Quem OMITE é `buildSyncInteractionArgs`: a RPC externa vive no banco do CRM e
+    // daqui não há como provar que aceita `NULL` — omitir deixa o default do CRM
+    // decidir o que "não informado" significa, em vez de sobrescrever a coluna.
     expect(sentimentForExternalCrm(undefined)).toBeNull();
   });
 });
@@ -127,8 +129,9 @@ describe('a fronteira no FONTE do edge não volta a fabricar sentimento', () => 
     expect(semComentarios).not.toMatch(/sentiment[^\n]*\|\|\s*'neutral'/);
   });
 
-  it('o call site de sync_interaction_from_zapp passa pelo resolvedor', () => {
-    expect(semComentarios).toMatch(/p_sentiment:\s*sentimentForExternalCrm\(payload\.sentiment\)/);
+  it('o call site de sync_interaction_from_zapp passa pelo construtor de argumentos', () => {
+    expect(semComentarios).toMatch(/buildSyncInteractionArgs\(row, payload\)/);
+    expect(semComentarios).not.toMatch(/p_sentiment:\s*sentimentForExternalCrm\(/);
   });
 
   it("o único 'neutral' no fonte está no mapa de SAÍDA, atrás de um canônico", () => {
@@ -138,5 +141,46 @@ describe('a fronteira no FONTE do edge não volta a fabricar sentimento', () => 
     expect(semComentarios).toMatch(/neutro:\s*'neutral'/);
     // E não existe default/fallback textual de sentimento em lugar nenhum.
     expect(semComentarios).not.toMatch(/p_sentiment:\s*payload\.sentiment/);
+  });
+});
+
+describe('buildSyncInteractionArgs — sem sentimento a chave é OMITIDA (nunca `null`)', () => {
+  const row = { normalized_phone: '11988776655', idempotency_key: 'closure:abc' };
+
+  it('com sentimento canônico: manda o token EN do CRM, com os 11 parâmetros', () => {
+    const args = buildSyncInteractionArgs(row, { sentiment: 'negativo' });
+    expect(args.p_sentiment).toBe('negative');
+    expect(Object.keys(args)).toHaveLength(11);
+  });
+
+  it.each([undefined, null, '', '   ', 'very_negative', 'aleatorio'])(
+    'sem sentimento (%j): p_sentiment NÃO existe no objeto enviado ao CRM',
+    (raw) => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const args = buildSyncInteractionArgs(row, { sentiment: raw });
+      expect('p_sentiment' in args).toBe(false);
+      expect(Object.keys(args)).toHaveLength(10);
+      warn.mockRestore();
+    },
+  );
+
+  it('lixo no banco não derruba a chamada: omite e registra o motivo', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const args = buildSyncInteractionArgs(row, { sentiment: 'very_negative' });
+    expect('p_sentiment' in args).toBe(false);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('crm_sentiment_out_of_vocabulary'));
+    warn.mockRestore();
+  });
+
+  it('os demais parâmetros seguem intactos e a identidade vem da linha da fila', () => {
+    const args = buildSyncInteractionArgs(row, { channel: 'whatsapp', direction: 'inbound' });
+    expect(args.p_phone).toBe('11988776655');
+    expect(args.p_zapp_conversation_id).toBe('closure:abc');
+    expect(args).toMatchObject({
+      p_channel: 'whatsapp',
+      p_direction: 'inbound',
+      p_conteudo: null,
+      p_message_count: 0,
+    });
   });
 });
