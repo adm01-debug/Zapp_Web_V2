@@ -19,16 +19,9 @@ import { CrmBadges } from './CrmBadges';
 import { BusinessHoursBadge } from '../BusinessHoursBadge';
 import { AnalysisBadges } from '../AnalysisBadges';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreVertical, Video, Tag, Archive, CheckCircle, Clock, ArrowRight, Phone, Search, Brain, Info, Users, UserCheck, Truck, Wrench } from 'lucide-react';
+import { MoreVertical, Video, Tag, Archive, CheckCircle, Clock, ArrowRight, Phone, Search, Brain, Info } from 'lucide-react';
 import { toast } from '@/hooks/ui/use-toast';
-
-const contactTypeConfig: Record<string, { label: string; icon: typeof Users; color: string }> = {
-  cliente: { label: 'Cliente', icon: Users, color: 'bg-info/10 text-info border-info/30' },
-  colaborador: { label: 'Colaborador', icon: UserCheck, color: 'bg-success/10 text-success border-success/30' },
-  fornecedor: { label: 'Fornecedor', icon: Truck, color: 'bg-secondary/10 text-secondary border-secondary/30' },
-  prestador_servico: { label: 'Prestador', icon: Wrench, color: 'bg-warning/10 text-warning border-warning/30' },
-  transportadora: { label: 'Transportadora', icon: Truck, color: 'bg-info/10 text-info border-info/30' },
-};
+import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
 
 interface ChatHeaderProps {
   conversation: Conversation;
@@ -125,10 +118,10 @@ export function ChatHeader({
             </Badge>
             {(() => {
               const ct = conversation.contact.contact_type;
-              const cfg = ct ? contactTypeConfig[ct] : null;
+              const cfg = ct ? CONTACT_TYPE_CONFIG[ct] : null;
               if (!cfg) return null;
-              const TypeIcon = cfg.icon;
-              return <Badge variant="outline" className={cn('text-3xs border font-medium', cfg.color)}><TypeIcon className="w-3 h-3 mr-0.5" />{cfg.label}</Badge>;
+              const TypeIcon = cfg.Icon;
+              return <Badge variant="outline" className={cn('text-3xs border font-medium', cfg.badgeClass)}><TypeIcon className="w-3 h-3 mr-0.5" />{cfg.label}</Badge>;
             })()}
             <SLAIndicator firstMessageAt={conversation.createdAt} firstResponseAt={conversation.firstResponseAt ?? null} firstResponseMinutes={5} />
             <CrmBadges crmCompany={crmCompany} crmCustomer={crmCustomer} crmRfm={crmRfm} />

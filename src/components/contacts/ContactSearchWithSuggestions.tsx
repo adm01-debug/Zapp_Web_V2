@@ -125,7 +125,7 @@ export function ContactSearchWithSuggestions({
             {/* Quick stats */}
             {!value && (
               <div className="px-3 py-2 bg-muted/30 border-b border-border/30">
-                <div className="flex items-center gap-2 text-3xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-caption">
                   <Sparkles className="w-3 h-3" />
                   <span>{totalCount} contatos na base</span>
                   <span>·</span>
@@ -143,7 +143,7 @@ export function ContactSearchWithSuggestions({
                   </span>
                   <button
                     onClick={() => { clearRecentSearches(); setRecentSearches([]); }}
-                    className="text-3xs text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-caption hover:text-foreground transition-colors"
                   >
                     Limpar
                   </button>
