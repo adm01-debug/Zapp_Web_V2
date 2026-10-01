@@ -1026,19 +1026,34 @@ describe('Security Gaps Audit', () => {
     expect(dangerousSearch).toBeDefined();
   });
 
-  it('edge has per-user rate limiting (60 req/min → 429)', () => {
-    // CORRIGIDO (CT-59): o achado antigo ("no rate limiting on edge function",
-    // hasRateLimit = false) era FALSO — a edge promogifts-catalog tem
-    // checkRateLimit por user_id desde o endurecimento: RATE_LIMIT = 60 numa
-    // janela de 60 s e resposta 429 quando estoura. O teste agora lê o código
-    // real da edge em vez de afirmar uma constante inventada.
+  it('edge tem rate limit POR AÇÃO (list_products 120/min, demais 60/min → 429)', () => {
+    // CT-19: o limite deixou de ser 60/min fixo. A cota efetiva passou a ser
+    // POR AÇÃO, em ACTION_RATE_LIMITS: `list_products` (a ação que a tela
+    // refaz a cada busca/página) ganhou 120/min e as outras 5 continuam no
+    // teto global de 60/min (RATE_LIMIT). Corpo inválido/malformado não tem
+    // ação conhecida e cai no teto global como fallback (fail-closed — não
+    // abre bypass a requisição inválida). Por depender da ação lida do corpo,
+    // a checagem acontece DEPOIS do parse. O teste lê o fonte real da edge.
     const source = fs.readFileSync(
       path.resolve(__dirname, '../../../supabase/functions/promogifts-catalog/index.ts'),
       'utf8',
     );
-    expect(source).toContain('export const RATE_LIMIT = 60');
-    expect(source).toMatch(/checkRateLimit\(userData\.user\.id\)/);
-    expect(source).toMatch(/Too many requests[^"]*"\s*\},\s*429/);
+    // mapa por ação ancorado no enum (ação nova sem cota quebra o typecheck)
+    expect(source).toContain('export const ACTION_RATE_LIMITS: Record<CatalogAction, number> = {');
+    // cota dobrada só para list_products; as demais seguem no teto global
+    expect(source).toMatch(/\blist_products:\s*120,/);
+    expect(source).toMatch(/\bget_product:\s*RATE_LIMIT,/);
+    expect(source).toMatch(/\bbootstrap:\s*RATE_LIMIT,/);
+    // a cota é resolvida pela ação; sem ação o fallback é o teto global
+    expect(source).toContain('const limit = action ? ACTION_RATE_LIMITS[action] : RATE_LIMIT;');
+    expect(source).toMatch(/checkRateLimit\(userData\.user\.id, action\)/);
+    // a checagem vem DEPOIS do parse do corpo (a cota depende da ação)
+    const parseIndex = source.indexOf('ActionSchema.safeParse');
+    const rateIndex = source.indexOf('checkRateLimit(userData.user.id, action)');
+    expect(parseIndex).toBeGreaterThan(-1);
+    expect(rateIndex).toBeGreaterThan(parseIndex);
+    // resposta 429 quando estoura a cota
+    expect(source).toMatch(/Too many requests[^"]*"\s*\}\s*,\s*429/);
   });
 
   it('external elevated credential remains confined to the authenticated read-only edge', () => {

@@ -33,6 +33,9 @@ import { AlertCard } from '@/components/talkx/talkxShared';
 import { useContactSearch, useSendToContact, type ContactResult } from './useSendProduct';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { ContactSelectionStep } from './ContactSelectionStep';
+// CT-37 — PhonePreview (prévia estilo WhatsApp) subiu para catalogShared,
+// junto com a classe .catalog-phone e os tokens --wa-*.
+import { PhonePreview } from './catalogShared';
 
 interface SendProductDialogProps {
   product: ExternalProduct;
@@ -91,45 +94,8 @@ const readDraft = (productId: string): SendDraft | null => {
   } catch { return null; }
 };
 
-/** Prévia visual estilo WhatsApp da mensagem/fotos selecionadas (E74). */
-const WhatsAppPreview: React.FC<{ message: string; images: { url: string; label: string }[] }> = ({ message, images }) => {
-  const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  const firstImage = images[0];
-  return (
-    <div className="space-y-2">
-      <span className="text-sm text-muted-foreground">Pré-visualização</span>
-      <div className="rounded-lg overflow-hidden border border-border/50">
-        <div className="flex items-center gap-2 bg-[#075E54] text-white px-3 py-2">
-          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-            <User className="w-4 h-4" />
-          </div>
-          <span className="text-sm font-medium">Cliente</span>
-        </div>
-        <div className="bg-[#e5ddd5] p-3 space-y-2">
-          {firstImage && (
-            <div className="relative inline-block rounded-lg overflow-hidden max-w-[70%] align-top">
-              <img src={firstImage.url} alt="Prévia" className="w-full h-auto max-h-40 object-cover" />
-              {images.length > 1 && (
-                <span className="absolute bottom-1 right-1 text-3xs leading-none bg-black/60 text-white px-1.5 py-0.5 rounded">
-                  1/{images.length}
-                </span>
-              )}
-            </div>
-          )}
-          <div className="bg-[#dcf8c6] rounded-lg px-3 py-2 max-w-[85%] ml-auto">
-            <p className="text-sm whitespace-pre-line text-black">{message}</p>
-            <div className="flex items-center justify-end gap-0.5 mt-1">
-              <span className="text-3xs text-black/50 mr-1">{time}</span>
-              <Check className="w-3 h-3 text-blue-500" />
-              <Check className="w-3 h-3 text-blue-500 -ml-2" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
+/** Prévia visual da mensagem/fotos (E74) agora é o PhonePreview de
+ * catalogShared (CT-37) — reutilizável e sem hex/tokens locais. */
 export const SendProductDialog: React.FC<SendProductDialogProps> = ({
   product, open, onOpenChange, onConfirmSend, initialVariantColor, presetContact = null,
 }) => {
@@ -525,7 +491,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
 
                 <Separator />
 
-                <WhatsAppPreview message={message} images={selectedImagesList} />
+                <PhonePreview message={message} images={selectedImagesList} />
               </div>
             </ScrollArea>
 
