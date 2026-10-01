@@ -124,8 +124,8 @@ for (const secao of SECOES) {
   const setB = new Set(arrayB);
   const duplicadosA = arrayA.length - setA.size;
   const duplicadosB = arrayB.length - setB.size;
-  const soNoArquivo = [...setA].filter((x) => !setB.has(x)).sort();
-  const soNoBanco = [...setB].filter((x) => !setA.has(x)).sort();
+  const soNoArquivo = [...setA].filter((x) => !setB.has(x)).sort((a, b) => a.localeCompare(b));
+  const soNoBanco = [...setB].filter((x) => !setA.has(x)).sort((a, b) => a.localeCompare(b));
   drifts += soNoArquivo.length + soNoBanco.length + duplicadosA;
   errosOperacionais += duplicadosB;
   console.log(

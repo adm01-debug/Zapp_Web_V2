@@ -125,7 +125,7 @@ function normalizeLedgerName(version, name) {
 }
 
 function hasExactKeys(value, expectedKeys) {
-  return JSON.stringify(Object.keys(value).sort()) === JSON.stringify([...expectedKeys].sort());
+  return JSON.stringify(Object.keys(value).sort((a, b) => a.localeCompare(b))) === JSON.stringify([...expectedKeys].sort((a, b) => a.localeCompare(b)));
 }
 
 function loadEvidence(filePath) {
@@ -133,7 +133,7 @@ function loadEvidence(filePath) {
   const errors = [];
   const expectedRootKeys = ['exceptions', 'schema_version'];
   const rootKeys = document && typeof document === 'object' && !Array.isArray(document)
-    ? Object.keys(document).sort()
+    ? Object.keys(document).sort((a, b) => a.localeCompare(b))
     : [];
 
   if (JSON.stringify(rootKeys) !== JSON.stringify(expectedRootKeys)) {
@@ -359,7 +359,7 @@ function loadMigrations(dir, evidence) {
     byVersion.set(migration.version, group);
   }
   for (const [version, names] of byVersion) {
-    if (names.length > 1) errors.push(`versao duplicada ${version}: ${names.sort().join(', ')}`);
+    if (names.length > 1) errors.push(`versao duplicada ${version}: ${names.sort((a, b) => a.localeCompare(b)).join(', ')}`);
   }
 
   const migrationsByVersion = new Map(migrations.map((migration) => [migration.version, migration]));

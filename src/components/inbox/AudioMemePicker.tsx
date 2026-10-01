@@ -95,7 +95,7 @@ export function AudioMemePicker({ onSendAudio, disabled }: AudioMemePickerProps)
     handleSend, toggleFavorite, handleCategoryChange, handleDelete, cleanup,
   } = useAudioMemes(open);
 
-  const categories = [...new Set(memes.map(m => m.category).filter(Boolean))].sort();
+  const categories = [...new Set(memes.map(m => m.category).filter(Boolean))].sort((a, b) => a.localeCompare(b));
   const filtered = memes.filter(m => {
     const matchSearch = !search || m.name?.toLowerCase().includes(search.toLowerCase()) || m.category?.toLowerCase().includes(search.toLowerCase());
     if (showFavorites) return matchSearch && m.is_favorite;
