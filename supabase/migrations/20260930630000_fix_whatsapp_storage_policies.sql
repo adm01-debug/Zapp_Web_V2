@@ -29,7 +29,7 @@ CREATE POLICY "Users can read assigned whatsapp media"
       OR EXISTS (
         SELECT 1 FROM public.messages m
         JOIN public.contacts c ON c.id = m.contact_id
-        WHERE m.media_url LIKE '%/' || name
+        WHERE m.media_url LIKE '%/' || objects.name
           AND c.assigned_to IN (
             SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid()
           )
@@ -53,7 +53,7 @@ CREATE POLICY "Users can read assigned audio messages"
       OR EXISTS (
         SELECT 1 FROM public.messages m
         JOIN public.contacts c ON c.id = m.contact_id
-        WHERE m.media_url LIKE '%/' || name
+        WHERE m.media_url LIKE '%/' || objects.name
           AND c.assigned_to IN (
             SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid()
           )
