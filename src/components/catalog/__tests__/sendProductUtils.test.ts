@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { ExternalProduct, ExternalProductVariant } from '@/hooks/integrations/useExternalCatalog';
-import { groupVariantsByColor, buildMessage, collectAllImages } from '../sendProductUtils';
+import { groupVariantsByColor, buildMessage, collectAllImages, downloadImageAsBlob } from '../sendProductUtils';
 
 const mockVariant = (overrides: Partial<ExternalProductVariant> = {}): ExternalProductVariant => ({
   id: 'v1',
@@ -115,7 +115,7 @@ describe('buildMessage', () => {
   it('informal: usa saudação e emoji, corta descrição em 200 chars', () => {
     const longDesc = 'x'.repeat(500);
     const msg = buildMessage(mockProduct({ short_description: null, description: longDesc }), 'informal');
-    expect(msg).toContain('Oi! 😊');
+    expect(msg).toContain('Olá! 😊');
     expect(msg).toContain('x'.repeat(200));
     expect(msg).not.toContain('x'.repeat(201));
   });
@@ -148,5 +148,89 @@ describe('buildMessage', () => {
     expect(msg).not.toContain('Marca:');
     expect(msg).not.toContain('Quantidade mínima');
     expect(msg).not.toContain('undefined');
+  });
+});
+
+describe('buildMessage — CT-45 (personalização {{nome}}/{{empresa}})', () => {
+  it('sem contato usa o fallback "Olá!" e não deixa placeholder nem contato de exemplo', () => {
+    const msg = buildMessage(mockProduct(), 'informal');
+    expect(msg).toContain('Olá! 😊');
+    expect(msg).not.toContain('{{');
+    // O contato de exemplo do personalizePreview ("João Silva"/"Sua Empresa")
+    // não pode vazar quando não há contato selecionado.
+    expect(msg).not.toContain('João Silva');
+    expect(msg).not.toContain('Sua Empresa');
+  });
+
+  it('com contato resolve {{nome}} pelo primeiro nome', () => {
+    const msg = buildMessage(mockProduct(), 'informal', null, { name: 'Ana Paula Souza' });
+    expect(msg).toContain('Olá, Ana! 😊');
+    expect(msg).not.toContain('{{');
+  });
+
+  it('resolve {{empresa}} e não emite a linha vazia quando o contato não tem empresa', () => {
+    const comEmpresa = buildMessage(mockProduct(), 'formal', null, { name: 'Ana', company: 'ACME Ltda' });
+    expect(comEmpresa).toContain('Olá, Ana!');
+    expect(comEmpresa).toContain('Empresa: ACME Ltda');
+    expect(comEmpresa).not.toContain('{{');
+
+    const semEmpresa = buildMessage(mockProduct(), 'formal', null, { name: 'Ana', company: null });
+    expect(semEmpresa).toContain('Olá, Ana!');
+    expect(semEmpresa).not.toContain('Empresa:');
+  });
+
+  it('mantém o template formal com a mesma informação comercial (sem regressão)', () => {
+    const msg = buildMessage(mockProduct(), 'formal', null, { name: 'Ana', company: 'ACME' });
+    expect(msg).toContain('Só Marcas');
+    expect(msg).toContain('R$');
+    expect(msg).toContain('Em estoque: 1573 un.');
+  });
+});
+
+describe('downloadImageAsBlob — CT-39 (download real, sem zip)', () => {
+  const createObjectURL = vi.fn((_blob: Blob | MediaSource) => 'blob:mock');
+  const revokeObjectURL = vi.fn((_url: string) => undefined);
+  let clicked: { href: string | null; download: string | null } | null;
+
+  beforeEach(() => {
+    clicked = null;
+    URL.createObjectURL = createObjectURL;
+    URL.revokeObjectURL = revokeObjectURL;
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      clicked = { href: this.getAttribute('href'), download: this.getAttribute('download') };
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it('busca a imagem, baixa por object URL e revoga a URL', async () => {
+    const blob = new Blob(['img'], { type: 'image/jpeg' });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, blob: async () => blob });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(downloadImageAsBlob('https://x/a.jpg', 'produto_1.jpg')).resolves.toBe(true);
+
+    expect(fetchMock).toHaveBeenCalledWith('https://x/a.jpg', { mode: 'cors' });
+    expect(createObjectURL).toHaveBeenCalledWith(blob);
+    expect(clicked).not.toBeNull();
+    expect(clicked!.download).toBe('produto_1.jpg');
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock');
+
+    // O arquivo é buscado por fetch: o `download` de um <a> cross-origin é
+    // ignorado pelo browser e o "download" seria falso sem o Blob.
+    expect(clicked!.href).toBe('blob:mock');
+  });
+
+  it('sem CORS/resposta ok devolve false sem disparar click', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('CORS')));
+
+    await expect(downloadImageAsBlob('https://x/a.jpg', 'produto_1.jpg')).resolves.toBe(false);
+
+    expect(clicked).toBeNull();
+    expect(createObjectURL).not.toHaveBeenCalled();
   });
 });

@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
   X, MessageSquare, Edit, Phone, Mail, Building, Briefcase,
-  Calendar, Tag, Clock, Zap,
+  Calendar, Tag, Clock, Zap, Package,
 } from 'lucide-react';
 import { ContactActivityTimeline } from './ContactActivityTimeline';
 import { ContactNotes } from './ContactNotes';
@@ -18,6 +18,9 @@ import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { ContactEngagementScore } from './ContactEngagementScore';
 import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
+// CT-51/CT-52 — o catálogo do chat reusado no painel do contato: abre o mesmo
+// Dialog de envio (CT-14), já com este contato como `presetContact`.
+import { ExternalProductCatalog } from '@/components/catalog/ExternalProductCatalog';
 interface ContactDetail {
   id: string;
   name: string;
@@ -127,19 +130,43 @@ export function ContactDetailPanel<T extends ContactDetail>({
             />
           </div>
 
-          {/* Quick Actions */}
-          <div className="flex gap-2 mt-4">
-            <Button
-              className="flex-1 gap-2 bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground"
-              onClick={() => onOpenChat(contact.id)}
-            >
-              <MessageSquare className="w-4 h-4" />
-              Conversar
-            </Button>
-            <Button variant="outline" className="gap-2" onClick={() => onEdit(contact)}>
-              <Edit className="w-4 h-4" />
-              Editar
-            </Button>
+          {/* Quick Actions — CT-51: é AQUI o ponto de extensão das ações do
+              contato (o "header" do contato é este painel lateral, não um
+              cabeçalho de página). */}
+          <div className="flex flex-col gap-2 mt-4">
+            <div className="flex gap-2">
+              <Button
+                className="flex-1 gap-2 bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground"
+                onClick={() => onOpenChat(contact.id)}
+              >
+                <MessageSquare className="w-4 h-4" />
+                Conversar
+              </Button>
+              <Button variant="outline" className="gap-2" onClick={() => onEdit(contact)}>
+                <Edit className="w-4 h-4" />
+                Editar
+              </Button>
+            </div>
+
+            {/* CT-52 — envia um produto do catálogo com ESTE contato já
+                pré-selecionado; o envio grava `catalog_send_events` com o
+                contact_id do perfil (CT-14). O catálogo abre o mesmo Dialog do
+                chat (grade + filtros), não um picker compacto — divergência
+                registrada no relatório. */}
+            <ExternalProductCatalog
+              presetContact={{
+                id: contact.id,
+                name: contact.name,
+                phone: contact.phone,
+                avatar_url: contact.avatar_url ?? null,
+              }}
+              trigger={
+                <Button variant="outline" className="w-full gap-2">
+                  <Package className="w-4 h-4" />
+                  Enviar produto
+                </Button>
+              }
+            />
           </div>
         </div>
 
