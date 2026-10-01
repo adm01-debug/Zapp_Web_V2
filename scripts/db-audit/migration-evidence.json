@@ -400,7 +400,7 @@
       "version": "20260905080000",
       "filename": "20260905080000_conversation_status_fsm.sql",
       "file_sha256": "1315e2b073c4894711916949f464546eed1c24ac5d17c052205f2df58c4da3c2",
-      "file_sql_sha256": "1693da7795ca3007f8e2a008cb6a79bbf97725294113fbad7cee4a99b276f160",
+      "file_sql_sha256": "1693da7795ca3007f8e2a008cb6a79bbf97718150d553be86b28b0f27075226d4",
       "ledger_name": "conversation_status_fsm",
       "ledger_statements_sha256": "2aa20755f4d1da26c3afeb9dc1697bb018173150b553be86b28b0f27075226d4",
       "ledger_sql_sha256": "c1e1824acb6505d6c623670adbdc0eefd092997a59e1f5e7a50b55c66407d8c4",
@@ -746,10 +746,15 @@
     {
       "version": "20260930390000",
       "filename": "20260930390000_endurece_l5_contrato_e_jobs.sql",
-      "file_sha256": "3ba508d732f942fdb7a2aecdd3f1dea2296c846a71e3384f5b0f5c5e7b9dd76e",
+      "file_sha256": "a16bba042eb7361fa2987025d295fb51f786908feee033b274b9f36fac67b885",
+      "file_sql_sha256": "f3f4b910cd213b99b5e7efb189b980d0be6cc12c144f68f1003f135999e2c3fd",
+      "kind": "ledger-divergence/pinned-replay",
       "ledger_name": "endurece_l5_contrato_e_jobs",
-      "kind": "ledger-only/name-and-file-pinned",
-      "justification": "O arquivo em main continha uma versao DML incorreta (DELETE FROM cron.job) que nunca foi aplicada. O conteudo correto — identico ao registrado no ledger (apply_zapp_cron_secrets_l5 com cron.unschedule) — foi aplicado via MCP em 2026-09-30 e agora o arquivo em disco e corrigido para refletir o que esta em producao. Commit 5ed2c20 na branch claude/gifted-mccarthy-vhdcce / PR 1389."
+      "ledger_statements_sha256": "2baa19aa509cec139832100366aac02b3a0c0731fed3f299cbbf80d3387fdbc0",
+      "ledger_sql_sha256": "d73c2cd5410b1a985f65c933c4bc96c2ab12bb8616a3d3a3c6d9f4ea78d5035b",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "O corpo do arquivo no repo usa DELETE FROM cron.job, que nao executa no banco (postgres nao tem DELETE em cron.job: relacl postgres=r*/supabase_admin, erro 42501); o ledger preserva o SQL efetivamente aplicado, com o guard v_intruso + cron.unschedule, e pg_get_functiondef(apply_zapp_cron_secrets_l5()) bate com o ledger. Migration ja aplicada e imutavel: o arquivo nao pode ser reescrito, entao o replay do arquivo fica fixado por hash proprio. Medido em 01/10/2026: SELECT statements do schema_migrations comparado ao dry-run de register-migration.mjs, com os 4 hashes conferidos contra o que o db-live-guard imprimiu no run 36865197699."
     }
   ]
 }
