@@ -48,6 +48,18 @@ export function hasPushTriggerUnrestricted(source) {
     // Detect: push: (empty), push: {} (inline empty mapping), push: null, push: ~
     const pushMatch = /^(\s+)push:\s*(?:\{\}|null|~)?\s*(?:#.*)?$/.exec(line);
     if (pushMatch) { pushStart = i; pushIndent = pushMatch[1].length; continue; }
+    // Detect: push: { key: value } (nonempty inline mapping)
+    const pushInlineMatch = /^(\s+)push:\s*(\{[^}]+\})\s*(?:#.*)?$/.exec(line);
+    if (pushInlineMatch) {
+      const inlineContent = pushInlineMatch[2];
+      if (
+        /\bbranches:\s*\[\s*(?:"main"|'main'|main)\s*\]/.test(inlineContent) &&
+        !/\btags(?:-ignore)?:/.test(inlineContent)
+      ) {
+        continue;
+      }
+      return true;
+    }
     // Inside push block: detect sibling key at same or lesser indent = end of push
     if (pushStart !== -1) {
       const indentMatch = /^(\s+)\S/.exec(line);
