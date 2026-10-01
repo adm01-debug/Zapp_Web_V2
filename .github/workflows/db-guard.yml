@@ -402,6 +402,15 @@ jobs:
           MULTIPLIX_RLS_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/multiplix-rls.test.sh
 
+      # F24 do plano do Multiplix: prova que a edge multiplix-audience deriva o
+      # escopo do JWT (matriz F25) e IGNORA escopo forjado no corpo. O bloco
+      # estatico roda sempre; o bloco ao vivo PULA e sai 0 sem credenciais
+      # (ZAPP_SUPABASE_URL/ANON + EXTERNAL_SUPABASE_* + contas em ~/.secrets),
+      # entao o CI offline nao quebra — quando as credenciais existirem no
+      # runner, a prova roda contra a edge e o Singu reais.
+      - name: Provar escopo da audiencia Multiplix (F24)
+        run: bash scripts/db-audit/multiplix-scope.test.sh
+
       - name: Simular estados e audiencia canônicos do Talk X
         env:
           TALKX_CAMPAIGN_STATE_TEST_POSTGRES_IMAGE: postgres:17-alpine
