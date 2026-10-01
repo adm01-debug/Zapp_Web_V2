@@ -1,4 +1,4 @@
--- 20260930400000_cron_sem_dml_direto
+-- 20260930430000_cron_sem_dml_direto_v2
 -- Follow-up do L5 (docs/ia/IA-004-matriz-autorizacao.md).
 --
 -- POR QUE EXISTE ESTA VERSAO, E NAO UMA EDICAO DA ANTERIOR: o corpo abaixo substitui o
