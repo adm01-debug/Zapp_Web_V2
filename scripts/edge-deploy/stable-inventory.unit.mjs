@@ -51,11 +51,40 @@ test('knownUnchanged invalido e rejeitado antes de qualquer chamada de rede', as
   await assert.rejects(simulate([rows], { knownUnchanged: 'not-an-array' }), /policy/);
   await assert.rejects(simulate([rows], { knownUnchanged: [123] }), /policy/);
 });
-for (const [name, patch] of Object.entries({ failed: { status: 'FAILED' }, version: { version: null }, digest: { ezbr_sha256: 'invalid-hash-16-chars' }, timestamp: { updated_at: 'invalid' }, identity: { id: null }, jwt: { verify_jwt: !rows[0].verify_jwt } })) {
+// `digest` e `jwt` sairam deste laco: sao erros deterministicos (configuracao e
+// bundle publicado), nao propagacao lenta. Ver o teste especifico logo abaixo.
+for (const [name, patch] of Object.entries({ failed: { status: 'FAILED' }, version: { version: null }, timestamp: { updated_at: 'invalid' }, identity: { id: null } })) {
   test(`rejects ${name} drift`, async () => {
     await assert.rejects(simulate([rows.map((fn, i) => i === 0 ? { ...fn, ...patch } : fn)]), /NOT attested/);
   });
 }
+test('drift deterministico falha na primeira amostra com a causa real, sem gastar as 144 tentativas', async () => {
+  // Cada caso abaixo so pode ser resolvido por acao humana (corrigir o
+  // config/manifesto ou republicar a funcao). Tratar como transitorio custava
+  // 144 amostras x 10 s (~24 min) e entregava ao operador a mensagem generica
+  // "Remote inventory did not stabilize" em vez da causa.
+  const cases = [
+    ['digest ausente', rows.map((fn, i) => (i === 0 ? { ...fn, ezbr_sha256: 'invalid-hash-16-chars' } : fn)), /remote bundle digest is missing/],
+    ['verify_jwt divergente', rows.map((fn, i) => (i === 0 ? { ...fn, verify_jwt: !fn.verify_jwt } : fn)), /verify_jwt mismatch/],
+    ['funcao remota nao declarada', [...rows, { slug: 'intruder', id: 'fn-intruder', version: 1, status: 'ACTIVE', verify_jwt: true, ezbr_sha256: 'd'.repeat(64), updated_at: '2026-09-22T12:00:00.000Z' }], /Remote function set mismatch/],
+  ];
+  for (const [label, sequence, expected] of cases) {
+    let calls = 0;
+    await assert.rejects(
+      simulate([sequence], {
+        fetchInventory: async () => { calls += 1; return sequence; },
+      }),
+      expected,
+      `${label}: mensagem precisa ser a causa real`,
+    );
+    assert.equal(calls, 1, `${label}: a primeira amostra ja prova o problema, nao ha o que esperar`);
+  }
+});
+test('funcao gerenciada ausente na lista remota continua transitoria (pode ser propagacao de deploy novo)', async () => {
+  // Diferente do excedente: a lista remota pode ainda estar propagando a
+  // criacao de uma funcao recem-publicada, entao aqui a espera tem valor.
+  await assert.rejects(simulate([rows.slice(1)]), /NOT attested/);
+});
 test('transient errors reset stability but never emit response contents', async () => {
   const result = await simulate([rows, rows, new Error('fixture-private-response'), rows]);
   assert.equal(result.verification.samples[2].valid, false);
