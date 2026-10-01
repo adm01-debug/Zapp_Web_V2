@@ -1,9 +1,21 @@
-import React, { useEffect, useState, createContext, useContext, useCallback, useRef } from 'react';
+import React, { lazy, Suspense, useEffect, useState, createContext, useContext, useCallback, useRef } from 'react';
 import { useGlobalKeyboardShortcuts } from '@/hooks/ui/useGlobalKeyboardShortcuts';
 import { useCatalogQuickSearch } from '@/hooks/integrations/useCatalogQuickSearch';
 import { useTalkXCommandItems } from '@/hooks/integrations/useTalkXCommandItems';
-import { KeyboardShortcutsDialog } from './KeyboardShortcutsDialog';
 import { CommandPalette } from '@/components/ui/command-palette';
+
+/**
+ * Etapa 84: o painel de ajuda saiu do grafo de entrada.
+ *
+ * Ele só existe quando o usuário pede (`?`, Ctrl+/ ou o atalho "Ajuda de
+ * atalhos" das Tarefas) e é junto dele que chegam os rótulos dos 7 atalhos de
+ * Tarefas (`taskShortcutLabels`) — manter tudo isso no chunk de entrada
+ * estourava o budget `initial-js` de 340 KB. O registry de teclado continua
+ * eager: só a UI do painel virou chunk sob demanda.
+ */
+const KeyboardShortcutsDialog = lazy(() =>
+  import('./KeyboardShortcutsDialog').then((mod) => ({ default: mod.KeyboardShortcutsDialog })),
+);
 
 interface GlobalKeyboardContextType {
   openCommandPalette: () => void;
@@ -117,7 +129,11 @@ export function GlobalKeyboardProvider({ children, customActions }: GlobalKeyboa
   return (
     <GlobalKeyboardContext.Provider value={contextValue}>
       {children}
-      <KeyboardShortcutsDialog open={showHelp} onOpenChange={setShowHelp} />
+      {showHelp && (
+        <Suspense fallback={null}>
+          <KeyboardShortcutsDialog open={showHelp} onOpenChange={setShowHelp} />
+        </Suspense>
+      )}
       <CommandPalette
         open={showCommandPalette}
         onOpenChange={setShowCommandPalette}

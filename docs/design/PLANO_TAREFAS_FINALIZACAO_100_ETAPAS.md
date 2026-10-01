@@ -301,3 +301,19 @@ B1→35 · B2→28,29 · B3→26 · B4→48 · B5→51 · B6→19 · B7→47 · 
 cd /workspace/repos/Zapp_Web_V2-tarefas && git fetch origin && git checkout main && git pull && \
 claude -p 'Leia docs/design/RELATORIO_AUDITORIA_TAREFAS_FUSAO.md e docs/design/PLANO_TAREFAS_FINALIZACAO_100_ETAPAS.md por completo. Execute o plano da Fase A à Fase J, fechando cada checkpoint SOMENTE com a evidência exigida em docs/design/TAREFAS_QUADRO_STATUS.md. Uma branch e uma PR por fase. Nunca pushes vazios em série. Se um gate falhar 3 vezes, registre o resíduo e siga. A migration da etapa 97 fica aberta aguardando APROVADO.' --model sonnet
 ```
+
+> **Budget de bundle (medido em 2026-10-01, FASE H):** o build da FASE G fechava em 333,7 KB de JS
+> inicial; a main atual (que o mergear re-sincroniza no branch) esta em 339,8 KB — **o #1424 (Talk X,
+> Fase 1) consumiu 6,1 KB do grafo de entrada** (tocou `src/App.tsx`, rotas e providers). Com o guard em
+> 340 KB, sobraram ~0,2 KB de folga: a FASE H estourou por 0,2 KB e a decisao 20261001-160338-3700 foi
+> tirar os rotulos (nome/descricao) dos 7 atalhos de Tarefas do chunk de entrada, carregando-os sob
+> demanda no painel de ajuda e na tela de atalhos. Nao se mexe no budget; quem for adicionar peso ao
+> grafo de entrada (nao-lazy) precisa medir com `VITE_CRM_INTEGRATION_ENABLED=true bun run build` e
+> `VITE_CRM_INTEGRATION_ENABLED=true node scripts/ci/bundle-budget.mjs` (o budget local sem esse env
+> nao acusa o estouro).
+> **Etapa 84 — budget (decisao 20261001-160338-3700, opcao c):** os rotulos (nome/descricao) dos 7
+> atalhos de Tarefas sairam do chunk de ENTRADA: o binding (tecla/modificadores/categoria/escopo)
+> continua em `defaultShortcuts.ts`, e `name`/`description` vivem em `shortcuts/taskShortcutLabels.ts`,
+> alcancado por `import()` dinamico pelo dialogo de atalhos (que ja e lazy) e pela tela de atalhos.
+> `ShortcutBinding.name/description` viraram opcionais com resolvedor + fallback no id. Medido com o env
+> do CI: JS inicial 340,2 KB (estourava) -> **338,9 KB (OK)**; budget intacto em 340 KB.
