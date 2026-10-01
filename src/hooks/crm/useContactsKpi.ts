@@ -78,18 +78,28 @@ export function aggregateKpi(rows: Row[], now = new Date()) {
 
 export type ContactsKpi = ReturnType<typeof aggregateKpi>;
 
+/** Limite de linhas por resposta do PostgREST (`max_rows`). */
+export const KPI_PAGE_SIZE = 1000;
+
+export async function fetchKpiRows(includeLegacy: boolean): Promise<Row[]> {
+  const rows: Row[] = [];
+  for (let from = 0; ; from += KPI_PAGE_SIZE) {
+    let q = supabase.from('contacts').select('created_at, contact_type, company').is('deleted_at', null);
+    if (!includeLegacy) {
+      q = q.eq('is_lid_legacy', false).filter('phone', 'match', CONTACT_VISIBLE_PHONE_PATTERN);
+    }
+    const { data, error } = await q.order('id', { ascending: true }).range(from, from + KPI_PAGE_SIZE - 1);
+    if (error) throw error;
+    const page = (data ?? []) as Row[];
+    rows.push(...page);
+    if (page.length < KPI_PAGE_SIZE) return rows;
+  }
+}
+
 export function useContactsKpi(includeLegacy: boolean) {
   return useQuery({
     queryKey: ['contacts-kpi', includeLegacy],
-    queryFn: async () => {
-      let q = supabase.from('contacts').select('created_at, contact_type, company').is('deleted_at', null);
-      if (!includeLegacy) {
-        q = q.eq('is_lid_legacy', false).filter('phone', 'match', CONTACT_VISIBLE_PHONE_PATTERN);
-      }
-      const { data, error } = await q;
-      if (error) throw error;
-      return aggregateKpi((data ?? []) as Row[]);
-    },
+    queryFn: async () => aggregateKpi(await fetchKpiRows(includeLegacy)),
     staleTime: 60_000,
     ...CONTACTS_AGGREGATE_QUERY_OPTIONS,
   });
