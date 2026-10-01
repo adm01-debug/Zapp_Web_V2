@@ -287,16 +287,19 @@ jobs:
           DEPLOY_LOG="$EVIDENCE_DIR/deploy-output.log"
           if [ -n "$FN" ]; then
             echo "Deploy da funcao: $FN"
-            supabase functions deploy "$FN" --project-ref "$PROJECT_REF" | tee "$DEPLOY_LOG"
+            supabase functions deploy "$FN" --project-ref "$PROJECT_REF" 2>&1 | tee "$DEPLOY_LOG"
           else
             echo "Deploy de TODAS as funcoes"
-            supabase functions deploy --project-ref "$PROJECT_REF" | tee "$DEPLOY_LOG"
+            supabase functions deploy --project-ref "$PROJECT_REF" 2>&1 | tee "$DEPLOY_LOG"
           fi
           # O CLI pula (sem bump de versao) uma funcao cujo bundle local bate
           # byte a byte com o ja publicado, sinalizando "No change found in
           # Function: X". Sem capturar isso, a verificacao pos-deploy esgota
           # as tentativas esperando um bump que nunca vai acontecer para essa
           # funcao (achado da auditoria de 25/09/2026, run 36183348853).
+          # 01/10/2026 (run 36852598923): essa linha sai no STDERR -- sem o 2>&1
+          # acima o log capturado ficou com 197 bytes, sem ela, e a atestacao
+          # queimou as 144 amostras (~24 min) para falhar com "did not stabilize".
           node --input-type=module <<'NODE'
           import { readFileSync, writeFileSync } from 'node:fs';
           const evidenceDir = `${process.env.RUNNER_TEMP}/edge-deployment-evidence`;
