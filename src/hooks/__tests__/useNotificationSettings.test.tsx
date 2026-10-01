@@ -252,6 +252,23 @@ describe('useNotificationSettings', () => {
       expect(result.current.settings.messageSoundType).toBe('soft');
     });
 
+    it('avisa UMA vez por rajada de falhas, e volta a avisar numa rajada nova', async () => {
+      const upsert = vi.fn().mockResolvedValue({ error: new Error('falha de rede') });
+      mockFrom.mockReturnValue(montarCadeia(null, upsert));
+      const result = await carregar();
+
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(2026, 9, 1, 9, 0, 0));
+      await result.current.updateSettings({ soundVolume: 35 });
+      await result.current.updateSettings({ soundVolume: 40 });
+      await result.current.updateSettings({ soundVolume: 45 });
+      vi.setSystemTime(new Date(2026, 9, 1, 9, 0, 10));
+      await result.current.updateSettings({ soundVolume: 50 });
+      vi.useRealTimers();
+
+      expect(upsert).toHaveBeenCalledTimes(4);
+      expect(toastMock).toHaveBeenCalledTimes(2);
+    });
   });
 
   // ========== HORÁRIO DE SILÊNCIO (isQuietHours) ==========
