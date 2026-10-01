@@ -1737,7 +1737,7 @@
         "user_settings.sla_sound_type:text:nullable",
         "user_settings.goal_sound_type:text:nullable",
         "user_settings.transcription_sound_type:text:nullable",
-        "user_settings.sound_volume:integer:nullable",
+        "user_settings.sound_volume:integer:not-null",
         "voice_command_logs.id:uuid:not-null",
         "voice_command_logs.user_id:uuid:not-null",
         "voice_command_logs.transcript:text:not-null",
@@ -2054,7 +2054,7 @@
         "upsert_my_call",
         "user_has_permission"
     ],
-    "generated_at": "2026-09-30",
+    "generated_at": "2026-10-01",
     "format_version": 2,
     "check_constraints": [
         "agent_presence.agent_presence_status_check:CHECK ((status = ANY (ARRAY['online'::text, 'away'::text, 'offline'::text])))",
@@ -2173,7 +2173,12 @@
         "team_messages.team_messages_no_self_reply:CHECK (((reply_to_id IS NULL) OR (reply_to_id <> id)))",
         "team_messages.team_messages_status_check:CHECK ((status = ANY (ARRAY['sent'::text, 'delivered'::text, 'read'::text, 'failed'::text])))",
         "team_messages.team_messages_type_media_check:CHECK (((message_type = ANY (ARRAY['text'::text, 'image'::text, 'audio'::text, 'video'::text, 'file'::text, 'sticker'::text, 'system'::text])) OR (media_url IS NULL)))",
+        "user_settings.user_settings_goal_sound_type_valid:CHECK ((goal_sound_type = ANY (ARRAY['beep'::text, 'chime'::text, 'bell'::text, 'alert'::text, 'soft'::text])))",
+        "user_settings.user_settings_mention_sound_type_valid:CHECK ((mention_sound_type = ANY (ARRAY['beep'::text, 'chime'::text, 'bell'::text, 'alert'::text, 'soft'::text])))",
+        "user_settings.user_settings_message_sound_type_valid:CHECK ((message_sound_type = ANY (ARRAY['beep'::text, 'chime'::text, 'bell'::text, 'alert'::text, 'soft'::text])))",
+        "user_settings.user_settings_sla_sound_type_valid:CHECK ((sla_sound_type = ANY (ARRAY['beep'::text, 'chime'::text, 'bell'::text, 'alert'::text, 'soft'::text])))",
         "user_settings.user_settings_sound_volume_range:CHECK (((sound_volume >= 10) AND (sound_volume <= 100)))",
+        "user_settings.user_settings_transcription_sound_type_valid:CHECK ((transcription_sound_type = ANY (ARRAY['beep'::text, 'chime'::text, 'bell'::text, 'alert'::text, 'soft'::text])))",
         "webauthn_challenges.webauthn_challenges_type_check:CHECK ((type = ANY (ARRAY['registration'::text, 'authentication'::text])))",
         "whatsapp_connections.whatsapp_connections_status_check:CHECK ((status = ANY (ARRAY['connected'::text, 'disconnected'::text, 'connecting'::text, 'qr_pending'::text])))"
     ],
