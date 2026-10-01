@@ -43,7 +43,7 @@ async function sendSingleProduct(
   product: ExternalProduct,
   agentId: string | null | undefined,
 ): Promise<'ok' | 'partial' | 'fail'> {
-  const message = buildMessage(product, 'informal', null);
+  const message = buildMessage(product, 'informal', null, contact);
   const imgUrl = product.primary_image_url;
   const messageIds: string[] = [];
   let imageOk = true;
