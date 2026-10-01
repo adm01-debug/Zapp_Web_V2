@@ -25,11 +25,13 @@ export interface ContactItemProps {
   contact: Contact;
   isSelected: boolean;
   onToggleSelect: (id: string, selected: boolean) => void;
+  /** Clique no corpo do item: abre o painel de detalhe. */
+  onOpenDetails: (id: string) => void;
+  /** Botão "Conversar": abre o contato no inbox. */
   onOpenChat: (id: string) => void;
   onEdit: (contact: Contact) => void;
   onDelete: (contact: Contact) => void;
   index: number;
-  companyLogo?: string | null;
   companyName?: string | null;
   searchQuery?: string;
 }

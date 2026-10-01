@@ -54,7 +54,7 @@ export function ContactViewSwitcher({
     <div className="flex items-center gap-2">
       {/* Segmented view mode toggles */}
       <LayoutGroup id="contacts-view">
-        <div className="h-11 rounded-xl border border-border bg-card p-1 flex items-center gap-1">
+        <div data-testid="view-switcher" className="h-11 rounded-xl border border-border bg-card p-1 flex items-center gap-1">
           {PRIMARY_MODES.map(({ value, label, icon: Icon }) => {
             const active = viewMode === value;
             return (
@@ -64,7 +64,7 @@ export function ContactViewSwitcher({
                 title={label}
                 className={cn(
                   'relative isolate h-9 px-4 rounded-[10px] text-sm font-medium flex items-center gap-2 transition-colors',
-                  active ? 'text-white' : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                  active ? 'text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                 )}
               >
                 {active && <SegmentPill reduceMotion={reduceMotion} />}
@@ -80,7 +80,7 @@ export function ContactViewSwitcher({
               <button
                 className={cn(
                   'relative isolate h-9 px-4 rounded-[10px] text-sm font-medium flex items-center gap-2 transition-colors',
-                  isSecondaryActive ? 'text-white' : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                  isSecondaryActive ? 'text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                 )}
                 title="Mais visualizações"
               >

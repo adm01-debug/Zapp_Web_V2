@@ -164,7 +164,7 @@ export function ContactDialogs({
               </div>
             </DialogDescription>
           </DialogHeader>
-          <Button onClick={() => setShowSuccess(null)} className="w-full bg-success hover:bg-success/90 text-white">
+          <Button onClick={() => setShowSuccess(null)} className="w-full bg-success hover:bg-success/90 text-success-foreground">
             Continuar
           </Button>
         </DialogContent>

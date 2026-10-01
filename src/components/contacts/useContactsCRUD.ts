@@ -75,13 +75,19 @@ const ADDRESS_FIELDS = ['postal_code', 'address', 'address_number', 'neighborhoo
  * linha resumida da lista. Remover as chaves de endereço faz o guarda do E04 não gravá-las,
  * em vez de sobrescrever o banco com `null` ou com um valor velho.
  */
-function withoutAddressFields(contact: Contact): Contact {
+function withoutAddressFields(contact: ContactEditSource): Contact {
   const copy: Record<string, unknown> = { ...contact };
   for (const field of ADDRESS_FIELDS) delete copy[field];
   delete copy.latitude;
   delete copy.longitude;
   return copy as unknown as Contact;
 }
+
+/** Contato vindo da busca/detalhe: lat/lng chegam como número e são recarregados do banco. */
+type ContactEditSource = Omit<Contact, 'latitude' | 'longitude'> & {
+  latitude?: number | string | null;
+  longitude?: number | string | null;
+};
 
 export function useContactsCRUD() {
   const { profile } = useAuth();
@@ -234,8 +240,7 @@ export function useContactsCRUD() {
         // devolvia 0 linhas SEM erro — `contacts` tem RLS ligada e nao tinha nenhuma
         // policy de DELETE — enquanto a UI anunciava "Contato excluido com sucesso!"
         // com o contato intacto (auditoria de 29/09, §3.1). Agora `null`/erro sao falha.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC de 20260929370000; types.ts sincroniza no types-sync
-        const { data, error } = await (supabase as any).rpc('delete_contact', { p_id: id });
+        const { data, error } = await supabase.rpc('delete_contact', { p_id: id });
         if (error) {
           throw new Error(error.message || 'Erro ao excluir contato. Tente novamente.');
         }
@@ -262,7 +267,7 @@ export function useContactsCRUD() {
    * (RLS), abre com a linha da lista avisando o operador; nesse caso o E04 impede
    * que os campos de endereço sejam gravados.
    */
-  const openEditDialog = useCallback(async (contact: Contact) => {
+  const openEditDialog = useCallback(async (contact: ContactEditSource) => {
     setIsSubmitting(true);
     try {
       const { data, error } = await ContactService.getById(contact.id);

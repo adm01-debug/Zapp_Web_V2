@@ -42,7 +42,7 @@ export function ContactEmptyState({
           </p>
           <div className="flex items-center gap-3">
             {onAddContact && (
-              <Button onClick={onAddContact} className="gap-2 bg-success hover:bg-success/90 text-white">
+              <Button onClick={onAddContact} className="gap-2 bg-success hover:bg-success/90 text-success-foreground">
                 <UserPlus className="w-4 h-4" />
                 Novo Contato
               </Button>
