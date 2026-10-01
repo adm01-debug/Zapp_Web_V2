@@ -1,7 +1,22 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 
-Deno.serve(async (req) => {
+// T15: o front não conhece mais a linha — host/usuário/porta vêm daqui. Os
+// defaults são os valores que estavam hardcoded no front; a variável de
+// ambiente só é necessária se a linha mudar (SIP_PASSWORD segue sendo o único
+// segredo obrigatório). `Number(...) || 8089` cobre env ausente, vazia ou
+// não-numérica. Exportada para o teste travar o contrato dos 5 campos.
+export function provisionamentoSip(
+  getEnv: (key: string) => string | undefined = (k) => Deno.env.get(k),
+): { server: string; user: string; wsPort: number } {
+  return {
+    server: getEnv('SIP_SERVER') ?? 'ip.b24-9441-1552764901.bitrixphone.com',
+    user: getEnv('SIP_USER') ?? 'phone1',
+    wsPort: Number(getEnv('SIP_WS_PORT')) || 8089,
+  };
+}
+
+export async function handleGetSipPassword(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -41,11 +56,18 @@ Deno.serve(async (req) => {
       log.done(503);
       return jsonResponse({ error: 'SIP não configurado', code: 'SIP_NOT_CONFIGURED' }, 503, req);
     }
+    const { server, user, wsPort } = provisionamentoSip();
     log.done(200);
-    return jsonResponse({ password, profileId: profile.id }, 200, req);
+    return jsonResponse({ server, user, wsPort, password, profileId: profile.id }, 200, req);
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
     log.error("Unhandled error", { error: msg });
     return errorResponse(msg, 500, req);
   }
-});
+}
+
+// Convenção do repo para funções testáveis: o handler é exportado e o servidor
+// só sobe quando o módulo é o entrypoint (o runtime do Supabase é o entrypoint).
+if (import.meta.main) {
+  Deno.serve(handleGetSipPassword);
+}
