@@ -120,8 +120,7 @@ então esse caminho nunca foi executável por agente de qualquer forma.
 
 ## Auditoria e plano de correções (2026-09-16)
 
-**Plano vigente:** `docs/audits/PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md` (sucessor; herda
-os 80 checkboxes abertos de 16/09 e adiciona o aprendido em 17/09).
+**Plano vigente:** `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` (auditoria exaustiva dos 17 workflows + meta CI score 10/10; supercede PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md).
 Auditoria exaustiva local↔GitHub↔banco em `docs/audits/PLANO_CORRECOES_50_ETAPAS_2026-09-16.md`.
 Estado dos achados após re-auditoria de 2026-09-17:
 - `messages` >75% dead tuples — **RESOLVIDO**: autovacuum executou em 2026-09-16 18:37; em
@@ -177,16 +176,16 @@ Estado dos achados após re-auditoria de 2026-09-17:
 
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
-Auditoria dos 13 workflows + 3 dinâmicos (16 total), da branch protection, dos secrets e dos environments. O que passou a
+Auditoria dos 14 workflows + 3 dinâmicos (17 total), da branch protection, dos secrets e dos environments. O que passou a
 valer (confira antes de propor mudança de CI, para não refazer o que já existe):
 
-**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions):** são 13 arquivos em
+**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions):** são 14 arquivos em
 `.github/workflows/` (`auto-update-pr-branch.yml`, `branch-hygiene-audit.yml`, `ci.yml`,
 `codeql.yml`, `crm-sync-worker.yml`, `db-guard.yml`, `db-live-guard.yml`, `db-migrate.yml`,
-`deploy-functions.yml`, `e2e-logado.yml`, `supabase-sync.yml`, `targeted-ledger-evidence.yml`,
+`deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx-pr.yml`, `supabase-sync.yml`, `targeted-ledger-evidence.yml`,
 `types-sync.yml`), mais 3 workflows dinâmicos que não têm arquivo próprio no repo (Dependabot
-Updates, Dependency Graph, Copilot reviewer) — 16 no total. Plano completo em
-`docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-26.md`.
+Updates, Dependency Graph, Copilot reviewer) — 17 no total. Plano completo em
+`docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md`.
 
 **Required checks da `main`** (6; `strict` está `true` ao vivo — ver correção de 01/10 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
 `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline` e
@@ -444,10 +443,6 @@ não existe mais — próximas fases usam branch novo por fase, padrão `feat/ta
 - **NUNCA** imprimir tokens ou secrets no output.
 
 ## Contatos — critério de contato visível (2026-10-01, F5 / decisão D4)
-
-- **Tipos canônicos**: 6 (`cliente`, `fornecedor`, `transportadora`, `colaborador`, `prestador_servico`, `parceiro`) — `CONTACT_TYPES` em `src/utils/whatsappFileTypes.ts` ≡ CHECK `chk_contact_type` (guard `scripts/db-audit/contact-types-contract.test.mjs`). `sicoob_gifts` e `lead` são extintos: a Sicoob Bridge é desligada (decisão D2), não reativar o tipo no CHECK.
-- **Ícone e cor por tipo** vivem só em `src/components/contacts/contactTypeConfig.tsx`; ordem e tipos válidos de aba/preset em `contactTypeOrder.ts`. Não criar mapa paralelo.
-- **Exclusão** é soft-delete pelas RPCs `delete_contact(p_id)` / `delete_contacts(p_ids)` (decisão D1). Nunca `.delete()` direto em `contacts` (RLS sem policy de DELETE devolve 0 linhas sem erro). RPC com erro ou `null` = falha na UI. Restaurar: `docs/runbooks/contatos-exclusao-e-legados.md`.
 
 - **Contato visível em Contatos** = `deleted_at IS NULL` + `is_lid_legacy = false` + `phone ~ '^[0-9]{10,15}$'`.
 - `search_contacts(..., include_legacy boolean DEFAULT false)` e `contacts_count_by_type(include_legacy boolean DEFAULT false)` aplicam o critério quando `include_legacy` é falso (migration `20260930450000`).

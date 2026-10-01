@@ -1,26 +1,22 @@
 # ==========================================================================
-# ZAPP-WEB · E2E Talk X em PR (Playwright, login real, NÃO required)
+# ZAPP-WEB · E2E Talk X em PR (Playwright, deslogado, NÃO required)
 # ==========================================================================
-# Complementa e2e-logado.yml (que roda só na main). Este roda o spec do Talk X
-# nos 3 browsers quando um branch de PR toca arquivos do Talk X — antes do merge.
+# Roda o spec do Talk X em Chromium quando um PR toca arquivos do Talk X —
+# antes do merge, sem secrets de autenticação.
 #
-# SEGURANCA: deliberadamente usa `push` (branches de colaboradores confiáveis,
-# que é quem empurra os branches hermes/* claude/* codex/*) e NAO `pull_request`,
-# porque scripts/ci/check-pr-workflow-secrets.mjs proíbe `pull_request` + secrets.
-# `push` com branches-ignore:main + paths é o equivalente seguro: o job só roda
-# quando um colaborador empurra um branch não-main que altera o Talk X, e o
-# secret E2E_TEST_* não vaza para código de fork.
+# E27 (auditoria GitHub Actions 2026-10-01): gatilho original era `push`
+# branches-ignore:main para contornar check-pr-workflow-secrets.mjs que proíbe
+# pull_request + secrets. Com a remoção de E2E_TEST_EMAIL/PASSWORD, pull_request
+# passa a ser seguro: PRs de fork não têm acesso a secrets de repositório.
 #
-# NÃO é required no branch protection — é informativo (mesmo status do
-# e2e-logado.yml pós-merge). "required após 2 semanas verde" é critério da V92.
+# NÃO é required no branch protection — é informativo.
 # ==========================================================================
 
 name: E2E Talk X (PR)
 
 on:
-  push:
-    branches-ignore:
-      - main
+  pull_request:
+    branches: [main]
     paths:
       - 'src/components/talkx/**'
       - 'src/hooks/integrations/useTalkX*'
@@ -38,9 +34,9 @@ concurrency:
 
 jobs:
   e2e-talkx-pr:
-    name: 🎭 E2E Talk X (PR, 3 browsers)
+    name: 🎭 E2E Talk X (PR, Chromium, deslogado)
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
       - name: 📥 Checkout confiável
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -55,12 +51,10 @@ jobs:
       - name: 📦 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
-      - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
-        run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
+      - name: 🎭 Install Playwright (Chromium)
+        run: bunx playwright@1.63.0 install --with-deps chromium
 
-      - name: 📐 Run Playwright E2E Talk X (login real, 3 browsers)
-        run: bun run test:e2e -- --project=setup --project=chromium-talkx --project=firefox-talkx --project=webkit-talkx
+      - name: 📐 Run Playwright E2E Talk X (Chromium, deslogado)
+        run: bun run test:e2e -- --project=chromium
         env:
           CI: true
-          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
-          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}

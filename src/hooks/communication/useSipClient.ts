@@ -6,6 +6,8 @@ import { useSipConnection } from '../sip/useSipConnection';
 import { novoCallId, desfechoDaChamada, criarFilaDePersistencia, type CallEndOutcome, type UpsertMyCallInput } from '@/lib/calls/persistence';
 import { phoneQueryVariants, pickUniquePhoneMatch } from '@/lib/calls/phone';
 import { SipCallAdapter } from '@/lib/calls/adapters/SipCallAdapter';
+import { provisionarSip } from '@/lib/calls/sipProvisioning';
+import { useMicrophoneGuard } from './useMicrophoneGuard';
 import { CallEngine } from '@/lib/calls/adapters/CallEngine';
 import type { CallEngineSink, EngineStatus } from '@/lib/calls/adapters/CallEngine';
 import type { AdapterDirection } from '@/lib/calls/adapters/CallAdapter';
@@ -83,37 +85,31 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
   const handleInvitation = useCallback((invitation: Parameters<CallEngine['handleInvitation']>[0]) => engine.handleInvitation(invitation), [engine]);
   const { sipStatus, uaRef, connect, disconnect } = useSipConnection(handleInvitation);
 
+  // T17: o microfone é conferido ANTES de discar E de atender — este é o funil
+  // real dos dois caminhos (o painel VoIP chama o SIP direto, sem passar pelo
+  // provider). Sem isto a negativa virava "Erro ao ligar" genérico.
+  const { micReason, garantirMicrofone } = useMicrophoneGuard();
   // O `sessionId` vem do provider: é o id da linha e o mesmo do evento `DIAL`.
-  const makeCall = useCallback((number: string, sessionId?: string) => engine.makeCall(number, uaRef.current, sipStatus === 'registered', sessionId), [engine, sipStatus, uaRef]);
+  const makeCall = useCallback(async (number: string, sessionId?: string) => {
+    if (!(await garantirMicrofone())) return;
+    engine.makeCall(number, uaRef.current, sipStatus === 'registered', sessionId);
+  }, [engine, sipStatus, uaRef, garantirMicrofone]);
   const hangUp = useCallback(() => engine.hangUp(), [engine]);
   const toggleMute = useCallback(() => engine.toggleMute(), [engine]);
   const sendDTMF = useCallback((digit: string) => engine.sendDTMF(digit), [engine]);
-  const acceptIncomingCall = useCallback(async () => { await engine.accept(); }, [engine]);
+  const acceptIncomingCall = useCallback(async () => { if (await garantirMicrofone()) await engine.accept(); }, [engine, garantirMicrofone]);
   const rejectIncomingCall = useCallback(async () => { await engine.reject(); }, [engine]);
 
   const connectWithStoredCredentials = useCallback(async () => {
-    const { data, error } = await supabase.functions.invoke('get-sip-password');
-    const password = data?.password;
-    // T15: host/usuário/porta vêm do servidor — o front não conhece mais a linha.
-    const { server, user, wsPort } = data ?? {};
-    if (error || !password || !server || !user || !wsPort) {
-      // FunctionsHttpError.context pode ser Response (status) ou corpo já
-      // parseado (code), dependendo da versão do supabase-js.
-      const ctx = (error as { context?: { status?: number; code?: string } } | null)?.context;
-      const isMissingSecret = error ? ctx?.status === 503 || ctx?.code === 'SIP_NOT_CONFIGURED' : !password;
-      // Sem erro e sem os campos = função ainda antiga (janela entre o deploy do
-      // front, imediato, e o da Edge): avisa em vez de conectar com valor velho.
-      toast.error(isMissingSecret ? 'Senha SIP não configurada. Adicione o segredo SIP_PASSWORD no Supabase.' : error ? 'Erro ao conectar ao servidor SIP. Verifique sua sessão e tente novamente.' : 'Provisionamento SIP indisponível (função desatualizada). Tente novamente após a publicação.');
-      return;
-    }
-    await connect({ server, user, password, wsPort });
+    const config = await provisionarSip();
+    if (config) await connect(config);
   }, [connect]);
 
   useEffect(() => () => { stopTimer(); engine.dispose(); }, [stopTimer, engine]);
 
   return {
-    sipStatus, callStatus, callDuration, isMuted, currentNumber, callDirection, currentCallId,
+    sipStatus, micReason, callStatus, callDuration, isMuted, currentNumber, callDirection, currentCallId,
     connect, connectWithStoredCredentials, disconnect, makeCall, hangUp, toggleMute, sendDTMF,
-    acceptIncomingCall, rejectIncomingCall,
+    acceptIncomingCall, rejectIncomingCall, garantirMicrofone,
   };
 }

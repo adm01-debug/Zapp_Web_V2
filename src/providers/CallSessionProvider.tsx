@@ -292,14 +292,18 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const dial = useCallback(
-    (phone: string) => {
+    async (phone: string) => {
+      // T17: o microfone é conferido ANTES do `DIAL`. Despachar primeiro e
+      // falhar depois deixaria a máquina presa em `dialing` — nada a encerraria,
+      // e o agente ficaria com uma chamada fantasma na tela.
+      if (!(await sip.garantirMicrofone())) return;
       reiniciarSeTerminal();
       // T11: UM id por chamada — o mesmo uuid no evento `DIAL` (máquina), no
       // `sessionId` do evento e no `p_id` das 3 gravações do banco.
       const id = novoId();
       dispatch({ type: 'DIAL', sessionId: id, channel: 'voip', phone });
       openDialer();
-      sip.makeCall(phone, id);
+      await sip.makeCall(phone, id);
     },
     [openDialer, novoId, reiniciarSeTerminal, sip],
   );
