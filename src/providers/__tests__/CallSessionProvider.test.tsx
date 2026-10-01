@@ -17,6 +17,7 @@ import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CallSessionApi } from '../CallSessionProvider';
+import { useNavigationHistory } from '@/hooks/system/useNavigationHistory';
 
 /** O hook de SIP é o transporte — aqui ele é dublê, controlado pelo teste. */
 const h = vi.hoisted(() => ({
@@ -88,12 +89,18 @@ function Sonda() {
   );
 }
 
+function SondaNav() {
+  const { currentView } = useNavigationHistory('inbox');
+  return <span data-testid="nav-view">{currentView}</span>;
+}
+
 function Harness({ rota = '/' }: { rota?: string }) {
   return (
     <MemoryRouter initialEntries={[rota]}>
       <CallSessionProvider>
         <RotaAtual />
         <Sonda />
+        <SondaNav />
       </CallSessionProvider>
     </MemoryRouter>
   );
@@ -143,6 +150,17 @@ describe('CallSessionProvider (T10)', () => {
     expect(texto('status')).toBe('dialing');
     expect(texto('telefone')).toBe('11999992048');
     expect(texto('sessao')).not.toBe('-');
+  });
+
+  it('openDialer emite zapp:navigate e sincroniza useNavigationHistory para voip', () => {
+    montar();
+    expect(texto('nav-view')).toBe('inbox');
+
+    fireEvent.click(screen.getByText('abrir'));
+
+    // A view de telefonia é navegada via react-router, mas o hook precisa
+    // acompanhar pelo evento `zapp:navigate` — é o que esconde a ActiveCallBar.
+    expect(texto('nav-view')).toBe('voip');
   });
 
   it('mantém os campos que a UI antiga consome (VoIPPanel/DialPad/ActiveCallBar)', () => {

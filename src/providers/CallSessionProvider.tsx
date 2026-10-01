@@ -89,6 +89,13 @@ function PonteDeNavegacao({
   useEffect(() => {
     registrar((search) => {
       navigate({ search });
+      // Fonte única de navegação: o dialer navega via react-router, mas o
+      // useNavigationHistory (ActiveCallBar/Index) precisa acompanhar pelo
+      // evento `zapp:navigate` — senão a barra não some na tela de Telefonia.
+      const view = new URLSearchParams(search).get('view');
+      if (view) {
+        window.dispatchEvent(new CustomEvent('zapp:navigate', { detail: { view } }));
+      }
     });
   }, [navigate, registrar]);
   return null;
