@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { localDayKey } from '@/lib/localDay';
 import { ptBR } from 'date-fns/locale';
 
 interface AuditLog {
@@ -75,8 +76,8 @@ export function AuditLogDashboard() {
     if (!error && data) {
       setLogs(data as AuditLog[]);
       
-      const today = new Date().toISOString().split('T')[0];
-      const todayLogs = data.filter(l => l.created_at.startsWith(today));
+      const today = localDayKey(new Date());
+      const todayLogs = data.filter(l => localDayKey(l.created_at) === today);
       const uniqueUsers = new Set(data.map(l => l.user_id).filter(Boolean));
       const suspicious = data.filter(l => 
         l.action.includes('delete') || l.action.includes('role_change') || l.action.includes('export')
