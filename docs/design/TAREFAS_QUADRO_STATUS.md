@@ -92,7 +92,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
   D16: `useMyWorkItemsBadge` nao tem consumidor na UI (depende da Fase F) e `WorkItem.contact` (join da etapa 13) tambem nao e renderizado — contratos prontos e testados, UI pendente. `includeCancelled`, `snooze` e `setReminder` sao API publica sem UI (Fase F).
   D17: `bun run lint` (eslint cru, que NAO e gate do CI) acusa 956 problemas legados; o gate real e o lint-ratchet, que passa (0 novas).
 
-## CP-C Sheet       [ ] WorkItemSheet= · ?task= · Aguardando por DnD/kebab/menu= · kebab 5 grupos= · RemindChip popover= · ContactChip=
+## CP-C Sheet       [~] WorkItemSheet=ok (etapas 23–27, C1) · ?task=ok · Abrir pelo card=ok (B3) · Aguardando por DnD/kebab/menu=pendente (C2) · kebab 5 grupos=pendente (C2) · RemindChip popover=pendente (C2) · ContactChip=pendente (C2)
 ## CP-D QuickAdd    [ ] chip-btn CSS= · 7 chips= · validação passado= · teste=
 ## CP-E Telas       [~] etapas 43, 44, 45 e 46, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8), 53, 55, 56 e 57 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos: ok (barra de 5 filtros, estado na URL por replaceState, recorte único) · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos: ok (3 grupos, ponto por tipo, atrasadas expansível) · card agenda: ok (h-11, 1 linha, checkbox) · QuickAdd no dia: ok (pré-preenchido) · 0 requests na troca= · modo por rota: ok · auditoria F1: ok (7 correções; 9 mutações mortas) · auditoria F2: ok (7 correções; 7 mutações mortas) · auditoria F3: ok (A4 16/16 mutações mortas; A1-1 corrigido; 3 achados do A2 na fila) · cenários F4: ok (7 sobreviventes da F3 cobertos; 5/5 mutações mortas) · rótulos pt-BR do módulo: ok (Média, Concluído e as políticas das colunas acentuados)
 
@@ -519,6 +519,41 @@ leituras foram descartadas.
 
 ## Iterações
 - 28/09 PR #1133: 6 commits de fix de CI (TransitionResult, cast Supabase, LazyExoticComponent, baseline realtime, runtime-config.test.sh) + 2 pushes vazios que NÃO geraram run (concurrency) → regra 7 do plano v2
+
+## FASE C1 — Sheet de edição (etapas 23–27) — 2026-10-01
+
+Branch `hermes/fase-c-sheet-2610011018cb68`. PR: feat(tarefas): Sheet de edição do item.
+
+- **23** `src/components/tasks/shared/WorkItemSheet.tsx` (novo, 396 linhas): `Sheet` `side="right"` `w-[420px]`,
+  `side="bottom" h-[90vh]` abaixo de `md` (matchMedia). Props exatamente como o plano: `{ item | null, open,
+  onOpenChange, onSave(item, patch), onMove(item, to, waitingReason?), onSnooze, onSetReminder, onCancel,
+  contactOptions, doingCount, focusField? }`. Esc fecha (caso de teste "23: abre com os 8 campos e fecha no Esc").
+- **24** 8 campos na ordem do plano: título (autofocus), estado (`Select` com as 5 colunas; `doing` `disabled` com
+  o texto "Fazendo está cheio (3/3)" quando `doingCount >= 3` e o item não está em doing), motivo de espera
+  (`Textarea`, só em Aguardando, obrigatório, erro inline "Diga por que parou"), prioridade (4 chips),
+  contato, prazo (`Popover`+`Calendar` pt-BR + hora opcional; sem hora = `T23:59`, a convenção de "dia inteiro"
+  já usada no módulo), alarme (`Popover` data+hora, "Avisado em {notified_at}", "Remover alarme", "Adiar 15 min"),
+  descrição (colapsada, abre quando o item já tem uma).
+- **25** Rodapé: "Salvar" (`bg-primary`, `disabled` sem mudança, `Ctrl+Enter`), "Cancelar tarefa" (ghost
+  destructive → `cancel`, com undo do hook, decisão D8), "Concluir" (`bg-success` → `move('done')`).
+- **26 (B3)** `TasksModule.tsx` renderiza `<WorkItemSheet item={itemAberto} …/>`; os três modos passam a receber
+  `onOpen={abrirSheet}`; `abrirSheet`/`fecharSheet` sincronizam `?task=` por `history.replaceState`.
+- **27** Deep-link `?task=<id>`: o id é lido **uma vez** no primeiro render e o item é **derivado** do cache
+  (`itemAberto = selectedItem ?? itemDoLink`), sem `useEffect` — a primeira versão usava efeito com `setState` e
+  o **lint-ratchet acusou 1 dívida nova** (`react-hooks/set-state-in-effect`); corrigido no mesmo PR.
+- Estado vai por `move` (máquina de estados), nunca por `update` — fecha o resíduo registrado no ledger
+  ("`update()` do hook ignora `input.status` (vai morder no Sheet da Fase C)").
+
+**Prova (execução, não auto-relato)**
+- Vermelho-antes: com a ligação do `TasksModule` removida (`git stash`), `WorkItemSheet.test.tsx` → **2 falhas
+  exatamente nos casos 26 e 27** (7 passam); com a ligação → **9/9 verde**.
+- Mutações (`.tmp/mut-c1.py`, backup por hash antes e conferência depois): M1 `open={false}` (Sheet não abre) →
+  **morta**; M2 `move` sem o motivo → **morta**; M3 `doing` nunca desabilita → **morta**; M4 Salvar sempre
+  habilitado → **morta**. 4/4 mortas, restauração `ok` nas quatro.
+- Gates: `typecheck` 0 · `implicit-any-check` 0 (baseline 0) · `db:guard` 0 novas (702 migrations, nada meu) ·
+  tipografia aprovada · `lint-ratchet` **945 atual / 26 removidas / 0 novas** · eslint dos 3 arquivos do diff 0 ·
+  `build` 8,47s · bundle **4057,6 KB gzip (budget 4100)** / CSS 39,3 KB · suíte completa **354 arquivos / 4703
+  testes / 0 falhas**.
 
 ## Pendências / resíduos (honestos)
 - Push do navegador: decidir na etapa 64 (infra existe: usePushNotifications.ts, PushNotificationToggle.tsx — não avaliada)
