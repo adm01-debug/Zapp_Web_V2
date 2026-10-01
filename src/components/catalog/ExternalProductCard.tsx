@@ -17,6 +17,10 @@ interface ExternalProductCardProps {
   /** E47: seleção em massa */
   isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
+  /** CT-72: capa acima da dobra — prioriza o carregamento da imagem. */
+  priority?: boolean;
+  /** CT-72: sizes por breakpoint, repassado ao ProductThumb. */
+  sizes?: string;
 }
 
 export const ExternalProductCard: React.FC<ExternalProductCardProps> = ({
@@ -27,6 +31,8 @@ export const ExternalProductCard: React.FC<ExternalProductCardProps> = ({
   onToggleFavorite,
   isSelected = false,
   onToggleSelect,
+  priority,
+  sizes,
 }) => (
   <CatalogProductCard
     product={product}
@@ -36,5 +42,7 @@ export const ExternalProductCard: React.FC<ExternalProductCardProps> = ({
     onToggleFavorite={onToggleFavorite}
     isSelected={isSelected}
     onToggleSelect={onToggleSelect}
+    priority={priority}
+    sizes={sizes}
   />
 );

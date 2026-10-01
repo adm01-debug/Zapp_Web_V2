@@ -189,7 +189,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
     onOpenChange(true);
     setStep('selectContact');
   }, [onOpenChange]);
-  const { isSending, sendProductToContact } = useSendToContact(() => {
+  const { isSending, sendProgress, sendProductToContact } = useSendToContact(() => {
     try { sessionStorage.removeItem(draftKey(product.id)); } catch { /* ignore */ }
     onOpenChange(false);
     setStep('configure');
@@ -383,6 +383,29 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
 
             <ScrollArea className="max-h-[60vh]">
               <div className="px-5 pb-5 space-y-4">
+                {sendMode === 'product' && (
+                  <div
+                    data-testid="product-info-card"
+                    className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/50 border border-border/30"
+                  >
+                    {fullProduct.primary_image_url && (
+                      <img
+                        src={fullProduct.primary_image_url}
+                        alt={fullProduct.name}
+                        className="w-10 h-10 rounded-md object-cover flex-shrink-0"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{fullProduct.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {selectedImages.size} foto(s) · Modelo {TEMPLATE_LABELS[template]}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {hasDraft && (
                   <div className="flex items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5">
                     <div className="flex items-center gap-2 min-w-0">
@@ -543,7 +566,9 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
                     ? (isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />)
                     : <User className="w-4 h-4" />}
                   {presetContact
-                    ? (isSending ? 'Enviando...' : `Enviar para ${selectedContact?.name ?? 'contato'}`)
+                    ? (isSending
+                        ? (sendProgress ? `Enviando ${sendProgress.done}/${sendProgress.total}...` : 'Enviando...')
+                        : `Enviar para ${selectedContact?.name ?? 'contato'}`)
                     : 'Selecionar Contato'}
                 </Button>
                 <DropdownMenu>

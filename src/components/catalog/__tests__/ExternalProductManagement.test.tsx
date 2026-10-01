@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ExternalProductManagement } from '../ExternalProductManagement';
 import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
@@ -38,6 +38,21 @@ vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: (...args: unknown[]) => mockUseAuth(...args),
 }));
 
+// CT-59 — o 429 dispara toast do sonner.
+const toastError = vi.hoisted(() => vi.fn());
+vi.mock('sonner', () => ({
+  toast: Object.assign(vi.fn(), { error: toastError, success: vi.fn() }),
+}));
+
+// CT-70 — o componente lê `useReducedMotion`; aqui só esse hook do
+// framer-motion é trocado (o resto segue real, então a asserção é sobre o DOM
+// que o framer-motion de fato produz).
+const reduceMotion = vi.hoisted(() => ({ value: false }));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return { ...actual, useReducedMotion: () => reduceMotion.value };
+});
+
 const mockUseExternalCatalog = vi.fn();
 // E32: ModuleHeader usa useCatalogStats (total real + status de sync).
 const mockUseCatalogStats = vi.fn();
@@ -60,6 +75,8 @@ function baseHookReturn(overrides: Record<string, unknown> = {}) {
     suppliers: [{ id: 'sup1', name: 'Spot' }],
     loading: false,
     error: null,
+    errorCode: null,
+    errorStatus: null,
     fetchProducts: vi.fn(),
     fetchProduct: vi.fn(),
     fetchCategories: vi.fn(),
@@ -86,6 +103,7 @@ describe('ExternalProductManagement', () => {
     mockUseExternalCatalog.mockReturnValue(baseHookReturn());
     mockUseAuth.mockReset();
     mockUseAuth.mockReturnValue({ profile: { id: 'profile-1' } });
+    toastError.mockReset();
     mockUseCatalogStats.mockReset();
     mockUseCatalogStats.mockReturnValue({
       data: {
@@ -369,5 +387,111 @@ describe('ExternalProductManagement', () => {
       fireEvent.click(screen.getByText('Filtros avançados'));
       expect(screen.getByPlaceholderText('2000')).toBeInTheDocument();
     });
+  });
+
+  describe('CT-59: erro por código da edge', () => {
+    const renderWithError = (overrides: Record<string, unknown>) => {
+      const hookReturn = baseHookReturn({ products: [], totalProducts: 0, ...overrides });
+      mockUseExternalCatalog.mockReturnValue(hookReturn);
+      renderManagement();
+      return hookReturn;
+    };
+
+    it('CATALOG_UPSTREAM_ERROR: TalkXDataUnavailableState + "Tentar de novo" refaz a busca', () => {
+      const hookReturn = renderWithError({
+        error: 'Catalog database is temporarily unavailable',
+        errorCode: 'CATALOG_UPSTREAM_ERROR',
+        errorStatus: 503,
+      });
+
+      expect(screen.getByText('Dados indisponíveis')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
+      expect(hookReturn.fetchProducts).toHaveBeenCalled();
+    });
+
+    it('CATALOG_NOT_CONFIGURED: mostra o código para o admin', () => {
+      renderWithError({ error: 'Catalog is not configured', errorCode: 'CATALOG_NOT_CONFIGURED', errorStatus: 503 });
+
+      expect(screen.getByText(/Código do erro:/)).toBeInTheDocument();
+      expect(screen.getByText('CATALOG_NOT_CONFIGURED')).toBeInTheDocument();
+    });
+
+    it('CATALOG_CREDENTIALS_INVALID: mostra o código real da edge', () => {
+      renderWithError({
+        error: 'Catalog credentials are not authorized for the requested resource',
+        errorCode: 'CATALOG_CREDENTIALS_INVALID',
+        errorStatus: 503,
+      });
+
+      expect(screen.getByText('CATALOG_CREDENTIALS_INVALID')).toBeInTheDocument();
+    });
+
+    it('429: toast "Muitas requisições, aguarde 1 min" + botões desabilitados', async () => {
+      renderWithError({
+        error: 'Too many requests. Try again in 1 minute.',
+        errorCode: 'CATALOG_RATE_LIMITED',
+        errorStatus: 429,
+      });
+
+      await waitFor(() => {
+        expect(toastError).toHaveBeenCalledWith('Muitas requisições, aguarde 1 min');
+      });
+      expect(screen.getByRole('button', { name: 'Tentar de novo' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /Atualizar/ })).toBeDisabled();
+    });
+  });
+
+  describe('CT-60: contagem nos filtros', () => {
+    it('select de categoria em árvore com contagem (raiz semibold, filho indentado)', () => {
+      mockUseExternalCatalog.mockReturnValue(baseHookReturn({
+        categories: [
+          { id: 'cat1', name: 'Brindes', slug: 'brindes', parent_id: null, products_count: 42 },
+          { id: 'cat2', name: 'Canecas', slug: 'canecas', parent_id: 'cat1', products_count: 7 },
+          { id: 'cat3', name: 'Sem contagem', slug: 'sem', parent_id: null },
+        ],
+      }));
+      renderManagement();
+
+      fireEvent.keyDown(screen.getAllByRole('combobox')[0], { key: 'ArrowDown' });
+
+      expect(screen.getByRole('option', { name: 'Brindes (42)' }).className).toContain('font-semibold');
+      expect(screen.getByRole('option', { name: 'Canecas (7)' }).className).toContain('pl-6');
+      expect(screen.getByRole('option', { name: 'Sem contagem' })).toBeInTheDocument();
+    });
+
+    it('select de fornecedor não inventa contagem (não há fonte real)', () => {
+      renderManagement();
+
+      fireEvent.keyDown(screen.getAllByRole('combobox')[1], { key: 'ArrowDown' });
+
+      expect(screen.getByRole('option', { name: 'Spot' })).toBeInTheDocument();
+    });
+  });
+});
+
+describe('ExternalProductManagement — CT-70 (prefers-reduced-motion)', () => {
+  afterEach(() => {
+    reduceMotion.value = false;
+  });
+
+  const comOpacidadeInicial = (root: HTMLElement) =>
+    root.querySelectorAll('[style*="opacity: 0"]').length;
+
+  it('sem redução, o cabeçalho e os cards entram animando', () => {
+    reduceMotion.value = false;
+    const { container } = renderManagement();
+
+    // 1 motion.div do cabeçalho (ModuleHeader) + 1 por card da grade
+    expect(comOpacidadeInicial(container)).toBeGreaterThanOrEqual(3);
+  });
+
+  it('com redução, nada entra animando (estado final direto)', () => {
+    reduceMotion.value = true;
+    const { container } = renderManagement();
+
+    expect(comOpacidadeInicial(container)).toBe(0);
+    // a grade continua montada — só a animação foi pulada
+    expect(screen.getByText('Caneta Plástica Azul')).toBeInTheDocument();
+    expect(screen.getByText('Catálogo de Produtos')).toBeInTheDocument();
   });
 });

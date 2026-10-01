@@ -1,6 +1,10 @@
 # PLANO — Catálogo: finalização da implantação (100 etapas, prefixo `CT-`)
 
-**Data:** 2026-09-29 · **Status:** PLANEJADO — nada executado
+**Data:** 2026-09-29 · **Status:** EM EXECUÇÃO — atualizado em 01/10/2026. Cada etapa fechada traz a evidência ao lado
+(arquivo:linha, migration, consulta medida ou saída de comando). Execução sob responsabilidade do Hermes a partir de
+01/10/2026 (ordem do Joaquim); o Claude audita a `main` e a matriz de pendências.
+**Base na última auditoria:** `main` @ `a1ddaafe` (Claude, 01/10/2026): 11 etapas feitas (CT-04..09, 13, 14, 16, 17, 47),
+14 parciais, 75 não feitas.
 **Origem:** `docs/catalogo/AUDITORIA_CATALOGO_2026-09-29.md` (41 DONE · 1 DESCARTADO · 38 PARCIAL · 20 AUSENTE sobre o
 plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 **Sucede** `PLANO_IMPLEMENTACAO_CATALOGO_100.md` (não reabrir; fica como registro do escopo original e dos mocks).
@@ -39,11 +43,20 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 ## FASE 0 — Segurança e prova de vida do envio (CT-01–CT-12)
 *Bloco A: 1 PR de DDL (CT-01–CT-03, aguarda Joaquim) + 1 PR de front (CT-04–CT-09) + teste real (CT-10–CT-12).*
 
-- [ ] **CT-01** — `REVOKE ALL ON catalog_favorites, catalog_send_events FROM anon; REVOKE TRUNCATE, TRIGGER, REFERENCES ON
+- [x] **CT-01** — `REVOKE ALL ON catalog_favorites, catalog_send_events FROM anon; REVOKE TRUNCATE, TRIGGER, REFERENCES ON
   … FROM authenticated`. **Aceite:** `role_table_grants` sem `anon` e sem os 3 privilégios para `authenticated`.
-- [ ] **CT-02** — `catalog_send_events`: `REVOKE UPDATE, DELETE FROM authenticated` (log é append-only; policy hoje não
+  **✅ FEITO — provado em 01/10/2026 (MCP read-only, banco `tnnnlkbymytvtqngbbqh`):** migration
+  `20260929650000_catalog_grants_append_only.sql` **presente no ledger** (`supabase_migrations.schema_migrations`);
+  `information_schema.role_table_grants` **sem nenhum grant de `anon`** em `catalog_favorites` e `catalog_send_events`;
+  `authenticated` **sem TRUNCATE/TRIGGER/REFERENCES** nas duas tabelas. Arquivo também presente no repo (sem drift).
+- [x] **CT-02** — `catalog_send_events`: `REVOKE UPDATE, DELETE FROM authenticated` (log é append-only; policy hoje não
   cobre UPDATE/DELETE, mas o grant existe); `COMMENT ON TABLE` das 2 tabelas. **Aceite:** grants = `INSERT, SELECT`;
   `obj_description` não nulo.
+  **✅ FEITO — provado em 01/10/2026:** grants de `authenticated` em `catalog_send_events` = **apenas INSERT e SELECT**
+  (append-only, sem UPDATE/DELETE); `catalog_favorites` = SELECT/INSERT/UPDATE/DELETE;
+  `obj_description('public.catalog_send_events')` e `obj_description('public.catalog_favorites')` **não nulos**
+  (os comentários descrevem exatamente o estado pós-CT-01/CT-02). Observação: a migration foi escrita antes da regra de
+  cabeçalho `-- rollback:` e já está mergeada e aplicada — migration aplicada não se edita (regra 7 do `CLAUDE.md` §1).
 - [ ] **CT-03** — PromoGifts: `REVOKE EXECUTE ON FUNCTION zapp_catalog_stats() FROM authenticated` (só service key,
   como o plano E24.2 pedia) — via `apply_migration` do MCP GESTÃO DE PRODUTOS. **Aceite:** `proacl` sem `authenticated`;
   edge continua respondendo `catalog_stats`.
@@ -84,6 +97,13 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 - [x] **CT-15** — `ExternalProductCatalog.tsx` reusa `CatalogProductCard` (grade/lista), `TalkXPagination`, estados de
   vazio/erro da tela principal; remove `ScrollArea` interno e `ExternalProductCard` legado se ficar sem consumidor.
   **Aceite:** `ExternalProductCard.tsx` apagado ou com 1 consumidor; `eslint-baseline.json` sem entrada do arquivo.
+  **✅ FEITO — provado em 01/10/2026:** `ExternalProductCard.tsx` **mantido com exatamente 1 consumidor**
+  (`ExternalProductManagement.tsx:36` import, uso ~:616) — aceite satisfeito. As **2 supressões `eslint-disable-next-line
+  react-hooks/exhaustive-deps`** do `ExternalProductCatalog.tsx` (linhas 129 e 138) foram **eliminadas corrigindo os hooks
+  de verdade** (refs `doFetchRef`/`isOpenRef` + sync effect), não mascaradas; o bloco `{path, sha256}` desse arquivo e as
+  2 entradas `react-hooks/exhaustive-deps` foram removidos de `scripts/ci/eslint-baseline.json`
+  (`baseline 971→969`, `atual 944`, **`novas: 0`**, sem `--update-baseline`). `npx eslint` no arquivo = 0 problemas;
+  `bun run typecheck` exit 0; `bunx vitest run src/components/catalog` = **10 arquivos, 185 testes passando**.
 - [x] **CT-16** — Chip "Meus favoritos" no dialog do chat (`useCatalogFavorites`). **Aceite:** teste RTL.
 - [x] **CT-17** — `SendProductDialog` em modo `presetContact` mostra o card-resumo do contato e permite trocar.
   **Aceite:** teste RTL.
@@ -141,8 +161,15 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 - [ ] **CT-37** — `SendProductDialog.tsx`: preview WhatsApp em `PhonePreview` (`catalogShared.tsx`) usando `.catalog-phone`;
   remover `#075E54/#dcf8c6/#e5ddd5/bg-white/text-white` — a bolha verde do WhatsApp vira token local documentado
   (`--wa-bubble`) em `tokens.css`. **Aceite:** `grep -c "#[0-9a-fA-F]\{6\}" SendProductDialog.tsx` = 0.
-- [ ] **CT-38** — Cards de variação com foto/cor/estoque (modo "Variação específica") e card de info do produto no
+- [x] **CT-38** — Cards de variação com foto/cor/estoque (modo "Variação específica") e card de info do produto no
   modo completo. **Aceite:** teste RTL.
+  **✅ FEITO — provado em 01/10/2026:** os cards de variação já traziam foto/cor/estoque; o que faltava era o **card de
+  info do produto no modo completo**, agora em `SendProductDialog.tsx:386-408` (thumb + nome + "N foto(s) · Modelo X",
+  só tokens, `data-testid="product-info-card"`), renderizado só em `sendMode === 'product'` para não quebrar os modos
+  `presetContact` (CT-17) e variação específica. Teste: 5 casos novos em `__tests__/SendProductDialog.test.tsx:421-478`
+  → **28 testes passando**, typecheck exit 0, `eslint` 0 problemas, `lint-ratchet novas: 0`.
+  *(Achado do executor, corrigido no mesmo arquivo: o `vi.mock` de `useCatalogContactSearch` não exportava
+  `CONTACT_SEARCH_MIN_CHARS`, o que derrubava os 28 testes independentemente do CT-38 — corrigido no mock.)*
 - [ ] **CT-39** — "Adicionar fotos" (das `variants.images` não selecionadas) e "Baixar" (zip das fotos selecionadas
   via `fetch` + `JSZip` se já existir no bundle; senão download individual). **Aceite:** teste RTL do picker.
 - [ ] **CT-40** — Fechamento D: PR mergeada; `PARIDADE.md` seções "Detalhes" e "Enviar" (prints antes/depois); zerar
@@ -152,18 +179,39 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 ## FASE 4 — Passo "Selecionar contato" completo (CT-41–CT-50)
 *Bloco E — 1 PR de front + 1 migration (CT-48).*
 
-- [ ] **CT-41** — `ContactSelectionStep.tsx`: 2 colunas `md:grid-cols-[1fr_300px]`, header `IconTile Users`, card-resumo
+- [x] **CT-41** — `ContactSelectionStep.tsx`: 2 colunas `md:grid-cols-[1fr_300px]`, header `IconTile Users`, card-resumo
   do produto (thumb 96, nome, modelo, "N foto(s)"). **Aceite:** teste RTL.
-- [ ] **CT-42** — Lista: `InitialsAvatar` 40 com `avatar_url`, telefone formatado, radio; seção "Enviados recentemente"
+  **✅ FEITOS — CT-41, CT-42 e CT-43 provados em 01/10/2026** (`ContactSelectionStep.tsx`, `useSendProduct.ts`,
+  `useCatalogContactSearch.ts` + 3 arquivos de teste: **38 testes passando**, `typecheck` exit 0, `eslint` 0 problemas,
+  `lint-ratchet novas: 0`):
+  · **CT-41:** 2 colunas `md:grid-cols-[1fr_300px]` + header com `IconTile` (o componente existe em `@/components/talkx/talkxShared`)
+  + card-resumo com **thumb 96** (era 40 px).
+  · **Divergência de componente:** `InitialsAvatar` existe em `@/components/dashboard/overview/DashboardCard`, mas seus tipos
+  só aceitam `size` `24|28|32|36|44|56` (não 40) — usado `size={44}` com `!h-10 !w-10` para os 40 px pedidos.
+- [x] **CT-42** — Lista: `InitialsAvatar` 40 com `avatar_url`, telefone formatado, radio; seção "Enviados recentemente"
   (contatos de `catalog_send_events`) acima dos 15 recentes. **Aceite:** teste RTL com 3 contatos.
-- [ ] **CT-43** — Busca: normalização de telefone (só dígitos) no `ilike`, mínimo 2 chars, debounce 300 ms; vazio com
+  **✅ FEITO:** telefone pelo `formatPhoneBR` de `@/lib/calls/phone` (**já existia** — não foi criado helper novo), radio de
+  seleção e seção "Enviados recentemente" alimentada por `useCatalogRecentSends`. Teste RTL com 3 contatos.
+- [x] **CT-43** — Busca: normalização de telefone (só dígitos) no `ilike`, mínimo 2 chars, debounce 300 ms; vazio com
   link "Criar contato" (`?view=contacts&new=1` — confirmar param antes). **Aceite:** busca "9999" acha `+55 (41) 9 9999`.
+  **✅ FEITO:** normalizador de dígitos aplicado no `ilike`, mínimo **2** caracteres, debounce de 300 ms (reusado o que já
+  existia, sem duplicar) e estado vazio com link "Criar contato". O teste prova exatamente o aceite: busca "9999" encontra o
+  contato armazenado como `+55 (41) 9 9999`.
+  **⚠️ Divergência medida (o plano pedia "confirmar param antes"):** o deep link `?view=contacts&new=1` **não existe** — o
+  `ViewRouter` só interpreta `?view=`; foi usado `?view=contacts` (sem `new`), com a razão comentada no código.
 - [ ] **CT-44** — Rail "Resumo do envio" (`RailCard`) com 4 linhas + check e `AlertCard` "Pronto para enviar!" só com
   contato; `aria-live="polite"`. **Aceite:** teste RTL sem/com contato.
 - [ ] **CT-45** — Personalização `{{nome}}`/`{{empresa}}` reusando `personalizePreview`/`extractVariables` do
   `talkxShared`; templates ganham "Olá, {{nome}}!" com fallback "Olá!"; preview atualiza ao selecionar contato.
   **Aceite:** teste de `buildMessage` com e sem nome.
-- [ ] **CT-46** — Botão "Enviar agora" com progresso real "Enviando 2/4…" (contador de mensagens). **Aceite:** teste RTL.
+- [x] **CT-46** — Botão "Enviar agora" com progresso real "Enviando 2/4…" (contador de mensagens). **Aceite:** teste RTL.
+  **✅ FEITO — provado em 01/10/2026.** O contador é **real**, não decorativo: o estado `sendProgress` nasce em
+  `useSendProduct.ts:149`, é devolvido pelo hook (`:266`) e os testes travam a sequência do loop
+  (`{done:0,total:2}` → `{1,2}` → `{2,2}` → `null` em `useSendProduct.test.tsx:201-230`). Os **dois** botões de envio
+  exibem o contador: `ContactSelectionStep.tsx:144-146` (passo de contato) e `SendProductDialog.tsx:566-571` (modo completo).
+  **Nota de execução:** a segunda metade (botão do modo completo) não pôde ser feita pelo subagente porque o arquivo estava
+  reservado a outro executor naquele momento — foi fechada pelo orquestrador, e verificada por medição própria
+  (`SendProductDialog.test.tsx` = **28 testes passando**, `bun run typecheck` exit 0).
 - [ ] **CT-47** — Envio multi-produto (bulk) passa pelo mesmo passo de contato e pelo resumo ("N produtos");
   `CatalogBulkSendDialog` vira modo de `SendProductDialog` ou reusa `ContactSelectionStep`. **Aceite:** 1 componente de
   contato no módulo.
@@ -195,12 +243,37 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   reflete a aba.
 - [ ] **CT-58** — Abas com `DashboardTabs` (reuso) em vez de `Tabs` cru, se o componente aceitar 3 itens sem mudança;
   senão manter e registrar. **Aceite:** decisão na §10.
-- [ ] **CT-59** — Estados de erro por código da edge: `CATALOG_UPSTREAM_ERROR` → `TalkXDataUnavailableState`
+- [x] **CT-59** — Estados de erro por código da edge: `CATALOG_UPSTREAM_ERROR` → `TalkXDataUnavailableState`
   ("Catálogo PromoGifts indisponível" + Tentar de novo); `CATALOG_NOT_CONFIGURED`/`CREDENTIALS_INVALID` → estado
   para admin com o código; 429 → toast "Muitas requisições, aguarde 1 min" + botões desabilitados 10 s. **Aceite:**
-  teste por `error.code` (4 casos).
+  **✅ FEITO — provado em 01/10/2026.** O front **descartava** o `code` (`useExternalCatalog.ts:154-161` fazia
+  `throw new Error(error.message)`); agora `CatalogEdgeError` preserva `code`+`status` e o hook expõe `errorCode`/`errorStatus`.
+  Estados: `CatalogErrorState` em `catalogShared.tsx:610-655`; cooldown de 429 em `catalogShared.tsx:570-604` (toast + botões
+  desabilitados 10 s) e `retry` do react-query desligado quando o código é de rate limit. Testes: `useExternalCatalog.test.ts:1206-1319`
+  (6 casos por `error.code`, incluindo a prova de que **não houve retry** no 429) + RTL nos dois componentes.
+  **Divergências medidas (registradas):** (1) o código real é `CATALOG_CREDENTIALS_INVALID`, não `CREDENTIALS_INVALID` como o
+  plano escreve; (2) a edge devolve **429 sem `code`** — o front **sintetiza** `CATALOG_RATE_LIMITED` a partir do status e
+  documenta isso no tipo (linhas 153-158); (3) o texto literal "Catálogo PromoGifts indisponível" dentro de
+  `TalkXDataUnavailableState` exigiria editar `talkxShared.tsx` (fora do escopo desta etapa) — foi usado
+  `what="O catálogo PromoGifts"` + botão "Tentar de novo" externo, e o título literal aparece no estado de admin.
+  **Achado grave corrigido:** existia um teste que **afirmava o falso** ("no rate limiting on edge function") quando a edge
+  tem `checkRateLimit` por `user_id` com `RATE_LIMIT=60/60 s`; agora o teste **lê o código real da edge** e afirma o comportamento real. **Aceite cumprido:** teste por `error.code` com os 4 casos (e mais 2).
 - [ ] **CT-60** — Barra de filtros: select de categoria em árvore (raiz semibold, filhos indentados) com contagem;
   select de fornecedor com contagem (sem logo — 0 fornecedores têm `logo_url`, achado E25). **Aceite:** teste RTL.
+  **🟡 PARCIAL — 01/10/2026: metade fechada e provada; a outra metade é impossível com o dado atual.**
+  **Categoria: FEITO.** Árvore com contagem em `ExternalProductCatalog.tsx:215-260` (raiz `:226`, filho indentado `:230`)
+  e `ExternalProductManagement.tsx:456-500` (`:467`/`:471`), usando o `products_count` **real** do `ExternalCategory`
+  (`useExternalCatalog.ts:22`, que já vem no `bootstrap`). Rótulos "Brindes (42)", "Canecas (7)"; sem contagem o helper
+  `countLabel` (`catalogShared.tsx:566-568`) devolve o nome puro — **nunca inventa número**. Testes RTL nos dois componentes
+  + `catalogShared.test.tsx:528-605`.
+  **Fornecedor: NÃO FEITO — prova da impossibilidade** (não é pendência de execução): (1) `ExternalSupplier`
+  (`useExternalCatalog.ts:26-35`) **não tem** campo de contagem; (2) a edge devolve só `SUPPLIER_FIELDS`
+  (`id, name, trading_name, logo_url, is_product_supplier, low_stock_threshold`) — nenhum agregado; (3) a consulta de produtos
+  é paginada/filtrada, então somar no cliente daria **número falso** (só a página atual); (4) não existe RPC nem tabela de
+  contagem por fornecedor. Pela regra do plano ("nada morto") e por não se inventar número, os options ficaram **sem contagem**,
+  com a razão comentada no código (`ExternalProductCatalog.tsx:239-254`, `ExternalProductManagement.tsx:480-497`).
+  **Para fechar:** agregado de fornecedor na edge/PromoGifts (`suppliers.products_count` ou RPC) — sistema **externo**,
+  logo depende da decisão pendente sobre DDL no PromoGifts. Fecha em 1 linha quando existir: `countLabel(s.name, s.products_count)`.
 - [ ] **CT-61** — Atalhos: `/` foca a busca, `Esc` limpa, `⌘F` foca. **Aceite:** teste RTL.
 - [ ] **CT-62** — `ExternalProductManagement.tsx`: filtros em `useReducer` único (a reescrita adiada na E06), zerar os
   4 `eslint-disable` e os `useEffect` de sincronização. **Aceite:** `grep -c eslint-disable` = 0 no arquivo;
@@ -224,12 +297,42 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   chips, thumbs, radios; `Esc` fecha e o foco volta ao gatilho. **Aceite:** teste RTL de foco.
 - [ ] **CT-69** — `alt` descritivo (nome + cor) em todas as imagens; contraste dos badges ≥ 4,5:1 nos 3 temas (tabela
   em `docs/catalogo/CONTRASTE.md`). **Aceite:** tabela commitada.
-- [ ] **CT-70** — `useReducedMotion` em todo componente animado do módulo (grep `motion.` × `useReducedMotion`).
+- [x] **CT-70** — `useReducedMotion` em todo componente animado do módulo (grep `motion.` × `useReducedMotion`).
   **Aceite:** cada arquivo com `framer-motion` importa `useReducedMotion`.
+  **✅ FEITO — provado em 01/10/2026.** Os 3 arquivos animados que faltavam importam e **chamam** `useReducedMotion`, e com a
+  flag ligada nada anima (`initial`/`animate`/`exit` → `false`/`undefined`, `layout={!prefersReducedMotion}`), renderizando o
+  estado final — mesmo padrão já usado em `catalogShared.tsx` (FavoriteButton): `ExternalProductCatalog.tsx` (import `:22`;
+  wrapper do grid + wrapper por card), `ExternalProductManagement.tsx` (import `:34`; ModuleHeader + 2 spots do grid) e
+  `WhatsAppTemplatesManager.tsx` (import `:11`; os dois `motion.tr`).
+  **Prova forte:** o aceite deixou de depender de inspeção manual — o teste-contrato novo `CT70_reducedMotion.test.tsx`
+  **varre `src/components/catalog/*.tsx` e falha** se algum arquivo animado importar `framer-motion` sem o hook ou sem a
+  chamada; além disso cada arquivo tem par de asserções "sem redução → opacidade 0 no 1º paint" / "com redução → já no estado
+  final" (teste não-vácuo). Nota de setup registrada: `vi.mock('motion-dom')` **não** intercepta — só
+  `vi.mock('framer-motion')` com `importOriginal`, porque `useReducedMotion` lê um singleton de `prefersReducedMotion`.
+  Suíte do módulo: **243 testes passando** (12 arquivos); `typecheck` exit 0; `eslint` 0; `lint-ratchet novas: 0`.
 - [ ] **CT-71** — Modais `React.lazy` (`ProductDetailDialog`, `SendProductDialog`, `CatalogAdvancedFilters`,
   `CatalogBulkSendDialog`); `recharts` só no rail (lazy). **Aceite:** `vite build` mostra chunks separados.
-- [ ] **CT-72** — `sizes` por breakpoint no `ProductThumb`, `fetchpriority="high"` nas 4 primeiras capas,
+- [x] **CT-72** — `sizes` por breakpoint no `ProductThumb`, `fetchpriority="high"` nas 4 primeiras capas,
   `content-visibility: auto` nos cards abaixo da dobra. **Aceite:** Lighthouse LCP < 2,5 s (4G simulado).
+  **✅ CÓDIGO FEITO E VERIFICADO — 01/10/2026 (o número de Lighthouse tem ressalva, ver abaixo).**
+  (a) **`priority` nas 4 primeiras capas** da grade (`ExternalProductCatalog.tsx:361` → `priority={index < 4}`), que vira
+  `loading="eager"` + `fetchpriority="high"` no `<img>`; as demais seguem `lazy`.
+  (b) **`sizes` sempre presente** no thumb da grade, com degraus **medidos no Chrome** (largura computada real do `.catalog-card`:
+  390px→171, 768px→235, 1024px→236, 1280px→172/219, 1440px→204/259). O degrau novo de **1024px (25vw)** é o ganho real: o default
+  antigo não tinha tier nessa faixa e pedia a variante de 400w (11,1 KB) onde a de 300w (7,3 KB) bastava.
+  (c) **`content-visibility: auto`** via `.catalog-card--offscreen` (`src/styles/components.css`, logo após `.catalog-card`), com
+  `contain-intrinsic-size: auto 320px` (o keyword `auto` faz o placeholder usar a altura real depois do 1º render) aplicada
+  **só nos cards abaixo da dobra** — as 4 primeiras ficam sem, para não encostar no elemento de LCP. **CLS medido = 0.**
+  **Lacuna que o executor sinalizou e o orquestrador fechou:** a grade da página de **gestão** não conseguia propagar `priority`
+  (o wrapper `ExternalProductCard.tsx` não repassava). Fechado por mim: `priority`/`sizes` adicionados à interface e repassados no
+  wrapper, e `ExternalProductManagement.tsx:622-636` passa `priority={index < 4}` (o `map` ganhou o `index`).
+  **⚠️ O aceite "Lighthouse LCP < 2,5 s (4G simulado)" NÃO está provado — e eu não o declaro cumprido.** Não é possível medir a
+  página autenticada neste ambiente (a view exige sessão Supabase; o executor **se recusou, corretamente**, a usar credencial de
+  conta). O que existe é um harness com o HTML real do card + o CSS de produção: LCP 2,3 s, CLS 0 — mas nele `LCP == FCP` e o
+  elemento de LCP é o **texto**, não a imagem, então **isso mede o harness, não o app**. O que está provado em **Chrome real**
+  (não jsdom) é o mecanismo: das 24 `<img>`, exatamente 4 saem `eager`+`fetchpriority=high`, 20 saem `lazy`, 20 carregam a classe
+  offscreen e o atributo `sizes` emitido é o esperado. **Para fechar:** Lighthouse em `/?view=catalog` **autenticado**, 4G simulado.
+  Testes: `CT72_imagens.test.tsx` (10 casos) + extensões em `ExternalProductCatalog.test.tsx` (confirma `['true','true','true','true','false','false']`); suíte do módulo **243 testes passando**.
 - [ ] **CT-73** — Payload de `list_products compact` medido (< 30 KB por página de 24) — se passar, cortar campos.
   **Aceite:** medição em `PERF.md`.
 - [ ] **CT-74** — Lighthouse perf ≥ 90 na view em 4G; CLS < 0,05. **Aceite:** relatório em `PERF.md`.
@@ -239,10 +342,26 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 ## FASE 8 — Testes, e2e e ajuda (CT-77–CT-88)
 *Bloco I — 2 PRs.*
 
-- [ ] **CT-77** — Testes Deno da edge para as 6 ações + `new_or_recent` + rate limit 120/60, com mock do `extClient`;
+- [x] **CT-77** — Testes Deno da edge para as 6 ações + `new_or_recent` + rate limit 120/60, com mock do `extClient`;
   incluídos na lista fixa do CI (`deno test`). **Aceite:** job roda `promogifts-catalog/index.test.ts`.
-- [ ] **CT-78** — Teste dedicado da lógica de `status` (`sent/partial/failed`) e de `logCatalogSendEvent` (pendência
+  **✅ FEITO (com 1 ressalva medida) — 01/10/2026.** Seam de teste construído **sem mudar comportamento de produção**:
+  `promogiftsCatalogHandler` passou a ser exportado e a aceitar um 2º parâmetro **opcional** `deps {localClient, extClient}`
+  (em produção `deps` é `undefined` → caminho idêntico ao de hoje); a criação do client externo virou
+  `createExternalCatalogClient(url, key)`, que devolve `null` sem secrets (o 503 `CATALOG_NOT_CONFIGURED` continua igual);
+  `Deno.serve(promogiftsCatalogHandler)` virou `Deno.serve((req) => promogiftsCatalogHandler(req))` porque o Deno passa
+  `ServeHandlerInfo` no 2º argumento (typecheck quebrava com TS2769). `RATE_LIMIT`/`RATE_WINDOW_MS` exportados com os valores
+  **intactos**, para o teste derivar o limite do próprio módulo. Novo `index.actions.test.ts` (390 linhas, **17 testes**:
+  as 6 ações + 401/400/503-not-configured + rate limit derivado + PGRST103/42501/404); arquivo acrescentado à lista fixa do
+  `deno test` no `ci.yml`; rodando a lista inteira com `--frozen`: **266 testes passando, 0 falhas**; `deno check` exit 0.
+  **Ressalvas registradas:** (1) o texto desta etapa cita a ação `new_or_recent`, que **não existe** no `ActionSchema` da edge
+  (apenas as 6 ações) — é escopo do **CT-64** (bloco E); (2) a mudança de rate limit **60→120/min é o CT-19** e não foi feita
+  aqui, conforme instruído — como o teste deriva de `RATE_LIMIT`, ele passa a valer 120 automaticamente quando o CT-19 mudar.
+- [x] **CT-78** — Teste dedicado da lógica de `status` (`sent/partial/failed`) e de `logCatalogSendEvent` (pendência
   admitida na E28). **Aceite:** 3 casos verdes.
+  **✅ FEITO — 01/10/2026.** 3 testes travando o `status` no evento logado (`useSendProduct.test.tsx:287-351`, cobrindo
+  `sent`/`partial`/`failed`) + **4 testes da implementação real** do `logCatalogSendEvent` (novo
+  `src/hooks/integrations/__tests__/useCatalogContactSearch.test.ts`: payload snake_case completo, opcionais → `null`, os
+  3 status e a falha silenciosa que loga sem lançar) — antes ele era **sempre mockado**, nunca testado de verdade.
 - [ ] **CT-79** — Cobertura do módulo ≥ 80 % linhas (`vitest --coverage src/components/catalog`); registrar.
   **Aceite:** número em `PERF.md`.
 - [ ] **CT-80** — Suíte do módulo em < 30 s. **Aceite:** tempo registrado.
@@ -270,11 +389,22 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   Importar planilha se sem URL, Sincronizar). **Aceite:** seção no `PARIDADE.md`.
 - [ ] **CT-91** — RLS testada com 2 usuários reais (agente vê só os próprios envios; supervisor vê todos; favoritos
   isolados). **Aceite:** resultado em `SECURITY.md`.
-- [ ] **CT-92** — Service key do PromoGifts só em Edge secrets: grep no repo e no bundle de produção. **Aceite:** 0 hits.
+- [x] **CT-92** — Service key do PromoGifts só em Edge secrets: grep no repo e no bundle de produção. **Aceite:** 0 hits.
+  **✅ FEITO — provado em 01/10/2026:** no repositório a service key aparece **apenas como nome de variável**
+  (`Deno.env.get("PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY")` em `supabase/functions/promogifts-catalog/index.ts:195`) e como
+  `${{ secrets.… }}` em `.github/workflows/deploy-functions.yml:172,234` — **nenhum literal**. No **bundle de produção**:
+  13 chunks JS baixados de `https://zapp-web-v2.vercel.app` e greppados → **0 hits**.
+  Observação (achado pré-existente, fora do escopo): há JWTs literais versionados em `src/integrations/supabase/client.ts:14`,
+  `.env.production`, `e2e/fixtures/*` e `supabase/migrations/20260829110000_gmail_incremental_sync_cron.sql:22` — verifiquei o
+  campo `role` de cada um **sem imprimir o token**: todos são `role=anon ref=tnnnlkbymytvtqngbbqh`, ou seja a **anon key**
+  (pública por desenho, protegida por RLS), **não** a service key.
 - [ ] **CT-93** — Sentry: breadcrumbs `catalog.*` (abrir, filtrar, enviar) e alerta `CATALOG_UPSTREAM_ERROR` > 5/min.
   **Aceite:** alerta criado; breadcrumb visível num evento de teste.
 - [ ] **CT-94** — Rate limit testado em produção (61 × `bootstrap` → 429) e a UI de CT-59 reage. **Aceite:** print.
-- [ ] **CT-95** — Logs da edge sem PII (grep `console.log` por telefone/nome). **Aceite:** revisão registrada.
+- [x] **CT-95** — Logs da edge sem PII (grep `console.log` por telefone/nome). **Aceite:** revisão registrada.
+  **✅ FEITO — revisão em 01/10/2026:** `grep -n "console\." supabase/functions/promogifts-catalog/index.ts` → **nenhuma
+  ocorrência**: a edge de catálogo não emite log nenhum (portanto nenhum telefone, nome ou credencial é logado). Revisão
+  registrada aqui; se logs forem adicionados no futuro, a regra é não incluir PII (telefone/nome/credencial).
 - [ ] **CT-96** — `SECURITY.md` do módulo (RLS, grants pós-CT-01, secrets, rate limit, o que o `anon` não vê).
   **Aceite:** arquivo commitado.
 - [ ] **CT-97** — `deployment-manifest.json` final = versão deployada (digest confere). **Aceite:** `--check` ok.
@@ -332,4 +462,5 @@ não houver 1 envio real verificado, todo o resto é vitrine.
 - Ordenação por relevância (`ts_rank_cd`) — exige RPC dedicada no PromoGifts.
 - Reativar a sincronização do PromoGifts (parada desde 05/09) — sistema externo.
 
-*Plano criado em 2026-09-29 a partir de `AUDITORIA_CATALOGO_2026-09-29.md`. Nenhuma etapa executada.*
+*Plano criado em 2026-09-29 a partir de `AUDITORIA_CATALOGO_2026-09-29.md`. Execução iniciada em 01/10/2026: as etapas
+fechadas têm evidência ao lado do checkbox (ver também o mapa de PRs na §11).*

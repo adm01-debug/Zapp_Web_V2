@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,7 +19,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Search, Package, Grid3X3, List, X, Heart } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   useExternalCatalog,
   useCatalogFavorites,
@@ -27,8 +27,8 @@ import {
 } from '@/hooks/integrations/useExternalCatalog';
 import { CatalogProductCard, CatalogProductCardSkeleton } from './CatalogProductCard';
 import { SendProductDialog } from './SendProductDialog';
-import { favoriteToProduct } from './catalogShared';
-import { TalkXPagination, TalkXEmptyState, TalkXDataUnavailableState } from '@/components/talkx/talkxShared';
+import { favoriteToProduct, CatalogErrorState, countLabel, useRateLimitCooldown } from './catalogShared';
+import { TalkXPagination, TalkXEmptyState } from '@/components/talkx/talkxShared';
 import type { ContactResult } from './useSendProduct';
 
 interface ExternalProductCatalogProps {
@@ -58,10 +58,14 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
     suppliers,
     loading,
     error,
+    errorCode,
     fetchProducts,
     fetchCategories,
     fetchSuppliers,
   } = useExternalCatalog();
+
+  // CT-59 — 429 da edge: toast + botões desabilitados por 10 s.
+  const coolingDown = useRateLimitCooldown(errorCode === 'CATALOG_RATE_LIMITED');
 
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
@@ -80,6 +84,9 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
   const [sendProduct, setSendProduct] = useState<ExternalProduct | null>(null);
 
   const { favorites, isFavorite } = useCatalogFavorites();
+
+  // CT-70 — com "reduzir movimento" ligado, os cards entram já no estado final.
+  const prefersReducedMotion = useReducedMotion();
 
   // Build category tree for display
   const parentCategories = categories.filter((c) => !c.parent_id);
@@ -101,41 +108,45 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
     [page, search, categoryId, supplierId, onlyInStock, fetchProducts]
   );
 
+  // `doFetch` muda de identidade a cada mudanca de filtro OU de `page` (o
+  // useCallback acima lista os dois), e `isOpen` alterna ao abrir/fechar. Os
+  // efeitos abaixo so podem reagir ao proprio gatilho (abrir / filtro /
+  // pagina): se `doFetch` entrasse nas deps do efeito de filtros, paginar
+  // resetaria `page` para 0 de novo; se `isOpen` entrasse ali, abrir o dialog
+  // dispararia um fetch duplicado (o efeito de abertura ja buscou). Por isso
+  // os dois valores sao lidos via ref (sempre o ultimo valor), o que mantem
+  // os arrays de deps corretos sem eslint-disable.
+  const doFetchRef = useRef(doFetch);
+  const isOpenRef = useRef(isOpen);
+  useEffect(() => {
+    doFetchRef.current = doFetch;
+    isOpenRef.current = isOpen;
+  });
+
   useEffect(() => {
     if (isOpen) {
       fetchCategories();
       fetchSuppliers();
-      doFetch();
+      doFetchRef.current();
     }
-  }, [isOpen]);
+  }, [isOpen, fetchCategories, fetchSuppliers]);
 
   // Re-fetch on filter changes (debounced for search). O cleanup do proprio
   // effect ja cancela o timer anterior quando as deps mudam de novo -
   // guardar o id em state (como antes) era redundante e disparava
   // set-state-in-effect.
-  //
-  // doFetch nao entra nas deps de proposito: ele muda a cada mudanca de
-  // 'page' (esta na propria lista de deps do seu useCallback), e inclui-lo
-  // aqui faria este efeito de busca reagir a paginacao e resetar page para
-  // 0 a cada troca de pagina. Reescrito com useReducer na E35
-  // (CatalogFilterBar), quando essa UI for substituida.
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpenRef.current) return;
     const t = setTimeout(() => {
       setPage(0);
-      doFetch({ offset: 0 });
+      doFetchRef.current({ offset: 0 });
     }, 300);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, categoryId, supplierId, onlyInStock]);
 
-  // Re-fetch on page change. `doFetch` muda junto com `page` (useCallback) e
-  // `isOpen` só chega aqui já verdadeiro — incluir os dois faria o efeito
-  // disparar duas vezes por troca de página (mesmo motivo documentado no
-  // efeito de filtros acima).
+  // Re-fetch on page change.
   useEffect(() => {
-    if (isOpen && page > 0) doFetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (isOpenRef.current && page > 0) doFetchRef.current();
   }, [page]);
 
   // CT-14 — o envio deixou de ser um callback do chat (que montava um texto
@@ -195,6 +206,7 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9"
+                  disabled={coolingDown}
                 />
                 {search && (
                   <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setSearch('')}>
@@ -203,7 +215,7 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
                 )}
               </div>
 
-              <Select value={categoryId} onValueChange={setCategoryId}>
+              <Select value={categoryId} onValueChange={setCategoryId} disabled={coolingDown}>
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
@@ -213,10 +225,12 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
                     const subs = getSubcategories(cat.id);
                     return (
                       <React.Fragment key={cat.id}>
-                        <SelectItem value={cat.id} className="font-semibold">{cat.name}</SelectItem>
+                        <SelectItem value={cat.id} className="font-semibold">
+                          {countLabel(cat.name, cat.products_count)}
+                        </SelectItem>
                         {subs.map((sub) => (
                           <SelectItem key={sub.id} value={sub.id} className="pl-6 text-sm">
-                            {sub.name}
+                            {countLabel(sub.name, sub.products_count)}
                           </SelectItem>
                         ))}
                       </React.Fragment>
@@ -225,12 +239,17 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
                 </SelectContent>
               </Select>
 
-              <Select value={supplierId} onValueChange={setSupplierId}>
+              <Select value={supplierId} onValueChange={setSupplierId} disabled={coolingDown}>
                 <SelectTrigger className="w-[170px]">
                   <SelectValue placeholder="Fornecedor" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos fornecedores</SelectItem>
+                  {/* CT-60 — fornecedor sem contagem: ExternalSupplier não tem
+                      campo de contagem e a edge não devolve esse número
+                      (SUPPLIER_FIELDS em promogifts-catalog/index.ts). Sem
+                      fonte real, o número não é inventado (divergência
+                      registrada no relatório do CT-60). */}
                   {suppliers.map((s) => (
                     <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                   ))}
@@ -238,7 +257,7 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
               </Select>
 
               <div className="flex items-center gap-2">
-                <Switch id="stock-filter" checked={onlyInStock} onCheckedChange={setOnlyInStock} />
+                <Switch id="stock-filter" checked={onlyInStock} onCheckedChange={setOnlyInStock} disabled={coolingDown} />
                 <Label htmlFor="stock-filter" className="text-sm cursor-pointer">Em estoque</Label>
               </div>
 
@@ -310,7 +329,12 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
                   ))}
                 </div>
               ) : error ? (
-                <TalkXDataUnavailableState what="Os produtos do catálogo PromoGifts" />
+                <CatalogErrorState
+                  code={errorCode}
+                  message={error}
+                  onRetry={() => doFetch()}
+                  retryDisabled={coolingDown}
+                />
               ) : products.length === 0 ? (
                 <TalkXEmptyState
                   icon={Package}
@@ -319,20 +343,22 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
                 />
               ) : (
                 <AnimatePresence mode="popLayout">
-                  <motion.div layout className={gridClass}>
-                    {products.map((product) => (
+                  <motion.div layout={!prefersReducedMotion} className={gridClass}>
+                    {products.map((product, index) => (
                       <motion.div
                         key={product.id}
-                        layout
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
+                        layout={!prefersReducedMotion}
+                        initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.95 }}
+                        animate={prefersReducedMotion ? undefined : { opacity: 1, scale: 1 }}
+                        exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.95 }}
                       >
                         <CatalogProductCard
                           product={product}
                           mode={viewMode === 'list' ? 'list' : 'grade'}
                           onSend={handleSend}
                           isFavorite={isFavorite(product.id)}
+                          // CT-72 — as 4 capas acima da dobra saem eager + fetchpriority=high.
+                          priority={index < 4}
                         />
                       </motion.div>
                     ))}
