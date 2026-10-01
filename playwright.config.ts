@@ -11,6 +11,17 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5173',
     trace: 'on-first-retry',
   },
+  // Screenshots de referência: caminho fixo pedido pela etapa 90 do
+  // PLANO_CONTATOS_100_ETAPAS_2026-09-29 — `e2e/__screenshots__/contacts-*.png`
+  // (o padrão do Playwright jogaria tudo em `<spec>.ts-snapshots/` com sufixo de
+  // projeto). `{platform}` fica no nome de propósito: uma baseline gerada em
+  // outro SO não pode ser comparada com o render do Linux do `e2e-logado.yml`.
+  snapshotPathTemplate: '{testDir}/__screenshots__/{arg}-{platform}{ext}',
+  expect: {
+    // Tolerância da etapa 90 (0,2%). `animations: disabled` congela CountUp,
+    // pills de layoutId e transições antes da foto.
+    toHaveScreenshot: { maxDiffPixelRatio: 0.002, animations: 'disabled' },
+  },
   projects: [
     {
       // auth.spec.ts exercita a tela de login deslogada (tabs, validação de

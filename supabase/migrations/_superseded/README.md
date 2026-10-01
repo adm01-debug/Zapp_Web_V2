@@ -86,6 +86,18 @@ Como todas as 225 funcoes de `public` sao de `postgres`, o default que importa e
 (coberto por 20260930113613) — o `FOR ROLE supabase_admin` deste arquivo era desnecessario desde o
 inicio. Nao aplicar, nao reaplicar; a cobertura equivalente ja existe.
 
+### `20260930660000_talkx_v15_replied_count_guard_and_drop_increment.sql`
+
+**Nunca aplicada — superada por bug de ordem (DROP-before-REVOKE).** A V15 original
+(versão 20260930660000) executava `DROP FUNCTION IF EXISTS` ANTES de `REVOKE ALL ON
+FUNCTION` — o REVOKE apontava para a função já dropada e a transação abortava com
+`42883` (undefined_function). Como nunca rodou, não há drift: o ledger não tem a
+versão 20260930660000 (confirmado por `hermes-db-migrar --ja-no-ledger` = "nao").
+
+A V15 corrigida (ordem REVOKE antes do DROP) é a migration
+`20260930750000_talkx_v15_replied_count_guard_and_drop_increment.sql` (mesmo nome,
+versão nova). Este arquivo fica aqui só como registro histórico do bug.
+
 ## Regra
 
 Nao apagar. Nao reaplicar. Servem como registro historico do schema anterior a migracao.
