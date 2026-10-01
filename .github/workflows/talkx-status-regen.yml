@@ -16,11 +16,13 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   regen:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout (histórico completo)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
