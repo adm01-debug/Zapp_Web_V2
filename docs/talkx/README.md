@@ -6,7 +6,8 @@ Módulo de envio de campanhas WhatsApp em massa, com segmentação, templates, s
 
 | Arquivo | Conteúdo |
 |---|---|
-| **[PLANO_TALKX_V3_100_ETAPAS_2026-09-29.md](./PLANO_TALKX_V3_100_ETAPAS_2026-09-29.md)** | **Plano vigente** — 100 etapas (V01–V100) para finalizar a implantação, cada uma com "Hoje" e "Aceite" |
+| **[PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md](./PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md)** | **Plano vigente** — 200 etapas (X001–X200), com etapas por fase em `v4/etapas/`, inventário em `v4/inventario/` e decisões em `v4/DECISOES.md` |
+| [PLANO_TALKX_V3_100_ETAPAS_2026-09-29.md](./PLANO_TALKX_V3_100_ETAPAS_2026-09-29.md) | **Substituído pelo V4** — 100 etapas (V01–V100), histórico |
 | **[AUDITORIA_PLANO_TALKX_2026-09-29.md](./AUDITORIA_PLANO_TALKX_2026-09-29.md)** | Auditoria exaustiva etapa a etapa (E01–E100 × código × banco × CI): bugs P0/P1, drifts, docs falsas |
 | [PLANO_RECUPERACAO_100_ETAPAS_2026-09-11.md](./PLANO_RECUPERACAO_100_ETAPAS_2026-09-11.md) | Critério de aceite (DoD, gates, contrato de evidência) — continua valendo |
 | [PLANO_IMPLEMENTACAO_TALKX_100.md](./PLANO_IMPLEMENTACAO_TALKX_100.md) | Plano original E01–E100 (08/09) — **histórico**, substituído pelo V3 |
@@ -29,4 +30,5 @@ Módulo de envio de campanhas WhatsApp em massa, com segmentação, templates, s
 
 ## Próximas fases
 
-Seguir o plano V3 na ordem numérica: **Fase 0 (V01–V10)** corrige produção primeiro (P0/P1, drifts, E2E vermelho).
+Seguir o plano V4 na ordem numérica (X001 em diante), uma etapa = uma PR. A **Fase 0 (X001–X005)** institui a
+régua e a governança; as correções imediatas vêm na **Fase 1 (X006–X009)**.
