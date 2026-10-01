@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { invalidateContactsAggregates } from '@/hooks/crm/contactsAggregates';
 
 type ContactUpdate = Database['public']['Tables']['contacts']['Update'];
 
@@ -135,7 +136,8 @@ export function EditContactDialog({ open, onOpenChange, contact }: EditContactDi
 
       toast.success('Contato atualizado com sucesso!');
       queryClient.invalidateQueries({ queryKey: ['contact-enriched'] });
-      queryClient.invalidateQueries({ queryKey: ['contacts'] });
+      invalidateContactsAggregates(queryClient);
+      queryClient.invalidateQueries({ queryKey: ['contacts-search'] });
       onOpenChange(false);
     } catch (err) {
       // Rollback optimistic update on error
