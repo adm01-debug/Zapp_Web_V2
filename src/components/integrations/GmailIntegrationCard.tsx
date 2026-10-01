@@ -21,7 +21,7 @@ export function GmailIntegrationCard() {
             <div>
               <CardTitle className="text-base">Gmail</CardTitle>
               <CardDescription className="text-xs">
-                {activeAccount?.email_address || 'Nao conectado'}
+                {activeAccount?.email_address || 'Não conectado'}
               </CardDescription>
             </div>
           </div>
@@ -34,7 +34,7 @@ export function GmailIntegrationCard() {
         <CardContent className="space-y-1 text-xs text-muted-foreground pb-2">
           {/* E46: exibir sync_status e last_error */}
           <div>Status: <span className="font-medium">{activeAccount.sync_status}</span></div>
-          <div>Ultimo sync: {activeAccount.last_sync_at ? format(new Date(activeAccount.last_sync_at), 'dd/MM HH:mm', { locale: ptBR }) : '—'}</div>
+          <div>Último sync: {activeAccount.last_sync_at ? format(new Date(activeAccount.last_sync_at), 'dd/MM HH:mm', { locale: ptBR }) : '—'}</div>
           {activeAccount.last_error && (
             <div className="text-destructive mt-1 p-2 bg-destructive/10 rounded text-xs">
               Erro: {activeAccount.last_error}
