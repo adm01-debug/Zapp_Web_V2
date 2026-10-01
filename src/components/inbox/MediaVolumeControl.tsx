@@ -1,4 +1,5 @@
 import { useCallback, useRef } from 'react';
+import type { RefObject } from 'react';
 import { ChevronUp, HeadphoneOff, Headphones, Volume1, Volume2, VolumeX } from 'lucide-react';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -6,7 +7,7 @@ import { VolumeSliderPopoverContent } from '@/components/ui/VolumeSliderPopoverC
 import { VolumeTriggerButton } from '@/components/ui/VolumeTriggerButton';
 import { useMediaVolume } from '@/hooks/communication/useMediaVolume';
 import { useVolumeRocker } from '@/hooks/ui/useVolumeRocker';
-import { MEDIA_VOLUME_STEP } from '@/lib/mediaVolumeStore';
+import { MEDIA_VOLUME_STEP, getSnapshot } from '@/lib/mediaVolumeStore';
 import {
   MEDIA_VOLUME_LABEL,
   MEDIA_VOLUME_LABEL_MUTED,
@@ -19,6 +20,12 @@ export type MediaVolumeControlVariant = 'bubble' | 'overlay' | 'sidebar';
 export interface MediaVolumeControlProps {
   variant?: MediaVolumeControlVariant;
   className?: string;
+  /**
+   * E16 — container do player em volta do controle. Com ele, ↑/↓ e `M` valem com o
+   * foco em qualquer parte do player (botão de play, barra de progresso, ...);
+   * sem ele valem só com o foco no próprio botão do volume.
+   */
+  playerRef?: RefObject<HTMLElement | null>;
   /** E26 — vídeo sem faixa de áudio: controle visível, porém inerte, com a razão no tooltip. */
   disabled?: boolean;
   disabledReason?: string;
@@ -41,6 +48,7 @@ const LOW_VOLUME_THRESHOLD = 30;
 export function MediaVolumeControl({
   variant = 'bubble',
   className,
+  playerRef,
   disabled = false,
   disabledReason,
 }: MediaVolumeControlProps) {
@@ -54,11 +62,14 @@ export function MediaVolumeControl({
   const label = disabled && disabledReason ? disabledReason : muted ? MEDIA_VOLUME_LABEL_MUTED : MEDIA_VOLUME_LABEL;
   const showLowVolumeDot = isSidebar && !disabled && (muted || volume < LOW_VOLUME_THRESHOLD);
 
+  // Lê o valor ATUAL do store (não o do render): o atalho pode chegar por dois caminhos
+  // no mesmo tique (o listener do player e o `onKeyDown` do botão) e cada um tem de andar
+  // uma casa — o dedup entre os dois está em `useVolumeRocker` (E16).
   const adjustBy = useCallback(
     (delta: number) => {
-      setVolume(volume + delta);
+      setVolume(getSnapshot().volume + delta);
     },
-    [setVolume, volume],
+    [setVolume],
   );
 
   const rootRef = useRef<HTMLSpanElement>(null);
@@ -67,6 +78,7 @@ export function MediaVolumeControl({
     onAdjust: adjustBy,
     onToggleMute: toggleMuted,
     rootRef,
+    playerRef,
     enabled: !disabled,
     wheelEnabled: !sliderDisabled,
   });

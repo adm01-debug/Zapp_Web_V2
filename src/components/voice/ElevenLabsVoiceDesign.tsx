@@ -146,6 +146,10 @@ export function ElevenLabsVoiceDesign() {
         {audioUrl && (
           <div className="p-3 rounded-lg bg-muted/50 border border-border/50">
             <Label className="text-xs text-muted-foreground mb-2 block">Preview da Voz</Label>
+            {/* E37 — isenta do controle de volume de mídia (`mediaVolumeStore`): é o
+                preview da VOZ no laboratório das Configurações, não mídia de conversa;
+                o `<audio controls>` nativo responde pelo próprio volume. Se este player
+                um dia aparecer dentro do inbox, ele entra no controle. */}
             <audio src={audioUrl} controls className="w-full h-10" />
           </div>
         )}
