@@ -329,7 +329,9 @@ cross-origin o `createMediaElementSource` pode lançar, o `catch` cai num `eleme
 ### 7.4 E31/E47/E49 — branch, PR e produção
 
 - **Branch:** `hermes/plano-volume-50-etapas-finalizacao-2610011018e48d`.
-- **PR:** _preenchido depois do `hermes-tarefa-fechar` (o PR-modelo da casa exige o link no próprio corpo)._
+- **PR:** [#1395](https://github.com/adm01-debug/Zapp_Web_V2/pull/1395) — `feat(midia): fecha as
+  etapas pendentes do plano de volume de mídia (E10/E16/E37/E39/E41/E45)`, 3 commits: as etapas de
+  código, o spec do E2E e este plano.
 - **E31 (conflito de UI):** conferido — a PR **#1040** mexeu no header do chat e na sidebar do
   contato, **não** nos "Controles rápidos" da sidebar (`Sidebar.tsx:210-226`); já está MERGED, então
   não há colisão pendente.
