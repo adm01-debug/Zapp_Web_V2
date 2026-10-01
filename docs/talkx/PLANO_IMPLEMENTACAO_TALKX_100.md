@@ -1,3 +1,5 @@
+> **SUBSTITUÍDO pelo V4 em 2026-10-01 — não executar.**
+
 # Talk X · Campanhas — Plano de Implementação em 100 Etapas
 
 **Repo:** `adm01-debug/Zapp_Web_V2` · **Branch de trabalho:** `feat/talkx-campanhas-ui` (HEAD `c4ac1a1`, 20 commits à frente de `main`; `main` = `68bbfee` #288)
