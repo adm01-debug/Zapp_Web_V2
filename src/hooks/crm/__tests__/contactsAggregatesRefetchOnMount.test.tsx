@@ -20,7 +20,8 @@ vi.mock('@/integrations/supabase/client', () => ({
       select: () => {
         mocks.kpiFetches++;
         const result = Promise.resolve({ data: [], error: null });
-        return Object.assign(result, { eq: () => result });
+        const chain = Object.assign(result, { eq: () => chain, is: () => chain, filter: () => chain, order: () => chain, range: () => chain });
+        return chain;
       },
     }),
     rpc: vi.fn(async () => ({ data: [], error: null })),

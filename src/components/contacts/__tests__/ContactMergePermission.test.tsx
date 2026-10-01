@@ -33,6 +33,8 @@ function toolbarProps(adminAccess: boolean | null | undefined, onMerge = noop) {
     onSearchChange: noop,
     sortBy: 'name_asc',
     setSortBy: noop,
+    showLegacy: false,
+    setShowLegacy: noop,
     showFilters: false,
     setShowFilters: noop,
     activeFiltersCount: 0,
