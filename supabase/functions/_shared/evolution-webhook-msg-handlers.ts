@@ -141,6 +141,18 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
             console.warn(`Multiplix delivery acknowledged: ${key.id}`);
           }
         }
+      } else if (newStatus === 'read' && key?.fromMe === true && connection?.id) {
+        // V17: READ/PLAYED marca read_at no destinatário Talk X (idempotente via RPC).
+        const { data: readRecorded, error: readError } = await supabase.rpc('record_talkx_recipient_delivered', {
+          p_external_id: key.id,
+          p_connection_id: connection.id,
+          p_event: 'read',
+        });
+        if (readError) {
+          console.error(`TalkX read acknowledgement failed for ${key.id}: ${readError.message}`);
+        } else if (readRecorded === true) {
+          console.warn(`TalkX read acknowledged: ${key.id}`);
+        }
       } else if (key.fromMe === true) {
         // Recibo de mensagem NOSSA que o frontend ainda nao estampou com
         // external_id (corrida envio x webhook): criar stub aqui duplicaria a

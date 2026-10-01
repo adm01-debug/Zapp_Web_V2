@@ -30,11 +30,11 @@ test('Talk X evaluates the delivery window in the campaign timezone and fails cl
   // deliveryWindowStatus foi extraida para _shared/talkx-window.ts (auditoria
   // 2026-09-16) para que talkx-scheduler reuse a MESMA logica em vez de
   // reimplementar; talkx-send agora importa em vez de definir localmente.
-  assert.match(sender, /import \{ DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus \} from "\.\.\/_shared\/talkx-window\.ts"/);
+  assert.match(sender, /import \{ DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus, parseBusinessHours \} from "\.\.\/_shared\/talkx-window\.ts"/);
   assert.match(windowShared, /function deliveryWindowStatus/);
   assert.match(windowShared, /invalid_schedule_timezone/);
   assert.doesNotMatch(sender, /nowBR|hmBR|horário de Brasília/);
-  assert.match(sender, /const windowStatus = deliveryWindowStatus\(campaign\)/);
+  assert.match(sender, /const windowStatus = deliveryWindowStatus\(campaign/);
   assert.match(sender, /extractMessageId/);
   assert.match(sender, /sendWhatsAppAudio/);
   assert.match(sender, /missing_provider_message_id/);
