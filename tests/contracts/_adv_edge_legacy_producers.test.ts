@@ -8,6 +8,8 @@
  * atualizar o mapa — que é a lista de trabalho da revisão.
  *
  * Medição de origem: 139 arquivos .ts em supabase/functions, 5 ocorrências.
+ * 01/10 (T15): 143 — o +1 é o `get-sip-password/index.test.ts` (teste da
+ * função), que não produz nenhum token legado nem usa o regex antigo.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -82,8 +84,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('142 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(142);
+  it('143 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(143);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );
