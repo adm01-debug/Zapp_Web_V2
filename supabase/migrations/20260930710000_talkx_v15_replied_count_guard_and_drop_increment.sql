@@ -11,8 +11,8 @@
 -- Classe: contrato (DROP FUNCTION + CREATE OR REPLACE FUNCTION) -> aplicada após o merge/deploy.
 
 -- 1) use_count: remove a RPC redundante (o trigger E86 de 20260916130000 basta) ----
-DROP FUNCTION IF EXISTS public.increment_talkx_template_use(uuid);
 REVOKE ALL ON FUNCTION public.increment_talkx_template_use(uuid) FROM PUBLIC, anon, authenticated, service_role;
+DROP FUNCTION IF EXISTS public.increment_talkx_template_use(uuid);
 
 -- 2) replied_count entra no guard de imutabilidade (P2-7) -------------------------
 CREATE OR REPLACE FUNCTION public.enforce_talkx_campaign_mutability()
