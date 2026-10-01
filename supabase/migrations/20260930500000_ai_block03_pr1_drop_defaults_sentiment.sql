@@ -95,13 +95,9 @@ revoke all on function public.enqueue_crm_sync_from_closure() from public;
 
 -- ============================================================================
 -- CORRECAO NO MESMO PR, FORA DESTE ARQUIVO SQL (.ts):
--- supabase/functions/crm-integration/index.ts
+-- supabase/functions/crm-integration/index.ts:171
 --   -  p_sentiment: payload.sentiment || 'neutral',
---   +  p_sentiment: sentimentForExternalCrm(payload.sentiment),
--- O operador || trata string vazia como ausencia e INVENTA token. O resolvedor
--- traduz o canonico pt-BR para o dominio EN que o CRM externo aceita
--- (positivo->positive, neutro->neutral, negativo->negative, critico->critical),
--- devolve null quando o valor esta ausente (chave omitida no payload) e faz o
--- mesmo com valor fora do vocabulario, registrando log — nunca inventa.
--- Decisao do dono: card 20260930-193937-f9f4 (item 1).
+--   +  p_sentiment: typeof payload.sentiment === 'string' ? payload.sentiment : null,
+-- (o operador || trata string vazia como ausencia e inventa token; ?? resolve so
+--  null/undefined; typeof garante que so string entra no contrato externo).
 -- ============================================================================
