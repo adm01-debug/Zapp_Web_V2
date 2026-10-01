@@ -9,6 +9,7 @@ DECLARE
   v_vendedor_user_id integer;
   v_total bigint;
 BEGIN
+  PERFORM public.multiplix_validate_scope_signature(p_scope_permissions, p_scope_vendedor_email);
   IF NOT v_is_admin AND 'customers_own' = ANY(p_scope_permissions) AND p_scope_vendedor_email IS NOT NULL THEN
     SELECT u.id INTO v_vendedor_user_id
     FROM public.users u

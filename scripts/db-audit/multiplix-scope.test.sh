@@ -115,6 +115,7 @@ ZAPP_URL="$url" ZAPP_ANON="$anon" ACCOUNTS_FILE="$accounts_file" \
 EXTERNAL_URL="${EXTERNAL_SUPABASE_URL:-}" EXTERNAL_KEY="${EXTERNAL_SUPABASE_SERVICE_ROLE_KEY:-}" \
 python3 - <<'PY' || exit 1
 import json, os, sys, time, urllib.request, urllib.error
+import hmac as hmaclib, hashlib
 
 ZAPP_URL = os.environ['ZAPP_URL'].rstrip('/')
 ANON = os.environ['ZAPP_ANON']
@@ -168,12 +169,52 @@ def edge(jwt, body, tentativas=3):
     return st, resp
 
 
+def _segredo_escopo():
+    """Segredo do HMAC de escopo (nunca impresso). Env var ou vault do Singu."""
+    s = os.environ.get('MULTIPLIX_SCOPE_HMAC_SECRET')
+    if s:
+        return s.strip()
+    tok_file = os.path.expanduser('~/.supabase/access-token')
+    if not os.path.exists(tok_file):
+        return None
+    tok = open(tok_file).read().strip()
+    body = json.dumps({'query': "select decrypted_secret from vault.decrypted_secrets"
+                                " where name='MULTIPLIX_SCOPE_HMAC_SECRET'"}).encode()
+    r = urllib.request.Request(
+        'https://api.supabase.com/v1/projects/pgxfvjmuubtbowutlide/database/query',
+        data=body, method='POST',
+        headers={'Authorization': f'Bearer {tok}', 'Content-Type': 'application/json'})
+    try:
+        with urllib.request.urlopen(r, timeout=60) as resp:
+            rows = json.loads(resp.read().decode())
+        return rows[0]['decrypted_secret'] if rows else None
+    except Exception:
+        return None
+
+
+SECRET = _segredo_escopo()
+
+
+def headers_assinatura(scope, email):
+    """Assina o escopo como a edge assina (contrato v1, HMAC-SHA256, TTL 300s).
+
+    O guard do F22 (aplicado no Singu em 01/10/2026) recusa chamada direta SEM
+    assinatura (42501), entao a perna de referencia precisa assinar igual.
+    """
+    if not SECRET:
+        return {}
+    exp = int(time.time()) + 300
+    payload = f"v1|{','.join(sorted(scope))}|{email or ''}|{exp}"
+    mac = hmaclib.new(SECRET.encode(), payload.encode(), hashlib.sha256).hexdigest()
+    return {'x-multiplix-scope-hmac': mac, 'x-multiplix-scope-exp': str(exp)}
+
+
 def singu_count(scope, email=None, roles=None):
     args = {'p_roles': roles, 'p_ramo': None, 'p_uf': None, 'p_search': None,
             'p_scope_permissions': scope, 'p_scope_vendedor_email': email}
     st, body = req('POST', f'{SINGU}/rest/v1/rpc/multiplix_count_audience',
                    {'apikey': SERVICE, 'Authorization': f'Bearer {SERVICE}',
-                    'Content-Type': 'application/json'}, args)
+                    'Content-Type': 'application/json', **headers_assinatura(scope, email)}, args)
     if st != 200:
         raise SystemExit(f'RPC count (referencia) falhou: HTTP {st} {body}')
     return int(body)
