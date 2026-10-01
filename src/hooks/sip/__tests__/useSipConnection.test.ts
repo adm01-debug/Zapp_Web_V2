@@ -40,11 +40,31 @@ vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
+// T20: o hook consulta a eleição de aba (`tabLeaderStore`) no topo do `connect`.
+// Aqui o store é MOCKADO para o teste poder alternar o papel de forma
+// determinística (o store REAL é um singleton de módulo com timers — o teste
+// dele, com `vi.resetModules()`, vive em `src/lib/calls/__tests__/tabLeaderStore.test.ts`).
+// O gate é provado pelo PAR: com `isLeader()` falso nenhum UA nasce e, virando
+// verdadeiro, o MESMO connect volta a registrar — logo o portão lê o valor vivo.
+const { mockIsLeader } = vi.hoisted(() => ({ mockIsLeader: vi.fn(() => true) }));
+
+vi.mock('@/lib/calls/tabLeaderStore', () => ({
+  CALL_SESSION_CHANNEL_NAME: 'zapp-call-session',
+  getSnapshot: () => ({ role: 'leader', leaderId: 'tab', expiresAt: null, tabId: 'tab' }),
+  subscribe: () => () => {},
+  claimLeadership: vi.fn(),
+  releaseLeadership: vi.fn(),
+  isLeader: mockIsLeader,
+}));
+
 import { useSipConnection } from '../useSipConnection';
 
 describe('useSipConnection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // `clearAllMocks` não devolve a implementação: um teste que deixou a aba
+    // como seguidora envenenaria os seguintes.
+    mockIsLeader.mockReturnValue(true);
     mockRegisterStateListeners.length = 0;
     mockRegisterCalls.length = 0;
     mockUaInstances.length = 0;
@@ -191,5 +211,42 @@ describe('useSipConnection', () => {
     await act(async () => { vi.advanceTimersByTime(120000); });
     expect(mockUaInstances.length).toBe(uaCount);
     vi.useRealTimers();
+  });
+
+  // === T20: eleição de aba — só a líder registra ===
+
+  it('T20: aba SEGUIDORA não registra — nenhum UserAgent nasce e o motivo fica "outra aba"', async () => {
+    mockIsLeader.mockReturnValue(false);
+    const { result } = renderHook(() => useSipConnection());
+
+    await act(async () => {
+      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+
+    // Prova de que o portão CONSULTA o store (e não bloqueia por acaso).
+    expect(mockIsLeader).toHaveBeenCalled();
+    expect(mockUaInstances.length).toBe(0);
+    expect(mockRegisterCalls.length).toBe(0);
+    expect(result.current.sipStatus).toBe('idle');
+    expect(result.current.sipReason).toBe('line_in_use_other_tab');
+  });
+
+  it('T20: o portão lê o valor VIVO — a mesma aba, virando líder, registra', async () => {
+    mockIsLeader.mockReturnValue(false);
+    const { result } = renderHook(() => useSipConnection());
+
+    await act(async () => {
+      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+    expect(mockUaInstances.length).toBe(0);
+
+    // A eleição terminou nesta aba (a anterior saiu): agora é líder.
+    mockIsLeader.mockReturnValue(true);
+    await act(async () => {
+      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+
+    expect(mockUaInstances.length).toBe(1);
+    expect(result.current.sipStatus).toBe('connecting');
   });
 });

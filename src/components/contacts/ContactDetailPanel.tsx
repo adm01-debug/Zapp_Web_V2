@@ -18,6 +18,10 @@ import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { ContactEngagementScore } from './ContactEngagementScore';
 import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
+// Guarda de WhatsApp: o mesmo critério que o resto do app usa para telefone
+// utilizável é o `normalizeE164BR` (src/lib/calls/phone.ts) — devolve `null`
+// quando não dá para extrair um E.164 brasileiro.
+import { normalizeE164BR } from '@/lib/calls/phone';
 // CT-51/CT-52 — o catálogo do chat reusado no painel do contato: abre o mesmo
 // Dialog de envio (CT-14), já com este contato como `presetContact`.
 import { ExternalProductCatalog } from '@/components/catalog/ExternalProductCatalog';
@@ -59,6 +63,9 @@ export function ContactDetailPanel<T extends ContactDetail>({
 
   const avatarColors = getAvatarColor(contact.name);
   const typeConfig = CONTACT_TYPE_CONFIG[contact.contact_type || 'cliente'] || CONTACT_TYPE_CONFIG.cliente;
+  // Sem telefone utilizável (E.164 brasileiro) não há WhatsApp de destino, e
+  // sem destino não há envio de produto: o gatilho do catálogo fica bloqueado.
+  const hasWhatsApp = normalizeE164BR(contact.phone) !== null;
 
   const infoItems = [
     { icon: Phone, label: 'Telefone', value: contact.phone },
@@ -160,11 +167,28 @@ export function ContactDetailPanel<T extends ContactDetail>({
                 phone: contact.phone,
                 avatar_url: contact.avatar_url ?? null,
               }}
+              /* Sem WhatsApp o catálogo é forçado fechado (open controlado) e o
+                 gatilho vira um botão desabilitado com o motivo no `title`. O
+                 `title` fica no <span>: o botão desabilitado tem
+                 `disabled:pointer-events-none` e não receberia o hover, e um
+                 Tooltip (src/components/ui/tooltip) não pode ser o filho do
+                 `DialogTrigger asChild` do ExternalProductCatalog. */
+              open={hasWhatsApp ? undefined : false}
+              onOpenChange={hasWhatsApp ? undefined : () => {}}
               trigger={
-                <Button variant="outline" className="w-full gap-2">
-                  <Package className="w-4 h-4" />
-                  Enviar produto
-                </Button>
+                hasWhatsApp ? (
+                  <Button variant="outline" className="w-full gap-2">
+                    <Package className="w-4 h-4" />
+                    Enviar produto
+                  </Button>
+                ) : (
+                  <span className="block w-full" title="Contato sem WhatsApp">
+                    <Button variant="outline" className="w-full gap-2" disabled>
+                      <Package className="w-4 h-4" />
+                      Enviar produto
+                    </Button>
+                  </span>
+                )
               }
             />
           </div>

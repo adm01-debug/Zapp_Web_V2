@@ -41,6 +41,7 @@ function fakeSink(overrides: Partial<CallEngineSink> = {}): CallEngineSink {
     onTerminated: vi.fn(),
     onMuted: vi.fn(),
     onError: vi.fn(),
+    onBusyHere: vi.fn(),
     create: vi.fn(async () => 'call-1'),
     onAnswered: vi.fn(),
     onFinished: vi.fn(),
@@ -632,5 +633,53 @@ describe('CallEngine — ordem do desfecho (D4)', () => {
     expect(ordem).toContain('onFinished');
     expect(ordem).toContain('status:ended');
     expect(ordem.indexOf('onFinished')).toBeLessThan(ordem.indexOf('status:ended'));
+  });
+});
+
+// ─── Linha ocupada: a 2ª chamada não pode ser silenciosa nem derrubar a atual ─
+
+describe('CallEngine — linha ocupada (busy here)', () => {
+  /** Adapter real com o `reject` contabilizado (o 486 é a prova da recusa). */
+  class AdapterContando extends TestAdapter {
+    recusas: Array<number | undefined> = [];
+
+    override async reject(_invitation: Invitation, code?: number): Promise<void> {
+      this.recusas.push(code);
+    }
+  }
+
+  it('2º INVITE com a sessão ativa: recusa 486, avisa o sink (onBusyHere) e não toca a sessão em curso', async () => {
+    const adapter = new AdapterContando();
+    adapter.inviter = { ...sessionWithTrack(fakeAudioTrack(true)), cancel: vi.fn() };
+    const sink = fakeSink();
+    const engine = new CallEngine(adapter, sink);
+
+    // Chamada em curso (ela NÃO pode cair).
+    await engine.makeCall('11999992048', fakeUa(), true, 'sessao-1');
+    const statusAntes = vi.mocked(sink.onStatus).mock.calls.length;
+    const sessaoAntes = vi.mocked(sink.onSession).mock.calls.length;
+    const criarAntes = vi.mocked(sink.create).mock.calls.length;
+
+    // Segunda chamada chegando com a linha ocupada.
+    const segundoConvite = {
+      id: 'sip-invite-2',
+      state: 'Initial',
+      stateChange: { addListener: vi.fn() },
+      remoteIdentity: { uri: { user: '5511977776666' }, displayName: '' },
+    } as unknown as Invitation;
+
+    engine.handleInvitation(segundoConvite);
+
+    // (a) recusou com 486.
+    expect(adapter.recusas).toEqual([486]);
+    // (b) o sink foi avisado com o número remoto do convite.
+    expect(sink.onBusyHere).toHaveBeenCalledTimes(1);
+    expect(sink.onBusyHere).toHaveBeenCalledWith('5511977776666');
+    // A sessão em curso não foi alterada: mesmo status, nenhum evento novo.
+    expect(engine.isBusy).toBe(true);
+    expect(vi.mocked(sink.onStatus).mock.calls.length).toBe(statusAntes);
+    expect(vi.mocked(sink.onSession).mock.calls.length).toBe(sessaoAntes);
+    // Nada de registro novo para a 2ª chamada (o sink cria o dela).
+    expect(vi.mocked(sink.create).mock.calls.length).toBe(criarAntes);
   });
 });

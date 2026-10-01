@@ -459,3 +459,80 @@ node scripts/ci/implicit-any-ratchet.mjs        -> 0 (baseline 0) -> exit 0
 **Mutação (vermelho antes):** chave de volta para `event_id` derruba 1 · sem o filtro de chamada
 encerrada caem 6 · `isFinishedStatus` esquecendo `cancelled` derruba 2 · consultar sem a guarda de
 `call_id` derruba 5 · invertendo o fail-open caem 3. Restaurado, suíte limpa.
+
+## Fase 1-B — T20 (01/10/2026 · executor: Hermes)
+
+**T20 — uma aba por linha.** Duas abas do app abertas tentavam registrar o mesmo ramal no SIP ao mesmo
+tempo. Agora há eleição de aba líder por `BroadcastChannel('zapp-call-session')`: só a líder abre o
+REGISTER, e a outra vira seguidora com o motivo **"Ligação em andamento em outra aba"** na tela.
+
+- **Lock com TTL** (`localStorage`, `zapp.call.tab-leader`): a líder renova a cada 3 s com validade de 10 s;
+  sem renovação, o lock caduca e a seguidora assume — é o que salva a linha quando a aba líder morre sem
+  avisar.
+- **Jitter de 120 ms + releitura do lock** na reivindicação: duas abas subindo juntas nunca elegem duas
+  líderes.
+- **Sem `BroadcastChannel`** (ou com ele lançando) o modo é aba única e a aba assume: o app nunca fica sem
+  registro por falta de canal.
+- **Portão no funil**: `useSipConnection.connect` recusa criar o UA quando a aba não é líder — é o único
+  caminho de registro, então não há como furar por outro botão.
+- **2ª chamada com a linha ocupada** deixou de ser muda: o `CallEngine` avisa o sink (`onBusyHere`), que
+  persiste a nova chamada como `missed`/`busy_here` **com id próprio** e avisa o agente — a chamada em
+  curso não é tocada (o `return` cedo do ramo ocupado continua).
+
+### Dois buracos encontrados na validação (não na leitura do relatório)
+
+Os quatro agentes entregaram tudo verde. Mesmo assim, medindo o workspace:
+
+1. **`claimLeadership()` não era chamado por ninguém em produção** — só o próprio store e os mocks dos
+   testes. Como o módulo nasce seguidora, o portão recém-criado faria o app **nunca registrar a linha**:
+   telefonia inteira morta, com a suíte 100% verde. Corrigido no boot do painel (`VoIPPanel`), com teste.
+2. **O TTL não salvava ninguém** — só havia promoção por `RELEASE` ou claim explícito, então a aba líder
+   morrendo sem avisar deixava a linha sem registro em silêncio. O tick passou a decidir por papel: líder
+   renova, seguidora **lê o TTL** e assume quando o lock caduca. TTL que ninguém consulta não é proteção,
+   é enfeite. Teste: *"a aba líder morre sem avisar: a seguidora assume sozinha depois do TTL"*.
+
+### Aceite do T09 preservado (não maquiado)
+
+O plano (`:63`) exige `useSipClient.ts < 120 linhas`. Com o T20 o arquivo chegou a **151**. Voltou a
+**98** extraindo o papel de aba (`useTabLeaderRole`) e a construção do sink do motor
+(`useCallEngineSink`) — movimentação mecânica, mesmos deps, nenhum teste enfraquecido.
+
+### Correções de premissa (com o código citado)
+
+- **Não é 486.** Registro duplicado do mesmo ramal dá **403** — tratado desde o T15 em
+  `useSipConnection.ts:118-126` como `line_in_use_other_user` ("Linha em uso por outro usuário"). O 486 é
+  emitido **por nós** (`CallEngine.ts:126`) quando já estamos em chamada. A eleição evita o conflito de
+  REGISTER (e o cenário pior: a 2ª aba "rouba" o registro e a 1ª continua achando que está registrada,
+  perdendo chamada em silêncio) — não um 486.
+- **`busyHereOutcome()` gravava o par errado.** Devolvia `endReason:'busy'` enquanto o comentário acima
+  dele, a tabela `persistedStatusForEndReason` e o **título do próprio teste** diziam `busy_here`. O teste
+  chegou a asserir o valor defeituoso: quem fosse consertar via vermelho e desistiria. Agora é o par
+  canônico `(missed, busy_here)`, com asserção extra amarrando par e tabela.
+
+```
+npx tsc -b --force                        -> exit 0
+bun run test:coverage                     -> 386 arquivos, 5118 testes passando | 38 todo -> exit 0
+bun run test:contracts                    -> 30 arquivos, 681 testes passando -> exit 0
+bun run build + bundle-budget.mjs         -> 337,3 KB de 341 KB -> exit 0
+typecheck/lint/implicit-any ratchet       -> 0 novas -> exit 0
+manifesto de deploy + workflow-pins       -> exit 0
+```
+
+### Mutação (verificada pelo executor, com restauração provada)
+
+| Quebra aplicada | Teste que cai |
+|---|---|
+| remover `considerPromotion()` do tick | "a aba líder morre sem avisar: a seguidora assume sozinha depois do TTL" |
+| remover `claimLeadership()` do boot do painel | "T20: reivindica a liderança da aba ao montar (a eleição começa)" |
+| remover `sink.onBusyHere(...)` | "2º INVITE com a sessão ativa: recusa 486, avisa o sink e não toca a sessão em curso" |
+| `busyHereOutcome()` de volta para `'busy'` | "a segunda chamada ocupada é registrada fora da máquina como missed/busy_here" |
+| remover o portão do `connect` | "aba SEGUIDORA não registra" |
+
+### Decisões do executor
+
+- **Boot no `VoIPPanel`, não no `AppProviders`** — `AppProviders`/`App.tsx` são escopo do T22 (o plano
+  manda chamar o Joaquim para essa etapa). O painel é onde a linha é registrada hoje.
+- **A seguidora promove passando pelo `claimLeadership()`** (jitter + releitura), nunca assumindo direto:
+  com 2+ seguidoras, assumir na hora criaria duas líderes.
+- **`LEADER_TTL_MS`/`HEARTBEAT`/`JITTER` exportados** para o teste poder medir o TTL em vez de dormir 10 s.
+- **Não foi tocado**: `AppProviders`, `App.tsx`, `CallDialog`/`IncomingCallAlert` (T21), RLS, banco.

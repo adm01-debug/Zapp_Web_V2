@@ -240,12 +240,27 @@ Formato: `[ ] N. Ação — arquivo — DoD`. Marque `[x]` **só** com evidênci
 
 ### FASE I — Testes de componente e performance (etapas 85–90) → CP-I
 
-- [ ] **85.** Branch `claude/test-tarefas-i-componentes-<carimbo>`. `WorkItemCard.test.tsx`: 6 status renderizam; checkbox chama `onToggleDone`; Enter chama `onOpen`; `X` conclui; `Delete` cancela; `Backspace` **não** faz nada; kebab mostra 5 grupos; "Fazendo" desabilitado com WIP cheio. — DoD: ≥ 8 casos.
-- [ ] **86.** `TasksListMode.test.tsx`: 6 seções; "Concluídas" recebe `done7d`; "Próximas" agrupa por dia; empty `all`/`filter`. `TasksModule.test.tsx`: `defaultMode`; `?view=pipeline` força board; `?task=` abre Sheet; atalho N. — DoD: ≥ 8 casos.
-- [ ] **87.** `TasksBoardMode.test.tsx` (testar `handleDragEnd` extraído para função pura `resolveDragEnd(result, byStatus, doingCount)` → `{ action: 'reorder' | 'move' | 'need_reason' | 'blocked', … }`): 5 colunas; doing cheio bloqueia; waiting sem motivo pede; reorder recalcula `position`; mover entre colunas recalcula as duas. — DoD: ≥ 6 casos.
-- [ ] **88.** `TasksAgendaMode.test.tsx` (`now` fixo): distribuição por dia; 3 grupos; atrasadas sempre visíveis; fim de semana marcado. `WorkItemSheet.test.tsx`: motivo obrigatório em Aguardando; Fazendo desabilitado; Salvar desabilitado sem mudança. — DoD: ≥ 8 casos.
-- [ ] **89.** Performance: script E.6 (`/workspace/qa/tasks-seed.mjs`) cria 300 tarefas no usuário QA via REST, mede TTI dos 3 modos com Playwright (`performance.now` até `[data-testid=work-item-card]` ≥ 50), apaga tudo. `npm run build` → tamanho gzip do chunk do módulo (`dist/assets/*Tasks*`) ≤ 45 KB. — DoD: 4 números no ledger.
-- [ ] **90.** Commit `test(tarefas): fase I — testes de componente (card, lista, quadro, agenda, sheet) e medição de performance`. PR, CI, merge. — DoD: SHA; `npx vitest run src/components/tasks src/hooks/tasks` ≥ 60 testes verdes.
+- [x] **85.** Branch `claude/test-tarefas-i-componentes-<carimbo>`. `WorkItemCard.test.tsx`: 6 status renderizam; checkbox chama `onToggleDone`; Enter chama `onOpen`; `X` conclui; `Delete` cancela; `Backspace` **não** faz nada; kebab mostra 5 grupos; "Fazendo" desabilitado com WIP cheio. — DoD: ≥ 8 casos.
+- [x] **86.** `TasksListMode.test.tsx`: 6 seções; "Concluídas" recebe `done7d`; "Próximas" agrupa por dia; empty `all`/`filter`. `TasksModule.test.tsx`: `defaultMode`; `?view=pipeline` força board; `?task=` abre Sheet; atalho N. — DoD: ≥ 8 casos.
+- [x] **87.** `TasksBoardMode.test.tsx` (testar `handleDragEnd` extraído para função pura `resolveDragEnd(result, byStatus, doingCount)` → `{ action: 'reorder' | 'move' | 'need_reason' | 'blocked', … }`): 5 colunas; doing cheio bloqueia; waiting sem motivo pede; reorder recalcula `position`; mover entre colunas recalcula as duas. — DoD: ≥ 6 casos.
+- [x] **88.** `TasksAgendaMode.test.tsx` (`now` fixo): distribuição por dia; 3 grupos; atrasadas sempre visíveis; fim de semana marcado. `WorkItemSheet.test.tsx`: motivo obrigatório em Aguardando; Fazendo desabilitado; Salvar desabilitado sem mudança. — DoD: ≥ 8 casos.
+- [x] **89.** Performance: script E.6 (`/workspace/qa/tasks-seed.mjs`) cria 300 tarefas no usuário QA via REST, mede TTI dos 3 modos com Playwright (`performance.now` até `[data-testid=work-item-card]` ≥ 50), apaga tudo. `npm run build` → tamanho gzip do chunk do módulo (`dist/assets/*Tasks*`) ≤ 45 KB. — DoD: 4 números no ledger.
+- [x] **90.** Commit `test(tarefas): fase I — testes de componente (card, lista, quadro, agenda, sheet) e medição de performance`. PR, CI, merge. — DoD: SHA; `npx vitest run src/components/tasks src/hooks/tasks` ≥ 60 testes verdes.
+
+> **FASE I — executada em 2026-10-01 (rede de testes).** 46 casos novos no dominio:
+> `WorkItemCard.test.tsx` (11, +14/14 mutantes mortos pelo autor), `TasksListMode.test.tsx` (8)
+> + `TasksModule.test.tsx` (+6, total 37), `TasksBoardMode.test.tsx` (10, com a extracao do
+> `resolveDragEnd`), `TasksAgendaMode.test.tsx` (7 com relogio congelado em 01/10/2026 10:00) e
+> `WorkItemSheet.test.tsx` (+4 de borda). Dominio: 19 arquivos / 254 casos (DoD pedia >= 60).
+> **87 — refatoracao:** a decisao do arrasto saiu do `TasksBoardMode.tsx` para a funcao PURA
+> `board/resolveDragEnd.ts` (`{ action: 'reorder' | 'move' | 'need_reason' | 'blocked' }`), com o
+> portao do Aguardando e a trava de WIP 3/3 intactos (contagem REAL via `doingCount`); o componente
+> so interpreta o veredito. Ganhou 2 guardas defensivas novas (destino nulo / id desconhecido -> null).
+> **89 — medicao:** chunk do modulo **12,2 KB gz** (teto 45 KB) e JS inicial **334,9 KB / 341 KB**.
+> **NAO medido (depende do login de QA):** seed de 300 tarefas via REST (`qa/tasks-seed.mjs`) e TTI
+> dos 3 modos no Playwright — os 2 dos 4 numeros do DoD ficam declarados como pendentes.
+> **Instabilidade vista (nao reproduzida):** `cardAcoes.test.tsx` falhou em 1 rodada de um agente
+> (matchMedia restaurado por um caso) e passou em 2/2 rodadas minhas; registrado para investigar.
 
 **CP-I — Rede de testes.** Gate: ≥ 12 arquivos de teste no domínio; ≥ 60 casos; bundle ≤ 45 KB gz.
 

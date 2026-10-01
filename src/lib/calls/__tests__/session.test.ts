@@ -381,7 +381,9 @@ describe('session — invariantes', () => {
   });
 
   it('a segunda chamada ocupada é registrada fora da máquina como missed/busy_here', () => {
-    expect(busyHereOutcome()).toEqual({ persistedStatus: 'missed', endReason: 'busy' });
+    expect(busyHereOutcome()).toEqual({ persistedStatus: 'missed', endReason: 'busy_here' });
+    // O par tem de ser o mesmo que a tabela canônica produz para `busy_here`.
+    expect(persistedStatusForEndReason(busyHereOutcome().endReason)).toBe(busyHereOutcome().persistedStatus);
   });
 
   it('HANGUP_LOCAL em active encerra como hangup_local (T12/C3)', () => {

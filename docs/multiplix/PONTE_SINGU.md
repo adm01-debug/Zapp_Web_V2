@@ -191,13 +191,14 @@ em 5/5**. E016 e E017 já estavam implementados; **E014 divergia** (o degrau de 
 restringia a B2B) e foi corrigido + aplicado (`20261001154000_singu_e014_b2b_e_papeis.sql`), com prova A/B
 medida no retorno da RPC.
 
-### 6.2 F22 — guard HMAC nas RPCs — 🟡 VERSIONADO, NÃO APLICADO (depende do deploy da edge)
+### 6.2 F22 — guard HMAC nas RPCs — ✅ APLICADO NO SINGU (01/10/2026)
 Ver §3.2 (desenho) e o detalhe em `_foreign/singu/README.md`. O arquivo
-`20261001160000_singu_guard_hmac_escopo.sql` está pronto e **provado antes de ir para produção** (transação
-com `ROLLBACK`, 6 casos + HTTP real: 403/403/200/403). **Aplicar só depois** que a edge estiver em produção
-assinando. A assinatura viaja em **cabeçalho** (`x-multiplix-scope-hmac`/`-exp`), não em parâmetro: medido,
-parâmetro novo faz o PostgREST devolver `404 PGRST202` e — como a chamada é casada pelo conjunto de nomes —
-**não existe ordem de deploy segura** nesse desenho.
+`20261001160000_singu_guard_hmac_escopo.sql` foi **aplicado depois do deploy da edge assinando**. Provas
+medidas em produção: chamada direta sem cabeçalho → `42501 escopo sem assinatura`; edge real → **HTTP 200**
+(`agent` 5319, `supervisor` 55930); `multiplix-scope.test.sh` → **43 PASS**. A assinatura viaja em
+**cabeçalho** (`x-multiplix-scope-hmac`/`-exp`), não em parâmetro: medido, parâmetro novo faz o PostgREST
+devolver `404 PGRST202` e — como a chamada é casada pelo conjunto de nomes — **não existe ordem de deploy
+segura** nesse desenho.
 ### 6.3 F23 — prova de contagem — ✅ FEITO (2026-10-01): `scripts/db-audit/multiplix-audience-parity.mjs`, 11/11 pares iguais → ver §5.
 ### 6.4 F24 — teste de escopo (⚠️ BLOQUEANTE)
 `scripts/db-audit/multiplix-scope.test.sh` com 3 perfis reais (vendedor com carteira, Compras,

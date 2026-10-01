@@ -180,17 +180,38 @@ function projectSchemaFromForwardMigrations(catalog) {
     // Qualquer schema (nao so public): o DDL real e qualificado e a chave e
     // montada como schema.nome, igual a projecao do catalogo e ao scan().
     const qual = (schema, name) => schema.toLowerCase() + '.' + name;
-    for (const m of sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?(?:FUNCTION|ROUTINE|PROCEDURE)\s+([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)/gi)) {
-      ops.push({ at: m.index, kind: 'fn', op: 'add', name: qual(m[1], m[2]), sig: normArgs(m[3]) });
+    // A migration roda com search_path public: DDL sem qualificacao (`DROP TABLE x;`)
+    // atinge public.x. Exigir o prefixo deixava esse DROP invisivel (fail-open: o
+    // caller de x seguia aprovado mesmo com a tabela derrubada).
+    const alvo = (schema, name) => qual(schema || 'public', name);
+    // VIEW entra em relations: 27 arquivos de migration criam view e views do
+    // catalogo sao derrubadas na janela (profiles_public, whatsapp_connections_public,
+    // password_reset_requests_safe, ...). Sem projetar o CREATE acusa falso positivo
+    // (a view recem-criada "nao existe") e o DROP passa invisivel (fail-open).
+    for (const m of sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?(?:MATERIALIZED\s+)?VIEW(?:\s+IF\s+NOT\s+EXISTS)?\s+(?:([a-zA-Z0-9_]+)\.)?([a-zA-Z0-9_]+)/gi)) {
+      ops.push({ at: m.index, kind: 'rel', op: 'add', name: alvo(m[1], m[2]) });
     }
-    for (const m of sql.matchAll(/DROP\s+(?:FUNCTION|ROUTINE|PROCEDURE)(?:\s+IF\s+EXISTS)?\s+([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)/gi)) {
-      ops.push({ at: m.index, kind: 'fn', op: 'del', name: qual(m[1], m[2]), sig: normArgs(m[3]) });
+    for (const m of sql.matchAll(/DROP\s+(?:MATERIALIZED\s+)?VIEW(?:\s+IF\s+EXISTS)?\s+(?:([a-zA-Z0-9_]+)\.)?([a-zA-Z0-9_]+)/gi)) {
+      ops.push({ at: m.index, kind: 'rel', op: 'del', name: alvo(m[1], m[2]) });
     }
-    for (const m of sql.matchAll(/CREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?\s+([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)/gi)) {
-      ops.push({ at: m.index, kind: 'rel', op: 'add', name: qual(m[1], m[2]) });
+    for (const m of sql.matchAll(/CREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?\s+(?:([a-zA-Z0-9_]+)\.)?([a-zA-Z0-9_]+)/gi)) {
+      ops.push({ at: m.index, kind: 'rel', op: 'add', name: alvo(m[1], m[2]) });
     }
-    for (const m of sql.matchAll(/DROP\s+TABLE(?:\s+IF\s+EXISTS)?\s+([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)/gi)) {
-      ops.push({ at: m.index, kind: 'rel', op: 'del', name: qual(m[1], m[2]) });
+    for (const m of sql.matchAll(/DROP\s+TABLE(?:\s+IF\s+EXISTS)?\s+(?:([a-zA-Z0-9_]+)\.)?([a-zA-Z0-9_]+)/gi)) {
+      ops.push({ at: m.index, kind: 'rel', op: 'del', name: alvo(m[1], m[2]) });
+    }
+    // RENAME TO muda a identidade do alvo: o nome antigo sai da projecao e o novo
+    // entra. Sem isso um caller do nome antigo fica invisivel ao guard (e um do
+    // nome novo vira falso positivo). O `+ 1` mantem o add depois do del na ordem.
+    for (const m of sql.matchAll(/ALTER\s+(?:MATERIALIZED\s+VIEW|TABLE|VIEW)(?:\s+IF\s+EXISTS)?\s+(?:ONLY\s+)?(?:([a-zA-Z0-9_]+)\.)?([a-zA-Z0-9_]+)\s+RENAME\s+TO\s+([a-zA-Z0-9_]+)/gi)) {
+      ops.push({ at: m.index, kind: 'rel', op: 'del', name: alvo(m[1], m[2]) });
+      ops.push({ at: m.index + 1, kind: 'rel', op: 'add', name: alvo(m[1], m[3]) });
+    }
+    for (const m of sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?(?:FUNCTION|ROUTINE|PROCEDURE)\s+(?:([a-zA-Z0-9_]+)\.)?([a-zA-Z0-9_]+)\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)/gi)) {
+      ops.push({ at: m.index, kind: 'fn', op: 'add', name: alvo(m[1], m[2]), sig: normArgs(m[3]) });
+    }
+    for (const m of sql.matchAll(/DROP\s+(?:FUNCTION|ROUTINE|PROCEDURE)(?:\s+IF\s+EXISTS)?\s+(?:([a-zA-Z0-9_]+)\.)?([a-zA-Z0-9_]+)\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)/gi)) {
+      ops.push({ at: m.index, kind: 'fn', op: 'del', name: alvo(m[1], m[2]), sig: normArgs(m[3]) });
     }
     ops.sort((a, b) => a.at - b.at);
     for (const change of ops) {

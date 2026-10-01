@@ -250,7 +250,7 @@ export function useQuickReplies() {
     if (!templates) return [];
     
     const cats = new Set(templates.map(t => t.category || 'geral'));
-    return Array.from(cats).sort();
+    return Array.from(cats).sort((a, b) => a.localeCompare(b));
   }, [templates]);
 
   // Recent templates (most used)

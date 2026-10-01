@@ -8,6 +8,7 @@ import {
   Phone, PhoneOff, Mic, MicOff, Delete, Wifi, WifiOff, Loader2,
 } from 'lucide-react';
 import type { SipStatus, CallStatus, CallDirection } from '@/hooks/communication/useSipClient';
+import { describeReason, type CapabilityReason } from '@/lib/calls/capabilities';
 
 interface DialPadProps {
   sipStatus: SipStatus;
@@ -16,6 +17,15 @@ interface DialPadProps {
   isMuted: boolean;
   currentNumber: string;
   callDirection: CallDirection | null;
+  /**
+   * T20 — motivo (opcional) da linha VoIP limitada, o mesmo `CapabilityReason`
+   * que circula para microfone (T17) e para `line_in_use_other_user`. Quando é
+   * `line_in_use_other_tab`, esta aba NÃO é dona do registro SIP: o rótulo de
+   * estado da conexão dá lugar ao texto operacional do motivo e o botão de
+   * conectar fica desabilitado (não se oferece conectar numa aba que não é a
+   * dona do registro). Ausente/`null` → comportamento antigo, intacto.
+   */
+  sipReason?: CapabilityReason | null;
   onConnect: () => void;
   onDisconnect: () => void;
   onCall: (number: string) => void;
@@ -46,13 +56,17 @@ function formatTime(seconds: number) {
 }
 
 export function DialPad({
-  sipStatus, callStatus, callDuration, isMuted, currentNumber, callDirection,
+  sipStatus, callStatus, callDuration, isMuted, currentNumber, callDirection, sipReason = null,
   onConnect, onDisconnect, onCall, onHangUp, onAcceptIncoming, onToggleMute, onDTMF,
 }: DialPadProps) {
   const [number, setNumber] = useState('');
   const isInCall = callStatus === 'calling' || callStatus === 'ringing' || callStatus === 'active';
   const isIncomingRinging = callStatus === 'ringing' && callDirection === 'inbound';
   const isConnected = sipStatus === 'registered';
+  // T20: a linha está tocando em OUTRA aba — esta não é a dona do registro.
+  // O texto vem do domínio (`REASON_LABEL` via `describeReason`), nunca solto aqui.
+  const lineInUseOtherTab = sipReason === 'line_in_use_other_tab';
+  const reasonLabel = describeReason(sipReason);
 
   const handleDigit = useCallback((digit: string) => {
     if (isInCall) {
@@ -90,17 +104,19 @@ export function DialPad({
 
   return (
     <div className="flex flex-col items-center gap-4">
-      {/* Connection Status */}
+      {/* Connection Status — T20: com a linha em outra aba o estado da conexão
+          dá lugar ao motivo operacional (texto do domínio). */}
       <div className="flex items-center gap-2 w-full justify-between">
-        <Badge className={`${statusColor[sipStatus]} text-xs`}>
+        <Badge className={`${lineInUseOtherTab ? 'bg-warning/20 text-warning' : statusColor[sipStatus]} text-xs`}>
           {sipStatus === 'registered' ? <Wifi className="w-3 h-3 mr-1" /> : <WifiOff className="w-3 h-3 mr-1" />}
-          {statusLabel[sipStatus]}
+          {lineInUseOtherTab ? reasonLabel : statusLabel[sipStatus]}
         </Badge>
         <Button
           variant={isConnected ? 'destructive' : 'default'}
           size="sm"
           onClick={isConnected ? onDisconnect : onConnect}
-          disabled={sipStatus === 'connecting'}
+          disabled={sipStatus === 'connecting' || lineInUseOtherTab}
+          title={lineInUseOtherTab ? reasonLabel ?? undefined : undefined}
         >
           {sipStatus === 'connecting' && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
           {isConnected ? 'Desconectar' : 'Conectar SIP'}

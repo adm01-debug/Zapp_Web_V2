@@ -4,9 +4,13 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // vi.hoisted ensures this reference is available inside the vi.mock() factory closure.
-const { mockConnectWithStoredCredentials, mockAddCallNotes } = vi.hoisted(() => ({
+const { mockConnectWithStoredCredentials, mockAddCallNotes, mockSipExtras, mockClaimLeadership } = vi.hoisted(() => ({
   mockConnectWithStoredCredentials: vi.fn(),
   mockAddCallNotes: vi.fn().mockResolvedValue(true),
+  // T20: campos extra do `useCallSession` que cada teste pode ligar (ex.: `sipReason`).
+  mockSipExtras: { current: {} as Record<string, unknown> },
+  // T20(A): prova que o painel dispara a eleição de aba no boot.
+  mockClaimLeadership: vi.fn(),
 }));
 
 function makeCallsQueryBuilder({ historyResult = { data: [], error: null }, statsResult = { data: [], error: null } } = {}) {
@@ -65,7 +69,12 @@ vi.mock('@/providers/CallSessionProvider', () => ({
     rejectIncomingCall: vi.fn(),
     toggleMute: vi.fn(),
     sendDTMF: vi.fn(),
+    ...mockSipExtras.current,
   }),
+}));
+
+vi.mock('@/lib/calls/tabLeaderStore', () => ({
+  claimLeadership: mockClaimLeadership,
 }));
 
 import { VoIPPanel } from '../VoIPPanel';
@@ -82,6 +91,8 @@ describe('VoIPPanel', () => {
     supabase.from.mockReturnValue(makeCallsQueryBuilder());
     mockConnectWithStoredCredentials.mockReset();
     mockAddCallNotes.mockReset().mockResolvedValue(true);
+    mockSipExtras.current = {};
+    mockClaimLeadership.mockReset();
   });
 
   it('renders the Telefonia header', () => {
@@ -260,5 +271,25 @@ describe('VoIPPanel', () => {
     await waitFor(() => {
       expect(mockConnectWithStoredCredentials).toHaveBeenCalledOnce();
     });
+  });
+
+  // T20(A): a eleição de aba líder tem de COMEÇAR no boot do painel — sem esta
+  // reivindicação nenhuma aba assume e o portão de `connect()` (useSipConnection)
+  // recusaria o REGISTER em todas elas (a telefonia nunca registraria a linha).
+  it('T20: reivindica a liderança da aba ao montar (a eleição começa)', () => {
+    renderWithProviders(<VoIPPanel />);
+
+    expect(mockClaimLeadership).toHaveBeenCalled();
+  });
+
+  // T20: o painel repassa o motivo da linha (vindo de useCallSession/useSipClient)
+  // ao DialPad — a aba que não é dona do registro mostra o motivo e não oferece conectar.
+  it('T20: com sipReason=line_in_use_other_tab mostra o motivo e desabilita conectar', () => {
+    mockSipExtras.current = { sipReason: 'line_in_use_other_tab' };
+
+    renderWithProviders(<VoIPPanel />);
+
+    expect(screen.getByText('Ligação em andamento em outra aba')).toBeInTheDocument();
+    expect(screen.getByText('Conectar SIP').closest('button')).toBeDisabled();
   });
 });

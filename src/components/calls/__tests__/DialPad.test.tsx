@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { DialPad } from '../DialPad';
+import { REASON_LABEL } from '@/lib/calls/capabilities';
 
 const defaultProps = {
   sipStatus: 'idle' as const,
@@ -300,5 +301,45 @@ describe('DialPad', () => {
     expect(defaultProps.onDTMF).toHaveBeenCalledWith('*');
     fireEvent.click(screen.getByText('#'));
     expect(defaultProps.onDTMF).toHaveBeenCalledWith('#');
+  });
+});
+
+// === T20 — a aba que NÃO é dona do registro SIP ===
+
+describe('DialPad — T20: linha em uso em outra aba', () => {
+  /**
+   * O texto é o do domínio (`REASON_LABEL`), não uma string solta no DialPad.
+   * O literal continua fixado aqui para o teste falhar se o rótulo do domínio
+   * mudar sem intenção.
+   */
+  const ROTULO_OUTRA_ABA = 'Ligação em andamento em outra aba';
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it('com o motivo line_in_use_other_tab mostra o rótulo e NÃO oferece conectar', () => {
+    render(<DialPad {...defaultProps} sipReason="line_in_use_other_tab" />);
+
+    expect(REASON_LABEL.line_in_use_other_tab).toBe(ROTULO_OUTRA_ABA);
+    expect(screen.getByText(ROTULO_OUTRA_ABA)).toBeInTheDocument();
+    // O rótulo de estado da conexão dá lugar ao motivo.
+    expect(screen.queryByText('Desconectado')).not.toBeInTheDocument();
+    // Esta aba não é a dona do registro: o botão não oferece conectar.
+    expect(screen.getByText('Conectar SIP').closest('button')).toBeDisabled();
+  });
+
+  it('sem o motivo nada muda: estado antigo e conectar habilitado', () => {
+    render(<DialPad {...defaultProps} />);
+
+    expect(screen.getByText('Desconectado')).toBeInTheDocument();
+    expect(screen.queryByText(ROTULO_OUTRA_ABA)).not.toBeInTheDocument();
+    expect(screen.getByText('Conectar SIP').closest('button')).not.toBeDisabled();
+  });
+
+  it('outro motivo não sequestra o rótulo de estado (escopo é só a outra aba)', () => {
+    render(<DialPad {...defaultProps} sipReason="mic_blocked" />);
+
+    expect(screen.getByText('Desconectado')).toBeInTheDocument();
+    expect(screen.queryByText(ROTULO_OUTRA_ABA)).not.toBeInTheDocument();
+    expect(screen.getByText('Conectar SIP').closest('button')).not.toBeDisabled();
   });
 });

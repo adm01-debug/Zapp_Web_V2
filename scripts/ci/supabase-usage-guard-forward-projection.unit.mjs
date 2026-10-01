@@ -350,3 +350,33 @@ test('usage guard honra todas as formas de SET/RESET de standard_conforming_stri
     assert.equal(result.status, esperado, `${forma}\n${result.stdout}${result.stderr}`);
   }
 });
+
+test('usage guard projeta VIEW (CREATE/DROP/MATERIALIZED) e RENAME TO', () => {
+  const casos = [
+    ['DROP VIEW de view catalogada usada por caller',
+      { '20260909210000_a.sql': 'DROP VIEW IF EXISTS public.v;\n' },
+      { 'c.ts': "supabase.from('v').select('*');\n" }, { views: ['v'] }, 1],
+    ['CREATE OR REPLACE VIEW na janela nao e falso positivo',
+      { '20260909210000_b.sql': 'CREATE OR REPLACE VIEW public.nova AS SELECT 1 AS x;\n' },
+      { 'c.ts': "supabase.from('nova').select('*');\n" }, {}, 0],
+    ['ALTER TABLE ... RENAME TO tira o nome antigo da projecao',
+      { '20260909210000_c.sql': 'ALTER TABLE public.x RENAME TO x_novo;\n' },
+      { 'c.ts': "supabase.from('x').select('*');\n" }, { tables: ['x'] }, 1],
+    ['DROP TABLE sem prefixo de schema (search_path = public)',
+      { '20260909210000_d.sql': 'DROP TABLE x;\n' },
+      { 'c.ts': "supabase.from('x').select('*');\n" }, { tables: ['x'] }, 1],
+    ['DROP MATERIALIZED VIEW',
+      { '20260909210000_e.sql': 'DROP MATERIALIZED VIEW public.mv;\n' },
+      { 'c.ts': "supabase.from('mv').select('*');\n" }, { views: ['mv'] }, 1],
+    ['ALTER TABLE RENAME TO com o nome novo mantem caller do nome novo',
+      { '20260909210000_f.sql':
+        'ALTER TABLE public.x RENAME TO x_novo;\n'
+        + 'ALTER VIEW public.w RENAME TO w_novo;\n' },
+      { 'c.ts': "supabase.from('x_novo').select('*');\nsupabase.from('w_novo').select('*');\n" },
+      { tables: ['x'], views: ['w'] }, 0],
+  ];
+  for (const [desc, migrations, callers, catalog, esperado] of casos) {
+    const result = runGuard({ migrations, callers, catalog });
+    assert.equal(result.status, esperado, `${desc}\n${result.stdout}${result.stderr}`);
+  }
+});

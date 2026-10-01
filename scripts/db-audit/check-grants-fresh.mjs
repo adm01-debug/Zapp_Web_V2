@@ -52,7 +52,7 @@ const valid = (value) => value && typeof value === 'object' && !Array.isArray(va
 const METADADOS = new Set(['generated_at', 'note', 'how_to_regenerate']);
 const canon = (value) => Array.isArray(value) ? value.map(canon)
   : value && typeof value === 'object'
-    ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, canon(value[key])]))
+    ? Object.fromEntries(Object.keys(value).sort((a, b) => a.localeCompare(b)).map((key) => [key, canon(value[key])]))
     : value;
 const aclOnly = (value) => Object.fromEntries(
   Object.entries(value).filter(([key]) => !METADADOS.has(key)),

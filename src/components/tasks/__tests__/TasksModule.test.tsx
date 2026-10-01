@@ -576,3 +576,83 @@ describe('TasksModule — etapas 77/78 (atalhos do registry + aria-live)', () =>
     await waitFor(() => expect(regiaoViva().textContent).toContain('Desfeito'));
   });
 });
+
+/**
+ * Etapa 86 — o contrato de entrada do módulo fechado de ponta a ponta: qual modo
+ * a rota abre (`defaultMode` × preferência salva × `forceMode` de `?view=pipeline`),
+ * o deep-link `?task=` convivendo com esse modo, e o atalho `N` alcançando o
+ * QuickAdd do dia na Agenda (o registro do registry só chega como evento).
+ */
+describe('TasksModule — etapa 86 (modo padrão, deep-link e atalho N)', () => {
+  beforeEach(() => {
+    cleanup();
+    resetSupabaseMock();
+    localStorage.clear();
+    window.history.replaceState(null, '', '/');
+    setSelectResult({ data: [makeTaskRow({ id: 't1', title: 'Ligar para o cliente' })], error: null });
+  });
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
+    cleanup();
+  });
+
+  it('sem preferência salva, o defaultMode da rota decide o modo (Agenda) e não é gravado', async () => {
+    renderModule({ defaultMode: 'agenda' });
+
+    await waitFor(() => expect(modoAtual()).toBe('agenda'));
+    // entrar pela rota não reescreve a preferência do usuário
+    expect(localStorage.getItem(MODE_STORAGE_KEY)).toBeNull();
+  });
+
+  it('com preferência salva, o defaultMode NÃO vence (retoma o modo salvo)', async () => {
+    localStorage.setItem(MODE_STORAGE_KEY, 'board');
+
+    renderModule({ defaultMode: 'agenda' });
+
+    await waitFor(() => expect(modoAtual()).toBe('board'));
+  });
+
+  it('`?view=pipeline` força o Quadro sobre a preferência salva e não a reescreve', async () => {
+    localStorage.setItem(MODE_STORAGE_KEY, 'list');
+
+    renderModule(TASKS_ROUTE_PROPS.pipeline);
+
+    await waitFor(() => expect(modoAtual()).toBe('board'));
+    // visitar a rota não altera a preferência do usuário
+    expect(localStorage.getItem(MODE_STORAGE_KEY)).toBe('list');
+  });
+
+  it('o deep-link `?task=` abre o Sheet sobre o Quadro forçado por `?view=pipeline`', async () => {
+    localStorage.setItem(MODE_STORAGE_KEY, 'agenda');
+    window.history.replaceState(null, '', '/?view=pipeline&task=t1');
+
+    renderModule(TASKS_ROUTE_PROPS.pipeline);
+
+    await waitFor(() => expect(modoAtual()).toBe('board'));
+    const titulo = await screen.findByTestId('sheet-titulo');
+    expect((titulo as HTMLInputElement).value).toBe('Ligar para o cliente');
+    // a URL segue carregando o id do item aberto
+    expect(new URLSearchParams(window.location.search).get('task')).toBe('t1');
+  });
+
+  it('`?task=` com um id fora da carga não abre o Sheet', async () => {
+    window.history.replaceState(null, '', '/?task=nao-existe');
+
+    renderModule();
+    await screen.findByTestId('work-item-card');
+
+    expect(screen.queryByTestId('work-item-sheet')).toBeNull();
+  });
+
+  it('o atalho N na Agenda leva o foco ao QuickAdd do dia (único da tela)', async () => {
+    renderModule({ defaultMode: 'agenda', forceMode: true });
+    await screen.findAllByTestId('agenda-day-dots');
+
+    act(() => {
+      document.dispatchEvent(new CustomEvent('tasks-shortcut', { detail: { id: 'tasks-focus-quickadd' } }));
+    });
+
+    expect(screen.getAllByTestId('quick-add')).toHaveLength(1);
+    expect(document.activeElement).toBe(screen.getByTestId('quick-add-input'));
+  });
+});
