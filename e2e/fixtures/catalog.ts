@@ -4,13 +4,15 @@
 // `./e2e-contact` (`E2E_FIXTURE_CONTACT_ID`, `[E2E] Contato de teste`) e é
 // reaproveitado aqui por import/re-export.
 //
-// Produto: o plano CT-81 citava o produto fixo `PO-13153`. Esse SKU aparece na
-// documentação do repo (`docs/catalogo/CHANGELOG_CATALOGO.md:12`, "PO-13153:
-// 6 imagens, 1 swatch, LASER"), MAS **não foi possível verificar** que ele
-// existe e é buscável no catálogo PromoGifts — sistema EXTERNO, fora deste
-// repo (a edge `promogifts-catalog` não roda neste ambiente). Por isso o SKU
-// NÃO é fixado em código: é parametrizado por env e acompanhado de um flag de
-// verificação. Um spec deve degradar com aviso claro enquanto
+// Produto: o plano CT-81 citava o produto fixo `PO-13153` (`CHANGELOG_CATALOGO.md:12`,
+// "PO-13153: 6 imagens, 1 swatch, LASER"). **VERIFICADO em 2026-10-02** com sessão
+// autenticada no próprio app (`?view=catalog`, conta de teste): buscar `PO-13153`
+// devolve **1 card** e o detalhe mostra `SKU: PO-13153` —
+// "Açucareiro com formato de coração e colher em bambu", gravação LASER, 1 variante
+// (o plano citava 6 imagens; a ficha real mostra 8). Buscar `13153` sem o prefixo
+// devolve 0 cards, ou seja o SKU é buscável pelo valor exato. O SKU continua
+// parametrizável por env (`E2E_CATALOG_PRODUCT_SKU`) e o flag
+// `E2E_CATALOG_PRODUCT_SKU_VERIFIED` libera os asserts que dependem dele. Um spec deve degradar com aviso claro enquanto
 // `E2E_CATALOG_PRODUCT_SKU_VERIFIED` for falso, em vez de buscar um id
 // inventado. Não invente id/URL de produto.
 import {

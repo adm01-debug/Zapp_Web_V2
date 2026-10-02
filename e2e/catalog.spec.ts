@@ -143,6 +143,27 @@ async function softDeleteMessagesSince(page: Page, sinceIso: string): Promise<nu
   return ((await res.json()) as MessageRow[]).length;
 }
 
+const OVERLAY_ONBOARDING = 'div.fixed.inset-0.z-\\[9999\\]';
+
+/**
+ * Achado do grupo D (02/10, medido): depois de um login novo o modal de
+ * boas-vindas ("Bem-vindo, Multiplix!") monta por cima da tela e intercepta
+ * qualquer clique (`div.fixed.inset-0.z-[9999]`), inclusive o "Ver" do primeiro
+ * card — o fluxo nunca saía do passo 3. Aqui ele é dispensado como um usuário
+ * faria, pelo botão "Pular tour". **Escape NÃO fecha esse modal** (medido).
+ */
+async function dispensarOnboarding(page: import('@playwright/test').Page) {
+  const pular = page.getByRole('button', { name: /pular tour/i });
+  if ((await pular.count()) > 0) {
+    await pular.first().click();
+    await pular.first().waitFor({ state: 'detached', timeout: 10_000 }).catch(() => {});
+  }
+  await page
+    .locator(OVERLAY_ONBOARDING)
+    .waitFor({ state: 'detached', timeout: 10_000 })
+    .catch(() => {});
+}
+
 test.describe('Catálogo — envio de produto no chat (CT-82)', () => {
   test.describe.configure({ timeout: 150_000 });
 
@@ -213,7 +234,12 @@ test.describe('Catálogo — envio de produto no chat (CT-82)', () => {
     const detailSheet = page.getByRole('dialog');
     const cor = detailSheet.getByRole('button', { name: /^Cor / }).first();
     await expect(cor).toBeVisible({ timeout: 20_000 });
-    await cor.click();
+    // O Sheet re-renderiza quando as imagens/variantes chegam e o botao chega a
+    // ser recriado no meio do clique (medido: "element was detached from the
+    // DOM"). toPass repete a acao inteira ate ela valer.
+    await expect(async () => {
+      await cor.click({ timeout: 5_000 });
+    }).toPass({ timeout: 30_000 });
 
     // 5) aciona "Enviar variação (<cor>)" no rodapé do Sheet
     const enviarVariacao = detailSheet.getByRole('button', { name: /^Enviar variação \(/ });
@@ -223,7 +249,7 @@ test.describe('Catálogo — envio de produto no chat (CT-82)', () => {
     // O Sheet fecha e o SendProductDialog abre: espera sobrar 1 único dialog.
     await expect(page.getByRole('dialog')).toHaveCount(1);
     const sendDialog = page.getByRole('dialog');
-    await expect(sendDialog.getByText('Modelo de mensagem')).toBeVisible({ timeout: 20_000 });
+    await expect(sendDialog.getByText('Modelo de mensagem', { exact: true })).toBeVisible({ timeout: 20_000 });
 
     // 6) escolhe as fotos (garante todas marcadas) e confere a contagem
     const selecionarTodas = sendDialog.getByRole('button', {

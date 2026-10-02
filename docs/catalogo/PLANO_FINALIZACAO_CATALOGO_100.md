@@ -506,7 +506,7 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   `hasFilters`** (que agrega busca textual/categoria/fornecedor — o chip apareceria só com uma busca digitada). Não se
   tocou no bloco "Mostrando X–Y de Z" (é o contador de paginação). Testes em
   `CT61_62_65_catalogFilters.test.tsx:214-235`: aparece/desliga com a flag e **não** aparece só com busca textual.
-- [ ] **CT-66** — Fechamento G: PR mergeada; `PARIDADE.md` seção "Topo" e "Grade" com prints 1920/1440/1280.
+- [x] **CT-66** — Fechamento G: PR mergeada; `PARIDADE.md` seção "Topo" e "Grade" com prints 1920/1440/1280. **✅ FEITO (02/10/2026, grupo D)** — prints autenticados commitados em `docs/catalogo/screens/A-catalogo-{1920,1440,1280}.jpg` (sessão real da conta de teste, grade povoada com 24 cartões em cada largura) e `PARIDADE.md` atualizado. O "PR mergeada" é o desta rodada.
   **Aceite:** prints commitados.
 
 ## FASE 7 — Acessibilidade e performance (CT-67–CT-76)
@@ -1026,6 +1026,58 @@ etapa — não recalcular tempo a cada render — está cumprido.
 
 **Ordem:** A → B → (C, D em paralelo) → E → F → G → H → I → J. A é obrigatória antes de qualquer outra: enquanto
 não houver 1 envio real verificado, todo o resto é vitrine.
+
+### Bloco D — prints autenticados, Lighthouse e verificação do SKU (02/10/2026)
+
+Conta de teste COMPRAS (`~/.secrets/zapp-multiplix-escopo.env`), **sem imprimir a senha** em log,
+resposta ou prompt. Sessão real via `e2e/auth.setup.ts` (Playwright) contra o alvo que se quer medir.
+
+**CT-81 — SKU do produto de teste: VERIFICADO (era a pendência que travava o CT-82).** Com sessão
+autenticada no próprio app (`?view=catalog`), a busca por `PO-13153` devolve **1 card** e o detalhe
+mostra `SKU: PO-13153` — *"Açucareiro com formato de coração e colher em bambu"*, gravação **LASER**,
+**1 variante** (BAMBU), fornecedor Só Marcas, 8 imagens. Buscar `13153` (sem o prefixo) devolve 0
+cards: o SKU responde pelo valor exato. O plano citava "6 imagens"; a ficha real mostra 8 —
+divergência registrada. O flag `E2E_CATALOG_PRODUCT_SKU_VERIFIED=true` passa a ter base factual e o
+comentário do fixture (`e2e/fixtures/catalog.ts`) foi atualizado.
+
+**CT-66 — prints responsivos da Tela A: ✅ FECHADO.** `docs/catalogo/screens/A-catalogo-1920.jpg`,
+`A-catalogo-1440.jpg` e `A-catalogo-1280.jpg`, capturados com sessão autenticada e a grade povoada
+(24 cartões) em cada largura; o modal de boas-vindas foi dispensado antes do print. `PARIDADE.md`
+deixou de dizer "pendente da CT-66" e passou a apontar os três arquivos.
+
+**CT-30 — prints feitos, aceite NÃO cumprido (segue aberto).** Os 4 prints
+(`A-catalogo-resp-{1280x800,1024x800,768x900,390x844}.jpg`) estão commitados, mas a medição no DOM
+mostra que o **rail continua `aside` em todas as larguras** (não vira Accordion) e o **detalhe
+continua dialog comum em 390 px** (não vira Drawer). O que existe é a grade responsiva
+(6 → 3 → 3 → 2 colunas).
+
+**CT-74 — medido; aceite NÃO cumprido (segue aberto).** Método e números crus em `PERF.md` (§CT-74).
+Resumo: produção, mobile/Slow 4G, cache limpo → **perf 44** (aceite ≥ 90) e **CLS 0,2455**
+(aceite < 0,05). Causa dominante do CLS, medida: a faixa de KPIs (`data-testid="catalog-kpi…"`)
+cresce quando os dados chegam — 0,2211 dos 0,2455. Armadilha descartada: `launchPersistentContext`
+não aplica `storageState`, então três medições anteriores eram da **tela de login**.
+
+**CT-82 — spec destravado, ainda não verde (segue aberto).** Dois defeitos reais do spec corrigidos
+(o CI bateria nos dois): (1) o modal de boas-vindas ("Bem-vindo, Multiplix!") monta após o login e
+**intercepta o primeiro clique** — agora é dispensado com "Pular tour" (Escape **não** fecha);
+(2) `getByText('Modelo de mensagem')` era **ambíguo** (strict mode, casava com 2 elementos) — passou
+a `{ exact: true }`. Com isso o fluxo avança de verdade: busca → card → **detalhes → cor → "Enviar
+variação" → dialog de envio com fotos/modelo**. Não fecha por dois motivos: o Sheet de detalhes chega
+a se fechar antes do clique da cor (snapshot em `test-results/…/error-context.md`) e, acima de tudo,
+o envio real exige **conexão WhatsApp ativa** — o botão "Enviar para <contato>" só habilita após a
+checagem de prontidão (`e2e/catalog.spec.ts:261-265`), e a conexão é pendência do Joaquim.
+
+### Achados fora do escopo (declarados, não corrigidos aqui)
+
+- **Modal de boas-vindas bloqueia a tela depois do login e Escape não o fecha** (medido: overlay
+  `div.fixed.inset-0.z-[9999]` presente por mais de 16 s; Escape sem efeito; `Pular tour` fecha). É o
+  mesmo achado que o chat **CONTATOS** está tratando — o componente não foi tocado aqui.
+- **`playwright.config.ts` disputa a porta 5173 entre chats** (`webServer` com
+  `reuseExistingServer: !process.env.CI` e `url: http://localhost:5173`): um e2e de outro chat chegou
+  a carregar `playwright-report/` pelo dev server deste workspace (visto no log do próprio servidor).
+  Sugestão (fora do escopo): parametrizar a porta por variável de ambiente.
+- **A11Y no console** (visto no log do dev server, não bloqueante): `color-contrast` SERIOUS em 3–4
+  elementos e `button-name` CRITICAL em 3 elementos — território do CT-69 (decisão de produto).
 
 ## 12. Fora de escopo (registrado, não esquecido)
 
