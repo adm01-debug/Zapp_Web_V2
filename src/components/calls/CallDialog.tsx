@@ -127,7 +127,7 @@ export function CallDialog({
     // deixa o ESTABLISHED do motor marcar `answeredAt`.
     await accept();
     onAnswer?.();
-    logAudit({
+    void logAudit({
       action: 'call_started',
       entityType: 'call',
       entityId: session.sessionId ?? undefined,
@@ -140,7 +140,7 @@ export function CallDialog({
     // REJECT → `declined`; nos demais estados, HANGUP_LOCAL. O gravação do
     // desfecho é do motor (RPC), não da UI.
     hangup();
-    logAudit({
+    void logAudit({
       action: 'call_ended',
       entityType: 'call',
       entityId: session.sessionId ?? undefined,
