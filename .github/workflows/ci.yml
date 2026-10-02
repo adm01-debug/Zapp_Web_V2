@@ -104,6 +104,7 @@ jobs:
           supabase/functions/message-delivery/index.test.ts
           supabase/functions/sentiment-alert/index.test.ts
           supabase/functions/talkx-send/index.test.ts
+          supabase/functions/talkx-scheduler/index.test.ts
           supabase/functions/multiplix-audience/index.test.ts
           supabase/functions/public-api/index.test.ts
           supabase/functions/webhook-diagnostic/diagnostic.test.ts
