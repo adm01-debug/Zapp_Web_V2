@@ -84,7 +84,7 @@ export const Sidebar = React.memo(function Sidebar({
   );
 
   return (
-    <aside id="main-navigation" role="navigation" aria-label="Menu de navegação principal"
+    <nav id="main-navigation" aria-label="Menu de navegação principal"
       className={cn('flex flex-col h-screen supports-[height:100dvh]:h-[100dvh] border-r border-border bg-sidebar shrink-0 transition-[width] duration-300 ease-in-out overflow-hidden', collapsed ? 'w-[var(--sidebar-w-collapsed)]' : 'w-[var(--sidebar-w)]')}>
 
       {/* Logo + Toggle */}
@@ -243,6 +243,6 @@ export const Sidebar = React.memo(function Sidebar({
           </div>
         </div>
       </div>
-    </aside>
+    </nav>
   );
 });
