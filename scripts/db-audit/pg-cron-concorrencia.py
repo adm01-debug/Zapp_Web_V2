@@ -6,19 +6,18 @@ de jobs por slot, quantos slots passam de 5 e de 7, e os 3 piores slots.
 Sai com codigo 1 se o arquivo estiver vazio: medicao sem dados e PROVA INVALIDA,
 nunca verde.
 """
-import os
 import sys
+import tempfile
 from pathlib import Path
 
 RAIZ_REPO = Path(__file__).resolve().parents[2]
 
-# Mesmas raizes de `scripts/lib/seguranca-processo.mjs`: o repositorio e os
-# diretorios temporarios (o chamador escreve a medicao em $TMPDIR).
-RAIZES_PERMITIDAS = (
-    RAIZ_REPO,
-    Path(os.path.realpath(os.environ.get("TMPDIR") or "/tmp")),
-    Path("/tmp"),
-)
+# Mesmas raizes de `scripts/lib/seguranca-processo.mjs`: o repositorio e o
+# diretorio temporario do processo (o chamador escreve a medicao em $TMPDIR).
+# `tempfile.gettempdir()` resolve TMPDIR -- ou o padrao da plataforma -- sem
+# embutir caminho literal de diretorio publicamente gravavel, que acenderia
+# `python:S5443` no lugar do achado que este modulo fecha.
+RAIZES_PERMITIDAS = (RAIZ_REPO, Path(tempfile.gettempdir()).resolve())
 
 
 def resolver_caminho_permitido(valor, rotulo):
@@ -27,8 +26,8 @@ def resolver_caminho_permitido(valor, rotulo):
     Fecha o `jssecurity:S8707` (path traversal): o caminho vem de argv e nunca
     pode chegar cru ao open(). Fail-closed: fora das raizes levanta antes de
     qualquer leitura, com codigo 1 (entrada invalida). A comparacao usa a
-    cadeia de pais do caminho resolvido, nao prefixo de texto -- '/tmpfoo' nao
-    esta dentro de '/tmp'.
+    cadeia de pais do caminho resolvido, nao prefixo de texto: um diretorio
+    irmao com o mesmo prefixo do temporario nao pode passar por dentro dele.
     """
     resolvido = Path(valor).resolve()
     if not any(resolvido == raiz or raiz in resolvido.parents for raiz in RAIZES_PERMITIDAS):
