@@ -511,7 +511,7 @@ leituras foram descartadas.
 ## CP-I Testes      [x] arquivos=398 · casos=5219 (46 novos de tarefas) · bundle=12,2 KB gz (do modulo; teto 45) · TTI 300 itens=Lista 1606 ms · Quadro 1633 ms · Agenda 1584 ms (Playwright chromium 1672x941, login pela UI, `performance.now()` da navegacao ate o 1o `[data-testid=work-item-card]`; cards no DOM: 175/250/250)
   - (O DoD pedia ">= 50 cards no DOM"; por modo a Lista agrupa e o Quadro recorta por coluna, entao 50 simultaneos nao acontecem — medido ate o 1o card com o total no DOM registrado.)
   - Seed do QA: 300 tarefas `[E2E seed 89]` — contagem ANTES `0-0/300`, DELETE 204 (`*/300`), DEPOIS `*/0`. Rodado 2x, zerado nas duas.
-## CP-J Entrega     [~] gates 8/8=8 · func 24/24=17 · geometria=em medicao · cores=em medicao · isolamento (agente x supervisor)=OK · migração=OK · PR drop n (aguarda APROVADO)=pendente · docs=OK · prod final=cron OK / screenshots pendentes
+## CP-J Entrega     [~] gates 8/8=8 OK · func 24/24=17 (E.5, 7 restantes classificadas) · geometria 8/8=OK · cores 10/10=OK (ΔE76) · isolamento=OK na RLS com agent (supervisor ve tudo por desenho) · migração=OK (ID conferido) · PR drop n (aguarda APROVADO)=PENDENTE (workspace 2) · docs=OK (README do modulo criado) · prod final=cron OK + E.1 6/6 OK; falta E.5 24/24 e abrir a migrada na Lista/Sheet do dono
 
 ### FASE J — numeros reais (2026-10-01)
 
@@ -530,12 +530,34 @@ Nenhuma provada como bug do app. Rodada paralela com harness corrigido de outro 
 divergencia entre harnesses e a prova de flakiness. O 404 de `/assets/EvolutionDisconnectBan...` visto no
 `console-sem-erro` **foi descartado**: era corrida com o deploy (o check passou depois).
 
-**93/94.** Em medicao (2 subagentes reabertos com instrucao fechada).
+**93. Geometria — 8/8 OK.** Medido em producao (1672x941, Chromium/Playwright, conta QA COMPRAS):
+quickAdd **44** (44±2) · kpiCard **88** (88±4, 5/5) · modeSwitcher **44** · card com chips **72** (>=72) ·
+agendaCard **44** · columns **5** · columnGap **12** · sheet **420** (420±4). Reproduzido em 2 execucoes.
+Ressalva registrada: o card fecha 72 no estado COM chips (DueChip+PriorityChip); sem chip fica em 56
+(min 56 / max 72 numa amostra de 68 cards) — confirmar se o alvo vale para qualquer card.
 
-**95. Isolamento — ENTREGUE com prova.** Tarefa `997dd9e8-...` (dono Admin 01). Papel **agente**
-(`comercial01`): GET `[]`, PATCH `[]`, DELETE `[]`, e na UI 0 cards. Supervisores (COMPRAS/LOGISTICA) veem a
-tarefa — desenho. 2 screenshots em `out/`. Leitura honesta: a fronteira real e **agente x supervisor**, nao
-"usuario A x usuario B" como a redacao do plano sugere.
+**94. Cores — 10/10 OK por ΔE76.** fundo e card ΔE **0,00** · chip urgente 0,79 · alta 0,66 · media 0,85 ·
+baixa 0,48 · chips do QuickAdd 0,00 · coluna cheia 0,00 · coluna vazia 5,13 · chip atrasado 4,23
+(tolerancia: fundos <=6, demais <=8). Comparado contra `src/styles/tokens.css` (bloco `.dark`), que e o que a
+producao pinta; a redacao "tokens navy" do plano e legada. Como a conta QA nao tinha prazo nem prioridade
+variada, o medidor semeou **7 tarefas sinteticas QA-E2E3-*** via REST **com o JWT do proprio usuario**
+(nunca service_role) e apagou ao fim — limpeza conferida por leitura independente (restantes=0).
+
+**95. Isolamento — ENTREGUE com prova, e com uma CORRECAO ao relato anterior.** Tarefa `997dd9e8-...`
+(dono Admin 01). Prova em 3 camadas: (a) UI — Compras ve 8 cards (so os dele), Logistica ve **0** e o agent
+`comercial01` ve **0**; (b) RLS/REST — GET/PATCH/DELETE do agent na tarefa de outro dono devolvem **0 linhas**
+(`[]`, HTTP 200) e releitura SQL confirma a tarefa intacta; (c) `reminders` e estritamente por usuario
+(`[]` nos tres).
+**CORRECAO (achado do agente, e eu tinha dito o contrario de forma incompleta):** os **dois** usuarios de
+teste (Compras e Logistica) sao **supervisor** (`user_roles`: d2229ada=supervisor, ab2d4b9b=supervisor) e a
+policy e `created_by = current_profile_id() OR is_admin_or_supervisor()`. Ou seja: **supervisor x supervisor
+nao se isolam entre si na RLS** — eles veem tudo, por desenho. O isolamento que se observa entre eles na UI
+vem do **filtro client-side** (`src/hooks/tasks/useMyWorkItems.ts:186`, `.eq('created_by', profileId)`).
+O invariante "dono so ve o seu" foi provado na RLS com o unico usuario **nao-privilegiado** disponivel, o
+agent `comercial01`. Para fechar o DoD literal ("2 usuarios") na camada RLS, o segundo usuario teria de ser
+um **agent**, nao um supervisor.
+**Pendencia do DoD de 96:** abrir a tarefa migrada na Lista e no Sheet **do dono** (Admin 01) nao foi feito —
+falta credencial do Admin 01/QA; e a tarefa nao aparece para os usuarios de escopo por causa do filtro por dono.
 
 **96. Migracao dos lembretes — OK, ID conferido.** `reminders`: 1 linha, `migrated_task_id IS NULL` = **0**; a
 linha aponta para a tarefa `997dd9e8-...`, que existe (`zcxvcv`, `todo`).

@@ -66,6 +66,9 @@ Sete, com escopo `tasks`/`pipeline`: `tasks-focus-quickadd`, `tasks-mode`, `task
   UI. **Feche o diálogo de entrada com `Escape` antes de clicar** (senão os cliques são
   interceptados) e nunca use `waitUntil: 'networkidle'` — o app mantém websocket aberto.
 - Dados de teste em produção: use prefixo identificável e **apague com contagem antes/depois**.
+- **`WelcomeModal`**: o app abre o "Bem-vindo… Pular tour" (overlay `z-[9999]`) em contexto/sessão nova e ele
+  **intercepta todo clique de ponteiro** — não há flag persistente. Qualquer automação precisa fechá-lo (Escape
+  ou "Pular tour") antes de interagir, senão o clique resolve o elemento e não completa.
 
 ## Resíduos conhecidos
 
