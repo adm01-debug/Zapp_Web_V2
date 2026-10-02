@@ -376,6 +376,11 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
                     onRetry={() => addressAutocomplete.retrySuggest()}
                   />
                 )}
+                {/* E64: o leitor de tela anuncia o endereço escolhido. Vive fora da lista (que
+                    desmonta ao selecionar) e o nome nunca entra em logAudit (E50). */}
+                <div role="status" aria-live="polite" className="sr-only" data-testid="sr-selecao-endereco">
+                  {addressAutocomplete.selectionAnnouncement}
+                </div>
               </div>
             </div>
           </div>

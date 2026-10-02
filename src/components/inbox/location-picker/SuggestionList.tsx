@@ -200,19 +200,24 @@ export function SuggestionList({
           Mapbox
         </a>
       </p>
-      {/* E57: quem usa leitor de tela não "vê" a lista aparecer. Região viva só com texto de
-          estado — o conteúdo dos itens já é lido pelo próprio listbox, repetir viraria eco. */}
-      <span aria-live="polite" role="status" className="sr-only" data-testid="sr-aviso">
+      {/* E57: quem usa leitor de tela não "vê" a lista aparecer. A região viva anuncia ESTADO e
+          CONTAGEM, com redação própria — nunca copia o texto visível (repetir o mesmo texto no DOM
+          viraria eco e quebraria qualquer `getByText` de terceiro com "Found multiple elements").
+          O texto depende só de `status` e de `suggestions.length`: digitar não muda nenhum dos
+          dois, então não há anúncio a cada tecla. */}
+      <div role="status" aria-live="polite" className="sr-only" data-testid="sr-aviso">
         {status === 'ok'
-          ? `${suggestions.length} sugestões disponíveis`
-          : status === 'empty'
-            ? 'Nenhuma sugestão'
-            : status === 'error'
-              ? 'Erro na busca de sugestões'
-              : status === 'paused'
-                ? 'Busca temporariamente indisponível'
-                : ''}
-      </span>
+          ? `${suggestions.length} sugestões`
+          : digitando
+            ? 'Buscando…'
+            : status === 'empty'
+              ? 'Nenhum resultado'
+              : status === 'error'
+                ? 'Erro na busca de sugestões'
+                : status === 'paused'
+                  ? 'Sugestões pausadas'
+                  : ''}
+      </div>
     </div>
   );
 }

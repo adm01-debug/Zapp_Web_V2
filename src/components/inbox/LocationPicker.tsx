@@ -226,6 +226,12 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
                       onRetry={() => autocomplete.retrySuggest()}
                     />
                   )}
+                  {/* E64: depois de escolher um endereço, o leitor de tela ouve o nome do que foi
+                      escolhido. A região vive FORA da lista (que desmonta ao selecionar) e o nome
+                      não entra em nenhum logAudit — é da pessoa que está escolhendo, não telemetria. */}
+                  <div role="status" aria-live="polite" className="sr-only" data-testid="sr-selecao">
+                    {autocomplete.selectionAnnouncement}
+                  </div>
                 </div>
             </div>
             <div className="relative">
