@@ -158,10 +158,14 @@ export class WhatsAppCallAdapter {
    * a cria é o webhook (T25, `record_incoming_call_event`) com o mesmo `id`.
    * Se o `accept` fosse o primeiro write da linha, `answered_by` ficaria nulo.
    *
-   * Pelo mesmo motivo o `channel` é **imutável após o primeiro write** (a lista
-   * `SET` de `:335-359` não inclui `channel`): a linha precisa nascer com o
-   * canal certo, e é por isso que o payload abaixo passa `channel: 'whatsapp'`
-   * em vez de confiar no `coalesce`.
+   * Sobre o `channel`: medi depois que a versão vigente de
+   * `record_incoming_call_event` **grava `channel='whatsapp'` nas duas
+   * inserções** e o preserva no `ON CONFLICT` por
+   * `COALESCE(public.calls.channel, EXCLUDED.channel)`. A imutabilidade vale
+   * para quem **não** passa o canal (o `SET` do `upsert_my_call` não inclui
+   * `channel`). Como o webhook cria a linha antes, ela nasce com o canal certo;
+   * o `channel: 'whatsapp'` abaixo é a garantia caso o adapter seja o primeiro
+   * write.
    */
   async accept(call: WhatsAppIncomingCall): Promise<WhatsAppAcceptResult> {
     const persistencia = await this.ports.persistir({
