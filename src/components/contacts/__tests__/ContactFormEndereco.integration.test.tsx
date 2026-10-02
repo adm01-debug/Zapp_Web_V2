@@ -4,6 +4,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ContactForm, type ContactFormValues } from '../ContactForm';
 import type { GeoSuggestion } from '@/lib/mapboxGeocode';
 import { resetSearchSessionForTests } from '@/lib/mapboxSession';
+// E68: respostas reais da Mapbox em disco (Apêndice A) — o fetch destes testes serve estes arquivos.
+import suggestAvenida from '@/lib/__fixtures__/mapbox/suggest-avenida-paulista-1000.json';
+import suggestXbz from '@/lib/__fixtures__/mapbox/suggest-xbz.json';
+import retrieveXbz from '@/lib/__fixtures__/mapbox/retrieve-xbz-brindes.json';
+import forwardAvenida from '@/lib/__fixtures__/mapbox/forward-avenida-paulista-1000.json';
 
 /**
  * E67 — integração do combobox de endereço **do cadastro de contato**, com o hook real e
@@ -41,45 +46,9 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 
 const values = (): ContactFormValues => ({ name: 'XBZ Brindes', phone: '11999999999' }) as ContactFormValues;
 
-// Shapes do Apêndice A (2026-09-25). `feature_type: 'address'` porque o cadastro usa
-// `ADDRESS_SEARCH_TYPES` (sem POI).
-const SUGGEST_BODY = {
-  suggestions: [
-    {
-      name: 'Avenida Paulista, 1000',
-      full_address: 'Av. Paulista, 1000 - Bela Vista, São Paulo',
-      feature_type: 'address',
-      mapbox_id: 'addr-1',
-    },
-  ],
-};
-const RETRIEVE_BODY = {
-  features: [
-    {
-      geometry: { coordinates: [-46.6565, -23.5613] },
-      properties: {
-        name: 'Avenida Paulista, 1000',
-        full_address: 'Av. Paulista, 1000 - Bela Vista, São Paulo',
-        context: {
-          street: { name: 'Av. Paulista' },
-          address: { address_number: '1000' },
-          neighborhood: { name: 'Bela Vista' },
-          place: { name: 'São Paulo' },
-          region: { region_code: 'SP' },
-          postcode: { name: '01310-100' },
-        },
-      },
-    },
-  ],
-};
-const FORWARD_BODY = {
-  features: [
-    {
-      geometry: { coordinates: [-46.6565, -23.5613] },
-      properties: { name: 'Avenida Paulista, 1000', full_address: 'Av. Paulista, 1000 - Bela Vista, São Paulo' },
-    },
-  ],
-};
+// E68: os shapes do Apêndice A saíram daqui — vivem em `src/lib/__fixtures__/mapbox/*.json`.
+// `suggest-avenida-paulista-1000.json` é o resultado real do termo (E47), com `feature_type:
+// 'address'` porque o cadastro usa `ADDRESS_SEARCH_TYPES` (sem POI).
 
 type Resp = { ok: boolean; status: number; json: () => Promise<unknown> };
 function jsonResponse(body: unknown, status = 200): Resp {
@@ -141,7 +110,7 @@ afterEach(() => {
 
 describe('E67 · integração do combobox de endereço do cadastro (hook real, só fetch mockado)', () => {
   it('1) digitar dispara UMA busca no /suggest e mostra a sugestão do shape real', async () => {
-    routeFetch({ suggest: jsonResponse(SUGGEST_BODY) });
+    routeFetch({ suggest: jsonResponse(suggestAvenida) });
     const { input } = renderForm();
 
     await digitar(input, 'avenida paulista');
@@ -154,7 +123,7 @@ describe('E67 · integração do combobox de endereço do cadastro (hook real, s
   });
 
   it('2) /suggest fora do ar: o /forward assume e a lista aparece (sem erro na tela)', async () => {
-    routeFetch({ suggest: new TypeError('Failed to fetch'), forward: jsonResponse(FORWARD_BODY) });
+    routeFetch({ suggest: new TypeError('Failed to fetch'), forward: jsonResponse(forwardAvenida) });
     const { input } = renderForm();
 
     await digitar(input, 'avenida paulista 1000');
@@ -192,26 +161,28 @@ describe('E67 · integração do combobox de endereço do cadastro (hook real, s
     await waitFor(() => expect(callsTo('/search/searchbox/v1/suggest')).toHaveLength(2));
   });
 
-  it('5) escolher a sugestão preenche o endereço e a coordenada a partir do /retrieve', async () => {
-    routeFetch({ suggest: jsonResponse(SUGGEST_BODY), retrieve: jsonResponse(RETRIEVE_BODY) });
+  it('5) escolher a sugestão preenche o endereço e a coordenada a partir do /retrieve (fixture do Apêndice A)', async () => {
+    routeFetch({ suggest: jsonResponse(suggestXbz), retrieve: jsonResponse(retrieveXbz) });
     const onChange = vi.fn();
     const { input } = renderForm(onChange);
 
-    await digitar(input, 'avenida paulista');
-    fireEvent.click(await screen.findByRole('option', { name: /Avenida Paulista/ }));
+    await digitar(input, 'xbz');
+    fireEvent.click(await screen.findByRole('option', { name: /XBZ\s*Brindes/ }));
 
-    await waitFor(() => expect(onChange).toHaveBeenCalledWith('address', 'Av. Paulista'));
-    expect(onChange).toHaveBeenCalledWith('address_number', '1000');
+    // Os valores vêm do retrieve-xbz-brindes.json (Apêndice A), não de strings soltas no teste.
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith('address', 'R. da Independência'));
+    expect(onChange).toHaveBeenCalledWith('address_number', '100');
+    expect(onChange).toHaveBeenCalledWith('neighborhood', 'Liberdade');
     expect(onChange).toHaveBeenCalledWith('city', 'São Paulo');
     expect(onChange).toHaveBeenCalledWith('state', 'SP');
-    expect(onChange).toHaveBeenCalledWith('postal_code', '01310100');
-    expect(onChange).toHaveBeenCalledWith('latitude', '-23.5613');
-    expect(onChange).toHaveBeenCalledWith('longitude', '-46.6565');
+    expect(onChange).toHaveBeenCalledWith('postal_code', '01524000');
+    expect(onChange).toHaveBeenCalledWith('latitude', '-23.56672978');
+    expect(onChange).toHaveBeenCalledWith('longitude', '-46.61563441');
     expect(callsTo('/search/searchbox/v1/retrieve/')).toHaveLength(1);
   });
 
   it('6) a request do /suggest carrega o filtro de tipos do cadastro (sem POI) e o locale do Apêndice A', async () => {
-    routeFetch({ suggest: jsonResponse(SUGGEST_BODY) });
+    routeFetch({ suggest: jsonResponse(suggestAvenida) });
     const { input } = renderForm();
 
     await digitar(input, 'avenida paulista');
@@ -226,7 +197,7 @@ describe('E67 · integração do combobox de endereço do cadastro (hook real, s
   });
 
   it('7) sugestão vinda do /forward (com coordenada) preenche o formulário sem gastar /retrieve (E15)', async () => {
-    routeFetch({ suggest: new TypeError('Failed to fetch'), forward: jsonResponse(FORWARD_BODY) });
+    routeFetch({ suggest: new TypeError('Failed to fetch'), forward: jsonResponse(forwardAvenida) });
     const onChange = vi.fn();
     const { input } = renderForm(onChange);
 

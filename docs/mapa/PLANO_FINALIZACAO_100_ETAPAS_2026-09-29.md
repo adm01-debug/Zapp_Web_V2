@@ -526,7 +526,15 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 **Arquivos:** `src/lib/__fixtures__/mapbox/*.json`
 1. Gravar 1× (com o token de produção, via edge) as respostas de `/suggest` para "xbz", "avenida paulista 1000", "asdkjh"; `/retrieve` de 1 id; `/forward` de 1 termo; 1 resposta 429.
 2. Sem token no arquivo. Testes passam a ler daqui.
-**Checklist:** [ ] 6 fixtures · [ ] 0 segredos (grep `access_token`)
+**Checklist:** [x] 6 fixtures · [x] 0 segredos (grep access_token = 0)
+
+**Fechada em 2026-10-02.** Seis fixtures em src/lib/__fixtures__/mapbox/ (3 suggest, 1 retrieve, 1 forward, 1 de 429) mais um README de proveniência, sem nenhum access_token e sem pk/sk.
+
+**Divergência principal declarada:** a etapa pede gravar com o token de produção via edge, o que é impossível neste ambiente (edge exige sessão autenticada e não há credencial de teste). As fixtures são reconstrução fiel dos shapes documentados no Apêndice A, no E47 e no E67 — proveniência de cada campo no README da pasta. Custo assumido: se a API mudar um campo, ninguém descobre por aqui.
+
+**Outras divergências:** resolveJsonModule ligado no tsconfig.app.json (a etapa nomeia *.json e o repo nunca importava JSON; é aditivo e não entra no bundle); dois casos novos no teste de integração do picker (suggest vazio e 429) para que as fixtures sejam de fato lidas; e o mapboxGeocode.test.ts segue com shapes inline, fora do caminho que a etapa nomeia.
+
+**Prova por mutação:** removendo geometry da fixture do retrieve, 3 testes caem nos DOIS consumidores — as fixtures refletem o que o código consome.
 
 ### E69 · Script de mutação reproduzível
 **Arquivos:** `scripts/mutation/run-mapa.mjs` (novo, ~60 linhas)
