@@ -2,14 +2,14 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const [sender, linkFn, sharedValidation, linksMigration, idorMigration, caseInsensitiveMigration, talkxShared, contactService, campaignWizard, wizardDelivery, messagingPersonalize, recipientProcessor] = await Promise.all([
+const [sender, linkFn, sharedValidation, linksMigration, idorMigration, caseInsensitiveMigration, personalizeKit, contactService, campaignWizard, wizardDelivery, messagingPersonalize, recipientProcessor] = await Promise.all([
   readFile(new URL('../../supabase/functions/talkx-send/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/talkx-link/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/_shared/validation.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/migrations/20260916200000_talkx_e90_links.sql', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/migrations/20260916270000_talkx_link_click_idor_guard.sql', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/migrations/20260916260000_talkx_links_slug_case_insensitive.sql', import.meta.url), 'utf8'),
-  readFile(new URL('../../src/components/talkx/talkxShared.tsx', import.meta.url), 'utf8'),
+  readFile(new URL('../../src/components/talkx/kit/personalize.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../src/services/contact.service.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../src/components/talkx/TalkXCampaignWizard.tsx', import.meta.url), 'utf8'),
   readFile(new URL('../../src/components/talkx/TalkXWizardDelivery.tsx', import.meta.url), 'utf8'),
@@ -131,9 +131,9 @@ test('Talk X personalize() and personalizePreview() both guard against inherited
   // de funcao/objeto em vez de cair no fallback "[variavel]".
   // F37 (Bloco D): a funcao `personalize()` (que faz esse guard) saiu deste arquivo e passou
   // a morar em `_shared/messaging/personalize.ts` — a assercao segue o dono da logica, senao
-  // ela testaria a ausencia da funcao. O preview do wizard continua em talkxShared.tsx.
+  // ela testaria a ausencia da funcao. O preview do wizard continua em kit/personalize.ts.
   assert.match(messagingPersonalize, /Object\.prototype\.hasOwnProperty\.call\(contactValues, key\)/);
-  assert.match(talkxShared, /Object\.prototype\.hasOwnProperty\.call\(contactValues, key\)/);
+  assert.match(personalizeKit, /Object\.prototype\.hasOwnProperty\.call\(contactValues, key\)/);
 });
 
 test('Talk X personalizePreview() resolves every placeholder in a single pass, matching the real send', () => {
@@ -141,9 +141,9 @@ test('Talk X personalizePreview() resolves every placeholder in a single pass, m
   // dado de contato (nome/empresa/etc.) contendo literalmente "{{cargo}}"
   // era rescaneado pelo passe de fallback seguinte e divergia do que
   // personalize() (envio real) de fato produz.
-  const previewIdx = talkxShared.indexOf('export function personalizePreview');
+  const previewIdx = personalizeKit.indexOf('export function personalizePreview');
   assert.ok(previewIdx > -1, 'personalizePreview() deve existir');
-  const singlePassIdx = talkxShared.indexOf('return template.replace(/\\{\\{([^}]+)\\}\\}/g', previewIdx);
+  const singlePassIdx = personalizeKit.indexOf('return template.replace(/\\{\\{([^}]+)\\}\\}/g', previewIdx);
   assert.ok(singlePassIdx > -1, 'personalizePreview() deve resolver tudo num unico regex.replace() sobre o template original');
 });
 

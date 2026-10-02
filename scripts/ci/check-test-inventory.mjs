@@ -3,10 +3,13 @@
 // tem correspondente registrado em ci.yml / db-guard.yml.
 // E49: quando ci.yml usa $(git ls-files 'supabase/functions/**/*.test.ts'), a
 // comparação individual de .test.ts é desnecessária (o glob cobre todos).
+// E50: ai-block03-vocabulary-contract, talkx-settings-rls e
+// user-settings-sound-integrity-contract movidos da ALLOWLIST para db-guard.yml.
 
 import { readFileSync } from 'fs';
 import { spawnSync } from 'child_process';
 import { join } from 'path';
+import { resolverExecutavel } from '../lib/seguranca-processo.mjs';
 import { fileURLToPath } from 'url';
 
 const root = join(fileURLToPath(import.meta.url), '../../..');
@@ -16,23 +19,23 @@ function read(rel) {
 }
 
 // Testes conhecidos ainda fora do CI; remover linha quando a etapa correspondente mergear.
-// .test.sh serão cobertos quando E50 adicionar os passos em db-guard.yml.
 const ALLOWLIST = new Set([
-  // --- .test.sh — fixar com E50 (db-guard.yml) ---
-  'scripts/db-audit/ai-block03-vocabulary-contract.test.sh',
-  'scripts/db-audit/talkx-settings-rls.test.sh',
-  'scripts/db-audit/user-settings-sound-integrity-contract.test.sh',
   // --- .test.sh — TalkX features em andamento; registrar em db-guard.yml quando prontas ---
   'scripts/db-audit/talk-me-client-privileges.test.sh',
   'scripts/db-audit/talkx-current-template-version.test.sh',
   'scripts/db-audit/talkx-v23-draft-step.test.sh',
   'scripts/db-audit/talkx-v25-owner.test.sh',
   'scripts/db-audit/talkx-v26-template-version.test.sh',
+  // --- .test.sh — prova em container descartável (docker); passo de YAML
+  // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
+  'scripts/db-audit/pg-cron-escalonamento.test.sh',
+  'scripts/db-audit/talkx-optout.test.sh',
+  'scripts/db-audit/talkx-overview-stats.test.sh',
 ]);
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────
 
-const testTsOnDisk = spawnSync('git', ['ls-files', 'supabase/functions'], { cwd: root, encoding: 'utf8' })
+const testTsOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'supabase/functions'], { cwd: root, encoding: 'utf8' })
   .stdout
   .split('\n')
   .filter(f => f.endsWith('.test.ts'));
@@ -45,7 +48,7 @@ const ciUsesGlob = ciYaml.includes(CI_TS_GLOB);
 
 // ── 2. .test.sh: disco vs db-guard.yml ────────────────────────────────────────
 
-const testShOnDisk = spawnSync('git', ['ls-files', 'scripts/db-audit'], { cwd: root, encoding: 'utf8' })
+const testShOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'scripts/db-audit'], { cwd: root, encoding: 'utf8' })
   .stdout
   .split('\n')
   .filter(f => f.endsWith('.test.sh'));

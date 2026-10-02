@@ -1,27 +1,18 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { contactCrm360Key } from '@/hooks/crm/useContactCrm360';
+import { contactPurchasesKey, useContactPurchases } from '@/hooks/crm/useContactPurchases';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ShoppingBag, Plus, DollarSign, Package, FileText } from 'lucide-react';
+import { Plus, DollarSign, Package, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion } from 'framer-motion';
-
-interface Purchase {
-  id: string;
-  title: string;
-  description: string | null;
-  amount: number | null;
-  currency: string;
-  status: string;
-  purchase_type: string;
-  purchased_at: string | null;
-  created_at: string;
-}
 
 interface ContactPurchasesPanelProps {
   contactId: string;
@@ -36,33 +27,12 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 };
 
 export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchasesPanelProps) {
-  const [purchases, setPurchases] = useState<Purchase[]>([]);
-  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('purchase');
-  const isMountedRef = useRef(true);
-
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => { isMountedRef.current = false; };
-  }, []);
-
-  // eslint-disable-next-line react-hooks/immutability, react-hooks/exhaustive-deps
-  useEffect(() => { void loadPurchases(); }, [contactId]);
-
-  const loadPurchases = async () => {
-    setLoading(true);
-    const { data } = await supabase
-      .from('contact_purchases')
-      .select('*')
-      .eq('contact_id', contactId)
-      .order('created_at', { ascending: false });
-    if (!isMountedRef.current) return;
-    if (data) setPurchases(data as Purchase[]);
-    setLoading(false);
-  };
+  const queryClient = useQueryClient();
+  const { data: purchases = [], isLoading } = useContactPurchases(contactId);
 
   const addPurchase = async () => {
     if (!title.trim()) return;
@@ -75,11 +45,11 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
     });
     if (!error) {
       toast.success('Registro adicionado');
-      if (!isMountedRef.current) return;
+      void queryClient.invalidateQueries({ queryKey: contactCrm360Key(contactId) });
+      void queryClient.invalidateQueries({ queryKey: contactPurchasesKey(contactId) });
       setDialogOpen(false);
       setTitle('');
       setAmount('');
-      void loadPurchases();
     }
   };
 
@@ -99,7 +69,7 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
         </Button>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="space-y-2">{[1,2].map(i => <div key={i} className="h-12 bg-muted/20 rounded-lg animate-pulse" />)}</div>
       ) : purchases.length === 0 ? (
         <p className="text-xs text-muted-foreground text-center py-3">Nenhum registro de compra/proposta</p>

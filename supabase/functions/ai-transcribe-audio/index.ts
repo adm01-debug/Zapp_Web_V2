@@ -15,7 +15,7 @@ import {
   validationErrorResponse,
 } from "../_shared/schemas.ts";
 import { parseApprovedStorageUrl } from "../_shared/ssrf.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 
 const MAX_AUDIO_SIZE = 25 * 1024 * 1024; // 25MB
 const APPROVED_AUDIO_BUCKETS = [

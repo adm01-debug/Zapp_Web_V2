@@ -10,8 +10,9 @@ Criado em 2026-10-01
 
 > **Escopo.** Este arquivo cobre as quatro telas (A-catálogo, Detalhes, Enviar,
 > Contato), incluindo as seções **Topo** e **Grade** da Tela A. A seção
-> **Tela A** foi acrescentada na etapa CT-89; os prints responsivos (1920/1440/1280)
-> da Tela A ficam pendentes da CT-66. "Diferença deliberada" = divergência assumida
+> **Tela A** foi acrescentada na etapa CT-89; os **prints responsivos (1920/1440/1280) foram
+> capturados na CT-66** em 2026-10-02 com sessão autenticada real (ver "Print" abaixo).
+> "Diferença deliberada" = divergência assumida
 > do mock, com o motivo — não é item pendente.
 
 ---
@@ -19,6 +20,9 @@ Criado em 2026-10-01
 ## Tela A — Catálogo / lista de produtos (`ExternalProductManagement.tsx` · `ExternalProductCatalog.tsx`)
 
 Print: [`screens/A-catalogo.jpg`](./screens/A-catalogo.jpg)
+
+Prints responsivos (CT-66, 02/10/2026 — sessão autenticada, 24 cartões):
+[1920](./screens/A-catalogo-1920.jpg) · [1440](./screens/A-catalogo-1440.jpg) · [1280](./screens/A-catalogo-1280.jpg)
 
 A Tela A tem **duas apresentações** com o mesmo Topo/Grade: a **página**
 (`?view=catalog`, `ExternalProductManagement.tsx`), com as 3 abas e o rail direito, e o

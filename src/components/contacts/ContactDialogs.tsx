@@ -79,7 +79,7 @@ export function ContactDialogs({
                   type="button"
                   aria-label="Novo contato"
                   data-testid="contact-create-fab"
-                  className="group fixed z-20 right-4 bottom-[calc(156px+env(safe-area-inset-bottom,0px))] md:right-6 md:bottom-24 w-14 h-14 rounded-full bg-success text-success-foreground shadow-[0_8px_24px_-10px_hsl(var(--success)/.8)] hover:bg-success/90 hover:scale-105 active:scale-95 transition-all flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className="group fixed z-20 right-4 bottom-[calc(76px+env(safe-area-inset-bottom,0px))] md:right-6 md:bottom-24 w-14 h-14 rounded-full bg-success text-success-foreground shadow-[0_8px_24px_-10px_hsl(var(--success)/.8)] hover:bg-success/90 hover:scale-105 active:scale-95 transition-all flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   <span
                     aria-hidden="true"

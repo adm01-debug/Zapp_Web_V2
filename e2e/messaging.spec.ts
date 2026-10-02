@@ -40,9 +40,16 @@ test.describe('Messaging flows', () => {
     // Escopo para a area de mensagens da conversa aberta (role=log aria-label="Mensagens da conversa").
     // Sem escopo, getByText(text) encontra 2 elementos: o preview na lista de conversas
     // e o corpo da mensagem -- causando strict mode violation.
+    //
+    // O envio e ASSINCRONO: a UI chama rpc/enqueue_outbound_message (HTTP 200, medido no
+    // trace do Playwright) e o worker da fila grava a linha em messages depois. Latencia
+    // medida nesta fixture (02/10/2026, 6 envios): 2,8 s a 8,5 s -- acima do timeout
+    // padrao de 5 s do expect, o que fazia o teste falhar em ~metade das execucoes
+    // (3 falhas em 6 no webkit-conversation, o mesmo projeto vermelho no CI).
+    // 20 s cobre a cauda observada sem esconder fila travada.
     await expect(
       page.getByRole('log', { name: 'Mensagens da conversa' }).getByText(text)
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 20_000 });
   });
 
   test('image attachment button is enabled', async ({ page }) => {

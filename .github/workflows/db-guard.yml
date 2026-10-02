@@ -399,6 +399,11 @@ jobs:
           TALKX_SEND_INTERVAL_TETO_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-send-interval-teto-24h.test.sh
 
+      - name: Simular limites de ritmo por minuto/dia/conexão e perfis de velocidade (X018)
+        env:
+          TALKX_SEND_BUDGET_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-send-budget.test.sh
+
       - name: Simular eventos do ciclo de vida gravados no servidor (V12)
         env:
           TALKX_V12_LIFECYCLE_EVENTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
@@ -457,6 +462,14 @@ jobs:
         env:
           MULTIPLIX_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/multiplix-rls.test.sh
+
+      # F57 do plano do Multiplix: prova a fila de entrega por ITEM — claim com lease, ordem por
+      # bloco, heartbeat e cancelamento — e trava o defeito em que o cancel encerrava apenas os
+      # destinatarios, deixando item pending na fila para o worker enviar depois do cancel.
+      - name: Simular a fila de entrega por item do Multiplix
+        env:
+          MULTIPLIX_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/multiplix-delivery-leases.test.sh
 
       # F24 do plano do Multiplix: prova que a edge multiplix-audience deriva o
       # escopo do JWT (matriz F25) e IGNORA escopo forjado no corpo. O bloco
@@ -655,3 +668,25 @@ jobs:
         env:
           MAPA_F1_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/mapa-f1-address-contract.test.sh
+
+      # E50 (auditoria de GitHub Actions, 2026-10-02): promove 3 testes que estavam
+      # na ALLOWLIST de check-test-inventory.mjs para passos efetivos do db-guard.
+      # Todos iniciam containers Docker próprios (docker run -d) e são incompatíveis
+      # com o docker-shim do E47 — SKIP_DOCKER_SHIM="1" em cada um.
+      - name: Provar contrato de vocabulário de IA — backfill e reversão (IA-030)
+        env:
+          AI_VOCAB_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/ai-block03-vocabulary-contract.test.sh
+
+      - name: Provar RLS de escrita em talkx_settings — admin persiste, agente não (V06)
+        env:
+          TALKX_SETTINGS_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-settings-rls.test.sh
+
+      - name: Provar contrato de integridade de som em user_settings — NOT NULL e vocabulário fechado
+        env:
+          SOUND_INTEGRITY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/user-settings-sound-integrity-contract.test.sh

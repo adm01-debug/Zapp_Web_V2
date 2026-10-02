@@ -97,6 +97,12 @@ CREATE TABLE public.role_permissions (id uuid PRIMARY KEY DEFAULT gen_random_uui
 CREATE FUNCTION public.is_admin_or_supervisor(_user_id uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$
   SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role IN ('admin', 'supervisor'))
 $$;
+-- A 20261001261230 (F35, publicos) usa has_role nas policies de leitura
+-- compartilhada; assinatura real: public.has_role(_user_id uuid, _role app_role)
+-- (20251215025014). Mesmo estilo dos outros stubs do harness.
+CREATE FUNCTION public.has_role(_user_id uuid, _role public.app_role) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$
+  SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = _role)
+$$;
 CREATE FUNCTION public.user_has_permission(_user_id uuid, _permission_name text) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.user_roles ur
@@ -207,6 +213,12 @@ migration "20260930300000_multiplix_guards_fail_closed.sql"
 # versao com guard de conexao e retomada por cota — e a version mais alta da
 # tarefa e tem de entrar depois das demais do bloco DDL.
 migration "20260930560000_f17b_f17c_conexao_unica_e_cota.sql"
+# F35 (Bloco C): publicos (audiencias) do modelo v2 — cria as DUAS tabelas novas
+# (multiplix_audiences, multiplix_audience_members), o trigger de validacao, os
+# grants e o contrato de acesso com FORCE RLS. Version mais alta do fixture
+# (20261001261230); entra por ultimo na ordem de version. E ela que liga o FORCE
+# RLS das duas tabelas que a assercao F02 (linha ~236) passa a exigir.
+migration "20261001261230_f35_multiplix_audiences.sql"
 
 # A revogacao da escrita direta em multiplix_recipients (F08, segunda metade) so
 # existe depois que a edge que cria o disparo esta DEPLOYADA — ela entra no PR de
@@ -233,8 +245,21 @@ owner_d="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET
   || fail 'anon ainda tem grant em tabela do Multiplix (F01)'
 [[ "$(psql_test -Atqc "SELECT count(*) FROM information_schema.role_table_grants WHERE table_schema='public' AND table_name LIKE 'multiplix%' AND grantee='authenticated' AND privilege_type IN ('TRUNCATE','REFERENCES','TRIGGER')")" == '0' ]] \
   || fail 'authenticated ainda tem TRUNCATE/REFERENCES/TRIGGER (F01)'
-[[ "$(psql_test -Atqc "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname IN ('multiplix_dispatches','multiplix_recipients','multiplix_blocks') AND c.relforcerowsecurity")" == '3' ]] \
-  || fail 'FORCE ROW LEVEL SECURITY ausente nas tres tabelas (F02)'
+[[ "$(psql_test -Atqc "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname IN ('multiplix_dispatches','multiplix_recipients','multiplix_blocks','multiplix_audiences','multiplix_audience_members') AND c.relforcerowsecurity")" == '5' ]] \
+  || fail 'FORCE ROW LEVEL SECURITY ausente nas cinco tabelas (F02)'
+# F35: as duas tabelas de fila/evento ficam SEM FORCE RLS de proposito — sao escritas por
+# RPCs SECURITY DEFINER (rodam como owner), e com FORCE o owner passaria a respeitar as
+# policies e o worker pararia de conseguir claim/complete. O fixture DESTE arquivo cobre o
+# nucleo do Multiplix e nao cria essas duas tabelas (o ENABLE RLS delas vem das migrations
+# f32a/f34, fora da lista daqui); a cobertura de fila e do multiplix-delivery-leases.test.sh
+# (F57). Quando elas existirem aqui, RLS ligado e obrigatorio — tabela de fila nua seria
+# regressao — e a existencia das RPCs e o que sustenta a excecao do FORCE.
+if [[ "$(psql_test -Atqc "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname IN ('multiplix_delivery_items','multiplix_events')")" == '2' ]]; then
+  [[ "$(psql_test -Atqc "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname IN ('multiplix_delivery_items','multiplix_events') AND c.relrowsecurity")" == '2' ]] \
+    || fail 'multiplix_delivery_items/multiplix_events sem RLS ligado (F35)'
+  [[ "$(psql_test -Atqc "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.prosecdef AND (p.prosrc ILIKE '%multiplix_delivery_items%' OR p.prosrc ILIKE '%multiplix_events%')")" -ge 1 ]] \
+    || fail 'nenhuma RPC SECURITY DEFINER toca delivery_items/events: a excecao do FORCE RLS perdeu o motivo (F35)'
+fi
 anon_truncate="$(psql_test -v VERBOSITY=verbose -c "$anon_session TRUNCATE public.multiplix_recipients;" 2>&1 || true)"
 [[ "$anon_truncate" == *permission*denied* ]] || fail 'anon truncou a fila do Multiplix'
 anon_read="$(psql_test -Atqc "$anon_session SELECT count(*) FROM public.multiplix_dispatches;" 2>&1 || true)"

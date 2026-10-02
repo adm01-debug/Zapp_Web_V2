@@ -272,6 +272,87 @@ SELECT version, name FROM supabase_migrations.schema_migrations
 WHERE array_to_string(statements,' ') ILIKE '%CREATE TABLE%minha_tabela%';
 ```
 
+### Caso concreto: `20261001341230_f51_*` foi superada — nao editar, a substituta e a `f51c`
+
+`20261001341230_f51_multiplix_confirm_dispatch.sql` declara a funcao com
+`CREATE FUNCTION public.multiplix_confirm_dispatch(...)`, **sem `OR REPLACE`**. Ela aborta com
+`42723 function "multiplix_confirm_dispatch" already exists with same argument types` em
+qualquer banco onde a funcao ja exista — e neste banco ela existe desde
+`20261001351230_f51a_multiplix_confirm_dispatch_fn.sql` (a parte aditiva, aplicada antes).
+
+**Nao edite o arquivo antigo.** A versao que o substitui e:
+
+```
+supabase/migrations/20261002461230_f51c_multiplix_confirm_dispatch_contrato.sql
+```
+
+### O hash da f51 no ledger diverge do arquivo — e a excecao registrada
+
+O `O_MIGRATIONS` do `db-live-guard.yml` fica **vermelho** por causa dessa migration, e nao por
+erro de conteudo: o arquivo no repo declara a funcao com `CREATE FUNCTION` (sem `OR REPLACE`),
+enquanto o que **rodou** — na aplicacao pos-merge de 02/10/2026 — foi a versao equivalente
+**com** `OR REPLACE`, que e a unica diferenca. O ledger preserva o que foi aplicado, entao os
+dois hashes divergem (`arquivo=7cec99db...`, `ledger=ba9faefd...`).
+
+**O arquivo nao pode ser reescrito** (migration registrada e imutavel, regra 7 do CLAUDE.md) e
+**mover para `_superseded/` PIORA**: como a versao esta no ledger, o guard passaria a acusar
+`Registro no banco sem arquivo no repo (DDL fora do Git)`, que e erro sem excecao. O caminho e o
+**registro**:
+
+```
+scripts/db-audit/migration-evidence.json  →  kind: "ledger-divergence/pinned-replay"
+                                              reason: "safer-replay"
+```
+
+Os quatro hashes saem medidos, nunca digitados:
+
+```bash
+# hashes do ARQUIVO (valida contra as entradas existentes: 50 amostras recalcularam certo)
+node .tmp/calc-hashes.mjs supabase/migrations/20261001341230_f51_multiplix_confirm_dispatch.sql
+# hashes do LEDGER: reconstroi os statements com o MESMO splitStatements do
+# register-migration.mjs e confere o resultado contra o valor que o Postgres calcula
+node .tmp/calc-ledger.mjs supabase/migrations/20261001341230_f51_multiplix_confirm_dispatch.sql
+```
+
+Para provar verde **sem** a `DESTINO_URL` (o guard aceita `PSQL_BIN` fake e `MIGRATIONS_DIR` de
+fixture — sao as variaveis que ele documenta para teste offline): monte um diretorio com **so** a
+migration alvo, um `psql` falso que imprime o JSON do ledger e rode com
+`MIGRATION_EVIDENCE_PATH` apontando para um manifesto com **so** a excecao testada. Sem a excecao
+o guard falha com `conteudo SQL divergente`; com ela, `OK`. Medido em 02/10/2026.
+
+**Duas correcoes factuais sobre esta migration** (levantadas na auditoria de ledger de 02/10/2026):
+
+1. O cabecalho da `f51c` afirma que o ledger **nunca** registrou a f51. Isso **deixou de ser
+   verdade** em 02/10/2026: a f51 **esta** registrada (`version=20261001341230`,
+   `name=f51_multiplix_confirm_dispatch`, 22 statements) — foi ela que entrou no ledger na
+   aplicacao pos-merge. A `f51c` continua sendo a substituta canonica do **conteudo**, mas o
+   registro existe. A f51c e migration ja aplicada: **corrigir no texto dela nao vale a pena**
+   (regra 7), a correcao fica aqui.
+
+2. **Num banco zerado, a ordem f51 -> f51a quebra.** A f51 declara a funcao com `CREATE FUNCTION`
+   (sem `OR REPLACE`) e a f51a repete a declaracao: aplicando as duas em sequencia num banco novo,
+   a **f51a** aborta com `42723 function "multiplix_confirm_dispatch" already exists with same
+   argument types` (a f51, vindo antes, ja a criou). No banco atual isso nao aparece porque a
+   f51 nunca rodou de verdade (entrou no ledger pelo replay com `OR REPLACE`). **Efeito pratico:
+   `supabase db reset` / ambiente novo pela cadeia de arquivos nao sobe.** Nao corrigido aqui
+   porque exige mudar uma migration aplicada ou inverter a ordem — decisao de outra tarefa.
+
+Ela reafirma a funcao com `CREATE OR REPLACE` e traz o que faltava (ACL da RPC, `COMMENT`s,
+`CHECK` de `reply_attribution`, as duas funcoes de trigger de bump de versao e os triggers).
+
+Banco novo, com as migrations aplicadas em ordem, **nao tropeca**: `20261001341230` cria a
+funcao (primeira a rodar), `20261001351230_f51a` e idempotente e `20261002461230_f51c` reafirma
+tudo com `OR REPLACE`. O defeito so aparece em banco que **ja** tenha a funcao quando a
+`20261001341230` tenta rodar — por isso a substituta existe, e por isso a `f51c` vai depois
+das duas na ordem de versao.
+
+Para confirmar o que esta no ledger deste banco:
+
+```sql
+SELECT version, name FROM supabase_migrations.schema_migrations
+WHERE name ILIKE '%f51%' ORDER BY version;
+```
+
 ---
 
 ## 5. Operacao pontual nao e migration

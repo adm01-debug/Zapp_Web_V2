@@ -41,7 +41,7 @@ const read = (rel: string): string => readFileSync(resolve(ROOT, rel), 'utf8');
 
 const EDGE = 'supabase/functions/multiplix-dispatch';
 const INDEX = `${EDGE}/index.ts`;
-const ACTION_FILES = ['blocks', 'audience', 'inspect', 'lifecycle'].map((n) => `${EDGE}/actions/${n}.ts`);
+const ACTION_FILES = ['blocks', 'audience', 'inspect', 'lifecycle', 'listing'].map((n) => `${EDGE}/actions/${n}.ts`);
 
 const stripComments = (src: string): string =>
   src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
@@ -66,11 +66,15 @@ function walk(relDir: string, ext: RegExp = /\.(ts|tsx)$/): string[] {
 const TARGET_TABLES = ['multiplix_dispatches', 'multiplix_blocks', 'multiplix_delivery_items'];
 const MUTATOR = /\.(insert|update|upsert|delete)\s*\(/;
 
-/** Acha uma referencia a tabela e, na janela ate o fim do comando, um mutador. */
-function directWriteHits(): string[] {
+/**
+ * Acha uma referencia a tabela e, na janela ate o fim do comando, um mutador.
+ * Recebe as fontes (arquivo + conteudo cru) para ser exercitavel tambem contra
+ * amostras sinteticas — e o controle positivo/negativo do proprio scanner.
+ */
+function directWriteHitsIn(sources: Array<{ file: string; src: string }>): string[] {
   const hits: string[] = [];
-  for (const file of walk('src')) {
-    const src = stripComments(read(file));
+  for (const { file, src: raw } of sources) {
+    const src = stripComments(raw);
     for (const table of TARGET_TABLES) {
       for (const quote of ["'", '"']) {
         const needle = `${quote}${table}${quote}`;
@@ -90,15 +94,44 @@ function directWriteHits(): string[] {
   return hits;
 }
 
+/** Varre o front (src/) com o detector de escrita direta. */
+function directWriteHits(): string[] {
+  return directWriteHitsIn(walk('src').map((file) => ({ file, src: read(file) })));
+}
+
 registrar('(a) o front NAO escreve direto em multiplix_dispatches/blocks/delivery_items', () => {
   const hits = directWriteHits();
   assert(hits.length === 0, `escrita direta no front (a escrita deve passar pela edge):\n${hits.join('\n')}`);
 
-  // Nao-vacuidade: a varredura ENXERGA as tabelas — a leitura existe no front.
+  // Controle POSITIVO: o MESMO detector acusa uma escrita direta real. Sem isto um
+  // zero poderia ser um scanner cego (varrendo zero arquivo ou sem o padrao certo).
+  const positivo = directWriteHitsIn([{
+    file: '(controle)',
+    src: "await supabase.from('multiplix_dispatches').update({ status: 'draft' }).eq('id', id);",
+  }]);
+  assert(
+    positivo.length === 1,
+    `o detector nao acusou uma escrita direta sintetica (scanner cego): ${positivo.join(', ') || 'nenhum hit'}`,
+  );
+  // Controle NEGATIVO: leitura pura NAO e acusada (sem falso-positivo).
+  const negativo = directWriteHitsIn([{
+    file: '(controle)',
+    src: "await supabase.from('multiplix_dispatches').select('id').eq('id', id);",
+  }]);
+  assert(
+    negativo.length === 0,
+    `o detector acusou uma leitura como escrita (falso-positivo): ${negativo.join(', ')}`,
+  );
+
+  // Estado verdadeiro do front (Bloco E): a leitura do Multiplix saiu do PostgREST
+  // direto e passou a ser feita pela EDGE (`dispatch.list`/`recipients.list`). A
+  // prova de nao-vacuidade e o caminho de leitura existir — so que na fronteira,
+  // nao mais nas tabelas.
   const hook = read('src/hooks/integrations/useMultiplixDispatches.ts');
   assert(
-    hook.includes("fromTable('multiplix_dispatches')") && hook.includes('.select('),
-    'esperava a leitura de multiplix_dispatches no front (sem ela o scan seria vazio)',
+    hook.includes("invokeMultiplixDispatch('dispatch.list'") &&
+      hook.includes("invokeMultiplixDispatch('recipients.list'"),
+    'esperava a leitura do Multiplix pela edge (dispatch.list/recipients.list) no front',
   );
 });
 

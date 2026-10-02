@@ -283,6 +283,18 @@ export interface GenerateParams {
   /** `ai_usage_logs.function_name`. */
   functionName: string;
   userId?: string | null;
+  /**
+   * IA-051 — correlação da execução.
+   *
+   * `requestId` é o id opaco que o cliente manda no header
+   * `x-ai-request-id` (a identidade criada pelo IA-048 no clique); `jobId` e
+   * `attempt` vêm do worker, quando a execução nasce na fila. Todos
+   * opcionais de propósito: ausência vira NULL no log — nunca um id
+   * inventado no servidor, que não teria como ser correlacionado com nada.
+   */
+  requestId?: string | null;
+  jobId?: string | null;
+  attempt?: number | null;
   /** Mensagens do CLIENTE (sem system). */
   messages: unknown[];
   /** Política do SERVIDOR (IA-037, composeMessages). */
@@ -629,6 +641,12 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
 
   const userId = params.userId ?? null;
 
+  // IA-051 — correlação. Aqui só repassamos: quem normaliza é o logger, que
+  // descarta qualquer coisa que não seja uuid (ver `normalizeCorrelationId`).
+  const requestId = params.requestId ?? null;
+  const jobId = params.jobId ?? null;
+  const attempt = params.attempt ?? null;
+
   // --- (8) auditoria: SEMPRE, em todos os desfechos ---------------------------
   const logUsage = (entry: {
     model: string | null;
@@ -643,6 +661,9 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
     logAiUsage({
       functionName,
       userId,
+      requestId,
+      jobId,
+      attempt,
       model: entry.model,
       inputTokens: entry.inputTokens,
       outputTokens: entry.outputTokens,

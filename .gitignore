@@ -114,6 +114,9 @@ supabase/.temp/
 deno.lock
 !scripts/ci/deno.lock
 graphify-out/
+# Gerados por `graphify hook install` com o caminho do Python da máquina
+.husky/post-commit
+.husky/post-checkout
 
 # Scratch local — nunca deve ser versionado (achado G-05, auditoria 2026-08-30)
 tmp/

@@ -69,8 +69,56 @@ CREATE TABLE public.talkx_blacklist (
   reason_code public.talkx_blacklist_reason,
   origin text,
   source_message_id uuid,
+  campaign_id uuid,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  expires_at timestamptz,
   removed_at timestamptz
 );
+
+-- Objetos que a X029 (migration seguinte) exige: ela DROPa a assinatura de 6
+-- argumentos e cria a de 7, alem da tabela de palavras, do match, do UPDATE do
+-- setting e da view por campanha.
+CREATE TABLE public.profiles (
+  id uuid PRIMARY KEY,
+  user_id uuid NOT NULL UNIQUE,
+  is_active boolean NOT NULL DEFAULT true
+);
+CREATE TABLE public.user_roles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  role text NOT NULL,
+  UNIQUE (user_id, role)
+);
+CREATE FUNCTION public.is_admin_or_supervisor(_user_id uuid) RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role IN ('admin','supervisor'))
+$$;
+CREATE FUNCTION public.is_admin(_user_id uuid) RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = 'admin')
+$$;
+CREATE TABLE public.talkx_campaigns (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL DEFAULT 'campanha',
+  created_by uuid,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE public.contacts (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), phone text);
+CREATE TABLE public.talkx_recipients (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id uuid NOT NULL REFERENCES public.talkx_campaigns(id) ON DELETE CASCADE,
+  contact_id uuid NOT NULL REFERENCES public.contacts(id) ON DELETE CASCADE,
+  status text NOT NULL DEFAULT 'pending',
+  sent_at timestamptz,
+  UNIQUE (campaign_id, contact_id)
+);
+CREATE TABLE public.talkx_settings (
+  key text PRIMARY KEY,
+  value jsonb NOT NULL,
+  description text,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+INSERT INTO public.talkx_settings (key, value) VALUES ('optout_autoreply', '"PARE para sair"');
 
 -- índices únicos parciais (V05 phone + V07 contact) — são os alvos de conflito
 CREATE UNIQUE INDEX talkx_blacklist_phone_active_unique
@@ -87,6 +135,16 @@ migration="$repo_root/supabase/migrations/20260930330000_talkx_suppress_contact_
 psql_test < "$migration" >/dev/null || fail 'migration nao aplicou'
 psql_test < "$migration" >/dev/null || fail 'migration nao e replayavel (2a aplicacao falhou)'
 
+# ---- X029: a assinatura de 6 argumentos e DROPada e nasce a de 7 com default ----
+x029="$repo_root/supabase/migrations/20261002581230_talkx_v4_x029_optout.sql"
+[[ -f "$x029" ]] || fail 'migration X029 nao existe'
+psql_test < "$x029" >/dev/null || fail 'X029 nao aplicou'
+psql_test < "$x029" >/dev/null || fail 'X029 nao e replayavel (2a aplicacao falhou)'
+[[ "$(psql_test -Atqc "SELECT to_regprocedure('public.talkx_suppress_contact(uuid,text,text,public.talkx_blacklist_reason,text,uuid)') IS NULL")" == 't' ]] \
+  || fail 'a assinatura antiga de 6 argumentos sobreviveu (ambiguidade 42725)'
+[[ "$(psql_test -Atqc "SELECT count(*) FROM pg_proc WHERE proname='talkx_suppress_contact'")" == '1' ]] \
+  || fail 'deveria existir exatamente 1 talkx_suppress_contact'
+
 # ---- (a) eixo phone: mesmo phone, contact_id diferente => NULL (antes vazava 23505) ----
 psql_test -q <<'SQL' >/dev/null
 BEGIN;
@@ -100,7 +158,7 @@ out="$(psql_test -At 2>&1 <<'SQL' || true
 BEGIN;
 SET LOCAL request.jwt.claim.role = 'service_role';
 SELECT public.talkx_suppress_contact(
-  'bbbbbbbb-0000-0000-0000-000000000002', '+5511999999999', 'opt-out', 'opt_out', 'webhook', NULL
+  'bbbbbbbb-0000-0000-0000-000000000002', '+5511999999999', 'opt-out', 'opt_out', 'webhook', NULL, NULL
 );
 COMMIT;
 SQL
@@ -113,7 +171,7 @@ out2="$(psql_test -At 2>&1 <<'SQL' || true
 BEGIN;
 SET LOCAL request.jwt.claim.role = 'service_role';
 SELECT public.talkx_suppress_contact(
-  'aaaaaaaa-0000-0000-0000-000000000001', NULL, 'opt-out', 'opt_out', 'webhook', NULL
+  'aaaaaaaa-0000-0000-0000-000000000001', NULL, 'opt-out', 'opt_out', 'webhook', NULL, NULL
 );
 COMMIT;
 SQL
@@ -125,7 +183,7 @@ out3="$(psql_test -At 2>&1 <<'SQL' || true
 BEGIN;
 SET LOCAL request.jwt.claim.role = 'service_role';
 SELECT public.talkx_suppress_contact(
-  'cccccccc-0000-0000-0000-000000000003', '+5511888888888', 'manual', 'manual', 'ui', NULL
+  'cccccccc-0000-0000-0000-000000000003', '+551****8888', 'manual', 'manual', 'ui', NULL, NULL
 );
 COMMIT;
 SQL
@@ -134,11 +192,15 @@ SQL
   || fail "supressão nova deveria devolver uuid, mas veio: $out3"
 
 # ---- (d) ACL: authenticated/anon NAO executam (42501), service_role sim ----
-[[ "$(psql_test -Atqc "SELECT has_function_privilege('service_role','public.talkx_suppress_contact(uuid,text,text,public.talkx_blacklist_reason,text,uuid)','EXECUTE')")" == 't' ]] \
+new_sig='public.talkx_suppress_contact(uuid,text,text,public.talkx_blacklist_reason,text,uuid,uuid)'
+[[ "$(psql_test -Atqc "SELECT has_function_privilege('service_role','$new_sig','EXECUTE')")" == 't' ]] \
   || fail 'service_role deveria ter EXECUTE'
-[[ "$(psql_test -Atqc "SELECT has_function_privilege('authenticated','public.talkx_suppress_contact(uuid,text,text,public.talkx_blacklist_reason,text,uuid)','EXECUTE')")" == 'f' ]] \
+[[ "$(psql_test -Atqc "SELECT has_function_privilege('authenticated','$new_sig','EXECUTE')")" == 'f' ]] \
   || fail 'authenticated NAO deveria ter EXECUTE'
-[[ "$(psql_test -Atqc "SELECT has_function_privilege('anon','public.talkx_suppress_contact(uuid,text,text,public.talkx_blacklist_reason,text,uuid)','EXECUTE')")" == 'f' ]] \
+[[ "$(psql_test -Atqc "SELECT has_function_privilege('anon','$new_sig','EXECUTE')")" == 'f' ]] \
   || fail 'anon NAO deveria ter EXECUTE'
+# A assinatura antiga de 6 argumentos nao existe mais (sem ambiguidade 42725).
+[[ "$(psql_test -Atqc "SELECT to_regprocedure('public.talkx_suppress_contact(uuid,text,text,public.talkx_blacklist_reason,text,uuid)') IS NULL")" == 't' ]] \
+  || fail 'assinatura antiga de 6 argumentos ainda viva'
 
-printf '[OK] Talk X V07b: supressão de contato idempotente nos eixos phone e contact_id (sem 23505).\n'
+printf '[OK] Talk X V07b/X029: supressão de contato idempotente nos eixos phone e contact_id (sem 23505), na assinatura nova de 7 argumentos.\n'

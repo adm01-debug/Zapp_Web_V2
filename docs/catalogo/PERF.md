@@ -400,3 +400,115 @@ ambiente** e o bloco não pede token nem deploya.
 - **Para fechar:** rodar `collect-remote.mjs` (com `SUPABASE_ACCESS_TOKEN` +
   `--snapshot` ou `--before`/`--git-sha`/`--run-id`/`--scope`) e anexar aqui a
   evidência de digest contra o deploy.
+
+## CT-74 — Lighthouse na view autenticada do catálogo (medido em 2026-10-02)
+
+**Aceite do plano:** *Lighthouse perf ≥ 90 na view em 4G; CLS < 0,05*.
+**Resultado medido: os dois critérios NÃO foram atingidos — perf 44 e CLS 0,2455.**
+O CT-74 **não pode ser marcado**.
+
+### Método (por que a medição é da view, e não da tela de login)
+
+O Lighthouse não tem sessão. Medir `?view=catalog` sem login faz o app redirecionar para
+`/auth` e o número vira o da tela de **login**. O caminho usado foi:
+
+1. Chrome headless com **perfil persistente** exposto por CDP (`--remote-debugging-port`);
+2. **login real da conta de teste (COMPRAS) dentro desse perfil**, até `#main-navigation`;
+3. confirmação de que a grade carregou (24 cartões) **antes** de medir;
+4. `Network.clearBrowserCache` (sessão preservada) para não medir cache aquecido;
+5. `lighthouse@12` anexado por `--port` (preset mobile = Slow 4G + CPU 4×) contra produção.
+
+> **Armadilha medida e descartada.** `launchPersistentContext` **não aplica `storageState`**.
+> As três primeiras rodadas (dev server, preview local e produção: perf 45, 71 e 69) mediram
+> `https://zapp-web-v2.vercel.app/auth` — a **tela de login** — e foram jogadas fora. Só a
+> rodada com login dentro do perfil mediu a view de verdade (`.finalDisplayedUrl` conferido).
+
+### Resultado — produção `https://zapp-web-v2.vercel.app/?view=catalog`
+
+```console
+URL MEDIDO: https://zapp-web-v2.vercel.app/?view=catalog
+PERF: 44      (aceite: >= 90)   -> NAO CUMPRIDO
+CLS:  0.2455  (aceite: < 0.05)  -> NAO CUMPRIDO
+FCP 3,4 s | LCP 7,3 s | TBT 460 ms | SI 4,3 s | TTI 7,3 s
+202 requisicoes | 906 KB transferidos | 4 requisicoes da edge do catalogo
+mobile (Slow 4G, CPU 4x) | lighthouse 12.8.2 | cache HTTP limpo
+```
+
+### Causas medidas (não supostas)
+
+- **CLS 0,2455 — 0,2211 vem de UM elemento:** a faixa de KPIs
+  (`data-testid="catalog-kpi…"`, classes `grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6`)
+  que **cresce quando os dados chegam** e empurra a grade para baixo. Os chips de categoria
+  somam outros 0,0222. Correção provável: reservar a altura da faixa (skeleton com a altura
+  final) e não inserir os chips depois do primeiro paint.
+- **1210 ms de JavaScript não usado** no carregamento inicial (candidato a corte por import
+  dinâmico — relacionado ao CT-75).
+- **LCP 7,3 s** aponta para um `<p class="text-[13px] text-foreground-secondary mt-0.5">`,
+  ou seja o LCP é **o conteúdo do catálogo chegando**, não o shell. Com 906 KB e 202
+  requisições em Slow 4G, o peso de rede domina.
+
+### O que fica aberto
+
+- **CT-74 continua aberto:** falta a correção (faixa de KPIs + peso de JS) e nova medição.
+  Corrigida a faixa, o CLS tende a entrar no aceite; o perf ≥ 90 exige mais que isso.
+- Artefato cru desta medição: `.tmp/lh-prod.json` (relatório completo do Lighthouse).
+
+### Re-medição depois do restart do banco canônico (02/10, ~15:30)
+
+Com o banco de volta, a medição foi **repetida com a mesma metodologia** (produção, mobile/Slow 4G,
+cache HTTP limpo, sessão COMPRAS dentro do perfil do Chrome):
+
+```console
+URL MEDIDO: https://zapp-web-v2.vercel.app/?view=catalog
+PERF: 39      (1a medicao: 44)
+CLS:  0.2451  (1a medicao: 0.2455)
+FCP 3,4 s | LCP 7,3 s | TBT 680 ms | SI 3,8 s | TTI 7,3 s
+203 requisicoes | 4 requisicoes da edge do catalogo
+```
+
+Leitura: duas medições independentes dão o **mesmo CLS (~0,245)** e perf na mesma faixa (39–44) —
+o veredito do aceite (≥ 90 e < 0,05) **não muda** com o banco saudável, e a causa dominante do CLS
+(a faixa de KPIs) fica confirmada. Artefatos crus (fora dos workspaces, que são apagados na limpeza):
+`~/.cache/hermes-pr/ct74-20261002-lh-prod.json` (1ª) e
+`~/.cache/hermes-pr/ct74-20261002-lh-prod-2.json` (2ª).
+
+## CT-73 — payload de `list_products compact` (medido em 2026-10-02)
+
+**Aceite do plano:** *payload de `list_products compact` medido (< 30 KB por página de 24) —
+se passar, cortar campos. Aceite: medição em `PERF.md`.*
+
+Método: sessão autenticada real em produção, medindo o corpo de cada resposta da edge
+`promogifts-catalog`, com a ação lida do **corpo da requisição** (o `action` vai na requisição,
+não na resposta).
+
+```console
+list_products | limit=24 | offset=0 | 81,5 KB
+bootstrap     | limit=null | offset=null | 186,1 KB
+```
+
+Leitura: o alvo de **< 30 KB por página de 24 NÃO é atingido** — a página de 24 produtos traz
+**81,5 KB** (2,7× o teto). O `bootstrap` (que não é o alvo deste item) traz 186,1 KB. O aceite
+do CT-73 é a **medição**, que está feita; o corte de campos fica como o próximo passo, com o
+número agora conhecido.
+
+## CT-74 — correção aplicada (2026-10-02): o strip de KPIs reserva o espaço
+
+**Causa medida:** o layout shift de 0,2211 (dos 0,2455 totais) vinha de
+`data-testid="catalog-kpi-strip"`. No código (`catalogShared.tsx`), o `CatalogKpiStrip` devolvia
+**`null`** quando não havia número em `stats` — o strip nascia **depois** do primeiro paint e
+empurrava a grade.
+
+**Correção:** sem dados (ou carregando), o esqueleto **ocupa o lugar** (mesma grade, elemento
+`data-testid="catalog-kpi-strip-placeholder"`, `aria-hidden`), em vez de o componente sumir.
+
+**Prova de que a altura casa:** medido em produção, na view autenticada —
+`alturaStrip = 72 px`, `alturaCardKpi = 72 px`, 6 KPIs. O esqueleto é `h-[72px]`, ou seja a
+troca de estado **não muda a altura** (que era o mecanismo do shift).
+
+**Teste:** `src/components/catalog/__tests__/CT74_kpiStripCls.test.tsx` (vermelho antes: o
+placeholder era `null`; verde depois). O caso antigo de `catalogShared.test.tsx`
+("sem stats, não renderiza nada") foi atualizado com o porquê, porque codificava o comportamento
+que causava o shift.
+
+**Pendente:** a re-medição do CLS em produção **depois do deploy** desta correção (o número
+esperado é CLS próximo de 0; o desempenho geral exige mais que isso — ver a medição acima).

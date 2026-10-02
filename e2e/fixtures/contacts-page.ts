@@ -1,10 +1,8 @@
 import { expect, type Page } from '@playwright/test';
 
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-env';
+import { dispensarOnboarding } from './onboarding';
 // Mesmos valores públicos de e2e/fixtures/e2e-contact.ts (URL do projeto + anon key).
-const SUPABASE_URL = 'https://tnnnlkbymytvtqngbbqh.supabase.co';
-const SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRubm5sa2J5bXl0dnRxbmdiYnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MjU0MDEsImV4cCI6MjEwMzMwMTQwMX0.4kDVowXzo3yBVboLOFn1bsij-vBKncJXVoPot3iknC0';
-
 /** Ordem canônica das abas (CONTACT_TYPES em src/utils/whatsappFileTypes.ts). */
 export const CONTACT_TAB_LABELS = [
   'Todos', 'Cliente', 'Fornecedor', 'Transportadora', 'Colaborador', 'Prestador de Serviço', 'Parceiro',
@@ -13,6 +11,9 @@ export const CONTACT_TAB_LABELS = [
 /** Abre `?view=contacts` e espera os KPIs e as abas carregarem. */
 export async function gotoContacts(page: Page) {
   await page.goto('/?view=contacts');
+  // O overlay de boas-vindas intercepta o ponteiro e faz o clique morrer em
+  // silencio (alvo visivel, estavel, e mesmo assim o click nao completa).
+  await dispensarOnboarding(page);
   // No mobile o banner também tem um <h1> "Contatos"; o da página fica dentro do <main>.
   await expect(
     page.getByRole('main', { name: 'Conteúdo principal' }).getByRole('heading', { level: 1, name: 'Contatos' }),
@@ -73,4 +74,60 @@ export async function softDeleteContact(page: Page, id: string) {
     headers: await headers(page),
     data: { p_id: id },
   });
+}
+
+/**
+ * Token da sessao lido do storageState do projeto "setup".
+ *
+ * Existe porque `accessToken(page)` depende da pagina VIVA: quando um teste estoura
+ * por timeout ou o worker e cancelado, a pagina ja morreu e a limpeza nao consegue
+ * nem consultar. Lendo do arquivo, a limpeza sobrevive ao que matou o teste.
+ */
+export async function accessTokenDoStorageState(): Promise<string> {
+  const { readFile } = await import('node:fs/promises');
+  const raw = JSON.parse(await readFile('e2e/.auth/user.json', 'utf8'));
+  for (const origem of raw.origins ?? []) {
+    for (const item of origem.localStorage ?? []) {
+      if (!String(item.name).includes('auth-token')) continue;
+      const valor = JSON.parse(item.value);
+      if (valor?.access_token) return valor.access_token as string;
+    }
+  }
+  throw new Error('storageState sem access_token: rode o projeto "setup" antes');
+}
+
+/**
+ * Limpeza que NAO depende da pagina viva (etapa E97).
+ *
+ * O `cleanup` antigo fazia `liveContactsByPhone(page, phone).catch(() => [])`: como a
+ * consulta usa `page.request`, ela falhava junto com a pagina, o erro era engolido e
+ * o contato ficava — sem nenhum sinal. Comprovado em 2026-10-02: pagina fechada antes
+ * do `finally` deixou 2 contatos `[E2E] RODAPE EDIT` no banco.
+ *
+ * Aqui nao existe `catch` que engole: se a limpeza falhar, o teste fica VERMELHO.
+ * Falha de limpeza tem de ser visivel, nao silenciosa.
+ */
+export async function limparContatosPorTelefone(
+  ctx: import('@playwright/test').APIRequestContext,
+  telefones: string[],
+): Promise<void> {
+  if (telefones.length === 0) return;
+  {
+    const token = await accessTokenDoStorageState();
+    const h = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+    for (const phone of telefones) {
+      const res = await ctx.get(
+        `${SUPABASE_URL}/rest/v1/contacts?select=id&phone=eq.${phone}&deleted_at=is.null`,
+        { headers: h },
+      );
+      if (!res.ok()) throw new Error(`limpeza E97: consulta de contacts falhou HTTP ${res.status()}`);
+      for (const linha of (await res.json()) as { id: string }[]) {
+        const del = await ctx.post(`${SUPABASE_URL}/rest/v1/rpc/delete_contact`, {
+          headers: h,
+          data: { p_id: linha.id },
+        });
+        if (!del.ok()) throw new Error(`limpeza E97: delete_contact falhou HTTP ${del.status()}`);
+      }
+    }
+  }
 }

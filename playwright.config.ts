@@ -67,7 +67,7 @@ export default defineConfig({
       // As specs do módulo MAPA (E71-E74) ficam de fora: usam sessão FALSA e não
       // podem depender do login real — ver o projeto `chromium-mapa` abaixo.
       name: 'chromium-authenticated',
-      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts/,
+      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts/,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
@@ -85,6 +85,13 @@ export default defineConfig({
       // arrastar a dependência do login real (etapa E75 do plano MAPA).
       name: 'chromium-mapa',
       testMatch: [/location-picker\.spec\.ts/, /contact-address\.spec\.ts/, /contact-map-pin\.spec\.ts/],
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      // Etapa 90 do plano de Contatos: screenshots de referência com sessão FALSA e
+      // backend mockado (sem setup, sem secrets) — roda no job E2E de PR do ci.yml.
+      name: 'chromium-contacts-visual',
+      testMatch: /contacts-snapshots\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {
@@ -172,14 +179,51 @@ export default defineConfig({
         storageState: 'e2e/.auth/user.json',
       },
     },
+    {
+      // catalog.spec.ts (CT-82) no Firefox — paridade cross-browser do fluxo de
+      // envio do catálogo (o aceite pede verde nos 3 browsers). O Chromium é
+      // coberto pelo project `chromium-authenticated` (catch-all que já coleta
+      // este spec); estes dois projects completam Firefox e WebKit. Reusa o
+      // storageState do `setup` (sessão browser-agnostic).
+      //
+      // Só entram no `e2e-logado.yml` (login real) — NUNCA no `ci.yml`, que
+      // lista explicitamente os projects deslogados.
+      name: 'firefox-catalog',
+      testMatch: /catalog\.spec\.ts/,
+      dependencies: ['setup'],
+      use: {
+        ...devices['Desktop Firefox'],
+        storageState: 'e2e/.auth/user.json',
+      },
+    },
+    {
+      // catalog.spec.ts (CT-82) no WebKit (Safari engine).
+      name: 'webkit-catalog',
+      testMatch: /catalog\.spec\.ts/,
+      dependencies: ['setup'],
+      use: {
+        ...devices['Desktop Safari'],
+        storageState: 'e2e/.auth/user.json',
+      },
+    },
   ],
-  webServer: {
-    // The application development server intentionally defaults to port 8080.
-    // E2E owns an isolated port so Playwright's readiness probe and its browser
-    // always exercise the same process, including while a developer is running
-    // the app locally on the default port.
-    command: 'bun run dev -- --host 127.0.0.1 --port 5173 --strictPort',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: (() => {
+    // A porta vem do proprio ambiente quando PLAYWRIGHT_BASE_URL e' definida.
+    // Sem isso, a suite e' fixa em 5173 e, com `reuseExistingServer` fora do CI,
+    // ela ADOTA o dev server que estiver la -- inclusive o de outro chat, o que
+    // fazia o e2e de um workspace exercitar o codigo de outro (medido 02/10).
+    const alvo = process.env.PLAYWRIGHT_BASE_URL;
+    const url = alvo ?? 'http://127.0.0.1:5173';
+    const porta = new URL(url).port || '5173';
+    return {
+      // O app de desenvolvimento usa 8080 por padrao; o E2E tem porta propria
+      // para que a sonda do Playwright e o navegador exercitem o MESMO processo.
+      command: `bun run dev -- --host 127.0.0.1 --port ${porta} --strictPort`,
+      url,
+      // Fora do CI o desenvolvedor costuma ja' ter o dev server no ar: reusar
+      // a propria porta e' o comportamento util. O que nao pode acontecer e'
+      // olhar para uma porta que nao e' a sua -- e isso o `url` acima resolve.
+      reuseExistingServer: !process.env.CI,
+    };
+  })(),
 });

@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Play, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,17 @@ interface WelcomeModalProps {
 
 export const WelcomeModal = forwardRef<HTMLDivElement, WelcomeModalProps>(
   function WelcomeModal({ isOpen, onClose, onStartTour, userName }, ref) {
+  // Overlay de tela cheia sem focus trap: sem esta saída por teclado, a única
+  // forma de fechar era achar o X ou o "Pular tour" (medido: Escape não fechava).
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -21,6 +32,9 @@ export const WelcomeModal = forwardRef<HTMLDivElement, WelcomeModalProps>(
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/80 backdrop-blur-sm"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Boas-vindas"
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -38,6 +52,7 @@ export const WelcomeModal = forwardRef<HTMLDivElement, WelcomeModalProps>(
           {/* Close button */}
           <button
             onClick={onClose}
+            aria-label="Fechar"
             className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors z-10"
           >
             <X className="w-5 h-5 text-muted-foreground" />

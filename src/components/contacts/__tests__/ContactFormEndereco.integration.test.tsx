@@ -76,7 +76,7 @@ function routeFetch(routes: { suggest?: unknown; retrieve?: unknown; forward?: u
 
 const callsTo = (fragment: string) => h.fetch.mock.calls.filter(([u]) => String(u).includes(fragment));
 
-function renderForm(onChange = vi.fn()) {
+function renderForm(onChange = vi.fn(), focar = true) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={qc}>
@@ -84,7 +84,7 @@ function renderForm(onChange = vi.fn()) {
     </QueryClientProvider>,
   );
   const input = screen.getByLabelText('Logradouro');
-  fireEvent.focus(input);
+  if (focar) fireEvent.focus(input);
   return { input, onChange };
 }
 
@@ -207,5 +207,20 @@ describe('E67 · integração do combobox de endereço do cadastro (hook real, s
     await waitFor(() => expect(onChange).toHaveBeenCalledWith('latitude', '-23.5613'));
     expect(onChange).toHaveBeenCalledWith('longitude', '-46.6565');
     expect(callsTo('/search/searchbox/v1/retrieve/')).toHaveLength(0);
+  });
+});
+
+describe('E81 · o autocomplete nao chama a Mapbox sem uso (contencao por foco)', () => {
+  it('1) campo de endereco FORA de foco: get-mapbox-token NAO e invocado', async () => {
+    renderForm(vi.fn(), false);
+    await waitFor(() => expect(screen.getByLabelText('Logradouro')).toBeInTheDocument());
+    expect(h.getMapboxToken).not.toHaveBeenCalled();
+  });
+
+  it('2) com o campo em foco e digitando: 1 get-mapbox-token por sessao, nao mais que isso', async () => {
+    routeFetch({ suggest: jsonResponse(suggestAvenida) });
+    const { input } = renderForm();
+    await digitar(input, 'avenida paulista 1000');
+    expect(h.getMapboxToken).toHaveBeenCalledTimes(1);
   });
 });

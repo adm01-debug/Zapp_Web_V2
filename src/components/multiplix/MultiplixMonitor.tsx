@@ -4,9 +4,9 @@ import { Pause, Play, Square, Send, XCircle, AlertTriangle, Clock, BarChart3, Ar
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
-import { fromTable } from '@/lib/supabaseHelpers';
 import {
   useMultiplixDispatch, useMultiplixRecipients, useMultiplixDispatchAction,
+  fetchMultiplixRecipientsTotal,
 } from '@/hooks/integrations/useMultiplixDispatches';
 import {
   IconTile, StatusPill, fmtInt, pct, fmtDateTime,
@@ -59,14 +59,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   // resolvido como sem destino.
   const { data: skippedCount = 0 } = useQuery({
     queryKey: ['multiplix-skipped-count', dispatchId],
-    queryFn: async () => {
-      const { count, error } = await fromTable('multiplix_recipients')
-        .select('id', { count: 'exact', head: true })
-        .eq('dispatch_id', dispatchId)
-        .eq('status', 'skipped');
-      if (error) throw new Error(error.message);
-      return count ?? 0;
-    },
+    queryFn: () => fetchMultiplixRecipientsTotal(dispatchId, 'skipped'),
     enabled: !!dispatchId,
     refetchInterval: 5_000,
   });

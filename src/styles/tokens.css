@@ -151,7 +151,8 @@
     --radius: 0.875rem; /* 14px — Promo Gifts default */
 
     /* ===== ESTADOS ===== */
-    --success: 160 70% 42%;
+    /* L 27%: branco fecha 4,5:1 também no hover (bg-success/90 sobre o card) e no verde como texto sobre branco. */
+    --success: 160 70% 27%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     /* Texto sobre o amarelo: escuro fecha 4,5:1 (branco dava 2,2:1). Nao tem outro consumidor. */
@@ -428,7 +429,8 @@
     --input: 240 5% 14%;
     --ring: 221 83% 53%;
     --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
+    /* Texto escuro sobre o verde claro fecha 7,8:1 (branco dava 2,3:1); text-success sobre o card continua 7,7:1. */
+    --success-foreground: 142 80% 6%;
     --warning: 40 91% 60%;
     --warning-foreground: 0 0% 8%;
     --info: 213 94% 62%;

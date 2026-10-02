@@ -150,8 +150,12 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
 
     // o valor do campo é imediato; o recorte (e a URL) vêm com o debounce
     expect((campo as HTMLInputElement).value).toBe('liga');
-    await waitFor(() => expect(screen.queryByText('Feita')).toBeNull());
-    expect(window.location.search).toContain('q=liga');
+    // combina as duas asserções para garantir que o debounce (200ms) disparou
+    // antes de checar window.location.search
+    await waitFor(() => {
+      expect(screen.queryByText('Feita')).toBeNull();
+      expect(window.location.search).toContain('q=liga');
+    });
   });
 });
 

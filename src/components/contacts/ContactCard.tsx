@@ -55,6 +55,7 @@ export function ContactCard({
         <Checkbox
           checked={isSelected}
           onCheckedChange={(checked) => onToggleSelect(contact.id, !!checked)}
+          aria-label={isSelected ? `Desmarcar ${contact.name}` : `Selecionar ${contact.name}`}
           className="bg-background/90"
         />
       </div>

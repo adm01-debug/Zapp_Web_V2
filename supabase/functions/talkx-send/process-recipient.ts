@@ -11,7 +11,7 @@
  * incrementos de contador do laço antigo: quem chama replica os contadores e
  * decide se roda a cauda (RELOAD_EVERY + `sleep(interval)`) ou encerra o laço.
  */
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
 import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talkx-window.ts";
 import { pauseReasonForWindow } from "../_shared/talkx-resume-policy.ts";
@@ -76,6 +76,7 @@ export interface ProcessRecipientDeps {
   campaign: Record<string, unknown>;
   businessHours: { start?: string; end?: string; days?: number[] } | null;
   initialInstanceId: string;
+  instanceToken: string | null;
   evolutionUrl: string;
   evolutionKey: string;
   supabaseUrl: string;
@@ -139,7 +140,7 @@ export async function processRecipient(
   recipient: ProcessRecipientRow,
 ): Promise<ProcessResult> {
   const {
-    supabase, campaignId, businessHours, initialInstanceId,
+    supabase, campaignId, businessHours, initialInstanceId, instanceToken,
     evolutionUrl, evolutionKey, supabaseUrl, workerId,
     trackingUrlFor, customFieldsByContact, log, correlationId,
     isRecipientSuppressed, mediaForSend,
@@ -293,7 +294,8 @@ export async function processRecipient(
     try {
       await evoFetch(evolutionUrl, evolutionKey,
         `/chat/updatePresence/${initialInstanceId}`,
-        { number: phone, presence: "composing" });
+        { number: phone, presence: "composing" },
+        undefined, undefined, undefined, instanceToken ?? undefined);
     } catch { /* Presence update is best-effort */ }
 
     await sleep(typingDelay);
@@ -388,7 +390,7 @@ export async function processRecipient(
         effectiveMediaType === "audio"
           ? { number: phone, audio: mediaSource, delay: 0 }
           : { number: phone, mediatype: effectiveMediaType!, media: mediaSource, caption: personalizedMsg, delay: 0 },
-        undefined, undefined, abortCtrl.signal,
+        undefined, undefined, abortCtrl.signal, instanceToken ?? undefined,
       );
     } else {
       await markProviderDispatch();
@@ -396,7 +398,7 @@ export async function processRecipient(
       sendResponse = await evoFetch(evolutionUrl, evolutionKey,
         `/message/sendText/${beforeSendInstanceId}`,
         { number: phone, text: personalizedMsg, delay: 0 },
-        undefined, undefined, abortCtrl.signal,
+        undefined, undefined, abortCtrl.signal, instanceToken ?? undefined,
       );
     }
     clearTimeout(sendTimeout);

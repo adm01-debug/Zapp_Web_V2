@@ -290,30 +290,6 @@ export default function TalkXView() {
             >
               <LayoutDashboard className="w-4 h-4 shrink-0" />Visão geral
             </TabsTrigger>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button type="button" className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5 bg-input/40 border-border/60 text-muted-foreground hover:text-foreground hover:border-border">
-                  <BarChart3 className="w-4 h-4 shrink-0" />Analytics <span className="text-2xs text-muted-foreground">▾</span>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem onSelect={() => goTab('overview')}>Campanhas</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => goTab('segments')}>Segmentos</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => goTab('analytics')}>Comparativo</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => goTab('analytics', 'configuracoes')}>Configurações</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button type="button" className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5 bg-input/40 border-border/60 text-muted-foreground hover:text-foreground hover:border-border">
-                  <FileText className="w-4 h-4 shrink-0" />Templates <span className="text-2xs text-muted-foreground">▾</span>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem onSelect={() => goTab('templates')}>Biblioteca</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => openNew()}>Novo template</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
             <TabsTrigger value="suppression"
               className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5
                 data-[state=active]:bg-primary/12 data-[state=active]:border-primary/40 data-[state=active]:text-foreground
@@ -323,6 +299,30 @@ export default function TalkXView() {
               <ShieldBan className="w-4 h-4 shrink-0" />Lista de supressão
             </TabsTrigger>
           </TabsList>
+            <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button type="button" className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5 bg-input/40 border-border/60 text-muted-foreground hover:text-foreground hover:border-border">
+                              <BarChart3 className="w-4 h-4 shrink-0" />Analytics <span className="text-2xs text-muted-foreground">▾</span>
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            <DropdownMenuItem onSelect={() => goTab('overview')}>Campanhas</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => goTab('segments')}>Segmentos</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => goTab('analytics')}>Comparativo</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => goTab('analytics', 'configuracoes')}>Configurações</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+            <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button type="button" className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5 bg-input/40 border-border/60 text-muted-foreground hover:text-foreground hover:border-border">
+                              <FileText className="w-4 h-4 shrink-0" />Templates <span className="text-2xs text-muted-foreground">▾</span>
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            <DropdownMenuItem onSelect={() => goTab('templates')}>Biblioteca</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => openNew()}>Novo template</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
         </div>
 
         <TabsContent value="overview" className="mt-4">

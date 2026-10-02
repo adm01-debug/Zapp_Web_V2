@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';
 import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
 import { getCorsHeaders, handleCors } from '../_shared/validation.ts';
 

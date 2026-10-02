@@ -235,8 +235,12 @@ describe('CT-55 — deep link ?contact=<id>', () => {
 
     renderManagement();
 
-    const dialog = await screen.findByTestId('send-dialog');
-    expect(mockFetchContactPreset).toHaveBeenCalledWith('c9');
+    const dialog = await screen.findByTestId('send-dialog', {}, { timeout: 5000 });
+    // Porta de sincronizacao: o deep link so monta o dialog depois de
+    // `Promise.all([fetchProduct, fetchCatalogContactPreset])`, e a cadeia toda
+    // comeca num `setTimeout(0)`. Sem esperar o fetch, a assercao corria contra
+    // o efeito (o caso oscilava na suite completa e passava isolado).
+    await waitFor(() => expect(mockFetchContactPreset).toHaveBeenCalledWith('c9'));
     expect(dialog).toHaveAttribute('data-contact-id', 'c9');
     expect(dialog).toHaveAttribute('data-contact-name', 'Cliente Deep Link');
     expect(dialog).toHaveAttribute('data-contact-phone', '5541999990000');
@@ -247,7 +251,7 @@ describe('CT-55 — deep link ?contact=<id>', () => {
 
     renderManagement();
 
-    const dialog = await screen.findByTestId('send-dialog');
+    const dialog = await screen.findByTestId('send-dialog', {}, { timeout: 5000 });
     expect(mockFetchContactPreset).not.toHaveBeenCalled();
     expect(dialog).toHaveAttribute('data-contact-id', '');
     expect(dialog).toHaveAttribute('data-contact-name', '');
@@ -259,7 +263,7 @@ describe('CT-55 — deep link ?contact=<id>', () => {
 
     renderManagement();
 
-    const dialog = await screen.findByTestId('send-dialog');
+    const dialog = await screen.findByTestId('send-dialog', {}, { timeout: 5000 });
     expect(mockFetchContactPreset).toHaveBeenCalledWith('ghost');
     // o ContactResult vem da BUSCA, não do id da URL: nada é inventado a partir do id
     expect(dialog).toHaveAttribute('data-contact-id', '');
@@ -274,7 +278,7 @@ describe('CT-55 — deep link ?contact=<id>', () => {
 
     renderManagement();
 
-    await screen.findByTestId('send-dialog');
+    await screen.findByTestId('send-dialog', {}, { timeout: 5000 });
     await waitFor(() => expect(hookReturn.fetchProduct).toHaveBeenCalledWith('p1'));
   });
 
@@ -288,7 +292,7 @@ describe('CT-55 — deep link ?contact=<id>', () => {
 
     renderManagement();
 
-    const dialog = await screen.findByTestId('send-dialog');
+    const dialog = await screen.findByTestId('send-dialog', {}, { timeout: 5000 });
     // não vira presetContact: o dialog abre no passo normal de seleção
     expect(dialog).toHaveAttribute('data-contact-id', '');
     expect(dialog).toHaveAttribute('data-contact-name', '');
@@ -303,7 +307,7 @@ describe('CT-55 — deep link ?contact=<id>', () => {
 
     renderManagement();
 
-    const dialog = await screen.findByTestId('send-dialog');
+    const dialog = await screen.findByTestId('send-dialog', {}, { timeout: 5000 });
     expect(dialog).toHaveAttribute('data-contact-id', 'c9');
     expect(dialog).toHaveAttribute('data-contact-phone', '5541999990000');
   });

@@ -9,16 +9,16 @@ const AiTab = lazy(() =>
   import('../tabs/AiTab').then((m) => ({ default: m.AiTab })));
 const Crm360Tab = lazy(() =>
   import('../tabs/Crm360Tab').then((m) => ({ default: m.Crm360Tab })));
-const OrdersTab = lazy(() =>
-  import('../tabs/OrdersTab').then((m) => ({ default: m.OrdersTab })));
+const SalesViewTab = lazy(() =>
+  import('../tabs/SalesViewTab').then((m) => ({ default: m.SalesViewTab })));
 const TasksTab = lazy(() =>
   import('../tabs/TasksTab').then((m) => ({ default: m.TasksTab })));
 const NotesTab = lazy(() =>
   import('../tabs/NotesTab').then((m) => ({ default: m.NotesTab })));
 const FilesTab = lazy(() =>
   import('../tabs/FilesTab').then((m) => ({ default: m.FilesTab })));
-const HistoryTab = lazy(() =>
-  import('../tabs/HistoryTab').then((m) => ({ default: m.HistoryTab })));
+const JourneyTab = lazy(() =>
+  import('../tabs/JourneyTab').then((m) => ({ default: m.JourneyTab })));
 
 function PanelFallback() {
   return (
@@ -48,10 +48,12 @@ interface ConversationTabContentProps {
   children: ReactNode;
   /** "Usar resposta" (aba IA) — leva o texto para o input do Chat e troca de aba. */
   onUseSuggestion?: (text: string) => void;
+  /** Perfil do agente logado — a SalesView grava como `created_by` nas compras. */
+  profileId?: string | null;
 }
 
 export function ConversationTabContent({
-  activeTab, onTabChange, conversation, messages, children, onUseSuggestion,
+  activeTab, onTabChange, conversation, messages, children, onUseSuggestion, profileId,
 }: ConversationTabContentProps) {
   const contactId = conversation.contact.id;
 
@@ -96,8 +98,8 @@ export function ConversationTabContent({
       )}
 
       {activeTab === 'orders' && (
-        <Panel name="Pedidos">
-          <OrdersTab contactId={contactId} />
+        <Panel name="SalesView">
+          <SalesViewTab contactId={contactId} profileId={profileId ?? null} />
         </Panel>
       )}
 
@@ -121,8 +123,8 @@ export function ConversationTabContent({
       )}
 
       {activeTab === 'history' && (
-        <Panel name="Histórico">
-          <HistoryTab contactId={contactId} />
+        <Panel name="Journey">
+          <JourneyTab contactId={contactId} />
         </Panel>
       )}
     </div>

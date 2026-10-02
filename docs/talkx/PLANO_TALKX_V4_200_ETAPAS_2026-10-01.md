@@ -2,7 +2,7 @@
 
 **Gerado em:** 2026-10-01 · **Base do levantamento:** `main` `3d09433` e banco `tnnnlkbymytvtqngbbqh` conferido ao vivo em 01/10
 **Estado:** proposto — passa a ser o plano vigente quando a etapa X001 for executada. Até lá vale o [V3](PLANO_TALKX_V3_100_ETAPAS_2026-09-29.md).
-**Substitui:** as 89 etapas em aberto do V3 (V12–V100); V01–V11 já estão na `main`.
+**Substitui:** as etapas ainda em aberto do V3 (**V27–V100**); **V01–V11** já na `main` e **V12–V26 entregues com PR** (V22 #1464, V23 #1475, V24 #1498, V25 #1508, V26 #1520/#1526/#1532; as demais, V12–V21, entregues por migration — registro completo no [V3 congelado](PLANO_TALKX_V3_100_ETAPAS_2026-09-29.md)).
 
 Arquivos deste plano:
 

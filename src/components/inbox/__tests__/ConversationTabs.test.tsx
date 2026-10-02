@@ -93,7 +93,7 @@ describe('etapa 75 — ConversationTabs (8 abas da fusão)', () => {
     expect(screen.queryByTestId('conversation-tab-count-tasks')).toBeNull();
   });
 
-  it('badge de Pedidos vem de extraCounts (CRM client-side)', () => {
+  it('badge de SalesView vem de extraCounts (CRM client-side)', () => {
     renderTabs({ extraCounts: { orders: 4 } });
 
     expect(screen.getByTestId('conversation-tab-count-orders').textContent).toBe('4');

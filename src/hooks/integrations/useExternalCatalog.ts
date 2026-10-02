@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { getLogger } from '@/lib/logger';
 
 const log = getLogger('ExternalCatalog');
@@ -213,7 +213,23 @@ async function invokeAction<T = unknown>(action: string, params: Record<string, 
   return data as T;
 }
 
-// ─── Hook ─────────────────────────────────────────────────────
+/**
+ * CT-29 — busca de uma pagina de produtos extraida para funcao de modulo:
+ * o `productsQuery` e o `prefetchNextPage` usam a MESMA logica de fetch
+ * (sem duplicar o `invokeAction`) e a MESMA forma de queryKey, entao o
+ * prefetch cai exatamente no cache que o clique em "Proxima" vai consultar.
+ */
+async function queryExternalProducts(filters: CatalogFilters) {
+  log.debug('Fetching products with filters:', JSON.stringify(filters));
+  const result = await invokeAction<{ data: ExternalProduct[]; meta: { total: number; duration_ms: number } }>(
+    'list_products',
+    filters as Record<string, unknown>
+  );
+  log.debug('Got', result.data?.length, 'products, total:', result.meta?.total);
+  return result;
+}
+
+// ─── Hook ──────────────────────────────────────────────────────
 export function useExternalCatalog() {
   const queryClient = useQueryClient();
   // null = ainda nao pedido (nenhuma query dispara). Vira {} ou os filtros
@@ -224,20 +240,15 @@ export function useExternalCatalog() {
   // em 'handles concurrent fetchProducts and fetchCategories').
   const [filters, setFilters] = useState<CatalogFilters | null>(null);
   const ready = filters !== null;
-  const activeFilters = filters ?? {};
+  // CT-29 — memoizado: a identidade dos filtros precisa ser estável entre renders
+  // (é a queryKey do React Query e dependência do prefetch); antes, `filters ?? {}`
+  // criava um objeto novo a cada render.
+  const activeFilters = useMemo(() => filters ?? {}, [filters]);
 
   // Products query - auto-fetches quando filters muda e ready=true
   const productsQuery = useQuery({
     queryKey: ['external-catalog', 'products', activeFilters],
-    queryFn: async () => {
-      log.debug('Fetching products with filters:', JSON.stringify(activeFilters));
-      const result = await invokeAction<{ data: ExternalProduct[]; meta: { total: number; duration_ms: number } }>(
-        'list_products',
-        activeFilters as Record<string, unknown>
-      );
-      log.debug('Got', result.data?.length, 'products, total:', result.meta?.total);
-      return result;
-    },
+    queryFn: () => queryExternalProducts(activeFilters),
     enabled: ready,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -303,6 +314,27 @@ export function useExternalCatalog() {
     setFilters((f) => f ?? {});
   }, []);
 
+  /**
+   * CT-29 — prefetch da PAGINA SEGUINTE: reusa a mesma queryKey/queryFn do
+   * `productsQuery` com o `offset` avancado em `limit`, para o clique em
+   * "Proxima" achar a pagina ja no cache (sem flash). Nao dispara quando a
+   * pagina atual ja e a ultima (`offset + limit >= total`) nem antes de haver
+   * dado/limite conhecido.
+   */
+  const prefetchNextPage = useCallback(async (): Promise<void> => {
+    const page = productsQuery.data;
+    const total = page?.meta?.total ?? 0;
+    const limit = activeFilters.limit ?? page?.data?.length ?? 0;
+    const offset = activeFilters.offset ?? 0;
+    if (!ready || limit <= 0 || total <= 0 || offset + limit >= total) return;
+    const nextFilters: CatalogFilters = { ...activeFilters, offset: offset + limit };
+    await queryClient.prefetchQuery({
+      queryKey: ['external-catalog', 'products', nextFilters],
+      queryFn: () => queryExternalProducts(nextFilters),
+      staleTime: 5 * 60 * 1000,
+    });
+  }, [queryClient, productsQuery.data, activeFilters, ready]);
+
   const invalidate = useCallback(() => {
     return queryClient.invalidateQueries({ queryKey: ['external-catalog'] });
   }, [queryClient]);
@@ -326,6 +358,7 @@ export function useExternalCatalog() {
     fetchProduct,
     fetchCategories,
     fetchSuppliers,
+    prefetchNextPage,
     invalidate,
   };
 }
