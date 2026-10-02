@@ -510,9 +510,13 @@ jobs:
           TALKX_EVENTS_CONTRACT_PG_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-events-contract.test.sh
 
+      # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
+      # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e
+      # current_database() devolve esse nome, quebrando a asserção.
       - name: Simular primitivas atômicas de mensagens e encerramento
         env:
           MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/message-delivery-phase1-behavior.test.sh
 
       - name: Simular contrato de dados da Telefonia v2
