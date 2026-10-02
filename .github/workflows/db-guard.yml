@@ -297,6 +297,9 @@ jobs:
       - name: Simular credencial dedicada de cron no Vault (L5)
         env:
           CRON_SECRET_L5_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          # E47: SKIP_DOCKER_SHIM=1 — o teste usa docker exec bash (BLOCO C/D),
+          # não suportado pelo shim (apenas psql é interceptado; exit 1 silencia o FAIL).
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/cron-secret-l5-contract.test.sh
 
       - name: Simular escopo das 14 policies TO public -> authenticated
