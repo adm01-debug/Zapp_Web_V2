@@ -62,8 +62,9 @@ export function useContactsViewState() {
         e.preventDefault(); handleSelectAll();
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    // Captura: roda antes do Esc do Radix fechar o diálogo, enquanto ele ainda está `data-state="open"`.
+    window.addEventListener('keydown', handler, true);
+    return () => window.removeEventListener('keydown', handler, true);
   }, [selectedIds.length, searchInput, clearSearch, setIsAddDialogOpen, setSelectedIds, handleSelectAll, detailContact]);
 
   return {

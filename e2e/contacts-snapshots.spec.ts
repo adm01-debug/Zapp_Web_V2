@@ -62,6 +62,9 @@ function mascarasDeDadoVivo(page: Page) {
   return [
     page.getByTestId('kpi-value'),
     page.getByTestId('kpi-sparkline'),
+    page.getByTestId('kpi-delta'),
+    page.getByTestId('contacts-showing'),
+    page.getByTestId('contacts-page-indicator'),
     page.getByTestId('tab-count'),
     page.getByTestId('contact-card'),
     page.getByTestId('contact-list-item'),

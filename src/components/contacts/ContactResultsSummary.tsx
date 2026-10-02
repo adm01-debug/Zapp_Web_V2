@@ -56,7 +56,7 @@ export function ContactResultsSummary({
           </span>
         </div>
         <span className="h-4 w-px bg-border" />
-        <span>
+        <span data-testid="contacts-showing">
           Exibindo <span className="font-semibold text-foreground">{filteredCount}</span>
           {filteredCount < totalCount && <> de <span className="font-semibold text-foreground">{totalCount}</span></>}
           {' '}contato{totalCount !== 1 ? 's' : ''}
@@ -74,7 +74,7 @@ export function ContactResultsSummary({
 
       {showPagination && (
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-sm font-medium text-muted-foreground">
+          <span data-testid="contacts-page-indicator" className="text-sm font-medium text-muted-foreground">
             Página <span className="font-semibold text-foreground">{currentPage}</span> de{' '}
             <span className="font-semibold text-foreground">{totalPages}</span>
           </span>
