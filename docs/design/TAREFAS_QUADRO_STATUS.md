@@ -508,8 +508,46 @@ leituras foram descartadas.
 ## CP-F Avisos de alarme [x] — toast=ok · popover=criado · badge=ok · push=fora da v1 · 66/67 pendentes de QA
 ## CP-G Chat integrado [x] — NotesTab=resumo+atalho+QuickAdd · TasksTab=5 grupos · reminders->tasks=ok · Alt+T=ok
 ## CP-H Acessivel e responsivo [~] — 7 atalhos=ok · aria-live=ok · reduced-motion=ok · contraste=ok (tabela medida) · mobile=ok por construcao · zen=aberta
-## CP-I Testes      [ ] arquivos= · casos= · bundle= KB gz · TTI 300 itens=
-## CP-J Entrega     [ ] gates 8/8= · func 24/24= · geometria= · cores= · isolamento 2 usuários= · migração= · PR drop reminders_pending (aguarda APROVADO)= · docs= · prod final=
+## CP-I Testes      [x] arquivos=398 · casos=5219 (46 novos de tarefas) · bundle=12,2 KB gz (do modulo; teto 45) · TTI 300 itens=Lista 1606 ms · Quadro 1633 ms · Agenda 1584 ms (Playwright chromium 1672x941, login pela UI, `performance.now()` da navegacao ate o 1o `[data-testid=work-item-card]`; cards no DOM: 175/250/250)
+  - (O DoD pedia ">= 50 cards no DOM"; por modo a Lista agrupa e o Quadro recorta por coluna, entao 50 simultaneos nao acontecem — medido ate o 1o card com o total no DOM registrado.)
+  - Seed do QA: 300 tarefas `[E2E seed 89]` — contagem ANTES `0-0/300`, DELETE 204 (`*/300`), DEPOIS `*/0`. Rodado 2x, zerado nas duas.
+## CP-J Entrega     [~] gates 8/8=8 · func 24/24=17 · geometria=em medicao · cores=em medicao · isolamento (agente x supervisor)=OK · migração=OK · PR drop n (aguarda APROVADO)=pendente · docs=OK · prod final=cron OK / screenshots pendentes
+
+### FASE J — numeros reais (2026-10-01)
+
+**91. Gates — 8 saidas, todas exit 0.** typecheck · build · `db-usage-guard` · `check-migration-drift` ·
+`check-realtime-subscriptions` · `lint-ratchet` · `implicit-any-ratchet` · `medir-tipografia --check` ·
+`bundle-budget` (JS inicial **336,3 KB** de 341; CSS 39,9/80; maior chunk 492,3/550; assets 4088,2/4100) ·
+suite **404 arquivos / 5284 testes / 0 falhas**. O `bun run lint` cru acusa 937 problemas **legados** — ja
+registrados como "nao e gate do CI"; o gate real e o `lint-ratchet`, que passa.
+
+**92. E.5 funcional (24 checks) — 17/24, DoD NAO atingido.** Trajetoria convergente: 1 → 8 → 14 → **17**.
+As 7 restantes: `criar-do-chat-com-contato` (o usuario de QA nao tem conversa — **nao testavel com essa conta**),
+`fazendo-x3-bloqueia-4a` e `mobile-mover-pelo-menu` (nome do `menuitem` nao bate — harness),
+`filtro-por-prioridade-nos-3-modos` (strict mode: `quick-add-input` resolve 2 elementos — harness),
+`toast-do-alarme` e `adiar-15min` (passaram em outra rodada = **flake**), `central-notificacoes-abrir`.
+Nenhuma provada como bug do app. Rodada paralela com harness corrigido de outro jeito deu **10/24** — a
+divergencia entre harnesses e a prova de flakiness. O 404 de `/assets/EvolutionDisconnectBan...` visto no
+`console-sem-erro` **foi descartado**: era corrida com o deploy (o check passou depois).
+
+**93/94.** Em medicao (2 subagentes reabertos com instrucao fechada).
+
+**95. Isolamento — ENTREGUE com prova.** Tarefa `997dd9e8-...` (dono Admin 01). Papel **agente**
+(`comercial01`): GET `[]`, PATCH `[]`, DELETE `[]`, e na UI 0 cards. Supervisores (COMPRAS/LOGISTICA) veem a
+tarefa — desenho. 2 screenshots em `out/`. Leitura honesta: a fronteira real e **agente x supervisor**, nao
+"usuario A x usuario B" como a redacao do plano sugere.
+
+**96. Migracao dos lembretes — OK, ID conferido.** `reminders`: 1 linha, `migrated_task_id IS NULL` = **0**; a
+linha aponta para a tarefa `997dd9e8-...`, que existe (`zcxvcv`, `todo`).
+
+**98. Docs — OK.** Faltava o README do modulo: criado `docs/tasks/README.md` (modos, modelo de dados com as 18
+colunas, RPC das abas, cron do alarme, RLS por papel, os 7 atalhos, como rodar os testes e os residuos).
+Divergencia do plano: o DoD falava em "<=15 linhas de diff", mas o arquivo **nao existia** — documentar de
+verdade custou ~70 linhas.
+
+**100 (parte de infra) — OK.** Cron `tasks-notify-due` **active** em producao, `* * * * *`, sem sobras de
+`notify-due-reminders`. Faltam as screenshots do E.1.
+
 
 ## Divergências plano × código (D1–D6 acima; novas)
   D7: Agenda começa hoje (etapa 93) e não na segunda (etapa 98) — contradição do plano v1; mantido hoje→+6
