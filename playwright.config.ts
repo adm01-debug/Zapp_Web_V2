@@ -67,7 +67,7 @@ export default defineConfig({
       // As specs do módulo MAPA (E71-E74) ficam de fora: usam sessão FALSA e não
       // podem depender do login real — ver o projeto `chromium-mapa` abaixo.
       name: 'chromium-authenticated',
-      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts/,
+      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts/,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
@@ -85,6 +85,13 @@ export default defineConfig({
       // arrastar a dependência do login real (etapa E75 do plano MAPA).
       name: 'chromium-mapa',
       testMatch: [/location-picker\.spec\.ts/, /contact-address\.spec\.ts/, /contact-map-pin\.spec\.ts/],
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      // Etapa 90 do plano de Contatos: screenshots de referência com sessão FALSA e
+      // backend mockado (sem setup, sem secrets) — roda no job E2E de PR do ci.yml.
+      name: 'chromium-contacts-visual',
+      testMatch: /contacts-snapshots\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {

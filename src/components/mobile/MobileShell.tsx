@@ -83,8 +83,8 @@ export function MobileShell({
         onLogout={signOut}
       />
 
-      {/* Hide FAB when keyboard is open or on team-chat to avoid overlap with input */}
-      {!isKeyboardOpen && currentView !== 'team-chat' && (
+      {/* Hide FAB when keyboard is open, on team-chat (overlaps the input) and on contacts (has its own FAB) */}
+      {!isKeyboardOpen && currentView !== 'team-chat' && currentView !== 'contacts' && (
         <MobileFAB
           onNewConversation={() => setCurrentView('inbox')}
           onNewContact={() => setCurrentView('contacts')}

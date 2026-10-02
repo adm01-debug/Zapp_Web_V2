@@ -230,9 +230,9 @@ A parte de banco foi refeita via MCP read-only:
 | B1 | `DB Live Guard` vermelho: manifesto stale + 2 migrations fora do Git | — | Regenerar `schema-manifest.json` e regularizar/registrar as 2 migrations órfãs |
 | B2 | `deploy-functions.yml` vermelho: `extra=[sicoob-bridge,sicoob-bridge-reply]` | Joaquim/admin | Apagar as 2 edges remotas e re-disparar |
 | ~~B3~~ | ~~Etapa 98 incompleta: sem credencial do usuário QA~~ | — | **Resolvido em 02/10** (complemento abaixo) |
-| B7 | Etapa 90: baselines não versionadas (captura não determinística contra produção) | — | Mockar as RPCs de Contatos no spec (`page.route`) ou rodar contra ambiente com dados fixos; depois gerar e versionar |
+| ~~B7~~ | ~~Etapa 90: baselines não versionadas (captura não determinística contra produção)~~ | — | **Resolvido em 02/10**: backend mockado e PNGs versionados (complemento abaixo) |
 | B4 | Etapa 95: receitas do runbook não testadas por execução (DML proibido) | — | Testar na primeira janela com escrita |
-| B5 | Etapa 67: `text-success-foreground` sobre `bg-success` (2.60/2.30:1) | — | Escurecer `--success` (afeta o app todo) |
+| ~~B5~~ | ~~Etapa 67: `text-success-foreground` sobre `bg-success` (2.60/2.30:1)~~ | — | **Resolvido em 02/10**: 5.66/7.80:1 (hover `bg-success/90`: 4.63/6.53:1) (complemento abaixo) |
 | B6 | Etapas 52/55/58/59 (F5) dependem de apply de migration | — | Aplicar e refazer o `DB Live Guard` |
 
 ---
@@ -258,6 +258,19 @@ Bugs achados nesta verificação e corrigidos no PR #1562:
 
 Ressalva visual: no mobile o FAB "+" cobre parte do botão "Colunas".
 
+## Complemento 2026-10-02 (2) — Etapas 90 e 67, FAB no mobile
+
+**Etapa 90 (B7).** `e2e/contacts-snapshots.spec.ts` deixou de usar o login real: sessão falsa (`installFakeSession`), backend mockado com 8 contatos fixos (KPIs, abas, lista, "último contato") e relógio parado em 2026-09-15 12:00 UTC. `bloquearRedeReal` falha o teste se alguma chamada sair para o Supabase. Sem máscara de dado vivo. Os 6 PNGs (`e2e/__screenshots__/contacts-{cards,list,table}-{light,dark}-linux.png`) estão versionados. O projeto `chromium-contacts-visual` roda no job E2E de PR do `ci.yml`. Localmente: geração 6/6 e 4 comparações seguidas 6/6 a 0,2%.
+
+**Etapa 67 (B5).** `node scripts/qa/contraste-contatos.mjs --check` → 0 pares abaixo de 4.5:1.
+
+| Token | Antes | Depois | Branco/texto sobre `bg-success` |
+|-------|-------|--------|------------------|
+| `--success` (claro) | 160 70% 42% | 160 70% 27% | 2.60 → 5.66:1; hover `bg-success/90`: 4.63:1 (e `text-success` sobre o card: 2.60 → 5.66:1) |
+| `--success-foreground` (escuro) | 0 0% 100% | 142 80% 6% | 2.30 → 7.80:1 (`text-success` sobre o card segue 7.70:1) |
+
+**FAB no mobile.** O "+" de Contatos ficava empilhado sobre o FAB global "Novo" (`MobileFAB`) e cobria "Colunas". Na vista Contatos o `MobileFAB` sai (a ação "Novo contato" dele só navegava para Contatos), e o "+" desce para a posição dele (`bottom-[76px]`).
+
 ## Conclusão
 
 - Fases F2–F9 mergeadas com os 6 required checks verdes e `strict=false`; worktree limpo de DDL do módulo.
@@ -268,4 +281,4 @@ Ressalva visual: no mobile o FAB "+" cobre parte do botão "Colunas".
   ledger (B1), e o deploy de edges falha por funções Sicoob órfãs no remoto (B2). Ambos são
   reconciliação de estado do banco/edge — **sem regressão de código**.
 
-*Plano Contatos 100 etapas encerrado em 2026-10-01, com as pendências B1–B6 rastreadas.*
+*Plano Contatos 100 etapas encerrado em 2026-10-01; B3, B5 e B7 resolvidos em 02/10. Seguem abertos B1, B2, B4 e B6.*
