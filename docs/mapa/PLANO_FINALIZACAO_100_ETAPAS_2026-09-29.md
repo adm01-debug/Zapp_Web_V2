@@ -512,7 +512,15 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 
 ### E67 · Suíte de integração hook + UI (consolidar E33)
 1. `LocationPicker.integration.test.tsx` e `ContactFormEndereco.integration.test.tsx` com o hook real; só `fetch` mockado com shapes reais do Apêndice A.
-**Checklist:** [ ] 2 arquivos · [ ] ≥ 10 casos
+**Checklist:** [x] 2 arquivos · [x] ≥ 10 casos (13)
+
+**Fechada em 2026-10-02.** Dois arquivos de integração com o hook real e só o fetch mockado: ContactFormEndereco.integration.test.tsx (7 casos) e LocationPicker.integration.test.tsx (6 casos) — 13 no total. O AddressSearchIntegration.test.tsx antigo saiu, absorvido pelo arquivo renomeado.
+
+**Divergência 1 (nome):** o arquivo existente mockava as FUNÇÕES de mapboxGeocode e mapboxToken, não o fetch; foi renomeado para o nome da etapa com os comportamentos preservados e a fronteira de mock movida para o fetch.
+
+**Divergência 2 (o que é mockado):** "só fetch mockado" não roda em jsdom como está escrito — o token via Supabase e o cost guard via RPC precisam ser mockados, e o hook do mapa monta WebGL. Moca-se só essas bordas; o parsing, a sessão e a lista correm reais.
+
+**Achado NOVO, não corrigido (fora do escopo):** o nome acessível do item destacado concatena o <mark> sem separador — o leitor de tela lê "XBZBrindes" em vez de "XBZ Brindes" (src/components/inbox/chat/HighlightedText.tsx:109).
 
 ### E68 · Fixture de respostas reais da Mapbox
 **Arquivos:** `src/lib/__fixtures__/mapbox/*.json`
