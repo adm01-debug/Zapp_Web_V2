@@ -902,7 +902,19 @@ Sem flag (decisão `20261001-103207-6c0b`): não existe "ligar só para 2 operad
 
 ### E98 · Auditoria adversarial final (5 frentes)
 1. Perda de dado em qualquer writer de `contacts`; sessão fantasma; estado enganoso; a11y; custo — cada frente com 1 teste novo ou "sem achado" justificado.
-**Checklist:** [ ] 5 frentes · [ ] achados com teste
+**Checklist:** [x] 5 frentes · [x] achados com teste
+> **FEITA em 2026-10-02.** Relatório completo em `docs/mapa/AUDITORIA_ADVERSARIAL_E98.md`.
+> **1 defeito real:** sessão fantasma — `searchbox_session` é contado na ABERTURA da sessão
+> (`mapboxSession.ts:26`), antes de qualquer request sair; o contador
+> (`count_searchbox_sessions_this_month`) alimenta o freio de 450 e o alerta de 400 (E91). Medido:
+> 3 sessões contadas com 0 requisições. Teste pinado em `it.fails`.
+> **4 frentes resistiram com medição:** perda de dado (guardas + testes nos dois sentidos — eu havia
+> reportado que faltava teste; errado, procurei nome de implementação em vez de comportamento),
+> estado enganoso (`toast.success` só após o await), a11y (axe no Chromium real: 0 contraste e 0
+> button-name nos contatos, com spec novo que fecha o vão de não haver axe em `e2e/`) e custo
+> (mesma raiz da sessão fantasma).
+> **Ressalvas declaradas:** o inbox não foi medido para contraste; o defeito da frente 2 está
+> pinado, **não consertado**.
 
 ### E99 · Fechamento do custo do 1º mês completo
 1. Apêndice B do plano antigo + `USO_SEARCHBOX.md`: sessões, seleções, envios, custo (US$) de set/2026 fechado e out/2026 parcial.
