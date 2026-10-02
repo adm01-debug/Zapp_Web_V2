@@ -668,10 +668,12 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
               // dentro do TalkXPagination compartilhado (não dá para pendurar o
               // handler nele sem tocar em talkxShared), então o intent — hover/foco
               // na região da paginação que o contém — adianta o fetch; o hook ignora
-              // quando a página atual já é a última.
+              // quando a página atual já é a última. O prefetch é OTIMIZAÇÃO, não requisito:
+              // daí o encadeamento opcional — a suíte tem mocks parciais do hook (sem a função
+              // nova) e a UI não pode quebrar por causa de um atalho.
               <div
-                onMouseEnter={() => void prefetchNextPage()}
-                onFocus={() => void prefetchNextPage()}
+                onMouseEnter={() => void prefetchNextPage?.()}
+                onFocus={() => void prefetchNextPage?.()}
               >
                 <TalkXPagination
                   page={page + 1}
