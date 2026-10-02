@@ -332,6 +332,13 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [audienceSource, setAudienceSource] = useState<AudienceSource>(campaign?.audience_source || (initial?.segmentId ? 'segment' : 'contacts'));
   const [segmentId, setSegmentId] = useState(campaign?.segment_id || initial?.segmentId || '');
   const [templateId, setTemplateId] = useState(campaign?.template_id || initial?.templateId || '');
+  // V26 — versão do template que originou a mensagem (talkx_template_versions.id).
+  // Fica NULA de propósito nesta etapa: a única versão arquivada é o estado
+  // ANTERIOR à edição (ver update_talkx_template_with_snapshot), então gravá-la
+  // apontaria para o template errado numa coluna de auditoria — decisão
+  // 20261001-223527-33aa. A coluna e a RPC já persistem o campo; ele passa a ser
+  // preenchido quando `talkx_templates` tiver `current_version_id`.
+  const [templateVersionId] = useState<string | null>(campaign?.template_version_id ?? null);
   const [messageTemplate, setMessageTemplate] = useState(campaign?.message_template || '');
   const [typingDelay, setTypingDelay] = useState([
     (campaign?.typing_delay_min || 1500) / 1000,
@@ -648,6 +655,13 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
         setMediaUrl('');
         setMediaType('');
       }
+      // V26 — `template_version_id` fica NULO nesta etapa, de propósito: a única
+      // versão que existe em talkx_template_versions é o estado ANTERIOR à edição
+      // (update_talkx_template_with_snapshot grava a linha lida antes do UPDATE),
+      // então apontar para ela seria dado enganoso numa coluna de auditoria
+      // (decisão 20261001-223527-33aa). A coluna e a RPC já persistem o campo;
+      // quando `talkx_templates` ganhar `current_version_id`, esta função volta a
+      // resolver o ponteiro correto.
     }
   }, [templates]);
 
@@ -700,10 +714,12 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
 
   const canProceed = useMemo(() => ({
     1: name.trim().length >= 3 && !!connectionId && (audienceSource === 'segment' ? !!segmentId : audienceSource === 'contacts' ? selectedContacts.length > 0 : false),
-    2: messageTemplate.trim().length > 0,
+    // V26 — só-mídia passa: aceita texto OU uma mídia real (URL preenchida; a RPC
+    // exige media_url e media_type juntos, então um tipo sem URL não pode avançar).
+    2: messageTemplate.trim().length > 0 || (hasMedia && mediaUrl.trim().length > 0),
     3: scheduleConfigIsValid,
     4: confirmConsent && confirmContent && confirmSuppression,
-  }), [name, connectionId, audienceSource, segmentId, selectedContacts.length, messageTemplate, scheduleConfigIsValid, confirmConsent, confirmContent, confirmSuppression]);
+  }), [name, connectionId, audienceSource, segmentId, selectedContacts.length, messageTemplate, hasMedia, mediaUrl, scheduleConfigIsValid, confirmConsent, confirmContent, confirmSuppression]);
 
   const buildPayload = useCallback((): Partial<TalkXCampaign> => ({
     name, description: description || null, objective, message_template: messageTemplate,
@@ -715,6 +731,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       : {},
     segment_id: audienceSource === 'segment' ? segmentId || null : null,
     template_id: templateId || null,
+    // V26 — versão do template usada (auditoria do que a campanha enviou).
+    template_version_id: templateVersionId || null,
     typing_delay_min: Math.round(typingDelay[0] * 1000), typing_delay_max: Math.round(typingDelay[1] * 1000),
     send_interval_min: Math.round(sendInterval[0] * 1000), send_interval_max: Math.round(sendInterval[1] * 1000),
     speed_profile: speedProfile,
@@ -731,7 +749,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     confirm_consent: confirmConsent,
     // V23: o passo atual do wizard é persistido para reabrir o rascunho no mesmo passo.
     draft_step: step,
-  }), [name, description, objective, messageTemplate, audienceSource, audienceRules, contactSearch, segmentId, templateId, typingDelay, sendInterval, speedProfile, connectionId, owner, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly, respectSuppression, confirmConsent, step]);
+  }), [name, description, objective, messageTemplate, audienceSource, audienceRules, contactSearch, segmentId, templateId, templateVersionId, typingDelay, sendInterval, speedProfile, connectionId, owner, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly, respectSuppression, confirmConsent, step]);
 
   /** Salva (rascunho/agendada) e, se `launch`, dispara imediatamente. Devolve o id da campanha. */
   const persistSave = useCallback(async (mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
@@ -827,6 +845,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     typingDelay, sendInterval, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly,
     isScheduled, scheduledAt, scheduleTimezone, respectSuppression, selectedContacts,
     audienceRules, contactSearch,
+    templateVersionId, // V26: versão do template (nula nesta etapa — ver comentário do estado).
     step, // V23: o passo do wizard entra no autosave — sair no passo 2 e reabrir volta ao passo 2.
   });
   const autosaveIsDirty = persistedAutosaveSnapshot !== null && persistedAutosaveSnapshot !== autosaveFields;
@@ -893,6 +912,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     name, setName, description, setDescription, objective, setObjective,
     audienceSource, setAudienceSource, segmentId, setSegmentId, segments, selectedSegment, segmentEstimate,
     templateId, applyTemplate, templates, selectedTemplate,
+    // V26 — versão do template aplicada (talkx_template_versions.id).
+    templateVersionId,
     messageTemplate, setMessageTemplate,
     typingDelay, setTypingDelay, sendInterval, setSendInterval, speedProfile, setSpeedProfile, messagesPerMinute,
     connectionId, setConnectionId, selectedContacts, showPreview, setShowPreview,

@@ -11,6 +11,8 @@ const f = vi.hoisted(() => ({
   create: vi.fn(), update: vi.fn(), saveDraft: vi.fn(), replace: vi.fn(), start: vi.fn(), log: vi.fn(),
   resolveAudience: vi.fn(async (_rules: unknown, _limit?: number) => [] as unknown[]),
   countAudience: vi.fn(async (_rules: unknown) => 0),
+  // V26 — versão do template aplicado (talkx_template_versions).
+  fetchVersionHistory: vi.fn(async (_templateId: string) => [] as { id: string; version_number: number }[]),
   contacts: [{ id: 'contact-1', name: 'Ana Silva', nickname: null, phone: '5511999999999', company: 'Acme', avatar_url: null, tags: ['VIP'] }],
   connections: [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }],
   blacklist: { ids: new Set<string>(), phones: new Set<string>() },
@@ -58,7 +60,22 @@ vi.mock('@/hooks/integrations/useTalkXSegments', async (importOriginal) => {
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ user: null, session: null, profile: f.profile, loading: false, signIn: vi.fn(), signUp: vi.fn(), signOut: vi.fn(), refreshProfile: vi.fn() }),
 }));
-vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({ useTalkXTemplates: () => ({ templates: f.templates, registerUse: vi.fn() }) }));
+vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
+  useTalkXTemplates: () => ({
+    templates: f.templates,
+    registerUse: vi.fn(),
+    // V26 — o wizard consulta a versão do template aplicado.
+    fetchVersionHistory: f.fetchVersionHistory,
+    createTemplate: { mutateAsync: vi.fn(), mutate: vi.fn() },
+    updateTemplate: { mutateAsync: vi.fn(), mutate: vi.fn() },
+    duplicateTemplate: { mutateAsync: vi.fn(), mutate: vi.fn() },
+    testTemplate: vi.fn(),
+    fetchVariants: vi.fn(async () => []),
+    saveVariant: vi.fn(),
+    deleteVariant: vi.fn(),
+    countVariantRecipients: vi.fn(async () => 0),
+  }),
+}));
 vi.mock('@/hooks/integrations/useTalkXEvents', () => ({ useTalkXEventLogger: () => f.log }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: vi.fn() } }));
 vi.mock('@/lib/supabaseHelpers', () => ({ fromTable: vi.fn() }));
@@ -81,8 +98,10 @@ vi.mock('@tanstack/react-query', () => ({
 
 import { AUDIENCE_PREVIEW_LIMIT, localToUTCInTimezone, useCampaignEditor } from '@/components/talkx/useCampaignEditor';
 import { TalkXCampaignWizard } from '@/components/talkx/TalkXCampaignWizard';
-import { OBJECTIVES } from '@/components/talkx/talkxShared';
+import { TalkXTemplateEditor } from '@/components/talkx/TalkXTemplateEditor';
+import { OBJECTIVES, personalizePreview } from '@/components/talkx/talkxShared';
 import { rulesToPostgrest, type SegmentRules } from '@/hooks/integrations/useTalkXSegments';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 /** Última consulta registrada com a chave informada (o mock empilha por render). */
 function capturedQuery(key: string): CapturedQuery | undefined {
@@ -681,5 +700,185 @@ describe('useCampaignEditor — V25 (responsável, nome mínimo, segmentos ativo
   it('todo objetivo tem ícone', () => {
     expect(OBJECTIVES).toHaveLength(6);
     for (const objective of OBJECTIVES) expect(objective.icon).toBeDefined();
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* V26 — editor de mensagem, só-mídia e versão do template            */
+/* ------------------------------------------------------------------ */
+
+/** Template completo (o editor de template lê todos os campos). */
+function makeTemplate(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 't-1', name: 'Boas-vindas', description: null, category: 'geral',
+    content: 'Olá {{nome}} da {{empresa}}', media_url: null, media_type: null,
+    tags: [] as string[], status: 'approved' as const, use_count: 0,
+    created_by: null, custom_variables: [] as string[],
+    created_at: '2026-09-01T00:00:00Z', updated_at: '2026-09-01T00:00:00Z',
+    ...overrides,
+  };
+}
+
+describe('useCampaignEditor — V26 (editor de mensagem, só-mídia e versão do template)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    f.create.mockResolvedValue({ id: 'draft-1' });
+    f.update.mockResolvedValue({});
+    f.replace.mockResolvedValue(1);
+    f.start.mockResolvedValue(true);
+    f.log.mockResolvedValue({});
+    f.persistedRecipientIds = [];
+    f.templates = [];
+    f.profile = { id: 'profile-1', name: 'Ana Silva', email: 'ana@example.com' };
+    f.segments = [];
+    f.connections = [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }];
+    f.queryCalls.length = 0;
+    f.resolveAudience.mockResolvedValue(f.contacts);
+    f.countAudience.mockResolvedValue(f.contacts.length);
+    // clearAllMocks não remove implementações: zera explicitamente entre testes.
+    f.fetchVersionHistory.mockResolvedValue([]);
+    window.sessionStorage.clear();
+    window.history.replaceState(null, '', '/');
+  });
+
+  afterEach(() => vi.useRealTimers());
+
+  it('usa o TalkXMessageEditor no passo 2 do wizard (toolbar e contador por limite)', () => {
+    window.history.replaceState(null, '', '/?view=talkx&wizard=new&step=2');
+    // O painel de variáveis do passo 2 usa Tooltip (provider fica no app root).
+    render(<TooltipProvider><TalkXCampaignWizard campaign={null} onClose={vi.fn()} /></TooltipProvider>);
+
+    expect(screen.getByTitle('Negrito (*texto*)')).toBeInTheDocument();
+    expect(screen.getByTitle('Itálico (_texto_)')).toBeInTheDocument();
+    expect(screen.getByTitle('Lista (- item)')).toBeInTheDocument();
+    expect(screen.getByTitle('Emoji')).toBeInTheDocument();
+    expect(screen.getByTitle('Link (https://)')).toBeInTheDocument();
+    expect(screen.getByTitle('Inserir variável')).toBeInTheDocument();
+    expect(screen.getByText('0/4096')).toBeInTheDocument();
+  });
+
+  it('texto vazio + mídia passa do passo 2; sem mídia não passa', async () => {
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    await act(async () => {});
+
+    act(() => { result.current.setMessageTemplate(''); });
+    expect(result.current.canProceed[2]).toBe(false);
+
+    act(() => {
+      result.current.toggleMedia(true);
+      result.current.setMediaType('image');
+      result.current.setMediaUrl('https://exemplo.com/foto.jpg');
+    });
+    expect(result.current.canProceed[2]).toBe(true);
+  });
+
+  it('tipo de mídia sem URL não libera o passo 2 (a RPC exige media_url e media_type juntos)', async () => {
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    await act(async () => {});
+
+    act(() => {
+      result.current.setMessageTemplate('');
+      result.current.toggleMedia(true);
+      result.current.setMediaType('image');
+    });
+    expect(result.current.canProceed[2]).toBe(false);
+  });
+
+  it('mensagem só com texto continua liberando o passo 2', async () => {
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    await act(async () => {});
+    act(() => result.current.setMessageTemplate('Olá {{nome}}'));
+    expect(result.current.canProceed[2]).toBe(true);
+  });
+
+  it('aplicar um template NAO grava a versao arquivada: fica nulo nesta etapa', async () => {
+    f.templates = [{ id: 't-1', content: 'Olá {{nome}}', media_url: null, use_count: 0 }];
+    // Existe versão arquivada, mas ela é o estado ANTERIOR à edição
+    // (update_talkx_template_with_snapshot grava a linha lida antes do UPDATE):
+    // apontar para ela seria apontar para o template errado numa coluna de
+    // auditoria. O front tem que mandar null MESMO com versão disponível — a
+    // coluna e a RPC já persistem o campo; falta só o ponteiro correto
+    // (current_version_id em talkx_templates, tarefa própria).
+    f.fetchVersionHistory.mockResolvedValue([{ id: 'version-9', version_number: 3 }]);
+    const campaign = { id: 'draft-1', name: 'Rascunho', status: 'draft' };
+    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+    await act(async () => {});
+    f.update.mockClear();
+
+    await act(async () => { result.current.applyTemplate('t-1'); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+
+    expect(result.current.templateVersionId).toBeNull();
+    expect(f.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'draft-1', template_version_id: null }));
+  });
+
+  it('template sem versão registrada grava template_version_id nulo', async () => {
+    f.templates = [{ id: 't-1', content: 'Olá {{nome}}', media_url: null, use_count: 0 }];
+    f.fetchVersionHistory.mockResolvedValue([]);
+    const campaign = { id: 'draft-1', name: 'Rascunho', status: 'draft' };
+    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+    await act(async () => {});
+    f.update.mockClear();
+
+    await act(async () => { result.current.applyTemplate('t-1'); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+
+    expect(result.current.templateVersionId).toBeNull();
+    expect(f.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'draft-1', template_version_id: null }));
+  });
+
+  it('mesma entrada produz a mesma prévia no wizard e no editor de template', () => {
+    const MSG = 'Olá {{nome}} da {{empresa}}';
+    const contact = { id: 'contact-1', name: 'João Silva', nickname: null, company: 'Sua Empresa', phone: '5511999999999', avatar_url: null, tags: [] };
+    f.contacts = [contact];
+    const template = makeTemplate({ content: MSG });
+    f.templates = [template];
+
+    // Fonte única: os dois pontos de uso chamam personalizePreview com a MESMA entrada.
+    const expected = personalizePreview(MSG, { name: 'João Silva', nickname: null, company: 'Sua Empresa' });
+    expect(expected).toBe('Olá João da Sua Empresa');
+
+    render(<TalkXCampaignWizard campaign={{ id: 'draft-1', name: 'Teste', status: 'draft', message_template: MSG } as never} onClose={vi.fn()} />);
+    render(<TalkXTemplateEditor templates={[template] as never} isLoading={false} editing={template as never} onClose={vi.fn()} />);
+
+    // A prévia é renderizada uma vez no rail do wizard e uma vez na moldura do editor.
+    const occurrences = (document.body.textContent ?? '').split(expected).length - 1;
+    expect(occurrences).toBeGreaterThanOrEqual(2);
+  });
+
+  it('o editor de template usa a mesma toolbar do editor compartilhado', () => {
+    const template = makeTemplate();
+    render(<TalkXTemplateEditor templates={[template] as never} isLoading={false} editing={template as never} onClose={vi.fn()} />);
+    expect(screen.getByTitle('Negrito (*texto*)')).toBeInTheDocument();
+    expect(screen.getByTitle('Inserir variável')).toBeInTheDocument();
+    expect(screen.getByText('27/1024')).toBeInTheDocument();
+  });
+
+  it('abrir um template e não alterar nada não marca alteração ao sair', () => {
+    const template = makeTemplate();
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const onClose = vi.fn();
+    render(<TalkXTemplateEditor templates={[template] as never} isLoading={false} editing={template as never} onClose={onClose} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Voltar' }));
+
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalledTimes(1);
+    confirmSpy.mockRestore();
+  });
+
+  it('alterar só a mídia já marca alteração ao sair', () => {
+    const template = makeTemplate();
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const onClose = vi.fn();
+    render(<TalkXTemplateEditor templates={[template] as never} isLoading={false} editing={template as never} onClose={onClose} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Imagem' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Voltar' }));
+
+    expect(confirmSpy).toHaveBeenCalledWith('Descartar alterações?');
+    expect(onClose).not.toHaveBeenCalled();
+    confirmSpy.mockRestore();
   });
 });

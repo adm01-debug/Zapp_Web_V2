@@ -50,6 +50,9 @@ export interface TalkXCampaign {
   audience_filters?: Record<string, unknown>;
   segment_id?: string | null;
   template_id?: string | null;
+  // V26 — versão do template (talkx_template_versions.id) que originou a
+  // mensagem. Opcional até o types-sync canônico após a migration da coluna.
+  template_version_id?: string | null;
   send_window_start?: string | null;
   send_window_end?: string | null;
   business_hours_only?: boolean;

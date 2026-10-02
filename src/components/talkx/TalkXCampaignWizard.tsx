@@ -5,7 +5,6 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +17,8 @@ import { useAudienceEstimate, RULE_FIELDS, RULE_OPS, type RuleOp, type SegmentRu
 import { useCampaignEditor, VARIABLES, MESSAGE_TEMPLATES, MEDIA_TYPES, type WizardStep } from './useCampaignEditor';
 import { TalkXContactSelector } from './TalkXContactSelector';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
-import { IconTile, WhatsAppBubble, OBJECTIVES, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
+import { TalkXMessageEditor } from './TalkXMessageEditor';
+import { IconTile, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
@@ -460,13 +460,19 @@ function StepMessage({ ed }: { ed: WizardState }) {
           })}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-3">
-          <div className="rounded-xl border border-border/70 bg-input/30 overflow-hidden">
-            <Textarea value={ed.messageTemplate} onChange={(e) => ed.setMessageTemplate(e.target.value)} placeholder="{{saudacao}}, {{nome}}! Temos uma novidade especial para a sua empresa…" rows={7} className="resize-none border-0 bg-transparent text-sm leading-relaxed focus-visible:ring-0" />
-            <div className="flex items-center justify-between px-3 py-2 border-t border-border/50 text-2xs text-muted-foreground">
-              <span className="flex items-center gap-2"><Wand2 className="w-3.5 h-3.5" /> Variáveis são substituídas por contato no envio</span>
-              <span>{ed.messageTemplate.length}/4096</span>
-            </div>
-          </div>
+          <TalkXMessageEditor
+            value={ed.messageTemplate}
+            onChange={ed.setMessageTemplate}
+            placeholder="{{saudacao}}, {{nome}}! Temos uma novidade especial para a sua empresa…"
+            rows={7}
+            limit={4096}
+            knownVariables={VARIABLE_KEYS}
+            footer={(
+              <div className="flex items-center px-3 py-2 border-t border-border/50 text-2xs text-muted-foreground">
+                <span className="flex items-center gap-2"><Wand2 className="w-3.5 h-3.5" /> Variáveis são substituídas por contato no envio</span>
+              </div>
+            )}
+          />
           <div className="rounded-xl border border-border/70 bg-input/30 p-3">
             <p className="text-xs font-semibold text-foreground mb-2">Variáveis</p>
             <div className="flex flex-wrap gap-1.5">
