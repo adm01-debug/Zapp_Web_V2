@@ -220,14 +220,13 @@ export async function handleIncomingMessage(
   const connection = await getConnectionByInstance(supabase, instance);
   if (!connection) return;
 
-  const earlyContact = await getContactByPhone(supabase, phone, connection.id);
-
   if (messageType === 'sticker') {
     mediaUrl = await handleStickerMedia(supabase, instance, data, message, key);
   }
 
   if (['image', 'video', 'audio', 'document'].includes(messageType)) {
     const msgId = key.id || `${Date.now()}`;
+    const earlyContact = await getContactByPhone(supabase, phone, connection.id);
     const permanentUrl = await persistIncomingMedia(supabase, instance, data, messageType, msgId, mediaUrl, earlyContact?.id);
     if (permanentUrl) mediaUrl = permanentUrl;
   }
