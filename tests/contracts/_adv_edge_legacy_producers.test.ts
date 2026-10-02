@@ -67,6 +67,10 @@
  *    É arquivo de teste, não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3)
  *    seguem idênticos — só o total varrido sobe (196 → 197), medido pela varredura depois do merge,
  *    que é a regra declarada neste arquivo.
+ *  - 200: Email NAVY (02/10/2026) — `_shared/gmail-mime.ts`,
+ *    `_shared/__tests__/gmail-mime.test.ts` e `gmail-sync/index.test.ts`. São implementação
+ *    e testes do contrato MIME/sincronização do Gmail; não produzem vocabulário legado e, por
+ *    isso, apenas elevam o total varrido de 197 para 200.
  *    De propósito NÃO usa o "regex antigo": o fatiamento das chamadas é por `indexOf`.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -142,8 +146,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('197 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(197);
+  it('200 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(200);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );

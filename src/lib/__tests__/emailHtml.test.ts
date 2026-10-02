@@ -63,10 +63,18 @@ describe('sanitizeEmailHtml — link hardening', () => {
 
 // ─── Hooks: imagens ────────────────────────────────────────────────────────
 describe('sanitizeEmailHtml — imagens', () => {
-  it('adiciona loading=lazy e referrerpolicy=no-referrer', () => {
+  it('bloqueia imagem remota por padrão em vez de acionar rastreador', () => {
     const out = sanitizeEmailHtml('<img src="https://cdn.example.com/img.jpg" alt="x">');
+    expect(attr(out, 'img', 'src')).toBeNull();
+    expect(attr(out, 'img', 'title')).toContain('bloqueada por privacidade');
     expect(attr(out, 'img', 'loading')).toBe('lazy');
     expect(attr(out, 'img', 'referrerpolicy')).toBe('no-referrer');
+  });
+
+  it('bloqueia cid não resolvido sem inventar URL', () => {
+    const out = sanitizeEmailHtml('<img src="cid:logo-empresa">');
+    expect(attr(out, 'img', 'src')).toBeNull();
+    expect(attr(out, 'img', 'alt')).toContain('bloqueada por privacidade');
   });
 
   it('remove src de data: URL > 32 KB e aplica alt de fallback quando não havia alt', () => {

@@ -60,6 +60,7 @@ const OUTBOUND_MSG: EmailMessage = {
   ...INBOUND_MSG,
   id: 'msg2',
   direction: 'outbound',
+  to_addresses: ['customer@example.com'],
 };
 
 const defaultProps = {
@@ -92,7 +93,7 @@ describe('EmailChatReplyBar', () => {
     it('reply outbound: mostra to_addresses[0] no "para:"', () => {
       renderBar({ mode: 'reply', lastMessage: OUTBOUND_MSG });
       const span = screen.getByText(/para:/);
-      expect(span.textContent).toContain('user@example.com');
+      expect(span.textContent).toContain('customer@example.com');
     });
 
     it('reply-all inbound: inclui from e cc, exclui accountEmail', () => {
@@ -114,7 +115,7 @@ describe('EmailChatReplyBar', () => {
     it('corpo vazio sem anexos: não chama nenhuma mutation', () => {
       renderBar();
       const textarea = screen.getByPlaceholderText('Digite sua resposta...');
-      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+      fireEvent.click(screen.getByRole('button', { name: /Enviar/i }));
       expect(replyMutateAsync).not.toHaveBeenCalled();
       expect(sendMutateAsync).not.toHaveBeenCalled();
     });
@@ -142,7 +143,7 @@ describe('EmailChatReplyBar', () => {
       fireEvent.change(toInput, { target: { value: 'fwd@example.com' } });
       const textarea = container.querySelector('textarea') as HTMLTextAreaElement;
       fireEvent.change(textarea, { target: { value: 'Encaminhando' } });
-      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+      fireEvent.keyDown(textarea, { key: 'Enter', ctrlKey: true });
       await waitFor(() =>
         expect(sendMutateAsync).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -157,14 +158,15 @@ describe('EmailChatReplyBar', () => {
       renderBar({ mode: 'forward' });
       const textarea = screen.getByPlaceholderText('Adicione uma mensagem...');
       fireEvent.change(textarea, { target: { value: 'Mensagem sem destino' } });
-      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+      fireEvent.keyDown(textarea, { key: 'Enter', ctrlKey: true });
       await waitFor(() =>
         expect(vi.mocked(toast.error)).toHaveBeenCalledWith('Informe o destinatário'),
       );
     });
 
     it('mode=new sem assunto: toast.error "Informe o assunto do e-mail"', async () => {
-      renderBar({ mode: 'new' });
+      const { container } = renderBar({ mode: 'new' });
+      fireEvent.change(container.querySelector('input[placeholder="email@destinatario.com"]') as HTMLInputElement, { target: { value: 'dest@example.com' } });
       const textarea = screen.getByPlaceholderText('Digite sua resposta...');
       fireEvent.change(textarea, { target: { value: 'Nova mensagem' } });
       fireEvent.click(screen.getByRole('button', { name: /Enviar/i }));
@@ -184,19 +186,19 @@ describe('EmailChatReplyBar', () => {
   });
 
   describe('handleKeyDown', () => {
-    it('Enter sem Shift: envia a mensagem', async () => {
+    it('Ctrl+Enter envia a mensagem', async () => {
       renderBar();
       const textarea = screen.getByPlaceholderText('Digite sua resposta...');
       fireEvent.change(textarea, { target: { value: 'Enter test' } });
-      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+      fireEvent.keyDown(textarea, { key: 'Enter', ctrlKey: true });
       await waitFor(() => expect(replyMutateAsync).toHaveBeenCalled());
     });
 
-    it('Shift+Enter: não envia', async () => {
+    it('Enter sem modificador cria linha e não envia', async () => {
       renderBar();
       const textarea = screen.getByPlaceholderText('Digite sua resposta...');
       fireEvent.change(textarea, { target: { value: 'Draft' } });
-      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: true });
+      fireEvent.keyDown(textarea, { key: 'Enter' });
       expect(replyMutateAsync).not.toHaveBeenCalled();
     });
   });
