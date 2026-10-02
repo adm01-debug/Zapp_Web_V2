@@ -199,7 +199,7 @@ export function IconTile({ icon: Icon, color = 'blue', size = 40, glow = false, 
   const bgCls = soft ? tileSoft[color] : glow ? tileGradient[color] : cn('bg-dash-tile-' + color, 'rounded-xl flex items-center justify-center shrink-0');
   const iconColor = soft ? `text-${color === 'blue' ? 'primary' : color === 'green' ? 'success' : color === 'red' ? 'destructive' : 'foreground'}` : 'text-white/90';
   return (
-    <div style={{ width: size, height: size }} className={cn(soft || glow ? '' : '', bgCls, radiusCls, 'flex items-center justify-center shrink-0', className)}>
+    <div style={{ width: size, height: size }} className={cn(bgCls, radiusCls, 'flex items-center justify-center shrink-0', className)}>
       <Icon className={cn(iconSize, iconColor)} strokeWidth={2} />
     </div>
   );

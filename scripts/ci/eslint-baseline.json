@@ -269,10 +269,6 @@
       "sha256": "b8d063c19f2e5e5a51287d2f57609101ebf8e7928b28719434c2218d9f042711"
     },
     {
-      "path": "src/components/email/EmailThreadList.tsx",
-      "sha256": "03ffbdc1945dc6cf8e4f0e88e19d288e7d690e0ff4290d479418ce8ecb957cf3"
-    },
-    {
       "path": "src/components/ErrorBoundary.tsx",
       "sha256": "1d681b3546ae59316de8e48e07d05d7cd8e5ecea295a13362bccc469a1caae17"
     },
@@ -342,7 +338,7 @@
     },
     {
       "path": "src/components/inbox/AudioRecorder.tsx",
-      "sha256": "cbfe1a5d8843bfb16c7d18719f06b1cc5e56a6076f677f4c17acb05efd44af25"
+      "sha256": "44b230ca99a11872278a212b5e2b7cf9618eb5d39f9bbe3ba603a7244f2e98d9"
     },
     {
       "path": "src/components/inbox/chat/__tests__/ChatSearchBar.test.tsx",
@@ -746,11 +742,11 @@
     },
     {
       "path": "src/components/settings/__tests__/SLAConfigurationManager.test.tsx",
-      "sha256": "b9fd7e277b3e82cdf99a6bb75530720aee49241578f5b255772dc21fa4795443"
+      "sha256": "3007bb2b685cb75db21389c9a57c642913248c8a37cda35b3f261cdaf5b55455"
     },
     {
       "path": "src/components/settings/__tests__/SLARulesManager.test.tsx",
-      "sha256": "38e78410d554d550ef232216d3891123f0eb096f9f8733237d45ef9afdb988b6"
+      "sha256": "9913e66437141798fbf3bb8057a55c0274896f0de01e50ccc7c9b9feaf127a83"
     },
     {
       "path": "src/components/settings/ai-providers/AIProviderHealthPanel.tsx",
@@ -838,7 +834,7 @@
     },
     {
       "path": "src/components/team-chat/TeamFileUploader.tsx",
-      "sha256": "f8166b394ac3d7d83b8b1c1d29355ac33febc87d9daaafb357af862149bcf76b"
+      "sha256": "b2522ee17209f0ea97583e77dfbfbc2c08482c54a5f01d35820fd757b17fc5d3"
     },
     {
       "path": "src/components/team-chat/TeamMemberProfileHeader.tsx",
@@ -1286,7 +1282,7 @@
     },
     {
       "path": "src/hooks/integrations/useWhatsAppStatus.ts",
-      "sha256": "268537beb3c46bd877ec91516319cd8204f537e40ee4152c569e594adcf3ad0a"
+      "sha256": "d51c54e79105b08c0846b9e18a7bcdb8e01ac8ad05365b9696776607877b8165"
     },
     {
       "path": "src/hooks/integrations/useWhatsAppTemplates.ts",
@@ -1474,7 +1470,7 @@
     },
     {
       "path": "src/test/mocks/supabase.ts",
-      "sha256": "b46631902d8e04589a3f19676dc22241ab742db0f5a52c12a68f4d89d0a1baf4"
+      "sha256": "28b1b237f6e708f7c2d628b21c0c182084580dbf55a217ad69397b00ac285358"
     },
     {
       "path": "src/types/chat.ts",
@@ -1538,7 +1534,7 @@
     },
     {
       "path": "supabase/functions/_shared/validation.ts",
-      "sha256": "21cdf66adc5bb9f1820f46936015a67a8b67748f94c13e118ece43fe77423108"
+      "sha256": "257890b6c2c20f463f6bb01b670306681b00bdc3685eda012c4296aad620d61e"
     },
     {
       "path": "supabase/functions/ai-suggest-reply/index.ts",
@@ -3061,20 +3057,6 @@
       "spanHash": "4461c7fd0818f59595ec9f02ea44389f1256e22c8aa5c00399ab4d5534722e23",
       "lineHash": "2040a7f258002506ec99a0738fec0e49567ed21cff0481fa176a66a0da617755",
       "contextHash": "a2cd11579f01db2dfde44b1bc45753fd17fb56e7021e82fb1e4a8f760af375a7"
-    },
-    {
-      "file": "src/components/email/EmailThreadList.tsx",
-      "line": 65,
-      "column": 47,
-      "endLine": 65,
-      "endColumn": 53,
-      "severity": 2,
-      "ruleId": "no-self-assign",
-      "messageId": "selfAssignment",
-      "message": "'result' is assigned to itself.",
-      "spanHash": "f6a214f7a5fcda0c2cee9660b7fc29f5649e3c68aad48e20e950137c98913a68",
-      "lineHash": "f1e722d339d7c735b0789c9589db3cbe0bc774d64b1829bb48370263c17a3227",
-      "contextHash": "259198915a588043cbb6f6c1d531e13f8cb5847789102928549ecdf76204a018"
     },
     {
       "file": "src/components/ErrorBoundary.tsx",
@@ -11744,14 +11726,14 @@
     },
     {
       "file": "src/hooks/integrations/useWhatsAppStatus.ts",
-      "line": 278,
+      "line": 274,
       "column": 5,
-      "endLine": 278,
+      "endLine": 274,
       "endColumn": 14,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/integrations/useWhatsAppStatus.ts:278:5 276 | 277 | useEffect(() => { > 278 | fetchData(); | ^^^^^^^^^ Avoid calling setState() directly within an effect 279 | }, [fetchData]); 280 | 281 | return {",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/integrations/useWhatsAppStatus.ts:274:5 272 | 273 | useEffect(() => { > 274 | fetchData(); | ^^^^^^^^^ Avoid calling setState() directly within an effect 275 | }, [fetchData]); 276 | 277 | return {",
       "spanHash": "9f1d76c025605bd3eae6e38282899b99ba7785a23050d8b5f9c02906e10b92d6",
       "lineHash": "7978dd47b71847f4677826ba6758beb8d8499455c6d93a04362171ee6901329e",
       "contextHash": "8aaba8ce2470dc5c155c0cd964eab13fa6e61650d48259b871503595a6b29173"
@@ -12934,23 +12916,23 @@
     },
     {
       "file": "src/test/mocks/supabase.ts",
-      "line": 24,
-      "column": 21,
-      "endLine": 24,
-      "endColumn": 24,
+      "line": 12,
+      "column": 18,
+      "endLine": 12,
+      "endColumn": 21,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
       "messageId": "unexpectedAny",
       "message": "Unexpected any. Specify a different type.",
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "e54a0e267cf9006a578ec0aced841604295cbf37a5605128b3b6379c1e79fbdd",
-      "contextHash": "152e1e229e55993ec2f2c156c0d88ccc87fc5f9cf9b60d618c974c7b93c57622"
+      "lineHash": "7f12dbec42f7f1ccf05c6ade9f604bec1310c4c8338652a8461cc0457b6ad869",
+      "contextHash": "0af577c09ddbf7022ee4844d3942e1bc2230be930a63ef2c2cd0d07845235503"
     },
     {
       "file": "src/test/mocks/supabase.ts",
-      "line": 30,
+      "line": 34,
       "column": 62,
-      "endLine": 30,
+      "endLine": 34,
       "endColumn": 65,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -12959,20 +12941,6 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "771575065c9cfda8b845422aeaa3dbd144ac26cac6e5faa0fe06b6afb23fa209",
       "contextHash": "796d0d7457ae271cfaabdb94642cab73df4e9f366540c8aebb0f63c125cfaa5f"
-    },
-    {
-      "file": "src/test/mocks/supabase.ts",
-      "line": 7,
-      "column": 18,
-      "endLine": 7,
-      "endColumn": 21,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "55604625cd87bce78ab819d7fa81169a695c6f401a5a5b9b6b08ca17c65dd2ec",
-      "contextHash": "d478bb21bc947ec1267f99e179aa2b90c466809004af85adbe5121b5cb68d32f"
     },
     {
       "file": "src/types/chat.ts",

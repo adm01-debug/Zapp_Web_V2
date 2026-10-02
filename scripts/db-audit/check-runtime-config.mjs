@@ -24,6 +24,17 @@ export function loadRealtimeBaseline() {
   return tables.sort((a, b) => a.localeCompare(b));
 }
 
+/**
+ * Escala de autovacuum esperada (S1244). O valor chega do Postgres como float,
+ * então a igualdade exata `Number(x) !== 0.05` é frágil; compara-se com
+ * tolerância (1e-9) — o mesmo resultado para o 0.05 real. Valor ausente ou não
+ * numérico (NaN) continua contando como divergência (nada afrouxa aqui).
+ */
+function escalaAutovacuumOk(valor) {
+  const n = Number(valor);
+  return Number.isFinite(n) && Math.abs(n - 0.05) <= 1e-9;
+}
+
 export function evaluateRuntimeConfig(raw, realtimeBaseline = loadRealtimeBaseline()) {
   const sections = raw.trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
   const names = ['identity', 'autovacuum', 'realtime', 'cron', 'storage', 'ledger_limitations'];
@@ -38,7 +49,8 @@ export function evaluateRuntimeConfig(raw, realtimeBaseline = loadRealtimeBaseli
   for (const name of expected) {
     const tables = data.autovacuum.tables.filter(row => row.table === name);
     if (tables.length !== 1 || tables[0].enabled !== true
-      || Number(tables[0].vacuum_scale_factor) !== 0.05 || Number(tables[0].analyze_scale_factor) !== 0.05) failures.push(`autovacuum ${name}`);
+      || !escalaAutovacuumOk(tables[0].vacuum_scale_factor)
+      || !escalaAutovacuumOk(tables[0].analyze_scale_factor)) failures.push(`autovacuum ${name}`);
   }
   const realtimeTables = Array.isArray(data.realtime.tables)
     ? data.realtime.tables.filter(table => typeof table === 'string').sort((a, b) => a.localeCompare(b))
