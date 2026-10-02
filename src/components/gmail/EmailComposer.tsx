@@ -275,7 +275,7 @@ export function EmailComposer({
                 {activeAccount.email_address}
               </Badge>
             )}
-            {draftStatus !== 'idle' && <span className="text-[10px] text-slate-400">{draftStatus === 'saving' ? 'Salvando…' : draftStatus === 'saved' ? 'Rascunho salvo' : 'Falha ao salvar rascunho'}</span>}
+            {draftStatus !== 'idle' && <span className="text-3xs text-slate-400">{draftStatus === 'saving' ? 'Salvando…' : draftStatus === 'saved' ? 'Rascunho salvo' : 'Falha ao salvar rascunho'}</span>}
           </div>
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsMinimized(!isMinimized)} aria-label={isMinimized ? 'Expandir compositor' : 'Minimizar compositor'}>
@@ -411,7 +411,7 @@ export function EmailComposer({
 
                 {selectedForwardAttachments.length > 0 && (
                   <div className="space-y-1 rounded-lg border border-blue-400/15 bg-blue-500/5 p-2" aria-label="Anexos da mensagem encaminhada">
-                    <p className="text-[10px] font-medium text-blue-200">Anexos originais incluídos</p>
+                    <p className="text-3xs font-medium text-blue-200">Anexos originais incluídos</p>
                     <div className="flex flex-wrap gap-1">
                       {selectedForwardAttachments.map(attachment => (
                         <Badge key={attachment.id} variant="secondary" className="gap-1 text-3xs">

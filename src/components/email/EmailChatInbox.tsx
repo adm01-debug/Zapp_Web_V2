@@ -103,7 +103,7 @@ export function EmailChatInbox() {
           <Button ref={helpButtonRef} variant="outline" onClick={() => setShowHelp(true)} className="ml-auto hidden border-blue-400/30 bg-transparent text-slate-200 hover:bg-blue-500/10 hover:text-white sm:inline-flex"><CircleHelp className="mr-2 h-4 w-4" />Ajuda</Button>
           <Button onClick={() => { setComposerTo(''); setShowComposer(true); }} className="bg-blue-600 shadow-[0_0_18px_rgba(37,99,235,.25)] hover:bg-blue-500"><Plus className="mr-2 h-4 w-4" />Nova mensagem</Button>
         </div>
-        <div className="mt-2 flex items-center gap-2 text-[11px] text-emerald-300/90"><Wifi className="h-3 w-3" />{activeAccount.email_address}<span className="text-slate-600">•</span><span className="text-slate-400">{unreadCount} não {unreadCount === 1 ? 'lido' : 'lidos'}</span></div>
+        <div className="mt-2 flex items-center gap-2 text-2xs text-emerald-300/90"><Wifi className="h-3 w-3" />{activeAccount.email_address}<span className="text-slate-600">•</span><span className="text-slate-400">{unreadCount} não {unreadCount === 1 ? 'lido' : 'lidos'}</span></div>
       </header>
 
       <div className="flex min-h-0 flex-1">
