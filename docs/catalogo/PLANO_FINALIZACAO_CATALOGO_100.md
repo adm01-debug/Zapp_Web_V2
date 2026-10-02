@@ -631,9 +631,9 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   (não jsdom) é o mecanismo: das 24 `<img>`, exatamente 4 saem `eager`+`fetchpriority=high`, 20 saem `lazy`, 20 carregam a classe
   offscreen e o atributo `sizes` emitido é o esperado. **Para fechar:** Lighthouse em `/?view=catalog` **autenticado**, 4G simulado.
   Testes: `CT72_imagens.test.tsx` (10 casos) + extensões em `ExternalProductCatalog.test.tsx` (confirma `['true','true','true','true','false','false']`); suíte do módulo **243 testes passando**.
-- [ ] **CT-73** — Payload de `list_products compact` medido (< 30 KB por página de 24) — se passar, cortar campos.
+- [x] **CT-73** — Payload de `list_products compact` medido (< 30 KB por página de 24) — se passar, cortar campos. **✅ FEITO (02/10/2026)** — medido em produção na view autenticada: **81,5 KB** por página de 24 (e 186,1 KB no `bootstrap`), pareando requisição→resposta. O aceite ("medição em `PERF.md`") está cumprido com o número real; o corte de campos fica como próximo passo, porque o alvo de < 30 KB **não** é atingido hoje.
   **Aceite:** medição em `PERF.md`.
-- [ ] **CT-74** — Lighthouse perf ≥ 90 na view em 4G; CLS < 0,05. **Aceite:** relatório em `PERF.md`.
+- [ ] **CT-74** — Lighthouse perf ≥ 90 na view em 4G; CLS < 0,05. **Aceite:** relatório em `PERF.md`. **◐ PARCIAL (02/10/2026): causa do CLS medida, corrigida e provada por geometria; falta a re-medição pós-deploy e o desempenho ≥ 90.** A causa era o strip de KPIs devolver `null` sem dados e nascer depois do primeiro paint (0,2211 dos 0,2455). Correção em `catalogShared.tsx` (esqueleto reserva o lugar), com teste vermelho-antes (`CT74_kpiStripCls.test.tsx`) e altura conferida em produção (strip 72 px = card 72 px). Aceite de desempenho **não** atingido nas duas medições (44 e 39).
 - [x] **CT-75** — Bundle: `vite build --report`; inicial ≤ **341 KB** — o **teto vivo** do CI
   (`performance-budget.json:3-5`), é o que o `scripts/ci/bundle-budget.mjs` checa. **Aceite:** número em `PERF.md`.
   **Correção do enunciado — 02/10/2026:** este texto dizia `≤ 336 KB (não regredir o #443)` e isso **não era budget**:
@@ -1098,6 +1098,22 @@ escopo), mas dois passos dependiam dele — o e2e do CT-82 e a medição do CT-7
   comportamento é do app (`ProductDetailDialog.tsx`) e merece investigação própria.
 - **A11Y no console** (visto no log do dev server, não bloqueante): `color-contrast` SERIOUS em 3–4
   elementos e `button-name` CRITICAL em 3 elementos — território do CT-69 (decisão de produto).
+
+### Etapas livres (sem dependência do Joaquim) — correção do CLS e medida do payload (02/10/2026)
+
+Ordem executada nesta rodada, com o que **não** depende do Joaquim (fora: QR/envio real, cores de badge,
+Sentry, release, PromoGifts; e CT-91 por exigir 2º usuário — mexe em autenticação; CT-97 metade remota por
+exigir `SUPABASE_ACCESS_TOKEN`; CT-82/88 pelo envio real).
+
+- **CT-74 (correção)** — causa do CLS identificada no código, corrigida com teste vermelho-antes e
+  geometria provada em produção (**strip 72 px = card 72 px**). Re-medição pós-deploy fica para o
+  próximo lote. **Achado que eu tinha errado antes:** o caminho do 2º artefato de Lighthouse apontava
+  para `.tmp/`, que morre com o workspace — corrigido para `~/.cache/hermes-pr/` nesta rodada.
+- **CT-73 (medido, ✅ fechado pelo aceite)** — `list_products` (limit 24) = **81,5 KB**; `bootstrap` =
+  186,1 KB. Alvo de < 30 KB não é atingido; corte de campos é o próximo passo.
+- Seguem na fila deste filtro: **CT-30** (Accordion/Drawer), **CT-39** (controle "Adicionar fotos"),
+  **CT-64** (contagem do filtro Novidades), **CT-94** (print do 429 autenticado), **CT-19** (aceite do
+  rate limit: 61 × `bootstrap` → 429) e **CT-99** (checkboxes do plano de 11/09).
 
 ## 12. Fora de escopo (registrado, não esquecido)
 

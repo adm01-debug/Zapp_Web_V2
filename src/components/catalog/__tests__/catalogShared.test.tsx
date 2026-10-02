@@ -217,9 +217,15 @@ const mockStats = (overrides: Partial<CatalogStats> = {}): CatalogStats => ({
 });
 
 describe('CatalogKpiStrip', () => {
-  it('sem stats (undefined), não renderiza nada', () => {
+  // CT-74: este caso mudou DE PROPOSITO. O strip sem dados passou a reservar o
+  // espaço (esqueleto) porque devolver `null` fazia a faixa nascer depois do
+  // primeiro paint e empurrar a grade — 0,2211 dos 0,2455 de CLS medidos no
+  // Lighthouse de produção em 02/10.
+  it('sem stats (undefined), reserva o espaço com o esqueleto (não some)', () => {
     const { container } = render(<CatalogKpiStrip stats={undefined} />);
-    expect(container.firstChild).toBeNull();
+
+    expect(container.querySelector('[data-testid="catalog-kpi-strip-placeholder"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="catalog-kpi-strip"]')).toBeNull();
   });
 
   it('com stats completo, renderiza os 6 KPIs', () => {
