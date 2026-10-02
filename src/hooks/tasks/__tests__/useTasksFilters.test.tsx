@@ -135,4 +135,18 @@ describe('etapa 45 — useTasksFilters', () => {
     expect(result.current.filters.prio).toBe('high');
     expect(result.current.textoDaBusca).toBe('liga');
   });
+
+  it('nao desfaz a navegacao por pushState: a base e a URL real, nao o location obsoleto do router', () => {
+    // Fluxo do aviso de alarme (`openTask`): `history.replaceState(?task=<id>)`
+    // + `pushState(?view=tasks)` deixam a URL real em `?view=tasks&task=<id>`.
+    // O `location` do react-router NAO ve pushState (so popstate), entao ele
+    // continua em `?view=inbox`. Com a base obsoleta este hook regravava a URL
+    // com a view antiga e desfazia a navegacao (Sheet nunca abria).
+    window.history.replaceState(null, '', '/?view=tasks&task=abc123');
+
+    renderHook(() => useTasksFilters(), { wrapper: wrapper('?view=inbox') });
+
+    expect(window.location.search).toContain('view=tasks');
+    expect(window.location.search).toContain('task=abc123');
+  });
 });
