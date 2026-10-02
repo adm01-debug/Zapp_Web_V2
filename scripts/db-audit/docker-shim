@@ -65,7 +65,12 @@ case "${1:-}" in
     shift
     cname="${1:-}"
     if _has_state "$cname"; then
+      # Emit the postgres startup sequence twice — once for the temporary initdb
+      # instance and once for the real server — so test scripts that wait for
+      # count("database system is ready to accept connections") >= 2 (e.g.
+      # public-api-disable.test.sh) see the expected output immediately.
       printf 'PostgreSQL init process complete; ready for start up.\n'
+      printf 'database system is ready to accept connections\n'
       printf 'PostgreSQL init process complete; ready for start up.\n'
       printf 'database system is ready to accept connections\n'
     else
