@@ -190,7 +190,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
           )}
         </SectionCard>
 
-        <SectionCard icon={ShoppingBag} title="Últimas compras" tone="blue" action={{ label: 'Ver todas →', onClick: () => onTabChange('orders') }}>
+        <SectionCard icon={ShoppingBag} title="Últimas compras" tone="blue" action={{ label: 'Ver no SalesView →', onClick: () => onTabChange('orders') }}>
           {!crm360 || crm360.purchases.length === 0 ? (
             <EmptyState icon={ShoppingBag} title="Nenhuma compra registrada" description="Compras deste contato aparecerão aqui." size="sm" />
           ) : (
@@ -280,7 +280,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
           )}
         </SectionCard>
 
-        <SectionCard icon={HistoryIcon} title="Últimas interações comerciais" action={{ label: 'Ver histórico →', onClick: () => onTabChange('history') }} className="xl:col-span-2">
+        <SectionCard icon={HistoryIcon} title="Últimas interações comerciais" action={{ label: 'Ver na Journey →', onClick: () => onTabChange('history') }} className="xl:col-span-2">
           {!crm360 || crm360.interacoes.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhuma interação comercial</p>
           ) : (

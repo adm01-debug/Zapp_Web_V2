@@ -125,15 +125,15 @@ describe('Crm360Tab', () => {
     expect(screen.queryByText(/Joaquim|Ana Souza|12\.450|Score 92|Segmento Varejo/)).not.toBeInTheDocument();
   });
 
-  it('"Ver todas →" de Últimas compras troca para a aba Pedidos', () => {
+  it('"Ver no SalesView →" de Últimas compras troca para a aba SalesView', () => {
     const { onTabChange } = renderTab();
-    fireEvent.click(screen.getByText('Ver todas →'));
+    fireEvent.click(screen.getByText('Ver no SalesView →'));
     expect(onTabChange).toHaveBeenCalledWith('orders');
   });
 
-  it('"Ver histórico →" troca para a aba Histórico', () => {
+  it('"Ver na Journey →" troca para a aba Journey', () => {
     const { onTabChange } = renderTab();
-    fireEvent.click(screen.getByText('Ver histórico →'));
+    fireEvent.click(screen.getByText('Ver na Journey →'));
     expect(onTabChange).toHaveBeenCalledWith('history');
   });
 
