@@ -1,9 +1,12 @@
 import type { QueryClient } from '@tanstack/react-query';
 
 /**
- * Queries agregadas da tela de Contatos que NÃO se atualizam sozinhas quando um
- * contato muda: os KPIs (`useContactsKpi`) e os contadores por tipo que alimentam
- * Total/Fornecedores e as abas (`useContactsSearch`).
+ * Queries da tela de Contatos que NÃO se atualizam sozinhas quando um contato
+ * muda: os KPIs (`useContactsKpi`), os contadores por tipo que alimentam
+ * Total/Fornecedores e as abas, e as páginas da lista (`useContactsSearch`). A
+ * lista entra por prefixo: cada busca/aba/página é uma entrada própria em cache, e
+ * só a ativa é refeita pelo `refetch()` local — sem isso, limpar a busca depois de
+ * excluir mostrava o contato excluído.
  *
  * Toda escrita em `contacts` (criar, editar, excluir, mesclar, ações em massa,
  * mover no Kanban) precisa invalidá-las. Antes isso dependia do botão
@@ -13,6 +16,7 @@ import type { QueryClient } from '@tanstack/react-query';
 export const CONTACTS_AGGREGATE_QUERY_KEYS = [
   ['contacts-kpi'],
   ['contacts-type-counts'],
+  ['contacts-search'],
 ] as const;
 
 export function invalidateContactsAggregates(queryClient: Pick<QueryClient, 'invalidateQueries'>) {
