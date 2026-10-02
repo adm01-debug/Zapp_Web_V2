@@ -250,6 +250,7 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   **Aceite:** 4 prints commitados; Accordion e Drawer testados.
   **✅ FEITO (02/10/2026).** O rail virou `<Accordion>` rotulado exatamente **"Resumo do catálogo"**, com `xl:hidden`, **acima da grade**, reusando o mesmo `<CatalogRail>` com as mesmas props do `<aside>` (`ExternalProductManagement.tsx:968`; o `<aside>` segue exclusivo do `xl+`). O detalhe e o envio passaram a usar **Drawer** (`vaul`, via `src/components/ui/drawer.tsx` novo) abaixo de `md` e mantêm `Sheet`/`Dialog` acima disso. Testes: `CT30_responsivo.test.tsx` (rótulo do Accordion, detalhe em Drawer com `data-vaul-drawer-direction="bottom"` abaixo de md, Sheet em md+). **Aceite literal cumprido:** os 4 prints estão commitados em `docs/catalogo/screens/` e os dois componentes estão testados. **Ressalva declarada:** esses 4 prints são anteriores a esta mudança e mostram o layout antigo (sem Accordion, com Dialog no lugar do Drawer); refazê-los é documentação pendente, não aceite em aberto.
   **🔴 MEDIDO EM PRODUÇÃO (02/10/2026) — o aceite NÃO é cumprido: o limite não está ativo.** Com o mesmo cabeçalho que o app usa na edge, **61 `bootstrap` em paralelo, todos respondidos em 8,3 s (dentro da janela de 60 s) → zero respostas 429**; e 100 `list_products` → todas 200. A causa já estava escrita no próprio item (falta o deploy da edge) e foi confirmada: o deploy de edge só sai pelo `hermes-tarefa-mergear` e só para função alterada — o código está mergeado e inalterado desde então. O "100 → 200" é verdade trivial, não prova de limite. Não contornei o caminho de deploy.
+  **🔴 RE-MEDIDO COM O DEPLOY PUBLICADO (02/10/2026, run 37068703384 SUCCESS) — aceite inatingível por construção, e a causa NÃO é o deploy.** 61 `bootstrap` em paralelo (12,6 s) → zero 429; rajadas de 120 → 120×200 e de 300 → 299×200 + 1×503; **nenhum 429 em 421 chamadas**. Causa no código: o balde é um `Map` em memória do isolate (`index.ts:135`, `checkRateLimit:166-177`), então requisições paralelas caem em isolates diferentes e o contador nunca soma 60 num só; cold start/deploy zeram. Limitador por usuário exige estado compartilhado (tabela/RPC ou KV) — **achado registrado para o Claude planejar**, não corrigido aqui. Corrige a nota anterior, que culpava o deploy.
 
 ## FASE 3 — Ligar os órfãos da F1 no detalhe e no envio (CT-31–CT-40)
 *Bloco D — 1 PR de front. Não reabre o layout do mock B/C (decisão de 24/09).*
@@ -899,6 +900,7 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   NÃO tocado** (arquivo compartilhado/grande — a sugestão de seção ficou apenas registrada no `HANDOFF_v1.md` §4). Limpeza
   de branches `claude/feat-catalog-*` não executada (operação de git).
   **🔴 BLOQUEADO PELO MESMO MOTIVO (02/10/2026):** como não há 429 em produção (medido acima), não existe reação da UI para fotografar — o print do aceite é impossível enquanto o deploy não acontecer.
+  **🔴 IMPOSSÍVEL COM A IMPLEMENTAÇÃO ATUAL (02/10/2026):** como não existe 429 (medido em 421 chamadas paralelas, ver CT-19), não há reação da UI para fotografar. O print do aceite depende de o limitador passar a ter estado compartilhado.
 
 ---
 
@@ -1150,6 +1152,18 @@ Sem dependência do Joaquim, na sequência do lote anterior (CT-74/CT-73).
   cada bloco tem exatamente 4 caixas — marcar conforme o estado real quebraria o validador).
 - **Lição de medição (minha):** o primeiro teste do rate limit foi **sequencial** e as 61 chamadas passaram de 60 s,
   o que produziria um falso "o limite não funciona". Só o disparo em paralelo, com tempo medido, dá veredito.
+
+### CT-19 / CT-94 — re-medição depois do deploy autorizado (02/10/2026)
+
+O Joaquim disparou o `deploy-functions` de `promogifts-catalog` a partir da `main` (run 37068703384, SUCCESS).
+Medição repetida: **zero 429 em 421 chamadas paralelas** (61 → 0; 120 → 120×200; 300 → 299×200 + 1×503).
+
+- **CT-19 🔴 aceite inatingível com esta implementação** — o limitador conta num `Map` em memória do isolate
+  (`index.ts:135`, `checkRateLimit:166-177`): sob concorrência cada isolate tem o seu balde e nenhum chega a 60.
+  **Achado de código registrado para planejamento** (estado compartilhado: tabela/RPC ou KV), não corrigido aqui.
+- **CT-94 🔴 continua impossível** — sem 429 não existe reação da UI para fotografar.
+- **Correção do meu registro anterior:** eu havia atribuído a ausência de 429 à falta de deploy; com o deploy
+  publicado e o resultado idêntico, a causa é o código. Registrado também no `PERF.md`.
 
 ## 12. Fora de escopo (registrado, não esquecido)
 

@@ -562,3 +562,40 @@ CT-64 | total da edge com o filtro aplicado: null
 
 **Sem a contagem do filtro, o aceite ("bate com") não pode ser afirmado** — fica declarado como não
 comprovado, com tudo o que foi medido acima.
+
+## CT-19 / CT-94 — re-medição COM o deploy publicado (2026-10-02): a causa é o código
+
+O Joaquim autorizou e disparou o workflow `deploy-functions` para `promogifts-catalog` a partir da `main`
+(run **37068703384**, SUCCESS). Repeti a medição na mesma metodologia (sessão autenticada, mesmo cabeçalho
+do app, disparo em paralelo com tempo medido):
+
+```console
+CT-19 | 61 bootstrap em paralelo em 12617 ms: 429=0 | distintos=[200]
+CT-19 | list_products 1..100: distintos=[200]
+
+# rajadas maiores, para provar que não é questão de tamanho:
+rajada de 120 bootstrap em 15955 ms -> {"200":120}
+rajada de 300 bootstrap em 34313 ms -> {"200":299,"503":1}
+```
+
+**Nenhum 429 em 421 chamadas paralelas.** Então não era o deploy (minha conclusão anterior, que eu
+corrijo aqui). A causa está no código, e é de projeto:
+
+```ts
+// supabase/functions/promogifts-catalog/index.ts:135
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+// :166-177 — checkRateLimit(userId, action) lê e incrementa esse Map em memória
+```
+
+O balde vive na **memória do isolate**. Requisições paralelas são atendidas por **isolates diferentes**,
+cada um com o seu `Map` começando em zero — o contador do usuário nunca soma 60 em um único isolate. E
+cada cold start (ou deploy) zera tudo. Resultado medido: 421 chamadas paralelas, **zero** cortes, com o
+único não-200 sendo **um 503** no meio de 300 (o próprio limite de concorrência da plataforma).
+
+**O que o aceite do CT-19 exigia** (61 `bootstrap` → 429 e 100 `list_products` → 200) **não é alcançável
+com esta implementação**: o "100 → 200" é verdade trivial e o "61 → 429" nunca acontece porque o balde
+não é compartilhado. **O CT-94 cai junto**: sem 429 não existe reação da UI para fotografar.
+
+**Achado (não corrigido aqui, de propósito):** um limitador por usuário precisa de estado compartilhado
+(tabela/RPC no Postgres, ou KV) — em memória de isolate ele não limita nada sob concorrência. Fica
+registrado para o Claude planejar; mudar a edge por conta própria está fora do meu caminho.
