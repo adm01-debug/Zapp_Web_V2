@@ -3,6 +3,13 @@ import type { Database } from '@/integrations/supabase/types';
 
 export type Contact = Database['public']['Tables']['contacts']['Row'];
 
+function windowChangePercent(current: number | null, previous: number | null): number | null {
+  const curr = current ?? 0;
+  const prev = previous ?? 0;
+  if (prev === 0) return curr > 0 ? 100 : null;
+  return Math.round(((curr - prev) / prev) * 100);
+}
+
 export interface SearchContactsParams {
   search_term?: string;
   contact_type_filter?: string | null;
@@ -193,19 +200,50 @@ export class ContactService {
    }
 
   static async fetchStats(contactId: string) {
-    const { count: messageCount } = await supabase
-      .from('messages')
-      .select('id', { count: 'exact', head: true })
-      .eq('contact_id', contactId);
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const windowStart = new Date(Date.now() - 30 * DAY_MS).toISOString();
+    const prevWindowStart = new Date(Date.now() - 60 * DAY_MS).toISOString();
 
-    const { data: messages } = await supabase
-      .from('messages')
-      .select('created_at')
-      .eq('contact_id', contactId)
-      .order('created_at', { ascending: false })
-      .limit(500);
+    const [
+      { count: messageCount },
+      { count: recentMessageCount },
+      { count: prevMessageCount },
+      { count: conversationCount },
+      { count: recentConversationCount },
+      { count: prevConversationCount },
+    ] = await Promise.all([
+      supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('contact_id', contactId),
+      supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('contact_id', contactId)
+        .gte('created_at', windowStart),
+      supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('contact_id', contactId)
+        .gte('created_at', prevWindowStart)
+        .lt('created_at', windowStart),
+      supabase
+        .from('conversation_sla')
+        .select('id', { count: 'exact', head: true })
+        .eq('contact_id', contactId),
+      supabase
+        .from('conversation_sla')
+        .select('id', { count: 'exact', head: true })
+        .eq('contact_id', contactId)
+        .gte('created_at', windowStart),
+      supabase
+        .from('conversation_sla')
+        .select('id', { count: 'exact', head: true })
+        .eq('contact_id', contactId)
+        .gte('created_at', prevWindowStart)
+        .lt('created_at', windowStart),
+    ]);
 
-    const uniqueDays = new Set(messages?.map(m => new Date(m.created_at).toDateString()) || []);
     const { data: csatData } = await supabase.from('csat_surveys').select('rating').eq('contact_id', contactId);
     const csatAvg = csatData && csatData.length > 0 ? csatData.reduce((sum, s) => sum + s.rating, 0) / csatData.length : null;
 
@@ -231,7 +269,9 @@ export class ContactService {
     return {
       totalMessages: messageCount || 0,
       avgResponseTimeMinutes: responseCount > 0 ? Math.round(totalResponseTime / (responseCount * 60000)) : 0,
-      totalConversations: uniqueDays.size,
+      totalConversations: conversationCount || 0,
+      messagesChangePercent: windowChangePercent(recentMessageCount, prevMessageCount),
+      conversationsChangePercent: windowChangePercent(recentConversationCount, prevConversationCount),
       csatAverage: csatAvg,
       csatCount: csatData?.length || 0,
     };
