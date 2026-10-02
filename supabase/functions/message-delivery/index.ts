@@ -11,6 +11,11 @@ import {
 } from '../_shared/validation.ts';
 import { resolvePrivateBucketUrl } from '../_shared/evolution-api-proxy.ts';
 import { evoFetch, extractMessageId } from '../_shared/evolution-send.ts';
+import {
+  EFFECT_MESSAGE_SEND,
+  enqueueEffectReconcile,
+  type ReconcileClient,
+} from '../_shared/effect-reconcile.ts';
 
 const MAX_REQUEST_BYTES = 8 * 1024;
 const WORKER_NAME = 'edge:message-delivery';
@@ -176,6 +181,34 @@ async function failClaim(
   if (error) console.error(JSON.stringify({ event: 'message_delivery_fail_transition', code: error.code }));
 }
 
+/**
+ * IA-047: enfileira a RECONCILIAÇÃO (somente-leitura, idempotente, SEM reenvio)
+ * de uma entrega cujo resultado ficou incerto. A chave estável
+ * `reconcile:message.send:<message_id>` colide no UNIQUE de `ai_jobs`, então
+ * repetir devolve o MESMO job. Best-effort: a linha já está terminal/quarentena,
+ * então uma falha aqui só é logada e a linha segue visível para ação humana.
+ */
+async function enqueueDeliveryReconciliation(
+  service: ReconcileClient,
+  claim: Claim,
+  externalId: string | null,
+): Promise<void> {
+  try {
+    await enqueueEffectReconcile({
+      supabase: service,
+      effect: EFFECT_MESSAGE_SEND,
+      sourceTable: 'messages',
+      sourceId: claim.message_id,
+      externalId,
+    });
+  } catch (error) {
+    console.error(JSON.stringify({
+      event: 'message_delivery_reconcile_enqueue_error',
+      code: error instanceof Error ? error.message : 'unknown',
+    }));
+  }
+}
+
 export async function handleMessageDeliveryRequest(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
@@ -245,6 +278,10 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
     return errorResponse('Message delivery is already in progress or cannot be sent', 409, req);
   }
 
+  // IA-047: rastreia se o POST ao provedor já saiu. Se saiu e o resultado ficou
+  // ambíguo, enfileira a RECONCILIAÇÃO (somente-leitura, sem reenvio).
+  let providerPostAttempted = false;
+  let externalId: string | null = null;
   try {
     const mediaUrl = claim.media_url
       ? await resolvePrivateBucketUrl(caller, claim.media_url, undefined, supabaseUrl)
@@ -261,6 +298,7 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
       if (metadataError || !richPayload) throw new Error('missing_rich_delivery_payload');
     }
     const outbound = providerPayload(claim, mediaUrl, richPayload);
+    providerPostAttempted = true;
     const providerResponse = await evoFetch(evolutionUrl, evolutionKey, outbound.path, outbound.body);
     const raw = await providerResponse.text();
     let providerData: unknown = null;
@@ -268,13 +306,20 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
 
     if (!providerResponse.ok) {
       await failClaim(service, claim);
+      // 5xx: o provedor pode ter aceitado antes de falhar → efeito INCERTO.
+      // 4xx: rejeição definitiva, nada a reconciliar.
+      if (providerResponse.status >= 500) {
+        await enqueueDeliveryReconciliation(service, claim, null);
+      }
       console.error(JSON.stringify({ event: 'message_delivery_provider_error', status: providerResponse.status }));
       return errorResponse('Message provider rejected the delivery', 502, req);
     }
 
-    const externalId = extractMessageId(providerData);
+    externalId = extractMessageId(providerData) ?? null;
     if (!externalId || externalId.length > 512) {
       await failClaim(service, claim);
+      // 200 sem id: ambíguo (pode ter enviado). Efeito INCERTO.
+      await enqueueDeliveryReconciliation(service, claim, null);
       console.error(JSON.stringify({ event: 'message_delivery_missing_provider_id' }));
       return errorResponse('Message provider returned an invalid delivery receipt', 502, req);
     }
@@ -290,6 +335,8 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
       // be persisted. Make this terminal so an expired lease can never resend
       // the same WhatsApp message; reconciliation is an explicit operation.
       await failClaim(service, claim);
+      // IA-047: temos o id do provedor — o varredor confirma por ele, SOMENTE-LEITURA.
+      await enqueueDeliveryReconciliation(service, claim, externalId);
       console.error(JSON.stringify({ event: 'message_delivery_complete_error', code: completeError?.code }));
       return errorResponse('Unable to persist delivery receipt', 502, req);
     }
@@ -310,6 +357,11 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
     return jsonResponse({ messageId: completed.id, status: completed.status, externalId, idempotent: false }, 200, req);
   } catch (error) {
     await failClaim(service, claim);
+    // IA-047: exceção depois do POST (rede/timeout/corpo): efeito INCERTO.
+    // Enfileira a reconciliação com o id se já o tínhamos; nunca reenvia.
+    if (providerPostAttempted) {
+      await enqueueDeliveryReconciliation(service, claim, externalId);
+    }
     console.error(JSON.stringify({ event: 'message_delivery_exception', code: error instanceof Error ? error.message : 'unknown' }));
     return errorResponse('Message delivery failed', 502, req);
   }

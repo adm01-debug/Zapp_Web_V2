@@ -27,6 +27,8 @@ Deno.serve(async (req) => {
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { messages, contactName, contactId, context } = parsed.data;
+    // IA-048: identidade da requisição, ecoada no corpo (só eco — sem efeito novo).
+    const requestId = parsed.data.requestId ?? null;
 
     // Fetch Knowledge Base articles for context
     let knowledgeContext = '';
@@ -174,6 +176,13 @@ Responda APENAS em formato JSON com a seguinte estrutura:
           { type: "followup", text: "Poderia me fornecer mais detalhes sobre isso?", emoji: "❓", source: null }
         ]
       };
+    }
+
+    // IA-048: ecoa o identificador da requisição no corpo para o cliente descartar
+    // com segurança uma resposta que já não pertence ao contexto atual. Não há
+    // revalidação aqui: esta capacidade não tem efeito de servidor a proteger.
+    if (requestId && suggestions && typeof suggestions === 'object') {
+      (suggestions as Record<string, unknown>).requestId = requestId;
     }
 
     log.done(200);

@@ -106,3 +106,29 @@ describe('IA-024 · o contexto enviado é medido e versionado', () => {
     expect(source).toContain('CONTEXT_CONTRACT_VERSION');
   });
 });
+
+describe('IA-048 · revalida o contexto antes do efeito e devolve cancelled', () => {
+  it('revalida o contexto ANTES de chamar a RPC de persistência', () => {
+    const revalidacao = source.indexOf('await revalidateContextBeforeEffect({');
+    const rpc = source.indexOf("supabase.rpc('persist_conversation_analysis'");
+    expect(revalidacao, 'não revalida o contexto antes de persistir').toBeGreaterThan(-1);
+    expect(rpc, 'não chama a RPC de persistência').toBeGreaterThan(-1);
+    expect(revalidacao).toBeLessThan(rpc);
+  });
+
+  it('sem contexto vigente NÃO persiste: volta envelope cancelled (200) ecoando o requestId', () => {
+    const guarda = source.indexOf('if (!revalidation.current)');
+    const rpc = source.indexOf("supabase.rpc('persist_conversation_analysis'");
+    expect(guarda, 'não há guarda de cancelamento antes da persistência').toBeGreaterThan(-1);
+    const bloco = source.slice(guarda, rpc);
+    expect(bloco).toContain('contextCancelledEnvelope(');
+    expect(bloco).toContain('requestId');
+    expect(bloco).toMatch(/200,\s*req\)/);
+  });
+
+  it('ecoa o requestId no envelope de sucesso (descarte seguro no cliente)', () => {
+    const resposta = source.indexOf('conversationRunResponse({');
+    expect(resposta).toBeGreaterThan(-1);
+    expect(source.slice(resposta)).toContain('requestId,');
+  });
+});

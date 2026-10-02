@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useSummaryTts } from './summary/useSummaryTts';
 import { SummaryResult } from './summary/SummaryResult';
+import { buildPeriodKey, useAiRequestGeneration } from '@/lib/aiRequest/context';
 
 interface Message { id: string; sender: 'agent' | 'contact'; content: string; created_at: string; }
 interface SummaryData { summary: string; status: 'resolvido' | 'pendente' | 'aguardando_cliente' | 'aguardando_atendente'; keyPoints: string[]; nextSteps?: string[]; sentiment: 'positivo' | 'neutro' | 'negativo'; }
@@ -36,8 +37,34 @@ export function ConversationSummary({ messages, contactName, contactId, initialS
   const { analysisPeriod, setAnalysisPeriod, customDateFrom, customDateTo, setCustomDateFrom, setCustomDateTo, clearCustomDates, filteredMessages } = usePeriodFilter(messages, '7d');
   const canGenerateSummary = filteredMessages.length >= 10;
 
-  useEffect(() => { setSummary(null); setHasGenerated(false); }, [contactId]);
-  useEffect(() => { if (hasGenerated) { setSummary(null); setHasGenerated(false); } }, [analysisPeriod, customDateFrom, customDateTo]);
+  // IA-048 — identidade da requisição: contato + período ESCOLHIDO. As mensagens
+  // vivas ficam de fora: uma mensagem que chega não pode descartar o resumo em voo.
+  const {
+    begin: beginRequest,
+    isCurrent: isRequestCurrent,
+    invalidate: invalidateRequests,
+  } = useAiRequestGeneration({
+    contactId: contactId ?? '',
+    periodKey: buildPeriodKey(analysisPeriod, customDateFrom, customDateTo),
+  });
+
+  useEffect(() => {
+    // Troca de contato: descarta resposta em voo e zera o resultado visível.
+    invalidateRequests();
+    setIsLoading(false);
+    setSummary(null);
+    setHasGenerated(false);
+  }, [contactId, invalidateRequests]);
+
+  useEffect(() => {
+    // Troca de período: invalida a resposta em voo (mesmo antes de gerar) e zera
+    // o resumo exibido, que pertence ao recorte antigo.
+    invalidateRequests();
+    setIsLoading(false);
+    setSummary(null);
+    setHasGenerated(false);
+  }, [analysisPeriod, customDateFrom, customDateTo, invalidateRequests]);
+
   useEffect(() => { if (initialSummary) { setSummary(initialSummary as unknown as SummaryData); setHasGenerated(true); } }, [initialSummary]);
 
   const buildFullNarrationText = useCallback(() => {
@@ -58,11 +85,16 @@ export function ConversationSummary({ messages, contactName, contactId, initialS
 
   const generateSummary = async () => {
     if (!canGenerateSummary) { toast.error('O período selecionado precisa ter pelo menos 10 mensagens.'); return; }
+    const request = beginRequest();
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('ai-conversation-summary', {
         body: { messages: filteredMessages.map(m => ({ sender: m.sender, content: m.content, created_at: m.created_at })), contactName, contactId },
       });
+
+      // IA-048 — a resposta só vale se contato/período ainda forem os do clique.
+      // A checagem vem DEPOIS do await, que é onde a resposta chega.
+      if (!isMountedRef.current || !isRequestCurrent(request)) return;
 
       if (error) {
         // O envelope de erro (IA-025) chega no corpo de `error.context` (Response);
@@ -92,8 +124,11 @@ export function ConversationSummary({ messages, contactName, contactId, initialS
 
       if (isMountedRef.current) { setSummary(summaryData); setHasGenerated(true); }
       toast.success('Resumo gerado com sucesso!');
-    } catch (error) { log.error('Error generating summary:', error); toast.error('Erro ao gerar resumo. Tente novamente.'); }
-    finally { if (isMountedRef.current) setIsLoading(false); }
+    } catch (error) {
+      if (!isMountedRef.current || !isRequestCurrent(request)) return;
+      log.error('Error generating summary:', error); toast.error('Erro ao gerar resumo. Tente novamente.');
+    }
+    finally { if (isMountedRef.current && isRequestCurrent(request)) setIsLoading(false); }
   };
 
   const StatusIcon = summary ? statusConfig[summary.status]?.icon || Clock : Clock;

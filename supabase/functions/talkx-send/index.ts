@@ -28,6 +28,19 @@ import {
 // (index.test.ts importa ambos daqui).
 export { personalize, randomBetween };
 
+/**
+ * IA-047 — chave estável (SHA-256 em hex) do pedido de envio de TESTE, derivada
+ * dos campos que definem o pedido. Determinística: o mesmo pedido produz a MESMA
+ * chave, então repetir o clique cai na UNIQUE de `talkx_test_send_claims`.
+ */
+async function deriveTestSendKey(parts: Array<string | null | undefined>): Promise<string> {
+  const data = new TextEncoder().encode(parts.map((p) => p ?? "").join("\u0000"));
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 export async function handleTalkxSend(
   req: Request,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -100,11 +113,12 @@ export async function handleTalkxSend(
       // customVariables (nomes) e aceito no corpo por retrocompatibilidade com o
       // frontend, mas nao e mais necessario: qualquer placeholder sem valor real
       // vira "[nome]" automaticamente (ver personalize()).
-      const { templateContent, mediaUrl, mediaType, phone } = body as {
+      const { templateContent, mediaUrl, mediaType, phone, idempotencyKey } = body as {
         templateContent: string;
         mediaUrl?: string | null;
         mediaType?: string | null;
         phone: string;
+        idempotencyKey?: string | null;
         customVariables?: string[];
       };
       if (!templateContent || !phone) {
@@ -126,6 +140,43 @@ export async function handleTalkxSend(
         return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Placeholder invalido" }), { status: 400, headers });
       }
       const cleanPhone = phone.replace(/\D/g, "");
+
+      // IA-047: chave estável do envio de teste. Preferimos a chave do cliente
+      // (idempotencyKey) — o front a deriva uma vez por clique; sem ela, o hash
+      // do pedido (instância + telefone + template + mídia) faz o mesmo papel.
+      // Repetir o mesmo pedido NÃO pode virar um segundo POST ao provedor.
+      const requestKey = idempotencyKey && idempotencyKey.trim() !== ""
+        ? idempotencyKey.trim()
+        : await deriveTestSendKey([testInstanceId, cleanPhone, templateContent, mediaUrl ?? "", mediaType ?? ""]);
+
+      // Claim ANTES do POST: quem registra primeiro envia; a repetição cai na
+      // UNIQUE (23505) e é resolvida SEM tocar o provedor de novo.
+      const { error: claimError } = await supabase
+        .from("talkx_test_send_claims")
+        .insert({ request_key: requestKey });
+
+      if (claimError && (claimError as { code?: string }).code === "23505") {
+        const { data: existing, error: lookupError } = await supabase
+          .from("talkx_test_send_claims")
+          .select("provider_message_id")
+          .eq("request_key", requestKey)
+          .maybeSingle();
+        if (lookupError) {
+          return new Response(JSON.stringify({ error: `claim_lookup_failed: ${lookupError.message}` }), { status: 500, headers });
+        }
+        const jaEnviado = (existing as { provider_message_id?: string | null } | null)?.provider_message_id;
+        if (typeof jaEnviado === "string" && jaEnviado.length > 0) {
+          // Repetição de um envio já confirmado: devolve o MESMO id, sem POST.
+          return new Response(JSON.stringify({ success: true, provider_message_id: jaEnviado, idempotent: true }), { headers });
+        }
+        // Claim registrado mas ainda não confirmado (duplo clique simultâneo):
+        // NÃO reenvia — o primeiro request é quem manda.
+        return new Response(JSON.stringify({ success: true, pending: true, idempotent: true }), { status: 202, headers });
+      }
+      if (claimError) {
+        return new Response(JSON.stringify({ error: `claim_failed: ${claimError.message}` }), { status: 500, headers });
+      }
+
       try {
         let sendRes: Response;
         if (mediaUrl && mediaType) {
@@ -144,16 +195,27 @@ export async function handleTalkxSend(
           });
         }
         if (!sendRes.ok) {
-          const body = await sendRes.text().catch(() => '');
-          return new Response(JSON.stringify({ error: `Evolution retornou ${sendRes.status}: ${body}` }), { status: 502, headers });
+          const errBody = await sendRes.text().catch(() => '');
+          // Resposta DEFINITIVA de falha: o provedor não entregou — libera o claim
+          // para permitir um retry deliberado (não houve efeito externo).
+          await supabase.from("talkx_test_send_claims").delete().eq("request_key", requestKey);
+          return new Response(JSON.stringify({ error: `Evolution retornou ${sendRes.status}: ${errBody}` }), { status: 502, headers });
         }
         const providerResult = await sendRes.json().catch(() => null);
         const providerMessageId = extractMessageId(providerResult);
         if (!providerMessageId || providerMessageId.length > 512) {
           return new Response(JSON.stringify({ error: "Evolution não confirmou um identificador de entrega" }), { status: 502, headers });
         }
+        // Confirma no claim: a próxima repetição devolve este id SEM novo POST.
+        await supabase
+          .from("talkx_test_send_claims")
+          .update({ provider_message_id: providerMessageId, sent_at: new Date().toISOString() })
+          .eq("request_key", requestKey);
         return new Response(JSON.stringify({ success: true, provider_message_id: providerMessageId }), { headers });
       } catch (e) {
+        // Exceção (rede/timeout): o efeito externo ficou INDETERMINADO, então o
+        // claim NÃO é liberado — repetir não pode virar um segundo POST (não se
+        // presume exactly-once externo).
         return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro ao enviar" }), { status: 500, headers });
       }
     }

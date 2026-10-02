@@ -15,15 +15,19 @@ const suites: Record<string, Suite> = {
     { payload: 'x', hint: 'formato' }, { payload: 5, hint: 'tipo' }, { payload: '', hint: 'vazio' }] },
   MessageSchema: { schema: S.MessageSchema, valid: [{}, { sender: 'a', content: 'b' }], invalid: [
     { payload: { sender: 5 }, hint: 'tipo' }, { payload: 'texto', hint: 'root não-objeto' }] },
-  AiSuggestReplySchema: { schema: S.AiSuggestReplySchema, valid: [{}, { messages: [{}], contactId: UUID }], invalid: [
-    { payload: { messages: 'x' }, hint: 'tipo' }, { payload: { contactId: 'x' }, hint: 'uuid' }] },
-  AiEnhanceMessageSchema: { schema: S.AiEnhanceMessageSchema, valid: [{ message: 'oi' }], invalid: [
+  AiSuggestReplySchema: { schema: S.AiSuggestReplySchema, valid: [{}, { messages: [{}], contactId: UUID }, { requestId: UUID }], invalid: [
+    { payload: { messages: 'x' }, hint: 'tipo' }, { payload: { contactId: 'x' }, hint: 'uuid' },
+    { payload: { requestId: 'x' }, hint: 'requestId uuid' }] },
+  AiEnhanceMessageSchema: { schema: S.AiEnhanceMessageSchema, valid: [{ message: 'oi' }, { message: 'oi', requestId: UUID }], invalid: [
     { payload: {}, hint: 'ausente' }, { payload: { message: 1 }, hint: 'tipo' },
-    { payload: { message: '' }, hint: 'vazio' }, { payload: { message: 'a', tone: 'x' }, hint: 'enum' }] },
-  AiConversationAnalysisSchema: { schema: S.AiConversationAnalysisSchema, valid: [{ messages: [{}, {}, {}, {}, {}] }], invalid: [
-    { payload: {}, hint: 'ausente' }, { payload: { messages: [{}] }, hint: 'min 5' }, { payload: { messages: {} }, hint: 'tipo' }] },
-  AiConversationSummarySchema: { schema: S.AiConversationSummarySchema, valid: [{ messages: [{}, {}, {}, {}, {}] }], invalid: [
-    { payload: {}, hint: 'ausente' }, { payload: { messages: [] }, hint: 'vazio' }] },
+    { payload: { message: '' }, hint: 'vazio' }, { payload: { message: 'a', tone: 'x' }, hint: 'enum' },
+    { payload: { message: 'oi', requestId: 'x' }, hint: 'requestId uuid' }] },
+  AiConversationAnalysisSchema: { schema: S.AiConversationAnalysisSchema, valid: [{ messages: [{}, {}, {}, {}, {}] }, { messages: [{}, {}, {}, {}, {}], requestId: UUID, contextVersion: '7d' }, { messages: [{}, {}, {}, {}, {}], requestId: UUID, periodKey: 'custom:2026-01-01:2026-01-31' }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { messages: [{}] }, hint: 'min 5' }, { payload: { messages: {} }, hint: 'tipo' },
+    { payload: { messages: [{}, {}, {}, {}, {}], requestId: 'x' }, hint: 'requestId uuid' }] },
+  AiConversationSummarySchema: { schema: S.AiConversationSummarySchema, valid: [{ messages: [{}, {}, {}, {}, {}] }, { messages: [{}, {}, {}, {}, {}], requestId: UUID, contextVersion: '7d' }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { messages: [] }, hint: 'vazio' },
+    { payload: { messages: [{}, {}, {}, {}, {}], requestId: 'x' }, hint: 'requestId uuid' }] },
   AiAutoTagSchema: { schema: S.AiAutoTagSchema, valid: [{}, { contactId: UUID }], invalid: [
     { payload: { messages: 3 }, hint: 'tipo' }, { payload: { contactId: 'x' }, hint: 'uuid' }] },
   AiChurnAnalysisSchema: { schema: S.AiChurnAnalysisSchema, valid: [{ contactIds: [UUID] }], invalid: [

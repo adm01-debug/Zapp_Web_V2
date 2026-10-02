@@ -38,6 +38,8 @@ Deno.serve(async (req) => {
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { message, tone, contactName } = parsed.data;
+    // IA-048: identidade da requisição, ecoada no corpo (só eco — sem efeito novo).
+    const requestId = parsed.data.requestId ?? null;
     const systemPrompt = tonePrompts[tone as string];
 
     const firstName = contactName ? contactName.split(' ')[0] : null;
@@ -76,7 +78,7 @@ Regras importantes:
     if (!enhancedMessage) throw new Error("Resposta vazia da IA");
 
     log.done(200);
-    return jsonResponse({ enhanced: enhancedMessage }, 200, req);
+    return jsonResponse({ enhanced: enhancedMessage, ...(requestId ? { requestId } : {}) }, 200, req);
   } catch (error: unknown) {
     log.error("Unhandled error", { error: error instanceof Error ? error.message : String(error) });
     return errorResponse(error instanceof Error ? error.message : "Erro desconhecido", 500, req);
