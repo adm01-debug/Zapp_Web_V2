@@ -80,10 +80,24 @@ describe('ProfessionalSection (etapas 52–60)', () => {
     const props = renderSection({ status: 'not_found', data: null, contact: semEmail });
     fireEvent.click(screen.getByTestId('sidebar-add-email'));
     fireEvent.click(screen.getByTestId('sidebar-add-company'));
-    fireEvent.click(screen.getByTestId('sidebar-add-department'));
     fireEvent.click(screen.getByTestId('sidebar-add-job_title'));
     expect(props.onQuickAction).toHaveBeenCalledWith('edit');
-    expect(props.onQuickAction).toHaveBeenCalledTimes(4);
+    expect(props.onQuickAction).toHaveBeenCalledTimes(3);
+    // Departamento não oferece "Adicionar": EditContactDialog não tem o campo.
+    expect(screen.queryByTestId('sidebar-add-department')).not.toBeInTheDocument();
+  });
+
+  it('numero nacional sem e164 ganha +55 no link wa.me e na cópia', () => {
+    const nacional: ContactSidebarData = {
+      ...rpcData,
+      professional: {
+        ...rpcData.professional!,
+        whatsapp: { numero_e164: null, numero: '11988776655', phone_type: 'mobile' },
+      },
+    };
+    renderSection({ data: nacional });
+    const row = screen.getByTestId('sidebar-row-whatsapp');
+    expect(within(row).getByRole('link')).toHaveAttribute('href', 'https://wa.me/5511988776655');
   });
 
   it('not_found mostra "Contato não vinculado" + CTA Buscar no CRM (etapa 59)', () => {

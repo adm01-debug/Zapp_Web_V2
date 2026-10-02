@@ -21,6 +21,10 @@ vi.mock('@/components/contacts/ContactCRMDialog', () => ({
   ContactCRMDialog: () => null,
 }));
 
+vi.mock('@/services/contact.service', () => ({
+  ContactService: { getById: vi.fn(async () => ({ data: null })) },
+}));
+
 const contact = { id: 'contact-1', name: 'João Silva', phone: '+55 11 99999-0000' } as Contact;
 
 beforeEach(() => {

@@ -26,8 +26,13 @@ export function getStoredSidebarState(): string[] {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      const valid = validValues(JSON.parse(stored));
-      if (valid.length > 0) return valid;
+      const parsed: unknown = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        const valid = validValues(parsed);
+        // `[]` gravado por "recolher tudo" é preferência válida; valor com
+        // itens desconhecidos (chave adulterada) cai no default.
+        if (valid.length === parsed.length) return valid;
+      }
     }
   } catch { /* storage indisponível */ }
 

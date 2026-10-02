@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { ContactService } from '@/services/contact.service';
+import { cleanPhone } from '@/lib/formatters';
 import { ContactCRMDialog } from '@/components/contacts/ContactCRMDialog';
 import { useContactSidebar } from '@/hooks/crm/useContactSidebar';
 import { ProfessionalSection } from './ProfessionalSection';
@@ -28,6 +31,21 @@ export function ContactSidebarSections({ contact, enrichedData, onQuickAction }:
 
   const buscarCRM = () => setCrmDialogOpen(true);
 
+  // O vínculo é por telefone (RPC `get_contact_sidebar_by_phone`): só vale
+  // refazer a busca quando o contato escolhido tem o MESMO número da
+  // conversa. Telefone diferente → aviso honesto em vez de no-op silencioso
+  // (sem escrita em `crm_contact_links` — vedado pelo plano).
+  const handleCrmSelected = async (contactId: string) => {
+    const { data: sel } = await ContactService.getById(contactId);
+    const mesmaLinha = sel?.phone && contact.phone &&
+      cleanPhone(sel.phone) === cleanPhone(contact.phone);
+    if (mesmaLinha) {
+      void queryClient.invalidateQueries({ queryKey: ['contact-sidebar', contact.id] });
+    } else {
+      toast.info('Contato encontrado no CRM com outro telefone — este painel vincula pelo número da conversa.');
+    }
+  };
+
   return (
     <>
       <ProfessionalSection
@@ -47,9 +65,9 @@ export function ContactSidebarSections({ contact, enrichedData, onQuickAction }:
         <ContactCRMDialog
           open={crmDialogOpen}
           onOpenChange={setCrmDialogOpen}
-          onContactSelected={() => {
+          onContactSelected={(contactId) => {
             setCrmDialogOpen(false);
-            void queryClient.invalidateQueries({ queryKey: ['contact-sidebar', contact.id] });
+            void handleCrmSelected(contactId);
           }}
         />
       )}

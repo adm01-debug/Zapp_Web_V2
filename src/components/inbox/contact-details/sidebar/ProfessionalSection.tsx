@@ -7,6 +7,7 @@ import { SidebarRow } from './SidebarRow';
 import { SidebarEmpty } from './SidebarEmpty';
 import { buildProfessionalFallback } from './professionalFallback';
 import { cleanPhone, formatBrazilianPhone } from '@/lib/formatters';
+import { normalizeE164BR } from '@/lib/calls/phone';
 import type { ContactSidebarData, ContactSidebarStatus } from '@/types/contactSidebar';
 import type { ConversationContact as Contact } from '@/types/chat';
 import type { EnrichedContactData } from '@/hooks/crm/useContactEnrichedData';
@@ -35,7 +36,10 @@ export function ProfessionalSection({ index, status, data, contact, enrichedData
   const whatsappRaw = fromRpc
     ? (fromRpc.whatsapp?.numero_e164 ?? fromRpc.whatsapp?.numero ?? null)
     : (fallback?.whatsapp ?? null);
-  const whatsappDigits = whatsappRaw ? cleanPhone(whatsappRaw) : '';
+  // E.164 normalizado (BR nacional ganha +55, tronco 0 e 9º dígito tratados);
+  // números não-BR que `normalizeE164BR` não resolve mantêm os dígitos crus.
+  const whatsappE164 = whatsappRaw ? normalizeE164BR(whatsappRaw) : null;
+  const whatsappDigits = whatsappE164 ? whatsappE164.slice(1) : (whatsappRaw ? cleanPhone(whatsappRaw) : '');
   const whatsappDisplay = whatsappRaw ? formatBrazilianPhone(whatsappRaw) : null;
   const whatsappHref = whatsappDigits ? `https://wa.me/${whatsappDigits}` : null;
 
@@ -97,7 +101,8 @@ export function ProfessionalSection({ index, status, data, contact, enrichedData
             <SidebarRow
               icon={<Users />} label="Departamento" field="department"
               value={departamento} copyable
-              local={fallbackMode && departamento !== null} onAdd={fallbackMode ? add : undefined}
+              // Sem `onAdd`: `EditContactDialog` não tem campo de departamento.
+              local={fallbackMode && departamento !== null}
             />
             <SidebarRow
               icon={<BadgeCheck />} label="Cargo" field="job_title"

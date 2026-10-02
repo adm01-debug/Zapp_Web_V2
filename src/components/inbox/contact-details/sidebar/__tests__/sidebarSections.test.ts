@@ -33,6 +33,16 @@ describe('sidebarSections — migração do localStorage (etapa 44)', () => {
     expect(getStoredSidebarState()).toEqual(DEFAULT_OPEN_SECTIONS);
   });
 
+  it('"recolher tudo" grava [] e o vazio persiste na reabertura', () => {
+    saveSidebarState([]);
+    expect(getStoredSidebarState()).toEqual([]);
+  });
+
+  it('chave nova com valor desconhecido → default (não vira "tudo fechado")', () => {
+    localStorage.setItem(NEW_KEY, JSON.stringify(['info']));
+    expect(getStoredSidebarState()).toEqual(DEFAULT_OPEN_SECTIONS);
+  });
+
   it('storage indisponível → default', () => {
     const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('blocked');
