@@ -3,6 +3,8 @@
 -- Classe: CONTRATO (create or replace). PR SEPARADA e SEM MERGE: aguarda APROVADO.
 -- Aplicar sem o front atualizado deixa a UI lendo um campo que nao existe mais; por isso a ordem e
 -- front + migration juntos, e o merge so depois do APROVADO.
+-- rollback: reaplicar supabase/migrations/20260928140200_tab_counts_tasks_own.sql, que devolve a funcao
+-- com reminders_pending fixo em 0. E CREATE OR REPLACE da funcao inteira, sem DDL de coluna.
 BEGIN;
 
 CREATE OR REPLACE FUNCTION public.get_conversation_tab_counts(p_contact_id uuid)
