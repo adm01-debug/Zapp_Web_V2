@@ -51,6 +51,10 @@
  *    (ações de leitura `dispatch.list`/`recipients.list`) e `actions/__tests__/listing.test.ts`.
  *    Nenhum dos dois produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem
  *    idênticos — só o total varrido sobe, e o ratchet é atualizado de propósito.
+ *  - 195: X019 (02/10/2026) — `talkx-send/x019-connection-budget.test.ts` (prova Deno do envio
+ *    pela conexão escolhida e dos limites de ritmo por minuto/dia). É arquivo de teste, não
+ *    produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos —
+ *    só o total varrido sobe, e o ratchet é atualizado de propósito.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -125,8 +129,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('194 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(194);
+  it('195 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(195);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );
