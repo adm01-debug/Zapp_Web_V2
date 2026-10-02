@@ -172,6 +172,33 @@ export default defineConfig({
         storageState: 'e2e/.auth/user.json',
       },
     },
+    {
+      // catalog.spec.ts (CT-82) no Firefox — paridade cross-browser do fluxo de
+      // envio do catálogo (o aceite pede verde nos 3 browsers). O Chromium é
+      // coberto pelo project `chromium-authenticated` (catch-all que já coleta
+      // este spec); estes dois projects completam Firefox e WebKit. Reusa o
+      // storageState do `setup` (sessão browser-agnostic).
+      //
+      // Só entram no `e2e-logado.yml` (login real) — NUNCA no `ci.yml`, que
+      // lista explicitamente os projects deslogados.
+      name: 'firefox-catalog',
+      testMatch: /catalog\.spec\.ts/,
+      dependencies: ['setup'],
+      use: {
+        ...devices['Desktop Firefox'],
+        storageState: 'e2e/.auth/user.json',
+      },
+    },
+    {
+      // catalog.spec.ts (CT-82) no WebKit (Safari engine).
+      name: 'webkit-catalog',
+      testMatch: /catalog\.spec\.ts/,
+      dependencies: ['setup'],
+      use: {
+        ...devices['Desktop Safari'],
+        storageState: 'e2e/.auth/user.json',
+      },
+    },
   ],
   webServer: {
     // The application development server intentionally defaults to port 8080.
