@@ -20,6 +20,7 @@ import {
   normalizePhone,
   personalize,
   prepareMedia,
+  providerErrorInfo,
   randomBetween,
   send,
   sleep,
@@ -653,13 +654,34 @@ export async function handleMultiplixSend(
             throw new Error("multiplix_provider_outcome_unknown: missing_provider_message_id");
           } else {
             failedCount++;
+            // F61: o operador le TEXTO, nunca o JSON do provedor. `providerErrorInfo`
+            // traduz o par (status, corpo) pelo mapa do E095 e devolve o codigo ESTAVEL
+            // do erro — assim "Numero nao existe no WhatsApp" chega na tela em vez de
+            // {"status":400,"error":{"code":...}}. O corpo bruto nao entra no campo que
+            // a tela mostra; o codigo vai para a trilha de eventos (abaixo).
+            const providerError = providerErrorInfo(envio.status, envio.body);
             const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
               p_item_id: item.item_id,
               p_claim_token: claim.claim_token,
               p_status: "failed",
-              p_error_message: String(sendResult?.message || sendResult?.error || "Erro ao enviar"),
+              p_error_message: providerError.operatorMessage,
             });
             if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
+            // F61 (segunda metade): o codigo CRU (classe + codigo estavel + status HTTP)
+            // vai para `multiplix_events`, que e onde quem depura olha. NAO grava o corpo
+            // do provedor: ele pode carregar telefone/conteudo de cliente, e diagnostico
+            // nao precisa disso — o par (classe, codigo) ja diz o que aconteceu.
+            await supabase.from("multiplix_events").insert({
+              dispatch_id: dispatchId,
+              item_id: item.item_id,
+              recipient_id: item.recipient_id ?? null,
+              kind: "item_failed",
+              payload: {
+                error_class: providerError.class,
+                error_code: providerError.code,
+                provider_status: envio.status,
+              },
+            });
           }
           stopHeartbeat();
         } catch (err) {
