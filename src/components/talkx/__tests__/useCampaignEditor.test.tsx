@@ -1,4 +1,4 @@
-import { act, render, renderHook, screen } from '@testing-library/react';
+import { act, fireEvent, render, renderHook, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /** Consulta registrada pelo mock de `useQuery` (o teste invoca o `queryFn`). */
@@ -16,6 +16,9 @@ const f = vi.hoisted(() => ({
   blacklist: { ids: new Set<string>(), phones: new Set<string>() },
   persistedRecipientIds: [] as { contact_id: string }[] | undefined,
   templates: [] as { id: string; content: string; media_url: string | null; media_type?: string | null; use_count: number }[],
+  // V25 — usuário logado (profiles.id) e segmentos do passo 1.
+  profile: { id: 'profile-1', name: 'Ana Silva', email: 'ana@example.com' } as { id: string; name: string; email: string } | null,
+  segments: [] as { id: string; name: string; description: string; status: string; estimated_count: number }[],
   queryCalls: [] as CapturedQuery[],
 }));
 
@@ -46,11 +49,15 @@ vi.mock('@/hooks/integrations/useTalkXSegments', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/hooks/integrations/useTalkXSegments')>();
   return {
     ...actual,
-    useTalkXSegments: () => ({ segments: [] }),
+    useTalkXSegments: () => ({ segments: f.segments }),
     resolveAudience: f.resolveAudience,
     countAudience: f.countAudience,
   };
 });
+// V25 — `useCampaignEditor` usa `useAuth().profile.id` como responsável padrão.
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ user: null, session: null, profile: f.profile, loading: false, signIn: vi.fn(), signUp: vi.fn(), signOut: vi.fn(), refreshProfile: vi.fn() }),
+}));
 vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({ useTalkXTemplates: () => ({ templates: f.templates, registerUse: vi.fn() }) }));
 vi.mock('@/hooks/integrations/useTalkXEvents', () => ({ useTalkXEventLogger: () => f.log }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: vi.fn() } }));
@@ -74,6 +81,7 @@ vi.mock('@tanstack/react-query', () => ({
 
 import { AUDIENCE_PREVIEW_LIMIT, localToUTCInTimezone, useCampaignEditor } from '@/components/talkx/useCampaignEditor';
 import { TalkXCampaignWizard } from '@/components/talkx/TalkXCampaignWizard';
+import { OBJECTIVES } from '@/components/talkx/talkxShared';
 import { rulesToPostgrest, type SegmentRules } from '@/hooks/integrations/useTalkXSegments';
 
 /** Última consulta registrada com a chave informada (o mock empilha por render). */
@@ -102,6 +110,8 @@ describe('useCampaignEditor — draft integrity', () => {
     f.blacklist.phones.clear();
     f.persistedRecipientIds = [];
     f.templates = [];
+    f.profile = { id: 'profile-1', name: 'Ana Silva', email: 'ana@example.com' };
+    f.segments = [];
     f.connections = [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }];
     f.queryCalls.length = 0;
     f.resolveAudience.mockResolvedValue(f.contacts);
@@ -567,5 +577,109 @@ describe('useCampaignEditor — draft integrity', () => {
     expect(result.current.messageTemplate).toBe('Apenas texto');
     expect(result.current.hasMedia).toBe(false);
     expect(result.current.mediaUrl).toBe('');
+  });
+});
+
+describe('useCampaignEditor — V25 (responsável, nome mínimo, segmentos ativos, objetivo)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    f.create.mockResolvedValue({ id: 'draft-1' });
+    f.update.mockResolvedValue({});
+    f.replace.mockResolvedValue(1);
+    f.start.mockResolvedValue(true);
+    f.log.mockResolvedValue({});
+    f.persistedRecipientIds = [];
+    f.templates = [];
+    f.profile = { id: 'profile-1', name: 'Ana Silva', email: 'ana@example.com' };
+    f.segments = [];
+    f.connections = [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }];
+    f.queryCalls.length = 0;
+    f.resolveAudience.mockResolvedValue(f.contacts);
+    f.countAudience.mockResolvedValue(f.contacts.length);
+    window.sessionStorage.clear();
+    window.history.replaceState(null, '', '/');
+  });
+
+  afterEach(() => vi.useRealTimers());
+
+  it('exige nome com 3+ caracteres para liberar o passo 1', async () => {
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    await act(async () => {});
+    // Público e conexão válidos: só o nome separa o bloqueio da liberação.
+    act(() => { result.current.setName('abc'); result.current.toggleContact('contact-1'); });
+    expect(result.current.canProceed[1]).toBe(true);
+
+    act(() => result.current.setName('a'));
+    expect(result.current.canProceed[1]).toBe(false);
+
+    act(() => result.current.setName('ab'));
+    expect(result.current.canProceed[1]).toBe(false);
+
+    act(() => result.current.setName('abcd'));
+    expect(result.current.canProceed[1]).toBe(true);
+  });
+
+  it('mostra o aviso de nome curto apenas com 1–2 caracteres', () => {
+    render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
+    const input = screen.getByPlaceholderText(/Lançamento Linha Office/i);
+
+    fireEvent.change(input, { target: { value: 'ab' } });
+    expect(screen.getByText(/O nome precisa de pelo menos 3 caracteres/i)).toBeInTheDocument();
+
+    fireEvent.change(input, { target: { value: 'abc' } });
+    expect(screen.queryByText(/pelo menos 3 caracteres/i)).not.toBeInTheDocument();
+  });
+
+  it('assume o usuário logado como responsável padrão e grava owner no payload', async () => {
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    await act(async () => {});
+    expect(result.current.owner).toBe('profile-1');
+
+    act(() => {
+      result.current.setOwner('profile-2');
+      result.current.setName('Campanha com responsável');
+      result.current.toggleContact('contact-1');
+    });
+    await act(async () => { await result.current.handleSave('draft'); });
+
+    expect(f.saveDraft).toHaveBeenLastCalledWith(expect.objectContaining({
+      payload: expect.objectContaining({ owner: 'profile-2' }),
+    }));
+  });
+
+  it('hidrata o responsável do rascunho em vez do usuário logado', async () => {
+    const campaign = { id: 'draft-1', name: 'Rascunho', status: 'draft', owner: 'profile-9' };
+    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+    await act(async () => {});
+
+    expect(result.current.owner).toBe('profile-9');
+  });
+
+  it('oferece apenas segmentos ativos no passo 1', () => {
+    f.segments = [
+      { id: 'seg-active', name: 'Segmento Ativo', description: '', status: 'active', estimated_count: 10 },
+      { id: 'seg-inactive', name: 'Segmento Inativo', description: '', status: 'inactive', estimated_count: 5 },
+    ];
+    render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Segmento salvo/i }));
+
+    expect(screen.getByText('Segmento Ativo')).toBeInTheDocument();
+    expect(screen.queryByText('Segmento Inativo')).not.toBeInTheDocument();
+  });
+
+  it('desabilita "Segmento salvo" quando só há segmentos inativos (lista filtrada)', () => {
+    f.segments = [{ id: 'seg-inactive', name: 'Segmento Inativo', description: '', status: 'inactive', estimated_count: 5 }];
+    render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
+
+    const card = screen.getByRole('button', { name: /Segmento salvo/i });
+    expect(card).toBeDisabled();
+    expect(card).toHaveTextContent('Nenhum segmento salvo');
+  });
+
+  it('todo objetivo tem ícone', () => {
+    expect(OBJECTIVES).toHaveLength(6);
+    for (const objective of OBJECTIVES) expect(objective.icon).toBeDefined();
   });
 });
