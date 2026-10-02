@@ -42,7 +42,7 @@ operador digita (≥ 3 caracteres, debounce 300 ms)
 Uma **sessão de busca** (`src/lib/mapboxSession.ts`) é um `session_token` (UUID v4) que:
 - é reaproveitado entre buscas seguidas, desde que não passem 2 min de inatividade (`SESSION_IDLE_MS`) e ainda não tenha havido `/retrieve`;
 - é encerrado (`endSearchSession()`) no `/retrieve`, ao limpar a busca (`clear()`) ou ao chegar a 50 `/suggest` (teto da Mapbox);
-- gera **exatamente 1** evento `searchbox_session` em `audit_logs` por sessão (nunca por `/suggest` — ver E35), sem PII (só contagem + `source`).
+- gera **exatamente 1** evento `searchbox_session` em `audit_logs` por sessão (nunca por `/suggest` — ver E35) **e só quando a sessão vira uso faturado** (E100: gravar na abertura contava intenção e inflava o freio de 450 e o alerta de 400), sem PII (só contagem + `source`).
 
 Billing da Mapbox: **1 sessão = até 50 `/suggest` + 1 `/retrieve`**, não 1 request avulso.
 
@@ -102,7 +102,7 @@ O autocomplete **não tem mais feature flag de runtime**: o item 4b removeu o ra
 
 | `action` | Quando é gravado | Contém termo digitado? |
 |---|---|---|
-| `searchbox_session` | 1x por sessão, na criação | Não — só contagem e `source` |
+| `searchbox_session` | 1x por sessão, no **primeiro request faturado** (E100) | Não — só contagem e `source` |
 | `searchbox_cost_guard` | 1x por transição para `/forward` por teto de custo | Não |
 | `client_error` | Falha classificada (rede/timeout/http/429) quando `/suggest` **e** `/forward` falham os dois | Não — só a causa, nunca o termo (revisão de privacidade, E39) |
 
