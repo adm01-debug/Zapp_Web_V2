@@ -22,8 +22,12 @@ const monitor = await readFile(
   new URL('../../src/components/talkx/TalkXLiveMonitor.tsx', import.meta.url),
   'utf8',
 );
-const shared = await readFile(
-  new URL('../../src/components/talkx/talkxShared.tsx', import.meta.url),
+const sharedDialogs = await readFile(
+  new URL('../../src/components/talkx/kit/dialogs.tsx', import.meta.url),
+  'utf8',
+);
+const sharedPrimitives = await readFile(
+  new URL('../../src/components/talkx/kit/primitives.tsx', import.meta.url),
   'utf8',
 );
 
@@ -69,6 +73,6 @@ test('Talk X lê o status real da conexão WA em vez de "Conectada" fixo', () =>
 });
 
 test('TalkXConfirmDialog desabilita de verdade o botão de confirmar', () => {
-  assert.match(shared, /disabled=\{!allChecked \|\| loading\}/);
-  assert.match(shared, /disabled=\{disabled \|\| loading\}/);
+  assert.match(sharedDialogs, /disabled=\{!allChecked \|\| loading\}/);
+  assert.match(sharedPrimitives, /disabled=\{disabled \|\| loading\}/);
 });
