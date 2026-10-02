@@ -74,6 +74,19 @@ Base da medição: `main` em `de64c092f` (02/10) — PRs desta rodada: #1589, #1
    `completeOnboarding()` **só grava no `localStorage`** — então quem não tem essa linha recebe o modal
    bloqueante em **todo contexto novo**. As 3 contas de QA medidas têm `tem_user_settings = false`.
    É também a causa das comparações instáveis da etapa 90 (B7). Virou tarefa própria.
+   **RESOLVIDO no #1667** (`d8723e19`, mergeado 02/10 com deploy OK): a conclusão do tour passou a ser
+   gravada em `user_settings` (upsert com `ignoreDuplicates`) e o modal ganhou `Escape`, `role="dialog"`
+   e `aria-modal`. **Re-medido em produção depois do deploy**, com a conta QA COMPRAS: **zero camadas de
+   tela cheia** (varredura de todos os elementos `fixed`/`absolute` cobrindo ≥90% do viewport, com
+   `pointer-events != none`: lista vazia), o tour não abre mais, e o clique no toggle de Contatos
+   chega (`aria-checked` `false → true`).
+   **Lead falso descartado com medição:** o "modal de celebração da Multiplix" com o texto
+   `Multiplix! 🎉` **não existe** — esse texto é o título do próprio `WelcomeModal`
+   (`Bem-vindo{, ${nome}}! 🎉`), e o perfil daquela conta chama-se **`MultiplixCompras`**
+   (`profiles.name`, medido). O único overlay de celebração do repo é o `CelebrationOverlay`
+   (`Confetti.tsx:148+`, usado só pelo `GoalsDashboard`), que é **`pointer-events-none` e se desmonta
+   sozinho em 3,5 s**; e o `TourOverlay` (`z-[10000]`) **tem** tratador de `Escape`
+   (`TourOverlay.tsx:91`). Nenhum deles bloqueia clique nem ignora o Escape.
 2. **`types-sync` segue vermelho mesmo com o ledger reconciliado** — a causa não era o drift.
 3. **Exclusão das edges autorizada revelou-se desnecessária** (ver 97): a autorização **não** foi usada.
 4. **Branches da etapa 100 — resolvido.** Cinco das seis já tinham sido apagadas no merge
