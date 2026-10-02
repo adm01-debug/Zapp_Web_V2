@@ -188,7 +188,7 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
   const responses = null; // sem histórico de respostas no motor atual — não estimamos
   const waOk = !!connection;
   const audienceOk = ed.eligibleCount > 0 || !!campaign;
-  const allGood = waOk && audienceOk && ed.messageTemplate.trim().length > 0;
+  const allGood = waOk && audienceOk && (ed.messageTemplate.trim().length > 0 || (ed.hasMedia && ed.mediaUrl.trim().length > 0));
   const launchAllowed = allGood && ed.canProceed[4] && !ed.saving;
 
   const launch = async () => {

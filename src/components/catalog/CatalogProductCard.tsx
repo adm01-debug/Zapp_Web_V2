@@ -1,11 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { Send, Eye, Heart, Star, Sparkles, TrendingUp, Tag, Check, Copy, Link2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
-import { formatPrice, ProductThumb } from './catalogShared';
-import { ProductDetailDialog } from './ProductDetailDialog';
+import {
+  formatPrice,
+  ProductThumb,
+  CATALOG_FOCUS_VISIBLE,
+  productImageAlt,
+  singleProductColor,
+} from './catalogShared';
+// CT-71 — o detalhe entra por `import()` (chunk próprio, fora do bundle
+// inicial). `lazy()` fica em ESCOPO DE MÓDULO: a regra
+// `react-hooks/static-components` rejeita React.lazy dentro do corpo do render
+// (mesma razão documentada em catalogShared.tsx:399). O `Suspense` fica no
+// ponto de uso; como o dialog já nasce montado (fechado), o fallback é `null`
+// para não piscar um spinner em cada card antes de o chunk resolver.
+const ProductDetailDialog = lazy(() =>
+  import('./ProductDetailDialog').then((m) => ({ default: m.ProductDetailDialog }))
+);
 // CT-25 — menu de ações do card (menu real do Talk X, já usado no repo).
 import { RowActionsMenu, type RowAction } from '@/components/talkx/talkxShared';
 // CT-25 — "Copiar link"/"Abrir no PromoGifts" reusam o mesmo builder de URL
@@ -134,7 +148,8 @@ function FavoriteButton({ active, onToggle, productId }: { active: boolean; onTo
       className={cn(
         'absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center',
         'bg-background/70 backdrop-blur-sm border border-border/30 hover:scale-110 transition-transform',
-        active ? 'text-rose-500' : 'text-muted-foreground'
+        active ? 'text-rose-500' : 'text-muted-foreground',
+        CATALOG_FOCUS_VISIBLE
       )}
       aria-label={active ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
     >
@@ -158,7 +173,8 @@ function SelectCheckbox({ selected, onToggle, productId }: {
         'transition-all duration-150',
         selected
           ? 'border-primary bg-primary text-primary-foreground'
-          : 'border-border/60 bg-background/80 backdrop-blur-sm text-transparent hover:border-primary/60'
+          : 'border-border/60 bg-background/80 backdrop-blur-sm text-transparent hover:border-primary/60',
+        CATALOG_FOCUS_VISIBLE
       )}
       aria-label={selected ? 'Desselecionar produto' : 'Selecionar produto'}
       aria-pressed={selected}
@@ -265,7 +281,8 @@ export function CatalogProductCard({
         <div
           className={cn(
             'flex items-center gap-3 px-4 py-3 border-b border-border/30 hover:bg-muted/10 transition-colors cursor-pointer',
-            isSelected && 'bg-primary/5 border-primary/20'
+            isSelected && 'bg-primary/5 border-primary/20',
+            CATALOG_FOCUS_VISIBLE
           )}
           onClick={() => !onToggleSelect && setShowDetails(true)}
           onKeyDown={handleCardKeyDown}
@@ -283,7 +300,7 @@ export function CatalogProductCard({
             className="relative w-14 h-14 rounded-md overflow-hidden bg-muted shrink-0"
             onClick={() => setShowDetails(true)}
           >
-            <ProductThumb src={product.primary_image_url} fallbackSrc={product.primary_image_fallback_url} alt={product.name} sizes="56px" />
+            <ProductThumb src={product.primary_image_url} fallbackSrc={product.primary_image_fallback_url} alt={productImageAlt(product.name, singleProductColor(product))} sizes="56px" />
             {stockout && <div className="absolute inset-0 bg-background/70" />}
           </div>
 
@@ -338,7 +355,9 @@ export function CatalogProductCard({
             {cardActionsMenu}
           </div>
         </div>
-        <ProductDetailDialog product={product} products={products} open={showDetails} onOpenChange={setShowDetails} onSend={onSend} />
+        <Suspense fallback={null}>
+          <ProductDetailDialog product={product} products={products} open={showDetails} onOpenChange={setShowDetails} onSend={onSend} />
+        </Suspense>
       </>
     );
   }
@@ -353,7 +372,9 @@ export function CatalogProductCard({
           // demais o browser adia layout/paint até o card se aproximar do
           // viewport (content-visibility: auto em components.css).
           !priority && 'catalog-card--offscreen',
-          isSelected && 'border-primary/50 bg-primary/5 shadow-sm shadow-primary/10'
+          isSelected && 'border-primary/50 bg-primary/5 shadow-sm shadow-primary/10',
+          // CT-68 — anel de foco visível (o tabIndex={0} já existia na grade).
+          CATALOG_FOCUS_VISIBLE
         )}
         onKeyDown={handleCardKeyDown}
         tabIndex={0}
@@ -366,7 +387,7 @@ export function CatalogProductCard({
           <ProductThumb
             src={product.primary_image_url}
             fallbackSrc={product.primary_image_fallback_url}
-            alt={product.name}
+            alt={productImageAlt(product.name, singleProductColor(product))}
             iconSize="w-12 h-12"
             priority={priority}
             sizes={sizes ?? CATALOG_GRADE_SIZES}
@@ -466,7 +487,9 @@ export function CatalogProductCard({
           </div>
         </div>
       </div>
-      <ProductDetailDialog product={product} products={products} open={showDetails} onOpenChange={setShowDetails} onSend={onSend} />
+      <Suspense fallback={null}>
+        <ProductDetailDialog product={product} products={products} open={showDetails} onOpenChange={setShowDetails} onSend={onSend} />
+      </Suspense>
     </>
   );
 }

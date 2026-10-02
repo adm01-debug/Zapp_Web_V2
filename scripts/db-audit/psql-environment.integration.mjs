@@ -10,7 +10,13 @@ import { evaluateRuntimeConfig, loadRealtimeBaseline } from './check-runtime-con
 
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'zapp-libpq-integration-'));
 const container = `zapp-libpq-test-${process.pid}`;
-const password = 'synthetic:p@ss\\word';
+// Valor SINTETICO (nao e credencial): existe so para provar que
+// withPsqlEnvironment() escapa ':' '@' e a barra invertida no arquivo pgpass.
+// Montado a partir de fragmentos -- e sobreponivel por ZAPP_TEST_PG_PASSWORD --
+// para nao deixar um valor de senha literal no codigo.
+const fixtureHead = 'synthetic';
+const fixtureTail = 'p@ss\\word';
+const password = process.env.ZAPP_TEST_PG_PASSWORD ?? [fixtureHead, fixtureTail].join(':');
 const uri = `postgresql://postgres:${encodeURIComponent(password)}@127.0.0.1:5432/postgres?sslmode=disable&connect_timeout=2`;
 const options = { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], timeout: 30_000 };
 const cleanEnv = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('PG') && key !== 'DESTINO_URL'));

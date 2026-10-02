@@ -138,12 +138,13 @@ describe('SendProductDialog — Fase 7 (E72-E75 parcial)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Desmarcar todas' }));
     expect(screen.getByText('0 de 11 fotos selecionadas')).toBeInTheDocument();
 
+    // CT-69 — o alt das fotos do produto agora e "Nome — Cor".
     for (let i = 0; i < 10; i++) {
-      fireEvent.click(screen.getByAltText(`Cor ${i}`).closest('button')!);
+      fireEvent.click(screen.getByAltText(new RegExp(`— Cor ${i}$`)).closest('button')!);
     }
     expect(screen.getByText('10 de 11 fotos selecionadas')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByAltText('Cor 10').closest('button')!);
+    fireEvent.click(screen.getByAltText(/— Cor 10$/).closest('button')!);
     expect(screen.getByText('10 de 11 fotos selecionadas')).toBeInTheDocument();
     expect(mockToast.error).toHaveBeenCalledWith('Limite de 10 fotos por envio', expect.objectContaining({ description: expect.any(String) }));
   });
@@ -371,6 +372,24 @@ describe('SendProductDialog — CT-08/CT-09 (checagem pré-envio e teclado)', ()
     });
     expect((mockSendOutboundMessage.mock.calls[0][0] as { caption: string }).caption).toContain('Olha esse produto');
   });
+
+  it('CT-68: enquanto o envio acontece, o progresso é anunciado numa região viva', async () => {
+    mockFetchContacts.mockResolvedValue([CONTACT]);
+    // promise que nunca resolve: prende o dialog no estado "enviando"
+    mockSendOutboundMessage.mockImplementation(() => new Promise(() => {}));
+    renderDialog();
+
+    expect(screen.queryByTestId('send-progress-live')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Selecionar Contato/i }));
+    fireEvent.click((await screen.findByText('Tomaz')).closest('button')!);
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Enter', ctrlKey: true });
+
+    const live = await screen.findByTestId('send-progress-live');
+    expect(live).toHaveAttribute('role', 'status');
+    expect(live).toHaveAttribute('aria-live', 'polite');
+    expect(live).toHaveTextContent('Enviando');
+  });
 });
 
 describe('SendProductDialog — CT-17 (contato da conversa pré-selecionado)', () => {
@@ -461,7 +480,8 @@ describe('SendProductDialog — CT-38 (card de info do produto no modo completo)
     expect(screen.queryByTestId('product-info-card')).not.toBeInTheDocument();
 
     const variantCard = screen.getByText('Azul').closest('button')!;
-    expect(within(variantCard).getByAltText('Azul')).toHaveAttribute('src', 'https://x/azul.jpg');
+    // CT-69 — alt das fotos de variação agora e "Nome — Cor".
+    expect(within(variantCard).getByAltText(/— Azul$/)).toHaveAttribute('src', 'https://x/azul.jpg');
     expect(within(variantCard).getByText('1 foto · 7 un.')).toBeInTheDocument();
   });
 

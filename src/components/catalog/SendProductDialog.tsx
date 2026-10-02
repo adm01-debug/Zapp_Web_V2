@@ -35,7 +35,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { ContactSelectionStep } from './ContactSelectionStep';
 // CT-37 — PhonePreview (prévia estilo WhatsApp) subiu para catalogShared,
 // junto com a classe .catalog-phone e os tokens --wa-*.
-import { PhonePreview } from './catalogShared';
+import { PhonePreview, CATALOG_FOCUS_VISIBLE, productImageAlt } from './catalogShared';
 
 interface SendProductDialogProps {
   product: ExternalProduct;
@@ -374,7 +374,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
                     {fullProduct.primary_image_url && (
                       <img
                         src={fullProduct.primary_image_url}
-                        alt={fullProduct.name}
+                        alt={productImageAlt(fullProduct.name)}
                         className="w-10 h-10 rounded-md object-cover flex-shrink-0"
                         loading="lazy"
                         decoding="async"
@@ -405,10 +405,10 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
                 {variantGroups.length > 0 && (
                   <div className="space-y-3">
                     <div className="flex gap-2">
-                      <Button variant={sendMode === 'product' ? 'default' : 'outline'} size="sm" className="text-xs h-8 gap-1.5" onClick={() => { setSendMode('product'); setSelectedColorGroup(null); setIsEditing(false); }}>
+                      <Button variant={sendMode === 'product' ? 'default' : 'outline'} size="sm" className={cn('text-xs h-8 gap-1.5', CATALOG_FOCUS_VISIBLE)} onClick={() => { setSendMode('product'); setSelectedColorGroup(null); setIsEditing(false); }}>
                         <Package className="w-3.5 h-3.5" />Produto Completo
                       </Button>
-                      <Button variant={sendMode === 'variant' ? 'default' : 'outline'} size="sm" className="text-xs h-8 gap-1.5" onClick={() => { setSendMode('variant'); if (!selectedColorGroup && variantGroups.length > 0) setSelectedColorGroup(variantGroups[0].colorName); setIsEditing(false); }}>
+                      <Button variant={sendMode === 'variant' ? 'default' : 'outline'} size="sm" className={cn('text-xs h-8 gap-1.5', CATALOG_FOCUS_VISIBLE)} onClick={() => { setSendMode('variant'); if (!selectedColorGroup && variantGroups.length > 0) setSelectedColorGroup(variantGroups[0].colorName); setIsEditing(false); }}>
                         <Palette className="w-3.5 h-3.5" />Variação Específica
                       </Button>
                     </div>
@@ -422,8 +422,8 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
                             const groupStock = group.variants.reduce((s, v) => s + v.stock_quantity, 0);
                             return (
                               <button key={group.colorName} onClick={() => { setSelectedColorGroup(group.colorName); setIsEditing(false); }}
-                                className={cn('flex items-center gap-3 p-2.5 rounded-lg border-2 transition-all text-left', isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border/50 hover:border-border')}>
-                                {group.images[0] ? <img src={group.images[0]} alt={group.colorName} className="w-10 h-10 rounded-md object-cover flex-shrink-0" loading="lazy" />
+                                className={cn('flex items-center gap-3 p-2.5 rounded-lg border-2 transition-all text-left', isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border/50 hover:border-border', CATALOG_FOCUS_VISIBLE)}>
+                                {group.images[0] ? <img src={group.images[0]} alt={productImageAlt(fullProduct.name, group.colorName)} className="w-10 h-10 rounded-md object-cover flex-shrink-0" loading="lazy" />
                                   : group.colorHex ? <div className="w-10 h-10 rounded-md border flex-shrink-0" style={{ backgroundColor: group.colorHex }} />
                                     : <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center flex-shrink-0"><Palette className="w-4 h-4 text-muted-foreground" /></div>}
                                 <div className="min-w-0 flex-1">
@@ -466,8 +466,8 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
                     </div>
                     <div className="flex gap-2 flex-wrap">
                       {visibleImages.map((img) => (
-                        <button key={img.url} onClick={() => toggleImage(img.url)} className={cn('relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all', selectedImages.has(img.url) ? 'border-primary ring-2 ring-primary/30' : 'border-border/50 opacity-60 hover:opacity-100')}>
-                          <img src={img.url} alt={img.label} className="w-full h-full object-cover" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                        <button key={img.url} onClick={() => toggleImage(img.url)} className={cn('relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all', selectedImages.has(img.url) ? 'border-primary ring-2 ring-primary/30' : 'border-border/50 opacity-60 hover:opacity-100', CATALOG_FOCUS_VISIBLE)}>
+                          <img src={img.url} alt={productImageAlt(fullProduct.name, img.label)} className="w-full h-full object-cover" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
                           {selectedImages.has(img.url) && <div className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center"><Check className="w-3 h-3 text-primary-foreground" /></div>}
                         </button>
                       ))}
@@ -542,6 +542,14 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
               <div className="flex items-center gap-2">
               <Button variant="outline" className="flex-1" onClick={requestClose}>Cancelar</Button>
               <div className="flex flex-1">
+                {/* CT-68 — progresso de envio anunciado: o texto do botão muda a
+                    cada lote, mas botão não é região viva; esta é a fonte do
+                    anúncio para o leitor de tela (visually hidden). */}
+                {isSending && (
+                  <span className="sr-only" role="status" aria-live="polite" data-testid="send-progress-live">
+                    {sendProgress ? `Enviando ${sendProgress.done} de ${sendProgress.total}` : 'Enviando'}
+                  </span>
+                )}
                 <Button
                   className="flex-1 rounded-r-none gap-2"
                   onClick={presetContact ? handleSendToContact : handleSend}
@@ -560,7 +568,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
                     : 'Selecionar Contato'}
                 </Button>
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild><Button className="rounded-l-none border-l border-primary-foreground/20 px-2"><ChevronDown className="w-4 h-4" /></Button></DropdownMenuTrigger>
+                  <DropdownMenuTrigger asChild><Button aria-label="Mais ações de envio" className="rounded-l-none border-l border-primary-foreground/20 px-2"><ChevronDown className="w-4 h-4" /></Button></DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-52">
                     <DropdownMenuItem onClick={handleCopyDescription}><Copy className="w-4 h-4 mr-2" />Copiar Descrição</DropdownMenuItem>
                     <DropdownMenuItem onClick={handleDownloadImages}><Download className="w-4 h-4 mr-2" />Download ({selectedImages.size} fotos)</DropdownMenuItem>

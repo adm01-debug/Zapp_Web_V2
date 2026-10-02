@@ -295,7 +295,7 @@ export function WhatsAppBubble({ text, mediaUrl, mediaType, time, senderName = '
             {mediaUrl && mediaType && mediaType !== 'image' && (
               <div className="rounded-lg mb-2 px-2.5 py-2 bg-black/20 text-2xs text-muted-foreground">📎 {mediaType} anexado</div>
             )}
-            {text || <span className="text-muted-foreground italic">Digite uma mensagem…</span>}
+            {text || (mediaUrl ? null : <span className="text-muted-foreground italic">Digite uma mensagem…</span>)}
             <span className="block text-right text-3xs text-muted-foreground mt-1">{time ?? format(new Date(), 'HH:mm')} ✓✓</span>
           </div>
         </div>

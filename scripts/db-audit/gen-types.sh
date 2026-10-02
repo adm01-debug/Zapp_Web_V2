@@ -97,7 +97,15 @@ else
     # nao tem TLS. Sem sslmode=disable aqui, tanto o pg_isready quanto o
     # supabase CLI herdam PGSSLMODE=verify-full do ambiente do job e tentam
     # TLS contra um endpoint loopback que nao fala TLS — falha sempre.
-    PROXY_URL="postgresql://proxy:unused@127.0.0.1:${PROXY_PORT}/proxydb?sslmode=disable"
+    # A perna cliente do proxy (loopback) usa auth_type=trust: a senha NAO e
+    # validada (userlist.txt registra "unused"). O valor aqui e' descartavel,
+    # nunca aponta para producao, e vem do ambiente (ZAPP_PG_PROXY_PASSWORD)
+    # para nao deixar credencial literal no codigo. Sem a variavel cai no
+    # proprio usuario do proxy, que o trust ignora -- o script segue rodando
+    # tanto no CI quanto no uso manual local.
+    PROXY_USER=proxy
+    PROXY_PASSWORD="${ZAPP_PG_PROXY_PASSWORD:-$PROXY_USER}"
+    PROXY_URL="postgresql://${PROXY_USER}:${PROXY_PASSWORD}@127.0.0.1:${PROXY_PORT}/proxydb?sslmode=disable"
 
     i=0
     while [ "$i" -lt 50 ]; do
@@ -117,6 +125,10 @@ else
       --schema public \
       > "$TMP"
   else
+    if [ "${CI:-}" = "true" ]; then
+      echo "Erro: pgbouncer ausente em ambiente CI; a credencial DESTINO_URL nao pode ir direto no --db-url. Instale pgbouncer." >&2
+      exit 1
+    fi
     echo "Aviso: pgbouncer ausente; DESTINO_URL vai direto no --db-url (visivel via ps/proc a processos deste job). Instale pgbouncer para blindar a credencial." >&2
     supabase gen types typescript \
       --db-url "$DESTINO_URL" \

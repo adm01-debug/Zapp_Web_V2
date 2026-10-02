@@ -373,7 +373,20 @@ A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`)
 ### E55 · Testes da Fase 5
 1. `mapboxCostGuard.test.ts`: 1 evento/mês, warning 80 %, teto vindo de config.
 2. `mapboxSession.test.ts`: sessão só no request real; `noteSuggestCall` sem sessão.
-**Checklist:** [ ] ≥ 6 casos novos · [ ] verde
+**Checklist:** [x] ≥ 6 casos novos · [x] verde
+
+**Fechada em 2026-10-01.** Medido, caso a caso:
+- *1 evento/mês* → `mapboxCostGuard.evento-mensal.test.ts` (2 casos, E47: reload depois do teto não reemite).
+- *teto vindo de config* → `mapboxCostGuard.teto-configuravel.test.ts` (4 casos, E48; inclui inválida → padrão 450, nunca "sem teto").
+- *sessão só no request real* e *`noteSuggestCall` sem sessão* → `mapboxSession.test.ts`, bloco E46 (5 casos: DEV lança erro de programação, PROD é no-op com warn, não cria sessão fantasma nem conta para o teto).
+- *≥ 6 casos novos* → **7** no total: E47 (2) + E48 (4) + E51 (1, no `/retrieve` com causa de rota).
+- *verde* → os quatro arquivos passam; a suíte do consumidor do E51 passa 46/46.
+
+**Divergência registrada — "warning 80 %" não existe e não foi inventado.** Nenhuma etapa da FASE 5
+(E45–E54) implementa limiar de 80 %; `grep` por `0.8`/`80 %` em `mapboxCostGuard.ts`, `LocationPicker.tsx`
+e `ContactForm.tsx` não encontra nada além da degradação em 100 %. Escrever o teste exigiria inventar a
+feature, o que a etapa não autoriza. Fica como **decisão de produto pendente**: (a) criar aviso suave em
+80 % do teto, ou (b) remover a menção da etapa. Mesmo tratamento dado ao "/ 500" do E53 (o teto real é 450).
 
 ### E56 · PR da Fase 5
 1. Título: `fix(mapa): telemetria de uso real e guarda de custo por mês (M3, M4, M10)`.

@@ -63,7 +63,7 @@ jobs:
         run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
-        run: bunx playwright install --with-deps chromium firefox webkit
+        run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
 
       # Uma unica invocacao do Playwright, com os projetos listados
       # EXPLICITAMENTE em vez de confiar na resolucao automatica de dependsOn:

@@ -1,17 +1,17 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
-  X, Check, Copy, Bold, Italic, List, Smile, Hash, ChevronLeft, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
+  X, Check, Copy, ChevronLeft, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useTalkXTemplates, type TalkXTemplate, type TemplateInput, type TemplateVariant } from '@/hooks/integrations/useTalkXTemplates';
+import { TalkXMessageEditor, type TalkXMessageEditorHandle } from './TalkXMessageEditor';
 import {
   IconTile, RailCard, PhoneFrame, TalkXSkeletonRows, TEMPLATE_CATEGORIES, TEMPLATE_STATUS,
   VARIABLE_KEYS, personalizePreview, fmtInt,
@@ -26,7 +26,7 @@ interface Props {
 
 export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: Props) {
   const { createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants, saveVariant, deleteVariant, countVariantRecipients } = useTalkXTemplates();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const messageEditorRef = useRef<TalkXMessageEditorHandle>(null);
 
   // Inicializa campos do template sendo editado
   const [eName, setEName] = useState(editing?.name ?? '');
@@ -118,24 +118,14 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
     setEHasMedia(!!t.media_url); setEStatus(t.status); setETags(t.tags ?? []); setECustomVars(t.custom_variables ?? []);
   };
 
-  /** Insere markup na posicao do cursor no textarea */
-  const insertAtCursor = useCallback((prefix: string, suffix = '', placeholder = '') => {
-    const el = textareaRef.current;
-    if (!el) return;
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    const selected = eContent.slice(start, end) || placeholder;
-    const before = eContent.slice(0, start);
-    const after = eContent.slice(end);
-    const next = (before + prefix + selected + suffix + after).slice(0, 1024);
-    setEContent(next);
-    // Reposiciona cursor apos a insercao
-    requestAnimationFrame(() => {
-      el.focus();
-      const cursor = start + prefix.length + selected.length + suffix.length;
-      el.setSelectionRange(cursor, cursor);
-    });
-  }, [eContent]);
+  // V26 — variáveis conhecidas do editor: as built-in + as personalizadas deste template.
+  const knownTemplateVariables = useMemo(
+    () => [...VARIABLE_KEYS, ...eCustomVars.map((variable) => `{{${variable}}}`)],
+    [eCustomVars],
+  );
+
+  /** Insere markup na posicao do cursor (painéis de variaveis fora do editor). */
+  const insertAtCursor = (text: string) => messageEditorRef.current?.insertAtCursor(text);
 
 
   /** E47: envia mensagem de teste para o numero informado */
@@ -298,30 +288,18 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             </div>
           </div>
 
-          {/* Toolbar WhatsApp */}
+          {/* Mensagem (V26: mesmo editor do passo 2 do wizard) */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <Label className="text-xs text-foreground-secondary">Mensagem</Label>
-              <span className={cn('text-2xs', eContent.length > 980 ? 'text-dash-red' : 'text-muted-foreground')}>{eContent.length}/1024</span>
-            </div>
-            {/* Toolbar */}
-            <div className="flex items-center gap-1 mb-1.5 p-1 rounded-t-lg border border-border/60 bg-muted/20 border-b-0">
-              <button type="button" title="Negrito (*texto*)" onClick={() => insertAtCursor('*', '*', 'texto')} className="h-7 w-7 rounded flex items-center justify-center hover:bg-muted/50 text-foreground-secondary hover:text-foreground"><Bold className="w-3.5 h-3.5" /></button>
-              <button type="button" title="Itálico (_texto_)" onClick={() => insertAtCursor('_', '_', 'texto')} className="h-7 w-7 rounded flex items-center justify-center hover:bg-muted/50 text-foreground-secondary hover:text-foreground"><Italic className="w-3.5 h-3.5" /></button>
-              <button type="button" title="Lista (- item)" onClick={() => insertAtCursor('\n- ', '', 'item')} className="h-7 w-7 rounded flex items-center justify-center hover:bg-muted/50 text-foreground-secondary hover:text-foreground"><List className="w-3.5 h-3.5" /></button>
-              <div className="w-px h-4 bg-border/60 mx-0.5" />
-              {VARIABLE_KEYS.slice(0, 6).map((v) => (
-                <button key={v} type="button" title={`Inserir ${v}`} onClick={() => insertAtCursor(v)} className="h-7 px-1.5 rounded text-3xs font-mono border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20 whitespace-nowrap">{v.replace(/[{}]/g, '')}</button>
-              ))}
-              
-              
-            </div>
-            <Textarea
-              ref={textareaRef}
+            <Label className="text-xs text-foreground-secondary">Mensagem</Label>
+            <TalkXMessageEditor
+              ref={messageEditorRef}
+              className="mt-1.5"
               value={eContent}
-              onChange={(e) => setEContent(e.target.value.slice(0, 1024))}
+              // Preserva o corte em 1024 do editor original.
+              onChange={(next) => setEContent(next.slice(0, 1024))}
               rows={7}
-              className="resize-none bg-input/40 border-border/70 text-sm leading-relaxed font-mono rounded-t-none border-t-0 rounded-tl-none rounded-tr-none"
+              limit={1024}
+              knownVariables={knownTemplateVariables}
               placeholder="{{saudacao}}, {{nome}}! Temos uma novidade especial…"
               onKeyDown={(e) => {
                 if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); void save(); }
