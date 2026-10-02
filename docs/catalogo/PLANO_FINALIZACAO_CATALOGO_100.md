@@ -1067,6 +1067,23 @@ a se fechar antes do clique da cor (snapshot em `test-results/…/error-context.
 o envio real exige **conexão WhatsApp ativa** — o botão "Enviar para <contato>" só habilita após a
 checagem de prontidão (`e2e/catalog.spec.ts:261-265`), e a conexão é pendência do Joaquim.
 
+### Re-verificação depois do restart do banco canônico (02/10, ~15:30)
+
+O coordenador avisou que o banco voltou. Nada do meu diff tinha falhado **por** banco (não há DB no
+escopo), mas dois passos dependiam dele — o e2e do CT-82 e a medição do CT-74 — e foram refeitos:
+
+- **CT-82 — o spec agora atravessa o fluxo inteiro.** Com o passo 4 blindado (o Sheet de detalhes
+  chega a **fechar sozinho** entre o "Ver" e o clique da cor; o bloco reabre e repete a ação), o spec
+  passa por: busca → card → detalhes → **cor** → "Enviar variação" → dialog de envio → fotos →
+  Informal → contato E2E → **"Enviar agora"**, e para no toast "Produto enviado". Ou seja: o que falta
+  no CT-82 **não é código nem teste** — é o **envio real**, que depende da conexão WhatsApp ativa
+  (pendência do Joaquim). Nenhuma mensagem foi enviada.
+- **CT-74 — re-medição confirma o veredito.** Banco saudável, mesma metodologia: **perf 39** e
+  **CLS 0,2451** (1ª medição: 44 e 0,2455). Duas medições independentes no mesmo CLS reforçam a causa
+  medida (faixa de KPIs). Aceite segue **não cumprido** (detalhe na §CT-74 do `PERF.md`).
+- O Sheet de detalhes **fechar sozinho** é **achado de app**, não de teste — registrado abaixo, sem
+  correção aqui.
+
 ### Achados fora do escopo (declarados, não corrigidos aqui)
 
 - **Modal de boas-vindas bloqueia a tela depois do login e Escape não o fecha** (medido: overlay
@@ -1076,6 +1093,9 @@ checagem de prontidão (`e2e/catalog.spec.ts:261-265`), e a conexão é pendênc
   `reuseExistingServer: !process.env.CI` e `url: http://localhost:5173`): um e2e de outro chat chegou
   a carregar `playwright-report/` pelo dev server deste workspace (visto no log do próprio servidor).
   Sugestão (fora do escopo): parametrizar a porta por variável de ambiente.
+- **Sheet de detalhes do catálogo fecha sozinho** (medido 02/10): em algumas rodadas o dialog some
+  entre o clique em "Ver" e o clique na cor, sem interação do usuário. O spec reabre e segue, mas o
+  comportamento é do app (`ProductDetailDialog.tsx`) e merece investigação própria.
 - **A11Y no console** (visto no log do dev server, não bloqueante): `color-contrast` SERIOUS em 3–4
   elementos e `button-name` CRITICAL em 3 elementos — território do CT-69 (decisão de produto).
 
