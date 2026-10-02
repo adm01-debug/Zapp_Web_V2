@@ -309,7 +309,7 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentId?: string; templateId?: string; step?: WizardStep }) {
   const { saveDraftCampaign, updateCampaign, replaceDraftRecipients, startCampaign } = useTalkX();
   const { segments } = useTalkXSegments();
-  const { templates } = useTalkXTemplates();
+  const { templates, fetchVersionHistory } = useTalkXTemplates();
   const logEvent = useTalkXEventLogger();
   const { profile } = useAuth();
 
@@ -332,6 +332,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [audienceSource, setAudienceSource] = useState<AudienceSource>(campaign?.audience_source || (initial?.segmentId ? 'segment' : 'contacts'));
   const [segmentId, setSegmentId] = useState(campaign?.segment_id || initial?.segmentId || '');
   const [templateId, setTemplateId] = useState(campaign?.template_id || initial?.templateId || '');
+  // V26 — versão do template que originou a mensagem (talkx_template_versions.id).
+  const [templateVersionId, setTemplateVersionId] = useState<string | null>(campaign?.template_version_id ?? null);
   const [messageTemplate, setMessageTemplate] = useState(campaign?.message_template || '');
   const [typingDelay, setTypingDelay] = useState([
     (campaign?.typing_delay_min || 1500) / 1000,
@@ -388,12 +390,33 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     return () => window.clearInterval(timer);
   }, [isScheduled]);
 
+  /**
+   * V26 — resolve a versão mais recente registrada para o template (mesma
+   * consulta que o histórico do editor de template já usa) e a guarda em
+   * `template_version_id` para auditar de qual versão a campanha saiu.
+   *
+   * Observação: `update_talkx_template_with_snapshot` arquiva em
+   * talkx_template_versions o estado ANTERIOR à edição (é um histórico), então
+   * a linha de maior `version_number` é o último estado ARQUIVADO e pode ficar
+   * uma edição atrás do conteúdo ao vivo do template. Como `talkx_templates`
+   * não tem coluna de versão corrente e a FK exige um id existente, este é o id
+   * mais próximo de "versão aplicada" que o banco oferece hoje.
+   */
+  const resolveTemplateVersion = useCallback(async (id: string) => {
+    try {
+      const versions = await fetchVersionHistory(id);
+      setTemplateVersionId(versions[0]?.id ?? null);
+    } catch {
+      setTemplateVersionId(null);
+    }
+  }, [fetchVersionHistory]);
+
   // Template inicial (vindo da galeria) preenche a mensagem uma vez.
   useEffect(() => {
     if (!campaign && templateId && !messageTemplate) {
       const t = templates.find((x) => x.id === templateId);
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (t) { setMessageTemplate(t.content); if (t.media_url) { setHasMedia(true); setMediaUrl(t.media_url); setMediaType(t.media_type || 'image'); } }
+      if (t) { setMessageTemplate(t.content); if (t.media_url) { setHasMedia(true); setMediaUrl(t.media_url); setMediaType(t.media_type || 'image'); } void resolveTemplateVersion(templateId); }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateId, templates.length]);
@@ -648,8 +671,10 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
         setMediaUrl('');
         setMediaType('');
       }
+      // V26 — grava a versão do template aplicada (sem bloquear a UI).
+      void resolveTemplateVersion(id);
     }
-  }, [templates]);
+  }, [templates, resolveTemplateVersion]);
 
   const toggleContact = useCallback((id: string) => {
     setSelectedContacts((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
@@ -700,10 +725,12 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
 
   const canProceed = useMemo(() => ({
     1: name.trim().length >= 3 && !!connectionId && (audienceSource === 'segment' ? !!segmentId : audienceSource === 'contacts' ? selectedContacts.length > 0 : false),
-    2: messageTemplate.trim().length > 0,
+    // V26 — só-mídia passa: aceita texto OU uma mídia real (URL preenchida; a RPC
+    // exige media_url e media_type juntos, então um tipo sem URL não pode avançar).
+    2: messageTemplate.trim().length > 0 || (hasMedia && mediaUrl.trim().length > 0),
     3: scheduleConfigIsValid,
     4: confirmConsent && confirmContent && confirmSuppression,
-  }), [name, connectionId, audienceSource, segmentId, selectedContacts.length, messageTemplate, scheduleConfigIsValid, confirmConsent, confirmContent, confirmSuppression]);
+  }), [name, connectionId, audienceSource, segmentId, selectedContacts.length, messageTemplate, hasMedia, mediaUrl, scheduleConfigIsValid, confirmConsent, confirmContent, confirmSuppression]);
 
   const buildPayload = useCallback((): Partial<TalkXCampaign> => ({
     name, description: description || null, objective, message_template: messageTemplate,
@@ -715,6 +742,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       : {},
     segment_id: audienceSource === 'segment' ? segmentId || null : null,
     template_id: templateId || null,
+    // V26 — versão do template usada (auditoria do que a campanha enviou).
+    template_version_id: templateVersionId || null,
     typing_delay_min: Math.round(typingDelay[0] * 1000), typing_delay_max: Math.round(typingDelay[1] * 1000),
     send_interval_min: Math.round(sendInterval[0] * 1000), send_interval_max: Math.round(sendInterval[1] * 1000),
     speed_profile: speedProfile,
@@ -731,7 +760,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     confirm_consent: confirmConsent,
     // V23: o passo atual do wizard é persistido para reabrir o rascunho no mesmo passo.
     draft_step: step,
-  }), [name, description, objective, messageTemplate, audienceSource, audienceRules, contactSearch, segmentId, templateId, typingDelay, sendInterval, speedProfile, connectionId, owner, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly, respectSuppression, confirmConsent, step]);
+  }), [name, description, objective, messageTemplate, audienceSource, audienceRules, contactSearch, segmentId, templateId, templateVersionId, typingDelay, sendInterval, speedProfile, connectionId, owner, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly, respectSuppression, confirmConsent, step]);
 
   /** Salva (rascunho/agendada) e, se `launch`, dispara imediatamente. Devolve o id da campanha. */
   const persistSave = useCallback(async (mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
@@ -827,6 +856,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     typingDelay, sendInterval, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly,
     isScheduled, scheduledAt, scheduleTimezone, respectSuppression, selectedContacts,
     audienceRules, contactSearch,
+    templateVersionId, // V26: a versão resolvida do template também precisa ser persistida.
     step, // V23: o passo do wizard entra no autosave — sair no passo 2 e reabrir volta ao passo 2.
   });
   const autosaveIsDirty = persistedAutosaveSnapshot !== null && persistedAutosaveSnapshot !== autosaveFields;
@@ -893,6 +923,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     name, setName, description, setDescription, objective, setObjective,
     audienceSource, setAudienceSource, segmentId, setSegmentId, segments, selectedSegment, segmentEstimate,
     templateId, applyTemplate, templates, selectedTemplate,
+    // V26 — versão do template aplicada (talkx_template_versions.id).
+    templateVersionId,
     messageTemplate, setMessageTemplate,
     typingDelay, setTypingDelay, sendInterval, setSendInterval, speedProfile, setSpeedProfile, messagesPerMinute,
     connectionId, setConnectionId, selectedContacts, showPreview, setShowPreview,
