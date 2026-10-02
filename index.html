@@ -59,7 +59,11 @@
       // Boot diagnostic – captures any error before React mounts and surfaces
       // a visible reason if mount doesn't happen within the timeout.
       (function() {
-        var deadline = Date.now() + 8000;
+        // O default de produção é 8s. O override (window.__BOOT_DEADLINE_MS) existe
+        // para o CI/spec visual: com o dev server vite frio e vários workers em
+        // paralelo, o React 19 pode levar >8s para montar e o watchdog destruiria
+        // o app (#root zerado) — falha flaky "Falha ao inicializar o app".
+        var deadline = Date.now() + (window.__BOOT_DEADLINE_MS || 8000);
         var interval = setInterval(function() {
           if (document.getElementById('root') && document.getElementById('root').firstChild) {
             clearInterval(interval);

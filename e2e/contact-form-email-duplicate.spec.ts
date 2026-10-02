@@ -1,11 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 
-// Mesmos valores de e2e/fixtures/e2e-contact.ts — duplicados aqui porque o
-// runner do Playwright não resolve o alias "@/" do bundler.
-const SUPABASE_URL = 'https://tnnnlkbymytvtqngbbqh.supabase.co';
-const SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRubm5sa2J5bXl0dnRxbmdiYnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MjU0MDEsImV4cCI6MjEwMzMwMTQwMX0.4kDVowXzo3yBVboLOFn1bsij-vBKncJXVoPot3iknC0';
-
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './fixtures/supabase-env';
 const FIXTURE_CONTACT_ID = '04dff4dc-c6b1-4283-ac22-bd8639804759';
 // Email exclusivo do fixture E2E; não deve coincidir com nenhum contato real.
 const FIXTURE_EMAIL = 'e2e-dup-guard@promobrindes.com.br';

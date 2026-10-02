@@ -2,7 +2,7 @@
  * F54 (Bloco E) — CONTRATO da API de dominio do `multiplix-dispatch`.
  *
  * O que este contrato trava (a versao "de API publica" do roteador):
- *   (a) as 14 acoes do Bloco E estao em `HANDLERS` e NENHUMA esta em `PENDING_ACTIONS`;
+ *   (a) as 16 acoes do Bloco E estao em `HANDLERS` e NENHUMA esta em `PENDING_ACTIONS`;
  *   (b) toda acao desconhecida responde 400 NOMEADO (nunca 500) nem cai num 501 mudo;
  *   (c) o log estruturado do roteador NAO carrega conteudo de mensagem/telefone —
  *       so campos escolhidos (data de negocio proibida no log);
@@ -48,7 +48,7 @@ const read = (rel: string): string => readFileSync(resolve(ROOT, rel), 'utf8');
 
 const INDEX = 'supabase/functions/multiplix-dispatch/index.ts';
 
-/** As 14 acoes do Bloco E ligadas no roteador (F44-F52). */
+/** As 16 acoes do Bloco E ligadas no roteador (F44-F52 + as listagens do Bloco C). */
 const EXPECTED_ACTIONS = [
   'draft.create',
   'draft.get',
@@ -64,6 +64,9 @@ const EXPECTED_ACTIONS = [
   'estimate',
   'confirm',
   'status',
+  // Leitura de listagem (dono OU `multiplix.dispatch.manage_all`).
+  'dispatch.list',
+  'recipients.list',
 ] as const;
 
 /** Remove comentarios: as linhas de explicacao citam "500"/"mensagem" de proposito. */
@@ -92,12 +95,12 @@ const ALLOWED_LOG_KEYS = new Set([
 const FORBIDDEN_LOG_TOKENS =
   /(payload|\bbody\b|\btemplate\b|\bcontent\b|\bmessage\b|\bmensagem\b|\bphone\b|\btelefone\b|destino|recipients)/i;
 
-registrar('(a) as 14 acoes estao em HANDLERS e nenhuma esta em PENDING_ACTIONS', () => {
+registrar('(a) as 16 acoes estao em HANDLERS e nenhuma esta em PENDING_ACTIONS', () => {
   const src = stripComments(read(INDEX));
   const keys = handlersKeys(src).sort();
   const expected = [...EXPECTED_ACTIONS].sort();
 
-  assert(keys.length === 14, `esperava 14 acoes em HANDLERS, veio ${keys.length}: ${keys.join(', ')}`);
+  assert(keys.length === 16, `esperava 16 acoes em HANDLERS, veio ${keys.length}: ${keys.join(', ')}`);
   assert(
     JSON.stringify(keys) === JSON.stringify(expected),
     `acoes divergentes do contrato.\n  veio:      ${keys.join(', ')}\n  esperado:  ${expected.join(', ')}`,

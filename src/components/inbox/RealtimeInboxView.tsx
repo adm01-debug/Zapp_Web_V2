@@ -129,7 +129,7 @@ export function RealtimeInboxView() {
     [inbox.selectedContactId, setConversationTab]
   );
   const { counts: tabCounts } = useConversationTabCounts(inbox.selectedContactId);
-  // Badge da aba Pedidos vem do CRM 360° (client-side) — a RPC get_conversation_tab_counts não muda.
+  // Badge da aba SalesView vem do CRM 360° (client-side) — a RPC get_conversation_tab_counts não muda.
   const { data: crm360ForOrdersBadge } = useContactCrm360(inbox.selectedContactId);
   const tabExtraCounts = { orders: crm360ForOrdersBadge?.purchases.length ?? 0 };
 

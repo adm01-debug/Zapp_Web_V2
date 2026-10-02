@@ -25,6 +25,8 @@
     "preview": "vite preview",
     "test:contracts": "vitest run --config vitest.contracts.config.ts",
     "mutation:mapa": "node scripts/mutation/run-mapa.mjs",
+    "graph:setup": "bash scripts/graphify/setup.sh",
+    "graph:update": "graphify update .",
     "prepare": "husky || true"
   },
   "dependencies": {

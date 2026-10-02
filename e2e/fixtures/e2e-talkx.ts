@@ -1,9 +1,6 @@
 import type { Page } from '@playwright/test';
 
-const SUPABASE_URL = 'https://tnnnlkbymytvtqngbbqh.supabase.co';
-const SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRubm5sa2J5bXl0dnRxbmdiYnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MjU0MDEsImV4cCI6MjEwMzMwMTQwMX0.4kDVowXzo3yBVboLOFn1bsij-vBKncJXVoPot3iknC0';
-
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-env';
 // Conexão WhatsApp dedicada para E2E, semeada em produção (2026-09-28).
 // DEVE ter status='connected' e instance_id preenchido — useCampaignEditor filtra
 // por .eq('status','connected') e !instance_id; conexão disconnected não aparece no dropdown
