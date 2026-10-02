@@ -1,6 +1,6 @@
 import { useContactCrm360 } from '@/hooks/crm/useContactCrm360';
 
-interface ComercialSummaryWidgetProps {
+interface CommercialSummaryStripProps {
   contactId: string;
 }
 
@@ -15,7 +15,7 @@ function Tile({ value, label }: { value: string | number; label: string }) {
   );
 }
 
-export function ComercialSummaryWidget({ contactId }: ComercialSummaryWidgetProps) {
+export function CommercialSummaryStrip({ contactId }: CommercialSummaryStripProps) {
   const { data, isLoading } = useContactCrm360(contactId);
   const resumo = data?.resumo;
   const ticketMedio = data?.ticketMedio;
