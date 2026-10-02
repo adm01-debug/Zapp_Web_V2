@@ -151,8 +151,8 @@
     --radius: 0.875rem; /* 14px — Promo Gifts default */
 
     /* ===== ESTADOS ===== */
-    /* L 30%: branco sobre o verde e o verde como texto sobre branco fecham 4,5:1 (42% dava 2,6:1). */
-    --success: 160 70% 30%;
+    /* L 27%: branco fecha 4,5:1 também no hover (bg-success/90 sobre o card) e no verde como texto sobre branco. */
+    --success: 160 70% 27%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     /* Texto sobre o amarelo: escuro fecha 4,5:1 (branco dava 2,2:1). Nao tem outro consumidor. */

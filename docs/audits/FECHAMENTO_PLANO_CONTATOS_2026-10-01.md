@@ -232,7 +232,7 @@ A parte de banco foi refeita via MCP read-only:
 | ~~B3~~ | ~~Etapa 98 incompleta: sem credencial do usuário QA~~ | — | **Resolvido em 02/10** (complemento abaixo) |
 | ~~B7~~ | ~~Etapa 90: baselines não versionadas (captura não determinística contra produção)~~ | — | **Resolvido em 02/10**: backend mockado e PNGs versionados (complemento abaixo) |
 | B4 | Etapa 95: receitas do runbook não testadas por execução (DML proibido) | — | Testar na primeira janela com escrita |
-| ~~B5~~ | ~~Etapa 67: `text-success-foreground` sobre `bg-success` (2.60/2.30:1)~~ | — | **Resolvido em 02/10**: 4.78/7.80:1 (complemento abaixo) |
+| ~~B5~~ | ~~Etapa 67: `text-success-foreground` sobre `bg-success` (2.60/2.30:1)~~ | — | **Resolvido em 02/10**: 5.66/7.80:1 (hover `bg-success/90`: 4.63/6.53:1) (complemento abaixo) |
 | B6 | Etapas 52/55/58/59 (F5) dependem de apply de migration | — | Aplicar e refazer o `DB Live Guard` |
 
 ---
@@ -266,7 +266,7 @@ Ressalva visual: no mobile o FAB "+" cobre parte do botão "Colunas".
 
 | Token | Antes | Depois | Branco/texto sobre `bg-success` |
 |-------|-------|--------|------------------|
-| `--success` (claro) | 160 70% 42% | 160 70% 30% | 2.60 → 4.78:1 (e `text-success` sobre o card: 2.60 → 4.78:1) |
+| `--success` (claro) | 160 70% 42% | 160 70% 27% | 2.60 → 5.66:1; hover `bg-success/90`: 4.63:1 (e `text-success` sobre o card: 2.60 → 5.66:1) |
 | `--success-foreground` (escuro) | 0 0% 100% | 142 80% 6% | 2.30 → 7.80:1 (`text-success` sobre o card segue 7.70:1) |
 
 **FAB no mobile.** O "+" de Contatos ficava empilhado sobre o FAB global "Novo" (`MobileFAB`) e cobria "Colunas". Na vista Contatos o `MobileFAB` sai (a ação "Novo contato" dele só navegava para Contatos), e o "+" desce para a posição dele (`bottom-[76px]`).

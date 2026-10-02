@@ -16,6 +16,7 @@ export const PAIRS = [
   ['ContactCard e-mail (text-muted-foreground)', 'muted-foreground', 'card', 1],
   ['Ativo primário (text-primary-foreground on bg-primary)', 'primary-foreground', 'primary', 1],
   ['Botão sucesso (text-success-foreground on bg-success)', 'success-foreground', 'success', 1],
+  ['Botão sucesso hover (text-success-foreground on bg-success/90)', 'success-foreground', 'success', 0.9],
   ['ContactForm aviso (text-foreground on bg-warning/10)', 'foreground', 'warning', 0.1],
   ...['primary', 'info', 'success', 'warning', 'destructive', 'muted-foreground'].map((bg) => [
     `ContactMapView ícone (text-foreground on bg-${bg}/15)`, 'foreground', bg, 0.15,
