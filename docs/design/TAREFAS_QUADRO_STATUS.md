@@ -511,7 +511,19 @@ leituras foram descartadas.
 ## CP-I Testes      [x] arquivos=398 · casos=5219 (46 novos de tarefas) · bundle=12,2 KB gz (do modulo; teto 45) · TTI 300 itens=Lista 1606 ms · Quadro 1633 ms · Agenda 1584 ms (Playwright chromium 1672x941, login pela UI, `performance.now()` da navegacao ate o 1o `[data-testid=work-item-card]`; cards no DOM: 175/250/250)
   - (O DoD pedia ">= 50 cards no DOM"; por modo a Lista agrupa e o Quadro recorta por coluna, entao 50 simultaneos nao acontecem — medido ate o 1o card com o total no DOM registrado.)
   - Seed do QA: 300 tarefas `[E2E seed 89]` — contagem ANTES `0-0/300`, DELETE 204 (`*/300`), DEPOIS `*/0`. Rodado 2x, zerado nas duas.
-## CP-J Entrega     [~] gates 8/8=8 OK · func 24/24=17 (E.5, 7 restantes classificadas) · geometria 8/8=OK · cores 10/10=OK (ΔE76) · isolamento=OK na RLS com agent (supervisor ve tudo por desenho) · migração=OK (ID conferido) · PR drop n (aguarda APROVADO)=PENDENTE (workspace 2) · docs=OK (README do modulo criado) · prod final=cron OK + E.1 6/6 OK; falta E.5 24/24 e abrir a migrada na Lista/Sheet do dono
+## CP-J Entrega     [~] (E.5 fica 23/24 declarado por decisao 30d5; 1 check e pendencia do Joaquim) gates 8/8=8 OK · func 24/24=17 (E.5, 7 restantes classificadas) · geometria 8/8=OK · cores 10/10=OK (ΔE76) · isolamento=OK na RLS com agent (supervisor ve tudo por desenho) · migração=OK (ID conferido) · PR drop n (aguarda APROVADO)=PENDENTE (workspace 2) · docs=OK (README do modulo criado) · prod final=cron OK + E.1 6/6 OK; falta E.5 24/24 e abrir a migrada na Lista/Sheet do dono
+
+### Decisao 30d5 (Joaquim, 2026-10-01) — como tratar o E.5
+
+Opcao A + investigacao:
+1. As **4 flaky** (`concluir-e-desfazer`, `apagar-e-undo`, `atalhos-altk-altp-n-1-2-3`, `console-sem-erro`)
+   ganham **retry padrao de e2e: ate 3 tentativas**, com a flakiness **declarada** na saida. **Se falhar nas 3,
+   conta como FALHA** — nao mascara.
+2. `central-notificacoes-abrir` e **codigo, nao dado**: investigar e **corrigir agora, com vermelho-antes**
+   (teste que falha primeiro, depois a correcao minima, depois verde + suite inteira verde).
+3. `criar-do-chat-com-contato` fica como **PENDENCIA DO JOAQUIM**: criar conversa em producao depende dele.
+   **Nao perseguir** essa check; ela permanece declarada como nao executada.
+4. O E.5 fica **23/24 declarado** — **nunca** marcado 24/24.
 
 ### FASE J — numeros reais (2026-10-01)
 
