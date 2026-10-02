@@ -1,3 +1,4 @@
+import { dispensarOnboarding } from './fixtures/onboarding';
 import { test, expect, type Page } from '@playwright/test';
 import {
   E2E_CATALOG_FIXTURE_MARKER,
@@ -143,26 +144,6 @@ async function softDeleteMessagesSince(page: Page, sinceIso: string): Promise<nu
   return ((await res.json()) as MessageRow[]).length;
 }
 
-const OVERLAY_ONBOARDING = 'div.fixed.inset-0.z-\\[9999\\]';
-
-/**
- * Achado do grupo D (02/10, medido): depois de um login novo o modal de
- * boas-vindas ("Bem-vindo, Multiplix!") monta por cima da tela e intercepta
- * qualquer clique (`div.fixed.inset-0.z-[9999]`), inclusive o "Ver" do primeiro
- * card — o fluxo nunca saía do passo 3. Aqui ele é dispensado como um usuário
- * faria, pelo botão "Pular tour". **Escape NÃO fecha esse modal** (medido).
- */
-async function dispensarOnboarding(page: import('@playwright/test').Page) {
-  const pular = page.getByRole('button', { name: /pular tour/i });
-  if ((await pular.count()) > 0) {
-    await pular.first().click();
-    await pular.first().waitFor({ state: 'detached', timeout: 10_000 }).catch(() => {});
-  }
-  await page
-    .locator(OVERLAY_ONBOARDING)
-    .waitFor({ state: 'detached', timeout: 10_000 })
-    .catch(() => {});
-}
 
 test.describe('Catálogo — envio de produto no chat (CT-82)', () => {
   test.describe.configure({ timeout: 150_000 });
