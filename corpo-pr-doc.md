@@ -59,6 +59,17 @@ Todo o contexto medido que o V4 precisa está no bloco de handoff (guard de `tal
 - [x] Documentação atualizada — é o objeto da PR
 - [x] Hooks de pre-commit/pre-push passaram sem `--no-verify`
 
+## Rollback
+
+Documentação: reverter é `git revert` deste commit — nenhuma migration, schema ou dado é afetado.
+
+## Achados fora do escopo (NÃO corrigidos)
+
+1. **`PENDENTE_POS_MERGE` órfão da migration v2** (arquivada em `supabase/migrations/_superseded/`): o `hermes-db-migrar` não conhece esse diretório e não há flag de "substituída por", então o `hermes-tarefa-mergear` segue reportando `ddl_nao_aplicado` mesmo com o DDL aplicado. Reportado ao Joaquim; limpar exigiria editar `.hermes-tarefa`, que a guarda proíbe. **Não corrigido aqui.**
+2. **`docs/MIGRATIONS.md`** ainda descreve a migration v2 como pendente. **Não corrigido aqui** (fora do escopo desta PR).
+3. **`docs/talkx/v4/STATUS.md`** é do V4 — regenerado apenas para o check de CI não ficar vermelho; o conteúdo do placar não é assunto deste plano.
+4. **`corpo-pr.md` / `corpo-pr-doc.md`** entram no commit como rascunho de corpo de PR (mesmo comportamento das PRs anteriores) — se o V4 quiser, vale um `.gitignore` para esses arquivos.
+
 ## Notas para Reviewer
 
 - Esta PR **não executa nada**: não cria migration, não altera RPC do Talk X e não toca código de produção. É o encerramento formal do V3.
