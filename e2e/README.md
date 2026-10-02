@@ -156,18 +156,29 @@ qualquer escrita é bloqueada com 403 `"escrita não prevista"`. Criadores
 (`get_team_profiles`) e contatos (insights) respondem vazios para o demo não
 ler produção. O relógio é fixado com `page.clock`.
 
-A fixture **cresce junto com cada etapa de tela**: a etapa que cria uma
-tabela/RPC Talk X acrescenta a resposta dela no JSON da tela correspondente.
+**Contrato de crescimento (oficializado em X003/X004).** A fixture **cresce
+junto com cada etapa de tela**: a etapa que cria uma tabela/RPC Talk X acrescenta
+a resposta dela no JSON da tela correspondente — a fixture de cada tela nasce na
+etapa daquela tela, nunca antes. Enquanto isso, o arquivo da tela é `{}` e:
+
+- `loadDemoData(tela)` (e portanto `mockTalkXBackend`/`mockTalkXVisual`) **lança
+  `FixtureVaziaError`** ao referenciar uma fixture vazia — nunca mais
+  `data[table] ?? []` renderizando a tela em branco em silêncio;
+- a régua visual (`e2e/talkx-visual.spec.ts`) **pula** as telas cuja fixture é
+  `{}` (`fixtureDaTela(nn)` devolve `undefined`) — ausência de fixture não é
+  falha, é "ainda não é a etapa desta tela".
+
 Hoje só a tela 01 (`01-campanhas-visao-geral.json`) tem dados (as 24 campanhas
-do mock, KPI "Total de campanhas" = 24); as demais são esqueleto (`{}`) e serão
-preenchidas pelas etapas de cada tela. O spec roda no `e2e-logado.yml` via
-`chromium-authenticated` (mesmo `storageState` dos demais specs autenticados),
-mas nunca toca o banco de produção do módulo.
+do mock, KPI "Total de campanhas" = 24); as demais são `{}` e serão preenchidas
+pelas etapas de cada tela — por isso a régua hoje captura só a 01. O spec roda no
+`e2e-logado.yml` via `chromium-authenticated` (mesmo `storageState` dos demais
+specs autenticados), mas nunca toca o banco de produção do módulo.
 
 ## Régua visual lado a lado (plano V4 · X004)
 
 `e2e/talkx-visual.spec.ts` é a **régua informativa** do plano V4: percorre as
-17 telas do Talk X e captura cada uma em 1672×941 (tema escuro) para comparar
+17 telas do mock e captura, em 1672×941 (tema escuro), aquelas cuja fixture tem
+dados reais (hoje só a 01 — ver contrato de crescimento acima), para comparar
 com os mockups de `docs/talkx/references/NN_*.png`. Roda **deslogado** (sem
 `storageState`/secrets) no projeto `chromium-talkx-visual` — a sessão é
 injetada no localStorage por `installFakeSession(page)` de
@@ -177,6 +188,11 @@ injetada no localStorage por `installFakeSession(page)` de
 
 As telas **13/14/15** (pausa/retomada, relatório concluído, importação CRM360)
 ainda não existem no app: o spec grava `nao-existe-NN.txt` em vez de capturar.
+
+Além disso, a régua só **captura** as telas cuja fixture tem dados reais
+(contrato de crescimento, seção anterior): hoje só a 01 — as 02..17 são puladas
+(`test.skip`) até que a etapa de cada tela popule a fixture dela, sem que isso
+seja falha do run.
 
 O artefato é montado por `scripts/talkx/lado-a-lado.mjs --out <dir>`, que copia
 mock + captura para `<dir>/img/{mock,captura}` e gera `<dir>/index.html` lado a
