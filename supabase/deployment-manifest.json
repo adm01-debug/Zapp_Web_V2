@@ -7,9 +7,9 @@
     "sha256": "4ce1acb56ca0cd8efb82cc269a4942c306e1863b79ed9b887e784b7ca8c70375"
   },
   "summary": {
-    "function_count": 67,
-    "source_file_count": 120,
-    "verify_jwt_true": 55,
+    "function_count": 68,
+    "source_file_count": 125,
+    "verify_jwt_true": 56,
     "verify_jwt_false": 12
   },
   "orphan_allowlist": [
@@ -524,13 +524,38 @@
     },
     {
       "path": "supabase/functions/multiplix-audience/index.ts",
-      "bytes": 29151,
-      "sha256": "73a0ca771064f9319cc27e2fa1daa426dfed0ad04b27887066fcb4a857722d9c"
+      "bytes": 29392,
+      "sha256": "37250d2808f85d06b11d19f5675dbdb030b424d26fac3cf66d9c19a20eb0344b"
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/actions/audience.ts",
+      "bytes": 26418,
+      "sha256": "a7981ea3e6217c7ca0268cf237e60be06cf4e61cca63b0f42b6ca778c86f07c8"
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/actions/blocks.ts",
+      "bytes": 13851,
+      "sha256": "2f1266816d9535794feeaedc982d5c4ea5de5bc7edf7d0eabec273430bd6b3cf"
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/actions/inspect.ts",
+      "bytes": 40349,
+      "sha256": "f245a231e2070c42a26422e4894739e7cc0aa2185596a136086367aea6627ff0"
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/actions/lifecycle.ts",
+      "bytes": 18485,
+      "sha256": "7de69af12fdc8be08099f2703f67ad731d5d501ff8b58949dd0b45bef343eeda"
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/index.ts",
+      "bytes": 12998,
+      "sha256": "6fc96fd103de166c4ad6cacad977c68533a9e26efc1cca75034d64eaae815160"
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "bytes": 32459,
-      "sha256": "bbc853c0ef65cbb30dcf0d75c0b22ca3fe5329bb80b3fe39adcbbe1614e47961"
+      "bytes": 33607,
+      "sha256": "72997971cc4799ee02c06d12276b6483bb86fa526b40c6e0530929d475459e9f"
     },
     {
       "path": "supabase/functions/promogifts-catalog/index.ts",
@@ -1302,7 +1327,7 @@
       "name": "multiplix-audience",
       "entrypoint": "supabase/functions/multiplix-audience/index.ts",
       "verify_jwt": true,
-      "source_sha256": "08ff3e3214403d59e713b3e307b0868075590848e477d5185add71f2fd110bb2",
+      "source_sha256": "6fc4caa2e1431dc389288efcdf38bbb2ba364b1059c7be9364f1b481ef3823df",
       "source_files": [
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1312,10 +1337,42 @@
       ]
     },
     {
+      "name": "multiplix-dispatch",
+      "entrypoint": "supabase/functions/multiplix-dispatch/index.ts",
+      "verify_jwt": true,
+      "source_sha256": "fe83dd05d621c0ad97cd0c816326b36a5549f4a9e7d559fb786abb84b53ec907",
+      "source_files": [
+        "supabase/functions/_shared/crm-integration-contract.ts",
+        "supabase/functions/_shared/evolution-go-routes.ts",
+        "supabase/functions/_shared/evolution-helpers.ts",
+        "supabase/functions/_shared/evolution-send.ts",
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/messaging/eligibility.ts",
+        "supabase/functions/_shared/messaging/errors.ts",
+        "supabase/functions/_shared/messaging/evolution-go.ts",
+        "supabase/functions/_shared/messaging/index.ts",
+        "supabase/functions/_shared/messaging/media.ts",
+        "supabase/functions/_shared/messaging/personalize.ts",
+        "supabase/functions/_shared/messaging/phone.ts",
+        "supabase/functions/_shared/messaging/timing.ts",
+        "supabase/functions/_shared/messaging/types.ts",
+        "supabase/functions/_shared/multiplix-eligibility.ts",
+        "supabase/functions/_shared/ssrf.ts",
+        "supabase/functions/_shared/talkx-window.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/multiplix-audience/index.ts",
+        "supabase/functions/multiplix-dispatch/actions/audience.ts",
+        "supabase/functions/multiplix-dispatch/actions/blocks.ts",
+        "supabase/functions/multiplix-dispatch/actions/inspect.ts",
+        "supabase/functions/multiplix-dispatch/actions/lifecycle.ts",
+        "supabase/functions/multiplix-dispatch/index.ts"
+      ]
+    },
+    {
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d76eaf8c9463b1483cbd7c27208ddbd06b4832ad80a93f867623b8ce2c2eaa29",
+      "source_sha256": "33943988f2a93248d64781a3bf9881e30bbd7a849dcdab6ff4638fb4ad7b540c",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1564,5 +1621,5 @@
       ]
     }
   ],
-  "manifest_sha256": "a62a192241fddb8acddae505428f072700b62b9ee7e55688d5cfb3646765210e"
+  "manifest_sha256": "77ea63f6d6783aa6cfcfddc934647d0e39d2ccc736ede43332aaf02e3294fb42"
 }

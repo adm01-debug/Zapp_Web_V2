@@ -3,7 +3,8 @@
   "_gerado_em": "2026-08-27",
   "_contexto": "docs/audits/EXECUCAO_2026-08-27.md, secao 'Acoplamento quebrado'",
   "known": [
-    "from:department_whatsapp_configs:src/hooks/team-chat/useDepartmentManagement.ts"
+    "from:department_whatsapp_configs:src/hooks/team-chat/useDepartmentManagement.ts",
+    "rpc:multiplix_confirm_dispatch:supabase/functions/multiplix-dispatch/actions/lifecycle.ts"
   ],
   "_resolvido": {
     "retry_talkx_recipient": "RPC criado (migration 20260930630000_talkx_v19_retry_recipient.sql). A divida era falsa: o alvo passou a existir no banco e so nao aparecia no catalogo porque os artefatos derivados estavam desatualizados; a entrada ficou obsoleta e o guard manda remove-la.",

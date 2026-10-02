@@ -78,6 +78,15 @@ jobs:
           deno test --config scripts/ci/deno.json --frozen --allow-env --allow-net=127.0.0.1
           supabase/functions/_shared/messaging/__tests__/media.test.ts
 
+      - name: 🧪 API de dominio do Multiplix (Bloco E: roteador + acoes)
+        run: >-
+          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read
+          supabase/functions/multiplix-dispatch/__tests__/f53-rate-limit.test.ts
+          supabase/functions/multiplix-dispatch/actions/__tests__/blocks.test.ts
+          supabase/functions/multiplix-dispatch/actions/__tests__/audience.test.ts
+          supabase/functions/multiplix-dispatch/actions/__tests__/inspect.test.ts
+          supabase/functions/multiplix-dispatch/actions/__tests__/lifecycle.test.ts
+
       - name: 🧪 Run executable Edge handler contracts
         run: >-
           deno test --config scripts/ci/deno.json --frozen --allow-env

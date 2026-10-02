@@ -97,8 +97,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('169 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(169);
+  it('179 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(179);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );
