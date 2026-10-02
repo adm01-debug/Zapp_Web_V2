@@ -64,10 +64,17 @@ jobs:
       - name: 🦕 Setup Deno
         run: |
           DENO_VERSION="v2.9.5"
-          curl -fsSL "https://github.com/denoland/deno/releases/download/${DENO_VERSION}/deno-x86_64-unknown-linux-gnu.zip" -o /tmp/deno.zip
-          unzip -q /tmp/deno.zip -d /tmp/deno
-          chmod +x /tmp/deno/deno
-          echo "/tmp/deno" >> "$GITHUB_PATH"
+          deno_asset="deno-x86_64-unknown-linux-gnu.zip"
+          deno_sha256="8b010a3b1a4a0188a67cdb8a7a27348b2a501af78aec7fc74f2ace167368d530"
+          deno_dir="$RUNNER_TEMP/deno"
+          mkdir -p "$deno_dir"
+          curl --proto '=https' --tlsv1.2 -sSL \
+            -o "$deno_dir/$deno_asset" \
+            "https://github.com/denoland/deno/releases/download/${DENO_VERSION}/${deno_asset}"
+          echo "${deno_sha256}  ${deno_dir}/${deno_asset}" | sha256sum --check --strict
+          unzip -q "$deno_dir/$deno_asset" -d "$deno_dir"
+          chmod +x "$deno_dir/deno"
+          echo "$deno_dir" >> "$GITHUB_PATH"
 
       - name: 🦕 Typecheck das Edge Functions (deno check)
         run: >-
