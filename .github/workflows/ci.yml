@@ -385,3 +385,65 @@ jobs:
           path: playwright-report/
           retention-days: 3
           if-no-files-found: ignore
+
+  # ===========================================
+  # JOB 6: Mutação do mapa (E70, não bloqueante)
+  # ===========================================
+  # E70: roda o runner de mutação do módulo do mapa (E69,
+  # `scripts/mutation/run-mapa.mjs`) quando um PR toca `src/lib/mapbox*` ou
+  # `src/components/inbox/location-picker/**`. `continue-on-error: true` mantém o
+  # job INFORMATIVO: um mutante sobrevivente nunca trava o merge (não é required).
+  #
+  # O GitHub Actions não oferece `paths:` por job — o filtro `paths` só existe no
+  # gatilho do workflow, e usá-lo aqui restringiria TODOS os jobs do ci.yml. Para
+  # não alterar os jobs existentes, o filtro de caminhos roda em STEP
+  # (`git diff --name-only` contra a base do PR), a alternativa prevista na
+  # auditoria de GitHub Actions (E64).
+  mutation-mapa:
+    name: 🧬 Mutação do mapa (não bloqueante)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    continue-on-error: true
+    needs: lint-and-typecheck
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Histórico completo: o filtro de caminhos compara com a base do PR
+          # (`origin/<base>...HEAD`), o que exige o ancestral comum.
+          fetch-depth: 0
+
+      # Filtro de caminhos (E70): só o módulo do mapa justifica a rodada.
+      - name: 🔎 Detectar mudança no módulo do mapa (paths filter)
+        id: paths
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BASE_REF:-}" ]; then
+            # push/dispatch/merge_group: sem base de PR, roda (fail-open).
+            echo "map_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed="$(git diff --name-only "origin/${BASE_REF}...HEAD")"
+          printf 'Arquivos alterados no PR:\n%s\n' "$changed"
+          if printf '%s\n' "$changed" | grep -Eq '^(src/lib/mapbox|src/components/inbox/location-picker/)'; then
+            echo "map_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "map_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 🧄 Setup Bun
+        if: steps.paths.outputs.map_changed == 'true'
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+
+      - name: 📚 Install dependencies
+        if: steps.paths.outputs.map_changed == 'true'
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: 🧬 Rodar mutação do mapa (E69)
+        if: steps.paths.outputs.map_changed == 'true'
+        run: bun run mutation:mapa
