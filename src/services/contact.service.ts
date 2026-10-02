@@ -6,7 +6,7 @@ export type Contact = Database['public']['Tables']['contacts']['Row'];
 function windowChangePercent(current: number | null, previous: number | null): number | null {
   const curr = current ?? 0;
   const prev = previous ?? 0;
-  if (prev === 0) return curr > 0 ? 100 : null;
+  if (prev === 0) return null;
   return Math.round(((curr - prev) / prev) * 100);
 }
 
@@ -204,20 +204,22 @@ export class ContactService {
     const windowStart = new Date(Date.now() - 30 * DAY_MS).toISOString();
     const prevWindowStart = new Date(Date.now() - 60 * DAY_MS).toISOString();
 
-    const headCount = (table: 'messages' | 'conversation_sla', gte?: string, lt?: string) => {
+    const headCount = async (table: 'messages' | 'conversation_sla', gte?: string, lt?: string) => {
       let q = supabase.from(table).select('id', { count: 'exact', head: true }).eq('contact_id', contactId);
       if (gte) q = q.gte('created_at', gte);
       if (lt) q = q.lt('created_at', lt);
-      return q;
+      const { count, error } = await q;
+      if (error) throw error;
+      return count ?? 0;
     };
 
     const [
-      { count: messageCount },
-      { count: recentMessageCount },
-      { count: prevMessageCount },
-      { count: conversationCount },
-      { count: recentConversationCount },
-      { count: prevConversationCount },
+      messageCount,
+      recentMessageCount,
+      prevMessageCount,
+      conversationCount,
+      recentConversationCount,
+      prevConversationCount,
     ] = await Promise.all([
       headCount('messages'),
       headCount('messages', windowStart),

@@ -19,11 +19,12 @@ export function useContactPurchases(contactId: string) {
   return useQuery({
     queryKey: contactPurchasesKey(contactId),
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('contact_purchases')
         .select('*')
         .eq('contact_id', contactId)
         .order('created_at', { ascending: false });
+      if (error) throw error;
       return (data ?? []) as ContactPurchase[];
     },
     enabled: !!contactId,
