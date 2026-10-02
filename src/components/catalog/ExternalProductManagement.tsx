@@ -745,16 +745,13 @@ export const ExternalProductManagement: React.FC = () => {
         initial={prefersReducedMotion ? false : { opacity: 0, y: -10 }}
         animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
       >
-        {statsLoading ? (
-          <div className="flex items-center gap-3.5">
-            <Skeleton className="w-14 h-14 rounded-2xl shrink-0" />
-            <div className="space-y-2 flex-1">
-              <Skeleton className="h-7 w-64" />
-              <Skeleton className="h-4 w-96" />
-            </div>
-          </div>
-        ) : (
-          <ModuleHeader
+        {/* CT-74: o header é SEMPRE o mesmo ModuleHeader. Antes havia um esqueleto
+            de altura diferente aqui; quando os stats chegavam, o header real
+            substituía o esqueleto e empurrava tudo abaixo. A faixa de KPIs, logo em
+            seguida, é quem aparecia na atribuição do Lighthouse (0,2211) apesar de
+            NÃO mudar de altura — ela só era empurrada. O subtitle já cai em
+            totalProducts enquanto os stats não chegam, então a troca não faz falta. */}
+        <ModuleHeader
             icon={Package}
             color="blue"
             title="Catálogo de Produtos"
@@ -779,7 +776,6 @@ export const ExternalProductManagement: React.FC = () => {
               </>
             )}
           />
-        )}
       </motion.div>
 
       {statsError ? (
