@@ -199,8 +199,8 @@
     },
     {
       "path": "supabase/functions/_shared/messaging/evolution-go.ts",
-      "bytes": 8991,
-      "sha256": "9c9e9671848537f8ad2e3613d42109baaa7dbb126779890285c9c91e77f3c529"
+      "bytes": 10427,
+      "sha256": "3af95dfe703c6666e5aa344936a1620564fe56e5b6627aaf3fe24fbe1a30b3a3"
     },
     {
       "path": "supabase/functions/_shared/messaging/index.ts",
@@ -584,8 +584,8 @@
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "bytes": 36227,
-      "sha256": "5d2d7692a3b43b7c8c323eeba0c5114df75ac58920c6d3b9b5e0d31738408ba6"
+      "bytes": 38206,
+      "sha256": "1b222c7f7f0a8e22e55c9f8cb2e583a710312bc51c8e25cd7c6789086510157c"
     },
     {
       "path": "supabase/functions/promogifts-catalog/index.ts",
@@ -1430,7 +1430,7 @@
       "name": "multiplix-dispatch",
       "entrypoint": "supabase/functions/multiplix-dispatch/index.ts",
       "verify_jwt": true,
-      "source_sha256": "e4ee5948d86e3615221198a04dd2ddf1e80d56e855cc0c9f575f3d3eae2033a5",
+      "source_sha256": "20dcc7300c1a261b9a9dca9ea7067656a6a61302de12ec246c6fe60ae079c855",
       "source_files": [
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1464,7 +1464,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "1867a198ebbeacb9bfbd2d88700ce83c022ffe1ae34aaf401e566c1a4ff35c8c",
+      "source_sha256": "6e2c6aa8c0ed301865766ca600a53e4af84ff8e474330e35e16f56c65165809b",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1627,7 +1627,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "2d1505297a86f17c0c5af296e6d5d41c02a2d4ecc696dc0418741cc7a420c24b",
+      "source_sha256": "ab293a58fb41269c2058d155c152fdc6456f369a96b0f86f747a9e19c6d65697",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/effect-reconcile.ts",
@@ -1737,5 +1737,5 @@
       ]
     }
   ],
-  "manifest_sha256": "17e4c016553eeb0c3f172c8e9b33c5e59dbe230f9678ca2fbbf466486cd617c0"
+  "manifest_sha256": "5ba4b6a8a31e7e65e8eb066a4e445800d8543f991e5de2d5e727ff78033577f3"
 }
