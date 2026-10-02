@@ -217,10 +217,7 @@ export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
             {/* Progress bar with actual playback tracking */}
             <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
               <motion.div
-                className={cn(
-                  "h-full rounded-full transition-all",
-                  voiceChanged ? "bg-primary" : "bg-primary"
-                )}
+                className={cn("h-full rounded-full transition-all", "bg-primary")}
                 style={{ width: `${isPlaying ? playbackProgress : 100}%` }}
               />
             </div>

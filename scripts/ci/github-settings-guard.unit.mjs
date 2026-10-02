@@ -42,7 +42,12 @@ describe('settings-guard: regression detection logic', () => {
   });
 
   it('handles null strict as regression', () => {
-    const strict = null;
+    // O guard real lê `protection?.required_status_checks?.strict ?? null`
+    // (github-settings-guard.mjs:112): a API pode devolver o campo ausente, e o
+    // `?? null` normaliza. Simula-se essa resposta em vez de um literal `null`,
+    // que o analisador constataria sempre-verdadeiro contra `!== true`.
+    const protection = JSON.parse('{"required_status_checks":{}}');
+    const strict = protection.required_status_checks?.strict ?? null;
     const regressions = [];
     if (strict !== true) regressions.push('required_status_checks.strict');
     assert.equal(regressions.length, 1);

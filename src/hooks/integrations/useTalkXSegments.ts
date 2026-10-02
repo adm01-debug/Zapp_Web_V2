@@ -116,7 +116,7 @@ function ruleToFilter(r: SegmentRule): string | null {
   if (!def) return null;
   const v = r.value.trim();
   switch (r.op) {
-    case 'is_set': return def.kind === 'array' ? `${r.field}.not.is.null` : `${r.field}.not.is.null`;
+    case 'is_set': return `${r.field}.not.is.null`;
     case 'is_empty': {
       if (def.kind === 'array') return `or(${r.field}.is.null,${r.field}.eq.{})`;
       // Coluna uuid nao compara com string vazia (`eq.`): "vazio" aqui e apenas nulo.
@@ -175,7 +175,7 @@ export function rulesToPostgrest(rules: SegmentRules | null | undefined): string
     .filter((g) => g.filters.length > 0);
   if (groups.length === 0) return null;
   const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})`));
-  return parts.length === 1 ? (groups[0].filters.length === 1 ? parts[0] : parts[0]) : parts.join(',');
+  return parts.length === 1 ? parts[0] : parts.join(',');
 }
 
 function applyRules<T extends { or: (f: string) => T }>(q: T, rules: SegmentRules | null | undefined): T {

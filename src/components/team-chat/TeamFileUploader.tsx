@@ -143,11 +143,7 @@ export function TeamFileUploader({ conversationId, onFileSent, disabled }: TeamF
                 <img src={preview.url} alt="Preview" className="max-h-48 w-full object-contain"  loading="lazy" decoding="async"/>
               ) : (
                 <div className="flex items-center gap-3 p-4">
-                  {preview.file.type.startsWith('video/') ? (
-                    <FileText className="w-8 h-8 text-muted-foreground" />
-                  ) : (
-                    <FileText className="w-8 h-8 text-muted-foreground" />
-                  )}
+                  <FileText className="w-8 h-8 text-muted-foreground" />
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{preview.file.name}</p>
                     <p className="text-xs text-muted-foreground">

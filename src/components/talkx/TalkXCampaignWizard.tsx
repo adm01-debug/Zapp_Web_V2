@@ -210,7 +210,7 @@ function SourceCard({ icon, title, desc, active, onClick, disabled, badge }: { i
   const Icon = icon;
   return (
     <button type="button" onClick={onClick} disabled={disabled} className={cn('relative text-left rounded-xl border p-3.5 transition-all flex items-start gap-3', active ? 'border-primary bg-primary/10 shadow-[0_0_0_1px_hsl(var(--primary)/.5)]' : 'border-border/70 bg-input/30 hover:border-primary/40', disabled && 'opacity-50 cursor-not-allowed')}>
-      <IconTile icon={Icon as never} size={40} color={active ? 'blue' : 'blue'} />
+      <IconTile icon={Icon as never} size={40} color="blue" />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-foreground">{title}</p>
         <p className="text-2xs text-foreground-secondary leading-snug mt-0.5">{desc}</p>

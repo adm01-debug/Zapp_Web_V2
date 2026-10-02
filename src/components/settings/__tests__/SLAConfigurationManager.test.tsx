@@ -112,7 +112,10 @@ describe('SLAConfigurationManager', () => {
 
   it('opens create dialog on "Novo SLA" click', async () => {
     render(<SLAConfigurationManager />, { wrapper: createWrapper() });
-    await waitFor(() => fireEvent.click(screen.getByText('Novo SLA')));
+    await waitFor(() => {
+      expect(screen.getByText('Novo SLA')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText('Novo SLA'));
     await waitFor(() => {
       expect(screen.getByText('Nova Configuração de SLA')).toBeInTheDocument();
     });
