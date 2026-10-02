@@ -262,8 +262,8 @@ tocar só um player por vez.
 | **E37** | As 4 superfícies de mídia que **não** são de conversa (laboratório de voz e biblioteca do admin) passam a ter isenção **explícita** no código e no contrato — como já era o caso dos alertas. | comentários em `src/components/voice/ElevenLabsVoiceDesign.tsx:149`, `src/components/voice/ElevenLabsDialogue.tsx:157`, `src/components/settings/media-library/AIGenerateDialog.tsx:32`, `src/components/settings/media-library/useMediaLibrary.ts:221` · `tests/contracts/media-volume-surfaces.contract.test.ts:64-71` · mutações E37a/E37b |
 | **E39** | O teste do alerta lê `settings.soundVolume` (não um literal) e confere que a cadeia termina num `ctx.destination` de verdade. | `src/components/inbox/__tests__/MediaVolume.test.tsx` (caso E38/E39) · mutação E39 |
 | **E41** | A âncora `ÂNCORA (não unificar)` também no toque da chamada entrante — o módulo que mais tenta "consolidar" os canais, porque o ganho dele igualmente sai de `settings.soundVolume` — agora pinada por teste. (A linha correspondente no `CLAUDE.md` foi **decidida como não acrescentada** — ver 7.6.) | `src/components/calls/IncomingCallAlert.tsx:14-26` · asserção no caso E41 de `MediaVolume.test.tsx` · mutação E41 |
-| **E45/E48** | O spec de volume do E2E logado perdeu a flake: o clique longo posicional (timer de 400 ms cancelado por qualquer `pointerleave`) deu lugar a `focus()` + `Enter`, o equivalente de teclado do mesmo `setOpen(true)`. **A causa citada pela auditoria (`media-volume.spec.ts:49`) era linha obsoleta** — nas runs o spec aparece como *flaky* (1ª tentativa vermelha, retry verde), e o `beforeEach` nunca falhou. | `e2e/media-volume.spec.ts:59-71` e `:106-108` · diagnóstico com 42 runs em `~/evidencias/plano-volume-50/e45-e48-e2e.md` |
-| **E46** | Checklist de navegadores registrado com o que é prova e o que depende de aparelho. Ver 7.3. | `~/evidencias/plano-volume-50/e46-navegadores.md` |
+| **E45/E48** | O spec de volume do E2E logado perdeu a flake: o clique longo posicional (timer de 400 ms cancelado por qualquer `pointerleave`) deu lugar a `focus()` + `Enter`, o equivalente de teclado do mesmo `setOpen(true)`. **A causa citada pela auditoria (`media-volume.spec.ts:49`) era linha obsoleta** — nas runs o spec aparece como *flaky* (1ª tentativa vermelha, retry verde), e o `beforeEach` nunca falhou. | `e2e/media-volume.spec.ts:59-71` e `:106-108` · diagnóstico com 42 runs em `docs/evidencias/plano-volume-50/e45-e48-e2e.md` |
+| **E46** | Checklist de navegadores registrado com o que é prova e o que depende de aparelho. Ver 7.3. | `docs/evidencias/plano-volume-50/e46-navegadores.md` |
 | **E31/E47/E49** | Branch, PR e validação em produção. Ver 7.4. | 7.4 |
 | **E50** | Cabeçalho deste arquivo corrigido + persistência do volume dos ALERTAS conferida com o código em mãos. Ver 7.5. | 7.5 |
 | **D6** | O `SoundMuteToggle` — que esta decisão dizia intocado — foi substituído pelo `SoundVolumeControl` (com slider) em etapa anterior; o controle de MÍDIA entrou ao lado como `MediaVolumeToggle`, com ícone distinto (fone). **Decisão mantida, não revertida** (D6 descrevia o estado de 27/09; a UI evoluiu com a própria etapa do volume de alertas). | `src/components/layout/Sidebar.tsx:221` (alertas) e `:224` (mídia) |
@@ -304,7 +304,7 @@ com transições desligadas.
 
 ### 7.3 E46 — checklist de navegadores
 
-Registrado em `~/evidencias/plano-volume-50/e46-navegadores.md` (24 linhas, no formato
+Registrado em `docs/evidencias/plano-volume-50/e46-navegadores.md` (24 linhas, no formato
 `plataforma | passo exato | critério de aprovação | status | evidência`). O que ficou **provado** e o
 que **depende de aparelho**:
 
@@ -371,7 +371,7 @@ cross-origin o `createMediaElementSource` pode lançar, o `catch` cai num `eleme
    E linha em `messages` no **banco de produção** (tenant real — histórico de cliente fabricado,
    limpeza não garantida se o job morrer, efeito em badge/SLA/alerta). O caso segue `test.fixme` com
    o motivo escrito no próprio spec; caminho completo e riscos em
-   `~/evidencias/plano-volume-50/e45-e48-e2e.md`.
+   `docs/evidencias/plano-volume-50/e45-e48-e2e.md`.
 2. **E18 em alto-contraste** — bloqueado pelo defeito do tema (7.2, item 1), que é anterior a este
    plano. **Tarefa separada autorizada (Joaquim, 2026-10-01 11h55)**: abrir logo depois deste PR,
    com teste vermelho-antes.
