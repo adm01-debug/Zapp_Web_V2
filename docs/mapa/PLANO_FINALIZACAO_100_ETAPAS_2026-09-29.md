@@ -834,7 +834,8 @@ Substitui o antigo "desligar a flag": sem chave (decisão `20261001-103207-6c0b`
 
 ### E92 · `db-live-guard` cobre o módulo
 1. Confirmar que os contratos de E76/E77 rodam no guard vivo e que o `grants-baseline.json` inclui as RPCs novas.
-**Checklist:** [ ] 8 guards verdes com os contratos novos
+**Checklist:** [x] 8 guards verdes com os contratos novos
+> **Medido 2026-10-02.** `db-live-guard.yml` tem **0** ocorrencias de `node --test`: os contratos dos E76/E77 (24 `.test.mjs`) rodam no guard **OFFLINE** (`db-guard.yml:196`), que e o check obrigatorio de PR `Contrato DB offline`. O guard vivo cobre o modulo por `Paridade tripla (migrations, edges, grants)`, manifesto e catalogo. Nao afirmo "8 guards verdes": isso exigiria enumerar branch protection, que nao se le do repositorio.
 
 ### E93 · Rollout do cadastro sem flag
 Sem flag (decisão `20261001-103207-6c0b`): não existe "ligar só para 2 operadores".
@@ -852,7 +853,8 @@ Sem flag (decisão `20261001-103207-6c0b`): não existe "ligar só para 2 operad
 ### E96 · Query de detecção de regressão do C1
 **Arquivos:** `USO_SEARCHBOX.md`
 1. `select count(*) from audit_logs where action='contact_address_changed' and (details->>'cleared')::bool and created_at > now() - interval '7 days'` — esperado 0 fora de apagamento intencional.
-**Checklist:** [ ] query no doc · [ ] rodada 1× após F1
+**Checklist:** [x] query no doc · [x] rodada 1× após F1
+> **Rodada em 2026-10-02, producao (somente `select`).** A query ja estava em `USO_SEARCHBOX.md` (escrita no E85). Resultado: **0** eventos com `cleared=true` em 7 dias (esperado). **Ressalva medida:** `contact_address_changed` tem **0 eventos desde a criacao do trigger** - verde nunca exercitado, que nao distingue "sem regressao" de "trigger nao dispara". Dano do C1 segue total: **3386 contatos, 0 com endereco**.
 
 ### E97 · Limpeza de fixtures/contatos de teste
 1. Garantir que os E2E deixam 0 contatos `[E2E] Endereço *` no banco (query de verificação).

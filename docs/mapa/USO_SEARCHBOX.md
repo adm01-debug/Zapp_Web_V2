@@ -136,6 +136,27 @@ where action = 'contact_address_changed'
   and created_at > now() - interval '7 days';
 ```
 
+**Rodada 1× após a Fase 1 — resultado medido em 2026-10-02 (produção, somente `select`):**
+
+| Medição | Resultado |
+|---|---|
+| Eventos `contact_address_changed` com `cleared=true` nos últimos 7 dias | **0** ✓ (esperado) |
+| Eventos `contact_address_changed` **desde a criação do trigger** | **0** |
+| Contatos `address is null or ''` | **3386** de 3386 |
+| Contatos com endereço | **0** |
+
+**Duas leituras, e a segunda é a que importa:**
+
+1. **Nenhuma regressão do C1** — a query responde 0, como esperado depois da Fase 1.
+2. **Mas esse 0 é um verde que nunca foi exercitado.** O trigger de auditoria **nunca registrou um
+   evento sequer** desde que existe: com 0 eventos gravados, não dá para distinguir "nenhuma edição
+   apagou endereço" de "o trigger não está disparando". Um verde que não pode falhar não é prova de
+   nada — é preciso que a próxima edição real de contato com endereço gere o evento para o contrato
+   passar a valer. Isso está aqui registrado para não ser confundido com cobertura.
+3. O dano do C1 continua **total**: 3386 contatos, **0** com endereço. A Fase 1 impede a perda futura
+   (a RPC `search_contacts` voltou a devolver as colunas e a edição deixou de gravar `null`), mas o que
+   foi apagado não volta — não há backup lógico da linha anterior nem trilha anterior ao trigger.
+
 Um número > 0 aqui significa que uma edição de contato esvaziou endereço e coordenada sem o
 operador pedir — é o sintoma do C1 voltando. Rodar 1× depois de cada deploy que toque o módulo de
 Contatos (o detalhe do evento é só `{contact_id, cleared}`, sem PII).
