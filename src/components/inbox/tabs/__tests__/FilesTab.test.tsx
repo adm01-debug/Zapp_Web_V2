@@ -16,8 +16,8 @@ vi.mock('@/hooks/storage/useResolvedStorageUrl', () => ({
 }));
 
 const ITEMS: ContactMediaItem[] = [
-  { id: 'm1', url: 'https://x/a.jpg', type: 'image', filename: 'foto-praia.jpg', created_at: '2026-01-10T10:00:00.000Z', caption: null, mimetype: 'image/jpeg', size: 1024, meta: null, sender: 'contact' },
-  { id: 'm2', url: 'https://x/b.pdf', type: 'document', filename: 'contrato.pdf', created_at: '2026-01-11T10:00:00.000Z', caption: null, mimetype: 'application/pdf', size: 2048, meta: null, sender: 'agent' },
+  { id: 'm1', url: 'https://x/a.jpg', type: 'image', filename: 'foto-praia.jpg', displayName: 'foto-praia.jpg', extension: 'jpg', senderLabel: null, created_at: '2026-01-10T10:00:00.000Z', caption: null, mimetype: 'image/jpeg', size: 1024, meta: null, sender: 'contact' },
+  { id: 'm2', url: 'https://x/b.pdf', type: 'document', filename: 'contrato.pdf', displayName: 'contrato.pdf', extension: 'pdf', senderLabel: 'Atendente', created_at: '2026-01-11T10:00:00.000Z', caption: null, mimetype: 'application/pdf', size: 2048, meta: null, sender: 'agent' },
 ];
 
 function renderTab(items: ContactMediaItem[] = ITEMS) {

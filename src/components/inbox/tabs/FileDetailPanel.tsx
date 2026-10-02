@@ -19,12 +19,15 @@ interface FileDetailPanelProps {
 
 export function FileDetailPanel({ item, contactName, onClose, onForward, onDeleted }: FileDetailPanelProps) {
   const [hasError, setHasError] = useState(false);
-  const { url: resolvedUrl, refresh } = useResolvedStorageUrl(item.url);
+  // Etapa 10: a consulta já assina em lote, um request por bucket. O hook individual
+  // continua como fallback para item sem URL assinada (objeto público ou lote que falhou).
+  const { url: resolvedUrl, refresh } = useResolvedStorageUrl(item.signedUrl ? '' : item.url);
+  const displayUrl = item.signedUrl ?? resolvedUrl;
   const size = formatSize(item.size);
 
   const copyLink = async () => {
     try {
-      await navigator.clipboard.writeText(resolvedUrl || item.url);
+      await navigator.clipboard.writeText(displayUrl || item.url);
       toast.success('Link copiado');
     } catch {
       toast.error('Não foi possível copiar o link');
@@ -48,8 +51,8 @@ export function FileDetailPanel({ item, contactName, onClose, onForward, onDelet
       </div>
 
       <div className="aspect-square rounded-lg bg-muted flex items-center justify-center overflow-hidden">
-        {item.type === 'image' && !hasError && resolvedUrl ? (
-          <img src={resolvedUrl} alt={item.filename} className="w-full h-full object-cover" onError={() => { setHasError(true); void refresh(); }} />
+        {item.type === 'image' && !hasError && displayUrl ? (
+          <img src={displayUrl} alt={item.filename} className="w-full h-full object-cover" onError={() => { setHasError(true); void refresh(); }} />
         ) : item.type === 'video' || item.type === 'audio' ? (
           <Play className="w-8 h-8 text-muted-foreground" />
         ) : item.type === 'document' ? (
