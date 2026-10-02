@@ -559,6 +559,10 @@ jobs:
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/runtime-config.test.sh
 
       - name: Provar transporte libpq com cliente e PostgreSQL reais
+        env:
+          # E47: SKIP_DOCKER_SHIM=1 — o readiness check conecta sem -U, usando o usuario
+          # OS (root no container), causando "role root does not exist" no servico compartilhado.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh node scripts/db-audit/psql-environment.integration.mjs
 
       - name: Simular ambiguidade da RPC e recursao da policy do team chat (#1266)
