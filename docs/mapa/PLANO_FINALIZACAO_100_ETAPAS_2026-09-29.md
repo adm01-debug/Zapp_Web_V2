@@ -673,7 +673,21 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 **Arquivos:** `docs/mapa/ARQUITETURA_BUSCA.md`
 1. `npm run build` antes/depois da F3+F6; registrar tamanho do chunk `LocationPicker-*.js` e do `ContactForm` (raw/gzip) e o orçamento (`performance-budget.json`).
 2. Se passar do orçamento, `SuggestionList` vira `React.lazy`.
-**Checklist:** [ ] números no doc · [ ] dentro do orçamento
+**Checklist:** [x] números no doc · [x] dentro do orçamento
+
+**Fechada em 2026-10-02.** docs/mapa/ARQUITETURA_BUSCA.md ganha a seção Bundle (medido no build real), com o comando de medição, tabela raw/gzip dos 3 chunks e medido-vs-orçamento.
+
+**Medido** (build com o mesmo env do CI, VITE_CRM_INTEGRATION_ENABLED=true): ContactForm 5,30 KB gzip, LocationPicker 4,62 KB gzip, SuggestionList 4,79 KB gzip. Orçamento: initial-js 336,6/341 KB, initial-css 40,0/80 KB, largest-chunk 492,3/550 KB, total-assets 2.801,6/4.100 KB.
+
+**SuggestionList NÃO vira React.lazy:** o passo 2 da etapa é condicional (se passar do orçamento) e não passou. O maior chunk absoluto é o vendor-maps (mapbox-gl, 492,3 KB gzip), mas é lazy e não é do módulo.
+
+**Prova:** bundle-budget.mjs exit 0; mutação baixando initial-js.maxKB de 341 para 300 faz o gate REPROVAR com a mensagem exata do estouro, restaurado por cp com sha idêntico; ratchets novas=0.
+
+**O budget É gate, verificado:** ci.yml:314-315 roda bundle-budget.mjs no job build, que é check obrigatório. Não é o padrão existe-mas-não-roda que apareceu no E75 e no E76 — conferi antes de aceitar.
+
+**Divergências medidas:** (1) a evidência do mapeamento (grep por gzip/bundle em docs/mapa = 0) é FALSA — o grep dá 9 matches; a conclusão dele (o doc sem número de bundle) está certa, o método é que não se reproduz. (2) AUDITORIA_PLANO_50_ETAPAS:84 cita initial-js 340 KB e ci.yml:228 — o real é 341 KB e o gate é ci.yml:314-315. (3) não existe orçamento por chunk do módulo; a seção nova é fotografia datada, o contrato contínuo é o budget agregado.
+
+**Não verificado:** o 'antes' do par antes/depois da F3+F6 (exigiria reverter código fora do escopo); registrei os números atuais, que é o que a etapa pede.
 
 ### E79 · Cobertura mínima do módulo
 1. `vitest --coverage` restrito a `src/lib/mapbox*`, `location-picker/**`, `ContactForm.tsx`: linhas ≥ 85 %, branches ≥ 75 %; registrar no doc.
