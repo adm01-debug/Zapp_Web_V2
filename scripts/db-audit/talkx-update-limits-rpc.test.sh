@@ -96,7 +96,13 @@ CREATE TABLE public.talkx_campaigns (
   send_window_end time,
   business_hours_only boolean NOT NULL DEFAULT false,
   revision bigint NOT NULL DEFAULT 1,
-  updated_at timestamptz NOT NULL DEFAULT now()
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  -- X014: colunas que o gatilho vigente (worker lease) referencia.
+  worker_id text,
+  worker_lease_expires_at timestamptz,
+  replied_count integer NOT NULL DEFAULT 0,
+  message_template text NOT NULL DEFAULT 'Olá',
+  media_url text
 );
 
 CREATE TABLE public.talkx_campaign_events (
@@ -108,8 +114,14 @@ CREATE TABLE public.talkx_campaign_events (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- X014: objetos que a migration de role gates cria/ajusta.
+CREATE TABLE public.talkx_settings (key text PRIMARY KEY, value jsonb NOT NULL);
+CREATE TABLE public.talkx_blacklist (id uuid PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE public.talkx_links (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), campaign_id uuid);
+CREATE TABLE public.talkx_link_clicks (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), link_id uuid);
+
 INSERT INTO public.profiles(id, user_id, role) VALUES
-  ('10000000-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000001', 'agent'),
+  ('10000000-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000001', 'admin'),
   ('10000000-0000-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000002', 'admin'),
   ('10000000-0000-0000-0000-000000000003', 'aaaaaaaa-0000-0000-0000-000000000003', 'agent');
 
@@ -118,12 +130,16 @@ SQL
 
 # ---- aplica a migration (funcao do trigger + RPC); replayavel ----
 migration="$repo_root/supabase/migrations/20260930180000_talkx_update_campaign_limits_rpc.sql"
+role_gates_migration="$repo_root/supabase/migrations/20261002381230_talkx_role_gates.sql"
 [[ -f "$migration" ]] || fail 'migration da V09 nao existe'
+[[ -f "$role_gates_migration" ]] || fail 'migration da X014 nao existe'
 psql_test < "$migration" >/dev/null || fail 'V09 nao aplicou'
 psql_test < "$migration" >/dev/null || fail 'V09 nao e replayavel (segunda aplicacao falhou)'
 
-# ---- trigger vivo (BEFORE INSERT OR UPDATE OR DELETE) ----
-psql_test -q -c 'CREATE TRIGGER enforce_talkx_campaign_mutability BEFORE INSERT OR UPDATE OR DELETE ON public.talkx_campaigns FOR EACH ROW EXECUTE FUNCTION public.enforce_talkx_campaign_mutability();' >/dev/null
+# X014: a RPC de limites passa a exigir admin/supervisor e o gatilho passa a ser
+# criado pela propria migration (BEFORE INSERT OR UPDATE OR DELETE).
+psql_test < "$role_gates_migration" >/dev/null || fail 'X014 nao aplicou'
+psql_test < "$role_gates_migration" >/dev/null || fail 'X014 nao e replayavel (segunda aplicacao falhou)'
 
 # ---- campanha `sending` de fixture (o trigger de INSERT nao barra service_role) ----
 psql_test -q <<'SQL' >/dev/null
@@ -200,7 +216,7 @@ SQL
 echo "$stale_out" | grep -q 'talkx_campaign_stale_revision' \
   || fail "revision defasada nao foi recusada (esperava stale_revision): $stale_out"
 
-# ---- 5) ownership: agente que nao e dono nem supervisor e recusado ----
+# ---- 5) X014: agente (sem papel) e recusado pelo portao de papel na RPC ----
 notowner_out="$(psql_test 2>&1 <<'SQL' || true
 BEGIN;
 SET LOCAL ROLE authenticated;
@@ -213,8 +229,8 @@ SELECT * FROM public.update_talkx_campaign_limits(
 COMMIT;
 SQL
 )"
-echo "$notowner_out" | grep -q 'talkx_campaign_not_authorized' \
-  || fail "nao-dono nao foi recusado (esperava not_authorized): $notowner_out"
+echo "$notowner_out" | grep -q 'talkx_campaign_role_required' \
+  || fail "agente (sem papel) nao foi recusado (esperava role_required): $notowner_out"
 
 # ---- 6) validacao de faixa: min > max e recusado ----
 range_out="$(psql_test 2>&1 <<'SQL' || true

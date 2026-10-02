@@ -51,13 +51,23 @@ CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
   SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid
 $$;
 CREATE ROLE authenticated NOLOGIN;
-CREATE TABLE public.profiles (id uuid PRIMARY KEY, role text NOT NULL);
+-- X014: a migration de role gates revoga o acesso de anon a talkx_settings.
+CREATE ROLE anon NOLOGIN;
+CREATE TABLE public.profiles (id uuid PRIMARY KEY, user_id uuid UNIQUE, role text NOT NULL);
 CREATE FUNCTION public.is_admin_or_supervisor(p_user uuid)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT EXISTS (SELECT 1 FROM public.profiles WHERE id = p_user AND role IN ('admin','supervisor'))
 $$;
 
--- estado efetivo pre-V06: tabela criada, RLS ligada, GRANT, e SO a policy de SELECT
+-- X014: objetos que a migration de role gates cria/ajusta (a tabela de campanha é
+-- mínima: o teste de settings não executa as RPCs nem o gatilho).
+CREATE TABLE public.talkx_campaigns (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), created_by uuid, status text NOT NULL DEFAULT 'draft');
+CREATE TABLE public.talkx_blacklist (id uuid PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE public.talkx_links (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), campaign_id uuid);
+CREATE TABLE public.talkx_link_clicks (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), link_id uuid);
+
+-- estado efetivo pre-V06: tabela criada, RLS ligada, GRANT, e SO a policy de SELECT.
+-- X014 (d): anon tinha acesso (espelha 20260930410000:31).
 CREATE TABLE public.talkx_settings (
   key text PRIMARY KEY,
   value jsonb NOT NULL,
@@ -66,13 +76,13 @@ CREATE TABLE public.talkx_settings (
 );
 ALTER TABLE public.talkx_settings ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.talkx_settings FROM PUBLIC;
-GRANT SELECT, UPDATE ON public.talkx_settings TO authenticated;
+GRANT ALL ON public.talkx_settings TO anon, authenticated;
 CREATE POLICY "authenticated_read_talkx_settings"
   ON public.talkx_settings FOR SELECT TO authenticated USING (true);
 
-INSERT INTO public.profiles(id, role) VALUES
-  ('30000000-0000-0000-0000-000000000001', 'admin'),
-  ('30000000-0000-0000-0000-000000000002', 'agent');
+INSERT INTO public.profiles(id, user_id, role) VALUES
+  ('30000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 'admin'),
+  ('30000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000002', 'agent');
 INSERT INTO public.talkx_settings(key, value) VALUES ('send_window', '{"start":"08:00"}'::jsonb);
 SQL
 
@@ -99,6 +109,20 @@ printf '[OK] red-first: antes da V06 o update e descartado silenciosamente (bug 
 # --- aplica a V06 (e prova idempotencia: duas vezes) ---
 psql_test < "$migration_file" >/dev/null || fail 'V06 nao aplicou'
 psql_test < "$migration_file" >/dev/null || fail 'V06 nao e idempotente (segunda aplicacao falhou)'
+
+# --- X014 (d): antes da migration, anon tinha acesso a talkx_settings ---
+[[ "$(psql_test -Atqc "SELECT has_table_privilege('anon','public.talkx_settings','SELECT')")" == 't' ]] \
+  || fail 'harness invalido: anon deveria ter SELECT em talkx_settings antes da X014'
+
+role_gates_migration="$repo_root/supabase/migrations/20261002381230_talkx_role_gates.sql"
+[[ -f "$role_gates_migration" ]] || fail 'migration da X014 nao existe'
+psql_test < "$role_gates_migration" >/dev/null || fail 'X014 nao aplicou'
+psql_test < "$role_gates_migration" >/dev/null || fail 'X014 nao e replayavel (segunda aplicacao falhou)'
+
+[[ "$(psql_test -Atqc "SELECT has_table_privilege('anon','public.talkx_settings','SELECT')")" == 'f' ]] \
+  || fail 'X014: anon ainda le talkx_settings'
+[[ "$(psql_test -Atqc "SELECT has_table_privilege('authenticated','public.talkx_settings','SELECT')")" == 't' ]] \
+  || fail 'X014: authenticated perdeu a leitura de talkx_settings'
 
 # --- admin/supervisor persiste ---
 update_como "$admin_uid" '09:00'

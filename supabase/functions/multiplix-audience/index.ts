@@ -201,12 +201,23 @@ export function planResolveBatches(
 export const SCOPE_SIGNATURE_VERSION = 'v1';
 export const SCOPE_SIGNATURE_TTL_SECONDS = 300;
 
+/**
+ * Comparador de ordem de code-unit UTF-16 — exatamente o que `.sort()` sem
+ * argumento faz.
+ *
+ * NAO troque por `localeCompare`: esta ordem entra no payload ASSINADO abaixo, e
+ * `localeCompare` depende do locale do runtime (muda a posicao de pontuacao e
+ * caixa — `a_b` vs `ab`), o que geraria assinatura diferente em ambientes
+ * diferentes e invalidaria as ja emitidas.
+ */
+const compararCodeUnit = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+
 export function scopeSignaturePayload(
   permissions: string[],
   vendedorEmail: string | null,
   exp: number,
 ): string {
-  return `${SCOPE_SIGNATURE_VERSION}|${[...permissions].sort().join(',')}|${vendedorEmail ?? ''}|${exp}`;
+  return `${SCOPE_SIGNATURE_VERSION}|${[...permissions].sort(compararCodeUnit).join(',')}|${vendedorEmail ?? ''}|${exp}`;
 }
 
 export async function signScope(
