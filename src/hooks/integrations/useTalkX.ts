@@ -367,6 +367,35 @@ export function useTalkX() {
     },
   });
 
+  /**
+   * X017 — gera o snapshot de destinatários NO SERVIDOR a partir do rascunho
+   * salvo: a RPC relê origem/segmento/audience_filters/seleção manual, aplica o
+   * critério de elegível (talkx_audience_query, X016), regrava talkx_recipients +
+   * total_recipients e exige a revisão corrente (controle otimista). Devolve
+   * { eligible, suppressed, skipped_invalid }.
+   */
+  const snapshotDraftAudience = useMutation({
+    mutationFn: async ({
+      campaignId,
+      expectedRevision,
+    }: {
+      campaignId: string;
+      expectedRevision: number;
+    }) => {
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const { data, error } = await rpc('snapshot_talkx_campaign_audience', {
+        p_campaign_id: campaignId,
+        p_expected_revision: expectedRevision,
+      });
+      if (error) throw error;
+      return data as { eligible: number; suppressed: number; skipped_invalid: number };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['talkx-recipients'] });
+      queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
+    },
+  });
+
   const startCampaign = useCallback(async (campaignId: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('talkx-send', {
@@ -418,6 +447,7 @@ export function useTalkX() {
     deleteCampaign,
     addRecipients,
     replaceDraftRecipients,
+    snapshotDraftAudience,
     startCampaign,
     pauseCampaign,
     cancelCampaign,

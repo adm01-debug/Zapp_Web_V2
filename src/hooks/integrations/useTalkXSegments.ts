@@ -220,36 +220,71 @@ export function rulesToPostgrest(rules: SegmentRules | null | undefined): string
   return parts.length === 1 ? parts[0] : parts.join(',');
 }
 
-function applyRules<T extends { or: (f: string) => T }>(q: T, rules: SegmentRules | null | undefined): T {
-  const f = rulesToPostgrest(rules);
-  if (!f) return q;
-  // .or() já envolve o filtro em or(...); um único and(...) continua correto.
-  return q.or(f);
+/** Formato aceito pela RPC talkx_resolve_audience (X016): { groups: [...] }. */
+function audienceRulesPayload(rules: SegmentRules | null | undefined): { groups: SegmentRuleGroup[] } {
+  return { groups: rules?.groups ?? [] };
 }
 
-/** Estimativa (count exato) do público de um conjunto de regras. */
+type TalkXAudienceRpc = (name: string, args: Record<string, unknown>) => Promise<{
+  data: unknown;
+  error: { message: string } | null;
+}>;
+
+/** Teto de uma página da RPC de audiência (X016). */
+const AUDIENCE_RPC_PAGE_LIMIT = 1000;
+
+/**
+ * X017 — a contagem do público é decidida no servidor pela RPC
+ * talkx_resolve_audience (X016), com o MESMO critério de elegibilidade do
+ * snapshot (deleted_at/LID/telefone/visibilidade). Antes o navegador contava via
+ * PostgREST filtrando só `phone not null`, o que superestimava o público.
+ */
 export async function countAudience(rules: SegmentRules | null | undefined): Promise<number> {
-  let q = supabase.from('contacts').select('id', { count: 'exact', head: true })
-    .not('phone', 'is', null);
-  q = applyRules(q, rules);
-  const { count, error } = await q;
-  if (error) throw error;
-  return count ?? 0;
+  const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
+  const { data, error } = await rpc('talkx_resolve_audience', {
+    p_rules: audienceRulesPayload(rules),
+    p_segment_ids: null,
+    p_mode: 'count',
+    p_limit: null,
+    p_after: null,
+  });
+  if (error) throw new Error(error.message);
+  const result = data as { eligible?: number } | null;
+  return Number(result?.eligible ?? 0);
 }
 
 export interface AudienceContact { id: string; name: string; nickname: string | null; phone: string; company: string | null; avatar_url: string | null; tags: string[] | null }
 
-/** Resolve os contatos do público (limite alto; usado para amostra e para gerar os destinatários). */
+/**
+ * X017 — a amostra/lista do público passa a vir da RPC talkx_resolve_audience
+ * (modo `page`, keyset) em vez do PostgREST no navegador. O telefone chega
+ * mascarado pelo servidor e a paginação percorre até `limit` (ou o fim da lista).
+ */
 export async function resolveAudience(rules: SegmentRules | null | undefined, limit = 5000): Promise<AudienceContact[]> {
-  let q = supabase.from('contacts')
-    .select('id, name, nickname, phone, company, avatar_url, tags')
-    .not('phone', 'is', null)
-    .order('name')
-    .limit(limit);
-  q = applyRules(q, rules);
-  const { data, error } = await q;
-  if (error) throw error;
-  return (data ?? []) as AudienceContact[];
+  const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
+  const target = Math.max(0, Math.floor(limit));
+  const rows: AudienceContact[] = [];
+  let after: string | null = null;
+
+  while (rows.length < target) {
+    const pageSize = Math.min(AUDIENCE_RPC_PAGE_LIMIT, target - rows.length);
+    const { data, error } = await rpc('talkx_resolve_audience', {
+      p_rules: audienceRulesPayload(rules),
+      p_segment_ids: null,
+      p_mode: 'page',
+      p_limit: pageSize,
+      p_after: after,
+    });
+    if (error) throw new Error(error.message);
+    const page = (data ?? {}) as { rows?: AudienceContact[]; has_more?: boolean; next_after?: string | null };
+    const batch = page.rows ?? [];
+    rows.push(...batch);
+    if (!page.has_more || batch.length === 0) break;
+    after = page.next_after ?? null;
+    if (!after) break;
+  }
+
+  return rows;
 }
 
 export function useAudienceEstimate(rules: SegmentRules | null | undefined, enabled = true) {

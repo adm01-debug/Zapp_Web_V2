@@ -307,7 +307,7 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 }
 
 export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentId?: string; templateId?: string; step?: WizardStep }) {
-  const { saveDraftCampaign, updateCampaign, replaceDraftRecipients, startCampaign } = useTalkX();
+  const { saveDraftCampaign, updateCampaign, snapshotDraftAudience, startCampaign } = useTalkX();
   const { segments } = useTalkXSegments();
   const { templates } = useTalkXTemplates();
   const logEvent = useTalkXEventLogger();
@@ -317,7 +317,9 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [name, setName] = useState(campaign?.name || '');
   const [description, setDescription] = useState(campaign?.description || '');
   const [objective, setObjective] = useState(campaign?.objective || 'engajamento');
-  const [suppressedByPhoneCount, setSuppressedByPhoneCount] = useState(0); // E63 phone-based
+  // X017: a supressão passa a ser calculada pelo servidor no snapshot; o último
+  // resultado confirma quantos contatos foram excluídos do público.
+  const [snapshotSuppressedCount, setSnapshotSuppressedCount] = useState(0);
   const [lastAutosave, setLastAutosave] = useState<Date | null>(null); // E68
   const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'error' | 'offline'>('idle');
   const [autosaveError, setAutosaveError] = useState<string | null>(null);
@@ -520,22 +522,9 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     || (campaign.status !== 'draft' && campaign.status !== 'scheduled')
     || hydratedRecipientCampaignId === campaign.id;
 
-  // E54: filtragem por phone + contact_id com soft-delete e expiração
-  const { data: blacklistData } = useQuery({
-    queryKey: ['talkx-blacklist-ids'],
-    queryFn: async () => {
-      const now = new Date().toISOString();
-      const { data } = await supabase.from('talkx_blacklist')
-        .select('contact_id, phone').is('removed_at', null)
-        .or('expires_at.is.null,expires_at.gt.' + now);
-      return {
-        ids: new Set((data || []).map((b) => b.contact_id).filter(Boolean) as string[]),
-        phones: new Set((data || []).map((b) => b.phone?.replace(/\D/g, '') || null).filter(Boolean) as string[]),
-      };
-    },
-  });
-  const blacklistIds = blacklistData?.ids;
-  const blacklistPhones = blacklistData?.phones;
+  // X017: a lista de supressão (talkx_blacklist) deixou de ser lida no navegador.
+  // O servidor aplica o critério de elegível/suprimido no snapshot; nada aqui
+  // filtra ids antes de salvar (era a origem de divergência entre tela e disparo).
 
   const selectedSegment = useMemo(() => segments.find((s) => s.id === segmentId) ?? null, [segments, segmentId]);
   const selectedTemplate = useMemo(() => templates.find((t) => t.id === templateId) ?? null, [templates, templateId]);
@@ -615,12 +604,11 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
 
   /** Público total antes da supressão. */
   const audienceTotal = audienceSource === 'segment' ? (segmentEstimate ?? selectedSegment?.estimated_count ?? 0) : selectedContacts.length;
-  /** Bloqueados por supressão dentro do público selecionado (só calculável para seleção manual). */
+  /** Bloqueados por supressão dentro do público (calculado no servidor — X017). */
   const suppressedCount = useMemo(() => {
     if (audienceSource !== 'contacts') return 0;
-    const byId = blacklistIds ? selectedContacts.filter((id) => blacklistIds.has(id)).length : 0;
-    return byId + suppressedByPhoneCount; // E63: inclui phone-based
-  }, [blacklistIds, selectedContacts, audienceSource, suppressedByPhoneCount]);
+    return snapshotSuppressedCount;
+  }, [audienceSource, snapshotSuppressedCount]);
   const eligibleCount = Math.max(0, audienceTotal - suppressedCount);
 
   const previewMessage = useMemo(() => {
@@ -736,8 +724,10 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     audience_source: audienceSource,
     // V24: as regras vão no MESMO JSON do motor de segmentos. `search` é o
     // único resto do snapshot antigo (busca livre não existe no catálogo).
+    // X017: a seleção manual também é persistida — o servidor intersecta
+    // regras × seleção ao gerar o snapshot (não há mais envio de ids no save).
     audience_filters: audienceSource === 'contacts'
-      ? { ...completedRules(audienceRules), search: contactSearch }
+      ? { ...completedRules(audienceRules), search: contactSearch, contact_ids: selectedContacts }
       : {},
     segment_id: audienceSource === 'segment' ? segmentId || null : null,
     template_id: templateId || null,
@@ -759,7 +749,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     confirm_consent: confirmConsent,
     // V23: o passo atual do wizard é persistido para reabrir o rascunho no mesmo passo.
     draft_step: step,
-  }), [name, description, objective, messageTemplate, audienceSource, audienceRules, contactSearch, segmentId, templateId, templateVersionId, typingDelay, sendInterval, speedProfile, connectionId, owner, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly, respectSuppression, confirmConsent, step]);
+  }), [name, description, objective, messageTemplate, audienceSource, audienceRules, contactSearch, selectedContacts, segmentId, templateId, templateVersionId, typingDelay, sendInterval, speedProfile, connectionId, owner, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly, respectSuppression, confirmConsent, step]);
 
   /** Salva (rascunho/agendada) e, se `launch`, dispara imediatamente. Devolve o id da campanha. */
   const persistSave = useCallback(async (mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
@@ -795,23 +785,18 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
         await logEvent(id, 'created', 'Campanha criada');
       }
 
-      let contactIds: string[] = [];
+      // X017: os destinatários são gerados NO SERVIDOR a partir do rascunho
+      // recém-salvo (origem, segmento, audience_filters e seleção manual). Uma
+      // única chamada transacional substitui a resolução de ids no navegador, o
+      // filtro de blacklist e o replace separado.
+      const snapshot = await snapshotDraftAudience.mutateAsync({
+        campaignId: id,
+        expectedRevision: draftRevisionRef.current,
+      });
+      setSnapshotSuppressedCount(snapshot?.suppressed ?? 0);
       if (audienceSource === 'segment' && selectedSegment) {
-        const audience = await resolveAudience(selectedSegment.rules as SegmentRules);
-        contactIds = audience.map((c) => c.id);
         await fromTable('talkx_segments').update({ last_used_at: new Date().toISOString() }).eq('id', selectedSegment.id);
-      } else {
-        contactIds = selectedContacts;
       }
-      if (respectSuppression && (blacklistIds || blacklistPhones)) {
-        if (blacklistIds) contactIds = contactIds.filter((contactId) => !blacklistIds.has(contactId));
-        if (blacklistPhones && blacklistPhones.size > 0) {
-          const { data: cPhones } = await supabase.from('contacts').select('id, phone').in('id', contactIds);
-          const byPhone = new Set((cPhones ?? []).filter((cp) => cp.phone && blacklistPhones.has(cp.phone.replace(/\D/g, ''))).map((cp) => cp.id));
-          if (byPhone.size > 0) { setSuppressedByPhoneCount(byPhone.size); contactIds = contactIds.filter((contactId) => !byPhone.has(contactId)); }
-        }
-      }
-      await replaceDraftRecipients.mutateAsync({ campaignId: id, contactIds });
 
       if (mode === 'schedule' && payload.scheduled_at) {
         await updateCampaign.mutateAsync({ id, status: 'scheduled' });
@@ -826,7 +811,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     } finally {
       setSaving(false);
     }
-  }, [recipientSnapshotReady, canProceed, buildPayload, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, replaceDraftRecipients, startCampaign]);
+  }, [recipientSnapshotReady, canProceed, buildPayload, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, logEvent, audienceSource, selectedSegment, snapshotDraftAudience, startCampaign]);
 
   // Serializa autosave, salvar manual e lançamento. Uma falha não bloqueia a
   // próxima operação, mas nenhuma mutação posterior começa antes do término da

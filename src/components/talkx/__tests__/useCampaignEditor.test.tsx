@@ -8,7 +8,7 @@ type CapturedQuery = {
 };
 
 const f = vi.hoisted(() => ({
-  create: vi.fn(), update: vi.fn(), saveDraft: vi.fn(), replace: vi.fn(), start: vi.fn(), log: vi.fn(),
+  create: vi.fn(), update: vi.fn(), saveDraft: vi.fn(), replace: vi.fn(), snapshot: vi.fn(), start: vi.fn(), log: vi.fn(),
   resolveAudience: vi.fn(async (_rules: unknown, _limit?: number) => [] as unknown[]),
   countAudience: vi.fn(async (_rules: unknown) => 0),
   // Histórico de versões: consumido pelo TalkXTemplateEditor (renderizado nesta
@@ -16,7 +16,6 @@ const f = vi.hoisted(() => ({
   fetchVersionHistory: vi.fn(async (_templateId: string) => [] as { id: string; version_number: number }[]),
   contacts: [{ id: 'contact-1', name: 'Ana Silva', nickname: null, phone: '5511999999999', company: 'Acme', avatar_url: null, tags: ['VIP'] }],
   connections: [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }],
-  blacklist: { ids: new Set<string>(), phones: new Set<string>() },
   persistedRecipientIds: [] as { contact_id: string }[] | undefined,
   templates: [] as { id: string; content: string; media_url: string | null; media_type?: string | null; use_count: number; current_version_id?: string | null }[],
   // V25 — usuário logado (profiles.id) e segmentos do passo 1.
@@ -42,6 +41,8 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
       },
     },
     replaceDraftRecipients: { mutateAsync: f.replace },
+    // X017 — geração do snapshot no servidor (editor não chama mais replace).
+    snapshotDraftAudience: { mutateAsync: f.snapshot },
     startCampaign: f.start,
   }),
 }));
@@ -90,7 +91,7 @@ vi.mock('@tanstack/react-query', () => ({
       : key === 'talkx-audience-contacts' ? f.contacts
         : key === 'talkx-audience-count' ? f.contacts.length
           : key === 'talkx-draft-recipient-ids' ? f.persistedRecipientIds?.map((recipient) => recipient.contact_id)
-            : key === 'talkx-blacklist-ids' ? f.blacklist : undefined;
+            : undefined;
     return { data, isFetching: false };
   },
   useMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
@@ -102,6 +103,8 @@ import { TalkXCampaignWizard } from '@/components/talkx/TalkXCampaignWizard';
 import { TalkXTemplateEditor } from '@/components/talkx/TalkXTemplateEditor';
 import { OBJECTIVES, personalizePreview } from '@/components/talkx/talkxShared';
 import { rulesToPostgrest, type SegmentRules } from '@/hooks/integrations/useTalkXSegments';
+// X017 — spy do cliente Supabase: prova que o persist não faz consulta solta.
+import { supabase } from '@/integrations/supabase/client';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 /** Última consulta registrada com a chave informada (o mock empilha por render). */
@@ -124,10 +127,9 @@ describe('useCampaignEditor — draft integrity', () => {
     f.update.mockResolvedValue({});
     f.saveDraft.mockClear();
     f.replace.mockResolvedValue(1);
+    f.snapshot.mockResolvedValue({ eligible: 1, suppressed: 0, skipped_invalid: 0 });
     f.start.mockResolvedValue(true);
     f.log.mockResolvedValue({});
-    f.blacklist.ids.clear();
-    f.blacklist.phones.clear();
     f.persistedRecipientIds = [];
     f.templates = [];
     f.profile = { id: 'profile-1', name: 'Ana Silva', email: 'ana@example.com' };
@@ -194,7 +196,7 @@ describe('useCampaignEditor — draft integrity', () => {
     expect(result.current.canProceed[1]).toBe(false);
   });
 
-  it('creates one draft and atomically replaces its recipient snapshot on later saves', async () => {
+  it('creates one draft and asks the server for the audience snapshot on later saves (X017)', async () => {
     const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
     act(() => { result.current.setName('Campanha de teste'); result.current.toggleContact('contact-1'); });
 
@@ -203,8 +205,25 @@ describe('useCampaignEditor — draft integrity', () => {
 
     expect(f.create).toHaveBeenCalledTimes(1);
     expect(f.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'draft-1' }));
-    expect(f.replace).toHaveBeenCalledTimes(2);
-    expect(f.replace).toHaveBeenLastCalledWith({ campaignId: 'draft-1', contactIds: ['contact-1'] });
+    expect(f.snapshot).toHaveBeenCalledTimes(2);
+    expect(f.snapshot).toHaveBeenLastCalledWith({ campaignId: 'draft-1', expectedRevision: 2 });
+    // X017: a substituição de destinatários no navegador saiu de cena.
+    expect(f.replace).not.toHaveBeenCalled();
+  });
+
+  it('persist resolves the audience on the server: no talkx_blacklist query and no .in("id", …) (X017)', async () => {
+    const fromSpy = supabase.from as unknown as ReturnType<typeof vi.fn>;
+    fromSpy.mockClear();
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    act(() => { result.current.setName('Campanha de teste'); result.current.toggleContact('contact-1'); });
+
+    await act(async () => { await result.current.handleSave('draft'); });
+
+    // Nenhuma leitura de blacklist e nenhuma consulta PostgREST solta no persist.
+    expect(fromSpy.mock.calls.map(([table]) => table)).not.toContain('talkx_blacklist');
+    expect(fromSpy).not.toHaveBeenCalled();
+    // A geração de destinatários virou UMA chamada de RPC com a revisão corrente.
+    expect(f.snapshot).toHaveBeenCalledWith({ campaignId: 'draft-1', expectedRevision: 1 });
   });
 
   it('uses the created identity after opening a duplicate with an empty id', async () => {
@@ -271,7 +290,8 @@ describe('useCampaignEditor — draft integrity', () => {
 
     expect(f.create).toHaveBeenCalledTimes(1);
     expect(f.update).toHaveBeenCalledTimes(1);
-    expect(f.replace).toHaveBeenLastCalledWith({ campaignId: 'draft-1', contactIds: ['contact-1'] });
+    expect(f.snapshot).toHaveBeenLastCalledWith({ campaignId: 'draft-1', expectedRevision: 2 });
+    expect(f.replace).not.toHaveBeenCalled();
   });
 
   it('persiste as regras de audiência no mesmo JSON do motor (V24)', async () => {
@@ -466,6 +486,7 @@ describe('useCampaignEditor — draft integrity', () => {
     await act(async () => {
       await expect(result.current.handleSave('draft')).rejects.toThrow('audiência deste rascunho ainda está carregando');
     });
+    expect(f.snapshot).not.toHaveBeenCalled();
     expect(f.replace).not.toHaveBeenCalled();
   });
 
@@ -630,6 +651,7 @@ describe('useCampaignEditor — V25 (responsável, nome mínimo, segmentos ativo
     f.create.mockResolvedValue({ id: 'draft-1' });
     f.update.mockResolvedValue({});
     f.replace.mockResolvedValue(1);
+    f.snapshot.mockResolvedValue({ eligible: 1, suppressed: 0, skipped_invalid: 0 });
     f.start.mockResolvedValue(true);
     f.log.mockResolvedValue({});
     f.persistedRecipientIds = [];
@@ -750,6 +772,7 @@ describe('useCampaignEditor — V26 (editor de mensagem, só-mídia e versão do
     f.create.mockResolvedValue({ id: 'draft-1' });
     f.update.mockResolvedValue({});
     f.replace.mockResolvedValue(1);
+    f.snapshot.mockResolvedValue({ eligible: 1, suppressed: 0, skipped_invalid: 0 });
     f.start.mockResolvedValue(true);
     f.log.mockResolvedValue({});
     f.persistedRecipientIds = [];
