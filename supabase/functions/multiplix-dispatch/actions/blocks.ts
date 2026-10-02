@@ -32,6 +32,11 @@ import { z } from 'https://esm.sh/zod@3.23.8';
 import { type ActionContext, DispatchError } from '../index.ts';
 import { errorResponse, jsonResponse } from '../../_shared/validation.ts';
 
+// Ordem de code-unit UTF-16 (identica a `.sort()` sem argumento) DE PROPOSITO: e a
+// ordem estavel do `stableStringify` — NAO trocar por `localeCompare`, que depende do
+// locale do runtime e mudaria a ordem entre ambientes.
+const compararCodeUnit = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+
 // ---------------------------------------------------------------------------
 // Contratos de entrada.
 // ---------------------------------------------------------------------------
@@ -115,7 +120,7 @@ function stableStringify(value: unknown): string {
   if (value && typeof value === 'object') {
     const obj = value as JsonObject;
     return `{${Object.keys(obj)
-      .sort()
+      .sort(compararCodeUnit)
       .map((k) => `${JSON.stringify(k)}:${stableStringify(obj[k])}`)
       .join(',')}}`;
   }

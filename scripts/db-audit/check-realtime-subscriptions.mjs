@@ -90,7 +90,7 @@ export function extractRealtimeSubscriptions(source, fileName = 'fixture.ts') {
     }
 
     if (ts.isVariableStatement(node)
-      && (node.declarationList.flags & ts.NodeFlags.Const) !== 0) {
+      && (node.declarationList.flags & ts.NodeFlags.Const) !== 0) {  // NOSONAR(S1529): mascara de bit real da API do TypeScript (NodeFlags.Const); `&&` mudaria a semantica
       for (const declaration of node.declarationList.declarations) {
         if (!ts.isIdentifier(declaration.name) || !declaration.initializer) continue;
         localDeclarations.add(declaration.name.text);

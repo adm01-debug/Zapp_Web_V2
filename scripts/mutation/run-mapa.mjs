@@ -33,6 +33,8 @@ import {
 } from "node:fs";
 import path from "node:path";
 
+import { resolverExecutavel } from "../lib/seguranca-processo.mjs";
+
 const ROOT = process.cwd();
 const BACKUP_DIR = path.join(ROOT, ".tmp", "mutation-backup");
 
@@ -169,7 +171,7 @@ function main() {
         throw new Error(`[${m.id}] literal aparece ${occurrences}× (esperado 1): ${m.from}`);
       }
 
-      const sed = spawnSync("sed", ["-i", "-E", m.sedScript, m.file], {
+      const sed = spawnSync(resolverExecutavel("sed"), ["-i", "-E", m.sedScript, m.file], {
         cwd: ROOT,
         encoding: "utf8",
       });

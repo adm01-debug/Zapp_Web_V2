@@ -554,8 +554,8 @@
     },
     {
       "path": "supabase/functions/multiplix-dispatch/actions/blocks.ts",
-      "bytes": 13851,
-      "sha256": "2f1266816d9535794feeaedc982d5c4ea5de5bc7edf7d0eabec273430bd6b3cf"
+      "bytes": 14186,
+      "sha256": "0e7757772aababdf136a2d6fbd03deaa7188c970a85ffaa40a262980a798198d"
     },
     {
       "path": "supabase/functions/multiplix-dispatch/actions/inspect.ts",
@@ -1403,7 +1403,7 @@
       "name": "multiplix-dispatch",
       "entrypoint": "supabase/functions/multiplix-dispatch/index.ts",
       "verify_jwt": true,
-      "source_sha256": "3865306c28915ff7fe912f118d1e791b4c1a5ba469f847b349234edbf4c11bb6",
+      "source_sha256": "e69a16c9acc75846c23359cb01d4e78b079c5c71d899a21ce568d45e1d2ff520",
       "source_files": [
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1688,5 +1688,5 @@
       ]
     }
   ],
-  "manifest_sha256": "f2c925c97df16886ad4ceefe32777786da63908f1452ba0c5d53a1503f1393a8"
+  "manifest_sha256": "b3d129c840fc967e9b295159552eb6e7cdabc1928c3c6067bb717296a277b0b3"
 }
