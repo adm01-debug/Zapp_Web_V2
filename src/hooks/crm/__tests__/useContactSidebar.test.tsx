@@ -67,10 +67,10 @@ describe('useContactSidebar', () => {
     expect(result.current.data?.contact_id).toBe('crm-1');
   });
 
-  it('sem contactId não dispara a query', async () => {
+  it('sem contactId não dispara a query e reporta disabled (nunca loader eterno)', async () => {
     const { result } = renderHook(() => useContactSidebar(undefined), { wrapper });
     await new Promise((r) => setTimeout(r, 20));
     expect(getContactSidebar).not.toHaveBeenCalled();
-    expect(result.current.status).toBe('loading');
+    expect(result.current.status).toBe('disabled');
   });
 });

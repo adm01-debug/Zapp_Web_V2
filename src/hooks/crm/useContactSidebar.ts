@@ -23,7 +23,9 @@ export function useContactSidebar(contactId: string | undefined) {
   });
 
   let status: ContactSidebarStatus;
-  if (!crmEnabled) status = 'disabled';
+  // Sem contactId não há o que buscar: mesma UI de 'disabled' (query fica
+  // disabled → isPending eterno, que renderizaria um loader infinito).
+  if (!crmEnabled || !contactId) status = 'disabled';
   else if (query.isPending) status = 'loading';
   else if (query.isError) status = 'error';
   else if (query.data?.found !== true) status = 'not_found';

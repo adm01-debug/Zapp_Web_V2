@@ -140,15 +140,30 @@ export function formatPercentage(value: number, decimals = 1): string {
 export function formatBirthday(iso: string | null | undefined, now: Date = new Date()): { label: string | null; age: number | null } {
   if (!iso) return { label: null, age: null };
   // 'YYYY-MM-DD' precisa ser lido como data local (new Date(iso) interpreta
-  // como UTC e o dd/MM viraria o dia anterior em GMT-3).
+  // como UTC e o dd/MM viraria o dia anterior em GMT-3). O construtor
+  // numérico NORMALIZA datas impossíveis (2025-02-30 → 02/03) e anos 0-99
+  // (→ 1900+), então a data só vale se os componentes baterem de volta.
   const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
-  const date = dateOnly
-    ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
-    : new Date(iso);
+  let date: Date;
+  if (dateOnly) {
+    const [y, m, d] = [Number(dateOnly[1]), Number(dateOnly[2]), Number(dateOnly[3])];
+    const parsed = new Date(y, m - 1, d);
+    if (parsed.getFullYear() !== y || parsed.getMonth() !== m - 1 || parsed.getDate() !== d) {
+      return { label: null, age: null };
+    }
+    date = parsed;
+  } else {
+    date = new Date(iso);
+  }
   if (Number.isNaN(date.getTime())) return { label: null, age: null };
   if (date.getTime() > now.getTime()) return { label: format(date, 'dd/MM/yyyy', { locale: ptBR }), age: null };
   let age = now.getFullYear() - date.getFullYear();
-  const birthdayThisYear = new Date(now.getFullYear(), date.getMonth(), date.getDate());
+  // 29/02 em ano comum: o aniversário conta no dia 28/02 (new Date(y,1,29)
+  // normalizaria para 01/03 e atrasaria a idade um dia).
+  const month = date.getMonth();
+  const day = date.getDate();
+  const dayThisYear = month === 1 && day === 29 && new Date(now.getFullYear(), 1, 29).getDate() !== 29 ? 28 : day;
+  const birthdayThisYear = new Date(now.getFullYear(), month, dayThisYear);
   if (birthdayThisYear.getTime() > now.getTime()) age -= 1;
   return { label: format(date, 'dd/MM/yyyy', { locale: ptBR }), age };
 }
