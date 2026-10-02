@@ -526,7 +526,12 @@ As 7 restantes: `criar-do-chat-com-contato` (o usuario de QA nao tem conversa �
 `fazendo-x3-bloqueia-4a` e `mobile-mover-pelo-menu` (nome do `menuitem` nao bate — harness),
 `filtro-por-prioridade-nos-3-modos` (strict mode: `quick-add-input` resolve 2 elementos — harness),
 `toast-do-alarme` e `adiar-15min` (passaram em outra rodada = **flake**), `central-notificacoes-abrir`.
-Nenhuma provada como bug do app. Rodada paralela com harness corrigido de outro jeito deu **10/24** — a
+Nenhuma provada como bug do app.
+**Prova independente do alarme (checada por mim no banco, nao pelo relato do subagente):** a tabela e
+`notifications`; existem **7 linhas de `type='reminder_due'`**, a ultima em `2026-10-02T00:28:00Z` (21:28 BRT,
+minutos antes da checagem). O cron **dispara** — portanto `toast-do-alarme` e `adiar-15min` sao flakiness de
+headless, nao alarme quebrado. (`public.reminder_due` NAO existe: a alegacao inicial do agente citava essa
+relacao; conferi e o registro real e em `notifications.type`.) Rodada paralela com harness corrigido de outro jeito deu **10/24** — a
 divergencia entre harnesses e a prova de flakiness. O 404 de `/assets/EvolutionDisconnectBan...` visto no
 `console-sem-erro` **foi descartado**: era corrida com o deploy (o check passou depois).
 
