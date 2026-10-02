@@ -2,10 +2,9 @@
 -- versão 20261002641230 reservada para hermes-talkx-v4-x057-segmentos-2610021719d64e em 2026-10-02T17:20:29-03:00 (hermes-db-migrar --nova)
 --
 -- rollback: 1) alter publication supabase_realtime drop table if exists public.talkx_campaign_segments;
--- rollback: 2) alter publication supabase_realtime drop table if exists public.talkx_recipients; alter publication supabase_realtime add table public.talkx_recipients;  (republica sem a coluna nova)
--- rollback: 3) drop table if exists public.talkx_campaign_segments;   (remove a estrutura nova; nenhum dado de talkx_campaigns/talkx_recipients e perdido)
--- rollback: 4) drop index if exists public.idx_talkx_recipients_campaign_segment_status;
--- rollback: 5) alter table public.talkx_recipients drop column if exists segment_id;
+-- rollback: 2) drop table if exists public.talkx_campaign_segments;   (remove a estrutura nova; nenhum dado de talkx_campaigns/talkx_recipients e perdido; talkx_recipients nunca saiu da publicacao)
+-- rollback: 3) drop index if exists public.idx_talkx_recipients_campaign_segment_status;
+-- rollback: 4) alter table public.talkx_recipients drop column if exists segment_id;
 --
 -- X057 (Talk X V4, Fase 6) — parte ESTRUTURAL: permitir varios segmentos por campanha.
 --
@@ -127,9 +126,9 @@ select c.id,
 on conflict (campaign_id, segment_id) do nothing;
 
 -- 6. Realtime --------------------------------------------------------------------
--- A publicacao manda a linha inteira; republicar talkx_recipients garante que a
--- coluna segment_id entre no stream dos assinantes que ja acompanham a tabela.
--- Statements diretos, como em todas as migrations do repo — que nao usam bloco do/begin.
+-- talkx_recipients NAO e republicada de proposito: a publicacao nao tem lista de
+-- colunas, entao a replicacao manda a linha inteira e a coluna nova (segment_id)
+-- ja entra no stream. Tirar e devolver a tabela da publicacao so criaria uma
+-- janela sem eventos — e um 'drop table' aqui derruba a projecao forward-only do
+-- guard de catalogo, que le o SQL por texto. Statements diretos, como no resto do repo.
 alter publication supabase_realtime add table public.talkx_campaign_segments;
-alter publication supabase_realtime drop table public.talkx_recipients;
-alter publication supabase_realtime add table public.talkx_recipients;
