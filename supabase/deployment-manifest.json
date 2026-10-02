@@ -8,7 +8,7 @@
   },
   "summary": {
     "function_count": 67,
-    "source_file_count": 120,
+    "source_file_count": 121,
     "verify_jwt_true": 55,
     "verify_jwt_false": 12
   },
@@ -584,8 +584,13 @@
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
-      "bytes": 44627,
-      "sha256": "4268dc1adcbbd0f1614bc78c3400eb81528b1acf3559b37bfdb85792b7837843"
+      "bytes": 37904,
+      "sha256": "235e50cebd31e82954de35a19429e7100f163e3492512b4e6199bec4e87f3a3a"
+    },
+    {
+      "path": "supabase/functions/talkx-send/process-recipient.ts",
+      "bytes": 21646,
+      "sha256": "abb73f877f07b0d0ec8c5ce050bcb73896a0c35f9468ea892ec19d66a2ecd9df"
     },
     {
       "path": "supabase/functions/voice-agent/index.ts",
@@ -1465,7 +1470,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "0efa1fb3150767a64ac3468c364e173c4f64a3f3b2346e82ca1898225af12088",
+      "source_sha256": "108c093866cc874ce78d6da4aba20f6b8a175036c94bf7b0c162fdbe89b86141",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1487,7 +1492,8 @@
         "supabase/functions/_shared/talkx-resume-policy.ts",
         "supabase/functions/_shared/talkx-window.ts",
         "supabase/functions/_shared/validation.ts",
-        "supabase/functions/talkx-send/index.ts"
+        "supabase/functions/talkx-send/index.ts",
+        "supabase/functions/talkx-send/process-recipient.ts"
       ]
     },
     {
@@ -1564,5 +1570,5 @@
       ]
     }
   ],
-  "manifest_sha256": "a62a192241fddb8acddae505428f072700b62b9ee7e55688d5cfb3646765210e"
+  "manifest_sha256": "5fc19fe542f19c4d3eb1445eb279783c117818e491725a61129bd91e231a88d6"
 }
