@@ -795,3 +795,21 @@ Armadilha registrada: `CREATE OR REPLACE FUNCTION` **nao troca o tipo de retorno
 **Etapa 93 (card 56px -> 72px):** a correcao (`min-h-[72px]` so no modo nao-agenda) foi mergeada (#1590) e esta **no ar**: o CSS de producao (`assets/index-B65zfFfB.css`) contem `min-height:72px`, e os tokens `--warning` / `--warning-foreground` estao presentes para o badge amarelo da 62. Remedicao com tarefa seedada fica para a proxima janela (a conta QA esta sem tarefa e o card so existe com dado).
 
 **Etapas 42/34:** reconfirmadas por medicao — `C-34-sheet.png` tirado 02/10 (o CP-C dizia pendente por login de QA, que ja nao e bloqueio) e o QuickAdd expoe **7 chips** no DOM (`D-42-quickadd.png`).
+
+
+---
+
+## CP-M Entrega (2026-10-02) — placar do plano em 96/100
+
+**Fechadas neste ciclo (com o SHA da entrega citado na propria linha):**
+- **34 (Sheet de edicao):** `e6739afc4` (#1391, FASE C, etapas 23-27) + `09e7cdffd` (#1398, 28-33) + `out/C-34-sheet.png` (02/10, conta COMPRAS).
+- **42 (QuickAdd):** `256fac36e` (#1418, FASE D, etapas 35-42) + `out/D-42-quickadd.png` (7 chips medidos no DOM).
+- **58 (telas da FASE E):** `ebc126427` (#1298, 45/46), `fed595989` (#1303, 55), `211fe1606` (#1305, 56), `92e884eef` (#1308, 57), com os ajustes #1325/#1334/#1360/#1372 + os 4 PNGs `out/E-58-*`.
+
+**Placar: 96 de 100 etapas marcadas.**
+
+**Pendentes do Joaquim (as 4 que restam, cada uma com o que destrava):**
+- **66** (idempotencia do alarme): a idempotencia **1 -> 2** esta provada com timestamps; falta medir `concluir -> status='done' + remind_at IS NULL`, que exige remedicao instrumentada lendo o banco depois de concluir.
+- **67** (concluir antes do horario -> 0 notificacoes): **nao medida**; o roteiro nao cria a tarefa (3 tentativas, 20s e 60s — nao e timing). Destrava com roteiro instrumentado (screenshot + console no momento da criacao).
+- **96** (dados migrados): a query fecha (`migrated_task_id IS NULL` = 0); falta abrir a tarefa migrada na Lista/Sheet **do dono** — precisa de credencial do Admin 01.
+- **100** (verificacao final): cron ativo e `reminder_due` > 0 nas 24h ja provados, e os 3 PNGs `J-100-prod-*` existem; falta a conferencia presencial do dono.
