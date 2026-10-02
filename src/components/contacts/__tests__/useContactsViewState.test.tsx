@@ -86,6 +86,21 @@ describe('useContactsViewState — atalhos e sanitização (etapa 79)', () => {
     expect(crud.setSelectedIds).toHaveBeenCalledWith([]);
   });
 
+  it('Esc que fecha um diálogo aberto não limpa a seleção', () => {
+    crud.selectedIds = ['a', 'b'];
+    renderHook(() => useContactsViewState());
+    const dialog = document.createElement('div');
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('data-state', 'open');
+    document.body.appendChild(dialog);
+    try {
+      press('Escape');
+      expect(crud.setSelectedIds).not.toHaveBeenCalled();
+    } finally {
+      dialog.remove();
+    }
+  });
+
   it('Esc sem painel nem seleção limpa a busca', () => {
     crud.searchInput = 'ana';
     renderHook(() => useContactsViewState());

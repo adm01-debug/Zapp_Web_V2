@@ -53,6 +53,7 @@ export function useContactsViewState() {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); setIsAddDialogOpen(true); }
       if (e.key === 'Escape') {
+        if (e.defaultPrevented || document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]')) return;
         if (detailContact) { setDetailContact(null); return; }
         if (selectedIds.length > 0) { setSelectedIds([]); }
         else if (searchInput) { clearSearch(); }
