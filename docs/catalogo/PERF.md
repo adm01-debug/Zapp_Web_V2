@@ -452,3 +452,21 @@ mobile (Slow 4G, CPU 4x) | lighthouse 12.8.2 | cache HTTP limpo
 - **CT-74 continua aberto:** falta a correção (faixa de KPIs + peso de JS) e nova medição.
   Corrigida a faixa, o CLS tende a entrar no aceite; o perf ≥ 90 exige mais que isso.
 - Artefato cru desta medição: `.tmp/lh-prod.json` (relatório completo do Lighthouse).
+
+### Re-medição depois do restart do banco canônico (02/10, ~15:30)
+
+Com o banco de volta, a medição foi **repetida com a mesma metodologia** (produção, mobile/Slow 4G,
+cache HTTP limpo, sessão COMPRAS dentro do perfil do Chrome):
+
+```console
+URL MEDIDO: https://zapp-web-v2.vercel.app/?view=catalog
+PERF: 39      (1a medicao: 44)
+CLS:  0.2451  (1a medicao: 0.2455)
+FCP 3,4 s | LCP 7,3 s | TBT 680 ms | SI 3,8 s | TTI 7,3 s
+203 requisicoes | 4 requisicoes da edge do catalogo
+```
+
+Leitura: duas medições independentes dão o **mesmo CLS (~0,245)** e perf na mesma faixa (39–44) —
+o veredito do aceite (≥ 90 e < 0,05) **não muda** com o banco saudável, e a causa dominante do CLS
+(a faixa de KPIs) fica confirmada. Artefatos crus: `~/.cache/hermes-pr/ct74-20261002-lh-prod.json`
+(1ª) e `.tmp/lh-prod-2.json` (2ª, nesta rodada).

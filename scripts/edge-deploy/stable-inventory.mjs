@@ -62,6 +62,10 @@ export async function collectStableAttestation({
   // baseline pre-deploy -- nunca aceitamos "sem mudanca" por inferencia pura
   // de digest, so quando o CLI mesmo disse que pulou essa funcao.
   knownUnchanged = [],
+  // Emissor de progresso por amostra. Injetavel para teste; por padrao escreve no
+  // stderr do job, que e o que o workflow captura. Recebe SEMPRE texto ja sanitizado
+  // (ver a whitelist no catch): nunca conteudo de resposta da API, transporte ou token.
+  log = (linha) => console.error(linha),
 }) {
   verifyManifestDigest(manifest);
   if (manifest.project_ref !== CANONICAL_PROJECT || before?.project_ref !== manifest.project_ref) {
@@ -83,6 +87,7 @@ export async function collectStableAttestation({
   const started = now();
   let previousDigest = null;
   let consecutive = 0;
+  let lastCause = null;
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
       const observedAt = new Date(now()).toISOString();
@@ -134,6 +139,7 @@ export async function collectStableAttestation({
       consecutive = digest === previousDigest ? consecutive + 1 : 1;
       previousDigest = digest;
       samples.push({ attempt, observed_at: observedAt, inventory_sha256: digest, valid: true });
+      log(`[edge-inventory] amostra ${attempt}/${maxAttempts}: inventario estavel ${consecutive}/${consecutiveSamples} amostras identicas`);
       if (consecutive >= consecutiveSamples && now() - started >= minimumObservationMs) {
         const changedOutsideScope = snapshot.functions.filter(fn => !selected.includes(fn.slug)
           && JSON.stringify(fn) !== JSON.stringify(pre.get(fn.slug))).map(fn => fn.slug);
@@ -155,11 +161,20 @@ export async function collectStableAttestation({
       }
     } catch (error) {
       if (error.permanent) throw new Error(error.message);
+      // Whitelist de mensagens PROPRIAS (conjunto de funcoes, identidade, escopo):
+      // sao seguras e nomeiam a causa. Qualquer outra coisa (falha de API/transporte)
+      // vira um rotulo generico -- o contrato do modulo e nunca emitir conteudo de
+      // resposta, transporte ou token.
+      const bruta = typeof error?.message === 'string' ? error.message : '';
+      const nossa = /^(Remote function set mismatch|Selected deployment not yet observed|Missing remote identity or timestamp|Unknown deployment scope)/.test(bruta);
+      lastCause = nossa ? bruta : `falha transitoria (${error?.name || 'Error'})`;
       previousDigest = null;
       consecutive = 0;
-      samples.push({ attempt, observed_at: new Date(now()).toISOString(), valid: false });
+      samples.push({ attempt, observed_at: new Date(now()).toISOString(), valid: false, cause: lastCause });
+      log(`[edge-inventory] amostra ${attempt}/${maxAttempts}: ${lastCause}`);
     }
     if (attempt < maxAttempts) await sleep(intervalMs);
   }
-  throw new Error(`Remote inventory did not stabilize after ${maxAttempts} attempts; deployment NOT attested`);
+  const causa = lastCause ? `; ultima causa observada: ${lastCause}` : '';
+  throw new Error(`Remote inventory did not stabilize after ${maxAttempts} attempts; deployment NOT attested${causa}`);
 }

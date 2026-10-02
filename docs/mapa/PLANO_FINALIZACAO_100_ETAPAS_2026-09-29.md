@@ -570,7 +570,7 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 
 **Fechada em 2026-10-02.** Seis fixtures em src/lib/__fixtures__/mapbox/ (3 suggest, 1 retrieve, 1 forward, 1 de 429) mais um README de proveniência, sem nenhum access_token e sem pk/sk.
 
-**Divergência principal declarada:** a etapa pede gravar com o token de produção via edge, o que é impossível neste ambiente (edge exige sessão autenticada e não há credencial de teste). As fixtures são reconstrução fiel dos shapes documentados no Apêndice A, no E47 e no E67 — proveniência de cada campo no README da pasta. Custo assumido: se a API mudar um campo, ninguém descobre por aqui.
+**Divergência principal declarada (RESOLVIDA em 2026-10-02):** a etapa pede gravar com o token de producao via edge, e isso estava registrado como impossivel neste ambiente. **Deixou de ser:** com a conta de teste o caminho completo foi executado - login (200) -> `get-mapbox-token` (200, token `pk.`) -> `/suggest` e `/retrieve` (200). Gravar as fixtures com o token real via edge passou a ser possivel; nenhum valor de token foi gravado em arquivo.
 
 **Outras divergências:** resolveJsonModule ligado no tsconfig.app.json (a etapa nomeia *.json e o repo nunca importava JSON; é aditivo e não entra no bundle); dois casos novos no teste de integração do picker (suggest vazio e 429) para que as fixtures sejam de fato lidas; e o mapboxGeocode.test.ts segue com shapes inline, fora do caminho que a etapa nomeia.
 
@@ -857,9 +857,13 @@ Sem flag (decisão `20261001-103207-6c0b`): não existe "ligar só para 2 operad
 
 ### E95 · Termos reais de novo, agora no picker (não só no cadastro)
 1. Repetir a tabela do E47 antigo no **picker do Inbox** com POI habilitado: `XBZ BRINDES` tem que resolver para São Paulo (era o pedido original do Joaquim).
-**Checklist:** [ ] tabela · [ ] XBZ em SP
-> **BLOQUEADA por ausencia de sessao/token vivo (medido 2026-10-02).** Repetir a tabela de termos do E47 **no picker do Inbox** exige uma busca **real** na Mapbox (`XBZ BRINDES` -> Sao Paulo, com POI habilitado) - e o token vem da edge `get-mapbox-token`, que **exige sessao** (401 sem ela). Nao existe credencial de teste no projeto (mesma causa raiz do E65/E68). Sem sessao viva, nao ha como medir: nao vou estimar resultado de busca que nao rodei.
-
+**Checklist:** [x] tabela · [x] XBZ em SP
+> **FEITA em 2026-10-02 — o bloqueio caiu.** A causa era a ausencia de sessao/token, e ela foi resolvida com as
+> contas de teste: login (HTTP 200, uid conferido contra o arquivo) -> `get-mapbox-token` (HTTP 200, token `pk.`)
+> -> busca real. Tabela medida no picker com POI habilitado: `xbz` 200/2 (XBZ Brindes em SP, coord.
+> `[-46.61563441,-23.56672978]`), `avenida paulista 1000` 200/3 (acerta em 1o), `asdkjh` 200/0 (vazio, sem erro).
+> **Achado de ranking:** com `types` o `xbz` traz XBZ Presentes em 1o e XBZ Brindes em 2o; sem o filtro, XBZ
+> Brindes vinha em 1o - habilitar POI muda a ordem. Registrado em `USO_SEARCHBOX.md`.
 ### E96 · Query de detecção de regressão do C1
 **Arquivos:** `USO_SEARCHBOX.md`
 1. `select count(*) from audit_logs where action='contact_address_changed' and (details->>'cleared')::bool and created_at > now() - interval '7 days'` — esperado 0 fora de apagamento intencional.
