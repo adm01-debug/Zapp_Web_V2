@@ -58,7 +58,7 @@ export function listarFontes(raiz = RAIZ_PADRAO) {
     }
   };
   visitar(raiz);
-  return arquivos.sort();
+  return arquivos.sort((a, b) => a.localeCompare(b));
 }
 
 export function main(raiz = RAIZ_PADRAO, argv = process.argv.slice(2)) {
