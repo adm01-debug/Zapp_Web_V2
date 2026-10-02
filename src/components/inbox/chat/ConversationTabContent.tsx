@@ -17,8 +17,8 @@ const NotesTab = lazy(() =>
   import('../tabs/NotesTab').then((m) => ({ default: m.NotesTab })));
 const FilesTab = lazy(() =>
   import('../tabs/FilesTab').then((m) => ({ default: m.FilesTab })));
-const HistoryTab = lazy(() =>
-  import('../tabs/HistoryTab').then((m) => ({ default: m.HistoryTab })));
+const JourneyTab = lazy(() =>
+  import('../tabs/JourneyTab').then((m) => ({ default: m.JourneyTab })));
 
 function PanelFallback() {
   return (
@@ -124,7 +124,7 @@ export function ConversationTabContent({
 
       {activeTab === 'history' && (
         <Panel name="Journey">
-          <HistoryTab contactId={contactId} />
+          <JourneyTab contactId={contactId} />
         </Panel>
       )}
     </div>

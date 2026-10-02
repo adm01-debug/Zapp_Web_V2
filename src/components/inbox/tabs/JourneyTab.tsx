@@ -3,7 +3,8 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
   Clock, MessageSquare, FileText, ArrowLeftRight, UserPlus, Paperclip, CheckSquare,
-  DollarSign, XCircle, RotateCcw, Activity, CalendarClock, CheckCircle2, type LucideIcon,
+  DollarSign, XCircle, RotateCcw, Activity, CalendarClock, CheckCircle2, BarChart3,
+  Route, type LucideIcon,
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatRelativeTime } from '@/lib/formatters';
@@ -12,8 +13,10 @@ import {
   useConversationHistoryTimeline, type TimelineEvent, type TimelineEventKind, type TimelineTypeFilter,
 } from '@/hooks/chat/useConversationHistoryTimeline';
 import { KpiStrip } from './KpiStrip';
+import { SectionCard } from './SectionCard';
+import { ContactStatsStrip } from './ContactStatsStrip';
 
-interface HistoryTabProps {
+interface JourneyTabProps {
   contactId: string;
 }
 
@@ -71,8 +74,8 @@ function dayLabel(dateStr: string): string {
   return isToday ? `Hoje, ${formatted}` : formatted;
 }
 
-/** Aba Histórico (2.10) — cabeçalho + filtros + KPIs + timeline agrupada por dia. */
-export function HistoryTab({ contactId }: HistoryTabProps) {
+/** Aba Journey — estatísticas do contato + filtros + KPIs + timeline agrupada por dia. */
+export function JourneyTab({ contactId }: JourneyTabProps) {
   const [period, setPeriod] = useState<'7' | '30' | '90' | '0'>('30');
   const [type, setType] = useState<TimelineTypeFilter>('all');
   const [limit, setLimit] = useState(200);
@@ -86,12 +89,16 @@ export function HistoryTab({ contactId }: HistoryTabProps) {
   return (
     <div className="flex flex-col gap-4" data-testid="history-tab">
       <div className="flex items-center gap-3">
-        <span className="w-10 h-10 rounded-lg bg-primary/15 text-primary flex items-center justify-center shrink-0"><Clock className="w-5 h-5" /></span>
+        <span className="w-10 h-10 rounded-lg bg-primary/15 text-primary flex items-center justify-center shrink-0"><Route className="w-5 h-5" /></span>
         <div className="min-w-0 flex-1">
           <h2 className="text-xl font-bold text-foreground">Journey</h2>
           <p className="text-sm text-muted-foreground">Estatísticas e toda a jornada de relacionamento com este contato.</p>
         </div>
       </div>
+
+      <SectionCard icon={BarChart3} title="Estatísticas do contato" subtitle="Desde o início do relacionamento" tone="blue">
+        <ContactStatsStrip contactId={contactId} />
+      </SectionCard>
 
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
@@ -110,6 +117,7 @@ export function HistoryTab({ contactId }: HistoryTabProps) {
         </div>
       </div>
 
+      <p className="text-xs text-muted-foreground">No período selecionado</p>
       <KpiStrip
         cells={[
           { icon: Activity, label: 'Total de interações', value: metrics?.total ?? '—', tone: 'blue', sublabel: 'Mensagens, ligações e ações' },

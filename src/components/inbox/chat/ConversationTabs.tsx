@@ -1,6 +1,6 @@
 import { motion, LayoutGroup, useReducedMotion } from 'framer-motion';
 import {
-  MessageSquare, Sparkles, Compass, CircleDollarSign, CheckSquare, FileText, Paperclip, History, Bell,
+  MessageSquare, Sparkles, Compass, CircleDollarSign, CheckSquare, FileText, Paperclip, Route, Bell,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -23,7 +23,7 @@ const TABS: TabDef[] = [
   { id: 'ia', label: 'IA', icon: Sparkles },
   { id: 'crm', label: 'CRM 360°', icon: Compass },
   { id: 'orders', label: 'SalesView', icon: CircleDollarSign },
-  { id: 'history', label: 'Journey', icon: History },
+  { id: 'history', label: 'Journey', icon: Route },
   { id: 'tasks', label: 'Tarefas', icon: CheckSquare, count: (c) => c.tasksOpen },
   { id: 'notes', label: 'Notas', icon: FileText, count: (c) => c.notesTotal },];
 

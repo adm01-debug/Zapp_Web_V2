@@ -8,7 +8,7 @@ import { Conversation, ConversationContact as Contact } from '@/types/chat';
 
 import { ContactInfoSection } from './ContactInfoSection';
 import { AssignmentSection } from './AssignmentSection';
-import { ContactStatsSection } from './ContactStatsSection';
+import { ContactStatsStrip } from '../tabs/ContactStatsStrip';
 import { SLAAndAITagsSection } from './SLAAndAITagsSection';
 import { ExternalContact360Panel } from './ExternalContact360Panel';
 import { ContactIntelligencePanel } from './ContactIntelligencePanel';
@@ -126,7 +126,7 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
               <ConversationTimeline contactId={contact.id} />
             </MoreDetailsBlock>
             <MoreDetailsBlock icon={<BarChart3 className="w-3.5 h-3.5 text-primary" />} label="Estatísticas">
-              <ContactStatsSection contactId={contact.id} />
+              <ContactStatsStrip contactId={contact.id} compact />
             </MoreDetailsBlock>
             <MoreDetailsBlock icon={<BookOpen className="w-3.5 h-3.5 text-primary" />} label="Base de Conhecimento">
               <KnowledgeBaseSearchPanel />
