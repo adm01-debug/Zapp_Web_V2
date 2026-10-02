@@ -218,6 +218,11 @@ minute_sent=$(psql_test -Atqc "SET request.jwt.claim.role = 'service_role'; SELE
 # 4 (Talk X) + 2 (Multiplix) = 6 no último minuto.
 [[ "$minute_sent" == '6' ]] || fail "minute_sent esperado 6 (4 Talk X + 2 Multiplix), obtido $minute_sent"
 
+# (3b) talkx_campaign_pace devolve o MESMO orçamento da conexão da campanha.
+echo "(3b) campaign_pace devolve o orçamento da conexão da campanha"
+pace_minute_sent=$(psql_test -Atqc "SET request.jwt.claim.role = 'service_role'; SELECT (public.talkx_campaign_pace('60000000-0000-0000-0000-000000000001') ->> 'minute_sent')::int")
+[[ "$pace_minute_sent" == '6' ]] || fail "campaign_pace minute_sent esperado 6, obtido $pace_minute_sent"
+
 # (4) perfil fast com send_interval_min=0 -> gravado no mínimo do perfil (3000).
 echo "(4) fast com intervalo 0 clampa para 3000"
 psql_test >/dev/null <<'SQL'
