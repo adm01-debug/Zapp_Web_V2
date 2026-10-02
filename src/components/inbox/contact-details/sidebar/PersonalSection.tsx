@@ -27,8 +27,9 @@ function socialValue(entry: SidebarSocial | undefined, atPrefix: boolean): strin
   if (entry.handle?.trim()) return atPrefix ? `@${entry.handle.replace(/^@/, '')}` : entry.handle;
   if (entry.url && isSafeHttpUrl(entry.url)) {
     try {
-      const path = new URL(entry.url).pathname.replace(/\/+$/, '');
-      return path && path !== '/' ? (atPrefix ? `@${path.split('/').pop()}` : path) : null;
+      let path = new URL(entry.url).pathname;
+      while (path.endsWith('/')) path = path.slice(0, -1);
+      return path ? (atPrefix ? `@${path.split('/').pop()}` : path) : null;
     } catch { return null; }
   }
   return null;
