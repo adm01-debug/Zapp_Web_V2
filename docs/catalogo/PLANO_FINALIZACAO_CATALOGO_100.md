@@ -325,8 +325,12 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   → **28 testes passando**, typecheck exit 0, `eslint` 0 problemas, `lint-ratchet novas: 0`.
   *(Achado do executor, corrigido no mesmo arquivo: o `vi.mock` de `useCatalogContactSearch` não exportava
   `CONTACT_SEARCH_MIN_CHARS`, o que derrubava os 28 testes independentemente do CT-38 — corrigido no mock.)*
-- [x] **CT-39** — "Adicionar fotos" (das `variants.images` não selecionadas) e "Baixar" (zip das fotos selecionadas
+- [ ] **CT-39** — "Adicionar fotos" (das `variants.images` não selecionadas) e "Baixar" (zip das fotos selecionadas
   via `fetch` + `JSZip` se já existir no bundle; senão download individual). **Aceite:** teste RTL do picker.
+  **◐ PARCIAL (02/10/2026):** o aceite literal ("teste RTL do picker") está cumprido (`SendProductDialog.test.tsx:130-150`,
+  toggle "Selecionar todas" em `:454-465`) e o download individual existe (`:574` + `handleDownloadImages:265-283`), **mas o
+  controle "Adicionar fotos" nomeado no plano não existe** — foi substituído pelo picker (justificativa em `:454-458`) — e o
+  handler de download **não tem teste**. Falta: teste do download e o nome do controle bater com o plano.
 - [x] **CT-40** — Fechamento D: PR mergeada; `PARIDADE.md` seções "Detalhes" e "Enviar" (prints antes/depois); zerar
   `text-white`/`violet-500` restantes por tokens (`text-primary-foreground`, `--badge-new`). **Aceite:** grep de cores
   literais no módulo = 0 (exceção documentada: `bg-white` da mídia).
@@ -995,6 +999,14 @@ foram rodados um a um (contagem no fim).
 `CatalogRail.tsx:436` (inicializador de `useState`). O aceite literal (*"grep Date.now/Math.random = 0"*) é
 **incompatível com o uso legítimo** (handler/efeito/inicializador), mesma classe de contradição do CT-99: o objetivo da
 etapa — não recalcular tempo a cada render — está cumprido.
+
+**Divergências do plano medidas nesta conferência (02/10/2026):**
+
+- **CT-05 — `Math.random()` virou Web Crypto:** o plano pede `sleep(800 + Math.random()*700)`; o código usa `randomFraction()` sobre `crypto.getRandomValues` (`useSendProduct.ts:44-48`) porque a regra **Sonar S2245** marca `Math.random` como vulnerabilidade e derruba o quality gate. O intervalo entregue é o mesmo `[800, 1500] ms` (teste com timers falsos: `useSendProduct.test.tsx:112-135`).
+- **CT-06 — o deep link do plano não existe no inbox:** o plano manda "Abrir conversa" para `?view=inbox&contact=<id>`, mas o inbox **não lê `contact=` nem `conversation=`** (`ViewRouter.tsx:46` só troca a view). O mecanismo real é o evento **`open-contact-chat`** (`useRealtimeInbox.ts:66-82`), e é o que o código usa (`useSendProduct.ts:58-80`) — o literal do plano está errado, não o código.
+- **CT-39 — PARCIAL:** ver a nota da etapa (o controle "Adicionar fotos" não existe; falta teste do download).
+- **CT-57 (não bloqueante):** a direção **clique → URL** (`handleTabChange`, `ExternalProductManagement.tsx:341-350`) está implementada mas **sem teste RTL**; o teste cobre só **URL → aba** (`CT55_57_management.test.tsx:201-216`).
+- **CT-48 / CT-76:** a metade "db-guard verde"/"CI verde" dos aceites não é provada por leitura de repo; os gates equivalentes foram rodados nesta tarefa (contratos, coverage, build/budget) e a CI do PR é a autoridade final.
 
 ## 11. Mapa de PRs
 
