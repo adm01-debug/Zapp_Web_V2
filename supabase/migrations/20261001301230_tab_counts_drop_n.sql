@@ -5,8 +5,6 @@
 -- front + migration juntos, e o merge so depois do APROVADO.
 -- rollback: reaplicar supabase/migrations/20260928140200_tab_counts_tasks_own.sql, que devolve a funcao
 -- com reminders_pending fixo em 0. E CREATE OR REPLACE da funcao inteira, sem DDL de coluna.
-BEGIN;
-
 CREATE OR REPLACE FUNCTION public.get_conversation_tab_counts(p_contact_id uuid)
 RETURNS TABLE(
   tasks_open   integer,
@@ -47,8 +45,6 @@ BEGIN
        AND m.media_url IS NOT NULL);
 END;
 $$;
-
-COMMIT;
 
 -- ROLLBACK:
 -- Restaurar a versao com a coluna (migration 20260928140200_tab_counts_tasks_own.sql), que devolve
