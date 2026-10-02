@@ -129,8 +129,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-helpers.ts",
-      "bytes": 14495,
-      "sha256": "289c8f2cdd96aa1c4ece8053e65c94decc1be8ec630a62565d682ef3d6697e4a"
+      "bytes": 14541,
+      "sha256": "8db75511660743742f11ee847cfe33039e4a554f2a393bca5974bf319c4b293a"
     },
     {
       "path": "supabase/functions/_shared/evolution-media.ts",
@@ -775,7 +775,7 @@
       "name": "batch-fetch-avatars",
       "entrypoint": "supabase/functions/batch-fetch-avatars/index.ts",
       "verify_jwt": false,
-      "source_sha256": "38a60fa2b078a3b089d325187bf297b2243ad2d0c3ce7b68b9f02e522e134252",
+      "source_sha256": "520567f942e7ec8d704461f94230d11a977b611fc7c05b182779aa7929a9fec3",
       "source_files": [
         "supabase/functions/_shared/cron-secret-auth.ts",
         "supabase/functions/_shared/edge-boot.ts",
@@ -1091,7 +1091,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "5cbff92835e8191dab8a89b86d7a23a56677d8f936044591946adc8adaf542a2",
+      "source_sha256": "5a736d1ae7c5511a705f5e2701c818fe2543f6b9626df3e8bf96144302cbd0c9",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -1495,5 +1495,5 @@
       ]
     }
   ],
-  "manifest_sha256": "f868a221b1375f3942ab53b9433ae168ebd74dc3cf3e56feb84419d6508c4a51"
+  "manifest_sha256": "1f2c9b8a593f69873fe195f3df777f542df6c522ee0f751cbe5077d97016adc8"
 }
