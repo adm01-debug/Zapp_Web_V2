@@ -51,6 +51,9 @@ import { useAddressAutocomplete } from '../useAddressAutocomplete';
 const suggestionA: GeoSuggestion = { id: 'a', name: 'Rua A', address: 'Rua A, São Paulo', kind: 'street' };
 const suggestionB: GeoSuggestion = { id: 'b', name: 'Rua B', address: 'Rua B, São Paulo', kind: 'street' };
 const suggestionC: GeoSuggestion = { id: 'c', name: 'Rua C', address: 'Rua C, São Paulo', kind: 'street' };
+// E50: sugestão vinda do `/forward` (já tem coordenada) — a seleção não passa pelo `/retrieve`,
+// mas continua registrando o evento, com `source: 'forward'` e o `kind` da própria sugestão.
+const suggestionPoiForward: GeoSuggestion = { id: 'f', name: 'Rua A', address: 'Rua A, 1, São Paulo', kind: 'poi', coords: { lat: -23.5, lng: -46.6 } };
 // Coordenadas que o `/forward` devolveria nos casos de cascata (F2/E15/E16/E17).
 const forwardPaulista: GeoSearchPlace = { name: 'Avenida Paulista', address: 'Av. Paulista, 1000 - Bela Vista, São Paulo', lat: -23.5613, lng: -46.6565 };
 const forwardA: GeoSearchPlace = { name: 'Rua A', address: 'Rua A, 1, São Paulo', lat: -23.5, lng: -46.6 };
@@ -81,6 +84,8 @@ describe('useAddressAutocomplete', () => {
     h.noteRetrieveCall.mockReset();
     h.endSearchSession.mockReset();
     h.isSearchBudgetOk.mockReset().mockReturnValue(true);
+    // E50: a contagem de eventos é parte da prova (1× por seleção) — não pode acumular entre casos.
+    h.logAudit.mockReset();
   });
 
   afterEach(() => {
@@ -151,9 +156,10 @@ describe('useAddressAutocomplete', () => {
       expect(result.current.suggestions).toEqual([suggestionB]);
     });
 
-    it('E49: a seleção registra searchbox_selected com a origem — é o medidor de custo do Searchbox', async () => {
+    it('E50: seleção via /retrieve registra {source, kind} — 1× e sem termo/endereço/coordenada', async () => {
       // O evento responde: a escolha veio da sessão do Searchbox (paga) ou da rede de proteção
-      // `/forward`? Sem isso só se sabe quantas sessões foram ABERTAS, nunca quantas ENTREGARAM.
+      // `/forward`? E o `kind` diz QUE tipo de lugar foi escolhido (rua, endereço, POI). Termo
+      // digitado, nome, endereço e coordenada NÃO entram no evento (spec E50, item 2).
       h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionC] });
       h.retrievePlaceResult.mockResolvedValue({
         ok: true,
@@ -162,15 +168,43 @@ describe('useAddressAutocomplete', () => {
       const { result } = setup();
       act(() => { result.current.setQuery('Rua A'); });
       await act(async () => { vi.advanceTimersByTime(300); });
-    
+
       await act(async () => { await result.current.select(0); });
-    
-      expect(h.logAudit).toHaveBeenCalledWith(
-        expect.objectContaining({
-          action: 'searchbox_selected',
-          details: expect.objectContaining({ source: 'suggest', position: 0 }),
-        }),
-      );
+
+      // 1× por `/retrieve` bem-sucedido — não duplica.
+      expect(h.logAudit).toHaveBeenCalledTimes(1);
+      const evento = h.logAudit.mock.calls[0][0];
+      expect(evento).toMatchObject({
+        action: 'searchbox_selected',
+        details: { source: 'suggest', kind: 'street' },
+      });
+      // Shape fechado: SÓ {source, kind} — nada de position nem campo extra.
+      expect(Object.keys(evento.details).sort()).toEqual(['kind', 'source']);
+      const json = JSON.stringify(evento.details);
+      expect(json).not.toContain('Rua');
+      expect(json).not.toContain('Paulista');
+      expect(json).not.toContain('-23.5');
+    });
+
+    it('E50: sugestão do /forward (já com coords) registra source forward e o kind da sugestão', async () => {
+      h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionPoiForward] });
+      const { result } = setup();
+      act(() => { result.current.setQuery('Rua A'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      await act(async () => { await result.current.select(0); });
+
+      // Não passa pelo `/retrieve`, mas o evento sai com a origem e o tipo certos.
+      expect(h.retrievePlaceResult).not.toHaveBeenCalled();
+      expect(h.logAudit).toHaveBeenCalledTimes(1);
+      const evento = h.logAudit.mock.calls[0][0];
+      expect(evento).toMatchObject({
+        action: 'searchbox_selected',
+        details: { source: 'forward', kind: 'poi' },
+      });
+      const json = JSON.stringify(evento.details);
+      expect(json).not.toContain('Rua');
+      expect(json).not.toContain('-23.5');
     });
     
     it('lista vazia cacheada (E19) também é servida sem sessão nova', async () => {

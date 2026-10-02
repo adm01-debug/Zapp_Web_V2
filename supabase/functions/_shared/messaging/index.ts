@@ -24,6 +24,8 @@
  *     testavel sem rede.
  */
 
+import { secureRandomFloat } from "../secure-random.ts";
+
 export * from "./types.ts";
 
 export * from "./personalize.ts";
@@ -43,5 +45,5 @@ export * from "./timing.ts";
 export function newCorrelationId(): string {
   const cripto = globalThis.crypto;
   if (cripto && typeof cripto.randomUUID === "function") return cripto.randomUUID();
-  return `c-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  return `c-${Date.now().toString(36)}-${secureRandomFloat().toString(36).slice(2, 10)}`;
 }

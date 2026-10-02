@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { secureRandomFloat } from '../../lib/secureRandom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -124,7 +125,10 @@ export function TrainingMode() {
 
     // Complete if all steps done
     if (customerStep >= scenario.customerScript.length) {
-      const finalScore = Math.min(100, Math.max(40, 60 + Math.round(Math.random() * 40)));
+      // Nota simulada: inteiro 40..100, gravado em `training_sessions.score`.
+      // O formato (inteiro na faixa, decidido pelo clamp) nao muda; a fonte deixa
+      // de ser o PRNG previsivel (S2245).
+      const finalScore = Math.min(100, Math.max(40, 60 + Math.round(secureRandomFloat() * 40)));
       setScore(finalScore);
       const fb = finalScore >= 80 ? 'Excelente! Boa empatia e resolução.' :
         finalScore >= 60 ? 'Bom, mas poderia ser mais proativo.' :
