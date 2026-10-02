@@ -872,7 +872,33 @@ Sem flag (decisão `20261001-103207-6c0b`): não existe "ligar só para 2 operad
 
 ### E97 · Limpeza de fixtures/contatos de teste
 1. Garantir que os E2E deixam 0 contatos `[E2E] Endereço *` no banco (query de verificação).
-**Checklist:** [ ] 0 sobras
+**Checklist:** [x] 0 sobras
+> **FEITA em 2026-10-02 — com o defeito que a produzia consertado, nao so o lixo varrido.**
+> Alvo literal da etapa (`[E2E] Endereco *`): **0 sobras**, medido antes e depois.
+> **O que estava errado:** havia 26 contatos `[E2E]` VIVOS (nao 309 — esse numero contava
+> linhas, incluindo as 288 ja soft-deleted, que sao historico legitimo). Todos os 25 vivos
+> eram `[E2E] RODAPE EDIT`.
+> **Causa-raiz, reproduzida:** o `cleanup` do `dialog-rodape-viewport.spec.ts` usava
+> `liveContactsByPhone(page, ...)` — `page.request` morre junto com a pagina. Quando o teste
+> estoura por timeout ou o worker e cancelado, a consulta falha e o `.catch(() => [])` ENGOLIA
+> o erro: nada era apagado e nao havia sinal nenhum. Prova: matando a pagina antes do `finally`,
+> 2 contatos ficaram no banco (o `retry` criou o segundo).
+> **Fix:** limpeza movida para `test.afterEach`, por telefone registrado, com o fixture
+> `request` do Playwright (nao depende da pagina viva) e **sem engolir erro** — limpeza que
+> falha deixa o teste VERMELHO. **Prova discriminante:** a MESMA mutacao que antes deixava 2
+> residuos passou a deixar **0**.
+> **Duas tentativas minhas que falharam, registradas:** (1) eu criei o contexto de request a
+> mao (`request.newContext()`/`dispose()`) e o teste passou a estourar 30s — trocado pelo fixture
+> `request`; (2) removi os `finally` e deixei `try {` sem `catch`, o que e JS invalido
+> ("No tests found"). Tambem errei duas hipoteses antes de medir: "nao esta em hook" (esta) e
+> "os residuos sao anteriores ao fix" (23 de 23 sao posteriores).
+> **Limpeza do lixo (autorizada pelo responsavel):** 23 contatos `[E2E]%` com mais de 2h,
+> excluidos por soft-delete (mesma semantica da UI). Vivos: **26 -> 3**.
+> `[E2E] Contato de teste - nao apagar` **preservado** (o nome e uma instrucao; filtro por
+> prefixo sozinho o teria apagado). Os outros 2 sao residuos do meu proprio experimento
+> (19:39 UTC, ~35 min) e ficaram de fora da janela de 2h pela propria regra.
+> Query da limpeza: `update contacts set deleted_at = now() where name like '[E2E]%' and name
+> not ilike '%nao apagar%' and created_at < now() - interval '2 hours' and deleted_at is null`.
 
 ### E98 · Auditoria adversarial final (5 frentes)
 1. Perda de dado em qualquer writer de `contacts`; sessão fantasma; estado enganoso; a11y; custo — cada frente com 1 teste novo ou "sem achado" justificado.
