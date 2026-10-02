@@ -373,6 +373,19 @@ describe('SendProductDialog — CT-08/CT-09 (checagem pré-envio e teclado)', ()
     expect((mockSendOutboundMessage.mock.calls[0][0] as { caption: string }).caption).toContain('Olha esse produto');
   });
 
+  it('Cmd+Enter (metaKey, Mac) no passo do contato também envia (CT-09)', async () => {
+    mockFetchContacts.mockResolvedValue([CONTACT]);
+    renderDialog();
+
+    fireEvent.click(screen.getByRole('button', { name: /Selecionar Contato/i }));
+    fireEvent.click((await screen.findByText('Tomaz')).closest('button')!);
+
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Enter', metaKey: true });
+
+    await waitFor(() => expect(mockSendOutboundMessage).toHaveBeenCalledTimes(1));
+    expect(mockSendOutboundMessage.mock.calls[0][0]).toMatchObject({ contactId: 'c1' });
+  });
+
   it('CT-68: enquanto o envio acontece, o progresso é anunciado numa região viva', async () => {
     mockFetchContacts.mockResolvedValue([CONTACT]);
     // promise que nunca resolve: prende o dialog no estado "enviando"

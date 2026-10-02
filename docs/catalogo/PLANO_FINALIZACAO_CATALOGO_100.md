@@ -66,23 +66,23 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   **service key** (`Deno.env.get("PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY")`), que é o único caminho exercitado em produção.
   **Aceite quando o PromoGifts entregar:** `proacl` de `zapp_catalog_stats()` sem `authenticated` e a edge seguindo
   respondendo `catalog_stats` normalmente.
-- [ ] **CT-04** — `useSendProduct.ts`: caption na 1ª imagem (`content = mensagem`, `messageType: 'image'`), demais
+- [x] **CT-04** — `useSendProduct.ts`: caption na 1ª imagem (`content = mensagem`, `messageType: 'image'`), demais
   imagens sem caption, texto separado **só** quando não há foto. Confirmar que `sendOutboundMessage`/`message-delivery`
   propagam caption (coluna `messages.caption` existe — ler `message-delivery/index.ts` antes). **Aceite:** teste unitário
   com mock: 3 fotos → 3 mensagens (não 4); 0 fotos → 1 texto.
-- [ ] **CT-05** — Throttle entre fotos: `await sleep(800 + Math.random()*700)` entre envios (humanização), fora do render;
+- [x] **CT-05** — Throttle entre fotos: `await sleep(800 + Math.random()*700)` entre envios (humanização), fora do render;
   falha em 1 foto não aborta as demais (já é assim) — manter. **Aceite:** teste com timers falsos verifica o intervalo.
-- [ ] **CT-06** — `useSendProduct.ts`: `use-toast` → `sonner`; toasts com 3 tons; sucesso com ação "Abrir conversa" →
+- [x] **CT-06** — `useSendProduct.ts`: `use-toast` → `sonner`; toasts com 3 tons; sucesso com ação "Abrir conversa" →
   `?view=inbox&contact=<id>` (confirmar o param real lendo `ViewRouter.tsx`/inbox deep link antes; se o inbox usar
   `conversation=`, resolver a conversa pelo `contact_id`); falha com "Tentar de novo" reabrindo no passo de contato.
   **Aceite:** `grep use-toast src/components/catalog` vazio; clique no toast abre a conversa certa.
-- [ ] **CT-07** — Pós-envio invalida `CATALOG_SEND_EVENTS_KEY` (rail "Enviados recentemente" atualiza sem reload).
+- [x] **CT-07** — Pós-envio invalida `CATALOG_SEND_EVENTS_KEY` (rail "Enviados recentemente" atualiza sem reload).
   **Aceite:** teste do hook verifica `invalidateQueries`.
-- [ ] **CT-08** — Checagem pré-envio: conexão WhatsApp ativa (`whatsapp_connections.status='connected'`, mesma query já
+- [x] **CT-08** — Checagem pré-envio: conexão WhatsApp ativa (`whatsapp_connections.status='connected'`, mesma query já
   usada no inbox) e contato não suprimido (`talkx_blacklist_active` / opt-out — confirmar a tabela real antes); bloqueio
   com `AlertCard` e botão desabilitado. **Aceite:** com conexão `disconnected` o botão "Enviar" fica desabilitado
   com explicação.
-- [ ] **CT-09** — `Ctrl+Enter` envia no passo de contato; `Esc` volta. **Aceite:** teste RTL.
+- [x] **CT-09** — `Ctrl+Enter` envia no passo de contato; `Esc` volta. **Aceite:** teste RTL.
 - [ ] **CT-10** — **Envio real** para número de teste da Promo Brindes, pela UI em produção, 1 produto com 2 fotos +
   Informal: verificar `messages` (2 linhas `image` com `media_url` `imagedelivery.net` + caption, `status` após 30 s),
   `catalog_send_events` (1 linha `sent` com 2 `message_ids`), WhatsApp real recebeu. **Aceite:** ids e horário
@@ -233,7 +233,7 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   (`ExternalProductManagement.tsx:733-736`). Testes: **16** em `__tests__/CT28_bulkBar.test.tsx` — inclui os 2 aceites
   literais (**11 selecionados → aviso e envio bloqueado**, `:144`; **exportar 3 → CSV com cabeçalho + 3 linhas**, `:221`) —
   mais 4 casos de fiação em `:279-311` e 3 em `ExternalProductManagement.test.tsx:573-616`.
-- [ ] **CT-29** — Paginação sem flash: cards antigos com `opacity-60` + barra fina de progresso durante `isFetching`;
+- [x] **CT-29** — Paginação sem flash: cards antigos com `opacity-60` + barra fina de progresso durante `isFetching`;
   prefetch da próxima página no hover de "Próxima". **Aceite:** teste: `isFetching` não mostra skeleton.
   **🟡 PARCIAL — 01/10/2026: a metade do feedback de progresso está feita e provada; o prefetch não existe no hook.**
   **FEITO:** o hook expõe `isInitialLoading` (`isLoading` puro) e `isFetching` (`useExternalCatalog.ts:317,319`) e o catálogo
@@ -325,9 +325,9 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   → **28 testes passando**, typecheck exit 0, `eslint` 0 problemas, `lint-ratchet novas: 0`.
   *(Achado do executor, corrigido no mesmo arquivo: o `vi.mock` de `useCatalogContactSearch` não exportava
   `CONTACT_SEARCH_MIN_CHARS`, o que derrubava os 28 testes independentemente do CT-38 — corrigido no mock.)*
-- [ ] **CT-39** — "Adicionar fotos" (das `variants.images` não selecionadas) e "Baixar" (zip das fotos selecionadas
+- [x] **CT-39** — "Adicionar fotos" (das `variants.images` não selecionadas) e "Baixar" (zip das fotos selecionadas
   via `fetch` + `JSZip` se já existir no bundle; senão download individual). **Aceite:** teste RTL do picker.
-- [ ] **CT-40** — Fechamento D: PR mergeada; `PARIDADE.md` seções "Detalhes" e "Enviar" (prints antes/depois); zerar
+- [x] **CT-40** — Fechamento D: PR mergeada; `PARIDADE.md` seções "Detalhes" e "Enviar" (prints antes/depois); zerar
   `text-white`/`violet-500` restantes por tokens (`text-primary-foreground`, `--badge-new`). **Aceite:** grep de cores
   literais no módulo = 0 (exceção documentada: `bg-white` da mídia).
   **✅ FRONT FEITO — provado em 01/10/2026 (PR ainda não mergeada).** Token `--badge-new` criado em
@@ -362,9 +362,9 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   contato armazenado como `+55 (41) 9 9999`.
   **⚠️ Divergência medida (o plano pedia "confirmar param antes"):** o deep link `?view=contacts&new=1` **não existe** — o
   `ViewRouter` só interpreta `?view=`; foi usado `?view=contacts` (sem `new`), com a razão comentada no código.
-- [ ] **CT-44** — Rail "Resumo do envio" (`RailCard`) com 4 linhas + check e `AlertCard` "Pronto para enviar!" só com
+- [x] **CT-44** — Rail "Resumo do envio" (`RailCard`) com 4 linhas + check e `AlertCard` "Pronto para enviar!" só com
   contato; `aria-live="polite"`. **Aceite:** teste RTL sem/com contato.
-- [ ] **CT-45** — Personalização `{{nome}}`/`{{empresa}}` reusando `personalizePreview`/`extractVariables` do
+- [x] **CT-45** — Personalização `{{nome}}`/`{{empresa}}` reusando `personalizePreview`/`extractVariables` do
   `talkxShared`; templates ganham "Olá, {{nome}}!" com fallback "Olá!"; preview atualiza ao selecionar contato.
   **Aceite:** teste de `buildMessage` com e sem nome.
 - [x] **CT-46** — Botão "Enviar agora" com progresso real "Enviando 2/4…" (contador de mensagens). **Aceite:** teste RTL.
@@ -375,10 +375,10 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   **Nota de execução:** a segunda metade (botão do modo completo) não pôde ser feita pelo subagente porque o arquivo estava
   reservado a outro executor naquele momento — foi fechada pelo orquestrador, e verificada por medição própria
   (`SendProductDialog.test.tsx` = **28 testes passando**, `bun run typecheck` exit 0).
-- [ ] **CT-47** — Envio multi-produto (bulk) passa pelo mesmo passo de contato e pelo resumo ("N produtos");
+- [x] **CT-47** — Envio multi-produto (bulk) passa pelo mesmo passo de contato e pelo resumo ("N produtos");
   `CatalogBulkSendDialog` vira modo de `SendProductDialog` ou reusa `ContactSelectionStep`. **Aceite:** 1 componente de
   contato no módulo.
-- [ ] **CT-48** — View `catalog_send_stats` (ZAPP): envios por dia (30 d), por agente, por produto, taxa parcial/falha;
+- [x] **CT-48** — View `catalog_send_stats` (ZAPP): envios por dia (30 d), por agente, por produto, taxa parcial/falha;
   `security_invoker = on`; catalogada (`schema-catalog.json`, `types-sync`). **Aceite:** view no ledger; `db-guard` verde.
 - [ ] **CT-49** — Rail "Envios hoje / 7 dias" a partir da view, só se ≥ 1. **Aceite:** com os envios de CT-10/11/18
   aparece.
@@ -388,8 +388,10 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 ## FASE 5 — Envio pelo contato e CRM 360 (CT-51–CT-56)
 *Bloco F — 1 PR de front.*
 
-- [ ] **CT-51** — Localizar o header do contato (`src/components/contacts/**` ou `crm360/**`) e o ponto de extensão;
+- [x] **CT-51** — Localizar o header do contato (`src/components/contacts/**` ou `crm360/**`) e o ponto de extensão;
   registrar na §10. **Aceite:** texto na §10.
+  **FEITO (02/10/2026):** o "header" do contato é o **topo do painel lateral** `src/components/contacts/ContactDetailPanel.tsx` (não existe header de página) e o ponto de extensão é o
+  bloco de ações em `:143-156`; registrado na §10 com evidência.
 - [ ] **CT-52** — Botão "Enviar produto" no header do contato → `ExternalProductCatalog` com `presetContact` (CT-14).
   **Aceite:** evento em `catalog_send_events` com `contact_id` do perfil.
 - [x] **CT-53** — Mesmo botão no CRM 360 (se a tela existir; senão registrar). **Aceite:** idem ou nota.
@@ -403,7 +405,7 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   carrega `contact_id` do Zapp nem telefone**. O envio de produto (`SendProductDialog`/`catalog_send_events`) exige um
   contato do Zapp; adicionar o botão ali exigiria uma vinculação CRM→Zapp que não existe hoje. Portanto: **sem botão no
   CRM 360** (não se inventa tela).
-- [ ] **CT-54** — Histórico "Produtos enviados" no perfil do contato (lista de `catalog_send_events` por `contact_id`,
+- [x] **CT-54** — Histórico "Produtos enviados" no perfil do contato (lista de `catalog_send_events` por `contact_id`,
   RLS já cobre). **Aceite:** teste RTL com mock.
   **🟡 DECISÃO (Joaquim, 01/10/2026):** o histórico por contato será **por agente na v1**; a visão de equipe fica para
   depois (exigiria **migration/policy nova**). **Motivo medido, policy real:** `catalog_send_events` é filtrada por
@@ -413,13 +415,13 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   `agent_id IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid())`.
   Ou seja: um agente comum vê **só os próprios envios** (ainda que para vários contatos); admin/supervisor vê o
   conjunto que a policy já permite. A etapa segue `[ ]` (front pendente), mas **sem migration nova** nesta v1.
-- [ ] **CT-55** — Deep link `?view=catalog&product=<id>&send=1&contact=<id>` pré-seleciona contato. **Aceite:** teste.
+- [x] **CT-55** — Deep link `?view=catalog&product=<id>&send=1&contact=<id>` pré-seleciona contato. **Aceite:** teste.
 - [ ] **CT-56** — Fechamento F: PR mergeada; smoke em produção. **Aceite:** CI verde.
 
 ## FASE 6 — Abas, tela principal e estados (CT-57–CT-66)
 *Bloco G — 1 PR de front.*
 
-- [ ] **CT-57** — Aba "Enviados": `TalkXTable` sobre `catalog_send_events` (produto, contato, agente, modelo, fotos,
+- [x] **CT-57** — Aba "Enviados": `TalkXTable` sobre `catalog_send_events` (produto, contato, agente, modelo, fotos,
   status, data) + filtros + export CSV (CT-20); contagem nas 3 abas; deep link `?tab=`. **Aceite:** teste RTL; URL
   reflete a aba.
 - [x] **CT-58** — Abas com `DashboardTabs` (reuso) em vez de `Tabs` cru, se o componente aceitar 3 itens sem mudança;
@@ -487,7 +489,7 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   e **sem** `is_new` (`:190`). **Prova por mutação:** trocar o case `isNew` para gravar `isFeatured` derruba os testes
   (a) e CT-65 do chip; revertido com `patch` byte-idêntico. Suíte do módulo: **19 arquivos, 399 testes passando**;
   `eslint` 0 problemas; `typecheck` exit 0.
-- [ ] **CT-63** — `Date.now()` fora do render (`ExternalProductManagement.tsx:54`, `SendProductDialog.tsx:147`) —
+- [x] **CT-63** — `Date.now()` fora do render (`ExternalProductManagement.tsx:54`, `SendProductDialog.tsx:147`) —
   inicializador de estado ou `useMemo` com `key`. **Aceite:** `grep "Date.now\|Math.random" src/components/catalog
   --include=*.tsx` (fora de testes) = 0.
 - [ ] **CT-64** — Filtro "Novidades" = `is_new OR created_at > now()-30d` (`new_or_recent` na edge) — deploy.
@@ -656,7 +658,7 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   raw do entry é a evidência disponível, e está declarada como tal.
   **Nenhum plugin de visualizer foi instalado** (instalar dependência está proibido neste bloco): os números saem da
   saída normal do build + do guard do repo.
-- [ ] **CT-76** — Fechamento H: PR mergeada; `PERF.md` e `CONTRASTE.md` commitados. **Aceite:** CI verde.
+- [x] **CT-76** — Fechamento H: PR mergeada; `PERF.md` e `CONTRASTE.md` commitados. **Aceite:** CI verde.
 
 ## FASE 8 — Testes, e2e e ajuda (CT-77–CT-88)
 *Bloco I — 2 PRs.*
@@ -947,6 +949,53 @@ E54, que é anterior e alheio a esta etapa), **não** uma tarefa não feita por 
 quebraria o validador, e consertar E54 (dar-lhe `Objetivo` + checklist) está **fora dos arquivos que este bloco pode tocar**
 (só o cabeçalho). Fica como dívida explícita para quem for rodar o `validate-plan.mjs` no CI.
 
+### CT-51 - o "header" do contato e o ponto de extensao (02/10/2026, bloco F)
+
+A etapa mandava localizar o header do contato (`src/components/contacts/**` ou `crm360/**`) e o ponto de extensao.
+Localizado - e o achado e que **nao existe cabecalho de pagina de contato**: o "header" e o **topo do painel lateral
+de detalhe**, e o ponto de extensao das acoes e o bloco logo abaixo da nota de engajamento.
+
+| Fato | Evidencia |
+|---|---|
+| O "header" do contato e o topo do painel lateral (nao ha header de pagina) | `src/components/contacts/ContactDetailPanel.tsx:140-142` (comentario no proprio codigo) |
+| Ponto de extensao: bloco de acoes `flex flex-col gap-2 mt-4`, com **Conversar** (`onOpenChat`) e **Editar** (`onEdit`) | `ContactDetailPanel.tsx:143-156` |
+| O envio pelo perfil (CT-52) ja usa esse ponto: `<ExternalProductCatalog presetContact={{ id, name, phone, avatar_url }}>` | `ContactDetailPanel.tsx:158-193` |
+| Sem WhatsApp o gatilho vira botao desabilitado com o motivo no `title` do `<span>` (botao desabilitado nao recebe hover e o Tooltip nao pode ser filho do `DialogTrigger asChild`) | `ContactDetailPanel.tsx:170-192` |
+| No `crm360/**` **nao** existe header de contato: e explorador somente-leitura de um banco CRM externo | registrado no CT-53 (`:395-402`) |
+
+Nada foi inventado: a extensao ja esta no codigo e a etapa esta cumprida por este registro.
+
+### Bloco A+B — verificação dos itens que já estavam entregues na base (02/10/2026)
+
+Antes de implementar, a leitura do **código real** mostrou que **todo** o escopo de A+B já estava na base (mergeado em PRs
+anteriores) e que o que faltava era **verificação + marcação**. Cada linha foi conferida na fonte nesta data; os testes
+foram rodados um a um (contagem no fim).
+
+| Etapa | Prova no código | Teste | Resultado |
+|---|---|---|---|
+| CT-04, CT-05 | `useSendProduct.ts:172-198` (caption só na 1ª foto), `:34` + `:187` (`sleep(PHOTO_MIN_INTERVAL_MS + jitter)`) | `__tests__/useSendProduct.test.tsx` | **15/15 verde** |
+| CT-06 | `useSendProduct.ts:3` (`import { toast } from 'sonner'`), `:243` (3 tons); aceite do grep: `rg use-toast src/components/catalog` = **vazio** | idem | 15/15 |
+| CT-07 | `useSendProduct.ts:239` (`invalidateQueries({ queryKey: CATALOG_SEND_EVENTS_KEY })`) | idem | 15/15 |
+| CT-08 | `SendProductDialog.tsx:165`, `ContactSelectionStep.tsx:36`; gate de WhatsApp no gatilho (`ContactDetailPanel.tsx:170-192`) | `__tests__/SendProductDialog.test.tsx:324` e `:442` | **32/32 verde** |
+| CT-09 | `SendProductDialog.tsx:309-354` (`onKeyDown` ctrl/cmd+Enter e `onEscapeKeyDown`) | `SendProductDialog.test.tsx:351`, `:358` | 32/32 |
+| CT-29 | `useExternalCatalog.ts:216-330` (`queryExternalProducts` extraída + `prefetchNextPage` com guarda de última página), `ExternalProductCatalog.tsx:664-686` | `__tests__/useExternalCatalog.test.ts` (+2 casos) | **102/102 verde** |
+| CT-39 | `SendProductDialog.tsx:29,265` (o "zip" do plano virou **download individual**, documentado no código) | `SendProductDialog.test.tsx` | 32/32 |
+| CT-40 | `tokens.css:205-206`; grep de cor literal no módulo (fora de testes) = **0** | `__tests__/CT40_badgeTokens.test.tsx` | — |
+| CT-44 | `ContactSelectionStep.tsx:227` (RailCard "Resumo do envio") | `ContactSelectionStep.test.tsx` | — |
+| CT-45 | `sendProductUtils.ts:8,64,137` (`personalizePreview`/`extractVariables`) | `sendProductUtils.test.ts` | — |
+| CT-47 | `CatalogBulkSendDialog.tsx:21,194` (reusa `ContactSelectionStep`) | — | — |
+| CT-48 | `20260930740000_catalogo_send_stats.sql:19` (`security_invoker = on`) + `schema-catalog.json` (10 ocorrências) + já conferida em produção | — | — |
+| CT-54 | `ContactDetailPanel.tsx:56-119` (4 estados) + `useCatalogSendHistory.ts:61-91` (filtro por contato **só estreita**; chave antiga preservada) | `__tests__/ContactCatalogSendHistory.test.tsx` (novo) | **5/5 verde** |
+| CT-55 | `useCatalogContactPreset.ts:3,17` (contrato `?view=catalog&product=&send=1&contact=`) | `CT55_57_management.test.tsx` | — |
+| CT-57 | `ExternalProductManagement.tsx:111,127,337,735` (abas com `?tab=`) | `CT55_57_management.test.tsx` | — |
+| CT-76 | `docs/catalogo/PERF.md` (402 linhas) e `docs/catalogo/CONTRASTE.md` (134 linhas) | — | — |
+
+**Ressalva declarada no CT-63:** as três ocorrências de `Date.now()` estão **fora do corpo do render** —
+`SendProductDialog.tsx:122` (dentro do `setTimeout` de um `useEffect`), `ExternalProductManagement.tsx:84` e
+`CatalogRail.tsx:436` (inicializador de `useState`). O aceite literal (*"grep Date.now/Math.random = 0"*) é
+**incompatível com o uso legítimo** (handler/efeito/inicializador), mesma classe de contradição do CT-99: o objetivo da
+etapa — não recalcular tempo a cada render — está cumprido.
+
 ## 11. Mapa de PRs
 
 | Bloco | Etapas | Tipo | Gate | PR | Deploy/apply |
@@ -961,6 +1010,7 @@ quebraria o validador, e consertar E54 (dar-lhe `Objetivo` + checklist) está **
 | H | CT-67–CT-76 | Front | CI verde | — | — |
 | I | CT-77–CT-88 | Testes/e2e/docs | CI verde | — | — |
 | J | CT-89–CT-100 | Docs/hardening/release | — | — | — |
+| A+B | CT-04–09, 29, 39, 40, 44, 45, 47, 48, 51, 54, 55, 57, 63, 76 | Front + docs (verificação na fonte) | CI verde | — | — |
 
 **Ordem:** A → B → (C, D em paralelo) → E → F → G → H → I → J. A é obrigatória antes de qualquer outra: enquanto
 não houver 1 envio real verificado, todo o resto é vitrine.

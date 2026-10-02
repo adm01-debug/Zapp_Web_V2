@@ -93,6 +93,7 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
     fetchProducts,
     fetchCategories,
     fetchSuppliers,
+    prefetchNextPage,
   } = useExternalCatalog();
 
   // CT-59 — 429 da edge: toast + botões desabilitados por 10 s.
@@ -663,15 +664,25 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
 
             {/* Pagination */}
             {!favoritesOnly && totalProducts > pageSize && (
-              <TalkXPagination
-                page={page + 1}
-                pageSize={pageSize}
-                total={totalProducts}
-                // trocar de página limpa a seleção (os ids antigos saem da tela)
-                onPage={(p) => { setPage(p - 1); clearSelection(); }}
-                onPageSize={handlePageSize}
-                noun="produtos"
-              />
+              // CT-29 — prefetch da próxima página: o botão "Próxima" é renderizado
+              // dentro do TalkXPagination compartilhado (não dá para pendurar o
+              // handler nele sem tocar em talkxShared), então o intent — hover/foco
+              // na região da paginação que o contém — adianta o fetch; o hook ignora
+              // quando a página atual já é a última.
+              <div
+                onMouseEnter={() => void prefetchNextPage()}
+                onFocus={() => void prefetchNextPage()}
+              >
+                <TalkXPagination
+                  page={page + 1}
+                  pageSize={pageSize}
+                  total={totalProducts}
+                  // trocar de página limpa a seleção (os ids antigos saem da tela)
+                  onPage={(p) => { setPage(p - 1); clearSelection(); }}
+                  onPageSize={handlePageSize}
+                  noun="produtos"
+                />
+              </div>
             )}
 
             {/* CT-28 — barra de seleção em massa (grade e lista): só existe
