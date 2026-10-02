@@ -154,18 +154,27 @@ export async function installFakeSession(page: Page) {
 }
 
 export async function mockTalkXAuth(page: Page) {
-  // Perfil do usuário fake (AuthService.fetchProfile → profiles.maybeSingle()).
+  // Perfil do usuário fake. PostgREST devolve ARRAY num select de tabela — e o
+  // `.maybeSingle()` do cliente desembrulha sozinho quando volta 1 linha
+  // (`data = data[0]`), então array serve para os dois formatos de leitura.
+  // Responder objeto quebra quem LISTA `profiles` sem filtro de id (passo 1 do
+  // wizard de campanha, V25: `.select('id,name,email').eq('is_active', true)`):
+  // o array vira objeto, `(ed.owners ?? []).map` estoura TypeError e a tela cai
+  // no error boundary ("Erro ao carregar Campanhas") em vez de renderizar.
   await page.route(/\/rest\/v1\/profiles/, (route) => {
     if (!isRead(route.request().method())) return writeBlocked(route);
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        user_id: FAKE_USER_ID,
-        name: 'Visual Talk X',
-        email: FAKE_EMAIL,
-        role: 'admin',
-      }),
+      body: JSON.stringify([
+        {
+          id: FAKE_USER_ID,
+          user_id: FAKE_USER_ID,
+          name: 'Visual Talk X',
+          email: FAKE_EMAIL,
+          role: 'admin',
+        },
+      ]),
     });
   });
 
