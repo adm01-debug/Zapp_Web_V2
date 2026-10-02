@@ -17,7 +17,7 @@ import { primaryNav, sidebarGroups, advancedNav } from './sidebarNavConfig';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { NavigationService } from '@/services/navigation.service';
 import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
-import { useMyWorkItemsBadge } from '@/hooks/tasks/useMyWorkItems';
+import { useMyWorkItemsBadgeInfo } from '@/hooks/tasks/useMyWorkItems';
 
 interface SidebarProps {
   currentView: string;
@@ -47,8 +47,9 @@ export const Sidebar = React.memo(function Sidebar({
   const { roles, permissions } = useUserRole();
 
   // Fase F (etapa 62): badge do item Tarefas = atrasadas + avisos já disparados
-  // e ainda não tratados (mesma regra do `useMyWorkItemsBadge`).
-  const tasksBadge = useMyWorkItemsBadge();
+  // e ainda não tratados. A COR diz o estado: vermelho quando ha tarefa atrasada,
+  // amarelo quando o badge e so de avisos disparados.
+  const tasksBadgeInfo = useMyWorkItemsBadgeInfo();
 
   const filteredPrimaryNav = useMemo(() =>
     NavigationService.filterNavItems(primaryNav, roles, permissions),
@@ -131,7 +132,10 @@ export const Sidebar = React.memo(function Sidebar({
                   item={item}
                   currentView={currentView}
                   onViewChange={onViewChange}
-                  badge={item.id === 'inbox' ? inboxBadge : item.id === 'tasks' ? tasksBadge : undefined}
+                  badge={item.id === 'inbox' ? inboxBadge : item.id === 'tasks' ? tasksBadgeInfo.count : undefined}
+                  badgeVariant={
+                    item.id === 'tasks' && !tasksBadgeInfo.hasOverdue ? 'warning' : 'destructive'
+                  }
                   collapsed={collapsed}
                 />
               </li>

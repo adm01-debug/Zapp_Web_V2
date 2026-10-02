@@ -182,7 +182,7 @@ export const WorkItemCard = React.memo(function WorkItemCard({
         'group relative border bg-card cursor-pointer',
         isAgenda
           ? 'flex flex-row h-11 items-center gap-2 rounded-xl px-3'
-          : 'flex flex-col gap-1.5 rounded-[14px] p-3',
+          : 'flex flex-col gap-1.5 rounded-[14px] p-3 min-h-[72px]',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
         'transition-[border-color,box-shadow,transform] duration-150',
         isDragging
