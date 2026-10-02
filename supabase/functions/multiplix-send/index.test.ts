@@ -149,6 +149,7 @@ interface MockCtx {
   rpcCalls: Array<{ name: string; args: Record<string, unknown> }>;
   limits: number[];
   completions: Array<Record<string, unknown>>;
+  events: Array<Record<string, unknown>>;
   dispatch: DispatchRow | null;
   remaining: Array<ReturnType<typeof recipientRow>>;
   recipientSelects: number;
@@ -1200,7 +1201,7 @@ Deno.test("F61: erro do provedor vira texto legivel — nunca JSON cru — e o c
     );
 
     // Segunda metade: o codigo CRU fica na trilha de eventos, para quem depura.
-    const falha = ctx.events.find((e) => e.kind === "item_failed");
+    const falha = ctx.events.find((e: Record<string, unknown>) => e.kind === "item_failed");
     assert(falha !== undefined, "esperava um evento item_failed com o codigo do provedor");
     const payload = falha.payload as Record<string, unknown>;
     assert(payload.error_code === "number_not_exists", `error_code inesperado: ${String(payload.error_code)}`);
