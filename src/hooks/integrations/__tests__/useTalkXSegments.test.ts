@@ -5,7 +5,7 @@ vi.mock('@/lib/supabaseHelpers', () => ({ fromTable: vi.fn() }));
 vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: vi.fn() }));
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 
-import { rulesToPostgrest } from '@/hooks/integrations/useTalkXSegments';
+import { RULE_FIELDS, RULE_OPS, rulesToPostgrest } from '@/hooks/integrations/useTalkXSegments';
 
 describe('rulesToPostgrest', () => {
   it('fails closed instead of dropping an unknown rule', () => {
@@ -67,5 +67,63 @@ describe('rulesToPostgrest', () => {
       ] }],
     });
     expect(filtro).toBe('company.ilike."*Acme, Inc*"');
+  });
+});
+
+// Campos de audiencia reais (city/state/assigned_to/group_category): cada um
+// precisa virar filtro na SUA coluna de public.contacts, com os operadores que
+// o kind oferece em RULE_OPS. O valor do campo e o nome da coluna, como nos
+// campos ja existentes de ruleToFilter.
+describe('rulesToPostgrest — campos de audiencia novos', () => {
+  const filtroDe = (field: string, op: string, value: string) =>
+    rulesToPostgrest({
+      groups: [{ id: 'group-1', match: 'and', rules: [
+        { id: 'rule-1', field, op, value } as never,
+      ] }],
+    });
+
+  it('city (kind text): igualdade, contem e vazio apontam para a coluna city', () => {
+    expect(filtroDe('city', 'eq', 'Sao Paulo')).toBe('city.eq."Sao Paulo"');
+    expect(filtroDe('city', 'neq', 'Sao Paulo')).toBe('or(city.is.null,city.neq."Sao Paulo")');
+    expect(filtroDe('city', 'contains', 'Sao')).toBe('city.ilike."*Sao*"');
+    expect(filtroDe('city', 'is_empty', '')).toBe('or(city.is.null,city.eq.)');
+  });
+
+  it('state (kind text): igualdade, contem e preenchido apontam para a coluna state', () => {
+    expect(filtroDe('state', 'eq', 'SP')).toBe('state.eq."SP"');
+    expect(filtroDe('state', 'contains', 'S')).toBe('state.ilike."*S*"');
+    expect(filtroDe('state', 'is_set', '')).toBe('state.not.is.null');
+  });
+
+  it('assigned_to (kind uuid): igualdade, preenchido e vazio apontam para a coluna assigned_to', () => {
+    const uuid = '11111111-2222-3333-4444-555555555555';
+    expect(filtroDe('assigned_to', 'eq', uuid)).toBe(`assigned_to.eq."${uuid}"`);
+    expect(filtroDe('assigned_to', 'neq', uuid)).toBe(`or(assigned_to.is.null,assigned_to.neq."${uuid}")`);
+    expect(filtroDe('assigned_to', 'is_set', '')).toBe('assigned_to.not.is.null');
+    // Coluna uuid nao compara com string vazia (`eq.`): "vazio" aqui e apenas nulo.
+    expect(filtroDe('assigned_to', 'is_empty', '')).toBe('assigned_to.is.null');
+  });
+
+  it('group_category (kind enum): igualdade, diferente e vazio apontam para a coluna group_category', () => {
+    expect(filtroDe('group_category', 'eq', 'orcamentos')).toBe('group_category.eq."orcamentos"');
+    expect(filtroDe('group_category', 'neq', 'aprovacao')).toBe('or(group_category.is.null,group_category.neq."aprovacao")');
+    expect(filtroDe('group_category', 'is_empty', '')).toBe('or(group_category.is.null,group_category.eq.)');
+  });
+
+  it('expoe os 4 campos novos em RULE_FIELDS com kind/categoria corretos', () => {
+    const byField = Object.fromEntries(RULE_FIELDS.map((f) => [f.value, f]));
+    expect(byField.city).toMatchObject({ label: 'Cidade', kind: 'text', category: 'basico' });
+    expect(byField.state).toMatchObject({ label: 'UF', kind: 'text', category: 'basico' });
+    expect(byField.assigned_to).toMatchObject({ label: 'Responsável', kind: 'uuid', category: 'comercial' });
+    expect(byField.group_category).toMatchObject({ label: 'Grupo', kind: 'enum', category: 'basico' });
+    expect(byField.group_category.options).toEqual(['orcamentos', 'aprovacao', 'os', 'acerto']);
+  });
+
+  it('nao oferece "contem" para uuid: ilike em coluna uuid e erro do Postgres', () => {
+    const opsUuid = (RULE_OPS.uuid ?? []).map((o) => o.value);
+    expect(opsUuid).toContain('eq');
+    expect(opsUuid).toContain('neq');
+    expect(opsUuid).not.toContain('contains');
+    expect(opsUuid).not.toContain('not_contains');
   });
 });
