@@ -422,8 +422,17 @@ com outra migration real. Regras:
 
 ## graphify
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
-- For codebase questions: `graphify query "<question>"` when graph.json exists.
-- After modifying code: `graphify update .` to keep graph current.
+- For codebase questions: `graphify query "<question>"` when graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code: `graphify update .` to keep graph current (AST-only, no API cost).
+
+Instalação por clone (Linux, macOS ou WSL; precisa de `uv` ou `pipx`), depois do `bun install`: `bun run graph:setup`
+(`scripts/graphify/setup.sh`). Instala `graphifyy[sql]` com versão fixada (o pacote oficial no
+PyPI tem dois "y"; o comando é `graphify`), gera `.husky/post-commit` e `.husky/post-checkout`
+(rebuild do grafo em background) e roda o primeiro `graphify update .`. `graphify-out/` (~50 MB)
+e os dois hooks do husky ficam no `.gitignore`: cada clone gera os seus, porque os hooks gravam o
+caminho do Python da máquina. Os hooks do Claude Code em `.claude/settings.json` chamam
+`graphify hook-guard` pelo PATH e não fazem nada onde o graphify não estiver instalado.
 
 ## Frescura do Grafo
 ```sh
