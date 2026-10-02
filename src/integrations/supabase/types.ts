@@ -11441,6 +11441,16 @@ export type Database = {
           waiting_since: string
         }[]
       }
+      talkx_analytics_scope: {
+        Args: {
+          p_audience_source?: string
+          p_channel?: string
+          p_department_id?: string
+        }
+        Returns: {
+          campaign_id: string
+        }[]
+      }
       talkx_audience_query: {
         Args: {
           p_contact_ids?: string[]
@@ -11483,7 +11493,14 @@ export type Database = {
       }
       talkx_normalize_optout_text: { Args: { p_text: string }; Returns: string }
       talkx_overview_stats: {
-        Args: { p_from: string; p_to: string }
+        Args: {
+          p_audience_source?: string
+          p_channel?: string
+          p_department_id?: string
+          p_from: string
+          p_timezone?: string
+          p_to: string
+        }
         Returns: Json
       }
       talkx_recipient_is_suppressed: {
