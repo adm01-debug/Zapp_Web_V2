@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import type { VoiceAgentPhase } from '@/hooks/voice/types';
 import { usePhaseColors } from './usePhaseColors';
+import { secureRandomFloat } from '../../lib/secureRandom';
 
 interface AudioFrequencyVisualizerProps {
   phase: VoiceAgentPhase;
@@ -46,11 +47,11 @@ export function AudioFrequencyVisualizer({ phase }: AudioFrequencyVisualizerProp
       if (active) {
         // Simulate voice frequency patterns
         const base = MIN_HEIGHT + (MAX_HEIGHT - MIN_HEIGHT) * envelope;
-        const randomFactor = 0.3 + Math.random() * 0.7;
+        const randomFactor = 0.3 + secureRandomFloat() * 0.7;
         targetsRef.current[i] = base * randomFactor;
       } else {
         // Idle: very subtle movement
-        targetsRef.current[i] = MIN_HEIGHT + Math.random() * 4 * envelope;
+        targetsRef.current[i] = MIN_HEIGHT + secureRandomFloat() * 4 * envelope;
       }
     }
   }, []);

@@ -330,7 +330,9 @@ A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`)
 **Arquivos:** `CG:79-98`, migration
 1. Evento `searchbox_cost_guard` só se não existe outro no mês corrente — verificar via a própria RPC (`count_searchbox_cost_guard_this_month`, nova, `SECURITY DEFINER`, grant só `authenticated`) antes de `logAudit`.
 2. Alternativa mais barata: `localStorage['searchbox_cost_guard_month']` = `YYYY-MM` — aceitar se o Joaquim preferir evitar DDL; registrar a decisão.
-**Checklist:** [ ] 1 evento/mês · [ ] decisão registrada
+**Checklist:** [x] 1 evento/mês · [x] decisão registrada
+
+**Decisão registrada (2026-10-01): alternativa (2), marca em `localStorage`.** O E47 conta sessões pela RPC `count_searchbox_sessions_this_month` e guarda a marca do mês em `localStorage`, sem DDL nova. Motivo: a RPC que o item 1 propõe (`count_searchbox_cost_guard_this_month`) existiria só para evitar o reenvio de um aviso, e o custo de uma função a mais no banco não se paga contra uma chave local. **Limite aceito e escrito:** a marca é por navegador, então dois navegadores no mesmo mês emitem o aviso uma vez cada. O E49 usa a mesma mecânica, como o próprio passo manda.
 
 ### E48 · Limite configurável em runtime
 **Arquivos:** `CG:79`, `feature_flags` ou `system_settings`
@@ -355,7 +357,7 @@ A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`)
 3. É o que permite responder "o recurso é usado?" — hoje só sabemos que sessões abrem.
 **Checklist:** [x] 2 eventos · [x] sem PII · [x] teste — **PARCIAL nos details**
 
-**Estado medido em 2026-10-01:** os dois eventos existem e são registrados, sem termo de busca e sem coordenada (coberto por teste), mas os `details` não são os da spec: `searchbox_selected` foi entregue com source e position em vez de source e kind; `location_sent` com hasName e hasAddress em vez de origin. **Pendente:** alinhar os dois details à spec (tarefa própria, com teste) ou registrar a divergência como decisão — nenhuma das duas foi feita ainda.
+**Estado medido em 2026-10-01:** os dois eventos existem e são registrados, sem termo de busca e sem coordenada (coberto por teste), mas os `details` não são os da spec: `searchbox_selected` foi entregue com source e position em vez de source e kind; `location_sent` com hasName e hasAddress em vez de origin. **ALINHADA À SPEC em 2026-10-01.** Os dois details passaram a ser os da etapa: `searchbox_selected` emite source e kind (o kind vem da sugestão escolhida, não de position), e `location_sent` emite origin. O tipo `LocationOrigin = suggest | forward | click | gps` foi criado em `useLocationPicker.ts` e a origem é derivada de COMO a localização foi escolhida: click no mapa, gps pela localização atual, forward pela busca por texto e suggest pela lista de sugestões. 102 testes passando nos 3 arquivos do caminho. **Lacuna declarada, não emitida:** no fallback do E16 (o /retrieve falha e o /forward devolve o lugar) a localização é aplicada mas nenhum searchbox_selected sai — correto, porque a spec pede 1 por /retrieve **bem-sucedido** e ali não houve nenhum.
 
 ### E51 · `retrieve` com causa alimenta telemetria
 1. Com E18, `reportMapboxFailure('retrieve', kind)` na dupla falha; `not_found` **não** é falha de rota, não reporta.
@@ -392,8 +394,24 @@ A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`)
 
 ### E56 · PR da Fase 5
 1. Título: `fix(mapa): telemetria de uso real e guarda de custo por mês (M3, M4, M10)`.
-2. DDL (view + RPC) destacada; deixar aberta.
-**Checklist:** [ ] PR · [ ] CI verde
+**Checklist:** [x] PR · [x] CI verde
+
+**FASE 5 fechada em 2026-10-01.** O conteúdo entrou em PRs por etapa, todos mergeados na main e conferidos por medição depois do merge:
+
+| Passo | O que entrou | PR |
+|---|---|---|
+| E45 · E46 · E54 | sessão só no request real · erro de programação sem sessão · backoff de 429 nas duas rotas | #1412 |
+| E47 · E48 | aviso 1×/mês (localStorage) e teto configurável em runtime | #1432 |
+| E49 | aviso antecipado a 80 % do teto | #1523 |
+| E50 | details dos dois eventos alinhados à spec | #1527 |
+| E51 | telemetria do /retrieve na dupla falha, com prova | #1517 |
+| E52 | view `searchbox_usage_daily` (DDL, classe contrato, aplicada pós-deploy) | #1468 |
+| E53 | card de telemetria registrado como não feito, com motivo | #1507 |
+| E55 | contagem medida dos testes da fase | #1519 |
+
+**DDL da fase:** apenas a view `searchbox_usage_daily` (`20260930760000`), aplicada no banco canônico pelo `mergear` depois do deploy e conferida por medição (existe, está no ledger e devolve dado real). **Não há RPC nova:** o E47 tomou a alternativa (2) do próprio passo, com a decisão registrada acima; a contagem de sessões usa a RPC `count_searchbox_sessions_this_month`, que já existia.
+
+**Por que não existe um PR único da fase:** o fluxo da casa exige um branch e um PR por tarefa, com merge automático depois do CI — o plano imaginava um PR de fase deixado aberto para revisão manual. Este registro faz o papel desse PR. Divergência declarada, não silenciada.
 
 ---
 

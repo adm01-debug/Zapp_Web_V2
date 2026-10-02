@@ -17,6 +17,7 @@ import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talk
 import { pauseReasonForWindow } from "../_shared/talkx-resume-policy.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
+import { secureRandomFloat } from "../_shared/secure-random.ts";
 import {
   getMediaEndpoint,
   personalize,
@@ -34,7 +35,7 @@ export async function pickVariant(supabase: SupabaseClient, templateId: string):
   if (varErr) throw new Error(`variant_lookup_failed: ${varErr.message}`);
   if (!variants || variants.length === 0) return null;
   const total = variants.reduce((s: number, v: { weight: number }) => s + v.weight, 0);
-  let roll = Math.random() * total;
+  let roll = secureRandomFloat() * total;
   for (const v of variants) { roll -= v.weight; if (roll <= 0) return v; }
   return variants[variants.length - 1];
 }

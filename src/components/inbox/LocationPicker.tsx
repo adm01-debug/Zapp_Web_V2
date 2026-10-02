@@ -35,6 +35,7 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
   const {
     mapContainer, isMapLoaded, mapError, retryMap, isLoadingLocation, mapboxToken,
     selectedLocation,
+    selectedOrigin,
     chooseSearchResult, getCurrentLocation, searchLocation, reset, proximity,
   } = useLocationPicker(open, activeTab);
 
@@ -107,14 +108,16 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
   };
 
   const handleSend = async () => {
-    if (!selectedLocation) { toast({ title: 'Selecione uma localização', description: 'Clique no mapa ou use sua localização atual.', variant: 'destructive' }); return; }
+    // E50: `selectedLocation` e `selectedOrigin` são setados/limpos juntos pelo hook — a origem
+    // é o que o evento `location_sent` carrega ('suggest' | 'forward' | 'click' | 'gps').
+    if (!selectedLocation || !selectedOrigin) { toast({ title: 'Selecione uma localização', description: 'Clique no mapa ou use sua localização atual.', variant: 'destructive' }); return; }
     try {
       await onSend({
         latitude: selectedLocation.lat, longitude: selectedLocation.lng, name: selectedLocation.name, address: selectedLocation.address,
       });
-      // E50: funil fechado — só booleanos, nunca endereço/coordenada do cliente. Envio
-      // que falha mantém o diálogo aberto e não chega aqui.
-      void logAudit({ action: 'location_sent', details: { hasName: Boolean(selectedLocation.name), hasAddress: Boolean(selectedLocation.address) } });
+      // E50: funil fechado — só a ORIGEM da escolha, nunca termo, endereço, nome ou coordenada
+      // do cliente. Envio que falha mantém o diálogo aberto e não chega aqui.
+      void logAudit({ action: 'location_sent', details: { origin: selectedOrigin } });
       handleClose();
     } catch {
       // The handler owns the user-facing error; preserve the selected point so

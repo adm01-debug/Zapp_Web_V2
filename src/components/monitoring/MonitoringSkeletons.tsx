@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { secureRandomFloat } from '../../lib/secureRandom';
 
 export function StatsCardsSkeleton() {
   return (
@@ -37,7 +38,7 @@ export function ChartSkeleton() {
             <Skeleton
               key={i}
               className="flex-1 rounded-t"
-              style={{ height: `${25 + Math.random() * 65}%` }}
+              style={{ height: `${25 + secureRandomFloat() * 65}%` }}
             />
           ))}
         </div>

@@ -6,6 +6,13 @@ import path from "node:path";
 
 import { evaluate, extractInitialAssets, main, measure } from "./bundle-budget.mjs";
 
+// `node --test` roda este .mjs direto, sem transpilar TypeScript, entao nao da
+// para importar `src/lib/secureRandom.ts` (S2245 fora do src cai como
+// javascript:S2245). O `crypto` global (Web Crypto, Node 18+) entrega o mesmo
+// byte uniforme 0-255 que o sorteio pseudoaleatorio anterior produzia, so que sem
+// o gerador previsivel. Uma chamada por byte, mesma quantidade de sorteios.
+const randomByte = () => crypto.getRandomValues(new Uint8Array(1))[0];
+
 const html = [
   '<!doctype html><html><head>',
   '<link rel="modulepreload" crossorigin href="/assets/vendor-core-abc.js">',
@@ -31,8 +38,8 @@ function fixture(sizeKB) {
   fixtureDirs.push(dir);
   mkdirSync(path.join(dir, "assets"));
   // Conteudo aleatorio nao comprime: gzip ~= tamanho bruto.
-  const noise = Buffer.from(Array.from({ length: sizeKB * 1024 }, () => Math.floor(Math.random() * 256)));
-  const secondNoise = Buffer.from(Array.from({ length: sizeKB * 1024 }, () => Math.floor(Math.random() * 256)));
+  const noise = Buffer.from(Array.from({ length: sizeKB * 1024 }, () => randomByte()));
+  const secondNoise = Buffer.from(Array.from({ length: sizeKB * 1024 }, () => randomByte()));
   writeFileSync(path.join(dir, "assets", "index-abc.js"), noise);
   writeFileSync(path.join(dir, "assets", "vendor-core-abc.js"), noise);
   writeFileSync(path.join(dir, "assets", "index-abc.css"), "body{margin:0}");

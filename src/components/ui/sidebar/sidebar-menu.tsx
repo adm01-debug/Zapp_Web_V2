@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSidebar } from "./sidebar-context";
+import { secureRandomFloat } from "@/lib/secureRandom";
 
 export const SidebarMenu = React.forwardRef<HTMLUListElement, React.ComponentProps<"ul">>(({ className, ...props }, ref) => (
   <ul ref={ref} data-sidebar="menu" className={cn("flex w-full min-w-0 flex-col gap-1", className)} {...props} />
@@ -125,7 +126,7 @@ export const SidebarMenuSkeleton = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & { showIcon?: boolean }
 >(({ className, showIcon = false, ...props }, ref) => {
-  const width = React.useMemo(() => `${Math.floor(Math.random() * 40) + 50}%`, []);
+  const width = React.useMemo(() => `${Math.floor(secureRandomFloat() * 40) + 50}%`, []);
   return (
     <div
       ref={ref}

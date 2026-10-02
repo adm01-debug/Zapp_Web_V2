@@ -333,12 +333,14 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [segmentId, setSegmentId] = useState(campaign?.segment_id || initial?.segmentId || '');
   const [templateId, setTemplateId] = useState(campaign?.template_id || initial?.templateId || '');
   // V26 — versão do template que originou a mensagem (talkx_template_versions.id).
-  // Fica NULA de propósito nesta etapa: a única versão arquivada é o estado
-  // ANTERIOR à edição (ver update_talkx_template_with_snapshot), então gravá-la
-  // apontaria para o template errado numa coluna de auditoria — decisão
-  // 20261001-223527-33aa. A coluna e a RPC já persistem o campo; ele passa a ser
-  // preenchido quando `talkx_templates` tiver `current_version_id`.
-  const [templateVersionId] = useState<string | null>(campaign?.template_version_id ?? null);
+  // Resolvida a partir de `talkx_templates.current_version_id`, o ponteiro para a
+  // versão do conteúdo VIVO (mantido pela RPC update_talkx_template_with_snapshot).
+  // NÃO usar `max(version_number)` do histórico: até a V26 essa linha mais recente
+  // era o estado ANTERIOR à edição, então apontaria para o template errado numa
+  // coluna de auditoria (decisão 20261001-223527-33aa). O campo pode continuar
+  // nulo quando o template não tem versão corrente (ex.: criado antes do backfill
+  // e nunca editado) — nesse caso não há ponteiro correto a gravar.
+  const [templateVersionId, setTemplateVersionId] = useState<string | null>(campaign?.template_version_id ?? null);
   const [messageTemplate, setMessageTemplate] = useState(campaign?.message_template || '');
   const [typingDelay, setTypingDelay] = useState([
     (campaign?.typing_delay_min || 1500) / 1000,
@@ -395,12 +397,19 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     return () => window.clearInterval(timer);
   }, [isScheduled]);
 
-  // Template inicial (vindo da galeria) preenche a mensagem uma vez.
+  // Template inicial (vindo da galeria) preenche a mensagem e a versão uma vez.
   useEffect(() => {
     if (!campaign && templateId && !messageTemplate) {
       const t = templates.find((x) => x.id === templateId);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (t) { setMessageTemplate(t.content); if (t.media_url) { setHasMedia(true); setMediaUrl(t.media_url); setMediaType(t.media_type || 'image'); } }
+      /* eslint-disable react-hooks/set-state-in-effect -- hidratação única do template inicial */
+      if (t) {
+        setMessageTemplate(t.content);
+        // V26 — mesma regra do applyTemplate: a versão vem do ponteiro da coluna
+        // (conteúdo vivo), não do histórico; ausente/no nulo => permanece nulo.
+        setTemplateVersionId(t.current_version_id ?? null);
+        if (t.media_url) { setHasMedia(true); setMediaUrl(t.media_url); setMediaType(t.media_type || 'image'); }
+      }
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateId, templates.length]);
@@ -655,13 +664,14 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
         setMediaUrl('');
         setMediaType('');
       }
-      // V26 — `template_version_id` fica NULO nesta etapa, de propósito: a única
-      // versão que existe em talkx_template_versions é o estado ANTERIOR à edição
-      // (update_talkx_template_with_snapshot grava a linha lida antes do UPDATE),
-      // então apontar para ela seria dado enganoso numa coluna de auditoria
-      // (decisão 20261001-223527-33aa). A coluna e a RPC já persistem o campo;
-      // quando `talkx_templates` ganhar `current_version_id`, esta função volta a
-      // resolver o ponteiro correto.
+      // V26 — grava o ponteiro da versão do conteúdo VIVO do template
+      // (talkx_templates.current_version_id), e NÃO o max(version_number) do
+      // histórico: até a V26 essa linha mais recente era o estado ANTERIOR à
+      // edição (update_talkx_template_with_snapshot gravava a linha lida antes
+      // do UPDATE), então apontaria para o template errado numa coluna de
+      // auditoria (decisão 20261001-223527-33aa). Template sem versão corrente
+      // resulta em nulo — não há ponteiro correto a gravar.
+      setTemplateVersionId(t.current_version_id ?? null);
     }
   }, [templates]);
 
@@ -845,7 +855,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     typingDelay, sendInterval, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly,
     isScheduled, scheduledAt, scheduleTimezone, respectSuppression, selectedContacts,
     audienceRules, contactSearch,
-    templateVersionId, // V26: versão do template (nula nesta etapa — ver comentário do estado).
+    templateVersionId, // V26: versão do template aplicado (current_version_id; pode ser nula).
     step, // V23: o passo do wizard entra no autosave — sair no passo 2 e reabrir volta ao passo 2.
   });
   const autosaveIsDirty = persistedAutosaveSnapshot !== null && persistedAutosaveSnapshot !== autosaveFields;
@@ -912,7 +922,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     name, setName, description, setDescription, objective, setObjective,
     audienceSource, setAudienceSource, segmentId, setSegmentId, segments, selectedSegment, segmentEstimate,
     templateId, applyTemplate, templates, selectedTemplate,
-    // V26 — versão do template aplicada (talkx_template_versions.id).
+    // V26 — versão do template aplicada (talkx_template_versions.id do conteúdo
+    // vivo, via current_version_id); nula quando o template não tem versão corrente.
     templateVersionId,
     messageTemplate, setMessageTemplate,
     typingDelay, setTypingDelay, sendInterval, setSendInterval, speedProfile, setSpeedProfile, messagesPerMinute,
