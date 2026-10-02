@@ -7,7 +7,7 @@
  * (opt-out) e consultada em talkx_recipient_is_suppressed logo apos o claim e de
  * novo imediatamente antes do POST ao provedor (F09).
  */
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { enforceRateLimit, getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
 import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talkx-window.ts";

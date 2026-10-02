@@ -3,7 +3,7 @@
  * Fixes CR: auth, CORS em erros, profiles.user_id fallback, skipped no pending,
  *           recipients error, HTML escape, 503 em resend_not_configured.
  */
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
 import { EMAIL_FONT_STACK } from "../_shared/email-font-stack.ts";
 

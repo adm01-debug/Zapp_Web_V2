@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1'
 import { getCorsHeaders, handleCors } from '../_shared/validation.ts'
 
 const READ_TABLES = new Set(['evolution_contacts', 'evolution_messages', 'media_quarantine'])
