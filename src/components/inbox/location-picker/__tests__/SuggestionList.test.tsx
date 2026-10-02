@@ -111,3 +111,46 @@ describe('SuggestionList — pausa de 429 (A3-04)', () => {
     expect(screen.queryByRole('button', { name: /tentar novamente/i })).toBeNull();
   });
 });
+
+/**
+ * E61 — alvo de toque ≥ 44 px. Em celular o dedo precisa de 44 px verticais (WCAG 2.5.5 /
+ * Material) para acertar o item, o retry e o link de atribuição sem errar o vizinho. O projeto
+ * usa a classe utilitária `min-h-11` (2.75rem = 44px). Cada teste abaixo trava um dos três alvos.
+ */
+describe('SuggestionList — alvos de toque E61 (min-h-11)', () => {
+  it('E61: todo item da lista tem alvo de toque de 44 px (min-h-11)', () => {
+    const dois = [
+      { id: 's1', name: 'Rua A, 1', address: 'Rua A, 1, São Paulo', kind: 'street' },
+      { id: 's2', name: 'Rua B, 2', address: 'Rua B, 2, São Paulo', kind: 'address' },
+    ] as unknown as SuggestionListProps['suggestions'];
+    render(<SuggestionList {...props({ status: 'ok', suggestions: dois })} />);
+
+    const itens = screen.getAllByRole('option');
+    expect(itens.length).toBe(2);
+    for (const item of itens) {
+      expect(item.className).toContain('min-h-11');
+    }
+  });
+
+  it('E61: o botão "Tentar novamente" tem alvo de toque de 44 px (min-h-11)', () => {
+    render(<SuggestionList {...props({ status: 'paused', blocked: 'rate_limited', pausedUntil: Date.now() + 45_000 })} />);
+    const botaoPausa = screen.getByRole('button', { name: /tentar novamente/i });
+    expect(botaoPausa.className).toContain('min-h-11');
+
+    // A mesma ação existe no estado de erro; o alvo precisa valer também lá.
+    const { unmount } = render(
+      <SuggestionList {...props({ status: 'error', blocked: null, pausedUntil: null, error: 'network' })} />
+    );
+    const botoesErro = screen.getAllByRole('button', { name: /tentar novamente/i });
+    for (const b of botoesErro) {
+      expect(b.className).toContain('min-h-11');
+    }
+    unmount();
+  });
+
+  it('E61: o link "Powered by Mapbox" tem alvo de toque de 44 px (min-h-11)', () => {
+    render(<SuggestionList {...props({ status: 'ok', suggestions: [] })} />);
+    const link = screen.getByRole('link', { name: /mapbox/i });
+    expect(link.className).toContain('min-h-11');
+  });
+});
