@@ -400,3 +400,55 @@ ambiente** e o bloco não pede token nem deploya.
 - **Para fechar:** rodar `collect-remote.mjs` (com `SUPABASE_ACCESS_TOKEN` +
   `--snapshot` ou `--before`/`--git-sha`/`--run-id`/`--scope`) e anexar aqui a
   evidência de digest contra o deploy.
+
+## CT-74 — Lighthouse na view autenticada do catálogo (medido em 2026-10-02)
+
+**Aceite do plano:** *Lighthouse perf ≥ 90 na view em 4G; CLS < 0,05*.
+**Resultado medido: os dois critérios NÃO foram atingidos — perf 44 e CLS 0,2455.**
+O CT-74 **não pode ser marcado**.
+
+### Método (por que a medição é da view, e não da tela de login)
+
+O Lighthouse não tem sessão. Medir `?view=catalog` sem login faz o app redirecionar para
+`/auth` e o número vira o da tela de **login**. O caminho usado foi:
+
+1. Chrome headless com **perfil persistente** exposto por CDP (`--remote-debugging-port`);
+2. **login real da conta de teste (COMPRAS) dentro desse perfil**, até `#main-navigation`;
+3. confirmação de que a grade carregou (24 cartões) **antes** de medir;
+4. `Network.clearBrowserCache` (sessão preservada) para não medir cache aquecido;
+5. `lighthouse@12` anexado por `--port` (preset mobile = Slow 4G + CPU 4×) contra produção.
+
+> **Armadilha medida e descartada.** `launchPersistentContext` **não aplica `storageState`**.
+> As três primeiras rodadas (dev server, preview local e produção: perf 45, 71 e 69) mediram
+> `https://zapp-web-v2.vercel.app/auth` — a **tela de login** — e foram jogadas fora. Só a
+> rodada com login dentro do perfil mediu a view de verdade (`.finalDisplayedUrl` conferido).
+
+### Resultado — produção `https://zapp-web-v2.vercel.app/?view=catalog`
+
+```console
+URL MEDIDO: https://zapp-web-v2.vercel.app/?view=catalog
+PERF: 44      (aceite: >= 90)   -> NAO CUMPRIDO
+CLS:  0.2455  (aceite: < 0.05)  -> NAO CUMPRIDO
+FCP 3,4 s | LCP 7,3 s | TBT 460 ms | SI 4,3 s | TTI 7,3 s
+202 requisicoes | 906 KB transferidos | 4 requisicoes da edge do catalogo
+mobile (Slow 4G, CPU 4x) | lighthouse 12.8.2 | cache HTTP limpo
+```
+
+### Causas medidas (não supostas)
+
+- **CLS 0,2455 — 0,2211 vem de UM elemento:** a faixa de KPIs
+  (`data-testid="catalog-kpi…"`, classes `grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6`)
+  que **cresce quando os dados chegam** e empurra a grade para baixo. Os chips de categoria
+  somam outros 0,0222. Correção provável: reservar a altura da faixa (skeleton com a altura
+  final) e não inserir os chips depois do primeiro paint.
+- **1210 ms de JavaScript não usado** no carregamento inicial (candidato a corte por import
+  dinâmico — relacionado ao CT-75).
+- **LCP 7,3 s** aponta para um `<p class="text-[13px] text-foreground-secondary mt-0.5">`,
+  ou seja o LCP é **o conteúdo do catálogo chegando**, não o shell. Com 906 KB e 202
+  requisições em Slow 4G, o peso de rede domina.
+
+### O que fica aberto
+
+- **CT-74 continua aberto:** falta a correção (faixa de KPIs + peso de JS) e nova medição.
+  Corrigida a faixa, o CLS tende a entrar no aceite; o perf ≥ 90 exige mais que isso.
+- Artefato cru desta medição: `.tmp/lh-prod.json` (relatório completo do Lighthouse).
