@@ -44,59 +44,33 @@ function renderSheet(kind: SinguDetailKind, p: SinguProfile | null = profile) {
 }
 
 describe('SinguProfileDetailSheet (etapa 77)', () => {
-  it('metaprograms: 5 eixos com barras opostas + notas', () => {
-    renderSheet('metaprograms');
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText('Metaprogramas')).toBeInTheDocument();
-    expect(screen.getByText('Foco em resultados')).toBeInTheDocument();
-    expect(screen.getByText('Detalhista')).toBeInTheDocument();
-    expect(screen.getByText('Notas de metaprogramas')).toBeInTheDocument();
-  });
+  // Tabela dos 7 blocos de detalhe: cada caso afirma os textos-chave que o
+  // detalhe daquele kind deve exibir.
+  const CASES: Array<{ kind: SinguDetailKind; esperado: Array<string | RegExp> }> = [
+    {
+      kind: 'metaprograms',
+      esperado: ['Metaprogramas', 'Foco em resultados', 'Detalhista', 'Notas de metaprogramas'],
+    },
+    { kind: 'fears', esperado: ['Perder status', 'Reconhecimento', 'Meta do trimestre', 'Virar diretor'] },
+    { kind: 'decision', esperado: ['Rápido', 'Preço', 'Qualidade', 'Maria Souza'] },
+    { kind: 'budget', esperado: ['Aprovador final', 'Decisor Final', '8'] },
+    { kind: 'influencers', esperado: ['Maria Souza', 'Sócia', 'Pedro Lima'] },
+    {
+      kind: 'rapport',
+      esperado: ['urgencia', 'time do coração', 'pressão excessiva', 'Notas de rapport'],
+    },
+    { kind: 'objections', esperado: [/Não é sobre o preço/, /ancoragem/, /eficácia 0\.85/] },
+  ];
 
-  it('fears: 4 campos', () => {
-    renderSheet('fears');
-    expect(screen.getByText('Perder status')).toBeInTheDocument();
-    expect(screen.getByText('Reconhecimento')).toBeInTheDocument();
-    expect(screen.getByText('Meta do trimestre')).toBeInTheDocument();
-    expect(screen.getByText('Virar diretor')).toBeInTheDocument();
-  });
-
-  it('decision: velocidade + critérios + aprovação', () => {
-    renderSheet('decision');
-    expect(screen.getByText('Rápido')).toBeInTheDocument();
-    expect(screen.getByText('Preço')).toBeInTheDocument();
-    expect(screen.getByText('Qualidade')).toBeInTheDocument();
-    expect(screen.getByText('Maria Souza')).toBeInTheDocument();
-  });
-
-  it('budget: autoridade + papel + barra de poder 1-10', () => {
-    renderSheet('budget');
-    expect(screen.getByText('Aprovador final')).toBeInTheDocument();
-    expect(screen.getByText('Decisor Final')).toBeInTheDocument();
-    expect(screen.getByText('8')).toBeInTheDocument();
-  });
-
-  it('influencers: nome + cargo por influenciador', () => {
-    renderSheet('influencers');
-    expect(screen.getByText('Maria Souza')).toBeInTheDocument();
-    expect(screen.getByText('Sócia')).toBeInTheDocument();
-    expect(screen.getByText('Pedro Lima')).toBeInTheDocument();
-  });
-
-  it('rapport: barras de canal + gatilhos + âncoras + resistências + notas', () => {
-    renderSheet('rapport');
-    expect(screen.getByText('urgencia')).toBeInTheDocument();
-    expect(screen.getByText('time do coração')).toBeInTheDocument();
-    expect(screen.getByText('pressão excessiva')).toBeInTheDocument();
-    expect(screen.getByText('Notas de rapport')).toBeInTheDocument();
-  });
-
-  it('objections: cards com bias + effectiveness', () => {
-    renderSheet('objections');
-    expect(screen.getByText(/Não é sobre o preço/)).toBeInTheDocument();
-    expect(screen.getByText(/ancoragem/)).toBeInTheDocument();
-    expect(screen.getByText(/eficácia 0\.85/)).toBeInTheDocument();
-  });
+  for (const c of CASES) {
+    it(`${c.kind}: renderiza o detalhe com os campos esperados`, () => {
+      renderSheet(c.kind);
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      for (const texto of c.esperado) {
+        expect(screen.getByText(texto)).toBeInTheDocument();
+      }
+    });
+  }
 
   it('sem dados do bloco → estado vazio honesto', () => {
     const vazio: SinguProfile = { ...profile, metaprograms: null };

@@ -54,47 +54,27 @@ function renderSection(overrides: Partial<Parameters<typeof SinguProfileSection>
 const tileValue = (name: string) => within(screen.getByTestId(`singu-tile-${name}`));
 
 describe('SinguProfileSection (etapas 69–80)', () => {
-  it('DISC: primary + blend com barra = confidence (etapa 70)', () => {
-    renderSection();
-    const tile = tileValue('disc');
-    expect(tile.getByText('D Dominante (DI)')).toBeInTheDocument();
-    expect(tile.getByRole('progressbar')).toHaveAttribute('aria-label', 'DISC: 80%');
-  });
+  // Tabela das 6 métricas da grade 2×3 (etapas 70–75): valor do tile e
+  // aria-label da barra (Progress do Radix não expõe aria-valuenow ao
+  // testing-library — o label propaga o valor já clampeado).
+  const TILE_CASES: Array<{ name: string; valor: string; barra: string | null; etapa: number }> = [
+    { name: 'disc', valor: 'D Dominante (DI)', barra: 'DISC: 80%', etapa: 70 },
+    { name: 'vak', valor: 'Visual', barra: 'VAK: 80%', etapa: 71 },
+    { name: 'big_five', valor: 'Alta Extroversão', barra: 'Big Five: 70%', etapa: 72 },
+    { name: 'mbti', valor: 'ENTJ – O Comandante', barra: 'MBTI: 40%', etapa: 73 },
+    { name: 'enneagram', valor: 'Tipo 3 – O Realizador (asa 2)', barra: 'Eneagrama: 90%', etapa: 74 },
+    { name: 'temperament', valor: 'Colérico · Sanguíneo', barra: null, etapa: 75 },
+  ];
 
-  it('VAK: rótulo pt-BR com barra = score do canal primário (etapa 71)', () => {
-    renderSection();
-    const tile = tileValue('vak');
-    expect(tile.getByText('Visual')).toBeInTheDocument();
-    expect(tile.getByRole('progressbar')).toHaveAttribute('aria-label', 'VAK: 80%');
-  });
-
-  it('Big Five: maior score com faixa e barra = confidence (etapa 72)', () => {
-    renderSection();
-    const tile = tileValue('big_five');
-    expect(tile.getByText('Alta Extroversão')).toBeInTheDocument();
-    expect(tile.getByRole('progressbar')).toHaveAttribute('aria-label', 'Big Five: 70%');
-  });
-
-  it('MBTI: tipo + apelido com barra = intensidade (máx |eixo-50|) (etapa 73)', () => {
-    renderSection();
-    const tile = tileValue('mbti');
-    expect(tile.getByText('ENTJ – O Comandante')).toBeInTheDocument();
-    expect(tile.getByRole('progressbar')).toHaveAttribute('aria-label', 'MBTI: 40%');
-  });
-
-  it('Eneagrama: "Tipo N – Nome (asa)" com barra = score do tipo (etapa 74)', () => {
-    renderSection();
-    const tile = tileValue('enneagram');
-    expect(tile.getByText('Tipo 3 – O Realizador (asa 2)')).toBeInTheDocument();
-    expect(tile.getByRole('progressbar')).toHaveAttribute('aria-label', 'Eneagrama: 90%');
-  });
-
-  it('Temperamento: primário + secundário sem barra (etapa 75)', () => {
-    renderSection();
-    const tile = tileValue('temperament');
-    expect(tile.getByText('Colérico · Sanguíneo')).toBeInTheDocument();
-    expect(tile.queryByRole('progressbar')).not.toBeInTheDocument();
-  });
+  for (const c of TILE_CASES) {
+    it(`tile ${c.name}: "${c.valor}"${c.barra ? ` com barra ${c.barra}` : ' sem barra'} (etapa ${c.etapa})`, () => {
+      renderSection();
+      const tile = tileValue(c.name);
+      expect(tile.getByText(c.valor)).toBeInTheDocument();
+      if (c.barra) expect(tile.getByRole('progressbar')).toHaveAttribute('aria-label', c.barra);
+      else expect(tile.queryByRole('progressbar')).not.toBeInTheDocument();
+    });
+  }
 
   it('7 linhas de detalhe com preview derivado (etapa 76)', () => {
     renderSection();

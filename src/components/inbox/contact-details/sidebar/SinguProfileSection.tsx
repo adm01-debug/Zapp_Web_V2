@@ -44,7 +44,7 @@ function bigFiveTile(bf: SidebarBigFive | null): { value: string | null; bar: nu
     .map((key) => ({ label: BIG_FIVE_LABELS[key], score: bf[key] }))
     .filter((x): x is { label: string; score: number } => typeof x.score === 'number');
   if (axes.length === 0) return { value: null, bar: bf.confidence ?? null };
-  const top = axes.reduce((a, b) => (b.score > a.score ? b : a));
+  const top = axes.reduce((a, b) => (b.score > a.score ? b : a), axes[0]);
   const faixa = top.score >= 70 ? 'Alta' : top.score >= 40 ? 'Média' : 'Baixa';
   return { value: `${faixa} ${top.label}`, bar: bf.confidence ?? null };
 }
