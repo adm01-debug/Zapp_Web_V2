@@ -16,11 +16,11 @@ function read(rel) {
 }
 
 // Testes conhecidos ainda fora do CI; remover linha quando a etapa correspondente mergear.
-// .test.sh serão cobertos quando E50 adicionar os passos em db-guard.yml.
+// E50: talkx-settings-rls.test.sh foi promovido para db-guard.yml neste PR.
+//      ai-block03 e user-settings-sound têm '# NÃO entra no CI' — permanecem aqui.
 const ALLOWLIST = new Set([
-  // --- .test.sh — fixar com E50 (db-guard.yml) ---
+  // --- .test.sh — NÃO entram no CI (arquivo marcado explicitamente) ---
   'scripts/db-audit/ai-block03-vocabulary-contract.test.sh',
-  'scripts/db-audit/talkx-settings-rls.test.sh',
   'scripts/db-audit/user-settings-sound-integrity-contract.test.sh',
   // --- .test.sh — TalkX features em andamento; registrar em db-guard.yml quando prontas ---
   'scripts/db-audit/talk-me-client-privileges.test.sh',
