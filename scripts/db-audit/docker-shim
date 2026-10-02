@@ -131,12 +131,15 @@ case "${1:-}" in
     fi
     db="$(< "$STATE/$cname.db")"
     old="$(< "$STATE/$cname.roles" 2>/dev/null || true)"
+    # Drop database FIRST so its objects (ALTER DEFAULT PRIVILEGES grants) are
+    # removed before we try to drop roles that depend on them.  If roles are
+    # dropped first, service_role fails silently and leaks into the next test.
+    _svc -d postgres -c "DROP DATABASE IF EXISTS \"$db\" WITH (FORCE);" > /dev/null 2>&1 || true
     cur="$(_svc -d postgres -tAX -c "SELECT rolname FROM pg_roles ORDER BY rolname" 2>/dev/null || true)"
     while IFS= read -r role; do
       [[ -z "$role" ]] && continue
       _svc -d postgres -c "DROP ROLE IF EXISTS \"$role\";" > /dev/null 2>&1 || true
     done < <(comm -23 <(printf '%s\n' "$cur" | sort) <(printf '%s\n' "$old" | sort))
-    _svc -d postgres -c "DROP DATABASE IF EXISTS \"$db\" WITH (FORCE);" > /dev/null 2>&1 || true
     rm -f "$STATE/$cname.db" "$STATE/$cname.roles"
     ;;
 
