@@ -7,9 +7,9 @@
     "sha256": "4ce1acb56ca0cd8efb82cc269a4942c306e1863b79ed9b887e784b7ca8c70375"
   },
   "summary": {
-    "function_count": 68,
-    "source_file_count": 128,
-    "verify_jwt_true": 56,
+    "function_count": 69,
+    "source_file_count": 130,
+    "verify_jwt_true": 57,
     "verify_jwt_false": 12
   },
   "orphan_allowlist": [
@@ -56,6 +56,11 @@
       "path": "supabase/functions/_shared/ai-image-input.ts",
       "bytes": 14831,
       "sha256": "a5ef80641783858fb58d8f79464cdab38afd35705bfcd8cbdfce1f7f954acc58"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-jobs.ts",
+      "bytes": 23453,
+      "sha256": "9662bdbdf251d77ba79106b371f7d71a652b63569d221d2db948933976e11a78"
     },
     {
       "path": "supabase/functions/_shared/ai-json.ts",
@@ -321,6 +326,11 @@
       "path": "supabase/functions/ai-enhance-message/index.ts",
       "bytes": 4694,
       "sha256": "843e14b1f3475b295d3d3afae8afdf7e17d242592a2d6027c2d9e161ee40859e"
+    },
+    {
+      "path": "supabase/functions/ai-jobs-worker/index.ts",
+      "bytes": 15595,
+      "sha256": "b9297d086d9596f5e07ea9f0e1b880b3f595833faa7b0b3aacfba49a1b76540d"
     },
     {
       "path": "supabase/functions/ai-proxy/index.ts",
@@ -777,6 +787,27 @@
         "supabase/functions/_shared/secure-random.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-enhance-message/index.ts"
+      ]
+    },
+    {
+      "name": "ai-jobs-worker",
+      "entrypoint": "supabase/functions/ai-jobs-worker/index.ts",
+      "verify_jwt": true,
+      "source_sha256": "c5df3183e5b0e76df4dc18452882d062f36efb705454e185174605d19690c268",
+      "source_files": [
+        "supabase/functions/_shared/ai-budget.ts",
+        "supabase/functions/_shared/ai-capabilities.ts",
+        "supabase/functions/_shared/ai-generate.ts",
+        "supabase/functions/_shared/ai-jobs.ts",
+        "supabase/functions/_shared/ai-providers.ts",
+        "supabase/functions/_shared/ai-routing.ts",
+        "supabase/functions/_shared/ai-usage.ts",
+        "supabase/functions/_shared/cron-secret-auth.ts",
+        "supabase/functions/_shared/edge-boot.ts",
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/ai-jobs-worker/index.ts"
       ]
     },
     {
@@ -1657,5 +1688,5 @@
       ]
     }
   ],
-  "manifest_sha256": "d592fad19d02c36dcd25d8b9d90f9d6b7d73c3d0f3f24d8d8f03e3717b5df625"
+  "manifest_sha256": "2b637500661526f9627441d11fae564ccd973f597d2b2923efa4aa98380fce00"
 }
