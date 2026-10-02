@@ -375,3 +375,25 @@ Decisão de negócio que **não** cabe neste plano e vai para "Próximos passos"
 | S41–S50 (Fase 5) | [~] | este PR; S44–S48 executados. **Pendentes:** S41 (7 checks em produção, incl. `db_query` no `created_by`), S42 (prints antes/depois), S43 (contraste claro/alto-contraste) — exigem login real na produção e acesso ao banco, indisponíveis nesta sessão; S49 (merge) e S50 (reporte) dependem desta PR |
 
 *Atualizar esta tabela a cada merge (S47).*
+
+---
+
+## Verificação pós-fechamento — S38, S41, S42, S43 (2026-10-02, Hermes)
+
+Estas 4 etapas ficaram pendentes no #1628 por exigirem login real em produção e acesso ao banco.
+Nesta rodada os dois existem e a medição foi feita contra a produção — resultado cru em
+`docs/design/salesview-journey/VERIFICACAO_S38_S41_S42_S43_2026-10-02.md`.
+
+- **S38 / S42** — [x] 9 prints em `docs/design/salesview-journey/` (1280x900, o maior com 342 KB).
+  Ressalvas declaradas: `03-salesview-cheio.png` é o estado vazio (a conta QA não tem contato com
+  compras) e o par no tema escuro não foi produzido (o tema padrão da conta é claro).
+- **S41** — [~] itens **1, 2, 3 e 5 fecham** com evidência (abas, faixa de resumo, `created_by` gravado
+  e conferido no banco, sidebar sem os 3 blocos); item **4 bloqueado** (aba Journey não carrega em
+  produção: chunk `JourneyTab-B1r1ugA1.js` = **404**); item **6 não confirmado** (o reload não restaura
+  nem a conversa aberta).
+- **S43** — [~] tema claro **passa** medido (15,68:1 principal, 5,59:1 secundário); alto-contraste
+  **não demonstrado** (a classe `.high-contrast` não alterou as cores computadas dos blocos novos).
+
+**Bugs de produção abertos por esta verificação:** (1) aba Journey servindo chunk inexistente (404);
+(2) o banner de conexão do WhatsApp (`z-index: 90`, 44px) cobre 83% da barra de abas e intercepta os
+cliques de SalesView/Journey.
