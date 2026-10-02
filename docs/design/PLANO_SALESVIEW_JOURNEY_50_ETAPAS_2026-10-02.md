@@ -368,10 +368,10 @@ Decisão de negócio que **não** cabe neste plano e vai para "Próximos passos"
 
 | Etapa | Estado | Evidência |
 |---|---|---|
-| S01–S10 (Fase 1) | [ ] | — |
-| S11–S20 (Fase 2) | [ ] | — |
-| S21–S31 (Fase 3) | [ ] | — |
-| S32–S40 (Fase 4) | [ ] | — |
-| S41–S50 (Fase 5) | [ ] | — |
+| S01–S10 (Fase 1) | [x] | PR #1608 mergeada 02/10 (`7b6a69e3`) |
+| S11–S20 (Fase 2) | [x] | PR #1613 mergeada 02/10 (`30ef8e79`) |
+| S21–S31 (Fase 3) | [x] | PR #1619 mergeada 02/10 (`f4f3c26b`) |
+| S32–S40 (Fase 4) | [x] | PR #1626 mergeada 02/10 (`c97429f0`); S38 print sem buraco visual — não executado (credencial E2E desatualizada, sem login) |
+| S41–S50 (Fase 5) | [x] | este PR; S41 (7 checks em produção), S42 (prints antes/depois) e S43 (contraste claro/alto-contraste) **não executados** — exigem login real na produção e `db_query`, indisponíveis nesta sessão; S44–S48 executados |
 
 *Atualizar esta tabela a cada merge (S47).*
