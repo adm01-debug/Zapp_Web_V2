@@ -74,7 +74,10 @@ COMMENT ON COLUMN public.multiplix_delivery_items.reply_attribution IS
   'F62: linked (external_id casou) | inferred (janela + numero). NULL enquanto sem resposta.';
 
 -- ---------- 2. RPC de confirmacao ----------
-CREATE FUNCTION public.multiplix_confirm_dispatch(
+-- OR REPLACE: a parte aditiva (20261001351230_f51a) ja criou esta funcao no banco de producao.
+-- Sem OR REPLACE o migrador aborta com 42723 (function already exists with same argument types),
+-- porque o ledger nunca registrou esta migration (ela nunca chegou a aplicar).
+CREATE OR REPLACE FUNCTION public.multiplix_confirm_dispatch(
   p_dispatch_id uuid,
   p_actor_id uuid,
   p_allow_manage_all boolean,
