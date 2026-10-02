@@ -173,3 +173,24 @@ O artefato é montado por `scripts/talkx/lado-a-lado.mjs --out <dir>`, que copia
 mock + captura para `<dir>/img/{mock,captura}` e gera `<dir>/index.html` lado a
 lado. No CI, `e2e-talkx-pr.yml` roda o spec, monta a régua e sobe o HTML como
 artefato `regua-visual-talkx` (14 dias) — informativo, não bloqueia merge.
+
+## Picker de localização (plano MAPA · E71)
+
+`e2e/location-picker.spec.ts` cobre o combobox de endereço do picker **sem
+secret e sem token real**. Reusa `installFakeSession(page)` de
+`e2e/fixtures/talkx-demo.ts` (sessão falsa injetada no localStorage) e mocka o
+backend inteiro com `page.route`: `rest/v1` (contato fixo `04dff4dc-…`,
+`profiles`/`user_roles`/`user_settings`, `messages` só leitura — escritas
+devolvem 403) e, o que importa aqui, `functions/v1/get-mapbox-token` devolve um
+token falso enquanto todo o `searchbox/v1` da Mapbox é respondido com as
+fixtures de `src/lib/__fixtures__/mapbox/` (E68) — inclusive o `/retrieve`,
+que usa o shape de `forward-avenida-paulista-1000.json` porque o E68 não tem
+`retrieve-*` para esse endereço.
+
+O fluxo é: abrir a conversa do contato de teste → "Mais" → "Enviar
+localização" → aba "Escolher no Mapa" → digitar "avenida paulista 1000" →
+esperar `role=listbox` → `ArrowDown` + `Enter` → conferir o cartão de
+confirmação → **fechar sem enviar**. O spec asserta que nenhum POST (insert)
+saiu para `rest/v1/messages`, então nenhum WhatsApp real é gerado (o único
+PATCH é o `is_read` do markAsRead ao abrir a conversa). Roda em
+`chromium-authenticated`.

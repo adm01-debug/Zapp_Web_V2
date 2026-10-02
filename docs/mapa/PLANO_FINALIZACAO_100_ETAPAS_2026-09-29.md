@@ -563,7 +563,17 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 1. Login com o usuário E2E existente, abrir conversa do contato fixo `04dff4dc-…` ("[E2E] Contato de teste"), abrir "Compartilhar localização", digitar "avenida paulista 1000", esperar `role=listbox`, `ArrowDown`+`Enter`, conferir card de confirmação com "Paulista".
 2. **Não enviar** a mensagem (não gerar WhatsApp real): fechar o diálogo.
 3. Rede da Mapbox **interceptada** (`page.route('**/searchbox/v1/**')`) com as fixtures de E68 — zero sessão real, zero custo, determinístico.
-**Checklist:** [ ] spec · [ ] rota interceptada · [ ] verde em `chromium-authenticated`
+**Checklist:** [x] spec · [x] rota interceptada · [x] verde em chromium-authenticated
+
+**Fechada em 2026-10-02.** e2e/location-picker.spec.ts (202 linhas): abre a conversa do contato fixo, chega ao picker pelo chip Mais, digita avenida paulista 1000, espera role=listbox, navega com ArrowDown e Enter, confere o cartão com Avenida Paulista, 1000 e CANCELA sem enviar mensagem (com asserção de que nenhum POST em messages ocorreu).
+
+**Sem secret:** reusa installFakeSession da própria suíte e intercepta rest/v1, as RPC e o token do Mapbox (page.route). A rede do searchbox responde com as FIXTURES DO E68 — a primeira spec a consumi-las. A etapa dizia login com usuário E2E existente e, no mesmo bloco, zero sessão real: escolhi a via sem secret, coerente com o passo 3, e declarei.
+
+**Prova:** 5 execuções verdes (incluindo --repeat-each=3, 3 workers), zero flaky. Mutação no aria-label do botão do picker derruba a spec com timeout do próprio seletor que ela cobre. Produção intacta (git diff em src/ vazio).
+
+**Divergências técnicas:** Playwright casa rotas na ordem INVERSA de registro — o catch-all registrado depois roubava o endpoint do token e causava o MapboxTokenError; corrigido com negative lookahead. E profiles.map is not a function foi classificado como ARTEFATO DE MOCK por experimento causal (mesmo app e sessão, variando só o shape de rest/v1/profiles: array = 0 erros, objeto = 3), não como bug de produção.
+
+**Achado:** o E68 não tem fixture de /retrieve para avenida paulista 1000; a spec usa o corpo do forward, cujo shape é o que o parser lê. E há avisos de a11y do próprio app no console do inbox (button-name CRITICAL em 3 elementos, color-contrast SERIOUS em 7) — fora do E71, registrados no PR.
 
 ### E72 · E2E: fallback quando `/suggest` falha
 1. Mesma spec, `page.route` devolvendo 500 no `/suggest` e 200 no `/forward`: lista mostra resultado do forward; Enter funciona.
