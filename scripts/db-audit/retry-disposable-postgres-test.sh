@@ -62,7 +62,7 @@ pre_pull_images() {
     return 0
   fi
 
-  local var imagem tentativa espera espelho
+  local var imagem tentativa espera espelho espelho_tag
   while read -r var; do
     imagem="${!var}"
     [[ -n "$imagem" ]] || continue
@@ -73,10 +73,14 @@ pre_pull_images() {
         break
       fi
       espelho="$(espelho_do_ecr "$imagem")"
-      if [[ -n "$espelho" ]] && docker pull "$espelho" >/dev/null 2>&1; then
-        docker tag "$espelho" "$imagem"
-        printf 'INFO: imagem obtida do espelho %s (o ECR limita pull anonimo)\n' "$espelho"
-        break
+      espelho_tag="${espelho%%@*}"
+      if [[ -n "$espelho_tag" ]] && docker pull "$espelho_tag" >/dev/null 2>&1; then
+        docker tag "$espelho_tag" "${imagem%%@*}"
+        if docker image inspect "$imagem" >/dev/null 2>&1; then
+          printf 'INFO: imagem obtida do espelho %s (o ECR limita pull anonimo)\n' "$espelho_tag"
+          break
+        fi
+        printf 'WARN: espelho %s tem digest diferente do esperado; tentando ECR direto\n' "$espelho_tag" >&2
       fi
       if docker pull "$imagem" >/dev/null 2>&1; then
         printf 'INFO: imagem baixada: %s\n' "$imagem"

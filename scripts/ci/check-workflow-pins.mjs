@@ -4,6 +4,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const FULL_SHA = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_./-]+)?@[a-f0-9]{40}$/u;
+const IMAGE_DIGEST = /@sha256:[a-f0-9]{64}/u;
 
 export function findMutableActionRefs(source, file = "workflow.yml") {
   const violations = [];
@@ -45,6 +46,24 @@ export function findUnauthorizedActionOwners(source, file = "workflow.yml", allo
   return violations;
 }
 
+export function findUnpinnedImages(source, file = "workflow.yml") {
+  const violations = [];
+  const lines = source.replace(/\r\n?/gu, "\n").split("\n");
+  for (const [index, line] of lines.entries()) {
+    const match = line.match(/^\s+[A-Za-z_][A-Za-z0-9_]*_IMAGE\s*:\s*(.+)$/u);
+    if (!match) continue;
+    const value = match[1].trim();
+    // Skip GitHub Actions expressions (${{ ... }}) — resolved at runtime
+    if (/^\$\{\{.*\}\}$/u.test(value)) continue;
+    // Skip empty / comment-only
+    if (!value || value.startsWith("#")) continue;
+    if (!IMAGE_DIGEST.test(value)) {
+      violations.push({ file, line: index + 1, image: value });
+    }
+  }
+  return violations;
+}
+
 export function loadAllowedOwnerRepos(root = process.cwd()) {
   const jsonPath = path.join(root, "scripts", "ci", "allowed-actions.json");
   const data = JSON.parse(readFileSync(jsonPath, "utf8"));
@@ -64,6 +83,10 @@ export function main(root = process.cwd()) {
     findUnauthorizedActionOwners(readFileSync(path.join(workflowsDir, file), "utf8"), file, allowedOwnerRepos),
   );
 
+  const imageViolations = files.flatMap((file) =>
+    findUnpinnedImages(readFileSync(path.join(workflowsDir, file), "utf8"), file),
+  );
+
   let exitCode = 0;
 
   if (pinViolations.length) {
@@ -80,8 +103,15 @@ export function main(root = process.cwd()) {
     exitCode = 1;
   }
 
+  if (imageViolations.length) {
+    console.error("FALHA: variáveis *_IMAGE sem digest (@sha256:<64 hex>):");
+    for (const violation of imageViolations) { console.error(`  ${violation.file}:${violation.line} ${violation.image}`); }
+    console.error("Use @sha256:<digest> para fixar a imagem. Referências ${{ env.* }} são aceitas.");
+    exitCode = 1;
+  }
+
   if (exitCode === 0) {
-    console.log(`OK: ${files.length} workflows usam somente Actions fixadas por SHA e de repositórios autorizados.`);
+    console.log(`OK: ${files.length} workflows usam somente Actions fixadas por SHA, repositórios autorizados e imagens com digest.`);
   }
 
   return exitCode;
