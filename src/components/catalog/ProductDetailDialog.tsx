@@ -28,7 +28,7 @@ import {
   ChevronLeft, ChevronRight, Sparkles, TrendingUp, Star, Copy, Store,
 } from 'lucide-react';
 import { ExternalProduct, useExternalProduct, useCatalogFavorites } from '@/hooks/integrations/useExternalCatalog';
-import { formatPrice, ProductThumb, handleImageError, MetaTile, SectionCard, ColorSwatch } from './catalogShared';
+import { formatPrice, ProductThumb, handleImageError, MetaTile, SectionCard, ColorSwatch, CATALOG_FOCUS_VISIBLE, productImageAlt } from './catalogShared';
 import { groupVariantsByColor } from './sendProductUtils';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -74,13 +74,15 @@ interface ProductDetailDialogProps {
 
 // ── galeria de imagens ───────────────────────────────────────────────────────────────────────────────
 function ImageGallery({
-  product, focusUrl, focusToken,
+  product, focusUrl, focusToken, colorLabel,
 }: {
   product: ExternalProduct;
   /** CT-33 — 1ª imagem da cor clicada; rola a galeria até ela. */
   focusUrl?: string | null;
   /** Muda a cada clique em cor (mesmo alvo) para o efeito rodar de novo. */
   focusToken?: number;
+  /** CT-69 — cor selecionada, para o alt descritivo "Nome — Cor" da foto. */
+  colorLabel?: string | null;
 }) {
   const images = [
     ...(product.primary_image_url ? [product.primary_image_url] : []),
@@ -145,13 +147,13 @@ function ImageGallery({
         <button
           type="button"
           onClick={() => current && setZoomOpen(true)}
-          className="w-full h-full block cursor-zoom-in"
+          className={cn('w-full h-full block cursor-zoom-in', CATALOG_FOCUS_VISIBLE)}
           aria-label="Ampliar imagem"
         >
           <ProductThumb
             src={current}
             fallbackSrc={product.primary_image_fallback_url}
-            alt={product.name}
+            alt={productImageAlt(product.name, colorLabel)}
             iconSize="w-16 h-16"
           />
         </button>
@@ -172,7 +174,7 @@ function ImageGallery({
           <button
             type="button"
             onClick={goPrev}
-            className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background/95 transition-colors"
+            className={cn("absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background/95 transition-colors", CATALOG_FOCUS_VISIBLE)}
             aria-label="Imagem anterior"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -182,7 +184,7 @@ function ImageGallery({
           <button
             type="button"
             onClick={goNext}
-            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background/95 transition-colors"
+            className={cn("absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background/95 transition-colors", CATALOG_FOCUS_VISIBLE)}
             aria-label="Próxima imagem"
           >
             <ChevronRight className="w-4 h-4" />
@@ -197,9 +199,13 @@ function ImageGallery({
               type="button"
               key={url + i}
               onClick={() => setIdx(i)}
+              /* CT-68 — o <img alt=""> é decorativo; o nome acessível vai no
+                 botão (axe `button-name`). */
+              aria-label={`Ver imagem ${i + 1} de ${images.length}`}
               className={cn(
                 'flex-shrink-0 w-12 h-12 rounded-md overflow-hidden border-2 transition-all',
-                i === idx ? 'border-primary' : 'border-transparent opacity-60 hover:opacity-90'
+                i === idx ? 'border-primary' : 'border-transparent opacity-60 hover:opacity-90',
+                CATALOG_FOCUS_VISIBLE
               )}
             >
               <img src={url} alt="" className="w-full h-full object-cover" onError={handleImageError} loading="lazy" />
@@ -211,7 +217,7 @@ function ImageGallery({
       <Dialog open={zoomOpen} onOpenChange={setZoomOpen}>
         <DialogContent className="max-w-3xl p-2 bg-background/95">
           {current && (
-            <img src={current} alt={product.name} className="w-full h-auto rounded-md" onError={handleImageError} />
+            <img src={current} alt={productImageAlt(product.name, colorLabel)} className="w-full h-auto rounded-md" onError={handleImageError} />
           )}
         </DialogContent>
       </Dialog>
@@ -297,7 +303,8 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend, produ
 
   const navButtonClass = (enabled: boolean) => cn(
     'w-8 h-8 rounded-full border border-border/40 flex items-center justify-center transition-colors',
-    enabled ? 'text-muted-foreground hover:text-foreground hover:bg-muted' : 'text-muted-foreground/40 cursor-not-allowed'
+    enabled ? 'text-muted-foreground hover:text-foreground hover:bg-muted' : 'text-muted-foreground/40 cursor-not-allowed',
+    CATALOG_FOCUS_VISIBLE
   );
 
   /**
@@ -314,7 +321,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend, produ
       <SheetContent side="right" className="w-full sm:max-w-xl p-0 flex flex-col overflow-hidden">
         <ScrollArea className="flex-1 overflow-y-auto">
           {/* galeria */}
-          <ImageGallery product={dp} focusUrl={activePick.image} focusToken={activePick.token} />
+          <ImageGallery product={dp} focusUrl={activePick.image} focusToken={activePick.token} colorLabel={selectedColor} />
 
           <div className="p-5 space-y-4">
             {/* header: nome + navegação ‹ › + ações */}
@@ -350,7 +357,8 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend, produ
                   onClick={() => toggleFavorite({ id: dp.id, name: dp.name, sku: dp.sku, primary_image_url: dp.primary_image_url })}
                   className={cn(
                     'mt-0.5 flex-shrink-0 w-8 h-8 rounded-full border border-border/40 flex items-center justify-center transition-all',
-                    isFav ? 'text-rose-500 bg-rose-50 dark:bg-rose-950/30 border-rose-200' : 'text-muted-foreground hover:text-rose-500'
+                    isFav ? 'text-rose-500 bg-rose-50 dark:bg-rose-950/30 border-rose-200' : 'text-muted-foreground hover:text-rose-500',
+                    CATALOG_FOCUS_VISIBLE
                   )}
                   aria-label={isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
                 >
@@ -414,7 +422,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend, produ
                     () => toast.error('Erro ao copiar'),
                   );
                 }}
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className={cn('text-muted-foreground hover:text-foreground transition-colors', CATALOG_FOCUS_VISIBLE)}
                 aria-label="Copiar SKU"
               >
                 <Copy className="w-3 h-3" />
@@ -517,7 +525,8 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend, produ
                         title={c.name}
                         className={cn(
                           'rounded-full p-0.5 transition-all',
-                          isActive ? 'ring-2 ring-primary/60' : 'hover:opacity-80'
+                          isActive ? 'ring-2 ring-primary/60' : 'hover:opacity-80',
+                          CATALOG_FOCUS_VISIBLE
                         )}
                       >
                         <ColorSwatch hex={c.hex} name={c.name} size={24} />
@@ -554,12 +563,13 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend, produ
                         aria-pressed={isActive}
                         className={cn(
                           'w-full flex items-center gap-2.5 p-2 rounded-lg text-sm text-left transition-colors',
-                          isActive ? 'bg-primary/10 ring-1 ring-primary/40' : 'bg-muted/40 hover:bg-muted/60'
+                          isActive ? 'bg-primary/10 ring-1 ring-primary/40' : 'bg-muted/40 hover:bg-muted/60',
+                          CATALOG_FOCUS_VISIBLE
                         )}
                       >
                         {g.images[0] ? (
                           <span className={cn('catalog-gallery-thumb block w-9 h-9 shrink-0', isActive && 'catalog-gallery-thumb--active')}>
-                            <img src={g.images[0]} alt={g.colorName} className="w-full h-full object-cover" loading="lazy" onError={handleImageError} />
+                            <img src={g.images[0]} alt={productImageAlt(dp.name, g.colorName)} className="w-full h-full object-cover" loading="lazy" onError={handleImageError} />
                           </span>
                         ) : (
                           <ColorSwatch hex={g.colorHex} name={g.colorName} size={20} />

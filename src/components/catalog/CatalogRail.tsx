@@ -16,7 +16,7 @@ import { Sparkles, BarChart3, PackageCheck, Star, Truck, Send, Flame, Zap, Downl
 import { RailCard, RailAction, MetaRow, IconTile, RecentList, fmtInt, fmtAgo, AlertCard, TipCard } from '@/components/talkx/talkxShared';
 import type { PillTone, RecentItem } from '@/components/talkx/talkxShared';
 import type { CatalogSendEventRow, CatalogTopSent } from '@/hooks/integrations/useCatalogRecentSends';
-import { ProductThumb } from './catalogShared';
+import { ProductThumb, CATALOG_FOCUS_VISIBLE } from './catalogShared';
 import type { CatalogStats } from '@/hooks/integrations/useExternalCatalog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
@@ -157,7 +157,7 @@ function RailBanner({ products, onApplyFilter }: Pick<CatalogRailProps, 'product
       <button
         type="button"
         onClick={() => onApplyFilter?.('new_30d')}
-        className="mt-3 text-[13px] font-semibold text-primary-glow hover:underline"
+        className={`mt-3 text-[13px] font-semibold text-primary-glow hover:underline ${CATALOG_FOCUS_VISIBLE}`}
       >
         {CATALOG_RAIL_COPY.bannerCta} →
       </button>
@@ -273,7 +273,7 @@ function RailCounts({ stats, loading, onApplyFilter }: CatalogRailProps) {
           return (
             <li key={r.label}>
               {r.key && onApplyFilter ? (
-                <button type="button" onClick={() => onApplyFilter(r.key as CatalogRailFilterKey)} className="w-full text-left rounded-lg hover:bg-muted/30 transition-colors">
+                <button type="button" onClick={() => onApplyFilter(r.key as CatalogRailFilterKey)} className={`w-full text-left rounded-lg hover:bg-muted/30 transition-colors ${CATALOG_FOCUS_VISIBLE}`}>
                   {content}
                 </button>
               ) : content}
@@ -322,7 +322,7 @@ function RailRecentSends({ recentSends, topSent, onOpenProduct }: Pick<CatalogRa
           <ul className="space-y-1">
             {topSent.map((t) => (
               <li key={t.product_id}>
-                <button type="button" onClick={() => onOpenProduct?.(t.product_id)} className="w-full text-left rounded-lg hover:bg-muted/30 transition-colors">
+                <button type="button" onClick={() => onOpenProduct?.(t.product_id)} className={`w-full text-left rounded-lg hover:bg-muted/30 transition-colors ${CATALOG_FOCUS_VISIBLE}`}>
                   <MetaRow label={t.product_name} value={<span className="tabular-nums">{fmtInt(t.count)}</span>} />
                 </button>
               </li>
@@ -396,7 +396,7 @@ function RailAlerts({ stats, nowMs, dismissed, onDismiss, onApplyLowStock }: {
             type="button"
             aria-label="Ocultar alerta de sincronização"
             onClick={() => onDismiss('sync')}
-            className="mt-2 underline font-semibold text-2xs"
+            className={`mt-2 underline font-semibold text-2xs ${CATALOG_FOCUS_VISIBLE}`}
           >
             Ocultar
           </button>
@@ -407,7 +407,7 @@ function RailAlerts({ stats, nowMs, dismissed, onDismiss, onApplyLowStock }: {
           <p>{fmtInt(lowStock)} produtos com estoque baixo (até 10 unidades).</p>
           <div className="mt-2 flex items-center gap-3">
             {onApplyLowStock && (
-              <button type="button" onClick={onApplyLowStock} className="underline font-semibold text-2xs">
+              <button type="button" onClick={onApplyLowStock} className={`underline font-semibold text-2xs ${CATALOG_FOCUS_VISIBLE}`}>
                 Ver produtos com estoque baixo
               </button>
             )}
@@ -418,7 +418,7 @@ function RailAlerts({ stats, nowMs, dismissed, onDismiss, onApplyLowStock }: {
               type="button"
               aria-label="Ocultar alerta de estoque baixo"
               onClick={() => onDismiss('low_stock')}
-              className="underline font-semibold text-2xs"
+              className={`underline font-semibold text-2xs ${CATALOG_FOCUS_VISIBLE}`}
             >
               Ocultar
             </button>

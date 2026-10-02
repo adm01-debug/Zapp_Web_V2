@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,13 +28,22 @@ import {
   type ExternalProduct,
 } from '@/hooks/integrations/useExternalCatalog';
 import { CatalogProductCard, CatalogProductCardSkeleton } from './CatalogProductCard';
-import { SendProductDialog } from './SendProductDialog';
+// CT-71 — modais em `React.lazy` (chunk próprio, fora do bundle inicial).
+// `lazy()` fica em ESCOPO DE MÓDULO: a regra `react-hooks/static-components`
+// rejeita lazy dentro do corpo do render (documentado em catalogShared.tsx:399).
+// Os dois dialogs abaixo só montam sob demanda (`{sendProduct && …}`), então o
+// `<Suspense fallback>` discreto aparece só enquanto o chunk baixa.
+const SendProductDialog = lazy(() =>
+  import('./SendProductDialog').then((m) => ({ default: m.SendProductDialog }))
+);
 import { CatalogBulkBar, CATALOG_BULK_SEND_MAX } from './CatalogBulkBar';
-import { CatalogBulkSendDialog } from './CatalogBulkSendDialog';
+const CatalogBulkSendDialog = lazy(() =>
+  import('./CatalogBulkSendDialog').then((m) => ({ default: m.CatalogBulkSendDialog }))
+);
 // CT-28 — "Exportar seleção" reusa os builders puros do CSV (CT-20); nada é
 // buscado na edge: as linhas são exatamente os produtos selecionados.
 import { buildCatalogCsv, catalogExportFilename, triggerCsvDownload } from './catalogExport';
-import { favoriteToProduct, CatalogErrorState, countLabel, useRateLimitCooldown } from './catalogShared';
+import { favoriteToProduct, CatalogErrorState, countLabel, useRateLimitCooldown, CatalogDialogFallback } from './catalogShared';
 import { TalkXPagination, TalkXEmptyState } from '@/components/talkx/talkxShared';
 import type { ContactResult } from './useSendProduct';
 import { toast } from 'sonner';
@@ -482,7 +491,12 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
 
             {/* Status bar */}
             <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>
+              {/* CT-68 — role="status" + aria-live: o leitor de tela anuncia a
+                  contagem quando ela muda. Sem debounce extra: a contagem só
+                  muda quando `totalProducts` volta do fetch, que o efeito de
+                  filtros já debounce em 300ms — digitar não gera um anúncio por
+                  tecla, só o resultado final da busca. */}
+              <span role="status" aria-live="polite" data-testid="catalog-result-count">
                 {favoritesOnly
                   ? `Mostrando ${favoriteProducts.length} produto(s) favorito(s)`
                   : `Mostrando ${Math.min(page * pageSize + 1, totalProducts)}-${Math.min((page + 1) * pageSize, totalProducts)} de ${totalProducts.toLocaleString('pt-BR')}`}
@@ -684,25 +698,29 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
           aberto: ele depende do AuthProvider (useAuth) e o dialog do chat não
           precisa disso fechado. */}
       {bulkSendOpen && (
-        <CatalogBulkSendDialog
-          products={selectedProducts}
-          open
-          onOpenChange={setBulkSendOpen}
-          onSent={clearSelection}
-        />
+        <Suspense fallback={<CatalogDialogFallback />}>
+          <CatalogBulkSendDialog
+            products={selectedProducts}
+            open
+            onOpenChange={setBulkSendOpen}
+            onSent={clearSelection}
+          />
+        </Suspense>
       )}
 
       {/* CT-34 — a cor escolhida no detalhe entra como `initialVariantColor`
           (preset que o SendProductDialog aplica na 1ª renderização). */}
       {sendProduct && (
-        <SendProductDialog
-          key={sendProduct.id}
-          product={sendProduct}
-          open={!!sendProduct}
-          onOpenChange={(v) => { if (!v) { setSendProduct(null); setSendVariantColor(undefined); } }}
-          presetContact={presetContact}
-          initialVariantColor={sendVariantColor}
-        />
+        <Suspense fallback={<CatalogDialogFallback />}>
+          <SendProductDialog
+            key={sendProduct.id}
+            product={sendProduct}
+            open={!!sendProduct}
+            onOpenChange={(v) => { if (!v) { setSendProduct(null); setSendVariantColor(undefined); } }}
+            presetContact={presetContact}
+            initialVariantColor={sendVariantColor}
+          />
+        </Suspense>
       )}
     </>
   );

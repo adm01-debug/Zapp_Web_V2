@@ -17,6 +17,7 @@ import {
   countAdvancedFilters,
   DEFAULT_ADVANCED_FILTERS,
   TagMultiSelectChips,
+  CATALOG_FOCUS_VISIBLE,
   type AdvancedFilters,
 } from './catalogShared';
 import type { CatalogStats } from '@/hooks/integrations/useExternalCatalog';
@@ -147,11 +148,11 @@ export function CatalogAdvancedFilters({ open, onOpenChange, filters, onApply, o
           <Button
             variant="ghost" size="sm"
             onClick={() => { setLocal({ ...DEFAULT_ADVANCED_FILTERS }); onClear(); onOpenChange(false); }}
-            className="flex-1"
+            className={`flex-1 ${CATALOG_FOCUS_VISIBLE}`}
           >
             Limpar
           </Button>
-          <Button size="sm" onClick={() => { onApply(local); onOpenChange(false); }} className="flex-1">
+          <Button size="sm" onClick={() => { onApply(local); onOpenChange(false); }} className={`flex-1 ${CATALOG_FOCUS_VISIBLE}`}>
             Aplicar filtros
           </Button>
         </SheetFooter>

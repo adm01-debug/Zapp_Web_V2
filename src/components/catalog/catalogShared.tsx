@@ -31,6 +31,61 @@ export const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
   if (fallback) fallback.style.display = 'flex';
 };
 
+// ─── CT-68/CT-69 — acessibilidade visual e alt do módulo ────────────────
+/**
+ * CT-68 — anel de foco visível reutilizável (WCAG 2.4.7 "Focus Visible").
+ * Usa só tokens (`ring-ring`/`ring-offset-background`, isto é, `--ring` e
+ * `--background`) — nenhuma cor literal. O `:focus-visible` global
+ * (src/styles/base.css:210) já cobre o caso genérico; a classe explícita
+ * garante o anel sobre as superfícies próprias do módulo (card, mídia, chip) e
+ * deixa o alvo de foco legível no próprio componente.
+ */
+export const CATALOG_FOCUS_VISIBLE =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background';
+
+/**
+ * CT-69 — texto alternativo descritivo das imagens de produto/variação:
+ * `Nome — Cor` quando a cor é conhecida, só `Nome` quando não é. O `alt=""`
+ * proposital das miniaturas decorativas do strip (ProductDetailDialog) segue
+ * vazio de propósito: é decorativo e repetiria o mesmo nome a cada thumb.
+ */
+export function productImageAlt(name: string, color?: string | null): string {
+  const extra = color?.trim();
+  return extra ? `${name} — ${extra}` : name;
+}
+
+/**
+ * CT-69 — cor de capa do produto para o alt: só devolve uma cor quando o
+ * produto tem EXATAMENTE uma cor nomeada. Em produto multi-cor a capa não é de
+ * uma cor específica e rotulá-la com a 1ª descreveria errado a foto — nesse
+ * caso o alt fica só com o nome.
+ */
+export function singleProductColor(product: Pick<ExternalProduct, 'colors' | 'color_swatches'>): string | null {
+  const swatches = (product.color_swatches ?? [])
+    .map((s) => s.color_name?.trim())
+    .filter((n): n is string => !!n);
+  const names = swatches.length > 0
+    ? swatches
+    : (product.colors ?? []).map((c) => c.trim()).filter((n) => n.length > 0);
+  const unique = Array.from(new Set(names));
+  return unique.length === 1 ? unique[0] : null;
+}
+
+/**
+ * CT-68/CT-71 — fallback do `Suspense` dos modais lazy: spinner curto e
+ * discreto, com tokens. Nunca texto grande (troca o dialog inteiro por uma
+ * frase). Os `Sheet`/`Dialog` sempre montados (fechados desde o 1º paint) usam
+ * `fallback={null}` — um spinner apareceria na página enquanto o chunk carrega,
+ * o que é pior que o silêncio; ao abrir, o chunk já resolveu.
+ */
+export function CatalogDialogFallback() {
+  return (
+    <div className="flex items-center justify-center py-6 text-muted-foreground" role="status" aria-label="Carregando">
+      <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" aria-hidden="true" />
+    </div>
+  );
+}
+
 // ProductImage removido na E15 — substituído por ProductThumb (skeleton + srcSet real + fallback em cascata).
 
 // ─── ProductBadge (E12) ─────────────────────────────────────────
@@ -436,7 +491,7 @@ export function CategoryChips({ categories, activeId, onChange, max = 7 }: Categ
       <button
         type="button"
         onClick={() => onChange(null)}
-        className={`catalog-category-chip ${activeId === null ? 'catalog-category-chip--active' : ''}`}
+        className={cn('catalog-category-chip', activeId === null && 'catalog-category-chip--active', CATALOG_FOCUS_VISIBLE)}
       >
         Todos
       </button>
@@ -446,7 +501,7 @@ export function CategoryChips({ categories, activeId, onChange, max = 7 }: Categ
           type="button"
           onClick={() => onChange(c.id)}
           title={c.products_count != null ? `${c.products_count} produtos` : undefined}
-          className={`catalog-category-chip ${activeId === c.id ? 'catalog-category-chip--active' : ''}`}
+          className={cn('catalog-category-chip', activeId === c.id && 'catalog-category-chip--active', CATALOG_FOCUS_VISIBLE)}
         >
           {c.icon && <CategoryChipIcon name={c.icon} />}
           {c.name}
@@ -455,7 +510,7 @@ export function CategoryChips({ categories, activeId, onChange, max = 7 }: Categ
       {rest.length > 0 && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" className="catalog-category-chip">
+            <button type="button" className={cn('catalog-category-chip', CATALOG_FOCUS_VISIBLE)}>
               Mais <ChevronDown className="w-3 h-3 ml-1" />
             </button>
           </DropdownMenuTrigger>
@@ -816,7 +871,8 @@ export function AdvancedFilterChips({
           onClick={chip.onRemove}
           className={cn(
             'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border',
-            'bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 transition-colors'
+            'bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 transition-colors',
+            CATALOG_FOCUS_VISIBLE
           )}
         >
           {chip.label}
@@ -898,7 +954,7 @@ export function TagMultiSelectChips({ options, selected, onChange }: TagMultiSel
           onClick={() => toggle(opt.label)}
           title={`${opt.count} produtos`}
           aria-pressed={isSelected(opt.label)}
-          className={`catalog-category-chip ${isSelected(opt.label) ? 'catalog-category-chip--active' : ''}`}
+          className={cn('catalog-category-chip', isSelected(opt.label) && 'catalog-category-chip--active', CATALOG_FOCUS_VISIBLE)}
         >
           {opt.label}
         </button>

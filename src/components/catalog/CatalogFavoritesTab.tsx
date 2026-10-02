@@ -3,14 +3,19 @@
  * Consome useCatalogFavorites() diretamente; sem chamada à API do catálogo.
  * O preço/estoque não está na snapshot — exibe só o que foi salvo.
  */
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { Heart, Send, Trash2, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useCatalogFavorites, type CatalogFavorite } from '@/hooks/integrations/useExternalCatalog';
-import { favoriteToProduct } from './catalogShared';
-import { SendProductDialog } from './SendProductDialog';
+import { favoriteToProduct, CatalogDialogFallback } from './catalogShared';
+// CT-71 — envio em `React.lazy` (chunk próprio). `lazy()` em escopo de módulo
+// (react-hooks/static-components rejeita lazy no corpo do render) e o
+// `<Suspense>` no ponto de uso, com fallback discreto.
+const SendProductDialog = lazy(() =>
+  import('./SendProductDialog').then((m) => ({ default: m.SendProductDialog }))
+);
 import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 
 function FavoriteCard({ fav, onRemove, onSend }: {
@@ -117,12 +122,14 @@ export function CatalogFavoritesTab() {
         />
       ))}
       {sendProduct && (
-        <SendProductDialog
-          key={sendProduct.id}
-          product={sendProduct}
-          open={!!sendProduct}
-          onOpenChange={(open) => { if (!open) setSendProduct(null); }}
-        />
+        <Suspense fallback={<CatalogDialogFallback />}>
+          <SendProductDialog
+            key={sendProduct.id}
+            product={sendProduct}
+            open={!!sendProduct}
+            onOpenChange={(open) => { if (!open) setSendProduct(null); }}
+          />
+        </Suspense>
       )}
     </>
   );
