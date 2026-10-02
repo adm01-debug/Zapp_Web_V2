@@ -9,6 +9,10 @@
 -- 20260909200000_harden_inbox_contact_authorization.sql).
 -- Tudo roda dentro da transacao do runner, entao nao existe janela sem a funcao para outros clientes.
 --
+-- nomes-antigos-conferidos: get_conversation_tab_counts — o NOME NAO MUDA e nao e rename: a funcao e
+-- recriada com o mesmo nome e a mesma assinatura de entrada (p_contact_id uuid). O DROP existe apenas
+-- porque o PostgreSQL recusa trocar o RETURNS TABLE com CREATE OR REPLACE. O front continua chamando o
+-- MESMO RPC; o que sai e a coluna do retorno.
 -- rollback: 1) DROP FUNCTION IF EXISTS public.get_conversation_tab_counts(uuid);
 -- rollback: 2) recriar com a coluna a partir de supabase/migrations/20260928140200_tab_counts_tasks_own.sql (CREATE FUNCTION, mesmo corpo, RETURNS TABLE com reminders_pending integer);
 -- rollback: 3) REVOKE ALL ON FUNCTION public.get_conversation_tab_counts(uuid) FROM PUBLIC, anon; GRANT EXECUTE ... TO authenticated;
