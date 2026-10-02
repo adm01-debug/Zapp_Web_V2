@@ -1,76 +1,23 @@
 -- f51c_multiplix_confirm_dispatch_contrato
--- versao 20261002401230 reservada para hermes-bloco-e-api-dominio-dispatch-2610012241bab6 (hermes-db-migrar --nova)
+-- versão 20261002461230 reservada para hermes-bloco-e-api-dominio-dispatch-2610012241bab6 em 2026-10-02T08:31:24-03:00 (hermes-db-migrar --nova)
 --
--- Classe: CONTRATO (CREATE OR REPLACE / REVOKE / GRANT / DROP+CREATE TRIGGER / ADD CONSTRAINT).
--- Movida de 20261001341230_f51_multiplix_confirm_dispatch.sql: aquela versao nunca aplicou (o banco
--- ficou inacessivel) e o ledger ja avancou para 20261002381230, entao o migrador a recusa por
--- versao. O SQL e o mesmo, com CREATE OR REPLACE na RPC (a parte aditiva ja a criou) e a linha 1
--- corrompida do arquivo original consertada.
+-- Classe: CONTRATO. Contem APENAS o que ainda NAO esta aplicado no banco.
+-- O que ja esta aplicado NAO se repete aqui (o guard do CI recusa conteudo de
+-- migration ja existente): a parte aditiva 20261001351230_f51a_* criou a funcao
+-- multiplix_confirm_dispatch, as colunas replied_at/reply_attribution e o indice
+-- idx_multiplix_delivery_items_dispatch_replied.
 --
--- Depende de: F30, F31, F32a, F33, F34 (Bloco C) e da parte aditiva 20261001351230_f51a.
-
--- rollback: DROP FUNCTION IF EXISTS public.multiplix_confirm_dispatch(uuid, uuid, boolean, integer, timestamp with time zone, uuid);
--- rollback: DROP INDEX IF EXISTS public.idx_multiplix_delivery_items_dispatch_replied;
--- rollback: ALTER TABLE public.multiplix_delivery_items
--- rollback:   DROP COLUMN IF EXISTS reply_attribution,
--- rollback:   DROP COLUMN IF EXISTS replied_at;
--- rollback: -- (o DROP COLUMN leva junto o CHECK multiplix_delivery_items_reply_attribution_check; a
--- rollback: -- ordem importa: a RPC sai primeiro porque cita replied_at no SELECT de status? NAO: a RPC
--- rollback: -- de confirm nao cita replied_at. A ordem e livre, mas a funcao fica por ultimo por simetria.)
-
--- ============================================================================
--- F51 · Multiplix — confirmacao ATOMICA do disparo (Bloco E).
--- ============================================================================
+-- O que falta: a ACL da RPC (REVOKE/GRANT), os COMMENTs, o CHECK de
+-- reply_attribution, as duas funcoes de trigger de bump de versao e os triggers.
+-- A RPC vai com CREATE OR REPLACE porque a funcao ja existe (a versao anterior,
+-- 20261001341230, usava CREATE FUNCTION e abortava com 42723).
 --
--- POR QUE UMA RPC (e nao N INSERTs no TS): o plano exige "gera multiplix_delivery_items
--- NA MESMA TRANSACAO (RPC)". Confirmar revalida a elegibilidade (F49), congela o publico e
--- os blocos, avanca dispatch_version e materializa UMA LINHA POR (destinatario x bloco). Se
--- o TS fizesse isso em passos separados (o caminho antigo do front), uma falha no meio
--- deixaria o disparo confirmado com a fila pela metade. Numa funcao plpgsql tudo isso e a
--- MESMA transacao: qualquer erro faz ROLLBACK do conjunto — 0 itens, versao intacta.
---
--- IDEMPOTENCIA por (dispatch_id, dispatch_version): a versao CANDIDATA e
--- `p_expected_version + 1`, onde p_expected_version e a versao que o cliente REVISOU (a que
--- veio do draft.get). Como as linhas de item carregam essa versao no `idempotency_key`
--- (UNIQUE, F32a), 5 chamadas com a MESMA versao revisada acham os itens ja materializados e
--- devolvem `created = false` — 5 cliques = 1 confirmacao. A ORDEM importa:
---   1) idempotencia (ja confirmado na versao candidata -> devolve o mesmo resultado);
---   2) ja confirmado em OUTRA versao -> erro (nao re-materializa em cima de confirmacao feita);
---   3) status confirmavel (draft/scheduled) -> senao `not_confirmable`;
---   4) revisao desatualizada (dispatch_version mudou desde a revisao) -> `review_stale`.
--- Comparar a versao ANTES da idempotencia mataria o 2o clique; por isso o TS NAO compara.
---
--- FOLLOW-UP DECLARADO (fora deste modulo): quem edita o rascunho (F44 `draft.update`,
--- F45 `blocks.*`) precisa incrementar `multiplix_dispatches.dispatch_version`. Sem isso o
--- `p_expected_version` nao muda entre editar e confirmar e o passo 4 nao detecta revisao
--- nova. O confirm ja esta correto; a lacuna e do lado da edicao.
+-- Depende de: 20261001351230_f51a_* (ja aplicada).
 
--- ---------- 1. replied_at / reply_attribution ----------
--- F52 exige `sent != delivered != read != replied` SEPARADOS. Os tres primeiros sao estados
--- do enum `multiplix_item_status` (F30); `replied` NAO existe em enum nenhum — e um evento
--- ORTOGONAL (uma mensagem respondida tambem esta lida), correlacionado no F62. Estas duas
--- colunas sao a fonte honesta do 4o estado (em vez de fingir um numero): `replied_at` marca a
--- resposta, `reply_attribution` guarda `linked | inferred` (F62). Aditivas e nulas por padrao.
-ALTER TABLE public.multiplix_delivery_items
-  ADD COLUMN IF NOT EXISTS replied_at timestamp with time zone,
-  ADD COLUMN IF NOT EXISTS reply_attribution text;
-
-ALTER TABLE public.multiplix_delivery_items
-  DROP CONSTRAINT IF EXISTS multiplix_delivery_items_reply_attribution_check;
-
-ALTER TABLE public.multiplix_delivery_items
-  ADD CONSTRAINT multiplix_delivery_items_reply_attribution_check
-    CHECK (reply_attribution IS NULL OR reply_attribution IN ('linked', 'inferred'));
-
--- Indice parcial para a contagem de respondidos por disparo (F52/F62).
-CREATE INDEX IF NOT EXISTS idx_multiplix_delivery_items_dispatch_replied
-  ON public.multiplix_delivery_items (dispatch_id)
-  WHERE replied_at IS NOT NULL;
-
-COMMENT ON COLUMN public.multiplix_delivery_items.replied_at IS
-  'F52/F62: instante da resposta do contato correlacionada a este item (ortogonal ao status).';
-COMMENT ON COLUMN public.multiplix_delivery_items.reply_attribution IS
-  'F62: linked (external_id casou) | inferred (janela + numero). NULL enquanto sem resposta.';
+-- rollback: DROP TRIGGER IF EXISTS trg_multiplix_bump_version_on_block_change ON public.multiplix_blocks;
+-- rollback: DROP FUNCTION IF EXISTS public.multiplix_bump_version_on_block_change();
+-- rollback: DROP TRIGGER IF EXISTS trg_multiplix_bump_version_on_dispatch_edit ON public.multiplix_dispatches;
+-- rollback: DROP FUNCTION IF EXISTS public.multiplix_bump_version_on_dispatch_edit();
 
 -- ---------- 2. RPC de confirmacao ----------
 -- OR REPLACE: a parte aditiva (20261001351230_f51a) ja criou esta funcao no banco de producao.
