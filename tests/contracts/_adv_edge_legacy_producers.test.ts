@@ -55,6 +55,14 @@
  *    pela conexão escolhida e dos limites de ritmo por minuto/dia). É arquivo de teste, não
  *    produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos —
  *    só o total varrido sobe, e o ratchet é atualizado de propósito.
+ *  - 196: Bloco 06 (IA-051, 02/10/2026) — `ai-jobs-worker/index.test.ts` (guarda de origem da
+ *    correlação: o handler `ai.generate` tem de passar `jobId`/`attempt` do job arrendado e o
+ *    roteador `_shared/ai-generate.ts` tem de repassá-los ao registrador central). É arquivo de
+ *    teste, não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem
+ *    idênticos — só o total varrido sobe (195 → 196: os dois lados somam, o 195 acima é do X019,
+ *    que entrou na main no mesmo rebase) e o ratchet é atualizado de propósito. O valor certo
+ *    não é o de nenhum dos dois lados, é o que a varredura mede depois do merge.
+ *    De propósito NÃO usa o "regex antigo": o fatiamento das chamadas é por `indexOf`.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -129,8 +137,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('195 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(195);
+  it('196 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(196);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );
