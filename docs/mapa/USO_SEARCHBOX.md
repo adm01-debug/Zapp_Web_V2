@@ -57,6 +57,34 @@ order by dia desc;
 
 Para o detalhe de cada degradacao (`count`/`limit` no momento da degradacao), ver o Apendice A.
 
+## Acompanhamento das primeiras 48 h do cadastro (E93, sem flag)
+
+O cadastro de contato ganhou o autocomplete **sem flag** (decisão `20261001-103207-6c0b`): não existe
+"ligar só para 2 operadores" — está ligado para todos, com o teto de custo (E48) como freio. A etapa
+E93 pede o acompanhamento de **48 h reais** pela view e o registro dos números no fim.
+
+**Janela medida:** rollout em **2026-09-26 13:59 UTC** → 48 h depois, **2026-09-28 13:59 UTC**.
+
+| Métrica na janela de 48 h | Resultado |
+|---|---|
+| Sessões de busca | **8** |
+| Por origem | `contact-form` **6** · `picker` **2** |
+| Degradações do guarda de custo | **0** |
+| Avisos de orçamento | **0** |
+| Custo | **US$ 0,00** (8 de 500 grátis) |
+
+Depois da janela: **4 sessões** (28/09 13:59 → 02/10). Em outubro/2026, até a medição: **1 sessão**.
+
+**Leitura:** as 48 h correram **dentro da margem** — 8 sessões é 1,6% do teto grátis, o guarda nunca
+degradou e o aviso nunca disparou. O freio de custo (E48) não precisou atuar: era exatamente o que o
+acompanhamento existia para confirmar. **O número que a fase queria é este, e ele é verde por medição,
+não por ausência de reclamação.**
+
+**O que este acompanhamento NÃO prova:** quantas dessas 8 buscas viraram endereço escolhido. O evento
+de seleção (`searchbox_selected`) só passou a existir em **2026-10-01** — durante a janela de 48 h ele
+ainda não existia (ver a seção de fechamento do mês acima). O funil das primeiras 48 h é, portanto,
+**desconhecido e não recuperável**.
+
 ## Fechamento do primeiro mês — setembro/2026 fechado, outubro/2026 parcial (E99)
 
 Medido em **2026-10-02** contra produção: view `searchbox_usage_daily` e `audit_logs`, **somente
