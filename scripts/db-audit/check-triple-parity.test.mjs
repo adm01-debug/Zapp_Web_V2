@@ -9,8 +9,8 @@ import test from 'node:test';
 
 const SCRIPT = fileURLToPath(new URL('./check-triple-parity.mjs', import.meta.url));
 
-function md5(value) {
-  return crypto.createHash('md5').update(value).digest('hex');
+function sha256(value) {
+  return crypto.createHash('sha256').update(value).digest('hex');
 }
 
 function makeFixture({ versoes, dirs, manifestNames, ledger, grantsFresco, grantsCommitado }) {
@@ -37,19 +37,22 @@ function makeFixture({ versoes, dirs, manifestNames, ledger, grantsFresco, grant
   const grantsBaselinePath = path.join(tmp, 'grants-baseline.json');
   fs.writeFileSync(grantsBaselinePath, JSON.stringify(grantsCommitado));
 
-  // psql fake: -c => count|md5 do ledger; -f => grants frescos
+  // psql fake: -c => count|sha256 do ledger; -f => grants frescos
   const ledgerJoined = `${ledger.join('\n')}\n`;
   const psqlPath = path.join(tmp, 'psql-fake.mjs');
+  const capturePath = path.join(tmp, 'psql-args.log');
   fs.writeFileSync(psqlPath, `#!/usr/bin/env node
+import fs from 'node:fs';
 const args = process.argv.slice(2);
+fs.appendFileSync(${JSON.stringify(capturePath)}, JSON.stringify(args) + '\\n');
 if (args.includes('-c')) {
-  process.stdout.write(${JSON.stringify(`${ledger.length}|${md5(ledgerJoined)}`)} + '\\n');
+  process.stdout.write(${JSON.stringify(`${ledger.length}|${sha256(ledgerJoined)}`)} + '\\n');
 } else {
   process.stdout.write(${JSON.stringify(JSON.stringify(grantsFresco))});
 }
 `, { mode: 0o755 });
 
-  return { tmp, migDir, fnDir, manifestPath, grantsSqlPath, grantsBaselinePath, psqlPath };
+  return { tmp, migDir, fnDir, manifestPath, grantsSqlPath, grantsBaselinePath, psqlPath, capturePath };
 }
 
 function run(fx, { env = {}, args = [] } = {}) {
@@ -83,7 +86,7 @@ test('paridade tripla verde quando as tres pernas batem (generated_at ignorado)'
   assert.match(res.stdout, /OK: paridade tripla verificada/);
 });
 
-test('detecta divergencia arquivos↔ledger (md5/count)', () => {
+test('detecta divergencia arquivos↔ledger (sha256/count)', () => {
   const fx = makeFixture({
     versoes: ['20260901000000', '20260902000000'],
     dirs: ['fn-a'],
@@ -270,4 +273,27 @@ test('grants: note/how_to_regenerate divergentes PASSAM; mudanca de ACL continua
   }));
   assert.equal(acl.status, 1);
   assert.match(acl.stderr, /grants-baseline desatualizado/);
+});
+
+// S4790: o fingerprint de paridade arquivos↔ledger nao pode voltar a ser um
+// hash fraco. O script consulta o ledger com sha256() (built-in do Postgres,
+// equivalente ao crypto.createHash('sha256') usado no lado local) e nunca
+// md5(). Este teste captura o SQL realmente enviado ao psql: se alguem
+// regredir para md5(), a consulta deixa de casar com o digest local de 64 hex
+// e este teste falha.
+test('consulta o ledger com sha256, nunca md5 (S4790)', () => {
+  const fx = minimalFixture();
+  const res = run(fx);
+  assert.equal(res.status, 0, res.stderr + res.stdout);
+
+  const invocacoes = fs.readFileSync(fx.capturePath, 'utf8')
+    .trim().split('\n').filter(Boolean).map((linha) => JSON.parse(linha).map(String));
+  const sqlDoLedger = invocacoes
+    .filter((argv) => argv.includes('-c'))
+    .map((argv) => argv[argv.indexOf('-c') + 1] || '')
+    .join('\n');
+
+  assert.match(sqlDoLedger, /\bsha256\s*\(/i, 'o ledger deve ser consultado com sha256()');
+  assert.doesNotMatch(sqlDoLedger, /\bmd5\s*\(/i, 'md5 nao pode voltar na paridade');
+  assert.match(res.stdout, /sha256_local=[a-f0-9]{64}/, 'o digest local exposto deve ter 64 hex (sha256)');
 });

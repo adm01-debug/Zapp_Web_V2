@@ -13,14 +13,18 @@ Contagem igual esconde erro. Na auditoria de 27/08/2026 havia 267 arquivos e 259
 depois de reconciliar, os dois lados fecharam em 261 com o mesmo hash:
 
 ```sh
-# lado do repo
+# lado do repo (mesma receita do scripts/db-audit/check-triple-parity.mjs: versões
+# ordenadas, separadas por \n, com \n final — o script é a fonte da verdade)
 ls supabase/migrations/*.sql | sed 's|.*/||' \
-  | sed -E 's/^([0-9]{14}).*/\1/' | sort | tr -d '\n' | md5sum
+  | sed -E 's/^([0-9]{14}).*/\1/' | sort | paste -sd '\n' - | sha256sum
 
 # lado do banco
 psql "$DESTINO_URL" -At -c \
-  "SELECT md5(string_agg(version,'' ORDER BY version)) FROM supabase_migrations.schema_migrations"
+  "SELECT encode(sha256(convert_to(string_agg(version, E'\n' ORDER BY version) || E'\n','UTF8')),'hex') FROM supabase_migrations.schema_migrations"
 ```
+
+O algoritmo é `sha256` nos dois lados (`sha256()` é built-in do Postgres, PG11+). Trocar
+apenas um dos lados faz a paridade divergir sempre — se mexer num, mexa no outro.
 
 O `db-guard.yml` valida nomes, conteudo local e versoes unicas sem credencial. A
 comparacao com o ledger real ocorre no `db-live-guard.yml`, somente em eventos
