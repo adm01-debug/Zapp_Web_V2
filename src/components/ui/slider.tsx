@@ -37,7 +37,7 @@ const Slider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, S
         )}
         {...props}
       >
-        <SliderPrimitive.Track className={cn("relative grow overflow-hidden rounded-full bg-secondary", isVertical ? "h-full w-2" : "h-2 w-full")}>
+        <SliderPrimitive.Track className={cn("relative grow overflow-hidden rounded-full bg-background ring-1 ring-inset ring-foreground/30", isVertical ? "h-full w-2" : "h-2 w-full")}>
           <SliderPrimitive.Range className={cn("absolute rounded-full bg-primary", isVertical ? "w-full" : "h-full")} />
         </SliderPrimitive.Track>
         {Array.from({ length: thumbCount }).map((_, i) => (
