@@ -58,7 +58,7 @@ try {
 
 function lerCatalogo(arquivo, rotulo) {
   try {
-    const catalogo = JSON.parse(fs.readFileSync(arquivo, 'utf8'));
+    const catalogo = JSON.parse(fs.readFileSync(arquivo, 'utf8')); // NOSONAR(S8707): os dois chamadores passam 'catalogoCommitado'/'frescoPath', ja resolvidos por resolverCaminhoPermitido (exit 2 fora do repo/tmp); argv/env nao entram crus aqui
     if (!catalogo || typeof catalogo !== 'object' || Array.isArray(catalogo)) {
       throw new Error('a raiz precisa ser um objeto JSON');
     }
