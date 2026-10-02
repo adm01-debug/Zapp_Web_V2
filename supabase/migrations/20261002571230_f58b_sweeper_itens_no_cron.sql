@@ -1,5 +1,5 @@
 -- f58b_sweeper_itens_no_cron
--- versão 20261002491230 reservada para hermes-bloco-f-finalizacao-2610021025c321 em 2026-10-02T11:21:21-03:00 (hermes-db-migrar --nova)
+-- versão 20261002571230 reservada para hermes-bloco-f-finalizacao-2610021025c321 em 2026-10-02T13:01:27-03:00 (hermes-db-migrar --nova)
 -- Classe: CONTRATO (create or replace function).
 -- Corpo extraido do banco com pg_get_functiondef (nao redigitado) e alterado em UM ponto:
 -- acrescenta o sweeper da fila de ITENS ao lado do de destinatarios.

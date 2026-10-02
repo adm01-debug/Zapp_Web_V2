@@ -320,6 +320,23 @@ migration alvo, um `psql` falso que imprime o JSON do ledger e rode com
 `MIGRATION_EVIDENCE_PATH` apontando para um manifesto com **so** a excecao testada. Sem a excecao
 o guard falha com `conteudo SQL divergente`; com ela, `OK`. Medido em 02/10/2026.
 
+**Duas correcoes factuais sobre esta migration** (levantadas na auditoria de ledger de 02/10/2026):
+
+1. O cabecalho da `f51c` afirma que o ledger **nunca** registrou a f51. Isso **deixou de ser
+   verdade** em 02/10/2026: a f51 **esta** registrada (`version=20261001341230`,
+   `name=f51_multiplix_confirm_dispatch`, 22 statements) — foi ela que entrou no ledger na
+   aplicacao pos-merge. A `f51c` continua sendo a substituta canonica do **conteudo**, mas o
+   registro existe. A f51c e migration ja aplicada: **corrigir no texto dela nao vale a pena**
+   (regra 7), a correcao fica aqui.
+
+2. **Num banco zerado, a ordem f51 -> f51a quebra.** A f51 declara a funcao com `CREATE FUNCTION`
+   (sem `OR REPLACE`) e a f51a repete a declaracao: aplicando as duas em sequencia num banco novo,
+   a **f51a** aborta com `42723 function "multiplix_confirm_dispatch" already exists with same
+   argument types` (a f51, vindo antes, ja a criou). No banco atual isso nao aparece porque a
+   f51 nunca rodou de verdade (entrou no ledger pelo replay com `OR REPLACE`). **Efeito pratico:
+   `supabase db reset` / ambiente novo pela cadeia de arquivos nao sobe.** Nao corrigido aqui
+   porque exige mudar uma migration aplicada ou inverter a ordem — decisao de outra tarefa.
+
 Ela reafirma a funcao com `CREATE OR REPLACE` e traz o que faltava (ACL da RPC, `COMMENT`s,
 `CHECK` de `reply_attribution`, as duas funcoes de trigger de bump de versao e os triggers).
 

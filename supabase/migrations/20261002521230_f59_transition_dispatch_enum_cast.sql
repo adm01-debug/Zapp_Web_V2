@@ -2,6 +2,12 @@
 -- versão 20261002521230 reservada para hermes-bloco-f-finalizacao-2610021025c321 em 2026-10-02T12:06:50-03:00 (hermes-db-migrar --nova)
 -- Classe: CONTRATO (create or replace function).
 --
+-- NOTA DE NOMENCLATURA: o "f59" do NOME DO ARQUIVO e apenas rotulo — esta migration NAO
+-- implementa a etapa F59 do plano (que e a politica de recalculo do publico agendado, ADR-007,
+-- decisao 🔒 do Joaquim). Ela e o conserto do achado critico abaixo. O nome ficou assim porque
+-- o arquivo ja estava reservado e registrado como pendencia pos-merge (a chave do hermes-tarefa
+-- e arquivo:sha, renomear depois quebraria a fila); a etapa F59 segue em aberto e intocada.
+--
 -- rollback: DROP FUNCTION IF EXISTS public.transition_multiplix_dispatch(uuid, text, text); e recriar a versao de 20260929600000_multiplix_send_engine_fixes.sql (a que faz SET status = v_next_status sem cast).
 -- rollback: ATENCAO — o rollback reintroduz a falha 42804 descrita abaixo. Use so se esta migration precisar ser desfeita.
 --
