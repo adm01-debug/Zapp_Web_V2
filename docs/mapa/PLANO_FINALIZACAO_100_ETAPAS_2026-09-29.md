@@ -657,7 +657,17 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 
 ### E77 · Teste de contrato dos grants das RPCs do módulo
 1. `count_searchbox_sessions_this_month`, `search_contacts`, `count_searchbox_cost_guard_this_month` (E47): sem `anon`/`PUBLIC` — assert no `grants-baseline.json` já existente.
-**Checklist:** [ ] baseline atualizado
+**Checklist:** [x] baseline atualizado (como CONTRATO sobre o baseline existente)
+
+**Fechada em 2026-10-02.** scripts/db-audit/grants-baseline-module-rpcs.test.mjs (93 linhas, 7 testes): le o baseline COMMITADO e falha se qualquer RPC do modulo aparecer em anon_execute. Entra no gate de PR sem tocar workflow — o db-guard.yml:173 ja roda node --test scripts/db-audit/*.test.mjs.
+
+**Por que o grants-baseline.json NAO foi alterado** (o mapeamento dizia regenerar incluindo as 3 RPCs): (1) ele e gerado do banco por grants-baseline.sql e o banco esta fora (PGRST002); (2) chave adicionada a mao vira DRIFT no check-grants-fresh.mjs e e descartada na proxima regeneracao do types-sync — o proprio arquivo avisa que isso ja derrubou a main em 2026-09-22; (3) o snapshot ja esta correto, o que faltava era o CONTRATO. sha256 do baseline identico antes e depois: 42d3494677eb6335.
+
+**Divergencia medida:** count_searchbox_cost_guard_this_month tem 0 ocorrencias em supabase/migrations/ — a decisao registrada do E47 (2026-10-01) escolheu a alternativa (2), marca em localStorage, sem DDL nova. Sao 2 RPCs existentes + 1 declinada; o teste a inclui como guarda preventiva.
+
+**Prova:** 7/7 no teste novo; mutacao inserindo a RPC em anon_execute deixa o teste VERMELHO com a mensagem exata, restaurado por cp com sha identico; suite da area 304/304 com o comando exato do guard; check-grants-fresh OK; ratchets novas=0.
+
+**Nao provado (banco fora):** regenerar o baseline e conferir anon_execute contra o banco vivo; o caminho de snapshot fresco do types-sync nao foi executado.
 
 ### E78 · Bundle: número no repo
 **Arquivos:** `docs/mapa/ARQUITETURA_BUSCA.md`
