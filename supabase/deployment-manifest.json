@@ -624,8 +624,8 @@
     },
     {
       "path": "supabase/functions/send-scheduled-report/index.ts",
-      "bytes": 8952,
-      "sha256": "0171abc38b9ec030c7154520e709d139b5654b626180187417997d7aa6d8d7a4"
+      "bytes": 8959,
+      "sha256": "ec4926821b789b093dfe3088c8e6e44ca52b3d72078fffbf3b43b69b0d6cc330"
     },
     {
       "path": "supabase/functions/sentiment-alert/index.ts",
@@ -1570,7 +1570,7 @@
       "name": "send-scheduled-report",
       "entrypoint": "supabase/functions/send-scheduled-report/index.ts",
       "verify_jwt": true,
-      "source_sha256": "b94ca7ed5f4ce7971725582a8d75813a9f1c711188d20a9ef8b3851b55e32808",
+      "source_sha256": "771c9fbbd3b5395e59b7c3cacb1680bd34946c4a2c412f5f44dcb1ee4a50e9a4",
       "source_files": [
         "supabase/functions/_shared/email-font-stack.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1743,5 +1743,5 @@
       ]
     }
   ],
-  "manifest_sha256": "9ca02659ed83597a691f77816dc06d63da26d58ac6f8f0a16a1382c93c33a780"
+  "manifest_sha256": "120659e15199b2163c42490302352d0e24da52b61d5d6c047282fa9e84ac319b"
 }

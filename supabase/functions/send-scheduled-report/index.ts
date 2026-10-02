@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, internalErrorResponse } from "../_shared/validation.ts";
 import { ScheduledReportSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { EMAIL_FONT_STACK } from "../_shared/email-font-stack.ts";
 
@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
     return jsonResponse({ success: true, reportData }, 200, req);
   } catch (error) {
     log.error("Error sending report", { error: (error as Error).message });
-    return errorResponse((error as Error).message, 500, req);
+    return internalErrorResponse(error, req);
   }
 });
 
