@@ -170,6 +170,9 @@ export function ContactRegionMap({ regions, preciseContacts = [], selectedRegion
       el.title = `${name} · endereço confirmado`;
       el.setAttribute('aria-label', el.title);
       el.setAttribute('data-precise-contact-id', id);
+      // E74: identificador estável do PINO VERDE (marcador do endereço confirmado) para o
+      // E2E contar ≥ 1 pino por `data-testid` sem depender de classe/cor.
+      el.setAttribute('data-testid', 'pino-verde');
       el.className =
         'w-3.5 h-3.5 rounded-full bg-success ring-2 ring-background shadow-lg';
       markers.current.push(new mapboxgl.Marker(el).setLngLat(coords).addTo(map.current!));

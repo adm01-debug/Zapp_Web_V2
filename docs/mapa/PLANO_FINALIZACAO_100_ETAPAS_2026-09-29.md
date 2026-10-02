@@ -605,7 +605,19 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 
 ### E74 · E2E: mapa de contatos com pino verde
 1. Com o contato de E73 ainda existente, abrir "Mapa de Contatos", esperar a legenda "endereço confirmado", contar ≥ 1 pino verde (`data-testid`).
-**Checklist:** [ ] `data-testid` adicionados · [ ] caso
+**Checklist:** [x] `data-testid` adicionados · [x] caso
+
+**Fechada em 2026-10-02.** e2e/contact-map-pin.spec.ts (111 linhas): abre o mapa de contatos (na UI: Mais visualizações -> Mapa), espera a legenda Endereço confirmado (1) e conta >= 1 pino por data-testid. Reusa o módulo compartilhado do E73, sem duplicar setup.
+
+**Produção (mínima):** ContactRegionMap.tsx:175 ganha setAttribute data-testid = pino-verde no marcador do endereço confirmado — 3 inserções, 0 deleções, sem mudança de comportamento. O identificador é estável, então o E2E conta pinos sem depender de classe ou cor.
+
+**Prova:** repeat-each 3 verde, zero flaky. Mutação DISCRIMINANTE: renomeando o data-testid, o toHaveCount(1) vira Received 0 e a asserção da legenda CONTINUA passando — o caso isola o pino pelo identificador, não por acidente de layout. Specs irmãs verdes (3 passed: E71+E72+E73). Ratchets novas=0.
+
+**Divergências medidas:** (1) a etapa diz com o contato de E73 ainda existente, mas specs não compartilham estado e o E73 apaga no afterEach — o contato com coordenada é semeado no backend falso; (2) a vista Mapa fica em Mais visualizações -> Mapa; (3) ContactRegionMap.tsx:170 já marcava o title endereço confirmado, faltava só o data-testid.
+
+**Achado:** o módulo de mocks não cobria o CARREGAMENTO do mapa (o pino só é desenhado após o mapbox-gl emitir load), então o spec trouxe um mockMapboxEstilo local (estilo sintético) — candidato a subir para o módulo compartilhado na próxima spec de mapa.
+
+**Correção do meu próprio aviso:** eu disse ao executor que este PR dispararia o job de mutação do CI. Está errado e ele mediu: ci.yml:440 filtra ^(src/lib/mapbox|src/components/inbox/location-picker/), e este PR toca src/components/contacts/** e e2e/** — não casa, o job não roda. O executor rodou o comando por sanidade mesmo assim: 5 mortos de 6, sobrevivente F3-abort, idêntico ao esperado.
 
 ### E75 · E2E entra no `e2e-logado.yml`
 **Arquivos:** `.github/workflows/e2e-logado.yml`
