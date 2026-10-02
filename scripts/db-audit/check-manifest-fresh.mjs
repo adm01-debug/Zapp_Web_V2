@@ -9,6 +9,7 @@
  */
 import fs from 'node:fs';
 
+import { resolverCaminhoPermitido } from '../lib/seguranca-processo.mjs';
 import {
   carregarIdentidadeEsperada,
   validarDestino,
@@ -20,14 +21,35 @@ import {
   validarManifesto,
 } from './manifest-lib.mjs';
 
-const frescoPath = process.argv[2];
-if (!frescoPath) {
+// S8707: caminho de entrada nunca entra cru num fs.* — a guarda vive no modulo
+// compartilhado (scripts/lib/seguranca-processo.mjs): resolve e exige que o
+// resultado fique dentro do repositorio ou do diretorio temporario do sistema
+// (as duas raizes legitimas: snapshot commitado e arquivo fresco do psql num
+// tmp). `../../etc/passwd` ou absoluto fora delas e recusado. Fail-closed:
+// fora da raiz encerra com exit 2 (mesmo codigo de entrada invalida).
+const frescoArg = process.argv[2];
+if (!frescoArg) {
   console.error('uso: node check-manifest-fresh.mjs <manifesto_fresco.json>');
   process.exit(2);
 }
 
-const commitadoPath = process.env.MANIFEST_PATH || 'supabase/schema-manifest.json';
-const identidadePath = process.env.CATALOG_IDENTITY_PATH || 'scripts/db-audit/database-identity.json';
+let frescoPath;
+let commitadoPath;
+let identidadePath;
+try {
+  frescoPath = resolverCaminhoPermitido(frescoArg, 'manifesto fresco');
+  commitadoPath = resolverCaminhoPermitido(
+    process.env.MANIFEST_PATH || 'supabase/schema-manifest.json',
+    'manifesto commitado',
+  );
+  identidadePath = resolverCaminhoPermitido(
+    process.env.CATALOG_IDENTITY_PATH || 'scripts/db-audit/database-identity.json',
+    'identidade do banco',
+  );
+} catch (erro) {
+  console.error('ERRO: ' + erro.message);
+  process.exit(2);
+}
 
 function lerJson(arquivo, rotulo, opcoes = {}) {
   try {

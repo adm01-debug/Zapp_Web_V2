@@ -20,13 +20,32 @@
  */
 import fs from 'node:fs';
 
+import { resolverCaminhoPermitido } from '../lib/seguranca-processo.mjs';
+
+// S8707: caminho de entrada nunca entra cru num fs.* — a guarda vive no modulo
+// compartilhado (scripts/lib/seguranca-processo.mjs): resolve e exige que o
+// resultado fique dentro do repositorio ou do diretorio temporario do sistema
+// (as duas raizes legitimas: snapshot commitado e arquivo fresco do psql num
+// tmp). `../../etc/passwd` ou absoluto fora delas e recusado. Fail-closed:
+// fora da raiz encerra com exit 2 (mesmo codigo de entrada invalida).
 const fresco = process.argv[2];
 if (!fresco) {
   console.error('uso: node check-grants-fresh.mjs <grants_fresco.json>');
   process.exit(2);
 }
 
-const commitadoPath = process.env.GRANTS_BASELINE_PATH || 'scripts/db-audit/grants-baseline.json';
+let frescoPath;
+let commitadoPath;
+try {
+  frescoPath = resolverCaminhoPermitido(fresco, 'baseline de grants fresco');
+  commitadoPath = resolverCaminhoPermitido(
+    process.env.GRANTS_BASELINE_PATH || 'scripts/db-audit/grants-baseline.json',
+    'baseline de grants commitado',
+  );
+} catch (erro) {
+  console.error('ERRO: ' + erro.message);
+  process.exit(2);
+}
 
 function ler(arquivo, rotulo) {
   try {
@@ -58,7 +77,7 @@ const aclOnly = (value) => Object.fromEntries(
   Object.entries(value).filter(([key]) => !METADADOS.has(key)),
 );
 
-const fresh = ler(fresco, 'fresco');
+const fresh = ler(frescoPath, 'fresco');
 const committed = ler(commitadoPath, 'commitado');
 
 if (!valid(fresh) || !valid(committed)) {

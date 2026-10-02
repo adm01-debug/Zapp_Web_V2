@@ -3,10 +3,17 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { resolverCaminhoPermitido } from '../lib/seguranca-processo.mjs';
 import { carregarIdentidadeEsperada, validarDestino, validarSupabaseCa, endurecerDestinoTls } from './database-identity.mjs';
 import { withPsqlEnvironment } from './psql-environment.mjs';
 
 const REALTIME_BASELINE_PATH = new URL('./realtime-publication-baseline.json', import.meta.url);
+
+// S8707: o caminho de saida vem do argumento; nunca entra cru no writeFileSync.
+// A guarda vive no modulo compartilhado (scripts/lib/seguranca-processo.mjs):
+// resolve e exige que fique dentro do repositorio ou do diretorio temporario do
+// sistema (as duas raizes legitimas para a evidencia gerada). Fail-closed: fora
+// da raiz encerra com exit 2 (entrada invalida) sem tocar o banco.
 
 export function loadRealtimeBaseline() {
   const baseline = JSON.parse(fs.readFileSync(REALTIME_BASELINE_PATH, 'utf8'));
@@ -74,6 +81,13 @@ export function evaluateRuntimeConfig(raw, realtimeBaseline = loadRealtimeBaseli
 }
 
 export function runRuntimeConfigAudit(outputPath) {
+  let destinoSaida;
+  try {
+    destinoSaida = resolverCaminhoPermitido(outputPath, 'caminho de saida do runtime config');
+  } catch (erro) {
+    console.error('ERRO: ' + erro.message);
+    process.exit(2);
+  }
   const expected = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
   const errors = [...validarDestino(process.env.DESTINO_URL, expected), ...validarSupabaseCa()];
   const tls = endurecerDestinoTls(process.env.DESTINO_URL);
@@ -85,7 +99,7 @@ export function runRuntimeConfigAudit(outputPath) {
     encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 60_000,
   }));
   const evidence = evaluateRuntimeConfig(raw);
-  fs.writeFileSync(outputPath, `${JSON.stringify(evidence, null, 2)}\n`, { mode: 0o600, flag: 'wx' });
+  fs.writeFileSync(destinoSaida, `${JSON.stringify(evidence, null, 2)}\n`, { mode: 0o600, flag: 'wx' });
   return evidence;
 }
 
