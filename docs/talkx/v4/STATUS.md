@@ -5,13 +5,13 @@
 
 ## Etapas concluídas
 
-**17 de 200** concluídas.
+**18 de 200** concluídas.
 
 | Fase | Concluídas | Total |
 |---|---|---|
 | 0 · Régua e governança | 5 | 5 |
 | 1 · Correções imediatas | 4 | 4 |
-| 2 · Motor seguro para o primeiro disparo | 8 | 14 |
+| 2 · Motor seguro para o primeiro disparo | 9 | 14 |
 | 3 · Integridade, observabilidade e ensaio real | 0 | 12 |
 | 4 · Dados comerciais e vínculo com o CRM | 0 | 6 |
 | 5 · Kit, estados, modais e navegação | 0 | 15 |
