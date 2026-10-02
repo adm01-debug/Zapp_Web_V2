@@ -1,4 +1,4 @@
-import { format, formatDistanceToNowStrict, isToday, isYesterday, startOfDay } from 'date-fns';
+import { format, formatDistanceToNowStrict, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 /* ------------------------------------------------------------------ */
@@ -53,13 +53,11 @@ export function fmtDurationShort(seconds: number) {
 
 /** Série de barras (sparkline) para os últimos `n` dias a partir de timestamps. */
 export function barsByDay(dates: (string | null | undefined)[], n = 8): number[] {
+  const now = new Date();
   const buckets = Array.from({ length: n }, () => 0);
-  const today = startOfDay(new Date());
   for (const d of dates) {
     if (!d) continue;
-    const date = new Date(d);
-    if (Number.isNaN(date.getTime())) continue;
-    const diff = Math.round((today.getTime() - startOfDay(date).getTime()) / 86_400_000);
+    const diff = Math.floor((now.getTime() - new Date(d).getTime()) / 86_400_000);
     if (diff >= 0 && diff < n) buckets[n - 1 - diff] += 1;
   }
   return buckets;
