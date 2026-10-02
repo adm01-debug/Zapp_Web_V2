@@ -21,10 +21,23 @@ describe('serverLogin', () => {
     const r = await serverLogin('a@b.co', 'secret');
     expect(r).toEqual({ ok: true, accessToken: 'at', refreshToken: 'rt' });
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe('https://proj.supabase.co/functions/v1/auth-login');
+    expect(url).toBe('https://proj.supabase.co/functions/v1/auth-login?forceFunctionRegion=us-west-2');
     expect(init.headers.apikey).toBe('anon-key');
     expect(init.headers.Authorization).toBe('Bearer anon-key');
     expect(JSON.parse(init.body)).toMatchObject({ email: 'a@b.co', password: 'secret' });
+  });
+
+  it('fixa a regiao us-west-2 na invocacao (banco/GoTrue vivem la — T06)', async () => {
+    // O auth-login faz ~5 round-trips ao banco/GoTrue. Sem o pin a edge roda na
+    // regiao do usuario (sa-east-1 no Brasil) e cada salto cruza o continente:
+    // p50 medido 925ms em sa-east-1 contra 101ms em us-east-1 (T06).
+    fetchMock.mockResolvedValue(jsonResponse(200, { access_token: 'at', refresh_token: 'rt' }));
+    await serverLogin('a@b.co', 'secret');
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toContain('forceFunctionRegion=us-west-2');
+    // x-region exigiria liberar o header no preflight CORS (getCorsHeaders lista
+    // os headers permitidos); o query param e o caminho documentado para browser.
+    expect(init.headers['x-region']).toBeUndefined();
   });
 
   it('401 devolve a recusa com o estado do lock', async () => {

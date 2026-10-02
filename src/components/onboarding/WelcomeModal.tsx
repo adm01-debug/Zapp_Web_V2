@@ -38,6 +38,7 @@ export const WelcomeModal = forwardRef<HTMLDivElement, WelcomeModalProps>(
           {/* Close button */}
           <button
             onClick={onClose}
+            aria-label="Fechar"
             className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors z-10"
           >
             <X className="w-5 h-5 text-muted-foreground" />

@@ -3,6 +3,8 @@
 // tem correspondente registrado em ci.yml / db-guard.yml.
 // E49: quando ci.yml usa $(git ls-files 'supabase/functions/**/*.test.ts'), a
 // comparação individual de .test.ts é desnecessária (o glob cobre todos).
+// E50: ai-block03-vocabulary-contract, talkx-settings-rls e
+// user-settings-sound-integrity-contract movidos da ALLOWLIST para db-guard.yml.
 
 import { readFileSync } from 'fs';
 import { spawnSync } from 'child_process';
@@ -16,12 +18,7 @@ function read(rel) {
 }
 
 // Testes conhecidos ainda fora do CI; remover linha quando a etapa correspondente mergear.
-// .test.sh serão cobertos quando E50 adicionar os passos em db-guard.yml.
 const ALLOWLIST = new Set([
-  // --- .test.sh — fixar com E50 (db-guard.yml) ---
-  'scripts/db-audit/ai-block03-vocabulary-contract.test.sh',
-  'scripts/db-audit/talkx-settings-rls.test.sh',
-  'scripts/db-audit/user-settings-sound-integrity-contract.test.sh',
   // --- .test.sh — TalkX features em andamento; registrar em db-guard.yml quando prontas ---
   'scripts/db-audit/talk-me-client-privileges.test.sh',
   'scripts/db-audit/talkx-current-template-version.test.sh',

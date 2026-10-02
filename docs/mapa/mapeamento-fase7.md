@@ -1,4 +1,6 @@
 # Mapeamento da FASE 7 (E67–E82) contra o código real
+> **SUPERADO (2026-10-02).** Este documento e um SNAPSHOT DE AUDITORIA: retrato do estado do codigo em 2026-10-02 02:29, antes da execucao da fase. **Nao use as colunas STATUS/evidencia como estado atual.** Depois dele, E67 a E78 foram executadas, verificadas por medicao propria e mergeadas (PRs #1551-#1570). O estado corrente esta em `PLANO_FINALIZACAO_100_ETAPAS_2026-09-29.md`. As linhas historicas abaixo ficam como registro de como estava.
+
 
 **Plano:** `docs/mapa/PLANO_FINALIZACAO_100_ETAPAS_2026-09-29.md` (FASE 7, linhas 507–589)
 **Repo auditado:** `Zapp_Web_V2` · **HEAD:** `447a931ab` · **Branch:** `hermes/mapa-fase7-mapeamento-2610020229a6de`

@@ -506,8 +506,23 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 ## FASE 7 — Acessibilidade e performance (CT-67–CT-76)
 *Bloco H — 1 PR de front.*
 
-- [ ] **CT-67** — `jest-axe` no vitest para `CatalogProductCard`, `CatalogAdvancedFilters`, `ProductDetailDialog`,
+- [x] **CT-67** — `jest-axe` no vitest para `CatalogProductCard`, `CatalogAdvancedFilters`, `ProductDetailDialog`,
   `SendProductDialog`, `ContactSelectionStep`: 0 violações sérias. **Aceite:** 5 testes verdes.
+  **✅ FEITO — verificado na fonte em 02/10/2026 (código entregue no PR #1500).** O matcher é `toHaveNoViolations` do
+  **`vitest-axe`** (0.1.0 fixa, devDependency — a substituição de `jest-axe` foi autorizada em decisão do Joaquim). Os
+  **5 componentes** do aceite têm caso próprio em `src/components/catalog/__tests__/CT67_a11y.test.tsx` e cada um assere
+  **0 violações de impacto `serious`/`critical`**: o helper monta `SERIOUS = new Set(['critical','serious'])` (`:154`),
+  roda o matcher sobre esse subconjunto e ainda compara o inventário **não-sério** por igualdade exata (uma violação nova,
+  mesmo `moderate`, também quebra o teste).
+  **A allowlist não afrouxa o aceite:** em todos os 5 componentes existe **uma única** violação tolerada — `heading-order`
+  (impacto **`moderate`**) no `ProductDetailDialog` (`:170`), do `<h4>` do `SectionCard` sob o `<h2>` do dialog.
+  **Nenhuma violação `serious` ou `critical` é tolerada em componente nenhum.**
+  **Prova:** `bunx vitest run …/CT67_a11y.test.tsx` → **6 passed (6)**, exit 0 — os 5 casos de aceite + 1 caso de controle
+  que prova que o matcher **não é decorativo** (um botão sem nome acessível **falha**).
+  **Comentários corrigidos (só texto, zero lógica de teste):** o bloco de "dívida conhecida" afirmava que 3 achados
+  `button-name` (`critical`) seguiam ativos e que os casos de `ProductDetailDialog`/`SendProductDialog` ficavam
+  "VERMELHOS de propósito" — **desatualizado**: o PR #1500 pagou os 3 `button-name` (`aria-label` em
+  `ProductDetailDialog.tsx:204` e `SendProductDialog.tsx:571`) e os casos estão **verdes** hoje.
 - [x] **CT-68** — `aria-live` para contagem de resultados e progresso de envio; foco visível (`--ring`) em cards,
   chips, thumbs, radios; `Esc` fecha e o foco volta ao gatilho. **Aceite:** teste RTL de foco.
   **✅ FEITO — 01/10/2026.** (a) **Anúncio da contagem:** `ExternalProductCatalog.tsx:499` virou região viva
@@ -613,7 +628,13 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 - [ ] **CT-73** — Payload de `list_products compact` medido (< 30 KB por página de 24) — se passar, cortar campos.
   **Aceite:** medição em `PERF.md`.
 - [ ] **CT-74** — Lighthouse perf ≥ 90 na view em 4G; CLS < 0,05. **Aceite:** relatório em `PERF.md`.
-- [x] **CT-75** — Bundle: `vite build --report`; inicial ≤ 336 KB (não regredir o #443). **Aceite:** número em `PERF.md`.
+- [x] **CT-75** — Bundle: `vite build --report`; inicial ≤ **341 KB** — o **teto vivo** do CI
+  (`performance-budget.json:3-5`), é o que o `scripts/ci/bundle-budget.mjs` checa. **Aceite:** número em `PERF.md`.
+  **Correção do enunciado — 02/10/2026:** este texto dizia `≤ 336 KB (não regredir o #443)` e isso **não era budget**:
+  336 KB é a **medição de 2026-09-29** (`docs/catalogo/AUDITORIA_CATALOGO_2026-09-29.md:111`, etapa E40) que foi
+  promovida a "teto" por engano. O teto real subiu para **341 KB em 01/10/2026** por um motivo de **outro módulo**
+  (gate de microfone do T17 — `initial-js` medido 340,2 KB, 0,2 KB acima do teto anterior de 340; está na `description`
+  do próprio `performance-budget.json`). Contra ele, os **336,3 KB** medidos pelo catálogo deixam **4,7 KB de folga**.
   - ⚠️ **Correção de 01/10 (pós-CI):** a medição antes registrada (4098,7 KB / OK) era de uma árvore **intermediária** e estava errada. Números verdadeiros, medidos com o mesmo ambiente do CI: **4091,3 KB** antes do CT-71 (passa, folga de 8,7 KB) e **4101,2 KB** com o CT-71 (**estoura 1,1 KB** contra o teto de 4100 KB do `total-assets`). O custo do CT-71 é **+9,9 KB de overhead estrutural de split** (zero código novo, zero duplicação — o mesmo código passando a viver em 7 streams de gzip). Cortes dentro do catálogo somam no máximo 0,45 KB. **O check obrigatório 🏗️ Build do CI está vermelho por isso** e a saída depende de decisão do Joaquim.
   **✅ FEITO — 01/10/2026, com 1 ressalva de número.** Medido com `bun run build` (exit 0) +
   `node scripts/ci/bundle-budget.mjs` (exit 0): **JS inicial = 336,3 KB gzip** em 13 chunks; CSS inicial 40,0 KB
@@ -626,8 +647,9 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   `catalogShared.tsx:453`: "estourou o budget de 350 KB no PR #415"). E os limites são **gzip**, enquanto o log do Vite
   imprime **raw** (`reportCompressedSize: false`, `vite.config.ts:45`) — comparar log com budget compara unidades
   diferentes.
-  **Ressalva honesta:** contra o teto do plano, 336,3 > 336 → **0,3 KB acima** do baseline do #443 (contra o limite
-  vivo, 4,7 KB de folga; gate verde). Não é regressão deste bloco: o chunk de **entrada** foi de
+  **Ressalva de número (corrigida em 02/10/2026):** contra o **teto vivo** a etapa é **cumprida com folga** — 336,3 ≤ 341,
+  **4,7 KB** livres, gate verde. O que havia era **confusão de referência** (o 336 era medição de 29/09, não teto), o que
+  fazia a etapa parecer 0,3 KB acima de um limite que nunca foi budget. **Não houve regressão neste bloco:** o chunk de **entrada** foi de
   `203,56 kB` para `203,65 kB` raw (**+0,09 kB**, o custo dos wrappers `lazy()/Suspense`) e os modais nunca estiveram
   no grafo inicial — o corte mexeu no **quando** o código baixa, não no tamanho do inicial. O gzip do inicial *antes*
   não foi remedido (`dist/` é sobrescrito a cada build e `git worktree` é bloqueado pelo guard do ambiente); o delta
@@ -686,13 +708,63 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   buscável no catálogo PromoGifts (sistema EXTERNO) — por isso **não** é fixado cego: é parametrizado por env
   (`E2E_CATALOG_PRODUCT_SKU`) e acompanhado de `E2E_CATALOG_PRODUCT_SKU_VERIFIED` (default `false`); o spec do CT-82
   deve degradar com aviso até a verificação. Nenhum id foi inventado.
+  **Tentativa de verificação do produto — 02/10/2026 (somente leitura; 4 caminhos testados, nenhum serviu):**
+  (1) tabela `products` do banco **canônico** do Zapp → existe, mas é de **outro domínio** (`id` uuid, `retailer_id`,
+  `whatsapp_connection_id`) e **não** contém `PO-13153` (busca por `sku` e por `name` = **0 linhas**);
+  (2) gateway de leitura `task-gifts` → **não expõe** o RPC `mcp_exec` (HTTP 404 / `PGRST202`), inutilizável daqui;
+  (3) credenciais `~/.secrets/taskgifts_*` → apontam para o projeto `awzhgfmqwddzgbqzqusc`, cujo **ref não aparece em
+  nenhum arquivo do repo** do Zapp → **identidade não provada**, por isso **não consultei** (não uso credencial de projeto
+  que não consigo identificar);
+  (4) container local `supabase_db_Promo_Brindes_Premium_V1` (porta 54322) → **não tem tabela de produto**, não é o catálogo.
+  **Conclusão:** o catálogo é o projeto **externo** "Catálogo de Produtos"; a própria
+  `docs/security/secret-surface-inventory.md:43,151` marca `PROMOGIFTS_*` como **"owner a confirmar"**, e as credenciais só
+  existem em **GitHub Actions secrets + env da Edge**. **Não existe caminho de leitura local**, então o SKU **não** foi
+  confirmado — e o fixture segue parametrizado (`E2E_CATALOG_PRODUCT_SKU_VERIFIED=false`), como deve ser.
+  **Como fechar (1 comando, por quem tem a chave):** `curl -s "$PROMOGIFTS_SUPABASE_URL/rest/v1/products?select=id,name&id=eq.PO-13153" -H "apikey: $PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY"` — resposta não vazia confirma; aí o fixture pode fixar o SKU e virar `VERIFIED=true`.
 - [ ] **CT-82** — `e2e/catalog.spec.ts`: login → `?view=catalog` → busca → card → detalhes → cor → Enviar → fotos →
   Informal → contato E2E → Enviar agora → toast; asserts em `messages`/`catalog_send_events` via API; limpeza
   (`is_deleted`). Habilitado no `e2e-logado.yml`; verificar antes que o usuário de teste enxerga a view. **Aceite:**
   verde nos 3 browsers.
-- [ ] **CT-83** — `CatalogHelpSheet.tsx`: "Como usar o catálogo" (5 passos com prints reais) + tour de 4 dicas
+  **◐ PARCIAL — 02/10/2026: o spec existe e está habilitado; a prova de VERDE não foi obtida (e não pode ser aqui).**
+  **Entregue:** `e2e/catalog.spec.ts` com o fluxo completo — login por `storageState` → `?view=catalog` → busca pelo SKU →
+  card → detalhes → cor → envio → fotos → modelo Informal → contato E2E → toast — mais **asserts por API**
+  (`catalog_send_events` com `status: 'sent'`/`product_sku`/`contact_id`/`template`; `messages` pelo marcador de fixture)
+  e **limpeza** (soft delete `is_deleted` em `messages`; o log de envios é append-only e é limpo no teardown do workflow
+  com a service role). Seletores sempre por acessibilidade (role/label/placeholder), nenhum por classe.
+  **A CI separa por `--project`, não por nome de arquivo:** o `ci.yml` (sem login) roda 4 projects cujos `testMatch` não
+  casam `catalog.spec.ts` — provado por `--list`: **0 ocorrências** do arquivo naquele conjunto. No `e2e-logado.yml` ele
+  é coletado **exatamente 3 vezes** (chromium pelo catch-all `chromium-authenticated` + os 2 projects novos
+  `firefox-catalog`/`webkit-catalog` em `playwright.config.ts`), sem execução dupla — o que importa porque o teste envia
+  mensagem real.
+  **O que NÃO foi provado (motivo de manter `[ ]`):** (a) o **verde nos 3 browsers** — exige sessão autenticada real;
+  (b) nenhum caminho de UI foi exercitado, os seletores vieram da leitura do `src`; (c) a limpeza não rodou contra o
+  banco. Enquanto `E2E_CATALOG_PRODUCT_SKU_VERIFIED=false` (produto ainda **não** confirmado no PromoGifts — ver CT-81)
+  o spec **pula com mensagem explícita**: provado `1 skipped`, exit 0, e **não** pula quando a var é `true`.
+  **Marcar `[x]` aqui seria prova falsa:** o aceite é "verde nos 3 browsers", e ele só existe depois de (1) o SKU ser
+  verificado e (2) o workflow logado rodar na `main`.
+- [x] **CT-83** — `CatalogHelpSheet.tsx`: "Como usar o catálogo" (5 passos com prints reais) + tour de 4 dicas
   (`localStorage catalog.tourDone`). **Aceite:** teste RTL; só na 1ª visita.
-- [ ] **CT-84** — Link "Ajuda" no header do módulo e no dialog do chat. **Aceite:** teste RTL.
+  **✅ FEITO (o aceite foi cumprido; o enunciado tem 1 desvio) — entregue no PR #1534.** `src/components/catalog/CatalogHelpSheet.tsx`
+  (Sheet do shadcn com "Como usar o catálogo") traz os **5 passos do fluxo real de envio** e o **tour de 4 dicas** com
+  navegação Anterior/Próxima/Concluir/Pular; a chave é `CATALOG_TOUR_DONE_KEY` (`CatalogHelpSheet.tsx:31`) com leitura
+  guardada para SSR/armazenamento indisponível (`:36-44`) e gravação silenciosa (`:49-56`). **Aceite coberto:**
+  `src/components/catalog/__tests__/CT83_84_helpSheet.test.tsx` — **5 casos** (1ª visita mostra "Dica 1 de 4"; concluir
+  grava a chave e fecha o tour; pular também grava; remontar com a chave marcada **não** reabre; `localStorage` lançando
+  não quebra) — todos verdes.
+  **Desvio declarado (não maquiar):** os 5 passos estão em **texto**, **sem os "prints reais"** do enunciado. Os prints em
+  `docs/catalogo/screens/` são **mocks de 11/09/2026** e capturar os reais exige browser logado — por isso **nenhuma
+  imagem foi commitada** (nada de placeholder falso). Essa metade segue aberta junto com o CT-66.
+- [x] **CT-84** — Link "Ajuda" no header do módulo e no dialog do chat. **Aceite:** teste RTL.
+  **✅ FEITO (o aceite foi cumprido; 1 dos 2 pontos de entrada do enunciado não foi feito) — PR #1534.** Gatilho "Ajuda"
+  (variant `outline`, ícone `HelpCircle` com `aria-hidden` e rótulo acessível) no header da tela de gestão do catálogo:
+  import em `ExternalProductManagement.tsx:54-55`, estado `helpOpen` em `:315`, botão em `:766`, render do sheet em
+  `:1054`. **Aceite coberto:** teste RTL que clica em `button` com nome `/Ajuda/` e asserta o sheet aberto —
+  `src/components/catalog/__tests__/ExternalProductManagement.test.tsx:597` (describe "CT-84: ajuda do catálogo no header").
+  **Não foi feito:** o ponto de entrada "no dialog do chat" — o catálogo do chat é montado por
+  `src/components/inbox/chat/**` e `ContactDetailPanel.tsx`, fora do escopo autorizado daquela tarefa. Fica registrado como
+  pendência, não como feito.
+  **Armadilha evitada:** a "**Ajuda dos Universitários**" (`ChatPanelHeader.tsx:149`, `ChatToolPanels.tsx:52`,
+  `ChatHeaderToolbar.tsx:66`) é **outra feature** e **não** foi usada como prova desta etapa.
 - [x] **CT-85** — Textos revisados (acentuação, "Qtd. mínima", "dias úteis") — lista em `PARIDADE.md`. **Aceite:** lista.
   **✅ FEITO — 02/10/2026.** Seção "Textos revisados (CT-85)" em `PARIDADE.md` com a tabela `texto × arquivo:linha ×
   resultado`. **Nenhuma correção foi necessária** — os textos já estavam corretos (`ProductDetailDialog.tsx:435` "Qtd.

@@ -13,22 +13,21 @@
  * NÃO-sérias (`moderate`/`minor`) também é pinado por componente: nada fica
  * escondido e uma moderada nova quebra o teste (ver `NAO_SERIAS`).
  *
- * ── DÍVIDA CONHECIDA (NÃO é do CT-67; NÃO foi escondida) ───────────────────
- * Na data deste teste, 3 achados `button-name` (**impacto `critical`**) e 1
- * `heading-order` (`moderate`) existem nos componentes e são dívida das
- * tarefas irmãs do MESMO bloco H:
- *   • `ProductDetailDialog` — as thumbs da galeria (`ProductDetailDialog.tsx`
- *     ~L196) são `<button>` com `<img alt="">` e sem `aria-label` → CT-69
- *     ("alt descritivo (nome + cor) em todas as imagens"). 2 nós.
- *   • `SendProductDialog` — o trigger do split-button (`SendProductDialog.tsx`
- *     L563) é `<Button><ChevronDown/></Button>` sem `aria-label` → CT-68
- *     ("`aria-label` em todo ícone-botão"). 1 nó.
+ * ── DÍVIDA CONHECIDA (NÃO é do CT-67) ──────────────────────────────────────
+ * Os 3 achados `button-name` (**impacto `critical`**) que existiam quando este
+ * teste foi escrito JÁ FORAM PAGOS pelo PR #1500 (bloco H — CT-68/CT-69):
+ *   • `ProductDetailDialog` — as thumbs da galeria ganharam
+ *     `aria-label="Ver imagem N de M"` (`ProductDetailDialog.tsx:204`); o
+ *     `<img alt="">` CONTINUA vazio, é decorativo. 2 nós.
+ *   • `SendProductDialog` — o trigger do split-button ganhou
+ *     `aria-label="Mais ações de envio"` (`SendProductDialog.tsx:571`). 1 nó.
+ * Com isso os casos de `ProductDetailDialog` e `SendProductDialog` ficam
+ * VERDES hoje. Resta 1 achado NÃO-sério, pinado na allowlist `NAO_SERIAS`
+ * abaixo (nada escondido):
  *   • `ProductDetailDialog` — `SectionCard` usa `<h4>` sob o título `<h2>` do
  *     dialog → `heading-order` (`moderate`).
- * Enquanto essas duas tarefas não landarem, os casos de `ProductDetailDialog`
- * e `SendProductDialog` ficam VERMELHOS de propósito — este arquivo é a prova
- * executável da dívida. Nenhuma regra foi desabilitada: consertar os
- * componentes é escopo do CT-68/CT-69 (outro executor), não deste teste.
+ * Nenhuma regra foi desabilitada: a varredura séria do CT-67 roda sobre os
+ * componentes reais e o inventário não-sério é afirmado por igualdade.
  *
  * ── Mocks ─────────────────────────────────────────────────────────────────
  * Os mesmos padrões dos testes vizinhos (`*.test.tsx`) — nenhuma infra nova.
@@ -157,8 +156,8 @@ const SERIOUS = new Set(['critical', 'serious']);
 /**
  * Inventário pinado das violações NÃO-sérias (`moderate`/`minor`) por
  * componente. Nada é escondido: se uma moderada nova aparecer — ou se uma
- * conhecida sumir (ex.: quando o CT-68/CT-69 landar) — o teste quebra e o
- * inventário tem de ser atualizado à mão.
+ * conhecida sumir (por ex. ao corrigir o cabeçalho do `SectionCard`) — o teste
+ * quebra e o inventário tem de ser atualizado à mão.
  *   • `ProductDetailDialog`: `heading-order` (1 nó, `moderate`) — `<h4>` do
  *     `SectionCard` sob o `<h2>` do título do dialog (pula o `h3`).
  *   • `ContactSelectionStep`: nenhuma. O `region` que a varredura acusava era

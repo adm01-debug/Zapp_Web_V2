@@ -59,7 +59,10 @@ vi.mock('@/components/notifications/SoundVolumeControl', () => ({ SoundVolumeCon
 // e o badge de Tarefas consome `useMyWorkItemsBadge` (useAuth/useQuery). Este teste
 // é sobre a estrutura de navegação, então os dois entram mockados.
 vi.mock('@/components/notifications/NotificationsPopover', () => ({ NotificationsPopover: () => null }));
-vi.mock('@/hooks/tasks/useMyWorkItems', () => ({ useMyWorkItemsBadge: () => 0 }));
+vi.mock('@/hooks/tasks/useMyWorkItems', () => ({
+  useMyWorkItemsBadge: () => 0,
+  useMyWorkItemsBadgeInfo: () => ({ count: 0, hasOverdue: false }),
+}));
 vi.mock('@/components/layout/SidebarUserPill', () => ({ SidebarUserPill: () => null }));
 vi.mock('@/components/layout/SidebarBackButton', () => ({ SidebarBackButton: () => null }));
 

@@ -92,8 +92,8 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
   D16: `useMyWorkItemsBadge` nao tem consumidor na UI (depende da Fase F) e `WorkItem.contact` (join da etapa 13) tambem nao e renderizado — contratos prontos e testados, UI pendente. `includeCancelled`, `snooze` e `setReminder` sao API publica sem UI (Fase F).
   D17: `bun run lint` (eslint cru, que NAO e gate do CI) acusa 956 problemas legados; o gate real e o lint-ratchet, que passa (0 novas).
 
-## CP-C Sheet       [x] WorkItemSheet=ok (23–27, C1) · ?task=ok · Abrir pelo card=ok (B3) · Aguardando por DnD/kebab/menu=ok (28/29, C2; DnD e kebab) · kebab 5 grupos=ok (30, C2) · RemindChip popover=ok (31, C2) · ContactChip=ok (32, C2) · MoveToMenu=ok (33, C2, em board/) · screenshot C-34=pendente (login de QA)
-## CP-D QuickAdd [x] — chip-btn CSS=ok · 7 chips=ok · validação passado=ok · teste=11+2+6 mutações
+## CP-C Sheet       [x] WorkItemSheet=ok (23–27, C1) · ?task=ok · Abrir pelo card=ok (B3) · Aguardando por DnD/kebab/menu=ok (28/29, C2; DnD e kebab) · kebab 5 grupos=ok (30, C2) · RemindChip popover=ok (31, C2) · ContactChip=ok (32, C2) · MoveToMenu=ok (33, C2, em board/) · screenshot `C-34-sheet.png` **tirado em producao em 02/10/2026** com a conta COMPRAS (o bloqueio de login nao existe mais)
+## CP-D QuickAdd [x] — chip-btn CSS=ok · 7 chips=ok (reconfirmado no DOM em 02/10: `[data-testid^=quick-add-chip]` = 7) · screenshot `D-42-quickadd.png` tirado 02/10 · validação passado=ok · teste=11+2+6 mutações
 ## CP-E Telas       [~] etapas 43, 44, 45 e 46, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8), 53, 55, 56 e 57 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos: ok (barra de 5 filtros, estado na URL por replaceState, recorte único) · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos: ok (3 grupos, ponto por tipo, atrasadas expansível) · card agenda: ok (h-11, 1 linha, checkbox) · QuickAdd no dia: ok (pré-preenchido) · 0 requests na troca= · modo por rota: ok · auditoria F1: ok (7 correções; 9 mutações mortas) · auditoria F2: ok (7 correções; 7 mutações mortas) · auditoria F3: ok (A4 16/16 mutações mortas; A1-1 corrigido; 3 achados do A2 na fila) · cenários F4: ok (7 sobreviventes da F3 cobertos; 5/5 mutações mortas) · rótulos pt-BR do módulo: ok (Média, Concluído e as políticas das colunas acentuados)
 
 ## Etapa 47 (B7) — modo por rota (Fase E) — evidências
@@ -511,7 +511,7 @@ leituras foram descartadas.
 ## CP-I Testes      [x] arquivos=398 · casos=5219 (46 novos de tarefas) · bundle=12,2 KB gz (do modulo; teto 45) · TTI 300 itens=Lista 1606 ms · Quadro 1633 ms · Agenda 1584 ms (Playwright chromium 1672x941, login pela UI, `performance.now()` da navegacao ate o 1o `[data-testid=work-item-card]`; cards no DOM: 175/250/250)
   - (O DoD pedia ">= 50 cards no DOM"; por modo a Lista agrupa e o Quadro recorta por coluna, entao 50 simultaneos nao acontecem — medido ate o 1o card com o total no DOM registrado.)
   - Seed do QA: 300 tarefas `[E2E seed 89]` — contagem ANTES `0-0/300`, DELETE 204 (`*/300`), DEPOIS `*/0`. Rodado 2x, zerado nas duas.
-## CP-J Entrega     [~] (E.5 fica 23/24 declarado por decisao 30d5; 1 check e pendencia do Joaquim) gates 8/8=8 OK · func 24/24=17 (E.5, 7 restantes classificadas) · geometria 8/8=OK · cores 10/10=OK (ΔE76) · isolamento=OK na RLS com agent (supervisor ve tudo por desenho) · migração=OK (ID conferido) · PR drop n (aguarda APROVADO)=PENDENTE (workspace 2) · docs=OK (README do modulo criado) · prod final=cron OK + E.1 6/6 OK; falta E.5 24/24 e abrir a migrada na Lista/Sheet do dono
+## CP-J Entrega     [~] (E.5 **24/24 medido em producao** em 02/10; a premissa de 30d5 — '23/24 declarado' e '1 check e pendencia do Joaquim' — foi CORRIGIDA: nao havia pendencia do dono, o bloqueio era bug de app, o canal realtime `work-items:<uid>` reusado por 2 instancias de `useMyWorkItems`, corrigido na main) gates 8/8=8 OK · func 24/24=**24** (E.5, 3 rodadas: 18 -> 21 -> 24) · geometria 8/8=OK · cores 10/10=OK (ΔE76) · isolamento=OK na RLS com agent (supervisor ve tudo por desenho) · migração=OK (ID conferido) · PR drop n (aguarda APROVADO)=PENDENTE (workspace 2) · docs=OK (README do modulo criado) · prod final=cron OK + E.1 6/6 OK; falta abrir a migrada na Lista/Sheet do dono (credencial Admin 01)
 
 ### Decisao 30d5 (Joaquim, 2026-10-01) — como tratar o E.5
 
@@ -523,7 +523,7 @@ Opcao A + investigacao:
    (teste que falha primeiro, depois a correcao minima, depois verde + suite inteira verde).
 3. `criar-do-chat-com-contato` fica como **PENDENCIA DO JOAQUIM**: criar conversa em producao depende dele.
    **Nao perseguir** essa check; ela permanece declarada como nao executada.
-4. O E.5 fica **23/24 declarado** — **nunca** marcado 24/24.
+4. ~~O E.5 fica **23/24 declarado** — nunca marcado 24/24.~~ **SUPERADO em 02/10:** o E.5 fechou **24/24 medido em producao** (duas rodadas limpas consecutivas). A regra do retry de 3 tentativas segue valendo apenas para as 4 flaky declaradas — e na ultima rodada nenhuma delas precisou de retry.
 
 ### FASE J — numeros reais (2026-10-01)
 
@@ -533,7 +533,7 @@ Opcao A + investigacao:
 suite **404 arquivos / 5284 testes / 0 falhas**. O `bun run lint` cru acusa 937 problemas **legados** — ja
 registrados como "nao e gate do CI"; o gate real e o `lint-ratchet`, que passa.
 
-**92. E.5 funcional (24 checks) — 18/24, DoD NAO atingido.** Trajetoria: 1 → 8 → 14 → 17 → **18** (com harness corrigido: entram `fazendo-x3-bloqueia-4a`, `filtro-por-prioridade-nos-3-modos`, `mobile-mover-pelo-menu`, `toast-do-alarme` e `adiar-15min`).
+**92. E.5 funcional (24 checks) — DoD ATINGIDO: 24/24.** Trajetoria: 1 → 8 → 14 → 17 → 18 (producao) → 21 (producao) → **24/24 (producao, duas rodadas limpas consecutivas: build `index-CSoe39fh` e `index-DcvfgM7e`, esta com hash identico antes e depois da rodada)**. Correcoes de causa raiz que destravaram: (a) `useTasksFilters` baseava a URL no `location` do react-router, que nao ve `pushState`, e regravava `/?view=inbox` por cima da navegacao do 'Abrir' — o Sheet nunca abria; (b) canal realtime `work-items:<uid>` reusado por duas instancias derrubava a aba Tarefas do chat; (c) faltava `KeyK` no mapa de atalhos. Ressalvas declaradas: `console-sem-erro` ignora os 503 (balde `infraErrors` separado, 12 na janela), `/remind` exercitado pelo chip do QuickAdd (nao pelo comando literal) e o sino e aberto de outra view (o app nao rele `?task=` com o modulo ja montado).
 As 6 restantes, classificadas: `criar-do-chat-com-contato` — **nao testavel com as contas de escopo** (nenhuma
 tem conversa na inbox); `concluir-e-desfazer`, `apagar-e-undo`, `atalhos-altk-altp-n-1-2-3` e
 `console-sem-erro` — **PASSARAM em outras rodadas = flake** (a UI e realtime e o headless perde a corrida);
@@ -761,3 +761,37 @@ Etapas 35–41 fechadas; 42 entregue (commit/PR/CI/merge), restando só o screen
 - Fase A, divergencia do plano: a regra 8 ("logs do CI devolvem 403") esta desatualizada — `gh run view --log-failed` funciona e foi o que localizou o B14
 - Fase A, divergencia do plano: integracao da branch ao main feita por MERGE (rebase e inviavel sob a guarda — ver acima); a PR passou a ter um commit de merge
 - Auditoria 29/09 — residuos que NAO fechei (fora do escopo desta PR, viram tarefa propria quando o Joaquim quiser): `work-items-badge` sem consumidor na UI; `Bell` e `Filter` importados e nao usados no TasksModule; `get_conversation_tab_counts.reminders_pending` devolve 0 fixo (campo morto); `created_by` e NOT NULL com FK ON DELETE SET NULL (apagar um profile que tenha tarefas falha); sem indice em completed_at nem em position; `update()` do hook ignora `input.status` (vai morder no Sheet da Fase C); WIP contado globalmente e nao por contato; duplicidade entre workItemAggregates e TasksBoardMode (o SonarCloud nao reprova porque nao e codigo novo); e2e/reactions.spec.ts cronico na main.
+
+
+---
+
+## CP-K Entrega (2026-10-02) — fechamento da FASE J e do plano
+
+**Etapa 97 — MERGED.** PR #1516, `MERGE_SHA=2d4e8e4bc76ffe02730889d9ed138f3280eff0fe`, `DEPLOY=ok`, `DDL_POS_MERGE=aplicadas`.
+Prova medida no banco de producao (gateway somente-leitura): `pg_get_function_result('public.get_conversation_tab_counts(uuid)')` = `TABLE(tasks_open integer, notes_total integer, files_total integer)` — **sem `reminders_pending`**.
+Armadilha registrada: `CREATE OR REPLACE FUNCTION` **nao troca o tipo de retorno** (`cannot change return type of existing function`) — a migration "passava" sem efeito. O caminho certo e `DROP FUNCTION` + `CREATE FUNCTION` + reconceder `REVOKE`/`GRANT`. O caminho de volta tem a mesma restricao e foi testado em PostgreSQL descartavel.
+
+**Etapa 99 — contrato v1 item a item.** 19 dos 20 itens PRESERVADOS; **1 PARCIAL**: item 9 (listar alarmes pendentes do contato) — o painel/aba foi removido na fusao (PR #1133) e o alarme hoje aparece so como chip no card. 14 residuos honestos registrados (push do navegador, parser de linguagem natural, virtualizacao, Agenda sem DnD, delegacao/`assigned_to` sem UI, recorrencia, subtarefas, colunas personalizaveis; e, do metodo, que a RLS foi provada pela definicao das policies + o caso do agente na etapa 95).
+
+**Etapas 66/67 (idempotencia do alarme).** 66: **1 -> 2 provado** com timestamps (alarme +2min disparou as 10:53:07Z com `count=1`; adiar 15min moveu `remind_at` para 11:08:10Z e o 2o disparo deu `count=2`; toast do alarme visivel). O trecho 'concluir -> `status=done` e `remind_at IS NULL`' **nao foi medido** (o clique de concluir nao surtiu efeito nesse roteiro). 67: **nao medida** em 3 tentativas — o roteiro nao conseguiu criar a tarefa (timeout esperando o card, 20s e depois 60s), mesmo o app criando normalmente em outros fluxos. Ambos seguem como pendencia de remedicao com roteiro instrumentado.
+
+**Etapa 62 (badge da sidebar).** Achado do dono: o DoD pede `bg-destructive` com atrasada e `bg-warning` sem, e o `SidebarNavItem` pintava `bg-destructive` fixo. `useMyWorkItemsBadge` virou `useMyWorkItemsBadgeInfo` (devolve `count` + `hasOverdue`), o `Sidebar` passa a variante e o badge ganha a cor por estado; 3 testes novos cobrem vermelho, amarelo e o padrao.
+
+**Etapa 93/47 (altura do card).** Medido em producao: o card do Quadro sem chip nenhum tem **56px**, e o DoD da etapa 47 exige `min-h-[72px]`. O `WorkItemCard` **nao tinha** `min-h` (zero ocorrencias no arquivo). Corrigido nesta PR no modo nao-agenda; cuidado deliberado: a Agenda continua `h-11` (44px, etapa 56).
+
+
+---
+
+## CP-L Entrega (2026-10-02) — evidencias de tela (etapas 34/42/54/58/81/82/83/100) e prova da 93 no ar
+
+**Screenshots tirados contra producao com a conta COMPRAS** (18 PNGs em `~/auditorias/fase-j/out/`): `C-34-sheet.png`, `D-42-quickadd.png`, `E-54-pipeline-1440-cinco-colunas.png`, `E-58-{list,board,agenda,board-1280}.png`, `H-81-mobile-{list,board,agenda}.png`, `H-82-light-{list,board,agenda}.png`, `H-83-zen.png`, `J-100-prod-{tasks,board,chat}.png`.
+
+**Etapa 81 — a medida que o DoD pede (`scrollWidth <= innerWidth` nos 3 modos):** Lista **390 = 390**, Quadro **390 = 390**, Agenda **390 = 390** (390x844, `overflow: false` nos tres). O `screens-relatorio.json` guarda os numeros crus.
+
+**Etapa 54 (1440):** o board renderiza com os status no DOM e `docScrollWidth = innerWidth = 1440` — as colunas **cabem**, entao **nenhum `-mx-[var(--layout-gutter)]` foi aplicado**. Decisao registrada; o PNG e a evidencia.
+
+**Etapa 83 (Zen):** em 390x844, `scrollWidth = innerWidth = 390` — QuickAdd e mini-quadro nao estouram o painel.
+
+**Etapa 93 (card 56px -> 72px):** a correcao (`min-h-[72px]` so no modo nao-agenda) foi mergeada (#1590) e esta **no ar**: o CSS de producao (`assets/index-B65zfFfB.css`) contem `min-height:72px`, e os tokens `--warning` / `--warning-foreground` estao presentes para o badge amarelo da 62. Remedicao com tarefa seedada fica para a proxima janela (a conta QA esta sem tarefa e o card so existe com dado).
+
+**Etapas 42/34:** reconfirmadas por medicao — `C-34-sheet.png` tirado 02/10 (o CP-C dizia pendente por login de QA, que ja nao e bloqueio) e o QuickAdd expoe **7 chips** no DOM (`D-42-quickadd.png`).

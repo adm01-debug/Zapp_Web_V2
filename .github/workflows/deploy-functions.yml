@@ -197,7 +197,7 @@ jobs:
           if (claims.ref !== expected || claims.role !== 'service_role') throw new Error('Identidade da chave CRM invalida');
           console.log('OK: endpoint e identidade service_role do CRM comprovados.');
           NODE
-            STATUS=$(curl --silent --show-error --output /tmp/crm-preflight.json --write-out '%{http_code}' \
+            STATUS=$(curl --proto '=https' --tlsv1.2 --silent --show-error --output /tmp/crm-preflight.json --write-out '%{http_code}' \
               --connect-timeout 10 --max-time 30 \
               "$EXTERNAL_SUPABASE_URL/rest/v1/rpc/get_contact_360_by_phone" \
               -H 'Content-Type: application/json' \
@@ -219,7 +219,7 @@ jobs:
               exit 1
             fi
             echo "Validando acesso server-side minimo ao catalogo"
-            STATUS=$(curl --silent --output /tmp/promogifts-preflight.json --write-out '%{http_code}' \
+            STATUS=$(curl --proto '=https' --tlsv1.2 --silent --output /tmp/promogifts-preflight.json --write-out '%{http_code}' \
               "$PROMOGIFTS_SUPABASE_URL/rest/v1/products?select=id&limit=1" \
               -H "apikey: $PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" \
               -H "Authorization: Bearer $PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY")

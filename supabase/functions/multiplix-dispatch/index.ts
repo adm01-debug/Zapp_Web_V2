@@ -33,6 +33,7 @@ import { handleBlocksDelete, handleBlocksReorder, handleBlocksUpsert } from './a
 import { handleAudienceSelect } from './actions/audience.ts';
 import { handleEligibilitySummary, handleEstimate, handlePreview, handleValidate } from './actions/inspect.ts';
 import { handleConfirm, handleStatus } from './actions/lifecycle.ts';
+import { handleDispatchList, handleRecipientsList } from './actions/listing.ts';
 
 // F44: escopo do usuario. O dispatch e do DONO (created_by) ou de quem tem a
 // permissao ampla — mesma regra que o F06 aplicou no `multiplix-send`, para a
@@ -241,6 +242,9 @@ const HANDLERS: Record<string, Handler> = {
   // F51/F52
   'confirm': handleConfirm,
   'status': handleStatus,
+  // Leitura de listagem: dono do disparo OU `multiplix.dispatch.manage_all`.
+  'dispatch.list': handleDispatchList,
+  'recipients.list': handleRecipientsList,
 };
 
 /** Nenhuma acao do Bloco E fica pendente apos a ligacao acima. */

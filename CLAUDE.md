@@ -422,8 +422,17 @@ com outra migration real. Regras:
 
 ## graphify
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
-- For codebase questions: `graphify query "<question>"` when graph.json exists.
-- After modifying code: `graphify update .` to keep graph current.
+- For codebase questions: `graphify query "<question>"` when graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code: `graphify update .` to keep graph current (AST-only, no API cost).
+
+Instalação por clone (Linux, macOS ou WSL; precisa de `uv` ou `pipx`), depois do `bun install`: `bun run graph:setup`
+(`scripts/graphify/setup.sh`). Instala `graphifyy[sql]` com versão fixada (o pacote oficial no
+PyPI tem dois "y"; o comando é `graphify`), gera `.husky/post-commit` e `.husky/post-checkout`
+(rebuild do grafo em background) e roda o primeiro `graphify update .`. `graphify-out/` (~50 MB)
+e os dois hooks do husky ficam no `.gitignore`: cada clone gera os seus, porque os hooks gravam o
+caminho do Python da máquina. Os hooks do Claude Code em `.claude/settings.json` chamam
+`graphify hook-guard` pelo PATH e não fazem nada onde o graphify não estiver instalado.
 
 ## Frescura do Grafo
 ```sh
@@ -475,3 +484,12 @@ Módulo em desenvolvimento ativo. **Plano vigente:** `docs/talkx/PLANO_TALKX_V4_
 - `search_contacts(..., include_legacy boolean DEFAULT false)` e `contacts_count_by_type(include_legacy boolean DEFAULT false)` aplicam o critério quando `include_legacy` é falso (migration `20260930450000`).
 - O front só envia `include_legacy: true` quando o toggle "Mostrar legados" está ligado (`localStorage` `contact-show-legacy`); `useContactsKpi(includeLegacy)` repete o filtro para KPI Total == aba "Todos".
 - Mudar o critério = mudar os três juntos (migration + `CONTACT_VISIBLE_PHONE_PATTERN` em `src/hooks/crm/contactsAggregates.ts` + `scripts/db-audit/contacts-legacy-visibility.test.sh`).
+
+## Issues de alerta — política de comentários excessivos de bot (2026-10-02, E51)
+
+Issues com > 20 comentários de bot (ex.: `types-sync`, `db-live-guard`) acumulam ruído sem
+valor — comentários individuais não podem ter labels removidas e a issue fica ilegível.
+**Quando uma issue de alerta superar 20 comentários de bot: fechar a issue existente com
+comentário-resumo e abrir uma nova limpa** (mesmo título + link para a anterior). O
+`db-live-guard` já tem dedupe de 6 h (E44); o `types-sync` ganhará dedupe em E20.
+Referência: issue #888 (`[types-sync]`, 89 comentários), fechada em 2026-10-01.

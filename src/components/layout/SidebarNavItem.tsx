@@ -17,12 +17,14 @@ interface SidebarNavItemProps {
   currentView: string;
   onViewChange: (v: string) => void;
   badge?: number;
+  /** Cor do badge: vermelho quando ha atrasada, amarelo quando so ha aviso disparado (etapa 62). */
+  badgeVariant?: 'destructive' | 'warning';
   collapsed?: boolean;
   onToggleFavorite?: (id: string) => void;
   isFavorite?: boolean;
 }
 
-export const SidebarNavItem = React.memo(function SidebarNavItem({ item, currentView, onViewChange, badge, collapsed = true, onToggleFavorite, isFavorite }: SidebarNavItemProps) {
+export const SidebarNavItem = React.memo(function SidebarNavItem({ item, currentView, onViewChange, badge, badgeVariant = 'destructive', collapsed = true, onToggleFavorite, isFavorite }: SidebarNavItemProps) {
   const Icon = item.icon;
   const isActive = currentView === item.id;
   const shortcut = item.shortcut;
@@ -103,7 +105,10 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
       {badgeCount != null && badgeCount > 0 && (
         <span
           className={cn(
-            'z-20 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center leading-none shadow-sm animate-scale-in',
+            'z-20 min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-bold flex items-center justify-center leading-none shadow-sm animate-scale-in',
+            badgeVariant === 'warning'
+              ? 'bg-warning text-warning-foreground'
+              : 'bg-destructive text-destructive-foreground',
             collapsed ? 'absolute -top-0.5 -right-0.5' : 'relative',
             !collapsed && !onToggleFavorite && !shortcut && 'ml-auto'
           )}
