@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const [sender, linkFn, sharedValidation, linksMigration, idorMigration, caseInsensitiveMigration, talkxShared, contactService, campaignWizard, wizardDelivery, messagingPersonalize] = await Promise.all([
+const [sender, linkFn, sharedValidation, linksMigration, idorMigration, caseInsensitiveMigration, talkxShared, contactService, campaignWizard, wizardDelivery, messagingPersonalize, recipientProcessor] = await Promise.all([
   readFile(new URL('../../supabase/functions/talkx-send/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/talkx-link/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/_shared/validation.ts', import.meta.url), 'utf8'),
@@ -16,6 +16,9 @@ const [sender, linkFn, sharedValidation, linksMigration, idorMigration, caseInse
   // Bloco D / F37: `personalize()` saiu do `talkx-send` e passou a morar no kernel
   // compartilhado — a garantia do `hasOwnProperty` mudou de arquivo, nao deixou de existir.
   readFile(new URL('../../supabase/functions/_shared/messaging/personalize.ts', import.meta.url), 'utf8'),
+  // X011: o corpo por-destinatário (onde o `personalize` real é chamado com o
+  // trackingUrl) saiu de index.ts para process-recipient.ts.
+  readFile(new URL('../../supabase/functions/talkx-send/process-recipient.ts', import.meta.url), 'utf8'),
 ]);
 
 test('Talk X {{link}} resolves to a real per-recipient tracking URL at the real send call site', () => {
@@ -28,8 +31,8 @@ test('Talk X {{link}} resolves to a real per-recipient tracking URL at the real 
   assert.match(sender, /order\("created_at", \{ ascending: true \}\)/);
   assert.match(sender, /const trackingUrlFor = \(recipientId: string\)/);
   assert.match(sender, /functions\/v1\/talkx-link\?s=\$\{encodeURIComponent\(trackingLink\.slug\)\}&r=\$\{encodeURIComponent\(recipientId\)\}/);
-  const realCallIdx = sender.indexOf('?? personalize(');
-  const trackingArgIdx = sender.indexOf('trackingUrlFor(recipient.id as string)');
+  const realCallIdx = recipientProcessor.indexOf('?? personalize(');
+  const trackingArgIdx = recipientProcessor.indexOf('trackingUrlFor(recipient.id as string)');
   assert.ok(realCallIdx > -1 && trackingArgIdx > -1, 'o call site real de personalize() e o argumento trackingUrlFor devem existir');
   assert.ok(trackingArgIdx > realCallIdx && trackingArgIdx - realCallIdx < 300, 'trackingUrlFor deve ser o argumento do call site real (nao do preview de teste)');
 });

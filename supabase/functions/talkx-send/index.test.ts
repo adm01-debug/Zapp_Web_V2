@@ -5,6 +5,8 @@ import {
   makeDispatchDeps, makeTestActionDeps,
   setDispatchEnv, setDispatchEnvGo,
   mockGlobalFetch, mockGlobalFetchGo, makeDispatchPost,
+  TEST_CRON_SECRET, installFakeClock,
+  makeContinueRecipients, makeContinueDeps, mockProviderRecording,
 } from './_test-utils.ts';
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -486,4 +488,176 @@ Deno.test("retry: destinatário suprimido → success:false reason:suppressed", 
   const res = await handleTalkxSend(req, deps);
   const body = await res.json();
   assert(body.success === false && body.reason === "suppressed", `esperado suppressed, recebido: ${JSON.stringify(body)}`);
+});
+
+// ---------------------------------------------------------------------------
+// X011 — ação continue: passadas em lote com orçamento de tempo e lease.
+// ---------------------------------------------------------------------------
+// O relógio falso faz cada `sleep(interval)` avançar o relógio, então o
+// orçamento (TALKX_BATCH_BUDGET_MS) é exercitado sem espera real. Com
+// send_interval=1000ms e typing_delay_max=0, cada destinatário custa 1s:
+// orçamento de 44000ms (25000 de folga mínima + 19s) deixa passar EXATAMENTE
+// um lote de 20 por invocação.
+
+type ProviderPost = { url: string; body: Record<string, unknown> };
+const phoneOf = (p: ProviderPost): string => String(p.body?.number ?? "");
+const messagePosts = (posts: ProviderPost[]): ProviderPost[] => posts.filter((p) => p.url.includes("/message/"));
+
+Deno.test("X011 continue: 45 destinatários em lote de 20 → três invocações enviam 45, sem id repetido", async () => {
+  setDispatchEnv();
+  const clock = installFakeClock(1_700_000_000_000);
+  const recipients = makeContinueRecipients(45);
+  const { deps, ctx } = makeContinueDeps({ recipients, clock, cronSecret: TEST_CRON_SECRET });
+  const provider = mockProviderRecording();
+  Deno.env.set("TALKX_BATCH_BUDGET_MS", "44000");
+  try {
+    const perInvocation: number[] = [];
+    const hasMore: boolean[] = [];
+    let previous = 0;
+    for (let i = 0; i < 3; i++) {
+      const res = await handleTalkxSend(
+        makePost({ cronSecret: TEST_CRON_SECRET, body: { action: "continue", campaignId: CAMPAIGN_ID } }),
+        deps,
+      );
+      assert(res.status === 200, `invocação ${i + 1}: esperado 200, recebido ${res.status}`);
+      const body = await res.json();
+      const total = messagePosts(provider.posts).length;
+      perInvocation.push(total - previous);
+      previous = total;
+      hasMore.push(body.has_more === true);
+    }
+    assert(
+      perInvocation.join(",") === "20,20,5",
+      `esperado um lote de 20 por invocação (20,20,5), recebido ${perInvocation.join(",")}`,
+    );
+    const phones = messagePosts(provider.posts).map(phoneOf);
+    assert(phones.length === 45, `esperado 45 envios, recebido ${phones.length}`);
+    assert(new Set(phones).size === 45, "nenhum destinatário pode ser enviado duas vezes ao provedor");
+    assert(
+      hasMore.join(",") === "true,true,false",
+      `has_more esperado true,true,false — recebido ${hasMore.join(",")}`,
+    );
+    assert(ctx.completeDrainedCalls === 1, `complete_talkx_campaign_if_drained deveria rodar 1x (fila drenada), rodou ${ctx.completeDrainedCalls}`);
+    assert(ctx.releaseWorkerCalls === 3, `o lease deveria ser solto em cada invocação, foi ${ctx.releaseWorkerCalls}x`);
+  } finally {
+    provider.restore();
+    clock.restore();
+    Deno.env.delete("TALKX_BATCH_BUDGET_MS");
+  }
+});
+
+Deno.test("X011 continue: orçamento estourado → has_more:true e complete_talkx_campaign_if_drained não é chamada", async () => {
+  setDispatchEnv();
+  const clock = installFakeClock(1_700_000_000_000);
+  const recipients = makeContinueRecipients(45);
+  const { deps, ctx } = makeContinueDeps({ recipients, clock, cronSecret: TEST_CRON_SECRET });
+  const provider = mockProviderRecording();
+  Deno.env.set("TALKX_BATCH_BUDGET_MS", "1");
+  try {
+    const res = await handleTalkxSend(
+      makePost({ cronSecret: TEST_CRON_SECRET, body: { action: "continue", campaignId: CAMPAIGN_ID } }),
+      deps,
+    );
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const body = await res.json();
+    assert(body.has_more === true, `esperado has_more:true, recebido ${JSON.stringify(body)}`);
+    assert(body.processed === 0, `nenhum destinatário deveria ser processado, processed=${body.processed}`);
+    assert(ctx.completeDrainedCalls === 0, "complete_talkx_campaign_if_drained NÃO pode rodar quando o orçamento estoura");
+    assert(messagePosts(provider.posts).length === 0, "nenhum POST de mensagem com o orçamento estourado");
+    assert(ctx.claimWorkerCalls === 1, "a campanha deveria ter sido reivindicada");
+  } finally {
+    provider.restore();
+    clock.restore();
+    Deno.env.delete("TALKX_BATCH_BUDGET_MS");
+  }
+});
+
+Deno.test("X011 continue: destinatário com retry_after vencido só é enviado na invocação seguinte", async () => {
+  setDispatchEnv();
+  const clock = installFakeClock(1_700_000_000_000);
+  const future = new Date(clock.now() + 60_000).toISOString();
+  const recipients = makeContinueRecipients(2, { retryAfter: (i) => (i === 1 ? future : null) });
+  const { deps } = makeContinueDeps({ recipients, clock, cronSecret: TEST_CRON_SECRET });
+  const provider = mockProviderRecording();
+  try {
+    const res1 = await handleTalkxSend(
+      makePost({ cronSecret: TEST_CRON_SECRET, body: { action: "continue", campaignId: CAMPAIGN_ID } }),
+      deps,
+    );
+    assert(res1.status === 200, `1ª invocação: esperado 200, recebido ${res1.status}`);
+    const body1 = await res1.json();
+    assert(body1.processed === 1, `1ª invocação deveria processar 1 (o reagendado ainda não venceu), processou ${body1.processed}`);
+    assert(messagePosts(provider.posts).length === 1, `1ª invocação deveria POSTar 1x, POSTou ${messagePosts(provider.posts).length}`);
+    const primeiroPhone = phoneOf(messagePosts(provider.posts)[0]);
+
+    // O relógio avança além do retry_after: na invocação seguinte ele é elegível.
+    clock.advance(61_000);
+    const res2 = await handleTalkxSend(
+      makePost({ cronSecret: TEST_CRON_SECRET, body: { action: "continue", campaignId: CAMPAIGN_ID } }),
+      deps,
+    );
+    assert(res2.status === 200, `2ª invocação: esperado 200, recebido ${res2.status}`);
+    const body2 = await res2.json();
+    assert(body2.processed === 1, `2ª invocação deveria processar o reagendado, processou ${body2.processed}`);
+    const phones = messagePosts(provider.posts).map(phoneOf);
+    assert(phones.length === 2, `esperado 2 envios no total, recebido ${phones.length}`);
+    const expectedSecond = String(recipients[1].contact_phone).replace(/\D/g, "");
+    assert(
+      primeiroPhone !== expectedSecond && phones[1] === expectedSecond,
+      `o reagendado só podia sair na 2ª invocação: phones=${JSON.stringify(phones)}`,
+    );
+  } finally {
+    provider.restore();
+    clock.restore();
+  }
+});
+
+Deno.test("X011 continue: segunda invocação com lease vivo faz 0 POST", async () => {
+  setDispatchEnv();
+  const clock = installFakeClock(1_700_000_000_000);
+  const recipients = makeContinueRecipients(3);
+  // 1ª chamada reivindica o lease; a 2ª encontra o lease vivo de outro worker.
+  const { deps } = makeContinueDeps({ recipients, clock, cronSecret: TEST_CRON_SECRET, claimWorker: (call) => call === 1 });
+  const provider = mockProviderRecording();
+  try {
+    const res1 = await handleTalkxSend(
+      makePost({ cronSecret: TEST_CRON_SECRET, body: { action: "continue", campaignId: CAMPAIGN_ID } }),
+      deps,
+    );
+    assert(res1.status === 200, `1ª invocação: esperado 200, recebido ${res1.status}`);
+    await res1.json();
+    const afterFirst = messagePosts(provider.posts).length;
+    assert(afterFirst === 3, `1ª invocação deveria enviar os 3, enviou ${afterFirst}`);
+
+    const res2 = await handleTalkxSend(
+      makePost({ cronSecret: TEST_CRON_SECRET, body: { action: "continue", campaignId: CAMPAIGN_ID } }),
+      deps,
+    );
+    assert(res2.status === 200, `2ª invocação: esperado 200, recebido ${res2.status}`);
+    const body2 = await res2.json();
+    assert(body2.skipped === "worker_alive", `esperado skipped:'worker_alive', recebido ${JSON.stringify(body2)}`);
+    assert(body2.processed === 0, `sem lease não há processamento, processed=${body2.processed}`);
+    assert(
+      messagePosts(provider.posts).length === afterFirst,
+      "com o lease vivo nenhum POST ao provedor pode sair",
+    );
+  } finally {
+    provider.restore();
+    clock.restore();
+  }
+});
+
+Deno.test("X011 continue: JWT de admin → 403 (só service key ou x-cron-secret dirigem a fila)", async () => {
+  setDispatchEnv();
+  const req = makePost({
+    bearer: "eyJvalid.admin.token.xx",
+    body: { action: "continue", campaignId: CAMPAIGN_ID },
+  });
+  const res = await handleTalkxSend(req, mockDeps({
+    authUser: { id: "user-admin-001" },
+    roleData: { role: "admin" },
+  }));
+  assert(res.status === 403, `esperado 403, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.error === "Forbidden", `body inesperado: ${JSON.stringify(body)}`);
 });

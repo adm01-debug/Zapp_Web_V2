@@ -9,6 +9,9 @@ const outcomeCounterMigration = await readFile(new URL('../../supabase/migration
 const receiptMigration = await readFile(new URL('../../supabase/migrations/20260912110000_harden_talkx_delivery_receipts.sql', import.meta.url), 'utf8');
 const messageSnapshotMigration = await readFile(new URL('../../supabase/migrations/20260912120000_snapshot_talkx_recipient_messages.sql', import.meta.url), 'utf8');
 const edgeFunction = await readFile(new URL('../../supabase/functions/talkx-send/index.ts', import.meta.url), 'utf8');
+// X011: o corpo por-destinatário (claim/leitura de estado do provedor/envio/
+// conclusão/marca de dispatch) saiu de index.ts para process-recipient.ts.
+const recipientProcessor = await readFile(new URL('../../supabase/functions/talkx-send/process-recipient.ts', import.meta.url), 'utf8');
 
 test('Talk X leases are service-role-only and fence claim completion', () => {
   assert.match(migration, /FOR UPDATE OF recipient SKIP LOCKED/i);
@@ -20,20 +23,20 @@ test('Talk X leases are service-role-only and fence claim completion', () => {
 });
 
 test('talkx-send claims before touching the provider and completes with its lease token', () => {
-  const claim = edgeFunction.lastIndexOf('claim_talkx_recipient');
-  const provider = edgeFunction.lastIndexOf('/message/sendText/');
-  const completion = edgeFunction.lastIndexOf('complete_talkx_recipient');
+  const claim = recipientProcessor.lastIndexOf('claim_talkx_recipient');
+  const provider = recipientProcessor.lastIndexOf('/message/sendText/');
+  const completion = recipientProcessor.lastIndexOf('complete_talkx_recipient');
   assert.ok(claim >= 0 && provider >= 0 && claim < provider, 'claim must precede provider send');
   assert.ok(completion > provider, 'completion must follow provider send');
-  assert.match(edgeFunction, /p_claim_token:\s*claim\.claim_token/);
+  assert.match(recipientProcessor, /p_claim_token:\s*claim\.claim_token/);
   assert.match(edgeFunction, /transition_talkx_campaign/);
   assert.doesNotMatch(edgeFunction, /\.update\(\{ status: newStatus \}\)/);
   assert.match(edgeFunction, /campaignAction !== "start"/);
   assert.match(edgeFunction, /complete_talkx_campaign_if_drained/);
-  assert.match(edgeFunction, /p_status:\s*"outcome_unknown"/);
-  assert.match(edgeFunction, /talkx_recipient_quarantine_failed/);
+  assert.match(recipientProcessor, /p_status:\s*"outcome_unknown"/);
+  assert.match(recipientProcessor, /talkx_recipient_quarantine_failed/);
   assert.match(edgeFunction, /liveTalkXInstanceId/);
-  assert.match(edgeFunction, /talkx_connection_state_lookup_failed/);
+  assert.match(recipientProcessor, /talkx_connection_state_lookup_failed/);
   assert.doesNotMatch(edgeFunction, /fetchWithRetry/);
 });
 
@@ -71,12 +74,12 @@ test('Talk X persists provider receipts and delivery acknowledgements atomically
   assert.match(receiptMigration, /whatsapp_connection_id = p_connection_id/i);
   assert.match(receiptMigration, /REVOKE ALL ON FUNCTION public\.record_talkx_recipient_sent[\s\S]*FROM PUBLIC, anon, authenticated/i);
   assert.match(receiptMigration, /GRANT EXECUTE ON FUNCTION public\.record_talkx_recipient_delivered[\s\S]*TO service_role/i);
-  assert.match(edgeFunction, /mark_talkx_recipient_dispatch_started/);
-  assert.match(edgeFunction, /record_talkx_recipient_sent/);
-  const typingDelay = edgeFunction.indexOf('await sleep(typingDelay)');
-  const recheck = edgeFunction.indexOf('await isRecipientSuppressed', typingDelay);
-  const connectionRecheck = edgeFunction.indexOf('beforeSendConnection', typingDelay);
-  const dispatchMark = edgeFunction.indexOf('mark_talkx_recipient_dispatch_started', recheck);
+  assert.match(recipientProcessor, /mark_talkx_recipient_dispatch_started/);
+  assert.match(recipientProcessor, /record_talkx_recipient_sent/);
+  const typingDelay = recipientProcessor.indexOf('await sleep(typingDelay)');
+  const recheck = recipientProcessor.indexOf('await isRecipientSuppressed', typingDelay);
+  const connectionRecheck = recipientProcessor.indexOf('beforeSendConnection', typingDelay);
+  const dispatchMark = recipientProcessor.indexOf('mark_talkx_recipient_dispatch_started', recheck);
   assert.ok(typingDelay >= 0 && connectionRecheck > typingDelay && recheck > connectionRecheck && dispatchMark > recheck, 'connection and suppression must be rechecked after typing and before the provider dispatch marker');
 });
 
@@ -98,10 +101,10 @@ test('Talk X snapshots the exact A/B message before a provider dispatch', () => 
   assert.match(messageSnapshotMigration, /REVOKE ALL ON FUNCTION public\.persist_talkx_recipient_message_snapshot[\s\S]*FROM PUBLIC, anon, authenticated/i);
   assert.match(messageSnapshotMigration, /GRANT EXECUTE ON FUNCTION public\.persist_talkx_recipient_message_snapshot[\s\S]*TO service_role/i);
 
-  const snapshot = edgeFunction.indexOf('persist_talkx_recipient_message_snapshot');
-  const dispatchMark = edgeFunction.indexOf('mark_talkx_recipient_dispatch_started', snapshot);
-  const provider = edgeFunction.indexOf('/message/sendText/', snapshot);
+  const snapshot = recipientProcessor.indexOf('persist_talkx_recipient_message_snapshot');
+  const dispatchMark = recipientProcessor.indexOf('mark_talkx_recipient_dispatch_started', snapshot);
+  const provider = recipientProcessor.indexOf('/message/sendText/', snapshot);
   assert.ok(snapshot >= 0 && dispatchMark > snapshot && provider > dispatchMark, 'the immutable recipient snapshot must precede the dispatch marker and provider POST');
-  assert.match(edgeFunction, /talkx_variant_snapshot_source_unavailable/);
-  assert.match(edgeFunction, /talkx_invalid_persisted_media_snapshot/);
+  assert.match(recipientProcessor, /talkx_variant_snapshot_source_unavailable/);
+  assert.match(recipientProcessor, /talkx_invalid_persisted_media_snapshot/);
 });
