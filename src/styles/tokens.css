@@ -129,7 +129,12 @@
 
     /* ===== MUTED ===== */
     --muted: 221 15% 92%;
-    --muted-foreground: 221 10% 45%;
+    /* E62 (combobox de endereços): o texto secundário sobre o destaque de busca
+       (`<mark>` = hsl(var(--warning)/0.35)) num popover branco dava 3,89:1 em
+       L45. Só a luminosidade desce até 40 → 4,67:1 (mesma matiz/saturação 221 10%;
+       L41 fica em 4,50 exato, abaixo do limiar). Espelhar em presets.ts, que
+       escreve esta var inline. */
+    --muted-foreground: 221 10% 40%;
 
     /* ===== ACCENT ===== */
     --accent: 221 55% 95%;

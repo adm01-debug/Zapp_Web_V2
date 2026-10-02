@@ -446,7 +446,15 @@ A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`)
 
 ### E62 · Contraste no tema claro/escuro/alto contraste
 1. Lista usa só `--popover`, `--border`, `--muted`, `--inbox-panel-bg` (lição de UI de 25/09 no CLAUDE.md); medir contraste do texto secundário e do `<mark>` nos 3 temas (≥ 4,5:1).
-**Checklist:** [ ] 3 temas medidos · [ ] números no doc
+**Checklist:** [x] 3 temas medidos · [x] números no doc
+
+**Fechada em 2026-10-02.** A medição achou UM par abaixo de 4,5:1 — o mark da linha de endereço no tema claro, em 3,89:1 — porque ali o destaque herda o texto secundário. Corrigido PELO TOKEN, não pelo componente: --muted-foreground do tema claro desceu de luminosidade 45% para 40% (mesmo matiz e saturação), o menor passo inteiro que passa: L41 ficaria em 4,495:1, abaixo do limiar. O espelho inline do token em presets.ts foi ajustado junto, senão os dois ficariam em desacordo.
+
+Números medidos, por tema (texto secundário | mark do nome | mark do endereço, sobre o popover da lista): claro 6,10 | 13,00 | 4,67 · escuro 9,32 | 9,55 | 5,27 · alto contraste 12,63 | 16,07 | 9,67 · alto contraste escuro 12,12 | 11,42 | 7,11. Tudo acima de 4,5:1.
+
+O mark não estava em SuggestionList.tsx: vem de chat/HighlightedText.tsx, que a lista usa nas duas linhas. A prova é o script reprodutível scripts/qa/contraste-combobox.mjs --check (0 pares abaixo do limiar) e o caso novo no contrato de contraste do repo, tests/contracts/contraste-aa-componentes.contract.test.ts — que já existia e foi ESTENDIDO, em vez de criar um segundo cálculo de WCAG. Mutação: revertendo o token, o caso do mark no claro cai com 3,87:1.
+
+**Limite declarado:** as razões vêm dos tokens (a mesma régua do repo), não de pixel renderizado; e a descida de L45 para L40 afeta todo uso de text-muted-foreground no tema claro — só escurece, e os 872 testes de contrato do repo seguem verdes.
 
 ### E63 · Redução de movimento
 1. Skeleton e countdown respeitam `prefers-reduced-motion`.
