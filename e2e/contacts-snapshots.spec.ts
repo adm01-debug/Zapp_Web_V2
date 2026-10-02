@@ -116,8 +116,10 @@ for (const tema of ['light', 'dark'] as const) {
         );
 
         const baseline = arquivoDaBaseline(vista.nome, tema);
+        // `--update-snapshots` liga 'changed' (ou 'all'); o padrão 'missing' não conta como geração deliberada.
+        const gerandoBaseline = testInfo.config.updateSnapshots === 'all' || testInfo.config.updateSnapshots === 'changed';
         test.skip(
-          !existsSync(baseline),
+          !existsSync(baseline) && !gerandoBaseline,
           `baseline ${path.relative(process.cwd(), baseline)} ausente — a etapa 90 exige os PNGs ` +
             'versionados. Gere uma vez, em Linux, com E2E_TEST_EMAIL/E2E_TEST_PASSWORD definidas: ' +
             '`bun run test:e2e -- --project=setup --project=chromium-authenticated --update-snapshots`.',
