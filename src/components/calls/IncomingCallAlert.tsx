@@ -9,6 +9,7 @@ import { CallChannelBadge } from './CallChannelBadge';
 import { useCallChannels } from '@/hooks/calls/useCallChannels';
 import { ROTULO_IGNORAR_WHATSAPP } from '@/lib/calls/WhatsAppCallAdapter';
 import { deveTocar, proximoToque, type EstadoDeToque } from '@/lib/calls/toqueDaChamada';
+import { useTerminoRemoto } from '@/hooks/calls/useTerminoRemoto';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 import { useCallSession } from '@/providers/CallSessionProvider';
 import { cn } from '@/lib/utils';
@@ -37,6 +38,9 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
   // O componente não escreve mais direto na tabela `calls` (legado `useCalls`).
   const { accept, reject } = useCallSession();
   const { voip, whatsapp } = useCallChannels();
+  // T28: quando o outro lado desliga, a linha em `calls` encerra a sessao e o alerta
+  // sai de cena sozinho (o listener para de entrega-la).
+  useTerminoRemoto(incomingCall?.callId);
   const [showDialog, setShowDialog] = useState(false);
   // O canal vem do próprio chamado: quem chega com `whatsapp_connection_id` é WhatsApp;
   // sem ele, a linha é a do VoIP.
