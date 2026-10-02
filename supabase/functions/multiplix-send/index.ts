@@ -622,7 +622,14 @@ export async function handleMultiplixSend(
                 fileName: prepared.fileName,
               }
               : { kind: "text", to: phone, instanceId: beforeSendInstanceId, text: personalizedMsg },
-            { fetch: (u, o) => fetch(u, o), evolutionUrl, evolutionKey, signal: abortCtrl.signal },
+            {
+              fetch: (u, o) => fetch(u, o),
+              evolutionUrl,
+              evolutionKey,
+              // O adaptador nao le env (roda tambem fora do Deno); a edge resolve e passa.
+              flavor: (Deno.env.get("EVOLUTION_API_FLAVOR") ?? "go") === "v2" ? "v2" : "go",
+              signal: abortCtrl.signal,
+            },
           );
           clearTimeout(sendTimeout);
 

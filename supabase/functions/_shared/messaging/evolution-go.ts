@@ -228,7 +228,10 @@ export async function send(item: SendItem, deps: SendDeps): Promise<SendResult> 
   // (evolution-send, evolution-api-proxy, effect-reconcile, evolution-sync-actions).
   // Sem isto, um ambiente em v2 teria a rota traduzida para GO sem ninguem pedir —
   // e o envio mudaria de endpoint so porque passou pelo adaptador.
-  const flavor = deps.flavor ?? ((Deno.env.get("EVOLUTION_API_FLAVOR") ?? "go") === "v2" ? "v2" : "go");
+  // Sem Deno.env aqui de proposito: este modulo tambem e carregado pelos contract tests
+  // em Node (tests/contracts/messaging-adapter.contract.test.ts), onde 'Deno' nao existe.
+  // Quem resolve a env e o chamador (edge) e passa por deps.flavor; o default e "go".
+  const flavor = deps.flavor ?? "go";
   const go: GoRoute | null = flavor !== "v2"
     ? translateV2ToGo(plan.v2Path, "POST", plan.v2Body)
     : { path: plan.v2Path, method: "POST", body: plan.v2Body, auth: "instance" };
