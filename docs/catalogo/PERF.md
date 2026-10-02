@@ -512,3 +512,53 @@ que causava o shift.
 
 **Pendente:** a re-medição do CLS em produção **depois do deploy** desta correção (o número
 esperado é CLS próximo de 0; o desempenho geral exige mais que isso — ver a medição acima).
+
+## CT-19 / CT-94 — rate limit medido em produção (2026-10-02): NÃO está ativo
+
+**Aceite do CT-19:** *61 chamadas de `bootstrap` em 1 min → 429; 100 de `list_products` → 200.*
+**Aceite do CT-94:** *rate limit testado em produção (61 × `bootstrap` → 429) e a UI de CT-59 reage. Aceite: print.*
+
+Método: sessão autenticada real, reusando o **mesmo cabeçalho** que o app manda para a edge
+(`https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/promogifts-catalog`), lido da requisição do
+próprio app. As 61 chamadas foram disparadas **em paralelo** — o primeiro teste, sequencial, levava
+mais que a janela de 60 s e o resultado seria artefato meu.
+
+```console
+CT-19 | 61 bootstrap em paralelo em 8290 ms: 429=0 | distintos=[200]
+CT-19 | list_products 1..100: distintos=[200]
+CT-94 | UI depois do 429: []
+```
+
+Leitura: **o limite não é aplicado em produção** — 61 chamadas dentro da janela e **nenhuma** resposta
+429. O "100 de `list_products` → 200" do aceite é verdade de forma trivial justamente porque não há
+limite: não é evidência de que o limite funcione. A UI também não reage (não há 429 para reagir), logo
+o print do CT-94 é impossível enquanto o deploy não acontecer.
+
+O próprio item já registrava a causa: *"falta o deploy da edge, que o próprio aceite exige"*. O deploy
+de edge só acontece pelo `hermes-tarefa-mergear` e só para função **alterada** — o código do CT-19
+está mergeado e inalterado desde então, então nunca foi publicado. **Não contornei esse caminho.**
+
+## CT-64 — filtro "Novidades" (2026-10-02): medido, aceite NÃO comprovado
+
+**Aceite do CT-64:** *contagem bate com `new_30d` do stats.*
+
+Medido na tela autenticada de produção:
+
+```console
+CT-64 | KPIs na tela: Produtos no total 7.746 | Categorias 27 | Fornecedores 4 | Em estoque 6.115 | Em destaque 2.147 | Novidades 364
+CT-64 | chip de estado: "Mostrando só Novidades · limpar"
+CT-64 | total da edge com o filtro aplicado: null
+```
+
+- O número do stats está confirmado na tela: **Novidades = 364**.
+- Clicar no KPI **aplica** o filtro (o chip de estado do CT-65 aparece com o texto exato).
+- A **contagem do filtro não pôde ser lida**: o contador da grade não é um `data-testid` simples (o
+  "7.746" vem do subtítulo, não do resultado filtrado) e a resposta da edge ao aplicar o chip não traz
+  nenhum campo de total (`total`, `count`, `total_count`, `totalCount`, `returned`).
+- Os nomes que o plano usa — `new_or_recent` na edge e `new_30d` no stats — **não existem** no código
+  (`rg` não acha nenhum dos dois em `supabase/functions/promogifts-catalog/index.ts` nem em
+  `src/hooks/integrations/useExternalCatalog.ts`). Ou seja: o aceite pede comparar duas coisas que o
+  código não nomeia assim.
+
+**Sem a contagem do filtro, o aceite ("bate com") não pode ser afirmado** — fica declarado como não
+comprovado, com tudo o que foi medido acima.
