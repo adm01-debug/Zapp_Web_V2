@@ -75,6 +75,42 @@ Sem telefone de empresa, Compras alcança 1 em cada 9 fornecedores.
 
 ---
 
+## D5 (F59, 2026-10-02) — Elegibilidade recalculada no disparo; dead letter consultável por função
+
+**Contexto.** O plano (F59) pedia três coisas: recalcular elegibilidade no momento do disparo,
+registrar a política neste ADR e tornar o dead letter do Multiplix consultável "no monitor".
+
+**Decisão (aprovada pelo dono em 02/10/2026).**
+
+1. **No disparo, recalcula-se a ELEGIBILIDADE — não o público.** Supressão (opt-out), conexão da
+   instância e escopo de empresa são reavaliados com o estado do **momento do envio**. O **público
+   não é re-resolvido**: quem estava no disparo continua no disparo. Um opt-out que chega **depois**
+   do agendamento faz o destinatário ser suprimido na hora (não recebe), mas **não** o remove da
+   lista — o disparo nunca muda de destinatários sozinho entre o agendamento e a hora de sair.
+   Onde isso já vive: supressão é conferida no claim do item e de novo antes do POST (F09);
+   conexão é validada no disparo; escopo é decidido na edge pelo JWT e aplicado dentro da RPC (E015).
+
+2. **Dead letter é consultável por função operacional, sem tela nova.** O dono decidiu: expor por
+   RPC com RLS de admin em vez de construir painel.
+
+**Correção de premissa (medida antes de implementar).** O plano descrevia o dead letter como
+`status='failed_permanent'`, e o código devolvia a ação `dead_lettered` — **nenhum dos dois é o
+estado do item**. O enum `multiplix_item_status` é
+`(pending, sending, sent, delivered, read, failed, failed_transient, skipped, cancelled,
+outcome_unknown)`. O dead letter é o **par**: `status='failed'` **e** `next_attempt_at IS NULL`
+(é isso que `reschedule_multiplix_item` grava quando `attempt_count >= 3`; `dead_lettered` é o nome
+da **ação** devolvida, não do estado). Consultar por `failed_permanent` acharia **zero linha para
+sempre** — o operador veria "nada" e concluiria que não há falha, que é o pior desfecho possível.
+Um item `failed` **com** `next_attempt_at` marcado é falha transitória e **não** entra na lista:
+misturar os dois faria o operador tratar como perdido algo que o sistema ainda vai retentar.
+
+**Superfície.** `list_multiplix_dead_letters(p_limit, p_dispatch_id)` e
+`count_multiplix_dead_letters(p_dispatch_id)` devolvem item/dispatch, motivo (`error_class`,
+`error_message`), quando (`updated_at`), tentativas, bloco e o destino **mascarado** (só os 4
+últimos dígitos: diagnóstico não precisa do contato inteiro). O gate de admin/supervisor está
+**dentro** da função — `GRANT` é para `authenticated`, e sem essa checagem qualquer usuário logado
+leria falhas de entrega de qualquer disparo. Não há `anon`. `p_limit` tem teto de 500.
+
 ## Reconciliação com o ADR-007 curto (F19, 2026-09-29)
 
 O `ADR-007-multiplix-ponte-singu.md` (escrito no Portão F0) divergia deste em três pontos. Ele passa a **Superseded by** este arquivo, e as três decisões finais são, para não sobrar dúvida na leitura de quem chega agora:
