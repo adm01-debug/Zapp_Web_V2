@@ -550,7 +550,13 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 **Arquivos:** `.github/workflows/ci.yml`
 1. Job `mutation-mapa` `continue-on-error: true`, roda só quando `src/lib/mapbox*` ou `location-picker/**` mudam (`paths` filter).
 2. Não vira required check (não travar merges).
-**Checklist:** [ ] job · [ ] não required
+**Checklist:** [x] job · [x] não required
+
+**Fechada em 2026-10-02.** Job mutation-mapa no FIM da lista do ci.yml (62 inserções, 0 deleções — nenhum job existente tocado), com continue-on-error e needs de lint-and-typecheck. actionlint exit 0; pins conferidos; o comando do job rodado localmente (5/6 mortos, exit 0).
+
+**Descoberta que define a etapa:** GitHub Actions **não aceita paths por job** — a chave só existe no gatilho, e usá-la lá restringiria TODOS os jobs do ci.yml. O filtro foi feito em passo (git diff --name-only contra a base + grep), que é a alternativa prevista na auditoria interna do repo. Consequência declarada: o job aparece como check em todo PR, mas só roda quando os caminhos casam; nos outros ele é pulado e termina verde.
+
+**Não required:** o check gerado é “Mutação do mapa (não bloqueante)”. Não foi adicionado a branch protection (proibido mexer), e o PR confirma que ele não está entre os obrigatórios.
 
 ### E71 · E2E: picker de localização (flag on)
 **Arquivos:** `e2e/location-picker.spec.ts` (novo), `e2e/README.md`
