@@ -1,3 +1,4 @@
+-- rollback: DROP POLICY IF EXISTS "authenticated_read_talkx_settings" ON public.talkx_settings;
 -- E93 · talkx_settings + RLS audit
 
 CREATE TABLE IF NOT EXISTS public.talkx_settings (
