@@ -219,6 +219,9 @@ migration "20260930560000_f17b_f17c_conexao_unica_e_cota.sql"
 # (20261001261230); entra por ultimo na ordem de version. E ela que liga o FORCE
 # RLS das duas tabelas que a assercao F02 (linha ~236) passa a exigir.
 migration "20261001261230_f35_multiplix_audiences.sql"
+# F59: a dead letter do Multiplix fica consultavel por funcao (admin/supervisor). A
+# ORDEM importa: a f35 e a version mais alta do fixture, entao a f59 entra depois.
+migration "20261002651230_f59_dead_letters_consultavel.sql"
 
 # A revogacao da escrita direta em multiplix_recipients (F08, segunda metade) so
 # existe depois que a edge que cria o disparo esta DEPLOYADA — ela entra no PR de
@@ -465,6 +468,109 @@ depois="$(psql_test -Atqc "SELECT extract(epoch FROM lease_until)::int FROM publ
 intruso="$(psql_test -Atqc "$service_session SELECT public.heartbeat_multiplix_item('$o3','00000000-0000-0000-0000-0000000000ff'::uuid,180);" 2>&1 || true)"
 [[ "$intruso" == 'f' ]] \
   || fail "F55.1: heartbeat com claim_token de OUTRO dono foi aceito (veio: $intruso)"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# F59: dead letter consultavel (admin), recalculo de elegibilidade no disparo
+# ══════════════════════════════════════════════════════════════════════════════
+# is_admin_or_supervisor(auth.uid()) le public.user_roles: o admin do teste precisa estar la.
+# Como superusuario: service_role nao tem GRANT em user_roles (nem deve — e tabela de papel).
+psql_test >/dev/null <<SQL
+INSERT INTO public.user_roles (user_id, role) VALUES
+  ('10000000-0000-0000-0000-000000000001', 'admin')
+ON CONFLICT DO NOTHING;
+SQL
+# F59: a supressao (opt-out) vive em talkx_blacklist, que o fixture nao criava — a
+# consulta de elegibilidade depende dela, entao ela entra com as colunas que
+# talkx_recipient_is_suppressed realmente le (phone normalizado, removed_at, expires_at).
+psql_test >/dev/null <<SQL
+CREATE TABLE IF NOT EXISTS public.talkx_blacklist (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  contact_id uuid,
+  phone text,
+  reason text,
+  removed_at timestamp with time zone,
+  expires_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now()
+);
+GRANT ALL ON public.talkx_blacklist TO service_role;
+SQL
+
+admin_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='10000000-0000-0000-0000-000000000001';"
+nao_admin_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='10000000-0000-0000-0000-0000000000ee';"
+
+# (F59.1) Um item levado a dead letter aparece na consulta, com motivo e quando.
+# NAO existe status 'dead_lettered' (nem 'failed_permanent', que o plano citava): o enum
+# tem 'failed', e o reschedule marca failed + next_attempt_at=NULL ao esgotar as
+# tentativas, devolvendo a ACAO 'dead_lettered'. O dead letter e esse PAR.
+psql_test >/dev/null <<SQL
+$service_session
+UPDATE public.multiplix_delivery_items
+   SET status = 'failed',
+       next_attempt_at = NULL,
+       attempt_count = 3,
+       error_class = 'provider_4xx',
+       error_message = 'numero inexistente no WhatsApp',
+       updated_at = statement_timestamp()
+ WHERE id = '$o1';
+SQL
+linha="$(psql_test -Atqc "$admin_session SELECT item_id || '|' || error_class || '|' || error_message || '|' || (failed_at IS NOT NULL)::text || '|' || (dispatch_id IS NOT NULL)::text || '|' || coalesce(block_order::text,'-') FROM public.list_multiplix_dead_letters(50, NULL);" 2>&1 || true)"
+[[ "$linha" == "$o1|provider_4xx|numero inexistente no WhatsApp|true|true|0" ]] \
+  || fail "F59.1: dead letter nao saiu na consulta como esperado (veio: $linha)"
+
+# O motivo e o QUANDO sao obrigatorios no diagnostico: um dead letter sem motivo nao
+# permite ao operador decidir nada — e sem isso a consulta nao serve para nada.
+motivo_vazio="$(psql_test -Atqc "$admin_session SELECT count(*) FROM public.list_multiplix_dead_letters(50, NULL) WHERE failed_at IS NULL OR coalesce(error_message,'') = '';" 2>&1 || true)"
+[[ "$motivo_vazio" == "0" ]] \
+  || fail "F59.1: $motivo_vazio dead letter(s) sem motivo ou sem data — consulta inutil para diagnostico"
+
+# O criterio do dead letter e o PAR (failed + sem proxima tentativa), nao o status 'failed'
+# sozinho: um item que ainda vai ser retentado NAO pode aparecer como dead letter — se
+# aparecesse, o operador trataria como perdido algo que o proprio sistema ainda vai tentar.
+psql_test >/dev/null <<SQL
+$service_session
+UPDATE public.multiplix_delivery_items
+   SET status = 'failed', next_attempt_at = statement_timestamp() + interval '5 minutes'
+ WHERE id = '$o2';
+SQL
+com_transitorio="$(psql_test -Atqc "$admin_session SELECT count(*) FROM public.list_multiplix_dead_letters(50, NULL);" 2>&1 || true)"
+[[ "$com_transitorio" == "1" ]] \
+  || fail "F59.2: falha TRANSITORIA (failed COM next_attempt_at) entrou na dead letter (havia $com_transitorio, esperava 1)"
+
+# O contador bate com a consulta (o operador precisa do numero, nao so da lista).
+conta="$(psql_test -Atqc "$admin_session SELECT public.count_multiplix_dead_letters(NULL);" 2>&1 | tail -1 || true)"
+[[ "$conta" == "1" ]] || fail "F59.2: contador de dead letters divergiu (veio: $conta)"
+
+# (F59.3) O gate e DENTRO da funcao: um authenticated comum nao pode ler dead letter.
+# Sem isto, qualquer usuario logado veria falhas de entrega de qualquer disparo.
+recusa="$(psql_test -Atqc "$nao_admin_session SELECT count(*) FROM public.list_multiplix_dead_letters(50, NULL);" 2>&1 || true)"
+[[ "$recusa" == *multiplix_dead_letters_forbidden* ]] \
+  || fail "F59.3: usuario sem admin/supervisor conseguiu consultar a dead letter (veio: $recusa)"
+recusa_conta="$(psql_test -Atqc "$nao_admin_session SELECT public.count_multiplix_dead_letters(NULL);" 2>&1 || true)"
+[[ "$recusa_conta" == *multiplix_dead_letters_forbidden* ]] \
+  || fail "F59.3: usuario sem admin/supervisor conseguiu CONTAR a dead letter (veio: $recusa_conta)"
+
+# (F59.4) Recalculo de ELEGIBILIDADE sem re-resolver publico: um opt-out que chega
+# DEPOIS do agendamento passa a constar na supressao, mas NAO mexe na lista do disparo.
+# Este e o ponto exato que o dono aprovou — a supressao e consultada na hora do disparo
+# (o worker faz isso, provado no F09); o que NAO pode acontecer e o disparo mudar de
+# destinatarios sozinho entre o agendamento e a hora de sair.
+itens_antes="$(psql_test -Atqc "$service_session SELECT count(*) FROM public.multiplix_delivery_items WHERE dispatch_id='$disp_ord';" 2>&1 | tail -1 || true)"
+alvo_r="$(psql_test -Atqc "$service_session SELECT recipient_id FROM public.multiplix_delivery_items WHERE id='$o1';" 2>&1 | tail -1 || true)"
+alvo_fone="$(psql_test -Atqc "$service_session SELECT destino_e164 FROM public.multiplix_recipients WHERE id='$alvo_r';" 2>&1 | tail -1 || true)"
+[[ -n "$alvo_fone" ]] || fail "F59.4: nao consegui o telefone do destinatario do item (alvo_r=$alvo_r)"
+psql_test >/dev/null <<SQL
+$service_session
+INSERT INTO public.talkx_blacklist (contact_id, phone, reason, removed_at)
+VALUES (NULL, '$alvo_fone', 'opt-out pos-agendamento', NULL);
+SQL
+sup_gravada="$(psql_test -Atqc "$service_session SELECT count(*) FROM public.talkx_blacklist WHERE phone='$alvo_fone' AND removed_at IS NULL;" 2>&1 | tail -1 || true)"
+[[ "$sup_gravada" == "1" ]]   || fail "F59.4: o opt-out pos-agendamento nao ficou registrado na supressao (veio: $sup_gravada)"
+
+# (F59.5) A LISTA nao muda: nem o numero de itens, nem o destinatario do item.
+itens_depois="$(psql_test -Atqc "$service_session SELECT count(*) FROM public.multiplix_delivery_items WHERE dispatch_id='$disp_ord';" 2>&1 | tail -1 || true)"
+[[ "$itens_depois" == "$itens_antes" ]]   || fail "F59.5: o opt-out MUDOU a lista do disparo agendado (itens antes=$itens_antes, depois=$itens_depois) — recalcular elegibilidade nao pode re-resolver publico"
+alvo_r_depois="$(psql_test -Atqc "$service_session SELECT recipient_id FROM public.multiplix_delivery_items WHERE id='$o1';" 2>&1 | tail -1 || true)"
+[[ "$alvo_r_depois" == "$alvo_r" ]]   || fail "F59.5: o item trocou de destinatario apos o opt-out (antes=$alvo_r, depois=$alvo_r_depois)"
 
 printf 'PASS: fila por item — dois workers nao pegam o mesmo item, lease vencido nao completa e devolve o item a fila (renovando o token), pausa nao entrega pending novo sem interromper o que esta em voo, cancel encerra pendentes sem tocar no que foi ao provedor, e timeout vira outcome_unknown sem reenvio (F57). Escolha do proximo item respeita a ORDEM POR BLOCO do destinatario (bloco k so depois do k-1 sent, tres blocos) e o heartbeat de lease renova so para o dono do claim (F55/F56)\n'
 
