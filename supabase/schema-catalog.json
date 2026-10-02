@@ -2417,7 +2417,7 @@
         "get_connection_health_check_cron_secret()->text|kind=f",
         "get_connection_instance(_connection_id uuid)->text|kind=f",
         "get_connection_qr_code(_connection_id uuid)->text|kind=f",
-        "get_conversation_tab_counts(p_contact_id uuid)->TABLE(tasks_open integer, notes_total integer, files_total integer, reminders_pending integer)|kind=f",
+        "get_conversation_tab_counts(p_contact_id uuid)->TABLE(tasks_open integer, notes_total integer, files_total integer)|kind=f",
         "get_crm_sync_health()->jsonb|kind=f",
         "get_department_whatsapp_api_key(p_department_id uuid)->text|kind=f",
         "get_department_whatsapp_credentials(p_department_id uuid)->jsonb|kind=f",
