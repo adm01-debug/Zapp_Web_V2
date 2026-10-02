@@ -7214,6 +7214,7 @@ export type Database = {
           id: string
           launched_at: string | null
           launched_by: string | null
+          max_per_minute: number | null
           media_type: string | null
           media_url: string | null
           message_template: string
@@ -7266,6 +7267,7 @@ export type Database = {
           id?: string
           launched_at?: string | null
           launched_by?: string | null
+          max_per_minute?: number | null
           media_type?: string | null
           media_url?: string | null
           message_template: string
@@ -7318,6 +7320,7 @@ export type Database = {
           id?: string
           launched_at?: string | null
           launched_by?: string | null
+          max_per_minute?: number | null
           media_type?: string | null
           media_url?: string | null
           message_template?: string
@@ -9837,6 +9840,10 @@ export type Database = {
       }
       ai_rate_limit_purge: { Args: { p_older_than: string }; Returns: number }
       ai_text_array: { Args: { p_value: Json }; Returns: string[] }
+      apply_pg_cron_escalonamento: {
+        Args: { p_reverter?: boolean }
+        Returns: number
+      }
       apply_zapp_cron_secrets_l5: { Args: never; Returns: undefined }
       calculate_level: { Args: { xp_amount: number }; Returns: number }
       can_delete_contacts: {
@@ -10954,7 +10961,11 @@ export type Database = {
         }[]
       }
       record_multiplix_item_delivered: {
-        Args: { p_connection_id: string; p_external_id: string }
+        Args: {
+          p_connection_id: string
+          p_event?: string
+          p_external_id: string
+        }
         Returns: boolean
       }
       record_multiplix_item_sent: {
@@ -11344,7 +11355,12 @@ export type Database = {
         }[]
       }
       talkx_benchmarks: { Args: never; Returns: Json }
+      talkx_campaign_pace: { Args: { p_campaign_id: string }; Returns: Json }
       talkx_campaign_report: { Args: { p_campaign: string }; Returns: Json }
+      talkx_connection_send_budget: {
+        Args: { p_connection_id: string }
+        Returns: Json
+      }
       talkx_increment_delivered: {
         Args: { p_campaign_id: string }
         Returns: undefined
@@ -11381,6 +11397,22 @@ export type Database = {
           p_segment_ids?: string[]
         }
         Returns: Json
+      }
+      talkx_resolve_speed_pace: {
+        Args: {
+          p_send_interval_max: number
+          p_send_interval_min: number
+          p_speed_profile: string
+          p_typing_delay_max: number
+          p_typing_delay_min: number
+        }
+        Returns: {
+          send_interval_max: number
+          send_interval_min: number
+          speed_profile: string
+          typing_delay_max: number
+          typing_delay_min: number
+        }[]
       }
       talkx_segment_tags: { Args: { p_segment: string }; Returns: Json }
       talkx_suppress_contact: {
