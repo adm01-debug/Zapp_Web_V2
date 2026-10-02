@@ -131,3 +131,24 @@ export function formatDuration(seconds: number): string {
 export function formatPercentage(value: number, decimals = 1): string {
   return `${(value * 100).toFixed(decimals)}%`;
 }
+
+/**
+ * Data de nascimento para o sidebar: `{ label: 'dd/MM/yyyy', age }`.
+ * Idade em anos completos; `null` para data inválida ou futura (nunca
+ * inventa — a UI mostra "—").
+ */
+export function formatBirthday(iso: string | null | undefined, now: Date = new Date()): { label: string | null; age: number | null } {
+  if (!iso) return { label: null, age: null };
+  // 'YYYY-MM-DD' precisa ser lido como data local (new Date(iso) interpreta
+  // como UTC e o dd/MM viraria o dia anterior em GMT-3).
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
+  const date = dateOnly
+    ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
+    : new Date(iso);
+  if (Number.isNaN(date.getTime())) return { label: null, age: null };
+  if (date.getTime() > now.getTime()) return { label: format(date, 'dd/MM/yyyy', { locale: ptBR }), age: null };
+  let age = now.getFullYear() - date.getFullYear();
+  const birthdayThisYear = new Date(now.getFullYear(), date.getMonth(), date.getDate());
+  if (birthdayThisYear.getTime() > now.getTime()) age -= 1;
+  return { label: format(date, 'dd/MM/yyyy', { locale: ptBR }), age };
+}

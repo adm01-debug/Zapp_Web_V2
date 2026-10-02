@@ -1,6 +1,7 @@
 import { callCRMIntegration } from '@/lib/crmIntegration';
 import { queryExternalProxy } from '@/lib/externalProxy';
 import { log } from '@/lib/logger';
+import type { ContactSidebarData } from '@/types/contactSidebar';
 import type { ExternalDBFilter } from '@/types/externalDB';
 import type { EvolutionMessage } from '@/types/evolutionExternal';
 
@@ -103,6 +104,11 @@ interface ContactSearchResponse {
        log.error('[ExternalCRMService] Error fetching contact 360:', error);
        return null;
      }
+   }
+
+   static async getContactSidebar(contactId: string): Promise<ContactSidebarData | null> {
+     const { data } = await callCRMIntegration<ContactSidebarData>('contactLookup', { contactId, lookup: 'sidebar' });
+     return data;
    }
  
    static async fetchUniqueCompanies(maxPages = 5, pageSize = 200) {
