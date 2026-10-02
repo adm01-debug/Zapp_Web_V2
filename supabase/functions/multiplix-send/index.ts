@@ -330,19 +330,45 @@ export async function handleMultiplixSend(
     // continua andando, com cada invocacao processando no maximo
     // MULTIPLIX_BATCH_SIZE (default 20).
     passLoop: {
-      const { data: recipients, error: recipientsError } = await supabase
-        .from("multiplix_recipients")
-        .select("*")
-        .eq("dispatch_id", dispatchId)
-        .in("status", ["pending", "sending"])
-        .or("retry_after.is.null,retry_after.lte." + new Date().toISOString())
-        .order("created_at")
-        .limit(batchSize);
-      if (recipientsError) throw new Error(`multiplix_recipients_lookup_failed: ${recipientsError.message}`);
-      if (!recipients || recipients.length === 0) break passLoop;
-      selectedTotal += recipients.length;
+      // F55 (02/10/2026): a escolha do que enviar agora e do BANCO, nao do worker.
+      // list_multiplix_claimable_items devolve os itens elegiveis ja na ordem de trabalho
+      // (e ja respeitando a ordem por bloco do F56: item do bloco k so quando o bloco k-1 do
+      // mesmo destinatario esta sent). Duplicar essa regra aqui seria o jeito mais facil de
+      // as duas versoes divergirem — e e justamente a que dois workers furariam.
+      const { data: claimable, error: claimableError } = await supabase.rpc("list_multiplix_claimable_items", {
+        p_dispatch_id: dispatchId,
+        p_limit: batchSize,
+      });
+      if (claimableError) throw new Error(`multiplix_claimable_lookup_failed: ${claimableError.message}`);
+      if (!claimable || claimable.length === 0) break passLoop;
+      selectedTotal += claimable.length;
 
-      for (const recipient of recipients) {
+      for (const item of claimable as Array<{
+        item_id: string;
+        recipient_id: string;
+        block_id: string;
+        block_order: number;
+        company_id: string;
+        attempt_count: number;
+      }>) {
+        // O item carrega so IDs. Destinatario (destino, nome da empresa) e bloco (conteudo)
+        // vem de uma leitura propria: a ordenacao ja foi decidida pelo banco, aqui e so o
+        // material do envio.
+        const { data: itemDetail, error: itemDetailError } = await supabase
+          .from("multiplix_delivery_items")
+          .select("id, recipient_id, block_id, attempt_count, status, " +
+            "recipient:multiplix_recipients!inner(id, destino_e164, company_name_snapshot, personalized_message), " +
+            "block:multiplix_blocks!inner(id, block_order, content)")
+          .eq("id", item.item_id)
+          .single();
+        if (itemDetailError) throw new Error(`multiplix_item_detail_failed: ${itemDetailError.message}`);
+        const recipient = (itemDetail as unknown as {
+          recipient: { id: string; destino_e164: string | null; company_name_snapshot: string | null; personalized_message: string | null };
+        }).recipient;
+        const block = (itemDetail as unknown as {
+          block: { id: string; block_order: number; content: Record<string, unknown> };
+        }).block;
+
         const { data: currentDispatch, error: currentDispatchError } = await supabase
           .from("multiplix_dispatches")
           .select("status, send_interval_min, send_interval_max, typing_delay_min, typing_delay_max, send_window_start, send_window_end, business_hours_only, speed_profile, schedule_timezone, message_template, media_url, media_type")
@@ -367,21 +393,21 @@ export async function handleMultiplixSend(
           break passLoop;
         }
 
-        const { data: claimRows, error: claimError } = await supabase.rpc("claim_multiplix_recipient", {
+        const { data: claimRows, error: claimError } = await supabase.rpc("claim_multiplix_item", {
           p_dispatch_id: dispatchId,
-          p_recipient_id: recipient.id,
+          p_item_id: item.item_id,
           p_worker: workerId,
           p_lease_seconds: 90,
         });
-        if (claimError) throw new Error(`multiplix_recipient_claim_failed: ${claimError.message}`);
+        if (claimError) throw new Error(`multiplix_item_claim_failed: ${claimError.message}`);
         const claim = Array.isArray(claimRows) ? claimRows[0] : null;
         if (!claim?.claim_token) continue;
 
         // F09: opt-out conferido assim que o destinatario e reivindicado. Quem
         // esta na lista negra vira 'skipped' com motivo (nao volta para a fila).
         if (await isRecipientSuppressed(recipient.destino_e164)) {
-          const { error: completionError } = await supabase.rpc("complete_multiplix_recipient", {
-            p_recipient_id: recipient.id,
+          const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+            p_item_id: item.item_id,
             p_claim_token: claim.claim_token,
             p_status: "skipped",
             p_error_message: "Contato na lista negra (opt-out)",
@@ -397,10 +423,10 @@ export async function handleMultiplixSend(
         // 14-15 digitos nu) — nos dois casos nao existe destino enderecavel:
         // classe `no_destination` do F39 (mesmo tratamento do destino ausente),
         // em vez de fazer o POST com string vazia.
-        const phone = normalizePhone(recipient.destino_e164);
+        const phone = normalizePhone(recipient.destino_e164 ?? undefined);
         if (!phone) {
-          const { error: completionError } = await supabase.rpc("complete_multiplix_recipient", {
-            p_recipient_id: recipient.id,
+          const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+            p_item_id: item.item_id,
             p_claim_token: claim.claim_token,
             p_status: "skipped",
             p_error_message: "Sem destino de WhatsApp",
@@ -411,7 +437,7 @@ export async function handleMultiplixSend(
           continue;
         }
 
-        let personalizedMsg: string = recipient.personalized_message;
+        let personalizedMsg: string = recipient.personalized_message ?? "";
         if (!personalizedMsg) {
           let calculatedMessage: string;
           try {
@@ -424,8 +450,8 @@ export async function handleMultiplixSend(
               typeof dispatch.schedule_timezone === "string" ? dispatch.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
             );
           } catch (e) {
-            const { error: completionError } = await supabase.rpc("complete_multiplix_recipient", {
-              p_recipient_id: recipient.id,
+            const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+              p_item_id: item.item_id,
               p_claim_token: claim.claim_token,
               p_status: "failed",
               p_error_message: e instanceof Error ? e.message : "Erro ao montar mensagem",
@@ -435,8 +461,8 @@ export async function handleMultiplixSend(
             processedCount++;
             continue;
           }
-          const { data: snapshotMessage, error: snapshotError } = await supabase.rpc("persist_multiplix_recipient_message_snapshot", {
-            p_recipient_id: recipient.id,
+          const { data: snapshotMessage, error: snapshotError } = await supabase.rpc("persist_multiplix_item_message_snapshot", {
+            p_item_id: item.item_id,
             p_claim_token: claim.claim_token,
             p_personalized_message: calculatedMessage,
           });
@@ -448,6 +474,24 @@ export async function handleMultiplixSend(
 
         let providerPostAttempted = false;
         let sendTimeout: ReturnType<typeof setTimeout> | undefined;
+        // F55: lease com heartbeat. O claim da 90 s e o POST tem timeout de 20 s, mas midia
+        // grande e PTT podem passar disso — e item com lease vencido volta para a fila (outro
+        // worker pega) ou o sweeper fecha como outcome_unknown. A RPC so renova para o dono
+        // vivo, entao o timer nao atrapalha quem legitimamente retomou o item.
+        let heartbeatTimer: ReturnType<typeof setInterval> | undefined;
+        const stopHeartbeat = () => {
+          if (heartbeatTimer !== undefined) {
+            clearInterval(heartbeatTimer);
+            heartbeatTimer = undefined;
+          }
+        };
+        heartbeatTimer = setInterval(() => {
+          void supabase.rpc("heartbeat_multiplix_item", {
+            p_item_id: item.item_id,
+            p_claim_token: claim.claim_token,
+            p_lease_seconds: 90,
+          });
+        }, 30_000);
         try {
           const typingDelay = randomBetween(dispatch.typing_delay_min, dispatch.typing_delay_max);
 
@@ -475,21 +519,24 @@ export async function handleMultiplixSend(
               // retoma); conexao caiu -> 'connection_lost' (exige operador).
               await pauseDispatch(beforeSendInstanceId ? "outside_window" : "connection_lost");
             }
-            const { data: released, error: releaseError } = await supabase.rpc("release_multiplix_recipient_claim", {
-              p_recipient_id: recipient.id,
+            const { data: released, error: releaseError } = await supabase.rpc("release_multiplix_item_claim", {
+              p_item_id: item.item_id,
               p_claim_token: claim.claim_token,
             });
             if (releaseError || released !== true) {
               throw new Error(`multiplix_recipient_claim_release_failed: ${releaseError?.message ?? "claim_not_owned"}`);
             }
+            // F55: esta saida devolve o item a fila (release), entao o timer perde a razao de
+            // existir agora — a RPC ja recusaria o token a partir daqui de qualquer forma.
+            stopHeartbeat();
             break passLoop;
           }
 
           // F09: ultima checagem antes do POST — entre o claim e este ponto o
           // contato pode ter entrado na lista negra (opt-out).
           if (await isRecipientSuppressed(recipient.destino_e164)) {
-            const { error: completionError } = await supabase.rpc("complete_multiplix_recipient", {
-              p_recipient_id: recipient.id,
+            const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+              p_item_id: item.item_id,
               p_claim_token: claim.claim_token,
               p_status: "skipped",
               p_error_message: "Contato na lista negra (opt-out)",
@@ -502,8 +549,8 @@ export async function handleMultiplixSend(
 
           let sendResponse: Response;
           const markProviderDispatch = async () => {
-            const { error } = await supabase.rpc("mark_multiplix_recipient_dispatch_started", {
-              p_recipient_id: recipient.id,
+            const { error } = await supabase.rpc("mark_multiplix_item_dispatch_started", {
+              p_item_id: item.item_id,
               p_claim_token: claim.claim_token,
             });
             if (error) throw new Error(`multiplix_provider_dispatch_mark_failed: ${error.message}`);
@@ -549,8 +596,8 @@ export async function handleMultiplixSend(
           if (sendResponse.ok && !sendResult.error && providerMessageId && providerMessageId.length <= 512) {
             sentCount++;
             if (dailyRoom !== null) dailyRoom -= 1;
-            const { error: completionError } = await supabase.rpc("record_multiplix_recipient_sent", {
-              p_recipient_id: recipient.id,
+            const { error: completionError } = await supabase.rpc("record_multiplix_item_sent", {
+              p_item_id: item.item_id,
               p_claim_token: claim.claim_token,
               p_external_id: providerMessageId,
             });
@@ -559,24 +606,26 @@ export async function handleMultiplixSend(
             throw new Error("multiplix_provider_outcome_unknown: missing_provider_message_id");
           } else {
             failedCount++;
-            const { error: completionError } = await supabase.rpc("complete_multiplix_recipient", {
-              p_recipient_id: recipient.id,
+            const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+              p_item_id: item.item_id,
               p_claim_token: claim.claim_token,
               p_status: "failed",
               p_error_message: String(sendResult?.message || sendResult?.error || "Erro ao enviar"),
             });
             if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
           }
+          stopHeartbeat();
         } catch (err) {
           clearTimeout(sendTimeout);
+          stopHeartbeat();
           if (!providerPostAttempted) {
             const backoffMs = [30_000, 120_000, 600_000];
-            const attemptSoFar = typeof recipient.attempt_count === "number" ? recipient.attempt_count : 0;
+            const attemptSoFar = typeof item.attempt_count === "number" ? item.attempt_count : 0;
             const delayMs = backoffMs[Math.min(attemptSoFar, backoffMs.length - 1)];
             const retryAfter = new Date(Date.now() + delayMs).toISOString();
             const reason = err instanceof Error ? err.message : "pre_dispatch_error";
-            const { data: schedResult } = await supabase.rpc("reschedule_multiplix_recipient", {
-              p_recipient_id: recipient.id,
+            const { data: schedResult } = await supabase.rpc("reschedule_multiplix_item", {
+              p_item_id: item.item_id,
               p_claim_token: claim.claim_token,
               p_retry_after: retryAfter,
               p_error_message: reason.slice(0, 500),
@@ -588,8 +637,8 @@ export async function handleMultiplixSend(
             continue;
           }
           const reason = err instanceof Error ? err.message : "request_failed";
-          const { error: quarantineError } = await supabase.rpc("complete_multiplix_recipient", {
-            p_recipient_id: recipient.id,
+          const { error: quarantineError } = await supabase.rpc("complete_multiplix_item", {
+            p_item_id: item.item_id,
             p_claim_token: claim.claim_token,
             p_status: "outcome_unknown",
             p_error_message: `Provider outcome unknown: ${reason}`.slice(0, 1000),
