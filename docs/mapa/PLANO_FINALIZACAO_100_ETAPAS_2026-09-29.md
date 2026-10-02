@@ -488,7 +488,15 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 
 ### E65 · Prints obrigatórios
 1. Desktop (1280), 360 px, teclado virtual aberto, tema escuro — 4 prints em `docs/mapa/prints/` (PNG ≤ 200 KB cada).
-**Checklist:** [ ] 4 prints no repo
+**Checklist:** [~] 3 de 4 prints · [x] no repo
+
+**Parcialmente fechada em 2026-10-02 (PR #1543).** Três dos quatro prints estão no repo — docs/mapa/prints/desktop-1280.png, mobile-360.png e tema-escuro.png, todos até 200 KB e na largura que a etapa pede — com a lista de sugestões ABERTA e 3 opções visíveis.
+
+**Limitação declarada:** as sugestões na tela foram servidas por MOCK, porque o token do Mapbox vem de uma edge function que exige sessão autenticada e não há credencial de teste no ambiente. Os prints provam o RENDER (a11y, largura de 360 px, tema escuro), não a integração Mapbox ao vivo — essa segue coberta pelos testes unitários com os shapes reais. Está escrito em docs/mapa/prints/README.md para ninguém confundir depois.
+
+**Pendente:** o print de TECLADO VIRTUAL ABERTO, que depende de aparelho real e não é simulável em browser headless. A etapa só fecha com ele.
+
+**Achado:** f3-desktop.png (210 KB), da FASE 3, está acima do limite de 200 KB que esta etapa define.
 
 ### E66 · PR da Fase 6
 1. Título: `fix(mapa): a11y do combobox (aria-live, blur, axe) e mobile 360px (M7, M8)`.
