@@ -102,6 +102,11 @@ jobs:
       - name: 🔒 Verify PR workflow secret boundary
         run: node scripts/ci/check-pr-workflow-secrets.mjs
 
+      - name: 🔐 Verify E2E artifact secret boundary
+        # O report do Playwright embute o error-context, que traz o valor digitado
+        # no campo de senha. Quem usa E2E_TEST_* nao pode publicar esse artifact.
+        run: node scripts/ci/check-e2e-artifact-secrets.mjs
+
       - name: 📋 Verify Talk X PR body (definição de pronto)
         if: github.event_name == 'pull_request'
         run: node scripts/ci/check-talkx-pr-body.mjs
@@ -363,7 +368,13 @@ jobs:
         if: always()
         with:
           name: playwright-report
-          path: playwright-report/
+          # Exclui o snapshot de falha e os traces: sao os unicos arquivos do
+          # report que podem conter valor digitado em campo de formulario.
+          path: |
+            playwright-report/
+            !playwright-report/**/error-context.md
+            !playwright-report/**/*.zip
+            !test-results/**/error-context.md
           retention-days: 3
           if-no-files-found: ignore
 
