@@ -2,6 +2,8 @@ import { useContactCrm360 } from '@/hooks/crm/useContactCrm360';
 
 interface CommercialSummaryStripProps {
   contactId: string;
+  /** Versão estreita (sidebar do contato ~323px): mantém 2 colunas em qualquer viewport. */
+  compact?: boolean;
 }
 
 const formatCurrency = (v: number) => v > 0 ? `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—';
@@ -15,17 +17,18 @@ function Tile({ value, label }: { value: string | number; label: string }) {
   );
 }
 
-export function CommercialSummaryStrip({ contactId }: CommercialSummaryStripProps) {
+export function CommercialSummaryStrip({ contactId, compact }: CommercialSummaryStripProps) {
   const { data, isLoading } = useContactCrm360(contactId);
   const resumo = data?.resumo;
   const ticketMedio = data?.ticketMedio;
+  const gridClass = compact ? 'grid-cols-2' : 'grid-cols-2 xl:grid-cols-4';
 
   if (isLoading) {
-    return <div data-testid="commercial-summary-strip" className="grid grid-cols-2 xl:grid-cols-4 gap-2 animate-pulse">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-14 rounded-lg bg-muted/20" />)}</div>;
+    return <div data-testid="commercial-summary-strip" className={`grid ${gridClass} gap-2 animate-pulse`}>{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-14 rounded-lg bg-muted/20" />)}</div>;
   }
 
   return (
-    <div data-testid="commercial-summary-strip" className="grid grid-cols-2 xl:grid-cols-4 gap-2">
+    <div data-testid="commercial-summary-strip" className={`grid ${gridClass} gap-2`}>
       <Tile value={resumo ? formatCurrency(resumo.comprasTotal) : '—'} label={`Compras (${resumo?.comprasCount ?? 0})`} />
       <Tile value={ticketMedio ? formatCurrency(ticketMedio) : '—'} label="Ticket médio" />
       <Tile value={resumo?.propostas ?? '—'} label="Propostas" />

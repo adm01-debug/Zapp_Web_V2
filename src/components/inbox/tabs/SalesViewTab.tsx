@@ -17,7 +17,7 @@ interface SalesViewTabProps {
  * "+ Novo", e sem ele um contato sem compras não teria onde registrar a primeira.
  */
 export function SalesViewTab({ contactId, profileId }: SalesViewTabProps) {
-  const { data: crm360 } = useContactCrm360(contactId);
+  const { data: crm360, isLoading } = useContactCrm360(contactId);
 
   return (
     <div className="flex flex-col gap-4" data-testid="orders-tab">
@@ -35,7 +35,11 @@ export function SalesViewTab({ contactId, profileId }: SalesViewTabProps) {
       </SectionCard>
 
       <SectionCard icon={FileText} title="Propostas em aberto" tone="blue">
-        <OpenDealsList deals={crm360?.openDeals ?? []} />
+        {isLoading ? (
+          <div className="space-y-2 animate-pulse">{[0, 1].map(i => <div key={i} className="h-11 rounded-lg bg-muted/20" />)}</div>
+        ) : (
+          <OpenDealsList deals={crm360?.openDeals ?? []} />
+        )}
       </SectionCard>
     </div>
   );

@@ -81,7 +81,7 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
       </Section>
 
       <Section index={3} value="commercial-summary" icon={<BarChart3 className="w-3.5 h-3.5" />} label="Resumo Comercial">
-        <CommercialSummaryStrip contactId={contact.id} />
+        <CommercialSummaryStrip contactId={contact.id} compact />
       </Section>
 
       <AIInsightsWidget contactId={contact.id} />

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SalesViewTab } from '../SalesViewTab';
 import type { Crm360Result, Crm360Deal } from '@/hooks/crm/useContactCrm360';
 
@@ -9,6 +10,7 @@ let purchasesData: unknown[] = [];
 
 vi.mock('@/hooks/crm/useContactCrm360', () => ({
   useContactCrm360: (...args: unknown[]) => mockUseContactCrm360(...args),
+  contactCrm360Key: (contactId: string) => ['contact-crm-360', contactId] as const,
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -63,7 +65,12 @@ const PURCHASE = (id: string, title: string) => ({
 });
 
 function renderTab(profileId: string | null = 'profile-1') {
-  return render(<SalesViewTab contactId="c1" profileId={profileId} />);
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={qc}>
+      <SalesViewTab contactId="c1" profileId={profileId} />
+    </QueryClientProvider>,
+  );
 }
 
 describe('SalesViewTab', () => {
@@ -105,6 +112,7 @@ describe('SalesViewTab', () => {
   });
 
   it('profileId chega ao insert do ContactPurchasesPanel como created_by', async () => {
+    const invalidateSpy = vi.spyOn(QueryClient.prototype, 'invalidateQueries');
     mockUseContactCrm360.mockReturnValue({ data: EMPTY_CRM360 });
     renderTab('profile-9');
 
@@ -116,6 +124,10 @@ describe('SalesViewTab', () => {
     expect(mockInsert).toHaveBeenCalledWith(
       expect.objectContaining({ contact_id: 'c1', created_by: 'profile-9', title: 'Cadeira' }),
     );
+    await waitFor(() =>
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['contact-crm-360', 'c1'] }),
+    );
+    invalidateSpy.mockRestore();
   });
 
   it('nunca renderiza o texto "Pedidos"', async () => {
