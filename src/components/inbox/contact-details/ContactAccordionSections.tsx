@@ -3,23 +3,20 @@ import { motion } from 'framer-motion';
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Plus, Tag, Sparkles, User, BarChart3, Brain, Info, TagsIcon, MessageCircle, BookOpen, TrendingUp, ShoppingBag, GitBranch, X, Layers, Activity } from 'lucide-react';
+import { ChevronDown, Plus, Tag, Sparkles, User, Brain, Info, TagsIcon, MessageCircle, BookOpen, TrendingUp, GitBranch, X, Layers, Activity } from 'lucide-react';
 import { Conversation, ConversationContact as Contact } from '@/types/chat';
 
 import { ContactInfoSection } from './ContactInfoSection';
 import { AssignmentSection } from './AssignmentSection';
-import { ContactStatsStrip } from '../tabs/ContactStatsStrip';
 import { SLAAndAITagsSection } from './SLAAndAITagsSection';
 import { ExternalContact360Panel } from './ExternalContact360Panel';
 import { ContactIntelligencePanel } from './ContactIntelligencePanel';
 import { WhatsAppStatusSection } from './WhatsAppStatusSection';
 import { EvolutionContactProfileSection } from './EvolutionContactProfileSection';
-import { CommercialSummaryStrip } from '../tabs/CommercialSummaryStrip';
 import { AIInsightsWidget } from './AIInsightsWidget';
 import { LastActivityWidget } from './LastActivityWidget';
 import { ConversationMemoryPanel } from '../ConversationMemoryPanel';
 import { LeadRiskScorePanel } from '../LeadRiskScorePanel';
-import { ContactPurchasesPanel } from '../ContactPurchasesPanel';
 import { ConversationTimeline } from '../ConversationTimeline';
 import { KnowledgeBaseSearchPanel } from '../KnowledgeBaseSearchPanel';
 import { AnalysisBadges } from '../AnalysisBadges';
@@ -80,10 +77,6 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
         <TagsContent contact={contact} conversation={conversation} />
       </Section>
 
-      <Section index={3} value="commercial-summary" icon={<BarChart3 className="w-3.5 h-3.5" />} label="Resumo Comercial">
-        <CommercialSummaryStrip contactId={contact.id} compact />
-      </Section>
-
       <AIInsightsWidget contactId={contact.id} />
 
       <Section index={6} value="last-activity" icon={<Activity className="w-3.5 h-3.5" />} label="Última atividade">
@@ -119,14 +112,8 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
             <MoreDetailsBlock icon={<TrendingUp className="w-3.5 h-3.5 text-primary" />} label="Scoring & LGPD">
               <LeadRiskScorePanel contactId={contact.id} />
             </MoreDetailsBlock>
-            <MoreDetailsBlock icon={<ShoppingBag className="w-3.5 h-3.5 text-primary" />} label="Compras & Propostas">
-              <ContactPurchasesPanel contactId={contact.id} profileId={profileId} />
-            </MoreDetailsBlock>
             <MoreDetailsBlock icon={<GitBranch className="w-3.5 h-3.5 text-primary" />} label="Linha do Tempo">
               <ConversationTimeline contactId={contact.id} />
-            </MoreDetailsBlock>
-            <MoreDetailsBlock icon={<BarChart3 className="w-3.5 h-3.5 text-primary" />} label="Estatísticas">
-              <ContactStatsStrip contactId={contact.id} compact />
             </MoreDetailsBlock>
             <MoreDetailsBlock icon={<BookOpen className="w-3.5 h-3.5 text-primary" />} label="Base de Conhecimento">
               <KnowledgeBaseSearchPanel />
