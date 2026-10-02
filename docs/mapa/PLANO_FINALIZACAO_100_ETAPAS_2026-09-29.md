@@ -458,7 +458,15 @@ O mark não estava em SuggestionList.tsx: vem de chat/HighlightedText.tsx, que a
 
 ### E63 · Redução de movimento
 1. Skeleton e countdown respeitam `prefers-reduced-motion`.
-**Checklist:** [ ] `motion-reduce:`
+**Checklist:** [x] `motion-reduce:`
+
+**Fechada em 2026-10-02.** Cinco pontos animados cobertos: o esqueleto de carregamento (para de pulsar), o spinner do /retrieve, a transicao de realce do item, e os tres spinners do LocationPicker (botao de localizacao atual, overlay do mapa e botao flutuante de GPS).
+
+**O countdown NAO tem animacao** — a contagem e so troca de texto por setInterval, entao nao havia o que desligar e nada foi inventado para ter o que desligar.
+
+**Achado de metodo:** classe Tailwind nao alcanca animacao guiada por JS. O cartao de confirmacao usa framer-motion, e ali a solucao foi `useReducedMotion()` do proprio framer-motion — a variante `motion-reduce:` nao teria efeito nenhum. Fica o alerta para quem for cobrir movimento em qualquer outro componente animado por JS.
+
+Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transicao do item) e passaram depois; 2 nasceram verdes e estao declarados (o caso que pina a AUSENCIA de animacao no countdown e o controle que garante que a entrada animada continua viva SEM a preferencia). Mutacao: removendo as variantes, 6 casos E63 caem. Suite 46/46; src/components/inbox inteiro 523/523; ratchets novas=0.
 
 ### E64 · Leitor de tela anuncia a seleção
 1. Após `select()`, `aria-live` diz "Endereço escolhido: <nome>".

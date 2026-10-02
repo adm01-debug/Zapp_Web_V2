@@ -132,7 +132,7 @@ export function SuggestionList({
     >
       {digitando && (
         <div className="p-2 space-y-2">
-          {[0, 1, 2].map((i) => <div key={i} className="h-9 rounded-md bg-muted animate-pulse" />)}
+          {[0, 1, 2].map((i) => <div key={i} className="h-9 rounded-md bg-muted animate-pulse motion-reduce:animate-none" />)}
         </div>
       )}
       {status === 'error' && (
@@ -167,7 +167,7 @@ export function SuggestionList({
                 type="button"
                 onClick={() => onSelect(index)}
                 className={cn(
-                  'w-full flex items-start gap-2 text-left px-3 py-2 min-h-11 hover:bg-muted/60 transition-colors',
+                  'w-full flex items-start gap-2 text-left px-3 py-2 min-h-11 hover:bg-muted/60 transition-colors motion-reduce:transition-none',
                   highlighted && 'bg-muted/60'
                 )}
               >
@@ -187,7 +187,7 @@ export function SuggestionList({
                   )}
                 </div>
                 {retrievingId === suggestion.id && (
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0 mt-0.5" />
+                  <Loader2 className="w-4 h-4 animate-spin motion-reduce:animate-none text-muted-foreground shrink-0 mt-0.5" />
                 )}
               </button>
             );

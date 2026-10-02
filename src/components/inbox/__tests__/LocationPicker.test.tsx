@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 
 const h = vi.hoisted(() => ({
@@ -13,6 +13,15 @@ vi.mock('../location-picker/useLocationPicker', () => ({ useLocationPicker: (...
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: (...args: unknown[]) => h.toast(...args) }));
 vi.mock('@/lib/audit', () => ({ logAudit: (...args: unknown[]) => h.logAudit(...args) }));
 vi.mock('../location-picker/useAddressAutocomplete', () => ({ useAddressAutocomplete: (...args: unknown[]) => h.autocomplete(...args) }));
+
+// E63: o cartão de confirmação usa `motion` (framer-motion) para a entrada. Para provar o
+// comportamento sob `prefers-reduced-motion` sem depender do singleton interno do framer-motion,
+// só o hook homônimo é substituído — o resto da lib segue real (mesmo padrão do CT-70 do catálogo).
+const reduceMotion = vi.hoisted(() => ({ value: false }));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return { ...actual, useReducedMotion: () => reduceMotion.value };
+});
 
 import { LocationPicker } from '../LocationPicker';
 import type { SearchStatus } from '../location-picker/useAddressAutocomplete';
@@ -518,5 +527,68 @@ describe('LocationPicker', () => {
       expect(marcas[0].textContent).toBe('Independência');
       expect(marcas[0].className).toContain('font-semibold');
     });
+  });
+});
+
+/**
+ * E63 — redução de movimento no picker de localização. Além do esqueleto da lista (ver
+ * SuggestionList.test.tsx), este componente tem spinner de carregamento em três pontos e o cartão
+ * de confirmação entra com `motion` (framer-motion). Quem pediu menos movimento no sistema não deve
+ * receber nenhum deles: os spinners usam a variante Tailwind `motion-reduce:animate-none` e a
+ * entrada do cartão é desligada pelo `useReducedMotion` do framer-motion (classe Tailwind não
+ * alcança animação guidada por JS).
+ */
+describe('LocationPicker — movimento reduzido E63', () => {
+  afterEach(() => { reduceMotion.value = false; });
+
+  it('E63: o spinner do botão "Usar localização atual" respeita menos movimento', () => {
+    const state = hookState(null);
+    state.isLoadingLocation = true;
+    h.hook.mockReturnValue(state);
+    h.autocomplete.mockReturnValue(autocompleteState());
+    render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
+
+    const spinner = document.querySelector('svg.animate-spin');
+    expect(spinner).not.toBeNull();
+    expect(spinner!.getAttribute('class')).toContain('motion-reduce:animate-none');
+  });
+
+  it('E63: o spinner de carregamento do mapa respeita menos movimento', async () => {
+    h.hook.mockReturnValue(hookState(null));
+    h.autocomplete.mockReturnValue(autocompleteState());
+    render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
+    const mapTab = screen.getByRole('tab', { name: /Escolher no Mapa/ });
+    fireEvent.click(mapTab);
+    fireEvent.focus(mapTab);
+    await screen.findByRole('combobox');
+
+    const spinners = [...document.querySelectorAll('svg.animate-spin')];
+    expect(spinners.length).toBeGreaterThan(0);
+    for (const s of spinners) {
+      expect(s.getAttribute('class')).toContain('motion-reduce:animate-none');
+    }
+  });
+
+  it('E63: com prefers-reduced-motion o cartão de confirmação entra sem animação', () => {
+    reduceMotion.value = true;
+    h.hook.mockReturnValue(hookState({ lat: -23.55, lng: -46.63, name: 'Av. Paulista', address: 'Av. Paulista, 1000' }));
+    h.autocomplete.mockReturnValue(autocompleteState());
+    render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
+
+    const cartao = screen.getByTestId('local-atual-card');
+    // `initial=false`: o cartão nasce direto no estado final — nenhum quadro de entrada foi criado.
+    expect(cartao.style.opacity).toBe('1');
+    expect(cartao.style.transform).toBe('none');
+  });
+
+  it('E63 controle: sem prefers-reduced-motion a entrada animada continua existindo', () => {
+    reduceMotion.value = false;
+    h.hook.mockReturnValue(hookState({ lat: -23.55, lng: -46.63, name: 'Av. Paulista', address: 'Av. Paulista, 1000' }));
+    h.autocomplete.mockReturnValue(autocompleteState());
+    render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
+    const cartao = screen.getByTestId('local-atual-card');
+    // controle: sem a preferência, a entrada animada continua — começa escondida e deslocada.
+    expect(cartao.style.opacity).toBe('0');
+    expect(cartao.style.transform).toBe('translateY(10px)');
   });
 });
