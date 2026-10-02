@@ -635,6 +635,19 @@ describe('useAddressAutocomplete', () => {
     expect(h.reportMapboxFailure).toHaveBeenCalledWith('server_error', 'suggest');
   });
 
+  it('E51: /retrieve com causa de ROTA e /forward tambem falho reporta uma vez, com a causa do retrieve', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
+    h.retrievePlaceResult.mockResolvedValue({ ok: false, kind: 'network' });
+    h.searchPlaces.mockResolvedValue({ ok: false, kind: 'network' });
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua a'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    await act(async () => { await result.current.select(0); });
+    // dupla falha: nem /retrieve nem o /forward resolveram, e a causa e de rota (nao not_found)
+    expect(h.reportMapboxFailure).toHaveBeenCalledWith('network', 'retrieve');
+    expect(h.reportMapboxFailure).toHaveBeenCalledWith('network', 'retrieve');
+  });
+
   it('E17/E51: /retrieve sem resultado com o /forward também vazio não gera client_error de rota', async () => {
     h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
     h.retrievePlaceResult.mockResolvedValue({ ok: false, kind: 'not_found' });
