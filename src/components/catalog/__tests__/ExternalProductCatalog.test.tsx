@@ -283,12 +283,14 @@ describe('ExternalProductCatalog — CT-16 (chip Meus favoritos)', () => {
     expect(screen.getByText('Sem favoritos ainda')).toBeInTheDocument();
   });
 
-  it('envia pelo SendProductDialog já com o contato da conversa (CT-14)', () => {
+  it('envia pelo SendProductDialog já com o contato da conversa (CT-14)', async () => {
     renderCatalog({ presetContact: CONTACT });
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Enviar' })[0]);
 
-    expect(screen.getByTestId('send-dialog')).toHaveTextContent('Caneta Bambu|Cliente da Conversa');
+    // CT-71 — o dialog entra por React.lazy: aguarda o chunk resolver.
+    const dialog = await screen.findByTestId('send-dialog');
+    expect(dialog).toHaveTextContent('Caneta Bambu|Cliente da Conversa');
   });
 });
 

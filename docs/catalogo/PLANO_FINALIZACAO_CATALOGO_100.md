@@ -508,10 +508,54 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 
 - [ ] **CT-67** — `jest-axe` no vitest para `CatalogProductCard`, `CatalogAdvancedFilters`, `ProductDetailDialog`,
   `SendProductDialog`, `ContactSelectionStep`: 0 violações sérias. **Aceite:** 5 testes verdes.
-- [ ] **CT-68** — `aria-live` para contagem de resultados e progresso de envio; foco visível (`--ring`) em cards,
+- [x] **CT-68** — `aria-live` para contagem de resultados e progresso de envio; foco visível (`--ring`) em cards,
   chips, thumbs, radios; `Esc` fecha e o foco volta ao gatilho. **Aceite:** teste RTL de foco.
+  **✅ FEITO — 01/10/2026.** (a) **Anúncio da contagem:** `ExternalProductCatalog.tsx:499` virou região viva
+  (`role="status"` + `aria-live="polite"`, `data-testid="catalog-result-count"`). Sem debounce próprio de propósito: a
+  contagem só muda quando `totalProducts` volta do fetch, que já é debounced em 300ms no efeito de filtros — digitar
+  não gera um anúncio por tecla, só o do resultado.
+  (b) **Progresso de envio:** `SendProductDialog.tsx:548` (fluxo do chat, com `presetContact`) e
+  `ContactSelectionStep.tsx:270` (fluxo com passo de contato — o `isSending` NÃO troca de passo, então o anúncio tem
+  de estar lá e não no rodapé): `sr-only`, `role="status"`, `aria-live="polite"`.
+  (c) **Anel de foco:** constante única `CATALOG_FOCUS_VISIBLE` (`catalogShared.tsx:43`) =
+  `focus-visible:ring-2 ring-ring ring-offset-2 ring-offset-background` — só tokens, zero cor literal — aplicada em
+  card da grade e da lista, botão de favorito e checkbox (`CatalogProductCard.tsx`), chips de categoria/tags
+  (`catalogShared.tsx`), thumbs da galeria, swatches e variações de cor e botões do detalhe (`ProductDetailDialog.tsx`),
+  botões do envio (`SendProductDialog.tsx`, `ContactSelectionStep.tsx`, `CatalogBulkSendDialog.tsx`,
+  `CatalogAdvancedFilters.tsx`) e do rail (`CatalogRail.tsx`).
+  (d) **`Esc` fecha e o foco volta ao gatilho:** já vinha pronto do Radix (`Dialog`/`Sheet`) — NÃO reimplementado.
+  **Decisão de tabulação (mudança de comportamento real):** NENHUMA parada de tabulação nova. O anel entrou só onde o
+  elemento **já** era interativo: o card da grade e o da lista já tinham `tabIndex={0}` + Enter/`e` (CT-25) e todo o
+  resto é `<button>`.
+  **Dívida do CT-67 paga de quebra:** os 3 achados `button-name` que o teste do CT-67 marcava como vermelho-proposital
+  são destas duas tarefas e ficaram verdes — thumbs do strip com `aria-label="Ver imagem N de M"`
+  (`ProductDetailDialog.tsx:204`; o `<img alt="">` CONTINUA vazio, é decorativo) e o trigger do split-button com
+  `aria-label="Mais ações de envio"` (`SendProductDialog.tsx:563`). `CT67_a11y.test.tsx`: **6/6**.
+  **Testes:** `CT68_acessibilidade.test.tsx` (novo, 6 casos) + caso novo em `SendProductDialog.test.tsx`.
+  **Prova por mutação:** tirar `aria-live="polite"` do span derruba o caso 1
+  (`toHaveAttribute("aria-live","polite")` → `null`), 5/6; revertido com patch idêntico, **6/6** de novo.
 - [ ] **CT-69** — `alt` descritivo (nome + cor) em todas as imagens; contraste dos badges ≥ 4,5:1 nos 3 temas (tabela
   em `docs/catalogo/CONTRASTE.md`). **Aceite:** tabela commitada.
+  **◐ PARCIAL — 01/10/2026: a metade dos `alt` está FEITA; o contraste dos badges NÃO atinge 4,5:1 e NÃO foi
+  corrigido (cor de badge é decisão de produto). Por isso o item fica aberto.**
+  (a) **`alt` FEITO.** Helper único `productImageAlt(name, color)` = `"Nome — Cor"` (`catalogShared.tsx:52`), com
+  `singleProductColor` (`catalogShared.tsx:63`) para a capa: só devolve cor quando o produto tem EXATAMENTE uma cor
+  nomeada (em produto multi-cor a capa não é de uma cor e rotulá-la com a 1ª descreveria errado a foto). Aplicado em
+  `CatalogProductCard.tsx` (capa da grade :369 e thumb da lista :286), `ProductDetailDialog.tsx` (imagem principal
+  :156, zoom :220, foto da variação agrupada :572) e `SendProductDialog.tsx` (card do produto :377, foto da variação
+  :426, seletor de fotos :470). O **`alt=""` decorativo do strip de miniaturas CONTINUA VAZIO** de propósito
+  (`ProductDetailDialog.tsx:211`): o nome acessível desses botões vive no `aria-label`, e repetir o nome do produto a
+  cada thumb seria ruído de leitor de tela.
+  (b) **Contraste MEDIDO e NÃO atingido.** `docs/catalogo/CONTRASTE.md` (novo) tem a tabela de 9 badges × 4 temas com o
+  par REAL — as cores hardcoded foram lidas do **CSS emitido no build** (`dist/assets/index-*.css`), não da doc do
+  Tailwind — a fórmula WCAG 2.1 e a fonte de cada valor. Resultado: **13 dos 24 pares abaixo de 4,5:1**.
+  Novo/Top/Promo = **2,54 / 2,80 / 3,67** (texto `--primary-foreground`, branco em 3 dos 4 temas, sobre
+  `emerald-500`/`orange-500`/`rose-500` crus — o fundo não acompanha o tema; só passam em "escuro + alto contraste",
+  onde o token vira preto); estoque baixo no claro e no alto contraste = **3,07**; previsão de entrada no claro e no
+  alto contraste = **3,19**. Os 3 badges de destaque ficam até abaixo de 3:1 (WCAG 1.4.11). Nenhuma cor foi alterada —
+  o achado ficou registrado no CONTRASTE.md para decisão de produto.
+  **Testes:** `CT69_alts.test.tsx` (novo, 8 casos: helpers + capa de 1 cor × multi-cor + o alt acompanha a cor
+  escolhida no detalhe + `alt=""` preservado nas thumbs + foto da variação agrupada).
 - [x] **CT-70** — `useReducedMotion` em todo componente animado do módulo (grep `motion.` × `useReducedMotion`).
   **Aceite:** cada arquivo com `framer-motion` importa `useReducedMotion`.
   **✅ FEITO — provado em 01/10/2026.** Os 3 arquivos animados que faltavam importam e **chamam** `useReducedMotion`, e com a
@@ -525,8 +569,26 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   final" (teste não-vácuo). Nota de setup registrada: `vi.mock('motion-dom')` **não** intercepta — só
   `vi.mock('framer-motion')` com `importOriginal`, porque `useReducedMotion` lê um singleton de `prefersReducedMotion`.
   Suíte do módulo: **243 testes passando** (12 arquivos); `typecheck` exit 0; `eslint` 0; `lint-ratchet novas: 0`.
-- [ ] **CT-71** — Modais `React.lazy` (`ProductDetailDialog`, `SendProductDialog`, `CatalogAdvancedFilters`,
+- [x] **CT-71** — Modais `React.lazy` (`ProductDetailDialog`, `SendProductDialog`, `CatalogAdvancedFilters`,
   `CatalogBulkSendDialog`); `recharts` só no rail (lazy). **Aceite:** `vite build` mostra chunks separados.
+  **✅ FEITO — 01/10/2026.** Os 4 modais entraram por `lazy()` em **ESCOPO DE MÓDULO** — a regra
+  `react-hooks/static-components` rejeita `React.lazy` dentro do corpo do render (é a mesma razão documentada em
+  `catalogShared.tsx`) — com `<Suspense>` no ponto de uso, no padrão de `src/pages/Index.tsx`:
+  `ProductDetailDialog` (`CatalogProductCard.tsx:22`, os 2 pontos de uso do card), `SendProductDialog` +
+  `CatalogBulkSendDialog` (`ExternalProductCatalog.tsx:32,38`), `SendProductDialog` (`CatalogFavoritesTab.tsx`) e
+  `SendProductDialog` + `CatalogAdvancedFilters` + `CatalogBulkSendDialog` (`ExternalProductManagement.tsx`).
+  Fallback: `CatalogDialogFallback` (`catalogShared.tsx:81`, spinner curto só com tokens, `role="status"`) nos modais
+  montados sob demanda; `fallback={null}` nos que já nascem montados e fechados (o `ProductDetailDialog` de cada card e
+  os modais de estado da gestão) — assim nenhum card pisca spinner antes de o chunk resolver.
+  **Aceite provado de verdade (a armadilha do `vendor-charts` foi evitada):** antes existia **1** chunk de modal
+  (`CatalogBulkSendDialog 77,56 kB`); depois existem `ProductDetailDialog 17,94 kB`, `SendProductDialog 16,97 kB`,
+  `CatalogAdvancedFilters 3,14 kB` e o próprio `CatalogBulkSendDialog` **caiu para 5,10 kB** (o que ele carregava junto
+  foi embora). `vendor-charts` (458,51 kB) é grupo do `vite.config.ts:100` e ficou **idêntico** antes/depois — não
+  serve de prova. Saída crua dos dois builds em `docs/catalogo/PERF.md`.
+  **`recharts` só no rail:** já estava satisfeito — `CatalogRail.tsx:12` é o único consumidor no catálogo e
+  `vendor-charts` tem **0** ocorrências em `dist/index.html`.
+  **Testes ajustados (lazy não é síncrono):** `CT28_bulkBar`, `ExternalProductCatalog` e `SendProductDialog` passaram a
+  aguardar o chunk (`findByTestId`/`await` em vez de `getByTestId` síncrono) — sem perder asserção nenhuma.
 - [x] **CT-72** — `sizes` por breakpoint no `ProductThumb`, `fetchpriority="high"` nas 4 primeiras capas,
   `content-visibility: auto` nos cards abaixo da dobra. **Aceite:** Lighthouse LCP < 2,5 s (4G simulado).
   **✅ CÓDIGO FEITO E VERIFICADO — 01/10/2026 (o número de Lighthouse tem ressalva, ver abaixo).**
@@ -551,7 +613,26 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 - [ ] **CT-73** — Payload de `list_products compact` medido (< 30 KB por página de 24) — se passar, cortar campos.
   **Aceite:** medição em `PERF.md`.
 - [ ] **CT-74** — Lighthouse perf ≥ 90 na view em 4G; CLS < 0,05. **Aceite:** relatório em `PERF.md`.
-- [ ] **CT-75** — Bundle: `vite build --report`; inicial ≤ 336 KB (não regredir o #443). **Aceite:** número em `PERF.md`.
+- [x] **CT-75** — Bundle: `vite build --report`; inicial ≤ 336 KB (não regredir o #443). **Aceite:** número em `PERF.md`.
+  **✅ FEITO — 01/10/2026, com 1 ressalva de número.** Medido com `bun run build` (exit 0) +
+  `node scripts/ci/bundle-budget.mjs` (exit 0): **JS inicial = 336,3 KB gzip** em 13 chunks; CSS inicial 40,0 KB
+  (budget 80); maior chunk JS 492,3 KB gzip (budget 550); assets totais 4098,7 KB gzip (budget 4100). Tudo em
+  `docs/catalogo/PERF.md` com a saída crua.
+  **Os três números se confundem — e o que vale é isto:** o **limite VIVO** é **341 KB**
+  (`performance-budget.json:4`, é o que o CI checa e ele passou). O **336** do plano NÃO é budget: é a **medição de
+  2026-09-29** (`docs/catalogo/AUDITORIA_CATALOGO_2026-09-29.md:111`, etapa E40) que o plano promoveu a teto ("não
+  regredir o #443"). O **350** só existe em **comentários**, como histórico (`vite.config.ts:71,88` e
+  `catalogShared.tsx:453`: "estourou o budget de 350 KB no PR #415"). E os limites são **gzip**, enquanto o log do Vite
+  imprime **raw** (`reportCompressedSize: false`, `vite.config.ts:45`) — comparar log com budget compara unidades
+  diferentes.
+  **Ressalva honesta:** contra o teto do plano, 336,3 > 336 → **0,3 KB acima** do baseline do #443 (contra o limite
+  vivo, 4,7 KB de folga; gate verde). Não é regressão deste bloco: o chunk de **entrada** foi de
+  `203,56 kB` para `203,65 kB` raw (**+0,09 kB**, o custo dos wrappers `lazy()/Suspense`) e os modais nunca estiveram
+  no grafo inicial — o corte mexeu no **quando** o código baixa, não no tamanho do inicial. O gzip do inicial *antes*
+  não foi remedido (`dist/` é sobrescrito a cada build e `git worktree` é bloqueado pelo guard do ambiente); o delta
+  raw do entry é a evidência disponível, e está declarada como tal.
+  **Nenhum plugin de visualizer foi instalado** (instalar dependência está proibido neste bloco): os números saem da
+  saída normal do build + do guard do repo.
 - [ ] **CT-76** — Fechamento H: PR mergeada; `PERF.md` e `CONTRASTE.md` commitados. **Aceite:** CI verde.
 
 ## FASE 8 — Testes, e2e e ajuda (CT-77–CT-88)

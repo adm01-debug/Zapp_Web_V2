@@ -266,6 +266,13 @@ export function ContactSelectionStep({
           <AlertCard tone="warning">{sendBlockedReason}</AlertCard>
         )}
         <div className="flex items-center gap-2">
+          {/* CT-68 — progresso do envio anunciado: o rótulo do botão muda a cada
+              lote, mas botão não é região viva. `sr-only` não ocupa layout. */}
+          {isSending && (
+            <span className="sr-only" role="status" aria-live="polite" data-testid="send-progress-live">
+              {sendProgress ? `Enviando ${sendProgress.done} de ${sendProgress.total}` : 'Enviando'}
+            </span>
+          )}
           <Button variant="outline" className="gap-1.5" onClick={onBack}>
             <ArrowLeft className="w-4 h-4" />Voltar
           </Button>
