@@ -1,11 +1,10 @@
 import React, { useEffect } from 'react';
 import {
   ArrowLeft, ArrowRight, Zap, FileText, Users, Database, Bookmark, Filter, MessageSquare, Image, Video, Music,
-  Paperclip, X, Wand2, BookOpen, Save, Check, Clock, CalendarDays, Ban, Smartphone, Sparkles, RefreshCw,
+  Paperclip, X, Wand2, BookOpen, Save, Check, Clock, CalendarDays, Ban, Smartphone, Sparkles, RefreshCw, Plus,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -14,13 +13,15 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
-import { useAudienceEstimate } from '@/hooks/integrations/useTalkXSegments';
+import { useAudienceEstimate, RULE_FIELDS, RULE_OPS, type RuleOp, type SegmentRule } from '@/hooks/integrations/useTalkXSegments';
 import { useCampaignEditor, VARIABLES, MESSAGE_TEMPLATES, MEDIA_TYPES, type WizardStep } from './useCampaignEditor';
 import { TalkXContactSelector } from './TalkXContactSelector';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
-import { IconTile, WhatsAppBubble, OBJECTIVES, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime } from './talkxShared';
+import { TalkXMessageEditor } from './TalkXMessageEditor';
+import { IconTile, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { toast } from 'sonner';
 
 const MEDIA_ICONS = { image: Image, video: Video, document: FileText, audio: Music } as const;
@@ -210,7 +211,7 @@ function SourceCard({ icon, title, desc, active, onClick, disabled, badge }: { i
   const Icon = icon;
   return (
     <button type="button" onClick={onClick} disabled={disabled} className={cn('relative text-left rounded-xl border p-3.5 transition-all flex items-start gap-3', active ? 'border-primary bg-primary/10 shadow-[0_0_0_1px_hsl(var(--primary)/.5)]' : 'border-border/70 bg-input/30 hover:border-primary/40', disabled && 'opacity-50 cursor-not-allowed')}>
-      <IconTile icon={Icon as never} size={40} color={active ? 'blue' : 'blue'} />
+      <IconTile icon={Icon as never} size={40} color="blue" />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-foreground">{title}</p>
         <p className="text-2xs text-foreground-secondary leading-snug mt-0.5">{desc}</p>
@@ -221,17 +222,123 @@ function SourceCard({ icon, title, desc, active, onClick, disabled, badge }: { i
   );
 }
 
+/**
+ * V24 — uma linha de regra do público. Campos e operadores vêm do MESMO
+ * catálogo do editor de segmentos (`RULE_FIELDS`/`RULE_OPS`), então a regra
+ * montada aqui é a mesma que o motor compila para PostgREST.
+ */
+function AudienceRuleRow({ rule, ed }: { rule: SegmentRule; ed: WizardState }) {
+  const field = RULE_FIELDS.find((definition) => definition.value === rule.field) ?? RULE_FIELDS[0];
+  const ops = RULE_OPS[field.kind] ?? RULE_OPS.text;
+  const needsValue = rule.op !== 'is_set' && rule.op !== 'is_empty';
+
+  // Trocar o campo troca o tipo: reinicia operador e valor para nunca deixar
+  // uma combinação que o motor rejeite (ex.: ilike em coluna uuid).
+  const changeField = (value: string) => {
+    const next = RULE_FIELDS.find((definition) => definition.value === value) ?? RULE_FIELDS[0];
+    ed.updateAudienceRule(rule.id, { field: next.value, op: (RULE_OPS[next.kind] ?? RULE_OPS.text)[0].value, value: '' });
+  };
+
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      <Select value={rule.field} onValueChange={changeField}>
+        <SelectTrigger aria-label="Campo do filtro" className="h-8 text-xs w-[150px] bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          {RULE_FIELDS.map((definition) => <SelectItem key={definition.value} value={definition.value}>{definition.label}</SelectItem>)}
+        </SelectContent>
+      </Select>
+      <Select value={rule.op} onValueChange={(value) => ed.updateAudienceRule(rule.id, { op: value as RuleOp })}>
+        <SelectTrigger aria-label="Operador do filtro" className="h-8 text-xs w-[150px] bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          {ops.map((op) => <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>)}
+        </SelectContent>
+      </Select>
+      {needsValue && (field.options ? (
+        <Select value={rule.value} onValueChange={(value) => ed.updateAudienceRule(rule.id, { value })}>
+          <SelectTrigger aria-label="Valor do filtro" className="h-8 text-xs w-[170px] bg-input/40 border-border/70"><SelectValue placeholder="Selecione…" /></SelectTrigger>
+          <SelectContent>
+            {field.options.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      ) : (
+        <Input
+          value={rule.value}
+          onChange={(event) => ed.updateAudienceRule(rule.id, { value: event.target.value })}
+          aria-label="Valor do filtro"
+          placeholder={field.kind === 'date' ? 'dias' : 'Valor'}
+          inputMode={field.kind === 'number' || field.kind === 'date' ? 'numeric' : undefined}
+          className="h-8 text-xs w-[170px] bg-input/40 border-border/70"
+        />
+      ))}
+      <button type="button" onClick={() => ed.removeAudienceRule(rule.id)} aria-label="Remover filtro" className="text-muted-foreground hover:text-foreground"><X className="w-3.5 h-3.5" /></button>
+    </div>
+  );
+}
+
+/** V24 — filtros do passo 1 como regras do público (mesma fonte dos segmentos). */
+function AudienceRulesEditor({ ed }: { ed: WizardState }) {
+  const hasRules = ed.audienceRules.groups.some((group) => group.rules.length > 0);
+  return (
+    <div className="mb-3 space-y-2 rounded-xl border border-border/70 bg-input/30 p-3">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <p className="text-xs font-semibold text-foreground flex items-center gap-1.5"><Filter className="w-3.5 h-3.5" /> Filtros do público</p>
+        <span className="text-3xs text-muted-foreground">
+          {typeof ed.audienceCount === 'number' ? `${fmtInt(ed.audienceCount)} contatos atendem aos filtros` : 'Contando público…'}
+        </span>
+      </div>
+      {ed.audienceRules.groups.map((group) => (
+        <div key={group.id} className="space-y-2">
+          {group.rules.length > 1 && (
+            <button
+              type="button"
+              onClick={() => ed.setGroupMatch(group.id, group.match === 'and' ? 'or' : 'and')}
+              className="h-7 px-2 rounded-md text-3xs font-medium border border-primary/30 bg-primary/10 text-primary-glow"
+            >
+              {group.match === 'and' ? 'Todas as regras (E)' : 'Qualquer regra (OU)'}
+            </button>
+          )}
+          {group.rules.map((rule) => <AudienceRuleRow key={rule.id} rule={rule} ed={ed} />)}
+        </div>
+      ))}
+      {!hasRules && <p className="text-2xs text-muted-foreground">Sem filtros — o público é toda a base de contatos com telefone.</p>}
+      <button
+        type="button"
+        onClick={() => ed.addAudienceRule()}
+        className="h-8 px-2.5 rounded-lg text-xs font-medium border border-border/70 bg-input/40 hover:bg-muted/50 flex items-center gap-1.5"
+      >
+        <Plus className="w-3.5 h-3.5" /> Adicionar filtro
+      </button>
+    </div>
+  );
+}
+
 function StepAudience({ ed }: { ed: WizardState }) {
+  // V25 — o passo 1 só oferece segmentos ATIVOS (a página de gestão de
+  // segmentos continua mostrando todos). O filtro fica no ponto de uso: a
+  // lista vem do hook compartilhado sem alteração.
+  const activeSegments = ed.segments.filter((s) => s.status === 'active');
   return (
     <>
       <SectionCard icon={FileText} title="Informações da campanha">
         <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-3">
-          <div><Label className="text-xs text-foreground-secondary">Nome da campanha</Label><Input value={ed.name} onChange={(e) => ed.setName(e.target.value)} placeholder="Ex: Lançamento Linha Office" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
+          <div>
+            <Label className="text-xs text-foreground-secondary">Nome da campanha</Label>
+            <Input value={ed.name} onChange={(e) => ed.setName(e.target.value)} placeholder="Ex: Lançamento Linha Office" aria-invalid={ed.name.trim().length > 0 && ed.name.trim().length < 3} className="mt-1.5 h-10 bg-input/40 border-border/70" />
+            {ed.name.trim().length > 0 && ed.name.trim().length < 3 && (
+              <p role="alert" className="mt-1.5 text-2xs text-dash-red">O nome precisa de pelo menos 3 caracteres</p>
+            )}
+          </div>
           <div>
             <Label className="text-xs text-foreground-secondary">Objetivo</Label>
             <Select value={ed.objective} onValueChange={ed.setObjective}>
               <SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
-              <SelectContent>{OBJECTIVES.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+              <SelectContent>
+                {OBJECTIVES.map(({ value, label, icon: ObjectiveIcon }) => (
+                  <SelectItem key={value} value={value}>
+                    <span className="flex items-center gap-2"><ObjectiveIcon className="w-4 h-4 text-muted-foreground" />{label}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
           <div>
@@ -244,19 +351,34 @@ function StepAudience({ ed }: { ed: WizardState }) {
             </Select>
           </div>
         </div>
-        <div className="mt-3"><Label className="text-xs text-foreground-secondary">Descrição (opcional)</Label><Input value={ed.description} onChange={(e) => ed.setDescription(e.target.value)} placeholder="Produtos em destaque para escritórios" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
-        {(ed.connections ?? []).length === 0 && <p className="text-xs text-dash-amber mt-3 flex items-center gap-1.5"><Smartphone className="w-3.5 h-3.5" /> Nenhuma conexão WhatsApp conectada — conecte em Conexões antes de enviar.</p>}
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-3">
+          <div><Label className="text-xs text-foreground-secondary">Descrição (opcional)</Label><Input value={ed.description} onChange={(e) => ed.setDescription(e.target.value)} placeholder="Produtos em destaque para escritórios" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
+          <div>
+            <Label className="text-xs text-foreground-secondary">Responsável</Label>
+            <Select value={ed.owner ?? ''} onValueChange={ed.setOwner}>
+              <SelectTrigger aria-label="Responsável" className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue placeholder="Selecione…" /></SelectTrigger>
+              <SelectContent>
+                {(ed.owners ?? []).map((p) => <SelectItem key={p.id} value={p.id}>{p.name || p.email || 'Sem nome'}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        {(ed.connections ?? []).length === 0 && (
+          <div className="mt-3">
+            <TalkXWhatsAppDisconnectedState onConnect={() => navigateToView('connections')} />
+          </div>
+        )}
       </SectionCard>
 
       <SectionCard icon={Users} title="Origem do público" subtitle="Escolha de onde virão os contatos para esta campanha.">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <SourceCard icon={Users} title="Contatos ZAPP" desc="Use seus contatos da plataforma com filtros avançados." active={ed.audienceSource === 'contacts'} onClick={() => ed.setAudienceSource('contacts')} />
-          <SourceCard icon={Bookmark} title="Segmento salvo" desc="Utilize um segmento de audiência já salvo." active={ed.audienceSource === 'segment'} onClick={() => ed.setAudienceSource('segment')} disabled={ed.segments.length === 0} badge={ed.segments.length === 0 ? 'Nenhum segmento salvo' : `${ed.segments.length} segmentos`} />
+          <SourceCard icon={Bookmark} title="Segmento salvo" desc="Utilize um segmento de audiência já salvo." active={ed.audienceSource === 'segment'} onClick={() => ed.setAudienceSource('segment')} disabled={activeSegments.length === 0} badge={activeSegments.length === 0 ? 'Nenhum segmento salvo' : `${activeSegments.length} segmentos`} />
           <SourceCard icon={Database} title="CRM 360°" desc="Selecione contatos do seu CRM com base em negócios e estágios." active={ed.audienceSource === 'crm360'} onClick={() => ed.setAudienceSource('crm360')} disabled badge="Vinculação CRM 360° não configurada" />
         </div>
         {ed.audienceSource === 'segment' && (
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-            {ed.segments.map((s) => {
+            {activeSegments.map((s) => {
               const active = ed.segmentId === s.id;
               return (
                 <button key={s.id} type="button" onClick={() => ed.setSegmentId(s.id)} className={cn('text-left rounded-xl border p-3 transition-all', active ? 'border-primary bg-primary/10' : 'border-border/70 bg-input/30 hover:border-primary/40')}>
@@ -274,7 +396,8 @@ function StepAudience({ ed }: { ed: WizardState }) {
       </SectionCard>
 
       {ed.audienceSource === 'contacts' && (
-        <SectionCard icon={Filter} title="Filtros de audiência" subtitle="Refine seu público com filtros e selecione os contatos." right={<button type="button" onClick={ed.clearFilters} className="text-xs font-medium text-primary-glow hover:underline">Limpar filtros</button>}>
+        <SectionCard icon={Filter} title="Filtros de audiência" subtitle="Refine seu público com regras (mesmas dos segmentos) e selecione os contatos." right={<button type="button" onClick={ed.clearFilters} className="text-xs font-medium text-primary-glow hover:underline">Limpar filtros</button>}>
+          <AudienceRulesEditor ed={ed} />
           <TalkXContactSelector
             contacts={ed.contacts || []}
             filteredContacts={ed.filteredContacts}
@@ -337,13 +460,19 @@ function StepMessage({ ed }: { ed: WizardState }) {
           })}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-3">
-          <div className="rounded-xl border border-border/70 bg-input/30 overflow-hidden">
-            <Textarea value={ed.messageTemplate} onChange={(e) => ed.setMessageTemplate(e.target.value)} placeholder="{{saudacao}}, {{nome}}! Temos uma novidade especial para a sua empresa…" rows={7} className="resize-none border-0 bg-transparent text-sm leading-relaxed focus-visible:ring-0" />
-            <div className="flex items-center justify-between px-3 py-2 border-t border-border/50 text-2xs text-muted-foreground">
-              <span className="flex items-center gap-2"><Wand2 className="w-3.5 h-3.5" /> Variáveis são substituídas por contato no envio</span>
-              <span>{ed.messageTemplate.length}/4096</span>
-            </div>
-          </div>
+          <TalkXMessageEditor
+            value={ed.messageTemplate}
+            onChange={ed.setMessageTemplate}
+            placeholder="{{saudacao}}, {{nome}}! Temos uma novidade especial para a sua empresa…"
+            rows={7}
+            limit={4096}
+            knownVariables={VARIABLE_KEYS}
+            footer={(
+              <div className="flex items-center px-3 py-2 border-t border-border/50 text-2xs text-muted-foreground">
+                <span className="flex items-center gap-2"><Wand2 className="w-3.5 h-3.5" /> Variáveis são substituídas por contato no envio</span>
+              </div>
+            )}
+          />
           <div className="rounded-xl border border-border/70 bg-input/30 p-3">
             <p className="text-xs font-semibold text-foreground mb-2">Variáveis</p>
             <div className="flex flex-wrap gap-1.5">

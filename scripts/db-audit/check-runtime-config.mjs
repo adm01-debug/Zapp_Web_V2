@@ -3,10 +3,17 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { resolverCaminhoPermitido } from '../lib/seguranca-processo.mjs';
 import { carregarIdentidadeEsperada, validarDestino, validarSupabaseCa, endurecerDestinoTls } from './database-identity.mjs';
 import { withPsqlEnvironment } from './psql-environment.mjs';
 
 const REALTIME_BASELINE_PATH = new URL('./realtime-publication-baseline.json', import.meta.url);
+
+// S8707: o caminho de saida vem do argumento; nunca entra cru no writeFileSync.
+// A guarda vive no modulo compartilhado (scripts/lib/seguranca-processo.mjs):
+// resolve e exige que fique dentro do repositorio ou do diretorio temporario do
+// sistema (as duas raizes legitimas para a evidencia gerada). Fail-closed: fora
+// da raiz encerra com exit 2 (entrada invalida) sem tocar o banco.
 
 export function loadRealtimeBaseline() {
   const baseline = JSON.parse(fs.readFileSync(REALTIME_BASELINE_PATH, 'utf8'));
@@ -24,6 +31,17 @@ export function loadRealtimeBaseline() {
   return tables.sort((a, b) => a.localeCompare(b));
 }
 
+/**
+ * Escala de autovacuum esperada (S1244). O valor chega do Postgres como float,
+ * então a igualdade exata `Number(x) !== 0.05` é frágil; compara-se com
+ * tolerância (1e-9) — o mesmo resultado para o 0.05 real. Valor ausente ou não
+ * numérico (NaN) continua contando como divergência (nada afrouxa aqui).
+ */
+function escalaAutovacuumOk(valor) {
+  const n = Number(valor);
+  return Number.isFinite(n) && Math.abs(n - 0.05) <= 1e-9;
+}
+
 export function evaluateRuntimeConfig(raw, realtimeBaseline = loadRealtimeBaseline()) {
   const sections = raw.trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
   const names = ['identity', 'autovacuum', 'realtime', 'cron', 'storage', 'ledger_limitations'];
@@ -38,7 +56,8 @@ export function evaluateRuntimeConfig(raw, realtimeBaseline = loadRealtimeBaseli
   for (const name of expected) {
     const tables = data.autovacuum.tables.filter(row => row.table === name);
     if (tables.length !== 1 || tables[0].enabled !== true
-      || Number(tables[0].vacuum_scale_factor) !== 0.05 || Number(tables[0].analyze_scale_factor) !== 0.05) failures.push(`autovacuum ${name}`);
+      || !escalaAutovacuumOk(tables[0].vacuum_scale_factor)
+      || !escalaAutovacuumOk(tables[0].analyze_scale_factor)) failures.push(`autovacuum ${name}`);
   }
   const realtimeTables = Array.isArray(data.realtime.tables)
     ? data.realtime.tables.filter(table => typeof table === 'string').sort((a, b) => a.localeCompare(b))
@@ -62,6 +81,13 @@ export function evaluateRuntimeConfig(raw, realtimeBaseline = loadRealtimeBaseli
 }
 
 export function runRuntimeConfigAudit(outputPath) {
+  let destinoSaida;
+  try {
+    destinoSaida = resolverCaminhoPermitido(outputPath, 'caminho de saida do runtime config');
+  } catch (erro) {
+    console.error('ERRO: ' + erro.message);
+    process.exit(2);
+  }
   const expected = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
   const errors = [...validarDestino(process.env.DESTINO_URL, expected), ...validarSupabaseCa()];
   const tls = endurecerDestinoTls(process.env.DESTINO_URL);
@@ -73,7 +99,7 @@ export function runRuntimeConfigAudit(outputPath) {
     encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 60_000,
   }));
   const evidence = evaluateRuntimeConfig(raw);
-  fs.writeFileSync(outputPath, `${JSON.stringify(evidence, null, 2)}\n`, { mode: 0o600, flag: 'wx' });
+  fs.writeFileSync(destinoSaida, `${JSON.stringify(evidence, null, 2)}\n`, { mode: 0o600, flag: 'wx' }); // NOSONAR(S8707): 'destinoSaida' vem de resolverCaminhoPermitido(...) acima (exit 2 fora do repo/tmp); argv[2] nao entra cru neste write
   return evidence;
 }
 

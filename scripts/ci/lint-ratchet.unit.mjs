@@ -15,6 +15,7 @@ import {
   stagedRemovedFiles,
   stripVolatilePosition,
 } from "./lint-ratchet.mjs";
+import { resolverExecutavel } from "../lib/seguranca-processo.mjs";
 
 test("ignora artefatos gerados de coverage no comando do ESLint", () => {
   assert.deepEqual(eslintCommandArguments("eslint.js"), [
@@ -408,7 +409,7 @@ test("eslintCommandArguments aceita alvos e silencia aviso de arquivo ignorado",
 function gitFixture() {
   const { root, cleanup } = fixture();
   const git = (...args) => {
-    const run = spawnSync("git", args, { cwd: root, encoding: "utf8" });
+    const run = spawnSync(resolverExecutavel("git"), args, { cwd: root, encoding: "utf8" });
     assert.equal(run.status, 0, run.stderr);
     return run.stdout;
   };

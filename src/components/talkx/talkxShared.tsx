@@ -5,6 +5,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   ChevronLeft, ChevronRight, ChevronRight as Chevron, Inbox, AlertTriangle, Database, Lock, Plus,
   Clock, MousePointerClick, RefreshCw, MessageSquare, Search, MoreHorizontal, Loader2, Lightbulb, AlignJustify, LayoutGrid,
+  BadgeDollarSign, Users, Building2,
 } from 'lucide-react';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -42,14 +43,18 @@ export const RECIPIENT_STATUS: Record<string, { label: string; tone: PillTone }>
   cancelled: { label: 'Cancelado', tone: 'muted' },
 };
 
-export const OBJECTIVES = [
-  { value: 'vendas', label: 'Vendas' },
-  { value: 'engajamento', label: 'Engajamento' },
-  { value: 'reativacao', label: 'Reativação' },
-  { value: 'relacionamento', label: 'Relacionamento' },
-  { value: 'pesquisa', label: 'Pesquisa' },
-  { value: 'institucional', label: 'Institucional' },
-] as const;
+/**
+ * V25 — cada objetivo carrega um ícone. O campo é aditivo: `TalkXOverview`,
+ * `TalkXSegments` e `TalkXWizardDelivery` continuam lendo só `value`/`label`.
+ */
+export const OBJECTIVES: { value: string; label: string; icon: LucideIcon }[] = [
+  { value: 'vendas', label: 'Vendas', icon: BadgeDollarSign },
+  { value: 'engajamento', label: 'Engajamento', icon: MousePointerClick },
+  { value: 'reativacao', label: 'Reativação', icon: RefreshCw },
+  { value: 'relacionamento', label: 'Relacionamento', icon: Users },
+  { value: 'pesquisa', label: 'Pesquisa', icon: Search },
+  { value: 'institucional', label: 'Institucional', icon: Building2 },
+];
 
 /** Perfis de velocidade → intervalo entre envios (segundos). Digitação fica com o editor. */
 export const SPEED_PROFILES = [
@@ -199,7 +204,7 @@ export function IconTile({ icon: Icon, color = 'blue', size = 40, glow = false, 
   const bgCls = soft ? tileSoft[color] : glow ? tileGradient[color] : cn('bg-dash-tile-' + color, 'rounded-xl flex items-center justify-center shrink-0');
   const iconColor = soft ? `text-${color === 'blue' ? 'primary' : color === 'green' ? 'success' : color === 'red' ? 'destructive' : 'foreground'}` : 'text-white/90';
   return (
-    <div style={{ width: size, height: size }} className={cn(soft || glow ? '' : '', bgCls, radiusCls, 'flex items-center justify-center shrink-0', className)}>
+    <div style={{ width: size, height: size }} className={cn(bgCls, radiusCls, 'flex items-center justify-center shrink-0', className)}>
       <Icon className={cn(iconSize, iconColor)} strokeWidth={2} />
     </div>
   );
@@ -290,7 +295,7 @@ export function WhatsAppBubble({ text, mediaUrl, mediaType, time, senderName = '
             {mediaUrl && mediaType && mediaType !== 'image' && (
               <div className="rounded-lg mb-2 px-2.5 py-2 bg-black/20 text-2xs text-muted-foreground">📎 {mediaType} anexado</div>
             )}
-            {text || <span className="text-muted-foreground italic">Digite uma mensagem…</span>}
+            {text || (mediaUrl ? null : <span className="text-muted-foreground italic">Digite uma mensagem…</span>)}
             <span className="block text-right text-3xs text-muted-foreground mt-1">{time ?? format(new Date(), 'HH:mm')} ✓✓</span>
           </div>
         </div>

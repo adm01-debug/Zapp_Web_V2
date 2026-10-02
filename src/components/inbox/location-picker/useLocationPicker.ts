@@ -20,6 +20,13 @@ interface SelectedLocation {
   address?: string;
 }
 
+/**
+ * E50: por onde o agente chegou até a localização escolhida — é o `origin` do evento
+ * `location_sent`. `suggest` = lista de sugestões; `forward` = busca por texto; `click` = clique
+ * no mapa; `gps` = localização atual. Nunca carrega termo/endereço/coordenada.
+ */
+export type LocationOrigin = 'suggest' | 'forward' | 'click' | 'gps';
+
 const DEFAULT_CENTER: [number, number] = [-46.6333, -23.5505];
 // Referencia estavel: usada como fallback de `proximity` (abaixo). Um objeto literal novo a
 // cada render quebraria a igualdade referencial nas deps do useCallback/useEffect de quem
@@ -54,6 +61,8 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<SelectedLocation | null>(null);
+  // E50: acompanha `selectedLocation` — as duas são setadas/limpas juntas por `select`.
+  const [selectedOrigin, setSelectedOrigin] = useState<LocationOrigin | null>(null);
   // E31: proximity dinamico do /suggest (Fase 4) - centro do mapa enquanto ele esta visivel,
   // ou a posicao do agente apos o GPS, com Sao Paulo como piso. Nenhum efeito no fluxo antigo:
   // so alimenta quem ler `proximity` (o hook de autocomplete).
@@ -63,9 +72,10 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
   // de um resultado quem decide e o operador — nao mandamos o marcador para o primeiro sozinho.
   const [searchResults, setSearchResults] = useState<GeoSearchPlace[]>([]);
 
-  const select = useCallback((location: SelectedLocation | null) => {
+  const select = useCallback((location: SelectedLocation | null, origin: LocationOrigin) => {
     selectedRef.current = location;
     setSelectedLocation(location);
+    setSelectedOrigin(location ? origin : null);
   }, []);
 
   const nextGeoSignal = useCallback((): AbortSignal => {
@@ -105,16 +115,16 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
     map.current.flyTo({ center: [lng, lat], zoom: 16 });
   }, []);
 
-  const reverseGeocode = useCallback(async (lng: number, lat: number) => {
+  const reverseGeocode = useCallback(async (lng: number, lat: number, origin: LocationOrigin) => {
     // O endereço é opcional: sem token (ou sem resposta do Mapbox) a coordenada continua
     // valendo, senão o GPS "funciona" mas o botão Enviar nunca habilita. A consulta tem
     // timeout e cache no módulo: uma requisição pendurada não trava mais a seleção.
-    if (!mapboxToken) { setSearchResults([]); select({ lat, lng }); return; }
+    if (!mapboxToken) { setSearchResults([]); select({ lat, lng }, origin); return; }
     const signal = nextGeoSignal();
     setSearchResults([]);
     const place = await reverseGeocodePlace(lat, lng, mapboxToken);
     if (signal.aborted) return;
-    select(place ? { lat, lng, name: place.name, address: place.address } : { lat, lng });
+    select(place ? { lat, lng, name: place.name, address: place.address } : { lat, lng }, origin);
   }, [mapboxToken, nextGeoSignal, select]);
 
   useEffect(() => {
@@ -162,7 +172,7 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
         pendingMarker.current = null;
         if (target) updateMarker(target[0], target[1]);
       });
-      map.current.on('click', async (e) => { const { lng, lat } = e.lngLat; updateMarker(lng, lat); await reverseGeocode(lng, lat); });
+      map.current.on('click', async (e) => { const { lng, lat } = e.lngLat; updateMarker(lng, lat); await reverseGeocode(lng, lat, 'click'); });
       // E31: centro do mapa alimenta o `proximity` do autocomplete enquanto o operador navega.
       map.current.on('moveend', () => { const c = map.current?.getCenter(); if (c) setMapCenter({ lng: c.lng, lat: c.lat }); });
     }).catch((err) => {
@@ -187,7 +197,7 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
       return;
     }
     navigator.geolocation.getCurrentPosition(
-      async (position) => { const { latitude, longitude } = position.coords; setAgentPosition({ lng: longitude, lat: latitude }); updateMarker(longitude, latitude); await reverseGeocode(longitude, latitude); setIsLoadingLocation(false); },
+      async (position) => { const { latitude, longitude } = position.coords; setAgentPosition({ lng: longitude, lat: latitude }); updateMarker(longitude, latitude); await reverseGeocode(longitude, latitude, 'gps'); setIsLoadingLocation(false); },
       (error) => { log.error('Error getting location:', error); toast({ title: 'Erro ao obter localização', description: 'Verifique se a permissão de localização está ativada.', variant: 'destructive' }); setIsLoadingLocation(false); },
       { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -222,7 +232,7 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
           const only = result.places[0];
           setSearchResults([]);
           updateMarker(only.lng, only.lat);
-          select({ lat: only.lat, lng: only.lng, name: only.name, address: only.address });
+          select({ lat: only.lat, lng: only.lng, name: only.name, address: only.address }, 'forward');
         } else {
           setSearchResults(result.places);
         }
@@ -261,13 +271,13 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
   const chooseSearchResult = useCallback((place: GeoSearchPlace) => {
     setSearchResults([]);
     updateMarker(place.lng, place.lat);
-    select({ lat: place.lat, lng: place.lng, name: place.name, address: place.address });
+    select({ lat: place.lat, lng: place.lng, name: place.name, address: place.address }, 'suggest');
   }, [select, updateMarker]);
 
   const reset = useCallback(() => {
     geoAbort.current?.abort();
     pendingMarker.current = null;
-    select(null);
+    select(null, 'click');
     setSearchResults([]);
     setSearchQuery('');
     setIsSearching(false);
@@ -288,6 +298,6 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
 
   return {
     mapContainer, isMapLoaded, mapError, retryMap, isLoadingLocation, mapboxToken, searchQuery, setSearchQuery, isSearching,
-    selectedLocation, searchResults, chooseSearchResult, getCurrentLocation, searchLocation, reset, proximity,
+    selectedLocation, selectedOrigin, searchResults, chooseSearchResult, getCurrentLocation, searchLocation, reset, proximity,
   };
 }

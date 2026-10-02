@@ -73,6 +73,20 @@ jobs:
           deno check --config scripts/ci/deno.json --frozen
           supabase/functions/*/index.ts
 
+      - name: 🧪 Kernel de mensageria — mídia (precisa de rede local)
+        run: >-
+          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-net=127.0.0.1
+          supabase/functions/_shared/messaging/__tests__/media.test.ts
+
+      - name: "API de dominio do Multiplix (Bloco E - roteador e acoes)"
+        run: >-
+          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read
+          supabase/functions/multiplix-dispatch/__tests__/f53-rate-limit.test.ts
+          supabase/functions/multiplix-dispatch/actions/__tests__/blocks.test.ts
+          supabase/functions/multiplix-dispatch/actions/__tests__/audience.test.ts
+          supabase/functions/multiplix-dispatch/actions/__tests__/inspect.test.ts
+          supabase/functions/multiplix-dispatch/actions/__tests__/lifecycle.test.ts
+
       - name: 🧪 Run executable Edge handler contracts
         run: >-
           deno test --config scripts/ci/deno.json --frozen --allow-env
@@ -86,12 +100,20 @@ jobs:
           supabase/functions/_shared/__tests__/evolution-send-instance-token.test.ts
           supabase/functions/_shared/__tests__/webhook-auth-shadow.test.ts
           supabase/functions/_shared/__tests__/gmail-send-schema.test.ts
+          supabase/functions/_shared/__tests__/multiplix-eligibility.test.ts
+          supabase/functions/_shared/__tests__/messaging-evolution-go.test.ts
+          supabase/functions/_shared/__tests__/messaging-errors.test.ts
+          supabase/functions/_shared/messaging/__tests__/personalize.test.ts
+          supabase/functions/_shared/messaging/__tests__/phone.test.ts
+          supabase/functions/_shared/messaging/__tests__/eligibility.test.ts
+          supabase/functions/_shared/messaging/__tests__/index.test.ts
           supabase/functions/crm-integration/index.test.ts
           supabase/functions/promogifts-catalog/index.test.ts
           supabase/functions/promogifts-catalog/index.actions.test.ts
           supabase/functions/message-delivery/index.test.ts
           supabase/functions/sentiment-alert/index.test.ts
           supabase/functions/talkx-send/index.test.ts
+          supabase/functions/talkx-scheduler/index.test.ts
           supabase/functions/multiplix-audience/index.test.ts
           supabase/functions/public-api/index.test.ts
           supabase/functions/webhook-diagnostic/diagnostic.test.ts
@@ -138,12 +160,28 @@ jobs:
 
       - name: 🔬 Lint workflows (actionlint)
         run: |
-          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
-          actionlint -shellcheck ''
+          # actionlint vem do release oficial pinado (v1.7.7) com o sha256
+          # conferido, em vez de `go install ...@versao`: a resolucao de modulo do
+          # go install nao e travada por lock-file (SonarCloud githubactions:S8545).
+          set -euo pipefail
+          actionlint_version="1.7.7"
+          actionlint_asset="actionlint_${actionlint_version}_linux_amd64.tar.gz"
+          actionlint_sha256="023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757"
+          actionlint_dir="$RUNNER_TEMP/actionlint"
+          mkdir -p "$actionlint_dir"
+          curl -sSL -o "$actionlint_dir/$actionlint_asset" \
+            "https://github.com/rhysd/actionlint/releases/download/v${actionlint_version}/${actionlint_asset}"
+          echo "${actionlint_sha256}  ${actionlint_dir}/${actionlint_asset}" | sha256sum --check --strict
+          tar -xzf "$actionlint_dir/$actionlint_asset" -C "$actionlint_dir" actionlint
+          chmod +x "$actionlint_dir/actionlint"
+          echo "$actionlint_dir" >> "$GITHUB_PATH"
+          "$actionlint_dir/actionlint" -shellcheck ''
 
       - name: 🛡️ Audit workflow security (zizmor)
         run: |
-          python3 -m pip install --quiet --break-system-packages zizmor==0.9.0
+          # --only-binary :all: impede o build de sdist (scripts de setup);
+          # zizmor==0.9.0 publica wheel manylinux (SonarCloud githubactions:S8541).
+          python3 -m pip install --quiet --break-system-packages --only-binary :all: zizmor==0.9.0
           # Aceitar apenas exit 11-13 (info/low/medium); falhar em qualquer outro
           # código, inclusive 1 (parse/erro interno) e 14-15 (high/error).
           zizmor --persona regular .github/workflows/ || { rc=$?; [ "$rc" -ge 11 ] && [ "$rc" -le 13 ] || exit "$rc"; }
@@ -353,7 +391,9 @@ jobs:
         run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
-        run: bunx playwright install --with-deps chromium firefox webkit
+        # Versao exata resolvida no bun.lock (SonarCloud githubactions:S8543:
+        # `bunx playwright` sem versao puxaria um release nao verificado).
+        run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
 
       # Projetos "chromium", "firefox-auth" e "webkit-auth" exercitam auth.spec.ts
       # deslogado (sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD). Workflows de PR não podem
@@ -372,3 +412,65 @@ jobs:
           path: playwright-report/
           retention-days: 3
           if-no-files-found: ignore
+
+  # ===========================================
+  # JOB 6: Mutação do mapa (E70, não bloqueante)
+  # ===========================================
+  # E70: roda o runner de mutação do módulo do mapa (E69,
+  # `scripts/mutation/run-mapa.mjs`) quando um PR toca `src/lib/mapbox*` ou
+  # `src/components/inbox/location-picker/**`. `continue-on-error: true` mantém o
+  # job INFORMATIVO: um mutante sobrevivente nunca trava o merge (não é required).
+  #
+  # O GitHub Actions não oferece `paths:` por job — o filtro `paths` só existe no
+  # gatilho do workflow, e usá-lo aqui restringiria TODOS os jobs do ci.yml. Para
+  # não alterar os jobs existentes, o filtro de caminhos roda em STEP
+  # (`git diff --name-only` contra a base do PR), a alternativa prevista na
+  # auditoria de GitHub Actions (E64).
+  mutation-mapa:
+    name: 🧬 Mutação do mapa (não bloqueante)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    continue-on-error: true
+    needs: lint-and-typecheck
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Histórico completo: o filtro de caminhos compara com a base do PR
+          # (`origin/<base>...HEAD`), o que exige o ancestral comum.
+          fetch-depth: 0
+
+      # Filtro de caminhos (E70): só o módulo do mapa justifica a rodada.
+      - name: 🔎 Detectar mudança no módulo do mapa (paths filter)
+        id: paths
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BASE_REF:-}" ]; then
+            # push/dispatch/merge_group: sem base de PR, roda (fail-open).
+            echo "map_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed="$(git diff --name-only "origin/${BASE_REF}...HEAD")"
+          printf 'Arquivos alterados no PR:\n%s\n' "$changed"
+          if printf '%s\n' "$changed" | grep -Eq '^(src/lib/mapbox|src/components/inbox/location-picker/)'; then
+            echo "map_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "map_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 🧄 Setup Bun
+        if: steps.paths.outputs.map_changed == 'true'
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+
+      - name: 📚 Install dependencies
+        if: steps.paths.outputs.map_changed == 'true'
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: 🧬 Rodar mutação do mapa (E69)
+        if: steps.paths.outputs.map_changed == 'true'
+        run: bun run mutation:mapa

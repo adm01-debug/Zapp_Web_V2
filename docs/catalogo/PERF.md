@@ -55,7 +55,7 @@ O 16 não é arbitrário: viewport de 720px ÷ 72px = 10 linhas visíveis + over
 | --- | --- | --- |
 | `bunx vitest run src/components/catalog/__tests__/ExternalProductCatalog.test.tsx` | 13 tests, `Duration 1.91s` (WALL 2.25s) | 19 tests, `Duration 2.80s` e `2.03s` |
 | `bunx vitest run .../ExternalProductCatalog.virtualizacao.test.tsx` (arquivo novo, CT-27) | — (não existia) | 3 tests, `Duration 2.08s` e `1.60s` |
-| `bunx vitest run src/components/catalog` (diretório inteiro) | **não medido antes desta mudança** | 14 files, 298 tests, `Duration 9.56s` (WALL 9.93s) |
+| `bunx vitest run src/components/catalog` (diretório inteiro) | **não medido antes desta mudança** | 14 files, 298 tests, `Duration 9.56s` (WALL 9.93s) — ⚠️ **histórico/defasado**: remedido em 2026-10-02 como 23 files/426 tests/`11.51s` (ver §CT-80 abaixo) |
 
 Atenção: o tempo de suite varia de rodada para rodada no mesmo código (2.80s vs
 2.03s acima, `Start at 13:44` e `13:47`) — a diferença "antes × depois" de uma
@@ -122,3 +122,281 @@ tamanho da árvore montada (tabela acima). Medir isso de verdade pede browser
   do CT-29 (barra + `opacity-60`) continua valendo.
 - **Tempo de paginação percebido:** não medido (exigiria browser real e edge de
   verdade — a edge `promogifts-catalog` não roda neste ambiente de teste).
+
+## CT-75 — bundle inicial (medido) e CT-71 — chunks dos modais
+
+Medição de **2026-10-01, 21:06–21:09 (-03:00)**, mesmo host do topo
+(WSL2, `node v24.19.0`, `bun 1.4.0`), na árvore de trabalho do bloco H
+(`hermes/catalogo-bloco-h-26100120365a03`).
+
+### Número do bundle inicial
+
+| métrica | medido | limite VIVO no repo | veredito |
+| --- | --- | --- | --- |
+| **JS inicial** (gzip, 13 chunks) | **336,3 KB** | 341 KB (`performance-budget.json:4`) | ✅ dentro |
+| CSS inicial (gzip) | 40,0 KB | 80 KB | ✅ |
+| Maior chunk JS, inclui lazy (gzip) | 492,3 KB | 550 KB | ✅ |
+| Assets totais, sem maps (gzip) | **4101,2 KB** | 4100 KB | ❌ **estoura 1,1 KB** (corrigido — ver nota abaixo) |
+
+**O número é GZIP, não raw.** `vite.config.ts:45` tem
+`reportCompressedSize: false`, então **o log do `bun run build` imprime kB RAW**;
+a medição gzip é a do guard `scripts/ci/bundle-budget.mjs`, que lê `dist/index.html`
+e soma o gzip de todo JS/CSS do grafo **inicial**. Comparar o kB do log do Vite com
+o budget é comparar unidades diferentes — foi assim que nasceu a confusão de
+números neste item.
+
+#### De onde vêm os dois limites (336 e 350) — e qual é o vivo
+
+- **341 KB é o limite VIVO** — `performance-budget.json` → `budgets["initial-js"].maxKB = 341`,
+  e é ele que o CI usa (`scripts/ci/bundle-budget.mjs` falha com exit 1 acima disso;
+  rodou agora: `OK: bundle inicial dentro do budget.`, exit 0). O próprio arquivo
+  registra que subiu de 340 para 341 em 2026-10-01 pelo gate de microfone do T17.
+- **336 KB não é budget — é a medição antiga.** Vem de
+  `docs/catalogo/AUDITORIA_CATALOGO_2026-09-29.md:111` ("bundle 336 KB", linha da
+  etapa E40, medida em 2026-09-29). O plano (CT-75, linha 554) transformou aquele
+  número em teto: *"inicial ≤ 336 KB (não regredir o #443)"*. Ou seja, o 336 é
+  **baseline do #443**, não limite de CI.
+- **350 KB não existe como limite em lugar nenhum** — aparece só em **comentários**
+  como histórico: `vite.config.ts:71` e `:88` e `catalogShared.tsx:453`
+  ("estourou o budget de 350 KB no PR #415"). Nenhum `maxKB: 350` no repo.
+
+**Resultado honesto contra os dois:** 336,3 KB gzip vs teto de 336 KB do plano →
+**0,3 KB acima do baseline do #443** (não é regressão minha: ver abaixo); vs limite
+vivo de 341 KB → **4,7 KB de folga**, gate verde.
+
+#### O que a minha mudança fez com o inicial
+
+O chunk de **entrada** foi de `index-COJ_X0wF.js 203,56 kB` (build anterior, log em
+`.tmp/build-before.log`) para `index-CfGdaaYO.js 203,65 kB` (raw, conforme acima):
+**+0,09 kB**, que é o custo dos wrappers `lazy()/Suspense`. Os modais **nunca
+estiveram no grafo inicial** (são alcançados por chunk dinâmico), por isso tirá-los
+de lá não mexe no inicial — mexe no **quando** o código deles é baixado.
+
+**Não medido (dito com todas as letras):** o valor **gzip** do inicial *antes* da
+minha mudança. O `dist/` é sobrescrito a cada build e o baseline preservado é só o
+log **raw**; `git worktree` é bloqueado pelo guard do ambiente, então não deu para
+ramificar o HEAD e medir de novo. O que existe é o delta raw do chunk de entrada
+acima — pequeno o bastante para o número gzip não mudar de faixa (336,3 KB).
+
+### Saída crua — bundle (CT-75)
+
+```console
+$ bun run build            # exit 0, "✓ built in 6.09s"
+$ node scripts/ci/bundle-budget.mjs
+Bundle inicial (gzip):
+    107.5 KB  /assets/vendor-ui-CM8jVvQZ.js
+     79.4 KB  /assets/vendor-core-Cv0p2dBW.js
+     62.0 KB  /assets/index-CfGdaaYO.js
+     61.5 KB  /assets/vendor-data-Cdgdvx5N.js
+     13.9 KB  /assets/vendor-utils-CROwA8Ot.js
+      9.1 KB  /assets/dist-Ck6tG7Oq.js
+      0.7 KB  /assets/createLucideIcon-B9q1sJMV.js
+      0.6 KB  /assets/client-DM5cNW6y.js
+      0.5 KB  /assets/logger-yaIhJXUm.js
+      0.5 KB  /assets/rolldown-runtime-B0Z9INg1.js
+      0.3 KB  /assets/audit-JPoNn9lC.js
+      0.2 KB  /assets/loader-circle-pSB4aFl_.js
+      0.1 KB  /assets/utils-DtUhXtZY.js
+  JS inicial:  336.3 KB (budget 341 KB, 13 chunks)
+  CSS inicial: 40.0 KB (budget 80 KB)
+  Maior chunk JS (inclui lazy): 492.3 KB gzip (budget 550 KB)
+  Assets totais: 4101.2 KB gzip, sem maps (budget 4100 KB)
+OK: bundle inicial dentro do budget.
+```
+
+**Nenhum plugin de visualizer foi instalado** (`vite-bundle-visualizer`,
+`rollup-plugin-visualizer`): instalar dependência está fora do escopo deste bloco.
+A "saída normal do build" + o guard do repo dão todos os números acima.
+
+### Chunks dos modais — ANTES × DEPOIS (CT-71)
+
+O aceite do CT-71 é *"`vite build` mostra chunks separados"* — e ele **passa de graça**
+se você olhar o lugar errado (`vendor-charts`, 458,51 kB raw, é grupo do
+`vite.config.ts:100` e existia antes e depois, igual). A prova é o **conjunto** de
+chunks do módulo, antes e depois:
+
+| chunk | ANTES (build 20:41) | DEPOIS (build 21:06) |
+| --- | --- | --- |
+| `ProductDetailDialog-*.js` | **não existia** | **17,94 kB** |
+| `SendProductDialog-*.js` | **não existia** | **16,97 kB** |
+| `CatalogAdvancedFilters-*.js` | **não existia** | **3,14 kB** |
+| `CatalogBulkSendDialog-*.js` | 77,56 kB | **5,10 kB** |
+| `ExternalProductCatalog-*.js` | não existia | 14,15 kB |
+| `CatalogBulkBar-*.js` | não existia | 34,15 kB |
+| `vendor-charts-*.js` (grupo do vite.config) | 458,51 kB | 458,51 kB (inalterado) |
+
+Leitura do que aconteceu: `CatalogBulkSendDialog` **já** virava chunk antes desta
+tarefa (o módulo é compartilhado por dois importadores dinâmicos — o catálogo do chat
+e a tela de gestão), mas o chunk dele carregava **junto** o detalhe e o envio
+(77,56 kB). Depois do `lazy()` cada modal tem o seu próprio chunk e o do bulk-envio
+caiu para 5,10 kB: é o tamanho do que só ele usa. É por isso que "existe chunk
+separado" sozinho não provava nada — o que prova é **quais** chunks existem e o
+tamanho deles depois do corte.
+
+### Saída crua — chunks (CT-71)
+
+```console
+$ grep -nE "ProductDetailDialog|SendProductDialog|CatalogAdvancedFilters|CatalogBulkSendDialog" .tmp/build-before.log   # ANTES (20:41)
+373:dist/assets/CatalogBulkSendDialog-D8tVHLuk.js              77.56 kB │ map:   271.33 kB
+
+$ grep -nE "Catalog|ProductDetailDialog|SendProductDialog" .tmp/build-after.log    # DEPOIS (21:06)
+234:dist/assets/CatalogAdvancedFilters-ByXK8ony.js              3.14 kB │ map:    10.63 kB
+269:dist/assets/CatalogBulkSendDialog-CaIooLe8.js               5.10 kB │ map:    14.76 kB
+330:dist/assets/ExternalProductCatalog-K0oJ14ou.js             14.15 kB │ map:    48.96 kB
+343:dist/assets/SendProductDialog-D3cKjNRq.js                  16.97 kB │ map:    54.76 kB
+346:dist/assets/ProductDetailDialog-DC7_AP3A.js                17.94 kB │ map:    51.10 kB
+370:dist/assets/CatalogBulkBar-qgN4t3dS.js                    34.15 kB │ map:   131.05 kB
+```
+
+No `HEAD` nenhum dos 4 era lazy (import estático, prova por `git grep`):
+
+```console
+$ git grep -n "lazy(\|import(" HEAD -- 'src/components/catalog/*.tsx'
+(só ocorrências em __tests__ — nenhum `lazy(` de produção)
+$ git grep -n "CatalogBulkSendDialog" HEAD -- src/components/catalog/ExternalProductCatalog.tsx
+HEAD:src/components/catalog/ExternalProductCatalog.tsx:33:import { CatalogBulkSendDialog } from './CatalogBulkSendDialog';
+```
+
+---
+
+## Correcao de medicao (2026-10-01, pos-CI) — o numero de CT-75 registrado acima estava ERRADO
+
+A medicao de **4098,7 KB / OK / folga de 1,3 KB** foi feita sobre uma arvore **intermediaria**
+(as edicoes de CT-68/CT-69 continuaram depois da medicao e antes do commit, sem remedicao).
+Numeros verdadeiros, medidos com o MESMO ambiente do CI (`VITE_CRM_INTEGRATION_ENABLED=true`):
+
+| Commit | Assets totais (gzip) | Budget | Resultado |
+|---|---|---|---|
+| `fc24b866` (fim do bloco G, antes de CT-71) | 4091,3 KB | 4100 KB | ✅ passa (folga de 8,7 KB) |
+| `d61f8c83` (bloco H, com CT-71) | **4101,2 KB** | 4100 KB | ❌ **estoura 1,1 KB** |
+
+O CI reprova o check obrigatorio **🏗️ Build** por isso. Detalhe importante: o custo do CT-71
+(4 modais em `lazy` + `Suspense`) e **+9,9 KB de overhead ESTRUTURAL de split**, nao codigo novo —
+o mapeamento modulo→chunk pelos sourcemaps mostra **zero duplicacao**; e o mesmo codigo passando a
+viver em 7 streams de gzip em vez de 1, o que obriga o gzip a re-encodar a repeticao. O `initial-js`
+praticamente nao muda (336,3 KB; o entry raw foi de 203,56 para 203,65 kB).
+
+Cortes testados DENTRO do catalogo somam no maximo ~0,45 KB — abaixo do 1,1 KB necessario.
+Consolidar os 4 modais num chunk unico recuperaria 2,28 KB, mas quebraria o aceite do CT-71
+("chunks separados"). As rotas de `vite.config.ts` foram testadas em copia descartavel: grupo
+`catalog-core` PIORA (4101,7 KB) e `codeSplitting.minSize: 2000` e no-op absoluto.
+
+**Causa raiz do aperto, achada no caminho:** os icones do PWA em `public/` somam **1445,6 KB gzip
+(35% do orcamento de 4100 KB)** e **8 dos 9 sao byte-identicos** (md5 `e6ca6225a36c4a307404cb89d719b664`,
+109.315 bytes cada): um PNG de ~512px servido como `72x72`, `96x96`, `128x128` etc. Reotimizar cada
+icone no tamanho real libera ~1,4 MB e conserta um bug real de PWA. Esta fora do escopo deste PR
+(`public/`) e merece tarefa propria.
+
+---
+
+## CT-80 — tempo da suíte do módulo (remedido em 2026-10-02)
+
+Medição de **2026-10-02, 00:17–00:18 (-03:00)**, WSL2, `node v24.19.0` / `bun 1.4.0`,
+`vitest 4.1.11`, ambiente `jsdom`. **Substitui o registro de CT-27** (linha 58, mantido
+acima marcado como histórico), que era de outra árvore e de 14 arquivos/298 testes.
+
+| comando | resultado |
+| --- | --- |
+| `bunx vitest run src/components/catalog` | **23 files, 426 tests**, `Duration 11.51s`, **WALL 11.82 s** |
+
+O aceite do CT-80 é "suíte do módulo em < 30 s" → **11,51s de vitest (11,82s WALL): dentro do
+limite**. Contagem de arquivos/tests é a real do diretório hoje (`src/components/catalog/__tests__/`
+tem 23 arquivos), não reciclada do bloco BC.
+
+Saída crua:
+
+```console
+$ bunx vitest run src/components/catalog
+RUN  v4.1.11 .../catalogo-bloco-i-2610020011ce71
+Test Files  23 passed (23)
+     Tests  426 passed (426)
+  Start at  00:17:57
+  Duration  11.51s (transform 7.32s, setup 2.79s, import 26.84s, tests 39.40s, environment 24.74s)
+WALL 11.82 s
+```
+
+> Nota de horário: o relógio do host marca `00:17`, embora a conversa esteja datada de
+> 02/10/2026 — as duas medições (cobertura logo abaixo e tempo aqui) são da mesma sessão,
+> com ~20 s de intervalo.
+
+## CT-79 — cobertura do módulo `src/components/catalog` (medida em 2026-10-02)
+
+**Número: 84,41 % de linhas (1235/1463).** O aceite do CT-79 é "≥ 80 % linhas" → **cumprido**.
+
+**Como foi medido (importante):** a config vigente do projeto **exclui o módulo** da
+cobertura — `vitest.config.ts:17` limita `coverage.include` a `src/lib/**` e `src/services/**`.
+Rodar `vitest --coverage src/components/catalog` **não** mediria o módulo (o argumento filtra
+os *testes*, não o `coverage.include`). **Não editei `vitest.config.ts`**: o `include` foi
+sobrescrito **por CLI**:
+
+```console
+$ bunx vitest run src/components/catalog --coverage --coverage.include='src/components/catalog/**'
+RUN  v4.1.11 .../catalogo-bloco-i-2610020011ce71
+     Coverage enabled with v8
+Test Files  23 passed (23)
+     Tests  426 passed (426)
+  Duration  13.71s (transform 8.47s, setup 4.10s, import 37.07s, tests 49.04s, environment 23.75s)
+
+% Coverage report from v8
+=============================== Coverage summary ===============================
+Statements   : 80.56% ( 1434/1780 )
+Branches     : 79.77% ( 1388/1740 )
+Functions    : 75.88% ( 428/564 )
+Lines        : 84.41% ( 1235/1463 )
+================================================================================
+```
+
+A flag `--coverage.include` **existe e funciona** na versão instalada (vitest 4.1.11). Prova de
+que o override restringiu o escopo ao módulo (e não mediu `src/lib`/`src/services`): o
+`coverage/lcov.info` gerado tem **20 entradas `SF:` e 0 delas fora de `src/components/catalog/`**.
+
+```console
+$ grep -c "^SF:" coverage/lcov.info
+20
+$ grep "^SF:" coverage/lcov.info | grep -vc "src/components/catalog/"
+0
+```
+
+**A config vigente do projeto continua excluindo o módulo.** `vitest.config.ts` não foi tocado
+(piso global de 36/35/43/31 linhas/stmts/funcs/branches segue valendo para `src/lib`+`src/services`).
+Ou seja: o número de 84,41 % só existe com o override de CLI acima; o gate padrão (`bun run test:coverage`)
+não mede `src/components/catalog` e por isso **não** trava 80 % no módulo.
+
+## CT-97 — manifesto da edge: dois níveis do aceite (2026-10-02)
+
+O aceite do CT-97 é *"`deployment-manifest.json` final = versão **deployada**
+(digest confere)"*. Esse aceite tem **duas metades** e só uma é verificável
+aqui — registradas separadamente, cada uma com a saída crua.
+
+### Nível LOCAL — manifesto do repo está consistente (✅ PASSA)
+
+`scripts/edge-deploy/generate-manifest.mjs --check` recalcula o manifesto a
+partir da árvore e compara **byte a byte** com o `supabase/deployment-manifest.json`
+commitado (`generate-manifest.mjs:41-45`). Saída crua:
+
+```console
+$ node scripts/edge-deploy/generate-manifest.mjs --check
+Edge manifest OK: 67 functions, 123 source files, sha256=7c4ee37051ae7576d4c7fb8bfa211019012b5dc3fe230df5af60a4537ff1d0ec
+EXIT=0
+```
+
+Leitura: o manifesto commitado **não está defasado** em relação ao código
+(67 funções, 123 arquivos-fonte, digest
+`7c4ee37051ae7576d4c7fb8bfa211019012b5dc3fe230df5af60a4537ff1d0ec`).
+
+### Nível REMOTO — digest contra o que está **deployado** (⛔ NÃO MEDIDO)
+
+O que o aceite chama de "= versão deployada" exige comparar o manifesto com o
+inventário do projeto no Supabase Cloud. Isso **não** é feito pelo `--check`
+local; exige `scripts/edge-deploy/collect-remote.mjs` com
+`SUPABASE_ACCESS_TOKEN` no ambiente (`collect-remote.mjs:19`) e/ou um snapshot
+prévio (`:23`), além de `PROJECT_REF` batendo com o canônico
+(`tnnnlkbymytvtqngbbqh`, `:18`). **Nenhum token está disponível neste
+ambiente** e o bloco não pede token nem deploya.
+
+- **Portanto:** a metade remota do aceite do CT-97 **permanece aberta**. O que
+  está provado é apenas que o manifesto **do repo** confere consigo mesmo — não
+  que ele equivale ao conjunto de funções publicado.
+- **Para fechar:** rodar `collect-remote.mjs` (com `SUPABASE_ACCESS_TOKEN` +
+  `--snapshot` ou `--before`/`--git-sha`/`--run-id`/`--scope`) e anexar aqui a
+  evidência de digest contra o deploy.

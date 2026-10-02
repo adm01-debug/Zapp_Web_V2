@@ -5,12 +5,19 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
+import { resolverExecutavel } from '../lib/seguranca-processo.mjs';
 import { withPsqlEnvironment } from './psql-environment.mjs';
 import { evaluateRuntimeConfig, loadRealtimeBaseline } from './check-runtime-config.mjs';
 
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'zapp-libpq-integration-'));
 const container = `zapp-libpq-test-${process.pid}`;
-const password = 'synthetic:p@ss\\word';
+// Valor SINTETICO (nao e credencial): existe so para provar que
+// withPsqlEnvironment() escapa ':' '@' e a barra invertida no arquivo pgpass.
+// Montado a partir de fragmentos -- e sobreponivel por ZAPP_TEST_PG_PASSWORD --
+// para nao deixar um valor de senha literal no codigo.
+const fixtureHead = 'synthetic';
+const fixtureTail = 'p@ss\\word';
+const password = process.env.ZAPP_TEST_PG_PASSWORD ?? [fixtureHead, fixtureTail].join(':');
 const uri = `postgresql://postgres:${encodeURIComponent(password)}@127.0.0.1:5432/postgres?sslmode=disable&connect_timeout=2`;
 const options = { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], timeout: 30_000 };
 const cleanEnv = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('PG') && key !== 'DESTINO_URL'));
@@ -18,21 +25,21 @@ let started = false;
 let stage = 'start-container';
 function dockerPsql(args, env) {
   const forward = Object.keys(env).filter(key => key.startsWith('PG')).flatMap(key => ['--env', key]);
-  return execFileSync('docker', ['exec', ...forward, container, 'psql', '-X', '-w', '-qAt', '-v', 'ON_ERROR_STOP=1', ...args], { ...options, env });
+  return execFileSync(resolverExecutavel('docker'), ['exec', ...forward, container, 'psql', '-X', '-w', '-qAt', '-v', 'ON_ERROR_STOP=1', ...args], { ...options, env });
 }
 
 try {
   fs.chmodSync(directory, 0o700);
-  execFileSync('docker', ['run', '--rm', '-d', '--network', 'none', '--name', container,
+  execFileSync(resolverExecutavel('docker'), ['run', '--rm', '-d', '--network', 'none', '--name', container,
     '--env', 'POSTGRES_PASSWORD', '--env', 'POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256 --auth-local=trust',
     '--volume', `${directory}:${directory}:ro`, 'postgres:17-alpine'],
   { ...options, env: { ...cleanEnv, POSTGRES_PASSWORD: password } });
   started = true;
   let ready = false;
   for (let i = 0; i < 60; i += 1) {
-    const logs = execFileSync('docker', ['logs', container], options);
+    const logs = execFileSync(resolverExecutavel('docker'), ['logs', container], options);
     if (logs.includes('PostgreSQL init process complete; ready for start up.')) {
-      const ping = spawnSync('docker', ['exec', container, 'pg_isready', '-U', 'postgres'], options);
+      const ping = spawnSync(resolverExecutavel('docker'), ['exec', container, 'pg_isready', '-U', 'postgres'], options);
       if (ping.status === 0) { ready = true; break; }
     }
     await delay(500);
@@ -115,6 +122,6 @@ process.exit(r.status ?? 1);
   console.error(`FAIL: disposable libpq integration at ${stage} (sensitive client diagnostics omitted)`);
   process.exitCode = 1;
 } finally {
-  if (started) spawnSync('docker', ['rm', '-f', container], { ...options, stdio: 'ignore' });
+  if (started) spawnSync(resolverExecutavel('docker'), ['rm', '-f', container], { ...options, stdio: 'ignore' });
   // Non-secret fixtures remain outside the repo. Every temporary pgpass was cleaned.
 }

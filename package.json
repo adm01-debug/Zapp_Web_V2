@@ -24,6 +24,7 @@
     "implicit-any-check": "node scripts/ci/implicit-any-ratchet.mjs",
     "preview": "vite preview",
     "test:contracts": "vitest run --config vitest.contracts.config.ts",
+    "mutation:mapa": "node scripts/mutation/run-mapa.mjs",
     "prepare": "husky || true"
   },
   "dependencies": {
@@ -122,6 +123,7 @@
     "typescript-eslint": "^8.70.1",
     "vite": "^8.3.1",
     "vitest": "^4.1.11",
+    "vitest-axe": "0.1.0",
     "zod3": "npm:zod@3.23.8"
   },
   "engines": {

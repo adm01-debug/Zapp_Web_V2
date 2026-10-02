@@ -57,6 +57,35 @@ function marcarAvisoDoMes(): void {
   }
 }
 
+/**
+ * E49 — aviso antecipado: a partir de 80% do teto efetivo, gravar UM evento
+ * `searchbox_budget_warning` por mês, com a MESMA mecânica de marca persistida por mês do E47
+ * (localStorage, não `budgetOk`, que nasce `true` a cada reload). Sem UI: alimenta o painel (E52).
+ * O evento leva só `limit`/`count`/`month` — nunca termo de busca nem coordenada.
+ */
+const AVISO_ANTECIPADO_PREFIX = 'searchbox_budget_warning_notified:';
+
+/** Limiar em sessões: 80% do teto, em aritmética inteira (evita ruído de ponto flutuante). */
+function limiarAntecipado(limit: number): number {
+  return Math.ceil((limit * 8) / 10);
+}
+
+function jaAvisouAntecipadoEsteMes(): boolean {
+  try {
+    return localStorage.getItem(AVISO_ANTECIPADO_PREFIX + mesAtual()) !== null;
+  } catch {
+    return false;
+  }
+}
+
+function marcarAvisoAntecipadoDoMes(): void {
+  try {
+    localStorage.setItem(AVISO_ANTECIPADO_PREFIX + mesAtual(), new Date().toISOString());
+  } catch {
+    // idem: sem storage, repete o evento a perdê-lo — observabilidade em primeiro lugar.
+  }
+}
+
 let budgetOk = true;
 let lastCheckedAt = 0;
 let inFlight: Promise<void> | null = null;
@@ -75,6 +104,15 @@ async function refresh(): Promise<void> {
       void logAudit({
         action: 'searchbox_cost_guard',
         details: { event: 'degraded', limit, count, month: mesAtual() },
+      });
+    }
+    // E49 — aviso antecipado a 80% do teto. Só quando AINDA liberado (`budgetOk`): depois de
+    // degradar, quem fala é o evento do E47, e o aviso de 80% para de fazer sentido.
+    if (budgetOk && count >= limiarAntecipado(limit) && !jaAvisouAntecipadoEsteMes()) {
+      marcarAvisoAntecipadoDoMes();
+      void logAudit({
+        action: 'searchbox_budget_warning',
+        details: { event: 'warning', limit, count, month: mesAtual() },
       });
     }
   } catch {

@@ -37,7 +37,7 @@ export function QuickRepliesManager({ onSelect, compact = false }: QuickRepliesM
   };
 
   const handleCopy = (content: string) => {
-    navigator.clipboard.writeText(content);
+    void navigator.clipboard.writeText(content);
     toast.success('Copiado para a área de transferência!');
   };
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Confetti, useCelebration } from './Confetti';
 import { toast } from '@/hooks/ui/use-toast';
+import { secureRandomFloat } from '../../lib/secureRandom';
 import { Sparkles, PartyPopper, Rocket, Ghost, Music } from 'lucide-react';
 
 interface EasterEggsProviderProps {
@@ -36,13 +37,13 @@ export const EasterEggsProvider = forwardRef<HTMLDivElement, EasterEggsProviderP
   const { celebrate, celebrating } = useCelebration();
 
   // Valores da chuva do Matrix Mode gerados uma unica vez, no mount (lazy
-  // initializer): Math.random() direto no render (mesmo dentro de useMemo)
-  // e impuro e re-randomiza a cada re-render do provider, gerando "saltos"
-  // visuais na animacao. So sao consumidos quando matrixMode fica true.
+  // initializer): uma fonte aleatoria impura chamada direto no render (mesmo
+  // dentro de useMemo) re-randomiza a cada re-render do provider, gerando
+  // "saltos" visuais na animacao. So sao consumidos quando matrixMode fica true.
   const [matrixColumns] = useState(() => Array.from({ length: 20 }, () => ({
-    duration: 3 + Math.random() * 2,
-    delay: Math.random() * 2,
-    chars: Array.from({ length: 30 }, () => String.fromCharCode(0x30A0 + Math.random() * 96)),
+    duration: 3 + secureRandomFloat() * 2,
+    delay: secureRandomFloat() * 2,
+    chars: Array.from({ length: 30 }, () => String.fromCharCode(0x30A0 + secureRandomFloat() * 96)),
   })));
 
   const triggerKonamiEasterEgg = useCallback(() => {

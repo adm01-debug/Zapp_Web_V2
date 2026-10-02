@@ -88,7 +88,7 @@ export function useConnectionsManager() {
   }, []);
 
   useEffect(() => {
-    fetchConnections();
+    void fetchConnections();
 
     const channel = supabase
       .channel('whatsapp-connections-changes')
@@ -164,7 +164,7 @@ export function useConnectionsManager() {
       toast({ title: 'Conexão criada!', description: 'Agora conecte escaneando o QR Code.' });
       setIsAddDialogOpen(false);
       setNewConnection({ name: '', phone_number: '' });
-      if (result?.connection) handleShowQrCode(result.connection as unknown as WhatsAppConnection);
+      if (result?.connection) void handleShowQrCode(result.connection as unknown as WhatsAppConnection);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       log.error('Error creating connection:', error);
@@ -241,7 +241,7 @@ export function useConnectionsManager() {
   };
 
   const handleCopyId = (id: string) => {
-    navigator.clipboard.writeText(id);
+    void navigator.clipboard.writeText(id);
     toast({ title: 'ID copiado!', description: 'O ID da conexão foi copiado para a área de transferência.' });
   };
 

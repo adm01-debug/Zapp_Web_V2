@@ -268,7 +268,17 @@ describe('useContactSearch — CT-43: mínimo de 2 caracteres e debounce de 300 
 describe('useSendToContact — CT-06/CT-07: toast de sucesso e cache do rail', () => {
   beforeEach(resetSendMocks);
 
+  // `openContactChat` agenda uma cadeia de retry (150 ms + até 14×200 ms) e o
+  // teste é dono do próprio tempo: com relógio real os timers sobrevivem ao
+  // teardown do jsdom e o `window.dispatchEvent` do callback estoura
+  // `ReferenceError: window is not defined` sob cobertura. `useRealTimers`
+  // descarta o relógio falso no fim de cada teste.
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('sucesso traz a ação "Abrir conversa", que abre a conversa do contato no inbox', async () => {
+    vi.useFakeTimers();
     mockSendOutboundMessage.mockResolvedValue({ id: 'msg-1' });
     const { result } = renderHook(() => useSendToContact(vi.fn()), { wrapper });
 
@@ -291,9 +301,15 @@ describe('useSendToContact — CT-06/CT-07: toast de sucesso e cache do rail', (
     expect(mockNavigateToView).toHaveBeenCalledWith('inbox');
     expect((window as Window & { __pendingOpenContactId?: string }).__pendingOpenContactId).toBe('c1');
 
-    await new Promise((resolve) => { setTimeout(resolve, 200); });
+    // 200 ms: dispara o primeiro `tryDispatch` (150 ms) exatamente como antes,
+    // mas agora no relógio do teste — a asserção abaixo segue a mesma.
+    await act(async () => { await vi.advanceTimersByTimeAsync(200); });
     window.removeEventListener('open-contact-chat', listener);
     expect(received).toContain('c1');
+
+    // Drena o resto da cadeia de retry dentro do teste: nenhum timer real fica
+    // pendente para o teardown.
+    await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
 
     delete (window as Window & { __pendingOpenContactId?: string }).__pendingOpenContactId;
   });
@@ -316,10 +332,16 @@ describe('useSendToContact — CT-06/CT-07: toast de sucesso e cache do rail', (
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: CATALOG_SEND_EVENTS_KEY });
   });
 
-  it('openContactChat navega para o inbox e marca o contato pendente', () => {
+  it('openContactChat navega para o inbox e marca o contato pendente', async () => {
+    vi.useFakeTimers();
     openContactChat('c9');
     expect(mockNavigateToView).toHaveBeenCalledWith('inbox');
     expect((window as Window & { __pendingOpenContactId?: string }).__pendingOpenContactId).toBe('c9');
+
+    // Drena a cadeia de retry (150 ms + 14×200 ms) no relógio do teste: sem
+    // isso os timers ficavam pendentes e estouravam no teardown do jsdom.
+    await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+
     delete (window as Window & { __pendingOpenContactId?: string }).__pendingOpenContactId;
   });
 });

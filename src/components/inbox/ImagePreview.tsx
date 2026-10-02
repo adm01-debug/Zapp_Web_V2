@@ -83,7 +83,7 @@ export const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(functi
             className={!canDownload ? 'opacity-50 cursor-not-allowed' : ''}
             onClick={(e) => {
               e.stopPropagation();
-              handleDownload();
+              void handleDownload();
             }}
           >
             <Download className="w-4 h-4" />

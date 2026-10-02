@@ -151,7 +151,7 @@ Se não houver objeções, retorne []`,
   }, []);
 
   const handleCopy = useCallback((text: string, idx: number) => {
-    navigator.clipboard.writeText(text);
+    void navigator.clipboard.writeText(text);
     setCopiedIdx(idx);
     toast.success('Copiado!');
     setTimeout(() => setCopiedIdx(null), 2000);

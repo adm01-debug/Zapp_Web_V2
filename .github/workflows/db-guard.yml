@@ -37,6 +37,32 @@ jobs:
     name: Contrato DB offline
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    # E47: um PostgreSQL 17 compartilhado para todos os ~48 testes de contrato.
+    # O docker-shim intercepta `docker run/exec/rm` e roteia cada teste para
+    # um banco isolado (CREATE/DROP DATABASE por invocação) no mesmo serviço,
+    # eliminando o overhead de inicialização individual de containers.
+    services:
+      postgres:
+        image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+        env:
+          POSTGRES_PASSWORD: shim_test_password
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      POSTGRES_TEST_IMAGE: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+      POSTGREST_TEST_IMAGE: public.ecr.aws/supabase/postgrest:v14.5@sha256:bb289d00570b569525e1e22fb77c49cd17c17ca3f41da9ee2b4351a35027551b
+      # E47: coordenadas do serviço compartilhado, lidas pelo docker-shim.
+      POSTGRES_SERVICE_HOST: localhost
+      POSTGRES_SERVICE_PORT: "5432"
+      POSTGRES_SERVICE_USER: postgres
+      POSTGRES_SERVICE_PASS: shim_test_password
+      DOCKER_SHIM_STATE_DIR: /tmp/docker-shim-state
     permissions:
       contents: read
       # pull-requests: read apenas para o passo de imutabilidade abaixo (lista
@@ -169,7 +195,26 @@ jobs:
       - name: Testar comparadores de catalogo, manifesto e migrations
         run: node --test scripts/db-audit/*.test.mjs
 
+      # E47: instala o docker-shim no PATH antes do primeiro step que usa docker.
+      # A partir daqui, `docker` aponta para o shim que roteia run/exec/rm para
+      # o serviço postgres compartilhado. SKIP_DOCKER_SHIM=1 no step do PostgREST
+      # (abaixo) desvia o shim e usa o docker real para subir o container PostgREST.
+      - name: Instalar docker-shim (E47)
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          cp scripts/db-audit/docker-shim "$HOME/.local/bin/docker"
+          chmod +x "$HOME/.local/bin/docker"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # E47: SKIP_DOCKER_SHIM=1 — este test cria dois bancos (db_a, db_b) no
+      # mesmo container e roda DDL identico em cada um. O shim mapeia um
+      # container a um unico banco; -d db_a e -d db_b roteariam para o mesmo
+      # banco, causando "already exists" na segunda iteracao. O test acessa
+      # postgres via docker exec (socket Unix interno), nao via localhost:5432,
+      # entao nao colide com o servico compartilhado.
       - name: Validar SQL de catalogo e manifesto no PostgreSQL 17
+        env:
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/catalog-manifest.test.sh
 
       - name: Testar normalizacao deterministica dos tipos gerados
@@ -184,57 +229,61 @@ jobs:
       # prova que cada regressao de ACL/contrato encerra com codigo nao zero.
       - name: Simular regressões do contrato mcp_exec
         env:
-          ACL_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          ACL_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-mcp-exec-acl.test.sh
 
       - name: Simular regressões da ACL de webhook failures
         env:
-          WEBHOOK_ACL_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          WEBHOOK_ACL_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-webhook-failures-acl.test.sh
 
       - name: Provar remoção do token legado da API pública
         env:
-          PUBLIC_API_DISABLE_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          PUBLIC_API_DISABLE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/public-api-disable.test.sh
 
       - name: Simular concorrência e integridade da fila CRM
         env:
-          CRM_OUTBOX_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          CRM_OUTBOX_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/crm-sync-outbox-behavior.test.sh
 
+      # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
+      # Com o shim o banco criado é shim_zapp_v2_inbox_authz_test_<PID> e
+      # current_database() devolve esse nome, quebrando a asserção.
       - name: Simular autorização canônica do Inbox
         env:
-          INBOX_AUTHZ_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          INBOX_AUTHZ_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/inbox-contact-authorization.test.sh
 
       - name: Simular exclusão, status e grants canônicos de Contatos
         env:
-          CONTACTS_F1_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          CONTACTS_F1_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/contacts-soft-delete-and-status.test.sh
 
       - name: Simular contatos legados fora por padrão (include_legacy)
         env:
-          CONTACTS_F5_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          CONTACTS_F5_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/contacts-legacy-visibility.test.sh
 
       - name: Simular autorização de status de conversa e etiquetas de WhatsApp
         env:
-          WA_TAG_AUTHZ_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          WA_TAG_AUTHZ_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/wa-tag-and-status-authorization.test.sh
 
       - name: Simular autorização do INSERT em análises de conversa
         env:
-          ANALYSES_AUTHZ_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          ANALYSES_AUTHZ_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/conversation-analyses-authorization.test.sh
 
       - name: Simular autorização da LEITURA de análises/etiquetas por fila (L8)
         env:
-          AI_READ_QUEUE_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          AI_READ_QUEUE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/ai-read-policies-queue-scope.test.sh
 
       - name: Simular autorização do notify_due_tasks (RPC sem guarda)
         env:
-          NOTIFY_DUE_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          NOTIFY_DUE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/notify-due-tasks-authorization.test.sh
 
       # L5 da matriz IA-004: os jobs do pg_cron autenticavam com a ANON KEY do projeto
@@ -247,42 +296,49 @@ jobs:
       # (o arquivo do repo não é tocado) e exige que a asserção de ACL falhe.
       - name: Simular credencial dedicada de cron no Vault (L5)
         env:
-          CRON_SECRET_L5_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          CRON_SECRET_L5_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          # E47: SKIP_DOCKER_SHIM=1 — o teste usa docker exec bash (BLOCO C/D),
+          # não suportado pelo shim (apenas psql é interceptado; exit 1 silencia o FAIL).
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/cron-secret-l5-contract.test.sh
 
       - name: Simular escopo das 14 policies TO public -> authenticated
         env:
-          PUBLIC_POLICY_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          PUBLIC_POLICY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/scope-public-policies-authenticated.test.sh
 
       - name: Simular permissao send_messages imposta na RPC de envio (L9)
         env:
-          SEND_MESSAGES_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          SEND_MESSAGES_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/send-messages-permission-authorization.test.sh
 
       - name: Simular escopo de fila na escolha da conexao de envio (L7)
         env:
-          ENQUEUE_SCOPE_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          ENQUEUE_SCOPE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/enqueue-connection-scope.test.sh
 
       - name: Simular vinculo de time na reacao em mensagem (#1265)
         env:
-          TEAM_REACTION_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TEAM_REACTION_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-reaction-membership.test.sh
 
       - name: Simular drop do indice redundante de messages.external_id (perf)
         env:
-          DROP_EXTID_INDEX_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          DROP_EXTID_INDEX_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/drop-redundant-messages-external-id-index.test.sh
 
       - name: Simular fila, autorização e aceite concorrente do TALK ME
         env:
-          TALK_ME_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALK_ME_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talk-me-queue-contract.test.sh
 
+      # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
+      # Com o shim o banco criado é shim_zapp_talkx_history_<PID> e
+      # current_database() devolve esse nome, quebrando a asserção.
       - name: Simular histórico atômico de templates Talk X
         env:
-          TALKX_HISTORY_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALKX_HISTORY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
         run: |
           TALKX_HISTORY_PRECREATE_RUNTIME=false bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-history-behavior.test.sh
           TALKX_HISTORY_PRECREATE_RUNTIME=true bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-history-behavior.test.sh
@@ -292,7 +348,7 @@ jobs:
 
       - name: Simular correção forward-only da FK saved_by do Talk X
         env:
-          TALKX_HISTORY_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALKX_HISTORY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: |
           TALKX_HISTORY_FK_PRESTATE=NO_ACTION bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-history-saved-by-fk.test.sh
           TALKX_HISTORY_FK_PRESTATE=SET_NULL bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-history-saved-by-fk.test.sh
@@ -300,52 +356,52 @@ jobs:
 
       - name: Simular reconciliação forward-only da policy Talk X blacklist
         env:
-          TALKX_BLACKLIST_POLICY_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALKX_BLACKLIST_POLICY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-blacklist-policy-forward-only.test.sh
 
       - name: Simular edição de limites de campanha via RPC Talk X (V09)
         env:
-          TALKX_UPDATE_LIMITS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALKX_UPDATE_LIMITS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-update-limits-rpc.test.sh
 
       - name: Simular correção da janela de envio via RPC Talk X (V09b)
         env:
-          TALKX_UPDATE_LIMITS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALKX_UPDATE_LIMITS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-update-limits-send-window.test.sh
 
       - name: Simular endurecimento de casts na RPC Talk X (V09c)
         env:
-          TALKX_UPDATE_LIMITS_CASTS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALKX_UPDATE_LIMITS_CASTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-update-limits-casts.test.sh
 
       - name: Simular correção do vazamento 22009 na RPC Talk X (V09e)
         env:
-          TALKX_UPDATE_LIMITS_22009_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALKX_UPDATE_LIMITS_22009_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-update-limits-22009.test.sh
 
       - name: Simular autenticação do escape hatch de limites Talk X (V09d)
         env:
-          TALKX_ESCAPE_HATCH_AUTH_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALKX_ESCAPE_HATCH_AUTH_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-escape-hatch-auth.test.sh
 
       - name: Simular guards fail-closed do Talk X (MAPA)
         env:
-          TALKX_GUARDS_FAIL_CLOSED_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALKX_GUARDS_FAIL_CLOSED_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-guards-fail-closed.test.sh
 
       - name: Simular replay idempotente do talkx_settings (R2-01)
         env:
-          TALKX_SETTINGS_REPLAY_IDEMPOTENT_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALKX_SETTINGS_REPLAY_IDEMPOTENT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-settings-replay-idempotent.test.sh
 
       - name: Simular teto de send_interval_max em 24h (A2)
         env:
-          TALKX_SEND_INTERVAL_TETO_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALKX_SEND_INTERVAL_TETO_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-send-interval-teto-24h.test.sh
 
       - name: Simular eventos do ciclo de vida gravados no servidor (V12)
         env:
-          TALKX_V12_LIFECYCLE_EVENTS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALKX_V12_LIFECYCLE_EVENTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-v12-lifecycle-events.test.sh
 
       - name: Simular guard de replied_count e remoção da RPC de use_count (V15)
@@ -365,32 +421,32 @@ jobs:
 
       - name: Simular supressão de contato idempotente nos eixos phone e contact_id (V07b)
         env:
-          TALKX_SUPPRESS_PHONE_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALKX_SUPPRESS_PHONE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-suppress-phone-axis.test.sh
 
       - name: Simular vazamento e correção da view de métricas Talk X
         env:
-          TALKX_METRICS_INVOKER_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALKX_METRICS_INVOKER_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-metrics-view-invoker.test.sh
 
       - name: Simular snapshot atômico de destinatários Talk X
         env:
-          TALKX_DRAFT_RECIPIENTS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALKX_DRAFT_RECIPIENTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-draft-recipients.test.sh
 
       - name: Simular identidade e revisão otimista de rascunhos Talk X
         env:
-          TALKX_DRAFT_SAVE_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALKX_DRAFT_SAVE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-draft-save.test.sh
 
       - name: Simular leases de entrega concorrente do Talk X
         env:
-          TALKX_DELIVERY_LEASES_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALKX_DELIVERY_LEASES_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-delivery-leases.test.sh
 
       - name: Simular snapshot imutável de mensagem e variante Talk X
         env:
-          TALKX_MESSAGE_SNAPSHOT_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALKX_MESSAGE_SNAPSHOT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-message-snapshot.test.sh
 
       # F20 do plano do Multiplix: replay limpo das 10 migrations do modulo +
@@ -399,7 +455,7 @@ jobs:
       # transacional idempotente com teto, fila e scheduler).
       - name: Simular contrato de acesso e fila do Multiplix
         env:
-          MULTIPLIX_RLS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          MULTIPLIX_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/multiplix-rls.test.sh
 
       # F24 do plano do Multiplix: prova que a edge multiplix-audience deriva o
@@ -413,13 +469,59 @@ jobs:
 
       - name: Simular estados e audiencia canônicos do Talk X
         env:
-          TALKX_CAMPAIGN_STATE_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALKX_CAMPAIGN_STATE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-campaign-state-transitions.test.sh
 
       - name: Simular transições concorrentes de campanha Talk X
         env:
-          TALKX_CAMPAIGN_TRANSITIONS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TALKX_CAMPAIGN_TRANSITIONS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-campaign-transitions.test.sh
+
+      # X010: trava por campanha (worker lease), start idempotente (sending ->
+      # sending sem tocar started_at), fila do worker em RPC e segredo de cron
+      # dedicado do Talk X.
+      - name: Simular trava por campanha, fila do worker e segredo de cron do Talk X (X010)
+        env:
+          TALKX_CAMPAIGN_WORKER_LEASE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-campaign-worker-lease.test.sh
+
+      # X014: exigir papel admin/supervisor no banco para criar, agendar e alterar
+      # campanha (RPCs, policies de talkx_campaigns, gatilho de agendamento, revoke
+      # de anon em talkx_settings, policy de talkx_blacklist e ramo admin em
+      # link_clicks).
+      - name: Simular portões de papel do Talk X (X014)
+        env:
+          TALKX_ROLE_GATES_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-role-gates.test.sh
+
+      # X016: RPC unica de audiencia (talkx_resolve_audience) com a funcao interna
+      # talkx_audience_query — whitelist de campo/operador, elegibilidade
+      # (deleted_at/LID/telefone/visibilidade), supressao por id ou telefone
+      # normalizado e paginacao keyset.
+      - name: Simular a RPC unica de audiencia do Talk X (X016)
+        env:
+          TALKX_AUDIENCE_RPC_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-audience-rpc.test.sh
+
+      # X017: geracao de destinatarios no servidor a partir do rascunho salvo
+      # (snapshot_talkx_campaign_audience) — colunas respect_suppression/
+      # audience_snapshot_at, criterio de elegivel no replace e recusa de
+      # respect_suppression=false (22023) ate a decisao N12.
+      - name: Simular o snapshot de audiencia do Talk X (X017)
+        env:
+          TALKX_AUDIENCE_SNAPSHOT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-audience-snapshot.test.sh
+
+      # X012: o tick do motor — reaper (lease vencido após o POST vira
+      # outcome_unknown), conclusão de campanha drenada, fan-out de no máximo 1
+      # campanha 'sending' por conexão com x-cron-secret e timeout de 30s, e a
+      # troca (alter_job, sem job novo) do command do 'talkx-scheduler-1min'.
+      # Aplica de verdade as dependências já mergeadas (X010 e a RPC de conclusão)
+      # e troca net.http_post por uma tabela de captura.
+      - name: Simular o tick do motor Talk X (X012)
+        env:
+          TALKX_ENGINE_TICK_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-engine-tick.test.sh
 
       # O teste existente acima monta o fixture aplicando SO a migration de
       # 20260911150000 (um overload), e por isso nunca viu a ambiguidade que
@@ -427,10 +529,13 @@ jobs:
       # esta viva. Este passo sobe PostgREST de verdade e chama a RPC por HTTP,
       # sem mock: HTTP 300 PGRST203 antes da migration, 200 e o ciclo completo
       # depois.
+      # E47: SKIP_DOCKER_SHIM=1 — este step precisa do docker real para subir
+      # o container PostgREST; o shim não intercepta este step.
       - name: Provar ambiguidade do overload de transition_talkx_campaign no PostgREST
         env:
-          TALKX_TRANSITION_POSTGREST_PG_IMAGE: postgres:17-alpine
-          TALKX_TRANSITION_POSTGREST_IMAGE: public.ecr.aws/supabase/postgrest:v14.5
+          TALKX_TRANSITION_POSTGREST_PG_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          TALKX_TRANSITION_POSTGREST_IMAGE: ${{ env.POSTGREST_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-transition-overload-postgrest.test.sh
 
       # V11: o contrato de eventos recusava os tipos que o servidor e a trilha
@@ -440,22 +545,30 @@ jobs:
       # talkx_campaigns nunca é verdadeiro com campaign_id nulo.
       - name: Provar o contrato de eventos do Talk X
         env:
-          TALKX_EVENTS_CONTRACT_PG_IMAGE: postgres:17-alpine
+          TALKX_EVENTS_CONTRACT_PG_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-events-contract.test.sh
 
+      # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
+      # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e
+      # current_database() devolve esse nome, quebrando a asserção.
       - name: Simular primitivas atômicas de mensagens e encerramento
         env:
-          MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/message-delivery-phase1-behavior.test.sh
 
       - name: Simular contrato de dados da Telefonia v2
         env:
-          CALLS_TELEFONIA_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          CALLS_TELEFONIA_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/calls-telefonia-contract.test.sh
 
+      # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
+      # Com o shim o banco criado é shim_zapp-notification-atomicity-<PID> e
+      # current_database() devolve esse nome, quebrando a asserção.
       - name: Simular notificações atômicas de chamadas e sentimento
         env:
-          NOTIFICATION_ATOMICITY_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          NOTIFICATION_ATOMICITY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/notification-delivery-atomicity.test.sh
 
       # Guarda o contrato runtime generico do db-migrate: se ele deixar de
@@ -463,23 +576,36 @@ jobs:
       # schema alterado entre o dry-run e a aplicacao.
       - name: Simular contrato runtime generico de migration
         env:
-          GENERIC_RUNTIME_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          GENERIC_RUNTIME_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          # E47: SKIP_DOCKER_SHIM=1 — o contrato verifica proof.database === 'postgres'.
+          # Com o shim o banco criado e shim_zapp_generic_runtime_test_<PID> e
+          # current_database() devolve esse nome, quebrando a assercao.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/generic-migration-runtime.test.sh
 
       - name: Simular reconciliação segura do ledger
         env:
-          LEDGER_RECONCILE_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          LEDGER_RECONCILE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-reconcile-ledger-drift.test.sh
 
       - name: Simular auditoria somente-leitura de configuracao runtime
+        env:
+          # E47: SKIP_DOCKER_SHIM=1 — o readiness check usa `docker logs` para aguardar
+          # "PostgreSQL init process complete; ready for start up." — o shim devolve saida
+          # vazia nesse subcomando, fazendo o loop de 45s falhar por timeout.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/runtime-config.test.sh
 
       - name: Provar transporte libpq com cliente e PostgreSQL reais
+        env:
+          # E47: SKIP_DOCKER_SHIM=1 — o readiness check conecta sem -U, usando o usuario
+          # OS (root no container), causando "role root does not exist" no servico compartilhado.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh node scripts/db-audit/psql-environment.integration.mjs
 
       - name: Simular ambiguidade da RPC e recursao da policy do team chat (#1266)
         env:
-          TEAM_CHAT_RPC_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TEAM_CHAT_RPC_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-rpc-ambiguity.test.sh
 
       # L11 da matriz IA-004 (IA-004-matriz-autorizacao.md:297): a ACL de ESCRITA de
@@ -492,7 +618,11 @@ jobs:
       # seguras) e a MUTACAO que remove o REVOKE de TABELA (o contrato tem de encerrar nao-zero).
       - name: Simular ACL de escrita de departments (L11)
         env:
-          L11_DEPARTMENTS_ACL_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          L11_DEPARTMENTS_ACL_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          # E47: SKIP_DOCKER_SHIM=1 — o readiness check usa `docker logs` para aguardar
+          # "PostgreSQL init process complete; ready for start up." — o shim devolve saida
+          # vazia nesse subcomando, fazendo o loop de 90s falhar por timeout.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/l11-departments-acl-escrita.test.sh
 
       # Auditoria Onda 3, achado 2: a RPC de recibo de leitura e SECURITY DEFINER e nao checava
@@ -500,5 +630,17 @@ jobs:
       # Bloco A prova o defeito no mesmo container, aplica a migration e o bloco B prova a correcao.
       - name: Simular vinculo obrigatorio no recibo de leitura do team chat (auditoria Onda 3)
         env:
-          TEAM_RECEIPTS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+          TEAM_RECEIPTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-receipts-membership.test.sh
+
+      # E76 (plano MAPA Fase 7), ajuste (b) da decisao 20261002-063721: o contrato da
+      # RPC `search_contacts` (8 campos de endereco, ACL sem anon/PUBLIC e trigger de
+      # auditoria) vive aqui porque este workflow tem gatilho `pull_request` (linha 17) —
+      # entao o contrato passa a BARRAR o PR; o db-live-guard nao roda em pull_request por
+      # design. Alinha ao E50 do PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md e a
+      # AUDITORIA-W3-REPLAY.md:229. De bonus, a imagem fica pinada por digest: o valor
+      # vem de POSTGRES_TEST_IMAGE, como nos passos vizinhos.
+      - name: Provar contrato de endereco da RPC search_contacts (mapa F1)
+        env:
+          MAPA_F1_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/mapa-f1-address-contract.test.sh

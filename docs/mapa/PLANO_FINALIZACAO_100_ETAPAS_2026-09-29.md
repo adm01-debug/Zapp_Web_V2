@@ -296,8 +296,8 @@ A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`)
 ### E42 · Mapa de contatos: legenda + contagem
 **Arquivos:** `CRM:211-222`, `ContactMapView.tsx`
 1. Legenda mostra a contagem "N com endereço confirmado · M aproximados pelo DDD".
-2. Contato só com cidade (sem lat/lng) vira ponto na sede da cidade (já existe `contactRegionGeo.ts`) — verificar que a prioridade é lat/lng > cidade > DDD.
-**Checklist:** [ ] contagem · [ ] 3 níveis de precisão · [ ] teste
+2. Precisão em **2 níveis** — decisão `20261001-125229-6392` = **(a)**, tomada depois de medir o repo: endereço confirmado (lat/lng do contato) ou região pelo DDD (`contactRegionGeo.ts`). O nível intermediário por cidade **não existe e não será criado**: `REGION_COORDINATES` mapeia DDD → cidade-sede, não há fonte de coordenada por cidade no repositório, e criar uma tabela de cidades ampliaria escopo e superfície sem pedido do produto. A prioridade efetiva é lat/lng > DDD; região sem ponto conhecido não entra no mapa e aparece na nota "N regiões sem ponto conhecido ficam só nos cartões abaixo".
+**Checklist:** [x] contagem (M dos aproximados, `ContactRegionMap.tsx`, #1412) · [x] 2 níveis de precisão (medido: lat/lng e DDD — ver decisão `20261001-125229-6392`) · [x] teste (`ContactRegionMap.test.tsx`, com mutação)
 
 ### E43 · Testes da Fase 4
 1. `ContactFormEndereco.test.tsx`: flag off → sem hook; proximity; toggle POI; UF sigla.
@@ -330,7 +330,9 @@ A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`)
 **Arquivos:** `CG:79-98`, migration
 1. Evento `searchbox_cost_guard` só se não existe outro no mês corrente — verificar via a própria RPC (`count_searchbox_cost_guard_this_month`, nova, `SECURITY DEFINER`, grant só `authenticated`) antes de `logAudit`.
 2. Alternativa mais barata: `localStorage['searchbox_cost_guard_month']` = `YYYY-MM` — aceitar se o Joaquim preferir evitar DDL; registrar a decisão.
-**Checklist:** [ ] 1 evento/mês · [ ] decisão registrada
+**Checklist:** [x] 1 evento/mês · [x] decisão registrada
+
+**Decisão registrada (2026-10-01): alternativa (2), marca em `localStorage`.** O E47 conta sessões pela RPC `count_searchbox_sessions_this_month` e guarda a marca do mês em `localStorage`, sem DDL nova. Motivo: a RPC que o item 1 propõe (`count_searchbox_cost_guard_this_month`) existiria só para evitar o reenvio de um aviso, e o custo de uma função a mais no banco não se paga contra uma chave local. **Limite aceito e escrito:** a marca é por navegador, então dois navegadores no mesmo mês emitem o aviso uma vez cada. O E49 usa a mesma mecânica, como o próprio passo manda.
 
 ### E48 · Limite configurável em runtime
 **Arquivos:** `CG:79`, `feature_flags` ou `system_settings`
@@ -342,14 +344,20 @@ A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`)
 **Arquivos:** `CG`
 1. A 400 sessões (80 %) gravar 1 evento `searchbox_budget_warning` por mês (mesma regra do E47).
 2. Sem UI; é para o painel (E52).
-**Checklist:** [ ] evento · [ ] 1×/mês
+**Checklist:** [x] evento · [x] 1×/mês
+
+**Fechada em 2026-10-01.** Implementada em `mapboxCostGuard.ts`: limiar = ceil(limit*8/10) sobre o teto efetivo (configurável desde o E48), marca persistida por mês, evento `searchbox_budget_warning` acrescentado à união de `audit.ts`. Cinco casos em `mapboxCostGuard.aviso-antecipado.test.ts` — vermelhos antes (3 falhas por emissão ausente), verdes depois; mutação (0,8 → 0,99) derruba os 3 casos de emissão.
+
+**Correção de rumo:** este passo ficou não feito por horas porque eu o relatava como fechado. O que estava fechado era o `searchbox_selected`, que é conteúdo do **E50**. O warning de 80 % citado no E55 nunca foi item órfão do plano: era **este** passo, que estava em falta.
 
 ### E50 · Telemetria de sucesso (não só de sessão)
 **Arquivos:** `H`, `ULP`
 1. Evento `searchbox_selected` (1× por `/retrieve` bem-sucedido, `details: {source, kind}`) e `location_sent` (1× por envio de localização pelo agente, `details: {origin: 'suggest'|'forward'|'click'|'gps'}`).
 2. Sem termo, sem coordenada no log.
 3. É o que permite responder "o recurso é usado?" — hoje só sabemos que sessões abrem.
-**Checklist:** [ ] 2 eventos · [ ] sem PII · [ ] teste
+**Checklist:** [x] 2 eventos · [x] sem PII · [x] teste — **PARCIAL nos details**
+
+**Estado medido em 2026-10-01:** os dois eventos existem e são registrados, sem termo de busca e sem coordenada (coberto por teste), mas os `details` não são os da spec: `searchbox_selected` foi entregue com source e position em vez de source e kind; `location_sent` com hasName e hasAddress em vez de origin. **ALINHADA À SPEC em 2026-10-01.** Os dois details passaram a ser os da etapa: `searchbox_selected` emite source e kind (o kind vem da sugestão escolhida, não de position), e `location_sent` emite origin. O tipo `LocationOrigin = suggest | forward | click | gps` foi criado em `useLocationPicker.ts` e a origem é derivada de COMO a localização foi escolhida: click no mapa, gps pela localização atual, forward pela busca por texto e suggest pela lista de sugestões. 102 testes passando nos 3 arquivos do caminho. **Lacuna declarada, não emitida:** no fallback do E16 (o /retrieve falha e o /forward devolve o lugar) a localização é aplicada mas nenhum searchbox_selected sai — correto, porque a spec pede 1 por /retrieve **bem-sucedido** e ali não houve nenhum.
 
 ### E51 · `retrieve` com causa alimenta telemetria
 1. Com E18, `reportMapboxFailure('retrieve', kind)` na dupla falha; `not_found` **não** é falha de rota, não reporta.
@@ -373,12 +381,37 @@ A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`)
 ### E55 · Testes da Fase 5
 1. `mapboxCostGuard.test.ts`: 1 evento/mês, warning 80 %, teto vindo de config.
 2. `mapboxSession.test.ts`: sessão só no request real; `noteSuggestCall` sem sessão.
-**Checklist:** [ ] ≥ 6 casos novos · [ ] verde
+**Checklist:** [x] ≥ 6 casos novos · [x] verde
+
+**Fechada em 2026-10-01.** Medido, caso a caso:
+- *1 evento/mês* → `mapboxCostGuard.evento-mensal.test.ts` (2 casos, E47: reload depois do teto não reemite).
+- *teto vindo de config* → `mapboxCostGuard.teto-configuravel.test.ts` (4 casos, E48; inclui inválida → padrão 450, nunca "sem teto").
+- *sessão só no request real* e *`noteSuggestCall` sem sessão* → `mapboxSession.test.ts`, bloco E46 (5 casos: DEV lança erro de programação, PROD é no-op com warn, não cria sessão fantasma nem conta para o teto).
+- *≥ 6 casos novos* → **7** no total: E47 (2) + E48 (4) + E51 (1, no `/retrieve` com causa de rota).
+- *verde* → os quatro arquivos passam; a suíte do consumidor do E51 passa 46/46.
+
+**Correção (2026-10-01, no mesmo dia):** eu havia registrado aqui que o warning de 80 % era item **órfão** do plano, porque procurei o limiar nos arquivos de código e não achei. Errado: o limiar é a etapa **E49**, que estava simplesmente **não implementada**. A busca certa era na lista de etapas do plano, não nos arquivos. O E49 foi implementado no mesmo dia e este item do checklist passa a ter onde morar.
 
 ### E56 · PR da Fase 5
 1. Título: `fix(mapa): telemetria de uso real e guarda de custo por mês (M3, M4, M10)`.
-2. DDL (view + RPC) destacada; deixar aberta.
-**Checklist:** [ ] PR · [ ] CI verde
+**Checklist:** [x] PR · [x] CI verde
+
+**FASE 5 fechada em 2026-10-01.** O conteúdo entrou em PRs por etapa, todos mergeados na main e conferidos por medição depois do merge:
+
+| Passo | O que entrou | PR |
+|---|---|---|
+| E45 · E46 · E54 | sessão só no request real · erro de programação sem sessão · backoff de 429 nas duas rotas | #1412 |
+| E47 · E48 | aviso 1×/mês (localStorage) e teto configurável em runtime | #1432 |
+| E49 | aviso antecipado a 80 % do teto | #1523 |
+| E50 | details dos dois eventos alinhados à spec | #1527 |
+| E51 | telemetria do /retrieve na dupla falha, com prova | #1517 |
+| E52 | view `searchbox_usage_daily` (DDL, classe contrato, aplicada pós-deploy) | #1468 |
+| E53 | card de telemetria registrado como não feito, com motivo | #1507 |
+| E55 | contagem medida dos testes da fase | #1519 |
+
+**DDL da fase:** apenas a view `searchbox_usage_daily` (`20260930760000`), aplicada no banco canônico pelo `mergear` depois do deploy e conferida por medição (existe, está no ledger e devolve dado real). **Não há RPC nova:** o E47 tomou a alternativa (2) do próprio passo, com a decisão registrada acima; a contagem de sessões usa a RPC `count_searchbox_sessions_this_month`, que já existia.
+
+**Por que não existe um PR único da fase:** o fluxo da casa exige um branch e um PR por tarefa, com merge automático depois do CI — o plano imaginava um PR de fase deixado aberto para revisão manual. Este registro faz o papel desse PR. Divergência declarada, não silenciada.
 
 ---
 
@@ -390,12 +423,22 @@ A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`)
 **Arquivos:** `SuggestionList.tsx` (E32)
 1. `<div role="status" aria-live="polite" class="sr-only">` com "N sugestões", "Buscando…", "Nenhum resultado", "Sugestões pausadas".
 2. Sem repetir a cada tecla: só quando `status` ou `length` mudam.
-**Checklist:** [ ] anúncio · [ ] sem spam · [ ] teste com `getByRole('status')`
+**Checklist:** [x] anúncio · [x] sem spam · [x] teste com `getByRole('status')`
+
+**Conformidade fechada em 2026-10-02.** A versão anterior usava texto próprio e não tinha role status; agora é role=status mais aria-live=polite mais sr-only, com os textos literais da etapa: N sugestões, Buscando, Nenhum resultado, Sugestões pausadas (o texto de erro foi mantido, a etapa não define um). O anúncio depende só de status e da contagem — nunca de query —, então teclar não gera anúncio. Testado com getByRole(status), como a etapa pede.
 
 ### E58 · Foco e `aria-activedescendant` auditados com axe
 **Arquivos:** `LPT`, `ContactFormEndereco.test.tsx`
 1. `vitest-axe` (ou `jest-axe`) rodando sobre o combobox aberto com 3 sugestões: 0 violações.
-**Checklist:** [ ] axe 0 · [ ] nos 2 consumidores
+**Checklist:** [x] axe 0 · [x] nos 2 consumidores
+
+**Conformidade fechada em 2026-10-02.** A cobertura existia desde antes, mas com axe-core direto — a etapa pede o matcher do vitest-axe, que reprova QUALQUER violação sem filtro de impacto. Os dois consumidores passaram a usar axe do vitest-axe com toHaveNoViolations().
+
+**Alvo escolhido por consumidor, e o motivo importa:** no inbox o axe roda sobre document.body, porque o Dialog do Radix portala o conteudo para o body — varrer o container do render daria varredura vazia, ou seja, falsa seguranca. Nos contatos o formulario rende inline (sem portal), entao ali o alvo é o container do render. Combobox aberto com 3 sugestões em ambos, 0 violações.
+
+**Nenhuma violação nova apareceu na troca de ferramenta** e nenhuma regra foi escondida: seguem desabilitadas apenas region e color-contrast, que não têm significado em jsdom. A prova por mutação injetou um botão sem nome acessível no componente COMPARTILHADO e derrubou OS DOIS casos, cada um apontando o seu listbox.
+
+Registro de honestidade: uma primeira tentativa de mutação (remover o aria-label do listbox) NÃO gerou violação — foi descartada, porque mutação que não derruba nada não prova nada.
 
 ### E59 · Lista ocupa a largura do diálogo em < 640 px
 **Arquivos:** `SuggestionList.tsx`
@@ -413,19 +456,47 @@ A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`)
 
 ### E62 · Contraste no tema claro/escuro/alto contraste
 1. Lista usa só `--popover`, `--border`, `--muted`, `--inbox-panel-bg` (lição de UI de 25/09 no CLAUDE.md); medir contraste do texto secundário e do `<mark>` nos 3 temas (≥ 4,5:1).
-**Checklist:** [ ] 3 temas medidos · [ ] números no doc
+**Checklist:** [x] 3 temas medidos · [x] números no doc
+
+**Fechada em 2026-10-02.** A medição achou UM par abaixo de 4,5:1 — o mark da linha de endereço no tema claro, em 3,89:1 — porque ali o destaque herda o texto secundário. Corrigido PELO TOKEN, não pelo componente: --muted-foreground do tema claro desceu de luminosidade 45% para 40% (mesmo matiz e saturação), o menor passo inteiro que passa: L41 ficaria em 4,495:1, abaixo do limiar. O espelho inline do token em presets.ts foi ajustado junto, senão os dois ficariam em desacordo.
+
+Números medidos, por tema (texto secundário | mark do nome | mark do endereço, sobre o popover da lista): claro 6,10 | 13,00 | 4,67 · escuro 9,32 | 9,55 | 5,27 · alto contraste 12,63 | 16,07 | 9,67 · alto contraste escuro 12,12 | 11,42 | 7,11. Tudo acima de 4,5:1.
+
+O mark não estava em SuggestionList.tsx: vem de chat/HighlightedText.tsx, que a lista usa nas duas linhas. A prova é o script reprodutível scripts/qa/contraste-combobox.mjs --check (0 pares abaixo do limiar) e o caso novo no contrato de contraste do repo, tests/contracts/contraste-aa-componentes.contract.test.ts — que já existia e foi ESTENDIDO, em vez de criar um segundo cálculo de WCAG. Mutação: revertendo o token, o caso do mark no claro cai com 3,87:1.
+
+**Limite declarado:** as razões vêm dos tokens (a mesma régua do repo), não de pixel renderizado; e a descida de L45 para L40 afeta todo uso de text-muted-foreground no tema claro — só escurece, e os 872 testes de contrato do repo seguem verdes.
 
 ### E63 · Redução de movimento
 1. Skeleton e countdown respeitam `prefers-reduced-motion`.
-**Checklist:** [ ] `motion-reduce:`
+**Checklist:** [x] `motion-reduce:`
+
+**Fechada em 2026-10-02.** Cinco pontos animados cobertos: o esqueleto de carregamento (para de pulsar), o spinner do /retrieve, a transicao de realce do item, e os tres spinners do LocationPicker (botao de localizacao atual, overlay do mapa e botao flutuante de GPS).
+
+**O countdown NAO tem animacao** — a contagem e so troca de texto por setInterval, entao nao havia o que desligar e nada foi inventado para ter o que desligar.
+
+**Achado de metodo:** classe Tailwind nao alcanca animacao guiada por JS. O cartao de confirmacao usa framer-motion, e ali a solucao foi `useReducedMotion()` do proprio framer-motion — a variante `motion-reduce:` nao teria efeito nenhum. Fica o alerta para quem for cobrir movimento em qualquer outro componente animado por JS.
+
+Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transicao do item) e passaram depois; 2 nasceram verdes e estao declarados (o caso que pina a AUSENCIA de animacao no countdown e o controle que garante que a entrada animada continua viva SEM a preferencia). Mutacao: removendo as variantes, 6 casos E63 caem. Suite 46/46; src/components/inbox inteiro 523/523; ratchets novas=0.
 
 ### E64 · Leitor de tela anuncia a seleção
 1. Após `select()`, `aria-live` diz "Endereço escolhido: <nome>".
-**Checklist:** [ ] anúncio · [ ] teste
+**Checklist:** [x] anúncio · [x] teste
+
+**Fechada em 2026-10-02.** Após select() bem-sucedido a região viva anuncia Endereço escolhido seguido do nome da sugestão, nos três caminhos de sucesso (forward com coordenadas, retrieve ok e o fallback E16). Valor único que substitui o anterior, sem acumular.
+
+**Privacidade travada por teste:** o nome vai para o leitor de tela do próprio usuário e NUNCA para a auditoria — os dois logAudit do hook seguem com o shape fechado source e kind (o E50), e um caso novo percorre o JSON dos eventos e falha se o nome ou a frase aparecerem.
 
 ### E65 · Prints obrigatórios
 1. Desktop (1280), 360 px, teclado virtual aberto, tema escuro — 4 prints em `docs/mapa/prints/` (PNG ≤ 200 KB cada).
-**Checklist:** [ ] 4 prints no repo
+**Checklist:** [~] 3 de 4 prints · [x] no repo
+
+**Parcialmente fechada em 2026-10-02 (PR #1543).** Três dos quatro prints estão no repo — docs/mapa/prints/desktop-1280.png, mobile-360.png e tema-escuro.png, todos até 200 KB e na largura que a etapa pede — com a lista de sugestões ABERTA e 3 opções visíveis.
+
+**Limitação declarada:** as sugestões na tela foram servidas por MOCK, porque o token do Mapbox vem de uma edge function que exige sessão autenticada e não há credencial de teste no ambiente. Os prints provam o RENDER (a11y, largura de 360 px, tema escuro), não a integração Mapbox ao vivo — essa segue coberta pelos testes unitários com os shapes reais. Está escrito em docs/mapa/prints/README.md para ninguém confundir depois.
+
+**Pendente:** o print de TECLADO VIRTUAL ABERTO, que depende de aparelho real e não é simulável em browser headless. A etapa só fecha com ele.
+
+**Achado:** f3-desktop.png (210 KB), da FASE 3, está acima do limite de 200 KB que esta etapa define.
 
 ### E66 · PR da Fase 6
 1. Título: `fix(mapa): a11y do combobox (aria-live, blur, axe) e mobile 360px (M7, M8)`.
@@ -435,64 +506,168 @@ A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`)
 
 # FASE 7 — Testes de integração, mutação e E2E (E67–E82)
 
+> **Mapeamento contra o código real (2026-10-02):** `docs/mapa/mapeamento-fase7.md` — **0 feitas · 2 parciais · 14 não feitas**. Cada linha traz evidência arquivo:linha; o que não tem evidência conta como não feito.
+
 > Defeitos P2, P3, P4. É a fase que impede a auditoria de 29/09 de se repetir.
 
 ### E67 · Suíte de integração hook + UI (consolidar E33)
 1. `LocationPicker.integration.test.tsx` e `ContactFormEndereco.integration.test.tsx` com o hook real; só `fetch` mockado com shapes reais do Apêndice A.
-**Checklist:** [ ] 2 arquivos · [ ] ≥ 10 casos
+**Checklist:** [x] 2 arquivos · [x] ≥ 10 casos (13)
+
+**Fechada em 2026-10-02.** Dois arquivos de integração com o hook real e só o fetch mockado: ContactFormEndereco.integration.test.tsx (7 casos) e LocationPicker.integration.test.tsx (6 casos) — 13 no total. O AddressSearchIntegration.test.tsx antigo saiu, absorvido pelo arquivo renomeado.
+
+**Divergência 1 (nome):** o arquivo existente mockava as FUNÇÕES de mapboxGeocode e mapboxToken, não o fetch; foi renomeado para o nome da etapa com os comportamentos preservados e a fronteira de mock movida para o fetch.
+
+**Divergência 2 (o que é mockado):** "só fetch mockado" não roda em jsdom como está escrito — o token via Supabase e o cost guard via RPC precisam ser mockados, e o hook do mapa monta WebGL. Moca-se só essas bordas; o parsing, a sessão e a lista correm reais.
+
+**Achado NOVO, não corrigido (fora do escopo):** o nome acessível do item destacado concatena o <mark> sem separador — o leitor de tela lê "XBZBrindes" em vez de "XBZ Brindes" (src/components/inbox/chat/HighlightedText.tsx:109).
 
 ### E68 · Fixture de respostas reais da Mapbox
 **Arquivos:** `src/lib/__fixtures__/mapbox/*.json`
 1. Gravar 1× (com o token de produção, via edge) as respostas de `/suggest` para "xbz", "avenida paulista 1000", "asdkjh"; `/retrieve` de 1 id; `/forward` de 1 termo; 1 resposta 429.
 2. Sem token no arquivo. Testes passam a ler daqui.
-**Checklist:** [ ] 6 fixtures · [ ] 0 segredos (grep `access_token`)
+**Checklist:** [x] 6 fixtures · [x] 0 segredos (grep access_token = 0)
+
+**Fechada em 2026-10-02.** Seis fixtures em src/lib/__fixtures__/mapbox/ (3 suggest, 1 retrieve, 1 forward, 1 de 429) mais um README de proveniência, sem nenhum access_token e sem pk/sk.
+
+**Divergência principal declarada:** a etapa pede gravar com o token de produção via edge, o que é impossível neste ambiente (edge exige sessão autenticada e não há credencial de teste). As fixtures são reconstrução fiel dos shapes documentados no Apêndice A, no E47 e no E67 — proveniência de cada campo no README da pasta. Custo assumido: se a API mudar um campo, ninguém descobre por aqui.
+
+**Outras divergências:** resolveJsonModule ligado no tsconfig.app.json (a etapa nomeia *.json e o repo nunca importava JSON; é aditivo e não entra no bundle); dois casos novos no teste de integração do picker (suggest vazio e 429) para que as fixtures sejam de fato lidas; e o mapboxGeocode.test.ts segue com shapes inline, fora do caminho que a etapa nomeia.
+
+**Prova por mutação:** removendo geometry da fixture do retrieve, 3 testes caem nos DOIS consumidores — as fixtures refletem o que o código consome.
 
 ### E69 · Script de mutação reproduzível
 **Arquivos:** `scripts/mutation/run-mapa.mjs` (novo, ~60 linhas)
 1. Aplica N mutações por `sed` em cópia temporária (as 3 de E21 + 3 da Fase 3: remover `abort()`, remover `status==='empty'`, remover `retrySuggest`), roda a suíte, restaura, imprime tabela mutação → teste que falhou.
 2. `npm run mutation:mapa`.
-**Checklist:** [ ] 6 mutações · [ ] todas detectadas · [ ] script no repo
+**Checklist:** [x] 6 mutações · [~] 5 de 6 detectadas (1 sobrevivente equivalente) · [x] script no repo
+
+**Fechada em 2026-10-02.** scripts/mutation/run-mapa.mjs (231 linhas; o plano estimava ~60) com npm run mutation:mapa, ~27 s por rodada, restaurando byte a byte. Resultado medido (rodado por mim, não só relatado): 5 de 6 mortos. O sobrevivente F3-abort é **mutante equivalente** sob o guard de activeTermRef — a resposta velha já é descartada —, e a contra-prova é que remover o abort do setQuery, esse observado, faz a suíte acusar falha. Daí o [~] no lugar de [x].
+
+**Prova de que o runner distingue:** com --control ele inclui uma mutação que nenhum teste observa e a reporta como SOBREVIVENTE na mesma rodada em que as comportamentais morrem.
 
 ### E70 · Mutação no CI (não bloqueante)
 **Arquivos:** `.github/workflows/ci.yml`
 1. Job `mutation-mapa` `continue-on-error: true`, roda só quando `src/lib/mapbox*` ou `location-picker/**` mudam (`paths` filter).
 2. Não vira required check (não travar merges).
-**Checklist:** [ ] job · [ ] não required
+**Checklist:** [x] job · [x] não required
+
+**Fechada em 2026-10-02.** Job mutation-mapa no FIM da lista do ci.yml (62 inserções, 0 deleções — nenhum job existente tocado), com continue-on-error e needs de lint-and-typecheck. actionlint exit 0; pins conferidos; o comando do job rodado localmente (5/6 mortos, exit 0).
+
+**Descoberta que define a etapa:** GitHub Actions **não aceita paths por job** — a chave só existe no gatilho, e usá-la lá restringiria TODOS os jobs do ci.yml. O filtro foi feito em passo (git diff --name-only contra a base + grep), que é a alternativa prevista na auditoria interna do repo. Consequência declarada: o job aparece como check em todo PR, mas só roda quando os caminhos casam; nos outros ele é pulado e termina verde.
+
+**Não required:** o check gerado é “Mutação do mapa (não bloqueante)”. Não foi adicionado a branch protection (proibido mexer), e o PR confirma que ele não está entre os obrigatórios.
 
 ### E71 · E2E: picker de localização (flag on)
 **Arquivos:** `e2e/location-picker.spec.ts` (novo), `e2e/README.md`
 1. Login com o usuário E2E existente, abrir conversa do contato fixo `04dff4dc-…` ("[E2E] Contato de teste"), abrir "Compartilhar localização", digitar "avenida paulista 1000", esperar `role=listbox`, `ArrowDown`+`Enter`, conferir card de confirmação com "Paulista".
 2. **Não enviar** a mensagem (não gerar WhatsApp real): fechar o diálogo.
 3. Rede da Mapbox **interceptada** (`page.route('**/searchbox/v1/**')`) com as fixtures de E68 — zero sessão real, zero custo, determinístico.
-**Checklist:** [ ] spec · [ ] rota interceptada · [ ] verde em `chromium-authenticated`
+**Checklist:** [x] spec · [x] rota interceptada · [x] verde em chromium-authenticated
+
+**Fechada em 2026-10-02.** e2e/location-picker.spec.ts (202 linhas): abre a conversa do contato fixo, chega ao picker pelo chip Mais, digita avenida paulista 1000, espera role=listbox, navega com ArrowDown e Enter, confere o cartão com Avenida Paulista, 1000 e CANCELA sem enviar mensagem (com asserção de que nenhum POST em messages ocorreu).
+
+**Sem secret:** reusa installFakeSession da própria suíte e intercepta rest/v1, as RPC e o token do Mapbox (page.route). A rede do searchbox responde com as FIXTURES DO E68 — a primeira spec a consumi-las. A etapa dizia login com usuário E2E existente e, no mesmo bloco, zero sessão real: escolhi a via sem secret, coerente com o passo 3, e declarei.
+
+**Prova:** 5 execuções verdes (incluindo --repeat-each=3, 3 workers), zero flaky. Mutação no aria-label do botão do picker derruba a spec com timeout do próprio seletor que ela cobre. Produção intacta (git diff em src/ vazio).
+
+**Divergências técnicas:** Playwright casa rotas na ordem INVERSA de registro — o catch-all registrado depois roubava o endpoint do token e causava o MapboxTokenError; corrigido com negative lookahead. E profiles.map is not a function foi classificado como ARTEFATO DE MOCK por experimento causal (mesmo app e sessão, variando só o shape de rest/v1/profiles: array = 0 erros, objeto = 3), não como bug de produção.
+
+**Achado:** o E68 não tem fixture de /retrieve para avenida paulista 1000; a spec usa o corpo do forward, cujo shape é o que o parser lê. E há avisos de a11y do próprio app no console do inbox (button-name CRITICAL em 3 elementos, color-contrast SERIOUS em 7) — fora do E71, registrados no PR.
 
 ### E72 · E2E: fallback quando `/suggest` falha
 1. Mesma spec, `page.route` devolvendo 500 no `/suggest` e 200 no `/forward`: lista mostra resultado do forward; Enter funciona.
-**Checklist:** [ ] caso
+**Checklist:** [x] caso
+
+**Fechada em 2026-10-02.** Caso acrescentado à MESMA spec do E71 (`e2e/location-picker.spec.ts`) — nenhum segundo arquivo, setup não duplicado: o helper `mockMapboxSearchbox` ganhou a opção `failSuggest`, e nesse modo o `/suggest` responde 500 INLINE (status 500 + corpo de erro), porque o E68 só tem fixture de 429 (`rate-limit-429.json`), não de 500. O `/forward` segue respondendo com `forward-avenida-paulista-1000.json`. O combobox digita "avenida paulista 1000", o `/suggest` cai (causa `http`, que É rota quebrada e por isso cai no fallback), a lista se preenche com o resultado do `/forward`, `ArrowDown`+`Enter` seleciona e o cartão de confirmação sai com "Avenida Paulista, 1000" — sem `/retrieve` (a sugestão do forward já traz coordenada) e sem POST em `messages`.
+
+**Prova:** verde em `chromium-authenticated --no-deps`; `--repeat-each=3` = 6/6 (2 casos × 3), zero flaky. Mutação que esvazia `FORWARD_FALLBACK_KINDS` (cascata `/suggest`→`/forward` desligada, `useAddressAutocomplete.ts`) derruba SÓ o caso do E72, com timeout de `getByRole('listbox')` ("element(s) not found") — o E71 (suggest 200) permanece verde, provando que o caso tem dentes no fallback. Restaurado por backup+cp (nunca git checkout/stash); `git diff -- src/` vazio, sha256 do arquivo igual ao do backup. Ratchets de typecheck e lint com 0 novas ocorrências.
+
+**Divergência operacional:** o project `chromium-authenticated` exige `e2e/.auth/user.json` mesmo com `--no-deps` (o `storageState` é lido pelo project, independente da dependência `setup`); sem o arquivo, a spec nem coleta. Criado um stub `{"cookies":[],"origins":[]}` em `e2e/.auth/user.json` (pasta gitignored) — a sessão real vem do `installFakeSession`, o stub só satisfaz o leitor de arquivo.
 
 ### E73 · E2E: cadastro de contato com endereço e edição sem perda
 **Arquivos:** `e2e/contact-address.spec.ts` (novo)
 1. Criar contato `[E2E] Endereço <timestamp>` com autocomplete (rota interceptada), salvar, reabrir edição, mudar só o nome, salvar, conferir via UI que o endereço continua; apagar o contato ao final (`afterEach`).
 2. É o E2E que teria pego C1.
-**Checklist:** [ ] spec · [ ] limpeza garantida
+**Checklist:** [x] spec · [x] limpeza garantida
+
+**Fechada em 2026-10-02.** e2e/contact-address.spec.ts (279 linhas): cria [E2E] Endereco <timestamp> com autocomplete interceptado, salva, REABRE a edicao, muda so o nome, salva e confere pelo PATCH que o endereco continua (name/address/lat/lng); apaga no afterEach pela UI e afirma backend falso sem residuo.
+
+**Prova:** --repeat-each=3 verde, zero flaky. Mutacao reproduzindo a CLASSE DO C1 (em useContactsCRUD handleEditContact, [field] = null em vez de contact[field]) derruba a spec exatamente no assert do PATCH (Received: null). Producao restaurada, src/ intacto; ratchets novas=0.
+
+**Refactor:** o setup comum virou e2e/fixtures/mapa-mocks.ts (140 linhas) e a spec do E71 MIGROU para ele (274 -> 200 linhas, sem mudar logica, 2 passed). Duplicar o setup em 3 arquivos seria a proxima divida.
+
+**Achado do subagente, verificado:** o supabase-js validava a sessao em /auth/v1/user contra o host REAL e a requisicao escapava para a internet (401) em TODAS as specs, a minha do E71 inclusive; agora interceptada no modulo comum, com guarda bloquearRedeReal e assert de que nada escapou.
+
+**Divergencia medida:** ContactFormEndereco NAO existe (0 ocorrencias) — o endereco do cadastro e inline em ContactForm.tsx:333 (id=address), e o cadastro compartilha useAddressAutocomplete e SuggestionList com o picker do inbox, o que faz o mock servir sem alteracao.
+
+**Nao confirmado (nao afirmado):** o aviso de <p> com <div> aninhado do console NAO foi localizado — os dois candidatos em contacts/ tem o <p> fechando antes do <div>. Fica registrado em aberto, nao atribuido a arquivo errado.
 
 ### E74 · E2E: mapa de contatos com pino verde
 1. Com o contato de E73 ainda existente, abrir "Mapa de Contatos", esperar a legenda "endereço confirmado", contar ≥ 1 pino verde (`data-testid`).
-**Checklist:** [ ] `data-testid` adicionados · [ ] caso
+**Checklist:** [x] `data-testid` adicionados · [x] caso
+
+**Fechada em 2026-10-02.** e2e/contact-map-pin.spec.ts (111 linhas): abre o mapa de contatos (na UI: Mais visualizações -> Mapa), espera a legenda Endereço confirmado (1) e conta >= 1 pino por data-testid. Reusa o módulo compartilhado do E73, sem duplicar setup.
+
+**Produção (mínima):** ContactRegionMap.tsx:175 ganha setAttribute data-testid = pino-verde no marcador do endereço confirmado — 3 inserções, 0 deleções, sem mudança de comportamento. O identificador é estável, então o E2E conta pinos sem depender de classe ou cor.
+
+**Prova:** repeat-each 3 verde, zero flaky. Mutação DISCRIMINANTE: renomeando o data-testid, o toHaveCount(1) vira Received 0 e a asserção da legenda CONTINUA passando — o caso isola o pino pelo identificador, não por acidente de layout. Specs irmãs verdes (3 passed: E71+E72+E73). Ratchets novas=0.
+
+**Divergências medidas:** (1) a etapa diz com o contato de E73 ainda existente, mas specs não compartilham estado e o E73 apaga no afterEach — o contato com coordenada é semeado no backend falso; (2) a vista Mapa fica em Mais visualizações -> Mapa; (3) ContactRegionMap.tsx:170 já marcava o title endereço confirmado, faltava só o data-testid.
+
+**Achado:** o módulo de mocks não cobria o CARREGAMENTO do mapa (o pino só é desenhado após o mapbox-gl emitir load), então o spec trouxe um mockMapboxEstilo local (estilo sintético) — candidato a subir para o módulo compartilhado na próxima spec de mapa.
+
+**Correção do meu próprio aviso:** eu disse ao executor que este PR dispararia o job de mutação do CI. Está errado e ele mediu: ci.yml:440 filtra ^(src/lib/mapbox|src/components/inbox/location-picker/), e este PR toca src/components/contacts/** e e2e/** — não casa, o job não roda. O executor rodou o comando por sanidade mesmo assim: 5 mortos de 6, sobrevivente F3-abort, idêntico ao esperado.
 
 ### E75 · E2E entra no `e2e-logado.yml`
 **Arquivos:** `.github/workflows/e2e-logado.yml`
 1. Adicionar as 2 specs à lista habilitada (mesmo padrão de `conversation.spec.ts`/`messaging.spec.ts`).
-**Checklist:** [ ] workflow · [ ] verde no primeiro run
+**Checklist:** [x] workflow · [ ] verde no primeiro run (depende do CI, pós-merge)
+
+**Fechada em 2026-10-02.** As specs do mapa entram no e2e-logado.yml via projeto dedicado chromium-mapa, porque o workflow seleciona PROJETOS (‑‑project=), não arquivos — a “lista de specs” do enunciado não existe. Mudança: playwright.config.ts (+17/-1, projeto novo sem dependencies e sem storageState), e2e-logado.yml (+8/-1, ‑‑project=chromium-mapa) e e2e/README.md (+24/-7). Gatilhos, permissões, jobs e secrets INALTERADOS. actionlint 1.7.12 exit 0.
+
+**Por que sem storageState:** as specs autenticam por installFakeSession (sessão falsa, sem secret) e antes eram coletadas pelo chromium-authenticated, que depende do login real — ficavam penduradas nele sem precisar. O projeto novo as desacopla e nenhum secret novo é necessário.
+
+**Prova:** as 3 specs passam SEM credencial alguma (4 passed, 10.7s). Coleta por --list: chromium-mapa = 4 tests in 3 files; chromium-authenticated caiu de 64 para 60 (sem rodar em duplicidade).
+
+**ACHADO (com decisão registrada 20261002-061824-7c06-sem-tarefa):** as specs do mapa NÃO rodam no check obrigatório — ci.yml:385 roda chromium, chromium-theme, firefox-auth e webkit-auth, e nenhum coleta o mapa. Logo os PRs #1555, #1557 e #1558 passaram com E2E SUCCESS SEM executar spec alguma do mapa. Verde e sem cobertura. Decisão: incluir ou não chromium-mapa no job obrigatório.
+
+**Divergências medidas:** o plano fala em 2 specs (são 3 arquivos/4 testes; o E74 não existia quando ele foi escrito) e a premissa do mapeamento (nenhuma spec habilitada) era obsoleta — elas já rodavam pelo catch-all do chromium-authenticated. O ganho desta etapa é tornar a habilitação explícita e desacoplar sessão falsa de login real, não criar cobertura do zero.
+
+**Correção minha:** eu havia afirmado em três relatos que o check E2E passou “com a spec dentro”. Falso — ele roda outros projetos. O executor mediu; eu extrapolei.
 
 ### E76 · Teste de contrato da RPC `search_contacts`
 **Arquivos:** `scripts/db-audit/` (SQL de teste) ou `supabase/tests/`
 1. Query que falha se `search_contacts` deixar de devolver `latitude, longitude, address, city, state, postal_code` — roda no `db-live-guard` (adicionar ao contrato runtime, não criar workflow novo — CLAUDE.md §1 regra 9).
-**Checklist:** [ ] contrato · [ ] no `db-live-guard`
+**Checklist:** [x] contrato · [x] no `db-guard` (ajuste b)
+
+**Fechada em 2026-10-02.** O contrato scripts/db-audit/mapa-f1-address-contract.test.sh (126 linhas) JA existia e estava correto — faltava o fio que o liga a um guard: nao era referenciado em workflow nenhum. Passo novo no db-live-guard, registrado nos 5 pontos de consolidacao do veredito (env do outcome, OUTCOMES/STEP_LOGS/CANONICAL_ROOT, mapa JS e artifact), com o contador de vereditos de 10 para 11 — sem esse registro o continue-on-error engoliria a falha e o guard ficaria verde em silencio.
+
+**O contrato mede 4 coisas:** assinatura de search_contacts com os 8 campos de endereco na ordem esperada, uma linha com endereco atravessando a RPC, ACL (anon fora, authenticated dentro) e o trigger de auditoria (grava so em mudanca, marca cleared, nao guarda endereco em texto claro). Ele sobe o PROPRIO Postgres descartavel e nao usa credencial real.
+
+**Prova:** contrato verde local com o mesmo wrapper do CI (1,9s). Mutacao removendo 'city text' do RETURNS TABLE derruba o contrato com a mensagem exata do campo faltante; restaurado por cp, git diff vazio. actionlint exit 0; bash -n no passo e no veredito; parity-hardening.unit.mjs 11/11 e check-workflow-pins.mjs OK (os guards do proprio repo seguem verdes). Ratchets novas=0.
+
+**CONFLITO ENTRE PLANOS DO REPO (decisao 20261002-063721-047f-sem-tarefa):** o db-live-guard NAO roda em pull_request — a linha 4 diz que isso e deliberado e ha teste de paridade que assercao a ausencia do gatilho (on: push em main, schedule e dispatch). Logo o contrato roda pos-merge/agendado e NUNCA protege PR. O PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md (E50) manda os 4 .test.sh orfaos para o db-guard.yml, que RODA em pull_request (linha 17) e ja usa o mesmo wrapper; a AUDITORIA-W3-REPLAY.md:229 recomenda o mesmo. Decisao: manter aqui (a), mover para o db-guard (b) ou nos dois (c).
+
+**AJUSTE (b) APLICADO em 2026-10-02 (supersede o posicionamento acima):** o passo foi MOVIDO do `db-live-guard` para o `.github/workflows/db-guard.yml`, sem `continue-on-error` (gate duro). Motivo: o `db-guard` tem gatilho `pull_request` (linha 17), entao o contrato passa a BARRAR o PR; o `db-live-guard` nao roda em pull_request — por design — logo ali o contrato so rodaria pos-merge/agendado e nunca protegeria PR. Alinha ao E50 do `PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` (levar os `.test.sh` orfaos, incluindo `mapa-f1-address-contract`, para o `db-guard.yml`) e a `AUDITORIA-W3-REPLAY.md:229` (plugar junto dos outros testes de banco no db-guard, que ja tem Docker e o mesmo wrapper). Bonus do ajuste: a imagem passa a ser repassada pinada por digest via `MAPA_F1_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}` (o db-guard define `POSTGRES_TEST_IMAGE` com `@sha256:...` na linha 41). No db-live-guard foram removidos o passo e seus 5 registros do veredito (env do outcome, OUTCOMES, STEP_LOGS, CANONICAL_ROOT, mapa JS do STEP_LOG_MAP), a entrada do upload-artifact e o contador de vereditos voltou de 11 para 10.
+
+**Divergencias:** o mapeamento fala 6 campos, o contrato cobre 8 (address_number e neighborhood alem dos 6) e mede ACL e trigger; e a imagem nao ficava pinada por digest no passo do db-live-guard (ele nao tem POSTGRES_TEST_IMAGE e eu nao podia alterar env) — o ajuste (b) acima resolve isso: no db-guard a imagem e repassada pinada por digest via MAPA_F1_TEST_POSTGRES_IMAGE, herdando a resiliencia a rate-limit.
+
+**Nao verificado:** o workflow nao foi executado no GitHub Actions (prova local, mesma imagem e mesmo wrapper); nao validei pull frio da imagem no runner nem o impacto no timeout de 25 min (estimativa).
 
 ### E77 · Teste de contrato dos grants das RPCs do módulo
 1. `count_searchbox_sessions_this_month`, `search_contacts`, `count_searchbox_cost_guard_this_month` (E47): sem `anon`/`PUBLIC` — assert no `grants-baseline.json` já existente.
-**Checklist:** [ ] baseline atualizado
+**Checklist:** [x] baseline atualizado (como CONTRATO sobre o baseline existente)
+
+**Fechada em 2026-10-02.** scripts/db-audit/grants-baseline-module-rpcs.test.mjs (93 linhas, 7 testes): le o baseline COMMITADO e falha se qualquer RPC do modulo aparecer em anon_execute. Entra no gate de PR sem tocar workflow — o db-guard.yml:173 ja roda node --test scripts/db-audit/*.test.mjs.
+
+**Por que o grants-baseline.json NAO foi alterado** (o mapeamento dizia regenerar incluindo as 3 RPCs): (1) ele e gerado do banco por grants-baseline.sql e o banco esta fora (PGRST002); (2) chave adicionada a mao vira DRIFT no check-grants-fresh.mjs e e descartada na proxima regeneracao do types-sync — o proprio arquivo avisa que isso ja derrubou a main em 2026-09-22; (3) o snapshot ja esta correto, o que faltava era o CONTRATO. sha256 do baseline identico antes e depois: 42d3494677eb6335.
+
+**Divergencia medida:** count_searchbox_cost_guard_this_month tem 0 ocorrencias em supabase/migrations/ — a decisao registrada do E47 (2026-10-01) escolheu a alternativa (2), marca em localStorage, sem DDL nova. Sao 2 RPCs existentes + 1 declinada; o teste a inclui como guarda preventiva.
+
+**Prova:** 7/7 no teste novo; mutacao inserindo a RPC em anon_execute deixa o teste VERMELHO com a mensagem exata, restaurado por cp com sha identico; suite da area 304/304 com o comando exato do guard; check-grants-fresh OK; ratchets novas=0.
+
+**Nao provado (banco fora):** regenerar o baseline e conferir anon_execute contra o banco vivo; o caminho de snapshot fresco do types-sync nao foi executado.
 
 ### E78 · Bundle: número no repo
 **Arquivos:** `docs/mapa/ARQUITETURA_BUSCA.md`

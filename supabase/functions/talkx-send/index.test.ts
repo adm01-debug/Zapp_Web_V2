@@ -4,7 +4,10 @@ import {
   makeCampaign, makeConnection,
   makeDispatchDeps, makeTestActionDeps,
   setDispatchEnv, setDispatchEnvGo,
-  mockGlobalFetch, mockGlobalFetchGo, makeDispatchPost,
+  mockGlobalFetch, makeDispatchPost,
+  TEST_CRON_SECRET, installFakeClock,
+  makeContinueRecipients, makeContinueDeps, mockProviderRecording,
+  thenableQB,
 } from './_test-utils.ts';
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -133,7 +136,8 @@ function qb(overrides: Record<string, () => unknown> = {}): any {
 interface MockOpts {
   authUser?: { id: string } | null;
   authUserError?: boolean;
-  roleData?: { role: string } | null;
+  // X013: o papel passou a ser conferido pela RPC is_admin_or_supervisor.
+  isAdminOrSupervisor?: boolean;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -150,10 +154,14 @@ function mockDeps(opts: MockOpts): any {
           return Promise.resolve({ data: { user }, error: user ? null : new Error("no user") });
         },
       },
-      from(table: string) {
-        if (table === "user_roles") {
-          return qb({ maybeSingle: () => Promise.resolve({ data: opts.roleData ?? null, error: null }) });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      rpc(name: string, _args?: unknown): Promise<any> {
+        if (name === "is_admin_or_supervisor") {
+          return Promise.resolve({ data: opts.isAdminOrSupervisor ?? false, error: null });
         }
+        return Promise.resolve({ data: null, error: null });
+      },
+      from(_table: string) {
         return qb();
       },
     },
@@ -188,7 +196,7 @@ Deno.test("auth: Bearer com JWT válido mas sem role admin/supervisor → 403", 
   const req = makePost({ bearer: "eyJvalid.user.token.xx" });
   const res = await handleTalkxSend(req, mockDeps({
     authUser: { id: "user-001" },
-    roleData: null,
+    isAdminOrSupervisor: false,
   }));
   assert(res.status === 403, `esperado 403, recebido ${res.status}`);
   const body = await res.json();
@@ -199,7 +207,7 @@ Deno.test("auth: Bearer com JWT válido e role admin → passa auth, chega no 40
   const req = makePost({ bearer: "eyJvalid.admin.token.xx" });
   const res = await handleTalkxSend(req, mockDeps({
     authUser: { id: "user-admin-001" },
-    roleData: { role: "admin" },
+    isAdminOrSupervisor: true,
   }));
   assert(res.status === 400, `esperado 400 (auth ok via JWT admin), recebido ${res.status}`);
   const body = await res.json();
@@ -210,7 +218,7 @@ Deno.test("auth: Bearer com JWT válido e role supervisor → passa auth, chega 
   const req = makePost({ bearer: "eyJvalid.supervisor.token.xx" });
   const res = await handleTalkxSend(req, mockDeps({
     authUser: { id: "user-supervisor-001" },
-    roleData: { role: "supervisor" },
+    isAdminOrSupervisor: true,
   }));
   assert(res.status === 400, `esperado 400 (auth ok via JWT supervisor), recebido ${res.status}`);
   const body = await res.json();
@@ -220,23 +228,6 @@ Deno.test("auth: Bearer com JWT válido e role supervisor → passa auth, chega 
 // ---------------------------------------------------------------------------
 // Testes de integração — dispatch/start
 // ---------------------------------------------------------------------------
-
-Deno.test("dispatch/start: happy path — 1 destinatário de texto → sent=1", async () => {
-  setDispatchEnv();
-  const restore = mockGlobalFetch();
-  try {
-    const req = makeDispatchPost();
-    const res = await handleTalkxSend(req, makeDispatchDeps());
-    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-    const body = await res.json();
-    assert(body.success === true, `esperado success:true, recebido: ${JSON.stringify(body)}`);
-    assert(body.sent === 1, `esperado sent:1, recebido sent:${body.sent}`);
-    assert(body.failed === 0, `esperado failed:0, recebido failed:${body.failed}`);
-    assert(body.total === 1, `esperado total:1, recebido total:${body.total}`);
-  } finally {
-    restore();
-  }
-});
 
 Deno.test("dispatch/start: campanha não encontrada → 404", async () => {
   setDispatchEnv();
@@ -278,38 +269,6 @@ Deno.test("dispatch/start: janela de envio fechada → 200 ok:false", async () =
     const body = await res.json();
     assert(body.ok === false, `esperado ok:false, recebido: ${JSON.stringify(body)}`);
     assert(body.reason === "outside_send_window", `reason inesperado: ${body.reason}`);
-  } finally {
-    restore();
-  }
-});
-
-Deno.test("dispatch/start: destinatário suprimido → blacklisted=1, sent=0", async () => {
-  setDispatchEnv();
-  const restore = mockGlobalFetch();
-  try {
-    const req = makeDispatchPost();
-    const res = await handleTalkxSend(req, makeDispatchDeps({ suppressAll: true }));
-    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-    const body = await res.json();
-    assert(body.success === true, `esperado success:true, recebido: ${JSON.stringify(body)}`);
-    assert(body.blacklisted === 1, `esperado blacklisted:1, recebido blacklisted:${body.blacklisted}`);
-    assert(body.sent === 0, `esperado sent:0, recebido sent:${body.sent}`);
-  } finally {
-    restore();
-  }
-});
-
-Deno.test("dispatch/start: Evolution GO retorna 5xx → outcome_unknown=1, sent=0", async () => {
-  setDispatchEnv();
-  const restore = mockGlobalFetch("/message/sendText");
-  try {
-    const req = makeDispatchPost();
-    const res = await handleTalkxSend(req, makeDispatchDeps());
-    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-    const body = await res.json();
-    assert(body.success === true, `esperado success:true, recebido: ${JSON.stringify(body)}`);
-    assert(body.outcome_unknown === 1, `esperado outcome_unknown:1, recebido: ${JSON.stringify(body)}`);
-    assert(body.sent === 0, `esperado sent:0, recebido sent:${body.sent}`);
   } finally {
     restore();
   }
@@ -388,41 +347,6 @@ Deno.test("dispatch/resume: ação não implementada → 400 Invalid campaign ac
 });
 
 // ---------------------------------------------------------------------------
-// Testes de integração — dispatch/start com EVOLUTION_API_FLAVOR=go
-// ---------------------------------------------------------------------------
-
-Deno.test("dispatch/start (GO flavor): happy path — URL traduzida /send/text → sent=1", async () => {
-  setDispatchEnvGo();
-  const restore = mockGlobalFetchGo();
-  try {
-    const req = makeDispatchPost();
-    const res = await handleTalkxSend(req, makeDispatchDeps());
-    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-    const body = await res.json();
-    assert(body.success === true, `esperado success:true, recebido: ${JSON.stringify(body)}`);
-    assert(body.sent === 1, `esperado sent:1, recebido sent:${body.sent}`);
-  } finally {
-    restore();
-  }
-});
-
-Deno.test("dispatch/start (GO flavor): Evolution GO retorna 5xx em /send/text → outcome_unknown=1", async () => {
-  setDispatchEnvGo();
-  const restore = mockGlobalFetchGo("/send/text");
-  try {
-    const req = makeDispatchPost();
-    const res = await handleTalkxSend(req, makeDispatchDeps());
-    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-    const body = await res.json();
-    assert(body.success === true, `esperado success:true, recebido: ${JSON.stringify(body)}`);
-    assert(body.outcome_unknown === 1, `esperado outcome_unknown:1, recebido: ${JSON.stringify(body)}`);
-    assert(body.sent === 0, `esperado sent:0, recebido sent:${body.sent}`);
-  } finally {
-    restore();
-  }
-});
-
-// ---------------------------------------------------------------------------
 // V19 — retry manual de destinatário terminal (outcome_unknown/failed)
 // ---------------------------------------------------------------------------
 
@@ -486,4 +410,438 @@ Deno.test("retry: destinatário suprimido → success:false reason:suppressed", 
   const res = await handleTalkxSend(req, deps);
   const body = await res.json();
   assert(body.success === false && body.reason === "suppressed", `esperado suppressed, recebido: ${JSON.stringify(body)}`);
+});
+
+// ---------------------------------------------------------------------------
+// X011 — ação continue: passadas em lote com orçamento de tempo e lease.
+// ---------------------------------------------------------------------------
+// O relógio falso faz cada `sleep(interval)` avançar o relógio, então o
+// orçamento (TALKX_BATCH_BUDGET_MS) é exercitado sem espera real. Com
+// send_interval=1000ms e typing_delay_max=0, cada destinatário custa 1s:
+// orçamento de 44000ms (25000 de folga mínima + 19s) deixa passar EXATAMENTE
+// um lote de 20 por invocação.
+
+type ProviderPost = { url: string; body: Record<string, unknown> };
+const phoneOf = (p: ProviderPost): string => String(p.body?.number ?? "");
+const messagePosts = (posts: ProviderPost[]): ProviderPost[] => posts.filter((p) => p.url.includes("/message/"));
+
+Deno.test("X011 continue: 45 destinatários em lote de 20 → três invocações enviam 45, sem id repetido", async () => {
+  setDispatchEnv();
+  const clock = installFakeClock(1_700_000_000_000);
+  const recipients = makeContinueRecipients(45);
+  const { deps, ctx } = makeContinueDeps({ recipients, clock, cronSecret: TEST_CRON_SECRET });
+  const provider = mockProviderRecording();
+  Deno.env.set("TALKX_BATCH_BUDGET_MS", "44000");
+  try {
+    const perInvocation: number[] = [];
+    const hasMore: boolean[] = [];
+    let previous = 0;
+    for (let i = 0; i < 3; i++) {
+      const res = await handleTalkxSend(
+        makePost({ cronSecret: TEST_CRON_SECRET, body: { action: "continue", campaignId: CAMPAIGN_ID } }),
+        deps,
+      );
+      assert(res.status === 200, `invocação ${i + 1}: esperado 200, recebido ${res.status}`);
+      const body = await res.json();
+      const total = messagePosts(provider.posts).length;
+      perInvocation.push(total - previous);
+      previous = total;
+      hasMore.push(body.has_more === true);
+    }
+    assert(
+      perInvocation.join(",") === "20,20,5",
+      `esperado um lote de 20 por invocação (20,20,5), recebido ${perInvocation.join(",")}`,
+    );
+    const phones = messagePosts(provider.posts).map(phoneOf);
+    assert(phones.length === 45, `esperado 45 envios, recebido ${phones.length}`);
+    assert(new Set(phones).size === 45, "nenhum destinatário pode ser enviado duas vezes ao provedor");
+    assert(
+      hasMore.join(",") === "true,true,false",
+      `has_more esperado true,true,false — recebido ${hasMore.join(",")}`,
+    );
+    assert(ctx.completeDrainedCalls === 1, `complete_talkx_campaign_if_drained deveria rodar 1x (fila drenada), rodou ${ctx.completeDrainedCalls}`);
+    assert(ctx.releaseWorkerCalls === 3, `o lease deveria ser solto em cada invocação, foi ${ctx.releaseWorkerCalls}x`);
+  } finally {
+    provider.restore();
+    clock.restore();
+    Deno.env.delete("TALKX_BATCH_BUDGET_MS");
+  }
+});
+
+Deno.test("X011 continue: orçamento estourado → has_more:true e complete_talkx_campaign_if_drained não é chamada", async () => {
+  setDispatchEnv();
+  const clock = installFakeClock(1_700_000_000_000);
+  const recipients = makeContinueRecipients(45);
+  const { deps, ctx } = makeContinueDeps({ recipients, clock, cronSecret: TEST_CRON_SECRET });
+  const provider = mockProviderRecording();
+  Deno.env.set("TALKX_BATCH_BUDGET_MS", "1");
+  try {
+    const res = await handleTalkxSend(
+      makePost({ cronSecret: TEST_CRON_SECRET, body: { action: "continue", campaignId: CAMPAIGN_ID } }),
+      deps,
+    );
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const body = await res.json();
+    assert(body.has_more === true, `esperado has_more:true, recebido ${JSON.stringify(body)}`);
+    assert(body.processed === 0, `nenhum destinatário deveria ser processado, processed=${body.processed}`);
+    assert(ctx.completeDrainedCalls === 0, "complete_talkx_campaign_if_drained NÃO pode rodar quando o orçamento estoura");
+    assert(messagePosts(provider.posts).length === 0, "nenhum POST de mensagem com o orçamento estourado");
+    assert(ctx.claimWorkerCalls === 1, "a campanha deveria ter sido reivindicada");
+  } finally {
+    provider.restore();
+    clock.restore();
+    Deno.env.delete("TALKX_BATCH_BUDGET_MS");
+  }
+});
+
+Deno.test("X011 continue: destinatário com retry_after vencido só é enviado na invocação seguinte", async () => {
+  setDispatchEnv();
+  const clock = installFakeClock(1_700_000_000_000);
+  const future = new Date(clock.now() + 60_000).toISOString();
+  const recipients = makeContinueRecipients(2, { retryAfter: (i) => (i === 1 ? future : null) });
+  const { deps } = makeContinueDeps({ recipients, clock, cronSecret: TEST_CRON_SECRET });
+  const provider = mockProviderRecording();
+  try {
+    const res1 = await handleTalkxSend(
+      makePost({ cronSecret: TEST_CRON_SECRET, body: { action: "continue", campaignId: CAMPAIGN_ID } }),
+      deps,
+    );
+    assert(res1.status === 200, `1ª invocação: esperado 200, recebido ${res1.status}`);
+    const body1 = await res1.json();
+    assert(body1.processed === 1, `1ª invocação deveria processar 1 (o reagendado ainda não venceu), processou ${body1.processed}`);
+    assert(messagePosts(provider.posts).length === 1, `1ª invocação deveria POSTar 1x, POSTou ${messagePosts(provider.posts).length}`);
+    const primeiroPhone = phoneOf(messagePosts(provider.posts)[0]);
+
+    // O relógio avança além do retry_after: na invocação seguinte ele é elegível.
+    clock.advance(61_000);
+    const res2 = await handleTalkxSend(
+      makePost({ cronSecret: TEST_CRON_SECRET, body: { action: "continue", campaignId: CAMPAIGN_ID } }),
+      deps,
+    );
+    assert(res2.status === 200, `2ª invocação: esperado 200, recebido ${res2.status}`);
+    const body2 = await res2.json();
+    assert(body2.processed === 1, `2ª invocação deveria processar o reagendado, processou ${body2.processed}`);
+    const phones = messagePosts(provider.posts).map(phoneOf);
+    assert(phones.length === 2, `esperado 2 envios no total, recebido ${phones.length}`);
+    const expectedSecond = String(recipients[1].contact_phone).replace(/\D/g, "");
+    assert(
+      primeiroPhone !== expectedSecond && phones[1] === expectedSecond,
+      `o reagendado só podia sair na 2ª invocação: phones=${JSON.stringify(phones)}`,
+    );
+  } finally {
+    provider.restore();
+    clock.restore();
+  }
+});
+
+Deno.test("X011 continue: segunda invocação com lease vivo faz 0 POST", async () => {
+  setDispatchEnv();
+  const clock = installFakeClock(1_700_000_000_000);
+  const recipients = makeContinueRecipients(3);
+  // 1ª chamada reivindica o lease; a 2ª encontra o lease vivo de outro worker.
+  const { deps } = makeContinueDeps({ recipients, clock, cronSecret: TEST_CRON_SECRET, claimWorker: (call) => call === 1 });
+  const provider = mockProviderRecording();
+  try {
+    const res1 = await handleTalkxSend(
+      makePost({ cronSecret: TEST_CRON_SECRET, body: { action: "continue", campaignId: CAMPAIGN_ID } }),
+      deps,
+    );
+    assert(res1.status === 200, `1ª invocação: esperado 200, recebido ${res1.status}`);
+    await res1.json();
+    const afterFirst = messagePosts(provider.posts).length;
+    assert(afterFirst === 3, `1ª invocação deveria enviar os 3, enviou ${afterFirst}`);
+
+    const res2 = await handleTalkxSend(
+      makePost({ cronSecret: TEST_CRON_SECRET, body: { action: "continue", campaignId: CAMPAIGN_ID } }),
+      deps,
+    );
+    assert(res2.status === 200, `2ª invocação: esperado 200, recebido ${res2.status}`);
+    const body2 = await res2.json();
+    assert(body2.skipped === "worker_alive", `esperado skipped:'worker_alive', recebido ${JSON.stringify(body2)}`);
+    assert(body2.processed === 0, `sem lease não há processamento, processed=${body2.processed}`);
+    assert(
+      messagePosts(provider.posts).length === afterFirst,
+      "com o lease vivo nenhum POST ao provedor pode sair",
+    );
+  } finally {
+    provider.restore();
+    clock.restore();
+  }
+});
+
+Deno.test("X011 continue: JWT de admin → 403 (só service key ou x-cron-secret dirigem a fila)", async () => {
+  setDispatchEnv();
+  const req = makePost({
+    bearer: "eyJvalid.admin.token.xx",
+    body: { action: "continue", campaignId: CAMPAIGN_ID },
+  });
+  const res = await handleTalkxSend(req, mockDeps({
+    authUser: { id: "user-admin-001" },
+    isAdminOrSupervisor: true,
+  }));
+  assert(res.status === 403, `esperado 403, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.error === "Forbidden", `body inesperado: ${JSON.stringify(body)}`);
+});
+
+// ---------------------------------------------------------------------------
+// X013 — lançamento assíncrono: action=start só transiciona e dispara o kick.
+// ---------------------------------------------------------------------------
+// O laço de envio deixou de rodar dentro do `start`; ele vive no `continue`
+// (X011), dirigido pelo `kick_talkx_campaign`. Os testes acima que exercitavam
+// o laço em `start` foram migrados para `continue` logo abaixo.
+
+interface AsyncStartDepsOpts {
+  campaign?: Record<string, unknown> | null;
+  connection?: Record<string, unknown> | null;
+  recipients?: unknown[];
+  authUser?: { id: string } | null;
+  isAdminOrSupervisor?: boolean;
+  roleRpcError?: boolean;
+  kickError?: boolean;
+}
+
+/**
+ * Deps do handler para `action=start` assíncrono: auth por JWT (opcional),
+ * papel via RPC, sem limite diário (settings vazio) e um contador de kicks e
+ * de POSTs ao provedor. `getUser` devolve null quando nenhum `authUser` é dado
+ * (caminho da service key, que nem consulta o papel).
+ */
+function makeAsyncStartDeps(opts: AsyncStartDepsOpts = {}) {
+  const campaign = opts.campaign === undefined ? makeCampaign() : opts.campaign;
+  const connection = opts.connection === undefined ? makeConnection() : opts.connection;
+  const recipients = opts.recipients ?? [];
+  const ctx = { kickCalls: 0, rpcCalls: [] as string[] };
+  return {
+    ctx,
+    deps: {
+      serviceKey: TEST_SERVICE_KEY,
+      supabase: {
+        auth: {
+          getUser: () => Promise.resolve(
+            opts.authUser
+              ? { data: { user: opts.authUser }, error: null }
+              : { data: { user: null }, error: new Error("no user") },
+          ),
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        rpc(name: string, _args?: unknown): Promise<any> {
+          ctx.rpcCalls.push(name);
+          if (name === "is_admin_or_supervisor") {
+            if (opts.roleRpcError) return Promise.resolve({ data: null, error: { message: "rpc failed" } });
+            return Promise.resolve({ data: opts.isAdminOrSupervisor ?? false, error: null });
+          }
+          if (name === "kick_talkx_campaign") {
+            ctx.kickCalls++;
+            return Promise.resolve({ data: null, error: opts.kickError ? { message: "kick failed" } : null });
+          }
+          if (name === "transition_talkx_campaign") return Promise.resolve({ data: [{ current_status: "sending" }], error: null });
+          if (name === "get_talkx_cron_secret") return Promise.resolve({ data: null, error: null });
+          return Promise.resolve({ data: null, error: null });
+        },
+        from(table: string) {
+          if (table === "talkx_campaigns") return thenableQB({ data: campaign, error: campaign ? null : { message: "not found" } });
+          if (table === "whatsapp_connections") return thenableQB({ data: connection, error: null });
+          if (table === "talkx_settings") return thenableQB({ data: [], error: null });
+          if (table === "talkx_recipients") return thenableQB({ data: recipients, error: null });
+          if (table === "talkx_links") return thenableQB({ data: null, error: null });
+          return thenableQB({ data: null, error: null });
+        },
+      },
+    },
+  };
+}
+
+/** Igual a mockProviderRecording, mas derruba 5xx em URLs com `failFragment`. */
+function mockProviderRecordingFailing(failFragment?: string): { posts: Array<{ url: string; body: Record<string, unknown> }>; restore: () => void } {
+  const posts: Array<{ url: string; body: Record<string, unknown> }> = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const orig = (globalThis as any).fetch;
+  let counter = 0;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).fetch = (input: unknown, init?: any): Promise<Response> => {
+    const url = typeof input === "string" ? input : String((input as { url?: unknown })?.url ?? input);
+    let body: Record<string, unknown> = {};
+    try { body = init?.body ? JSON.parse(String(init.body)) : {}; } catch { body = {}; }
+    posts.push({ url, body });
+    if (failFragment && url.includes(failFragment)) {
+      return Promise.resolve(new Response(JSON.stringify({ error: "mock server error" }), { status: 500 }));
+    }
+    counter++;
+    return Promise.resolve(new Response(JSON.stringify({ key: { id: `provider-msg-${counter}` } }), { status: 200 }));
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return { posts, restore: () => { (globalThis as any).fetch = orig; } };
+}
+
+Deno.test("X013 start: campanha com 500 destinatários → 200 accepted, 0 POST ao provedor, 1 kick", async () => {
+  setDispatchEnv();
+  const { deps, ctx } = makeAsyncStartDeps({ recipients: makeContinueRecipients(500) });
+  const provider = mockProviderRecording();
+  try {
+    const res = await handleTalkxSend(makeDispatchPost(), deps);
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const body = await res.json();
+    assert(body.success === true, `esperado success:true, recebido: ${JSON.stringify(body)}`);
+    assert(body.accepted === true, `esperado accepted:true, recebido: ${JSON.stringify(body)}`);
+    assert(body.status === "sending", `esperado status sending, recebido ${body.status}`);
+    assert(provider.posts.length === 0, `start não pode POSTar ao provedor (foi ${provider.posts.length})`);
+    assert(ctx.kickCalls === 1, `esperado exatamente 1 chamada a kick_talkx_campaign, houve ${ctx.kickCalls}`);
+  } finally {
+    provider.restore();
+  }
+});
+
+Deno.test("X013 start: usuário com as roles admin E supervisor → 200 accepted", async () => {
+  setDispatchEnv();
+  const { deps, ctx } = makeAsyncStartDeps({
+    authUser: { id: "user-admin-supervisor-001" },
+    isAdminOrSupervisor: true,
+  });
+  const req = makePost({
+    bearer: "eyJvalid.admin-supervisor.token.xx",
+    body: { action: "start", campaignId: CAMPAIGN_ID },
+  });
+  const res = await handleTalkxSend(req, deps);
+  assert(res.status === 200, `esperado 200 (as duas roles não podem virar 403), recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.accepted === true, `esperado accepted:true, recebido: ${JSON.stringify(body)}`);
+  assert(ctx.kickCalls === 1, `esperado 1 kick, houve ${ctx.kickCalls}`);
+});
+
+Deno.test("X013 start: agente sem role admin/supervisor → 403", async () => {
+  setDispatchEnv();
+  const { deps, ctx } = makeAsyncStartDeps({
+    authUser: { id: "user-agent-001" },
+    isAdminOrSupervisor: false,
+  });
+  const req = makePost({
+    bearer: "eyJvalid.agent.token.xx",
+    body: { action: "start", campaignId: CAMPAIGN_ID },
+  });
+  const res = await handleTalkxSend(req, deps);
+  assert(res.status === 403, `esperado 403, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.error === "Forbidden", `body inesperado: ${JSON.stringify(body)}`);
+  assert(ctx.kickCalls === 0, "um agente barrado não pode disparar o kick");
+});
+
+// ---------------------------------------------------------------------------
+// X013 — os testes de envio migrados de `start` para `continue`.
+// ---------------------------------------------------------------------------
+// O laço inline do `start` virou o lote do `continue` (X011); estas coberturas
+// seguem exercitando os mesmos desfechos, agora pela ação que realmente envia.
+
+Deno.test("X013 continue (migrado de start): happy path — 1 destinatário de texto → sent=1", async () => {
+  setDispatchEnv();
+  const clock = installFakeClock(1_700_000_000_000);
+  const { deps } = makeContinueDeps({ recipients: makeContinueRecipients(1), clock, cronSecret: TEST_CRON_SECRET });
+  const provider = mockProviderRecording();
+  try {
+    const res = await handleTalkxSend(
+      makePost({ cronSecret: TEST_CRON_SECRET, body: { action: "continue", campaignId: CAMPAIGN_ID } }),
+      deps,
+    );
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const body = await res.json();
+    assert(body.success === true, `esperado success:true, recebido: ${JSON.stringify(body)}`);
+    assert(body.sent === 1, `esperado sent:1, recebido sent:${body.sent}`);
+    assert(body.failed === 0, `esperado failed:0, recebido failed:${body.failed}`);
+    assert(body.processed === 1, `esperado processed:1, recebido processed:${body.processed}`);
+    assert(messagePosts(provider.posts).length === 1, `esperado 1 POST, recebido ${messagePosts(provider.posts).length}`);
+  } finally {
+    provider.restore();
+    clock.restore();
+  }
+});
+
+Deno.test("X013 continue (migrado de start): destinatário suprimido → blacklisted=1, sent=0", async () => {
+  setDispatchEnv();
+  const clock = installFakeClock(1_700_000_000_000);
+  const { deps } = makeContinueDeps({
+    recipients: makeContinueRecipients(1), clock, cronSecret: TEST_CRON_SECRET, suppressAll: true,
+  });
+  const provider = mockProviderRecording();
+  try {
+    const res = await handleTalkxSend(
+      makePost({ cronSecret: TEST_CRON_SECRET, body: { action: "continue", campaignId: CAMPAIGN_ID } }),
+      deps,
+    );
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const body = await res.json();
+    assert(body.success === true, `esperado success:true, recebido: ${JSON.stringify(body)}`);
+    assert(body.blacklisted === 1, `esperado blacklisted:1, recebido blacklisted:${body.blacklisted}`);
+    assert(body.sent === 0, `esperado sent:0, recebido sent:${body.sent}`);
+    assert(messagePosts(provider.posts).length === 0, "suprimido não pode POSTar ao provedor");
+  } finally {
+    provider.restore();
+    clock.restore();
+  }
+});
+
+Deno.test("X013 continue (migrado de start): Evolution v2 retorna 5xx em /message/sendText → outcome_unknown=1, sent=0", async () => {
+  setDispatchEnv();
+  const clock = installFakeClock(1_700_000_000_000);
+  const { deps } = makeContinueDeps({ recipients: makeContinueRecipients(1), clock, cronSecret: TEST_CRON_SECRET });
+  const provider = mockProviderRecordingFailing("/message/sendText");
+  try {
+    const res = await handleTalkxSend(
+      makePost({ cronSecret: TEST_CRON_SECRET, body: { action: "continue", campaignId: CAMPAIGN_ID } }),
+      deps,
+    );
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const body = await res.json();
+    assert(body.success === true, `esperado success:true, recebido: ${JSON.stringify(body)}`);
+    assert(body.outcome_unknown === 1, `esperado outcome_unknown:1, recebido: ${JSON.stringify(body)}`);
+    assert(body.sent === 0, `esperado sent:0, recebido sent:${body.sent}`);
+  } finally {
+    provider.restore();
+    clock.restore();
+  }
+});
+
+Deno.test("X013 continue (migrado de start, GO flavor): happy path — URL /send/text → sent=1", async () => {
+  setDispatchEnvGo();
+  const clock = installFakeClock(1_700_000_000_000);
+  const { deps } = makeContinueDeps({ recipients: makeContinueRecipients(1), clock, cronSecret: TEST_CRON_SECRET });
+  const provider = mockProviderRecording();
+  try {
+    const res = await handleTalkxSend(
+      makePost({ cronSecret: TEST_CRON_SECRET, body: { action: "continue", campaignId: CAMPAIGN_ID } }),
+      deps,
+    );
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const body = await res.json();
+    assert(body.success === true, `esperado success:true, recebido: ${JSON.stringify(body)}`);
+    assert(body.sent === 1, `esperado sent:1, recebido sent:${body.sent}`);
+    assert(provider.posts.some((p) => p.url.endsWith("/send/text")), "deveria POSTar na rota GO /send/text");
+    assert(
+      !provider.posts.some((p) => p.url.includes("/message/sendText/")),
+      "GO não pode POSTar na rota v2 /message/sendText/",
+    );
+  } finally {
+    provider.restore();
+    clock.restore();
+  }
+});
+
+Deno.test("X013 continue (migrado de start, GO flavor): 5xx em /send/text → outcome_unknown=1, sent=0", async () => {
+  setDispatchEnvGo();
+  const clock = installFakeClock(1_700_000_000_000);
+  const { deps } = makeContinueDeps({ recipients: makeContinueRecipients(1), clock, cronSecret: TEST_CRON_SECRET });
+  const provider = mockProviderRecordingFailing("/send/text");
+  try {
+    const res = await handleTalkxSend(
+      makePost({ cronSecret: TEST_CRON_SECRET, body: { action: "continue", campaignId: CAMPAIGN_ID } }),
+      deps,
+    );
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const body = await res.json();
+    assert(body.success === true, `esperado success:true, recebido: ${JSON.stringify(body)}`);
+    assert(body.outcome_unknown === 1, `esperado outcome_unknown:1, recebido: ${JSON.stringify(body)}`);
+    assert(body.sent === 0, `esperado sent:0, recebido sent:${body.sent}`);
+  } finally {
+    provider.restore();
+    clock.restore();
+  }
 });

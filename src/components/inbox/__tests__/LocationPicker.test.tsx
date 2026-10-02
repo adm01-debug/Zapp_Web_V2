@@ -1,7 +1,9 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 
 const h = vi.hoisted(() => ({
+  logAudit: vi.fn(),
   hook: vi.fn(),
   autocomplete: vi.fn(),
   // F3/E26: o aviso da falha de `/retrieve` sai por toast — precisa ser observável no teste.
@@ -10,14 +12,25 @@ const h = vi.hoisted(() => ({
 
 vi.mock('../location-picker/useLocationPicker', () => ({ useLocationPicker: (...args: unknown[]) => h.hook(...args) }));
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: (...args: unknown[]) => h.toast(...args) }));
+vi.mock('@/lib/audit', () => ({ logAudit: (...args: unknown[]) => h.logAudit(...args) }));
 vi.mock('../location-picker/useAddressAutocomplete', () => ({ useAddressAutocomplete: (...args: unknown[]) => h.autocomplete(...args) }));
+
+// E63: o cartão de confirmação usa `motion` (framer-motion) para a entrada. Para provar o
+// comportamento sob `prefers-reduced-motion` sem depender do singleton interno do framer-motion,
+// só o hook homônimo é substituído — o resto da lib segue real (mesmo padrão do CT-70 do catálogo).
+const reduceMotion = vi.hoisted(() => ({ value: false }));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return { ...actual, useReducedMotion: () => reduceMotion.value };
+});
 
 import { LocationPicker } from '../LocationPicker';
 import type { SearchStatus } from '../location-picker/useAddressAutocomplete';
+import type { LocationOrigin } from '../location-picker/useLocationPicker';
 
 interface Selected { lat: number; lng: number; name?: string; address?: string }
 
-function hookState(selectedLocation: Selected | null) {
+function hookState(selectedLocation: Selected | null, selectedOrigin: LocationOrigin | null = 'gps') {
   return {
     mapContainer: vi.fn(),
     isMapLoaded: false,
@@ -29,6 +42,8 @@ function hookState(selectedLocation: Selected | null) {
     setSearchQuery: vi.fn(),
     isSearching: false,
     selectedLocation,
+    // E50: de ONDE veio a localização escolhida — 'suggest' | 'forward' | 'click' | 'gps'.
+    selectedOrigin,
     searchResults: [],
     chooseSearchResult: vi.fn(),
     getCurrentLocation: vi.fn(),
@@ -73,6 +88,8 @@ function baseAutocomplete() {
     status: 'idle' as SearchStatus,
     pausedUntil: null as number | null,
     retrieveError: null as { id: string; kind: string } | null,
+    // E64: anúncio do leitor de tela preenchido dentro do select() — o mock começa vazio.
+    selectionAnnouncement: '',
   };
 }
 
@@ -110,6 +127,34 @@ describe('LocationPicker', () => {
     expect(state.reset).toHaveBeenCalled();
   });
 
+  it.each(['suggest', 'forward', 'click', 'gps'] as const)(
+    'E50: o envio registra location_sent com origin=%s (sem dado do cliente)',
+    async (origin) => {
+      // O funil do Searchbox terminava sem medir o desfecho: dava para saber quantas buscas e
+      // selecoes houve, nunca quantas viraram uma localizacao de fato ENVIADA nem POR ONDE ela
+      // chegou. So a origem entra — termo, nome, endereco e coordenada do cliente nunca aparecem.
+      h.logAudit.mockReset();
+      const state = hookState({ lat: -23.5, lng: -46.6, name: 'Rua A', address: 'Rua A, São Paulo' }, origin);
+      h.hook.mockReturnValue(state);
+      h.autocomplete.mockReturnValue(autocompleteState());
+      render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn().mockResolvedValue(undefined)} />);
+
+      fireEvent.click(screen.getByRole('button', { name: /Enviar Localização/ }));
+
+      // 1× por envio — não duplica.
+      await waitFor(() => expect(h.logAudit).toHaveBeenCalledTimes(1));
+      const evento = h.logAudit.mock.calls[0][0];
+      expect(evento).toMatchObject({ action: 'location_sent', details: { origin } });
+      // Shape fechado: SÓ {origin} — nem hasName/hasAddress, nem campo extra.
+      expect(Object.keys(evento.details)).toEqual(['origin']);
+      // Sem PII: nome, endereço e coordenada do cliente fora do evento.
+      const json = JSON.stringify(evento.details);
+      expect(json).not.toContain('Rua A');
+      expect(json).not.toContain('São Paulo');
+      expect(json).not.toContain('-23.5');
+    },
+  );
+  
   it('se o envio falha, mantém o diálogo aberto e a seleção para nova tentativa', async () => {
     const state = hookState({ lat: -23.5, lng: -46.6 });
     h.hook.mockReturnValue(state);
@@ -192,6 +237,42 @@ describe('LocationPicker', () => {
       await waitFor(() => expect(state.chooseSearchResult).toHaveBeenCalledWith(place));
     });
 
+    it('E64: após a seleção o anúncio aparece numa região viva (role=status) com o nome escolhido', async () => {
+      const state = hookState(null);
+      const place = { name: 'XBZ Brindes', address: 'SP', lat: -23.5, lng: -46.6 };
+      const ac = autocompleteState({
+        status: 'ok',
+        query: 'xbz',
+        suggestions: [{ id: 'a', name: 'XBZ Brindes', address: 'SP', kind: 'poi' }],
+      });
+      // O hook real preenche `selectionAnnouncement` DENTRO do select(); o mock reproduz isso.
+      ac.select = vi.fn(async () => {
+        ac.selectionAnnouncement = 'Endereço escolhido: XBZ Brindes';
+        return place;
+      });
+      h.hook.mockReturnValue(state);
+      h.autocomplete.mockReturnValue(ac);
+      const view = render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
+      const mapTab = screen.getByRole('tab', { name: /Escolher no Mapa/ });
+      fireEvent.click(mapTab);
+      fireEvent.focus(mapTab);
+      const input = await screen.findByRole('combobox');
+      fireEvent.focusIn(input);
+
+      fireEvent.click(screen.getByRole('option', { name: /^XBZ/ }));
+      await waitFor(() => expect(ac.select).toHaveBeenCalledWith(0));
+
+      // Re-render com o anúncio preenchido: é o que o hook real produz depois do select().
+      view.rerender(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
+      const viva = screen.getByTestId('sr-selecao');
+      expect(viva).toHaveAttribute('role', 'status');
+      expect(viva).toHaveAttribute('aria-live', 'polite');
+      expect(viva.className).toContain('sr-only');
+      expect(viva.textContent).toBe('Endereço escolhido: XBZ Brindes');
+      // O nome escolhido não vaza para a auditoria (E50).
+      expect(JSON.stringify(h.logAudit.mock.calls)).not.toContain('XBZ');
+    });
+
     it('navegação por teclado delega ao hook e Esc fecha a lista', async () => {
       const ac = autocompleteState({ query: 'xbz', suggestions: [{ id: 'a', name: 'XBZ Brindes', address: 'SP', kind: 'poi' }] });
       const input = await renderOnMapTab(hookState(null), ac);
@@ -270,7 +351,35 @@ describe('LocationPicker', () => {
 
     // ── Fase 3: estados verdadeiros na tela (E25, E26, E27, E29, E30, E31) ─────────────────────
 
-    it('E25: durante o debounce mostra esqueleto — "Nada encontrado" só depois de resposta vazia', async () => {
+    it('E58: combobox aberto com 3 sugestões não tem violação de acessibilidade (axe)', async () => {
+      const ac = autocompleteState({
+        query: 'rua a',
+        status: 'ok',
+        suggestions: [
+          { id: 's1', name: 'Rua A, 1', address: 'Rua A, 1, São Paulo', kind: 'street' },
+          { id: 's2', name: 'Rua B, 2', address: 'Rua B, 2, São Paulo', kind: 'address' },
+          { id: 's3', name: 'Rua C, 3', address: 'Rua C, 3, São Paulo', kind: 'poi' },
+        ] as never,
+      });
+      await renderOnMapTab(hookState(null), ac);
+      // E58: o padrão combobox precisa estar íntegro — role, aria-expanded, aria-controls e
+      // aria-activedescendant apontando para uma opção que existe de verdade.
+      const input = screen.getByRole('combobox');
+      expect(input).toHaveAttribute('aria-expanded', 'true');
+      const controls = input.getAttribute('aria-controls');
+      expect(controls).toBeTruthy();
+      expect(document.getElementById(controls as string)).not.toBeNull();
+      const ativo = input.getAttribute('aria-activedescendant');
+      if (ativo) expect(document.getElementById(ativo)).not.toBeNull();
+      // jsdom não calcula contraste (o axe não tem layout real) — fora da varredura, declarado.
+      // O Dialog/Tabs do Radix renderiza em portal no `document.body`, então o `container`
+      // do render fica vazio: a varredura tem de ser no body (senão seria vácuo).
+      const results = await axe(document.body, {
+        rules: { region: { enabled: false }, 'color-contrast': { enabled: false } },
+      });
+      expect(results).toHaveNoViolations();
+    });
+        it('E25: durante o debounce mostra esqueleto — "Nada encontrado" só depois de resposta vazia', async () => {
       const ac = autocompleteState({ status: 'typing', query: 'avenida paulista' });
       h.hook.mockReturnValue(hookState(null));
       h.autocomplete.mockReturnValue(ac);
@@ -458,5 +567,68 @@ describe('LocationPicker', () => {
       expect(marcas[0].textContent).toBe('Independência');
       expect(marcas[0].className).toContain('font-semibold');
     });
+  });
+});
+
+/**
+ * E63 — redução de movimento no picker de localização. Além do esqueleto da lista (ver
+ * SuggestionList.test.tsx), este componente tem spinner de carregamento em três pontos e o cartão
+ * de confirmação entra com `motion` (framer-motion). Quem pediu menos movimento no sistema não deve
+ * receber nenhum deles: os spinners usam a variante Tailwind `motion-reduce:animate-none` e a
+ * entrada do cartão é desligada pelo `useReducedMotion` do framer-motion (classe Tailwind não
+ * alcança animação guidada por JS).
+ */
+describe('LocationPicker — movimento reduzido E63', () => {
+  afterEach(() => { reduceMotion.value = false; });
+
+  it('E63: o spinner do botão "Usar localização atual" respeita menos movimento', () => {
+    const state = hookState(null);
+    state.isLoadingLocation = true;
+    h.hook.mockReturnValue(state);
+    h.autocomplete.mockReturnValue(autocompleteState());
+    render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
+
+    const spinner = document.querySelector('svg.animate-spin');
+    expect(spinner).not.toBeNull();
+    expect(spinner!.getAttribute('class')).toContain('motion-reduce:animate-none');
+  });
+
+  it('E63: o spinner de carregamento do mapa respeita menos movimento', async () => {
+    h.hook.mockReturnValue(hookState(null));
+    h.autocomplete.mockReturnValue(autocompleteState());
+    render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
+    const mapTab = screen.getByRole('tab', { name: /Escolher no Mapa/ });
+    fireEvent.click(mapTab);
+    fireEvent.focus(mapTab);
+    await screen.findByRole('combobox');
+
+    const spinners = [...document.querySelectorAll('svg.animate-spin')];
+    expect(spinners.length).toBeGreaterThan(0);
+    for (const s of spinners) {
+      expect(s.getAttribute('class')).toContain('motion-reduce:animate-none');
+    }
+  });
+
+  it('E63: com prefers-reduced-motion o cartão de confirmação entra sem animação', () => {
+    reduceMotion.value = true;
+    h.hook.mockReturnValue(hookState({ lat: -23.55, lng: -46.63, name: 'Av. Paulista', address: 'Av. Paulista, 1000' }));
+    h.autocomplete.mockReturnValue(autocompleteState());
+    render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
+
+    const cartao = screen.getByTestId('local-atual-card');
+    // `initial=false`: o cartão nasce direto no estado final — nenhum quadro de entrada foi criado.
+    expect(cartao.style.opacity).toBe('1');
+    expect(cartao.style.transform).toBe('none');
+  });
+
+  it('E63 controle: sem prefers-reduced-motion a entrada animada continua existindo', () => {
+    reduceMotion.value = false;
+    h.hook.mockReturnValue(hookState({ lat: -23.55, lng: -46.63, name: 'Av. Paulista', address: 'Av. Paulista, 1000' }));
+    h.autocomplete.mockReturnValue(autocompleteState());
+    render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
+    const cartao = screen.getByTestId('local-atual-card');
+    // controle: sem a preferência, a entrada animada continua — começa escondida e deslocada.
+    expect(cartao.style.opacity).toBe('0');
+    expect(cartao.style.transform).toBe('translateY(10px)');
   });
 });

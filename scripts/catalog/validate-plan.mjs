@@ -1,8 +1,24 @@
 #!/usr/bin/env node
 // Valida docs/catalogo/PLANO_IMPLEMENTACAO_CATALOGO_100.md: 100 etapas, 10 sub-etapas e checklist em cada.
 import { readFileSync } from 'node:fs';
-const path = process.argv[2] || 'docs/catalogo/PLANO_IMPLEMENTACAO_CATALOGO_100.md';
-const md = readFileSync(path, 'utf8');
+
+import { resolverCaminhoPermitido } from '../lib/seguranca-processo.mjs';
+
+// S8707: o caminho do plano vem do argumento; nunca entra cru no readFileSync.
+// A guarda vive no modulo compartilhado (scripts/lib/seguranca-processo.mjs).
+// Fail-closed: fora da raiz encerra com exit 1 (mesmo codigo usado para um plano
+// invalido). Um `../../etc/passwd` ou absoluto fora delas e recusado.
+let arquivo;
+try {
+  arquivo = resolverCaminhoPermitido(
+    process.argv[2] || 'docs/catalogo/PLANO_IMPLEMENTACAO_CATALOGO_100.md',
+    'plano de implementacao',
+  );
+} catch (erro) {
+  console.error('ERRO: ' + erro.message);
+  process.exit(1);
+}
+const md = readFileSync(arquivo, 'utf8'); // NOSONAR(S8707): 'arquivo' vem de resolverCaminhoPermitido(...) acima, que resolve o caminho e recusa (exit 1) tudo fora do repositorio/tmp antes deste read
 const blocks = md.split(/^### (?=E\d{2,3} · )/m).slice(1);
 const errors = [];
 const seen = new Set();

@@ -8,32 +8,29 @@
  * novo imediatamente antes do POST ao provedor (F09).
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
+import { enforceRateLimit, getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
 import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talkx-window.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
+import {
+  getMediaEndpoint,
+  newCorrelationId,
+  normalizePhone,
+  personalize,
+  randomBetween,
+  sleep,
+} from "../_shared/messaging/index.ts";
 
-function getGreeting(timeZone = DEFAULT_SCHEDULE_TIMEZONE): string {
-  const hour = new Date().toLocaleString("pt-BR", { timeZone, hour: "numeric", hour12: false });
-  const h = parseInt(hour, 10);
-  if (h >= 5 && h < 12) return "Bom dia";
-  if (h >= 12 && h < 18) return "Boa tarde";
-  return "Boa noite";
-}
-
-export function personalizeMultiplix(template: string, company: { name?: string | null }, timeZone = DEFAULT_SCHEDULE_TIMEZONE): string {
-  let result = template.replace(/\{\{saudacao\}\}/gi, getGreeting(timeZone));
-  result = result.replace(/\{\{empresa\}\}/gi, company.name || '');
-  // Um placeholder fora de {{empresa}}/{{saudacao}} chegaria intacto na mensagem real
-  // do WhatsApp sem erro nem aviso — falha explicita evita esse vazamento (mesmo
-  // principio de talkx-send/personalize).
-  const unknownPlaceholder = result.match(/\{\{[^}]+\}\}/);
-  if (unknownPlaceholder) {
-    throw new Error(`unknown_placeholder: ${unknownPlaceholder[0]}`);
-  }
-  return result;
-}
+// F37/F43: as duplicatas locais (`getGreeting`, `personalizeMultiplix`,
+// `randomBetween`, `sleep`, `getMediaEndpoint`) foram removidas — todas vêm do
+// kernel compartilhado em ../_shared/messaging. O dialeto do Multiplix
+// ({{saudacao}}/{{empresa}}) é um SUBCONJUNTO dos built-ins que `personalize`
+// resolve: o nome da empresa entra por `contact.company`. A política de
+// placeholder sem valor passa a ser o fallback `[variavel]` do kernel — NUNCA
+// string vazia silenciosa. `personalize` é reexportado para não quebrar os
+// importadores deste módulo (index.test.ts importa daqui).
+export { personalize };
 
 function timingSafeStringEqual(a: string, b: string): boolean {
   const enc = new TextEncoder();
@@ -43,21 +40,6 @@ function timingSafeStringEqual(a: string, b: string): boolean {
   let diff = 0;
   for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
   return diff === 0;
-}
-
-function randomBetween(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function getMediaEndpoint(mediaType: string): string {
-  switch (mediaType) {
-    case "audio": return "sendWhatsAppAudio";
-    default: return "sendMedia";
-  }
 }
 
 export async function handleMultiplixSend(
@@ -70,6 +52,9 @@ export async function handleMultiplixSend(
 
   const headers = { ...getCorsHeaders(req), "Content-Type": "application/json" };
   const log = new Logger("multiplix-send");
+  // F43: UM correlation_id por request, propagado ao log estruturado. Opaco de
+  // proposito: nao deriva de telefone, nome ou conteudo.
+  const correlationId = newCorrelationId();
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -300,12 +285,33 @@ export async function handleMultiplixSend(
       if (!Number.isFinite(remaining)) {
         // Medicao quebrada nao pode parar o modulo: segue sem cota (o limite do
         // provedor nao e um controle de seguranca).
-        log.warn("Cota diaria indisponivel: seguindo sem limite diario", { dispatchId });
+        log.warn("Cota diaria indisponivel: seguindo sem limite diario", { correlationId, dispatchId });
         return null;
       }
       return remaining;
     };
     let dailyRoom = await resolveDailyRoom();
+
+    // F53 (Bloco E): teto por CONEXAO nesta edge. Aqui a conta e por invocacao (uma
+    // passada = uma chamada), nao por destinatario: o que se protege e o canal
+    // (instancia do provedor), e o teto e generoso de proposito — isto e uma trava
+    // de rajada, nao a cota diaria do F17, que ja roda logo acima.
+    const connectionForLimit = typeof dispatch.whatsapp_connection_id === "string"
+      ? dispatch.whatsapp_connection_id
+      : "sem-conexao";
+    const burst = await enforceRateLimit(`multiplix-send:conn:${connectionForLimit}`, 600, 60_000);
+    if (!burst.allowed) {
+      log.warn("Rate limit por conexao atingido: adiando a passada", {
+        correlationId, dispatchId, connectionId: connectionForLimit, remaining: burst.remaining,
+      });
+      const limited = new Response(JSON.stringify({
+        error: "rate_limited",
+        message: "Muitas passadas em sequencia para esta conexao",
+        retry_after_seconds: 60,
+      }), { status: 429, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } });
+      limited.headers.set("Retry-After", "60");
+      return limited;
+    }
 
     const pauseDispatch = async (pauseReason: string) => {
       const { error } = await supabase.rpc("transition_multiplix_dispatch", {
@@ -386,7 +392,13 @@ export async function handleMultiplixSend(
           continue;
         }
 
-        if (!recipient.destino_e164) {
+        // F38: o destino passa pelo resolvedor E.164 do kernel. normalizePhone
+        // devolve null para ausente/vazio OU reputado invalido (possivel LID de
+        // 14-15 digitos nu) — nos dois casos nao existe destino enderecavel:
+        // classe `no_destination` do F39 (mesmo tratamento do destino ausente),
+        // em vez de fazer o POST com string vazia.
+        const phone = normalizePhone(recipient.destino_e164);
+        if (!phone) {
           const { error: completionError } = await supabase.rpc("complete_multiplix_recipient", {
             p_recipient_id: recipient.id,
             p_claim_token: claim.claim_token,
@@ -403,9 +415,12 @@ export async function handleMultiplixSend(
         if (!personalizedMsg) {
           let calculatedMessage: string;
           try {
-            calculatedMessage = personalizeMultiplix(
+            // F37: dialeto unificado do kernel — o nome da empresa entra por
+            // contact.company, que e o campo consumido por {{empresa}}.
+            calculatedMessage = personalize(
               dispatch.message_template,
-              { name: recipient.company_name_snapshot },
+              { company: recipient.company_name_snapshot },
+              {},
               typeof dispatch.schedule_timezone === "string" ? dispatch.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
             );
           } catch (e) {
@@ -434,7 +449,6 @@ export async function handleMultiplixSend(
         let providerPostAttempted = false;
         let sendTimeout: ReturnType<typeof setTimeout> | undefined;
         try {
-          const phone = recipient.destino_e164.replace(/\D/g, "");
           const typingDelay = randomBetween(dispatch.typing_delay_min, dispatch.typing_delay_max);
 
           try {
@@ -600,7 +614,7 @@ export async function handleMultiplixSend(
             dispatch = { ...dispatch, ...fresh };
             const refreshedWindowStatus = deliveryWindowStatus(dispatch);
             if (!refreshedWindowStatus.allowed) {
-              log.warn("Dispatch pausado automaticamente: fora da janela de envio", { dispatchId });
+              log.warn("Dispatch pausado automaticamente: fora da janela de envio", { correlationId, dispatchId });
               await pauseDispatch("outside_window");
               break passLoop;
             }
@@ -620,7 +634,7 @@ export async function handleMultiplixSend(
     );
     if (completionError) throw new Error(`multiplix_dispatch_completion_failed: ${completionError.message}`);
 
-    log.done(200, { sent: sentCount, failed: failedCount, outcomeUnknown: outcomeUnknownCount });
+    log.done(200, { correlationId, dispatchId, sent: sentCount, failed: failedCount, outcomeUnknown: outcomeUnknownCount });
 
     return new Response(
       JSON.stringify({
@@ -633,7 +647,7 @@ export async function handleMultiplixSend(
       { headers },
     );
   } catch (err) {
-    log.error("Multiplix send error", { error: err instanceof Error ? err.message : String(err) });
+    log.error("Multiplix send error", { correlationId, error: err instanceof Error ? err.message : String(err) });
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers },

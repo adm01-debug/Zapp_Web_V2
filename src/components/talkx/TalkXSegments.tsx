@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 
 import { PrimaryButton, GhostButton, Pill, ProgressBar, VerTodasButton, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
-import { useTalkXSegments, emptyRules, newRule, RULE_FIELDS, RULE_OPS, type TalkXSegment, type SegmentRules, type SegmentRule, type SegmentRuleGroup, useAudienceEstimate, countAudience } from '@/hooks/integrations/useTalkXSegments';
+import { useTalkXSegments, emptyRules, newRule, RULE_FIELDS, RULE_OPS, type TalkXSegment, type SegmentRules, type SegmentRule, type SegmentRuleGroup, useAudienceEstimate, countAudience, splitRules, isRuleComplete } from '@/hooks/integrations/useTalkXSegments';
 import { IconTile, RailCard, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCard, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo, barsByDay, OBJECTIVES } from './talkxShared';
 import { toast } from 'sonner';
 
@@ -62,12 +62,22 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   const save = async () => {
     if (saving) return;
     if (!editingName.trim()) return;
+    // Uma condição em branco não pode ir para o banco: recusa com o número exato
+    // do que falta em vez de deixar o botão sem efeito e sem aviso.
+    const { incompleteCount } = splitRules(editingRules);
+    if (incompleteCount > 0) {
+      toast.error(`Complete ou remova ${incompleteCount} condição(ões) antes de publicar.`);
+      return;
+    }
     setSaving(true);
     try {
       const count = await countAudience(editingRules);
       if (selected) await updateSegment.mutateAsync({ id: selected.id, name: editingName, description: editingDesc || null, rules: editingRules, estimated_count: count });
       else await createSegment.mutateAsync({ name: editingName, description: editingDesc || null, rules: editingRules, estimated_count: count });
       setMode('list');
+    } catch (e) {
+      // Erro real do banco (RLS, rede) precisa chegar ao usuário.
+      toast.error(`Erro ao salvar segmento: ${e instanceof Error ? e.message : String(e)}`);
     } finally { setSaving(false); }
   };
 
@@ -85,7 +95,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
             <KpiCard icon={Database} color="blue"   index={0} label="Total de segmentos"  value={fmtInt(totals.total)}        bars={totals.bars} />
-            <KpiCard icon={Check}    color="green"  index={1} label="Ativos este mês"      value={fmtInt(totals.active)} />
+            <KpiCard icon={Check}    color="green"  index={1} label="Segmentos ativos"    value={fmtInt(totals.active)} />
             <KpiCard icon={Shield}   color="violet" index={2} label="CRM 360° conectados" value={fmtInt(totals.crm360)} />
             <KpiCard icon={BarChart3} color="amber" index={3} label="Contatos cobertos"    value={fmtInt(totals.totalContacts)} />
           </div>
@@ -117,7 +127,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                 <tbody>
                   {paged.map((s) => (
                     <tr key={s.id} className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s)}>
-                      <Td><button type="button" onClick={(e) => { e.stopPropagation(); toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button></Td>
+                      <Td><button type="button" onClick={(e) => { e.stopPropagation(); void toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button></Td>
                       <Td>
                         <p className="text-sm font-semibold text-foreground">{s.name}</p>
                         <p className="text-2xs text-foreground-secondary truncate max-w-[220px]">{s.description || 'Sem descrição'}</p>
@@ -191,7 +201,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
 function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment; onEdit: () => void; onCampaign: () => void; onClose: () => void }) {
   const { data: est } = useAudienceEstimate(s.rules, true);
   return (
-    <RailCard icon={Bookmark} color="violet" title={s.name} subtitle={s.description || 'Altíssimo valor e recorrência'}
+    <RailCard icon={Bookmark} color="violet" title={s.name} subtitle={s.description || undefined}
       right={<button type="button" onClick={onClose} aria-label="Fechar" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50"><X className="w-4 h-4" /></button>}
     >
       <div className="flex items-center gap-2 flex-wrap mb-2">
@@ -231,7 +241,10 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
   onSave: () => void; onCancel: () => void; saving: boolean; isNew: boolean;
 }) {
   const { data: est, isFetching: estFetching } = useAudienceEstimate(rules, true);
-  const riskLevel = est?.count === 0 ? 'high' : (est?.count ?? 0) > 10000 ? 'low' : 'moderate';
+  // Condições em branco ficam fora da estimativa; a tela precisa dizer quantas
+  // antes de o usuário tentar publicar. O valor do hook cobre o mesmo cálculo,
+  // a derivação local mostra o aviso imediatamente (antes do fetch resolver).
+  const incompleteCount = est?.incompleteCount ?? splitRules(rules).incompleteCount;
   // id do grupo ativo para o catálogo (last by default, atualizado a cada interação de grupo)
   const [activeGroupId, setActiveGroupId] = React.useState<string | null>(null);
   const [dragOverGroupId, setDragOverGroupId] = React.useState<string | null>(null);
@@ -276,7 +289,7 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <GhostButton onClick={onCancel}>Cancelar</GhostButton>
-            <PrimaryButton icon={saving ? RefreshCw : Check} onClick={onSave} className={cn(saving && 'opacity-60 pointer-events-none', !name.trim() && 'opacity-50 pointer-events-none')}>{isNew ? 'Publicar segmento' : 'Salvar'}</PrimaryButton>
+            <PrimaryButton icon={saving ? RefreshCw : Check} onClick={onSave} disabled={saving || !name.trim()}>{isNew ? 'Publicar segmento' : 'Salvar'}</PrimaryButton>
           </div>
         </div>
 
@@ -354,11 +367,9 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
           <p className="text-2xs text-foreground-secondary">Audiência estimada</p>
           <p className={cn('text-4xl font-bold tabular-nums tracking-[-0.02em] transition-opacity', estFetching ? 'text-muted-foreground opacity-50' : 'text-foreground opacity-100')}>{fmtInt(est?.count ?? 0)}</p>
           <p className="text-xs text-foreground-secondary">contatos</p>
-          <div className="mt-3 rounded-xl border border-border/50 bg-input/20 p-3">
-            <p className="text-xs font-semibold text-foreground mb-1">Risco de entrega</p>
-            <Pill label={riskLevel === 'low' ? 'Baixo' : riskLevel === 'moderate' ? 'Moderado' : 'Alto'} tone={riskLevel === 'low' ? 'success' : riskLevel === 'moderate' ? 'warning' : 'danger'} dot />
-            <p className="text-2xs text-foreground-secondary mt-1.5">{riskLevel === 'low' ? 'Excelente potencial de entrega para campanhas no WhatsApp.' : riskLevel === 'moderate' ? 'Valide os contatos antes de lançar.' : 'Público muito pequeno — revise as regras.'}</p>
-          </div>
+          {incompleteCount > 0 && (
+            <p className="text-2xs text-dash-amber mt-2">{incompleteCount} condição(ões) incompleta(s) fora da estimativa</p>
+          )}
           {est?.sample && est.sample.length > 0 && (
             <div className="mt-3">
               <p className="text-2xs text-foreground-secondary mb-1.5">Amostra de contatos (5)</p>
@@ -380,8 +391,11 @@ function RuleRow({ rule, onChange, onRemove }: { rule: SegmentRule; onChange: (p
   const fieldDef = RULE_FIELDS.find((f) => f.value === rule.field);
   const ops = RULE_OPS[fieldDef?.kind ?? 'text'] ?? RULE_OPS.text;
   const needsValue = !['is_set', 'is_empty'].includes(rule.op);
+  // Condição ainda em branco não entra na estimativa: a borda de aviso mostra
+  // qual linha precisa ser completada (ou removida) antes de publicar.
+  const incomplete = !isRuleComplete(rule);
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className={cn('flex items-center gap-2 flex-wrap rounded-lg', incomplete && 'border border-dash-amber p-2')}>
       <Select value={rule.field} onValueChange={(v) => onChange({ field: v as never, op: (RULE_OPS[RULE_FIELDS.find((f) => f.value === v)?.kind ?? 'text']?.[0]?.value ?? 'eq') as never, value: '' })}>
         <SelectTrigger className="h-9 bg-input/40 border-border/70 text-xs min-w-[160px] w-auto"><SelectValue /></SelectTrigger>
         <SelectContent>{RULE_FIELDS.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent>

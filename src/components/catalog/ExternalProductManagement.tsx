@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useReducer, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useReducer, useRef, lazy, Suspense } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -25,6 +25,7 @@ import {
   Heart,
   Send,
   Download,
+  HelpCircle,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -37,15 +38,26 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useExternalCatalog, useCatalogStats, useCatalogFavorites, ExternalProduct, type CatalogStats } from '@/hooks/integrations/useExternalCatalog';
 import { ExternalProductCard } from './ExternalProductCard';
 import { CatalogProductCardSkeleton } from './CatalogProductCard';
-import { SendProductDialog } from './SendProductDialog';
+// CT-71 — os 3 modais da tela entram por `import()` (chunks próprios). `lazy()`
+// em ESCOPO DE MÓDULO: a regra react-hooks/static-components rejeita lazy no
+// corpo do render (documentado em catalogShared.tsx:399).
+const SendProductDialog = lazy(() =>
+  import('./SendProductDialog').then((m) => ({ default: m.SendProductDialog }))
+);
 import { ModuleHeader, fmtAgo, AlertCard, TalkXPagination, TalkXTable, StatusPill, fmtDateTime, type TalkXColumn, type PillTone } from '@/components/talkx/talkxShared';
 import { CatalogRail, type CatalogRailFilterKey } from './CatalogRail';
 import { useCatalogRecentSends } from '@/hooks/integrations/useCatalogRecentSends';
-import { CatalogKpiStrip, CategoryChips, AdvancedFilterChips, countAdvancedFilters, matchesAnySelected, DEFAULT_ADVANCED_FILTERS, CatalogErrorState, countLabel, useRateLimitCooldown, type AdvancedFilters } from './catalogShared';
-import { CatalogAdvancedFilters } from './CatalogAdvancedFilters';
+import { CatalogKpiStrip, CategoryChips, AdvancedFilterChips, countAdvancedFilters, matchesAnySelected, DEFAULT_ADVANCED_FILTERS, CatalogErrorState, countLabel, useRateLimitCooldown, CatalogDialogFallback, type AdvancedFilters } from './catalogShared';
+const CatalogAdvancedFilters = lazy(() =>
+  import('./CatalogAdvancedFilters').then((m) => ({ default: m.CatalogAdvancedFilters }))
+);
+// CT-84 — ponto de entrada da ajuda do catálogo (CatalogHelpSheet) no header.
+import { CatalogHelpSheet } from './CatalogHelpSheet';
 import { parseCatalogCategoryRoute, replaceCatalogCategoryRoute } from './catalogCategoryRoute';
 import { CatalogBulkBar } from './CatalogBulkBar';
-import { CatalogBulkSendDialog } from './CatalogBulkSendDialog';
+const CatalogBulkSendDialog = lazy(() =>
+  import('./CatalogBulkSendDialog').then((m) => ({ default: m.CatalogBulkSendDialog }))
+);
 // CT-28 — "Exportar seleção" reusa os builders puros do CSV (CT-20), como no
 // catálogo do chat: as linhas são exatamente os produtos selecionados na tela
 // (nada é buscado na edge; o export do filtro inteiro é o do rail).
@@ -300,6 +312,8 @@ export const ExternalProductManagement: React.FC = () => {
   });
 
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  // CT-84 — ajuda do catálogo (CatalogHelpSheet), aberta pelo botão "Ajuda".
+  const [helpOpen, setHelpOpen] = useState(false);
   const advCount = countAdvancedFilters(advFilters);
 
   // E36-2: o edge promogifts-catalog (list_products) agora aceita array
@@ -747,6 +761,10 @@ export const ExternalProductManagement: React.FC = () => {
             right={(
               <>
                 <SyncStatusChip key={stats?.last_sync_at} lastSyncAt={stats?.last_sync_at} />
+                <Button variant="outline" size="sm" onClick={() => setHelpOpen(true)}>
+                  <HelpCircle className="w-4 h-4 mr-1" aria-hidden="true" />
+                  Ajuda
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => fetchProducts(buildFilters())} disabled={coolingDown}>
                   <RefreshCw className="w-4 h-4 mr-1" />
                   Atualizar
@@ -1019,15 +1037,22 @@ export const ExternalProductManagement: React.FC = () => {
         />
       )}
 
-      <CatalogAdvancedFilters
-        key={String(advancedOpen)}
-        open={advancedOpen}
-        onOpenChange={setAdvancedOpen}
-        filters={advFilters}
-        stats={stats}
-        onApply={(next) => { dispatch({ type: 'advanced', filters: next }); setPage(0); }}
-        onClear={() => { dispatch({ type: 'advanced', filters: { ...DEFAULT_ADVANCED_FILTERS } }); setPage(0); }}
-      />
+      {/* CT-71 — Sheet montado desde o 1º paint (fechado): fallback null para
+          não piscar spinner na página antes de o chunk resolver. */}
+      <Suspense fallback={null}>
+        <CatalogAdvancedFilters
+          key={String(advancedOpen)}
+          open={advancedOpen}
+          onOpenChange={setAdvancedOpen}
+          filters={advFilters}
+          stats={stats}
+          onApply={(next) => { dispatch({ type: 'advanced', filters: next }); setPage(0); }}
+          onClear={() => { dispatch({ type: 'advanced', filters: { ...DEFAULT_ADVANCED_FILTERS } }); setPage(0); }}
+        />
+      </Suspense>
+
+      {/* CT-84 — ajuda do catálogo (acionada pelo botão "Ajuda" do header). */}
+      <CatalogHelpSheet open={helpOpen} onOpenChange={setHelpOpen} />
 
       {selectedIds.size > 0 && (
         <CatalogBulkBar
@@ -1043,23 +1068,27 @@ export const ExternalProductManagement: React.FC = () => {
       )}
 
       {sendProduct && (
-        <SendProductDialog
-          key={sendProduct.id}
-          product={sendProduct}
-          open={!!sendProduct}
-          onOpenChange={(open) => { if (!open) { setSendProduct(null); setDeepLinkVariant(undefined); setDeepLinkContact(null); } }}
-          initialVariantColor={deepLinkVariant}
-          /* CT-55 — contato pré-selecionado vindo de `?contact=<id>`. */
-          presetContact={deepLinkContact}
-        />
+        <Suspense fallback={<CatalogDialogFallback />}>
+          <SendProductDialog
+            key={sendProduct.id}
+            product={sendProduct}
+            open={!!sendProduct}
+            onOpenChange={(open) => { if (!open) { setSendProduct(null); setDeepLinkVariant(undefined); setDeepLinkContact(null); } }}
+            initialVariantColor={deepLinkVariant}
+            /* CT-55 — contato pré-selecionado vindo de `?contact=<id>`. */
+            presetContact={deepLinkContact}
+          />
+        </Suspense>
       )}
 
-      <CatalogBulkSendDialog
-        products={[...selectedIds].map((id) => products.find((p) => p.id === id)).filter((p): p is ExternalProduct => p !== undefined)}
-        open={bulkSendOpen}
-        onOpenChange={setBulkSendOpen}
-        onSent={clearSelection}
-      />
+      <Suspense fallback={null}>
+        <CatalogBulkSendDialog
+          products={[...selectedIds].map((id) => products.find((p) => p.id === id)).filter((p): p is ExternalProduct => p !== undefined)}
+          open={bulkSendOpen}
+          onOpenChange={setBulkSendOpen}
+          onSent={clearSelection}
+        />
+      </Suspense>
     </div>
 
     <aside className="catalog-rail sticky top-4 hidden xl:block">

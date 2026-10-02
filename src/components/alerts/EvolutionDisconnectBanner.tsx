@@ -31,7 +31,7 @@ export function EvolutionDisconnectBanner() {
   };
 
   useEffect(() => {
-    fetchStatus();
+    void fetchStatus();
 
     // Real-time updates on connection status changes
     const channel = supabase
@@ -39,7 +39,7 @@ export function EvolutionDisconnectBanner() {
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'whatsapp_connections' },
-        () => { fetchStatus(); }
+        () => { void fetchStatus(); }
       )
       .subscribe();
 

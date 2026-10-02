@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { suggestPlaces, retrievePlaceResult, searchPlaces, getCachedSuggest } from '@/lib/mapboxGeocode';
 import type { GeoSuggestion, GeoFailureKind, GeoProximity, GeoSearchPlace } from '@/lib/mapboxGeocode';
@@ -78,6 +78,12 @@ export interface UseAddressAutocompleteResult {
   pausedUntil: number | null;
   /** E26: falha do `/retrieve` amarrada ao item que o operador escolheu. */
   retrieveError: { id: string; kind: GeoFailureKind } | null;
+  /**
+   * E64: anúncio para o LEITOR DE TELA do próprio operador — `''` enquanto nada foi escolhido e
+   * `Endereço escolhido: <nome>` após um `select()` bem-sucedido. É texto de DOM (região viva),
+   * **nunca** entra em `logAudit` (E50 trava que o evento não carrega nome/endereço).
+   */
+  selectionAnnouncement: string;
 }
 
 interface State {
@@ -266,6 +272,11 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
   // E13: último retry já executado pelo effect — é a comparação que diz "esta mudança veio de um
   // clique em Tentar novamente" (dispara na hora) em vez de uma tecla (respeita o debounce).
   const retryRef = useRef(0);
+  // E64: texto anunciado ao leitor de tela após a seleção. Vive FORA do reducer de propósito: o
+  // `clear()` que o consumidor dispara logo depois de aplicar a escolha (para limpar o campo) não
+  // pode apagar o anúncio antes do operador ouvi-lo. É um valor único, sempre substituído — nunca
+  // acumula mensagens.
+  const [selectionAnnouncement, setSelectionAnnouncement] = useState('');
 
   const runSuggest = useCallback((term: string) => {
     if (!token) return;
@@ -413,7 +424,9 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     // E15 item 3: sugestão do `/forward` já traz coordenada — sem `/retrieve` e sem gastar sessão.
     if (suggestion.coords) {
       endSearchSession();
-      void logAudit({ action: 'searchbox_selected', details: { source: 'forward', position: index } });
+      void logAudit({ action: 'searchbox_selected', details: { source: 'forward', kind: suggestion.kind } });
+      // E64: anúncio para o leitor de tela da pessoa que está escolhendo — não é telemetria.
+      setSelectionAnnouncement(`Endereço escolhido: ${suggestion.name}`);
       return {
         lat: suggestion.coords.lat,
         lng: suggestion.coords.lng,
@@ -434,7 +447,9 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     if (result.ok) {
       dispatch({ type: 'RETRIEVE_END' });
       endSearchSession();
-      void logAudit({ action: 'searchbox_selected', details: { source: 'suggest', position: index } });
+      void logAudit({ action: 'searchbox_selected', details: { source: 'suggest', kind: suggestion.kind } });
+      // E64: o nome vai só para a região viva (leitor de tela), nunca para o logAudit acima.
+      setSelectionAnnouncement(`Endereço escolhido: ${suggestion.name}`);
       return result.place;
     }
 
@@ -462,6 +477,8 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     const place = fallback.ok ? fallback.places[0] : undefined;
     if (place) {
       dispatch({ type: 'RETRIEVE_END' });
+      // E64: a seleção venceu pelo fallback (E16) — o operador também ouve o que escolheu.
+      setSelectionAnnouncement(`Endereço escolhido: ${suggestion.name}`);
       return place;
     }
 
@@ -565,5 +582,7 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     status: state.status,
     pausedUntil: state.rateLimitedUntil,
     retrieveError: state.retrieveError,
+    // E64: alimenta a região viva (aria-live) do consumidor; não vai para nenhum logAudit.
+    selectionAnnouncement,
   };
 }

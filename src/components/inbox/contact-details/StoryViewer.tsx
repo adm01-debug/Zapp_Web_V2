@@ -122,7 +122,7 @@ export function StoryViewer({ messages, initialIndex, open, onClose, pushName }:
         setErroDeMidia({ index, message: error instanceof Error ? error.message : 'Erro ao carregar mídia' });
       } finally { if (!cancelled) setCarregandoMidia({ index, loading: false }); }
     };
-    loadMedia();
+    void loadMedia();
     return () => { cancelled = true; };
   }, [open, index, messages, getMediaBase64]);
 

@@ -208,7 +208,9 @@ function buildPreset(p: PresetParams): ThemePreset {
     secondary,
     'secondary-foreground': '210 40% 92%',
     muted: `${h} 15% 92%`,
-    'muted-foreground': `${h} 10% 45%`,
+    // E62: L40 (era 45) para o texto secundário fechar 4,5:1 sobre o `<mark>` da busca
+    // no popover claro. Ver comentário em tokens.css.
+    'muted-foreground': `${h} 10% 40%`,
     accent: `${h} 55% 95%`,
     'accent-foreground': `${h} ${s}% ${Math.max(l - 8, 5)}%`,
     border: `${h} 15% 90%`,

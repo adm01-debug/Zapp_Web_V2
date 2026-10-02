@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const [sender, linkFn, sharedValidation, linksMigration, idorMigration, caseInsensitiveMigration, talkxShared, contactService, campaignWizard, wizardDelivery] = await Promise.all([
+const [sender, linkFn, sharedValidation, linksMigration, idorMigration, caseInsensitiveMigration, talkxShared, contactService, campaignWizard, wizardDelivery, messagingPersonalize, recipientProcessor] = await Promise.all([
   readFile(new URL('../../supabase/functions/talkx-send/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/talkx-link/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/_shared/validation.ts', import.meta.url), 'utf8'),
@@ -13,6 +13,12 @@ const [sender, linkFn, sharedValidation, linksMigration, idorMigration, caseInse
   readFile(new URL('../../src/services/contact.service.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../src/components/talkx/TalkXCampaignWizard.tsx', import.meta.url), 'utf8'),
   readFile(new URL('../../src/components/talkx/TalkXWizardDelivery.tsx', import.meta.url), 'utf8'),
+  // Bloco D / F37: `personalize()` saiu do `talkx-send` e passou a morar no kernel
+  // compartilhado — a garantia do `hasOwnProperty` mudou de arquivo, nao deixou de existir.
+  readFile(new URL('../../supabase/functions/_shared/messaging/personalize.ts', import.meta.url), 'utf8'),
+  // X011: o corpo por-destinatário (onde o `personalize` real é chamado com o
+  // trackingUrl) saiu de index.ts para process-recipient.ts.
+  readFile(new URL('../../supabase/functions/talkx-send/process-recipient.ts', import.meta.url), 'utf8'),
 ]);
 
 test('Talk X {{link}} resolves to a real per-recipient tracking URL at the real send call site', () => {
@@ -25,8 +31,8 @@ test('Talk X {{link}} resolves to a real per-recipient tracking URL at the real 
   assert.match(sender, /order\("created_at", \{ ascending: true \}\)/);
   assert.match(sender, /const trackingUrlFor = \(recipientId: string\)/);
   assert.match(sender, /functions\/v1\/talkx-link\?s=\$\{encodeURIComponent\(trackingLink\.slug\)\}&r=\$\{encodeURIComponent\(recipientId\)\}/);
-  const realCallIdx = sender.indexOf('?? personalize(');
-  const trackingArgIdx = sender.indexOf('trackingUrlFor(recipient.id as string)');
+  const realCallIdx = recipientProcessor.indexOf('?? personalize(');
+  const trackingArgIdx = recipientProcessor.indexOf('trackingUrlFor(recipient.id as string)');
   assert.ok(realCallIdx > -1 && trackingArgIdx > -1, 'o call site real de personalize() e o argumento trackingUrlFor devem existir');
   assert.ok(trackingArgIdx > realCallIdx && trackingArgIdx - realCallIdx < 300, 'trackingUrlFor deve ser o argumento do call site real (nao do preview de teste)');
 });
@@ -42,12 +48,14 @@ test('Talk X personalize() resolves every placeholder in a single pass over the 
   // contato OU de campo customizado — e um UNICO regex.replace() sobre a
   // string original, resolvendo tudo (saudacao, link, dado de contato, campo
   // customizado) dentro do mesmo callback, nunca reescaneando o resultado.
-  const singlePassIdx = sender.indexOf('return template.replace(/\\{\\{([^}]+)\\}\\}/g');
+  // F37 (Bloco D): o `personalize()` mudou de arquivo (foi para o kernel) — as provas estruturais
+  // abaixo seguem a logica, nao o arquivo antigo. Tudo o que e do CALL SITE continua em `sender`.
+  const singlePassIdx = messagingPersonalize.indexOf('return template.replace(/\\{\\{([^}]+)\\}\\}/g');
   assert.ok(singlePassIdx > -1, 'personalize() deve resolver tudo num unico regex.replace() sobre o template original');
-  const saudacaoIdx = sender.indexOf('key === "saudacao"', singlePassIdx);
-  const linkIdx = sender.indexOf('key === "link"', singlePassIdx);
-  const contactValuesIdx = sender.indexOf('Object.prototype.hasOwnProperty.call(contactValues, key)', singlePassIdx);
-  const customValuesIdx = sender.indexOf('normalizedCustomValues.has(key)', singlePassIdx);
+  const saudacaoIdx = messagingPersonalize.indexOf('key === "saudacao"', singlePassIdx);
+  const linkIdx = messagingPersonalize.indexOf('key === "link"', singlePassIdx);
+  const contactValuesIdx = messagingPersonalize.indexOf('Object.prototype.hasOwnProperty.call(contactValues, key)', singlePassIdx);
+  const customValuesIdx = messagingPersonalize.indexOf('normalizedCustomValues.has(key)', singlePassIdx);
   assert.ok(
     saudacaoIdx > singlePassIdx && linkIdx > saudacaoIdx && contactValuesIdx > linkIdx && customValuesIdx > contactValuesIdx,
     'ordem de resolucao dentro do passe unico: saudacao, link, dado de contato, campo customizado',
@@ -58,8 +66,8 @@ test('Talk X personalize() never lets a custom field with a reserved name overri
   // Review da PR #909: um campo customizado do CRM chamado "link" (ou
   // "nome"/"empresa"/etc.) nao pode sequestrar o placeholder built-in
   // correspondente antes do passe de resolucao real.
-  assert.match(sender, /RESERVED_PLACEHOLDER_KEYS/);
-  assert.match(sender, /if \(RESERVED_PLACEHOLDER_KEYS\.has\(normalizedKey\)\) continue/);
+  assert.match(messagingPersonalize, /RESERVED_PLACEHOLDER_KEYS/);
+  assert.match(messagingPersonalize, /if \(RESERVED_PLACEHOLDER_KEYS\.has\(normalizedKey\)\) continue/);
 });
 
 test('Talk X custom-fields pagination orders by a stable unique key', () => {
@@ -121,7 +129,10 @@ test('Talk X personalize() and personalizePreview() both guard against inherited
   // Review da PR #909: "key in contactValues" tambem acha propriedades
   // herdadas (constructor, __proto__) -- um placeholder desses vazaria texto
   // de funcao/objeto em vez de cair no fallback "[variavel]".
-  assert.match(sender, /Object\.prototype\.hasOwnProperty\.call\(contactValues, key\)/);
+  // F37 (Bloco D): a funcao `personalize()` (que faz esse guard) saiu deste arquivo e passou
+  // a morar em `_shared/messaging/personalize.ts` — a assercao segue o dono da logica, senao
+  // ela testaria a ausencia da funcao. O preview do wizard continua em talkxShared.tsx.
+  assert.match(messagingPersonalize, /Object\.prototype\.hasOwnProperty\.call\(contactValues, key\)/);
   assert.match(talkxShared, /Object\.prototype\.hasOwnProperty\.call\(contactValues, key\)/);
 });
 

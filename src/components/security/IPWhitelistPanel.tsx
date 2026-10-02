@@ -64,7 +64,7 @@ export function IPWhitelistPanel() {
   };
 
   useEffect(() => {
-    fetchWhitelistedIPs();
+    void fetchWhitelistedIPs();
   }, []);
 
   const handleAddIP = async () => {
@@ -99,7 +99,7 @@ export function IPWhitelistPanel() {
       toast.success('IP adicionado à whitelist');
       setShowAddDialog(false);
       resetForm();
-      fetchWhitelistedIPs();
+      void fetchWhitelistedIPs();
     }
     setUpdating(false);
   };
@@ -118,7 +118,7 @@ export function IPWhitelistPanel() {
     } else {
       toast.success('IP removido da whitelist');
       setIpToRemove(null);
-      fetchWhitelistedIPs();
+      void fetchWhitelistedIPs();
     }
     setUpdating(false);
   };

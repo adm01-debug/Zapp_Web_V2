@@ -2,14 +2,20 @@
 
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { withPsqlEnvironment } from './psql-environment.mjs';
 
 const VERSION_RE = /^\d{14}$/u;
+// Fallback (sem LEDGER_EVIDENCE_OUTPUT): diretorio privado por execucao (0700)
+// via mkdtemp, em vez de um caminho fixo e previsivel em /tmp (S5443).
 const OUTPUT_PATH = process.env.LEDGER_EVIDENCE_OUTPUT
-  || '/tmp/targeted-ledger-evidence.json';
+  || path.join(
+    fs.mkdtempSync(path.join(os.tmpdir(), 'zapp-ledger-evidence-')),
+    'targeted-ledger-evidence.json',
+  );
 const PSQL_BIN = process.env.PSQL_BIN || 'psql';
 
 function sha256(input) {

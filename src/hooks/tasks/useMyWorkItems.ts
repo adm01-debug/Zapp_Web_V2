@@ -35,6 +35,7 @@ import { useQuery, useMutation, useQueryClient, type QueryKey } from '@tanstack/
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { undoToast } from '@/lib/undoToast';
+import { secureRandomFloat } from '../../lib/secureRandom';
 import { useAuth } from '@/hooks/auth/useAuth';
 import {
   canTransition,
@@ -206,8 +207,17 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
   // ---- Realtime ------------------------------------------------------------
   useEffect(() => {
     if (!profileId) return;
+    // Nome UNICO por instancia. `RealtimeClient.channel(topic)` devolve o canal
+    // EXISTENTE quando o topico se repete, e `.on()` depois de `subscribe()`
+    // lanca. Com duas instancias vivas na mesma pagina (ex.: `ChatPanel` +
+    // aba Tarefas do inbox, que chamam `useMyWorkItems` com o mesmo `profileId`)
+    // a segunda derrubava a aba com "cannot add `postgres_changes` callbacks ...
+    // after `subscribe()`". O sufixo aleatorio da um canal por montagem.
+    // O topico e opaco: nao e gravado, comparado por regex nem enviado ao banco
+    // (so ao Realtime, como nome de canal) — a fonte deixa de ser o PRNG
+    // previsivel (S2245) e a expressao segue identica.
     const channel = supabase
-      .channel('work-items:' + profileId)
+      .channel(`work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         {

@@ -1,4 +1,5 @@
 import { getLogger, generateCorrelationId } from '@/lib/logger';
+import { secureRandomFloat } from './secureRandom';
 
 const log = getLogger('RetryUtil');
 
@@ -49,9 +50,11 @@ export async function withRetry<T>(
         throw error;
       }
 
-      // Exponential backoff with jitter
+      // Exponential backoff with jitter. O jitter so entra no setTimeout: nao e
+      // gravado, comparado por regex nem enviado ao banco. A fonte deixa de ser
+      // o PRNG previsivel (S2245); a formula segue identica.
       const delay = Math.min(
-        baseDelayMs * Math.pow(2, attempt) + Math.random() * 500,
+        baseDelayMs * Math.pow(2, attempt) + secureRandomFloat() * 500,
         maxDelayMs
       );
 

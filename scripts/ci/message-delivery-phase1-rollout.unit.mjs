@@ -65,7 +65,8 @@ test('message delivery phase 1 remains additive and deployment-order safe', () =
 
 test('offline DB guard executes the PostgreSQL 17 behavioral harness', () => {
   assert.match(dbGuard, /message-delivery-phase1-behavior\.test\.sh/);
-  assert.match(dbGuard, /MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE:\s*postgres:17-alpine/);
+  assert.match(dbGuard, /MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE:\s*\$\{\{.*POSTGRES_TEST_IMAGE.*\}\}/);
+  assert.match(dbGuard, /POSTGRES_TEST_IMAGE:\s*postgres:17-alpine@sha256:/);
 });
 
 test('rich outbound enqueue keeps provider payload immutable and non-service callable', () => {

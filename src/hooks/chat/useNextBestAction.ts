@@ -145,7 +145,7 @@ export function useNextBestAction(contactId: string, contactName: string) {
       }
     };
 
-    analyzeAndSuggest();
+    void analyzeAndSuggest();
     return () => { cancelled = true; };
   }, [contactId, contactName]);
 

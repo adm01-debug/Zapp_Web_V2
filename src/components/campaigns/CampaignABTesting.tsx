@@ -35,7 +35,7 @@ export function CampaignABTesting({ campaignId }: CampaignABTestingProps) {
   const [newContent, setNewContent] = useState('');
 
   // eslint-disable-next-line react-hooks/immutability, react-hooks/exhaustive-deps
-  useEffect(() => { loadVariants(); }, [campaignId]);
+  useEffect(() => { void loadVariants(); }, [campaignId]);
 
   const loadVariants = async () => {
     setLoading(true);
@@ -61,21 +61,21 @@ export function CampaignABTesting({ campaignId }: CampaignABTestingProps) {
       setDialogOpen(false);
       setNewName('');
       setNewContent('');
-      loadVariants();
+      void loadVariants();
     }
   };
 
   const deleteVariant = async (id: string) => {
     await supabase.from('campaign_ab_variants').delete().eq('id', id);
     toast.success('Variante removida');
-    loadVariants();
+    void loadVariants();
   };
 
   const declareWinner = async (id: string) => {
     await supabase.from('campaign_ab_variants').update({ is_winner: false }).eq('campaign_id', campaignId);
     await supabase.from('campaign_ab_variants').update({ is_winner: true }).eq('id', id);
     toast.success('Vencedor declarado!');
-    loadVariants();
+    void loadVariants();
   };
 
   const getConversionRate = (v: ABVariant) => {

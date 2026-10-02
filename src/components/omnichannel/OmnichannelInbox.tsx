@@ -98,7 +98,7 @@ export function OmnichannelInbox() {
       await loadConnections();
       await loadUnifiedInbox();
     };
-    init();
+    void init();
   }, []);
 
   const filteredMessages = messages.filter(m => {

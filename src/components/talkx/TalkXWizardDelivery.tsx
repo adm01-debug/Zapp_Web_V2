@@ -14,8 +14,9 @@ import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overvie
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { WizardState } from './TalkXCampaignWizard';
-import { IconTile, WhatsAppBubble, RailCard, MetaRow, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables } from './talkxShared';
+import { IconTile, WhatsAppBubble, RailCard, MetaRow, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
 
 function formatLocalSchedule(localDateTime: string, timezone: string): string {
   const [date = '', time = ''] = localDateTime.split('T');
@@ -54,6 +55,11 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
     : 'Envio imediato ao lançar';
   return (
     <>
+      {/* E65 — sem conexão WhatsApp 'connected' o envio é impossível: o passo 3
+          mostra o estado dedicado com caminho para a tela de Conexões. */}
+      {(ed.connections ?? []).length === 0 && (
+        <TalkXWhatsAppDisconnectedState onConnect={() => navigateToView('connections')} />
+      )}
       <Section icon={CalendarDays} title="Configurações de agendamento" subtitle="Defina quando, como e em que condições a campanha será enviada."
         right={<Pill label={ed.isScheduled ? `Agendada para ${scheduleLabel}` : scheduleLabel} tone={ed.isScheduled ? 'success' : 'info'} dot />}
       >
@@ -182,7 +188,7 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
   const responses = null; // sem histórico de respostas no motor atual — não estimamos
   const waOk = !!connection;
   const audienceOk = ed.eligibleCount > 0 || !!campaign;
-  const allGood = waOk && audienceOk && ed.messageTemplate.trim().length > 0;
+  const allGood = waOk && audienceOk && (ed.messageTemplate.trim().length > 0 || (ed.hasMedia && ed.mediaUrl.trim().length > 0));
   const launchAllowed = allGood && ed.canProceed[4] && !ed.saving;
 
   const launch = async () => {

@@ -19,7 +19,7 @@ export function KnowledgeBaseSearchPanel({ onInsertText, className }: KnowledgeB
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
+    void navigator.clipboard.writeText(text);
     toast.success('Copiado para a área de transferência');
   };
 

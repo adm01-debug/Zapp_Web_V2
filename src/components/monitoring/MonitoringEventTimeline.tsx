@@ -95,7 +95,7 @@ export function MonitoringEventTimeline() {
       setEvents(result);
     };
 
-    load();
+    void load();
     const interval = setInterval(load, 15000);
     return () => clearInterval(interval);
   }, [paused]);

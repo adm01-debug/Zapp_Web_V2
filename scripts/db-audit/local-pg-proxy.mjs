@@ -21,12 +21,25 @@
 import net from 'node:net';
 import fs from 'node:fs';
 import path from 'node:path';
+import { resolverCaminhoPermitido } from '../lib/seguranca-processo.mjs';
 import { parseConnection } from './psql-environment.mjs';
 import { endurecerDestinoTls, SUPABASE_CA_PATH } from './database-identity.mjs';
 
-const proxyDir = process.argv[2];
-if (!proxyDir) {
+// S8707: o diretorio do proxy vem do argumento; nunca entra cru num fs.*.
+// A guarda vive no modulo compartilhado (scripts/lib/seguranca-processo.mjs):
+// resolve e exige que fique dentro do repositorio ou do diretorio temporario do
+// sistema (gen-types.sh passa um `mktemp -d`). Fail-closed: fora da raiz
+// encerra com exit 2 (mesmo codigo do uso invalido) antes de qualquer socket.
+const proxyDirArg = process.argv[2];
+if (!proxyDirArg) {
   console.error('uso: local-pg-proxy.mjs <diretorio-temporario-0700>');
+  process.exit(2);
+}
+let proxyDir;
+try {
+  proxyDir = resolverCaminhoPermitido(proxyDirArg, 'diretorio do proxy');
+} catch (erro) {
+  console.error('ERRO: ' + erro.message);
   process.exit(2);
 }
 
@@ -104,7 +117,7 @@ const iniLines = [
   '',
 ].join('\n');
 
-fs.writeFileSync(path.join(proxyDir, 'userlist.txt'), '"proxy" "unused"\n', { mode: 0o600 });
-fs.writeFileSync(path.join(proxyDir, 'pgbouncer.ini'), iniLines, { mode: 0o600 });
+fs.writeFileSync(path.join(proxyDir, 'userlist.txt'), '"proxy" "unused"\n', { mode: 0o600 }); // NOSONAR(S8707): 'proxyDir' ja passou por resolverCaminhoPermitido (exit 2 fora do repo/tmp) e o nome do arquivo e literal ('userlist.txt')
+fs.writeFileSync(path.join(proxyDir, 'pgbouncer.ini'), iniLines, { mode: 0o600 }); // NOSONAR(S8707): 'proxyDir' ja passou por resolverCaminhoPermitido (exit 2 fora do repo/tmp) e o nome do arquivo e literal ('pgbouncer.ini')
 
 console.log(String(port));

@@ -230,7 +230,7 @@ export function useDeviceDetection() {
   useEffect(() => {
     if (user) {
       setLoading(true);
-      Promise.all([checkDevice(), fetchDevices(), fetchSessions()])
+      void Promise.all([checkDevice(), fetchDevices(), fetchSessions()])
         .finally(() => setLoading(false));
     }
   }, [user, checkDevice, fetchDevices, fetchSessions]);

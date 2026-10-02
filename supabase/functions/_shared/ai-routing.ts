@@ -260,11 +260,16 @@ export function resolveModel(
  * mensagens do cliente na ordem original. Um `system` do cliente continua
  * onde estava (não é sobrescrito nem apagado) e deixa de ser a primeira
  * mensagem. O array de entrada nunca é mutado.
+ *
+ * `content` é `unknown` de propósito (IA-033): conteúdo MULTIPART (array de
+ * partes imagem+texto dos classificadores de visão) precisa atravessar como
+ * está — coagir para string destruiria a imagem. É pass-through puro: nenhuma
+ * validação, coerção ou transformação do conteúdo acontece aqui.
  */
 export function composeMessages(
   serverSystemPrompt: string | null,
-  messages: Array<{ role: string; content: string }>,
-): Array<{ role: string; content: string }> {
+  messages: Array<{ role: string; content: unknown }>,
+): Array<{ role: string; content: unknown }> {
   const input = Array.isArray(messages) ? messages : [];
   // Cópia rasa de cada item: mutações posteriores no resultado não vazam para a entrada.
   const clientMessages = input.map((message) => ({ ...message }));
