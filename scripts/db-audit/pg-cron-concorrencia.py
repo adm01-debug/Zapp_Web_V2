@@ -6,7 +6,38 @@ de jobs por slot, quantos slots passam de 5 e de 7, e os 3 piores slots.
 Sai com codigo 1 se o arquivo estiver vazio: medicao sem dados e PROVA INVALIDA,
 nunca verde.
 """
+import os
 import sys
+from pathlib import Path
+
+RAIZ_REPO = Path(__file__).resolve().parents[2]
+
+# Mesmas raizes de `scripts/lib/seguranca-processo.mjs`: o repositorio e os
+# diretorios temporarios (o chamador escreve a medicao em $TMPDIR).
+RAIZES_PERMITIDAS = (
+    RAIZ_REPO,
+    Path(os.path.realpath(os.environ.get("TMPDIR") or "/tmp")),
+    Path("/tmp"),
+)
+
+
+def resolver_caminho_permitido(valor, rotulo):
+    """Caminho absoluto de `valor`, recusando o que escapar das raizes legitimas.
+
+    Fecha o `jssecurity:S8707` (path traversal): o caminho vem de argv e nunca
+    pode chegar cru ao open(). Fail-closed: fora das raizes levanta antes de
+    qualquer leitura, com codigo 1 (entrada invalida). A comparacao usa a
+    cadeia de pais do caminho resolvido, nao prefixo de texto -- '/tmpfoo' nao
+    esta dentro de '/tmp'.
+    """
+    resolvido = Path(valor).resolve()
+    if not any(resolvido == raiz or raiz in resolvido.parents for raiz in RAIZES_PERMITIDAS):
+        raise SystemExit(
+            f"caminho de {rotulo} fora das raizes permitidas "
+            f"(repositorio ou diretorio temporario): {valor}"
+        )
+    return resolvido
+
 
 def expande(campo, lo, hi):
     out = set()
@@ -25,7 +56,8 @@ def expande(campo, lo, hi):
     return out
 
 def main(rotulo, caminho):
-    linhas = [l.strip() for l in open(caminho, encoding="utf-8") if l.strip()]
+    arquivo = resolver_caminho_permitido(caminho, "arquivo de jobs")
+    linhas = [l.strip() for l in open(arquivo, encoding="utf-8") if l.strip()]
     if not linhas:
         print(f"{rotulo}: SEM DADOS -- PROVA INVALIDA")
         return 1
