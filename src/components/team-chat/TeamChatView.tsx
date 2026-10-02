@@ -68,7 +68,7 @@ export function TeamChatView() {
                   <MessageSquare className="w-4 h-4 text-accent-foreground/60" />
                 </motion.div>
               </div>
-              <h3 className="text-lg font-extrabold text-foreground mb-2">Chat da Equipe</h3>
+              <h1 className="text-lg font-extrabold text-foreground mb-2">Chat da Equipe</h1>
               <p className="text-muted-foreground text-sm leading-relaxed mb-5">
                 Selecione uma conversa ou inicie uma nova para conversar com seus colegas
               </p>

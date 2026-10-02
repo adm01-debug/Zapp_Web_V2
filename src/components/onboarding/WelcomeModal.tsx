@@ -41,6 +41,11 @@ export const WelcomeModal = forwardRef<HTMLDivElement, WelcomeModalProps>(
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+          // Modal de boas-vindas: sem role=dialog o axe trata todo o conteúdo do card como
+          // "fora de landmark" em qualquer tela onde ele aparece. O aria-labelledby aponta para o h2.
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="welcome-modal-title"
           className="relative w-full max-w-lg mx-4 bg-card border border-border rounded-3xl shadow-2xl overflow-hidden"
         >
           {/* Background decoration */}
@@ -81,7 +86,10 @@ export const WelcomeModal = forwardRef<HTMLDivElement, WelcomeModalProps>(
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <h2 className="font-display text-2xl font-bold text-foreground mb-2">
+              <h2
+                id="welcome-modal-title"
+                className="font-display text-2xl font-bold text-foreground mb-2"
+              >
                 Bem-vindo{userName ? `, ${userName.split(' ')[0]}` : ''}! 🎉
               </h2>
               <p className="text-muted-foreground mb-6 leading-relaxed">

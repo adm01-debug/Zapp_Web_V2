@@ -127,7 +127,7 @@ export function ConversationListSidebar({
         {!isMobile && (
           <div className="h-14 px-4 flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="text-2xl font-bold tracking-tight text-foreground leading-none">Conversas</h2>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground leading-none">Conversas</h1>
               <div className="flex items-center gap-1.5 mt-1">
                 <span className={cn('w-2 h-2 rounded-full shrink-0', inbox.isOnline ? 'bg-success' : 'bg-destructive')} />
                 <span className="text-[13px] text-muted-foreground truncate">{inbox.cachedConversations.length.toLocaleString('pt-BR')} conversas</span>
