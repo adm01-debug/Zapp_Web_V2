@@ -1,5 +1,6 @@
 import { requireAiIdentity } from "../_shared/ai-auth.ts";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, Logger } from "../_shared/validation.ts";
+import { generateWithRouting } from "../_shared/ai-generate.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const TranscriptSchema = z.object({
@@ -93,8 +94,6 @@ Deno.serve(async (req) => {
   const log = new Logger("voice-agent");
 
   try {
-    const LOVABLE_API_KEY = requireEnv('LOVABLE_API_KEY');
-
     const body = await req.json().catch(() => null);
     const parsed = TranscriptSchema.safeParse(body);
     if (!parsed.success) {
@@ -104,25 +103,16 @@ Deno.serve(async (req) => {
     const { transcript } = parsed.data;
     log.info("Processing voice command", { transcript: transcript.substring(0, 100) });
 
-    // Timeout for AI gateway call
-    const aiController = new AbortController();
-    const aiTimeout = setTimeout(() => aiController.abort(), 12000);
-
-    let response: Response;
-    try {
-      response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-3-flash-preview',
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            { role: 'user', content: transcript },
-          ],
-          tools: [{
+    // Despacho central (auditoria do Bloco 05): sem URL fixa do gateway, sem chave
+    // fixa no consumidor e sem modelo fixo — provedor e modelo são decididos no
+    // servidor pela finalidade.
+    const gen = await generateWithRouting({
+      purpose: 'copilot',
+      functionName: 'voice-agent',
+      userId: identity.userId,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: transcript }],
+      tools: [{
             type: 'function',
             function: {
               name: 'execute_voice_command',
@@ -168,38 +158,30 @@ Deno.serve(async (req) => {
                 additionalProperties: false,
               },
             },
-          }],
-          tool_choice: { type: 'function', function: { name: 'execute_voice_command' } },
-        }),
-        signal: aiController.signal,
-      });
-    } catch (fetchErr) {
-      clearTimeout(aiTimeout);
-      const isTimeout = fetchErr instanceof Error && fetchErr.name === 'AbortError';
-      log.error('AI fetch failed', { timeout: isTimeout });
-      return jsonResponse(
-        { action: 'answer', response: isTimeout ? 'A IA demorou para responder. Tente novamente.' : 'Erro ao processar comando.', data: {} },
-        200,
-        req
-      );
-    } finally {
-      clearTimeout(aiTimeout);
-    }
+      }],
+      toolChoice: { type: 'function', function: { name: 'execute_voice_command' } },
+      timeoutMs: 12000,
+    });
 
-    if (!response.ok) {
-      if (response.status === 429) return errorResponse('Rate limit exceeded', 429, req);
-      if (response.status === 402) return errorResponse('AI credits exhausted', 402, req);
-      const errText = await response.text().catch(() => '');
-      log.error('AI gateway error', { status: response.status, detail: errText.substring(0, 300) });
-      // Return graceful fallback instead of 500
+    // Degradação preservada, com os MESMOS códigos e mensagens de antes: o
+    // despacho central não lança — devolve `ok:false` com a `response` do provedor
+    // e o erro classificado, e registra o desfecho em ai_usage_logs.
+    if (!gen.ok || !gen.data) {
+      const status = gen.response.status;
+      if (status === 429) return errorResponse('Rate limit exceeded', 429, req);
+      if (status === 402) return errorResponse('AI credits exhausted', 402, req);
+      const isTimeout = status === 504;
+      log.error('AI gateway error', { status, detail: gen.errorCode ?? 'unknown' });
       return jsonResponse(
-        { action: 'answer', response: 'Desculpe, houve um problema com a IA. Tente novamente.', data: {} },
+        { action: 'answer', response: isTimeout ? 'A IA demorou para responder. Tente novamente.' : 'Desculpe, houve um problema com a IA. Tente novamente.', data: {} },
         200,
         req
       );
     }
 
-    const aiData = await response.json();
+    const aiData = gen.data as {
+      choices?: Array<{ message?: { tool_calls?: Array<{ function?: { arguments?: string } }>; content?: string } }>;
+    };
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
 
     let rawResult: Record<string, unknown>;

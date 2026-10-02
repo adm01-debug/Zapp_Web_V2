@@ -384,8 +384,8 @@
     },
     {
       "path": "supabase/functions/classify-audio-meme/index.ts",
-      "bytes": 3217,
-      "sha256": "2620fc32b40e62eb17dfff6ae9a873a5c2eb6cacc8c56618f2ffb4fb67ab7c8b"
+      "bytes": 3481,
+      "sha256": "a3d89d46f978d644b752deae3f56d5460a7ddedf54a3bf17d066ba52f4ee88ee"
     },
     {
       "path": "supabase/functions/classify-emoji/index.ts",
@@ -649,8 +649,8 @@
     },
     {
       "path": "supabase/functions/voice-agent/index.ts",
-      "bytes": 10087,
-      "sha256": "533ef42b50f8882026c9076ac7fd50d95a995fc168c7cd3333d39013a5e1f717"
+      "bytes": 9714,
+      "sha256": "7bcab539aed5f54a7e405e647744fc71d15ceb6739a2e77334527f4af396b5f5"
     },
     {
       "path": "supabase/functions/voice-changer/index.ts",
@@ -965,12 +965,19 @@
       "name": "classify-audio-meme",
       "entrypoint": "supabase/functions/classify-audio-meme/index.ts",
       "verify_jwt": true,
-      "source_sha256": "444b451fbff275e26475a75b8e1aa4c382363b15b56046a718f105e5e845a16f",
+      "source_sha256": "525353554bc6d53dd0430e341adf26bee3ca2ae48fbdf84fc2c6c2e00df8c279",
       "source_files": [
         "supabase/functions/_shared/ai-auth.ts",
+        "supabase/functions/_shared/ai-budget.ts",
+        "supabase/functions/_shared/ai-capabilities.ts",
+        "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/ai-providers.ts",
+        "supabase/functions/_shared/ai-routing.ts",
+        "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
+        "supabase/functions/_shared/secure-random.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/classify-audio-meme/index.ts"
       ]
@@ -1636,11 +1643,18 @@
       "name": "voice-agent",
       "entrypoint": "supabase/functions/voice-agent/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d0dd38abf76e2a9e041100d2ab771b1e39cdfa7fdc17997e8da218ad8545bf36",
+      "source_sha256": "b8e42e86e6cb38813b6d95417f319bb21ddb9065823c2c93fcbe33e41b4d9817",
       "source_files": [
         "supabase/functions/_shared/ai-auth.ts",
+        "supabase/functions/_shared/ai-budget.ts",
+        "supabase/functions/_shared/ai-capabilities.ts",
+        "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/ai-providers.ts",
+        "supabase/functions/_shared/ai-routing.ts",
+        "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/secure-random.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/voice-agent/index.ts"
       ]
@@ -1706,5 +1720,5 @@
       ]
     }
   ],
-  "manifest_sha256": "3149e20ac32dc79bcde66d2555f9dd6ed2afa3a06715e5a679559d4ceae6fd08"
+  "manifest_sha256": "67fc51a5e9d4f648dd8784861954193ab4bcec67d5c659278eb6e780cda361fb"
 }
