@@ -85,7 +85,36 @@ de seleção (`searchbox_selected`) só passou a existir em **2026-10-01** — d
 ainda não existia (ver a seção de fechamento do mês acima). O funil das primeiras 48 h é, portanto,
 **desconhecido e não recuperável**.
 
-## Alerta de custo — job `searchbox-budget-alert` (E91)
+## Termos reais no picker, com POI habilitado (E95) — medido em 2026-10-02
+
+Busca real na Mapbox, com **sessão de usuário de teste** e o token devolvido pela edge
+`get-mapbox-token` (mesmo caminho do app). Parâmetros do picker: `language=pt`, `country=BR`,
+`proximity=-46.6333,-23.5505` (São Paulo), `limit=3`, `types=poi,address,street`.
+
+| Termo | HTTP | Resultados | 1º resultado | `feature_type` |
+|---|---|---|---|---|
+| `xbz` | 200 | 2 | **XBZ Presentes** — São Paulo, 01027 | `poi` |
+| | | | XBZ Brindes — São Paulo, 01524 | `poi` |
+| `avenida paulista 1000` | 200 | 3 | **Avenida Paulista 1000** — São Paulo, 013… | `address` |
+| `asdkjh` | 200 | 0 | — (vazio, sem erro) | — |
+
+**`XBZ BRINDES` resolve para São Paulo** com a coordenada `[-46.61563441, -23.56672978]` e endereço
+`R. da Independência, São Paulo, 01524`.
+
+### O detalhe que só a medição mostra: o `types` muda o ranking
+
+Com `types=poi,address,street` (picker com POI), o termo `xbz` devolve **XBZ Presentes em 1º** e
+**XBZ Brindes em 2º**. Na busca por `XBZ BRINDES` **sem** o filtro de tipos, **XBZ Brindes vinha em
+1º**. Ou seja: habilitar POI **não** é neutro — muda quem aparece primeiro. Quem for depurar "o
+endereço certo aparece embaixo de um parecido" tem aqui a primeira hipótese a testar, antes de
+suspectar de índice ou de token.
+
+### Termo sem correspondência não é erro
+
+`asdkjh` devolveu **200 com zero sugestões** — não 4xx/5xx. O autocomplete deve tratar isso como
+"lista vazia", não como falha de rede; um fallback agressivo aqui faria o campo parecer quebrado.
+
+## Alerta de custo## Alerta de custo — job `searchbox-budget-alert` (E91)
 
 **Canal escolhido pelo responsável (2026-10-02):** notificação no app **+** e-mail para
 `adm01@promobrindes.com.br`.
