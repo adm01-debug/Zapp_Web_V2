@@ -6,14 +6,14 @@ Rota: `?view=email-chat`
 
 ## Veredito executivo
 
-A implementação local tornou o workspace Email substancialmente mais seguro, íntegro e próximo da direção NAVY: a rota real, lista, conversa, contexto, composição, anexos, respostas históricas, isolamento por conta, rascunhos e contratos das Edge Functions foram corrigidos no código real. A bateria local está verde e não realizou envio real, DDL, deploy ou merge.
+A implementação tornou o workspace Email substancialmente mais seguro, íntegro e próximo da direção NAVY: a rota real, lista, conversa, contexto, composição, anexos, respostas históricas, isolamento por conta, rascunhos e contratos das Edge Functions foram corrigidos no código real. A bateria local e o CI da branch estão verdes, sem envio real de e-mail. Após autorização explícita, `gmail-send` e `gmail-sync` foram publicados no projeto Supabase canônico e conferidos arquivo a arquivo contra a branch.
 
-Ainda não é correto declarar a entrega “100% em produção” por dois bloqueios externos objetivos:
+Ainda não é correto declarar a entrega “100% homologada” por dois gaps objetivos:
 
 1. O arquivo formal `referencias/01_EMAIL_DIRECAO_VISUAL.png` não está no pacote ou no repositório. A captura anexada orientou a composição, mas não substitui uma comparação pixel a pixel certificada.
-2. O banco canônico usado pela aplicação publicada não contém as tabelas Gmail exigidas e as Edge Functions `gmail-send`, `gmail-sync` e `gmail-oauth` respondem como ausentes. Portanto, o frontend não pode funcionar ponta a ponta online até uma mudança de infraestrutura separadamente revisada e autorizada.
+2. A reexecução dos advisors de segurança e performance ficou temporariamente impedida por timeout do conector, embora o inventário SQL, o ledger, a publicação e os smokes das funções tenham sido concluídos. A homologação final da rota publicada também depende do merge e do deploy do frontend.
 
-Esses bloqueios não foram mascarados com mocks de produção, DDL improvisado ou deploy fora do escopo.
+Esses gaps não foram mascarados com mocks de produção, DDL improvisado ou envio real.
 
 ## Escopo implementado
 
@@ -67,33 +67,36 @@ Esses bloqueios não foram mascarados com mocks de produção, DDL improvisado o
 - Notas internas e conversas relacionadas no rail, sem fabricar vínculo CRM.
 - Rail como drawer em breakpoints intermediários e validação formal de zoom a 200%.
 - Benchmark de 1.000 threads e thread longa.
-- Publicação do backend canônico e das Edge Functions, proibida nesta execução.
+- Homologação visual final da rota após o merge/deploy do frontend.
+- Reexecução dos advisors Supabase quando o endpoint de auditoria deixar de responder com timeout.
 
 ## Auditoria do backend canônico
 
-Inspeção somente leitura do projeto canônico usado pela URL publicada:
+Inspeção e validação controlada do projeto canônico usado pela URL publicada:
 
 | Verificação | Resultado |
 |---|---|
 | Projeto Supabase configurado e usado pelo bundle publicado | Mesmo projeto canônico configurado no repositório |
-| Tabelas públicas catalogadas | 272 |
-| `gmail_accounts` | Ausente |
-| `email_threads` | Ausente |
-| `email_messages` | Ausente |
-| `email_attachments` | Ausente |
-| Policies/índices/colunas dessas tabelas | Ausentes |
-| Ledger de migrations | 362 entradas; migrations Gmail requeridas não registradas |
-| `gmail-send` | Não publicada |
-| `gmail-sync` | Não publicada |
-| `gmail-oauth` | Não publicada |
+| Estado do projeto | `ACTIVE_HEALTHY`, PostgreSQL 17, região `us-west-2` |
+| `gmail_accounts` | Presente; RLS ativo; 4 policies; 3 índices; 1 conta no instante da auditoria |
+| `email_threads` | Presente; RLS ativo; 3 policies; 6 índices; 2.130 linhas no instante da auditoria |
+| `email_messages` | Presente; RLS ativo; 2 policies; 6 índices; 2.787 linhas no instante da auditoria |
+| `email_attachments` | Presente; RLS ativo; 2 policies; 3 índices; 2.220 linhas no instante da auditoria |
+| `email_labels` | Presente; RLS ativo; 2 policies; 3 índices; 24 linhas no instante da auditoria |
+| Ledger de migrations | 762 entradas; migrations Gmail `20260403105341`, `20260827210200`, `20260828220100` e `20260901100001` registradas |
+| `gmail-oauth` | Ativa; versão 543; JWT obrigatório |
+| `gmail-send` | Publicada na versão 543; ativa; JWT obrigatório; fontes remotas idênticas à branch |
+| `gmail-sync` | Publicada na versão 541; ativa; JWT obrigatório; fontes remotas idênticas à branch |
+| `gmail-webhook` / `gmail-cron-sync` | Ativas com autenticação própria; não alteradas nesta entrega |
+| Smoke anônimo de `gmail-send` / `gmail-sync` | HTTP 401 em ambas; nenhuma mensagem enviada |
 
-Migrations versionadas relevantes e ainda ausentes no ledger canônico: `20260403105341`, `20260827210200`, `20260828220100` e `20260901100001`.
+Nenhuma migration precisou ser aplicada nesta etapa: o schema e as migrations Gmail requeridas já estavam presentes no banco canônico. A publicação foi limitada às duas Edge Functions cujo código remoto estava desatualizado.
 
-Consequência: a interface pode ser validada com fixture segura, mas a rota publicada não possui hoje o backend necessário para listar, sincronizar ou enviar Gmail. A correção exige PR/backup/revisão de migrations, validação de RLS e deployment controlado das funções; não deve ser aplicada incidentalmente em uma tarefa de frontend.
+As fontes publicadas de `gmail-send` e `gmail-sync` foram relidas pela API de gestão e comparadas byte a byte com todos os arquivos declarados no manifesto de deploy. Não houve leitura, impressão ou alteração de secrets. A tentativa posterior de detalhar novamente expressões de policies e executar os advisors falhou por timeout do conector inclusive em consulta trivial; esse incidente operacional permanece explícito e não invalida o inventário SQL já obtido.
 
 ## Matriz dos 80 critérios de aceite
 
-Legenda: **Aprovado localmente**, **Parcial**, **Bloqueado** ou **Pendente**. “Aprovado localmente” não equivale a homologação online enquanto o backend canônico estiver ausente.
+Legenda: **Aprovado localmente**, **Parcial**, **Bloqueado** ou **Pendente**. “Aprovado localmente” não equivale a homologação online até o merge e o deploy do frontend.
 
 | AC | Estado | Evidência ou gap objetivo |
 |---|---|---|
@@ -176,9 +179,9 @@ Legenda: **Aprovado localmente**, **Parcial**, **Bloqueado** ou **Pendente**. �
 | 077 | Pendente | Não foi produzido benchmark com 1.000 threads e thread longa. |
 | 078 | Aprovado localmente | Projeto `chromium-email-navy` coleta 14 testes sem login real. |
 | 079 | Aprovado localmente | Typecheck, build, lint tocado, Deno, unitários e suíte global executados. |
-| 080 | Aprovado localmente | Diff, screenshots, contratos e evidências foram revisados, separados em commits e rebaseados sobre `origin/main`, sem deploy/DDL/envio real. |
+| 080 | Parcial | Diff, screenshots, contratos e evidências foram revisados e separados em commits; Edge Functions foram publicadas e verificadas, mas merge/deploy visual do frontend ainda estavam pendentes no fechamento deste documento. |
 
-Totais da auditoria final: 56 aprovados localmente, 20 parciais, 3 pendentes e 1 bloqueado visual. Além disso, a ausência do backend Gmail canônico bloqueia a homologação online de todos os fluxos dependentes de dados reais.
+Totais da auditoria neste marco: 55 aprovados localmente, 21 parciais, 3 pendentes e 1 bloqueado visual. O bloqueio anterior de backend foi removido; falta concluir merge, deploy e homologação visual do frontend.
 
 ## Validações executadas
 
@@ -194,6 +197,9 @@ Totais da auditoria final: 56 aprovados localmente, 20 parciais, 3 pendentes e 1
 | Playwright Email NAVY | 14/14 aprovados |
 | Acessibilidade Playwright/axe | Zero violação no cenário avaliado |
 | Chamadas mutáveis externas | Interceptadas e bloqueadas; zero envio real |
+| CI da branch | Build, unitários, Playwright, lint/typecheck, segurança, DB Guard, CodeQL, SonarCloud, mutation e E2E Talk X aprovados no commit remoto auditado |
+| Edge Functions canônicas | `gmail-send` v543 e `gmail-sync` v541 ativas, JWT obrigatório e fontes remotas iguais à branch |
+| Smoke remoto sem autenticação | 401 para ambas as funções; zero envio real |
 
 O lint global continua contendo dívida histórica fora do diff; não foi enfraquecido. O critério aplicado à entrega é lint estrito em todos os arquivos tocados, além de typecheck/build/teste global.
 
@@ -208,15 +214,13 @@ Diretório: `e2e/email-navy-visual/`
 
 As capturas usam dados sintéticos e não contêm e-mails, tokens ou sessões reais.
 
-## Rollback e próxima autorização necessária
+## Rollback e fechamento operacional
 
-O trabalho está isolado em uma branch e pode ser revertido por commits sem tocar produção. Para colocar o módulo online, abrir uma entrega de infraestrutura separada com:
+O trabalho permanece isolado em branch revisável. As funções publicadas podem ser revertidas republicando a versão anterior registrada no histórico do Supabase. Para fechar a entrega:
 
-1. backup e inventário do projeto canônico;
-2. revisão das migrations Gmail e da ordem do ledger;
-3. validação de RLS, grants, índices e isolamento entre contas;
-4. aplicação em staging descartável;
-5. publicação versionada de `gmail-oauth`, `gmail-sync` e `gmail-send` com secrets via Supabase;
-6. smoke autenticado sem envio real e depois canário explicitamente autorizado;
-7. rollback documentado de schema e funções;
-8. somente então deploy do frontend e homologação da rota publicada.
+1. reexecutar advisors e catálogo detalhado de RLS/grants quando o endpoint responder;
+2. publicar esta atualização documental e aguardar o CI do novo HEAD;
+3. promover a PR para revisão final e efetuar merge preservando as proteções do repositório;
+4. aguardar o deploy automático do frontend;
+5. validar a rota publicada em múltiplos viewports sem realizar envio real;
+6. registrar o SHA final, o estado do deploy e qualquer gap residual.
