@@ -33,6 +33,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # Obrigatorio para o create-pull-request criar o PR: sem esta permissao o
+      # GITHUB_TOKEN devolve "Resource not accessible by integration -
+      # .../pulls#create-a-pull-request" (medido no run 37068185925). O push do
+      # branch passa; o que falha e a criacao do PR.
+      pull-requests: write
       # Necessario para o passo "Destravar os checks do PR do placar" aprovar os
       # runs que nascem em action_required por terem sido disparados pelo
       # GITHUB_TOKEN. Sem isto o PR fica parado esperando aprovacao manual.

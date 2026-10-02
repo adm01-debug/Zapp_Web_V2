@@ -51,6 +51,15 @@ test('abre/atualiza o PR do placar pelo mesmo mecanismo do types-sync', () => {
 });
 
 test('destrava os checks do PR aberto com GITHUB_TOKEN', () => {
+  // Gap encontrado em producao depois do primeiro merge (run 37068185925): o
+  // job tinha contents+actions:write mas NAO pull-requests:write, e o
+  // create-pull-request falhou com "Resource not accessible by integration".
+  // O push do branch passava — so a criacao do PR quebrava.
+  assert.match(
+    workflow,
+    /pull-requests:\s*write/u,
+    'sem pull-requests: write o GITHUB_TOKEN nao cria o PR (Resource not accessible by integration)',
+  );
   assert.match(workflow, /actions:\s*write/u, 'precisa de actions:write para aprovar os runs');
   assert.match(workflow, /uses:\s*actions\/github-script@[a-f0-9]{40}/u);
   assert.match(workflow, /approveWorkflowRun/u);
