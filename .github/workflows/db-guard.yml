@@ -539,6 +539,10 @@ jobs:
       - name: Simular contrato runtime generico de migration
         env:
           GENERIC_RUNTIME_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          # E47: SKIP_DOCKER_SHIM=1 — o contrato verifica proof.database === 'postgres'.
+          # Com o shim o banco criado e shim_zapp_generic_runtime_test_<PID> e
+          # current_database() devolve esse nome, quebrando a assercao.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/generic-migration-runtime.test.sh
 
       - name: Simular reconciliação segura do ledger
