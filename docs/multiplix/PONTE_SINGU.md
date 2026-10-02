@@ -7,9 +7,10 @@
 > Itens **F21–F29** de `docs/multiplix/PLANO_FINALIZACAO_MULTIPLIX_100_ETAPAS_2026-09-29.md`
 > (linhas 49–57) e **F97** (linha 185). Estilo de `CANAL.md`/`PERMISSOES.md`.
 >
-> **Nada aqui foi medido contra o banco vivo nesta sessão.** Só é afirmado o que a leitura do
-> repositório prova; o que depende do banco (assinatura SQL real das RPCs, contagens,
-> `EXPLAIN`, tempos) entra marcado **PENDENTE** — sem número inventado.
+> A leitura original do repositório (2026-10-01) segue abaixo; os itens **F21/F22/F23/F27/F28**
+> já foram medidos/aplicados e estão marcados **FEITO/APLICADO** com a prova nas seções. O que
+> ainda depende de sessão com o banco vivo (ex.: **F24**, bloqueada) entra marcado **PENDENTE**
+> — sem número inventado.
 > Linhas citadas de `index.ts` conferem com o estado lido; reconfira por símbolo
 > (`grep -n "<símbolo>" supabase/functions/multiplix-audience/index.ts`) se o arquivo tiver mudado.
 
@@ -29,11 +30,12 @@ isso a re-resolução de destinatários acontece **na edge**, que já tem o esco
 
 ## 2. Contrato das 5 RPCs (como o Zapp chama hoje)
 
-Os **call sites existem** no repositório; as **definições SQL não** (F21 pendente, §6.1). A
+Os **call sites existem** no repositório **e as definições SQL espelhadas também** (F21 feito,
+§2.1): os espelhos em `supabase/migrations/_foreign/singu/` permitem conferir o DDL. A
 "assinatura" abaixo é o que a edge envia e o que ela/o front consomem de volta — os nomes
 dos parâmetros são exatos; os formatos de retorno vêm dos tipos do front
 (`src/hooks/integrations/useMultiplixAudience.ts`), que a edge apenas repassa sem validar
-(`index.ts:510-513`), **não** de um DDL conferível.
+(`index.ts:543-546`), **não** de uma validação de schema na própria edge.
 
 | RPC | Call site (arquivo:linha) | Parâmetros enviados (nomes exatos) | Retorno consumido |
 |---|---|---|---|
@@ -47,15 +49,17 @@ Desenho pretendido dessas RPCs (ADR-007 D1): **`SECURITY DEFINER`**, recebem o e
 usuário ZAPP como parâmetro **assinado pela edge** e **não** têm `GRANT` para `anon`
 (`docs/adr/ADR-007-multiplix-ponte-singu-canal-e-aptidao.md:26`).
 
-### 2.1 O que ainda NÃO está no repo (F21 — PENDENTE)
+### 2.1 Espelhos das 5 RPCs versionados no repo (F21 — ✅ FEITO, 2026-10-01)
 
-- `supabase/migrations/_foreign/singu/` **não existe** (conferido por `ls`); logo não há
-  arquivo com o `pg_get_functiondef` das 5, nem o `md5` exigido por F21, nem o README
-  dizendo que o `db-guard` não as aplica.
-- Consequência: a assinatura SQL real, os filtros de E016 (`deleted_at IS NULL`,
-  `is_duplicate = false`), E017 ("Não informado" explícito, ordem por frequência) e E014
-  (4 ramos de destino) **não são verificáveis por leitura do repo** — só por sessão com
-  MCP do Singu.
+- `supabase/migrations/_foreign/singu/` existe com os **5 espelhos** — `multiplix_list_ramos.sql`,
+  `multiplix_list_ufs.sql`, `multiplix_search_audience.sql`, `multiplix_count_audience.sql` e
+  `multiplix_resolve_recipients.sql` — mais um `README.md` com o `md5` de ida **e** de volta
+  ("md5 do repo == md5 do banco em **5/5**"); o README registra que o `db-guard` **não** aplica
+  esse diretório `_foreign`.
+- Com os espelhos no repo, os filtros de E016 (`deleted_at IS NULL`, `is_duplicate = false`),
+  E017 ("Não informado" explícito, ordem por frequência) e E014 (4 ramos de destino) passam a
+  ser conferíveis por leitura: a contagem real está em §5.1 e o E014 no
+  `_foreign/singu/20261001154000_singu_e014_b2b_e_papeis.sql` (§6.1).
 
 ### 2.2 `multiplix_create_draft` NÃO é uma das 5 RPCs do Singu
 
@@ -75,24 +79,35 @@ restrita a `service_role` (`...:61-63`, `...:151-152`). Não confundir com as 5 
 - O `body` carrega **apenas** filtros, paginação e ids (`index.ts:69-109`); o escopo
   **nunca** vem do front — campo desconhecido é descartado pelo schema zod (ADR-007 `:27`).
 
-### 3.2 Escopo assinado por HMAC (F22) — DESENHO, PENDENTE
+### 3.2 Escopo assinado por HMAC (F22) — ✅ APLICADO (2026-10-01)
 
 O que o plano exige (F22, `PLANO_...:50`):
 
-- a edge assina `p_scope` (**permissões + e-mail + `exp`**) com **HMAC-SHA256** usando o
-  secret **`MULTIPLIX_SCOPE_HMAC_SECRET`** (novo — nas edges do ZAPP **e** no vault do Singu);
+- a edge assina o escopo (**permissões + e-mail + `exp`**) com **HMAC-SHA256** usando o
+  secret **`MULTIPLIX_SCOPE_HMAC_SECRET`** (nas edges do ZAPP **e** no vault do Singu);
 - a RPC recusa assinatura inválida ou expirada;
 - assim a `EXTERNAL_SUPABASE_SERVICE_ROLE_KEY` sozinha (que o `crm-integration` também tem)
   deixa de conceder `admin`.
 - **Feito quando:** chamada direta com a service key e
   `p_scope_permissions=['multiplix.audience.admin']` **sem assinatura** → erro.
 
-Estado hoje (PENDENTE):
+Estado hoje (✅ APLICADO, provado no repo e em produção):
 
-- `p_scope_permissions` e `p_scope_vendedor_email` trafegam **em claro**, sem assinatura
-  (`index.ts:259-260`, `275-276`, `287-288`, `309-310`);
-- o nome `MULTIPLIX_SCOPE_HMAC_SECRET` **não aparece em nenhum arquivo do repo** (`grep` = 0);
-- nenhuma verificação de assinatura existe do lado do Singu (definições fora do repo, §2.1).
+- a edge assina o escopo uma vez por requisição: `scopeSignaturePayload` (payload
+  `v1|permissões ordenadas asc|email|exp`, TTL 300 s, `index.ts:201-221`) e `signScope`
+  (HMAC-SHA256 em hex, `index.ts:223-243`);
+- a assinatura viaja em **CABEÇALHO** no cliente externo, nunca em parâmetro:
+  `x-multiplix-scope-hmac` / `x-multiplix-scope-exp` (`index.ts:447-450`), ligados em
+  `global.headers` (`index.ts:457-463`). Medido: um parâmetro novo muda o conjunto de nomes do
+  corpo e o PostgREST devolve **404 PGRST202** — não existe ordem de deploy segura nesse
+  desenho, por isso cabeçalho;
+- sem `MULTIPLIX_SCOPE_HMAC_SECRET` na env a edge **não segue** (fail-closed): responde
+  `multiplix_scope_secret_ausente` antes de chamar o Singu (`index.ts:433-436`);
+- do lado do Singu, o guard
+  `supabase/migrations/_foreign/singu/20261001160000_singu_guard_hmac_escopo.sql` recusa escopo
+  sem assinatura: chamada direta **sem cabeçalho → `42501` escopo sem assinatura**;
+- **provado em produção (2026-10-01):** edge real → **HTTP 200** (`agent` 5319, `supervisor`
+  55930); `multiplix-scope.test.sh` → **43 PASS**. Detalhe em `_foreign/singu/README.md` e §6.2.
 
 ## 4. Cache de ramos e UFs na edge (F26)
 

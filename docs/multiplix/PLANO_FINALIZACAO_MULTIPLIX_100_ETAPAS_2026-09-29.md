@@ -237,8 +237,8 @@ Bloco A  [~]  19/20    Bloco F  [ ]  0/5
 Bloco B  [x]  9/9      Bloco G  [ ]  0/4
 Bloco C  [x]  6/6      Bloco H  [ ]  0/6
 Bloco D  [x]  8/8      Bloco I  [ ]  0/18
-Bloco E  [ ]  0/11     Bloco J  [ ]  0/13
-                       TOTAL    [~]  34/100
+Bloco E  [x]  11/11    Bloco J  [ ]  0/13
+                       TOTAL    [~]  53/100
 ```
 
 > Atualizado em 01/10/2026 (Hora oficial do Brasil): o Bloco A estava marcado 0/20 e isso era
