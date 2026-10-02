@@ -172,6 +172,26 @@ function tableBuilder(table: string, opts: MockOpts, ctx: MockCtx): any {
       if (ctx.recipientSelects > 12) throw new Error("laco do worker nao encerrou (selecoes repetidas)");
       return { data: ctx.remaining.slice(0, limit ?? 1000), error: null };
     }
+    // F55: o worker nao le mais item por SELECT — a escolha vem da RPC
+    // list_multiplix_claimable_items. Esta leitura existe so para os detalhes de envio
+    // (destino, nome da empresa, conteudo do bloco), e o stub devolve o destinatario da
+    // fila embrulhado nos dois relacionamentos, que e a forma que o worker consome.
+    if (table === "multiplix_delivery_items") {
+      const alvo = ctx.remaining[0];
+      if (!alvo) return { data: null, error: null };
+      return {
+        data: {
+          id: `item-${String(alvo.id)}`,
+          recipient_id: alvo.id,
+          block_id: "block-1",
+          attempt_count: alvo.attempt_count ?? 0,
+          status: "sending",
+          recipient: alvo,
+          block: { id: "block-1", block_order: 0, content: {} },
+        },
+        error: null,
+      };
+    }
     if (table === "whatsapp_connections") return { data: opts.connection ?? null, error: null };
     if (table === "profiles") return { data: opts.ownProfileId ? { id: opts.ownProfileId } : null, error: null };
     return { data: null, error: null };
@@ -219,19 +239,45 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             }
             return Promise.resolve({ data: [{ current_status: ctx.dispatch?.status ?? null }], error: null });
           }
-          case "claim_multiplix_recipient":
+          // F55: a ESCOLHA vem daqui. Devolve a fila embrulhada como item — o id do item e
+          // derivado do id do destinatario para o resto do stub continuar casando.
+          case "list_multiplix_claimable_items":
+            // O tamanho do lote agora e o p_limit desta RPC, nao um .limit() de SELECT. As
+            // assercoes do F11a (que sempre perguntaram "qual o tamanho do lote") continuam
+            // valendo sem reescrita porque o stub registra o mesmo valor no mesmo lugar.
+            ctx.limits.push(Number(args.p_limit ?? 20));
+            ctx.recipientSelects++;
+            if (ctx.recipientSelects > 12) throw new Error("laco do worker nao encerrou (selecoes repetidas)");
+            // claimReturnsNothing e sobre o CLAIM, nao sobre a lista: a fila existe (o worker
+            // tenta reivindicar), mas outro worker levou o item. Antes do F55 isso caia no
+            // SELECT; agora a lista entrega e o claim e que recusa.
+            return Promise.resolve({
+              data: ctx.remaining.slice(0, Number(args.p_limit ?? 20)).map((r) => ({
+                item_id: `item-${String(r.id)}`,
+                recipient_id: r.id,
+                block_id: "block-1",
+                block_order: 0,
+                company_id: r.company_id,
+                attempt_count: r.attempt_count ?? 0,
+                next_attempt_at: null,
+              })),
+              error: null,
+            });
+          case "claim_multiplix_item":
             if (opts.claimReturnsNothing) return Promise.resolve({ data: [], error: null });
-            return Promise.resolve({ data: [{ claim_token: `claim-${String(args.p_recipient_id)}` }], error: null });
-          case "complete_multiplix_recipient": {
+            return Promise.resolve({ data: [{ claim_token: `claim-${String(args.p_item_id)}` }], error: null });
+          case "complete_multiplix_item": {
             ctx.completions.push(args);
-            ctx.remaining = ctx.remaining.filter((r) => r.id !== args.p_recipient_id);
+            const id = String(args.p_item_id).replace(/^item-/, "");
+            ctx.remaining = ctx.remaining.filter((r) => r.id !== id);
             return Promise.resolve({ data: true, error: null });
           }
-          case "record_multiplix_recipient_sent": {
+          case "record_multiplix_item_sent": {
             // Espelha o efeito no banco: quem foi enviado sai da fila de
             // 'pending' (sem isso o worker re-seleciona o mesmo destinatario e a
             // rede de seguranca do mock derruba o teste por laco infinito).
-            ctx.remaining = ctx.remaining.filter((r) => r.id !== args.p_recipient_id);
+            const id = String(args.p_item_id).replace(/^item-/, "");
+            ctx.remaining = ctx.remaining.filter((r) => r.id !== id);
             return Promise.resolve({ data: true, error: null });
           }
           case "talkx_recipient_is_suppressed": {
@@ -583,7 +629,7 @@ Deno.test("F17: sem cota diária sobrando o disparo é pausado com motivo 'daily
   const pause = rpcs(ctx, "transition_multiplix_dispatch").find((call) => call.args.p_action === "pause");
   assert(pause, "esperava a pausa automatica do disparo");
   assert(pause.args.p_pause_reason === "daily_limit", `motivo esperado 'daily_limit', veio ${pause.args.p_pause_reason}`);
-  assert(rpcs(ctx, "claim_multiplix_recipient").length === 0, "nao deveria reivindicar destinatario sem cota");
+  assert(rpcs(ctx, "claim_multiplix_item").length === 0, "nao deveria reivindicar destinatario sem cota");
   assert(providerPosts === 0, `nenhum POST ao provedor era esperado, houve ${providerPosts}`);
 });
 
@@ -602,7 +648,7 @@ Deno.test("F17: com cota sobrando o disparo segue (não pausa por cota)", async 
   const quotaPause = rpcs(ctx, "transition_multiplix_dispatch")
     .find((call) => call.args.p_action === "pause" && call.args.p_pause_reason === "daily_limit");
   assert(!quotaPause, "nao deveria pausar por cota diaria com espaco disponivel");
-  assert(rpcs(ctx, "claim_multiplix_recipient").length === 1, "esperava reivindicar o destinatario");
+  assert(rpcs(ctx, "claim_multiplix_item").length === 1, "esperava reivindicar o destinatario");
 });
 
 Deno.test("F17: a cota da conexão é consumida por envio concluído (1 enviado, depois pausa o lote)", async () => {
@@ -630,15 +676,15 @@ Deno.test("F17: a cota da conexão é consumida por envio concluído (1 enviado,
     provider.restore();
   }
   assert(
-    rpcs(ctx, "record_multiplix_recipient_sent").length === 1,
-    `esperava 1 envio concluido, houve ${rpcs(ctx, "record_multiplix_recipient_sent").length}`,
+    rpcs(ctx, "record_multiplix_item_sent").length === 1,
+    `esperava 1 envio concluido, houve ${rpcs(ctx, "record_multiplix_item_sent").length}`,
   );
   const pause = rpcs(ctx, "transition_multiplix_dispatch").find((call) => call.args.p_action === "pause");
   assert(pause, "esperava pausa por cota depois de consumir o unico envio do dia");
   assert(pause.args.p_pause_reason === "daily_limit", `motivo esperado 'daily_limit', veio ${pause.args.p_pause_reason}`);
   assert(
-    rpcs(ctx, "claim_multiplix_recipient").length === 1,
-    `esperava 1 reivindicacao (a cota acaba depois dela), houve ${rpcs(ctx, "claim_multiplix_recipient").length}`,
+    rpcs(ctx, "claim_multiplix_item").length === 1,
+    `esperava 1 reivindicacao (a cota acaba depois dela), houve ${rpcs(ctx, "claim_multiplix_item").length}`,
   );
 });
 
@@ -665,7 +711,7 @@ Deno.test("F10: start fora da janela não dispara nada (ok:false, sem pausa e se
   }
   assert(body.ok === false, `esperava ok:false, veio ${JSON.stringify(body)}`);
   assert(body.reason === "outside_send_window", `motivo esperado 'outside_send_window', veio ${body.reason}`);
-  assert(rpcs(ctx, "claim_multiplix_recipient").length === 0, "nao pode reivindicar fora da janela");
+  assert(rpcs(ctx, "claim_multiplix_item").length === 0, "nao pode reivindicar fora da janela");
   assert(provider.messagePosts() === 0, "nao pode enviar fora da janela");
 });
 
@@ -684,7 +730,7 @@ Deno.test("F10: janela que fecha no meio do disparo pausa com motivo 'outside_wi
   const pause = rpcs(ctx, "transition_multiplix_dispatch").find((call) => call.args.p_action === "pause");
   assert(pause, "esperava pausa quando a janela fecha no meio do disparo");
   assert(pause.args.p_pause_reason === "outside_window", `motivo esperado 'outside_window', veio ${pause.args.p_pause_reason}`);
-  assert(rpcs(ctx, "claim_multiplix_recipient").length === 0, "nao pode reivindicar com a janela fechada");
+  assert(rpcs(ctx, "claim_multiplix_item").length === 0, "nao pode reivindicar com a janela fechada");
   assert(providerPosts === 0, "nao pode enviar com a janela fechada");
 });
 
@@ -703,8 +749,8 @@ Deno.test("F11a: passada sem reivindicação encerra o laço (não gira contra a
   const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
   assert(res.status === 200, `esperado 200, recebido ${res.status}`);
   assert(
-    rpcs(ctx, "claim_multiplix_recipient").length === 1,
-    `esperava 1 tentativa de reivindicacao, houve ${rpcs(ctx, "claim_multiplix_recipient").length}`,
+    rpcs(ctx, "claim_multiplix_item").length === 1,
+    `esperava 1 tentativa de reivindicacao, houve ${rpcs(ctx, "claim_multiplix_item").length}`,
   );
   assert(
     ctx.recipientSelects === 1,
@@ -881,7 +927,7 @@ Deno.test("envio bem-sucedido: WAMID do provedor vira 'sent' com external_id reg
     assert(res.status === 200, `esperado 200, recebido ${res.status}`);
     const posts = provider.urls.filter((url) => url.includes("/message/sendText/"));
     assert(posts.length === 1, `esperava 1 POST sendText, urls: ${JSON.stringify(provider.urls)}`);
-    const registrados = rpcs(ctx, "record_multiplix_recipient_sent");
+    const registrados = rpcs(ctx, "record_multiplix_item_sent");
     assert(registrados.length === 1, `esperava 1 registro de envio, houve ${registrados.length}`);
     assert(
       registrados[0].args.p_external_id === "WAMID-TESTE-1",
@@ -934,7 +980,7 @@ Deno.test("gap M12/F17: a cota diaria e consumida por envio (remaining=1 -> 1 en
   const provider = stubProviderSuccess();
   try {
     await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
-    const envios = rpcs(ctx, "record_multiplix_recipient_sent");
+    const envios = rpcs(ctx, "record_multiplix_item_sent");
     assert(envios.length === 1, `cota de 1 deveria permitir 1 envio, houve ${envios.length}`);
     const posts = provider.urls.filter((url) => url.includes("/message/"));
     assert(posts.length === 1, `esperava 1 POST ao provedor, houve ${posts.length}`);
