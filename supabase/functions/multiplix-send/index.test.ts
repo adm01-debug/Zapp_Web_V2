@@ -1,43 +1,41 @@
-import { handleMultiplixSend, personalizeMultiplix } from './index.ts';
+import { handleMultiplixSend, personalize } from './index.ts';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
 
-Deno.test('personalizeMultiplix resolves {{empresa}} com o nome da empresa', () => {
-  const result = personalizeMultiplix('Ola, aqui é da {{empresa}}', { name: 'Empresa Teste' });
+Deno.test('personalize resolve {{empresa}} com o nome da empresa', () => {
+  const result = personalize('Ola, aqui é da {{empresa}}', { company: 'Empresa Teste' });
   assert(result === 'Ola, aqui é da Empresa Teste', `unexpected result: ${result}`);
 });
 
-Deno.test('personalizeMultiplix resolve {{saudacao}} para um período válido do dia', () => {
+Deno.test('personalize resolve {{saudacao}} para um período válido do dia', () => {
   // getGreeting() usa a hora real — só valida que retorna uma das 3 saudações
   // esperadas, sem travar o teste a um horário fixo de execução do CI.
-  const result = personalizeMultiplix('{{saudacao}}, {{empresa}}!', { name: 'Acme' });
+  const result = personalize('{{saudacao}}, {{empresa}}!', { company: 'Acme' });
   const validGreetings = ['Bom dia, Acme!', 'Boa tarde, Acme!', 'Boa noite, Acme!'];
   assert(validGreetings.includes(result), `unexpected greeting result: ${result}`);
 });
 
-Deno.test('personalizeMultiplix usa string vazia quando company.name é ausente/null', () => {
-  const result = personalizeMultiplix('Empresa: {{empresa}}', {});
+Deno.test('personalize usa string vazia quando company é ausente/null (built-in {{empresa}} sem valor)', () => {
+  // Comportamento do kernel para um built-in SEM valor: {{empresa}} resolve para
+  // '' — o fallback "[variavel]" cobre apenas chaves FORA do conjunto de
+  // built-ins. Idêntico ao antigo personalizeMultiplix; nada a corrigir aqui.
+  const result = personalize('Empresa: {{empresa}}', {});
   assert(result === 'Empresa: ', `unexpected result: ${result}`);
 });
 
-Deno.test('personalizeMultiplix lança unknown_placeholder para variável fora do conjunto fixo', () => {
-  // Multiplix nao tem custom_variables (diferente do talkx-send) — todo
-  // placeholder que nao seja {{empresa}}/{{saudacao}} deve falhar explicito
-  // em vez de vazar {{...}} intacto pra mensagem real do WhatsApp.
-  let threw = false;
-  try {
-    personalizeMultiplix('Seu cargo é {{cargo}}', { name: 'Acme' });
-  } catch (e) {
-    threw = true;
-    assert(e instanceof Error && e.message.includes('unknown_placeholder: {{cargo}}'), `unexpected error: ${e}`);
-  }
-  assert(threw, 'expected personalizeMultiplix to throw for an unregistered placeholder');
+Deno.test('personalize usa fallback [variavel] para placeholder fora do conjunto fixo (nunca lança)', () => {
+  // MUDANÇA DE POLÍTICA do F37 (o caso que o plano manda corrigir): o kernel
+  // NUNCA lança unknown_placeholder. Uma variável sem valor — {{cargo}}, que o
+  // Multiplix não resolve — vira "[cargo]" em vez de derrubar o envio do
+  // destinatário inteiro. O dialeto antigo (personalizeMultiplix) lançava.
+  const result = personalize('Seu cargo é {{cargo}}', { company: 'Acme' });
+  assert(result === 'Seu cargo é [cargo]', `unexpected result: ${result}`);
 });
 
-Deno.test('personalizeMultiplix é case-insensitive nos placeholders conhecidos', () => {
-  const result = personalizeMultiplix('{{SAUDACAO}}, {{Empresa}}!', { name: 'Acme' });
+Deno.test('personalize é case-insensitive nos placeholders conhecidos', () => {
+  const result = personalize('{{SAUDACAO}}, {{Empresa}}!', { company: 'Acme' });
   const validGreetings = ['Bom dia, Acme!', 'Boa tarde, Acme!', 'Boa noite, Acme!'];
   assert(validGreetings.includes(result), `unexpected greeting result: ${result}`);
 });
@@ -896,6 +894,31 @@ Deno.test("envio bem-sucedido: WAMID do provedor vira 'sent' com external_id reg
     if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
     else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
   }
+});
+
+// ------------------------------------------------------------------- F38 (E.164)
+
+Deno.test("F38: destino invalido (possivel LID de 14 digitos) vira 'skipped' no_destination, sem POST", async () => {
+  // normalizePhone do kernel recusa 14-15 digitos nus (possivel LID). Antes o
+  // `replace(/\\D/g)` da L437 empurrava essa string direto ao provedor; agora o
+  // destino cai na classe `no_destination` (F39) e o item nao e enviado.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "12345678901234")],
+    suppressedPhones: [],
+  };
+  const { ctx, providerPosts } = await runWithProviderBlocked(opts);
+  assert(providerPosts === 0, `nenhum POST ao provedor era esperado, houve ${providerPosts}`);
+  assert(ctx.completions.length === 1, `esperava 1 conclusao, recebeu ${ctx.completions.length}`);
+  assert(
+    ctx.completions[0].p_status === "skipped",
+    `status esperado 'skipped' (no_destination), veio ${ctx.completions[0].p_status}`,
+  );
+  assert(
+    ctx.completions[0].p_error_message === "Sem destino de WhatsApp",
+    `motivo inesperado: ${ctx.completions[0].p_error_message}`,
+  );
 });
 
 Deno.test("gap M12/F17: a cota diaria e consumida por envio (remaining=1 -> 1 envio e pausa)", async () => {

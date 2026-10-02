@@ -11,65 +11,19 @@ import { pauseReasonForWindow } from "../_shared/talkx-resume-policy.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
 import { timingSafeEqual } from "../_shared/hmac-validation.ts";
+import {
+  getMediaEndpoint,
+  newCorrelationId,
+  personalize,
+  randomBetween,
+  sleep,
+} from "../_shared/messaging/index.ts";
 
-function getGreeting(timeZone = DEFAULT_SCHEDULE_TIMEZONE): string {
-  const hour = new Date().toLocaleString("pt-BR", { timeZone, hour: "numeric", hour12: false });
-  const h = parseInt(hour, 10);
-  if (h >= 5 && h < 12) return "Bom dia";
-  if (h >= 12 && h < 18) return "Boa tarde";
-  return "Boa noite";
-}
-
-// Nomes reservados aos built-ins — um campo customizado do CRM com um desses
-// nomes (ex.: contato com campo "link") nunca pode sequestrar o placeholder
-// built-in correspondente (achado do review: "link" comeria {{link}} antes do
-// passe de tracking).
-const RESERVED_PLACEHOLDER_KEYS = new Set(["saudacao", "link", "nome", "nome_completo", "apelido", "empresa"]);
-
-export function personalize(
-  template: string,
-  contact: { name?: string | null; nickname?: string | null; company?: string | null },
-  customValues: Record<string, string> = {},
-  timeZone = DEFAULT_SCHEDULE_TIMEZONE,
-  trackingUrl?: string,
-): string {
-  const firstName = (contact.name || '').split(' ')[0] || '';
-  const contactValues: Record<string, string> = {
-    nome: firstName,
-    nome_completo: contact.name || '',
-    apelido: contact.nickname || firstName,
-    empresa: contact.company || '',
-  };
-  // Nome do campo customizado vem do CRM (case livre, ex.: "CPF"); o editor de
-  // template força minúsculo no placeholder — casar por chave normalizada.
-  const normalizedCustomValues = new Map<string, string>();
-  for (const [key, value] of Object.entries(customValues)) {
-    const normalizedKey = key.toLowerCase();
-    if (RESERVED_PLACEHOLDER_KEYS.has(normalizedKey)) continue;
-    normalizedCustomValues.set(normalizedKey, value);
-  }
-  // Passe único sobre o template original: um valor inserido (campo customizado
-  // ou dado de contato) nunca é rescaneado como se fosse sintaxe de placeholder
-  // (achado do review: {{cargo}} com valor literal "{{empresa}}" não pode virar
-  // o nome da empresa).
-  return template.replace(/\{\{([^}]+)\}\}/g, (fullMatch, rawKey: string) => {
-    const key = rawKey.toLowerCase();
-    if (key === "saudacao") return getGreeting(timeZone);
-    // E90: {{link}} -> URL de rastreamento por destinatário
-    if (key === "link") return trackingUrl ?? `[${rawKey}]`;
-    // hasOwnProperty (não "in"): "in" também acha propriedades herdadas de
-    // Object.prototype — um placeholder {{constructor}}/{{__proto__}} vazaria
-    // texto de função/objeto em vez de cair no fallback (achado do review).
-    if (Object.prototype.hasOwnProperty.call(contactValues, key)) return contactValues[key];
-    if (normalizedCustomValues.has(key)) return normalizedCustomValues.get(key)!;
-    // Uma variável sem valor (nome digitado errado, campanha sem template com
-    // placeholder solto, ou contato sem aquele campo customizado preenchido)
-    // antes derrubava o envio inteiro para o destinatário (unknown_placeholder).
-    // Mostrar "[variavel]" é sempre melhor que vazar "{{variavel}}" cru ou
-    // bloquear o disparo.
-    return `[${rawKey}]`;
-  });
-}
+// F43: as duplicatas locais (`randomBetween`, `sleep`, `getMediaEndpoint`) foram
+// removidas — vêm do kernel compartilhado. `personalize` (F37) segue reexportado,
+// junto com `randomBetween`, para não quebrar os importadores deste módulo
+// (index.test.ts importa ambos daqui).
+export { personalize, randomBetween };
 
 /** E49: sorteia variante A/B pelo peso. Retorna null se nao houver variantes. */
 async function pickVariant(supabase: SupabaseClient, templateId: string): Promise<{ id: string; content: string; media_url: string | null; media_type: string | null } | null> {
@@ -85,21 +39,6 @@ async function pickVariant(supabase: SupabaseClient, templateId: string): Promis
   return variants[variants.length - 1];
 }
 
-export function randomBetween(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function getMediaEndpoint(mediaType: string): string {
-  switch (mediaType) {
-    case "audio": return "sendWhatsAppAudio";
-    default: return "sendMedia";
-  }
-}
-
 export async function handleTalkxSend(
   req: Request,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -110,6 +49,9 @@ export async function handleTalkxSend(
 
   const headers = { ...getCorsHeaders(req), "Content-Type": "application/json" };
   const log = new Logger("talkx-send");
+  // F43: UM correlation_id por request, propagado ao log estruturado.
+  // Opaco de proposito: nao deriva de telefone, nome ou conteudo.
+  const correlationId = newCorrelationId();
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -704,7 +646,7 @@ export async function handleTalkxSend(
             }
           }
           if (!beforeSendInstanceId) {
-            log.warn("Campanha pausada: conexão WhatsApp indisponível antes do envio", { campaignId });
+            log.warn("Campanha pausada: conexão WhatsApp indisponível antes do envio", { correlationId, campaignId });
           }
           const { data: released, error: releaseError } = await supabase.rpc("release_talkx_recipient_claim", {
             p_recipient_id: recipient.id,
@@ -835,7 +777,7 @@ export async function handleTalkxSend(
           const attemptSoFar = typeof (recipient as Record<string, unknown>).attempt_count === 'number'
             ? (recipient as Record<string, unknown>).attempt_count as number
             : 0;
-          log.warn("Destinatário em quarentena (outcome_unknown)", { campaignId, recipient_id: recipient.id, attempt: attemptSoFar });
+          log.warn("Destinatário em quarentena (outcome_unknown)", { correlationId, campaignId, recipient_id: recipient.id, attempt: attemptSoFar });
           const { error: quarantineError } = await supabase.rpc("complete_talkx_recipient", {
             p_recipient_id: recipient.id,
             p_claim_token: claim.claim_token,
@@ -877,7 +819,7 @@ export async function handleTalkxSend(
           // The locked transition preserves a concurrent manual pause/cancel.
           const refreshedWindowStatus = deliveryWindowStatus(campaign, undefined, businessHours);
           if (!refreshedWindowStatus.allowed) {
-            log.warn('Campanha pausada automaticamente: fora da janela de envio', { campaignId });
+            log.warn('Campanha pausada automaticamente: fora da janela de envio', { correlationId, campaignId });
             const { error: pauseError } = await supabase.rpc("transition_talkx_campaign", {
               p_campaign_id: campaignId,
               p_action: "pause",
@@ -898,7 +840,7 @@ export async function handleTalkxSend(
     );
     if (completionError) throw new Error(`talkx_campaign_completion_failed: ${completionError.message}`);
 
-    log.done(200, { campaignId, sent: sentCount, failed: failedCount, outcomeUnknown: outcomeUnknownCount });
+    log.done(200, { correlationId, campaignId, sent: sentCount, failed: failedCount, outcomeUnknown: outcomeUnknownCount });
 
     return new Response(
       JSON.stringify({
@@ -911,7 +853,7 @@ export async function handleTalkxSend(
       { headers }
     );
   } catch (err) {
-    log.error("Talk X error", { error: err instanceof Error ? err.message : String(err) });
+    log.error("Talk X error", { correlationId, error: err instanceof Error ? err.message : String(err) });
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }),
       { status: 500, headers }

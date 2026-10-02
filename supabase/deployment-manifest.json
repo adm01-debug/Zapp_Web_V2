@@ -8,7 +8,7 @@
   },
   "summary": {
     "function_count": 67,
-    "source_file_count": 111,
+    "source_file_count": 120,
     "verify_jwt_true": 55,
     "verify_jwt_false": 12
   },
@@ -171,6 +171,51 @@
       "path": "supabase/functions/_shared/hmac-validation.ts",
       "bytes": 15388,
       "sha256": "f6a785a3da09e2b11a9d074ac8827295f8d32c0eec535547c5a6c08d367434da"
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/eligibility.ts",
+      "bytes": 8967,
+      "sha256": "5f12e7df5c86e87c31333eda162681223c5c732508e34530cb17a1e3d77bb4c7"
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/errors.ts",
+      "bytes": 11544,
+      "sha256": "749ea0742264f25e50ab939c3544ae8d287344af8a77bd44c5f2b7f91aafca57"
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/evolution-go.ts",
+      "bytes": 8991,
+      "sha256": "9c9e9671848537f8ad2e3613d42109baaa7dbb126779890285c9c91e77f3c529"
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/index.ts",
+      "bytes": 2062,
+      "sha256": "a7362f69b9dadb164539a712a692bef5136fc2cd937d25c335f1e89d9c015da7"
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/media.ts",
+      "bytes": 25771,
+      "sha256": "912210b797d9a7e132d6e51c0ac6d050a72d7d4e5d24f0fd9928f0cd07c744ec"
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/personalize.ts",
+      "bytes": 6767,
+      "sha256": "a9b8405982d5c0bc81d8a010e5a5f0f8081402350a8316729e521621167245e3"
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/phone.ts",
+      "bytes": 2542,
+      "sha256": "a30e475a7970df23debebed46be41cb4da1f2b1eebf68afdc52d53bc6e1e61bb"
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/timing.ts",
+      "bytes": 935,
+      "sha256": "5cba3b4e6e4615da5cc3da0ccd202ecaf1c470ad74ecdcc3f34f6a748fa3c151"
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/types.ts",
+      "bytes": 2108,
+      "sha256": "eda287311f27bc54aa4182e6e167b77d41290b7b32be207addc77128bce29fe0"
     },
     {
       "path": "supabase/functions/_shared/multiplix-eligibility.ts",
@@ -484,8 +529,8 @@
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "bytes": 32296,
-      "sha256": "2678f0fd1c6fdd7b594f3f2a1583befc536825024273e8f0617b7b622ab7aadd"
+      "bytes": 32459,
+      "sha256": "bbc853c0ef65cbb30dcf0d75c0b22ca3fe5329bb80b3fe39adcbbe1614e47961"
     },
     {
       "path": "supabase/functions/promogifts-catalog/index.ts",
@@ -539,8 +584,8 @@
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
-      "bytes": 47321,
-      "sha256": "8cf11511612d3cf10546a8a4cce8fa7932b513a1d31101ee1fa1e300bd1a310d"
+      "bytes": 44627,
+      "sha256": "4268dc1adcbbd0f1614bc78c3400eb81528b1acf3559b37bfdb85792b7837843"
     },
     {
       "path": "supabase/functions/voice-agent/index.ts",
@@ -1270,12 +1315,24 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "df2c03a52e3c71964deeffc9c0716262632b2b473280525c5140aacfb6785374",
+      "source_sha256": "d76eaf8c9463b1483cbd7c27208ddbd06b4832ad80a93f867623b8ce2c2eaa29",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
+        "supabase/functions/_shared/evolution-helpers.ts",
         "supabase/functions/_shared/evolution-send.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/messaging/eligibility.ts",
+        "supabase/functions/_shared/messaging/errors.ts",
+        "supabase/functions/_shared/messaging/evolution-go.ts",
+        "supabase/functions/_shared/messaging/index.ts",
+        "supabase/functions/_shared/messaging/media.ts",
+        "supabase/functions/_shared/messaging/personalize.ts",
+        "supabase/functions/_shared/messaging/phone.ts",
+        "supabase/functions/_shared/messaging/timing.ts",
+        "supabase/functions/_shared/messaging/types.ts",
+        "supabase/functions/_shared/multiplix-eligibility.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/talkx-delivery-connection.ts",
         "supabase/functions/_shared/talkx-window.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1408,12 +1465,24 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "df95374e33d0ea337fc0a246555ce5486fe3fedd2d41fd19d7598c0fb1b29a23",
+      "source_sha256": "0efa1fb3150767a64ac3468c364e173c4f64a3f3b2346e82ca1898225af12088",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
+        "supabase/functions/_shared/evolution-helpers.ts",
         "supabase/functions/_shared/evolution-send.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/messaging/eligibility.ts",
+        "supabase/functions/_shared/messaging/errors.ts",
+        "supabase/functions/_shared/messaging/evolution-go.ts",
+        "supabase/functions/_shared/messaging/index.ts",
+        "supabase/functions/_shared/messaging/media.ts",
+        "supabase/functions/_shared/messaging/personalize.ts",
+        "supabase/functions/_shared/messaging/phone.ts",
+        "supabase/functions/_shared/messaging/timing.ts",
+        "supabase/functions/_shared/messaging/types.ts",
+        "supabase/functions/_shared/multiplix-eligibility.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/talkx-delivery-connection.ts",
         "supabase/functions/_shared/talkx-resume-policy.ts",
         "supabase/functions/_shared/talkx-window.ts",
@@ -1495,5 +1564,5 @@
       ]
     }
   ],
-  "manifest_sha256": "a6c8a7fffc834e7cdf32a50a871c434d3478fd6f6dd3c71d772a52f7392dd588"
+  "manifest_sha256": "a62a192241fddb8acddae505428f072700b62b9ee7e55688d5cfb3646765210e"
 }
