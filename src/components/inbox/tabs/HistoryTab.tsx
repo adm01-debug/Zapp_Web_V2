@@ -88,8 +88,8 @@ export function HistoryTab({ contactId }: HistoryTabProps) {
       <div className="flex items-center gap-3">
         <span className="w-10 h-10 rounded-lg bg-primary/15 text-primary flex items-center justify-center shrink-0"><Clock className="w-5 h-5" /></span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-xl font-bold text-foreground">Histórico da Conversa</h2>
-          <p className="text-sm text-muted-foreground">Acompanhe toda a jornada de relacionamento com este contato.</p>
+          <h2 className="text-xl font-bold text-foreground">Journey</h2>
+          <p className="text-sm text-muted-foreground">Estatísticas e toda a jornada de relacionamento com este contato.</p>
         </div>
       </div>
 

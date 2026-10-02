@@ -22,8 +22,8 @@ const TABS: TabDef[] = [
   { id: 'files', label: 'Arquivos', icon: Paperclip, count: (c) => c.filesTotal },
   { id: 'ia', label: 'IA', icon: Sparkles },
   { id: 'crm', label: 'CRM 360°', icon: Compass },
-  { id: 'orders', label: 'Pedidos', icon: ShoppingBag },
-  { id: 'history', label: 'Histórico', icon: History },
+  { id: 'orders', label: 'SalesView', icon: ShoppingBag },
+  { id: 'history', label: 'Journey', icon: History },
   { id: 'tasks', label: 'Tarefas', icon: CheckSquare, count: (c) => c.tasksOpen },
   { id: 'notes', label: 'Notas', icon: FileText, count: (c) => c.notesTotal },];
 
