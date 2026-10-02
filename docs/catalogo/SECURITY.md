@@ -182,7 +182,30 @@ autenticadas simultâneas** (um usuário comum + um admin/supervisor) com tokens
 reais, o que não está disponível neste ambiente (não há fixture de login real;
 `e2e/auth.spec.ts` só valida formulário). **Não afirmo que foi testado.**
 
-### O que **JÁ** está provado (por código/migration, não por runtime)
+### ✅ Estado de PRODUÇÃO medido em 02/10/2026 (o que dá para provar sem 2 logins)
+
+Com o banco canônico (`tnnnlkbymytvtqngbbqh`) respondendo, a camada de segurança
+foi **medida no próprio banco** pelo gateway de leitura (somente leitura), em vez
+de apenas lida nas migrations. Saídas cruas:
+
+| Verificação | Fonte (catálogo) | Resultado medido |
+|---|---|---|
+| RLS ligada | `pg_class.relrowsecurity` | `catalog_favorites` = **true** · `catalog_send_events` = **true** |
+| Policy de favoritos | `pg_policy` | `FOR ALL TO authenticated USING (user_id = auth.uid())` — role **`authenticated`**, não mais `public` |
+| Policy SELECT dos envios | `pg_policy.polqual` | `agent_id IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid())` |
+| `WITH CHECK` do INSERT | `pg_policy.polwithcheck` | `agent_id IN (…) OR is_admin_or_supervisor(…)` — **sem** o furo `agent_id IS NULL` |
+| Grants do `authenticated` | `information_schema.role_table_grants` | `catalog_favorites`: DELETE, INSERT, SELECT, UPDATE · `catalog_send_events`: **INSERT, SELECT** (append-only) |
+| Grants do `anon` | idem | **zero linhas** — o `anon` não tem privilégio nenhum nas duas tabelas |
+| View do módulo | `pg_class.reloptions` | `catalog_send_stats` → `security_invoker=on` |
+| Migrations do módulo no ledger | `supabase_migrations.schema_migrations` | **6/6** registradas: `20260913013153`, `20260913122557`, `20260924123033`, `20260925130000`, `20260929650000`, `20260930740000` |
+
+Isto é **estado de configuração em produção** — mais forte do que ler o código,
+porque pega o caso de uma migration de endurecimento que **não** tenha sido
+aplicada (foi assim que descobri, no mesmo dia, um DDL de outro módulo pendente:
+a função existia mas os triggers de versão não). O que ele **não** substitui é
+exercitar a RLS com dois principais distintos — ver a seção seguinte.
+
+### O que já estava provado por leitura das migrations
 
 Está provado, por **leitura** das migrations, que:
 
