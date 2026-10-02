@@ -161,6 +161,16 @@ interface MockCtx {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function tableBuilder(table: string, opts: MockOpts, ctx: MockCtx): any {
   let limit: number | null = null;
+  // F61: o worker grava o codigo cru do provedor na trilha de eventos. Sem capturar aqui,
+  // o insert cairia no vazio e o teste passaria sem provar nada (teste decorativo).
+  if (table === "multiplix_events") {
+    return {
+      insert: (row: Record<string, unknown>) => {
+        ctx.events.push(row);
+        return Promise.resolve({ data: null, error: null });
+      },
+    };
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rows = (): { data: any; error: any } => {
     if (table === "multiplix_dispatches") return { data: ctx.dispatch, error: null };
@@ -332,6 +342,7 @@ function newCtx(opts: MockOpts): MockCtx {
   }
   return {
     rpcCalls: [],
+    events: [],
     limits: [],
     completions: [],
     dispatch,
@@ -1138,5 +1149,68 @@ Deno.test("F56: audio do dispatch sai como PTT e avisa presenca 'recording'", as
     provider.restore();
     if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
     else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// F61 — o operador le TEXTO; o codigo cru vai para a trilha de eventos
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Provedor que RECUSA: devolve o corpo CRU (JSON do provedor) com status 400. */
+function stubProviderRejecting(body: unknown, status = 400) {
+  const original = globalThis.fetch;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  globalThis.fetch = ((input: any) => {
+    const url = typeof input === "string" ? input : String(input?.url ?? input);
+    // A chamada de presenca nao e a mensagem: quem recusa e o POST da mensagem.
+    if (url.includes("presence")) {
+      return Promise.resolve(new Response("{}", { status: 200 }));
+    }
+    return Promise.resolve(
+      new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } }),
+    );
+  }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  return { restore: () => { globalThis.fetch = original; } };
+}
+
+Deno.test("F61: erro do provedor vira texto legivel — nunca JSON cru — e o codigo vai para os eventos", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    recipients: [recipientRow(0, "5511999990000")],
+  };
+  const ctx = newCtx(opts);
+  // Corpo REAL do provedor: e isto que o operador via no campo de diagnostico.
+  const provider = stubProviderRejecting({ status: 400, error: { code: "400", message: "number not exists" } });
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+
+    const completions = rpcs(ctx, "complete_multiplix_item");
+    assert(completions.length >= 1, "esperava ao menos um complete_multiplix_item");
+    const p_error_message = String(completions[0].args.p_error_message ?? "");
+
+    // O ponto do F61: o campo que a TELA mostra nao pode ser o corpo do provedor.
+    assert(
+      !p_error_message.includes("{") && !p_error_message.includes("number not exists"),
+      `error_message vazou o corpo do provedor: ${p_error_message}`,
+    );
+    assert(
+      p_error_message.includes("Número não existe no WhatsApp"),
+      `error_message nao esta legivel para o operador: ${p_error_message}`,
+    );
+
+    // Segunda metade: o codigo CRU fica na trilha de eventos, para quem depura.
+    const falha = ctx.events.find((e) => e.kind === "item_failed");
+    assert(falha !== undefined, "esperava um evento item_failed com o codigo do provedor");
+    const payload = falha.payload as Record<string, unknown>;
+    assert(payload.error_code === "number_not_exists", `error_code inesperado: ${String(payload.error_code)}`);
+    assert(payload.error_class === "permanent", `error_class inesperado: ${String(payload.error_class)}`);
+    assert(payload.provider_status === 400, `provider_status inesperado: ${String(payload.provider_status)}`);
+
+    // O corpo do provedor NAO entra no evento: pode carregar dado de cliente.
+    const bruto = JSON.stringify(payload);
+    assert(!bruto.includes("number not exists"), "o evento carregou o corpo bruto do provedor");
+  } finally {
+    provider.restore();
   }
 });
