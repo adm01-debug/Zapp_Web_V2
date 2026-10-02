@@ -1,11 +1,21 @@
 -- migration: tab_counts_drop_n
 -- Etapa 97 — remove `reminders_pending` do RETURNS TABLE de get_conversation_tab_counts.
--- Classe: CONTRATO (create or replace). PR SEPARADA e SEM MERGE: aguarda APROVADO.
--- Aplicar sem o front atualizado deixa a UI lendo um campo que nao existe mais; por isso a ordem e
--- front + migration juntos, e o merge so depois do APROVADO.
--- rollback: reaplicar supabase/migrations/20260928140200_tab_counts_tasks_own.sql, que devolve a funcao
--- com reminders_pending fixo em 0. E CREATE OR REPLACE da funcao inteira, sem DDL de coluna.
-CREATE OR REPLACE FUNCTION public.get_conversation_tab_counts(p_contact_id uuid)
+-- Classe: CONTRATO. PR SEPARADA e SEM MERGE: aguarda APROVADO.
+--
+-- Por que DROP + CREATE e nao CREATE OR REPLACE: o PostgreSQL recusa trocar o tipo de retorno de uma
+-- funcao existente ("cannot change return type of existing function" — HINT: use DROP FUNCTION first).
+-- Testado em PostgreSQL descartavel: com CREATE OR REPLACE a migration "passava" sem efeito nenhum.
+-- O DROP leva os grants junto, por isso o REVOKE/GRANT e repetido no fim (mesmo padrao da
+-- 20260909200000_harden_inbox_contact_authorization.sql).
+-- Tudo roda dentro da transacao do runner, entao nao existe janela sem a funcao para outros clientes.
+--
+-- rollback: 1) DROP FUNCTION IF EXISTS public.get_conversation_tab_counts(uuid);
+-- rollback: 2) recriar com a coluna a partir de supabase/migrations/20260928140200_tab_counts_tasks_own.sql (CREATE FUNCTION, mesmo corpo, RETURNS TABLE com reminders_pending integer);
+-- rollback: 3) REVOKE ALL ON FUNCTION public.get_conversation_tab_counts(uuid) FROM PUBLIC, anon; GRANT EXECUTE ... TO authenticated;
+-- rollback: (o CREATE OR REPLACE NAO serve para volta: o PostgreSQL recusa trocar o tipo de retorno nos dois sentidos — testado em PostgreSQL descartavel)
+DROP FUNCTION IF EXISTS public.get_conversation_tab_counts(uuid);
+
+CREATE FUNCTION public.get_conversation_tab_counts(p_contact_id uuid)
 RETURNS TABLE(
   tasks_open   integer,
   notes_total  integer,
@@ -46,6 +56,7 @@ BEGIN
 END;
 $$;
 
--- ROLLBACK:
--- Restaurar a versao com a coluna (migration 20260928140200_tab_counts_tasks_own.sql), que devolve
--- reminders_pending fixo em 0. Reaplicar a funcao inteira, sem DDL de coluna.
+REVOKE ALL ON FUNCTION public.get_conversation_tab_counts(uuid)
+  FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_conversation_tab_counts(uuid)
+  TO authenticated;
