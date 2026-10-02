@@ -44,9 +44,17 @@ function reducer(state: TasksFilters, action: Action): TasksFilters {
 
 export function useTasksFilters() {
   const location = useLocation();
-  // Fase F (auditoria): a MESMA base de URL na leitura e na escrita. O `search`
-  // do router é a fonte em produção; o fallback cobre o router em memória dos testes.
-  const searchAtual = typeof window === 'undefined' ? '' : (location.search || window.location.search);
+  // Fase F (auditoria): a MESMA base de URL na leitura e na escrita.
+  // A base e a URL REAL (`window.location`): o app navega por `history.pushState`
+  // + evento `zapp:navigate` (useNavigationHistory), e o `location` do
+  // react-router NAO acompanha pushState — so muda em popstate. Ler o router
+  // aqui devolvia a view ANTERIOR e este hook regravava a URL com ela, desfazendo
+  // a navegacao (o aviso do alarme mandava para `?view=tasks&task=<id>` e a URL
+  // voltava para `?view=inbox`, com o Sheet nunca abrindo). O router fica como
+  // fallback do ambiente de teste (MemoryRouter, sem URL real navegavel).
+  const searchAtual = typeof window === 'undefined'
+    ? location.search
+    : (window.location.search || location.search);
   const [filters, dispatch] = useReducer(reducer, undefined, () => filtersFromSearch(searchAtual));
 
   // Busca com debounce: o texto digitado vai para um estado local e só depois de
