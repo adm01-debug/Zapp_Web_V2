@@ -124,7 +124,7 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
     };
 
     const interval = setInterval(checkSLABreaches, 60000);
-    checkSLABreaches(); // initial check
+    void checkSLABreaches(); // initial check
     return () => clearInterval(interval);
   }, [alerts]);
 

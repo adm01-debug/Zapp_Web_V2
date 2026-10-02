@@ -270,7 +270,34 @@ describe('LocationPicker', () => {
 
     // ── Fase 3: estados verdadeiros na tela (E25, E26, E27, E29, E30, E31) ─────────────────────
 
-    it('E25: durante o debounce mostra esqueleto — "Nada encontrado" só depois de resposta vazia', async () => {
+    it('E58: combobox aberto com 3 sugestões não tem violação de acessibilidade (axe)', async () => {
+      const ac = autocompleteState({
+        query: 'rua a',
+        status: 'ok',
+        suggestions: [
+          { id: 's1', name: 'Rua A, 1', address: 'Rua A, 1, São Paulo', kind: 'street' },
+          { id: 's2', name: 'Rua B, 2', address: 'Rua B, 2, São Paulo', kind: 'address' },
+          { id: 's3', name: 'Rua C, 3', address: 'Rua C, 3, São Paulo', kind: 'poi' },
+        ] as never,
+      });
+      await renderOnMapTab(hookState(null), ac);
+      // E58: o padrão combobox precisa estar íntegro — role, aria-expanded, aria-controls e
+      // aria-activedescendant apontando para uma opção que existe de verdade.
+      const input = screen.getByRole('combobox');
+      expect(input).toHaveAttribute('aria-expanded', 'true');
+      const controls = input.getAttribute('aria-controls');
+      expect(controls).toBeTruthy();
+      expect(document.getElementById(controls as string)).not.toBeNull();
+      const ativo = input.getAttribute('aria-activedescendant');
+      if (ativo) expect(document.getElementById(ativo)).not.toBeNull();
+      // jsdom não calcula contraste (o axe não tem layout real) — fora da varredura, declarado.
+      const axe = (await import('axe-core')).default;
+      const r = await axe.run(document.body, {
+        rules: { region: { enabled: false }, 'color-contrast': { enabled: false } },
+      });
+      expect(r.violations.map((v) => `${v.id} (${v.nodes.length} nó(s)): ${v.help}`)).toEqual([]);
+    });
+        it('E25: durante o debounce mostra esqueleto — "Nada encontrado" só depois de resposta vazia', async () => {
       const ac = autocompleteState({ status: 'typing', query: 'avenida paulista' });
       h.hook.mockReturnValue(hookState(null));
       h.autocomplete.mockReturnValue(ac);

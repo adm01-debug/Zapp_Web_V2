@@ -154,7 +154,7 @@ export function ContactDialogs({
                   <Button
                     variant="ghost" size="icon" className="w-6 h-6"
                     onClick={() => {
-                      navigator.clipboard.writeText(showSuccess?.protocol || '');
+                      void navigator.clipboard.writeText(showSuccess?.protocol || '');
                       toast.success('Protocolo copiado!');
                     }}
                   >

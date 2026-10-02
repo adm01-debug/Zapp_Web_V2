@@ -262,14 +262,14 @@ export function ContactChannels({ phones, emails }: { phones: Contact360Data['co
   return (
     <div className="space-y-1 text-xs">
       {phones?.map((p, i) => (
-        <div key={i} className="flex items-center gap-1.5 text-muted-foreground cursor-pointer hover:text-foreground transition-colors" onClick={() => { navigator.clipboard.writeText(p.numero_e164 || p.numero); toast.success('Copiado!'); }}>
+        <div key={i} className="flex items-center gap-1.5 text-muted-foreground cursor-pointer hover:text-foreground transition-colors" onClick={() => { void navigator.clipboard.writeText(p.numero_e164 || p.numero); toast.success('Copiado!'); }}>
           <Phone className="w-3 h-3" /><span>{p.numero_e164 || p.numero}</span>
           {p.is_whatsapp && <Badge variant="outline" className="text-[9px] py-0 px-1">WA</Badge>}
           {p.is_primary && <Badge variant="outline" className="text-[9px] py-0 px-1 bg-primary/10">P</Badge>}
         </div>
       ))}
       {emails?.map((e, i) => (
-        <div key={i} className="flex items-center gap-1.5 text-muted-foreground cursor-pointer hover:text-foreground transition-colors" onClick={() => { navigator.clipboard.writeText(e.email); toast.success('Copiado!'); }}>
+        <div key={i} className="flex items-center gap-1.5 text-muted-foreground cursor-pointer hover:text-foreground transition-colors" onClick={() => { void navigator.clipboard.writeText(e.email); toast.success('Copiado!'); }}>
           <Mail className="w-3 h-3" /><span className="truncate">{e.email}</span>
           {e.is_primary && <Badge variant="outline" className="text-[9px] py-0 px-1 bg-primary/10">P</Badge>}
         </div>

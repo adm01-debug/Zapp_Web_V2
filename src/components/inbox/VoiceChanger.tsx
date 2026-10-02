@@ -96,7 +96,7 @@ export function VoiceChanger({ audioBlob, onVoiceChanged, disabled }: VoiceChang
     if (!convertedAudioUrl) return;
 
     // Fetch the converted audio as blob and pass it up
-    fetch(convertedAudioUrl)
+    void fetch(convertedAudioUrl)
       .then(r => r.blob())
       .then(blob => {
         onVoiceChanged(blob);

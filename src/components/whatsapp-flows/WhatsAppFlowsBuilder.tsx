@@ -107,7 +107,7 @@ export function WhatsAppFlowsBuilder() {
 
   const addScreen = () => {
     if (!selectedFlow) return;
-    updateFlowScreens([...selectedFlow.screens, {
+    void updateFlowScreens([...selectedFlow.screens, {
       id: crypto.randomUUID(), title: `Tela ${selectedFlow.screens.length + 1}`,
       layout: [
         { id: crypto.randomUUID(), type: 'TextHeading' as const, text: 'Nova Tela' },
@@ -129,14 +129,14 @@ export function WhatsAppFlowsBuilder() {
     const footerIdx = screens[editingScreen].layout.findIndex(c => c.type === 'Footer');
     if (footerIdx >= 0) screens[editingScreen].layout.splice(footerIdx, 0, newComp);
     else screens[editingScreen].layout.push(newComp);
-    updateFlowScreens(screens);
+    void updateFlowScreens(screens);
   };
 
   const removeComponent = (compIdx: number) => {
     if (!selectedFlow) return;
     const screens = [...selectedFlow.screens];
     screens[editingScreen].layout.splice(compIdx, 1);
-    updateFlowScreens(screens);
+    void updateFlowScreens(screens);
   };
 
   if (!selectedFlow) {
@@ -154,7 +154,7 @@ export function WhatsAppFlowsBuilder() {
                     <div className="flex items-start justify-between mb-2">
                       <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center"><Workflow className="w-5 h-5 text-primary" /></div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={(e) => { e.stopPropagation(); deleteFlow(flow.id); }} aria-label="Excluir flow"><Trash2 className="w-3 h-3" /></Button>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={(e) => { e.stopPropagation(); void deleteFlow(flow.id); }} aria-label="Excluir flow"><Trash2 className="w-3 h-3" /></Button>
                       </div>
                     </div>
                     <h3 className="font-semibold text-sm mb-1">{flow.name}</h3>

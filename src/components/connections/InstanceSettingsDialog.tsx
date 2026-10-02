@@ -79,7 +79,7 @@ export function InstanceSettingsDialog({ open, onOpenChange, instanceName, conne
           <DialogTitle className="flex items-center gap-2"><Settings className="w-5 h-5 text-primary" />Configurações — {connectionName}</DialogTitle>
           <DialogDescription>Gerencie configurações, perfil, privacidade e etiquetas da instância</DialogDescription>
         </DialogHeader>
-        <Tabs defaultValue="settings" onValueChange={(v) => { if (v === 'labels') loadLabels(); }}>
+        <Tabs defaultValue="settings" onValueChange={(v) => { if (v === 'labels') void loadLabels(); }}>
           <TabsList className="grid grid-cols-4 w-full">
             <TabsTrigger value="settings"><Settings className="w-4 h-4 mr-1" /> Config</TabsTrigger>
             <TabsTrigger value="profile"><User className="w-4 h-4 mr-1" /> Perfil</TabsTrigger>

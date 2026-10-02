@@ -59,7 +59,7 @@ export default function VerifyEmail() {
       }
     };
 
-    verifyEmail();
+    void verifyEmail();
 
     return () => {
       subscription.unsubscribe();

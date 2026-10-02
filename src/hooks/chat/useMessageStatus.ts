@@ -54,7 +54,7 @@ export const useMessageStatus = (contactId?: string) => {
       }
     };
 
-    fetchInitialStatuses();
+    void fetchInitialStatuses();
   }, [contactId]);
 
   // Subscribe to realtime status updates

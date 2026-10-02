@@ -28,7 +28,7 @@ const getCtx = () => {
 export function playTeamChatSound(volume: number = 70) {
   try {
     const ctx = getCtx();
-    if (ctx.state === 'suspended') ctx.resume();
+    if (ctx.state === 'suspended') void ctx.resume();
 
     const now = ctx.currentTime;
     const volumeMultiplier = volume / 100;

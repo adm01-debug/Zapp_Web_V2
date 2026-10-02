@@ -89,7 +89,7 @@ export function ReauthDialog({
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    handleConfirm();
+                    void handleConfirm();
                   }
                 }}
                 className="pl-10 pr-10"

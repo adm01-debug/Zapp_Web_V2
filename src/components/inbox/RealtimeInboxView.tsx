@@ -154,7 +154,7 @@ export function RealtimeInboxView() {
       inbox.setPendingContactId(null);
     };
 
-    handlePendingContact();
+    void handlePendingContact();
   // inbox e inboxFilters são facades recriadas a cada render; depender dos objetos
   // inteiros repetiria o deep-link enquanto as funções assíncronas atualizam estado.
   }, [inbox.pendingContactId, inbox.loading]); // eslint-disable-line react-hooks/exhaustive-deps

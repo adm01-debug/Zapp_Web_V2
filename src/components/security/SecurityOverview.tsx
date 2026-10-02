@@ -62,7 +62,7 @@ export function SecurityOverview() {
       }
     }
 
-    fetchAlerts();
+    void fetchAlerts();
   }, [user]);
 
   // Calculate security score

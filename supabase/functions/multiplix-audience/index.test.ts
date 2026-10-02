@@ -18,14 +18,22 @@ function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
 
-// F08 (Bloco A): o navegador deixa de decidir quem recebe. Estes testes cobrem
-// a transformacao que a edge aplica na resposta de multiplix_resolve_recipients
+// F08 (Bloco A) + F30 (Bloco C): o navegador deixa de decidir quem recebe e a
+// edge deixa de comparar elegibilidade com literal PT. Estes testes cobrem a
+// transformacao que a edge aplica na resposta de multiplix_resolve_recipients
 // antes de chamar a RPC transacional multiplix_create_draft — o resto do
 // contrato (idempotencia por client_request_id, transacao, teto de
 // destinatarios) e provado no harness de banco
 // (scripts/db-audit/multiplix-rls.test.sh, F08/F17).
+//
+// As LINHAS DE ENTRADA seguem em portugues de proposito: elas modelam o
+// produtor real (o Singu externo devolve 'apto'|'destino_invalido'|
+// 'fora_do_escopo'). O comportamento provado e o MESMO de antes — traducao
+// PT->EN pela fronteira + regra de inclusao — agora com a saida canonica em
+// ingles: o filtro compara com 'eligible' e o payload carrega o valor do enum
+// do banco, nunca o literal PT.
 
-Deno.test('F08: só destinatário classificado como apto entra no disparo', () => {
+Deno.test('F08: só destinatário classificado como eligible entra no disparo', () => {
   const mapped = mapResolvedRecipients([
     { company_id: 'c-1', company_name: 'Apta', elegibilidade: 'apto', destino_e164: '5511900000001' },
     { company_id: 'c-2', company_name: 'Inválida', elegibilidade: 'destino_invalido', destino_e164: null },
@@ -33,6 +41,11 @@ Deno.test('F08: só destinatário classificado como apto entra no disparo', () =
   ]);
   assert(mapped.length === 1, `esperava 1 destinatario, veio ${mapped.length}`);
   assert(mapped[0].company_id === 'c-1', `company_id inesperado: ${mapped[0].company_id}`);
+  // O 'apto' do Singu é traduzido para o valor canonico do banco.
+  assert(
+    mapped[0].elegibilidade === 'eligible',
+    `elegibilidade esperada 'eligible', veio ${mapped[0].elegibilidade}`,
+  );
 });
 
 Deno.test('F08: linha sem company_id não vira destinatário', () => {
@@ -45,12 +58,17 @@ Deno.test('F08: linha sem company_id não vira destinatário', () => {
   assert(mapped[0].company_id === 'c-ok', `company_id inesperado: ${mapped[0].company_id}`);
 });
 
-Deno.test('F08: sem classificação explícita o destinatário entra como apto', () => {
+Deno.test('F08: sem classificação explícita o destinatário entra como eligible', () => {
   // Mesma leitura da RPC (COALESCE(elegibilidade,'apto')): o resolvedor antigo
-  // não devolvia a coluna e a linha não pode ser descartada por isso.
+  // não devolvia a coluna e a linha não pode ser descartada por isso. A
+  // fronteira normaliza a ausência para o valor canônico 'eligible' (a coluna
+  // `eligibility` do F31 é NOT NULL, então a ausência vira um valor concreto).
   const mapped = mapResolvedRecipients([{ company_id: 'c-1', company_name: 'Sem classificação' }]);
   assert(mapped.length === 1, `esperava 1 destinatario, veio ${mapped.length}`);
-  assert(mapped[0].elegibilidade === null, `elegibilidade esperada null, veio ${mapped[0].elegibilidade}`);
+  assert(
+    mapped[0].elegibilidade === 'eligible',
+    `elegibilidade esperada 'eligible', veio ${mapped[0].elegibilidade}`,
+  );
 });
 
 Deno.test('F08: campos que não existem no contrato não passam para a RPC', () => {
@@ -76,12 +94,24 @@ Deno.test('F08: campos que não existem no contrato não passam para a RPC', () 
   assert(mapped[0].destino_e164 === '5511900000001', `destino inesperado: ${mapped[0].destino_e164}`);
 });
 
-Deno.test('F08: nenhum destinatário apto → lista vazia (endpoint responde 400)', () => {
+Deno.test('F08: nenhum destinatário eligible → lista vazia (endpoint responde 400)', () => {
   const mapped = mapResolvedRecipients([
     { company_id: 'c-1', elegibilidade: 'fora_do_escopo' },
     { company_id: 'c-2', elegibilidade: 'destino_invalido' },
   ]);
   assert(mapped.length === 0, `esperava lista vazia, veio ${mapped.length}`);
+});
+
+Deno.test('F08: elegibilidade desconhecida não vira destinatário (fallback seguro)', () => {
+  // O Singu só produz 'apto'|'destino_invalido'|'fora_do_escopo'. Qualquer outro
+  // valor cai no fallback 'out_of_scope' e a linha NÃO entra — diferente de
+  // 'eligible', que é o único valor que o filtro deixa passar.
+  const mapped = mapResolvedRecipients([
+    { company_id: 'c-1', elegibilidade: 'apto' },
+    { company_id: 'c-2', elegibilidade: 'valor_que_o_singu_nunca_mandou' },
+  ]);
+  assert(mapped.length === 1, `esperava só o 'apto' traduzido, veio ${mapped.length}`);
+  assert(mapped[0].company_id === 'c-1', `company_id inesperado: ${mapped[0].company_id}`);
 });
 
 Deno.test('F08: entrada não-array ou vazia não quebra a transformação', () => {

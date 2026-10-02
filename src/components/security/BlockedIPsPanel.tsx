@@ -29,7 +29,7 @@ export function BlockedIPsPanel() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchBlockedIPs(); }, []);
+  useEffect(() => { void fetchBlockedIPs(); }, []);
 
   const filteredIPs = blockedIPs.filter(ip => ip.ip_address.includes(search) || ip.reason.toLowerCase().includes(search.toLowerCase()));
   const isExpired = (expiresAt: string | null) => expiresAt ? new Date(expiresAt) < new Date() : false;
