@@ -1,14 +1,13 @@
--- ===`).
--- NENHUMA versao foi inventada aqui: o prefixo 14-digitos e do hermes-db-migrar (regra da casa).
+-- f51c_multiplix_confirm_dispatch_contrato
+-- versao 20261002401230 reservada para hermes-bloco-e-api-dominio-dispatch-2610012241bab6 (hermes-db-migrar --nova)
 --
--- Classe: ADITIVA (add column + CREATE FUNCTION novo). Nao ha DROP/ALTER TYPE/set not null.
--- Depende de: F30 (enums multiplix_dispatch_status / multiplix_item_status), F31
---   (multiplix_dispatches.dispatch_version / audience_version; recipients.variables_snapshot,
---   audience_version), F32a (multiplix_delivery_items + idempotency_key UNIQUE), F33
---   (multiplix_blocks.content), F34 (multiplix_events) — todas ja na main (Bloco C).
+-- Classe: CONTRATO (CREATE OR REPLACE / REVOKE / GRANT / DROP+CREATE TRIGGER / ADD CONSTRAINT).
+-- Movida de 20261001341230_f51_multiplix_confirm_dispatch.sql: aquela versao nunca aplicou (o banco
+-- ficou inacessivel) e o ledger ja avancou para 20261002381230, entao o migrador a recusa por
+-- versao. O SQL e o mesmo, com CREATE OR REPLACE na RPC (a parte aditiva ja a criou) e a linha 1
+-- corrompida do arquivo original consertada.
 --
--- Teste fora de producao: rodar em PG descartavel antes de aplicar
---   (`bash scripts/db-audit/retry-disposable-postgres-test.sh ...`), com o schema do Bloco C aplicado.
+-- Depende de: F30, F31, F32a, F33, F34 (Bloco C) e da parte aditiva 20261001351230_f51a.
 
 -- rollback: DROP FUNCTION IF EXISTS public.multiplix_confirm_dispatch(uuid, uuid, boolean, integer, timestamp with time zone, uuid);
 -- rollback: DROP INDEX IF EXISTS public.idx_multiplix_delivery_items_dispatch_replied;
