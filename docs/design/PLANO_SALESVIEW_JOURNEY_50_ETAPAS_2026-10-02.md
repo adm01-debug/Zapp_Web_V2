@@ -177,7 +177,7 @@ Aceite: sem teste (ícone); print no S42.
 
 **S18 · Teste unitário de `SalesViewTab`**
 Hoje: `OrdersTab` nunca teve teste.
-Fazer: `src/components/inbox/tabs/__tests__/SalesViewTab.test.tsx` mockando `useContactCrm360` (padrão de `Crm360Tab.test.tsx`): (a) com `resumo` zerado mostra os 4 tiles, o botão "+ Novo" e os empty states internos de compras e propostas (nunca um empty state de aba); (b) com 2 compras e 1 deal mostra "Compras (2)", seção "Propostas em aberto" e **não** mostra o empty state; (c) `profileId` chega ao `ContactPurchasesPanel` (mock do painel que ecoa a prop, como `NotesTab` faz no teste de `inbox/__tests__/ConversationTabs.test.tsx:25-33`); (d) nunca renderiza o texto "Pedidos".
+Fazer: `src/components/inbox/tabs/__tests__/SalesViewTab.test.tsx` mockando `useContactCrm360` (padrão de `Crm360Tab.test.tsx`): (a) com `resumo` zerado mostra os 4 tiles, o botão "+ Novo" e os empty states internos de compras e propostas (nunca um empty state de aba); (b) com 2 compras `completed` e 1 deal mostra "Compras concluídas (2)" (rótulo do S14; uma terceira compra `pending` no mock não entra na contagem), seção "Propostas em aberto" e **não** mostra o empty state; (c) `profileId` chega ao `ContactPurchasesPanel` (mock do painel que ecoa a prop, como `NotesTab` faz no teste de `inbox/__tests__/ConversationTabs.test.tsx:25-33`); (d) nunca renderiza o texto "Pedidos".
 Aceite: 4 casos verdes; cobertura não cai (o piso do `test:coverage` é só `src/lib` + `src/services`, mas o arquivo novo entra no relatório).
 
 **S19 · Atualizar `INBOX_360_STATUS.md` (CP3)**
