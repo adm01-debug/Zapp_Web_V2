@@ -5,6 +5,8 @@ export interface ContactStats {
   totalMessages: number;
   avgResponseTimeMinutes: number;
   totalConversations: number;
+  messagesChangePercent?: number | null;
+  conversationsChangePercent?: number | null;
   csatAverage: number | null;
   csatCount: number;
 }
