@@ -110,7 +110,6 @@
         "talkx_campaigns",
         "talkx_recipients",
         "talkx_segments",
-        "talkx_settings",
         "talkx_templates",
         "training_sessions",
         "user_devices",
@@ -132,6 +131,6 @@
         "whisper_messages"
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 191,
-    "authenticated_execute_count": 111
+    "service_role_execute_count": 212,
+    "authenticated_execute_count": 113
 }
