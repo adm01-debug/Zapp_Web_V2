@@ -365,7 +365,13 @@ export async function handleMultiplixAudienceRequest(
   const { userId } = auth;
 
   const rate = await enforceRateLimit(`multiplix-audience:${userId}:${getClientIP(req)}`, 60, 60_000);
-  if (!rate.allowed) return errorResponse('Rate limit exceeded', 429, req);
+  if (!rate.allowed) {
+    // F53 (Bloco E): 429 sempre com `Retry-After` — quem consome (front, n8n) precisa
+    // saber QUANDO voltar; sem o header o cliente so pode chutar.
+    const limited = errorResponse('Rate limit exceeded', 429, req);
+    limited.headers.set('Retry-After', '60');
+    return limited;
+  }
 
   let externalUrl: string;
   let externalKey: string;

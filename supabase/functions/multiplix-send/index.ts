@@ -8,7 +8,7 @@
  * novo imediatamente antes do POST ao provedor (F09).
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
+import { enforceRateLimit, getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
 import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talkx-window.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
@@ -291,6 +291,27 @@ export async function handleMultiplixSend(
       return remaining;
     };
     let dailyRoom = await resolveDailyRoom();
+
+    // F53 (Bloco E): teto por CONEXAO nesta edge. Aqui a conta e por invocacao (uma
+    // passada = uma chamada), nao por destinatario: o que se protege e o canal
+    // (instancia do provedor), e o teto e generoso de proposito — isto e uma trava
+    // de rajada, nao a cota diaria do F17, que ja roda logo acima.
+    const connectionForLimit = typeof dispatch.whatsapp_connection_id === "string"
+      ? dispatch.whatsapp_connection_id
+      : "sem-conexao";
+    const burst = await enforceRateLimit(`multiplix-send:conn:${connectionForLimit}`, 600, 60_000);
+    if (!burst.allowed) {
+      log.warn("Rate limit por conexao atingido: adiando a passada", {
+        correlationId, dispatchId, connectionId: connectionForLimit, remaining: burst.remaining,
+      });
+      const limited = new Response(JSON.stringify({
+        error: "rate_limited",
+        message: "Muitas passadas em sequencia para esta conexao",
+        retry_after_seconds: 60,
+      }), { status: 429, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } });
+      limited.headers.set("Retry-After", "60");
+      return limited;
+    }
 
     const pauseDispatch = async (pauseReason: string) => {
       const { error } = await supabase.rpc("transition_multiplix_dispatch", {
