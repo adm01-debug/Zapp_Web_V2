@@ -426,7 +426,7 @@ jobs:
           PASSOS: ${{ steps.veredito.outputs.passos }}
           FALHAS_LISTA: ${{ steps.veredito.outputs.falhas_lista }}
         with:
-          script: |
+          script: |  # NOSONAR(S2068): falso positivo — o único `password=` deste bloco é o PADRÃO DE REDAÇÃO de logs (linha 453: `.replace(/password=[^\s&"']+/gi, 'password=***')`), que existe justamente para APAGAR credencial dos snippets. Não há senha nem credencial hardcoded neste script.
             const fs = require('fs');
             const title = '[db-live-guard] Contrato vivo do banco quebrado';
             const causa = process.env.CAUSA || 'credencial-ou-erro-antes-do-veredito';
