@@ -80,21 +80,14 @@ test.describe('Talk X module', () => {
     await expect(dialog).not.toBeVisible();
   });
 
-  test('segments and templates tabs render', async ({ page }) => {
-    await page.goto('/');
-    await expandCampanhasGroup(page);
-    await page
-      .getByRole('navigation', { name: 'Menu de navegação principal' })
-      .getByRole('button', { name: 'Campanhas', exact: true })
-      .first()
-      .click();
-
-    await page.getByRole('tab', { name: 'Segmentos' }).click();
-    await expect(page.getByRole('tab', { name: 'Segmentos' })).toHaveAttribute('data-state', 'active');
+  test('segments and templates render via deep links', async ({ page }) => {
+    // Após X007, "Segmentos" e "Templates" deixaram de ser abas (role=tab) e viraram
+    // itens de menu ("Analytics ▾" / "Templates ▾"). Cada aba tem endereço próprio
+    // (?tab=), que é o comportamento aceite da etapa — a régua visual (X004) navega assim.
+    await page.goto('/?view=talkx&tab=segments');
     await expect(page.getByPlaceholder('Buscar segmentos…')).toBeVisible();
 
-    await page.getByRole('tab', { name: 'Templates' }).click();
-    await expect(page.getByRole('tab', { name: 'Templates' })).toHaveAttribute('data-state', 'active');
+    await page.goto('/?view=talkx&tab=templates');
     await expect(page.getByPlaceholder('Buscar templates…')).toBeVisible();
   });
 
