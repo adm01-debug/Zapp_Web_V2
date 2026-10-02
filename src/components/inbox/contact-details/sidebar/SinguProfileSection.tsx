@@ -40,7 +40,7 @@ function vakTile(vak: SidebarVak | null): { value: string | null; bar: number | 
 
 function bigFiveTile(bf: SidebarBigFive | null): { value: string | null; bar: number | null } {
   if (!bf) return { value: null, bar: null };
-  const axes = (Object.keys(BIG_FIVE_LABELS) as Array<keyof typeof BIG_FIVE_LABELS>)
+  const axes = (Object.keys(BIG_FIVE_LABELS) as Array<keyof Omit<SidebarBigFive, 'confidence'>>)
     .map((key) => ({ label: BIG_FIVE_LABELS[key], score: bf[key] }))
     .filter((x): x is { label: string; score: number } => typeof x.score === 'number');
   if (axes.length === 0) return { value: null, bar: bf.confidence ?? null };
