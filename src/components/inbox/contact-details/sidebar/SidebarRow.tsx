@@ -62,7 +62,7 @@ export function SidebarRow({ icon, label, field, value, valueNode, copyable, cop
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Info className="w-3 h-3 text-muted-foreground/60 shrink-0" aria-label="Dado local do Zapp" />
+                <Info className="w-3 h-3 text-muted-foreground shrink-0" aria-label="Dado local do Zapp" />
               </TooltipTrigger>
               <TooltipContent>Dado local do Zapp</TooltipContent>
             </Tooltip>
