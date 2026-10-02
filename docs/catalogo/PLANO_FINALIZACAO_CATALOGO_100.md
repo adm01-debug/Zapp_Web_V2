@@ -249,6 +249,7 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   `Drawer` (vaul) em `< md`; prints 1280/1024/768/390 em `docs/catalogo/PARIDADE.md` (criado aqui, seção "Rail").
   **Aceite:** 4 prints commitados; Accordion e Drawer testados.
   **✅ FEITO (02/10/2026).** O rail virou `<Accordion>` rotulado exatamente **"Resumo do catálogo"**, com `xl:hidden`, **acima da grade**, reusando o mesmo `<CatalogRail>` com as mesmas props do `<aside>` (`ExternalProductManagement.tsx:968`; o `<aside>` segue exclusivo do `xl+`). O detalhe e o envio passaram a usar **Drawer** (`vaul`, via `src/components/ui/drawer.tsx` novo) abaixo de `md` e mantêm `Sheet`/`Dialog` acima disso. Testes: `CT30_responsivo.test.tsx` (rótulo do Accordion, detalhe em Drawer com `data-vaul-drawer-direction="bottom"` abaixo de md, Sheet em md+). **Aceite literal cumprido:** os 4 prints estão commitados em `docs/catalogo/screens/` e os dois componentes estão testados. **Ressalva declarada:** esses 4 prints são anteriores a esta mudança e mostram o layout antigo (sem Accordion, com Dialog no lugar do Drawer); refazê-los é documentação pendente, não aceite em aberto.
+  **🔴 MEDIDO EM PRODUÇÃO (02/10/2026) — o aceite NÃO é cumprido: o limite não está ativo.** Com o mesmo cabeçalho que o app usa na edge, **61 `bootstrap` em paralelo, todos respondidos em 8,3 s (dentro da janela de 60 s) → zero respostas 429**; e 100 `list_products` → todas 200. A causa já estava escrita no próprio item (falta o deploy da edge) e foi confirmada: o deploy de edge só sai pelo `hermes-tarefa-mergear` e só para função alterada — o código está mergeado e inalterado desde então. O "100 → 200" é verdade trivial, não prova de limite. Não contornei o caminho de deploy.
 
 ## FASE 3 — Ligar os órfãos da F1 no detalhe e no envio (CT-31–CT-40)
 *Bloco D — 1 PR de front. Não reabre o layout do mock B/C (decisão de 24/09).*
@@ -510,6 +511,7 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   `CT61_62_65_catalogFilters.test.tsx:214-235`: aparece/desliga com a flag e **não** aparece só com busca textual.
 - [x] **CT-66** — Fechamento G: PR mergeada; `PARIDADE.md` seção "Topo" e "Grade" com prints 1920/1440/1280. **✅ FEITO (02/10/2026, grupo D)** — prints autenticados commitados em `docs/catalogo/screens/A-catalogo-{1920,1440,1280}.jpg` (sessão real da conta de teste, grade povoada com 24 cartões em cada largura) e `PARIDADE.md` atualizado. O "PR mergeada" é o desta rodada.
   **Aceite:** prints commitados.
+  **🟡 MEDIDO, ACEITE NÃO COMPROVADO (02/10/2026).** Na tela autenticada: o stats mostra **Novidades = 364** e clicar no KPI **aplica** o filtro (o chip "Mostrando só Novidades · limpar" aparece). Mas a **contagem do filtro não pôde ser lida**: o contador da grade não é um `data-testid` simples e a resposta da edge ao aplicar o chip não traz campo de total. Além disso, os nomes que o aceite cita — `new_or_recent` (edge) e `new_30d` (stats) — **não existem** no código. Sem a contagem do filtro, "bate com" não pode ser afirmado.
 
 ## FASE 7 — Acessibilidade e performance (CT-67–CT-76)
 *Bloco H — 1 PR de front.*
@@ -896,6 +898,7 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   decisões pendentes (gate de cobertura do módulo; cores dos badges). **Tag `catalog-v1.0.0` NÃO criada** e **`CLAUDE.md`
   NÃO tocado** (arquivo compartilhado/grande — a sugestão de seção ficou apenas registrada no `HANDOFF_v1.md` §4). Limpeza
   de branches `claude/feat-catalog-*` não executada (operação de git).
+  **🔴 BLOQUEADO PELO MESMO MOTIVO (02/10/2026):** como não há 429 em produção (medido acima), não existe reação da UI para fotografar — o print do aceite é impossível enquanto o deploy não acontecer.
 
 ---
 
@@ -1131,6 +1134,22 @@ Sem dependência do Joaquim, na sequência do lote anterior (CT-74/CT-73).
   corrigido aqui.
 - **Verificação deste lote:** `bunx vitest run src/components/catalog` = **26 arquivos / 434 testes**; typecheck rc=0;
   eslint rc=0; lint-ratchet sem novas; `bun run build` ok.
+
+### Etapas livres (3) — rate limit e filtro Novidades medidos em produção (02/10/2026)
+
+Último lote do filtro "sem dependência do Joaquim". Todos os números vieram da sessão autenticada real.
+
+- **CT-19 🔴 medido, aceite não cumprido:** 61 `bootstrap` em paralelo (8,3 s, dentro da janela) → **zero 429**;
+  100 `list_products` → 200. **O limite não está ativo em produção** — o deploy da edge nunca aconteceu (e o deploy
+  de edge só sai pelo `mergear`, para função alterada).
+- **CT-94 🔴 bloqueado:** sem 429, não há reação da UI para fotografar.
+- **CT-64 🟡 medido, aceite não comprovado:** stats "Novidades = 364" confirmado na tela e o chip aplica o filtro;
+  a contagem do filtro não é legível no DOM nem na resposta da edge, e os nomes do plano (`new_or_recent`,
+  `new_30d`) não existem no código.
+- **CT-99** segue não iniciado (o aceite é autocontraditório: `validate-plan.mjs:17` exige ≥3 `- [ ]` por bloco e
+  cada bloco tem exatamente 4 caixas — marcar conforme o estado real quebraria o validador).
+- **Lição de medição (minha):** o primeiro teste do rate limit foi **sequencial** e as 61 chamadas passaram de 60 s,
+  o que produziria um falso "o limite não funciona". Só o disparo em paralelo, com tempo medido, dá veredito.
 
 ## 12. Fora de escopo (registrado, não esquecido)
 
