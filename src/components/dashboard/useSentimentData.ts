@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
-import { subDays, startOfDay, endOfDay, isWithinInterval, format } from 'date-fns';
+import { format, isWithinInterval } from 'date-fns';
+import { appDayEndOfKey, appDayKey, appDayKeyLabel, appDayStart, appDayStartOfKey, appShiftDayKey } from '@/lib/localDay';
 import { ptBR } from 'date-fns/locale';
 import { normalizeScore, aggregateScores } from '@/lib/ai-values';
 
@@ -64,7 +65,7 @@ export function useSentimentData(period: string) {
   const fetchData = useCallback(async () => {
     setLoading(true);
     const daysAgo = parseInt(period);
-    const startDate = startOfDay(subDays(new Date(), daysAgo)).toISOString();
+    const startDate = appDayStart(daysAgo).toISOString();
 
     try {
       // E39: RPC dedicada (SECURITY DEFINER, guard is_admin_or_supervisor
@@ -144,13 +145,13 @@ export function useSentimentData(period: string) {
     const data: { date: string; positive: number; neutral: number; negative: number; avgScore: number | null }[] = [];
 
     for (let i = days - 1; i >= 0; i--) {
-      const date = subDays(new Date(), i);
+      const key = appShiftDayKey(appDayKey(new Date()), -i);
       const dayAnalyses = analyses.filter(a =>
-        isWithinInterval(new Date(a.created_at), { start: startOfDay(date), end: endOfDay(date) })
+        isWithinInterval(new Date(a.created_at), { start: appDayStartOfKey(key), end: appDayEndOfKey(key) })
       );
 
       data.push({
-        date: format(date, 'dd/MM', { locale: ptBR }),
+        date: appDayKeyLabel(key),
         positive: dayAnalyses.filter(a => a.sentiment === 'positivo').length,
         neutral: dayAnalyses.filter(a => a.sentiment === 'neutro').length,
         negative: dayAnalyses.filter(a => a.sentiment === 'negativo').length,
@@ -174,9 +175,9 @@ export function useSentimentData(period: string) {
       // Média do agente que exclui ausente/inválido; `null` sem amostra válida.
       const avgScore = aggregateScores(agentAnalyses.map(a => a.sentiment_score)).average;
 
-      const firstHalfStart = subDays(new Date(), days);
-      const firstHalfEnd = subDays(new Date(), halfPeriod);
-      const secondHalfStart = subDays(new Date(), halfPeriod);
+      const firstHalfStart = appDayStart(days);
+      const firstHalfEnd = appDayStart(halfPeriod);
+      const secondHalfStart = appDayStart(halfPeriod);
 
       const firstHalfAnalyses = agentAnalyses.filter(a => { const d = new Date(a.created_at); return d >= firstHalfStart && d < firstHalfEnd; });
       const secondHalfAnalyses = agentAnalyses.filter(a => { const d = new Date(a.created_at); return d >= secondHalfStart; });

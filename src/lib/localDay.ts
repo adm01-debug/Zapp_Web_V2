@@ -99,18 +99,31 @@ function timeZoneOffsetMs(timeZone: string, at: Date): number {
 }
 
 /**
+ * Início (00:00) do dia de calendário `key` em um fuso IANA, como `Date`.
+ *
+ * O deslocamento é lido em duas passadas para acertar mudança de horário (DST) de qualquer fuso.
+ * Só serve aos helpers de recorte por dia de calendário deste módulo.
+ */
+function zonedDayStartFromKey(timeZone: string, key: string): Date {
+  const meiaNoiteUtc = Date.parse(`${key}T00:00:00.000Z`);
+  const primeira = meiaNoiteUtc - timeZoneOffsetMs(timeZone, new Date(meiaNoiteUtc));
+  return new Date(meiaNoiteUtc - timeZoneOffsetMs(timeZone, new Date(primeira)));
+}
+
+/**
  * Início (00:00) do dia de calendário **em um fuso IANA**, N dias atrás, como instante ISO.
  *
  * Os helpers acima resolvem exibição e agrupamento no fuso do **navegador**. Este resolve o caso
- * oposto: um recorte que **não pode** depender de quem está olhando. Um filtro de segmento é
- * gravado como string e reusado por qualquer usuário (e por contagens no servidor), então "nos
- * últimos 7 dias" precisa significar os mesmos 7 dias de calendário para todos.
+ * oposto: um recorte que **não pode** depender de quem está olhando (filtro gravado e reusado por
+ * qualquer usuário, contagem feita no servidor), então "nos últimos 7 dias" tem de significar os
+ * mesmos 7 dias de calendário para todos.
  *
- * Existe porque `Date.now() - d * 86_400_000` é uma janela de d*24h: as 22h30 em São Paulo
- * (UTC-3) os "7 dias" alcançavam o 8º dia de calendário — o mesmo defeito corrigido no R3-06
- * (timeline do Histórico), aqui num filtro de audiência.
+ * Existe porque `Date.now() - d * 86_400_000` é uma janela de d*24h: as 22h30 em São Paulo (UTC-3)
+ * os "7 dias" alcançavam o 8º dia de calendário — o mesmo defeito corrigido no R3-06 (timeline do
+ * Histórico), aqui num filtro de audiência.
  *
- * O deslocamento é lido em duas passadas para acertar mudança de horário (DST) de qualquer fuso.
+ * Para os recortes do app use os atalhos `appDayStart`/`appDayEnd`/`appWeekStart`/`appMonthStart`,
+ * que já fixam `APP_TIMEZONE` — não repita a string do fuso nas telas.
  */
 export function zonedDayStartISO(timeZone: string, daysAgo = 0, now: Date = new Date()): string {
   const diaLocal = new Intl.DateTimeFormat('en-CA', {
@@ -119,10 +132,99 @@ export function zonedDayStartISO(timeZone: string, daysAgo = 0, now: Date = new 
     month: '2-digit',
     day: '2-digit',
   }).format(now); // en-CA devolve yyyy-MM-dd
-  const [ano, mes, dia] = diaLocal.split('-').map(Number);
-  // Aritmética em UTC sobre a chave do dia: pura subtração de calendário, sem horas envolvidas.
-  const alvo = new Date(Date.UTC(ano, mes - 1, dia) - daysAgo * 86_400_000).toISOString().slice(0, 10);
-  const meiaNoiteUtc = Date.parse(`${alvo}T00:00:00.000Z`);
-  const primeira = meiaNoiteUtc - timeZoneOffsetMs(timeZone, new Date(meiaNoiteUtc));
-  return new Date(meiaNoiteUtc - timeZoneOffsetMs(timeZone, new Date(primeira))).toISOString();
+  return zonedDayStartFromKey(timeZone, appShiftDayKey(diaLocal, -daysAgo)).toISOString();
+}
+
+/**
+ * Fuso dos recortes do produto que **não podem** depender de quem está olhando: filtros de
+ * período, janelas de consulta e qualquer número que tenha de bater com o que o servidor conta.
+ * É o mesmo fuso usado por `in_last_days`/`not_in_last_days` e por `conversation_closure_day`
+ * no banco (America/Sao_Paulo).
+ */
+export const APP_TIMEZONE = 'America/Sao_Paulo';
+
+/**
+ * Deslocamento de dias sobre uma chave `yyyy-MM-dd`, por **aritmética de calendário** (em UTC,
+ * sem horas envolvidas) — o mesmo caminho que `zonedDayStartISO` já usava.
+ */
+export function appShiftDayKey(key: string, delta: number): string {
+  const [ano, mes, dia] = key.split('-').map(Number);
+  return new Date(Date.UTC(ano, mes - 1, dia) + delta * 86_400_000).toISOString().slice(0, 10);
+}
+
+/** Dia de calendário de um instante **no fuso do app** (`yyyy-MM-dd`). */
+export function appDayKey(value: string | Date): string {
+  const d = typeof value === 'string' ? new Date(value) : value;
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: APP_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(d);
+}
+
+/** Início (00:00) do dia de calendário `key` no fuso do app. */
+export function appDayStartOfKey(key: string): Date {
+  return zonedDayStartFromKey(APP_TIMEZONE, key);
+}
+
+/** `dd/MM` a partir de uma chave `yyyy-MM-dd`, sem depender do fuso do processo. */
+export function appDayKeyLabel(key: string): string {
+  return `${key.slice(8, 10)}/${key.slice(5, 7)}`;
+}
+
+/** Fim (23:59:59.999) do dia de calendário `key` no fuso do app. */
+export function appDayEndOfKey(key: string): Date {
+  return new Date(appDayStartOfKey(appShiftDayKey(key, 1)).getTime() - 1);
+}
+
+/** Início (00:00) do dia de calendário no fuso do app, `daysAgo` dias atrás (0 = hoje). */
+export function appDayStart(daysAgo = 0, now: Date = new Date()): Date {
+  return appDayStartOfKey(appShiftDayKey(appDayKey(now), -daysAgo));
+}
+
+/** Fim (23:59:59.999) do dia de calendário no fuso do app, `daysAgo` dias atrás (0 = hoje). */
+export function appDayEnd(daysAgo = 0, now: Date = new Date()): Date {
+  return new Date(appDayStart(daysAgo - 1, now).getTime() - 1);
+}
+
+/**
+ * Início/fim do dia escolhido no calendário da tela: o dia é o do **relógio do usuário**
+ * (o que ele viu no seletor), mas o recorte é aplicado no fuso do app.
+ */
+export function appDayStartOfLocalDate(date: Date): Date {
+  return appDayStartOfKey(localDayKey(date) ?? appDayKey(date));
+}
+
+/** Ver `appDayStartOfLocalDate`. */
+export function appDayEndOfLocalDate(date: Date): Date {
+  return appDayEndOfKey(localDayKey(date) ?? appDayKey(date));
+}
+
+/**
+ * Domingo 00:00 da semana corrente no fuso do app — mesmo começo de semana que o `startOfWeek`
+ * do date-fns com o locale ptBR (`weekStartsOn: 0`), só que ancorado no fuso do app.
+ */
+export function appWeekStart(now: Date = new Date()): Date {
+  const key = appDayKey(now);
+  const diaDaSemana = new Date(`${key}T00:00:00.000Z`).getUTCDay();
+  return appDayStartOfKey(appShiftDayKey(key, -diaDaSemana));
+}
+
+/** Sábado 23:59:59.999 da semana corrente no fuso do app. */
+export function appWeekEnd(now: Date = new Date()): Date {
+  const key = appShiftDayKey(appDayKey(appWeekStart(now)), 6);
+  return appDayEndOfKey(key);
+}
+
+/** Dia 1 do mês corrente, 00:00, no fuso do app. */
+export function appMonthStart(now: Date = new Date()): Date {
+  return appDayStartOfKey(`${appDayKey(now).slice(0, 7)}-01`);
+}
+
+/** Último dia do mês corrente, 23:59:59.999, no fuso do app. */
+export function appMonthEnd(now: Date = new Date()): Date {
+  const [ano, mes] = appDayKey(now).split('-').map(Number);
+  const ultimoDia = new Date(Date.UTC(ano, mes, 0)).getUTCDate();
+  return appDayEndOfKey(`${ano}-${String(mes).padStart(2, '0')}-${String(ultimoDia).padStart(2, '0')}`);
 }

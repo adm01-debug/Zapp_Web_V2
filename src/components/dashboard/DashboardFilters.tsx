@@ -17,21 +17,25 @@ import {
   Calendar as CalendarIcon,
   RefreshCw,
 } from 'lucide-react';
-import { format, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isSameDay } from 'date-fns';
+import { format } from 'date-fns';
+import {
+  appDayEnd,
+  appDayEndOfLocalDate,
+  appDayKey,
+  appDayKeyLabel,
+  appDayStart,
+  appDayStartOfLocalDate,
+  appMonthEnd,
+  appMonthStart,
+  appWeekEnd,
+  appWeekStart,
+  parseDayKey,
+} from '@/lib/localDay';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useQueues } from '@/hooks/business/useQueues';
 import { useAgents } from '@/hooks/crm/useAgents';
-
-export interface DashboardFiltersState {
-  dateRange: {
-    from: Date;
-    to: Date;
-  };
-  period: 'today' | 'yesterday' | 'week' | 'month' | 'custom';
-  queueId: string | null;
-  agentId: string | null;
-}
+import type { DashboardFiltersState } from './dashboardFilterDefaults';
 
 interface DashboardFiltersProps {
   filters: DashboardFiltersState;
@@ -49,16 +53,6 @@ const PERIOD_OPTIONS = [
   { value: 'month', label: 'Este Mês' },
   { value: 'custom', label: 'Personalizado' },
 ] as const;
-
-export const getDefaultFilters = (): DashboardFiltersState => ({
-  dateRange: {
-    from: startOfDay(new Date()),
-    to: endOfDay(new Date()),
-  },
-  period: 'today',
-  queueId: null,
-  agentId: null,
-});
 
 export function DashboardFilters({ 
   filters, 
@@ -78,26 +72,26 @@ export function DashboardFilters({
 
     switch (period) {
       case 'today':
-        from = startOfDay(now);
-        to = endOfDay(now);
+        from = appDayStart(0, now);
+        to = appDayEnd(0, now);
         break;
       case 'yesterday':
-        from = startOfDay(subDays(now, 1));
-        to = endOfDay(subDays(now, 1));
+        from = appDayStart(1, now);
+        to = appDayEnd(1, now);
         break;
       case 'week':
-        from = startOfWeek(now, { locale: ptBR });
-        to = endOfWeek(now, { locale: ptBR });
+        from = appWeekStart(now);
+        to = appWeekEnd(now);
         break;
       case 'month':
-        from = startOfMonth(now);
-        to = endOfMonth(now);
+        from = appMonthStart(now);
+        to = appMonthEnd(now);
         break;
       case 'custom':
         return; // Don't change dates for custom
       default:
-        from = startOfDay(now);
-        to = endOfDay(now);
+        from = appDayStart(0, now);
+        to = appDayEnd(0, now);
     }
 
     onFiltersChange({
@@ -113,8 +107,8 @@ export function DashboardFilters({
         ...filters,
         period: 'custom',
         dateRange: {
-          from: startOfDay(range.from),
-          to: endOfDay(range.to),
+          from: appDayStartOfLocalDate(range.from),
+          to: appDayEndOfLocalDate(range.to),
         },
       });
       setIsCalendarOpen(false);
@@ -124,7 +118,7 @@ export function DashboardFilters({
         period: 'custom',
         dateRange: {
           ...filters.dateRange,
-          from: startOfDay(range.from),
+          from: appDayStartOfLocalDate(range.from),
         },
       });
     }
@@ -145,9 +139,16 @@ export function DashboardFilters({
   };
 
   const periodLabel = PERIOD_OPTIONS.find(o => o.value === filters.period)?.label ?? 'Personalizado';
-  const rangeLabel = isSameDay(filters.dateRange.from, filters.dateRange.to)
-    ? format(filters.dateRange.from, "EEE, dd 'de' MMM 'de' yyyy", { locale: ptBR })
-    : `${format(filters.dateRange.from, 'dd/MM', { locale: ptBR })} – ${format(filters.dateRange.to, 'dd/MM/yyyy', { locale: ptBR })}`;
+  // O rótulo segue o dia de calendário do recorte (fuso do app), não o fuso do processo: com o
+  // recorte de hoje ancorado em America/Sao_Paulo, `isSameDay` no fuso do processo diria que
+  // início e fim estão em dias diferentes e imprimiria o rótulo de intervalo.
+  const diaInicial = appDayKey(filters.dateRange.from);
+  const diaFinal = appDayKey(filters.dateRange.to);
+  const primeiroDia = parseDayKey(diaInicial) ?? filters.dateRange.from;
+  const ultimoDia = parseDayKey(diaFinal) ?? filters.dateRange.to;
+  const rangeLabel = diaInicial === diaFinal
+    ? format(primeiroDia, "EEE, dd 'de' MMM 'de' yyyy", { locale: ptBR })
+    : `${appDayKeyLabel(diaInicial)} – ${format(ultimoDia, 'dd/MM/yyyy', { locale: ptBR })}`;
 
   return (
     <div className="flex flex-wrap items-center gap-2.5">
