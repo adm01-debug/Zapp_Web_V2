@@ -7,11 +7,14 @@
 #      HTTP 300 PGRST203 — start/pause/cancel quebrados em produção;
 #   2. com o CHECK de public.talkx_campaigns.status sem 'scheduled', gravar o
 #      status que o front grava ao agendar é recusado pelo banco;
-#   3. depois da migration 20260929420000 sobram 1 assinatura e o ciclo
-#      draft -> sending -> paused -> sending -> cancelled responde 200.
+#   3. depois da V02 (20260929420000) e do estado hoje vigente — V21
+#      (20260930640000) e V12 (20260930650000) — sobra 1 assinatura, agora a de
+#      4 args com 2 DEFAULTs, e o ciclo draft -> sending -> paused -> sending ->
+#      cancelled responde 200.
 #
 # As funções não são transcritas: as migrations REAIS do repo (20260911150000
-# cria a de 2 args, 20260916210000 cria a de 3) são aplicadas no PostgreSQL 17
+# cria a de 2 args, 20260916210000 cria a de 3, 20260930640000 e 20260930650000
+# criam a de 4) são aplicadas no PostgreSQL 17
 # descartável, sobre um schema mínimo com as colunas que a RPC toca (conferidas
 # ao vivo no banco canônico). O PostgREST só entra depois que o estado "de
 # produção" está montado, e é recarregado com NOTIFY pgrst após o DDL — sem
@@ -23,6 +26,8 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20260929420000_fix_talkx_transition_overload_and_status_check.sql"
 legacy_2arg="$repo_root/supabase/migrations/20260911150000_add_talkx_campaign_transition_rpc.sql"
 current_3arg="$repo_root/supabase/migrations/20260916210000_talkx_e91_resilience.sql"
+v21_launch_flags="$repo_root/supabase/migrations/20260930640000_talkx_v21_launch_flags.sql"
+v12_lifecycle="$repo_root/supabase/migrations/20260930650000_talkx_v12_server_lifecycle_events.sql"
 guard_sql="$repo_root/scripts/db-audit/check-talkx-transition-contract.sql"
 deno_test="$repo_root/scripts/db-audit/talkx-transition-postgrest.test.ts"
 
@@ -156,14 +161,35 @@ CREATE TABLE public.talkx_campaigns (
   started_at timestamptz,
   paused_at timestamptz,
   pause_reason text,
-  updated_at timestamptz NOT NULL DEFAULT now()
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  -- O V12 grava completed_at ao concluir a campanha.
+  completed_at timestamptz
 );
 CREATE TABLE public.talkx_recipients (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   campaign_id uuid NOT NULL REFERENCES public.talkx_campaigns(id) ON DELETE CASCADE,
-  status text NOT NULL DEFAULT 'pending'
+  status text NOT NULL DEFAULT 'pending',
+  -- O V12 troca este CHECK por um que aceita 'cancelled' (DROP + ADD): o
+  -- constraint precisa existir com este nome antes da migration.
+  CONSTRAINT talkx_recipients_status_check
+  CHECK (status IN ('pending', 'sending', 'sent', 'delivered', 'failed', 'skipped', 'outcome_unknown'))
 );
 GRANT SELECT ON public.talkx_campaigns, public.talkx_recipients TO service_role;
+
+-- O V21 (launched_by) e o V12 (actor_id dos eventos) têm FK para profiles.
+CREATE TABLE public.profiles (id uuid PRIMARY KEY);
+
+-- O V12 grava a trilha de eventos dentro da própria transição.
+CREATE TABLE public.talkx_campaign_events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id uuid NOT NULL REFERENCES public.talkx_campaigns(id) ON DELETE CASCADE,
+  event_type text NOT NULL,
+  message text,
+  actor_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT talkx_campaign_events_type_check
+  CHECK (event_type IN ('created','updated','scheduled','started','paused','resumed','cancelled','completed','note'))
+);
 
 INSERT INTO public.talkx_campaigns(id, status, total_recipients, message_template)
 VALUES ('40000000-0000-0000-0000-0000000000a2', 'draft', 1, 'olá {{nome}}');
@@ -242,14 +268,20 @@ assert_deno 'PGRST203 com os dois overloads (sem mock)' '1'
 
 # ---- aplica a V02 e recarrega o schema do PostgREST ----
 psql_script < "$migration" >/dev/null
+# O estado de produção avançou depois da V02: o V21 (640000) e o V12 (650000)
+# também recriam a transition, e o V12 é o último (o rollback dele recria o corpo
+# do 650000) — a assinatura vigente é a dele, de 4 args. Sem aplicar os dois, o
+# guard mediria um estado que não existe mais em produção.
+psql_script < "$v21_launch_flags" >/dev/null
+psql_script < "$v12_lifecycle" >/dev/null
 psql_query "NOTIFY pgrst, 'reload schema'" >/dev/null
 sleep 3
 
 assert_eq 'uma assinatura depois da migration' '1' \
   "$(psql_query "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'transition_talkx_campaign'")"
-assert_eq 'assinatura mantida é a de 3 args com DEFAULT' '3|1' \
+assert_eq 'assinatura vigente é a de 4 args com 2 DEFAULTs' '4|2' \
   "$(psql_query "SELECT p.pronargs || '|' || p.pronargdefaults FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'transition_talkx_campaign'")"
-assert_guard_passes 'contrato depois da V02'
+assert_guard_passes 'contrato depois do V12'
 
 psql_query "INSERT INTO public.talkx_campaigns(id, status) VALUES ('40000000-0000-0000-0000-0000000000b2', 'scheduled')" >/dev/null
 assert_eq "status='scheduled' aceito depois da V02" 'scheduled' \
