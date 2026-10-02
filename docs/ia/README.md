@@ -23,8 +23,10 @@ válidos. Este bloco **não altera código, banco nem configuração** — entre
 | IA-008 | [`IA-008-organizacao-das-entregas.md`](./IA-008-organizacao-das-entregas.md) | Os 20 blocos mapeados em 20 PRs, com dependências, classe de DDL e onde há autorização humana necessária | ✅ |
 | IA-009 | [`IA-009-desligamento-seguro.md`](./IA-009-desligamento-seguro.md) | Desenho de kill switch por capacidade/bot/provedor; lacuna provada: `feature_flags` só é lida no cliente | ✅ (implementação nos blocos 02/05/11) |
 | IA-010 | [`IA-010-ambiente-de-ensaio.md`](./IA-010-ambiente-de-ensaio.md) | Especificação de dados sintéticos por departamento, 4 perfis, credencial de homologação por referência | ✅ (provisionamento **não** executado: escrita em produção) |
-| IA-011..020 | [`IA-011-a-IA-020-contencao-P0.md`](./IA-011-a-IA-020-contencao-P0.md) + [laudo adversarial](./IA-011-a-IA-020-verificacao-adversarial.md) | **Bloco 02 (P0)** — identidade nas funções de IA sem guarda, assinatura de webhook bloqueante, autorização por objeto no áudio; mais o laudo de 5 verificadores adversariais (achados, correções e o que não foi provado) | 🟡 lotes A e B entregues (2 regressões do lote A corrigidas); política (IA-015/016/017/019/020) nos blocos 03/04/05; deploy de 2 funções + `ELEVENLABS_WEBHOOK_SECRET` pendentes de você |
-| IA-021..030 | [`IA-021-a-IA-030-contratos-integridade.md`](./IA-021-a-IA-030-contratos-integridade.md) | **Bloco 03 (P0/P1)** — vocabulário canônico único (sentimento/urgência/prioridade) em `supabase/functions/_shared/`, consumido pelo front por re-export (sem cópias duplicadas), contrato de mensagens com limite agregado, validação de toda saída de modelo com envelope, persistência completa da análise com projeção transacional e trava de recência, etiquetas atômicas e identidade da memória por contato | 🟡 PR único aberto; migration aditiva aplicada no banco canônico, contrato aplicado pós-merge |
+| IA-011..020 | [`IA-011-a-IA-020-contencao-P0.md`](./IA-011-a-IA-020-contencao-P0.md) + [laudo adversarial](./IA-011-a-IA-020-verificacao-adversarial.md) | **Bloco 02 (P0)** — identidade nas funções de IA sem guarda, assinatura de webhook bloqueante, autorização por objeto no áudio; mais o laudo de 5 verificadores adversariais (achados, correções e o que não foi provado) | ✅ entregue (lotes A e B; 2 regressões do lote A corrigidas). O `ELEVENLABS_WEBHOOK_SECRET` foi instalado e as 2 funções publicadas em 30/09/2026 — o defeito A9 está **fechado em produção** (sonda com assinatura falsa → `401`) |
+| IA-021..030 | [`IA-021-a-IA-030-contratos-integridade.md`](./IA-021-a-IA-030-contratos-integridade.md) | **Bloco 03 (P0/P1)** — vocabulário canônico único (sentimento/urgência/prioridade) em `supabase/functions/_shared/`, consumido pelo front por re-export (sem cópias duplicadas), contrato de mensagens com limite agregado, validação de toda saída de modelo com envelope, persistência completa da análise com projeção transacional e trava de recência, etiquetas atômicas e identidade da memória por contato | ✅ entregue em 4 PRs (#1279, #1381, #1402, #1413 e a correção de docs #1421); migrations aplicadas e provadas no banco canônico |
+| IA-031..040 | [`IA-031-a-IA-040-camada-de-provedores-e-capacidades.md`](./IA-031-a-IA-040-camada-de-provedores-e-capacidades.md) | **Bloco 04 (P1)** — camada única de provedores: roteamento determinístico no servidor, capacidades declaradas por provedor, fallback explícito e autorizado, teste do provedor real, despacho central para as 6 capacidades de texto (fim do gateway fixo) e visão por modalidade com imagem embutida | ✅ entregue em 4 PRs (#1434, #1444, #1465, #1487) |
+| IA-041..050 | [`IA-041-a-IA-050-execucao-resiliente-filas-e-consumo.md`](./IA-041-a-IA-050-execucao-resiliente-filas-e-consumo.md) | **Bloco 05 (P1)** — execução resiliente e controle de consumo: prazos por capacidade, retentativas disciplinadas com jitter, limite compartilhado atômico e reserva de orçamento, fila durável de jobs com estados padronizados, efeitos idempotentes, cancelamento fora de contexto e ledger de uso garantido | 🟡 entregue em 5 PRs (#1510, #1529, #1546, #1571, #1602), cobrindo **IA-041..IA-049**. **IA-050 (abrir circuito) não foi entregue** — verificado: nenhum PR a cita e não existe mecanismo de suspensão por falhas repetidas no código. O que existe é a degradação honesta (429/402/504 e a separação `denied` × `infrastructure_error`) |
 
 ## Os três achados que este bloco já deixa provados (base do Bloco 02, P0)
 
@@ -44,16 +46,19 @@ válidos. Este bloco **não altera código, banco nem configuração** — entre
 - Contagens de função/manifesto foram lidas no workspace desta tarefa (`origin/main`); a cópia de
   referência está 2 commits atrás e mostraria 2 funções a mais (`IA-001` §3.1).
 
-## Próximo bloco
+## Próximos blocos
 
-**Bloco 04 — Camada única de provedores e modelos (IA-031..IA-040, P1)**: arquitetura e comportamento
-consistente entre provedores (mesmo desenho que já isolou o áudio no Bloco 02/03). O Bloco 03 está em
-[`IA-021-a-IA-030-contratos-integridade.md`](./IA-021-a-IA-030-contratos-integridade.md).
+Os blocos **01 a 05 estão entregues** (etapas IA-001..IA-050):
 
-**Bloco 02 (P0) — em andamento:** o lote de contenção (IA-011/012/013/014) está em
-[`IA-011-a-IA-020-contencao-P0.md`](./IA-011-a-IA-020-contencao-P0.md), com as etapas de política
-apontadas para os blocos 03/04/05. O deploy das Edge Functions **não** depende de aprovação: o merge na
-`main` dispara o `deploy-functions.yml` (o environment `producao-edge-functions` tem só branch policy — medido:
-nenhum card de aprovação aparece). O que ainda **depende de você** para chegar a produção: criar o
-secret `ELEVENLABS_WEBHOOK_SECRET` (a verificação de assinatura é
-falha fechada: sem o secret, o webhook da ElevenLabs recusa os eventos).
+- **Bloco 04 — Camada única de provedores e modelos (IA-031..IA-040, P1)**:
+  [`IA-031-a-IA-040-camada-de-provedores-e-capacidades.md`](./IA-031-a-IA-040-camada-de-provedores-e-capacidades.md).
+- **Bloco 05 — Execução resiliente, filas e controle de consumo (IA-041..IA-050, P1)**:
+  [`IA-041-a-IA-050-execucao-resiliente-filas-e-consumo.md`](./IA-041-a-IA-050-execucao-resiliente-filas-e-consumo.md).
+
+O **Bloco 02 (P0)** está entregue: o secret `ELEVENLABS_WEBHOOK_SECRET` foi instalado e o
+`elevenlabs-webhook` e o `classify-audio-meme` publicados em 30/09/2026 — o defeito A9 está fechado em
+produção. O deploy das Edge Functions **não** depende de aprovação: o merge na `main` dispara o
+`deploy-functions.yml` (o environment `producao-edge-functions` tem só branch policy — medido: nenhum card
+de aprovação aparece).
+
+Continuação prevista: **Bloco 06 (IA-051..IA-060)**.
