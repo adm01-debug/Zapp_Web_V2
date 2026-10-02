@@ -240,6 +240,7 @@ export async function getContactByPhone(
       .from('contacts')
       .select('id, avatar_url, assigned_to, name')
       .in('phone', phonesVariants)
+      .order('created_at', { ascending: true })
       .limit(1)
       .maybeSingle();
     if (anyConnection) {
