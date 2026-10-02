@@ -82,11 +82,11 @@
 - [ ] **T24** — `WhatsAppCallAdapter.ts`: `dial` → `NotSupported`; `accept` → `answered_by` + abre a conversa do contato no inbox ("Atenda no aparelho da linha; a conversa foi aberta aqui"); `reject` → `declined` local, rótulo "Ignorar" (D7=b). **Aceite:** adapter testado nos 2 ramos.
 - [ ] **T25** — `handleCallEvent`: mapear `offer/ringing→ringing`, `accept→answered`, `reject|timeout→missed`, `terminate→ended`; `p_provider_event_id = data.id`; direção por `fromMe/isOutgoing`; timestamp `data.date`. Fixture anonimizada em `supabase/functions/_shared/__fixtures__/evolution-call-*.json` a partir de `webhook_events` reais (se não houver nenhum `terminate` gravado, registrar e manter defensivo). **Aceite:** teste da função com as fixtures; `deploy-functions` verde citado.
 - [ ] **T26** — `record_incoming_call_event`: **só se T25 precisar** de campo novo (ex.: `p_direction`) — migration própria `T26_record_incoming_call_event_direction.sql` (`CREATE OR REPLACE`, diff ≤ 10 linhas, versão reservada); caso contrário, "não necessária" aqui. **Aceite:** decisão registrada; se DDL, ledger + `types-sync`.
-- [ ] **T27** — `IncomingCallAlert` com `CallChannelBadge`, botões conforme capacidades (Atender/Recusar/Ignorar), toque para em `ACCEPT|REJECT|TIMEOUT|HANGUP_REMOTE`. **Aceite:** teste: toque inicia em `INVITE_RECEIVED` e para nos 4 eventos.
+- [ ] **T27** — `IncomingCallAlert` com `CallChannelBadge`, botões conforme capacidades (Atender/Recusar/Ignorar), toque para em `ACCEPT|REJECT|TIMEOUT|HANGUP_REMOTE`. **Aceite:** teste: toque inicia em `INVITE_RECEIVED` e para nos 4 eventos. **D8:** para quem não é admin/supervisor, o canal WhatsApp aparece indisponível com o texto "Disponível para supervisores" (RLS não muda) e um teste cobre esse caso.
 - [ ] **T28** — Término sincronizado: Realtime em `calls` (`agent_id=eq.<meu perfil>`) → `terminate/timeout` do webhook → `HANGUP_REMOTE` na `call_id` em curso; alerta fecha sozinho. **Aceite:** teste com fake timers + evento.
 - [ ] **T29** — Click-to-call unificado: `ContactActionButtons`/`ContactHeaderSection`/`ChatHeader` chamam `dispatchStartCall({ contactId, phone, name, channel, connectionId, source })`; **único consumidor** = `CallSessionProvider.openDialer` → `?view=voip` com o painel pré-preenchido; remover emissão de `start-voip-call` e o `CallDialog` de `ContactHeaderSection.tsx:210-214`. **Aceite:** `grep -rn "start-voip-call" src` só em `events.ts` (constante legada) ou vazio; 3 origens testadas.
-- [ ] **T30** — Linha de origem: `connectionId` da conversa prevalece; fora do inbox, `is_default`; painel mostra "pela linha <nome>". **Aceite:** texto correto nos 2 casos.
-- [ ] **T31** — `CAPACIDADES.md` atualizado com o que o código faz **após** T23–T30 (data, commit). **Aceite:** tabela igual ao código.
+- [ ] **T30** — Linha de origem: `connectionId` da conversa prevalece; fora do inbox, `is_default`; painel mostra "pela linha <nome>". **Aceite:** texto correto nos 2 casos. **D8:** sem permissão de supervisor o painel não mostra a linha e exibe "Disponível para supervisores"; um teste cobre o caso do agente comum.
+- [ ] **T31** — `CAPACIDADES.md` atualizado com o que o código faz **após** T23–T30 (data, commit). **Aceite:** tabela igual ao código. **D8:** a tabela precisa dizer que o canal WhatsApp é visível só a admin/supervisor.
 - [ ] **T32** — Fechamento Fase 2: gates; `grep start-voip-call` = 0 emissores; PR aberta chamando Joaquim. **Aceite:** seção 11.
 
 ## FASE 3 — Shell, header, disponibilidade, período, KPIs (T33–T42)
@@ -199,6 +199,7 @@
 | D5 | Linhas por página | 8 | 2026-09-29 | padrão do plano (executor: Hermes) — revisável por Joaquim |
 | D6 | KPIs seguem busca/filtros | não | 2026-09-29 | padrão do plano (executor: Hermes) — revisável por Joaquim |
 | D7 | Recusar WhatsApp | **(b) "Ignorar"** | 2026-09-29 | padrão do plano (executor: Hermes) — "Ignorar" = `declined` local, sem endpoint de recusa comprovado no Evolution GO |
+| D8 | Visibilidade do canal WhatsApp sob RLS | **(3) Não mexer na RLS** | 2026-10-02 | **Decisão do Joaquim** (caixa `20261002-092605-eb4f`) — a policy de SELECT de `whatsapp_connections` devolve zero linhas para agente comum (só admin/supervisor lê; a de agentes foi derrubada em `20260411111648`). O canal fica visível só a admin/supervisor; para o agente comum aparece **indisponível** com o texto "Disponível para supervisores". T27/T30 entregam isso e testam o caso. Segurança de produção não é alterada |
 
 ## 11. Mapa de PRs
 
