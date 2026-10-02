@@ -27,18 +27,31 @@
 # NAO usa withPsqlEnvironment/PGPASSFILE (diferente de check-migration-drift.mjs,
 # register-migration.mjs etc): a CLI 2.116.0 (rewrite TS/Effect) roda
 # `gen types typescript --db-url` subindo um container Docker
-# (ghcr.io/supabase/postgres-meta). Esse container NAO sobe em --network host:
-# a CLI cria uma rede Docker propria (bridge) para ele, e um container em bridge
-# NAO alcanca o loopback do runner, onde o proxy abaixo escuta. Medido num
-# Postgres de teste (mesmo Postgres, mesmo host, so muda a rede do cliente):
-#   container em bridge -> 127.0.0.1:<porta>  = "no response"
-#   container em bridge -> 172.17.0.1:<porta> = "accepting connections"
-# Por isso o comando `gen types` abaixo passa --network-id host (documentado
-# pela CLI como "use the specified docker network instead of a generated one").
-# Sem essa flag o container fica isolado da porta do proxy e a CLI morre com
-# "Error: timeout exceeded when trying to connect" apos ~16s.
-# A --db-url e entregue ao container em texto puro (confirmado empiricamente —
-# nao e in-process nem evita Docker). Mitigacao: ver bloco "Proxy local" abaixo.
+# (ghcr.io/supabase/postgres-meta), e entrega a --db-url a esse container em
+# texto puro (confirmado empiricamente — nao e in-process nem evita Docker).
+# Por isso a credencial real de producao nao pode ir direto nela: ver o bloco
+# "Proxy local" abaixo.
+#
+# Sobre o `--network-id host` no comando abaixo: ele torna explicita a rede do
+# container em vez de depender da rede que a CLI gera a cada execucao
+# (documentado como "use the specified docker network instead of a generated
+# one"). IMPORTANTE — ele NAO e correcao do "Error: timeout exceeded when
+# trying to connect", e um comentario anterior aqui afirmava isso e estava
+# errado (o PR #1637 foi mergeado com essa justificativa incorreta).
+# O que os runs mostram:
+#   - o timeout e INTERMITENTE: 2 de 14 runs do db-live-guard na main em
+#     02/10/2026 (bed17931, 73d808b8); os outros 12 conectaram, inclusive 7
+#     ANTES do #1637 existir;
+#   - nos runs que falham, o log traz os clientes do postgres-meta JA
+#     instanciados ("Failed to end the connection on error: { this:
+#     PostgresMetaRelationships { query: [AsyncFunction: query] }, end:
+#     undefined }") — se o container nao alcancasse o loopback do runner, o erro
+#     seria a montante e esses objetos nao existiriam;
+#   - logo o que trava e a QUERY atraves do pgbouncer ate o banco de producao
+#     (verify-full), apos ~16-21s; os runs que passam terminam em 4-8s.
+# A flag fica porque e inofensiva e remove uma dependencia implicita da rede
+# gerada; a causa do timeout segue em investigacao (nao e infra do container).
+#
 # --local nao tem esse problema: nao usa credencial nenhuma, so o Postgres do
 # Docker subido por `supabase db start`.
 set -e
