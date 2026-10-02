@@ -59,7 +59,14 @@ function arquivoDaBaseline(nome: string, tema: Tema): string {
 
 /** Regiões com dado vivo (mudam a cada contato criado): mascaradas na comparação. */
 function mascarasDeDadoVivo(page: Page) {
-  return [page.getByTestId('kpi-value'), page.getByTestId('tab-count')];
+  return [
+    page.getByTestId('kpi-value'),
+    page.getByTestId('kpi-sparkline'),
+    page.getByTestId('tab-count'),
+    page.getByTestId('contact-card'),
+    page.getByTestId('contact-list-item'),
+    page.getByTestId('contacts-table-body'),
+  ];
 }
 
 /** Toasts globais (ex.: aviso de SIP não configurado) não fazem parte da tela de Contatos. */

@@ -53,7 +53,7 @@ function Sparkline({ series, chart, className }: { series: number[]; chart: 'lin
     const totalW = series.length * barW + (series.length - 1) * gap;
     const offsetX = (w - totalW) / 2;
     return (
-      <svg width={w} height={h} className={className}>
+      <svg data-testid="kpi-sparkline" width={w} height={h} className={className}>
         {series.map((v, i) => {
           const barH = Math.max((v / max) * (h - 4), 2);
           return (
@@ -86,7 +86,7 @@ function Sparkline({ series, chart, className }: { series: number[]; chart: 'lin
   const [lastX, lastY] = points[points.length - 1];
 
   return (
-    <svg width={w} height={h} className={className}>
+    <svg data-testid="kpi-sparkline" width={w} height={h} className={className}>
       <defs>
         <linearGradient id="kpi-spark-area" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="currentColor" stopOpacity="0.25" />
