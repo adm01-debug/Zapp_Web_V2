@@ -124,7 +124,7 @@ export function ContactKpiCard({ label, value, deltaPct, tile, icon: Icon, serie
       data-testid="kpi-card"
       className="h-[108px] rounded-[14px] border border-border/70 card-glow py-4 px-4 flex items-center gap-4"
     >
-      <div data-testid="kpi-tile" className={cn('w-[60px] h-[60px] rounded-xl flex items-center justify-center shrink-0', bg)}>
+      <div data-testid="kpi-tile" className={cn('w-[60px] h-[60px] rounded-xl hidden sm:flex items-center justify-center shrink-0', bg)}>
         <Icon className={cn('w-[26px] h-[26px]', fg)} />
       </div>
 

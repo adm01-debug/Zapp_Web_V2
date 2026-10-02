@@ -82,7 +82,7 @@ export function ContactToolbar({
 }: ContactToolbarProps) {
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-3 flex-wrap xl:flex-nowrap">
+      <div className="flex items-center gap-3 flex-wrap 2xl:flex-nowrap">
         <ContactSearchWithSuggestions
           value={searchInput}
           onChange={onSearchChange}

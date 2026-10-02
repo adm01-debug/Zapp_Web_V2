@@ -62,6 +62,9 @@ function mascarasDeDadoVivo(page: Page) {
   return [page.getByTestId('kpi-value'), page.getByTestId('tab-count')];
 }
 
+/** Toasts globais (ex.: aviso de SIP não configurado) não fazem parte da tela de Contatos. */
+const SEM_TOASTS = '[data-sonner-toaster], [role="region"][aria-label^="Notifications"] { display: none !important; }';
+
 /** Espera a vista pedida estar de fato montada (mesmos marcadores de `contacts-views.spec.ts`). */
 async function abrirVista(page: Page, nome: string, label: string): Promise<void> {
   await page.getByTitle(label).click();
@@ -125,6 +128,7 @@ for (const tema of ['light', 'dark'] as const) {
             '`bun run test:e2e -- --project=setup --project=chromium-authenticated --update-snapshots`.',
         );
 
+        await page.addStyleTag({ content: SEM_TOASTS });
         await expect(page).toHaveScreenshot(`contacts-${vista.nome}-${tema}${SNAPSHOT_EXT}`, {
           maxDiffPixelRatio: 0.002,
           animations: 'disabled',

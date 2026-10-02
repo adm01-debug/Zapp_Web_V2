@@ -31,7 +31,7 @@ export function ContactResultsSummary({
   const showPagination = totalCount > pageSize;
 
   return (
-    <div className="h-9 flex items-center justify-between text-sm text-muted-foreground">
+    <div className="min-h-9 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm text-muted-foreground">
       <div className="flex items-center gap-3 flex-wrap">
         {/* Fix: <button> aninhado em <button> é HTML inválido.
             Usamos div com role=button + onKeyDown para acessibilidade. */}
