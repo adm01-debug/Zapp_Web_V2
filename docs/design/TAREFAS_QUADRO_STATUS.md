@@ -92,8 +92,8 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
   D16: `useMyWorkItemsBadge` nao tem consumidor na UI (depende da Fase F) e `WorkItem.contact` (join da etapa 13) tambem nao e renderizado — contratos prontos e testados, UI pendente. `includeCancelled`, `snooze` e `setReminder` sao API publica sem UI (Fase F).
   D17: `bun run lint` (eslint cru, que NAO e gate do CI) acusa 956 problemas legados; o gate real e o lint-ratchet, que passa (0 novas).
 
-## CP-C Sheet       [x] WorkItemSheet=ok (23–27, C1) · ?task=ok · Abrir pelo card=ok (B3) · Aguardando por DnD/kebab/menu=ok (28/29, C2; DnD e kebab) · kebab 5 grupos=ok (30, C2) · RemindChip popover=ok (31, C2) · ContactChip=ok (32, C2) · MoveToMenu=ok (33, C2, em board/) · screenshot C-34=pendente (login de QA)
-## CP-D QuickAdd [x] — chip-btn CSS=ok · 7 chips=ok · validação passado=ok · teste=11+2+6 mutações
+## CP-C Sheet       [x] WorkItemSheet=ok (23–27, C1) · ?task=ok · Abrir pelo card=ok (B3) · Aguardando por DnD/kebab/menu=ok (28/29, C2; DnD e kebab) · kebab 5 grupos=ok (30, C2) · RemindChip popover=ok (31, C2) · ContactChip=ok (32, C2) · MoveToMenu=ok (33, C2, em board/) · screenshot `C-34-sheet.png` **tirado em producao em 02/10/2026** com a conta COMPRAS (o bloqueio de login nao existe mais)
+## CP-D QuickAdd [x] — chip-btn CSS=ok · 7 chips=ok (reconfirmado no DOM em 02/10: `[data-testid^=quick-add-chip]` = 7) · screenshot `D-42-quickadd.png` tirado 02/10 · validação passado=ok · teste=11+2+6 mutações
 ## CP-E Telas       [~] etapas 43, 44, 45 e 46, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8), 53, 55, 56 e 57 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos: ok (barra de 5 filtros, estado na URL por replaceState, recorte único) · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos: ok (3 grupos, ponto por tipo, atrasadas expansível) · card agenda: ok (h-11, 1 linha, checkbox) · QuickAdd no dia: ok (pré-preenchido) · 0 requests na troca= · modo por rota: ok · auditoria F1: ok (7 correções; 9 mutações mortas) · auditoria F2: ok (7 correções; 7 mutações mortas) · auditoria F3: ok (A4 16/16 mutações mortas; A1-1 corrigido; 3 achados do A2 na fila) · cenários F4: ok (7 sobreviventes da F3 cobertos; 5/5 mutações mortas) · rótulos pt-BR do módulo: ok (Média, Concluído e as políticas das colunas acentuados)
 
 ## Etapa 47 (B7) — modo por rota (Fase E) — evidências
@@ -778,3 +778,20 @@ Armadilha registrada: `CREATE OR REPLACE FUNCTION` **nao troca o tipo de retorno
 **Etapa 62 (badge da sidebar).** Achado do dono: o DoD pede `bg-destructive` com atrasada e `bg-warning` sem, e o `SidebarNavItem` pintava `bg-destructive` fixo. `useMyWorkItemsBadge` virou `useMyWorkItemsBadgeInfo` (devolve `count` + `hasOverdue`), o `Sidebar` passa a variante e o badge ganha a cor por estado; 3 testes novos cobrem vermelho, amarelo e o padrao.
 
 **Etapa 93/47 (altura do card).** Medido em producao: o card do Quadro sem chip nenhum tem **56px**, e o DoD da etapa 47 exige `min-h-[72px]`. O `WorkItemCard` **nao tinha** `min-h` (zero ocorrencias no arquivo). Corrigido nesta PR no modo nao-agenda; cuidado deliberado: a Agenda continua `h-11` (44px, etapa 56).
+
+
+---
+
+## CP-L Entrega (2026-10-02) — evidencias de tela (etapas 34/42/54/58/81/82/83/100) e prova da 93 no ar
+
+**Screenshots tirados contra producao com a conta COMPRAS** (18 PNGs em `~/auditorias/fase-j/out/`): `C-34-sheet.png`, `D-42-quickadd.png`, `E-54-pipeline-1440-cinco-colunas.png`, `E-58-{list,board,agenda,board-1280}.png`, `H-81-mobile-{list,board,agenda}.png`, `H-82-light-{list,board,agenda}.png`, `H-83-zen.png`, `J-100-prod-{tasks,board,chat}.png`.
+
+**Etapa 81 — a medida que o DoD pede (`scrollWidth <= innerWidth` nos 3 modos):** Lista **390 = 390**, Quadro **390 = 390**, Agenda **390 = 390** (390x844, `overflow: false` nos tres). O `screens-relatorio.json` guarda os numeros crus.
+
+**Etapa 54 (1440):** o board renderiza com os status no DOM e `docScrollWidth = innerWidth = 1440` — as colunas **cabem**, entao **nenhum `-mx-[var(--layout-gutter)]` foi aplicado**. Decisao registrada; o PNG e a evidencia.
+
+**Etapa 83 (Zen):** em 390x844, `scrollWidth = innerWidth = 390` — QuickAdd e mini-quadro nao estouram o painel.
+
+**Etapa 93 (card 56px -> 72px):** a correcao (`min-h-[72px]` so no modo nao-agenda) foi mergeada (#1590) e esta **no ar**: o CSS de producao (`assets/index-B65zfFfB.css`) contem `min-height:72px`, e os tokens `--warning` / `--warning-foreground` estao presentes para o badge amarelo da 62. Remedicao com tarefa seedada fica para a proxima janela (a conta QA esta sem tarefa e o card so existe com dado).
+
+**Etapas 42/34:** reconfirmadas por medicao — `C-34-sheet.png` tirado 02/10 (o CP-C dizia pendente por login de QA, que ja nao e bloqueio) e o QuickAdd expoe **7 chips** no DOM (`D-42-quickadd.png`).
