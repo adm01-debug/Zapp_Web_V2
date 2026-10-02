@@ -1,4 +1,5 @@
 import React from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,13 @@ const RFM_SEGMENT_COLORS: Record<string, string> = {
   'Need Attention': 'bg-warning/15 text-warning border-warning/30',
   Promising: 'bg-secondary/15 text-secondary border-secondary/30',
 };
+
+// Altura estimada da linha de contato (p-2.5 + nome + telefone ≈ 56px). O
+// badge de CRM (opcional, por contato) deixa a linha mais alta; como a altura
+// real é medida no DOM via `virtualizer.measureElement`, este valor é só o
+// chute inicial que dimensiona a barra de rolagem antes da 1ª medição.
+const CONTACT_ROW_ESTIMATE = 56;
+const CONTACT_OVERSCAN = 6;
 
 function TalkXCRMBadge({ crmInfo }: { crmInfo: CRMBatchResult | undefined }) {
   if (!crmInfo?.company_name) return null;
@@ -76,6 +84,35 @@ export const TalkXContactSelector: React.FC<Props> = ({
   );
   const { lookup: crmLookup } = useExternalContact360Batch(crmContacts);
 
+  // V24 — a lista pode vir com milhares de contatos (o número vem do pai via
+  // `filteredContacts`); renderizar todos de uma vez trava o passo 1 do
+  // wizard. Virtualização com @tanstack/react-virtual (mesmo padrão de
+  // ExternalProductCatalog / VirtualizedRealtimeList): só a janela visível +
+  // overscan entra no DOM, sobre um espaçador com a altura total para a barra
+  // de rolagem continuar correta.
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const getScrollElement = React.useCallback(() => scrollRef.current, []);
+  const estimateSize = React.useCallback(() => CONTACT_ROW_ESTIMATE, []);
+  // Ref em vez de dependência: mantém `getItemKey` estável mesmo quando o
+  // filtro troca a lista (mesmo padrão do ChatMessagesArea).
+  const filteredRef = React.useRef(filteredContacts);
+  filteredRef.current = filteredContacts;
+  const getItemKey = React.useCallback(
+    (index: number) => filteredRef.current[index]?.id ?? index,
+    []
+  );
+  // TanStack Virtual devolve funcoes nao memoizaveis pelo React Compiler —
+  // mesma limitacao ja aceita nos outros usos deste hook no repo
+  // (ExternalProductCatalog, VirtualizedRealtimeList).
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const virtualizer = useVirtualizer({
+    count: filteredContacts.length,
+    getScrollElement,
+    estimateSize,
+    overscan: CONTACT_OVERSCAN,
+    getItemKey,
+  });
+
   return (
     <Card className="h-fit max-h-[calc(100vh-200px)] flex flex-col">
       <CardHeader className="pb-3">
@@ -128,15 +165,24 @@ export const TalkXContactSelector: React.FC<Props> = ({
             <p className="text-3xs text-muted-foreground">{filteredContacts.length} contatos filtrados • {selectedContacts.length} selecionados</p>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 overflow-auto min-h-0">
-        <div className="space-y-0.5">
-          {filteredContacts.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">{contactSearch ? 'Nenhum contato encontrado' : 'Nenhum contato disponível'}</p>
-          ) : (
-            filteredContacts.map((contact) => {
-                const isSelected = selectedContacts.includes(contact.id);
-                return (
-                  <label key={contact.id} className={`flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-primary/10 border border-primary/20' : 'hover:bg-muted/50 border border-transparent'}`}>
+      <CardContent ref={scrollRef} className="flex-1 overflow-auto min-h-0">
+        {filteredContacts.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-8">{contactSearch ? 'Nenhum contato encontrado' : 'Nenhum contato disponível'}</p>
+        ) : (
+          <div style={{ height: `${virtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
+            {virtualizer.getVirtualItems().map((virtualRow) => {
+              const contact = filteredContacts[virtualRow.index];
+              if (!contact) return null;
+              const isSelected = selectedContacts.includes(contact.id);
+              return (
+                <div
+                  key={virtualRow.key}
+                  data-index={virtualRow.index}
+                  ref={virtualizer.measureElement}
+                  className="pb-0.5"
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${virtualRow.start}px)` }}
+                >
+                  <label className={`flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-primary/10 border border-primary/20' : 'hover:bg-muted/50 border border-transparent'}`}>
                     <Checkbox checked={isSelected} onCheckedChange={() => toggleContact(contact.id)} />
                     <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground shrink-0">
                       {contact.avatar_url ? <img src={contact.avatar_url} alt="" className="w-full h-full rounded-full object-cover" /> : (contact.name || '?')[0].toUpperCase()}
@@ -150,10 +196,11 @@ export const TalkXContactSelector: React.FC<Props> = ({
                       {crmIntegrationEnabled && <TalkXCRMBadge crmInfo={crmLookup(contact.phone)} />}
                     </div>
                   </label>
-                );
-            })
-          )}
-        </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

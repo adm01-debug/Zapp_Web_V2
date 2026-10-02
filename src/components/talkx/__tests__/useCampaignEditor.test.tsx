@@ -1,13 +1,22 @@
 import { act, render, renderHook, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+/** Consulta registrada pelo mock de `useQuery` (o teste invoca o `queryFn`). */
+type CapturedQuery = {
+  queryKey: unknown[];
+  queryFn?: (context: { signal: AbortSignal }) => Promise<unknown>;
+};
+
 const f = vi.hoisted(() => ({
   create: vi.fn(), update: vi.fn(), saveDraft: vi.fn(), replace: vi.fn(), start: vi.fn(), log: vi.fn(),
+  resolveAudience: vi.fn(async (_rules: unknown, _limit?: number) => [] as unknown[]),
+  countAudience: vi.fn(async (_rules: unknown) => 0),
   contacts: [{ id: 'contact-1', name: 'Ana Silva', nickname: null, phone: '5511999999999', company: 'Acme', avatar_url: null, tags: ['VIP'] }],
   connections: [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }],
   blacklist: { ids: new Set<string>(), phones: new Set<string>() },
   persistedRecipientIds: [] as { contact_id: string }[] | undefined,
   templates: [] as { id: string; content: string; media_url: string | null; media_type?: string | null; use_count: number }[],
+  queryCalls: [] as CapturedQuery[],
 }));
 
 vi.mock('@/hooks/integrations/useTalkX', () => ({
@@ -30,10 +39,18 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
     startCampaign: f.start,
   }),
 }));
-vi.mock('@/hooks/integrations/useTalkXSegments', () => ({
-  useTalkXSegments: () => ({ segments: [] }),
-  resolveAudience: vi.fn(), countAudience: vi.fn(),
-}));
+// V24 — o motor de segmentos entra REAL (RULE_FIELDS/RULE_OPS/rulesToPostgrest/
+// emptyRules); só as consultas ao banco viram spies, para o teste provar que a
+// regra marcada no passo 1 chega ao motor.
+vi.mock('@/hooks/integrations/useTalkXSegments', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/hooks/integrations/useTalkXSegments')>();
+  return {
+    ...actual,
+    useTalkXSegments: () => ({ segments: [] }),
+    resolveAudience: f.resolveAudience,
+    countAudience: f.countAudience,
+  };
+});
 vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({ useTalkXTemplates: () => ({ templates: f.templates, registerUse: vi.fn() }) }));
 vi.mock('@/hooks/integrations/useTalkXEvents', () => ({ useTalkXEventLogger: () => f.log }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: vi.fn() } }));
@@ -41,16 +58,35 @@ vi.mock('@/lib/supabaseHelpers', () => ({ fromTable: vi.fn() }));
 vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => false }));
 vi.mock('@/hooks/crm/useExternalContact360Batch', () => ({ useExternalContact360Batch: () => ({ batchData: new Map(), lookup: () => undefined, isLoading: false, isConfigured: false }) }));
 vi.mock('@tanstack/react-query', () => ({
-  useQuery: ({ queryKey }: { queryKey: string[] }) => ({
-    data: queryKey[0] === 'wa-connections-talkx' ? f.connections
-      : queryKey[0] === 'contacts-talkx' ? f.contacts
-      : queryKey[0] === 'talkx-draft-recipient-ids' ? f.persistedRecipientIds?.map((recipient) => recipient.contact_id)
-        : queryKey[0] === 'talkx-blacklist-ids' ? f.blacklist : undefined,
-  }),
+  useQuery: (options: { queryKey?: unknown[]; queryFn?: CapturedQuery['queryFn'] }) => {
+    f.queryCalls.push({ queryKey: options.queryKey ?? [], queryFn: options.queryFn });
+    const key = String(options.queryKey?.[0]);
+    const data = key === 'wa-connections-talkx' ? f.connections
+      : key === 'talkx-audience-contacts' ? f.contacts
+        : key === 'talkx-audience-count' ? f.contacts.length
+          : key === 'talkx-draft-recipient-ids' ? f.persistedRecipientIds?.map((recipient) => recipient.contact_id)
+            : key === 'talkx-blacklist-ids' ? f.blacklist : undefined;
+    return { data, isFetching: false };
+  },
+  useMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+  useQueryClient: () => ({ invalidateQueries: vi.fn(), setQueryData: vi.fn(), getQueryData: vi.fn() }),
 }));
 
-import { localToUTCInTimezone, useCampaignEditor } from '@/components/talkx/useCampaignEditor';
+import { AUDIENCE_PREVIEW_LIMIT, localToUTCInTimezone, useCampaignEditor } from '@/components/talkx/useCampaignEditor';
 import { TalkXCampaignWizard } from '@/components/talkx/TalkXCampaignWizard';
+import { rulesToPostgrest, type SegmentRules } from '@/hooks/integrations/useTalkXSegments';
+
+/** Última consulta registrada com a chave informada (o mock empilha por render). */
+function capturedQuery(key: string): CapturedQuery | undefined {
+  return [...f.queryCalls].reverse().find((entry) => String(entry.queryKey[0]) === key);
+}
+
+/** Valor do filtro PostgREST persistido no último save. */
+function lastSavedFilter(): string | null {
+  const calls = f.update.mock.calls;
+  const payload = calls[calls.length - 1]?.[0] as { audience_filters?: SegmentRules } | undefined;
+  return rulesToPostgrest(payload?.audience_filters);
+}
 
 describe('useCampaignEditor — draft integrity', () => {
   beforeEach(() => {
@@ -67,6 +103,9 @@ describe('useCampaignEditor — draft integrity', () => {
     f.persistedRecipientIds = [];
     f.templates = [];
     f.connections = [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }];
+    f.queryCalls.length = 0;
+    f.resolveAudience.mockResolvedValue(f.contacts);
+    f.countAudience.mockResolvedValue(f.contacts.length);
     window.sessionStorage.clear();
     window.history.replaceState(null, '', '/');
   });
@@ -102,6 +141,15 @@ describe('useCampaignEditor — draft integrity', () => {
   it('uses a real disabled control while the current step is invalid', () => {
     render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
     expect(screen.getByRole('button', { name: /continuar/i })).toBeDisabled();
+  });
+
+  it('oferece os filtros do passo 1 pelo catálogo de regras e consulta o motor (V24)', () => {
+    render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
+
+    expect(screen.getByRole('button', { name: /adicionar filtro/i })).toBeInTheDocument();
+    // A lista e a contagem do passo 1 saem do motor (não mais do SELECT morto).
+    expect(capturedQuery('talkx-audience-contacts')).toBeDefined();
+    expect(capturedQuery('talkx-audience-count')).toBeDefined();
   });
 
   it('does not offer a stale or instance-less WhatsApp connection for campaign delivery', () => {
@@ -196,7 +244,7 @@ describe('useCampaignEditor — draft integrity', () => {
     expect(f.replace).toHaveBeenLastCalledWith({ campaignId: 'draft-1', contactIds: ['contact-1'] });
   });
 
-  it('autosaves all persisted audience filters', async () => {
+  it('persiste as regras de audiência no mesmo JSON do motor (V24)', async () => {
     const campaign = { id: 'draft-1', name: 'Rascunho', status: 'draft' };
     const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
     await act(async () => {});
@@ -204,36 +252,128 @@ describe('useCampaignEditor — draft integrity', () => {
 
     act(() => result.current.setCompanyFilter('Acme'));
     await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
-
-    expect(f.update).toHaveBeenCalledWith(expect.objectContaining({
-      id: 'draft-1',
-      audience_filters: expect.objectContaining({ company: 'Acme' }),
-    }));
+    expect(lastSavedFilter()).toBe('company.eq."Acme"');
 
     f.update.mockClear();
     act(() => result.current.setCompanyFilter('all'));
     await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
-    expect(f.update).toHaveBeenCalledWith(expect.objectContaining({
-      id: 'draft-1',
-      audience_filters: expect.objectContaining({ company: 'all' }),
-    }));
+    expect(lastSavedFilter()).toBeNull();
   });
 
-  it('reabre o rascunho com os filtros salvos em audience_filters (V23)', async () => {
+  it('converte o snapshot solto do V23 em regras e descarta os filtros mortos (V24)', async () => {
     const campaign = {
       id: 'draft-1', name: 'Rascunho', status: 'draft', audience_source: 'contacts',
-      audience_filters: { company: 'Acme', tag: 'VIP', city: 'Recife', group: 'Grupo A', inactive: true, birthday: 'this_month', search: 'ana' },
+      audience_filters: { company: 'Acme', tag: 'VIP', city: 'Recife', state: 'PE', status: 'open', group: 'Grupo A', inactive: true, birthday: 'this_month', search: 'ana' },
     };
     const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
     await act(async () => {});
 
+    expect(rulesToPostgrest(result.current.audienceRules))
+      .toBe('and(company.eq."Acme",tags.cs.{"VIP"},city.eq."Recife",state.eq."PE",conversation_status.eq."open")');
     expect(result.current.companyFilter).toBe('Acme');
     expect(result.current.tagFilter).toBe('VIP');
-    expect(result.current.cityFilter).toBe('Recife');
-    expect(result.current.groupFilter).toBe('Grupo A');
-    expect(result.current.inactiveFilter).toBe(true);
-    expect(result.current.birthdayFilter).toBe('this_month');
     expect(result.current.contactSearch).toBe('ana');
+    // group/inactive/birthday eram filtros mortos: não são convertidos nem expostos.
+    expect(result.current).not.toHaveProperty('cityFilter');
+    expect(result.current).not.toHaveProperty('groupFilter');
+    expect(result.current).not.toHaveProperty('inactiveFilter');
+    expect(result.current).not.toHaveProperty('birthdayFilter');
+  });
+
+  it('o rascunho salvo com regras reabre com as mesmas regras (V24)', async () => {
+    const first = renderHook(() => useCampaignEditor({ id: 'draft-1', name: 'Rascunho', status: 'draft', audience_source: 'contacts' } as never, vi.fn()));
+    await act(async () => {});
+    act(() => { first.result.current.setCompanyFilter('Acme'); first.result.current.setTagFilter('VIP'); });
+    act(() => first.result.current.addAudienceRule('city'));
+    const cityRule = first.result.current.audienceRules.groups[0].rules.find((rule) => rule.field === 'city');
+    if (!cityRule) throw new Error('a regra de cidade deveria existir');
+    act(() => { first.result.current.updateAudienceRule(cityRule.id, { op: 'eq', value: 'Recife' }); first.result.current.setContactSearch('ana'); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+
+    const calls = f.update.mock.calls;
+    const saved = calls[calls.length - 1]?.[0] as { audience_filters?: SegmentRules } | undefined;
+    const savedFilter = rulesToPostgrest(saved?.audience_filters) ?? '';
+    expect(savedFilter).toContain('company.eq."Acme"');
+    expect(savedFilter).toContain('tags.cs.{"VIP"}');
+    expect(savedFilter).toContain('city.eq."Recife"');
+    first.unmount();
+
+    const second = renderHook(() => useCampaignEditor({
+      id: 'draft-1', name: 'Rascunho', status: 'draft', audience_source: 'contacts',
+      audience_filters: saved?.audience_filters,
+    } as never, vi.fn()));
+    await act(async () => {});
+
+    expect(second.result.current.audienceRules).toEqual({ groups: saved?.audience_filters?.groups });
+    expect(second.result.current.companyFilter).toBe('Acme');
+    expect(second.result.current.tagFilter).toBe('VIP');
+    expect(second.result.current.contactSearch).toBe('ana');
+  });
+
+  it('marcar um filtro de cidade consulta o motor com a regra correspondente (V24)', async () => {
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    await act(async () => {});
+
+    act(() => result.current.addAudienceRule('city'));
+    const ruleId = result.current.audienceRules.groups[0].rules[0]?.id;
+    if (!ruleId) throw new Error('a regra de cidade deveria existir');
+    act(() => result.current.updateAudienceRule(ruleId, { op: 'eq', value: 'Sao Paulo' }));
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+
+    const listQuery = capturedQuery('talkx-audience-contacts');
+    const countQuery = capturedQuery('talkx-audience-count');
+    // A chave da consulta carrega a regra: é ela que dispara a nova busca.
+    expect(String(listQuery?.queryKey[1])).toContain('"field":"city"');
+    expect(String(listQuery?.queryKey[1])).toContain('"value":"Sao Paulo"');
+    expect(String(countQuery?.queryKey[1])).toBe(String(listQuery?.queryKey[1]));
+
+    const listFn = listQuery?.queryFn;
+    const countFn = countQuery?.queryFn;
+    if (!listFn || !countFn) throw new Error('as consultas de audiência precisam expor queryFn');
+
+    // Sem a regra na consulta este teste falha: ela tem de chegar ao motor.
+    const signal = new AbortController().signal;
+    f.resolveAudience.mockClear();
+    f.countAudience.mockClear();
+    await listFn({ signal });
+    await countFn({ signal });
+
+    expect(f.resolveAudience).toHaveBeenCalledTimes(1);
+    expect(f.countAudience).toHaveBeenCalledTimes(1);
+    expect(f.resolveAudience).toHaveBeenCalledWith(expect.anything(), AUDIENCE_PREVIEW_LIMIT);
+    expect(rulesToPostgrest(f.resolveAudience.mock.calls[0][0] as SegmentRules)).toBe('city.eq."Sao Paulo"');
+    expect(rulesToPostgrest(f.countAudience.mock.calls[0][0] as SegmentRules)).toBe('city.eq."Sao Paulo"');
+  });
+
+  it('descarta a resposta de uma consulta de audiência já cancelada (V24)', async () => {
+    renderHook(() => useCampaignEditor(null, vi.fn()));
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+
+    const listFn = capturedQuery('talkx-audience-contacts')?.queryFn;
+    if (!listFn) throw new Error('a consulta de audiência precisa expor queryFn');
+
+    const controller = new AbortController();
+    controller.abort();
+    await expect(listFn({ signal: controller.signal })).rejects.toThrow('cancelada');
+  });
+
+  it('não expõe nem persiste os filtros mortos group/inactive/birthday (V24)', async () => {
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    await act(async () => {});
+
+    for (const dead of ['cityFilter', 'setCityFilter', 'groupFilter', 'setGroupFilter', 'inactiveFilter', 'setInactiveFilter', 'birthdayFilter', 'setBirthdayFilter']) {
+      expect(result.current).not.toHaveProperty(dead);
+    }
+
+    act(() => { result.current.setName('Campanha sem filtros mortos'); result.current.toggleContact('contact-1'); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+
+    const payload = f.create.mock.calls[f.create.mock.calls.length - 1]?.[0] as { audience_filters?: Record<string, unknown> } | undefined;
+    const filters = payload?.audience_filters ?? {};
+    expect(Array.isArray(filters.groups)).toBe(true);
+    for (const dead of ['company', 'tag', 'city', 'state', 'status', 'group', 'inactive', 'birthday']) {
+      expect(filters).not.toHaveProperty(dead);
+    }
   });
 
   it('persiste o passo do wizard no payload do rascunho (V23)', async () => {
@@ -248,13 +388,16 @@ describe('useCampaignEditor — draft integrity', () => {
     expect(f.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'draft-1', draft_step: 2 }));
   });
 
-  it('round-trip: sair no passo 2 com filtro e reabrir no mesmo passo com o mesmo filtro (V23)', async () => {
+  it('round-trip: sair no passo 2 com regra e reabrir no mesmo passo com a mesma regra (V23/V24)', async () => {
     const first = renderHook(() => useCampaignEditor({ id: 'draft-1', name: 'Rascunho', status: 'draft', audience_source: 'contacts' } as never, vi.fn()));
     await act(async () => {});
-    act(() => { first.result.current.setStep(2); first.result.current.setCityFilter('Recife'); });
+    act(() => { first.result.current.setStep(2); first.result.current.addAudienceRule('city'); });
+    const cityRule = first.result.current.audienceRules.groups[0].rules[0];
+    if (!cityRule) throw new Error('a regra de cidade deveria existir');
+    act(() => first.result.current.updateAudienceRule(cityRule.id, { op: 'eq', value: 'Recife' }));
     await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
     const calls = f.update.mock.calls;
-    const saved = calls[calls.length - 1]?.[0] as { draft_step?: number; audience_filters?: Record<string, unknown> };
+    const saved = calls[calls.length - 1]?.[0] as { draft_step?: number; audience_filters?: SegmentRules };
     first.unmount();
 
     const second = renderHook(() => useCampaignEditor({
@@ -265,7 +408,7 @@ describe('useCampaignEditor — draft integrity', () => {
 
     expect(saved.draft_step).toBe(2);
     expect(second.result.current.step).toBe(2);
-    expect(second.result.current.cityFilter).toBe('Recife');
+    expect(rulesToPostgrest(second.result.current.audienceRules)).toBe('city.eq."Recife"');
   });
 
   it('reports a failed autosave and only marks the latest snapshot saved after a confirmed retry', async () => {
@@ -327,11 +470,18 @@ describe('useCampaignEditor — draft integrity', () => {
     expect(f.create).toHaveBeenCalledTimes(2);
   });
 
-  it('clears text search together with the other audience filters', () => {
+  it('limpa a busca textual e as regras no "Limpar filtros" (V24)', () => {
     const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
-    act(() => result.current.setContactSearch('ausente'));
+    act(() => result.current.addAudienceRule('city'));
+    const cityRule = result.current.audienceRules.groups[0].rules[0];
+    if (!cityRule) throw new Error('a regra de cidade deveria existir');
+    act(() => { result.current.updateAudienceRule(cityRule.id, { value: 'Recife' }); result.current.setContactSearch('ausente'); });
+    expect(rulesToPostgrest(result.current.audienceRules)).toBe('city.eq."Recife"');
+
     act(() => result.current.clearFilters());
+
     expect(result.current.contactSearch).toBe('');
+    expect(rulesToPostgrest(result.current.audienceRules)).toBeNull();
     expect(result.current.filteredContacts).toHaveLength(1);
   });
 
