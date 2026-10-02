@@ -157,7 +157,11 @@ function pular(motivo) {
  */
 function assinarEscopo(permissions, vendedorEmail, secret, agoraMs = Date.now()) {
   const exp = Math.floor(agoraMs / 1000) + 300;
-  const payload = `v1|${[...permissions].sort().join(',')}|${vendedorEmail ?? ''}|${exp}`;
+  // S2871: comparador explicito. Para os identificadores de permissao em uso
+  // (ascii minusculo: admin/suppliers/carriers/customers_own/customers_all) a
+  // ordem e identica ao sort() padrao e ao COLLATE "C" do guard SQL — o payload
+  // v1 continua o mesmo.
+  const payload = `v1|${[...permissions].sort((a, b) => a.localeCompare(b)).join(',')}|${vendedorEmail ?? ''}|${exp}`;
   return { hmac: crypto.createHmac('sha256', secret).update(payload, 'utf8').digest('hex'), exp };
 }
 

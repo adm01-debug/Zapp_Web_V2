@@ -396,6 +396,7 @@ export function useTalkX() {
   return {
     campaigns: campaignsQuery.data || [],
     isLoading: campaignsQuery.isLoading,
+    isError: campaignsQuery.isError,
     isLive,
     recipients: recipientsQuery.data || [],
     recipientsLoading: recipientsQuery.isLoading,

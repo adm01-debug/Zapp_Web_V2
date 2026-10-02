@@ -1,10 +1,15 @@
 import { vi } from 'vitest';
 
-// Chainable query builder mock
+// Chainable query builder mock.
+//
+// The real PostgREST builder is a promise: `await supabase.from(...).select()...`
+// resolves to `{ data, error }`. We reproduce that by backing the mock with a
+// resolved Promise instead of hand-rolling a `then` method on a plain object —
+// a plain object with `then` becomes thenable and silently hijacks `await`.
 export function createQueryBuilder(resolvedData: unknown = [], resolvedError: unknown = null) {
   const result = { data: resolvedData, error: resolvedError };
-  
-  const builder: any = {
+
+  const builder: any = Object.assign(Promise.resolve(result), {
     select: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
     update: vi.fn().mockReturnThis(),
@@ -21,9 +26,8 @@ export function createQueryBuilder(resolvedData: unknown = [], resolvedError: un
     range: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue(result),
     maybeSingle: vi.fn().mockResolvedValue(result),
-    then: (resolve: any) => Promise.resolve(result).then(resolve),
-  };
-  
+  });
+
   return builder;
 }
 

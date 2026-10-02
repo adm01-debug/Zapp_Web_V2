@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTalkX, TalkXCampaign } from '@/hooks/integrations/useTalkX';
-import { useTalkXSegments, resolveAudience, countAudience, type SegmentRules } from '@/hooks/integrations/useTalkXSegments';
+import { useTalkXSegments, resolveAudience, countAudience, RULE_FIELDS, RULE_OPS, emptyRules, type SegmentRules, type SegmentRule, type SegmentRuleGroup, type RuleField, type RuleOp } from '@/hooks/integrations/useTalkXSegments';
 import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
 import { useTalkXEventLogger } from '@/hooks/integrations/useTalkXEvents';
 import { fromTable } from '@/lib/supabaseHelpers';
@@ -177,6 +177,134 @@ export function localToUTCInTimezone(localStr: string, tz: string): string {
   }
   return new Date(candidates[0]).toISOString();
 }
+
+/* ------------------------------------------------------------------ */
+/* V24 — filtros de audiência como regras (motor dos segmentos)        */
+/* ------------------------------------------------------------------ */
+
+/** Debounce das regras antes de consultar o motor (não consultar a cada tecla). */
+const AUDIENCE_FILTER_DEBOUNCE_MS = 350;
+/**
+ * Teto da amostra do passo 1 — mesmo teto que o motor usa em `resolveAudience`.
+ * Não é o snapshot de destinatários: quem gera os recipients é `persistSave`.
+ */
+export const AUDIENCE_PREVIEW_LIMIT = 5000;
+/** Chave do snapshot antigo (V23) que guardava a busca textual livre. */
+const AUDIENCE_SEARCH_KEY = 'search';
+
+/**
+ * Converte o snapshot solto do V23 (`company`/`tag`/`city`/`state`/`status`) nas
+ * regras do motor. `group`/`inactive`/`birthday` eram filtros MORTOS — as
+ * colunas nunca entravam no SELECT e eles nunca filtraram nada — então são
+ * descartados em vez de convertidos.
+ */
+function legacySnapshotToRules(snapshot: Record<string, unknown>): SegmentRules {
+  const rules: SegmentRule[] = [];
+  const add = (field: RuleField, op: RuleOp, value: unknown) => {
+    if (typeof value !== 'string') return;
+    const trimmed = value.trim();
+    if (!trimmed || trimmed === 'all') return;
+    rules.push({ id: crypto.randomUUID(), field, op, value: trimmed });
+  };
+  add('company', 'eq', snapshot.company);
+  add('tags', 'contains', snapshot.tag);
+  add('city', 'eq', snapshot.city);
+  add('state', 'eq', snapshot.state);
+  add('conversation_status', 'eq', snapshot.status);
+  return { groups: [{ id: crypto.randomUUID(), match: 'and', rules }] };
+}
+
+/** Já está no formato de regras do motor quando traz `groups` com `rules`. */
+export function isSegmentRules(value: unknown): value is SegmentRules {
+  if (!value || typeof value !== 'object') return false;
+  const groups = (value as { groups?: unknown }).groups;
+  return Array.isArray(groups)
+    && groups.every((group) => !!group && Array.isArray((group as { rules?: unknown }).rules));
+}
+
+/** Hidratação: usa as regras do V24 quando existem; senão converte o snapshot do V23. */
+export function hydrateAudienceRules(filters: Record<string, unknown> | null | undefined): SegmentRules {
+  // Normaliza (`{ groups }` e só): o payload do V24 carrega também a busca
+  // textual como chave irmã, que não pode viajar dentro das regras.
+  if (isSegmentRules(filters)) return { groups: filters.groups };
+  return filters ? legacySnapshotToRules(filters) : emptyRules();
+}
+
+/**
+ * A busca textual continua em estado separado: nome/apelido/telefone não são
+ * campos do catálogo de regras (só empresa/e-mail/tags são), então a busca só
+ * refina a lista já filtrada pelo motor, sem ir ao servidor.
+ */
+export function hydrateContactSearch(filters: Record<string, unknown> | null | undefined): string {
+  const search = filters?.[AUDIENCE_SEARCH_KEY];
+  return typeof search === 'string' ? search : '';
+}
+
+/**
+ * Uma regra ainda em branco não pode ir para o motor: `rulesToPostgrest` lança
+ * em regra inválida (de propósito — nunca ampliar a audiência em silêncio).
+ */
+function isRuleComplete(rule: SegmentRule): boolean {
+  if (!RULE_FIELDS.some((field) => field.value === rule.field)) return false;
+  if (rule.op === 'is_set' || rule.op === 'is_empty') return true;
+  return rule.value.trim().length > 0;
+}
+
+/** Remove as regras incompletas antes de consultar e antes de persistir. */
+export function completedRules(rules: SegmentRules): SegmentRules {
+  return {
+    groups: rules.groups.map((group) => ({ ...group, rules: group.rules.filter(isRuleComplete) })),
+  };
+}
+
+/** Valor atual de uma regra simples de um campo (atalhos Empresa/Tag do seletor). */
+function findRuleValue(rules: SegmentRules, field: RuleField, op: RuleOp): string | null {
+  for (const group of rules.groups) {
+    const found = group.rules.find((rule) => rule.field === field && rule.op === op && rule.value.trim());
+    if (found) return found.value;
+  }
+  return null;
+}
+
+/**
+ * Garante pelo menos um grupo. O id do grupo novo chega pronto de fora para que
+ * a geração de id (`crypto.randomUUID`) nunca aconteça dentro do updater.
+ */
+function ensureGroups(rules: SegmentRules, freshGroupId: string): SegmentRuleGroup[] {
+  return rules.groups.length > 0 ? rules.groups : [{ id: freshGroupId, match: 'and', rules: [] }];
+}
+
+/** Acrescenta (ou substitui) a regra de um campo no primeiro grupo. */
+function upsertFieldRule(rules: SegmentRules, rule: SegmentRule, freshGroupId: string): SegmentRules {
+  const [first, ...rest] = ensureGroups(rules, freshGroupId);
+  const alreadyPresent = first.rules.some((item) => item.field === rule.field && item.op === rule.op && item.value === rule.value);
+  const kept = first.rules.filter((item) => item.field !== rule.field);
+  return { groups: [{ ...first, rules: alreadyPresent ? kept : [...kept, rule] }, ...rest] };
+}
+
+/** Acrescenta a regra informada ao primeiro grupo (sem deduplicar). */
+function appendFieldRule(rules: SegmentRules, rule: SegmentRule, freshGroupId: string): SegmentRules {
+  const [first, ...rest] = ensureGroups(rules, freshGroupId);
+  return { groups: [{ ...first, rules: [...first.rules, rule] }, ...rest] };
+}
+
+/** Remove todas as regras de um campo. */
+function removeFieldRules(rules: SegmentRules, field: RuleField): SegmentRules {
+  return {
+    groups: rules.groups.map((group) => ({ ...group, rules: group.rules.filter((rule) => rule.field !== field) })),
+  };
+}
+
+/** Debounce de um valor qualquer (as regras mudam a cada tecla digitada). */
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(timer);
+  }, [value, delayMs]);
+  return debounced;
+}
+
 export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentId?: string; templateId?: string; step?: WizardStep }) {
   const { saveDraftCampaign, updateCampaign, replaceDraftRecipients, startCampaign } = useTalkX();
   const { segments } = useTalkXSegments();
@@ -224,18 +352,15 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [draftCreationKey] = useState<string | null>(() => campaign?.id ? null : restoreOrCreateDraftCreationKey());
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const [showPreview, setShowPreview] = useState(true);
-  // V23: reabrir um rascunho restaura o recorte salvo — antes tudo voltava para 'all'.
-  const savedFilters = (campaign?.audience_filters ?? {}) as Record<string, unknown>;
-  const savedFilter = (key: string, fallback: string) =>
-    typeof savedFilters[key] === 'string' ? (savedFilters[key] as string) : fallback;
-  const [contactSearch, setContactSearch] = useState(savedFilter('search', ''));
+  // V24: o recorte do passo 1 é um conjunto de REGRAS do mesmo motor dos
+  // segmentos (antes era um snapshot solto, em parte com filtros mortos).
+  // A hidratação aceita o formato novo e converte o rascunho antigo do V23.
+  const savedFilters = (campaign?.audience_filters ?? null) as Record<string, unknown> | null;
+  const [audienceRules, setAudienceRules] = useState<SegmentRules>(() => hydrateAudienceRules(savedFilters));
+  // A busca textual não tem campo no catálogo (nome/apelido/telefone não são
+  // regra), por isso continua como estado próprio — só refina a lista.
+  const [contactSearch, setContactSearch] = useState(() => hydrateContactSearch(savedFilters));
   const [saving, setSaving] = useState(false);
-  const [companyFilter, setCompanyFilter] = useState(savedFilter('company', 'all'));
-  const [tagFilter, setTagFilter] = useState(savedFilter('tag', 'all'));
-  const [cityFilter, setCityFilter] = useState(savedFilter('city', 'all'));      // E63
-  const [groupFilter, setGroupFilter] = useState(savedFilter('group', 'all'));    // E63
-  const [inactiveFilter, setInactiveFilter] = useState(savedFilters.inactive === true); // E63: sem interacao nos ultimos N dias
-  const [birthdayFilter, setBirthdayFilter] = useState(savedFilter('birthday', '')); // E63: 'this_month' | 'next_30d' | ''
   const [mediaUrl, setMediaUrl] = useState(campaign?.media_url || '');
   const [mediaType, setMediaType] = useState(campaign?.media_type || '');
   const [hasMedia, setHasMedia] = useState(!!campaign?.media_url);
@@ -295,14 +420,35 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
 
 
 
+  // V24 — o passo 1 consulta o MESMO motor dos segmentos: a lista e a contagem
+  // passam a respeitar cidade/UF/grupo/última interação (antes o SELECT não
+  // trazia essas colunas e os filtros correspondentes nunca filtravam nada).
+  // Debounce nas regras para não consultar a cada tecla.
+  const debouncedAudienceRules = useDebouncedValue(audienceRules, AUDIENCE_FILTER_DEBOUNCE_MS);
+  const effectiveAudienceRules = useMemo(() => completedRules(debouncedAudienceRules), [debouncedAudienceRules]);
+  const audienceRulesKey = JSON.stringify(effectiveAudienceRules);
+
+  // `resolveAudience`/`countAudience` ainda não aceitam AbortSignal; o
+  // cancelamento é aplicado aqui, no ponto de uso (sem tocar no arquivo do
+  // motor): o resultado de uma consulta já substituída não hidrata a lista.
   const { data: contacts } = useQuery({
-    queryKey: ['contacts-talkx'],
-    queryFn: async () => {
-      const { data } = await supabase.from('contacts')
-        .select('id, name, nickname, phone, company, avatar_url, tags')
-        .not('phone', 'is', null).order('name');
-      return data || [];
+    queryKey: ['talkx-audience-contacts', audienceRulesKey],
+    queryFn: async ({ signal }) => {
+      const rows = await resolveAudience(effectiveAudienceRules, AUDIENCE_PREVIEW_LIMIT);
+      if (signal.aborted) throw new DOMException('Consulta de audiência cancelada', 'AbortError');
+      return rows;
     },
+    enabled: audienceSource === 'contacts',
+  });
+
+  const { data: audienceCount } = useQuery({
+    queryKey: ['talkx-audience-count', audienceRulesKey],
+    queryFn: async ({ signal }) => {
+      const total = await countAudience(effectiveAudienceRules);
+      if (signal.aborted) throw new DOMException('Consulta de audiência cancelada', 'AbortError');
+      return total;
+    },
+    enabled: audienceSource === 'contacts',
   });
 
   // Um draft existente precisa reabrir a sua audiência real. Sem este
@@ -370,37 +516,61 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     return { companies: Array.from(companySet).sort((a, b) => a.localeCompare(b)), tags: Array.from(tagSet).sort((a, b) => a.localeCompare(b)) };
   }, [contacts]);
 
+  // V24 — os filtros de Empresa/Tag do seletor viram atalhos para regras do
+  // motor: o valor é lido das próprias regras e a lista já chega filtrada.
+  const companyFilter = findRuleValue(audienceRules, 'company', 'eq') ?? 'all';
+  const setCompanyFilter = useCallback((value: string) => {
+    const rule: SegmentRule = { id: crypto.randomUUID(), field: 'company', op: 'eq', value };
+    const freshGroupId = crypto.randomUUID();
+    setAudienceRules((prev) => (value === 'all' ? removeFieldRules(prev, 'company') : upsertFieldRule(prev, rule, freshGroupId)));
+  }, []);
+  const tagFilter = findRuleValue(audienceRules, 'tags', 'contains') ?? 'all';
+  const setTagFilter = useCallback((value: string) => {
+    const rule: SegmentRule = { id: crypto.randomUUID(), field: 'tags', op: 'contains', value };
+    const freshGroupId = crypto.randomUUID();
+    setAudienceRules((prev) => (value === 'all' ? removeFieldRules(prev, 'tags') : upsertFieldRule(prev, rule, freshGroupId)));
+  }, []);
+
+  // A busca textual refina a lista recebida do motor (nome/apelido/telefone não
+  // são campos do catálogo de regras), sem ir ao servidor.
   const filteredContacts = useMemo(() => {
     if (!contacts) return [];
-    let result = contacts;
-    if (companyFilter !== 'all') result = result.filter((c) => c.company === companyFilter);
-    if (tagFilter !== 'all') result = result.filter((c) => c.tags && Array.isArray(c.tags) && c.tags.includes(tagFilter));
-    if (cityFilter !== 'all') result = result.filter((c) => (c as Record<string,unknown>).city === cityFilter); // E63
-    if (groupFilter !== 'all') result = result.filter((c) => (c as Record<string,unknown>).group === groupFilter); // E63
-    if (inactiveFilter) result = result.filter((c) => {
-      const lastContact = (c as Record<string,unknown>).last_contact as string | null | undefined;
-      if (!lastContact) return true; // sem contato = inativo
-      return new Date().getTime() - new Date(lastContact).getTime() > 30 * 24 * 60 * 60 * 1000;
-    }); // E63
-    if (birthdayFilter) {
-      const now = new Date(); const mm = now.getMonth() + 1;
-      result = result.filter((c) => {
-        const bm = (c as Record<string,unknown>).birth_month as number | null | undefined;
-        if (!bm) return false;
-        if (birthdayFilter === 'this_month') return bm === mm;
-        if (birthdayFilter === 'next_30d') return bm === mm || bm === (mm % 12) + 1;
-        return false;
-      });
-    } // E63
-    if (contactSearch.trim()) {
-      const q = contactSearch.toLowerCase();
-      result = result.filter((c) =>
-        c.name?.toLowerCase().includes(q) || c.nickname?.toLowerCase().includes(q) ||
-        c.phone?.includes(q) || c.company?.toLowerCase().includes(q)
-      );
-    }
-    return result;
-  }, [contacts, contactSearch, companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter]); // E63
+    const query = contactSearch.trim().toLowerCase();
+    if (!query) return contacts;
+    return contacts.filter((c) =>
+      c.name?.toLowerCase().includes(query) || c.nickname?.toLowerCase().includes(query) ||
+      c.phone?.includes(query) || c.company?.toLowerCase().includes(query)
+    );
+  }, [contacts, contactSearch]);
+
+  const addAudienceRule = useCallback((field: RuleField = 'city') => {
+    const kind = RULE_FIELDS.find((definition) => definition.value === field)?.kind ?? 'text';
+    const op = RULE_OPS[kind]?.[0]?.value ?? 'eq';
+    const rule: SegmentRule = { id: crypto.randomUUID(), field, op, value: '' };
+    const freshGroupId = crypto.randomUUID();
+    setAudienceRules((prev) => appendFieldRule(prev, rule, freshGroupId));
+  }, []);
+
+  const updateAudienceRule = useCallback((id: string, patch: Partial<Omit<SegmentRule, 'id'>>) => {
+    setAudienceRules((prev) => ({
+      groups: prev.groups.map((group) => ({
+        ...group,
+        rules: group.rules.map((rule) => (rule.id === id ? { ...rule, ...patch } : rule)),
+      })),
+    }));
+  }, []);
+
+  const removeAudienceRule = useCallback((id: string) => {
+    setAudienceRules((prev) => ({
+      groups: prev.groups.map((group) => ({ ...group, rules: group.rules.filter((rule) => rule.id !== id) })),
+    }));
+  }, []);
+
+  const setGroupMatch = useCallback((groupId: string, match: 'and' | 'or') => {
+    setAudienceRules((prev) => ({
+      groups: prev.groups.map((group) => (group.id === groupId ? { ...group, match } : group)),
+    }));
+  }, []);
 
   /** Público total antes da supressão. */
   const audienceTotal = audienceSource === 'segment' ? (segmentEstimate ?? selectedSegment?.estimated_count ?? 0) : selectedContacts.length;
@@ -513,7 +683,11 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const buildPayload = useCallback((): Partial<TalkXCampaign> => ({
     name, description: description || null, objective, message_template: messageTemplate,
     audience_source: audienceSource,
-    audience_filters: audienceSource === 'contacts' ? { company: companyFilter, tag: tagFilter, city: cityFilter, group: groupFilter, inactive: inactiveFilter, birthday: birthdayFilter, search: contactSearch } : {}, // E63
+    // V24: as regras vão no MESMO JSON do motor de segmentos. `search` é o
+    // único resto do snapshot antigo (busca livre não existe no catálogo).
+    audience_filters: audienceSource === 'contacts'
+      ? { ...completedRules(audienceRules), search: contactSearch }
+      : {},
     segment_id: audienceSource === 'segment' ? segmentId || null : null,
     template_id: templateId || null,
     typing_delay_min: Math.round(typingDelay[0] * 1000), typing_delay_max: Math.round(typingDelay[1] * 1000),
@@ -531,7 +705,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     confirm_consent: confirmConsent,
     // V23: o passo atual do wizard é persistido para reabrir o rascunho no mesmo passo.
     draft_step: step,
-  }), [name, description, objective, messageTemplate, audienceSource, companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter, contactSearch, segmentId, templateId, typingDelay, sendInterval, speedProfile, connectionId, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly, respectSuppression, confirmConsent, step]);
+  }), [name, description, objective, messageTemplate, audienceSource, audienceRules, contactSearch, segmentId, templateId, typingDelay, sendInterval, speedProfile, connectionId, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly, respectSuppression, confirmConsent, step]);
 
   /** Salva (rascunho/agendada) e, se `launch`, dispara imediatamente. Devolve o id da campanha. */
   const persistSave = useCallback(async (mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
@@ -626,7 +800,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     audienceSource, segmentId, templateId, connectionId, speedProfile,
     typingDelay, sendInterval, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly,
     isScheduled, scheduledAt, scheduleTimezone, respectSuppression, selectedContacts,
-    companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter, contactSearch,
+    audienceRules, contactSearch,
     step, // V23: o passo do wizard entra no autosave — sair no passo 2 e reabrir volta ao passo 2.
   });
   const autosaveIsDirty = persistedAutosaveSnapshot !== null && persistedAutosaveSnapshot !== autosaveFields;
@@ -680,7 +854,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     }
   }, [autosaveFields, handleSave]);
 
-  const clearFilters = useCallback(() => { setContactSearch(''); setCompanyFilter('all'); setTagFilter('all'); setCityFilter('all'); setGroupFilter('all'); setInactiveFilter(false); setBirthdayFilter(''); }, [setCityFilter, setGroupFilter, setInactiveFilter, setBirthdayFilter]);
+  const clearFilters = useCallback(() => { setAudienceRules(emptyRules()); setContactSearch(''); }, []);
   const toggleMedia = useCallback((v: boolean) => { setHasMedia(v); if (!v) { setMediaUrl(''); setMediaType(''); } }, []);
   const toggleSchedule = useCallback((v: boolean) => {
     setIsScheduled(v);
@@ -697,8 +871,9 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     typingDelay, setTypingDelay, sendInterval, setSendInterval, speedProfile, setSpeedProfile, messagesPerMinute,
     connectionId, setConnectionId, selectedContacts, showPreview, setShowPreview,
     contactSearch, setContactSearch, saving, companyFilter, setCompanyFilter,
-    tagFilter, setTagFilter, cityFilter, setCityFilter, groupFilter, setGroupFilter, // E63
-    inactiveFilter, setInactiveFilter, birthdayFilter, setBirthdayFilter, // E63
+    tagFilter, setTagFilter,
+    // V24 — regras de audiência (mesmo motor dos segmentos)
+    audienceRules, setAudienceRules, addAudienceRule, updateAudienceRule, removeAudienceRule, setGroupMatch, audienceCount,
     lastAutosave, autosaveStatus, autosaveError, autosaveIsDirty, retryAutosave, // E68
     scheduleTimezone, setScheduleTimezone: changeScheduleTimezone, scheduleConfigError, minimumScheduledAt, // E69
     mediaUrl, setMediaUrl, mediaType, setMediaType,

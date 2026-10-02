@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MapPin, Route, Building2, Milestone, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -98,9 +98,37 @@ export function SuggestionList({
   onRetry,
 }: SuggestionListProps) {
   const digitando = status === 'typing' || status === 'loading';
+  // E60: com o teclado virtual aberto o viewport visivel encolhe e a lista ficava escondida atras
+  // dele. Recalcula o teto a partir do `visualViewport` e limpa os listeners no unmount.
+  const cascaRef = useRef<HTMLDivElement | null>(null);
+  const [tetoTeclado, setTetoTeclado] = useState<number | null>(null);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const recalcular = () => {
+      const topo = cascaRef.current?.getBoundingClientRect().top ?? 0;
+      const disponivel = vv.height - topo - 12;
+      setTetoTeclado(disponivel > 0 ? Math.round(disponivel) : null);
+    };
+    recalcular();
+    vv.addEventListener('resize', recalcular);
+    
+    vv.addEventListener('scroll', recalcular);
+    return () => {
+      vv.removeEventListener('resize', recalcular);
+      vv.removeEventListener('scroll', recalcular);
+    };
+  }, [status]);
+
   return (
+      // E59: em tela pequena (< 640px) a lista sai do fluxo do campo e se ancora as bordas da
+      // tela com teto de 40vh — em 360px de largura ela nao estoura a horizontal. De sm: para
+      // cima volta ao comportamento ancorado no campo, com o teto de sempre.
     <div
-      className="absolute z-20 mt-1 w-full rounded-lg border border-border bg-popover shadow-lg max-h-64 overflow-y-auto"
+      ref={cascaRef}
+      data-testid="lista-sugestoes"
+      className="fixed inset-x-4 z-20 mt-1 rounded-lg border border-border bg-popover shadow-lg overflow-y-auto max-h-[40vh] sm:absolute sm:inset-x-auto sm:left-0 sm:right-0 sm:w-full sm:max-h-64"
+      style={tetoTeclado ? { maxHeight: `${tetoTeclado}px` } : undefined}
     >
       {digitando && (
         <div className="p-2 space-y-2">

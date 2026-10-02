@@ -2,9 +2,10 @@ import { toast } from 'sonner';
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   Zap, Plus, FileText, ShieldBan, BarChart3, ArrowLeft,
-  LayoutDashboard, Users, HelpCircle, Settings,
+  LayoutDashboard, HelpCircle,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useTalkX, TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useTeamProfiles } from '@/hooks/crm/useTeamProfiles';
 import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
@@ -24,17 +25,19 @@ import { TalkXCampaignScheduled } from './TalkXCampaignScheduled';
 import { TalkXCampaignRunning } from './TalkXCampaignRunning';
 import { duplicateTalkXCampaignDraft } from './talkxCampaignDraft';
 import { parseTalkXWizardRoute, pushTalkXWizardRoute, replaceTalkXWizardRoute, type TalkXWizardRoute } from './talkxWizardRoute';
+import { goTab, readTab, readSub } from './talkxTabRoute';
 import type { WizardStep } from './useCampaignEditor';
 
 export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running';
 
 export default function TalkXView() {
-  const { campaigns, isLoading, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign } = useTalkX();
+  const { campaigns, isLoading, isError, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign } = useTalkX();
   const { data: teamProfiles = [] } = useTeamProfiles();
   const { segments } = useTalkXSegments();
   const { templates } = useTalkXTemplates();
   const [topView, setTopView] = useState<TalkXTopView>(() => parseTalkXWizardRoute(window.location.search).route ? 'wizard' : 'tabs');
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState<string>(() => readTab(window.location.search));
+  const [activeSub, setActiveSub] = useState<string | undefined>(() => readSub(window.location.search));
   const [editingCampaign, setEditingCampaign] = useState<TalkXCampaign | null>(null);
   const [monitorId, setMonitorId] = useState<string | null>(null);
   const [scheduledCampaignId, setScheduledCampaignId] = useState<string | null>(null);
@@ -86,6 +89,16 @@ export default function TalkXView() {
     window.addEventListener('popstate', syncFromBrowserHistory);
     return () => window.removeEventListener('popstate', syncFromBrowserHistory);
   }, [syncFromBrowserHistory]);
+
+  // Aba ativa vem da URL; popstate (inclusive o disparado por goTab) restaura tab/sub.
+  useEffect(() => {
+    const syncTab = () => {
+      setActiveTab(readTab(window.location.search));
+      setActiveSub(readSub(window.location.search));
+    };
+    window.addEventListener('popstate', syncTab);
+    return () => window.removeEventListener('popstate', syncTab);
+  }, []);
 
   const routedCampaign = wizardRoute?.campaignId && wizardRoute.campaignId !== 'new'
     ? campaigns.find((candidate) => candidate.id === wizardRoute.campaignId) ?? null
@@ -255,10 +268,10 @@ export default function TalkXView() {
               </span>
             )}
             <button
-              type="button" aria-label="Ajuda" onClick={() => setHelpOpen(true)}
-              className="talkx-glow-ring inline-flex items-center justify-center w-9 h-9 rounded-lg border border-border/60 bg-input/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
+              type="button" onClick={() => setHelpOpen(true)}
+              className="talkx-glow-ring inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg border border-border/60 bg-input/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors text-xs font-medium"
             >
-              <HelpCircle className="w-4 h-4" />
+              <HelpCircle className="w-4 h-4" />Ajuda
             </button>
             <PrimaryButton icon={Plus} onClick={() => openNew()} className="shadow-[var(--shadow-glow-primary)]">Nova campanha</PrimaryButton>
           </div>
@@ -266,26 +279,49 @@ export default function TalkXView() {
       />
       <TalkXHelp open={helpOpen} onOpenChange={setHelpOpen} />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="min-w-0">
+      <Tabs value={activeTab} onValueChange={(tab) => goTab(tab)} className="min-w-0">
         <div className="overflow-x-auto">
           <TabsList className="inline-flex gap-1.5 h-auto bg-transparent pb-0 px-0 w-full justify-start flex-wrap">
-            {([
-              ['overview',    'Visão geral', LayoutDashboard],
-              ['segments',    'Segmentos',   Users],
-              ['templates',   'Templates',   FileText],
-              ['suppression', 'Lista de supressão', ShieldBan],
-              ['analytics',   'Analytics',   BarChart3],
-              ['settings',    'Configurações', Settings],
-            ] as const).map(([v, label, Icon]) => (
-              <TabsTrigger key={v} value={v}
-                className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5
-                  data-[state=active]:bg-primary/12 data-[state=active]:border-primary/40 data-[state=active]:text-foreground
-                  data-[state=inactive]:bg-input/40 data-[state=inactive]:border-border/60 data-[state=inactive]:text-muted-foreground
-                  hover:data-[state=inactive]:text-foreground hover:data-[state=inactive]:border-border"
-              >
-                <Icon className="w-4 h-4 shrink-0" />{label}
-              </TabsTrigger>
-            ))}
+            <TabsTrigger value="overview"
+              className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5
+                data-[state=active]:bg-primary/12 data-[state=active]:border-primary/40 data-[state=active]:text-foreground
+                data-[state=inactive]:bg-input/40 data-[state=inactive]:border-border/60 data-[state=inactive]:text-muted-foreground
+                hover:data-[state=inactive]:text-foreground hover:data-[state=inactive]:border-border"
+            >
+              <LayoutDashboard className="w-4 h-4 shrink-0" />Visão geral
+            </TabsTrigger>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button type="button" className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5 bg-input/40 border-border/60 text-muted-foreground hover:text-foreground hover:border-border">
+                  <BarChart3 className="w-4 h-4 shrink-0" />Analytics <span className="text-2xs text-muted-foreground">▾</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onSelect={() => goTab('overview')}>Campanhas</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => goTab('segments')}>Segmentos</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => goTab('analytics')}>Comparativo</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => goTab('analytics', 'configuracoes')}>Configurações</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button type="button" className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5 bg-input/40 border-border/60 text-muted-foreground hover:text-foreground hover:border-border">
+                  <FileText className="w-4 h-4 shrink-0" />Templates <span className="text-2xs text-muted-foreground">▾</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onSelect={() => goTab('templates')}>Biblioteca</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => openNew()}>Novo template</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <TabsTrigger value="suppression"
+              className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5
+                data-[state=active]:bg-primary/12 data-[state=active]:border-primary/40 data-[state=active]:text-foreground
+                data-[state=inactive]:bg-input/40 data-[state=inactive]:border-border/60 data-[state=inactive]:text-muted-foreground
+                hover:data-[state=inactive]:text-foreground hover:data-[state=inactive]:border-border"
+            >
+              <ShieldBan className="w-4 h-4 shrink-0" />Lista de supressão
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -297,7 +333,7 @@ export default function TalkXView() {
             onPause={async (id) => { try { await pauseCampaign(id); toast.info('Campanha pausada'); } catch { toast.error('Erro ao pausar'); } }}
             onCancel={async (id) => { try { await cancelCampaign(id); toast.info('Campanha cancelada'); } catch { toast.error('Erro ao cancelar'); } }}
             onDelete={(id) => deleteCampaign.mutate(id)}
-            onGoTab={(tab) => { if (tab === 'templates') setActiveTab('templates'); else if (tab === 'segments') setActiveTab('segments'); }}
+            onGoTab={(tab) => { if (tab === 'templates') goTab('templates'); else if (tab === 'segments') goTab('segments'); }}
           />
         </TabsContent>
         <TabsContent value="segments" className="mt-4">
@@ -310,10 +346,9 @@ export default function TalkXView() {
           <TalkXSuppression />
         </TabsContent>
         <TabsContent value="analytics" className="mt-4">
-          <TalkXAnalytics campaigns={campaigns} />
-        </TabsContent>
-        <TabsContent value="settings" className="mt-4">
-          <TalkXSettings />
+          {activeSub === 'configuracoes'
+            ? <TalkXSettings />
+            : <TalkXAnalytics campaigns={campaigns} isLoading={isLoading} isError={isError} />}
         </TabsContent>
       </Tabs>
     </div>

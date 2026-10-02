@@ -7,6 +7,7 @@ import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
 import { CONVERSATION_STATUSES } from '@/types/chat';
 import { OPERATIONAL_PRIORITY_VALUES, SENTIMENT_VALUES } from '@/lib/ai-vocabulary';
 import { zonedDayStartISO } from '@/lib/localDay';
+import { GROUP_CATEGORIES } from '@/hooks/groups/types';
 
 /**
  * Fuso do filtro de segmento. O segmento e gravado como string de filtro e reusado por
@@ -22,7 +23,8 @@ const SEGMENT_TIMEZONE = 'America/Sao_Paulo';
 export type RuleField =
   | 'tags' | 'company' | 'contact_type' | 'conversation_status' | 'channel_type'
   | 'consent_status' | 'lead_score' | 'risk_score' | 'ai_priority' | 'ai_sentiment'
-  | 'lead_origin' | 'updated_at' | 'created_at' | 'email';
+  | 'lead_origin' | 'updated_at' | 'created_at' | 'email'
+  | 'city' | 'state' | 'assigned_to' | 'group_category';
 export type RuleOp =
   | 'eq' | 'neq' | 'contains' | 'not_contains' | 'gt' | 'gte' | 'lt' | 'lte'
   | 'in_last_days' | 'not_in_last_days' | 'is_set' | 'is_empty';
@@ -48,12 +50,18 @@ export interface TalkXSegment {
   creator?: { name: string | null } | null;
 }
 
-export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'array' | 'number' | 'date' | 'enum'; category: 'basico' | 'comportamento' | 'comercial' | 'lgpd'; options?: string[] }[] = [
+export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'array' | 'number' | 'date' | 'enum' | 'uuid'; category: 'basico' | 'comportamento' | 'comercial' | 'lgpd'; options?: string[] }[] = [
   { value: 'tags', label: 'Tags', kind: 'array', category: 'basico' },
   { value: 'company', label: 'Empresa', kind: 'text', category: 'basico' },
+  { value: 'city', label: 'Cidade', kind: 'text', category: 'basico' },
+  { value: 'state', label: 'UF', kind: 'text', category: 'basico' },
+  // Valores canônicos dos grupos (mesma lista que classifica public.contacts.group_category),
+  // para a regra nunca oferecer categoria que o banco não guarda.
+  { value: 'group_category', label: 'Grupo', kind: 'enum', category: 'basico', options: GROUP_CATEGORIES.map((c) => c.value) },
   { value: 'email', label: 'E-mail', kind: 'text', category: 'basico' },
   { value: 'channel_type', label: 'Canal de origem', kind: 'text', category: 'basico' },
   { value: 'lead_origin', label: 'Origem do lead', kind: 'text', category: 'basico' },
+  { value: 'assigned_to', label: 'Responsável', kind: 'uuid', category: 'comercial' },
   // Tipos de contato e status de conversa vem das fontes canonicas: uma regra de segmento
   // nunca pode oferecer valor que o banco rejeita (a lista local tinha 'lead'/'sicoob_gifts',
   // extintos, e omitia 3 dos 6 tipos reais).
@@ -78,6 +86,10 @@ export const RULE_OPS: Record<string, { value: RuleOp; label: string }[]> = {
     { value: 'is_set', label: 'está preenchido' }, { value: 'is_empty', label: 'está vazio' },
   ],
   enum: [{ value: 'eq', label: 'é igual a' }, { value: 'neq', label: 'é diferente de' }, { value: 'is_empty', label: 'está vazio' }],
+  // uuid (ex.: public.contacts.assigned_to) aceita igualdade, mas NAO 'contem':
+  // o PostgREST viraria ilike numa coluna uuid e o Postgres rejeita
+  // ("operator does not exist: uuid ~~* text").
+  uuid: [{ value: 'eq', label: 'é igual a' }, { value: 'neq', label: 'é diferente de' }, { value: 'is_empty', label: 'está vazio' }],
   array: [{ value: 'contains', label: 'contém' }, { value: 'not_contains', label: 'não contém' }, { value: 'is_empty', label: 'está vazio' }],
   number: [
     { value: 'eq', label: 'é igual a' }, { value: 'gt', label: 'maior que' }, { value: 'gte', label: 'maior ou igual a' },
@@ -104,8 +116,13 @@ function ruleToFilter(r: SegmentRule): string | null {
   if (!def) return null;
   const v = r.value.trim();
   switch (r.op) {
-    case 'is_set': return def.kind === 'array' ? `${r.field}.not.is.null` : `${r.field}.not.is.null`;
-    case 'is_empty': return def.kind === 'array' ? `or(${r.field}.is.null,${r.field}.eq.{})` : `or(${r.field}.is.null,${r.field}.eq.)`;
+    case 'is_set': return `${r.field}.not.is.null`;
+    case 'is_empty': {
+      if (def.kind === 'array') return `or(${r.field}.is.null,${r.field}.eq.{})`;
+      // Coluna uuid nao compara com string vazia (`eq.`): "vazio" aqui e apenas nulo.
+      if (def.kind === 'uuid') return `${r.field}.is.null`;
+      return `or(${r.field}.is.null,${r.field}.eq.)`;
+    }
     // "nos ultimos (dias)" / "ha mais de (dias)" sao DIAS DE CALENDARIO no fuso do produto, nao
     // uma janela de d*24h: as 22h30 em SP a janela de 7 dias alcancava o 8o dia de calendario e a
     // audiencia saia um dia mais larga. Mesma semantica de dias de calendario do R3-06 (timeline).
@@ -158,7 +175,7 @@ export function rulesToPostgrest(rules: SegmentRules | null | undefined): string
     .filter((g) => g.filters.length > 0);
   if (groups.length === 0) return null;
   const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})`));
-  return parts.length === 1 ? (groups[0].filters.length === 1 ? parts[0] : parts[0]) : parts.join(',');
+  return parts.length === 1 ? parts[0] : parts.join(',');
 }
 
 function applyRules<T extends { or: (f: string) => T }>(q: T, rules: SegmentRules | null | undefined): T {

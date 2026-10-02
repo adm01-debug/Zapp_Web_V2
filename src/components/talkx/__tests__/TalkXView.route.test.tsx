@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const f = vi.hoisted(() => ({
@@ -32,8 +32,9 @@ vi.mock('@/components/talkx/TalkXOverview', () => ({
 vi.mock('@/components/talkx/TalkXLiveMonitor', () => ({ TalkXLiveMonitor: () => <div /> }));
 vi.mock('@/components/talkx/TalkXSegments', () => ({ TalkXSegments: () => <div /> }));
 vi.mock('@/components/talkx/TalkXTemplates', () => ({ TalkXTemplates: () => <div /> }));
-vi.mock('@/components/talkx/TalkXSuppression', () => ({ TalkXSuppression: () => <div /> }));
-vi.mock('@/components/talkx/TalkXAnalytics', () => ({ TalkXAnalytics: () => <div /> }));
+vi.mock('@/components/talkx/TalkXSuppression', () => ({ TalkXSuppression: () => <div data-testid="suppression" /> }));
+vi.mock('@/components/talkx/TalkXAnalytics', () => ({ TalkXAnalytics: () => <div data-testid="analytics" /> }));
+vi.mock('@/components/talkx/TalkXSettings', () => ({ TalkXSettings: () => <div data-testid="settings" /> }));
 vi.mock('@/components/talkx/TalkXCampaignScheduled', () => ({ TalkXCampaignScheduled: () => <div /> }));
 vi.mock('@/components/talkx/TalkXCampaignRunning', () => ({ TalkXCampaignRunning: () => <div /> }));
 
@@ -109,6 +110,57 @@ describe('TalkXView wizard route integration', () => {
     });
 
     await waitFor(() => expect(screen.queryByTestId('wizard')).not.toBeInTheDocument());
+  });
+});
+
+describe('TalkXView tab deep links (X007)', () => {
+  beforeEach(() => {
+    f.campaigns = [draft];
+    f.isLoading = false;
+  });
+
+  afterEach(() => vi.clearAllMocks());
+
+  it('?tab=suppression abre a supressão', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&tab=suppression');
+    render(<TalkXView />);
+    await waitFor(() => expect(screen.getByTestId('suppression')).toBeInTheDocument());
+    expect(new URLSearchParams(window.location.search).get('tab')).toBe('suppression');
+  });
+
+  it('Analytics ▾ → Configurações grava tab=analytics&sub=configuracoes', async () => {
+    window.history.replaceState(null, '', '/?view=talkx');
+    render(<TalkXView />);
+
+    const trigger = screen.getByRole('button', { name: /Analytics/ });
+    fireEvent.pointerDown(trigger);
+    fireEvent.click(trigger);
+
+    const configuracoes = await screen.findByText('Configurações');
+    fireEvent.click(configuracoes);
+
+    await waitFor(() => {
+      expect(new URLSearchParams(window.location.search).get('tab')).toBe('analytics');
+      expect(new URLSearchParams(window.location.search).get('sub')).toBe('configuracoes');
+    });
+    expect(screen.getByTestId('settings')).toBeInTheDocument();
+  });
+
+  it('voltar no navegador restaura a aba', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&tab=suppression');
+    render(<TalkXView />);
+    await waitFor(() => expect(screen.getByTestId('suppression')).toBeInTheDocument());
+
+    await act(async () => {
+      window.history.pushState(null, '', '/?view=talkx&tab=analytics');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    await waitFor(() => expect(screen.getByTestId('analytics')).toBeInTheDocument());
+
+    await act(async () => {
+      window.history.back();
+    });
+    await waitFor(() => expect(screen.getByTestId('suppression')).toBeInTheDocument());
   });
 });
 

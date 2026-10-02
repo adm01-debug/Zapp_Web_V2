@@ -202,7 +202,7 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
         return;
       }
 
-      const [statusResult, presenceResult] = await Promise.allSettled([
+      const [statusResult] = await Promise.allSettled([
         supabase.functions.invoke('evolution-api/find-status-messages', {
           method: 'POST',
           body: { instanceName, page: 1, offset: 200 },
@@ -257,11 +257,7 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
         setStatusMessages([]);
       }
 
-      if (presenceResult.status === 'fulfilled') {
-        setPresence({ isOnline: false, lastSeen: null, loading: false });
-      } else {
-        setPresence({ isOnline: false, lastSeen: null, loading: false });
-      }
+      setPresence({ isOnline: false, lastSeen: null, loading: false });
     } catch (err) {
       log.error('WhatsApp status fetch error:', err);
       if (mountedRef.current) {

@@ -344,7 +344,7 @@ function resolveProviderByModalities(
   }
   if (candidates.length > 1) {
     // Ordena só para a mensagem: a decisão não pode depender da ordem do banco.
-    const ids = candidates.map((row) => row.id).sort().join(', ');
+    const ids = candidates.map((row) => row.id).sort((a, b) => a.localeCompare(b)).join(', ');
     throw new AiRoutingError(
       'AMBIGUOUS_PROVIDER',
       `Mais de um provedor ativo declara as modalidades exigidas (${lista}): ${ids}. Desative/remova o provedor duplicado.`,
