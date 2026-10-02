@@ -54,9 +54,10 @@ case "${1:-}" in
     printf '%s' "$db" > "$STATE/$cname.db"
     _svc -d postgres -tAX -c "SELECT rolname FROM pg_roles ORDER BY rolname" \
       > "$STATE/$cname.roles" 2>/dev/null || true
-    _svc -d postgres \
-      -c "DROP DATABASE IF EXISTS \"$db\" WITH (FORCE); CREATE DATABASE \"$db\";" \
-      > /dev/null
+    # Two separate calls: psql wraps multi-statement -c in a transaction,
+    # and CREATE DATABASE cannot run inside a transaction block.
+    _svc -d postgres -c "DROP DATABASE IF EXISTS \"$db\" WITH (FORCE);" > /dev/null 2>&1 || true
+    _svc -d postgres -c "CREATE DATABASE \"$db\";" > /dev/null
     printf 'shimid_%s\n' "$cname"
     ;;
 
@@ -105,11 +106,13 @@ case "${1:-}" in
         -d*)    psql_args+=("-d" "$db"); has_d=1; shift ;;
         -h|-p)  shift; shift ;;
         -h*|-p[0-9]*) shift ;;
+        -U)     shift; shift ;;  # always added explicitly below
+        -U*)    shift ;;         # always added explicitly below
         *)      psql_args+=("$1"); shift ;;
       esac
     done
     [[ "$has_d" -eq 0 ]] && psql_args+=("-d" "$db")
-    PGPASSWORD="$PG_PASS" psql -h "$PG_HOST" -p "$PG_PORT" "${psql_args[@]}"
+    PGPASSWORD="$PG_PASS" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" "${psql_args[@]}"
     ;;
 
   rm)
