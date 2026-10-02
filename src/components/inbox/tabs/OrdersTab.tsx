@@ -19,8 +19,8 @@ export function OrdersTab({ contactId }: OrdersTabProps) {
   return (
     <div className="flex flex-col gap-4" data-testid="orders-tab">
       <header>
-        <h2 className="text-xl font-bold text-foreground">Pedidos</h2>
-        <p className="text-sm text-muted-foreground">Compras e propostas deste contato.</p>
+        <h2 className="text-xl font-bold text-foreground">SalesView</h2>
+        <p className="text-sm text-muted-foreground">Resumo comercial, compras e propostas deste contato.</p>
       </header>
 
       {isEmpty ? (
