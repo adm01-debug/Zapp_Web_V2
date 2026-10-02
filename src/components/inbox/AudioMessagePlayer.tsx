@@ -112,7 +112,7 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
       <audio ref={audioRef} src={resolvedUrl || undefined} preload="metadata" crossOrigin="anonymous" />
       <div className={cn('flex items-center gap-3 p-2 rounded-lg min-w-[200px]', isSent ? 'bg-primary-foreground' : 'bg-muted/50')}>
         <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-          <Button variant="ghost" size="icon" className={cn('w-10 h-10 rounded-full', hasError ? 'bg-destructive/10 hover:bg-destructive/20 text-destructive' : isSent ? 'bg-primary/10 hover:bg-primary/20 text-primary' : 'bg-primary/10 hover:bg-primary/20 text-primary')} onClick={togglePlay} disabled={isLoading}>
+          <Button variant="ghost" size="icon" className={cn('w-10 h-10 rounded-full', hasError ? 'bg-destructive/10 hover:bg-destructive/20 text-destructive' : 'bg-primary/10 hover:bg-primary/20 text-primary')} onClick={togglePlay} disabled={isLoading}>
             {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : hasError ? <RefreshCw className="w-5 h-5" /> : isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
           </Button>
         </motion.div>
@@ -124,7 +124,7 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
                 return (
                   <motion.div key={i} initial={{ scaleY: 0.5 }} animate={{ scaleY: isPlaying && isActive ? [0.6, 1, 0.6] : 1 }}
                     transition={{ duration: 0.5, repeat: isPlaying && isActive ? Infinity : 0, delay: i * 0.02 }}
-                    className={cn('flex-1 rounded-full transition-colors', hasError ? 'bg-destructive/30' : isActive ? (isSent ? 'bg-primary' : 'bg-primary') : (isSent ? 'bg-primary/60' : 'bg-muted-foreground/30'))}
+                    className={cn('flex-1 rounded-full transition-colors', hasError ? 'bg-destructive/30' : isActive ? 'bg-primary' : (isSent ? 'bg-primary/60' : 'bg-muted-foreground/30'))}
                     style={{ height: `${height}%` }} />
                 );
               })}
@@ -135,7 +135,7 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
           </div>
         </div>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <button onClick={cycleSpeed} className={cn('h-6 px-1.5 rounded-full text-3xs font-semibold transition-colors', playbackRate < 1 ? 'bg-destructive/20 hover:bg-destructive/30 text-destructive' : isSent ? 'bg-primary/10 hover:bg-primary/20 text-primary' : 'bg-primary/10 hover:bg-primary/20 text-primary')} title="Velocidade">{playbackRate}x</button>
+          <button onClick={cycleSpeed} className={cn('h-6 px-1.5 rounded-full text-3xs font-semibold transition-colors', playbackRate < 1 ? 'bg-destructive/20 hover:bg-destructive/30 text-destructive' : 'bg-primary/10 hover:bg-primary/20 text-primary')} title="Velocidade">{playbackRate}x</button>
         </motion.div>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           {/* E14 — volume das mídias entre a velocidade e a transcrição; as cores seguem
@@ -147,7 +147,7 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
           />
         </motion.div>
         <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-          <Button variant="ghost" size="icon" className={cn('w-8 h-8 relative', showTranscription && transcription ? (isSent ? 'text-primary' : 'text-primary') : (isSent ? 'text-primary' : 'text-muted-foreground'))}
+          <Button variant="ghost" size="icon" className={cn('w-8 h-8 relative', showTranscription && transcription ? 'text-primary' : (isSent ? 'text-primary' : 'text-muted-foreground'))}
             onClick={() => { if (!transcription && !isProcessing) void handleTranscribe(); else setShowTranscription(!showTranscription); }} disabled={isProcessing} title={transcription ? 'Mostrar/ocultar transcrição' : 'Transcrever áudio'}>
             {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
             {transcription && !showTranscription && <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-success" />}

@@ -9,6 +9,7 @@
 import { readFileSync } from 'fs';
 import { spawnSync } from 'child_process';
 import { join } from 'path';
+import { resolverExecutavel } from '../lib/seguranca-processo.mjs';
 import { fileURLToPath } from 'url';
 
 const root = join(fileURLToPath(import.meta.url), '../../..');
@@ -32,7 +33,7 @@ const ALLOWLIST = new Set([
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────
 
-const testTsOnDisk = spawnSync('git', ['ls-files', 'supabase/functions'], { cwd: root, encoding: 'utf8' })
+const testTsOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'supabase/functions'], { cwd: root, encoding: 'utf8' })
   .stdout
   .split('\n')
   .filter(f => f.endsWith('.test.ts'));
@@ -45,7 +46,7 @@ const ciUsesGlob = ciYaml.includes(CI_TS_GLOB);
 
 // ── 2. .test.sh: disco vs db-guard.yml ────────────────────────────────────────
 
-const testShOnDisk = spawnSync('git', ['ls-files', 'scripts/db-audit'], { cwd: root, encoding: 'utf8' })
+const testShOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'scripts/db-audit'], { cwd: root, encoding: 'utf8' })
   .stdout
   .split('\n')
   .filter(f => f.endsWith('.test.sh'));
