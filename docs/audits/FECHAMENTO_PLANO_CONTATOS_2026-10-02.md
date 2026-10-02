@@ -11,7 +11,7 @@ Base da medição: `main` em `de64c092f` (02/10) — PRs desta rodada: #1589, #1
 
 | Item | Auditoria 29/09 | Fechamento 01/10 | Final 02/10 |
 |---|---|---|---|
-| Etapas marcadas | 61/100 | 62/100 (declarado) | **84/100** (medido por script) |
+| Etapas marcadas | 61/100 | 62/100 (declarado) | **84/100** (medido por script) → **90/100** após as medições de 02/10 (2, 3, 13, 16, 18, 58) |
 | F0 Decisões | 0/6 | entregue | 2/6 — D1–D6 respondidas; 2–5 abertas |
 | F1 Banco (exclusão, Sicoob, grants) | 0/12 | entregue + DDL aplicada | 6/12 (`#1172` `41f66910`) |
 | F2 Tipografia/geometria | 6/10 | — | 9/10 — aberta 28 |
@@ -111,7 +111,7 @@ Base da medição: `main` em `de64c092f` (02/10) — PRs desta rodada: #1589, #1
 
 ## Conclusão
 
-O plano **não** está concluído: **84/100** etapas marcadas, com 16 abertas listadas acima. O que mudou
+O plano **não** está concluído: **90/100** etapas marcadas, com **10 abertas** (F0 4–5, F1 11/14/17, F2 28, F3 39, F6 65, F9 94, F10 98). O que mudou
 em relação ao fechamento de 01/10 é a qualidade da prova: sete etapas passaram a ter número cru em vez
 de declaração, uma foi **desmarcada** por falta de evidência, uma foi **reaberta** com 2 de 4
 evidências, e um bug de produção com causa-raiz identificada foi retirado do limbo do "B7" e virou
