@@ -11,7 +11,7 @@
  * incrementos de contador do laço antigo: quem chama replica os contadores e
  * decide se roda a cauda (RELOAD_EVERY + `sleep(interval)`) ou encerra o laço.
  */
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
 import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talkx-window.ts";
 import { pauseReasonForWindow } from "../_shared/talkx-resume-policy.ts";
