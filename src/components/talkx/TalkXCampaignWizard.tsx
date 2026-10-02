@@ -18,9 +18,10 @@ import { useAudienceEstimate, RULE_FIELDS, RULE_OPS, type RuleOp, type SegmentRu
 import { useCampaignEditor, VARIABLES, MESSAGE_TEMPLATES, MEDIA_TYPES, type WizardStep } from './useCampaignEditor';
 import { TalkXContactSelector } from './TalkXContactSelector';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
-import { IconTile, WhatsAppBubble, OBJECTIVES, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime } from './talkxShared';
+import { IconTile, WhatsAppBubble, OBJECTIVES, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { toast } from 'sonner';
 
 const MEDIA_ICONS = { image: Image, video: Video, document: FileText, audio: Music } as const;
@@ -312,16 +313,32 @@ function AudienceRulesEditor({ ed }: { ed: WizardState }) {
 }
 
 function StepAudience({ ed }: { ed: WizardState }) {
+  // V25 — o passo 1 só oferece segmentos ATIVOS (a página de gestão de
+  // segmentos continua mostrando todos). O filtro fica no ponto de uso: a
+  // lista vem do hook compartilhado sem alteração.
+  const activeSegments = ed.segments.filter((s) => s.status === 'active');
   return (
     <>
       <SectionCard icon={FileText} title="Informações da campanha">
         <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-3">
-          <div><Label className="text-xs text-foreground-secondary">Nome da campanha</Label><Input value={ed.name} onChange={(e) => ed.setName(e.target.value)} placeholder="Ex: Lançamento Linha Office" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
+          <div>
+            <Label className="text-xs text-foreground-secondary">Nome da campanha</Label>
+            <Input value={ed.name} onChange={(e) => ed.setName(e.target.value)} placeholder="Ex: Lançamento Linha Office" aria-invalid={ed.name.trim().length > 0 && ed.name.trim().length < 3} className="mt-1.5 h-10 bg-input/40 border-border/70" />
+            {ed.name.trim().length > 0 && ed.name.trim().length < 3 && (
+              <p role="alert" className="mt-1.5 text-2xs text-dash-red">O nome precisa de pelo menos 3 caracteres</p>
+            )}
+          </div>
           <div>
             <Label className="text-xs text-foreground-secondary">Objetivo</Label>
             <Select value={ed.objective} onValueChange={ed.setObjective}>
               <SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
-              <SelectContent>{OBJECTIVES.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+              <SelectContent>
+                {OBJECTIVES.map(({ value, label, icon: ObjectiveIcon }) => (
+                  <SelectItem key={value} value={value}>
+                    <span className="flex items-center gap-2"><ObjectiveIcon className="w-4 h-4 text-muted-foreground" />{label}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
           <div>
@@ -334,19 +351,34 @@ function StepAudience({ ed }: { ed: WizardState }) {
             </Select>
           </div>
         </div>
-        <div className="mt-3"><Label className="text-xs text-foreground-secondary">Descrição (opcional)</Label><Input value={ed.description} onChange={(e) => ed.setDescription(e.target.value)} placeholder="Produtos em destaque para escritórios" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
-        {(ed.connections ?? []).length === 0 && <p className="text-xs text-dash-amber mt-3 flex items-center gap-1.5"><Smartphone className="w-3.5 h-3.5" /> Nenhuma conexão WhatsApp conectada — conecte em Conexões antes de enviar.</p>}
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-3">
+          <div><Label className="text-xs text-foreground-secondary">Descrição (opcional)</Label><Input value={ed.description} onChange={(e) => ed.setDescription(e.target.value)} placeholder="Produtos em destaque para escritórios" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
+          <div>
+            <Label className="text-xs text-foreground-secondary">Responsável</Label>
+            <Select value={ed.owner ?? ''} onValueChange={ed.setOwner}>
+              <SelectTrigger aria-label="Responsável" className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue placeholder="Selecione…" /></SelectTrigger>
+              <SelectContent>
+                {(ed.owners ?? []).map((p) => <SelectItem key={p.id} value={p.id}>{p.name || p.email || 'Sem nome'}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        {(ed.connections ?? []).length === 0 && (
+          <div className="mt-3">
+            <TalkXWhatsAppDisconnectedState onConnect={() => navigateToView('connections')} />
+          </div>
+        )}
       </SectionCard>
 
       <SectionCard icon={Users} title="Origem do público" subtitle="Escolha de onde virão os contatos para esta campanha.">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <SourceCard icon={Users} title="Contatos ZAPP" desc="Use seus contatos da plataforma com filtros avançados." active={ed.audienceSource === 'contacts'} onClick={() => ed.setAudienceSource('contacts')} />
-          <SourceCard icon={Bookmark} title="Segmento salvo" desc="Utilize um segmento de audiência já salvo." active={ed.audienceSource === 'segment'} onClick={() => ed.setAudienceSource('segment')} disabled={ed.segments.length === 0} badge={ed.segments.length === 0 ? 'Nenhum segmento salvo' : `${ed.segments.length} segmentos`} />
+          <SourceCard icon={Bookmark} title="Segmento salvo" desc="Utilize um segmento de audiência já salvo." active={ed.audienceSource === 'segment'} onClick={() => ed.setAudienceSource('segment')} disabled={activeSegments.length === 0} badge={activeSegments.length === 0 ? 'Nenhum segmento salvo' : `${activeSegments.length} segmentos`} />
           <SourceCard icon={Database} title="CRM 360°" desc="Selecione contatos do seu CRM com base em negócios e estágios." active={ed.audienceSource === 'crm360'} onClick={() => ed.setAudienceSource('crm360')} disabled badge="Vinculação CRM 360° não configurada" />
         </div>
         {ed.audienceSource === 'segment' && (
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-            {ed.segments.map((s) => {
+            {activeSegments.map((s) => {
               const active = ed.segmentId === s.id;
               return (
                 <button key={s.id} type="button" onClick={() => ed.setSegmentId(s.id)} className={cn('text-left rounded-xl border p-3 transition-all', active ? 'border-primary bg-primary/10' : 'border-border/70 bg-input/30 hover:border-primary/40')}>

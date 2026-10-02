@@ -217,18 +217,19 @@ export async function handleIncomingMessage(
     return;
   }
 
+  const connection = await getConnectionByInstance(supabase, instance);
+  if (!connection) return;
+
   if (messageType === 'sticker') {
     mediaUrl = await handleStickerMedia(supabase, instance, data, message, key);
   }
 
   if (['image', 'video', 'audio', 'document'].includes(messageType)) {
     const msgId = key.id || `${Date.now()}`;
-    const permanentUrl = await persistIncomingMedia(supabase, instance, data, messageType, msgId, mediaUrl);
+    const earlyContact = await getContactByPhone(supabase, phone, connection.id);
+    const permanentUrl = await persistIncomingMedia(supabase, instance, data, messageType, msgId, mediaUrl, earlyContact?.id);
     if (permanentUrl) mediaUrl = permanentUrl;
   }
-
-  const connection = await getConnectionByInstance(supabase, instance);
-  if (!connection) return;
 
   const messageCreatedAt = (data.messageTimestamp as number)
     ? new Date((data.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();

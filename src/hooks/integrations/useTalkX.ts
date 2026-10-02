@@ -59,6 +59,9 @@ export interface TalkXCampaign {
   confirm_consent?: boolean;
   // V23 — passo do wizard persistido no rascunho (migration via hermes-db-migrar --nova).
   draft_step?: number | null;
+  // V25 — responsável da campanha (profiles.id). Opcional até o types-sync
+  // canônico após a migration que adiciona a coluna `owner`.
+  owner?: string | null;
   launched_by?: string | null;
   launched_at?: string | null;
   // Introduzido por 20260912130000. Opcional até o types-sync canônico após
