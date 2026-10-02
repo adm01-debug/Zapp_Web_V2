@@ -430,7 +430,15 @@ A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`)
 ### E58 · Foco e `aria-activedescendant` auditados com axe
 **Arquivos:** `LPT`, `ContactFormEndereco.test.tsx`
 1. `vitest-axe` (ou `jest-axe`) rodando sobre o combobox aberto com 3 sugestões: 0 violações.
-**Checklist:** [ ] axe 0 · [ ] nos 2 consumidores
+**Checklist:** [x] axe 0 · [x] nos 2 consumidores
+
+**Conformidade fechada em 2026-10-02.** A cobertura existia desde antes, mas com axe-core direto — a etapa pede o matcher do vitest-axe, que reprova QUALQUER violação sem filtro de impacto. Os dois consumidores passaram a usar axe do vitest-axe com toHaveNoViolations().
+
+**Alvo escolhido por consumidor, e o motivo importa:** no inbox o axe roda sobre document.body, porque o Dialog do Radix portala o conteudo para o body — varrer o container do render daria varredura vazia, ou seja, falsa seguranca. Nos contatos o formulario rende inline (sem portal), entao ali o alvo é o container do render. Combobox aberto com 3 sugestões em ambos, 0 violações.
+
+**Nenhuma violação nova apareceu na troca de ferramenta** e nenhuma regra foi escondida: seguem desabilitadas apenas region e color-contrast, que não têm significado em jsdom. A prova por mutação injetou um botão sem nome acessível no componente COMPARTILHADO e derrubou OS DOIS casos, cada um apontando o seu listbox.
+
+Registro de honestidade: uma primeira tentativa de mutação (remover o aria-label do listbox) NÃO gerou violação — foi descartada, porque mutação que não derruba nada não prova nada.
 
 ### E59 · Lista ocupa a largura do diálogo em < 640 px
 **Arquivos:** `SuggestionList.tsx`

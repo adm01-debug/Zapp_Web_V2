@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 
 const h = vi.hoisted(() => ({
   logAudit: vi.fn(),
@@ -371,11 +372,12 @@ describe('LocationPicker', () => {
       const ativo = input.getAttribute('aria-activedescendant');
       if (ativo) expect(document.getElementById(ativo)).not.toBeNull();
       // jsdom não calcula contraste (o axe não tem layout real) — fora da varredura, declarado.
-      const axe = (await import('axe-core')).default;
-      const r = await axe.run(document.body, {
+      // O Dialog/Tabs do Radix renderiza em portal no `document.body`, então o `container`
+      // do render fica vazio: a varredura tem de ser no body (senão seria vácuo).
+      const results = await axe(document.body, {
         rules: { region: { enabled: false }, 'color-contrast': { enabled: false } },
       });
-      expect(r.violations.map((v) => `${v.id} (${v.nodes.length} nó(s)): ${v.help}`)).toEqual([]);
+      expect(results).toHaveNoViolations();
     });
         it('E25: durante o debounce mostra esqueleto — "Nada encontrado" só depois de resposta vazia', async () => {
       const ac = autocompleteState({ status: 'typing', query: 'avenida paulista' });
