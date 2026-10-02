@@ -1,10 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-env';
 // Mesmos valores públicos de e2e/fixtures/e2e-contact.ts (URL do projeto + anon key).
-const SUPABASE_URL = 'https://tnnnlkbymytvtqngbbqh.supabase.co';
-const SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRubm5sa2J5bXl0dnRxbmdiYnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MjU0MDEsImV4cCI6MjEwMzMwMTQwMX0.4kDVowXzo3yBVboLOFn1bsij-vBKncJXVoPot3iknC0';
-
 /** Ordem canônica das abas (CONTACT_TYPES em src/utils/whatsappFileTypes.ts). */
 export const CONTACT_TAB_LABELS = [
   'Todos', 'Cliente', 'Fornecedor', 'Transportadora', 'Colaborador', 'Prestador de Serviço', 'Parceiro',

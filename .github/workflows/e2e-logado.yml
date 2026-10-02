@@ -114,7 +114,7 @@ jobs:
             echo "SUPABASE_SERVICE_ROLE_KEY nao configurado - teardown pulado"
             exit 0
           fi
-          curl -sf -X DELETE \
+          curl --proto '=https' --tlsv1.2 -sf -X DELETE \
             "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_closures?contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759" \
             -H "apikey: $SERVICE_ROLE_KEY" \
             -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
