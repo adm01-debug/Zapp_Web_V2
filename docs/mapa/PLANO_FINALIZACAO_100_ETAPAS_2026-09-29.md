@@ -774,15 +774,15 @@ que rodou e o que nao rodou, sem afirmar verde nao medido.
 ### E83 · Plano antigo recebe carimbo de "histórico"
 **Arquivos:** `PLANO_BUSCA_SEARCHBOX_50_ETAPAS.md`
 1. Nota de 3 linhas no topo apontando para a auditoria e para este plano; **não** reescrever os checkboxes (histórico é histórico).
-**Checklist:** [ ] nota
+**Checklist:** [x] nota
 
 ### E84 · `ARQUITETURA_BUSCA.md` reflete a cascata real
 1. Atualizar diagrama com `/forward` alcançável, estado `paused`, 2 flags, eventos novos (E50), view (E52).
-**Checklist:** [ ] doc
+**Checklist:** [x] doc
 
 ### E85 · `USO_SEARCHBOX.md` com view + números atuais
 1. Trocar as queries manuais pela view (mantendo as originais em apêndice); atualizar a tabela "primeiro mês" com o fechamento real de set/2026.
-**Checklist:** [ ] doc
+**Checklist:** [x] doc
 
 ### E86 · Docs in-app
 **Arquivos:** `src/components/docs/featuresSectionsData.ts`

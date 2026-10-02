@@ -2,7 +2,11 @@
 
 **Fonte:** `audit_logs`, evento `searchbox_session` (gravado em `src/lib/mapboxSession.ts`, um
 registro por sessão aberta — nunca por `/suggest`; ver E35). **Sem PII**: o registro só tem
-`source` (quem pediu a sessão: `picker`, e futuramente `contact-form` na Fase 6).
+`source` (quem pediu a sessão: `picker` e `contact-form`).
+
+**Caminho principal: a view `public.searchbox_usage_daily` (E52).** Ela agrega por dia e e o que se
+deve usar no dia a dia; as queries manuais que ela substitui ficam no **Apendice A**, para
+conferencia independente. Colunas da view: `dia`, `sessoes`, `degradacoes`, `ultimo_evento_em`.
 
 **Teto grátis da Mapbox:** 500 sessões/mês. Acima disso, US$ 3,00/1.000 sessões — e é isso que
 `src/lib/mapboxCostGuard.ts` (E37) monitora via a RPC `count_searchbox_sessions_this_month()`,
@@ -11,29 +15,26 @@ degradando para `/forward` silenciosamente a partir de 450 sessões no mês (10%
 ## Sessões por dia (últimos 30 dias)
 
 ```sql
-select date_trunc('day', created_at) as dia, count(*) as sessoes
-from audit_logs
-where action = 'searchbox_session'
-  and created_at > now() - interval '30 days'
-group by 1
-order by 1 desc;
+select dia, sessoes, degradacoes, ultimo_evento_em
+from public.searchbox_usage_daily
+where dia > current_date - interval '30 days'
+order by dia desc;
 ```
 
 ## Sessões no mês corrente vs. o teto grátis
 
 ```sql
 select
-  count(*) as sessoes_mes,
+  coalesce(sum(sessoes), 0) as sessoes_mes,
   500 as teto_gratis,
-  round(count(*)::numeric / 500 * 100, 1) as pct_do_teto
-from audit_logs
-where action = 'searchbox_session'
-  and created_at >= date_trunc('month', now() at time zone 'America/Sao_Paulo') at time zone 'America/Sao_Paulo';
+  round(coalesce(sum(sessoes), 0)::numeric / 500 * 100, 1) as pct_do_teto
+from public.searchbox_usage_daily
+where dia >= date_trunc('month', now() at time zone 'America/Sao_Paulo')::date;
 ```
 
-Mesma query que a RPC `count_searchbox_sessions_this_month()` usa internamente (ver migration
-`20260926120500_searchbox_session_budget_rpc.sql`) — essa aqui é só a versão pra rodar direto no
-banco quando quiser conferir o número manualmente, sem passar pelo client.
+Mesmo numero que a RPC `count_searchbox_sessions_this_month()` devolve (ver migration
+`20260926120500_searchbox_session_budget_rpc.sql`) - a versao em SQL acima serve para conferir
+direto no banco, sem passar pelo client.
 
 ## Sessões por origem (`source`)
 
@@ -45,29 +46,35 @@ group by 1
 order by 2 desc;
 ```
 
-## Quantas vezes o guarda de custo já degradou
+## Quantas vezes o guarda de custo ja degradou
 
 ```sql
-select created_at, details->>'count' as sessoes_no_momento, details->>'limit' as limite
-from audit_logs
-where action = 'searchbox_cost_guard'
-order by created_at desc;
+select dia, degradacoes
+from public.searchbox_usage_daily
+where degradacoes > 0
+order by dia desc;
 ```
 
-## Primeiro mês medido
+Para o detalhe de cada degradacao (`count`/`limit` no momento da degradacao), ver o Apendice A.
 
-**Atualizado em 2026-09-27** (queries executadas contra produção, ~31h após o rollout):
+## Primeiro mês medido — fechamento de setembro/2026
+
+**Fechamento medido em 2026-10-02**, pela view `searchbox_usage_daily` contra produção. A leitura
+anterior (27/09) mostrava 8 sessões: era leitura **parcial** do mês, não o fechamento.
 
 | Métrica | Resultado |
 |---|---|
-| Sessões no mês (set/2026) | **8** (1,6% do teto de 500) |
-| Sessões por dia | 2026-09-26: 8 · 2026-09-27: 0 |
-| Por origem | `contact-form`: 6 · `picker`: 2 |
-| Degradações do guarda | **0** (nenhuma vez ativou o fallback para `/forward`) |
-| Custo estimado | **US$ 0,00** — projeção mensal ~240 sessões, dentro do teto grátis |
+| Sessões em set/2026 | **11** (2,2% do teto de 500) |
+| Sessões por dia | 2026-09-26: 8 · 2026-09-28: 2 · 2026-09-30: 1 |
+| Por origem | `contact-form`: 7 · `picker`: 4 |
+| Degradações do guarda | **0** (o fallback para `/forward` nunca ativou) |
+| Custo estimado | **US$ 0,00** — 11 de 500 sessões grátis |
+| Primeira sessão registrada | 2026-09-26T13:59:03Z |
+| Outubro/2026 até a medição | 1 sessão |
 
-A flag `mapa.searchbox-autocomplete` foi ligada em `2026-09-26T13:20:15Z` (E48). O Apêndice B
-do plano tem o histórico completo.
+O rollout do autocomplete foi em `2026-09-26`, então setembro é um mês **parcial** (a função existiu
+em 5 dias). O primeiro mês **completo** de operação é **outubro/2026** — e é ele que fecha a conta de
+custo (E99, Fase 8).
 
 ## C1 — perda de endereço no cadastro de contato (Fase 1 / E07)
 
@@ -119,3 +126,43 @@ Contatos (o detalhe do evento é só `{contact_id, cleared}`, sem PII).
 - Retenção: `audit_logs` já está coberto por `docs/LGPD-RETENTION-POLICY.md` (5 anos, categoria
   Auditoria) — como os dois eventos novos não carregam dado pessoal, não precisam de exceção nem
   linha própria nessa política.
+
+## Apêndice A — queries originais (pré-view), mantidas para conferência
+
+Estas são as consultas manuais que a view substituiu (E52/E85). Ficam aqui para auditoria
+independente: **se a view e estas divergirem, a view está errada**.
+
+```sql
+-- A1. Sessões por dia (últimos 30 dias)
+select date_trunc('day', created_at) as dia, count(*) as sessoes
+from audit_logs
+where action = 'searchbox_session'
+  and created_at > now() - interval '30 days'
+group by 1
+order by 1 desc;
+
+-- A2. Sessões no mês corrente vs. o teto grátis
+select
+  count(*) as sessoes_mes,
+  500 as teto_gratis,
+  round(count(*)::numeric / 500 * 100, 1) as pct_do_teto
+from audit_logs
+where action = 'searchbox_session'
+  and created_at >= date_trunc('month', now() at time zone 'America/Sao_Paulo') at time zone 'America/Sao_Paulo';
+
+-- A3. Sessões por origem (source)
+select details->>'source' as origem, count(*) as sessoes
+from audit_logs
+where action = 'searchbox_session'
+group by 1
+order by 2 desc;
+
+-- A4. Detalhe de cada degradação do guarda de custo
+select created_at, details->>'count' as sessoes_no_momento, details->>'limit' as limite
+from audit_logs
+where action = 'searchbox_cost_guard'
+order by created_at desc;
+```
+
+> A A3 continua sendo a única consulta que vai direto em `audit_logs`: a view agrega por dia e não
+> carrega a coluna `source` (que é o que diz se a sessão veio do `picker` ou do `contact-form`).
