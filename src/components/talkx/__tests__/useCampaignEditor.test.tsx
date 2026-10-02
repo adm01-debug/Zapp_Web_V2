@@ -792,8 +792,14 @@ describe('useCampaignEditor — V26 (editor de mensagem, só-mídia e versão do
     expect(result.current.canProceed[2]).toBe(true);
   });
 
-  it('aplicar um template grava template_version_id no payload do rascunho', async () => {
+  it('aplicar um template NAO grava a versao arquivada: fica nulo nesta etapa', async () => {
     f.templates = [{ id: 't-1', content: 'Olá {{nome}}', media_url: null, use_count: 0 }];
+    // Existe versão arquivada, mas ela é o estado ANTERIOR à edição
+    // (update_talkx_template_with_snapshot grava a linha lida antes do UPDATE):
+    // apontar para ela seria apontar para o template errado numa coluna de
+    // auditoria. O front tem que mandar null MESMO com versão disponível — a
+    // coluna e a RPC já persistem o campo; falta só o ponteiro correto
+    // (current_version_id em talkx_templates, tarefa própria).
     f.fetchVersionHistory.mockResolvedValue([{ id: 'version-9', version_number: 3 }]);
     const campaign = { id: 'draft-1', name: 'Rascunho', status: 'draft' };
     const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
@@ -803,8 +809,8 @@ describe('useCampaignEditor — V26 (editor de mensagem, só-mídia e versão do
     await act(async () => { result.current.applyTemplate('t-1'); });
     await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
 
-    expect(result.current.templateVersionId).toBe('version-9');
-    expect(f.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'draft-1', template_version_id: 'version-9' }));
+    expect(result.current.templateVersionId).toBeNull();
+    expect(f.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'draft-1', template_version_id: null }));
   });
 
   it('template sem versão registrada grava template_version_id nulo', async () => {
