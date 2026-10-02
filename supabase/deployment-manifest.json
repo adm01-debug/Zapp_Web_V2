@@ -59,8 +59,8 @@
     },
     {
       "path": "supabase/functions/_shared/ai-jobs.ts",
-      "bytes": 23454,
-      "sha256": "a8e02e43bad7eb5e7d29a68a3d4152e719372beec9036cc3514daeb276125f73"
+      "bytes": 23453,
+      "sha256": "9662bdbdf251d77ba79106b371f7d71a652b63569d221d2db948933976e11a78"
     },
     {
       "path": "supabase/functions/_shared/ai-json.ts",
@@ -329,8 +329,8 @@
     },
     {
       "path": "supabase/functions/ai-jobs-worker/index.ts",
-      "bytes": 15596,
-      "sha256": "c61e16df5edc400456d461512431d124091d7a9db4356c4c102f9385b7fad23e"
+      "bytes": 15595,
+      "sha256": "b9297d086d9596f5e07ea9f0e1b880b3f595833faa7b0b3aacfba49a1b76540d"
     },
     {
       "path": "supabase/functions/ai-proxy/index.ts",
@@ -768,7 +768,7 @@
       "name": "ai-jobs-worker",
       "entrypoint": "supabase/functions/ai-jobs-worker/index.ts",
       "verify_jwt": true,
-      "source_sha256": "20d312bc178b44d74d62ca426343d35cb58f1bebc7267ea4befe771536866802",
+      "source_sha256": "201c0ec60cc65e4e7b4f65fbe0d414c532ab86f67f72a70847700126fd01cf22",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1630,5 +1630,5 @@
       ]
     }
   ],
-  "manifest_sha256": "f88b5646dd1b992bd59896e4f7b988ea16fefce4dd5bd2699f23c72455bead3d"
+  "manifest_sha256": "624126a04211756255c6117f6f9cfc10645405bfe4de4f1df3c148c604376d7b"
 }
