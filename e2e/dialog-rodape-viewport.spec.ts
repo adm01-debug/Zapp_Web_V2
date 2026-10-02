@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { gotoContacts, liveContactsByPhone, softDeleteContact } from './fixtures/contacts-page';
+import { gotoContacts, limparContatosPorTelefone } from './fixtures/contacts-page';
 
 /**
  * Regressão do e2e/contacts-crud.spec.ts:26.
@@ -18,12 +18,6 @@ import { gotoContacts, liveContactsByPhone, softDeleteContact } from './fixtures
  */
 const VIEWPORT = { width: 1280, height: 720 };
 
-async function cleanup(page: Page, phone: string) {
-  for (const row of await liveContactsByPhone(page, phone).catch(() => [])) {
-    await softDeleteContact(page, row.id).catch(() => undefined);
-  }
-}
-
 /** A caixa do diálogo tem de caber inteira na viewport de 720px de altura. */
 async function expectDialogInsideViewport(dialog: ReturnType<Page['getByRole']>) {
   const box = await dialog.boundingBox();
@@ -36,10 +30,22 @@ async function expectDialogInsideViewport(dialog: ReturnType<Page['getByRole']>)
 }
 
 test.describe('DialogContent — rodapé alcançável em 1280x720', () => {
+  // Telefones criados nesta spec. A limpeza roda no afterEach, por telefone, com um
+  // contexto de request proprio: se o teste morrer por timeout, a pagina morre junto
+  // mas a limpeza continua possivel (E97). Antes, o `finally` usava `page.request` e
+  // falhava em silencio, deixando contato no banco.
+  const criados: string[] = [];
+
+  test.afterEach(async ({ request }) => {
+    const pendentes = criados.splice(0);
+    await limparContatosPorTelefone(request, pendentes);
+  });
+
   test('modal Adicionar Contato: diálogo cabe na viewport e o rodapé é clicável', async ({ page }) => {
     const phone = `5511${Date.now().toString().slice(-9)}`;
+    criados.push(phone);
     const name = `[E2E] RODAPE ADD ${phone.slice(-6)}`;
-    try {
+    {
       await page.setViewportSize(VIEWPORT);
       await gotoContacts(page);
 
@@ -59,15 +65,14 @@ test.describe('DialogContent — rodapé alcançável em 1280x720', () => {
       // Playwright não consegue nem rolar o botão para dentro da viewport.
       await submit.click({ timeout: 10_000 });
       await expect(addDialog).toBeHidden({ timeout: 15_000 });
-    } finally {
-      await cleanup(page, phone);
     }
   });
 
   test('modal Editar Contato: diálogo cabe na viewport e o rodapé é clicável', async ({ page }) => {
     const phone = `5512${Date.now().toString().slice(-9)}`;
+    criados.push(phone);
     const name = `[E2E] RODAPE EDIT ${phone.slice(-6)}`;
-    try {
+    {
       await page.setViewportSize(VIEWPORT);
       await gotoContacts(page);
 
@@ -97,8 +102,6 @@ test.describe('DialogContent — rodapé alcançável em 1280x720', () => {
       await expect(save).toBeInViewport();
       await save.click({ timeout: 10_000 });
       await expect(editDialog).toBeHidden({ timeout: 15_000 });
-    } finally {
-      await cleanup(page, phone);
     }
   });
 });

@@ -9,6 +9,26 @@ Mapbox Search Box para sugerir endereços, e o mapa de contatos mostra o pino do
 A telemetria vai para `audit_logs` (`searchbox_session`, `searchbox_cost_guard`) e a leitura agregada
 é a view `searchbox_usage_daily` — ver `docs/mapa/USO_SEARCHBOX.md`.
 
+## Higiene das specs E2E de contatos (E97)
+
+Se um teste E2E de contatos estourar por timeout ou o worker for cancelado, **a limpeza tem de
+sobreviver** — e se ela falhar, o teste tem de ficar **vermelho**.
+
+O padrao que causou 26 contatos `[E2E]` vivos no banco: `cleanup` dentro do `finally` usando
+`page.request` (morre com a pagina) embrulhado em `.catch(() => [])` (engole o erro). O resultado
+e uma limpeza que falha em silencio: indistinguivel de "nada a limpar".
+
+**Ao escrever uma spec de contatos:** registre o telefone criado e limpe no `test.afterEach` com
+`limparContatosPorTelefone(request, telefones)` (`e2e/fixtures/contacts-page.ts`), que usa o
+fixture `request` do Playwright e o token lido do `e2e/.auth/user.json`. **Nunca** use
+`.catch(() => [])` em limpeza.
+
+```sql
+-- sobras vivas de teste (contatos), sem contar historico soft-deleted
+select count(*) from public.contacts
+where name ilike '[E2E]%' and deleted_at is null;
+```
+
 ## 1. "A lista de sugestões não aparece"
 
 **Sintoma:** o operador digita o endereço e nenhuma sugestão aparece — nem erro, nem lista vazia.
