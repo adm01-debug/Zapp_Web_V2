@@ -32,17 +32,15 @@ export const WelcomeModal = forwardRef<HTMLDivElement, WelcomeModalProps>(
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/80 backdrop-blur-sm"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Boas-vindas"
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          // Modal de boas-vindas: sem role=dialog o axe trata todo o conteúdo do card como
-          // "fora de landmark" em qualquer tela onde ele aparece. O aria-labelledby aponta para o h2.
+          // Dialogo UNICO do modal: o overlay e so backdrop (antes ele tambem era role=dialog, o que
+          // criava dois dialogos aninhados). O nome vem do h2 do card via aria-labelledby. Sem este
+          // papel+label o axe trata o conteudo do card como "fora de landmark" (regra region).
           role="dialog"
           aria-modal="true"
           aria-labelledby="welcome-modal-title"

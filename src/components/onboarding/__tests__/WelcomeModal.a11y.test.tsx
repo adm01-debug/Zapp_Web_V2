@@ -21,8 +21,11 @@ describe('a11y: modal de boas-vindas (landmark dialog)', () => {
       <WelcomeModal isOpen onClose={fechar} onStartTour={iniciarTour} userName="Ana" />,
     );
 
-    const dlg = container.querySelector('[role="dialog"]');
-    expect(dlg).toBeTruthy();
+    // Dialogo UNICO: se aparecer mais de um (ex.: role=dialog no overlay E no card), os leitores de
+    // tela anunciam dois dialogos aninhados. Este assert pega exatamente esse defeito.
+    const dialogs = container.querySelectorAll('[role="dialog"]');
+    expect(dialogs).toHaveLength(1);
+    const dlg = dialogs[0];
     expect(dlg?.getAttribute('aria-modal')).toBe('true');
 
     const id = dlg?.getAttribute('aria-labelledby');

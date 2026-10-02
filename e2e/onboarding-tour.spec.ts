@@ -92,9 +92,10 @@ test.describe('tour de onboarding não pode bloquear a aplicação', () => {
     });
 
     if (abriu) {
-      // Antes da correção este overlay era um motion.div solto: sem role de
-      // diálogo e sem nenhuma saída por teclado.
-      await expect(page.getByRole('dialog', { name: /boas-vindas/i })).toHaveAttribute(
+      // O diálogo é o CARD do modal (o overlay é só backdrop) e o nome acessível vem do h2 via
+      // aria-labelledby="welcome-modal-title" -> "Bem-vindo...". Antes o nome vinha de um
+      // aria-label="Boas-vindas" no overlay, que era um SEGUNDO diálogo aninhado.
+      await expect(page.getByRole('dialog', { name: /bem-vindo/i })).toHaveAttribute(
         'aria-modal',
         'true',
       );

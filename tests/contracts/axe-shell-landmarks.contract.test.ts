@@ -39,12 +39,16 @@ describe('contrato: landmarks do shell (regra region do axe)', () => {
     expect(faixa).toMatch(/aria-live="polite"/);
   });
 
-  it('o modal de boas-vindas é um dialog modal nomeado pelo próprio título', () => {
+  it('o modal de boas-vindas é UM dialog modal nomeado pelo próprio título', () => {
     expect(modal).toMatch(/role="dialog"/);
     expect(modal).toMatch(/aria-modal="true"/);
     expect(modal).toMatch(/aria-labelledby="welcome-modal-title"/);
     // o alvo do aria-labelledby tem de existir de fato no mesmo arquivo
     expect(modal).toMatch(/id="welcome-modal-title"/);
+    // UM dialogo so: o overlay era um segundo role=dialog, o que aninhava dois dialogos e ainda
+    // fazia o primeiro match de `[role="dialog"]` ser o elemento errado (foi falha de CI real).
+    expect((modal.match(/role="dialog"/g) ?? []).length).toBe(1);
+    expect(modal).not.toMatch(/aria-label="Boas-vindas"/);
   });
 
   it('os dois overlays continuam fora do <AppShell> (são irmãos, e é isso que exige o landmark)', () => {
