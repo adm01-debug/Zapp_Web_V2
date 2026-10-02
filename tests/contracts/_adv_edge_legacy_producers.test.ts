@@ -43,6 +43,10 @@
  *    `canonicalize`, que prova a ordenação por code-unit e a estabilidade da forma canônica). É arquivo
  *    de teste, não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem
  *    idênticos — só o total varrido sobe, e o ratchet é atualizado de propósito.
+ *  - 176: X015 (02/10/2026) — `talkx-scheduler/index.test.ts` (teste Deno do handler exportado do
+ *    scheduler: auth por `x-cron-secret`, timeout de 10 s e limites por tick). É arquivo de teste,
+ *    não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos —
+ *    só o total varrido sobe, e o ratchet é atualizado de propósito.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -117,8 +121,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('185 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(185);
+  it('186 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(186);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );

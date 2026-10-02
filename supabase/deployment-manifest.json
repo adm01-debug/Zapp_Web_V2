@@ -624,8 +624,8 @@
     },
     {
       "path": "supabase/functions/talkx-scheduler/index.ts",
-      "bytes": 8572,
-      "sha256": "e0124d0e34ffe515eb4680f73a347fcfe7958a903adf41442e7f506224208daf"
+      "bytes": 15445,
+      "sha256": "f146b395caedda9a020d3dbd69d0b9551fe4edd1f7bd2bfb1b8f0279b9ff05c3"
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
@@ -1574,7 +1574,7 @@
       "name": "talkx-scheduler",
       "entrypoint": "supabase/functions/talkx-scheduler/index.ts",
       "verify_jwt": true,
-      "source_sha256": "002080b418a79ffc845c832973bd39ec4aeda26bb2cd9779e3f9040eef5fa7ce",
+      "source_sha256": "53357882f1e7fe873d38bff4be040cbe5713d0893e21abe1b61c8ec2a4130dbb",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/talkx-resume-policy.ts",
@@ -1688,5 +1688,5 @@
       ]
     }
   ],
-  "manifest_sha256": "2b637500661526f9627441d11fae564ccd973f597d2b2923efa4aa98380fce00"
+  "manifest_sha256": "f2c925c97df16886ad4ceefe32777786da63908f1452ba0c5d53a1503f1393a8"
 }
