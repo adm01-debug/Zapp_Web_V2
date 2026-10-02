@@ -24,6 +24,7 @@
     "implicit-any-check": "node scripts/ci/implicit-any-ratchet.mjs",
     "preview": "vite preview",
     "test:contracts": "vitest run --config vitest.contracts.config.ts",
+    "mutation:mapa": "node scripts/mutation/run-mapa.mjs",
     "prepare": "husky || true"
   },
   "dependencies": {
