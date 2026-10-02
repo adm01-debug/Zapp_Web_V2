@@ -14,14 +14,14 @@ import { fileURLToPath } from 'node:url';
 // `anon_execute` e a fonte autoritativa (snapshot do banco), regenerada pelo
 // workflow types-sync e diffada por check-grants-fresh.mjs.
 //
-// `count_searchbox_cost_guard_this_month` entrou na lista do plano (E77), mas
+// `count_searchbox_cost_guard_this_month` entrou na lista do plano (E77), mas NAO existe e foi
+// dispensada pela decisao do E47 (marca do mes em localStorage, sem DDL nova).
 // NAO existe: a decisao registrada em E47 (2026-10-01) escolheu a alternativa
 // (2) — marca do mes em `localStorage`, sem DDL nova. A funcao fica na lista
 // como guarda preventiva: se um dia nascer, nasce sem anon/PUBLIC.
 const RPCS_MODULO = [
-  'count_searchbox_sessions_this_month',
   'search_contacts',
-  'count_searchbox_cost_guard_this_month',
+  'count_searchbox_sessions_this_month',
 ];
 
 // RPCs da lista acima que existem de fato nas migrations (a RPC de sessao do
