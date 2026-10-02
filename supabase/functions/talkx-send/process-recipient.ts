@@ -25,6 +25,10 @@ import {
   sleep,
 } from "../_shared/messaging/index.ts";
 import type { Logger } from "../_shared/validation.ts";
+import {
+  EFFECT_TALKX_RECIPIENT_SEND,
+  enqueueEffectReconcile,
+} from "../_shared/effect-reconcile.ts";
 
 /** E49: sorteia variante A/B pelo peso. Retorna null se nao houver variantes. */
 export async function pickVariant(supabase: SupabaseClient, templateId: string): Promise<{ id: string; content: string; media_url: string | null; media_type: string | null } | null> {
@@ -94,6 +98,41 @@ export type ProcessResult =
   | { kind: "outcome_unknown" }
   | { kind: "rescheduled"; deadLettered: boolean }
   | { kind: "stopped" };
+
+/**
+ * IA-047: enfileira a RECONCILIAÇÃO (somente-leitura, sem reenvio) de um
+ * destinatário que ficou em `outcome_unknown`. A chave estável
+ * `reconcile:talkx.recipient.send:<id>` colide no UNIQUE de `ai_jobs`, então
+ * repetir o enqueue devolve o MESMO job. Best-effort: a linha de origem JÁ está
+ * em quarentena durável, então uma falha aqui não pode derrubar o lote — só é
+ * logada; a linha segue visível para ação humana.
+ */
+async function enqueueRecipientReconciliation(
+  supabase: SupabaseClient,
+  recipient: ProcessRecipientRow,
+  externalId: string | null,
+  log: Logger,
+  correlationId: string,
+  campaignId: string,
+): Promise<void> {
+  try {
+    await enqueueEffectReconcile({
+      supabase,
+      effect: EFFECT_TALKX_RECIPIENT_SEND,
+      sourceTable: "talkx_recipients",
+      sourceId: recipient.id,
+      externalId,
+      attemptFrom: typeof recipient.attempt_count === "number" ? recipient.attempt_count : 0,
+    });
+  } catch (err) {
+    log.warn("TalkX: falha ao enfileirar reconciliacao (linha segue em outcome_unknown)", {
+      correlationId,
+      campaignId,
+      recipient_id: recipient.id,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
 
 export async function processRecipient(
   deps: ProcessRecipientDeps,
@@ -237,6 +276,10 @@ export async function processRecipient(
   const recipientHasMedia = effectiveMediaUrl !== null && effectiveMediaType !== null;
 
   let providerPostAttempted = false;
+  // IA-047: id do provedor quando ELE respondeu mas a CONFIRMAÇÃO no banco
+  // falhou. Vive fora do try para que o catch (quarentena) possa enfileirar a
+  // reconciliação com o id conhecido. Fica `null` quando nem chegamos a recebê-lo.
+  let providerMessageId: string | null = null;
   // Precisa viver fora do try: o catch chama clearTimeout(sendTimeout) para
   // qualquer erro dentro do try, inclusive os lançados antes da linha que
   // cria o timeout — declarado como `const` dentro do try, essa variável
@@ -371,12 +414,13 @@ export async function processRecipient(
       throw new Error("talkx_provider_outcome_unknown: invalid_response_body");
     }
 
-    const providerMessageId = extractMessageId(sendResult);
-    if (sendResponse.ok && !sendResult.error && providerMessageId && providerMessageId.length <= 512) {
+    const foundProviderMessageId = extractMessageId(sendResult);
+    providerMessageId = foundProviderMessageId ?? null;
+    if (sendResponse.ok && !sendResult.error && foundProviderMessageId && foundProviderMessageId.length <= 512) {
       const { error: completionError } = await supabase.rpc("record_talkx_recipient_sent", {
         p_recipient_id: recipient.id,
         p_claim_token: claim.claim_token,
-        p_external_id: providerMessageId,
+        p_external_id: foundProviderMessageId,
       });
       if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
       return { kind: "sent" };
@@ -435,6 +479,11 @@ export async function processRecipient(
         // the same invocation.
         throw new Error(`talkx_recipient_quarantine_failed: ${quarantineError.message}`);
       }
+      // IA-047: a linha está em quarentena DURÁVEL. Enfileira a RECONCILIAÇÃO
+      // (somente-leitura, idempotente, SEM reenvio) para um varredor tentar
+      // confirmar depois. Best-effort: se falhar, só loga — a linha continua em
+      // `outcome_unknown` e visível para ação humana.
+      await enqueueRecipientReconciliation(supabase, recipient, providerMessageId, log, correlationId, campaignId);
       const interval = randomBetween(campaign.send_interval_min as number, campaign.send_interval_max as number);
       await sleep(interval);
       return { kind: "outcome_unknown" };

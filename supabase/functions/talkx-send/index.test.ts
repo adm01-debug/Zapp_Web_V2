@@ -845,3 +845,105 @@ Deno.test("X013 continue (migrado de start, GO flavor): 5xx em /send/text → ou
     clock.restore();
   }
 });
+
+// ---------------------------------------------------------------------------
+// IA-047 — o envio de TESTE é idempotente: repetir o mesmo pedido (duplo clique
+// ou retry) NÃO pode produzir um segundo POST ao provedor. O claim durável
+// (`talkx_test_send_claims`) é registrado ANTES do POST e a repetição cai na
+// UNIQUE (23505), devolvendo o MESMO `provider_message_id` sem reenviar.
+// ---------------------------------------------------------------------------
+
+/** Deps com um `talkx_test_send_claims` stateful: a 2ª inserção da mesma
+ *  `request_key` devolve 23505 e a leitura devolve o id já confirmado. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function makeIdempotentTestDeps(connection: Record<string, unknown> | null): any {
+  const claims = new Map<string, string | null>();
+  const keyOf = (p: Record<string, unknown>) => String(p.request_key ?? "");
+  return {
+    serviceKey: TEST_SERVICE_KEY,
+    supabase: {
+      auth: { getUser: () => Promise.resolve({ data: { user: null }, error: new Error("") }) },
+      rpc: () => Promise.resolve({ data: null, error: null }),
+      from(table: string) {
+        if (table === "whatsapp_connections") return thenableQB({ data: connection, error: null });
+        if (table !== "talkx_test_send_claims") return thenableQB({ data: null, error: null });
+        let mode: "select" | "insert" | "update" | "delete" = "select";
+        let payload: Record<string, unknown> = {};
+        let key = "";
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const b: any = {};
+        Object.assign(b, {
+          insert: (row: Record<string, unknown>) => { mode = "insert"; payload = row; return b; },
+          update: (row: Record<string, unknown>) => { mode = "update"; payload = row; return b; },
+          delete: () => { mode = "delete"; return b; },
+          select: () => b,
+          eq: (col: string, val: string) => { if (col === "request_key") key = val; return b; },
+          maybeSingle: () => Promise.resolve(
+            mode === "select"
+              ? { data: { provider_message_id: claims.get(key) ?? null }, error: null }
+              : { data: null, error: null },
+          ),
+          then: (res: (v: unknown) => unknown) => {
+            if (mode === "insert") {
+              const k = keyOf(payload);
+              if (claims.has(k)) return res({ data: null, error: { code: "23505", message: "duplicate key" } });
+              claims.set(k, null);
+              return res({ data: { id: "claim-1", request_key: k }, error: null });
+            }
+            if (mode === "update") { claims.set(key, String(payload.provider_message_id)); return res({ data: null, error: null }); }
+            if (mode === "delete") { claims.delete(key); return res({ data: null, error: null }); }
+            return res({ data: null, error: null });
+          },
+          catch: () => b,
+        });
+        return b;
+      },
+    },
+  };
+}
+
+Deno.test("IA-047 test action: repetir o mesmo idempotencyKey faz UM único POST e devolve o MESMO id", async () => {
+  setDispatchEnv();
+  const provider = mockProviderRecording();
+  const deps = makeIdempotentTestDeps(makeConnection());
+  try {
+    const body = {
+      action: "test",
+      templateContent: "Ola {{nome}}, tudo bem?",
+      phone: "+551****0007",
+      idempotencyKey: "teste-clique-1",
+    };
+    const res1 = await handleTalkxSend(makePost({ bearer: TEST_SERVICE_KEY, body }), deps);
+    assert(res1.status === 200, `1ª chamada: esperado 200, recebido ${res1.status}`);
+    const b1 = await res1.json();
+    assert(typeof b1.provider_message_id === "string" && b1.provider_message_id.length > 0,
+      `1ª chamada sem provider_message_id: ${JSON.stringify(b1)}`);
+
+    const res2 = await handleTalkxSend(makePost({ bearer: TEST_SERVICE_KEY, body }), deps);
+    assert(res2.status === 200, `2ª chamada: esperado 200, recebido ${res2.status}`);
+    const b2 = await res2.json();
+    assert(b2.provider_message_id === b1.provider_message_id,
+      `a repetição devolve o MESMO provider_message_id: ${JSON.stringify(b2)}`);
+
+    const posts = provider.posts.filter((p) => p.url.includes("/message/"));
+    assert(posts.length === 1, `repetir o pedido NÃO pode POSTar de novo ao provedor (houve ${posts.length})`);
+  } finally {
+    provider.restore();
+  }
+});
+
+Deno.test("IA-047 test action: sem idempotencyKey, o mesmo pedido deriva a MESMA chave (1 POST)", async () => {
+  setDispatchEnv();
+  const provider = mockProviderRecording();
+  const deps = makeIdempotentTestDeps(makeConnection());
+  try {
+    const body = { action: "test", templateContent: "Ola {{nome}}", phone: "+551****0008" };
+    await handleTalkxSend(makePost({ bearer: TEST_SERVICE_KEY, body }), deps);
+    await handleTalkxSend(makePost({ bearer: TEST_SERVICE_KEY, body }), deps);
+
+    const posts = provider.posts.filter((p) => p.url.includes("/message/"));
+    assert(posts.length === 1, `o hash do pedido tem de deduplicar (houve ${posts.length} POSTs)`);
+  } finally {
+    provider.restore();
+  }
+});

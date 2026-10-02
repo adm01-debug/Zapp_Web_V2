@@ -171,3 +171,30 @@ describe('ai-conversation-summary — resposta em envelope (IA-025)', () => {
     expect(bloco).toMatch(/\.\.\.buildAiEnvelope\(\{[\s\S]*\}\)\s*,\s*\n\s*analysisId,/);
   });
 });
+
+describe('IA-048 · revalida o contexto antes do efeito e devolve cancelled', () => {
+  const source = read('supabase/functions/ai-conversation-summary/index.ts');
+
+  it('revalida o contexto ANTES de chamar a RPC de persistência', () => {
+    const revalidacao = source.indexOf('await revalidateContextBeforeEffect({');
+    const rpc = source.indexOf("supabase.rpc('persist_conversation_analysis'");
+    expect(revalidacao, 'não revalida o contexto antes de persistir').toBeGreaterThan(-1);
+    expect(rpc, 'não chama a RPC de persistência').toBeGreaterThan(-1);
+    expect(revalidacao).toBeLessThan(rpc);
+  });
+
+  it('sem contexto vigente NÃO persiste: volta envelope cancelled (200) ecoando o requestId', () => {
+    const guarda = source.indexOf('if (!revalidation.current)');
+    const rpc = source.indexOf("supabase.rpc('persist_conversation_analysis'");
+    expect(guarda, 'não há guarda de cancelamento antes da persistência').toBeGreaterThan(-1);
+    const bloco = source.slice(guarda, rpc);
+    expect(bloco).toContain('contextCancelledEnvelope(');
+    expect(bloco).toContain('requestId');
+    expect(bloco).toMatch(/200,\s*req\)/);
+  });
+
+  it('ecoa o requestId no envelope de sucesso', () => {
+    const resposta = source.indexOf('log.done(200, { analysisId');
+    expect(source.slice(resposta)).toContain('requestId');
+  });
+});

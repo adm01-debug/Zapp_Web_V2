@@ -30,7 +30,7 @@
  *  - `hasMounted` nao faz parte da API: a flag de animacao de entrada vive em
  *    `TasksModule` (etapa 18).
  */
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -101,6 +101,13 @@ export interface WorkItemInput {
   remindAt?: string | null;
   status?: WorkItemStatus;
   waitingReason?: string | null;
+  /**
+   * IA-047 — chave idempotente do clique (uuid estável). Derivada UMA vez por
+   * ação na borda (ex.: sugestão de IA) e reusada num duplo submit/retry: o
+   * índice único parcial (created_by, client_task_id) garante que o mesmo
+   * pedido não cria duas tarefas. Sem ela o hook gera um uuid por chamada.
+   */
+  clientTaskId?: string | null;
 }
 
 export interface MoveOpts {
@@ -127,6 +134,16 @@ export function tomorrowAtNine(now: Date = new Date()): Date {
   d.setDate(d.getDate() + 1);
   d.setHours(9, 0, 0, 0);
   return d;
+}
+
+/**
+ * UUID da chave idempotente do clique (IA-047). Usa o `crypto` do runtime; se
+ * ele faltar, devolve `null` — o insert segue sem chave em vez de quebrar a
+ * criação (o índice parcial simplesmente não cobre a linha).
+ */
+export function generateClientTaskId(): string | null {
+  const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
+  return typeof c?.randomUUID === 'function' ? c.randomUUID() : null;
 }
 
 /** Patch de `update` no vocabulario do banco (sem `status`: quem move e `move`). */
@@ -272,9 +289,15 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
       const targetStatus = input.status ?? 'backlog';
       const posicoes = items.filter((i) => i.status === targetStatus).map((i) => i.position);
       const position = posicoes.length ? Math.min(...posicoes) - 1 : 0;
-      // Devolve o id: quem cria fora do modulo precisa dele para abrir o item
-      // (o /remind da fase F abria o Sheet e fazia uma leitura extra so para isso).
-      const { data, error } = await supabase.from('conversation_tasks').insert({
+      // IA-047: o INSERT sempre carrega a chave idempotente do clique. Com a
+      // chave explícita, repetir o mesmo pedido cai no índice único parcial
+      // (created_by, client_task_id); sem chave (chamador antigo), geramos uma
+      // agora para não deixar a coluna nula em cotações novas.
+      const clientTaskId = input.clientTaskId ?? generateClientTaskId();
+      // A coluna client_task_id (IA-047) ainda não existe nos tipos gerados e o
+      // insert do supabase-js recusa propriedade excedente — cast de transporte
+      // (mesmo idioma do outbound-message.service para tipos ainda não gerados).
+      const row = {
         title: input.title,
         description: input.description ?? null,
         contact_id: input.contactId ?? null,
@@ -286,8 +309,17 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
         due_date: input.dueDate ?? null,
         remind_at: input.remindAt ?? null,
         waiting_reason: input.waitingReason ?? null,
-      }).select('id').single();
-      if (error) throw error;
+        client_task_id: clientTaskId,
+      } as unknown as TaskInsert;
+      // Devolve o id: quem cria fora do modulo precisa dele para abrir o item
+      // (o /remind da fase F abria o Sheet e fazia uma leitura extra so para isso).
+      const { data, error } = await supabase.from('conversation_tasks').insert(row).select('id').single();
+      if (error) {
+        // 23505 = violação da chave única (created_by, client_task_id): a tarefa
+        // JÁ existe. O pedido é idempotente — não é erro para o usuário.
+        if ((error as { code?: string }).code === '23505') return null;
+        throw error;
+      }
       return (data as { id: string } | null)?.id ?? null;
     },
     onSettled: () => invalidate(),
@@ -297,6 +329,31 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
       else toast.error('Erro ao criar tarefa');
     },
   });
+
+  /**
+   * IA-047 — dedupe do duplo submit. Duas chamadas de criação com a MESMA
+   * `clientTaskId` (dois cliques antes de a primeira resolver) compartilham a
+   * mesma promise: só o primeiro insert sai. Sem chave, cada chamada é uma
+   * intenção nova. Após resolver/falhar, a chave é liberada (um clique
+   * deliberado mais tarde é de novo um novo caminho — e, ainda assim, a
+   * constraint do banco barra um segundo INSERT com a mesma chave).
+   */
+  const inFlightCreates = useRef<Map<string, Promise<string | null>>>(new Map());
+  const createOnce = useCallback(
+    (input: WorkItemInput): Promise<string | null> => {
+      const key = input.clientTaskId ?? null;
+      if (key) {
+        const emVoo = inFlightCreates.current.get(key);
+        if (emVoo) return emVoo;
+      }
+      const promise = createMutation.mutateAsync(input).finally(() => {
+        if (key) inFlightCreates.current.delete(key);
+      });
+      if (key) inFlightCreates.current.set(key, promise);
+      return promise;
+    },
+    [createMutation],
+  );
 
   // update (otimista)
   const updateMutation = useMutation({
@@ -527,8 +584,9 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
     // mutations
     // `create` segue devolvendo void (varios consumidores tipam assim); quem precisa
     // do id da tarefa criada usa `createAndGetId` (fase F: o /remind abre o item).
-    create:   async (input: WorkItemInput) => { await createMutation.mutateAsync(input); },
-    createAndGetId: (input: WorkItemInput) => createMutation.mutateAsync(input),
+    // IA-047: as duas passam por `createOnce`, que deduplica pelo `clientTaskId`.
+    create:   async (input: WorkItemInput) => { await createOnce(input); },
+    createAndGetId: (input: WorkItemInput) => createOnce(input),
     update:   (id: string, patch: Partial<WorkItemInput>) => updateMutation.mutateAsync({ id, patch }),
     move:     (item: WorkItem, to: WorkItemStatus, opts?: MoveOpts) =>
                 moveMutation.mutateAsync({ item, to, opts }),

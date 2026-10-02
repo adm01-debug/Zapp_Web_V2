@@ -176,6 +176,30 @@ export async function loadContactPromptContext(input: {
 }
 
 /**
+ * Versão do contexto de IA do contato (IA-048): o instante da última projeção de
+ * IA aplicada ao contato (`contacts.ai_projection_updated_at`), ou `null` quando
+ * o contato nunca recebeu projeção. É o "relógio" contra o qual a revalidação
+ * compara — a MESMA coluna que a trava de recência do banco usa.
+ *
+ * Lança quando a leitura falha (erro de rede/consulta): quem chama decide entre
+ * tratar como "não medido" (não cancela) e propagar. Nunca devolve um instante
+ * inventado.
+ */
+export async function loadContactProjectionVersion(
+  supabase: SupabaseClient,
+  contactId: string,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('contacts')
+    .select('ai_projection_updated_at')
+    .eq('id', contactId)
+    .maybeSingle();
+  if (error) throw error;
+  const value = (data as { ai_projection_updated_at?: string | null } | null)?.ai_projection_updated_at ?? null;
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+/**
  * Parâmetros da chamada roteada que ESTE pipeline entrega ao despacho central:
  * política do SERVIDOR em `system` (IA-037) e conversa do cliente em
  * `messages`, mais a ferramenta forçada (`tools` + `toolChoice`).
@@ -355,6 +379,7 @@ export function conversationRunEnvelope(
   valueIssues: Record<string, string>,
   vocabularyConversions: Array<{ field: string; from: unknown; to: string }>,
   projected: boolean,
+  requestId?: string | null,
 ): {
   context: ConversationContextBudget;
   evidence: {
@@ -363,10 +388,13 @@ export function conversationRunEnvelope(
     vocabularyConversions: Array<{ field: string; from: unknown; to: string }>;
     projected: boolean;
   };
+  requestId?: string;
 } {
   return {
     context,
     evidence: { contractVersion: CONTEXT_CONTRACT_VERSION, valueIssues, vocabularyConversions, projected },
+    // IA-048: ecoa o identificador da requisição SÓ quando o cliente mandou um.
+    ...(typeof requestId === 'string' && requestId.length > 0 ? { requestId } : {}),
   };
 }
 
@@ -420,12 +448,14 @@ export function conversationRunResponse(input: {
   analysisId: string | null;
   data: unknown;
   req: Request;
+  /** IA-048: identificador da requisição, ecoado para o cliente descartar com segurança. */
+  requestId?: string | null;
 }): Response {
   return jsonResponse({
     ...buildAiEnvelope({
       capability: input.capability,
       status: input.status,
-      ...conversationRunEnvelope(input.context, input.valueIssues, input.vocabularyConversions, input.projected),
+      ...conversationRunEnvelope(input.context, input.valueIssues, input.vocabularyConversions, input.projected, input.requestId),
       data: input.data,
     }),
     analysisId: input.analysisId,

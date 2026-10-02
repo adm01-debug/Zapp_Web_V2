@@ -67,6 +67,36 @@ async function resolveProfileId(
   }
 }
 
+/**
+ * `EdgeRuntime` é um global do runtime do Supabase Edge Functions e pode NÃO
+ * existir no Deno local nem na suíte de testes. Declaramos o tipo (opcional)
+ * apenas para poder checá-lo com segurança de tipos; em runtime a referência
+ * resolve para o global, e a guarda abaixo trata o caso de ele não existir.
+ */
+declare const EdgeRuntime: { waitUntil?: (promise: Promise<unknown>) => void } | undefined;
+
+/**
+ * Log AI usage WITHOUT blocking the response and WITHOUT losing the record.
+ *
+ * `logAiUsage` continua sendo AGUARDADA pelo chamador. Esta variante existe para
+ * os pontos em que a resposta ao usuário não pode esperar o insert (ex.: o
+ * `ai-proxy`). Em vez de descartar a promessa com `void` — o que transforma o
+ * consumo PAGO em registro perdido se a função encerrar antes do insert —
+ * registramos a promessa em `EdgeRuntime.waitUntil` quando o runtime o oferece,
+ * para que a função só encerre após o insert concluir. Quando `waitUntil` NÃO
+ * existe (Deno local/teste), caímos no `await`, garantindo a gravação de forma
+ * síncrona ao chamador. A promessa NUNCA é descartada: é exatamente esse
+ * vazamento que esta função corrige.
+ */
+export async function logAiUsageDetached(entry: AiUsageEntry): Promise<void> {
+  const promise = logAiUsage(entry);
+  if (typeof EdgeRuntime !== "undefined" && typeof EdgeRuntime.waitUntil === "function") {
+    EdgeRuntime.waitUntil(promise);
+    return;
+  }
+  await promise;
+}
+
 /** Log AI usage to database (fire-and-forget, non-blocking) */
 export async function logAiUsage(entry: AiUsageEntry): Promise<void> {
   try {

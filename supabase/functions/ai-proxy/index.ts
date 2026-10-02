@@ -19,7 +19,7 @@
  */
 import { handleCors, errorResponse, jsonResponse, Logger, requireEnv, requireAuth, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 import { z, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
-import { logAiUsage, extractTokenUsage, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
+import { logAiUsageDetached, extractTokenUsage, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { callLovableAI, callOpenAICompatible, callCustomWebhook, withRetry } from "../_shared/ai-providers.ts";
 import {
@@ -58,6 +58,8 @@ const AiProxySchema = z.object({
   response_format: z.any().optional(),
   // IA-040: diagnóstico de UM provedor (destino fixo, sem fallback).
   test: z.boolean().optional().default(false),
+  // IA-048: identidade da requisição, ecoada no corpo (só eco — sem efeito novo).
+  requestId: z.string().uuid("requestId must be a valid UUID").optional(),
 });
 
 /** Teto de tempo por chamada no modo teste (IA-040). */
@@ -505,7 +507,7 @@ Deno.serve(async (req) => {
     const parsed = parseBody(AiProxySchema, await req.json());
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
-    const { messages, model: clientModel, use_for, provider_id, tools, tool_choice, stream, response_format, test } = parsed.data;
+    const { messages, model: clientModel, use_for, provider_id, tools, tool_choice, stream, response_format, test, requestId } = parsed.data;
     // O schema já aplica o default 'copilot'; o `?? ` só fecha o tipo (parseBody infere a entrada).
     const purpose = use_for ?? 'copilot';
     const isTest = test === true;
@@ -721,7 +723,7 @@ Deno.serve(async (req) => {
     if (!response.ok) {
       const errText = await bodyText(response);
       log.error("Final provider error", { status: response.status, error: errText.slice(0, 200) });
-      void logAiUsage({
+      await logAiUsageDetached({
         functionName: 'ai-proxy', userId,
         model: modelUsed,
         durationMs, status: 'error',
@@ -744,7 +746,7 @@ Deno.serve(async (req) => {
     const data = await response.json();
     const { inputTokens, outputTokens, model } = extractTokenUsage(data);
 
-    void logAiUsage({
+    await logAiUsageDetached({
       functionName: 'ai-proxy', userId,
       model: model || modelUsed || null,
       inputTokens, outputTokens, durationMs,
@@ -757,7 +759,12 @@ Deno.serve(async (req) => {
     });
 
     log.done(200, { provider: usedFallback && fallbackTo !== null ? fallbackTo.name : providerName, tokens: inputTokens + outputTokens });
-    return jsonResponse(data, 200, req);
+    // IA-048: ecoa o identificador da requisição no corpo (só eco — sem efeito novo),
+    // para o cliente descartar uma resposta que já não pertence ao contexto atual.
+    const proxyBody = requestId && data && typeof data === 'object' && !Array.isArray(data)
+      ? { ...(data as Record<string, unknown>), requestId }
+      : data;
+    return jsonResponse(proxyBody, 200, req);
 
   } catch (error) {
     log.error("Proxy error", { error: error instanceof Error ? error.message : String(error) });

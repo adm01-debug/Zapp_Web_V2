@@ -47,6 +47,20 @@
  *    scheduler: auth por `x-cron-secret`, timeout de 10 s e limites por tick). É arquivo de teste,
  *    não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos —
  *    só o total varrido sobe, e o ratchet é atualizado de propósito.
+ *  - 187: Bloco 05 / PR-4 (IA-049) — `_shared/ai-usage.test.ts` (teste Deno do `logAiUsageDetached`:
+ *    com `EdgeRuntime.waitUntil` a promessa do insert é entregue ao runtime; sem ele, é aguardada; e a
+ *    guarda prova que o `ai-proxy` não voltou a descartar com `void`). É arquivo de teste, não produz
+ *    token legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total
+ *    varrido sobe, e o ratchet é atualizado de propósito.
+ *  - 188: Bloco 05 / PR-4 (IA-047, reconciliação) — `_shared/effect-reconcile.ts` (confirmador
+ *    somente-leitura de efeito externo sem confirmação; NUNCA reenvia). É CÓDIGO de produção do PR-4,
+ *    não arquivo de teste: o mapa INVENTARIO segue idêntico porque ele não produz token legado.
+ *  - 189: Bloco 05 / PR-4 (IA-047, reconciliação) — `_shared/__tests__/effect-reconcile.test.ts`
+ *    (8 testes Deno do confirmador).
+ *  - 190: Bloco 05 / PR-4 (IA-048, servidor) — `_shared/__tests__/ai-context-revalidation.test.ts`
+ *    (17 testes da revalidação de contexto antes do efeito). Os dois de teste não produzem token
+ *    legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total varrido
+ *    sobe, e o ratchet é atualizado de propósito.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -121,8 +135,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('186 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(186);
+  it('190 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(190);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );

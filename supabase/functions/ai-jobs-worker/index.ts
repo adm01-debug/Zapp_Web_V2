@@ -44,6 +44,7 @@ import {
   type AiJob,
 } from "../_shared/ai-jobs.ts";
 import type { GenerateParams } from "../_shared/ai-generate.ts";
+import { EffectReconcileError, handleEffectReconcile } from "../_shared/effect-reconcile.ts";
 
 // ---------------------------------------------------------------------------
 // Identidade e parâmetros do tick.
@@ -185,6 +186,9 @@ async function handleAiGenerate(input: AiJobHandlerInput): Promise<AiJobHandlerR
 export const HANDLERS: Readonly<Record<string, AiJobHandler>> = {
   "ai_jobs.reap_expired": handleReapExpired,
   "ai.generate": handleAiGenerate,
+  // IA-047: confirmador de efeitos externos sem confirmação. SOMENTE-LEITURA no
+  // provedor — nunca reenvia (ver `_shared/effect-reconcile.ts`).
+  "effect.reconcile": handleEffectReconcile,
 };
 
 // ---------------------------------------------------------------------------
@@ -289,7 +293,13 @@ async function runBatch(
       });
     } catch (err) {
       if (err instanceof AiJobInfraError) throw err; // infra → 5xx (não é falha do job)
-      const code = err instanceof AiJobHandlerError ? err.code : "HANDLER_ERROR";
+      const code = err instanceof AiJobHandlerError
+        ? err.code
+        // IA-047: o handler de reconciliação sinaliza o terminal `failed/UNCONFIRMED`
+        // (e payload/efeito inválido) pelo próprio `code`, sem acoplar o worker ao módulo.
+        : err instanceof EffectReconcileError
+        ? err.code
+        : "HANDLER_ERROR";
       // Heartbeat DEPOIS do trabalho (mesmo no erro), antes de liquidar. Se o lease
       // se foi, NÃO liquida: outro worker assumiu a linha.
       if (await renewLease(job, leaseToken)) {
