@@ -154,3 +154,46 @@ describe('SuggestionList — alvos de toque E61 (min-h-11)', () => {
     expect(link.className).toContain('min-h-11');
   });
 });
+
+/**
+ * E63 — redução de movimento. Quem pediu "menos movimento" no sistema operacional não pode receber
+ * um esqueleto pulsando nem um spinner girando: o corpo responde a isso (vestibular/neurológico) e a
+ * expectativa do `prefers-reduced-motion` é que a animação contínua pare. O projeto é Tailwind, então
+ * a prova é a presença da variante `motion-reduce:` no PRÓPRIO elemento animado — é o que o checklist
+ * da etapa exige (nada de media query solta nem CSS global).
+ */
+describe('SuggestionList — movimento reduzido E63 (variante motion-reduce:)', () => {
+  const um = [
+    { id: 's1', name: 'Rua A, 1', address: 'Rua A, 1, São Paulo', kind: 'street' },
+  ] as unknown as SuggestionListProps['suggestions'];
+
+  it('E63: o esqueleto de carregamento para de pulsar quando o sistema pede menos movimento', () => {
+    render(<SuggestionList {...props({ status: 'loading' })} />);
+    const esqueleto = screen.getByTestId('lista-sugestoes').querySelector('.animate-pulse');
+    expect(esqueleto).not.toBeNull();
+    expect(esqueleto!.className).toContain('motion-reduce:animate-none');
+  });
+
+  it('E63: o spinner do /retrieve para de girar quando o sistema pede menos movimento', () => {
+    render(<SuggestionList {...props({ status: 'ok', suggestions: um, retrievingId: 's1' })} />);
+    const spinner = screen.getByTestId('lista-sugestoes').querySelector('.animate-spin');
+    expect(spinner).not.toBeNull();
+    // `className` de um elemento SVG é `SVGAnimatedString`, não string — lê o atributo.
+    expect(spinner!.getAttribute('class')).toContain('motion-reduce:animate-none');
+  });
+
+  it('E63: a transição de realce do item desliga quando o sistema pede menos movimento', () => {
+    render(<SuggestionList {...props({ status: 'ok', suggestions: um })} />);
+    const item = screen.getByRole('option');
+    expect(item.className).toContain('transition-colors');
+    expect(item.className).toContain('motion-reduce:transition-none');
+  });
+
+  it('E63: o aviso de pausa (contagem de segundos) hoje é só texto — nada a desligar', () => {
+    // A contagem da pausa é troca de TEXTO (o `setInterval` só muda o número); não existe animação
+    // para reduzir. Este caso pina isso e, se um dia alguém animar o contador, cobra a variante.
+    render(<SuggestionList {...props({ status: 'paused', blocked: 'rate_limited', pausedUntil: Date.now() + 45_000 })} />);
+    const animados = [...screen.getByTestId('lista-sugestoes').querySelectorAll('[class*="animate-"]')];
+    expect(animados).toEqual([]);
+  });
+});
