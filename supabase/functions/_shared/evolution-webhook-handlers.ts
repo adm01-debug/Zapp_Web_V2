@@ -10,6 +10,8 @@ import {
   normalizeEvolutionCallVideo,
   normalizeEvolutionCallStatus,
   shouldNotifyIncomingCall,
+  direcaoDaChamada,
+  deveNotificarChamada,
 } from "./notification-events.ts";
 
 // Re-export message handlers for backward compatibility
@@ -247,6 +249,9 @@ export async function handleCallEvent(supabase: any, instance: string, data: unk
   const from = callData.from as string;
   const isVideo = normalizeEvolutionCallVideo(callData.isVideo);
   const callStatus = typeof callData.status === 'string' ? callData.status : '';
+  // T25: direcao pelo payload (`fromMe`/`isOutgoing`). A RPC `record_incoming_call_event`
+  // ainda grava 'inbound' fixo; persistir a direcao depende do T26 (migration propria).
+  const direcao = direcaoDaChamada(callData);
   if (!from) return;
 
   const phone = from.replace('@s.whatsapp.net', '');
@@ -289,7 +294,9 @@ export async function handleCallEvent(supabase: any, instance: string, data: unk
     p_status: normalizedStatus,
     p_is_video: isVideo,
     p_provider_event_id: eventId,
-    p_should_notify: shouldNotifyIncomingCall(callStatus),
+    p_should_notify: deveNotificarChamada(callStatus, direcao),
+    // T26: a RPC passou a receber a direcao; sem ela gravava 'inbound' fixo.
+    p_direction: direcao,
   });
   if (persistError) throw new Error('Unable to persist incoming call event');
 }

@@ -6,7 +6,6 @@ import { ExternalProductCatalog } from '@/components/catalog/ExternalProductCata
 
 const TransferDialog = lazy(() => import('../TransferDialog').then(m => ({ default: m.TransferDialog })));
 const ScheduleMessageDialog = lazy(() => import('../ScheduleMessageDialog').then(m => ({ default: m.ScheduleMessageDialog })));
-const CallDialog = lazy(() => import('@/components/calls/CallDialog').then(m => ({ default: m.CallDialog })));
 const GlobalSearch = lazy(() => import('../GlobalSearch').then(m => ({ default: m.GlobalSearch })));
 const InteractiveMessageBuilder = lazy(() => import('../InteractiveMessageBuilder').then(m => ({ default: m.InteractiveMessageBuilder })));
 const ForwardMessageDialog = lazy(() => import('../ForwardMessageDialog').then(m => ({ default: m.ForwardMessageDialog })));
@@ -27,7 +26,6 @@ interface ChatDialogsProps {
   closeDialog: (key: DialogKey) => void;
   conversation: Conversation;
   forwardMessage: Message | null;
-  callDirection: 'inbound' | 'outbound';
   contactId: string;
   onTransfer: (type: 'agent' | 'queue', targetId: string, message?: string) => void;
   onScheduleMessage: (message: string, scheduledAt: Date, attachment?: File) => Promise<void>;
@@ -38,7 +36,7 @@ interface ChatDialogsProps {
 }
 
 export function ChatDialogs({
-  dialogs, openDialog, closeDialog, conversation, forwardMessage, callDirection,
+  dialogs, openDialog, closeDialog, conversation, forwardMessage,
   contactId, onTransfer, onScheduleMessage, onSendInteractiveMessage,
   onForwardToTargets, onSendLocation, onSetInputValue,
 }: ChatDialogsProps) {
@@ -54,7 +52,6 @@ export function ChatDialogs({
       <Suspense fallback={null}>
         {dialogs.transferDialog && <TransferDialog open={dialogs.transferDialog} onOpenChange={(v) => v ? openDialog('transferDialog') : closeDialog('transferDialog')} onTransfer={onTransfer as (type: "agent" | "connection" | "queue", targetId: string, message?: string) => void} />}
         {dialogs.scheduleDialog && <ScheduleMessageDialog open={dialogs.scheduleDialog} onOpenChange={(v) => v ? openDialog('scheduleDialog') : closeDialog('scheduleDialog')} onSchedule={onScheduleMessage} />}
-        {dialogs.callDialog && <CallDialog open={dialogs.callDialog} onOpenChange={(v) => v ? openDialog('callDialog') : closeDialog('callDialog')} contact={{ name: conversation.contact.name, phone: conversation.contact.phone, avatar: conversation.contact.avatar ?? undefined }} direction={callDirection} onEnd={() => closeDialog('callDialog')} />}
         {dialogs.globalSearch && <GlobalSearch open={dialogs.globalSearch} onOpenChange={(v) => v ? openDialog('globalSearch') : closeDialog('globalSearch')} onSelectResult={(result) => { log.debug('Selected:', result); toast({ title: 'Resultado selecionado', description: result.title }); }} />}
         {dialogs.interactiveBuilder && <InteractiveMessageBuilder open={dialogs.interactiveBuilder} onOpenChange={(v) => v ? openDialog('interactiveBuilder') : closeDialog('interactiveBuilder')} onSend={onSendInteractiveMessage} />}
         {dialogs.forwardDialog && <ForwardMessageDialog open={dialogs.forwardDialog} onOpenChange={(v) => v ? openDialog('forwardDialog') : closeDialog('forwardDialog')} message={forwardMessage} onForward={onForwardToTargets} />}
