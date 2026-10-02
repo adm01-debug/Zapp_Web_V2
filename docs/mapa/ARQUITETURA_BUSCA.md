@@ -46,6 +46,42 @@ Uma **sessão de busca** (`src/lib/mapboxSession.ts`) é um `session_token` (UUI
 
 Billing da Mapbox: **1 sessão = até 50 `/suggest` + 1 `/retrieve`**, não 1 request avulso.
 
+## Estados da lista de sugestões (inclui `paused`)
+
+O status vive no reducer de `src/components/inbox/location-picker/useAddressAutocomplete.ts`:
+
+```ts
+export type SearchStatus = 'idle' | 'typing' | 'loading' | 'ok' | 'empty' | 'paused'
+```
+
+- `paused` **não é erro**: é a lista suspensa de propósito quando `state.blocked` é verdadeiro
+  (`useAddressAutocomplete.ts:163`) — ou seja, **pausada = teto de custo atingido**, o mesmo
+  mecanismo que faz o `mapboxCostGuard` (E37) cair para `/forward` a partir de 450 sessões no mês.
+  Na UI aparece como aviso, não como falha.
+- Antes de `paused` existe `empty` (a Mapbox respondeu e não há resultado) e `idle` (termo abaixo do
+  mínimo). Nenhum dos dois é degradação de custo.
+
+## Configuração por ambiente (as 2 chaves vivas)
+
+Levantado no código (`grep VITE_`): o módulo é controlado por **duas** variáveis, e nenhuma delas é
+uma feature flag de liga/desliga do autocomplete:
+
+| Chave | O que faz | Menções |
+|---|---|---|
+| `VITE_SEARCHBOX_MONTHLY_SESSION_LIMIT` | teto de sessões do mês para o guarda de custo (E37) | 12 |
+| `VITE_CRM_INTEGRATION_ENABLED` | integração de CRM no cadastro de contato (Fase 6) | 1 |
+
+A **feature flag do autocomplete foi removida** (decisão `20261001-103207-6c0b`): o rollback passou a
+ser revert de código, não desligamento por flag — ver a seção abaixo. Por isso o texto do E84 que
+menciona "2 flags" se refere às duas chaves de ambiente acima, não a uma flag de módulo.
+
+## Telemetria — forma canônica de leitura
+
+Os eventos continuam em `audit_logs` (`searchbox_session`, `searchbox_cost_guard`), mas a leitura
+agregada do dia a dia é a **view `public.searchbox_usage_daily`** (E52, migration `20260930760000`),
+com `dia`, `sessoes`, `degradacoes`, `ultimo_evento_em`. As queries manuais que ela substituiu ficam
+no Apêndice A de `docs/mapa/USO_SEARCHBOX.md` — se as duas formas divergirem, a view está errada.
+
 ## Feature flag (removida)
 
 O autocomplete **não tem mais feature flag de runtime**: o item 4b removeu o ramo legado do picker (que era o gate `useFeatureFlag('mapa.searchbox-autocomplete', false)`) e a UI virou ramo único. A chave `mapa.searchbox-autocomplete` da tabela `feature_flags` foi removida pela migration `20260930210000_remove_orphan_searchbox_flag.sql` — nenhum `src/`, Edge Function, workflow ou `.env` a lia.
