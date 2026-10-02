@@ -57,7 +57,7 @@ export type MultiplixCompanyContact = { name?: string | null };
 
 export function getGreeting(timeZone = DEFAULT_SCHEDULE_TIMEZONE): string {
   const hour = new Date().toLocaleString("pt-BR", { timeZone, hour: "numeric", hour12: false });
-  const h = parseInt(hour, 10);
+  const h = Number.parseInt(hour, 10);
   if (h >= 5 && h < 12) return "Bom dia";
   if (h >= 12 && h < 18) return "Boa tarde";
   return "Boa noite";

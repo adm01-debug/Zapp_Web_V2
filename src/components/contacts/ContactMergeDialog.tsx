@@ -84,7 +84,7 @@ export function ContactMergeDialog({ open, onOpenChange, contacts, onMergeComple
             return (
               <div key={field.key} className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground">{field.label}</p>
-                <RadioGroup value={String(selections[field.key])} onValueChange={v => setSelections(s => ({ ...s, [field.key]: parseInt(v) }))} className="flex flex-col gap-1">
+                <RadioGroup value={String(selections[field.key])} onValueChange={v => setSelections(s => ({ ...s, [field.key]: Number.parseInt(v) }))} className="flex flex-col gap-1">
                   {values.map(v => (
                     <Label key={v.index} htmlFor={`${field.key}-${v.index}`}
                       className={cn('flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors',

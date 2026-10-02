@@ -215,7 +215,7 @@ async function rodarSqlDireto(ref, token, sql) {
   const texto = await res.text();
   if (!res.ok) throw new Error(`Management API HTTP ${res.status}: ${texto.slice(0, 300)}`);
   const linhas = JSON.parse(texto);
-  const valor = Number(Array.isArray(linhas) ? linhas[0]?.n : NaN);
+  const valor = Number(Array.isArray(linhas) ? linhas[0]?.n : Number.NaN);
   if (!Number.isFinite(valor)) throw new Error(`SQL direto nao devolveu 'n' numerico`);
   return valor;
 }

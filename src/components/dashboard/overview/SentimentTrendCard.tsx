@@ -13,7 +13,7 @@ const LEGEND = [
 
 export function SentimentTrendCard() {
   const [period, setPeriod] = useState<'7' | '14' | '30'>('14');
-  const data = useRealSentimentData(parseInt(period, 10));
+  const data = useRealSentimentData(Number.parseInt(period, 10));
 
   return (
     <DashboardCard testid="sentiment-card" className="min-h-[173px]">

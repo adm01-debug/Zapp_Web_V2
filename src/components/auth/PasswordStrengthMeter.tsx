@@ -108,7 +108,7 @@ export function PasswordStrengthMeter({ password, onStrengthChange }: PasswordSt
           const [hashSuffix, count] = line.split(':');
           if (hashSuffix.trim() === suffix) {
             setIsBreached(true);
-            setBreachCount(parseInt(count.trim(), 10));
+            setBreachCount(Number.parseInt(count.trim(), 10));
             return;
           }
         }

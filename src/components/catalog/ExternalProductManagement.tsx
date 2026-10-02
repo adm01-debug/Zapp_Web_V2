@@ -104,7 +104,7 @@ type PageSizeOption = typeof PAGE_SIZE_OPTIONS[number];
 
 function readPageParam(): number {
   try {
-    const p = parseInt(new URLSearchParams(window.location.search).get('page') ?? '1', 10);
+    const p = Number.parseInt(new URLSearchParams(window.location.search).get('page') ?? '1', 10);
     return isNaN(p) || p < 1 ? 0 : p - 1;
   } catch { return 0; }
 }
@@ -308,7 +308,7 @@ export const ExternalProductManagement: React.FC = () => {
   );
   const [page, setPageState] = useState(() => readPageParam());
   const [pageSize, setPageSizeState] = useState<PageSizeOption>(() => {
-    const stored = parseInt(sessionStorage.getItem('catalog.page_size') ?? '24', 10);
+    const stored = Number.parseInt(sessionStorage.getItem('catalog.page_size') ?? '24', 10);
     return (PAGE_SIZE_OPTIONS as readonly number[]).includes(stored) ? stored as PageSizeOption : 24;
   });
 
@@ -487,8 +487,8 @@ export const ExternalProductManagement: React.FC = () => {
     params.order_by = effectiveOrder;
     params.ascending = ascending;
     if (advFilters.isBestseller) params.is_bestseller = true;
-    if (advFilters.priceMin) params.price_min = parseFloat(advFilters.priceMin);
-    if (advFilters.priceMax) params.price_max = parseFloat(advFilters.priceMax);
+    if (advFilters.priceMin) params.price_min = Number.parseFloat(advFilters.priceMin);
+    if (advFilters.priceMax) params.price_max = Number.parseFloat(advFilters.priceMax);
     // E36-2 — o edge aceita 1 valor ou array (OR entre si); manda a
     // seleção completa direto, servidor filtra e pagina certo com 2+.
     if (advFilters.colors.length > 0) params.color = advFilters.colors;

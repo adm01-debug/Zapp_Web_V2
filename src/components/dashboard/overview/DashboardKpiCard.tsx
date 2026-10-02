@@ -11,7 +11,7 @@ interface CountUpProps {
 }
 
 function CountUp({ value }: CountUpProps) {
-  const numeric = /^-?\d+$/.test(value) ? parseInt(value, 10) : null;
+  const numeric = /^-?\d+$/.test(value) ? Number.parseInt(value, 10) : null;
   const reducedMotion = useReducedMotion();
   const motionValue = useMotionValue(0);
   const [animatedDisplay, setAnimatedDisplay] = useState('0');
