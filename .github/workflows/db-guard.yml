@@ -37,9 +37,32 @@ jobs:
     name: Contrato DB offline
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    # E47: um PostgreSQL 17 compartilhado para todos os ~48 testes de contrato.
+    # O docker-shim intercepta `docker run/exec/rm` e roteia cada teste para
+    # um banco isolado (CREATE/DROP DATABASE por invocação) no mesmo serviço,
+    # eliminando o overhead de inicialização individual de containers.
+    services:
+      postgres:
+        image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+        env:
+          POSTGRES_PASSWORD: shim_test_password
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       POSTGRES_TEST_IMAGE: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
       POSTGREST_TEST_IMAGE: public.ecr.aws/supabase/postgrest:v14.5@sha256:bb289d00570b569525e1e22fb77c49cd17c17ca3f41da9ee2b4351a35027551b
+      # E47: coordenadas do serviço compartilhado, lidas pelo docker-shim.
+      POSTGRES_SERVICE_HOST: localhost
+      POSTGRES_SERVICE_PORT: "5432"
+      POSTGRES_SERVICE_USER: postgres
+      POSTGRES_SERVICE_PASS: shim_test_password
+      DOCKER_SHIM_STATE_DIR: /tmp/docker-shim-state
     permissions:
       contents: read
       # pull-requests: read apenas para o passo de imutabilidade abaixo (lista
@@ -171,6 +194,17 @@ jobs:
 
       - name: Testar comparadores de catalogo, manifesto e migrations
         run: node --test scripts/db-audit/*.test.mjs
+
+      # E47: instala o docker-shim no PATH antes do primeiro step que usa docker.
+      # A partir daqui, `docker` aponta para o shim que roteia run/exec/rm para
+      # o serviço postgres compartilhado. SKIP_DOCKER_SHIM=1 no step do PostgREST
+      # (abaixo) desvia o shim e usa o docker real para subir o container PostgREST.
+      - name: Instalar docker-shim (E47)
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          cp scripts/db-audit/docker-shim "$HOME/.local/bin/docker"
+          chmod +x "$HOME/.local/bin/docker"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Validar SQL de catalogo e manifesto no PostgreSQL 17
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/catalog-manifest.test.sh
@@ -438,10 +472,13 @@ jobs:
       # esta viva. Este passo sobe PostgREST de verdade e chama a RPC por HTTP,
       # sem mock: HTTP 300 PGRST203 antes da migration, 200 e o ciclo completo
       # depois.
+      # E47: SKIP_DOCKER_SHIM=1 — este step precisa do docker real para subir
+      # o container PostgREST; o shim não intercepta este step.
       - name: Provar ambiguidade do overload de transition_talkx_campaign no PostgREST
         env:
           TALKX_TRANSITION_POSTGREST_PG_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           TALKX_TRANSITION_POSTGREST_IMAGE: ${{ env.POSTGREST_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-transition-overload-postgrest.test.sh
 
       # V11: o contrato de eventos recusava os tipos que o servidor e a trilha
