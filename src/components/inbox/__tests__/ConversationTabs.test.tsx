@@ -38,7 +38,6 @@ const COUNTS: ConversationTabCounts = {
   tasksOpen: 3,
   notesTotal: 2,
   filesTotal: 5,
-  remindersPending: 0,
 };
 
 beforeEach(() => {
