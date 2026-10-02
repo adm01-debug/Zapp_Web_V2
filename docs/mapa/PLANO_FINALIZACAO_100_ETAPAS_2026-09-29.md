@@ -423,7 +423,9 @@ A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`)
 **Arquivos:** `SuggestionList.tsx` (E32)
 1. `<div role="status" aria-live="polite" class="sr-only">` com "N sugestões", "Buscando…", "Nenhum resultado", "Sugestões pausadas".
 2. Sem repetir a cada tecla: só quando `status` ou `length` mudam.
-**Checklist:** [ ] anúncio · [ ] sem spam · [ ] teste com `getByRole('status')`
+**Checklist:** [x] anúncio · [x] sem spam · [x] teste com `getByRole('status')`
+
+**Conformidade fechada em 2026-10-02.** A versão anterior usava texto próprio e não tinha role status; agora é role=status mais aria-live=polite mais sr-only, com os textos literais da etapa: N sugestões, Buscando, Nenhum resultado, Sugestões pausadas (o texto de erro foi mantido, a etapa não define um). O anúncio depende só de status e da contagem — nunca de query —, então teclar não gera anúncio. Testado com getByRole(status), como a etapa pede.
 
 ### E58 · Foco e `aria-activedescendant` auditados com axe
 **Arquivos:** `LPT`, `ContactFormEndereco.test.tsx`
@@ -446,15 +448,35 @@ A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`)
 
 ### E62 · Contraste no tema claro/escuro/alto contraste
 1. Lista usa só `--popover`, `--border`, `--muted`, `--inbox-panel-bg` (lição de UI de 25/09 no CLAUDE.md); medir contraste do texto secundário e do `<mark>` nos 3 temas (≥ 4,5:1).
-**Checklist:** [ ] 3 temas medidos · [ ] números no doc
+**Checklist:** [x] 3 temas medidos · [x] números no doc
+
+**Fechada em 2026-10-02.** A medição achou UM par abaixo de 4,5:1 — o mark da linha de endereço no tema claro, em 3,89:1 — porque ali o destaque herda o texto secundário. Corrigido PELO TOKEN, não pelo componente: --muted-foreground do tema claro desceu de luminosidade 45% para 40% (mesmo matiz e saturação), o menor passo inteiro que passa: L41 ficaria em 4,495:1, abaixo do limiar. O espelho inline do token em presets.ts foi ajustado junto, senão os dois ficariam em desacordo.
+
+Números medidos, por tema (texto secundário | mark do nome | mark do endereço, sobre o popover da lista): claro 6,10 | 13,00 | 4,67 · escuro 9,32 | 9,55 | 5,27 · alto contraste 12,63 | 16,07 | 9,67 · alto contraste escuro 12,12 | 11,42 | 7,11. Tudo acima de 4,5:1.
+
+O mark não estava em SuggestionList.tsx: vem de chat/HighlightedText.tsx, que a lista usa nas duas linhas. A prova é o script reprodutível scripts/qa/contraste-combobox.mjs --check (0 pares abaixo do limiar) e o caso novo no contrato de contraste do repo, tests/contracts/contraste-aa-componentes.contract.test.ts — que já existia e foi ESTENDIDO, em vez de criar um segundo cálculo de WCAG. Mutação: revertendo o token, o caso do mark no claro cai com 3,87:1.
+
+**Limite declarado:** as razões vêm dos tokens (a mesma régua do repo), não de pixel renderizado; e a descida de L45 para L40 afeta todo uso de text-muted-foreground no tema claro — só escurece, e os 872 testes de contrato do repo seguem verdes.
 
 ### E63 · Redução de movimento
 1. Skeleton e countdown respeitam `prefers-reduced-motion`.
-**Checklist:** [ ] `motion-reduce:`
+**Checklist:** [x] `motion-reduce:`
+
+**Fechada em 2026-10-02.** Cinco pontos animados cobertos: o esqueleto de carregamento (para de pulsar), o spinner do /retrieve, a transicao de realce do item, e os tres spinners do LocationPicker (botao de localizacao atual, overlay do mapa e botao flutuante de GPS).
+
+**O countdown NAO tem animacao** — a contagem e so troca de texto por setInterval, entao nao havia o que desligar e nada foi inventado para ter o que desligar.
+
+**Achado de metodo:** classe Tailwind nao alcanca animacao guiada por JS. O cartao de confirmacao usa framer-motion, e ali a solucao foi `useReducedMotion()` do proprio framer-motion — a variante `motion-reduce:` nao teria efeito nenhum. Fica o alerta para quem for cobrir movimento em qualquer outro componente animado por JS.
+
+Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transicao do item) e passaram depois; 2 nasceram verdes e estao declarados (o caso que pina a AUSENCIA de animacao no countdown e o controle que garante que a entrada animada continua viva SEM a preferencia). Mutacao: removendo as variantes, 6 casos E63 caem. Suite 46/46; src/components/inbox inteiro 523/523; ratchets novas=0.
 
 ### E64 · Leitor de tela anuncia a seleção
 1. Após `select()`, `aria-live` diz "Endereço escolhido: <nome>".
-**Checklist:** [ ] anúncio · [ ] teste
+**Checklist:** [x] anúncio · [x] teste
+
+**Fechada em 2026-10-02.** Após select() bem-sucedido a região viva anuncia Endereço escolhido seguido do nome da sugestão, nos três caminhos de sucesso (forward com coordenadas, retrieve ok e o fallback E16). Valor único que substitui o anterior, sem acumular.
+
+**Privacidade travada por teste:** o nome vai para o leitor de tela do próprio usuário e NUNCA para a auditoria — os dois logAudit do hook seguem com o shape fechado source e kind (o E50), e um caso novo percorre o JSON dos eventos e falha se o nome ou a frase aparecerem.
 
 ### E65 · Prints obrigatórios
 1. Desktop (1280), 360 px, teclado virtual aberto, tema escuro — 4 prints em `docs/mapa/prints/` (PNG ≤ 200 KB cada).

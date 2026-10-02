@@ -593,6 +593,21 @@ describe('ExternalProductManagement', () => {
       expect(toggle).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1', name: 'Caneta Plástica Azul' }));
     });
   });
+
+  describe('CT-84: ajuda do catálogo no header', () => {
+    it('o botão "Ajuda" do header abre o CatalogHelpSheet (5 passos)', () => {
+      renderManagement();
+
+      // Sheet fechado por padrão (Radix não monta o conteúdo fechado).
+      expect(screen.queryByTestId('catalog-help-sheet')).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: /Ajuda/ }));
+
+      expect(screen.getByTestId('catalog-help-sheet')).toBeInTheDocument();
+      expect(screen.getByText('Como usar o catálogo')).toBeInTheDocument();
+      expect(screen.getByTestId('catalog-help-steps').querySelectorAll('li')).toHaveLength(5);
+    });
+  });
 });
 
 describe('ExternalProductManagement — CT-70 (prefers-reduced-motion)', () => {

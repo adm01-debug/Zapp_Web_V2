@@ -132,7 +132,7 @@ export function SuggestionList({
     >
       {digitando && (
         <div className="p-2 space-y-2">
-          {[0, 1, 2].map((i) => <div key={i} className="h-9 rounded-md bg-muted animate-pulse" />)}
+          {[0, 1, 2].map((i) => <div key={i} className="h-9 rounded-md bg-muted animate-pulse motion-reduce:animate-none" />)}
         </div>
       )}
       {status === 'error' && (
@@ -167,7 +167,7 @@ export function SuggestionList({
                 type="button"
                 onClick={() => onSelect(index)}
                 className={cn(
-                  'w-full flex items-start gap-2 text-left px-3 py-2 min-h-11 hover:bg-muted/60 transition-colors',
+                  'w-full flex items-start gap-2 text-left px-3 py-2 min-h-11 hover:bg-muted/60 transition-colors motion-reduce:transition-none',
                   highlighted && 'bg-muted/60'
                 )}
               >
@@ -187,7 +187,7 @@ export function SuggestionList({
                   )}
                 </div>
                 {retrievingId === suggestion.id && (
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0 mt-0.5" />
+                  <Loader2 className="w-4 h-4 animate-spin motion-reduce:animate-none text-muted-foreground shrink-0 mt-0.5" />
                 )}
               </button>
             );
@@ -200,19 +200,24 @@ export function SuggestionList({
           Mapbox
         </a>
       </p>
-      {/* E57: quem usa leitor de tela não "vê" a lista aparecer. Região viva só com texto de
-          estado — o conteúdo dos itens já é lido pelo próprio listbox, repetir viraria eco. */}
-      <span aria-live="polite" role="status" className="sr-only" data-testid="sr-aviso">
+      {/* E57: quem usa leitor de tela não "vê" a lista aparecer. A região viva anuncia ESTADO e
+          CONTAGEM, com redação própria — nunca copia o texto visível (repetir o mesmo texto no DOM
+          viraria eco e quebraria qualquer `getByText` de terceiro com "Found multiple elements").
+          O texto depende só de `status` e de `suggestions.length`: digitar não muda nenhum dos
+          dois, então não há anúncio a cada tecla. */}
+      <div role="status" aria-live="polite" className="sr-only" data-testid="sr-aviso">
         {status === 'ok'
-          ? `${suggestions.length} sugestões disponíveis`
-          : status === 'empty'
-            ? 'Nenhuma sugestão'
-            : status === 'error'
-              ? 'Erro na busca de sugestões'
-              : status === 'paused'
-                ? 'Busca temporariamente indisponível'
-                : ''}
-      </span>
+          ? `${suggestions.length} sugestões`
+          : digitando
+            ? 'Buscando…'
+            : status === 'empty'
+              ? 'Nenhum resultado'
+              : status === 'error'
+                ? 'Erro na busca de sugestões'
+                : status === 'paused'
+                  ? 'Sugestões pausadas'
+                  : ''}
+      </div>
     </div>
   );
 }

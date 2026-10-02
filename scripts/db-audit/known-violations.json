@@ -1,5 +1,5 @@
 {
-  "_comment": "Baseline (ratchet) do supabase-usage-guard. Cada chave e um .from()/.rpc() no cliente principal cujo alvo NAO existe no banco. O CI passa com estas e falha com qualquer nova. Ao resolver uma, REMOVA a chave daqui - o guard tambem falha se uma entrada ficar obsoleta. NOTA X011 (2026-10-02): as 4 chaves rpc:* de talkx-send/index.ts sao RPCs da X010 (ja aplicadas no banco, PR #1522) - divida FALSA de catalogo desatualizado, aguardando o types-sync #1513 (automation/types-sync) regenerar schema-catalog.json. Remover as 4 chaves assim que #1513 for mergeado.",
+  "_comment": "Baseline (ratchet) do supabase-usage-guard. Cada chave e um .from()/.rpc() no cliente principal cujo alvo NAO existe no banco. O CI passa com estas e falha com qualquer nova. Ao resolver uma, REMOVA a chave daqui - o guard tambem falha se uma entrada ficar obsoleta. NOTA X011/X013 (2026-10-02): as 5 chaves rpc:* de talkx-send/index.ts sao RPCs da X010 (PR #1522: get_talkx_cron_secret, claim/release_talkx_campaign_worker, talkx_next_recipients) e da X012 (PR #1535: kick_talkx_campaign) — ja aplicadas no banco, divida FALSA de catalogo desatualizado, aguardando o types-sync (automation/types-sync) regenerar schema-catalog.json. Remover as 5 chaves assim que o catalogo as incluir.",
   "_gerado_em": "2026-08-27",
   "_contexto": "docs/audits/EXECUCAO_2026-08-27.md, secao 'Acoplamento quebrado'",
   "known": [
@@ -8,7 +8,8 @@
     "rpc:get_talkx_cron_secret:supabase/functions/talkx-send/index.ts",
     "rpc:claim_talkx_campaign_worker:supabase/functions/talkx-send/index.ts",
     "rpc:talkx_next_recipients:supabase/functions/talkx-send/index.ts",
-    "rpc:release_talkx_campaign_worker:supabase/functions/talkx-send/index.ts"
+    "rpc:release_talkx_campaign_worker:supabase/functions/talkx-send/index.ts",
+    "rpc:kick_talkx_campaign:supabase/functions/talkx-send/index.ts"
   ],
   "_resolvido": {
     "retry_talkx_recipient": "RPC criado (migration 20260930630000_talkx_v19_retry_recipient.sql). A divida era falsa: o alvo passou a existir no banco e so nao aparecia no catalogo porque os artefatos derivados estavam desatualizados; a entrada ficou obsoleta e o guard manda remove-la.",

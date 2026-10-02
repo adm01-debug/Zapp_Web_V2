@@ -655,15 +655,37 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   aqui, conforme instruído — como o teste deriva de `RATE_LIMIT`, ele passa a valer 120 automaticamente quando o CT-19 mudar.
 - [x] **CT-78** — Teste dedicado da lógica de `status` (`sent/partial/failed`) e de `logCatalogSendEvent` (pendência
   admitida na E28). **Aceite:** 3 casos verdes.
-  **✅ FEITO — 01/10/2026.** 3 testes travando o `status` no evento logado (`useSendProduct.test.tsx:287-351`, cobrindo
-  `sent`/`partial`/`failed`) + **4 testes da implementação real** do `logCatalogSendEvent` (novo
-  `src/hooks/integrations/__tests__/useCatalogContactSearch.test.ts`: payload snake_case completo, opcionais → `null`, os
-  3 status e a falha silenciosa que loga sem lançar) — antes ele era **sempre mockado**, nunca testado de verdade.
-- [ ] **CT-79** — Cobertura do módulo ≥ 80 % linhas (`vitest --coverage src/components/catalog`); registrar.
-  **Aceite:** número em `PERF.md`.
-- [ ] **CT-80** — Suíte do módulo em < 30 s. **Aceite:** tempo registrado.
-- [ ] **CT-81** — Fixtures E2E: contato de teste já existe (`04dff4dc-…`, "[E2E] Contato de teste"); produto de teste
+  **✅ FEITO — 01/10/2026; prova do `logCatalogSendEvent` CORRIGIDA em 02/10/2026.** Os 3 testes de `status` seguem
+  travando o evento logado (`useSendProduct.test.tsx:349-413`, `sent`/`partial`/`failed`). A evidência anterior era
+  **FALSA**: o arquivo citado (`useCatalogContactSearch.test.ts`) continha só os testes de **CT-43**
+  (`buildContactSearchFilter`/`contactSearchDigits`, 51 linhas) e o `logCatalogSendEvent` **nunca** foi testado de
+  verdade — era sempre mockado (`SendProductDialog.test.tsx:40`, `useSendProduct.test.tsx:19`, `CT67_a11y.test.tsx:94`).
+  **Corrigido:** o mesmo arquivo agora tem **5 testes da implementação real** (mock só do cliente Supabase, nunca da
+  função sob teste): payload snake_case completo, opcionais ausentes → `null`, os 3 `status`, sucesso silencioso (resolve
+  `void`, não loga) e falha silenciosa (insert com erro → resolve `void` sem lançar e loga a mensagem). Arquivo:
+  **11/11** (5 novos + 6 de CT-43). Comportamento da função: `src/hooks/integrations/useCatalogContactSearch.ts:85`.
+- [x] **CT-79** — Cobertura do módulo ≥ 80 % linhas; registrar. **Aceite:** número em `PERF.md`.
+  **✅ FEITO — medido em 02/10/2026: 84,41 % de linhas (1235/1463)** → acima de 80 %. **A config vigente do projeto
+  exclui o módulo** (`vitest.config.ts:17` limita `coverage.include` a `src/lib/**`+`src/services/**`), então o
+  argumento posicional de `vitest --coverage src/components/catalog` filtra os *testes*, não a cobertura. Medido **sem
+  editar `vitest.config.ts`**, sobrescrevendo o `include` por CLI:
+  `bunx vitest run src/components/catalog --coverage --coverage.include='src/components/catalog/**'`
+  (statements 80,56 %, branches 79,77 %, functions 75,88 %). Prova de escopo: o `coverage/lcov.info` tem 20 `SF:`, 0
+  fora de `src/components/catalog/`. Detalhes e saída crua em `PERF.md` §CT-79.
+- [x] **CT-80** — Suíte do módulo em < 30 s. **Aceite:** tempo registrado.
+  **✅ FEITO — remedido em 02/10/2026.** `bunx vitest run src/components/catalog` → **23 files, 426 tests, `Duration
+  11.51s` (WALL 11.82 s)** → dentro dos 30 s. Substitui, em `PERF.md`, o registro de CT-27 (14 files/298 tests/9.56s),
+  que fica mantido e marcado como **histórico/defasado**.
+- [x] **CT-81** — Fixtures E2E: contato de teste já existe (`04dff4dc-…`, "[E2E] Contato de teste"); produto de teste
   fixo (`PO-13153`); `e2e/fixtures/catalog.ts`. **Aceite:** ids no fixture.
+  **✅ FEITO (com pendência de produto) — 02/10/2026.** `e2e/fixtures/catalog.ts` criado: reaproveita o contato do
+  fixture existente **por import** (`./e2e-contact` → `E2E_FIXTURE_CONTACT_ID`/`..._NAME`/`..._DISPLAY_NAME`, sem
+  duplicar o id `04dff4dc-…`) e exporta o que o CT-82 precisa (`E2E_CATALOG_VIEW`/`PATH` = `?view=catalog`, template
+  "Informal", tabelas `catalog_send_events`/`messages`, marcador de fixture). **Pendência registrada:** o produto
+  `PO-13153` aparece só na doc do repo (`CHANGELOG_CATALOGO.md:12`) e **não foi possível verificar** que existe/is
+  buscável no catálogo PromoGifts (sistema EXTERNO) — por isso **não** é fixado cego: é parametrizado por env
+  (`E2E_CATALOG_PRODUCT_SKU`) e acompanhado de `E2E_CATALOG_PRODUCT_SKU_VERIFIED` (default `false`); o spec do CT-82
+  deve degradar com aviso até a verificação. Nenhum id foi inventado.
 - [ ] **CT-82** — `e2e/catalog.spec.ts`: login → `?view=catalog` → busca → card → detalhes → cor → Enviar → fotos →
   Informal → contato E2E → Enviar agora → toast; asserts em `messages`/`catalog_send_events` via API; limpeza
   (`is_deleted`). Habilitado no `e2e-logado.yml`; verificar antes que o usuário de teste enxerga a view. **Aceite:**
@@ -671,9 +693,19 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 - [ ] **CT-83** — `CatalogHelpSheet.tsx`: "Como usar o catálogo" (5 passos com prints reais) + tour de 4 dicas
   (`localStorage catalog.tourDone`). **Aceite:** teste RTL; só na 1ª visita.
 - [ ] **CT-84** — Link "Ajuda" no header do módulo e no dialog do chat. **Aceite:** teste RTL.
-- [ ] **CT-85** — Textos revisados (acentuação, "Qtd. mínima", "dias úteis") — lista em `PARIDADE.md`. **Aceite:** lista.
-- [ ] **CT-86** — `CHANGELOG_CATALOGO.md` completado com F6/F7 e correções (#577–#714) e com este plano por bloco.
+- [x] **CT-85** — Textos revisados (acentuação, "Qtd. mínima", "dias úteis") — lista em `PARIDADE.md`. **Aceite:** lista.
+  **✅ FEITO — 02/10/2026.** Seção "Textos revisados (CT-85)" em `PARIDADE.md` com a tabela `texto × arquivo:linha ×
+  resultado`. **Nenhuma correção foi necessária** — os textos já estavam corretos (`ProductDetailDialog.tsx:435` "Qtd.
+  mínima", `:436` "dias úteis", `catalogExport.ts:42` "Qtd. mínima", + `:41` "Prazo" e `sendProductUtils.ts:94`); todos
+  marcados como **verificado e correto**, nenhum "corrigido". Varredura das formas sem acento achou ocorrências só em
+  **comentários** de código, nenhuma em texto de UI.
+- [x] **CT-86** — `CHANGELOG_CATALOGO.md` completado com F6/F7 e correções (#577–#714) e com este plano por bloco.
   **Aceite:** toda PR de `catalog` desde 12/09 citada.
+  **✅ FEITO — 02/10/2026.** Acrescentadas as seções **FASE 6 (bloco G)** e **FASE 7 (bloco H)** com as PRs reais
+  (#1490 = bloco G; #1500 = bloco H; #1396/#1409 = etapas parciais) + **tabela com 41 PRs de escopo Catálogo** desde
+  12/09, enumeradas por `gh pr list --state merged --search "catalogo merged:>=2026-09-12"` (leitura; números/títulos
+  copiados, não inventados) — inclui #1396, #1409, #1426, #1467, #1482, #1490, #1500. **Aviso de merge:** o arquivo é
+  compartilhado; a edição foi só de acréscimo ao fim; em conflito, conciliar os dois lados.
 - [x] **CT-87** — `README.md` do módulo: a referência a `PARIDADE.md` **fica** (o arquivo existe agora) e aponta para o
   caminho certo — [`./PARIDADE.md`](./PARIDADE.md) —, junto com a referência a este plano e à auditoria. **Aceite:**
   nenhum link quebrado.
@@ -683,10 +715,25 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 
 ## FASE 9 — Paridade, hardening e release (CT-89–CT-100)
 
-- [ ] **CT-89** — `PARIDADE.md` final: tabela por tela (A/B/C/D) mock → implementado → diferença deliberada (carvão,
+- [x] **CT-89** — `PARIDADE.md` final: tabela por tela (A/B/C/D) mock → implementado → diferença deliberada (carvão,
   Sheet em vez de modal, links externos, placeholders removidos, "Novo Produto" omitido). **Aceite:** 4 telas.
-- [ ] **CT-90** — Lista dos itens do mock **não** implementados com motivo (layout 2 colunas B/C, "SUA MARCA AQUI",
+  **✅ FEITO — 02/10/2026 (bloco J).** Acrescentada a seção **Tela A — Catálogo / lista de produtos**
+  (`ExternalProductManagement.tsx` · `ExternalProductCatalog.tsx`) com subseções **Topo** (header, KPIs, chips de
+  categoria/filtro, busca, selects, abas com contador, ordenação, chip de flag, atalhos, rail) e **Grade** (card,
+  badges, chips de cor, preço, pills, favoritar/seleção, grade responsiva, skeletons, estados vazios, paginação,
+  virtualização do modo lista) + "Diferenças deliberadas". As outras 3 telas (B/C/D) já existiam — não foram
+  reescritas. **Evidência:** só linhas reais lidas dos `.tsx`; os itens do mock que não existem no código ficaram
+  registrados como não implementados (rail → Accordion `<1280px` = E58 não construído; virtualização da página de
+  gestão; "Novo Produto" = CRUD é do PromoGifts). **Pendência de aceite:** os prints responsivos 1920/1440/1280 da
+  Tela A são da CT-66 (ainda em aberto) — o texto da seção aponta isso no topo do arquivo.
+- [x] **CT-90** — Lista dos itens do mock **não** implementados com motivo (layout 2 colunas B/C, "SUA MARCA AQUI",
   Importar planilha se sem URL, Sincronizar). **Aceite:** seção no `PARIDADE.md`.
+  **✅ FEITO — 02/10/2026 (bloco J), com a evidência PRÉ-EXISTENTE.** A seção
+  "Itens do mock não implementados (motivo)" **já existia** em `PARIDADE.md` (criada junto com o arquivo, 01/10/2026)
+  e já listava os 4 itens do aceite: Modal de 2 colunas (B), "SUA MARCA AQUI" (B), Importar planilha (A/B) e
+  "Sincronizar" (A) — **nada dele foi reescrito**. Só foram **acrescentadas** linhas que faltavam para bater o aceite
+  literal ("layout 2 colunas B/**C**") e as telas novas: layout 2 colunas do **envio** (C, `SendProductDialog.tsx:354`,
+  `max-w-lg`, decisão de 24/09), "Novo Produto" (A), rail → `Accordion` `<1280px` (A).
 - [ ] **CT-91** — RLS testada com 2 usuários reais (agente vê só os próprios envios; supervisor vê todos; favoritos
   isolados). **Aceite:** resultado em `SECURITY.md`.
 - [x] **CT-92** — Service key do PromoGifts só em Edge secrets: grep no repo e no bundle de produção. **Aceite:** 0 hits.
@@ -705,16 +752,61 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   **✅ FEITO — revisão em 01/10/2026:** `grep -n "console\." supabase/functions/promogifts-catalog/index.ts` → **nenhuma
   ocorrência**: a edge de catálogo não emite log nenhum (portanto nenhum telefone, nome ou credencial é logado). Revisão
   registrada aqui; se logs forem adicionados no futuro, a regra é não incluir PII (telefone/nome/credencial).
-- [ ] **CT-96** — `SECURITY.md` do módulo (RLS, grants pós-CT-01, secrets, rate limit, o que o `anon` não vê).
+- [x] **CT-96** — `SECURITY.md` do módulo (RLS, grants pós-CT-01, secrets, rate limit, o que o `anon` não vê).
   **Aceite:** arquivo commitado.
+  **✅ FEITO — 2026-10-02, com pendência de runtime DECLARADA.** Criado `docs/catalogo/SECURITY.md` (módulo; o
+  `SECURITY.md` da **raiz** é a política geral do projeto — arquivo distinto, **não** tocado). Conteúdo com evidência
+  `arquivo:linha`: RLS de `catalog_favorites` (`20260913013153_catalog_favorites.sql:18-23`,
+  `20260925130000_...favorites.sql:23-29`) e de `catalog_send_events`
+  (`20260913122557_catalog_send_events.sql:25-42`, `20260924123033_...anon_bypass.sql:3-10`,
+  `20260925130000_...favorites.sql:12-21`); grants pós-CT-01 (`20260929650000_catalog_grants_append_only.sql:32-43` —
+  `authenticated` fica com `SELECT/INSERT/UPDATE/DELETE` em favoritos e só `SELECT/INSERT` no log; **`anon` sem grant**);
+  view `catalog_send_stats` com `security_invoker=on` e por que respeita a RLS (`20260930740000_catalogo_send_stats.sql:18-19`);
+  rate limit por ação da edge (`index.ts:141-177`, `:268-270`: 120/min `list_products`, 60/min nas demais); o que a `anon`
+  não enxerga; e a service key do PromoGifts **só como nome** (`index.ts:276`), nunca literal.
+  **⚠️ PENDÊNCIA (o aceite original do CT-91 pedia teste com 2 usuários reais):** **NÃO foi testado** — exige duas sessões
+  autenticadas (agente × supervisor), indisponível neste ambiente. Provado por **código/migration** (os predicados das
+  policies); **não** provado em **runtime com 2 usuários**. Registrado como pendência explícita em
+  `docs/catalogo/SECURITY.md` §7.
 - [ ] **CT-97** — `deployment-manifest.json` final = versão deployada (digest confere). **Aceite:** `--check` ok.
-- [ ] **CT-98** — `ARQUITETURA.md` atualizado: números de 29/09 (7.722 ativos, `order_count` = 0, sync parado), fluxo
+  **◐ PARCIAL — 2026-10-02: o nível LOCAL passa; o nível REMOTO (digest contra o deployado) NÃO foi medido.**
+  (a) `node scripts/edge-deploy/generate-manifest.mjs --check` → `Edge manifest OK: 67 functions, 123 source files,
+  sha256=7c4ee37051ae7576d4c7fb8bfa211019012b5dc3fe230df5af60a4537ff1d0ec`, **EXIT=0** — o manifesto commitado confere
+  byte a byte com a árvore (`generate-manifest.mjs:41-45`).
+  (b) A metade "= versão **deployada**" exige `scripts/edge-deploy/collect-remote.mjs` com `SUPABASE_ACCESS_TOKEN`
+  (`collect-remote.mjs:19`) + snapshot/prévia (`:23`) — **token indisponível**, nenhum deploy feito, nenhum token pedido.
+  Registrado com a saída crua em `docs/catalogo/PERF.md` §CT-97.
+- [x] **CT-98** — `ARQUITETURA.md` atualizado: números de 29/09 (7.722 ativos, `order_count` = 0, sync parado), fluxo
   único de envio, view `catalog_send_stats`. **Aceite:** diff commitado.
+  **✅ FEITO — 02/10/2026 (bloco J).** `docs/catalogo/ARQUITETURA.md` corrigido: (a) números datados com fonte —
+  **7.722 ativos** e **`order_count` = 0 em 100%** e **sync parado desde 05/09/2026** (24 dias em 29/09), os três de
+  `AUDITORIA_CATALOGO_2026-09-29.md:52-55`; (b) as marcações "pendente" de **Favoritos** (E27) e **Log de envios**
+  (E28) removidas — ambos existem (`catalog_favorites`, `catalog_send_events`, migrations de 13/09); (c) acrescentada
+  a view **`catalog_send_stats`** (`security_invoker=on`, migration `20260930740000`, `schema-manifest.json:172`);
+  (d) acrescentado o parágrafo do **fluxo único de envio** (chat e catálogo usam o mesmo `SendProductDialog`, CT-13);
+  (e) **mantida** a nota de que o **envio real ponta a ponta segue NÃO testado**, agora datada (`catalog_send_events`
+  = 0 linhas e `messages` com `imagedelivery.net` = 0 em 29/09, `AUDITORIA…:51`).
 - [ ] **CT-99** — Plano de 11/09 recebe os checkboxes marcados conforme o estado real (por etapa equivalente) e o
   cabeçalho "SUPERSEDIDO por `PLANO_FINALIZACAO_CATALOGO_100.md`". **Aceite:** `validate-plan.mjs` ainda passa.
+  **◐ PARCIAL — 2026-10-02: cabeçalho SUPERSEDIDO FEITO; os checkboxes NÃO foram marcados (contradição de aceite).**
+  Feito **só a parte segura e verdadeira**: inserido no topo de `docs/catalogo/PLANO_IMPLEMENTACAO_CATALOGO_100.md` o
+  cabeçalho `⛔ SUPERSEDIDO` (data 2026-09-29 e motivo: auditoria 41 DONE/38 PARCIAL/20 AUSENTE). **Nenhum checkbox foi
+  marcado** (permanecem 396 `- [ ]` e 0 `- [x]`). **Contradição medida:** o aceite pede "marcar conforme o estado real **E**
+  o validador ainda passa", mas `scripts/catalog/validate-plan.mjs:17` exige **≥ 3** `- [ ]` por bloco E e cada bloco tem
+  **exatamente 4** caixas — marcar mais de uma por bloco **quebraria** o validador. Além disso, **o validador já falhava
+  ANTES** desta etapa: `E54: 0 sub-etapas / checklist com 0 itens / sem Objetivo` (E54 é a etapa riscada/descartada em
+  24/09, sem `Objetivo`/checklist), **EXIT=1** — o cabeçalho novo é *parse-neutral* (fica antes do primeiro bloco E e o
+  validador o descarta) e a saída **não mudou** após a inserção. Detalhe na §10 (CT-99).
 - [ ] **CT-100** — Release: tag `catalog-v1.0.0` + notas (do changelog), `HANDOFF_v1.md` (estado, pendências, comandos),
   branches `claude/feat-catalog-*` apagadas, CLAUDE.md com seção curta "Catálogo" (bancos, edge, fluxo de envio,
   regra "merge ≠ deploy da edge"). **Aceite:** tag existe; CLAUDE.md atualizado.
+  **◐ PARCIAL — 2026-10-02: `HANDOFF_v1.md` FEITO; tag e CLAUDE.md NÃO, por instrução.** Criado
+  `docs/catalogo/HANDOFF_v1.md` consolidando: entregue (PRs **#1396, #1409, #1426, #1467, #1482, #1490, #1500, #1534**,
+  todas confirmadas `MERGED` via `gh pr view`), bloqueios e **por quem** (envio real → Joaquim: CT-10/11/18 → CT-49/50/56 →
+  CT-82/88; sessão autenticada/Sentry: CT-91/93/94/96-runtime; CT-74 Lighthouse; CT-73 edge real; contraste dos badges) e
+  decisões pendentes (gate de cobertura do módulo; cores dos badges). **Tag `catalog-v1.0.0` NÃO criada** e **`CLAUDE.md`
+  NÃO tocado** (arquivo compartilhado/grande — a sugestão de seção ficou apenas registrada no `HANDOFF_v1.md` §4). Limpeza
+  de branches `claude/feat-catalog-*` não executada (operação de git).
 
 ---
 
@@ -750,6 +842,29 @@ mudança**. **Não aceita — e o motivo é estrutural, não estético:**
 **DECISÃO: manter o `Tabs` cru do shadcn** em `ExternalProductManagement.tsx:594-1027` (o array de abas "aceita 3 itens"
 no sentido de dados, mas o **componente** do dashboard não serve). Nenhuma linha das abas foi alterada por causa do
 CT-58 — o aceite da etapa ("decisão na §10") está cumprido por este registro.
+
+### CT-99 — a contradição de aceite, medida (2026-10-02, bloco J)
+
+O aceite do CT-99 é **duas coisas ao mesmo tempo**: (1) *"o plano de 11/09 recebe os checkboxes marcados conforme o estado
+real"* e (2) *"`validate-plan.mjs` ainda passa"*. As duas **não coexistem** — medido:
+
+| Fato medido | Evidência |
+|---|---|
+| `docs/catalogo/PLANO_IMPLEMENTACAO_CATALOGO_100.md` tem **396** `- [ ]` e **0** `- [x]` | `grep -c '^- \[ \]'` = 396; `grep -c '^- \[x\]'` = 0 |
+| O validador exige **≥ 3** `- [ ]` por bloco E (`checks.length < 3` → erro) | `scripts/catalog/validate-plan.mjs:17` |
+| Cada bloco E tem **exatamente 4** checkboxes | o `if (checks.length < 3)` só sobrevive porque o teto real é 4 — marcar a 2ª caixa já cai para 3, a 3ª cai para 2 (< 3) e **derruba** o validador |
+| O validador **já estava vermelho** antes desta etapa | `node scripts/catalog/validate-plan.mjs` → `E54: 0 sub-etapas / E54: checklist com 0 itens / E54: sem Objetivo`, **EXIT=1**. E54 é a etapa **riscada/descartada em 24/09** (`### E54 · ~~"Ações rápidas": Sincronizar catálogo~~ (RISCADO)`, sem `**Objetivo:**` e sem checklist) |
+
+**DECISÃO: fazer somente a parte segura e verdadeira.** Foi inserido no topo do plano o cabeçalho `⛔ SUPERSEDIDO por
+PLANO_FINALIZACAO_CATALOGO_100.md` (data 2026-09-29 + motivo da auditoria) e **nenhum checkbox foi marcado**. Prova de que
+o cabeçalho **não quebra** nada: ele fica **antes do primeiro bloco** `### E..` e o validador descarta todo o texto anterior
+ao 1º bloco (`md.split(/^### (?=E\d{2,3} · )/m).slice(1)`, `validate-plan.mjs:6`) — a saída do validador é **idêntica**
+antes e depois da inserção (mesmos 3 erros de E54, **EXIT=1**).
+
+Isto é **divergência de aceite** (o item 2 do aceite — "validador passa" — nunca foi verdadeiro neste arquivo por causa de
+E54, que é anterior e alheio a esta etapa), **não** uma tarefa não feita por preguiça: marcar os checkboxes do jeito pedido
+quebraria o validador, e consertar E54 (dar-lhe `Objetivo` + checklist) está **fora dos arquivos que este bloco pode tocar**
+(só o cabeçalho). Fica como dívida explícita para quem for rodar o `validate-plan.mjs` no CI.
 
 ## 11. Mapa de PRs
 
