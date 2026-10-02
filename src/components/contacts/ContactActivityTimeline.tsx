@@ -129,7 +129,7 @@ export function ContactActivityTimeline({ contactId, contactCreatedAt, className
       setLoading(false);
     }
 
-    fetchTimeline();
+    void fetchTimeline();
   }, [contactId, contactCreatedAt]);
 
   const displayedEvents = expanded ? events : events.slice(0, 5);

@@ -75,7 +75,7 @@ export function useAudioMemes(open: boolean) {
     // E36 — prévia do áudio meme é mídia de conversa: respeita o volume global.
     const detachMediaVolume = attachMediaVolume(audio);
     audio.onended = () => { detachMediaVolume(); setPlayingId(null); };
-    audio.play();
+    void audio.play();
     audioRef.current = audio;
     setPlayingId(meme.id);
   }, [playingId]);

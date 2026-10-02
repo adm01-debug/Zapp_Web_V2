@@ -60,8 +60,8 @@ export function WarRoomDashboard({
   const hasCriticalAlerts = alerts.some(a => a.type === 'critical' && a.isNew);
 
   const toggleFullscreen = () => {
-    if (!document.fullscreenElement) { document.documentElement.requestFullscreen(); setIsFullscreen(true); }
-    else { document.exitFullscreen(); setIsFullscreen(false); }
+    if (!document.fullscreenElement) { void document.documentElement.requestFullscreen(); setIsFullscreen(true); }
+    else { void document.exitFullscreen(); setIsFullscreen(false); }
   };
 
   return (
@@ -105,7 +105,7 @@ export function WarRoomDashboard({
           </CardHeader>
           <CardContent className="space-y-2 max-h-80 overflow-auto">
             <AnimatePresence>
-              {alerts.map((alert) => <WarRoomAlertRow key={alert.id} alert={alert} onDismiss={() => { onAlertDismiss?.(alert.id); dismissAlert(alert.id); }} />)}
+              {alerts.map((alert) => <WarRoomAlertRow key={alert.id} alert={alert} onDismiss={() => { onAlertDismiss?.(alert.id); void dismissAlert(alert.id); }} />)}
             </AnimatePresence>
           </CardContent>
         </Card>

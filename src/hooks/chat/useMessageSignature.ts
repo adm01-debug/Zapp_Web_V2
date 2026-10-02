@@ -37,7 +37,7 @@ export function useMessageSignature() {
         setAgentSignature(sig);
       }
     };
-    fetchName();
+    void fetchName();
   }, []);
 
   const toggleSignature = useCallback(() => {

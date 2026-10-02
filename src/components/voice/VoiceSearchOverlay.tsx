@@ -72,7 +72,7 @@ export function VoiceSearchOverlay({
   useEffect(() => {
     if (isOpen && phase === 'idle' && !hasAutoStarted.current && !startingRef.current) {
       hasAutoStarted.current = true; startingRef.current = true; setShowSuggestions(false);
-      const timer = setTimeout(() => { onStartListening().finally(() => { startingRef.current = false; }); }, 80);
+      const timer = setTimeout(() => { void onStartListening().finally(() => { startingRef.current = false; }); }, 80);
       return () => { clearTimeout(timer); startingRef.current = false; };
     }
     if (isOpen && phase === 'idle' && hasAutoStarted.current) { const timer = setTimeout(() => setShowSuggestions(true), 600); return () => clearTimeout(timer); }
@@ -81,7 +81,7 @@ export function VoiceSearchOverlay({
   }, [isOpen, phase, onStartListening]);
 
   const handleOrbClick = useCallback(() => {
-    if (phase === 'idle' || phase === 'error') onStartListening();
+    if (phase === 'idle' || phase === 'error') void onStartListening();
     else if (phase === 'listening') onStopListening();
     else if (phase === 'speaking') onStopSpeaking();
     if (navigator.vibrate) navigator.vibrate(30);

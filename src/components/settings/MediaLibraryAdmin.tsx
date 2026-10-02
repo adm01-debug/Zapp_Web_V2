@@ -105,7 +105,7 @@ function MediaAdminPanel({ type }: { type: MediaType }) {
                     <div className="flex-1 min-w-0">
                       {isEditing ? (
                         <div className="flex items-center gap-1">
-                          <Input value={lib.editName} onChange={e => lib.setEditName(e.target.value)} className="h-7 text-xs" autoFocus onKeyDown={e => { if (e.key === 'Enter') lib.handleRename(item); if (e.key === 'Escape') lib.setEditingId(null); }} />
+                          <Input value={lib.editName} onChange={e => lib.setEditName(e.target.value)} className="h-7 text-xs" autoFocus onKeyDown={e => { if (e.key === 'Enter') void lib.handleRename(item); if (e.key === 'Escape') lib.setEditingId(null); }} />
                           <Button size="icon" variant="ghost" className="w-6 h-6" onClick={() => lib.handleRename(item)}><Check className="w-3 h-3" /></Button>
                           <Button size="icon" variant="ghost" className="w-6 h-6" onClick={() => lib.setEditingId(null)}><X className="w-3 h-3" /></Button>
                         </div>

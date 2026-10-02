@@ -87,7 +87,7 @@ const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _r
    useEffect(() => {
      if (user && !hasLoggedAudit.current) {
        hasLoggedAudit.current = true;
-       logAudit({ action: 'login', details: { email: user.email } });
+       void logAudit({ action: 'login', details: { email: user.email } });
      }
    }, [user]);
  

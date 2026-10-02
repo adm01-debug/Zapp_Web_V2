@@ -150,7 +150,7 @@ export function usePermissions() {
       ]);
       setLoading(false);
     };
-    loadAll();
+    void loadAll();
   }, [fetchPermissions, fetchRolePermissions, fetchUserPermissions]);
 
   return {

@@ -192,7 +192,7 @@ export function useRealtimeMessages() {
       const errorMessage = err instanceof Error ? err.message : 'Falha ao carregar conversas';
       log.error('Error fetching conversations:', err);
       setError(errorMessage);
-      import('sonner').then(({ toast }) => {
+      void import('sonner').then(({ toast }) => {
         toast.error('Erro de conexão', {
           description: 'Não foi possível carregar suas conversas. Verifique sua conexão.'
         });

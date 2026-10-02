@@ -54,7 +54,7 @@ export function MFAVerify({
 
   useEffect(() => {
     if (code.length === 6 && !verifying) {
-      handleVerify();
+      void handleVerify();
     }
   }, [code]);
 

@@ -31,7 +31,7 @@ export default function TwoFactorAuth() {
     };
 
     if (user) {
-      checkMFAStatus();
+      void checkMFAStatus();
     }
   }, [user, navigate, getAssuranceLevel, fetchFactors]);
 

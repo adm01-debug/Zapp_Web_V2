@@ -34,7 +34,7 @@ export function undoToast({ message, onUndo, delay = 5000, icon = '🗑️' }: U
       label: 'Desfazer',
       onClick: () => {
         undone = true;
-        onUndo();
+        void onUndo();
         toast.success('Ação desfeita', { duration: 2000, icon: '↩️' });
       },
     },

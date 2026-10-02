@@ -521,7 +521,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
           )}
           <div className="flex items-center justify-between mb-2 pt-3 border-t border-border/50">
             <p className="text-xs font-semibold text-foreground">Histórico</p>
-            <button type="button" onClick={() => { setShowVersions(!showVersions); if (!showVersions && activeTemplateId) fetchVersions(activeTemplateId); }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVersions ? 'Ocultar' : 'Ver versões'}</button>
+            <button type="button" onClick={() => { setShowVersions(!showVersions); if (!showVersions && activeTemplateId) void fetchVersions(activeTemplateId); }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVersions ? 'Ocultar' : 'Ver versões'}</button>
           </div>
           {showVersions && (
             <div className="space-y-1">

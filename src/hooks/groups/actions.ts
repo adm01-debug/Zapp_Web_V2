@@ -73,7 +73,7 @@ export function useGroupActions({ connections, groups, selectedGroups, setGroups
         if (error) throw error;
       },
       { loadingMessage: 'Adicionando grupo...', successMessage: 'Grupo adicionado!', errorMessage: 'Erro ao adicionar grupo',
-        onSuccess: () => { success = true; fetchGroups(); } }
+        onSuccess: () => { success = true; void fetchGroups(); } }
     );
     return success;
   }, [feedback, fetchGroups]);

@@ -46,7 +46,7 @@ export function useGeoBlocking() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { void fetchData(); }, []);
 
   const handleModeChange = async (mode: 'disabled' | 'whitelist' | 'blacklist') => {
     if (!settings) return;
@@ -76,7 +76,7 @@ export function useGeoBlocking() {
       toast.success(`${countryName} adicionado à ${activeTab === 'whitelist' ? 'whitelist' : 'blacklist'}`);
       setDialogOpen(false);
       setSelectedCountry('');
-      fetchData();
+      void fetchData();
     } catch (error) {
       log.error('Error adding country:', error);
       toast.error('Erro ao adicionar país');
@@ -91,7 +91,7 @@ export function useGeoBlocking() {
       if (error) throw error;
       toast.success(`${countryToRemove.country_name} removido`);
       setCountryToRemove(null);
-      fetchData();
+      void fetchData();
     } catch (error) {
       log.error('Error removing country:', error);
       toast.error('Erro ao remover país');

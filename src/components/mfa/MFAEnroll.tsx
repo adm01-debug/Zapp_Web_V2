@@ -31,7 +31,7 @@ export function MFAEnroll({ onSuccess, onCancel }: MFAEnrollProps) {
 
   const handleCopySecret = () => {
     if (enrollmentData?.totp.secret) {
-      navigator.clipboard.writeText(enrollmentData.totp.secret);
+      void navigator.clipboard.writeText(enrollmentData.totp.secret);
       setCopied(true);
       toast.success('Código copiado!');
       setTimeout(() => setCopied(false), 2000);
@@ -54,7 +54,7 @@ export function MFAEnroll({ onSuccess, onCancel }: MFAEnrollProps) {
 
   useEffect(() => {
     if (code.length === 6) {
-      handleVerify();
+      void handleVerify();
     }
   }, [code]);
 
