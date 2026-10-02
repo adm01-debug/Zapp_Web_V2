@@ -49,7 +49,7 @@ try {
 
 function ler(arquivo, rotulo) {
   try {
-    return JSON.parse(fs.readFileSync(arquivo, 'utf8'));
+    return JSON.parse(fs.readFileSync(arquivo, 'utf8')); // NOSONAR(S8707): 'arquivo' so recebe frescoPath/commitadoPath, ja resolvidos por resolverCaminhoPermitido (exit 2 fora do repo/tmp) antes deste read
   } catch (error) {
     console.error('ERRO: baseline de grants ' + rotulo + ' invalido (' + arquivo + '): ' + error.message);
     return null;

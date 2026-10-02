@@ -53,7 +53,7 @@ try {
 
 function lerJson(arquivo, rotulo, opcoes = {}) {
   try {
-    return JSON.parse(fs.readFileSync(arquivo, 'utf8'));
+    return JSON.parse(fs.readFileSync(arquivo, 'utf8')); // NOSONAR(S8707): 'arquivo' so recebe frescoPath/commitadoPath, ja resolvidos por resolverCaminhoPermitido (exit 2 fora do repo/tmp) antes deste read
   } catch (error) {
     if (opcoes.permitirAusente && error.code === 'ENOENT') return null;
     console.error('ERRO: manifesto ' + rotulo + ' invalido (' + arquivo + '): ' + error.message);

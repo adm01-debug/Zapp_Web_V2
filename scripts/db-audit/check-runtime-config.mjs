@@ -99,7 +99,7 @@ export function runRuntimeConfigAudit(outputPath) {
     encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 60_000,
   }));
   const evidence = evaluateRuntimeConfig(raw);
-  fs.writeFileSync(destinoSaida, `${JSON.stringify(evidence, null, 2)}\n`, { mode: 0o600, flag: 'wx' });
+  fs.writeFileSync(destinoSaida, `${JSON.stringify(evidence, null, 2)}\n`, { mode: 0o600, flag: 'wx' }); // NOSONAR(S8707): 'destinoSaida' vem de resolverCaminhoPermitido(...) acima (exit 2 fora do repo/tmp); argv[2] nao entra cru neste write
   return evidence;
 }
 

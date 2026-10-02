@@ -117,7 +117,7 @@ const iniLines = [
   '',
 ].join('\n');
 
-fs.writeFileSync(path.join(proxyDir, 'userlist.txt'), '"proxy" "unused"\n', { mode: 0o600 });
-fs.writeFileSync(path.join(proxyDir, 'pgbouncer.ini'), iniLines, { mode: 0o600 });
+fs.writeFileSync(path.join(proxyDir, 'userlist.txt'), '"proxy" "unused"\n', { mode: 0o600 }); // NOSONAR(S8707): 'proxyDir' ja passou por resolverCaminhoPermitido (exit 2 fora do repo/tmp) e o nome do arquivo e literal ('userlist.txt')
+fs.writeFileSync(path.join(proxyDir, 'pgbouncer.ini'), iniLines, { mode: 0o600 }); // NOSONAR(S8707): 'proxyDir' ja passou por resolverCaminhoPermitido (exit 2 fora do repo/tmp) e o nome do arquivo e literal ('pgbouncer.ini')
 
 console.log(String(port));
