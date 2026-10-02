@@ -67,6 +67,7 @@ jobs:
             "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${bun_asset}"
           echo "${bun_sha256}  ${bun_dir}/${bun_asset}" | sha256sum --check --strict
           unzip -q "$bun_dir/$bun_asset" -d "$bun_dir"
+          ln -sf "$bun_dir/bun-linux-x64/bun" "$bun_dir/bun-linux-x64/bunx"
           echo "$bun_dir/bun-linux-x64" >> "$GITHUB_PATH"
 
       - name: 📚 Install dependencies
@@ -224,6 +225,7 @@ jobs:
             "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${bun_asset}"
           echo "${bun_sha256}  ${bun_dir}/${bun_asset}" | sha256sum --check --strict
           unzip -q "$bun_dir/$bun_asset" -d "$bun_dir"
+          ln -sf "$bun_dir/bun-linux-x64/bun" "$bun_dir/bun-linux-x64/bunx"
           echo "$bun_dir/bun-linux-x64" >> "$GITHUB_PATH"
 
       - name: 📚 Install dependencies
@@ -279,6 +281,7 @@ jobs:
             "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${bun_asset}"
           echo "${bun_sha256}  ${bun_dir}/${bun_asset}" | sha256sum --check --strict
           unzip -q "$bun_dir/$bun_asset" -d "$bun_dir"
+          ln -sf "$bun_dir/bun-linux-x64/bun" "$bun_dir/bun-linux-x64/bunx"
           echo "$bun_dir/bun-linux-x64" >> "$GITHUB_PATH"
 
       - name: 📚 Install dependencies
@@ -343,6 +346,7 @@ jobs:
             "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${bun_asset}"
           echo "${bun_sha256}  ${bun_dir}/${bun_asset}" | sha256sum --check --strict
           unzip -q "$bun_dir/$bun_asset" -d "$bun_dir"
+          ln -sf "$bun_dir/bun-linux-x64/bun" "$bun_dir/bun-linux-x64/bunx"
           echo "$bun_dir/bun-linux-x64" >> "$GITHUB_PATH"
 
       - name: 📚 Install dependencies
@@ -393,6 +397,7 @@ jobs:
             "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${bun_asset}"
           echo "${bun_sha256}  ${bun_dir}/${bun_asset}" | sha256sum --check --strict
           unzip -q "$bun_dir/$bun_asset" -d "$bun_dir"
+          ln -sf "$bun_dir/bun-linux-x64/bun" "$bun_dir/bun-linux-x64/bunx"
           echo "$bun_dir/bun-linux-x64" >> "$GITHUB_PATH"
 
       - name: 📚 Install dependencies
@@ -482,6 +487,7 @@ jobs:
             "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${bun_asset}"
           echo "${bun_sha256}  ${bun_dir}/${bun_asset}" | sha256sum --check --strict
           unzip -q "$bun_dir/$bun_asset" -d "$bun_dir"
+          ln -sf "$bun_dir/bun-linux-x64/bun" "$bun_dir/bun-linux-x64/bunx"
           echo "$bun_dir/bun-linux-x64" >> "$GITHUB_PATH"
 
       - name: 📚 Install dependencies
