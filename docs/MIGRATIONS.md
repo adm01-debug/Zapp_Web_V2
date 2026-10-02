@@ -286,6 +286,40 @@ qualquer banco onde a funcao ja exista — e neste banco ela existe desde
 supabase/migrations/20261002461230_f51c_multiplix_confirm_dispatch_contrato.sql
 ```
 
+### O hash da f51 no ledger diverge do arquivo — e a excecao registrada
+
+O `O_MIGRATIONS` do `db-live-guard.yml` fica **vermelho** por causa dessa migration, e nao por
+erro de conteudo: o arquivo no repo declara a funcao com `CREATE FUNCTION` (sem `OR REPLACE`),
+enquanto o que **rodou** — na aplicacao pos-merge de 02/10/2026 — foi a versao equivalente
+**com** `OR REPLACE`, que e a unica diferenca. O ledger preserva o que foi aplicado, entao os
+dois hashes divergem (`arquivo=7cec99db...`, `ledger=ba9faefd...`).
+
+**O arquivo nao pode ser reescrito** (migration registrada e imutavel, regra 7 do CLAUDE.md) e
+**mover para `_superseded/` PIORA**: como a versao esta no ledger, o guard passaria a acusar
+`Registro no banco sem arquivo no repo (DDL fora do Git)`, que e erro sem excecao. O caminho e o
+**registro**:
+
+```
+scripts/db-audit/migration-evidence.json  →  kind: "ledger-divergence/pinned-replay"
+                                              reason: "safer-replay"
+```
+
+Os quatro hashes saem medidos, nunca digitados:
+
+```bash
+# hashes do ARQUIVO (valida contra as entradas existentes: 50 amostras recalcularam certo)
+node .tmp/calc-hashes.mjs supabase/migrations/20261001341230_f51_multiplix_confirm_dispatch.sql
+# hashes do LEDGER: reconstroi os statements com o MESMO splitStatements do
+# register-migration.mjs e confere o resultado contra o valor que o Postgres calcula
+node .tmp/calc-ledger.mjs supabase/migrations/20261001341230_f51_multiplix_confirm_dispatch.sql
+```
+
+Para provar verde **sem** a `DESTINO_URL` (o guard aceita `PSQL_BIN` fake e `MIGRATIONS_DIR` de
+fixture — sao as variaveis que ele documenta para teste offline): monte um diretorio com **so** a
+migration alvo, um `psql` falso que imprime o JSON do ledger e rode com
+`MIGRATION_EVIDENCE_PATH` apontando para um manifesto com **so** a excecao testada. Sem a excecao
+o guard falha com `conteudo SQL divergente`; com ela, `OK`. Medido em 02/10/2026.
+
 Ela reafirma a funcao com `CREATE OR REPLACE` e traz o que faltava (ACL da RPC, `COMMENT`s,
 `CHECK` de `reply_attribution`, as duas funcoes de trigger de bump de versao e os triggers).
 
