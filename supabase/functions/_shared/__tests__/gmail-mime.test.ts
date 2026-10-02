@@ -3,7 +3,7 @@ import { buildGmailMimeMessage, encodeBase64Url } from "../gmail-mime.ts";
 
 Deno.test("Gmail MIME preserva headers RFC da mensagem historica", () => {
   const mime = buildGmailMimeMessage({
-    from: "agent@example.com",
+    from: "agent@promobrindes.com.br",
     to: ["customer@example.com"],
     subject: "Re: Cotação",
     textBody: "Resposta",
@@ -18,7 +18,7 @@ Deno.test("Gmail MIME preserva headers RFC da mensagem historica", () => {
 
 Deno.test("Gmail MIME inclui texto, HTML e multiplos anexos sem alterar os bytes base64", () => {
   const mime = buildGmailMimeMessage({
-    from: "agent@example.com",
+    from: "agent@promobrindes.com.br",
     to: ["customer@example.com"],
     cc: ["team@example.com"],
     subject: "Arquivos",
