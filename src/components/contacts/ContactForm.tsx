@@ -85,11 +85,16 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
   const v = useContactFormValidation(values, onChange, onSubmit, excludeContactId);
 
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  // E81: o token so e buscado quando o campo de endereco ganha foco. Antes o efeito
+  // abaixo rodava no mount (deps []), entao abrir o cadastro ja gastava um get-mapbox-token,
+  // mesmo sem o operador tocar no campo.
+  const [addressFocused, setAddressFocused] = useState(false);
   useEffect(() => {
+    if (!addressFocused) return;
     let cancelled = false;
     getMapboxToken().then((token) => { if (!cancelled) setMapboxToken(token); }).catch(() => {});
     return () => { cancelled = true; };
-  }, []);
+  }, [addressFocused]);
 
   const addressAutocomplete = useAddressAutocomplete({
     token: mapboxToken,
@@ -347,7 +352,7 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
                     addressAutocomplete.setQuery(e.target.value);
                     setAddressListOpen(true);
                   }}
-                  onFocus={() => setAddressListOpen(true)}
+                  onFocus={() => { setAddressFocused(true); setAddressListOpen(true); }}
                   onKeyDown={(e) => {
                     addressAutocomplete.onKeyDown(e);
                     if (e.key === 'Escape') setAddressListOpen(false);

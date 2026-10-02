@@ -725,7 +725,13 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 **Sem flag** (decisão `20261001-103207-6c0b`): a contenção se prova por foco, não por chave.
 1. Integração: campo de endereço **fora de foco** → `fetch` da Mapbox nunca chamado e `get-mapbox-token` **não** invocado (E36).
 2. Com o campo em foco e digitando → 1 `get-mapbox-token` por sessão de busca, não mais que isso.
-**Checklist:** [ ] 2 casos
+**Checklist:** [x] 2 casos
+
+**Fechada em 2026-10-02 — e o caso 1 pegou um defeito real.** `ContactForm.tsx` buscava o token no MOUNT (`useEffect` com deps `[]`), entao abrir o cadastro disparava um get-mapbox-token sem o operador tocar no campo: reproduzido por teste vermelho (expected to not be called at all, but been called 1 times).
+
+**Correcao:** o token passa a ser buscado quando o campo de endereco ganha foco, integrado ao handler que ja existia (`onFocus={() => setAddressListOpen(true)}`) em vez de um segundo onFocus (que sobrescreveria o primeiro — foi meu erro intermediario, 8 testes quebraram e a suite acusou). O ContactRegionMap busca o token por conta propria (linha 74), entao o mapa nao depende disto.
+
+**Prova:** 9/9 no arquivo de integracao (2 casos novos + 8 antigos sem regressao); mutacao removendo o gate `if (!addressFocused) return` faz 2 casos falharem (o caso 1 volta a chamada indevida e o caso 2 passa a 2 tokens).
 ### E82 · PR da Fase 7
 1. Título: `test(mapa): integração com hook real, mutação reproduzível e E2E do picker/cadastro/mapa`.
 **Checklist:** [ ] PR · [ ] CI verde · [ ] `e2e-logado` verde
