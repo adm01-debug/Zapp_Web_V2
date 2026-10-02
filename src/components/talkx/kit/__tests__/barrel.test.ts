@@ -62,7 +62,13 @@ const EXPORTED_NAMES = [
   'TipCard',
   'TalkXConfirmDialog',
   'InsightCard',
-] as const;
+  'EntityCell',
+  'ProgressCell',
+  'ResultsCell',
+  'ChannelCell',
+  'DateByCell',
+  'TalkXBulkBar',
+  'fmtRelativeDay',] as const;
 
 describe('talkxShared (barrel do kit X042)', () => {
   it('exporta exatamente os símbolos de hoje, sem perder nem inventar nenhum', () => {

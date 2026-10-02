@@ -1,4 +1,4 @@
-import { format, formatDistanceToNowStrict } from 'date-fns';
+import { format, formatDistanceToNowStrict, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 /* ------------------------------------------------------------------ */
@@ -16,6 +16,24 @@ export const fmtDate = (d: string | null | undefined) =>
 export const fmtTime = (d: string | null | undefined) => (d ? format(new Date(d), 'HH:mm') : '—');
 export const fmtAgo = (d: string | null | undefined) =>
   d ? formatDistanceToNowStrict(new Date(d), { locale: ptBR, addSuffix: true }) : '—';
+
+/**
+ * Data relativa curta para tabelas e listas:
+ *   - hoje      → "Hoje, 10:00"
+ *   - ontem     → "Ontem, 16:20"
+ *   - anterior  → "15 set, 09:30"
+ * Sem data (ou data inválida) devolve "—", nunca uma string inventada.
+ */
+export const fmtRelativeDay = (d: string | null | undefined) => {
+  if (!d) return '—';
+  const date = new Date(d);
+  if (Number.isNaN(date.getTime())) return '—';
+  const hm = format(date, 'HH:mm');
+  if (isToday(date)) return `Hoje, ${hm}`;
+  if (isYesterday(date)) return `Ontem, ${hm}`;
+  return `${format(date, 'd MMM', { locale: ptBR }).replace('.', '')}, ${hm}`;
+};
+
 export function extractVariables(template: string): string[] {
   const found = new Set<string>();
   for (const m of template.matchAll(/\{\{\s*([a-z_]+)\s*\}\}/gi)) found.add(`{{${m[1].toLowerCase()}}}`);

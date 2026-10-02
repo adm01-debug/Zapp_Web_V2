@@ -5,7 +5,7 @@
 
 ## Etapas concluídas
 
-**22 de 200** concluídas.
+**23 de 200** concluídas.
 
 | Fase | Concluídas | Total |
 |---|---|---|
@@ -15,7 +15,7 @@
 | 3 · Integridade, observabilidade e ensaio real | 1 | 12 |
 | 4 · Dados comerciais e vínculo com o CRM | 0 | 6 |
 | 5 · Kit, estados, modais e navegação | 1 | 15 |
-| 6 · Capacidades novas do motor e agregações | 1 | 20 |
+| 6 · Capacidades novas do motor e agregações | 2 | 20 |
 | 7 · Visão geral | 0 | 6 |
 | 8 · Templates | 0 | 16 |
 | 9 · Segmentos | 0 | 19 |

@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, ChevronsUpDown, Loader2, MoreVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -36,15 +36,20 @@ export function TalkXPagination({ page, pageSize, total, onPage, onPageSize, nou
 // E15 — RowActionsMenu, SegmentedToggle, PrimaryButtonGlow
 // ════════════════════════════════════════════════════════════════════════════
 export interface RowAction { label: string; icon?: LucideIcon; onSelect: () => void; danger?: boolean; disabled?: boolean; }
-export function RowActionsMenu({ actions, label = 'Ações' }: { actions: RowAction[]; label?: string }) {
+/**
+ * Menu de ações de linha (⋮ vertical). `label` vira o aria-label do gatilho —
+ * o chamador passa o NOME da linha. `busy` desabilita o gatilho e troca o
+ * ícone por um spinner, para ações por linha que ainda estão carregando.
+ */
+export function RowActionsMenu({ actions, label = 'Ações', busy = false }: { actions: RowAction[]; label?: string; busy?: boolean }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          type="button" aria-label={label}
-          className="talkx-glow-ring inline-flex items-center justify-center w-8 h-8 rounded-lg border border-border/60 bg-input/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
+          type="button" aria-label={label} aria-busy={busy || undefined} disabled={busy}
+          className={cn('talkx-glow-ring inline-flex items-center justify-center w-8 h-8 rounded-lg border border-border/60 bg-input/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors', busy && 'opacity-60 cursor-wait')}
         >
-          <MoreHorizontal className="w-4 h-4" />
+          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <MoreVertical className="w-4 h-4" />}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[180px]">
@@ -60,26 +65,64 @@ export function RowActionsMenu({ actions, label = 'Ações' }: { actions: RowAct
   );
 }
 // ════════════════════════════════════════════════════════════════════════════
-// E17 — TalkXTable genérico
+// X043 — barra de seleção em massa
 // ════════════════════════════════════════════════════════════════════════════
+/** "N selecionadas" + ações do chamador + "Limpar seleção". */
+export function TalkXBulkBar({ count, onClear, actions, className }: { count: number; onClear: () => void; actions?: ReactNode; className?: string }) {
+  if (count <= 0) return null;
+  return (
+    <div role="status" className={cn('flex flex-wrap items-center gap-3 rounded-xl border border-primary/25 bg-primary/8 px-3.5 py-2.5', className)}>
+      <span className="text-xs font-semibold text-foreground">{count} selecionada{count === 1 ? '' : 's'}</span>
+      {actions && <div className="flex items-center gap-2">{actions}</div>}
+      <button type="button" onClick={onClear} className="ml-auto text-2xs font-semibold text-primary underline underline-offset-2 hover:text-primary/80">Limpar seleção</button>
+    </div>
+  );
+}
+// ════════════════════════════════════════════════════════════════════════════
+// E17 — TalkXTable genérico (+ X043: ordenação, massa, ações e loading)
+// ════════════════════════════════════════════════════════════════════════════
+export type TalkXSortDir = 'asc' | 'desc';
+export interface TalkXSort { key: string; dir: TalkXSortDir }
 export interface TalkXColumn<T> {
   key: string; header: string; width?: string | number; align?: 'left' | 'center' | 'right';
+  /** Quando presente, o cabeçalho vira botão ordenável (cliente ou servidor). */
+  sortKey?: string;
   render: (row: T, idx: number) => ReactNode;
 }
+const alignCls = (a?: 'left' | 'center' | 'right') => (a === 'right' ? 'text-right' : a === 'center' ? 'text-center' : 'text-left');
 export function TalkXTable<T extends object>({
-  columns, rows, getId, selectable = false, selected, onSelectionChange, stickyHeader = false, emptyState, className,
+  columns, rows, getId, selectable = false, selected, onSelectionChange, selectionResetKey,
+  sort = null, onSortChange, rowActions, rowLabel, rowBusy, loading = false, loadingRows = 5,
+  stickyHeader = false, emptyState, className,
 }: {
   columns: TalkXColumn<T>[]; rows: T[]; getId: (row: T) => string;
   selectable?: boolean; selected?: Set<string>; onSelectionChange?: (s: Set<string>) => void;
+  /** Muda de valor → a seleção é zerada (troca de página/filtro). */
+  selectionResetKey?: string | number;
+  sort?: TalkXSort | null; onSortChange?: (s: TalkXSort | null) => void;
+  rowActions?: (row: T) => RowAction[]; rowLabel?: (row: T) => string; rowBusy?: (row: T) => boolean;
+  loading?: boolean; loadingRows?: number;
   stickyHeader?: boolean; emptyState?: ReactNode; className?: string;
 }) {
-  const allSelected = rows.length > 0 && selected && rows.every(r => selected.has(getId(r)));
-  const someSelected = selected && rows.some(r => selected.has(getId(r))) && !allSelected;
+  const allSelected = rows.length > 0 && !!selected && rows.every((r) => selected.has(getId(r)));
+  const someSelected = !!selected && !allSelected && rows.some((r) => selected.has(getId(r)));
+  const colCount = columns.length + (selectable ? 1 : 0) + (rowActions ? 1 : 0);
+
+  const headRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (headRef.current) headRef.current.indeterminate = someSelected; }, [someSelected]);
+
+  // selectionResetKey: zera a seleção controlada quando a chave muda (não no mount).
+  const prevResetKey = useRef(selectionResetKey);
+  useEffect(() => {
+    if (prevResetKey.current === selectionResetKey) return;
+    prevResetKey.current = selectionResetKey;
+    if (onSelectionChange && selected && selected.size > 0) onSelectionChange(new Set());
+  }, [selectionResetKey, onSelectionChange, selected]);
 
   const toggleAll = () => {
     if (!onSelectionChange || !selected) return;
     const n = new Set(selected);
-    if (allSelected) { rows.forEach(r => n.delete(getId(r))); } else { rows.forEach(r => n.add(getId(r))); }
+    if (allSelected) rows.forEach((r) => n.delete(getId(r))); else rows.forEach((r) => n.add(getId(r)));
     onSelectionChange(n);
   };
   const toggleRow = (id: string) => {
@@ -88,44 +131,82 @@ export function TalkXTable<T extends object>({
     if (n.has(id)) n.delete(id); else n.add(id);
     onSelectionChange(n);
   };
+  const cycleSort = (key: string) => {
+    if (!onSortChange) return;
+    const next: TalkXSort | null = !sort || sort.key !== key ? { key, dir: 'asc' }
+      : sort.dir === 'asc' ? { key, dir: 'desc' } : null;
+    onSortChange(next);
+  };
+  const skeletonN = Math.max(rows.length, loadingRows);
 
   return (
     <div className={cn('w-full overflow-x-auto', className)}>
-      <table className="talkx-table">
+      <table className="talkx-table" aria-busy={loading || undefined}>
         <thead className={stickyHeader ? 'sticky top-0 bg-card z-10' : ''}>
           <tr>
             {selectable && (
-              <th style={{ width: 44 }} className="pl-3">
-                <input type="checkbox" checked={!!allSelected} ref={el => { if (el) el.indeterminate = !!someSelected; }}
-                  onChange={toggleAll} className="w-3.5 h-3.5 accent-primary cursor-pointer" aria-label="Selecionar tudo" />
+              <th scope="col" style={{ width: 44 }} className="pl-3">
+                <input type="checkbox" checked={allSelected} ref={headRef} onChange={toggleAll}
+                  className="w-3.5 h-3.5 accent-primary cursor-pointer" aria-label="Selecionar tudo" />
               </th>
             )}
-            {columns.map(col => (
-              <th key={col.key} style={col.width ? { width: col.width } : undefined}
-                className={cn(col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left')}
-              >{col.header}</th>
-            ))}
+            {columns.map((col) => {
+              const active = !!col.sortKey && sort?.key === col.sortKey;
+              const ariaSort = col.sortKey ? (active ? (sort?.dir === 'asc' ? 'ascending' : 'descending') : 'none') : undefined;
+              return (
+                <th key={col.key} scope="col" aria-sort={ariaSort} style={col.width ? { width: col.width } : undefined} className={alignCls(col.align)}>
+                  {col.sortKey && onSortChange ? (
+                    <button type="button" onClick={() => cycleSort(col.sortKey as string)}
+                      className="inline-flex items-center gap-1.5 font-semibold text-inherit hover:text-foreground transition-colors"
+                    >
+                      {col.header}
+                      {active ? (sort?.dir === 'asc' ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />)
+                        : <ChevronsUpDown className="w-3.5 h-3.5 opacity-40" />}
+                    </button>
+                  ) : col.header}
+                </th>
+              );
+            })}
+            {rowActions && <th scope="col" style={{ width: 52 }} className="pr-3 text-right"><span className="sr-only">Ações</span></th>}
           </tr>
         </thead>
         <tbody>
-          {rows.length === 0 ? (
-            <tr><td colSpan={columns.length + (selectable ? 1 : 0)} className="h-32 text-center text-muted-foreground text-sm">{emptyState ?? 'Nenhum resultado.'}</td></tr>
+          {loading ? (
+            Array.from({ length: skeletonN }).map((_, i) => (
+              <tr key={`sk-${i}`}>
+                {selectable && <td className="pl-3"><div className="h-3.5 w-3.5 rounded bg-muted/60 animate-pulse" /></td>}
+                {columns.map((col) => (
+                  <td key={col.key} className={alignCls(col.align)}><div className="h-3.5 w-full max-w-[120px] rounded bg-muted/60 animate-pulse" /></td>
+                ))}
+                {rowActions && <td className="pr-3"><div className="ml-auto h-6 w-6 rounded bg-muted/60 animate-pulse" /></td>}
+              </tr>
+            ))
+          ) : rows.length === 0 ? (
+            <tr><td colSpan={colCount} className="h-32 text-center text-muted-foreground text-sm">{emptyState ?? 'Nenhum resultado.'}</td></tr>
           ) : rows.map((row, idx) => {
             const id = getId(row);
-            const isSelected = selected?.has(id);
+            const isSelected = !!selected?.has(id);
             return (
               <tr key={id} className={isSelected ? 'bg-primary/5' : ''}>
                 {selectable && (
                   <td className="pl-3">
-                    <input type="checkbox" checked={!!isSelected} onChange={() => toggleRow(id)}
-                      className="w-3.5 h-3.5 accent-primary cursor-pointer" aria-label={`Selecionar ${id}`} />
+                    <input type="checkbox" checked={isSelected} onChange={() => toggleRow(id)}
+                      className="w-3.5 h-3.5 accent-primary cursor-pointer" aria-label={rowLabel ? `Selecionar ${rowLabel(row)}` : `Selecionar ${id}`} />
                   </td>
                 )}
-                {columns.map(col => (
+                {columns.map((col) => (
                   <td key={col.key} className={cn(col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : '')}>
                     {col.render(row, idx)}
                   </td>
                 ))}
+                {rowActions && (
+                  <td className="pr-3">
+                    <div className="flex justify-end">
+                      <RowActionsMenu actions={rowActions(row)} busy={rowBusy?.(row)}
+                        label={rowLabel ? `Ações de ${rowLabel(row)}` : 'Ações'} />
+                    </div>
+                  </td>
+                )}
               </tr>
             );
           })}
