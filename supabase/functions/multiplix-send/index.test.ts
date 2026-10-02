@@ -5,14 +5,14 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 Deno.test('personalize resolve {{empresa}} com o nome da empresa', () => {
-  const result = personalize('Ola, aqui é da {{empresa}}', { company: 'Empresa Teste' });
+  const result = personalize('Ola, aqui é da {{empresa}}', { company: 'Empresa Teste' }).text;
   assert(result === 'Ola, aqui é da Empresa Teste', `unexpected result: ${result}`);
 });
 
 Deno.test('personalize resolve {{saudacao}} para um período válido do dia', () => {
   // getGreeting() usa a hora real — só valida que retorna uma das 3 saudações
   // esperadas, sem travar o teste a um horário fixo de execução do CI.
-  const result = personalize('{{saudacao}}, {{empresa}}!', { company: 'Acme' });
+  const result = personalize('{{saudacao}}, {{empresa}}!', { company: 'Acme' }).text;
   const validGreetings = ['Bom dia, Acme!', 'Boa tarde, Acme!', 'Boa noite, Acme!'];
   assert(validGreetings.includes(result), `unexpected greeting result: ${result}`);
 });
@@ -21,7 +21,7 @@ Deno.test('personalize usa string vazia quando company é ausente/null (built-in
   // Comportamento do kernel para um built-in SEM valor: {{empresa}} resolve para
   // '' — o fallback "[variavel]" cobre apenas chaves FORA do conjunto de
   // built-ins. Idêntico ao antigo personalizeMultiplix; nada a corrigir aqui.
-  const result = personalize('Empresa: {{empresa}}', {});
+  const result = personalize('Empresa: {{empresa}}', {}).text;
   assert(result === 'Empresa: ', `unexpected result: ${result}`);
 });
 
@@ -30,12 +30,12 @@ Deno.test('personalize usa fallback [variavel] para placeholder fora do conjunto
   // NUNCA lança unknown_placeholder. Uma variável sem valor — {{cargo}}, que o
   // Multiplix não resolve — vira "[cargo]" em vez de derrubar o envio do
   // destinatário inteiro. O dialeto antigo (personalizeMultiplix) lançava.
-  const result = personalize('Seu cargo é {{cargo}}', { company: 'Acme' });
+  const result = personalize('Seu cargo é {{cargo}}', { company: 'Acme' }).text;
   assert(result === 'Seu cargo é [cargo]', `unexpected result: ${result}`);
 });
 
 Deno.test('personalize é case-insensitive nos placeholders conhecidos', () => {
-  const result = personalize('{{SAUDACAO}}, {{Empresa}}!', { company: 'Acme' });
+  const result = personalize('{{SAUDACAO}}, {{Empresa}}!', { company: 'Acme' }).text;
   const validGreetings = ['Bom dia, Acme!', 'Boa tarde, Acme!', 'Boa noite, Acme!'];
   assert(validGreetings.includes(result), `unexpected greeting result: ${result}`);
 });

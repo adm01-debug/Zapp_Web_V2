@@ -479,7 +479,7 @@ export async function handleMultiplixSend(
               { company: recipient.company_name_snapshot },
               {},
               typeof dispatch.schedule_timezone === "string" ? dispatch.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
-            );
+            ).text;
           } catch (e) {
             const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
               p_item_id: item.item_id,
