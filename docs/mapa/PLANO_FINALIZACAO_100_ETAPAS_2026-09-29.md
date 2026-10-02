@@ -705,7 +705,9 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 
 ### E79 · Cobertura mínima do módulo
 1. `vitest --coverage` restrito a `src/lib/mapbox*`, `location-picker/**`, `ContactForm.tsx`: linhas ≥ 85 %, branches ≥ 75 %; registrar no doc.
-**Checklist:** [ ] números · [ ] sem exclusões novas
+**Checklist:** [x] números · [x] sem exclusões novas
+
+**Fechada em 2026-10-02.** Escopo do modulo entrou no coverage.include do vitest.config.ts (antes ficava fora) e o piso ficou por glob, provado por mutacao. Medido: agregado lines 91,97 / branches 79,13 (>= 85/75). Numeros registrados em ARQUITETURA_BUSCA.md, incluindo a ressalva: ContactForm.tsx 58,27 % branches e mapboxLoader.ts 0 % ficam abaixo do piso por arquivo - o agregado esconde isso. Decisao pendente: manter agregado ou ligar perFile: true.
 
 ### E80 · Teste de carga leve do debounce (sanidade de custo)
 1. Simular 200 teclas em 5 s com fake timers → ≤ 17 requests (1 a cada 300 ms) e 1 sessão.
