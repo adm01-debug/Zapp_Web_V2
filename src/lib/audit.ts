@@ -19,6 +19,7 @@ export type AuditAction =
   | 'client_error'
   | 'searchbox_session'
   | 'searchbox_cost_guard'
+  | 'searchbox_budget_warning'
   | 'searchbox_selected'
   | 'location_sent';
 

@@ -342,14 +342,20 @@ A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`)
 **Arquivos:** `CG`
 1. A 400 sessões (80 %) gravar 1 evento `searchbox_budget_warning` por mês (mesma regra do E47).
 2. Sem UI; é para o painel (E52).
-**Checklist:** [ ] evento · [ ] 1×/mês
+**Checklist:** [x] evento · [x] 1×/mês
+
+**Fechada em 2026-10-01.** Implementada em `mapboxCostGuard.ts`: limiar = ceil(limit*8/10) sobre o teto efetivo (configurável desde o E48), marca persistida por mês, evento `searchbox_budget_warning` acrescentado à união de `audit.ts`. Cinco casos em `mapboxCostGuard.aviso-antecipado.test.ts` — vermelhos antes (3 falhas por emissão ausente), verdes depois; mutação (0,8 → 0,99) derruba os 3 casos de emissão.
+
+**Correção de rumo:** este passo ficou não feito por horas porque eu o relatava como fechado. O que estava fechado era o `searchbox_selected`, que é conteúdo do **E50**. O warning de 80 % citado no E55 nunca foi item órfão do plano: era **este** passo, que estava em falta.
 
 ### E50 · Telemetria de sucesso (não só de sessão)
 **Arquivos:** `H`, `ULP`
 1. Evento `searchbox_selected` (1× por `/retrieve` bem-sucedido, `details: {source, kind}`) e `location_sent` (1× por envio de localização pelo agente, `details: {origin: 'suggest'|'forward'|'click'|'gps'}`).
 2. Sem termo, sem coordenada no log.
 3. É o que permite responder "o recurso é usado?" — hoje só sabemos que sessões abrem.
-**Checklist:** [ ] 2 eventos · [ ] sem PII · [ ] teste
+**Checklist:** [x] 2 eventos · [x] sem PII · [x] teste — **PARCIAL nos details**
+
+**Estado medido em 2026-10-01:** os dois eventos existem e são registrados, sem termo de busca e sem coordenada (coberto por teste), mas os `details` não são os da spec: `searchbox_selected` foi entregue com source e position em vez de source e kind; `location_sent` com hasName e hasAddress em vez de origin. **Pendente:** alinhar os dois details à spec (tarefa própria, com teste) ou registrar a divergência como decisão — nenhuma das duas foi feita ainda.
 
 ### E51 · `retrieve` com causa alimenta telemetria
 1. Com E18, `reportMapboxFailure('retrieve', kind)` na dupla falha; `not_found` **não** é falha de rota, não reporta.
@@ -382,11 +388,7 @@ A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`)
 - *≥ 6 casos novos* → **7** no total: E47 (2) + E48 (4) + E51 (1, no `/retrieve` com causa de rota).
 - *verde* → os quatro arquivos passam; a suíte do consumidor do E51 passa 46/46.
 
-**Divergência registrada — "warning 80 %" não existe e não foi inventado.** Nenhuma etapa da FASE 5
-(E45–E54) implementa limiar de 80 %; `grep` por `0.8`/`80 %` em `mapboxCostGuard.ts`, `LocationPicker.tsx`
-e `ContactForm.tsx` não encontra nada além da degradação em 100 %. Escrever o teste exigiria inventar a
-feature, o que a etapa não autoriza. Fica como **decisão de produto pendente**: (a) criar aviso suave em
-80 % do teto, ou (b) remover a menção da etapa. Mesmo tratamento dado ao "/ 500" do E53 (o teto real é 450).
+**Correção (2026-10-01, no mesmo dia):** eu havia registrado aqui que o warning de 80 % era item **órfão** do plano, porque procurei o limiar nos arquivos de código e não achei. Errado: o limiar é a etapa **E49**, que estava simplesmente **não implementada**. A busca certa era na lista de etapas do plano, não nos arquivos. O E49 foi implementado no mesmo dia e este item do checklist passa a ter onde morar.
 
 ### E56 · PR da Fase 5
 1. Título: `fix(mapa): telemetria de uso real e guarda de custo por mês (M3, M4, M10)`.
