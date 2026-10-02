@@ -89,7 +89,7 @@ export function ConversationSummary({ messages, contactName, contactId, initialS
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('ai-conversation-summary', {
-        body: { messages: filteredMessages.map(m => ({ sender: m.sender, content: m.content, created_at: m.created_at })), contactName, contactId },
+        body: { messages: filteredMessages.map(m => ({ sender: m.sender, content: m.content, created_at: m.created_at })), contactName, contactId, requestId: request.requestId },
       });
 
       // IA-048 — a resposta só vale se contato/período ainda forem os do clique.
