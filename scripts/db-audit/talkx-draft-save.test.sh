@@ -2,10 +2,20 @@
 set -euo pipefail
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
-migration="$repo_root/supabase/migrations/20260912130000_harden_talkx_draft_save.sql"
 postgres_image="${TALKX_DRAFT_SAVE_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="talkx-draft-save-test-$$"
 test_password="talkx_draft_save_test_only"
+
+# A migration sob teste é a última da cadeia: as anteriores reproduzem o estado da
+# main (V21 flags, V23 draft_step, V25 owner) e a X009 fecha passo/responsável,
+# mensagem vazia em draft e o gatilho de agendamento.
+migrations=(
+  "$repo_root/supabase/migrations/20260912130000_harden_talkx_draft_save.sql"
+  "$repo_root/supabase/migrations/20260930640000_talkx_v21_launch_flags.sql"
+  "$repo_root/supabase/migrations/20260930770000_talkx_v23_draft_step.sql"
+  "$repo_root/supabase/migrations/20261001271230_talkx_v25_campaign_owner.sql"
+  "$repo_root/supabase/migrations/20261001281230_talkx_campaigns_draft_step_responsible.sql"
+)
 
 cleanup() { docker rm -f "$container_name" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
@@ -56,10 +66,21 @@ CREATE TABLE public.profiles (
   user_id uuid NOT NULL UNIQUE,
   is_active boolean NOT NULL DEFAULT true
 );
+CREATE TABLE public.user_roles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  role text NOT NULL,
+  UNIQUE (user_id, role)
+);
 CREATE FUNCTION public.get_profile_id_for_user(uuid) RETURNS uuid LANGUAGE sql STABLE AS $$
   SELECT id FROM public.profiles WHERE user_id = $1
 $$;
-CREATE FUNCTION public.is_admin_or_supervisor(uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT false $$;
+CREATE FUNCTION public.is_admin_or_supervisor(_user_id uuid) RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.user_roles
+    WHERE user_id = _user_id AND role IN ('admin', 'supervisor')
+  )
+$$;
 CREATE FUNCTION public.is_valid_talkx_schedule_timezone(text) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT $1 = 'America/Sao_Paulo' $$;
 CREATE TABLE public.whatsapp_connections (
   id uuid PRIMARY KEY,
@@ -85,6 +106,7 @@ CREATE TABLE public.talkx_campaigns (
   failed_count integer NOT NULL DEFAULT 0,
   delivered_count integer NOT NULL DEFAULT 0,
   outcome_unknown_count integer NOT NULL DEFAULT 0,
+  replied_count integer NOT NULL DEFAULT 0,
   whatsapp_connection_id uuid,
   created_by uuid,
   started_at timestamptz,
@@ -108,11 +130,20 @@ CREATE TABLE public.talkx_campaigns (
 );
 INSERT INTO public.profiles (id, user_id) VALUES
   ('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001'),
-  ('10000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002');
+  ('10000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002'),
+  ('10000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000003');
+-- Perfil 3 é o responsável elegível (admin/supervisor). Perfil 2 fica sem papel,
+-- para continuar servindo de "outro ator" nas checagens de autorização.
+INSERT INTO public.user_roles (user_id, role) VALUES
+  ('20000000-0000-0000-0000-000000000003', 'supervisor');
 GRANT USAGE ON SCHEMA public, auth TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.talkx_campaigns TO authenticated;
 SQL
 
-psql_test < "$migration" >/dev/null
+for migration in "${migrations[@]}"; do
+  [[ -f "$migration" ]] || fail "migration ausente: $migration"
+  psql_test < "$migration" >/dev/null
+done
 
 anon_can_execute="$(psql_test -Atqc "SELECT has_function_privilege('anon', 'public.save_talkx_campaign_draft(uuid, bigint, uuid, jsonb)', 'EXECUTE')")"
 authenticated_can_execute="$(psql_test -Atqc "SELECT has_function_privilege('authenticated', 'public.save_talkx_campaign_draft(uuid, bigint, uuid, jsonb)', 'EXECUTE')")"
@@ -122,7 +153,9 @@ authenticated_can_execute="$(psql_test -Atqc "SELECT has_function_privilege('aut
 owner_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000001';"
 other_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000002';"
 creation_key='30000000-0000-0000-0000-000000000001'
-payload='{"name":"Rascunho resiliente","message_template":"Olá {{nome}}","description":null,"objective":"vendas","audience_source":"contacts","audience_filters":{},"segment_id":null,"template_id":null,"whatsapp_connection_id":null,"media_url":null,"media_type":null,"scheduled_at":null,"schedule_timezone":"America/Sao_Paulo","send_window_start":null,"send_window_end":null,"business_hours_only":false,"speed_profile":"moderate","typing_delay_min":1500,"typing_delay_max":4000,"send_interval_min":8000,"send_interval_max":20000}'
+resp_id='10000000-0000-0000-0000-000000000003'
+msg_ok='Olá {{nome}}'
+payload="{\"name\":\"Rascunho resiliente\",\"message_template\":\"$msg_ok\",\"description\":null,\"objective\":\"vendas\",\"audience_source\":\"contacts\",\"audience_filters\":{},\"segment_id\":null,\"template_id\":null,\"whatsapp_connection_id\":null,\"media_url\":null,\"media_type\":null,\"scheduled_at\":null,\"schedule_timezone\":\"America/Sao_Paulo\",\"send_window_start\":null,\"send_window_end\":null,\"business_hours_only\":false,\"speed_profile\":\"moderate\",\"typing_delay_min\":1500,\"typing_delay_max\":4000,\"send_interval_min\":8000,\"send_interval_max\":20000}"
 
 first="$(psql_test -Atqc "$owner_session SELECT campaign_id || ':' || revision || ':' || creation_replayed FROM public.save_talkx_campaign_draft(NULL, NULL, '$creation_key'::uuid, '$payload'::jsonb);")"
 [[ "$first" == *':1:false' ]] || fail 'primeiro create não criou revisão 1'
@@ -166,11 +199,53 @@ blank_instance_payload="$(printf '%s' "$payload" | sed 's/"whatsapp_connection_i
 blank_instance="$(psql_test -v VERBOSITY=verbose -c "$owner_session SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000012'::uuid, '$blank_instance_payload'::jsonb);" 2>&1 || true)"
 [[ "$blank_instance" == *selected_whatsapp_connection_unavailable* ]] || fail 'conexão WhatsApp sem instância foi aceita'
 
+# X009: mensagem só de espaços é equivalente a mensagem vazia — aceita em draft
+# (antes era recusada junto com o vazio).
 whitespace_payload="$(printf '%s' "$payload" | sed 's/"message_template":"[^"]*"/"message_template":"   "/')"
-whitespace_message="$(psql_test -v VERBOSITY=verbose -c "$owner_session SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000013'::uuid, '$whitespace_payload'::jsonb);" 2>&1 || true)"
-[[ "$whitespace_message" == *invalid_talkx_campaign_draft* ]] || fail 'mensagem composta apenas de espaços foi aceita'
+whitespace_message="$(psql_test -Atqc "$owner_session SELECT campaign_id || ':' || revision || ':' || creation_replayed FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000013'::uuid, '$whitespace_payload'::jsonb);")"
+[[ "$whitespace_message" == *':1:false' ]] || fail 'mensagem só de espaços deveria ser aceita em draft (X009)'
 
 inactive_profile="$(psql_test -v VERBOSITY=verbose -c "UPDATE public.profiles SET is_active=false WHERE user_id='20000000-0000-0000-0000-000000000001'; $owner_session SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000014'::uuid, '$payload'::jsonb);" 2>&1 || true)"
 [[ "$inactive_profile" == *active_profile_not_found* ]] || fail 'perfil inativo ainda conseguiu salvar rascunho'
 
-printf 'PASS: Talk X draft save enforces grants, active identity and live connection, recovers idempotent creates, scopes keys per actor, rejects divergent retries, and fences stale writes\n'
+# ---------------------------------------------------------------------------
+# X009 — os quatro casos novos.
+# ---------------------------------------------------------------------------
+
+# (a) criar rascunho só com nome (mensagem vazia) devolve campaign_id.
+payload_empty="${payload/\"message_template\":\"$msg_ok\"/\"message_template\":\"\"}"
+empty_first="$(psql_test -Atqc "$owner_session SELECT campaign_id || ':' || revision || ':' || creation_replayed FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000020'::uuid, '$payload_empty'::jsonb);")"
+[[ -n "$empty_first" && "$empty_first" == *':1:false' ]] || fail '(a) rascunho só com nome (mensagem vazia) não devolveu campaign_id'
+empty_campaign_id="${empty_first%%:*}"
+[[ "$(psql_test -Atqc "SELECT message_template FROM public.talkx_campaigns WHERE id='$empty_campaign_id'")" == '' ]] || fail '(a) mensagem vazia não foi persistida como vazia'
+
+# (b) mensagem com 4.097 caracteres -> erro 22023.
+msg_long="$(printf 'x%.0s' $(seq 1 4097))"
+payload_long="${payload/\"message_template\":\"$msg_ok\"/\"message_template\":\"$msg_long\"}"
+long_message="$(psql_test -v VERBOSITY=verbose -c "$owner_session SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000021'::uuid, '$payload_long'::jsonb);" 2>&1 || true)"
+[[ "$long_message" == *22023* && "$long_message" == *invalid_talkx_campaign_draft* ]] || fail '(b) mensagem com 4.097 caracteres não foi recusada com 22023'
+
+# (c) draft_step=3 e responsible_id gravados voltam no SELECT.
+payload_resp="${payload%?},\"draft_step\":3,\"responsible_id\":\"$resp_id\"}"
+resp_first="$(psql_test -Atqc "$owner_session SELECT campaign_id FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000022'::uuid, '$payload_resp'::jsonb);")"
+[[ -n "$resp_first" ]] || fail '(c) criação com responsible_id falhou'
+resp_sel="$(psql_test -Atqc "SELECT draft_step || ':' || responsible_id FROM public.talkx_campaigns WHERE id='$resp_first'")"
+[[ "$resp_sel" == "3:$resp_id" ]] || fail "(c) draft_step/responsible_id não voltaram no SELECT (obtido: $resp_sel)"
+# responsável explícito fora de admin/supervisor é recusado.
+payload_resp_bad="${payload%?},\"draft_step\":3,\"responsible_id\":\"10000000-0000-0000-0000-000000000002\"}"
+resp_bad="$(psql_test -v VERBOSITY=verbose -c "$owner_session SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000023'::uuid, '$payload_resp_bad'::jsonb);" 2>&1 || true)"
+[[ "$resp_bad" == *talkx_responsible_not_authorized* ]] || fail '(c) responsável sem papel admin/supervisor foi aceito'
+
+# (d) UPDATE para scheduled com mensagem vazia e sem mídia é recusado.
+# Pré-configura o agendamento como owner da tabela (o guard só vale para authenticated).
+configured="$(psql_test -Atqc "UPDATE public.talkx_campaigns SET scheduled_at = statement_timestamp() + interval '1 day', total_recipients = 1 WHERE id='$empty_campaign_id' RETURNING total_recipients;")"
+[[ "$configured" == '1' ]] || fail '(d) pré-configuração do agendamento falhou'
+schedule_denied="$(psql_test -v VERBOSITY=verbose -c "$owner_session UPDATE public.talkx_campaigns SET status='scheduled' WHERE id='$empty_campaign_id';" 2>&1 || true)"
+[[ "$schedule_denied" == *talkx_schedule_requires_message_or_media* ]] || fail "(d) UPDATE para scheduled com mensagem vazia e sem mídia foi aceito [$schedule_denied]"
+[[ "$(psql_test -Atqc "SELECT status FROM public.talkx_campaigns WHERE id='$empty_campaign_id'")" == 'draft' ]] || fail '(d) campanha mudou de status apesar da recusa'
+# com o mesmo agendamento, mensagem preenchida permite sair de draft.
+psql_test -qc "UPDATE public.talkx_campaigns SET message_template = 'Olá' WHERE id='$empty_campaign_id';" >/dev/null
+psql_test -qc "$owner_session UPDATE public.talkx_campaigns SET status='scheduled' WHERE id='$empty_campaign_id';" >/dev/null
+[[ "$(psql_test -Atqc "SELECT status FROM public.talkx_campaigns WHERE id='$empty_campaign_id'")" == 'scheduled' ]] || fail '(d) mensagem preenchida não liberou o agendamento'
+
+printf 'PASS: Talk X draft save enforces grants, active identity and live connection, recovers idempotent creates, scopes keys per actor, rejects divergent retries, fences stale writes, accepts draft without message, caps the message at 4096, records step/responsible and blocks scheduling without message or media\n'
