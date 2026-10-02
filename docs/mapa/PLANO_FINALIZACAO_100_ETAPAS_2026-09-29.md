@@ -540,7 +540,11 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 **Arquivos:** `scripts/mutation/run-mapa.mjs` (novo, ~60 linhas)
 1. Aplica N mutações por `sed` em cópia temporária (as 3 de E21 + 3 da Fase 3: remover `abort()`, remover `status==='empty'`, remover `retrySuggest`), roda a suíte, restaura, imprime tabela mutação → teste que falhou.
 2. `npm run mutation:mapa`.
-**Checklist:** [ ] 6 mutações · [ ] todas detectadas · [ ] script no repo
+**Checklist:** [x] 6 mutações · [~] 5 de 6 detectadas (1 sobrevivente equivalente) · [x] script no repo
+
+**Fechada em 2026-10-02.** scripts/mutation/run-mapa.mjs (231 linhas; o plano estimava ~60) com npm run mutation:mapa, ~27 s por rodada, restaurando byte a byte. Resultado medido (rodado por mim, não só relatado): 5 de 6 mortos. O sobrevivente F3-abort é **mutante equivalente** sob o guard de activeTermRef — a resposta velha já é descartada —, e a contra-prova é que remover o abort do setQuery, esse observado, faz a suíte acusar falha. Daí o [~] no lugar de [x].
+
+**Prova de que o runner distingue:** com --control ele inclui uma mutação que nenhum teste observa e a reporta como SOBREVIVENTE na mesma rodada em que as comportamentais morrem.
 
 ### E70 · Mutação no CI (não bloqueante)
 **Arquivos:** `.github/workflows/ci.yml`
