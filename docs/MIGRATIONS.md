@@ -272,6 +272,36 @@ SELECT version, name FROM supabase_migrations.schema_migrations
 WHERE array_to_string(statements,' ') ILIKE '%CREATE TABLE%minha_tabela%';
 ```
 
+### Caso concreto: `20261001341230_f51_*` foi superada — nao editar, a substituta e a `f51c`
+
+`20261001341230_f51_multiplix_confirm_dispatch.sql` declara a funcao com
+`CREATE FUNCTION public.multiplix_confirm_dispatch(...)`, **sem `OR REPLACE`**. Ela aborta com
+`42723 function "multiplix_confirm_dispatch" already exists with same argument types` em
+qualquer banco onde a funcao ja exista — e neste banco ela existe desde
+`20261001351230_f51a_multiplix_confirm_dispatch_fn.sql` (a parte aditiva, aplicada antes).
+
+**Nao edite o arquivo antigo.** A versao que o substitui e:
+
+```
+supabase/migrations/20261002461230_f51c_multiplix_confirm_dispatch_contrato.sql
+```
+
+Ela reafirma a funcao com `CREATE OR REPLACE` e traz o que faltava (ACL da RPC, `COMMENT`s,
+`CHECK` de `reply_attribution`, as duas funcoes de trigger de bump de versao e os triggers).
+
+Banco novo, com as migrations aplicadas em ordem, **nao tropeca**: `20261001341230` cria a
+funcao (primeira a rodar), `20261001351230_f51a` e idempotente e `20261002461230_f51c` reafirma
+tudo com `OR REPLACE`. O defeito so aparece em banco que **ja** tenha a funcao quando a
+`20261001341230` tenta rodar — por isso a substituta existe, e por isso a `f51c` vai depois
+das duas na ordem de versao.
+
+Para confirmar o que esta no ledger deste banco:
+
+```sql
+SELECT version, name FROM supabase_migrations.schema_migrations
+WHERE name ILIKE '%f51%' ORDER BY version;
+```
+
 ---
 
 ## 5. Operacao pontual nao e migration
