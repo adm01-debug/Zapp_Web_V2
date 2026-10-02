@@ -145,7 +145,9 @@ test.describe('Talk X module', () => {
     await expect(page.getByText('Revisão').first()).toBeVisible();
 
     // "Continuar" is disabled until canProceed[1] is satisfied:
-    //   name.trim().length > 0 && !!connectionId && (segmentId || selectedContacts.length > 0)
+    //   name.trim().length >= 3 && !!connectionId && (segmentId || selectedContacts.length > 0)
+    // V25: o mínimo do nome subiu de "não vazio" para 3 caracteres (e o passo 1
+    // passou a mostrar "O nome precisa de pelo menos 3 caracteres" com 1 ou 2).
     // The wizard starts with an empty form, so canProceed[1] is always false on open.
     // IMPORTANT: do NOT fill any field — useCampaignEditor autosave fires ~3 s after
     // the first keystroke and creates real draft records on every CI run.
@@ -173,7 +175,9 @@ test.describe('Talk X module', () => {
     await page.getByPlaceholder('Ex: Lançamento Linha Office').fill('[E2E] Campanha de Teste');
 
     // Step 1 — select WhatsApp connection (fixture connection, may be disconnected).
-    // StepAudience renders two comboboxes: index 0 = Objetivo, index 1 = Conexão WhatsApp.
+    // StepAudience renders three comboboxes: index 0 = Objetivo, index 1 = Conexão
+    // WhatsApp e, desde a V25, index 2 = Responsável. Os dois primeiros índices
+    // seguem valendo — o campo novo entrou depois.
     // O trigger do Select de conexão agora tem aria-label="Conexão WhatsApp", então
     // miramos pelo nome (determinístico) em vez de .nth(1) — .nth(1) é ambíguo quando o
     // overview renderiza comboboxes atrás do wizard, e o Radix Select é flaky no WebKit
