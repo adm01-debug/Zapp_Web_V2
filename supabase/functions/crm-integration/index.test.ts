@@ -24,6 +24,20 @@ Deno.test('rejects declared oversized body before external configuration', async
   assertStatus(response.status, 413);
 });
 
+Deno.test('service credential cannot drive the sidebar contact lookup', async () => {
+  Deno.env.set('SUPABASE_SERVICE_ROLE_KEY', 'test-service-key');
+  Deno.env.set('SUPABASE_URL', 'https://tnnnlkbymytvtqngbbqh.supabase.co');
+  Deno.env.set('EXTERNAL_SUPABASE_URL', 'https://pgxfvjmuubtbowutlide.supabase.co');
+  const payload = btoa(JSON.stringify({ ref: 'pgxfvjmuubtbowutlide', role: 'service_role' })).replace(/=/g, '');
+  Deno.env.set('EXTERNAL_SUPABASE_SERVICE_ROLE_KEY', `header.${payload}.signature`);
+  const response = await handleCRMIntegrationRequest(new Request('https://edge.invalid', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer test-service-key', 'content-type': 'application/json' },
+    body: JSON.stringify({ action: 'contactLookup', contactId: crypto.randomUUID(), lookup: 'sidebar' }),
+  }));
+  assertStatus(response.status, 400);
+});
+
 Deno.test('cron credential is scoped to worker and health actions', async () => {
   Deno.env.set('SUPABASE_SERVICE_ROLE_KEY', 'test-service-key');
   Deno.env.set('SUPABASE_URL', 'https://tnnnlkbymytvtqngbbqh.supabase.co');

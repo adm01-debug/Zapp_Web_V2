@@ -2,6 +2,7 @@ export const CRM_RPC_ALLOWLIST = new Set([
   'get_companies_by_phones_batch',
   'get_contact_360_by_phone',
   'get_contact_intelligence_by_phone',
+  'get_contact_sidebar_by_phone',
   'search_contacts_advanced',
 ]);
 
@@ -66,6 +67,18 @@ export function extractContact360Id(value: unknown): string | null {
   if (!contact || typeof contact !== 'object' || Array.isArray(contact)) return null;
   const id = (contact as Record<string, unknown>).id;
   return typeof id === 'string' && id.length >= 1 && id.length <= 200 ? id : null;
+}
+
+export function extractSidebarContactId(value: unknown): string | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const payload = value as Record<string, unknown>;
+  if (payload.found !== true) return null;
+  const id = payload.contact_id;
+  return typeof id === 'string' && isUuidLike(id) ? id : null;
+}
+
+function isUuidLike(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 }
 
 export function validIdentifier(value: unknown): value is string {
@@ -141,6 +154,7 @@ export function validateRpc(rpc: unknown, params: unknown): string | null {
     get_companies_by_phones_batch: new Set(['p_phones']),
     get_contact_360_by_phone: new Set(['p_phone']),
     get_contact_intelligence_by_phone: new Set(['p_phone']),
+    get_contact_sidebar_by_phone: new Set(['p_phone']),
     search_contacts_advanced: new Set([
       'p_search', 'p_vendedor', 'p_ramo', 'p_rfm_segment', 'p_estado',
       'p_cliente_ativado', 'p_ja_comprou', 'p_sort_by', 'p_page', 'p_page_size',
@@ -151,7 +165,7 @@ export function validateRpc(rpc: unknown, params: unknown): string | null {
     if (!Array.isArray(p.p_phones) || p.p_phones.length < 1 || p.p_phones.length > 100 ||
       p.p_phones.some((phone) => typeof phone !== 'string' || phone.length > 30 || !normalizePhone(phone))) return 'Phone batch is invalid';
   }
-  if ((rpc === 'get_contact_360_by_phone' || rpc === 'get_contact_intelligence_by_phone') &&
+  if ((rpc === 'get_contact_360_by_phone' || rpc === 'get_contact_intelligence_by_phone' || rpc === 'get_contact_sidebar_by_phone') &&
     (typeof p.p_phone !== 'string' || p.p_phone.length > 30 || !normalizePhone(p.p_phone))) return 'Phone is invalid';
   if (rpc === 'search_contacts_advanced') {
     const page = p.p_page ?? 0;

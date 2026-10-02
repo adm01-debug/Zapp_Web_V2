@@ -3,7 +3,7 @@ import {
   enforceRateLimit, errorResponse, getClientIP, handleCors, isValidUUID, jsonResponse, requireAuth, requireEnv,
 } from '../_shared/validation.ts';
 import {
-  CRM_TABLE_ALLOWLIST, extractContact360Id, FILTER_OPERATORS, isExpectedExternalServerKey, isExpectedExternalUrl,
+  CRM_TABLE_ALLOWLIST, extractContact360Id, extractSidebarContactId, FILTER_OPERATORS, isExpectedExternalServerKey, isExpectedExternalUrl,
   normalizePhone, parseSyncResult, validateMutation, validateRpc, validIdentifier,
 } from '../_shared/crm-integration-contract.ts';
 import { normalizeSentiment, type Sentiment } from '../_shared/ai-vocabulary.ts';
@@ -266,7 +266,7 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
 
     if (action === 'contactLookup') {
       if (isServiceRequest || isCronRequest || !isValidUUID(body.contactId) ||
-        !['360', 'intelligence'].includes(String(body.lookup))) return errorResponse('Contact lookup is invalid', 400, req);
+        !['360', 'intelligence', 'sidebar'].includes(String(body.lookup))) return errorResponse('Contact lookup is invalid', 400, req);
       const { data: contact, error: contactError } = await canonicalUser.from('contacts')
         .select('id,phone').eq('id', body.contactId).maybeSingle();
       if (contactError || !contact) return errorResponse('Contact not found or not visible', 404, req);
@@ -278,11 +278,25 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
       if (stableLink?.normalized_phone && stableLink.normalized_phone !== phone) {
         return errorResponse('Contact CRM identity requires reverification', 409, req);
       }
-      const rpc = body.lookup === '360' ? 'get_contact_360_by_phone' : 'get_contact_intelligence_by_phone';
+      const rpc = body.lookup === '360'
+        ? 'get_contact_360_by_phone'
+        : body.lookup === 'intelligence'
+          ? 'get_contact_intelligence_by_phone'
+          : 'get_contact_sidebar_by_phone';
       const result = await withTimeout(externalClient.rpc(rpc, { p_phone: phone }));
       if (result.error) throw new Error(`CRM_RPC:${result.error.code || 'unknown'}`);
-      if (stableLink && body.lookup === '360' && extractContact360Id(result.data) !== stableLink.external_contact_id) {
+      if (stableLink && (
+        (body.lookup === '360' && extractContact360Id(result.data) !== stableLink.external_contact_id) ||
+        (body.lookup === 'sidebar' && extractSidebarContactId(result.data) !== stableLink.external_contact_id)
+      )) {
         return errorResponse('Contact CRM identity mismatch', 409, req);
+      }
+      if (body.lookup === 'sidebar') {
+        const found = typeof result.data === 'object' && result.data !== null &&
+          (result.data as { found?: unknown }).found === true;
+        console.warn(JSON.stringify({
+          event: 'crm_sidebar_lookup', found, ms: Math.round(performance.now() - started),
+        }));
       }
       if (JSON.stringify(result.data).length > 512_000) throw new Error('CRM_RESPONSE_TOO_LARGE');
       data = result.data;
