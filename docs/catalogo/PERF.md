@@ -599,3 +599,44 @@ não é compartilhado. **O CT-94 cai junto**: sem 429 não existe reação da UI
 **Achado (não corrigido aqui, de propósito):** um limitador por usuário precisa de estado compartilhado
 (tabela/RPC no Postgres, ou KV) — em memória de isolate ele não limita nada sob concorrência. Fica
 registrado para o Claude planejar; mudar a edge por conta própria está fora do meu caminho.
+
+## CT-74 — re-medição pós-deploy da correção (2026-10-02): o CLS NÃO mudou
+
+A correção do #1682 (o strip de KPIs passou a reservar o espaço) já está publicada. Repeti a medição com a
+mesma metodologia (produção, mobile/Slow 4G, cache limpo, login dentro do perfil persistente):
+
+```console
+URL MEDIDO: https://zapp-web-v2.vercel.app/?view=catalog
+PERF: 44      CLS: 0.2452
+first-contentful-paint: 3.4 s | largest-contentful-paint: 7.8 s | total-blocking-time: 470 ms
+speed-index: 3.8 s | interactive: 7.8 s | cartoes=24 | requisicoes=202 | do catalogo(edge)=4
+```
+
+| medição | perf | CLS |
+|---|---|---|
+| 1ª (antes da correção) | 44 | 0,2455 |
+| 2ª (antes da correção) | 39 | 0,2451 |
+| **3ª (DEPOIS da correção)** | **44** | **0,2452** |
+
+**Leitura honesta: a correção não mudou o CLS.** Os três números são indistinguíveis dentro da variação entre
+execuções. Ou seja, a "causa medida" que eu atribuí à faixa de KPIs **não era a causa** — a correção em si é
+correta e inofensiva (reservar o espaço evita um salto quando não há dados), mas ela **não** é o que produz
+~0,245 de CLS.
+
+O que isso **não** diz: não sei ainda qual elemento produz o shift. A atribuição do Lighthouse apontava o
+`data-testid="catalog-kpi-strip"`, mas elemento que **se move** aparece na atribuição mesmo quando quem cresce
+está **acima** dele (cabeçalho, abas, barra de filtros, fonte) — e a altura do próprio strip eu conferi: 72 px
+no esqueleto e 72 px no estado carregado. **Investigar o CLS com a atribuição refeita depois da correção é o
+próximo passo** (não feito aqui).
+
+## CT-19 — terceira medição independente (2026-10-02, após novo edge-deploy)
+
+```console
+CT-19 | 61 bootstrap em paralelo em 8464 ms: 429=0 | distintos=[200]
+CT-19 | list_products 1..100: distintos=[200]
+```
+
+Uma publicação de edge mais nova apareceu no repositório
+(`edge-deploy/20261002-221654-7beb799c-37071463796`) e o resultado **não mudou**: segue **sem 429**. Agora são
+três medições independentes (61, 120 e 300 chamadas paralelas, em três momentos) com o mesmo veredito — o
+balde em memória do isolate não limita sob concorrência.
