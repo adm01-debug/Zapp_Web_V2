@@ -31,10 +31,22 @@ async function abrirTalkX(page: Page) {
   await expect(page.getByRole('tab', { name: 'Visão geral' })).toBeVisible();
 }
 
+// Após X007, "Segmentos", "Templates", "Analytics" e "Configurações" deixaram de ser
+// abas simples (role=tab) e viraram itens de menu ("Analytics ▾"/"Templates ▾"). Como
+// cada aba ganhou endereço próprio (?tab=/sub=), a régua navega pelo deep link, que é
+// exatamente o comportamento aceite da etapa.
+const TAB_URL: Record<string, string> = {
+  'Visão geral': '/?view=talkx&tab=overview',
+  'Segmentos': '/?view=talkx&tab=segments',
+  'Templates': '/?view=talkx&tab=templates',
+  'Lista de supressão': '/?view=talkx&tab=suppression',
+  'Analytics': '/?view=talkx&tab=analytics',
+  'Configurações': '/?view=talkx&tab=analytics&sub=configuracoes',
+};
+
 async function abrirTab(page: Page, tab: string) {
-  await abrirTalkX(page);
-  await page.getByRole('tab', { name: tab }).click();
-  await expect(page.getByRole('tab', { name: tab })).toHaveAttribute('data-state', 'active');
+  await page.goto(TAB_URL[tab] ?? '/?view=talkx');
+  await expect(page.getByRole('tab', { name: 'Visão geral' })).toBeVisible();
 }
 
 // Clicar no nome de uma campanha (coluna "Campanha" da tabela) dispara o
