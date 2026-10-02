@@ -113,11 +113,11 @@ Regras que não mudam: DDL do ZAPP segue `CLAUDE.md` §1 (arquivo → PR → mer
 
 - [ ] **F55** · Worker (`multiplix-send` renomeado internamente para papel de worker; o cron continua chamando) processa `multiplix_delivery_items` em lote (claim `FOR UPDATE SKIP LOCKED ... LIMIT N`, lease + heartbeat a cada 30 s), 1 dispatch por conexão por vez, ritmo humanizado, teto/hora e diário (F17). **Feito quando:** 2 workers simultâneos não pegam o mesmo item; limites respeitados sob carga simulada.
 - [ ] **F56** · Ordem por destinatário: item do bloco `k` só é elegível quando o bloco `k-1` do mesmo destinatário está `sent`; mídia via `prepareMedia` (F40) com `fileName`; PTT via adaptador com presença `recording`. **Feito quando:** teste com 3 blocos mantém ordem; PDF chega com nome.
-- [ ] **F57** · ⚠️ Testes de fila em `scripts/db-audit/multiplix-delivery-leases.test.sh` + unit: 2 workers, lease expira e volta, pausa para em 1 ciclo (em voo terminam), cancel encerra pendentes, timeout → `outcome_unknown` sem reenvio (simulação não duplica). **Feito quando:** no CI e verde.
-- [ ] **F58** · Reconciliação: webhook `DELIVERY_ACK`/`READ` com `external_id` que casa item `outcome_unknown` → `sent`/`delivered`/`read` (mesmo mecanismo E87); sweeper de F11 migrado para itens. **Feito quando:** `outcome_unknown` resolvido pelo evento em teste.
+- [x] **F57** · ⚠️ Testes de fila em `scripts/db-audit/multiplix-delivery-leases.test.sh` + unit: 2 workers, lease expira e volta, pausa para em 1 ciclo (em voo terminam), cancel encerra pendentes, timeout → `outcome_unknown` sem reenvio (simulação não duplica). **Feito quando:** no CI e verde. — **evidencia:** FEITO (PR do Bloco F). `scripts/db-audit/multiplix-delivery-leases.test.sh` (novo) sobe PostgreSQL 17 descartavel com a cadeia real de migrations — inclui as do modelo v2 (F30/F31/F32a/F32b), que o harness irmao nao aplicava — e cobre os 5 casos pedidos. Cada caso foi observado FALHANDO antes da correcao, e o mutante morre por assercao: devolver o cancel a 'pending' faz SO o caso 4 falhar, com os outros verdes. exit 0. Escrever o teste expos DOIS defeitos reais, corrigidos na mesma leva (ver a migration de enum cast): a f30 deixou `transition_multiplix_dispatch` quebrada (42804 em iniciar/pausar/cancelar) e o cancel do F14 nao encerrava os ITENS, so os destinatarios.
+- [x] **F58** · Reconciliação: webhook `DELIVERY_ACK`/`READ` com `external_id` que casa item `outcome_unknown` → `sent`/`delivered`/`read` (mesmo mecanismo E87); sweeper de F11 migrado para itens. **Feito quando:** `outcome_unknown` resolvido pelo evento em teste. — **evidencia:** FEITO (PR do Bloco F). `20261002561230_f58_reconcile_item_receipts` da `p_event` ('delivered'|'read') a `record_multiplix_item_delivered` — DROP da sobrecarga de 2 argumentos + CREATE da de 3, porque com DEFAULT as duas ficariam ambiguas numa chamada de 2 — e `20261002571230_f58b_sweeper_itens_no_cron` poe o cron a chamar `sweep_multiplix_stuck_items`, que existia desde o F32b e nao era chamado por ninguem (ACRESCENTA ao lado do sweeper de destinatarios, que o worker ainda usa ate o F55 — trocar agora deixaria destinatario preso sem quem o feche). Handler do webhook encadeia a RPC nos dois ramos, inclusive no READ, que antes so falava com o TalkX. `deno check` 0; `f58-item-receipts.test.ts` com 4 casos passa e o mutante morre (3 dos 4 falham ao desviar as chamadas para RPC inexistente).
 - [ ] **F59** · 🔒 Política de recálculo do público agendado (recomendação: recalcular elegibilidade — supressão, conexão, escopo — na hora do disparo, **sem** re-resolver o público) registrada no ADR-007 e implementada; dead letter consultável (`multiplix_delivery_items WHERE status='failed_permanent'` + evento) no monitor; agendamento em `America/Sao_Paulo` disparando sozinho (F10 validado com itens). **Feito quando:** dispara sozinho no horário; dead letter visível.
 
-> **Portão F:** F57 e F58 verdes.
+> **Portão F:** F57 e F58 verdes. ✅ **CUMPRIDO** em 02/10/2026 (PR do Bloco F) — F55/F56 (worker por item) e F59 (🔒, ADR-007) seguem em aberto.
 
 ---
 
@@ -233,12 +233,12 @@ Antes de cada branch: `github_list_pull_requests` e conferir sobreposição com 
 ## Progresso
 
 ```
-Bloco A  [~]  19/20    Bloco F  [ ]  0/5
+Bloco A  [~]  19/20    Bloco F  [~]  2/5
 Bloco B  [x]  9/9      Bloco G  [ ]  0/4
 Bloco C  [x]  6/6      Bloco H  [ ]  0/6
 Bloco D  [x]  8/8      Bloco I  [ ]  0/18
 Bloco E  [x]  11/11    Bloco J  [ ]  0/13
-                       TOTAL    [~]  53/100
+                       TOTAL    [~]  55/100
 ```
 
 > Atualizado em 01/10/2026 (Hora oficial do Brasil): o Bloco A estava marcado 0/20 e isso era
