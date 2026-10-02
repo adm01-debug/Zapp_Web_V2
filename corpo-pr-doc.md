@@ -39,6 +39,10 @@ O plano V3 do Talk X está **substituído pelo V4** (`TALK X 02`) desde 01/10/20
 
 Todo o contexto medido que o V4 precisa está no bloco de handoff (guard de `talkx_templates`, `current_version_id` já backfillado, `ON DELETE SET NULL` que não dispara, truncamento de 4000 chars do applier, harness-modelo).
 
+## Banco de dados
+
+**Não se aplica** — esta PR não cria nem altera migration, RPC ou schema. É documentação pura. O DDL do `current_version_id` foi aplicado no PR #1532 e está provado no banco (5/5 templates com ponteiro para versão de conteúdo igual ao vivo).
+
 ## Testes Realizados
 
 - [x] **PRs conferidos um a um** via `gh pr view` (número, estado `MERGED`, `mergedAt`, `mergeCommit`) — nenhum número citado de memória
