@@ -30,6 +30,8 @@ const PREFIXO_E2E = '[E2E]';
 
 /** Linha de `whatsapp_connections` que decide a capacidade do canal. */
 export interface WhatsappConnectionRow {
+  /** T30: identidade da linha — é por ela que a conversa escolhe a sua. */
+  id?: string | null;
   name?: string | null;
   status?: string | null;
   is_default?: boolean | null;
@@ -49,6 +51,12 @@ export interface CapacidadesEntrada {
    * antigo (não quebra quem já usava o mapper).
    */
   podeVerWhatsApp?: boolean;
+  /**
+   * T30: linha de origem da CONVERSA aberta (`contact.whatsapp_connection_id`).
+   * Prevalece sobre a `is_default` — no inbox, a chamada fala pela linha em que a
+   * conversa chegou. Ausente (fora do inbox) mantém o comportamento anterior.
+   */
+  connectionId?: string | null;
 }
 
 /** Resultado do mapeamento: uma capacidade por canal. */
@@ -144,13 +152,38 @@ function capacidadeVoip(
  * plano). Sem linha utilizável (nenhuma default ou só a `[E2E]`) →
  * `whatsapp_unavailable` e não recebe.
  */
+export function linhaDoCanal(
+  whatsapp: readonly WhatsappConnectionRow[] | null | undefined,
+  connectionId?: string | null,
+): WhatsappConnectionRow | null {
+  const candidatas = (whatsapp ?? []).filter((linha) => !ehLinhaE2E(linha.name));
+  if (connectionId) {
+    const daConversa = candidatas.find((linha) => linha.id === connectionId);
+    if (daConversa) return daConversa;
+  }
+  return candidatas.find((linha) => linha.is_default === true) ?? null;
+}
+
+/**
+ * T30: texto que o painel mostra sobre a linha. O painel NUNCA inventa um nome:
+ * quando a linha não é visível para este usuário (D8) ele diz por quê, e quando
+ * não há linha ele diz que não há.
+ */
+export function rotuloLinhaWhatsApp(
+  linha: WhatsappConnectionRow | null | undefined,
+  podeVerWhatsApp?: boolean,
+): string {
+  if (podeVerWhatsApp === false) return 'Disponível para supervisores';
+  if (!linha?.name) return 'Sem linha de WhatsApp';
+  return `pela linha ${linha.name}`;
+}
+
 function capacidadeWhatsapp(
   whatsapp: readonly WhatsappConnectionRow[] | null | undefined,
   podeVerWhatsApp?: boolean,
+  connectionId?: string | null,
 ): ChannelCapability {
-  const conexao = (whatsapp ?? []).find(
-    (linha) => linha.is_default === true && !ehLinhaE2E(linha.name),
-  );
+  const conexao = linhaDoCanal(whatsapp, connectionId);
 
   if (!conexao) {
     return {
@@ -182,10 +215,11 @@ export function capacidadesPorCanal({
   micReason,
   whatsapp,
   podeVerWhatsApp,
+  connectionId,
 }: CapacidadesEntrada): CapacidadesPorCanal {
   return {
     voip: capacidadeVoip(sipStatus, sipReason, micReason),
-    whatsapp: capacidadeWhatsapp(whatsapp, podeVerWhatsApp),
+    whatsapp: capacidadeWhatsapp(whatsapp, podeVerWhatsApp, connectionId),
   };
 }
 
@@ -197,7 +231,16 @@ export function capacidadesPorCanal({
  * (um por app). Chamar `useSipClient()` aqui dentro criaria um SEGUNDO motor
  * SIP — outro UserAgent/REGISTER — e não refletiria a linha de verdade.
  */
-export function useCallChannels(): { voip: ChannelCapability; whatsapp: ChannelCapability } {
+export function useCallChannels(options?: {
+  /** T30: linha da conversa aberta; prevalece sobre a `is_default`. */
+  connectionId?: string | null;
+}): {
+  voip: ChannelCapability;
+  whatsapp: ChannelCapability;
+  /** T30: a linha que decidiu o canal (null = nenhuma visível/utilizável). */
+  linhaWhatsApp: WhatsappConnectionRow | null;
+} {
+  const connectionId = options?.connectionId ?? null;
   const { sipStatus, sipReason, micReason } = useCallSession();
   const { user } = useAuth();
   const [whatsapp, setWhatsapp] = useState<WhatsappConnectionRow[] | null>(null);
@@ -230,14 +273,17 @@ export function useCallChannels(): { voip: ChannelCapability; whatsapp: ChannelC
     let ativo = true;
     void (async () => {
       try {
-        const { data } = await supabase
+        // T30: dentro do inbox a consulta busca a linha DA CONVERSA — a `is_default`
+        // é só o caso de fora do inbox (ou de linha da conversa invisível por RLS).
+        const consulta = supabase
           .from('whatsapp_connections')
-          .select('name, status, is_default')
-          .eq('is_default', true)
+          .select('id, name, status, is_default')
           // Linhas de teste nunca entram: filtradas na consulta E de novo no
           // mapper (`capacidadeWhatsapp`), que é a garantia final.
-          .not('name', 'ilike', `${PREFIXO_E2E}%`)
-          .limit(1);
+          .not('name', 'ilike', `${PREFIXO_E2E}%`);
+        const { data } = connectionId
+          ? await consulta.eq('id', connectionId).limit(1)
+          : await consulta.eq('is_default', true).limit(1);
         if (ativo) setWhatsapp(data ?? []);
       } catch {
         // Best-effort: sem linha visível, o canal cai em `whatsapp_unavailable`.
@@ -247,10 +293,21 @@ export function useCallChannels(): { voip: ChannelCapability; whatsapp: ChannelC
     return () => {
       ativo = false;
     };
-  }, []);
+  }, [connectionId]);
 
-  return useMemo(
-    () => capacidadesPorCanal({ sipStatus, sipReason, micReason, whatsapp, podeVerWhatsApp }),
-    [sipStatus, sipReason, micReason, whatsapp, podeVerWhatsApp],
+  const capacidades = useMemo(
+    () =>
+      capacidadesPorCanal({ sipStatus, sipReason, micReason, whatsapp, podeVerWhatsApp, connectionId }),
+    [sipStatus, sipReason, micReason, whatsapp, podeVerWhatsApp, connectionId],
   );
+
+  // T30/D8: qual linha decidiu o canal. Sem permissão de supervisor ela já não veio
+  // pela RLS — devolver `null` é o que impede o painel de exibir um nome que o
+  // usuário não pode ver (o painel mostra "Disponível para supervisores").
+  const linhaWhatsApp = useMemo(
+    () => (podeVerWhatsApp ? linhaDoCanal(whatsapp, connectionId) : null),
+    [whatsapp, connectionId, podeVerWhatsApp],
+  );
+
+  return { ...capacidades, linhaWhatsApp };
 }
