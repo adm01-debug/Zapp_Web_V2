@@ -29,15 +29,27 @@ function fromEnvFile(name: string): string | undefined {
   return undefined;
 }
 
-function required(name: string): string {
-  const value = process.env[name] ?? fromEnvFile(name);
+function fromEnvFileStrict(name: string): string {
+  const value = fromEnvFile(name);
   if (!value) {
     throw new Error(
-      `[e2e] ${name} nao definida. Defina no ambiente ou garanta .env.production na raiz do repo.`,
+      `[e2e] ${name} nao encontrada em .env.production. Esse arquivo e a fonte PRIMARIA ` +
+        'de proposito: teste que escreve nao pode ser desviado para outro projeto por ' +
+        'variavel de ambiente. Confira .env.production na raiz do repo ou use o override ' +
+        'E2E_SUPABASE_*_OVERRIDE conscientemente.',
     );
   }
   return value;
 }
 
-export const SUPABASE_URL = required('VITE_SUPABASE_URL');
-export const SUPABASE_ANON_KEY = required('VITE_SUPABASE_PUBLISHABLE_KEY');
+// Fonte PRIMARIA: .env.production versionado, que aponta para o projeto oficial.
+const FILE_URL = fromEnvFileStrict('VITE_SUPABASE_URL');
+const FILE_KEY = fromEnvFileStrict('VITE_SUPABASE_PUBLISHABLE_KEY');
+
+// Override EXPLICITO, com nome dedicado (E2E_*), para redirecionar de proposito.
+// Os nomes VITE_* NAO sao lidos aqui de proposito: o Supabase Cloud injeta essas
+// variaveis apontando para outro projeto (ver src/integrations/supabase/client.ts),
+// e um teste de e2e que escreve no banco nao pode cair no projeto errado em silencio.
+export const SUPABASE_URL = process.env.E2E_SUPABASE_URL_OVERRIDE?.trim() || FILE_URL;
+export const SUPABASE_ANON_KEY =
+  process.env.E2E_SUPABASE_PUBLISHABLE_KEY_OVERRIDE?.trim() || FILE_KEY;
