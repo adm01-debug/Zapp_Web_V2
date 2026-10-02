@@ -55,7 +55,9 @@ export const HighlightedText = memo(function HighlightedText({
   }
 
   const normalizedText = normalize(text);
-  const normalizedQuery = normalize(query);
+  // A checagem acima ja trata query vazia via query.trim(); aqui a busca precisa
+  // usar o MESMO valor normalizado, senao espaco em volta do termo zera o destaque.
+  const normalizedQuery = normalize(query.trim());
 
   if (!normalizedQuery || !normalizedText.includes(normalizedQuery)) {
     return <span className={className}>{text}</span>;
