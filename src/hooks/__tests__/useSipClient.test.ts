@@ -948,4 +948,47 @@ describe('useSipClient', () => {
     expect(result.current.callStatus).toBe('ringing');
     expect(result.current.currentNumber).toBe('5511988887777');
   });
+
+  // === T22: fecho das 8 linhas da tabela cenario -> status/end_reason ===
+  // `busy` e `failed` só tinham as METADES testadas (o outcome no motor, de um
+  // lado; o mapa outcome -> persistência, do outro). Estes dois testes fecham o
+  // elo que faltava: o evento SIP entra pelo duble e o que se asserta é a ÚLTIMA
+  // gravação que chegou à RPC `upsert_my_call`.
+
+  it('T22: saída com 486 grava busy/busy ponta a ponta (o elo que faltava)', async () => {
+    // O INVITE de saída recebe resposta final 486 (ocupado). O código NÃO fica
+    // no Inviter (sip.js 0.21 não expõe `lastResponse`): ele chega pelo
+    // `requestDelegate.onReject` que o SipCallAdapter instala. É ESSE callback
+    // que precisa marcar `sipCode` antes de o `Terminated` montar o desfecho —
+    // é justamente esta ligação (evento -> gravação) que os testes de metade
+    // nunca cobriram.
+    mockInvite.mockImplementationOnce(
+      async (options: { requestDelegate: { onReject: (response: { message: { statusCode: number } }) => void } }) => {
+        options.requestDelegate.onReject({ message: { statusCode: 486 } });
+      },
+    );
+
+    const { result } = await montarRegistrado();
+    await discar(result);
+    await evento('Terminated');
+
+    const chamadas = gravacoes();
+    const fim = chamadas[chamadas.length - 1];
+    expect(fim).toMatchObject({ p_status: 'busy', p_end_reason: 'busy', p_direction: 'outbound' });
+  });
+
+  it('T22: falha ao discar (invite rejeita) grava failed/failed ponta a ponta (o elo que faltava)', async () => {
+    // O `invite()` do adapter rejeita (transporte/URI): o motor cai no catch do
+    // `makeCall` (CallEngine.ts:235-238), emite o desfecho `failure` pelo
+    // `callIdPromise` e o Terminated pode nunca chegar. O fim tem de sair como
+    // `failed`/`failed`, não como `no_answer` nem como `Erro ao ligar` silencioso.
+    mockInvite.mockRejectedValueOnce(new Error('transporte caiu'));
+
+    const { result } = await montarRegistrado();
+    await discar(result, '5511999999999', 20);
+
+    const chamadas = gravacoes();
+    const fim = chamadas[chamadas.length - 1];
+    expect(fim).toMatchObject({ p_status: 'failed', p_end_reason: 'failed', p_direction: 'outbound' });
+  });
 });
