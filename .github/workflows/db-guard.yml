@@ -206,7 +206,15 @@ jobs:
           chmod +x "$HOME/.local/bin/docker"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
+      # E47: SKIP_DOCKER_SHIM=1 — este test cria dois bancos (db_a, db_b) no
+      # mesmo container e roda DDL identico em cada um. O shim mapeia um
+      # container a um unico banco; -d db_a e -d db_b roteariam para o mesmo
+      # banco, causando "already exists" na segunda iteracao. O test acessa
+      # postgres via docker exec (socket Unix interno), nao via localhost:5432,
+      # entao nao colide com o servico compartilhado.
       - name: Validar SQL de catalogo e manifesto no PostgreSQL 17
+        env:
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/catalog-manifest.test.sh
 
       - name: Testar normalizacao deterministica dos tipos gerados
