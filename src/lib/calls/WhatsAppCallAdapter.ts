@@ -149,6 +149,19 @@ export class WhatsAppCallAdapter {
    *
    * A conversa do contato é aberta pela porta injetada. Não há áudio aqui
    * (D2=a): atender significa registrar + levar o agente para o chat.
+
+   * ## Pré-condição medida (registrada, não escondida)
+   *
+   * `answered_by` só é preenchido no ramo `ON CONFLICT DO UPDATE` da RPC
+   * (`20260926800000:344-346`); o `INSERT` (`:327-334`) **não lista a coluna**.
+   * Logo: este `accept` deriva `answered_by` **porque a linha já existe** — quem
+   * a cria é o webhook (T25, `record_incoming_call_event`) com o mesmo `id`.
+   * Se o `accept` fosse o primeiro write da linha, `answered_by` ficaria nulo.
+   *
+   * Pelo mesmo motivo o `channel` é **imutável após o primeiro write** (a lista
+   * `SET` de `:335-359` não inclui `channel`): a linha precisa nascer com o
+   * canal certo, e é por isso que o payload abaixo passa `channel: 'whatsapp'`
+   * em vez de confiar no `coalesce`.
    */
   async accept(call: WhatsAppIncomingCall): Promise<WhatsAppAcceptResult> {
     const persistencia = await this.ports.persistir({
