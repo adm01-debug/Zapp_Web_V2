@@ -160,12 +160,28 @@ jobs:
 
       - name: 🔬 Lint workflows (actionlint)
         run: |
-          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
-          actionlint -shellcheck ''
+          # actionlint vem do release oficial pinado (v1.7.7) com o sha256
+          # conferido, em vez de `go install ...@versao`: a resolucao de modulo do
+          # go install nao e travada por lock-file (SonarCloud githubactions:S8545).
+          set -euo pipefail
+          actionlint_version="1.7.7"
+          actionlint_asset="actionlint_${actionlint_version}_linux_amd64.tar.gz"
+          actionlint_sha256="023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757"
+          actionlint_dir="$RUNNER_TEMP/actionlint"
+          mkdir -p "$actionlint_dir"
+          curl -sSL -o "$actionlint_dir/$actionlint_asset" \
+            "https://github.com/rhysd/actionlint/releases/download/v${actionlint_version}/${actionlint_asset}"
+          echo "${actionlint_sha256}  ${actionlint_dir}/${actionlint_asset}" | sha256sum --check --strict
+          tar -xzf "$actionlint_dir/$actionlint_asset" -C "$actionlint_dir" actionlint
+          chmod +x "$actionlint_dir/actionlint"
+          echo "$actionlint_dir" >> "$GITHUB_PATH"
+          "$actionlint_dir/actionlint" -shellcheck ''
 
       - name: 🛡️ Audit workflow security (zizmor)
         run: |
-          python3 -m pip install --quiet --break-system-packages zizmor==0.9.0
+          # --only-binary :all: impede o build de sdist (scripts de setup);
+          # zizmor==0.9.0 publica wheel manylinux (SonarCloud githubactions:S8541).
+          python3 -m pip install --quiet --break-system-packages --only-binary :all: zizmor==0.9.0
           # Aceitar apenas exit 11-13 (info/low/medium); falhar em qualquer outro
           # código, inclusive 1 (parse/erro interno) e 14-15 (high/error).
           zizmor --persona regular .github/workflows/ || { rc=$?; [ "$rc" -ge 11 ] && [ "$rc" -le 13 ] || exit "$rc"; }
@@ -375,7 +391,9 @@ jobs:
         run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
-        run: bunx playwright install --with-deps chromium firefox webkit
+        # Versao exata resolvida no bun.lock (SonarCloud githubactions:S8543:
+        # `bunx playwright` sem versao puxaria um release nao verificado).
+        run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
 
       # Projetos "chromium", "firefox-auth" e "webkit-auth" exercitam auth.spec.ts
       # deslogado (sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD). Workflows de PR não podem
