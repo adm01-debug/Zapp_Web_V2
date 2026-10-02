@@ -612,14 +612,24 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
 // ---------------------------------------------------------------------------
 // Badge (B6) — atrasadas + avisos ja avisados e nao tratados
 // ---------------------------------------------------------------------------
-export function useMyWorkItemsBadge(): number {
+const EMPTY_BADGE_INFO = { count: 0, hasOverdue: false } as const;
+
+export interface WorkItemsBadgeInfo {
+  /** Atrasadas + avisos ja disparados e nao tratados (mesma regra do badge). */
+  count: number;
+  /** Ha alguma tarefa com prazo vencido? Decide a COR do badge (etapa 62). */
+  hasOverdue: boolean;
+}
+
+/** Badge do item Tarefas com a informacao de cor (etapa 62). */
+export function useMyWorkItemsBadgeInfo(): WorkItemsBadgeInfo {
   const { profile } = useAuth();
   const profileId = profile?.id ?? '';
 
-  const { data = 0 } = useQuery({
-    queryKey: workItemsBadgeKey(profileId),
-    queryFn: async (): Promise<number> => {
-      if (!profileId) return 0;
+  const { data = EMPTY_BADGE_INFO } = useQuery({
+    queryKey: [...workItemsBadgeKey(profileId), 'info'] as const,
+    queryFn: async (): Promise<WorkItemsBadgeInfo> => {
+      if (!profileId) return EMPTY_BADGE_INFO;
       const now = Date.now();
       // Uma unica query e contagem no cliente (evita 2 round-trips).
       const { data, error } = await supabase
@@ -636,11 +646,16 @@ export function useMyWorkItemsBadge(): number {
       const fired = rows.filter(
         (r) => r.remind_at != null && new Date(r.remind_at).getTime() <= now && r.notified_at != null
       ).length;
-      return overdue + fired;
+      return { count: overdue + fired, hasOverdue: overdue > 0 };
     },
     enabled: !!profileId,
     staleTime: 60_000,
     refetchInterval: 60_000,
   });
   return data;
+}
+
+/** Compat: consumidores que so precisam do numero (comportamento anterior). */
+export function useMyWorkItemsBadge(): number {
+  return useMyWorkItemsBadgeInfo().count;
 }
