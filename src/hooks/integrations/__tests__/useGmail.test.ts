@@ -62,15 +62,19 @@ const MOCK_THREAD = {
   contact: undefined,
 };
 
-function makeFromChain(data: unknown[] = [], error: null | object = null) {
+function makeFromChain(data: unknown[] = [], error: null | object = null, singleData: unknown = data[0] ?? null) {
   const end = vi.fn().mockResolvedValue({ data, error });
-  const orderResult = Object.assign(Promise.resolve({ data, error }), { limit: end });
-  return {
+  const chain = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
-    order: vi.fn().mockReturnValue(orderResult),
+    order: vi.fn(),
     limit: end,
+    range: end,
+    in: vi.fn().mockResolvedValue({ data, error }),
+    maybeSingle: vi.fn().mockResolvedValue({ data: singleData, error }),
   };
+  chain.order.mockReturnValue(chain);
+  return chain;
 }
 
 function createWrapper() {
@@ -179,6 +183,19 @@ describe('useGmail', () => {
 
       expect(result.current.unreadCount).toBe(2);
       expect(result.current.starredCount).toBe(2);
+    });
+  });
+
+  describe('deep link de thread', () => {
+    it('busca por UUID e conta quando a thread não está no lote carregado', async () => {
+      const outsideThread = { ...MOCK_THREAD, id: 'thread-outside' };
+      setupDefaultMocks([MOCK_ACCOUNT], []);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(supabase.from).mockImplementation((table: string) => makeFromChain([], null, table === 'email_threads' ? outsideThread : null) as any);
+
+      const { result } = renderHook(() => useGmail(undefined, 'thread-outside'), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.requestedThread?.id).toBe('thread-outside'));
+      expect(supabase.from).toHaveBeenCalledWith('email_threads');
     });
   });
 

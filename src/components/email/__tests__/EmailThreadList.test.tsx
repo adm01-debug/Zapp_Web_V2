@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { EmailThreadList } from '../EmailThreadList';
 import type { EmailThread } from '@/hooks/integrations/useGmail';
 
@@ -55,5 +55,22 @@ describe('EmailThreadList (h538172)', () => {
     const { container } = render(<EmailThreadList {...baseProps} labels={labels} threads={[]} />);
     const chip = container.querySelector('[title="Nome de label muito comprido para caber"]');
     expect(chip).not.toBeNull();
+  });
+
+  it('pagina de forma estável e permite alcançar itens além dos primeiros 20', () => {
+    const threads = Array.from({ length: 45 }, (_, index) => makeThread({ id: `t${index + 1}`, subject: `Assunto ${index + 1}`, last_from_name: `Remetente ${index + 1}` }));
+    render(<EmailThreadList threads={threads} {...baseProps} />);
+    expect(screen.getByText('Remetente 1')).toBeInTheDocument();
+    expect(screen.queryByText('Remetente 21')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Próxima página' }));
+    expect(screen.getByText('Remetente 21')).toBeInTheDocument();
+    expect(screen.getByLabelText('Página 2 de 3')).toBeInTheDocument();
+  });
+
+  it('busca pelo remetente real mesmo quando estaria depois da primeira página', () => {
+    const threads = Array.from({ length: 125 }, (_, index) => makeThread({ id: `t${index + 1}`, subject: `Assunto ${index + 1}`, last_from_name: index === 124 ? 'Alvo Muito Antigo' : `Remetente ${index + 1}` }));
+    render(<EmailThreadList threads={threads} {...baseProps} />);
+    fireEvent.change(screen.getByPlaceholderText('Buscar...'), { target: { value: 'Alvo Muito Antigo' } });
+    expect(screen.getByText('Alvo Muito Antigo')).toBeInTheDocument();
   });
 });

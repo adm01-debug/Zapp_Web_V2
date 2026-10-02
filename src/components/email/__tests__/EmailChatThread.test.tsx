@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { ReactNode } from 'react';
 import type { EmailThread, EmailMessage } from '@/hooks/integrations/useGmail';
@@ -6,8 +6,9 @@ import type { EmailThread, EmailMessage } from '@/hooks/integrations/useGmail';
 const mocks = vi.hoisted(() => ({
   setSelectedThreadId: vi.fn(),
   markAsReadMutate: vi.fn(),
-  trashThreadMutate: vi.fn(),
-  modifyLabelsMutate: vi.fn(),
+  trashThreadMutateAsync: vi.fn().mockResolvedValue({}),
+  modifyThreadLabelsMutate: vi.fn(),
+  modifyThreadLabelsMutateAsync: vi.fn().mockResolvedValue({}),
   threadMessages: [] as EmailMessage[],
   messagesLoading: false,
 }));
@@ -15,24 +16,26 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/hooks/integrations/useGmail', () => ({
   useGmail: () => ({
     threadMessages: mocks.threadMessages,
+    threadAttachments: [],
     messagesLoading: mocks.messagesLoading,
     markAsRead: { mutate: mocks.markAsReadMutate },
     trashMessage: { mutate: vi.fn() },
-    trashThread: { mutate: mocks.trashThreadMutate },
-    modifyLabels: { mutate: mocks.modifyLabelsMutate },
+    trashThread: { mutateAsync: mocks.trashThreadMutateAsync, isPending: false },
+    modifyThreadLabels: { mutate: mocks.modifyThreadLabelsMutate, mutateAsync: mocks.modifyThreadLabelsMutateAsync, isPending: false },
+    downloadAttachment: { mutate: vi.fn(), isPending: false, variables: undefined },
     setSelectedThreadId: mocks.setSelectedThreadId,
     activeAccount: { email_address: 'user@example.com', id: 'acc1' },
   }),
 }));
 
 vi.mock('../EmailChatBubble', () => ({
-  EmailChatBubble: ({ message }: { message: EmailMessage }) => (
-    <div data-testid={`bubble-${message.id}`}>{message.snippet}</div>
+  EmailChatBubble: ({ message, onReply }: { message: EmailMessage; onReply?: (message: EmailMessage) => void }) => (
+    <div data-testid={`bubble-${message.id}`}>{message.snippet}<button type="button" aria-label={`Responder ${message.id}`} onClick={() => onReply?.(message)}>Responder</button></div>
   ),
 }));
 
 vi.mock('../EmailChatReplyBar', () => ({
-  EmailChatReplyBar: () => <div data-testid="reply-bar" />,
+  EmailChatReplyBar: ({ lastMessage }: { lastMessage: EmailMessage | null }) => <div data-testid="reply-bar">{lastMessage?.id}</div>,
 }));
 
 vi.mock('@/components/gmail/EmailComposer', () => ({
@@ -123,6 +126,16 @@ describe('EmailChatThread', () => {
     });
   });
 
+  it('preserva a primeira mensagem como alvo quando a resposta parte do histórico', () => {
+    const newest = { ...MOCK_MSG, id: 'msg2', gmail_message_id: 'gmail-m2', internal_date: '2026-09-06T11:00:00Z' };
+    mocks.threadMessages = [MOCK_MSG, newest];
+    render(<EmailChatThread thread={MOCK_THREAD} onBack={vi.fn()} />);
+    expect(screen.getByTestId('reply-bar')).toHaveTextContent('msg2');
+    fireEvent.click(screen.getByRole('button', { name: 'Responder msg1' }));
+    expect(screen.getByTestId('reply-bar')).toHaveTextContent('msg1');
+    expect(screen.getByText(/Respondendo à mensagem de Sender/)).toBeInTheDocument();
+  });
+
   describe('header', () => {
     it('exibe assunto da thread', () => {
       render(<EmailChatThread thread={MOCK_THREAD} onBack={vi.fn()} />);
@@ -206,24 +219,36 @@ describe('EmailChatThread', () => {
   });
 
   describe('ações de header', () => {
-    it('Arquivar: chama modifyLabels com INBOX removal e onBack', () => {
+    it('Arquivar: modifica a thread inteira e só então volta', async () => {
       mocks.threadMessages = [MOCK_MSG];
       const onBack = vi.fn();
       render(<EmailChatThread thread={MOCK_THREAD} onBack={onBack} />);
       fireEvent.click(screen.getByLabelText('Arquivar'));
-      expect(mocks.modifyLabelsMutate).toHaveBeenCalledWith({
-        message_id: 'gmail-m1',
+      expect(mocks.modifyThreadLabelsMutateAsync).toHaveBeenCalledWith({
+        thread_id: 'gmail-t1',
         remove_labels: ['INBOX'],
       });
-      expect(onBack).toHaveBeenCalled();
+      await waitFor(() => expect(onBack).toHaveBeenCalled());
     });
 
-    it('Excluir: chama trashThread com gmail_thread_id e onBack', () => {
+    it('Mover para lixeira: chama trashThread com gmail_thread_id e só então volta', async () => {
       const onBack = vi.fn();
       render(<EmailChatThread thread={MOCK_THREAD} onBack={onBack} />);
-      fireEvent.click(screen.getByLabelText('Excluir'));
-      expect(mocks.trashThreadMutate).toHaveBeenCalledWith('gmail-t1');
-      expect(onBack).toHaveBeenCalled();
+      fireEvent.click(screen.getByLabelText('Mover para lixeira'));
+      expect(mocks.trashThreadMutateAsync).toHaveBeenCalledWith('gmail-t1');
+      await waitFor(() => expect(onBack).toHaveBeenCalled());
+    });
+
+    it('Restaurar: remove TRASH, adiciona INBOX e só então volta', async () => {
+      const onBack = vi.fn();
+      render(<EmailChatThread thread={{ ...MOCK_THREAD, label_ids: ['TRASH'] }} onBack={onBack} />);
+      fireEvent.click(screen.getByLabelText('Restaurar da lixeira'));
+      expect(mocks.modifyThreadLabelsMutateAsync).toHaveBeenCalledWith({
+        thread_id: 'gmail-t1',
+        add_labels: ['INBOX'],
+        remove_labels: ['TRASH'],
+      });
+      await waitFor(() => expect(onBack).toHaveBeenCalled());
     });
   });
 

@@ -143,6 +143,15 @@ export default defineConfig({
       },
     },
     {
+      name: 'chromium-email-navy',
+      testMatch: /email-navy-visual\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1672, height: 941 },
+        colorScheme: 'dark',
+      },
+    },
+    {
       // auth.spec.ts on Firefox — cross-browser login UI coverage.
       // No dependencies, no storageState: runs without E2E_TEST_EMAIL/E2E_TEST_PASSWORD,
       // safe to include in ci.yml (PR checks cannot reference those secrets).

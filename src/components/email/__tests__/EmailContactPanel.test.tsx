@@ -58,14 +58,15 @@ describe('EmailContactPanel', () => {
       expect(screen.getByText('Alice Smith')).toBeDefined();
     });
 
-    it('exibe "Desconhecido" quando não há contato', () => {
+    it('usa a identidade real da thread quando não há contato CRM', () => {
       render(
         <EmailContactPanel
           thread={{ ...BASE_THREAD, contact: undefined, contact_id: null }}
           onClose={vi.fn()}
         />,
       );
-      expect(screen.getByText('Desconhecido')).toBeDefined();
+      expect(screen.getByText('Alice')).toBeDefined();
+      expect(screen.getAllByText('alice@example.com').length).toBeGreaterThan(0);
     });
 
     it('exibe email do contato', () => {
@@ -106,14 +107,14 @@ describe('EmailContactPanel', () => {
       expect(screen.getByTestId('avatar-fallback').textContent).toBe('C');
     });
 
-    it('sem contato → "?"', () => {
+    it('sem contato usa iniciais do remetente da thread', () => {
       render(
         <EmailContactPanel
           thread={{ ...BASE_THREAD, contact: undefined, contact_id: null }}
           onClose={vi.fn()}
         />,
       );
-      expect(screen.getByTestId('avatar-fallback').textContent).toBe('?');
+      expect(screen.getByTestId('avatar-fallback').textContent).toBe('A');
     });
   });
 

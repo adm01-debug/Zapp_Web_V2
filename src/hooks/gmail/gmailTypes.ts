@@ -29,6 +29,7 @@ export interface EmailThread {
   tags: string[];
   created_at: string;
   updated_at: string;
+  has_attachments?: boolean;
   contact?: { id: string; name: string; email: string; avatar_url: string | null };
 }
 
@@ -53,6 +54,7 @@ export interface EmailMessage {
   has_attachments: boolean;
   in_reply_to: string | null;
   references_header: string | null;
+  message_id_header?: string | null;
   internal_date: string;
   direction: 'inbound' | 'outbound';
   created_at: string;
@@ -62,10 +64,9 @@ export interface EmailAttachment {
   id: string;
   email_message_id: string;
   gmail_attachment_id: string;
-  filename: string;
-  mime_type: string;
-  size_bytes: number;
-  storage_path: string | null;
+  filename: string | null;
+  mime_type: string | null;
+  size_bytes: number | null;
 }
 
 export interface EmailLabel {
