@@ -265,3 +265,40 @@ describe('Keyboard navigation', () => {
     expect(screen.getByTestId('current-step').textContent).toBe('0');
   });
 });
+
+describe('WelcomeModal', () => {
+  // O overlay é um `motion.div` de tela cheia (não é Dialog do Radix): sem tratador
+  // próprio, Escape não fechava e a única saída era achar o X ou o "Pular tour".
+  it('fecha no Escape', () => {
+    const onClose = vi.fn();
+    render(<WelcomeModal isOpen onClose={onClose} onStartTour={vi.fn()} />);
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('não fecha com outras teclas', () => {
+    const onClose = vi.fn();
+    render(<WelcomeModal isOpen onClose={onClose} onStartTour={vi.fn()} />);
+
+    fireEvent.keyDown(document, { key: 'a' });
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('não reage ao Escape quando está fechado', () => {
+    const onClose = vi.fn();
+    render(<WelcomeModal isOpen={false} onClose={onClose} onStartTour={vi.fn()} />);
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('se anuncia como diálogo modal', () => {
+    render(<WelcomeModal isOpen onClose={vi.fn()} onStartTour={vi.fn()} />);
+
+    expect(screen.getByRole('dialog', { name: /boas-vindas/i })).toHaveAttribute('aria-modal', 'true');
+  });
+});

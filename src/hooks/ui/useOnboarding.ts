@@ -5,6 +5,26 @@ import { log } from '@/lib/logger';
 
 const ONBOARDING_KEY = 'onboarding_completed';
 
+/**
+ * Persiste a conclusão do tour no banco.
+ *
+ * A checagem abaixo decide "já completou" pela existência de linha em
+ * `user_settings`, então gravar apenas no localStorage fazia o tour reaparecer em
+ * todo navegador/sessão nova — e, aberto, ele cobre o app inteiro com
+ * `z-[9999]`, interceptando os cliques. `ignoreDuplicates` vira
+ * "on conflict do nothing": não sobrescreve preferências já salvas pelo usuário.
+ */
+async function persistOnboardingCompletion(userId: string) {
+  try {
+    const { error } = await supabase
+      .from('user_settings')
+      .upsert({ user_id: userId }, { onConflict: 'user_id', ignoreDuplicates: true });
+    if (error) log.error('Error persisting onboarding completion:', error);
+  } catch (error) {
+    log.error('Error persisting onboarding completion:', error);
+  }
+}
+
 export function useOnboarding() {
   const { user } = useAuth();
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean | null>(null);
@@ -64,6 +84,7 @@ export function useOnboarding() {
     if (user) {
       try { localStorage.setItem(`${ONBOARDING_KEY}_${user.id}`, 'true'); } catch { /* storage unavailable */ }
       setHasCompletedOnboarding(true);
+      void persistOnboardingCompletion(user.id);
     }
   };
 
