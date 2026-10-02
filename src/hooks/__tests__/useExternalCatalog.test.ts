@@ -1332,3 +1332,73 @@ describe('useExternalCatalog — CT-59 (error.code da edge)', () => {
     expect(result.current.errorStatus).toBeNull();
   });
 });
+
+
+// ═══════════════════════════════════════════════════════════════════
+// CT-29 — PREFETCH DA PRÓXIMA PÁGINA
+// ═══════════════════════════════════════════════════════════════════
+describe('useExternalCatalog — CT-29 (prefetch da próxima página)', () => {
+  // CT-29 — o mockInvoke é compartilhado pelo arquivo: limpar entre casos evita
+  // que a chamada da página seguinte de um teste apareça no assert do outro.
+  beforeEach(() => { mockInvoke.mockClear(); });
+
+  /** Wrapper que expõe o QueryClient para inspecionar o cache prefetchado. */
+  function createWrapperWithClient() {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0 } },
+    });
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: queryClient }, children);
+    return { queryClient, wrapper };
+  }
+
+  /** Chamada registrada no mock de `supabase.functions.invoke`: [nome, opções]. */
+  type InvokeCall = [string, { body: { action: string; params: Record<string, unknown> } }];
+
+  const listProductCalls = (): Record<string, unknown>[] =>
+    (mockInvoke.mock.calls as InvokeCall[])
+      .filter((c) => c[1]?.body?.action === 'list_products')
+      .map((c) => c[1].body.params);
+
+  it('prefetchNextPage busca a próxima página (offset+limit) com os mesmos filtros', async () => {
+    setupMockInvoke({ list_products: { data: [mockProduct()], meta: { total: 100 } } });
+    const { queryClient, wrapper } = createWrapperWithClient();
+
+    const { result } = renderHook(() => useExternalCatalog(), { wrapper });
+    act(() => { result.current.fetchProducts({ limit: 24, offset: 0, search: 'caneta', only_in_stock: false }); });
+    await waitFor(() => { expect(result.current.products).toHaveLength(1); });
+
+    await act(async () => { await result.current.prefetchNextPage(); });
+
+    // segunda chamada de list_products = a página seguinte (offset 24)
+    const next = listProductCalls().find((p) => p.offset === 24);
+    expect(next).toBeTruthy();
+    expect(next?.limit).toBe(24);
+    expect(next?.search).toBe('caneta');      // mesmos filtros da página atual
+    expect(next?.only_in_stock).toBe(false);
+
+    // o prefetch popula o MESMO cache que o clique em "Próxima" vai consultar
+    expect(
+      queryClient.getQueryData([
+        'external-catalog',
+        'products',
+        { limit: 24, offset: 24, search: 'caneta', only_in_stock: false },
+      ]),
+    ).toBeTruthy();
+  });
+
+  it('não dispara prefetch quando a página atual já é a última', async () => {
+    setupMockInvoke({ list_products: { data: [mockProduct()], meta: { total: 24 } } });
+    const { wrapper } = createWrapperWithClient();
+
+    const { result } = renderHook(() => useExternalCatalog(), { wrapper });
+    act(() => { result.current.fetchProducts({ limit: 24, offset: 0 }); });
+    await waitFor(() => { expect(result.current.products).toHaveLength(1); });
+
+    await act(async () => { await result.current.prefetchNextPage(); });
+
+    // última página: nenhum offset além da atual foi buscado
+    expect(listProductCalls().some((p) => p.offset === 24)).toBe(false);
+    expect(listProductCalls()).toHaveLength(1);
+  });
+});

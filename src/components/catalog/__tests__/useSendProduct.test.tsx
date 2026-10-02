@@ -22,7 +22,7 @@ vi.mock('@/hooks/integrations/useCatalogContactSearch', () => ({
   CONTACT_SEARCH_MIN_CHARS: 2,
 }));
 
-// CT-06 — o módulo usa `sonner` (não `use-toast`) depois desta etapa.
+// CT-06 — o módulo usa `sonner` (não o hook antigo de toast) depois desta etapa.
 const sonnerToast = vi.hoisted(() => ({ success: vi.fn(), warning: vi.fn(), error: vi.fn() }));
 vi.mock('sonner', () => ({ toast: sonnerToast }));
 
