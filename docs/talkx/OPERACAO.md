@@ -124,6 +124,62 @@ bunx playwright test --project=setup --project=chromium-e2e-core
 - **Alertas de CI:** `db-live-guard.yml` abre/atualiza issue com label
   `db-live-guard` se detectar drift no schema.
 
+### 7.1 Saúde do cron do motor (tick X012)
+
+O tick do motor roda no job `talkx-scheduler-1min` (a cada minuto), cujo command é
+`SELECT public.trigger_talkx_engine_tick()`. Em cada execução o tick: (1) roda o
+reaper (`sweep_talkx_stuck_recipients`), movendo para `outcome_unknown` o
+destinatário que teve o POST disparado e ficou com o lease vencido; (2) conclui
+campanhas `sending` que já drenaram; (3) re-invoca **no máximo 1 campanha
+`sending` por conexão** (a de `updated_at` mais antigo, teto de 10 no tick) via
+`kick_talkx_campaign`, que faz um POST `{campaignId, action:'continue'}` para
+`talkx-send` com `x-cron-secret` e `timeout_milliseconds := 30000`; e (4) faz 1
+POST para `talkx-scheduler` (agendadas e retomadas dentro da janela). Um tick
+perdido só atrasa 1 min — nenhuma decisão depende de uma execução isolada.
+
+Histórico de execuções do job (`status` e `return_message`):
+
+```sql
+SELECT jobid, runid, status, return_message, start_time, end_time,
+       (end_time - start_time) AS duration
+  FROM cron.job_run_details
+ WHERE jobid = (SELECT jobid FROM cron.job WHERE jobname = 'talkx-scheduler-1min')
+ ORDER BY start_time DESC
+ LIMIT 30;
+```
+
+Resposta HTTP das chamadas disparadas pelo tick (timeout/erro do `pg_net`):
+
+```sql
+SELECT id, status_code, timed_out, error_msg, created
+  FROM net._http_response
+ ORDER BY created DESC
+ LIMIT 30;
+```
+
+Estado atual do job (command, schedule e se está ativo):
+
+```sql
+SELECT jobid, jobname, schedule, active, command
+  FROM cron.job
+ WHERE jobname = 'talkx-scheduler-1min';
+```
+
+Como ler:
+
+- `cron.job_run_details.status = 'failed'` com `return_message` contendo
+  `job startup timeout` → o pg_cron não conseguiu **iniciar** o job (disputa por
+  worker). Por isso a X012 reaproveita o job existente via `cron.alter_job` em vez
+  de criar outro; se o volume de falhas continuar, o próximo passo é reduzir a
+  cadência ou o custo do tick, não duplicar jobs.
+- `net._http_response.timed_out = true` (ou `status_code >= 500`/nulo com
+  `error_msg` preenchido) nas últimas linhas → uma edge não respondeu dentro dos
+  30 s. Verifique o deploy de `talkx-send`/`talkx-scheduler` e, se o padrão se
+  repetir, o tempo de cada `continue` (orçamento de batch da X011).
+- `SELECT command FROM cron.job` **não** conter `trigger_talkx_engine_tick` → a
+  migration X012 não foi aplicada (ou foi feito rollback): o motor voltou a chamar
+  a edge sem o reaper/conclusão e as campanhas presas não se recuperam sozinhas.
+
 ---
 
 ## 8. Procedimentos operacionais
