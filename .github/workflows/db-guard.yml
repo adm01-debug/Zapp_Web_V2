@@ -399,6 +399,11 @@ jobs:
           TALKX_SEND_INTERVAL_TETO_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-send-interval-teto-24h.test.sh
 
+      - name: Simular limites de ritmo por minuto/dia/conexão e perfis de velocidade (X018)
+        env:
+          TALKX_SEND_BUDGET_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-send-budget.test.sh
+
       - name: Simular eventos do ciclo de vida gravados no servidor (V12)
         env:
           TALKX_V12_LIFECYCLE_EVENTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
