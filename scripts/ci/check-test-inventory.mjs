@@ -4,7 +4,7 @@
 // Sai com código 1 se houver teste no disco fora dos YAMLs (exceto allowlist abaixo).
 
 import { readFileSync } from 'fs';
-import { execSync } from 'child_process';
+import { spawnSync } from 'child_process';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -41,8 +41,8 @@ const ALLOWLIST = new Set([
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────
 
-const testTsOnDisk = execSync('git ls-files supabase/functions', { cwd: root })
-  .toString()
+const testTsOnDisk = spawnSync('git', ['ls-files', 'supabase/functions'], { cwd: root, encoding: 'utf8' })
+  .stdout
   .split('\n')
   .filter(f => f.endsWith('.test.ts'));
 
@@ -54,8 +54,8 @@ const testTsInCi = new Set(
 
 // ── 2. .test.sh: disco vs db-guard.yml ────────────────────────────────────────
 
-const testShOnDisk = execSync('git ls-files scripts/db-audit', { cwd: root })
-  .toString()
+const testShOnDisk = spawnSync('git', ['ls-files', 'scripts/db-audit'], { cwd: root, encoding: 'utf8' })
+  .stdout
   .split('\n')
   .filter(f => f.endsWith('.test.sh'));
 
@@ -64,7 +64,7 @@ const testShInGuard = new Set(
   [...dbGuardYaml.matchAll(/\bscripts\/db-audit\/\S+\.test\.sh\b/g)].map(m => m[0])
 );
 
-// ── 3. Detectar órfãos ────────────────────────────────────────────────────────
+// ── 3. Detectar órfão q────────────────────────────────────────────────────────
 
 const orphans = [];
 
