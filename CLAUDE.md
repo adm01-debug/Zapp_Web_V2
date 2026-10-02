@@ -376,6 +376,13 @@ por tema em `src/styles/tokens.css`, classe Tailwind `bg-inbox-panel`) — usa-l
 o bug. Referência: `docs/audits/` não tem entrada dedicada; a auditoria completa (5 agentes,
 cálculo de contraste WCAG) ficou só na sessão que corrigiu.
 
+## Lição de UI (2026-10-02) — SalesView/Journey: renomear rótulo ≠ renomear id
+
+SalesView/Journey (2026-10-02): os ids internos `orders`/`history` ficaram; só rótulo, conteúdo
+e pasta mudaram. Quem for renomear id precisa de `TAB_REDIRECTS` em `useInboxUIState.ts`
+(precedente `reminders → tasks`). Estatísticas do contato não têm série histórica — não
+reintroduzir % de variação sem query real. Plano: `docs/design/PLANO_SALESVIEW_JOURNEY_50_ETAPAS_2026-10-02.md`.
+
 ## Decisões de 2026-09-26 — como DDL entra em produção, e por que merge ≠ deploy
 
 **DDL em produção vai por MCP (`db_query`) + registro no ledger no mesmo turno, não pelo
