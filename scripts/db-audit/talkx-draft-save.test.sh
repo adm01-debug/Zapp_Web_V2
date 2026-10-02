@@ -15,8 +15,13 @@ migrations=(
   "$repo_root/supabase/migrations/20260930770000_talkx_v23_draft_step.sql"
   "$repo_root/supabase/migrations/20261001271230_talkx_v25_campaign_owner.sql"
   "$repo_root/supabase/migrations/20261001281230_talkx_campaigns_draft_step_responsible.sql"
+  # V26: coluna template_version_id (a RPC recriada abaixo a grava).
+  "$repo_root/supabase/migrations/20261001291230_talkx_v26_template_version.sql"
   # X014: a RPC de rascunho passa a exigir admin/supervisor.
   "$repo_root/supabase/migrations/20261002381230_talkx_role_gates.sql"
+  # Unificação owner × responsible_id (decisão 02/10): mantém responsible_id
+  # (obsoleta) e a RPC passa a ler/gravar SÓ owner (vazio = o próprio ator).
+  "$repo_root/supabase/migrations/20261002451230_talkx_owner_responsible_unify.sql"
 )
 
 cleanup() { docker rm -f "$container_name" >/dev/null 2>&1 || true; }
@@ -155,6 +160,8 @@ CREATE TABLE public.talkx_settings (key text PRIMARY KEY, value jsonb NOT NULL);
 CREATE TABLE public.talkx_blacklist (id uuid PRIMARY KEY DEFAULT gen_random_uuid());
 CREATE TABLE public.talkx_links (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), campaign_id uuid);
 CREATE TABLE public.talkx_link_clicks (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), link_id uuid);
+-- V26: FK de talkx_campaigns.template_version_id aponta para esta tabela.
+CREATE TABLE public.talkx_template_versions (id uuid PRIMARY KEY DEFAULT gen_random_uuid());
 
 GRANT USAGE ON SCHEMA public, auth TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.talkx_campaigns TO authenticated;
@@ -170,17 +177,27 @@ authenticated_can_execute="$(psql_test -Atqc "SELECT has_function_privilege('aut
 [[ "$anon_can_execute" == 'f' ]] || fail 'anon recebeu EXECUTE na RPC de rascunho'
 [[ "$authenticated_can_execute" == 't' ]] || fail 'authenticated não recebeu EXECUTE na RPC de rascunho'
 
+# Unificação owner × responsible_id (decisão 02/10): a coluna responsible_id
+# PERMANECE no banco (não dropar), mas marcada como obsoleta; a RPC grava só owner.
+responsible_col="$(psql_test -Atqc "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='talkx_campaigns' AND column_name='responsible_id'")"
+[[ "$responsible_col" == '1' ]] || fail 'coluna responsible_id deveria permanecer (decisão 02/10: não dropar)'
+responsible_comment="$(psql_test -Atqc "SELECT col_description('public.talkx_campaigns'::regclass, a.attnum) FROM pg_attribute a WHERE a.attrelid='public.talkx_campaigns'::regclass AND a.attname='responsible_id'")"
+[[ "$responsible_comment" == *obsoleta* ]] || fail "coluna responsible_id deveria estar marcada como obsoleta (obtido: $responsible_comment)"
+
 owner_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000001';"
 other_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000002';"
 agent_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000004';"
 creation_key='30000000-0000-0000-0000-000000000001'
-resp_id='10000000-0000-0000-0000-000000000003'
+owner_id='10000000-0000-0000-0000-000000000003'
 msg_ok='Olá {{nome}}'
 payload="{\"name\":\"Rascunho resiliente\",\"message_template\":\"$msg_ok\",\"description\":null,\"objective\":\"vendas\",\"audience_source\":\"contacts\",\"audience_filters\":{},\"segment_id\":null,\"template_id\":null,\"whatsapp_connection_id\":null,\"media_url\":null,\"media_type\":null,\"scheduled_at\":null,\"schedule_timezone\":\"America/Sao_Paulo\",\"send_window_start\":null,\"send_window_end\":null,\"business_hours_only\":false,\"speed_profile\":\"moderate\",\"typing_delay_min\":1500,\"typing_delay_max\":4000,\"send_interval_min\":8000,\"send_interval_max\":20000}"
 
 first="$(psql_test -Atqc "$owner_session SELECT campaign_id || ':' || revision || ':' || creation_replayed FROM public.save_talkx_campaign_draft(NULL, NULL, '$creation_key'::uuid, '$payload'::jsonb);")"
 [[ "$first" == *':1:false' ]] || fail 'primeiro create não criou revisão 1'
 campaign_id="${first%%:*}"
+# Unificação owner × responsible_id: payload sem owner -> owner cai no perfil do
+# ator (perfil 1), como antes o responsible_id caía.
+[[ "$(psql_test -Atqc "SELECT owner FROM public.talkx_campaigns WHERE id='$campaign_id'")" == '10000000-0000-0000-0000-000000000001' ]] || fail 'owner vazio deveria cair no perfil do ator'
 
 replayed="$(psql_test -Atqc "$owner_session SELECT campaign_id || ':' || revision || ':' || creation_replayed FROM public.save_talkx_campaign_draft(NULL, NULL, '$creation_key'::uuid, '$payload'::jsonb);")"
 [[ "$replayed" == "$campaign_id:1:true" ]] || fail 'retry idempotente criou outro rascunho ou alterou revisão'
@@ -246,16 +263,18 @@ payload_long="${payload/\"message_template\":\"$msg_ok\"/\"message_template\":\"
 long_message="$(psql_test -v VERBOSITY=verbose -c "$owner_session SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000021'::uuid, '$payload_long'::jsonb);" 2>&1 || true)"
 [[ "$long_message" == *22023* && "$long_message" == *invalid_talkx_campaign_draft* ]] || fail '(b) mensagem com 4.097 caracteres não foi recusada com 22023'
 
-# (c) draft_step=3 e responsible_id gravados voltam no SELECT.
-payload_resp="${payload%?},\"draft_step\":3,\"responsible_id\":\"$resp_id\"}"
-resp_first="$(psql_test -Atqc "$owner_session SELECT campaign_id FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000022'::uuid, '$payload_resp'::jsonb);")"
-[[ -n "$resp_first" ]] || fail '(c) criação com responsible_id falhou'
-resp_sel="$(psql_test -Atqc "SELECT draft_step || ':' || responsible_id FROM public.talkx_campaigns WHERE id='$resp_first'")"
-[[ "$resp_sel" == "3:$resp_id" ]] || fail "(c) draft_step/responsible_id não voltaram no SELECT (obtido: $resp_sel)"
-# responsável explícito fora de admin/supervisor é recusado (agente, perfil 4).
-payload_resp_bad="${payload%?},\"draft_step\":3,\"responsible_id\":\"10000000-0000-0000-0000-000000000004\"}"
-resp_bad="$(psql_test -v VERBOSITY=verbose -c "$owner_session SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000023'::uuid, '$payload_resp_bad'::jsonb);" 2>&1 || true)"
-[[ "$resp_bad" == *talkx_responsible_not_authorized* ]] || fail '(c) responsável sem papel admin/supervisor foi aceito'
+# (c) draft_step=3 e owner gravados voltam no SELECT (unificação owner × responsible_id).
+payload_owner="${payload%?},\"draft_step\":3,\"owner\":\"$owner_id\"}"
+owner_first="$(psql_test -Atqc "$owner_session SELECT campaign_id FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000022'::uuid, '$payload_owner'::jsonb);")"
+[[ -n "$owner_first" ]] || fail '(c) criação com owner falhou'
+owner_sel="$(psql_test -Atqc "SELECT draft_step || ':' || owner FROM public.talkx_campaigns WHERE id='$owner_first'")"
+[[ "$owner_sel" == "3:$owner_id" ]] || fail "(c) draft_step/owner não voltaram no SELECT (obtido: $owner_sel)"
+# Unificação: a RPC ignora o responsible_id legado do payload — a única fonte de
+# responsável é `owner`. Sem owner no payload, cai no perfil do ator.
+payload_resp_legacy="${payload%?},\"draft_step\":3,\"responsible_id\":\"$owner_id\"}"
+legacy_first="$(psql_test -Atqc "$owner_session SELECT campaign_id FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000023'::uuid, '$payload_resp_legacy'::jsonb);")"
+[[ -n "$legacy_first" ]] || fail '(c) payload com responsible_id legado foi recusado'
+[[ "$(psql_test -Atqc "SELECT owner FROM public.talkx_campaigns WHERE id='$legacy_first'")" == '10000000-0000-0000-0000-000000000001' ]] || fail '(c) responsible_id legado deveria ser ignorado (owner cai no ator)'
 
 # (d) UPDATE para scheduled com mensagem vazia e sem mídia é recusado.
 # Pré-configura o agendamento como owner da tabela (o guard só vale para authenticated).
@@ -269,4 +288,4 @@ psql_test -qc "UPDATE public.talkx_campaigns SET message_template = 'Olá' WHERE
 psql_test -qc "$owner_session UPDATE public.talkx_campaigns SET status='scheduled' WHERE id='$empty_campaign_id';" >/dev/null
 [[ "$(psql_test -Atqc "SELECT status FROM public.talkx_campaigns WHERE id='$empty_campaign_id'")" == 'scheduled' ]] || fail '(d) mensagem preenchida não liberou o agendamento'
 
-printf 'PASS: Talk X draft save enforces grants, active identity and live connection, recovers idempotent creates, scopes keys per actor, rejects divergent retries, fences stale writes, accepts draft without message, caps the message at 4096, records step/responsible and blocks scheduling without message or media\n'
+printf 'PASS: Talk X draft save enforces grants, active identity and live connection, recovers idempotent creates, scopes keys per actor, rejects divergent retries, fences stale writes, accepts draft without message, caps the message at 4096, records step/owner (responsible_id obsoleta) and blocks scheduling without message or media\n'

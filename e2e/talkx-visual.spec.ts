@@ -1,7 +1,21 @@
 import { test, expect, type Page } from '@playwright/test';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { mockTalkXVisual } from './fixtures/talkx-demo';
+import {
+  mockTalkXVisual,
+  loadDemoData,
+  FixtureVaziaError,
+  fixtureDaTela,
+  fixturesComDados,
+  fixturesVazias,
+} from './fixtures/talkx-demo';
+
+declare global {
+  interface Window {
+    /** Override do deadline do watchdog de boot (index.html). */
+    __BOOT_DEADLINE_MS?: number;
+  }
+}
 
 /**
  * Régua visual do Talk X (plano V4, etapa X004).
@@ -11,13 +25,15 @@ import { mockTalkXVisual } from './fixtures/talkx-demo';
  * escuro (projeto `chromium-talkx-visual`). Roda DESLOGADO — sem setup e sem
  * secrets — por isso entra no workflow de PR (e2e-talkx-pr.yml).
  *
+ * Contrato de crescimento (X003/X004): a régua só captura a tela cuja fixture
+ * tem dados reais (hoje só a 01). Fixture vazia (`{}`) é PULADA, não falha — ela
+ * cresce na etapa da própria tela (docs/talkx/v4/etapas/F00-regua-e-governanca.md).
  * Telas cujo componente ainda não existe (hoje 13, 14 e 15) gravam um marcador
  * `nao-existe-NN.txt` em vez de falhar. O `scripts/talkx/lado-a-lado.mjs` monta
- * as 17 duplas (mock | captura) a partir daqui.
+ * as duplas (mock | captura) a partir daqui.
  */
 
 const OUT = join(import.meta.dirname, 'talkx-visual');
-const FIXTURE = '01-campanhas-visao-geral';
 
 type Tela = {
   n: string;
@@ -89,17 +105,63 @@ const TELAS: Tela[] = [
   { n: '17', nome: 'Estados do sistema e modais', existe: true, abrir: (p) => abrirTab(p, 'Configurações') },
 ];
 
+// Watchdog de boot (index.html): o default de produção continua 8s; aqui o spec
+// eleva o deadline para 60s. Sem isso a régua é flaky: com o dev server vite
+// frio e vários workers em paralelo, o React 19 pode levar >8s para montar, o
+// watchdog apaga o #root e a tela vira "⚠️ Falha ao inicializar o app" em vez do
+// componente — falha de captura sem relação com o produto.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__BOOT_DEADLINE_MS = 60000;
+  });
+});
+
 for (const tela of TELAS) {
   test(`tela ${tela.n} — ${tela.nome}`, async ({ page }) => {
     mkdirSync(OUT, { recursive: true });
 
+    // Tela cujo componente ainda não existe: registra o motivo e não captura.
     if (!tela.existe) {
       writeFileSync(join(OUT, `nao-existe-${tela.n}.txt`), `tela ainda não existe: ${tela.nome}\n`);
       return;
     }
 
-    await mockTalkXVisual(page, FIXTURE);
+    // Contrato de crescimento (X003/X004): a régua só captura tela cuja fixture
+    // tem dados reais. Fixture vazia ({}) é PULADA — não é falha, é "ainda não é
+    // a etapa desta tela". O guard anti-vazio (loadDemoData) aborta se alguém
+    // referenciar uma fixture {} por engano.
+    const fixture = fixtureDaTela(tela.n);
+    if (!fixture) {
+      // Sem fixture, a tela sai da régua: apaga captura de execução anterior
+      // para o lado-a-lado não mostrar foto velha como se ainda fosse capturada.
+      rmSync(join(OUT, `captura-${tela.n}.png`), { force: true });
+    }
+    test.skip(!fixture, `sem fixture real — a tela ${tela.n} entra na régua quando a fixture dela crescer (etapa da tela)`);
+
+    await mockTalkXVisual(page, fixture!);
     await tela.abrir!(page);
     await capturar(page, join(OUT, `captura-${tela.n}.png`));
   });
 }
+
+// Contrato de crescimento oficializado em X003: referenciar uma fixture {} é
+// erro, nunca uma tela renderizada vazia em silêncio.
+test.describe('contrato de crescimento das fixtures (X003)', () => {
+  test('referenciar uma fixture vazia ({}) lança FixtureVaziaError', async ({ page }) => {
+    const vazia = fixturesVazias()[0];
+    test.skip(!vazia, 'todas as fixtures já têm dados — nada a guardar');
+
+    expect(() => loadDemoData(vazia!)).toThrow(FixtureVaziaError);
+    await expect(mockTalkXVisual(page, vazia!)).rejects.toThrow(FixtureVaziaError);
+  });
+
+  test('a régua só considera telas com fixture real', () => {
+    expect(fixtureDaTela('01')).toBe('01-campanhas-visao-geral');
+    for (const slug of fixturesVazias()) {
+      expect(fixtureDaTela(slug.slice(0, 2))).toBeUndefined();
+    }
+    for (const slug of fixturesComDados()) {
+      expect(fixtureDaTela(slug.slice(0, 2))).toBe(slug);
+    }
+  });
+});

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page, Route } from '@playwright/test';
 
@@ -15,8 +15,12 @@ import type { Page, Route } from '@playwright/test';
  * — o demo nunca grava nem envia nada em produção. Criadores (`get_team_profiles`)
  * e contatos (insights) respondem vazios para o demo não ler produção.
  *
- * A fixture cresce junto com cada etapa de tela: a etapa que cria uma tabela/RPC
- * Talk X acrescenta a resposta dela no JSON da tela correspondente (ver e2e/README.md).
+ * Contrato de crescimento (X003/X004): a fixture cresce junto com cada etapa de
+ * tela — a etapa que cria uma tabela/RPC Talk X acrescenta a resposta dela no
+ * JSON da tela correspondente. Enquanto a tela não tem fixture, o arquivo é `{}`
+ * e a régua a PULA (não captura, não falha). Referenciar uma fixture `{}` lança
+ * `FixtureVaziaError` em vez de renderizar uma tela vazia em silêncio
+ * (ver e2e/README.md e docs/talkx/v4/etapas/F00-regua-e-governanca.md).
  *
  * `mockTalkXVisual(page, tela)` (etapa X004) soma ao backend fake uma sessão
  * Supabase falsa (injetada no localStorage, deslogada — sem secrets) e o mock dos
@@ -29,14 +33,70 @@ export const ESCRITA_NAO_PREVISTA = 'escrita não prevista';
 export type TalkXDemoData = Record<string, unknown[]>;
 
 const here = import.meta.dirname;
+const demoDir = join(here, 'talkx-demo');
 const cache = new Map<string, TalkXDemoData>();
+
+/**
+ * Erro do contrato de crescimento (plano V4, X003/X004): uma fixture de tela só
+ * existe quando tem dados. Referenciar uma fixture vazia (`{}`) é erro — nunca
+ * uma tela renderizada em branco "sem aviso".
+ */
+export class FixtureVaziaError extends Error {
+  constructor(tela: string) {
+    super(
+      `fixture vazia para a tela "${tela}" ({}): nenhuma tabela/RPC Talk X foi mockada. ` +
+        'O contrato de crescimento exige que a fixture da tela nasça na etapa daquela tela — ' +
+        `popule e2e/fixtures/talkx-demo/${tela}.json antes de referenciá-la. ` +
+        'A régua só cobre telas com fixture real (docs/talkx/v4/etapas/F00-regua-e-governanca.md).',
+    );
+    this.name = 'FixtureVaziaError';
+  }
+}
 
 export function loadDemoData(tela: string): TalkXDemoData {
   if (!cache.has(tela)) {
-    const file = join(here, 'talkx-demo', `${tela}.json`);
-    cache.set(tela, JSON.parse(readFileSync(file, 'utf8')) as TalkXDemoData);
+    const file = join(demoDir, `${tela}.json`);
+    const data = JSON.parse(readFileSync(file, 'utf8')) as TalkXDemoData;
+    // Guard anti-vazio (X003): sem isto, `data[table] ?? []` faria a tela
+    // renderizar vazia sem erro. Uma fixture {} aborta o teste em vez de passar.
+    if (Object.keys(data).length === 0) throw new FixtureVaziaError(tela);
+    cache.set(tela, data);
   }
   return cache.get(tela)!;
+}
+
+function fixtures(): { slug: string; dados: boolean }[] {
+  return readdirSync(demoDir)
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => f.slice(0, -'.json'.length))
+    .sort()
+    .map((slug) => {
+      const data = JSON.parse(readFileSync(join(demoDir, `${slug}.json`), 'utf8')) as TalkXDemoData;
+      return { slug, dados: Object.keys(data).length > 0 };
+    });
+}
+
+/** Slugs (`NN-nome`) das fixtures que têm dados reais — hoje só a tela 01. */
+export function fixturesComDados(): string[] {
+  return fixtures()
+    .filter((f) => f.dados)
+    .map((f) => f.slug);
+}
+
+/** Slugs (`NN-nome`) das fixtures ainda vazias (`{}`), não populadas. */
+export function fixturesVazias(): string[] {
+  return fixtures()
+    .filter((f) => !f.dados)
+    .map((f) => f.slug);
+}
+
+/**
+ * Slug da fixture real da tela `nn`, ou `undefined` quando ela ainda é `{}`
+ * (não populada). A régua usa isto para PULAR telas sem fixture — a ausência
+ * não é falha, é "ainda não é a etapa desta tela".
+ */
+export function fixtureDaTela(nn: string): string | undefined {
+  return fixturesComDados().find((slug) => slug.startsWith(`${nn}-`));
 }
 
 function writeBlocked(route: Route) {
