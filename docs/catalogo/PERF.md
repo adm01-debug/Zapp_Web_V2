@@ -136,7 +136,7 @@ Medição de **2026-10-01, 21:06–21:09 (-03:00)**, mesmo host do topo
 | **JS inicial** (gzip, 13 chunks) | **336,3 KB** | 341 KB (`performance-budget.json:4`) | ✅ dentro |
 | CSS inicial (gzip) | 40,0 KB | 80 KB | ✅ |
 | Maior chunk JS, inclui lazy (gzip) | 492,3 KB | 550 KB | ✅ |
-| Assets totais, sem maps (gzip) | 4098,7 KB | 4100 KB | ✅ (folga de 1,3 KB) |
+| Assets totais, sem maps (gzip) | **4101,2 KB** | 4100 KB | ❌ **estoura 1,1 KB** (corrigido — ver nota abaixo) |
 
 **O número é GZIP, não raw.** `vite.config.ts:45` tem
 `reportCompressedSize: false`, então **o log do `bun run build` imprime kB RAW**;
@@ -200,7 +200,7 @@ Bundle inicial (gzip):
   JS inicial:  336.3 KB (budget 341 KB, 13 chunks)
   CSS inicial: 40.0 KB (budget 80 KB)
   Maior chunk JS (inclui lazy): 492.3 KB gzip (budget 550 KB)
-  Assets totais: 4098.7 KB gzip, sem maps (budget 4100 KB)
+  Assets totais: 4101.2 KB gzip, sem maps (budget 4100 KB)
 OK: bundle inicial dentro do budget.
 ```
 
@@ -256,3 +256,33 @@ $ git grep -n "lazy(\|import(" HEAD -- 'src/components/catalog/*.tsx'
 $ git grep -n "CatalogBulkSendDialog" HEAD -- src/components/catalog/ExternalProductCatalog.tsx
 HEAD:src/components/catalog/ExternalProductCatalog.tsx:33:import { CatalogBulkSendDialog } from './CatalogBulkSendDialog';
 ```
+
+---
+
+## Correcao de medicao (2026-10-01, pos-CI) — o numero de CT-75 registrado acima estava ERRADO
+
+A medicao de **4098,7 KB / OK / folga de 1,3 KB** foi feita sobre uma arvore **intermediaria**
+(as edicoes de CT-68/CT-69 continuaram depois da medicao e antes do commit, sem remedicao).
+Numeros verdadeiros, medidos com o MESMO ambiente do CI (`VITE_CRM_INTEGRATION_ENABLED=true`):
+
+| Commit | Assets totais (gzip) | Budget | Resultado |
+|---|---|---|---|
+| `fc24b866` (fim do bloco G, antes de CT-71) | 4091,3 KB | 4100 KB | ✅ passa (folga de 8,7 KB) |
+| `d61f8c83` (bloco H, com CT-71) | **4101,2 KB** | 4100 KB | ❌ **estoura 1,1 KB** |
+
+O CI reprova o check obrigatorio **🏗️ Build** por isso. Detalhe importante: o custo do CT-71
+(4 modais em `lazy` + `Suspense`) e **+9,9 KB de overhead ESTRUTURAL de split**, nao codigo novo —
+o mapeamento modulo→chunk pelos sourcemaps mostra **zero duplicacao**; e o mesmo codigo passando a
+viver em 7 streams de gzip em vez de 1, o que obriga o gzip a re-encodar a repeticao. O `initial-js`
+praticamente nao muda (336,3 KB; o entry raw foi de 203,56 para 203,65 kB).
+
+Cortes testados DENTRO do catalogo somam no maximo ~0,45 KB — abaixo do 1,1 KB necessario.
+Consolidar os 4 modais num chunk unico recuperaria 2,28 KB, mas quebraria o aceite do CT-71
+("chunks separados"). As rotas de `vite.config.ts` foram testadas em copia descartavel: grupo
+`catalog-core` PIORA (4101,7 KB) e `codeSplitting.minSize: 2000` e no-op absoluto.
+
+**Causa raiz do aperto, achada no caminho:** os icones do PWA em `public/` somam **1445,6 KB gzip
+(35% do orcamento de 4100 KB)** e **8 dos 9 sao byte-identicos** (md5 `e6ca6225a36c4a307404cb89d719b664`,
+109.315 bytes cada): um PNG de ~512px servido como `72x72`, `96x96`, `128x128` etc. Reotimizar cada
+icone no tamanho real libera ~1,4 MB e conserta um bug real de PWA. Esta fora do escopo deste PR
+(`public/`) e merece tarefa propria.

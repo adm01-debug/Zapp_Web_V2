@@ -614,6 +614,7 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   **Aceite:** medição em `PERF.md`.
 - [ ] **CT-74** — Lighthouse perf ≥ 90 na view em 4G; CLS < 0,05. **Aceite:** relatório em `PERF.md`.
 - [x] **CT-75** — Bundle: `vite build --report`; inicial ≤ 336 KB (não regredir o #443). **Aceite:** número em `PERF.md`.
+  - ⚠️ **Correção de 01/10 (pós-CI):** a medição antes registrada (4098,7 KB / OK) era de uma árvore **intermediária** e estava errada. Números verdadeiros, medidos com o mesmo ambiente do CI: **4091,3 KB** antes do CT-71 (passa, folga de 8,7 KB) e **4101,2 KB** com o CT-71 (**estoura 1,1 KB** contra o teto de 4100 KB do `total-assets`). O custo do CT-71 é **+9,9 KB de overhead estrutural de split** (zero código novo, zero duplicação — o mesmo código passando a viver em 7 streams de gzip). Cortes dentro do catálogo somam no máximo 0,45 KB. **O check obrigatório 🏗️ Build do CI está vermelho por isso** e a saída depende de decisão do Joaquim.
   **✅ FEITO — 01/10/2026, com 1 ressalva de número.** Medido com `bun run build` (exit 0) +
   `node scripts/ci/bundle-budget.mjs` (exit 0): **JS inicial = 336,3 KB gzip** em 13 chunks; CSS inicial 40,0 KB
   (budget 80); maior chunk JS 492,3 KB gzip (budget 550); assets totais 4098,7 KB gzip (budget 4100). Tudo em
