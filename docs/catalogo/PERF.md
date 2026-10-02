@@ -361,3 +361,42 @@ $ grep "^SF:" coverage/lcov.info | grep -vc "src/components/catalog/"
 (piso global de 36/35/43/31 linhas/stmts/funcs/branches segue valendo para `src/lib`+`src/services`).
 Ou seja: o número de 84,41 % só existe com o override de CLI acima; o gate padrão (`bun run test:coverage`)
 não mede `src/components/catalog` e por isso **não** trava 80 % no módulo.
+
+## CT-97 — manifesto da edge: dois níveis do aceite (2026-10-02)
+
+O aceite do CT-97 é *"`deployment-manifest.json` final = versão **deployada**
+(digest confere)"*. Esse aceite tem **duas metades** e só uma é verificável
+aqui — registradas separadamente, cada uma com a saída crua.
+
+### Nível LOCAL — manifesto do repo está consistente (✅ PASSA)
+
+`scripts/edge-deploy/generate-manifest.mjs --check` recalcula o manifesto a
+partir da árvore e compara **byte a byte** com o `supabase/deployment-manifest.json`
+commitado (`generate-manifest.mjs:41-45`). Saída crua:
+
+```console
+$ node scripts/edge-deploy/generate-manifest.mjs --check
+Edge manifest OK: 67 functions, 123 source files, sha256=7c4ee37051ae7576d4c7fb8bfa211019012b5dc3fe230df5af60a4537ff1d0ec
+EXIT=0
+```
+
+Leitura: o manifesto commitado **não está defasado** em relação ao código
+(67 funções, 123 arquivos-fonte, digest
+`7c4ee37051ae7576d4c7fb8bfa211019012b5dc3fe230df5af60a4537ff1d0ec`).
+
+### Nível REMOTO — digest contra o que está **deployado** (⛔ NÃO MEDIDO)
+
+O que o aceite chama de "= versão deployada" exige comparar o manifesto com o
+inventário do projeto no Supabase Cloud. Isso **não** é feito pelo `--check`
+local; exige `scripts/edge-deploy/collect-remote.mjs` com
+`SUPABASE_ACCESS_TOKEN` no ambiente (`collect-remote.mjs:19`) e/ou um snapshot
+prévio (`:23`), além de `PROJECT_REF` batendo com o canônico
+(`tnnnlkbymytvtqngbbqh`, `:18`). **Nenhum token está disponível neste
+ambiente** e o bloco não pede token nem deploya.
+
+- **Portanto:** a metade remota do aceite do CT-97 **permanece aberta**. O que
+  está provado é apenas que o manifesto **do repo** confere consigo mesmo — não
+  que ele equivale ao conjunto de funções publicado.
+- **Para fechar:** rodar `collect-remote.mjs` (com `SUPABASE_ACCESS_TOKEN` +
+  `--snapshot` ou `--before`/`--git-sha`/`--run-id`/`--scope`) e anexar aqui a
+  evidência de digest contra o deploy.
