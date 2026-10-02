@@ -1,11 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: vi.fn() } }));
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: vi.fn(),
+    // X017 — countAudience/resolveAudience falam com a RPC do motor (X016).
+    rpc: vi.fn(async () => ({ data: { eligible: 7, rows: [], has_more: false, next_after: null }, error: null })),
+  },
+}));
 vi.mock('@/lib/supabaseHelpers', () => ({ fromTable: vi.fn() }));
 vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: vi.fn() }));
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 
-import { RULE_FIELDS, RULE_OPS, rulesToPostgrest, isRuleComplete, splitRules, type SegmentRule } from '@/hooks/integrations/useTalkXSegments';
+import { RULE_FIELDS, RULE_OPS, rulesToPostgrest, isRuleComplete, splitRules, countAudience, resolveAudience, type SegmentRule } from '@/hooks/integrations/useTalkXSegments';
+import { supabase } from '@/integrations/supabase/client';
 
 describe('rulesToPostgrest', () => {
   it('fails closed instead of dropping an unknown rule', () => {
@@ -188,5 +195,48 @@ describe('splitRules — condição incompleta não entra na estimativa', () => 
         { id: 'r1', field: 'unknown_field', op: 'eq', value: 'x' },
       ] }],
     } as never)).toThrow('Regra de segmento inválida');
+  });
+});
+
+// X017 — o público (contagem e amostra) passa a ser resolvido pela RPC do motor
+// (talkx_resolve_audience, X016) em vez do PostgREST consultando public.contacts
+// no navegador: o critério de elegível fica no servidor, igual ao snapshot.
+describe('X017 — audiência resolvida pela RPC do motor (não mais no navegador)', () => {
+  const rules = {
+    groups: [{ id: 'g', match: 'and', rules: [{ id: 'r', field: 'company', op: 'eq', value: 'Acme' }] }],
+  } as never;
+
+  it('countAudience chama talkx_resolve_audience em modo count e lê `eligible`', async () => {
+    const rpc = supabase.rpc as unknown as ReturnType<typeof vi.fn>;
+    rpc.mockClear();
+    (supabase.from as unknown as ReturnType<typeof vi.fn>).mockClear();
+
+    const total = await countAudience(rules);
+
+    expect(total).toBe(7);
+    expect(rpc).toHaveBeenCalledWith('talkx_resolve_audience', expect.objectContaining({ p_mode: 'count' }));
+    // O navegador não consulta mais public.contacts para estimar o público.
+    expect(supabase.from).not.toHaveBeenCalledWith('contacts');
+  });
+
+  it('resolveAudience pagina a RPC (modo page) e devolve as linhas do servidor', async () => {
+    const rpc = supabase.rpc as unknown as ReturnType<typeof vi.fn>;
+    rpc.mockClear();
+    (supabase.from as unknown as ReturnType<typeof vi.fn>).mockClear();
+    rpc.mockResolvedValueOnce({
+      data: {
+        mode: 'page',
+        rows: [{ id: 'c1', name: 'Ana', nickname: null, phone: '55119*****', company: 'Acme', avatar_url: null, tags: null }],
+        has_more: false,
+        next_after: null,
+      },
+      error: null,
+    });
+
+    const rows = await resolveAudience(rules, 5);
+
+    expect(rows.map((r) => r.id)).toEqual(['c1']);
+    expect(rpc).toHaveBeenCalledWith('talkx_resolve_audience', expect.objectContaining({ p_mode: 'page', p_limit: 5 }));
+    expect(supabase.from).not.toHaveBeenCalledWith('contacts');
   });
 });

@@ -34,8 +34,8 @@ vi.mock('@/lib/supabaseHelpers', () => ({
   },
 }));
 
-// countAudience/resolveAudience (reais) consultam public.contacts via supabase.
-// Uma cadeia thenable única devolve a contagem fixa de 42 contatos.
+// X017 — countAudience/resolveAudience falam com a RPC talkx_resolve_audience
+// (modo count/page) em vez do PostgREST: o mock devolve a contagem fixa de 42.
 vi.mock('@/integrations/supabase/client', () => {
   const chain: Record<string, unknown> = {};
   chain.select = () => chain;
@@ -44,8 +44,18 @@ vi.mock('@/integrations/supabase/client', () => {
   chain.order = () => chain;
   chain.limit = () => chain;
   chain.eq = () => chain;
-  chain.then = (resolve: (v: unknown) => unknown) => Promise.resolve({ count: 42, data: [], error: null }).then(resolve);
-  return { supabase: { from: () => chain } };
+  chain.then = (resolve: (v: unknown) => unknown) => Promise.resolve({ data: [], error: null }).then(resolve);
+  return {
+    supabase: {
+      from: () => chain,
+      rpc: (_name: string, args?: { p_mode?: string }) => Promise.resolve({
+        data: args?.p_mode === 'page'
+          ? { mode: 'page', rows: [], has_more: false, next_after: null }
+          : { mode: 'count', matched: 42, eligible: 42, suppressed: 0, invalid_phone: 0, legacy_or_deleted: 0 },
+        error: null,
+      }),
+    },
+  };
 });
 
 // O motor de regras entra REAL (isRuleComplete/splitRules/rulesToPostgrest);
