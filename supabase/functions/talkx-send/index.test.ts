@@ -637,6 +637,14 @@ function makeAsyncStartDeps(opts: AsyncStartDepsOpts = {}) {
           }
           if (name === "transition_talkx_campaign") return Promise.resolve({ data: [{ current_status: "sending" }], error: null });
           if (name === "get_talkx_cron_secret") return Promise.resolve({ data: null, error: null });
+          if (name === "get_instance_token") return Promise.resolve({ data: "tok-principal", error: null });
+          if (name === "talkx_connection_send_budget") return Promise.resolve({
+            data: {
+              minute_limit: 6, minute_sent: 0, minute_remaining: 6,
+              day_limit: 500, day_sent: 0, day_remaining: 500, next_day_at: null,
+            },
+            error: null,
+          });
           return Promise.resolve({ data: null, error: null });
         },
         from(table: string) {
