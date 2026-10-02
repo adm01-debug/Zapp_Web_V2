@@ -326,11 +326,11 @@
     },
     {
       "path": "src/components/inbox/AIConversationAssistant.tsx",
-      "sha256": "2791b67a9a590374b39ac5b2a6c5307ca4001fc4a3ee29f4a556d393404a5baf"
+      "sha256": "0a5f78410516298ce9254a25dccc77bad2db41e327985e82080b8770aa89791f"
     },
     {
       "path": "src/components/inbox/AISuggestions.tsx",
-      "sha256": "0f7d5a9a05ab4e9b65f496195b4578c9315fed96379738f2ad79d6f878554124"
+      "sha256": "eda1cc6db46cb70115d72a48ac1e5cab979287a6da2668278276c0883e6e36cb"
     },
     {
       "path": "src/components/inbox/AudioMessagePlayer.tsx",
@@ -430,7 +430,7 @@
     },
     {
       "path": "src/components/inbox/ConversationSummary.tsx",
-      "sha256": "45d984b4c0bb98a61c17169fc030365742c20b44586316fe9a94a743e7a1b3c0"
+      "sha256": "4edde548d3e5fea6e63001bb6168a8ef3a3021d73757feebd58adebe0dd88e73"
     },
     {
       "path": "src/components/inbox/ConversationTimeline.tsx",
@@ -822,7 +822,7 @@
     },
     {
       "path": "src/components/talkx/useCampaignEditor.ts",
-      "sha256": "089e9c2c28f1a51138472d3b6a89f19710e79ca11d6d159ac8f2ab82ff27e614"
+      "sha256": "c7b290aa74f45b07adc8b1dba2e867dde0a53c5a475ec093cce024818aca152c"
     },
     {
       "path": "src/components/team-chat/TeamChatInputArea.tsx",
@@ -1258,7 +1258,7 @@
     },
     {
       "path": "src/hooks/inbox/useObjectionDetector.ts",
-      "sha256": "dd6aacf152a04c95da6b4e1e14d5fcb7026a8fe1d255d234c531f7aba4063fd7"
+      "sha256": "cfdddad6c73ccff1f672d3269e5e900efeb5114f93953565c158654ecd553c37"
     },
     {
       "path": "src/hooks/integrations/useCustomEmojis.ts",
@@ -1478,7 +1478,7 @@
     },
     {
       "path": "supabase/functions/_shared/ai-usage.ts",
-      "sha256": "30861ef988fd4ee3f030186bf0a699264bb1431b8466fc560895a250830f5153"
+      "sha256": "764c2f9868828c4a38f7780681efb8872ed877c86451520a6d94ea1dcca3207c"
     },
     {
       "path": "supabase/functions/_shared/evolution-api-proxy.ts",
@@ -1526,7 +1526,7 @@
     },
     {
       "path": "supabase/functions/_shared/schemas.ts",
-      "sha256": "5af87a2f308ca3f514593f985a5cf673dae70096c0eb6ff5c52d6a8eea7c56d6"
+      "sha256": "9a5548cb81a10305b0d7586bddc8606743c3d4ee3f4ca9f4fec80f3166b509ed"
     },
     {
       "path": "supabase/functions/_shared/validation.ts",
@@ -1534,7 +1534,7 @@
     },
     {
       "path": "supabase/functions/ai-suggest-reply/index.ts",
-      "sha256": "db0eafc68db70c30028a11a57b793b409d76ae7de44213d8902df35ef0b127e7"
+      "sha256": "cb867bac1c0e65549c3738b2b316472b23ff5ccb6d1262978504de67ea52c3c4"
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
@@ -3546,31 +3546,59 @@
     },
     {
       "file": "src/components/inbox/AIConversationAssistant.tsx",
-      "line": 69,
+      "line": 82,
       "column": 5,
-      "endLine": 69,
+      "endLine": 82,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/inbox/AIConversationAssistant.tsx:69:5 67 | 68 | useEffect(() => { > 69 | setAnalysis(null); | ^^^^^^^^^^^ Avoid calling setState() directly within an effect 70 | setActiveTab('resumo'); 71 | stopTts(); 72 | }, [analysisPeriod, customDateFrom, customDateTo, contactId, stopTts]);",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/inbox/AIConversationAssistant.tsx:82:5 80 | 81 | useEffect(() => { > 82 | setAnalysis(null); | ^^^^^^^^^^^ Avoid calling setState() directly within an effect 83 | setActiveTab('resumo'); 84 | stopTts(); 85 | // Invalida resposta em voo e encerra o spinner do pedido abandonado.",
       "spanHash": "3ec94157b33c997bf47cf9c5a2046cf65462662a0466b9ea0642bb0b93ab9fbf",
       "lineHash": "18b5e6791475a5834c5da77417c84936ac7e977f272ce1030feadda23d79ed25",
       "contextHash": "ee3b0e468f25dfb8e54207e7c526f8e44289fb1806804eec1a8cd3cd054087b6"
     },
     {
       "file": "src/components/inbox/AIConversationAssistant.tsx",
-      "line": 74,
+      "line": 90,
       "column": 41,
-      "endLine": 77,
+      "endLine": 93,
       "endColumn": 4,
       "severity": 2,
       "ruleId": "react-hooks/preserve-manual-memoization",
       "messageId": null,
-      "message": "Compilation Skipped: Existing memoization could not be preserved React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `analysis`, but the source dependencies were [analysis?.summary, startTtsPlayback]. Inferred less specific property than source. <ROOT>/src/components/inbox/AIConversationAssistant.tsx:74:41 72 | }, [analysisPeriod, customDateFrom, customDateTo, contactId, stopTts]); 73 | > 74 | const handlePlaySummary = useCallback(() => { | ^^^^^^^ > 75 | if (!analysis?.summary) return; | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 76 | startTtsPlayback(analysis.summary); | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 77 | }, [analysis?.summary, startTtsPlayback]); | ^^^^ Could not preserve existing manual memoization 78 | 79 | const analyzeConversation = useCallback(async () => { 80 | if (!canAnalyze) {",
+      "message": "Compilation Skipped: Existing memoization could not be preserved React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `analysis`, but the source dependencies were [analysis?.summary, startTtsPlayback]. Inferred less specific property than source. <ROOT>/src/components/inbox/AIConversationAssistant.tsx:90:41 88 | }, [analysisPeriod, customDateFrom, customDateTo, contactId, stopTts, invalidateRequests]); 89 | > 90 | const handlePlaySummary = useCallback(() => { | ^^^^^^^ > 91 | if (!analysis?.summary) return; | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 92 | startTtsPlayback(analysis.summary); | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 93 | }, [analysis?.summary, startTtsPlayback]); | ^^^^ Could not preserve existing manual memoization 94 | 95 | const analyzeConversation = useCallback(async () => { 96 | if (!canAnalyze) {",
       "spanHash": "6126d97ff0b0b2a78c3e7b5edfd82908798dd85dbb39f7eb31cd53b708b5c42a",
       "lineHash": "ce5becdfcbf295288b68ff37ab4cf7f7ef2fc844c553da044eb86c6dd3379bb3",
-      "contextHash": "5441f106ae29cca2d4ed33284a858185237cfa5f3c9bfeb9e836c859c062d818"
+      "contextHash": "dc2f72bfeaf0dbb261e0a6c39f8f70a42b3aeb63da4fea7dd801d16c979432ce"
+    },
+    {
+      "file": "src/components/inbox/AISuggestions.tsx",
+      "line": 52,
+      "column": 5,
+      "endLine": 0,
+      "endColumn": 0,
+      "severity": 1,
+      "ruleId": null,
+      "messageId": null,
+      "message": "Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect').",
+      "spanHash": null,
+      "lineHash": "7340c978117169759eccee4c8e7e88108978d7ceb24712003c188b596d92eeb8",
+      "contextHash": "dd915811cf3276995839849f9e91e952975e1022692a768618830830a92cc070"
+    },
+    {
+      "file": "src/components/inbox/AISuggestions.tsx",
+      "line": 54,
+      "column": 5,
+      "endLine": 54,
+      "endColumn": 19,
+      "severity": 2,
+      "ruleId": "react-hooks/set-state-in-effect",
+      "messageId": null,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/inbox/AISuggestions.tsx:54:5 52 | // eslint-disable-next-line react-hooks/set-state-in-effect -- reset de estado ancorado na identidade do contato; o hook de geração já vive fora do React. 53 | invalidateRequests(); > 54 | setSuggestions([]); | ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 55 | setIsLoading(false); 56 | }, [contactId, invalidateRequests]); 57 |",
+      "spanHash": "3bd543f2db248c6e53e19d3949227abc23614978bea7ec9758ed043831b875ab",
+      "lineHash": "fd78e85e1c0ee47388bf70a6faf8a2a870aa778a80ca2a58defc49c159824ef4",
+      "contextHash": "e852c8f921bfff6fbd9ac0243c5a76fc04ee023cabdbcc5b3552a7e4f3a4f92a"
     },
     {
       "file": "src/components/inbox/AISuggestions.tsx",
@@ -4120,59 +4148,45 @@
     },
     {
       "file": "src/components/inbox/ConversationSummary.tsx",
-      "line": 39,
-      "column": 21,
-      "endLine": 39,
-      "endColumn": 31,
+      "line": 54,
+      "column": 5,
+      "endLine": 54,
+      "endColumn": 17,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/inbox/ConversationSummary.tsx:39:21 37 | const canGenerateSummary = filteredMessages.length >= 10; 38 | > 39 | useEffect(() => { setSummary(null); setHasGenerated(false); }, [contactId]); | ^^^^^^^^^^ Avoid calling setState() directly within an effect 40 | useEffect(() => { if (hasGenerated) { setSummary(null); setHasGenerated(false); } }, [analysisPeriod, customDateFrom, customDateTo]); 41 | useEffect(() => { if (initialSummary) { setSummary(initialSummary as unknown as SummaryData); setHasGenerated(true); } }, [initialSummary]); 42 |",
-      "spanHash": "3adeb63ad4e113263219c16d42e835493481d4a33bcef349ca89fd0aebf4c6b9",
-      "lineHash": "824792232b8c5c2f69b84d1ba119accd641d2f294d180b95ee8cefd49c252774",
-      "contextHash": "8a18d378c298ca0eec62eecb029ca8264615b4a50801f0cc1199c97c6ad206b4"
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/inbox/ConversationSummary.tsx:54:5 52 | // Troca de contato: descarta resposta em voo e zera o resultado visível. 53 | invalidateRequests(); > 54 | setIsLoading(false); | ^^^^^^^^^^^^ Avoid calling setState() directly within an effect 55 | setSummary(null); 56 | setHasGenerated(false); 57 | }, [contactId, invalidateRequests]);",
+      "spanHash": "f4c53e9c2756b64e09a7b71ace5bcefcf30b9044da81f142b98fba03631870af",
+      "lineHash": "ccc30b1e46ad22797a4f9e4f74e554fc8015ff82f9d540703ffaf80f8915caad",
+      "contextHash": "09ddf01f7f8886615ef3fe9b97ff9395d6909b3524c56819b5ac57ec5821324e"
     },
     {
       "file": "src/components/inbox/ConversationSummary.tsx",
-      "line": 40,
-      "column": 41,
-      "endLine": 40,
-      "endColumn": 51,
+      "line": 63,
+      "column": 5,
+      "endLine": 63,
+      "endColumn": 17,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/inbox/ConversationSummary.tsx:40:41 38 | 39 | useEffect(() => { setSummary(null); setHasGenerated(false); }, [contactId]); > 40 | useEffect(() => { if (hasGenerated) { setSummary(null); setHasGenerated(false); } }, [analysisPeriod, customDateFrom, customDateTo]); | ^^^^^^^^^^ Avoid calling setState() directly within an effect 41 | useEffect(() => { if (initialSummary) { setSummary(initialSummary as unknown as SummaryData); setHasGenerated(true); } }, [initialSummary]); 42 | 43 | const buildFullNarrationText = useCallback(() => {",
-      "spanHash": "3adeb63ad4e113263219c16d42e835493481d4a33bcef349ca89fd0aebf4c6b9",
-      "lineHash": "fe0aa2357486072ce9810d921cceedd949f474b251ca8ad5ad1eafe395fad290",
-      "contextHash": "11bfa0d50140bf6af425f50c568fc1404b946acca43129f8bc8f686d4021d881"
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/inbox/ConversationSummary.tsx:63:5 61 | // o resumo exibido, que pertence ao recorte antigo. 62 | invalidateRequests(); > 63 | setIsLoading(false); | ^^^^^^^^^^^^ Avoid calling setState() directly within an effect 64 | setSummary(null); 65 | setHasGenerated(false); 66 | }, [analysisPeriod, customDateFrom, customDateTo, invalidateRequests]);",
+      "spanHash": "f4c53e9c2756b64e09a7b71ace5bcefcf30b9044da81f142b98fba03631870af",
+      "lineHash": "ccc30b1e46ad22797a4f9e4f74e554fc8015ff82f9d540703ffaf80f8915caad",
+      "contextHash": "09ddf01f7f8886615ef3fe9b97ff9395d6909b3524c56819b5ac57ec5821324e"
     },
     {
       "file": "src/components/inbox/ConversationSummary.tsx",
-      "line": 40,
-      "column": 88,
-      "endLine": 40,
-      "endColumn": 134,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has a missing dependency: 'hasGenerated'. Either include it or remove the dependency array.",
-      "spanHash": "24dabbe8695e0e868eadc2a9ebab3181f4719094fd7935bc965cad8447a18cb8",
-      "lineHash": "fe0aa2357486072ce9810d921cceedd949f474b251ca8ad5ad1eafe395fad290",
-      "contextHash": "11bfa0d50140bf6af425f50c568fc1404b946acca43129f8bc8f686d4021d881"
-    },
-    {
-      "file": "src/components/inbox/ConversationSummary.tsx",
-      "line": 41,
+      "line": 68,
       "column": 43,
-      "endLine": 41,
+      "endLine": 68,
       "endColumn": 53,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/inbox/ConversationSummary.tsx:41:43 39 | useEffect(() => { setSummary(null); setHasGenerated(false); }, [contactId]); 40 | useEffect(() => { if (hasGenerated) { setSummary(null); setHasGenerated(false); } }, [analysisPeriod, customDateFrom, customDateTo]); > 41 | useEffect(() => { if (initialSummary) { setSummary(initialSummary as unknown as SummaryData); setHasGenerated(true); } }, [initialSummary]); | ^^^^^^^^^^ Avoid calling setState() directly within an effect 42 | 43 | const buildFullNarrationText = useCallback(() => { 44 | if (!summary) return '';",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/inbox/ConversationSummary.tsx:68:43 66 | }, [analysisPeriod, customDateFrom, customDateTo, invalidateRequests]); 67 | > 68 | useEffect(() => { if (initialSummary) { setSummary(initialSummary as unknown as SummaryData); setHasGenerated(true); } }, [initialSummary]); | ^^^^^^^^^^ Avoid calling setState() directly within an effect 69 | 70 | const buildFullNarrationText = useCallback(() => { 71 | if (!summary) return '';",
       "spanHash": "3adeb63ad4e113263219c16d42e835493481d4a33bcef349ca89fd0aebf4c6b9",
       "lineHash": "bf72de125435fcdff3d3eb87023df95b5db470f46a8babc7f28cf0e2f0a44ed6",
-      "contextHash": "02d93e2e6e2efebb779914341424157033c4664bb2943a2b64fd732d3a6ced8d"
+      "contextHash": "da8346eebd0b3d9f4e84ad91403faabbe6cb295c9ffdf59d91a8893217bbe577"
     },
     {
       "file": "src/components/inbox/ConversationSummary.tsx",
@@ -11498,31 +11512,31 @@
     },
     {
       "file": "src/hooks/inbox/useObjectionDetector.ts",
-      "line": 53,
+      "line": 69,
       "column": 5,
-      "endLine": 53,
+      "endLine": 69,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/inbox/useObjectionDetector.ts:53:5 51 | 52 | useEffect(() => { > 53 | setAnalyzed(false); setObjections([]); setError(null); setRewritingIdx(null); setCopiedIdx(null); setSelectedTone('friendly'); | ^^^^^^^^^^^ Avoid calling setState() directly within an effect 54 | }, [contactId]); 55 | 56 | useEffect(() => {",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/inbox/useObjectionDetector.ts:69:5 67 | // Troca de contato: descarta resposta em voo e zera o estado do contato anterior. 68 | invalidateRequests(); > 69 | setAnalyzed(false); setObjections([]); setError(null); setRewritingIdx(null); setCopiedIdx(null); setSelectedTone('friendly'); setLoading(false); | ^^^^^^^^^^^ Avoid calling setState() directly within an effect 70 | }, [contactId, invalidateRequests]); 71 | 72 | useEffect(() => {",
       "spanHash": "fd97e0e35e4c1e2d54a188fe6ed9f42464bc4d0816658e9482787c428b4829c7",
-      "lineHash": "8f82105ec5574aef5c964c0b2be4ffe2792a230a587d52da7d5bcb7a3077ad40",
-      "contextHash": "b2fb13dfc7366fc34c393e433bf26d06146c43c9d67a9b772dd9eb1c60ff4657"
+      "lineHash": "8a4497d225b230aaae6ad4256a5239a7305905e56e81c9b2d9d7d9a9a3634169",
+      "contextHash": "e60ce5f489a50295f4e286d1825a85ff8a3435edd920a962191b2990cf77e40c"
     },
     {
       "file": "src/hooks/inbox/useObjectionDetector.ts",
-      "line": 57,
+      "line": 75,
       "column": 5,
-      "endLine": 57,
+      "endLine": 75,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/inbox/useObjectionDetector.ts:57:5 55 | 56 | useEffect(() => { > 57 | setAnalyzed(false); setObjections([]); setError(null); | ^^^^^^^^^^^ Avoid calling setState() directly within an effect 58 | }, [periodFilter.analysisPeriod, periodFilter.customDateFrom, periodFilter.customDateTo]); 59 | 60 | const analyze = useCallback(async (tone?: ToneKey) => {",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/inbox/useObjectionDetector.ts:75:5 73 | // Troca de período: descarta resposta em voo e zera o resultado do recorte antigo. 74 | invalidateRequests(); > 75 | setAnalyzed(false); setObjections([]); setError(null); setLoading(false); | ^^^^^^^^^^^ Avoid calling setState() directly within an effect 76 | }, [objectionPeriod, objectionFrom, objectionTo, invalidateRequests]); 77 | 78 | const analyze = useCallback(async (tone?: ToneKey) => {",
       "spanHash": "fd97e0e35e4c1e2d54a188fe6ed9f42464bc4d0816658e9482787c428b4829c7",
-      "lineHash": "20fa38d6c0f24dbd6255f9f8ba22b0a8bec9334e51be3c2cef77e79e7ada3ce3",
-      "contextHash": "89a771932a6c0e43977b8e37d9d74d9ef45c3b04aa7a9a10e1c1d6638bdcc79f"
+      "lineHash": "4bb8eb20590365d897add2826a818e1d37da0b37e2b37fc0982bbd441fc51c77",
+      "contextHash": "027890e6816c0fad90d18b0a532aeb118bf7c0b33d80e4a2823445541192b9dc"
     },
     {
       "file": "src/hooks/integrations/useCustomEmojis.ts",
@@ -14004,9 +14018,9 @@
     },
     {
       "file": "supabase/functions/ai-suggest-reply/index.ts",
-      "line": 158,
+      "line": 160,
       "column": 30,
-      "endLine": 158,
+      "endLine": 160,
       "endColumn": 33,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
