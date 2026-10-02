@@ -289,7 +289,21 @@ jobs:
           set -o pipefail
           node scripts/db-audit/check-runtime-config.mjs /tmp/runtime-config.json 2>&1 | tee /tmp/step-runtime-config.log
 
-      # Une os 10 vereditos individuais (continue-on-error acima) num unico
+      # E76 (plano MAPA Fase 7): o contrato da RPC `search_contacts` — 6 campos de
+      # endereco, ACL sem anon/PUBLIC e trigger de auditoria — existia em
+      # scripts/db-audit/ mas nenhum guard o invocava. Roda em PostgreSQL 17
+      # descartavel (imagem `postgres:17-alpine`) montado pelo wrapper padrao,
+      # SEM ler DESTINO_URL: e contrato de codigo, nao do banco oficial.
+      - name: Contrato da RPC search_contacts (mapa F1)
+        id: contract-mapa-f1-address
+        if: steps.credencial.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          bash scripts/db-audit/retry-disposable-postgres-test.sh \
+            bash scripts/db-audit/mapa-f1-address-contract.test.sh 2>&1 | tee /tmp/step-contract-mapa-f1-address.log
+
+      # Une os 11 vereditos individuais (continue-on-error acima) num unico
       # resultado: falha o job se qualquer um falhou/foi pulado, escreve a
       # tabela no Job Summary (E59) e calcula uma assinatura estavel da causa
       # para o dedupe do alerta abaixo (E05/E06/E43/E44).
@@ -307,6 +321,7 @@ jobs:
           O_TYPES: ${{ steps.types.outcome }}
           O_TRIPLE_PARITY: ${{ steps.triple-parity.outcome }}
           O_RUNTIME_CONFIG: ${{ steps.runtime-config.outcome }}
+          O_CONTRACT_MAPA_F1_ADDRESS: ${{ steps.contract-mapa-f1-address.outcome }}
         run: |
           set -uo pipefail
           declare -A OUTCOMES=(
@@ -320,6 +335,7 @@ jobs:
             ["Verificar frescor do types.ts"]="$O_TYPES"
             ["Paridade tripla (migrations, edges, grants)"]="$O_TRIPLE_PARITY"
             ["Auditar configuracao runtime sem dados de clientes"]="$O_RUNTIME_CONFIG"
+            ["Contrato da RPC search_contacts (mapa F1)"]="$O_CONTRACT_MAPA_F1_ADDRESS"
           )
           FALHAS=()
           {
@@ -350,6 +366,7 @@ jobs:
               ["Verificar frescor do types.ts"]="/tmp/step-types.log"
               ["Paridade tripla (migrations, edges, grants)"]="/tmp/step-triple-parity.log"
               ["Auditar configuracao runtime sem dados de clientes"]="/tmp/step-runtime-config.log"
+              ["Contrato da RPC search_contacts (mapa F1)"]="/tmp/step-contract-mapa-f1-address.log"
             )
             {
               echo ""
@@ -382,6 +399,7 @@ jobs:
               "Verificar ACL da dead-letter queue de webhooks"
               "Verificar security_invoker da view de metricas Talk X"
               "Verificar contrato de transicao de campanha do Talk X"
+              "Contrato da RPC search_contacts (mapa F1)"
               "Auditar configuracao runtime sem dados de clientes"
               "Paridade tripla (migrations, edges, grants)"
             )
@@ -446,6 +464,7 @@ jobs:
               'Verificar frescor do types.ts': '/tmp/step-types.log',
               'Paridade tripla (migrations, edges, grants)': '/tmp/step-triple-parity.log',
               'Auditar configuracao runtime sem dados de clientes': '/tmp/step-runtime-config.log',
+              'Contrato da RPC search_contacts (mapa F1)': '/tmp/step-contract-mapa-f1-address.log',
             };
             const failedSteps = passos.split('\n').filter(s => s.startsWith('- ')).map(s => s.slice(2));
             const redact = t => t
@@ -602,5 +621,6 @@ jobs:
             /tmp/step-types.log
             /tmp/step-triple-parity.log
             /tmp/step-runtime-config.log
+            /tmp/step-contract-mapa-f1-address.log
           if-no-files-found: ignore
           retention-days: 3

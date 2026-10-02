@@ -639,7 +639,19 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 ### E76 · Teste de contrato da RPC `search_contacts`
 **Arquivos:** `scripts/db-audit/` (SQL de teste) ou `supabase/tests/`
 1. Query que falha se `search_contacts` deixar de devolver `latitude, longitude, address, city, state, postal_code` — roda no `db-live-guard` (adicionar ao contrato runtime, não criar workflow novo — CLAUDE.md §1 regra 9).
-**Checklist:** [ ] contrato · [ ] no `db-live-guard`
+**Checklist:** [x] contrato · [x] no `db-live-guard`
+
+**Fechada em 2026-10-02.** O contrato scripts/db-audit/mapa-f1-address-contract.test.sh (126 linhas) JA existia e estava correto — faltava o fio que o liga a um guard: nao era referenciado em workflow nenhum. Passo novo no db-live-guard, registrado nos 5 pontos de consolidacao do veredito (env do outcome, OUTCOMES/STEP_LOGS/CANONICAL_ROOT, mapa JS e artifact), com o contador de vereditos de 10 para 11 — sem esse registro o continue-on-error engoliria a falha e o guard ficaria verde em silencio.
+
+**O contrato mede 4 coisas:** assinatura de search_contacts com os 8 campos de endereco na ordem esperada, uma linha com endereco atravessando a RPC, ACL (anon fora, authenticated dentro) e o trigger de auditoria (grava so em mudanca, marca cleared, nao guarda endereco em texto claro). Ele sobe o PROPRIO Postgres descartavel e nao usa credencial real.
+
+**Prova:** contrato verde local com o mesmo wrapper do CI (1,9s). Mutacao removendo 'city text' do RETURNS TABLE derruba o contrato com a mensagem exata do campo faltante; restaurado por cp, git diff vazio. actionlint exit 0; bash -n no passo e no veredito; parity-hardening.unit.mjs 11/11 e check-workflow-pins.mjs OK (os guards do proprio repo seguem verdes). Ratchets novas=0.
+
+**CONFLITO ENTRE PLANOS DO REPO (decisao 20261002-063721-047f-sem-tarefa):** o db-live-guard NAO roda em pull_request — a linha 4 diz que isso e deliberado e ha teste de paridade que assercao a ausencia do gatilho (on: push em main, schedule e dispatch). Logo o contrato roda pos-merge/agendado e NUNCA protege PR. O PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md (E50) manda os 4 .test.sh orfaos para o db-guard.yml, que RODA em pull_request (linha 17) e ja usa o mesmo wrapper; a AUDITORIA-W3-REPLAY.md:229 recomenda o mesmo. Decisao: manter aqui (a), mover para o db-guard (b) ou nos dois (c).
+
+**Divergencias:** o mapeamento fala 6 campos, o contrato cobre 8 (address_number e neighborhood alem dos 6) e mede ACL e trigger; e a imagem nao fica pinada por digest neste passo porque o db-live-guard nao tem POSTGRES_TEST_IMAGE e eu nao podia alterar env — perde a resiliencia a rate-limit que o db-guard tem.
+
+**Nao verificado:** o workflow nao foi executado no GitHub Actions (prova local, mesma imagem e mesmo wrapper); nao validei pull frio da imagem no runner nem o impacto no timeout de 25 min (estimativa).
 
 ### E77 · Teste de contrato dos grants das RPCs do módulo
 1. `count_searchbox_sessions_this_month`, `search_contacts`, `count_searchbox_cost_guard_this_month` (E47): sem `anon`/`PUBLIC` — assert no `grants-baseline.json` já existente.
