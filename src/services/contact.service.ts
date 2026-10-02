@@ -204,6 +204,13 @@ export class ContactService {
     const windowStart = new Date(Date.now() - 30 * DAY_MS).toISOString();
     const prevWindowStart = new Date(Date.now() - 60 * DAY_MS).toISOString();
 
+    const headCount = (table: 'messages' | 'conversation_sla', gte?: string, lt?: string) => {
+      let q = supabase.from(table).select('id', { count: 'exact', head: true }).eq('contact_id', contactId);
+      if (gte) q = q.gte('created_at', gte);
+      if (lt) q = q.lt('created_at', lt);
+      return q;
+    };
+
     const [
       { count: messageCount },
       { count: recentMessageCount },
@@ -212,36 +219,12 @@ export class ContactService {
       { count: recentConversationCount },
       { count: prevConversationCount },
     ] = await Promise.all([
-      supabase
-        .from('messages')
-        .select('id', { count: 'exact', head: true })
-        .eq('contact_id', contactId),
-      supabase
-        .from('messages')
-        .select('id', { count: 'exact', head: true })
-        .eq('contact_id', contactId)
-        .gte('created_at', windowStart),
-      supabase
-        .from('messages')
-        .select('id', { count: 'exact', head: true })
-        .eq('contact_id', contactId)
-        .gte('created_at', prevWindowStart)
-        .lt('created_at', windowStart),
-      supabase
-        .from('conversation_sla')
-        .select('id', { count: 'exact', head: true })
-        .eq('contact_id', contactId),
-      supabase
-        .from('conversation_sla')
-        .select('id', { count: 'exact', head: true })
-        .eq('contact_id', contactId)
-        .gte('created_at', windowStart),
-      supabase
-        .from('conversation_sla')
-        .select('id', { count: 'exact', head: true })
-        .eq('contact_id', contactId)
-        .gte('created_at', prevWindowStart)
-        .lt('created_at', windowStart),
+      headCount('messages'),
+      headCount('messages', windowStart),
+      headCount('messages', prevWindowStart, windowStart),
+      headCount('conversation_sla'),
+      headCount('conversation_sla', windowStart),
+      headCount('conversation_sla', prevWindowStart, windowStart),
     ]);
 
     const { data: csatData } = await supabase.from('csat_surveys').select('rating').eq('contact_id', contactId);
