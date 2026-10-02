@@ -86,6 +86,7 @@ jobs:
           supabase/functions/_shared/__tests__/evolution-send-instance-token.test.ts
           supabase/functions/_shared/__tests__/webhook-auth-shadow.test.ts
           supabase/functions/_shared/__tests__/gmail-send-schema.test.ts
+          supabase/functions/_shared/__tests__/multiplix-eligibility.test.ts
           supabase/functions/crm-integration/index.test.ts
           supabase/functions/promogifts-catalog/index.test.ts
           supabase/functions/promogifts-catalog/index.actions.test.ts
