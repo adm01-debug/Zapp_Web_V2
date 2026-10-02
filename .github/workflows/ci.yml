@@ -209,6 +209,9 @@ jobs:
       - name: 🛡️ Run Supabase usage guard
         run: node scripts/db-audit/supabase-usage-guard.mjs
 
+      - name: 📋 Check test inventory (todo .test.ts/.test.sh tem passo no CI YAML)
+        run: node scripts/ci/check-test-inventory.mjs
+
       - name: 🧾 Verify Talk X V4 placar freshness (aviso)
         # O placar compara o STATUS.md commitado com os títulos (X<NNN>) já em
         # origin/main. Uma etapa recém-mergeada deixa o arquivo 1 passo atrás (o

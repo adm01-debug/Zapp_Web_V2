@@ -435,6 +435,30 @@ do N8N (id `67dWSoWEPUGTX5mA`) existe e está ativo, mas a cadência de 15min n�
 prática (execução de 2026-09-15 12:00 falhou; nenhuma outra até 2026-09-17) — não depender dele
 como única via de atualização.
 
+## db-guard.yml — `docker-shim` e `SKIP_DOCKER_SHIM` (adicionado em E47, 2026-10-02)
+
+E47 (PR #1538) consolidou os ~48 containers Docker por passo em um único `postgres:17-alpine`
+como `services:` + script `scripts/db-audit/docker-shim` (instalado em `$HOME/.local/bin/docker`).
+
+O shim intercepta os comandos Docker e os roteia para o container compartilhado.
+Passos **incompatíveis** com o shim precisam de `SKIP_DOCKER_SHIM: "1"` no `env:` do step
+(isso causa passthrough para o Docker real). Os 11 passos com essa exceção hoje são:
+
+1. `catalog-manifest.test.sh` — usa `docker logs` para aguardar readiness
+2. `inbox-contact-authorization.test.sh` — idem
+3. `cron-secret-l5-contract.test.sh` — idem
+4. `talkx-template-history-behavior.test.sh` — idem
+5. `talkx-transition-overload-postgrest.test.sh` — depende de PostgREST
+6. `message-delivery-phase1-behavior.test.sh` — idem
+7. `notification-delivery-atomicity.test.sh` — idem
+8. `generic-migration-runtime.test.sh` — idem
+9. `runtime-config.test.sh` — idem
+10. `psql-environment.integration.mjs` — idem
+11. `l11-departments-acl-escrita.test.sh` — idem
+
+Ao adicionar novo passo em `db-guard.yml`, verificar se o script usa `docker logs` para readiness
+ou depende de PostgREST — se sim, adicionar `SKIP_DOCKER_SHIM: "1"`.
+
 ## Talk X / Campanhas
 Módulo em desenvolvimento ativo. **Plano vigente:** `docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md`
 (200 etapas X001–X200). Os planos anteriores (`PLANO_IMPLEMENTACAO_TALKX_100.md`,
