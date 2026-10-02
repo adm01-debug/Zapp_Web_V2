@@ -3,7 +3,7 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import { ConversationTabs } from '../ConversationTabs';
 import type { ConversationTabCounts } from '@/hooks/chat/useConversationTabCounts';
 
-const ZERO: ConversationTabCounts = { tasksOpen: 0, notesTotal: 0, filesTotal: 0, remindersPending: 0 };
+const ZERO: ConversationTabCounts = { tasksOpen: 0, notesTotal: 0, filesTotal: 0 };
 
 /**
  * Ordem contratada da barra "Seções da conversa":
@@ -66,7 +66,7 @@ describe('ConversationTabs', () => {
   });
 
   it('exibe badge só nas abas com count > 0', () => {
-    setup({ tasksOpen: 2, notesTotal: 1, filesTotal: 5, remindersPending: 4 });
+    setup({ tasksOpen: 2, notesTotal: 1, filesTotal: 5 });
     expect(screen.getByTestId('conversation-tab-count-tasks')).toHaveTextContent('2');
     expect(screen.getByTestId('conversation-tab-count-notes')).toHaveTextContent('1');
     expect(screen.getByTestId('conversation-tab-count-files')).toHaveTextContent('5');
@@ -80,7 +80,7 @@ describe('ConversationTabs', () => {
   });
 
   it('Chat, IA, CRM e Histórico nunca renderizam badge', () => {
-    setup({ tasksOpen: 9, notesTotal: 9, filesTotal: 9, remindersPending: 0 });
+    setup({ tasksOpen: 9, notesTotal: 9, filesTotal: 9 });
     ['chat', 'ia', 'crm', 'history'].forEach((id) => {
       expect(screen.queryByTestId(`conversation-tab-count-${id}`)).not.toBeInTheDocument();
     });
