@@ -114,6 +114,7 @@ export function NewMessageIndicator({
                     <Button
                       variant="ghost"
                       size="icon"
+                      aria-label="Dispensar aviso de novas mensagens"
                       className="w-6 h-6 hover:bg-muted/50"
                       onClick={onDismiss}
                     >
