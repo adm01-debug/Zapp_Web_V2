@@ -7,13 +7,13 @@ import type { Crm360Deal } from '@/hooks/crm/useContactCrm360';
 
 interface OpenDealsListProps {
   deals: Crm360Deal[];
-  /** Corta a lista (usado no resumo do CRM 360°); omitido = lista completa (aba Pedidos). */
+  /** Corta a lista (usado no resumo do CRM 360°); omitido = lista completa (aba SalesView). */
   limit?: number;
   emptyMessage?: string;
 }
 
 /**
- * Lista de "Propostas em aberto" — compartilhada entre a aba Pedidos (23b) e a
+ * Lista de "Propostas em aberto" — compartilhada entre a aba SalesView e a
  * aba CRM 360° (2.5 item 5) para não duplicar a mesma leitura de sales_deals.
  */
 export function OpenDealsList({ deals, limit, emptyMessage = 'Nenhuma proposta em aberto' }: OpenDealsListProps) {

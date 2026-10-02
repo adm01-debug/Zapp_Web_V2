@@ -14,7 +14,7 @@ import { ExternalContact360Panel } from './ExternalContact360Panel';
 import { ContactIntelligencePanel } from './ContactIntelligencePanel';
 import { WhatsAppStatusSection } from './WhatsAppStatusSection';
 import { EvolutionContactProfileSection } from './EvolutionContactProfileSection';
-import { ComercialSummaryWidget } from './ComercialSummaryWidget';
+import { CommercialSummaryStrip } from '../tabs/CommercialSummaryStrip';
 import { AIInsightsWidget } from './AIInsightsWidget';
 import { LastActivityWidget } from './LastActivityWidget';
 import { ConversationMemoryPanel } from '../ConversationMemoryPanel';
@@ -81,7 +81,7 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
       </Section>
 
       <Section index={3} value="commercial-summary" icon={<BarChart3 className="w-3.5 h-3.5" />} label="Resumo Comercial">
-        <ComercialSummaryWidget contactId={contact.id} />
+        <CommercialSummaryStrip contactId={contact.id} compact />
       </Section>
 
       <AIInsightsWidget contactId={contact.id} />

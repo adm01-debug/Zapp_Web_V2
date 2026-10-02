@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { contactCrm360Key } from '@/hooks/crm/useContactCrm360';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +45,7 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('purchase');
   const isMountedRef = useRef(true);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -75,6 +78,7 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
     });
     if (!error) {
       toast.success('Registro adicionado');
+      void queryClient.invalidateQueries({ queryKey: contactCrm360Key(contactId) });
       if (!isMountedRef.current) return;
       setDialogOpen(false);
       setTitle('');
