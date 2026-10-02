@@ -369,3 +369,54 @@ Rodada sobre o que já estava em produção (#1285/T11 e #1328/T12+T13). Ela **a
 **Evidência**: suíte completa **348 arquivos, 4668 passed | 38 todo, zero falhas**; `tsc -b --force` exit 0; cada D com mutação vermelha e restauração por `sha256`; a mutação do D2 refeita por mim.
 
 **Pendente da lista do usuário em 02/10:** **T11** (aguarda a chamada real de aceite), **T06** (bloqueio de autenticação — diagnóstico na seção 11) e a decisão do **#1494**. Entregues até aqui: T01–T10 e T12–T22; T15 conferido contra o deploy medido.
+
+### 11.2 FASE 3 — ponto exato de retomada (T34–T42) — PR #1703
+
+**Estado no fim da sessão (02/10):** branch `hermes/telefonia-fase3-shell-header-kpis-261002181232a9`
+**verde** — suíte `src/components/calls` 98 passed, 3 todo; `tsc -b --force` exit 0; árvore limpa,
+publicado até `46d1c236b`. PR **#1703** aberta. **Não mergear antes do T42** (é o gate da fase).
+
+**T33 — FEITO e verde.** `VoIPPanel.tsx` movido com `git mv` para `TelefoniaView.tsx` (histórico
+preservado) e o símbolo renomeado por dentro; `VoIPPanel.tsx` ficou como **alias**
+(`export { TelefoniaView as VoIPPanel }`) e os 5 consumidores não mudaram uma linha. A raiz virou o
+container do shell (`w-full flex flex-col gap-4 min-w-0` + `data-testid="tel-view"`) e `voip` entrou
+em `COMPACT_GUTTER_VIEWS` (`ViewRouter.tsx:34` — o plano cita `:33`). Provas: `TelefoniaView.test.tsx`
+2/2 · `VoIPPanel.test.tsx` 12/12 **sem alteração** · `tsc` 0. Aceite `contentX = 278 ±6` exige QA;
+sem QA, valeu a alternativa do próprio plano (prova de container por RTL).
+
+**T34 — tentado e REVERTIDO** (`8cfccbf5e` → revert `46d1c236b`). Causa **medida**, não suposta: o
+`PageHeader` (`src/components/layout/PageHeader.tsx`) lê o **`LayoutContext`** (breadcrumbs) e
+**estoura sem o provider**, então trocar o header local derrubou **13 testes** (12 do
+`VoIPPanel.test.tsx` + 1 do `TelefoniaView.test.tsx`) — não foi só texto. A prop
+`icon?: React.ReactNode` (opcional, default = markup atual) **já foi implementada com sucesso** e está
+no commit revertido: dá para reaplicar.
+
+**RETOMADA DO T34 — nesta ordem, um arquivo por vez:**
+1. **Primeiro** os testes que renderizam a view (`TelefoniaView.test.tsx` e `VoIPPanel.test.tsx`):
+   mockar o `PageHeader` (`vi.mock('@/components/layout/PageHeader', …)`) **ou** envolver o render no
+   provider de layout. É exatamente o que faltou.
+2. **Depois** trocar o bloco local (`motion.div` + `h1` + `p`) por
+   `PageHeader variant="plain" icon={<Phone/>} title="Telefonia" subtitle="…"`.
+3. **Acentos:** o subtítulo é `Suas ligações por VoIP e WhatsApp` — sem acento derruba os 12 do
+   `VoIPPanel` outra vez.
+4. `topRight={<TelefoniaTopActions/>}` é **T35** (o componente ainda não existe) — não antecipar.
+5. Verificar com `bun run test src/components/calls` e conferir o **exit code real**: **nunca**
+   encadear commit depois de `... | grep`, porque o grep mascara o exit do vitest (foi assim que um
+   commit vermelho passou e precisou de revert).
+
+**T35–T42 — pendentes, na ordem do plano:** T35 `TelefoniaTopActions` + `PeriodSelect` (chips
+VoIP/WhatsApp com `describeReason`; 3 controles h 40 ±2) · T36 `useTelefoniaFilters` (filtros em
+`useSearchParams`, defaults `7d|all|all|all||1|mine|`, `setFilter` reseta `page=1`, reload mantém) ·
+T37 `useCallsKpi` (`useQuery(['calls-kpi', …])` → RPC **`my_calls_kpi`**, que já existe; `staleTime
+30_000`; invalidação por fim de sessão + Realtime `calls`) · T38 `CallKpiCard` (5 cards h 78 ±4;
+`data-testid="tel-kpi-card|tile|value"`; Total == `total_count` de `search_my_calls` no mesmo filtro) ·
+T39 grid `grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3` com skeleton 5×78 e erro com "Tentar
+novamente" · T40 remover "Conectar SIP"/"Desconectar" do `DialPad` (aceite:
+`grep -c "Conectar SIP" src/components/calls` = 0) · T41 marcar `useCallHistory` como `@deprecated` ·
+T42 fechamento da fase (gates + `05-after.png` se o T05 resolver + seção 11).
+
+**Lição de harness (custou 3 voltas no T33 e 1 revert no T34):** os mocks de render da telefonia
+deveriam ser um **helper compartilhado**. `vi.mock` com caminho errado não dá erro útil — o hook real
+roda e estoura pedindo provider; e o caminho de `useCallSession` é `@/providers/CallSessionProvider`
+(não `@/hooks/...`). Forma também importa: `calls` precisa ser **array** onde o componente faz
+`.find`, e função onde ele chama.
