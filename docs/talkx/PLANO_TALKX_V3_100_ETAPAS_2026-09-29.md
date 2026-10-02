@@ -1,4 +1,17 @@
-> **SUBSTITUÍDO pelo V4 em 2026-10-01 — não executar.**
+> ### 🧊 PLANO CONGELADO — 2026-10-02 · substituído pelo V4 · **não executar**
+>
+> O **V4** (`TALK X 02`) é o **dono do Talk X** desde 01/10/2026. Este V3 fica congelado como **registro histórico**:
+> as etapas da Fase 2 que estavam na minha fila foram executadas e estão marcadas `✅ FEITO` com o PR; as que
+> sobraram (**V27–V30**) **não serão feitas aqui** e passam para o equivalente no V4.
+>
+> **Por que congelou:** dois executores (este chat e o TALK X 02) escreveram no mesmo banco na mesma janela —
+> `save_talkx_campaign_draft` foi recriada 4× em 24 h. Um dono só por módulo elimina essa classe de colisão.
+>
+> **Fase 2 (V21–V30) neste plano:** V21 ✅ · V22 ✅ · V23 ✅ · V24 ✅ · V25 ✅ · V26 ✅ — mais a continuação do
+> `current_version_id` (PRs #1526 e #1532), que fecha a decisão 33aa. **V27–V30 ⏭️ transferidas para o V4.**
+>
+> **Regra a partir daqui:** nenhuma migration nova e nenhuma RPC do Talk X criada por este plano.
+> O V3 passa a receber **apenas documentação**.
 
 # Talk X · Campanhas — Plano V3: 100 etapas para finalizar a implantação
 
@@ -161,6 +174,9 @@ mesmos arquivos (`talkxShared.tsx` é o ponto de colisão — quem mexer nele ab
 
 # FASE 2 — WIZARD E LANÇAMENTO (V21–V30)
 
+> **Status em 2026-10-02:** fechadas aqui **V21–V26** (6 de 10, todas com PR mergeado e evidência abaixo).
+> **V27–V30 transferidas para o V4** — ver o bloco de handoff antes da V27.
+
 ### V21 · Flags de lançamento persistidas
 **Fazer:** migration `talkx_campaigns add respect_suppression bool not null default true, confirm_consent bool not null default false, launched_by uuid references profiles(id), launched_at timestamptz`; `save_talkx_campaign_draft` aceita as flags; `launch()` grava `launched_by/at` via `transition_talkx_campaign`; checks do passo 3 gravam `respect_suppression`; `respect_suppression=false` só admin + confirmação; KPI "Campanhas protegidas" (V72) passa a ter fonte.
 **Aceite:** hidratação restaura as flags; agente não consegue desmarcar.
@@ -170,25 +186,53 @@ mesmos arquivos (`talkxShared.tsx` é o ponto de colisão — quem mexer nele ab
 **Hoje:** `ed.setStep` (`TalkXWizardDelivery.tsx:154`) é revertido pelo efeito de rota (`TalkXCampaignWizard.tsx:74-79`).
 **Fazer:** "Editar" chama o navegador de rota (`talkxWizardRoute`) com `step=N`; teste em `TalkXView.route.test.tsx`.
 **Aceite:** clicar Editar na revisão abre o passo certo e a URL muda.
+**✅ FEITO 2026-10-01 — PR [#1464](https://github.com/adm01-debug/Zapp_Web_V2/pull/1464) (squash `f4de03c226`):** "Editar" passou a navegar pela rota (`talkxWizardRoute` com `step=N`) em vez de `ed.setStep`, que era revertido pelo efeito de rota (`TalkXCampaignWizard.tsx:74-79`); teste em `TalkXView.route.test.tsx` cobre o clique e a mudança de URL.
 
 ### V23 · Rascunho restaura tudo
 **Hoje:** `audience_filters` volta a `'all'` (`useCampaignEditor.ts:222-227`); `respectSuppression` e o passo não são restaurados; `openEdit` força `step:1`.
 **Fazer:** hidratar filtros, flags e `step` salvo (coluna `draft_step int` opcional via `save_talkx_campaign_draft`); indicador "Rascunho salvo há X"; teste de hidratação completa (`useCampaignEditor.test.tsx`).
 **Aceite:** sair no passo 2 com filtros → reabrir → passo 2 e filtros iguais.
+**✅ FEITO 2026-10-01 — PR [#1475](https://github.com/adm01-debug/Zapp_Web_V2/pull/1475) (squash `a5116ae317`):** coluna `draft_step` (migration `20260930770000_talkx_v23_draft_step`) e `save_talkx_campaign_draft` restaurando passo e filtros; `useCampaignEditor` hidrata `audience_filters`, `respectSuppression` e o passo salvo; indicador "Rascunho salvo há X". Harness `scripts/db-audit/talkx-v23-draft-step.test.sh`.
+**Nota de CI (não era do diff):** o check `Unit Tests` chegou a ficar vermelho por defeito pré-existente em `tests/contracts/contraste-aa-componentes.contract.test.ts` (`--dark` em `src/styles/tokens.css:161`) — resolvido no PR #1478.
 
 ### V24 · Filtros de audiência reais e compartilhados com segmentos
 **Hoje:** UI expõe Busca/Empresa/Tag; estados cidade/grupo/inativo/aniversário mortos e fora do SELECT; `audience_filters` é snapshot solto.
 **Fazer:** passo 1 usa o mesmo `RULE_FIELDS`/`buildFilter` dos segmentos (campos validados no `schema-catalog.json`: `status`, `company`, `tags`, `city`, `state`, `assigned_to`, `pipeline_stage`); `audience_filters` guarda as regras (mesmo JSON do segmento); remover estados mortos; debounce + `signal` nas contagens; `TalkXContactSelector` virtualizado.
 **Aceite:** 6 filtros funcionam com teste ligado à query; `useTalkXSegments.test.ts` cobre os novos campos.
+**✅ FEITO 2026-10-01 — PR [#1498](https://github.com/adm01-debug/Zapp_Web_V2/pull/1498) (squash `201b74d956`):** o passo 1 passou a usar o **mesmo motor de regras dos segmentos** (`rulesToPostgrest` + `RULE_FIELDS`; o `buildFilter` que o plano citava **não existia**), com `audienceRules: SegmentRules`, `resolveAudience`/`countAudience`, debounce de 350 ms e `TalkXContactSelector` virtualizado; `assigned_to` entrou como kind `uuid`.
+**Divergência do plano (medida):** `pipeline_stage`, `status`, `group` e `birthday` **não existem** em `public.contacts` — os campos foram validados contra o `schema-catalog.json` antes de entrar.
 
 ### V25 · Passo 1: responsável, validação e segmentos ativos
 **Fazer:** campo Responsável (`profiles`, default usuário; grava `created_by`/`owner`); nome ≥ 3; objetivo com ícone; só segmentos `status='active'`; conexão continua no passo 3 (E65) com estado `TalkXWhatsAppDisconnectedState` quando não há conexão `connected`.
 **Aceite:** testes de validação; E2E V10 ajustado.
+**✅ FEITO 2026-10-01 — PR [#1508](https://github.com/adm01-debug/Zapp_Web_V2/pull/1508) (squash `cf697e2bda`):** coluna `owner uuid REFERENCES profiles(id) ON DELETE SET NULL` (migration `20261001271230_talkx_v25_campaign_owner`) com `save_talkx_campaign_draft` gravando `owner` no INSERT/UPDATE/idempotência; nome ≥ 3 com aviso `role="alert"`; `OBJECTIVES` com ícone; só segmentos `status='active'`; Select "Responsável" com default do usuário logado; `TalkXWhatsAppDisconnectedState` nos passos **1 e 3**. Harness `talkx-v25-owner.test.sh` (RED antes + dentes por mutação).
+**Divergências do plano (medidas):** 4 das 5 premissas tinham gap real e o campo Responsável **não existia**; o `<p>` que o plano mandava trocar estava no passo **1**, não no 3; `owner` foi **criado** em vez de reusar `created_by` porque a RPC usa `created_by` como identidade do rascunho (`ON CONFLICT (created_by, draft_creation_key)`) e sobrescrevê-lo quebraria a unicidade. O E2E `talkx.spec.ts:148` tinha comentários mentirosos sobre `length > 0`/two comboboxes — corrigidos.
 
 ### V26 · Um editor de mensagem para template e wizard
 **Hoje:** passo 2 é `Textarea` simples; template tem toolbar; sem highlight/validação de variável.
 **Fazer:** extrair `TalkXMessageEditor` (toolbar `*_-`, emoji, link, inserir variável no cursor, contador por limite do provedor, highlight `{{var}}` por overlay, aviso de variável desconhecida) e usar nos dois; aceitar só-mídia; Sheet de templates em modo seleção grava `template_id` e **versão** (`template_version_id`).
 **Aceite:** mesma saída de `personalizePreview` nos dois lugares (teste de paridade); dirty-check.
+**✅ FEITO 2026-10-01 — PR [#1520](https://github.com/adm01-debug/Zapp_Web_V2/pull/1520) (squash `d6bff666b9`):** `src/components/talkx/TalkXMessageEditor.tsx` novo — toolbar (negrito/itálico/lista/emoji/link), inserir variável no cursor, contador pelo limite do provedor, overlay `{{var}}` com scroll sync e aviso de variável desconhecida — usado no passo 2 (`limit=4096`) **e** no editor de template (`limit=1024`); aceitar **só-mídia** (o gate do passo 2 passou a `texto OU (hasMedia && mediaUrl)`); coluna `template_version_id` (migration `20261001291230_talkx_v26_template_version`). Testes: `TalkXMessageEditor.test.tsx` (9) + `useCampaignEditor.test.tsx` (+10).
+**Decisão 33aa (Joaquim) e a continuação:** a única versão arquivada até então era o snapshot **PRÉ-edição** (`update_talkx_template_with_snapshot` arquiva `v_template` e só depois faz o UPDATE), então **nenhum** id apontava para o conteúdo vivo — gravar `template_version_id` ali seria dado enganoso. Na V26 o front manda `null` (coluna e RPC prontas) e a continuação veio em tarefa própria: o **PR [#1526](https://github.com/adm01-debug/Zapp_Web_V2/pull/1526) (`a1249ede92`)** criou `talkx_templates.current_version_id` + backfill, mas o DDL foi **abortado** pelo trigger `trg_guard_talkx_template_update`; o **PR [#1532](https://github.com/adm01-debug/Zapp_Web_V2/pull/1532) (`aa7feb08b9`)** entregou a versão que passa pelo guard (função `SECURITY DEFINER` com `OWNER TO service_role`, dropada no fim). Provado no banco: **5/5** templates backfillados, todos com ponteiro para versão de conteúdo **igual ao vivo**. Isso fecha a parte (i) da decisão 33aa — o ponteiro de versão agora tem origem confiável.
+**Divergências do plano (medidas):** o "Sheet de templates" é **grid de cards** (`TalkXCampaignWizard.tsx:511`), não Sheet; o overlay de `{{var}}` foi **medido em Chromium real** e **não** desalinha (o `<textarea>` já herda `overflow-wrap: break-word` da UA) — só documentado, sem mudança de código.
+
+### ⏭️ V27–V30 · TRANSFERIDAS PARA O V4
+
+> Estas quatro etapas **não serão executadas neste plano**. Passam para o equivalente no **V4** (`TALK X 02`), dono do Talk X desde 01/10/2026.
+>
+> | etapa | o que fica para o V4 |
+> |---|---|
+> | **V27** | mídia: bucket privado `talkx-media`, upload com progresso, URL assinada no envio, `media_url_snapshot` |
+> | **V28** | rail do wizard com `PhonePreview` 320×640 e "Ver no celular" |
+> | **V29** | layout do wizard: rodapé sticky, `Sheet` de resumo, breadcrumb, dirty real |
+> | **V30** | recorrência (`recurrence jsonb`, `nextOccurrence()`, clonagem pelo scheduler) e validação de agendamento |
+>
+> **Contexto medido aqui que evita retrabalho no V4:**
+> - `talkx_templates.current_version_id` **existe e está backfillado** (PRs #1526/#1532) — o ponteiro de versão agora tem origem confiável.
+> - **Migration que escreve em `talkx_templates` é barrada** pelo trigger `trg_guard_talkx_template_update`: só passa `current_user = service_role`, ou mudança exclusiva de `use_count` (+1), ou snapshot casado por `statement_timestamp()` + `saved_by = get_profile_id_for_user(auth.uid())`. Backfill direto exige função `SECURITY DEFINER` com `OWNER TO service_role`.
+> - `ON DELETE SET NULL` da FK `talkx_templates.current_version_id` **não dispara em runtime** (a ação referencial roda como o dono da tabela, e o guard só libera `service_role`).
+> - O applier de migration **trunca a saída em 4000 caracteres** — consultas grandes devem ser fatiadas por `substr`.
+> - Harness de migration em `postgres:17-alpine` funcionando como modelo: `scripts/db-audit/talkx-current-template-version.test.sh` (reproduz os guards reais e o applier não-superuser membro de `service_role`).
 
 ### V27 · Mídia: bucket privado, upload, URL assinada, snapshot
 **Hoje:** nenhum bucket talkx; mídia = URL digitada; RPC exige `^https://`.

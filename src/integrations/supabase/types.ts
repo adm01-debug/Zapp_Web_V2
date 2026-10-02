@@ -4772,6 +4772,8 @@ export type Database = {
           provider_dispatch_started_at: string | null
           read_at: string | null
           recipient_id: string
+          replied_at: string | null
+          reply_attribution: string | null
           sent_at: string | null
           status: Database["public"]["Enums"]["multiplix_item_status"]
           updated_at: string
@@ -4796,6 +4798,8 @@ export type Database = {
           provider_dispatch_started_at?: string | null
           read_at?: string | null
           recipient_id: string
+          replied_at?: string | null
+          reply_attribution?: string | null
           sent_at?: string | null
           status?: Database["public"]["Enums"]["multiplix_item_status"]
           updated_at?: string
@@ -4820,6 +4824,8 @@ export type Database = {
           provider_dispatch_started_at?: string | null
           read_at?: string | null
           recipient_id?: string
+          replied_at?: string | null
+          reply_attribution?: string | null
           sent_at?: string | null
           status?: Database["public"]["Enums"]["multiplix_item_status"]
           updated_at?: string
@@ -7087,10 +7093,12 @@ export type Database = {
           name: string
           objective: string
           outcome_unknown_count: number
+          owner: string | null
           pause_reason: string | null
           paused_at: string | null
           replied_count: number
           respect_suppression: boolean
+          responsible_id: string | null
           revision: number
           schedule_timezone: string
           scheduled_at: string | null
@@ -7104,12 +7112,15 @@ export type Database = {
           started_at: string | null
           status: string
           template_id: string | null
+          template_version_id: string | null
           total_recipients: number
           typing_delay_max: number
           typing_delay_min: number
           updated_at: string
           variables_config: Json
           whatsapp_connection_id: string | null
+          worker_id: string | null
+          worker_lease_expires_at: string | null
         }
         Insert: {
           audience_filters?: Json
@@ -7133,10 +7144,12 @@ export type Database = {
           name: string
           objective?: string
           outcome_unknown_count?: number
+          owner?: string | null
           pause_reason?: string | null
           paused_at?: string | null
           replied_count?: number
           respect_suppression?: boolean
+          responsible_id?: string | null
           revision?: number
           schedule_timezone?: string
           scheduled_at?: string | null
@@ -7150,12 +7163,15 @@ export type Database = {
           started_at?: string | null
           status?: string
           template_id?: string | null
+          template_version_id?: string | null
           total_recipients?: number
           typing_delay_max?: number
           typing_delay_min?: number
           updated_at?: string
           variables_config?: Json
           whatsapp_connection_id?: string | null
+          worker_id?: string | null
+          worker_lease_expires_at?: string | null
         }
         Update: {
           audience_filters?: Json
@@ -7179,10 +7195,12 @@ export type Database = {
           name?: string
           objective?: string
           outcome_unknown_count?: number
+          owner?: string | null
           pause_reason?: string | null
           paused_at?: string | null
           replied_count?: number
           respect_suppression?: boolean
+          responsible_id?: string | null
           revision?: number
           schedule_timezone?: string
           scheduled_at?: string | null
@@ -7196,12 +7214,15 @@ export type Database = {
           started_at?: string | null
           status?: string
           template_id?: string | null
+          template_version_id?: string | null
           total_recipients?: number
           typing_delay_max?: number
           typing_delay_min?: number
           updated_at?: string
           variables_config?: Json
           whatsapp_connection_id?: string | null
+          worker_id?: string | null
+          worker_lease_expires_at?: string | null
         }
         Relationships: [
           {
@@ -7233,6 +7254,34 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "talkx_campaigns_owner_fkey"
+            columns: ["owner"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_campaigns_owner_fkey"
+            columns: ["owner"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_campaigns_responsible_id_fkey"
+            columns: ["responsible_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_campaigns_responsible_id_fkey"
+            columns: ["responsible_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "talkx_campaigns_segment_id_fkey"
             columns: ["segment_id"]
             isOneToOne: false
@@ -7244,6 +7293,13 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "talkx_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_campaigns_template_version_id_fkey"
+            columns: ["template_version_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_template_versions"
             referencedColumns: ["id"]
           },
           {
@@ -9734,6 +9790,14 @@ export type Database = {
           whatsapp_instance_name: string
         }[]
       }
+      claim_talkx_campaign_worker: {
+        Args: {
+          p_campaign_id: string
+          p_lease_seconds?: number
+          p_worker: string
+        }
+        Returns: boolean
+      }
       claim_talkx_recipient: {
         Args: {
           p_campaign_id: string
@@ -10275,6 +10339,7 @@ export type Database = {
           role: string
         }[]
       }
+      get_talkx_cron_secret: { Args: never; Returns: string }
       get_team_conversation_previews: {
         Args: never
         Returns: {
@@ -10477,6 +10542,27 @@ export type Database = {
         }
         Returns: Json
       }
+      multiplix_confirm_dispatch: {
+        Args: {
+          p_actor_id: string
+          p_allow_manage_all: boolean
+          p_correlation_id?: string
+          p_dispatch_id: string
+          p_expected_version: number
+          p_scheduled_at?: string
+        }
+        Returns: {
+          block_count: number
+          created: boolean
+          dispatch_id: string
+          dispatch_version: number
+          items_created: number
+          items_total: number
+          recipient_count: number
+          scheduled_at: string
+          status: Database["public"]["Enums"]["multiplix_dispatch_status"]
+        }[]
+      }
       multiplix_connection_daily_usage: {
         Args: { p_connection_id: string }
         Returns: Json
@@ -10665,6 +10751,10 @@ export type Database = {
       }
       release_multiplix_recipient_claim: {
         Args: { p_claim_token: string; p_recipient_id: string }
+        Returns: boolean
+      }
+      release_talkx_campaign_worker: {
+        Args: { p_campaign_id: string; p_worker: string }
         Returns: boolean
       }
       release_talkx_recipient_claim: {
@@ -10972,6 +11062,21 @@ export type Database = {
       talkx_increment_delivered: {
         Args: { p_campaign_id: string }
         Returns: undefined
+      }
+      talkx_next_recipients: {
+        Args: { p_campaign_id: string; p_limit?: number }
+        Returns: {
+          attempt_count: number
+          contact_company: string
+          contact_id: string
+          contact_name: string
+          contact_nickname: string
+          contact_phone: string
+          personalized_message: string
+          recipient_id: string
+          retry_after: string
+          status: string
+        }[]
       }
       talkx_overview_stats: {
         Args: { p_from: string; p_to: string }
