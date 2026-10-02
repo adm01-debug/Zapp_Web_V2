@@ -1,7 +1,8 @@
-import { test, expect, type Page, type Route } from '@playwright/test';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { test, expect, type Page } from '@playwright/test';
 import { installFakeSession } from './fixtures/talkx-demo';
+import {
+  json, mockAppShell, mockMapboxSearchbox, querObjetoUnico, type Registro,
+} from './fixtures/mapa-mocks';
 
 /**
  * E71 — E2E do picker de localização do inbox ("Escolher no Mapa").
@@ -22,17 +23,14 @@ import { installFakeSession } from './fixtures/talkx-demo';
  *
  * REDE DA MAPBOX: interceptada com `page.route` sobre o padrão glob do path
  * `searchbox/v1` (qualquer host, qualquer subpath) e as fixtures de E68
- * (`src/lib/__fixtures__/mapbox/`), exatamente como pede o texto da etapa.
+ * (`src/lib/__fixtures__/mapbox/`), exatamente como pede o texto da etapa. O mock de
+ * identidade/RPCs/edge e o da Mapbox vivem em `e2e/fixtures/mapa-mocks.ts`, compartilhados
+ * com a spec do E73 (cadastro de contato) — extraídos daqui sem mudar comportamento.
  */
 
 const CONTACT_ID = '04dff4dc-c6b1-4283-ac22-bd8639804759';
 const FAKE_USER_ID = '00000000-0000-4000-8000-000000000001';
 const NOW = '2026-10-02T12:00:00.000Z';
-const FIXTURES = join(import.meta.dirname, '..', 'src', 'lib', '__fixtures__', 'mapbox');
-
-function fixture(nome: string): unknown {
-  return JSON.parse(readFileSync(join(FIXTURES, nome), 'utf8')) as unknown;
-}
 
 // Contato fixo E2E (mesmo id de `e2e/fixtures/e2e-contact.ts`) — row completa do tipo
 // `contacts.Row`, para o InboxFilters/list do inbox renderizar o item.
@@ -56,34 +54,11 @@ const MENSAGEM_E2E = {
   is_read: false, external_id: null,
 };
 
-const PERFIL_FAKE = { id: FAKE_USER_ID, user_id: FAKE_USER_ID, name: 'Visual E2E', email: 'visual@test.local', role: 'admin' };
-
-type Registro = { writesApp: string[]; mapbox: string[] };
-
-function json(route: Route, body: unknown, status = 200) {
-  return route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
-}
-
-/** `.maybeSingle()` do supabase-js manda Accept object; `.select()` normal espera array. */
-function querObjetoUnico(route: Route): boolean {
-  return String(route.request().headers()['accept'] ?? '').includes('pgrst.object');
-}
-
 /**
- * Backend fake do app shell + inbox, equivalente em espírito ao `mockTalkXBackend`:
- * leitura devolve a fixture, escrita é bloqueada (403) e nada sai para a rede real.
+ * Dados do módulo do inbox: contato fixo e mensagem de fixture. Identidade, RPCs do
+ * shell e edge ficam em `mockAppShell` (`e2e/fixtures/mapa-mocks.ts`), chamado antes.
  */
 async function mockSupabaseBackend(page: Page, registro: Registro): Promise<void> {
-  // Playwright casa as rotas na ordem INVERSA de registro (a última registrada vence):
-  // por isso toda rota genérica usa negative lookahead para nunca roubar o endpoint
-  // específico que ela cobriria (ex.: `functions/v1/` vs `functions/v1/get-mapbox-token`).
-  await page.route(/\/rest\/v1\/profiles/, (route) =>
-    json(route, querObjetoUnico(route) ? PERFIL_FAKE : [PERFIL_FAKE]));
-  await page.route(/\/rest\/v1\/user_roles/, (route) =>
-    json(route, querObjetoUnico(route) ? { role: 'admin' } : [{ role: 'admin' }]));
-  await page.route(/\/rest\/v1\/user_settings/, (route) =>
-    json(route, querObjetoUnico(route) ? null : []));
-
   await page.route(/\/rest\/v1\/contacts/, (route) => {
     if (route.request().method() !== 'GET') {
       registro.writesApp.push(`${route.request().method()} ${new URL(route.request().url()).pathname}`);
@@ -100,57 +75,6 @@ async function mockSupabaseBackend(page: Page, registro: Registro): Promise<void
     }
     return json(route, [MENSAGEM_E2E]);
   });
-
-  // RPCs: permissão nomeada liberada; contagem do guarda de custo = 0 (autocomplete liberado).
-  await page.route(/\/rest\/v1\/rpc\/user_has_permission/, (route) => json(route, true));
-  await page.route(/\/rest\/v1\/rpc\/count_searchbox_sessions_this_month/, (route) => json(route, 0));
-  await page.route(/\/rest\/v1\/rpc\/(?!user_has_permission|count_searchbox_sessions_this_month)/, (route) => json(route, null));
-
-  // Edge functions: só o token do Mapbox importa; o resto é bloqueado.
-  await page.route(/\/functions\/v1\/get-mapbox-token/, (route) => json(route, { token: 'pk.e2e-location-picker' }));
-  await page.route(/\/functions\/v1\/(?!get-mapbox-token)/, (route) => json(route, {}));
-
-  // Catch-all das leituras do app shell não cobertas acima (nunca overlap com as rotas
-  // específicas por causa do negative lookahead).
-  await page.route(/\/rest\/v1\/(?!profiles|user_roles|user_settings|contacts|messages|rpc)[a-z_]+/, (route) =>
-    route.request().method() === 'GET' ? json(route, querObjetoUnico(route) ? null : []) : json(route, { message: 'blocked' }, 403));
-}
-
-/**
- * E71 · passo 3: toda a rede da Mapbox é interceptada por UM padrão glob
- * (qualquer host + `searchbox/v1` + qualquer subpath) e respondida com as fixtures de E68.
- *
- * Observação honesta: E68 NÃO tem fixture de `/retrieve` para "avenida paulista 1000"
- * (só `retrieve-xbz-brindes.json`, que é do XBZ). O corpo de
- * `forward-avenida-paulista-1000.json` tem exatamente o shape que o parser de `/retrieve`
- * lê (`features[0].geometry.coordinates` + `properties.name`/`full_address`) — mesmo dado
- * do E47, portanto, e nenhum shape inventado. É ele que responde o `/retrieve` aqui, para
- * o cartão de confirmação sair com o nome "Avenida Paulista, 1000".
- *
- * E72: com `failSuggest: true`, o `/suggest` responde 500 — o E68 NÃO tem fixture de 500
- * (só `rate-limit-429.json`), então esta falha é montada INLINE aqui (status 500 + corpo de
- * erro genérico), e o `/forward` continua respondendo com a fixture do E68. É o cenário do
- * E72: `/suggest` cai por rota → a cascata de fallback do `useAddressAutocomplete` chama
- * `searchPlaces()` → `/forward` → a lista se preenche.
- */
-async function mockMapboxSearchbox(
-  page: Page,
-  registro: Registro,
-  opts: { failSuggest?: boolean } = {},
-): Promise<void> {
-  await page.route('**/searchbox/v1/**', (route) => {
-    const url = route.request().url();
-    registro.mapbox.push(url);
-    if (url.includes('/searchbox/v1/suggest')) {
-      // E72: 500 inline (o E68 não tem fixture de 500) — causa `kind: 'http'`, que É rota
-      // quebrada e por isso cai no `/forward` (FORWARD_FALLBACK_KINDS em useAddressAutocomplete).
-      if (opts.failSuggest) return json(route, { message: 'Internal Server Error' }, 500);
-      return json(route, fixture('suggest-avenida-paulista-1000.json'));
-    }
-    if (url.includes('/searchbox/v1/retrieve/')) return json(route, fixture('forward-avenida-paulista-1000.json'));
-    if (url.includes('/searchbox/v1/forward')) return json(route, fixture('forward-avenida-paulista-1000.json'));
-    return json(route, {});
-  });
 }
 
 test.describe('E71 · picker de localização (combobox de endereço, sem enviar)', () => {
@@ -159,6 +83,7 @@ test.describe('E71 · picker de localização (combobox de endereço, sem enviar
 
     // Mocks ANTES da navegação (precisam estar registrados quando o app faz as chamadas).
 
+    await mockAppShell(page, registro);
     await mockSupabaseBackend(page, registro);
     await mockMapboxSearchbox(page, registro);
     await installFakeSession(page);
@@ -223,6 +148,7 @@ test.describe('E71 · picker de localização (combobox de endereço, sem enviar
   test('E72 · /suggest 500 → lista mostra o resultado do /forward e Enter seleciona', async ({ page }) => {
     const registro: Registro = { writesApp: [], mapbox: [] };
 
+    await mockAppShell(page, registro);
     await mockSupabaseBackend(page, registro);
     // Única diferença do E71: `failSuggest` responde 500 no /suggest (inline, sem fixture).
     await mockMapboxSearchbox(page, registro, { failSuggest: true });
