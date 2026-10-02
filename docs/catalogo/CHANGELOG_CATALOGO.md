@@ -104,3 +104,70 @@ Gates completos rodados de novo pos-reconciliacao antes do push.
   - `handleKpiSelect` ganhou o branch `low_stock` (o filtro `low_stock: true` já existia na edge e em `CatalogFilters` desde a E22, mas nenhum caminho de UI o acionava). Novo estado `lowStock` entra em `buildFilters`, no efeito de debounce, em `hasFilters` e em `clearFilters` — sem os quatro o botão filtraria só na primeira vez ou deixaria "Limpar filtros" incompleto.
   - 3 testes novos em `__tests__/ExternalProductManagement.test.tsx`: (1) botão do alerta aplica `low_stock=true` na busca; (2) com "Em destaque" ativo, "Exportar catálogo" chama `exportCatalogCsv` com `filterKey: 'featured'` + `{ is_featured: true }`; (3) sem filtro ativo, `filterKey: 'todos'` + `{}`. O módulo `catalogExport` é mockado (o fetcher real da edge não roda em teste).
   - Toca também `CHANGELOG.md` (raiz) — ver a entrada de 01/10/2026 lá.
+
+## FASE 6 — Abas, tela principal e estados (CT-57–CT-66) — Bloco G (01/10/2026)
+
+- **#1490** · `feat(catalogo): atalhos de teclado, filtros em reducer e chip de flag no gerenciador` · merge `fc24b866` · 2026-10-01 — é **o PR de front do bloco G** (Fase 6). Fecha **CT-62** (filtros num `useReducer` único; `eslint-disable` do arquivo de 4→0), **CT-61** (`/` foca a busca, `Esc` limpa, `Ctrl/Cmd+F` foca, nas duas telas) e **CT-65** (chip "Mostrando só Novidades · limpar"); registra a decisão do **CT-58** (manter o `Tabs` cru do shadcn — `DashboardTabs` apagaria os badges). Abertos com motivo: **CT-63** (aceite do plano inalcançável — `Date.now()` já está fora do render), **CT-64** e **CT-60 (fornecedor)** dependem do sistema externo PromoGifts.
+- **#1396** · `feat(catalogo): fecha 13 etapas parciais do plano com evidencia por etapa` · merge `a91c4fce` · 2026-10-01 — inclui **CT-59** (estados de erro por código na edge) e **CT-60** (contagem de categoria).
+- **#1409** · `fix(catalogo): oculta "Mais pedidos" no front e registra pendencias do PromoGifts` · merge `94e193ad` · 2026-10-01 — **CT-22** e registro das pendências **CT-03**/**CT-60 (fornecedor)** no banco externo.
+
+## FASE 7 — Acessibilidade e performance (CT-67–CT-76) — Bloco H (01–02/10/2026)
+
+- **#1500** · `feat(catalogo): acessibilidade (axe), foco visivel, alt nome+cor e modais em lazy` · merge `9f41e049` · 2026-10-02 — **o PR de front do bloco H** (Fase 7). Fecha **CT-67** (`vitest-axe` fixo como devDependency + 6 testes), **CT-68** (região viva + anel de foco por token), **CT-69** (`alt` "Nome — Cor"; o **contraste NÃO foi cumprido** — 13/24 pares abaixo de 4,5:1, item aberto por decisão de produto), **CT-71** (4 modais em `lazy()` de escopo de módulo) e **CT-75** (bundle inicial medido e registrado em `PERF.md`). Abertos com motivo: **CT-73**/**CT-74** exigem edge real / página autenticada; **CT-76** depende do CT-74.
+- **#1396** — **CT-70** (`useReducedMotion` nos 3 arquivos animados) e **CT-72** (`priority`/`sizes`/`content-visibility`).
+
+## PRs do catálogo mergeadas desde 12/09/2026 (enumeradas com `gh pr list`)
+
+Fonte: `gh pr list --state merged --search "catalogo merged:>=2026-09-12"` (leitura em
+2026-10-02). Lista **PRs de escopo Catálogo**; PRs de *sync de artefatos do banco* que
+apenas mencionam "catálogo" no título (`chore(db): sincronizar … catálogo …`) foram
+omitidos por serem infraestrutura, não entrega do módulo.
+
+| PR | merge | título |
+|---|---|---|
+| #366 | 2026-09-12 | feat(catalog): E01+E02 base do módulo Catálogo + E21 edge promogifts-catalog v2 |
+| #367 | 2026-09-12 | chore(catalog): E03–E08 saneamento completo da Fase 0 |
+| #370 | 2026-09-12 | feat(catalog): E11–E20 design system do módulo Catálogo (Fase 1) |
+| #383 | 2026-09-13 | feat(catalog): E22–E28 backend do módulo Catálogo (Fase 2) |
+| #405 | 2026-09-16 | feat(catalog): E31 layout grid · E32 header real · E33 KPIs com useCatalogStats |
+| #412 | 2026-09-16 | feat(catalog): E34 chips categoria · E35 persist sort/view · E37 ordenar por · E39 empty states |
+| #415 | 2026-09-16 | feat(catalog): E34 chips de categoria + deep link |
+| #417 | 2026-09-16 | fix(catalog): corrige teste de empty state vermelho no main (CI quebrado) |
+| #422 | 2026-09-16 | feat(catalog): E36 sheet filtros avançados · E38 busca ⌘K produtos |
+| #443 | 2026-09-17 | fix(catalog): tira lucide-react inteiro do bundle inicial (Build vermelho desde o PR #415) |
+| #463 | 2026-09-22 | docs(catalog): E40 QA · F3 fechado (3143 tests · bundle 336KB · E31–E39 ✅) |
+| #468 | 2026-09-22 | feat(catalog): E41 CatalogProductCard · E42 modo lista · E44 skeleton |
+| #471 | 2026-09-22 | feat(catalog): E43 favoritos — useCatalogFavorites (localStorage + toast + rollback) |
+| #474 | 2026-09-22 | fix(catalog): migra favoritos localStorage → Supabase (catalog_favorites) + remove hook duplicado |
+| #477 | 2026-09-22 | fix(inbox): "Produto enviado!" falso no catálogo + Cancelar do TransferDialog (follow-up do #464) |
+| #488 | 2026-09-22 | feat(catalog): E47 seleção múltipla · CatalogBulkBar · checkbox nos cards · envio em massa (MVP) |
+| #492 | 2026-09-22 | feat(catalog): E48 wiring CatalogBulkSendDialog + E49 aba Favoritos |
+| #563 | 2026-09-24 | feat(catalog): F5 E51-E53 + E56 — rail direito com dados reais |
+| #573 | 2026-09-24 | fix(catalog): fecha os 4 apontamentos do review do rail (E56) |
+| #579 | 2026-09-24 | chore(catalogo): risca E54 "Sincronizar catálogo" do plano |
+| #583 | 2026-09-24 | feat(catalog): Fase 6 - completa lacunas do painel de detalhe (E59-E68) |
+| #586 | 2026-09-24 | chore(catalogo): registra fechamento da Fase 6 (Sheet em vez de modal 2 colunas) |
+| #591 | 2026-09-24 | feat(catalog): Fase 7 - fecha lacunas do envio (E72-E75 parcial) |
+| #600 | 2026-09-24 | fix: filtro de material/cor no catálogo retornava 0 resultado |
+| #614 | 2026-09-24 | feat(catalog): Fase 7 - fecha rascunho/restauração e deep link (E77-E78) |
+| #680 | 2026-09-25 | feat(catalog): busca rápida (⌘K) também abre o dialog de envio direto |
+| #681 | 2026-09-25 | docs(catalog): registra fechamento da Fase 7 + auditoria de 24/09 |
+| #714 | 2026-09-25 | fix(promogifts-catalog): 503 em list_products quando offset > total do filtro |
+| #1033 | 2026-09-27 | chore(e22): trigger functions no catálogo + checkboxes E02/E09/E12/E22/E46 |
+| #1178 | 2026-09-29 | docs(catalog): auditoria exaustiva do plano de 100 etapas + plano de finalização (CT-01..CT-100) |
+| #1184 | 2026-09-29 | feat(catalogo): caption na primeira foto, toasts sonner e pre-checagem de envio (CT-01..CT-09) |
+| #1192 | 2026-09-29 | feat(catalogo): chat envia pelo SendProductDialog com o contato da conversa (CT-13..CT-17) |
+| #1396 | 2026-10-01 | feat(catalogo): fecha 13 etapas parciais do plano com evidencia por etapa |
+| #1409 | 2026-10-01 | fix(catalogo): oculta "Mais pedidos" no front e registra pendencias do PromoGifts |
+| #1425 | 2026-10-01 | refactor(sonar): extrai mocks/polyfills compartilhados dos testes de catálogo |
+| #1426 | 2026-10-01 | feat(catalogo): fecha bloco B/C — rate limit por acao, export CSV, rail, lista e detalhe |
+| #1459 | 2026-10-01 | perf(keyboard): palette do ⌘K em lazy — grupo Talk X e busca de catálogo saem do chunk de entrada |
+| #1467 | 2026-10-01 | feat(catalogo): fecha bloco D — envio pelo contato, historico e view de envios |
+| #1482 | 2026-10-01 | feat(catalogo): bloqueia envio de produto sem WhatsApp (painel, deep link) e registra CT-53 |
+| #1490 | 2026-10-01 | feat(catalogo): atalhos de teclado, filtros em reducer e chip de flag no gerenciador |
+| #1500 | 2026-10-02 | feat(catalogo): acessibilidade (axe), foco visivel, alt nome+cor e modais em lazy |
+
+> **Nota de merge.** As seções F6/F7 acima foram acrescentadas por outro bloco enquanto este
+> arquivo é compartilhado; o restante da FASE 4 (`#1467` — CT-39/40/44/45/48/51/52/54/55/57/87),
+> bloco B/C (`#1426`) e bloco A/parciais (`#1396`) já estão provados no plano
+> `PLANO_FINALIZACAO_CATALOGO_100.md`. Em caso de conflito, conciliar — não descartar um lado.

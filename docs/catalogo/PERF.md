@@ -55,7 +55,7 @@ O 16 não é arbitrário: viewport de 720px ÷ 72px = 10 linhas visíveis + over
 | --- | --- | --- |
 | `bunx vitest run src/components/catalog/__tests__/ExternalProductCatalog.test.tsx` | 13 tests, `Duration 1.91s` (WALL 2.25s) | 19 tests, `Duration 2.80s` e `2.03s` |
 | `bunx vitest run .../ExternalProductCatalog.virtualizacao.test.tsx` (arquivo novo, CT-27) | — (não existia) | 3 tests, `Duration 2.08s` e `1.60s` |
-| `bunx vitest run src/components/catalog` (diretório inteiro) | **não medido antes desta mudança** | 14 files, 298 tests, `Duration 9.56s` (WALL 9.93s) |
+| `bunx vitest run src/components/catalog` (diretório inteiro) | **não medido antes desta mudança** | 14 files, 298 tests, `Duration 9.56s` (WALL 9.93s) — ⚠️ **histórico/defasado**: remedido em 2026-10-02 como 23 files/426 tests/`11.51s` (ver §CT-80 abaixo) |
 
 Atenção: o tempo de suite varia de rodada para rodada no mesmo código (2.80s vs
 2.03s acima, `Start at 13:44` e `13:47`) — a diferença "antes × depois" de uma
@@ -286,3 +286,78 @@ Consolidar os 4 modais num chunk unico recuperaria 2,28 KB, mas quebraria o acei
 109.315 bytes cada): um PNG de ~512px servido como `72x72`, `96x96`, `128x128` etc. Reotimizar cada
 icone no tamanho real libera ~1,4 MB e conserta um bug real de PWA. Esta fora do escopo deste PR
 (`public/`) e merece tarefa propria.
+
+---
+
+## CT-80 — tempo da suíte do módulo (remedido em 2026-10-02)
+
+Medição de **2026-10-02, 00:17–00:18 (-03:00)**, WSL2, `node v24.19.0` / `bun 1.4.0`,
+`vitest 4.1.11`, ambiente `jsdom`. **Substitui o registro de CT-27** (linha 58, mantido
+acima marcado como histórico), que era de outra árvore e de 14 arquivos/298 testes.
+
+| comando | resultado |
+| --- | --- |
+| `bunx vitest run src/components/catalog` | **23 files, 426 tests**, `Duration 11.51s`, **WALL 11.82 s** |
+
+O aceite do CT-80 é "suíte do módulo em < 30 s" → **11,51s de vitest (11,82s WALL): dentro do
+limite**. Contagem de arquivos/tests é a real do diretório hoje (`src/components/catalog/__tests__/`
+tem 23 arquivos), não reciclada do bloco BC.
+
+Saída crua:
+
+```console
+$ bunx vitest run src/components/catalog
+RUN  v4.1.11 .../catalogo-bloco-i-2610020011ce71
+Test Files  23 passed (23)
+     Tests  426 passed (426)
+  Start at  00:17:57
+  Duration  11.51s (transform 7.32s, setup 2.79s, import 26.84s, tests 39.40s, environment 24.74s)
+WALL 11.82 s
+```
+
+> Nota de horário: o relógio do host marca `00:17`, embora a conversa esteja datada de
+> 02/10/2026 — as duas medições (cobertura logo abaixo e tempo aqui) são da mesma sessão,
+> com ~20 s de intervalo.
+
+## CT-79 — cobertura do módulo `src/components/catalog` (medida em 2026-10-02)
+
+**Número: 84,41 % de linhas (1235/1463).** O aceite do CT-79 é "≥ 80 % linhas" → **cumprido**.
+
+**Como foi medido (importante):** a config vigente do projeto **exclui o módulo** da
+cobertura — `vitest.config.ts:17` limita `coverage.include` a `src/lib/**` e `src/services/**`.
+Rodar `vitest --coverage src/components/catalog` **não** mediria o módulo (o argumento filtra
+os *testes*, não o `coverage.include`). **Não editei `vitest.config.ts`**: o `include` foi
+sobrescrito **por CLI**:
+
+```console
+$ bunx vitest run src/components/catalog --coverage --coverage.include='src/components/catalog/**'
+RUN  v4.1.11 .../catalogo-bloco-i-2610020011ce71
+     Coverage enabled with v8
+Test Files  23 passed (23)
+     Tests  426 passed (426)
+  Duration  13.71s (transform 8.47s, setup 4.10s, import 37.07s, tests 49.04s, environment 23.75s)
+
+% Coverage report from v8
+=============================== Coverage summary ===============================
+Statements   : 80.56% ( 1434/1780 )
+Branches     : 79.77% ( 1388/1740 )
+Functions    : 75.88% ( 428/564 )
+Lines        : 84.41% ( 1235/1463 )
+================================================================================
+```
+
+A flag `--coverage.include` **existe e funciona** na versão instalada (vitest 4.1.11). Prova de
+que o override restringiu o escopo ao módulo (e não mediu `src/lib`/`src/services`): o
+`coverage/lcov.info` gerado tem **20 entradas `SF:` e 0 delas fora de `src/components/catalog/`**.
+
+```console
+$ grep -c "^SF:" coverage/lcov.info
+20
+$ grep "^SF:" coverage/lcov.info | grep -vc "src/components/catalog/"
+0
+```
+
+**A config vigente do projeto continua excluindo o módulo.** `vitest.config.ts` não foi tocado
+(piso global de 36/35/43/31 linhas/stmts/funcs/branches segue valendo para `src/lib`+`src/services`).
+Ou seja: o número de 84,41 % só existe com o override de CLI acima; o gate padrão (`bun run test:coverage`)
+não mede `src/components/catalog` e por isso **não** trava 80 % no módulo.
