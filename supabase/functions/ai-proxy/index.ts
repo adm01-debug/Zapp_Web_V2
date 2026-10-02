@@ -725,6 +725,8 @@ Deno.serve(async (req) => {
       log.error("Final provider error", { status: response.status, error: errText.slice(0, 200) });
       await logAiUsageDetached({
         functionName: 'ai-proxy', userId,
+        // IA-051 — id do clique (IA-048) no log de consumo.
+        requestId,
         model: modelUsed,
         durationMs, status: 'error',
         errorMessage: "HTTP " + response.status,
@@ -748,6 +750,8 @@ Deno.serve(async (req) => {
 
     await logAiUsageDetached({
       functionName: 'ai-proxy', userId,
+      // IA-051 — id do clique (IA-048) no log de consumo.
+      requestId,
       model: model || modelUsed || null,
       inputTokens, outputTokens, durationMs,
       status: usedFallback ? 'fallback' : 'success',

@@ -264,6 +264,12 @@ export interface ConversationModelRequest {
   body: ConversationModelPayload;
   log: Logger;
   req: Request;
+  /**
+   * IA-051 — id do clique (IA-048) que originou a requisição. Opcional: quem
+   * chama já o valida no próprio schema (uuid), e o registrador normaliza de
+   * novo — um cliente que não mande nada continua funcionando sem correlação.
+   */
+  requestId?: string | null;
 }
 
 /**
@@ -291,6 +297,8 @@ export async function requestConversationModelJson(
     purpose: request.purpose,
     functionName: request.functionName,
     userId: request.userId,
+    // IA-051 — a correlação atravessa o pipeline até o log de consumo.
+    requestId: request.requestId ?? null,
     system: request.body.system,
     messages: request.body.messages,
     tools: request.body.tools,

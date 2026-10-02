@@ -111,6 +111,8 @@ Se não houver objeções, retorne []`,
             { role: 'user', content: `Mensagens do cliente:\n${clientMessages.join('\n')}` },
           ],
           model: 'google/gemini-3-flash-preview',
+          // IA-051 — o id do clique (IA-048) para o log de consumo do `ai-proxy`.
+          requestId: request.requestId,
         },
       });
 
@@ -162,6 +164,9 @@ Se não houver objeções, retorne []`,
             { role: 'user', content: target.counterArgument },
           ],
           model: 'google/gemini-3-flash-preview',
+          // IA-051 — reescrita é requisição derivada (`snapshotRequest`): id próprio,
+          // mesma geração do clique original.
+          requestId: request.requestId,
         },
       });
       // IA-048 — descarta reescrita de contato/período antigo. O índice pode
