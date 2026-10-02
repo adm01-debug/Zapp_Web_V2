@@ -512,3 +512,27 @@ operador digita (≥ 3 caracteres, debounce 300 ms)
         │
         └─ Enter sem seleção ─► searchPlaces(termo)   [comportamento da #737]
 ```
+
+---
+
+## Apêndice B — fechamento do primeiro mês (E99, medido 2026-10-02)
+
+Registro pedido pelo E99 do plano de continuação. **Medição direta em produção**, somente `select`,
+pela view `searchbox_usage_daily` e por `audit_logs`.
+
+| Métrica | set/2026 (fechado) | out/2026 (parcial, até 02/10) |
+|---|---|---|
+| Sessões de busca | **11** | **1** |
+| Seleções (`searchbox_selected`) | **não instrumentado** | 0 |
+| Envios (`location_sent`) | **não instrumentado** | 0 |
+| Degradações do guarda | **0** | **0** |
+| Custo | **US$ 0,00** | **US$ 0,00** |
+
+- Setembro: 26/09 = 8 sessões · 28/09 = 2 · 30/09 = 1. `contact-form` 7, `picker` 4.
+- Primeira sessão registrada: **2026-09-26 13:59 UTC** (mesmo dia do rollout da funcionalidade).
+- **Seleção e envio não têm dado de setembro porque os eventos só passaram a existir em 2026-10-01**
+  (`searchbox_selected` no PR #1441; `location_sent` no #1511/#1527), enquanto `searchbox_session`
+  existe desde 26/09. Zero por ausência de instrumentação **não é** zero de uso, e a diferença está
+  declarada para não virar número inventado.
+- Outubro é, portanto, o **primeiro mês com o funil completo** instrumentado — é ele que fecha a conta
+  do primeiro mês de operação.
