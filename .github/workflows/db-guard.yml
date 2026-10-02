@@ -632,7 +632,7 @@ jobs:
           L11_DEPARTMENTS_ACL_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           # E47: SKIP_DOCKER_SHIM=1 — o readiness check usa `docker logs` para aguardar
           # "PostgreSQL init process complete; ready for start up." — o shim devolve saida
-          # vazia nesse subcomando, fazendo o loop de 90s falhar por timeout.
+          # vazia nesse subcomando, fazendo o loop de 45s falhar por timeout.
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/l11-departments-acl-escrita.test.sh
 
@@ -655,3 +655,19 @@ jobs:
         env:
           MAPA_F1_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/mapa-f1-address-contract.test.sh
+
+      # E50: contratos promovidos da ALLOWLIST para db-guard.yml (check-test-inventory)
+      - name: Provar contrato de vocabulário AI Block 03 (E50)
+        env:
+          AI_BLOCK03_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/ai-block03-vocabulary-contract.test.sh
+
+      - name: Provar contrato RLS do talkx_settings (E50)
+        env:
+          TALKX_SETTINGS_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-settings-rls.test.sh
+
+      - name: Provar integridade de configurações de som do usuário (E50)
+        env:
+          USER_SETTINGS_SOUND_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/user-settings-sound-integrity-contract.test.sh
