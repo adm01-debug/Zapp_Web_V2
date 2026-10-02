@@ -7,13 +7,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { PanelRightClose } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ContactHeaderSection } from './contact-details/ContactHeaderSection';
-import { ContactAccordionSections } from './contact-details/ContactAccordionSections';
+import { ContactSidebarSections } from './contact-details/sidebar/ContactSidebarSections';
 import { useContactEnrichedData } from '@/hooks/crm/useContactEnrichedData';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
 import { Accordion } from '@/components/ui/accordion';
 import { toast } from 'sonner';
 import { undoToast } from '@/lib/undoToast';
-import { getStoredAccordionState, saveAccordionState } from './contact-details/contactDetailSections';
+import { getStoredSidebarState, saveSidebarState } from './contact-details/sidebar/sidebarSections';
 
 interface ContactDetailsProps {
   conversation: Conversation;
@@ -27,7 +27,7 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showCompactHeader, setShowCompactHeader] = useState(false);
-  const [accordionValue, setAccordionValue] = useState<string[]>(getStoredAccordionState);
+  const [accordionValue, setAccordionValue] = useState<string[]>(getStoredSidebarState);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
 
   const handleAccordionChange = useCallback((value: string[]) => {
     setAccordionValue(value);
-    saveAccordionState(value);
+    saveSidebarState(value);
   }, []);
 
   useEffect(() => {
@@ -55,9 +55,6 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
       // cancelar a edição, não fechar o painel (auditoria 2026-09-27).
       if (e.key === 'Escape' && !e.defaultPrevented && !['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName) && !(e.target as HTMLElement)?.isContentEditable) {
         e.preventDefault(); onClose();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === 't' && panelRef.current) {
-        e.preventDefault(); toast.info('🏷️ Seção de Tags');
       }
     };
     window.addEventListener('keydown', handler);
@@ -125,14 +122,14 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
         <ContactHeaderSection
           contact={{ ...contact, avatar: contact.avatar ?? undefined, email: contact.email ?? undefined }} enrichedData={enrichedData} conversation={conversation}
           onQuickAction={handleQuickAction} hasExpandedSections={accordionValue.length > 0}
-          onCollapseAll={() => { setAccordionValue([]); saveAccordionState([]); }}
+          onCollapseAll={() => { setAccordionValue([]); saveSidebarState([]); }}
         />
 
         <div ref={scrollRef} onScroll={handleScroll} className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
           <Accordion type="multiple" value={accordionValue} onValueChange={handleAccordionChange} className="w-full">
-            <ContactAccordionSections
-              contact={contact} conversation={conversation} enrichedData={enrichedData ?? null}
-              aiTags={aiTags} slaInfo={slaInfo ?? null} profileId={profileId}
+            <ContactSidebarSections
+              contact={contact} enrichedData={enrichedData ?? null}
+              onQuickAction={handleQuickAction}
             />
           </Accordion>
         </div>
