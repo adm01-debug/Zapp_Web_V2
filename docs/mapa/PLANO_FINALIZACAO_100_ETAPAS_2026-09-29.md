@@ -589,7 +589,19 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 **Arquivos:** `e2e/contact-address.spec.ts` (novo)
 1. Criar contato `[E2E] Endereço <timestamp>` com autocomplete (rota interceptada), salvar, reabrir edição, mudar só o nome, salvar, conferir via UI que o endereço continua; apagar o contato ao final (`afterEach`).
 2. É o E2E que teria pego C1.
-**Checklist:** [ ] spec · [ ] limpeza garantida
+**Checklist:** [x] spec · [x] limpeza garantida
+
+**Fechada em 2026-10-02.** e2e/contact-address.spec.ts (279 linhas): cria [E2E] Endereco <timestamp> com autocomplete interceptado, salva, REABRE a edicao, muda so o nome, salva e confere pelo PATCH que o endereco continua (name/address/lat/lng); apaga no afterEach pela UI e afirma backend falso sem residuo.
+
+**Prova:** --repeat-each=3 verde, zero flaky. Mutacao reproduzindo a CLASSE DO C1 (em useContactsCRUD handleEditContact, [field] = null em vez de contact[field]) derruba a spec exatamente no assert do PATCH (Received: null). Producao restaurada, src/ intacto; ratchets novas=0.
+
+**Refactor:** o setup comum virou e2e/fixtures/mapa-mocks.ts (140 linhas) e a spec do E71 MIGROU para ele (274 -> 200 linhas, sem mudar logica, 2 passed). Duplicar o setup em 3 arquivos seria a proxima divida.
+
+**Achado do subagente, verificado:** o supabase-js validava a sessao em /auth/v1/user contra o host REAL e a requisicao escapava para a internet (401) em TODAS as specs, a minha do E71 inclusive; agora interceptada no modulo comum, com guarda bloquearRedeReal e assert de que nada escapou.
+
+**Divergencia medida:** ContactFormEndereco NAO existe (0 ocorrencias) — o endereco do cadastro e inline em ContactForm.tsx:333 (id=address), e o cadastro compartilha useAddressAutocomplete e SuggestionList com o picker do inbox, o que faz o mock servir sem alteracao.
+
+**Nao confirmado (nao afirmado):** o aviso de <p> com <div> aninhado do console NAO foi localizado — os dois candidatos em contacts/ tem o <p> fechando antes do <div>. Fica registrado em aberto, nao atribuido a arquivo errado.
 
 ### E74 · E2E: mapa de contatos com pino verde
 1. Com o contato de E73 ainda existente, abrir "Mapa de Contatos", esperar a legenda "endereço confirmado", contar ≥ 1 pino verde (`data-testid`).
