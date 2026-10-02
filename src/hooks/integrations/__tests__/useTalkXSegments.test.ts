@@ -5,7 +5,7 @@ vi.mock('@/lib/supabaseHelpers', () => ({ fromTable: vi.fn() }));
 vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: vi.fn() }));
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 
-import { RULE_FIELDS, RULE_OPS, rulesToPostgrest } from '@/hooks/integrations/useTalkXSegments';
+import { RULE_FIELDS, RULE_OPS, rulesToPostgrest, isRuleComplete, splitRules, type SegmentRule } from '@/hooks/integrations/useTalkXSegments';
 
 describe('rulesToPostgrest', () => {
   it('fails closed instead of dropping an unknown rule', () => {
@@ -125,5 +125,68 @@ describe('rulesToPostgrest — campos de audiencia novos', () => {
     expect(opsUuid).toContain('neq');
     expect(opsUuid).not.toContain('contains');
     expect(opsUuid).not.toContain('not_contains');
+  });
+});
+
+// X008 — uma condição em branco precisa ficar de FORA da estimativa, sem derrubar
+// o count para 0 nem deixar passar valor inválido para o PostgREST.
+const regra = (field: string, op: string, value: string): SegmentRule =>
+  ({ id: 'r', field, op, value } as SegmentRule);
+
+describe('isRuleComplete — por tipo de campo', () => {
+  it('texto, enum e array exigem valor não vazio', () => {
+    expect(isRuleComplete(regra('company', 'eq', 'Acme'))).toBe(true);
+    expect(isRuleComplete(regra('company', 'eq', ''))).toBe(false);
+    expect(isRuleComplete(regra('company', 'eq', '   '))).toBe(false);
+    expect(isRuleComplete(regra('contact_type', 'eq', 'lead'))).toBe(true);
+    expect(isRuleComplete(regra('contact_type', 'eq', ''))).toBe(false);
+    expect(isRuleComplete(regra('tags', 'contains', 'vip'))).toBe(true);
+    expect(isRuleComplete(regra('tags', 'contains', ''))).toBe(false);
+  });
+
+  it('número e data exigem valor numérico válido', () => {
+    expect(isRuleComplete(regra('lead_score', 'gt', '50'))).toBe(true);
+    expect(isRuleComplete(regra('lead_score', 'gt', ''))).toBe(false);
+    expect(isRuleComplete(regra('lead_score', 'gt', 'abc'))).toBe(false);
+    expect(isRuleComplete(regra('created_at', 'in_last_days', '7'))).toBe(true);
+    expect(isRuleComplete(regra('created_at', 'in_last_days', '0'))).toBe(false);
+    expect(isRuleComplete(regra('created_at', 'in_last_days', 'abc'))).toBe(false);
+  });
+
+  it('is_set/is_empty não exigem valor e campo desconhecido nunca é completo', () => {
+    expect(isRuleComplete(regra('email', 'is_set', ''))).toBe(true);
+    expect(isRuleComplete(regra('email', 'is_empty', ''))).toBe(true);
+    expect(isRuleComplete(regra('unknown_field', 'eq', 'x'))).toBe(false);
+  });
+});
+
+describe('splitRules — condição incompleta não entra na estimativa', () => {
+  it('remove a condição vazia e conta quantas ficaram de fora', () => {
+    const { complete, incompleteCount } = splitRules({
+      groups: [{ id: 'g', match: 'and', rules: [
+        { id: 'r1', field: 'company', op: 'eq', value: 'Acme' },
+        { id: 'r2', field: 'city', op: 'eq', value: '' },
+      ] }],
+    });
+    expect(incompleteCount).toBe(1);
+    expect(rulesToPostgrest(complete)).toBe('company.eq."Acme"');
+  });
+
+  it('só com condições incompletas a estimativa representa a base inteira', () => {
+    const { complete, incompleteCount } = splitRules({
+      groups: [{ id: 'g', match: 'and', rules: [
+        { id: 'r1', field: 'tags', op: 'contains', value: '' },
+      ] }],
+    });
+    expect(incompleteCount).toBe(1);
+    expect(rulesToPostgrest(complete)).toBeNull();
+  });
+
+  it('regras completas seguem falhando fechado para campo desconhecido', () => {
+    expect(() => rulesToPostgrest({
+      groups: [{ id: 'g', match: 'and', rules: [
+        { id: 'r1', field: 'unknown_field', op: 'eq', value: 'x' },
+      ] }],
+    } as never)).toThrow('Regra de segmento inválida');
   });
 });

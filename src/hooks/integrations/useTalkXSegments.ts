@@ -101,6 +101,48 @@ export const RULE_OPS: Record<string, { value: RuleOp; label: string }[]> = {
 export const emptyRules = (): SegmentRules => ({ groups: [{ id: crypto.randomUUID(), match: 'and', rules: [] }] });
 export const newRule = (): SegmentRule => ({ id: crypto.randomUUID(), field: 'tags', op: 'contains', value: '' });
 
+/**
+ * Uma condição só é utilizável quando tem valor para o seu tipo: texto/enum/array
+ * exigem valor não vazio; número e data exigem valor numérico válido (dias > 0).
+ * `is_set`/`is_empty` não pedem valor. Campo desconhecido nunca é completo — a
+ * condição nasce em branco no construtor e não pode ir para o motor.
+ */
+export function isRuleComplete(rule: SegmentRule): boolean {
+  const def = RULE_FIELDS.find((f) => f.value === rule.field);
+  if (!def) return false;
+  if (rule.op === 'is_set' || rule.op === 'is_empty') return true;
+  const value = rule.value.trim();
+  if (!value) return false;
+  if (def.kind === 'number') return !Number.isNaN(Number(value));
+  if (def.kind === 'date') {
+    const days = Number(value);
+    return Number.isFinite(days) && days > 0;
+  }
+  return true;
+}
+
+/**
+ * Separa as condições completas das incompletas. Só as completas podem ir para a
+ * estimativa/PostgREST (uma regra vazia derrubaria o count para 0 e o botão para
+ * de funcionar); as incompletas viram apenas a contagem que a tela exibe fora da
+ * estimativa. Grupos que ficam sem nenhuma condição completa são descartados,
+ * como já faz o `rulesToPostgrest`.
+ */
+export function splitRules(rules: SegmentRules | null | undefined): { complete: SegmentRules; incompleteCount: number } {
+  let incompleteCount = 0;
+  const groups = (rules?.groups ?? [])
+    .map((group) => {
+      const completeRules = group.rules.filter((rule) => {
+        if (isRuleComplete(rule)) return true;
+        incompleteCount += 1;
+        return false;
+      });
+      return { ...group, rules: completeRules };
+    })
+    .filter((group) => group.rules.length > 0);
+  return { complete: { groups }, incompleteCount };
+}
+
 // Escapa \ ANTES de escapar " — em um unico passe, para nao deixar uma barra
 // invertida do valor original "engolir" a aspa de fechamento do filtro
 // PostgREST (js/incomplete-sanitization: sem isso, um valor terminado em \
@@ -212,11 +254,12 @@ export async function resolveAudience(rules: SegmentRules | null | undefined, li
 
 export function useAudienceEstimate(rules: SegmentRules | null | undefined, enabled = true) {
   const key = JSON.stringify(rules ?? null);
+  const { complete, incompleteCount } = splitRules(rules);
   return useQuery({
     queryKey: ['talkx-audience-estimate', key],
     queryFn: async () => {
-      const [count, sample] = await Promise.all([countAudience(rules), resolveAudience(rules, 5)]);
-      return { count, sample };
+      const [count, sample] = await Promise.all([countAudience(complete), resolveAudience(complete, 5)]);
+      return { count, sample, incompleteCount };
     },
     enabled,
     staleTime: 15_000,
@@ -247,9 +290,14 @@ export function useTalkXSegments() {
 
   const createSegment = useMutation({
     mutationFn: async (input: Partial<TalkXSegment> & { name: string; rules: SegmentRules }) => {
+      // O perfil pode ainda não ter carregado quando o clique acontece; sem o id
+      // a RLS rejeita o insert (created_by nulo). Falha com mensagem clara em vez
+      // de gravar um segmento órfão.
+      const userId = profile?.id;
+      if (!userId) throw new Error('Perfil ainda não carregado');
       const estimated_count = await countAudience(input.rules);
       const { data, error } = await fromTable('talkx_segments')
-        .insert({ ...input, estimated_count, created_by: profile?.id ?? null })
+        .insert({ ...input, estimated_count, created_by: userId })
         .select().single();
       if (error) throw error;
       return data as TalkXSegment;
@@ -260,6 +308,7 @@ export function useTalkXSegments() {
 
   const updateSegment = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<TalkXSegment> & { id: string }) => {
+      if (!profile?.id) throw new Error('Perfil ainda não carregado');
       const patch: Record<string, unknown> = { ...updates };
       delete patch.creator;
       if (updates.rules) patch.estimated_count = await countAudience(updates.rules);
