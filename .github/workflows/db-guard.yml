@@ -512,6 +512,17 @@ jobs:
           TALKX_AUDIENCE_SNAPSHOT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-audience-snapshot.test.sh
 
+      # Auditoria: correção de DUAS regressões vivas por recriação de função —
+      # save_talkx_campaign_draft perdeu template_version_id (V26) e
+      # transition_talkx_campaign não gravava launched_by/launched_at no start
+      # (V21). O harness aplica a CADEIA COMPLETA das migrations Talk X (do zero,
+      # ordem de versão) e confere RED (perda reproduzida) → GREEN (correção
+      # restaura).
+      - name: Simular a correção das regressões do Talk X (cadeia completa)
+        env:
+          TALKX_REGRESSOES_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-regressoes-chain.test.sh
+
       # X012: o tick do motor — reaper (lease vencido após o POST vira
       # outcome_unknown), conclusão de campanha drenada, fan-out de no máximo 1
       # campanha 'sending' por conexão com x-cron-secret e timeout de 30s, e a

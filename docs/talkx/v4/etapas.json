@@ -280,7 +280,11 @@
    "CAP-028",
    "CAP-030",
    "CAP-103"
-  ]
+  ],
+  "coberto_por": [
+   "20260930640000_talkx_v21_launch_flags"
+  ],
+  "status_nota": "PARCIAL — a V21 já cria talkx_campaigns.respect_suppression (bool not null default true) e a persiste em save_talkx_campaign_draft; desmarcar (false) exige admin/supervisor (talkx_respect_suppression_admin_only). Delta real da X017: audience_snapshot_at; RPC snapshot_talkx_campaign_audience; talkx_audience_query; critério de elegível em replace_talkx_draft_recipients; ajustes de front (editor/segs). Divergência: a X017 previa recusar respect_suppression=false até a decisão N12; a V21 já permite false para admin/supervisor."
  },
  {
   "id": "X018",
@@ -423,7 +427,11 @@
    "CAP-054",
    "CAP-055",
    "CAP-106"
-  ]
+  ],
+  "coberto_por": [
+   "20260930650000_talkx_v12_server_lifecycle_events"
+  ],
+  "status_nota": "PARCIAL — a V12 entrega o núcleo: transition_talkx_campaign grava started/resumed/paused(motivo)/cancelled com actor_id na mesma transação; cancel marca pending→cancelled; o CHECK de talkx_recipients ganha 'cancelled'; complete_talkx_campaign_if_drained grava 'completed'. Delta real: colunas paused_by/cancelled_by/cancelled_at; evento 'resumed_auto' distinto; claim_talkx_recipient/talkx_next_recipients ignorarem 'cancelled'; save_talkx_campaign_draft gravar created/updated; trigger de scheduled/scheduled_updated; liberar leases no cancel; resumo no completed. ATENÇÃO: V21 (20260930640000) e V12 (20260930650000) recriam a MESMA função; como 650000>640000 a V12 aplica depois e seu corpo não seta launched_by/at — possível regressão do carimbo de lançamento da V21."
  },
  {
   "id": "X025",
@@ -441,7 +449,11 @@
    "CAP-051",
    "CAP-054",
    "CAP-055"
-  ]
+  ],
+  "coberto_por": [
+   "20260930650000_talkx_v12_server_lifecycle_events"
+  ],
+  "status_nota": "PARCIAL — a V12 move a gravação dos eventos de ciclo de vida para o servidor; no front já não há logEvent de started/paused/cancelled/resumed. Delta real: talkx-send resolver profiles.id do JWT e repassar p_actor_id/p_reason; evento connection_failed na queda de conexão; skipped_suppressed agregado por lote; remover o insert de resumed_auto do talkx-scheduler (ainda em supabase/functions/talkx-scheduler/index.ts:278); remover logEvent('updated'/'created') de src/components/talkx/useCampaignEditor.ts:781,785."
  },
  {
   "id": "X026",
@@ -461,7 +473,11 @@
    "CAP-106",
    "CAP-107",
    "CAP-109"
-  ]
+  ],
+  "coberto_por": [
+   "20260930750000_talkx_v15_replied_count_guard_and_drop_increment"
+  ],
+  "status_nota": "PARCIAL — a V15 aplicada (a 20260930660000 ficou em _superseded por bug de ordem) põe replied_count no guard de imutabilidade e dropa increment_talkx_template_use (fim do use_count em dobro). Delta real: coluna talkx_campaigns.skipped_count + backfill; RPC log_talkx_campaign_checklist; RPC duplicate_talkx_campaign; RPC delete_talkx_campaign; policy de INSERT de eventos limitada a note|checklist|segments_reviewed."
  },
  {
   "id": "X027",
@@ -481,7 +497,11 @@
    "CAP-020",
    "CAP-099",
    "CAP-110"
-  ]
+  ],
+  "coberto_por": [
+   "20260930680000_talkx_v17_read_at"
+  ],
+  "status_nota": "PARCIAL — a V17 entrega talkx_recipients.read_at + índice, record_talkx_recipient_delivered com p_event 'delivered'|'read' (read preenche read_count) e o relatório com read_count. Delta real: RPC attribute_talkx_reply (hoje só função TS _shared/talkx-reply.ts, chamada com void); uso de talkx_settings.reply_window_hours; RPC talkx_campaign_reply_stats; publicação realtime com read_at; índice parcial (contact_id, sent_at desc). (A V16 também está na main e ajusta as séries do relatório, mas fora do núcleo da X027.)"
  },
  {
   "id": "X028",
@@ -499,7 +519,11 @@
    "CAP-016",
    "CAP-017",
    "CAP-018"
-  ]
+  ],
+  "coberto_por": [
+   "20260930680000_talkx_v17_read_at"
+  ],
+  "status_nota": "PARCIAL — a borda de edge veio no mesmo batch: evolution-webhook-msg-handlers.ts:146 já chama record_talkx_recipient_delivered com p_event='read'. Delta real: remover a dependência de key.fromMe===true em delivered/read; trocar attributeTalkXReply (void, TS) pelo await da RPC attribute_talkx_reply com telefone resolvido; criar os testes Deno talkx-webhook-receipts.test.ts / talkx-webhook-reply.test.ts."
  },
  {
   "id": "X029",
@@ -516,7 +540,8 @@
    "CAP-024",
    "CAP-026",
    "CAP-031"
-  ]
+  ],
+  "status_nota": "NÃO coberta por V12/V21 nem por outra migration da main: não existem talkx_optout_keywords/talkx_match_optout nem parâmetro p_campaign_id em talkx_suppress_contact. Delta real: integral (tabela de palavras, função de match, view talkx_campaign_optouts, seed de autoresposta)."
  },
  {
   "id": "X030",
@@ -537,7 +562,8 @@
    "CAP-024",
    "CAP-026",
    "CAP-110"
-  ]
+  ],
+  "status_nota": "NÃO coberta por V12/V21: etapa de edge; a V78 não está na main. TALKX_OPT_OUT_RE e a autoresposta fixa seguem em uso (evolution-webhook-messages.ts:334). Delta real: integral."
  },
  {
   "id": "X031",
@@ -556,7 +582,11 @@
    "CAP-047",
    "CAP-048",
    "CAP-049"
-  ]
+  ],
+  "coberto_por": [
+   "20260930630000_talkx_v19_retry_recipient"
+  ],
+  "status_nota": "PARCIAL — a V19 entrega retry_talkx_recipient(p_recipient_id) (service_role) que reabre failed/outcome_unknown com attempt_count<3. Delta real: RPC batch retry_talkx_recipients(p_campaign_id, p_recipient_ids uuid[]) para admin/supervisor; coluna manual_retry_count; revalidação de supressão/elegibilidade; reabertura de campanha completed para sending; RPC resolve_talkx_outcome_unknown(..., p_confirm_duplicate_risk)."
  },
  {
   "id": "X032",

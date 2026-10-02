@@ -120,6 +120,11 @@ export function loadElementos(invDir = INVENTARIO_DIR) {
 export function extractStepIds(titles, knownIds) {
   const done = new Set();
   for (const title of titles) {
+    // Só contam commits com escopo `talkx` no conventional commit (ex.:
+    // `feat(talkx): ... (X016)`). Falso positivo real: `fix(ci): ... (X028)` —
+    // um commit de CI que cita um id X<NNN> de OUTRO plano, mas não é etapa
+    // do Talk X. Sem este filtro o placar infla (X028 fantasma).
+    if (!/^[a-z]+\(talkx\):/.test(title)) continue;
     for (const m of title.matchAll(/\(X(\d{3})\)/g)) {
       const id = `X${m[1]}`;
       if (!knownIds.has(id)) throw new Error(`etapa inexistente: ${id}`);
