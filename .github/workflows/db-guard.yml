@@ -37,9 +37,6 @@ jobs:
     name: Contrato DB offline
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    # E46: imagens fixadas por digest para rastreabilidade de supply-chain.
-    # Todas as variaveis *_IMAGE dos passos referenciam estas via ${{ env.* }}
-    # para que uma unica linha controle qual imagem corre em todos os testes.
     env:
       POSTGRES_TEST_IMAGE: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
       POSTGREST_TEST_IMAGE: public.ecr.aws/supabase/postgrest:v14.5@sha256:bb289d00570b569525e1e22fb77c49cd17c17ca3f41da9ee2b4351a35027551b
