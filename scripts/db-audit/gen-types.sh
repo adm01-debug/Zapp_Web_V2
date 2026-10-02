@@ -27,11 +27,18 @@
 # NAO usa withPsqlEnvironment/PGPASSFILE (diferente de check-migration-drift.mjs,
 # register-migration.mjs etc): a CLI 2.116.0 (rewrite TS/Effect) roda
 # `gen types typescript --db-url` subindo um container Docker
-# (ghcr.io/supabase/postgres-meta), com --network host, que conecta usando a
-# --db-url recebida em texto puro (confirmado empiricamente — nao e
-# in-process nem evita Docker, ao contrario do que versoes anteriores deste
-# comentario afirmavam). Esse caminho nao respeita PGPASSFILE (convencao
-# exclusiva de libpq/psql/pgx). Mitigacao: ver bloco "Proxy local" abaixo.
+# (ghcr.io/supabase/postgres-meta). Esse container NAO sobe em --network host:
+# a CLI cria uma rede Docker propria (bridge) para ele, e um container em bridge
+# NAO alcanca o loopback do runner, onde o proxy abaixo escuta. Medido num
+# Postgres de teste (mesmo Postgres, mesmo host, so muda a rede do cliente):
+#   container em bridge -> 127.0.0.1:<porta>  = "no response"
+#   container em bridge -> 172.17.0.1:<porta> = "accepting connections"
+# Por isso o comando `gen types` abaixo passa --network-id host (documentado
+# pela CLI como "use the specified docker network instead of a generated one").
+# Sem essa flag o container fica isolado da porta do proxy e a CLI morre com
+# "Error: timeout exceeded when trying to connect" apos ~16s.
+# A --db-url e entregue ao container em texto puro (confirmado empiricamente —
+# nao e in-process nem evita Docker). Mitigacao: ver bloco "Proxy local" abaixo.
 # --local nao tem esse problema: nao usa credencial nenhuma, so o Postgres do
 # Docker subido por `supabase db start`.
 set -e
@@ -122,6 +129,7 @@ else
 
     supabase gen types typescript \
       --db-url "$PROXY_URL" \
+      --network-id host \
       --schema public \
       > "$TMP"
   else
