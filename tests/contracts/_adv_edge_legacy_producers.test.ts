@@ -33,6 +33,12 @@
  *  - 172: X011 (01/10/2026) — `talkx-send/process-recipient.ts` (corpo por-destinatário extraído do
  *    `talkx-send/index.ts` na ação `continue`, sem mudança de comportamento). Não produz token legado:
  *    o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total varrido subiu.
+ *  - 174: Bloco 05 / PR-3 (IA-045/IA-046) — `_shared/ai-jobs.ts` (máquina de estados e wrappers da
+ *    fila durável de jobs) e `ai-jobs-worker/index.ts` (worker das edge functions que a migration
+ *    `20261002371230` agenda de minuto em minuto). São 2 arquivos novos e NENHUM produz token legado:
+ *    o mapa INVENTARIO e a contagem de ocorrências (3) permanecem idênticos. Total MEDIDO com
+ *    `find supabase/functions -name '*.ts' | wc -l` na árvore mesclada — a base já vinha com 172
+ *    (X011) e este PR soma 2, então o valor certo não é o de nenhum dos lados.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -107,8 +113,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('172 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(172);
+  it('174 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(174);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );
