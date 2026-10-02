@@ -274,6 +274,9 @@ migration "20261001231230_f32b_multiplix_item_queue_rpcs.sql"
 # status para enum (42804). Sem ela, os casos 3 e 4 deste teste nao tem como passar — e
 # e justamente o teste que expoe o defeito.
 migration "20261002521230_f59_transition_dispatch_enum_cast.sql"
+# F55/F56 (bloco F2): a ESCOLHA do proximo item (list_multiplix_claimable_items, que traz a
+# regra de ordem por bloco do F56 para dentro do banco) e o heartbeat de lease do item.
+migration "20261002591230_f55_claimable_items_por_bloco.sql"
 
 
 # ── F57: fila POR ITEM (multiplix_delivery_items) ──────────────────────────────
@@ -324,15 +327,28 @@ UPDATE public.multiplix_delivery_items
    SET lease_until = statement_timestamp() - interval '1 second'
  WHERE id = '$item1';
 SQL
-psql_test -q <<SQL >/dev/null 2>&1 || true
-$service_session
-SELECT public.complete_multiplix_item('$item1','$token_a'::uuid,'sent',NULL);
-SQL
-[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_delivery_items WHERE id='$item1';")" == 'sending' ]] \
-  || fail 'F57.2: complete_multiplix_item aceitou claim_token de lease vencido (o item saiu de sending)'
-token_a2="$(psql_test -Atqc "$service_session SELECT claim_token FROM public.claim_multiplix_item('$disp','$item1','worker-a',90);" 2>&1 || true)"
+# 'sent' NAO e status de complete_multiplix_item (a RPC so aceita failed|skipped|outcome_unknown;
+# quem marca 'sent' e record_multiplix_item_sent). A versao anterior deste caso pedia 'sent' e por
+# isso a RPC lancava invalid_multiplix_delivery_completion ANTES de olhar o lease: a assercao
+# (item continua 'sending') passava por motivo errado e nao provava nada sobre token vencido.
+# Agora usa 'failed', que e rota REAL de fechamento, e exige o conflito de claim.
+# O re-claim (outro worker) e o que invalida o token ANTIGO: claim_multiplix_item so recicla
+# item com lease vencido e SEM provider_dispatch_started_at, e sempre gera token novo.
+token_a2="$(psql_test -Atqc "$service_session SELECT claim_token FROM public.claim_multiplix_item('$disp','$item1','worker-b',90);" 2>&1 || true)"
 [[ "$token_a2" =~ $is_uuid ]] || fail "F57.2: lease vencido NAO devolveu o item para a fila (veio: $token_a2)"
 [[ "$token_a2" != "$token_a" ]] || fail 'F57.2: o re-claim devolveu o MESMO token, entao o lease nao foi renovado'
+# Agora o dono ANTIGO tenta fechar o item que ja e de outro. Isto sim e o que o caso promete —
+# e o unico jeito de provar que o token vencido perdeu a validade.
+# (Nota: complete_multiplix_item valida status='sending' e lease_token, mas NAO valida
+# lease_until; quem torna o token antigo invalido e o re-claim, nao o relogio. A versao
+# anterior deste caso pedia p_status 'sent' — que a RPC recusa antes de olhar o claim — e por
+# isso passava por motivo errado, sem provar nada.)
+fechou="$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_item('$item1','$token_a'::uuid,'failed','lease vencido');" 2>&1 || true)"
+[[ "$fechou" == *multiplix_delivery_claim_conflict* ]] \
+  || fail "F57.2: o token ANTIGO completou o item que outro worker ja tinha reivindicado (veio: $fechou)"
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_delivery_items WHERE id='$item1';")" == 'sending' ]] \
+  || fail 'F57.2: complete_multiplix_item fechou o item com claim_token que nao e mais o dono'
+token_a="$token_a2"
 
 # (3) Pausa: item em voo nao e interrompido e pending nao avanca.
 # Deixa o item2 em voo (POST feito) e o item1 pendente; pausa o disparo; o pending
@@ -379,5 +395,76 @@ reenvio="$(psql_test -Atqc "$service_session SELECT claim_token FROM public.clai
 [[ ! "$reenvio" =~ $is_uuid ]] \
   || fail 'F57.5: item outcome_unknown voltou para a fila e seria REENVIADO (duplicaria a mensagem)'
 
-printf 'PASS: fila por item — dois workers nao pegam o mesmo item, lease vencido nao completa e devolve o item a fila (renovando o token), pausa nao entrega pending novo sem interromper o que esta em voo, cancel encerra pendentes sem tocar no que foi ao provedor, e timeout vira outcome_unknown sem reenvio (F57)\n'
+# ══ F55/F56 (bloco F2) · ESCOLHA do proximo item e heartbeat ═══════════════════
+# Fixture proprio: dispatch NOVO em 'sending', TRES blocos e UM destinatario, um item por
+# bloco. O dispatch anterior termina cancelado, e cancelado nao exercita a escolha.
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, whatsapp_connection_id)
+VALUES ('30000000-0000-0000-0000-000000000030', 'Ordem por bloco', 'Oi', 'sending',
+        '10000000-0000-0000-0000-00000000000a', 1, '70000000-0000-0000-0000-000000000001');
+INSERT INTO public.multiplix_blocks (id, dispatch_id, block_order, block_type, template_text) VALUES
+  ('60000000-0000-0000-0000-000000000031', '30000000-0000-0000-0000-000000000030', 0, 'text', 'b1'),
+  ('60000000-0000-0000-0000-000000000032', '30000000-0000-0000-0000-000000000030', 1, 'text', 'b2'),
+  ('60000000-0000-0000-0000-000000000033', '30000000-0000-0000-0000-000000000030', 2, 'text', 'b3');
+INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, destino_e164, status, created_at)
+VALUES ('40000000-0000-0000-0000-000000000031', '30000000-0000-0000-0000-000000000030', '50000000-0000-0000-0000-000000000031', '+551****0031', 'pending', statement_timestamp());
+INSERT INTO public.multiplix_delivery_items (id, dispatch_id, recipient_id, block_id, dispatch_version, status, external_id) VALUES
+  ('80000000-0000-0000-0000-000000000031', '30000000-0000-0000-0000-000000000030', '40000000-0000-0000-0000-000000000031', '60000000-0000-0000-0000-000000000031', 1, 'pending', 'o-1'),
+  ('80000000-0000-0000-0000-000000000032', '30000000-0000-0000-0000-000000000030', '40000000-0000-0000-0000-000000000031', '60000000-0000-0000-0000-000000000032', 1, 'pending', 'o-2'),
+  ('80000000-0000-0000-0000-000000000033', '30000000-0000-0000-0000-000000000030', '40000000-0000-0000-0000-000000000031', '60000000-0000-0000-0000-000000000033', 1, 'pending', 'o-3');
+SQL
+
+disp_ord='30000000-0000-0000-0000-000000000030'
+o1='80000000-0000-0000-0000-000000000031'
+o2='80000000-0000-0000-0000-000000000032'
+o3='80000000-0000-0000-0000-000000000033'
+ordem() { psql_test -Atqc "$service_session SELECT coalesce(string_agg(item_id::text, ',' ORDER BY block_order), 'VAZIO') FROM public.list_multiplix_claimable_items('$disp_ord', 10);" 2>&1 || true; }
+
+# (F56.1) Com os tres pendentes, so o BLOCO 0 pode ser oferecido.
+elegiveis="$(ordem)"
+[[ "$elegiveis" == "$o1" ]] \
+  || fail "F56.1: a escolha nao respeitou a ordem por bloco — esperava so o item do bloco 0 ($o1), veio: $elegiveis"
+
+# (F56.2) Bloco 0 concluido -> libera o bloco 1 e NADA mais.
+tok_o1="$(psql_test -Atqc "$service_session SELECT claim_token FROM public.claim_multiplix_item('$disp_ord','$o1','worker-a',90);" 2>&1 || true)"
+[[ "$tok_o1" =~ $is_uuid ]] || fail "F56.2: nao consegui reivindicar o item do bloco 0 (veio: $tok_o1)"
+psql_test >/dev/null <<SQL
+$service_session
+SELECT public.mark_multiplix_item_dispatch_started('$o1','$tok_o1'::uuid);
+SELECT public.record_multiplix_item_sent('$o1','$tok_o1'::uuid,'ext-o1');
+SQL
+elegiveis="$(ordem)"
+[[ "$elegiveis" == "$o2" ]] \
+  || fail "F56.2: com o bloco 0 'sent', esperava so o item do bloco 1 ($o2), veio: $elegiveis"
+
+# (F56.3) Bloco 1 concluido -> libera o bloco 2 (fim da cadeia).
+tok_o2="$(psql_test -Atqc "$service_session SELECT claim_token FROM public.claim_multiplix_item('$disp_ord','$o2','worker-a',90);" 2>&1 || true)"
+[[ "$tok_o2" =~ $is_uuid ]] || fail "F56.3: nao consegui reivindicar o item do bloco 1 (veio: $tok_o2)"
+psql_test >/dev/null <<SQL
+$service_session
+SELECT public.mark_multiplix_item_dispatch_started('$o2','$tok_o2'::uuid);
+SELECT public.record_multiplix_item_sent('$o2','$tok_o2'::uuid,'ext-o2');
+SQL
+elegiveis="$(ordem)"
+[[ "$elegiveis" == "$o3" ]] \
+  || fail "F56.3: com o bloco 1 'sent', esperava o item do bloco 2 ($o3), veio: $elegiveis"
+
+# (F55.1) Heartbeat renova o lease de quem tem o item — e so de quem tem.
+tok_o3="$(psql_test -Atqc "$service_session SELECT claim_token FROM public.claim_multiplix_item('$disp_ord','$o3','worker-a',90);" 2>&1 || true)"
+[[ "$tok_o3" =~ $is_uuid ]] || fail "F55.1: nao consegui reivindicar o item do bloco 2 (veio: $tok_o3)"
+antes="$(psql_test -Atqc "SELECT extract(epoch FROM lease_until)::int FROM public.multiplix_delivery_items WHERE id='$o3';")"
+psql_test >/dev/null <<SQL
+$service_session
+SELECT public.heartbeat_multiplix_item('$o3','$tok_o3'::uuid,180);
+SQL
+depois="$(psql_test -Atqc "SELECT extract(epoch FROM lease_until)::int FROM public.multiplix_delivery_items WHERE id='$o3';")"
+[[ "$depois" -gt "$antes" ]] \
+  || fail "F55.1: o heartbeat NAO estendeu o lease (antes=$antes, depois=$depois)"
+# Token de outro dono nao renova: renovar por cima roubaria o item de quem o tem agora.
+intruso="$(psql_test -Atqc "$service_session SELECT public.heartbeat_multiplix_item('$o3','00000000-0000-0000-0000-0000000000ff'::uuid,180);" 2>&1 || true)"
+[[ "$intruso" == 'f' ]] \
+  || fail "F55.1: heartbeat com claim_token de OUTRO dono foi aceito (veio: $intruso)"
+
+printf 'PASS: fila por item — dois workers nao pegam o mesmo item, lease vencido nao completa e devolve o item a fila (renovando o token), pausa nao entrega pending novo sem interromper o que esta em voo, cancel encerra pendentes sem tocar no que foi ao provedor, e timeout vira outcome_unknown sem reenvio (F57). Escolha do proximo item respeita a ORDEM POR BLOCO do destinatario (bloco k so depois do k-1 sent, tres blocos) e o heartbeat de lease renova so para o dono do claim (F55/F56)\n'
 
