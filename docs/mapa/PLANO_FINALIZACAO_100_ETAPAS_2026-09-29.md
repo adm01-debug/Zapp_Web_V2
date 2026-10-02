@@ -841,14 +841,17 @@ Substitui o antigo "desligar a flag": sem chave (decisão `20261001-103207-6c0b`
 Sem flag (decisão `20261001-103207-6c0b`): não existe "ligar só para 2 operadores".
 1. Ligado para todos, acompanhar 48 h **reais** pela view `searchbox_usage_daily` (E52), com o teto de custo (E48) como freio.
 2. Registrar os números no doc ao fim das 48 h.
-**Checklist:** [ ] 48 h decorridas · [ ] números no doc
+**Checklist:** [x] 48 h decorridas · [x] números no doc
+> **Medido 2026-10-02.** Janela do rollout (26/09 13:59 UTC) + 48 h reais (28/09 13:59 UTC): **8 sessoes** (`contact-form` 6, `picker` 2), **0 degradacoes** do guarda, **0 avisos** de orcamento, custo **US$ 0,00** (8 de 500 gratis). Depois da janela: 4 sessoes; outubro ate agora: 1. O freio de custo (E48) nao precisou atuar. **Ressalva:** quantas dessas 8 viraram endereco escolhido e **desconhecido** - `searchbox_selected` so passou a existir em 2026-10-01.
 ### E94 · Confirmação visual do envio de localização (E49 antigo, agora de verdade)
 1. Com F2/F3 em produção, um operador real (ou o Joaquim) envia 1 localização para um número de teste da empresa; conferir `location_sent` (E50) e o balão no WhatsApp; print no doc.
 **Checklist:** [ ] `location_sent` ≥ 1 · [ ] print
+> **BLOQUEADA por dependencia humana (medido 2026-10-02).** Exige um operador real (ou o Joaquim) enviando **1 localizacao de verdade** para um numero de teste e conferindo o balao no WhatsApp: envio de mensagem para numero real e coisa que eu **nao faco sem autorizacao explicita**. Estado atual: `location_sent` = **0** em setembro e outubro, consistente com o bloqueio. Registrada decisao `20261002-142455-c772-sem-tarefa` pedindo autorizacao + numero de teste.
 
 ### E95 · Termos reais de novo, agora no picker (não só no cadastro)
 1. Repetir a tabela do E47 antigo no **picker do Inbox** com POI habilitado: `XBZ BRINDES` tem que resolver para São Paulo (era o pedido original do Joaquim).
 **Checklist:** [ ] tabela · [ ] XBZ em SP
+> **BLOQUEADA por ausencia de sessao/token vivo (medido 2026-10-02).** Repetir a tabela de termos do E47 **no picker do Inbox** exige uma busca **real** na Mapbox (`XBZ BRINDES` -> Sao Paulo, com POI habilitado) - e o token vem da edge `get-mapbox-token`, que **exige sessao** (401 sem ela). Nao existe credencial de teste no projeto (mesma causa raiz do E65/E68). Sem sessao viva, nao ha como medir: nao vou estimar resultado de busca que nao rodei.
 
 ### E96 · Query de detecção de regressão do C1
 **Arquivos:** `USO_SEARCHBOX.md`
