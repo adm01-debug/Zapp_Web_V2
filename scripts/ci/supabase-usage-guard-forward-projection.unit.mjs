@@ -255,20 +255,31 @@ test('usage guard honra SET standard_conforming_strings = off (backslash escapa 
   assert.match(result.stderr, /\.from\('t'\)/);
 });
 
-test('usage guard reconhece dollar-quote com tag nao-ASCII', () => {
-  const result = runGuard({
-    migrations: {
-      '20260909210000_dollar_unicode.sql':
-        'CREATE TABLE public.t (id integer);\n'
-        + 'SELECT $ação$ DROP TABLE public.t; $ação$;\n',
-    },
-    callers: { 'c.ts': "supabase.from('t').select('*');\n" },
-  });
-  // O DROP esta DENTRO do dollar-quote (texto, nao DDL) e a tag nao-ASCII e
-  // valida no PG (medido: $ação$ ... $ação$ e aceito e devolve x). Sem reconhecer
-  // a tag, o conteudo vira tokens e o DROP falso remove t -> falso positivo.
-  assert.equal(result.status, 0, result.stdout + result.stderr);
-  assert.match(result.stdout, /projecao forward-only: 1 relacoes, 0 funcoes/);
+test('usage guard reconhece dollar-quote com tag nao-ASCII e ASTRAL', () => {
+  // O PG valida a tag byte a byte (scan.l: dolq_start/dolq_cont = [A-Za-z\200-\377_]),
+  // entao QUALQUER caractere multibyte UTF-8 vale — inclusive fora do plano basico.
+  // Medido no PG 17: `$ação$`, `$😀$`, `$a😀b$` e `$<U+10FFFF>$` sao tags validas e o
+  // corpo fica opaco. A classe `[\u0080-\uFFFF]` cobre so o BMP: a tag astral nao era
+  // reconhecida, o corpo virava tokens e o DDL citado dentro dele era projetado.
+  const tags = ['tag', 'ação', '😀', 'a😀b', '\u{10FFFF}'];
+  for (const tag of tags) {
+    // (a) DROP dentro do corpo e TEXTO: o alvo continua na projecao (sem isso, falso
+    // positivo e o caller valido vira orfao).
+    const a = runGuard({
+      catalog: { tables: ['t'] },
+      migrations: { '20260909210000_a.sql': `SELECT $${tag}$ DROP TABLE public.t; $${tag}$;\n` },
+      callers: { 'c.ts': "supabase.from('t').select('*');\n" },
+    });
+    assert.equal(a.status, 0, `DROP dentro do corpo (tag ${JSON.stringify(tag)})\n${a.stdout}${a.stderr}`);
+
+    // (b) CREATE dentro do corpo NAO cria objeto: o caller do alvo inventado tem de
+    // ser acusado (fail-open se o corpo virar DDL).
+    const b = runGuard({
+      migrations: { '20260909210000_b.sql': `SELECT $${tag}$ CREATE TABLE public.inventado (id integer); $${tag}$;\n` },
+      callers: { 'c.ts': "supabase.from('inventado').select('*');\n" },
+    });
+    assert.equal(b.status, 1, `CREATE dentro do corpo (tag ${JSON.stringify(tag)})\n${b.stdout}${b.stderr}`);
+  }
 });
 
 test('usage guard mantem funcao quando outra assinatura (overload) sobrevive', () => {
