@@ -18,6 +18,11 @@ const ISSUE_LABEL = 'settings-guard';
 const ISSUE_TITLE = '[settings-guard] branch protection regression detected';
 const BRANCH = 'main';
 
+// jssecurity:S5145 — valores vindos da API do GitHub entram no log em #92/#115/#127.
+// Quebras de linha / caracteres de controle são neutralizados para impedir que
+// esse conteúdo forje linhas de log. Valores normais (números, booleanos) ficam iguais.
+const semQuebra = (valor) => String(valor).replace(/[\r\n\u0000-\u001f\u007f]/g, ' ');
+
 if (!TOKEN) {
   console.error('::error::GITHUB_TOKEN ausente');
   process.exit(1);
@@ -89,7 +94,7 @@ async function openOrUpdateIssue(body) {
     body,
     labels: [ISSUE_LABEL],
   });
-  console.log(`Issue #${issue.number} aberta.`);
+  console.log(`Issue #${semQuebra(issue.number)} aberta.`);
   return issue.number;
 }
 
@@ -112,7 +117,7 @@ async function main() {
   const strict = protection?.required_status_checks?.strict ?? null;
   const allowAutoMerge = repo?.allow_auto_merge ?? null;
 
-  console.log(`strict=${strict}  allow_auto_merge=${allowAutoMerge}`);
+  console.log(`strict=${semQuebra(strict)}  allow_auto_merge=${semQuebra(allowAutoMerge)}`);
 
   const regressions = [];
   if (strict !== true) regressions.push(`required_status_checks.strict esperado=true atual=${strict}`);
@@ -124,7 +129,7 @@ async function main() {
     return;
   }
 
-  console.log(`::warning::Regressão detectada: ${regressions.join(' | ')}`);
+  console.log(`::warning::Regressão detectada: ${semQuebra(regressions.join(' | '))}`);
 
   // Restore
   const restored = [];

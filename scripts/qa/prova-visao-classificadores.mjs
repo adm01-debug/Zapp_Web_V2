@@ -39,6 +39,13 @@
 
 import { readFileSync, existsSync } from "node:fs";
 
+// jssecurity:S5145 — o corpo devolvido pelo Auth, a categoria devolvida pelas
+// edge functions e o resultado final entram no log em #123/#147/#182. Quebras de
+// linha / caracteres de controle são neutralizados para impedir que esse conteúdo
+// forje linhas de log. Valores normais (texto de uma linha, números) ficam iguais.
+// Mesmo helper de scripts/ci/github-settings-guard.mjs (consistência > solução nova).
+const semQuebra = (valor) => String(valor).replace(/[\r\n\u0000-\u001f\u007f]/g, " ");
+
 // Figurinha REAL, existente no banco do projeto (storage público whatsapp-media).
 const STICKER_PADRAO =
   "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/whatsapp-media/stickers/sticker_1787863317901_2A10468B4438D0B35BC6.webp";
@@ -120,7 +127,7 @@ const statusLogin = rLogin.status;
 if (!rLogin.ok) {
   const corpo = await rLogin.text();
   console.error(`  FALHA  login recusado (HTTP ${statusLogin})`);
-  console.error(`  resposta do Auth (sem credencial): ${corpo.slice(0, 180)}`);
+  console.error(`  resposta do Auth (sem credencial): ${semQuebra(corpo.slice(0, 180))}`);
   process.exit(2);
 }
 const token = (await rLogin.json()).access_token;
@@ -144,7 +151,7 @@ async function classificar(fn, corpo, rotulo) {
   try {
     categoria = JSON.parse(texto).category ?? null;
   } catch { /* resposta nao-JSON: a categoria fica nula e a verificacao abaixo reprova */ }
-  console.log(`  HTTP ${r.status}   categoria retornada: ${categoria ?? "(sem categoria)"}`);
+  console.log(`  HTTP ${r.status}   categoria retornada: ${semQuebra(categoria ?? "(sem categoria)")}`);
   ver(r.status === 200, `${fn} respondeu 200`);
   ver(Boolean(categoria) && categoria !== "outros", `${fn} classificou de verdade (nao caiu no fallback 'outros')`);
   return categoria;
@@ -179,5 +186,5 @@ if (!rUso.ok) {
 }
 
 console.log(`\n=== RESULTADO: ${falhas === 0 ? "PROVA OK" : `PROVA FALHOU (${falhas} verificacao(oes) vermelha(s))`} ===`);
-console.log(`categorias: figurinha=${categoriaSticker}  emoji=${categoriaEmoji}`);
+console.log(`categorias: figurinha=${semQuebra(categoriaSticker)}  emoji=${semQuebra(categoriaEmoji)}`);
 process.exit(falhas === 0 ? 0 : 1);

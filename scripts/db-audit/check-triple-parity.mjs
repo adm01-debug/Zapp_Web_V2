@@ -3,7 +3,7 @@
  * Gate de paridade tripla (E10 do plano 2026-09-20): consolida em um comando
  * as tres conferencias que a auditoria de 2026-09-16/17 fazia a mao.
  *
- *  A) migrations: count + md5 das versoes de supabase/migrations/*.sql
+ *  A) migrations: count + sha256 das versoes de supabase/migrations/*.sql
  *     contra supabase_migrations.schema_migrations (requer DESTINO_URL);
  *  B) edges: nomes em deployment-manifest.json .functions[] contra os
  *     diretorios reais de supabase/functions/ (sempre roda, local);
@@ -43,8 +43,13 @@ function fail(msg) {
   console.error(`FALHA: ${msg}`);
 }
 
-function md5(value) {
-  return crypto.createHash('md5').update(value).digest('hex');
+// Fingerprint de integridade da paridade -- nao e hash de credencial nem de
+// senha. Os dois lados precisam do MESMO algoritmo: o lado local usa
+// crypto.createHash('sha256') e o lado do banco usa sha256() (built-in do
+// Postgres, PG11+) sobre os mesmos bytes UTF-8. Trocar so um dos lados faz a
+// paridade divergir sempre.
+function sha256(value) {
+  return crypto.createHash('sha256').update(value).digest('hex');
 }
 
 function execPsqlSanitizado(args) {
@@ -97,18 +102,18 @@ function checkMigrations() {
     console.log('[migrations] pulado: DESTINO_URL ausente');
     return;
   }
-  const md5Local = md5(`${locais.join('\n')}\n`);
+  const sha256Local = sha256(`${locais.join('\n')}\n`);
   const out = psql(
-    "SELECT count(*) || '|' || md5(string_agg(version, E'\\n' ORDER BY version) || E'\\n') FROM supabase_migrations.schema_migrations",
+    "SELECT count(*) || '|' || encode(sha256(convert_to(string_agg(version, E'\\n' ORDER BY version) || E'\\n', 'UTF8')), 'hex') FROM supabase_migrations.schema_migrations",
   ).trim();
-  if (!/^\d+\|[a-f0-9]{32}$/.test(out)) throw new Error('invalid ledger aggregate');
-  const [countLedger, md5Ledger] = out.split('|');
-  console.log(`[migrations] arquivos=${locais.length} ledger=${countLedger} md5_local=${md5Local} md5_ledger=${md5Ledger}`);
+  if (!/^\d+\|[a-f0-9]{64}$/.test(out)) throw new Error('invalid ledger aggregate');
+  const [countLedger, sha256Ledger] = out.split('|');
+  console.log(`[migrations] arquivos=${locais.length} ledger=${countLedger} sha256_local=${sha256Local} sha256_ledger=${sha256Ledger}`);
   if (String(locais.length) !== countLedger) {
     fail(`count divergente: ${locais.length} arquivos vs ${countLedger} no ledger`);
   }
-  if (md5Local !== md5Ledger) {
-    fail('md5 das versoes divergente entre arquivos e ledger');
+  if (sha256Local !== sha256Ledger) {
+    fail('sha256 das versoes divergente entre arquivos e ledger');
   }
 }
 
@@ -151,7 +156,7 @@ function checkGrants() {
   const soAcl = (o) => Object.fromEntries(Object.entries(o).filter(([k]) => !METADADOS.has(k)));
   const a = JSON.stringify(canon(soAcl(fresco)));
   const b = JSON.stringify(canon(soAcl(commitado)));
-  console.log(`[grants] fresco=${md5(a)} commitado=${md5(b)}`);
+  console.log(`[grants] fresco=${sha256(a)} commitado=${sha256(b)}`);
   if (a !== b) {
     fail(`grants-baseline desatualizado. Regenere: ${PSQL_BIN} "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -f ${GRANTS_SQL_PATH} > ${GRANTS_BASELINE_PATH}`);
   }

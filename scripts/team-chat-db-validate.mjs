@@ -20,6 +20,12 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   process.exit(1);
 }
 
+// jssecurity:S5145 — o corpo da resposta REST (dado não-confiável devolvido pelo
+// banco) entra no log em checkTable. Quebras de linha / caracteres de controle são
+// neutralizados para impedir que esse conteúdo forje linhas de log. Mesmo helper de
+// scripts/ci/github-settings-guard.mjs (consistência > solução nova).
+const semQuebra = (valor) => String(valor).replace(/[\r\n\u0000-\u001f\u007f]/g, ' ');
+
 const headers = {
   apikey: SUPABASE_SERVICE_ROLE_KEY,
   Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
@@ -37,7 +43,7 @@ async function checkTable(table) {
       console.log(`  ✓ ${table} (HTTP ${res.status})`);
     } else {
       const body = await res.text();
-      console.error(`  ✗ ${table} — HTTP ${res.status}: ${body.slice(0, 120)}`);
+      console.error(`  ✗ ${table} — HTTP ${res.status}: ${semQuebra(body.slice(0, 120))}`);
       failures++;
     }
   } catch (e) {
