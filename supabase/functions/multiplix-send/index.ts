@@ -14,16 +14,19 @@ import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talk
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
 import {
-  getMediaEndpoint,
+  type MediaKind,
+  type MessageKind,
   newCorrelationId,
   normalizePhone,
   personalize,
+  prepareMedia,
   randomBetween,
+  send,
   sleep,
 } from "../_shared/messaging/index.ts";
 
 // F37/F43: as duplicatas locais (`getGreeting`, `personalizeMultiplix`,
-// `randomBetween`, `sleep`, `getMediaEndpoint`) foram removidas — todas vêm do
+// `randomBetween`, `sleep`, `prepareMedia`, `send`) foram removidas — todas vêm do
 // kernel compartilhado em ../_shared/messaging. O dialeto do Multiplix
 // ({{saudacao}}/{{empresa}}) é um SUBCONJUNTO dos built-ins que `personalize`
 // resolve: o nome da empresa entra por `contact.company`. A política de
@@ -41,6 +44,34 @@ function timingSafeStringEqual(a: string, b: string): boolean {
   for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
   return diff === 0;
 }
+
+/** F56: mapeia o tipo REAL detectado pelo prepareMedia para o kind do adaptador. */
+function kindForMedia(kind: MediaKind): MessageKind {
+  switch (kind) {
+    case "image":
+      return "image";
+    // No dispatch, media_type "audio" sempre significou nota de voz (o POST antigo ia para
+    // /message/sendWhatsAppAudio). Como ptt e o kind que liga a presenca "recording", o
+    // mapeamento preserva o que ja acontecia — e passa a avisar ao destinatario que gravamos.
+    case "audio":
+      return "ptt";
+    case "video":
+      return "video";
+    case "document":
+    default:
+      return "document";
+  }
+}
+
+/** F56: nome do arquivo do documento vem do bloco (F33: content.media.fileName). */
+function mediaFileNameFromBlock(content: Record<string, unknown> | null | undefined): string | undefined {
+  const media = content?.media;
+  if (!media || typeof media !== "object") return undefined;
+  const nome = (media as Record<string, unknown>).fileName;
+  return typeof nome === "string" && nome.trim() !== "" ? nome : undefined;
+}
+
+type PreparedForSend = { kind: MessageKind; url: string; fileName: string };
 
 export async function handleMultiplixSend(
   req: Request,
@@ -547,7 +578,6 @@ export async function handleMultiplixSend(
             continue;
           }
 
-          let sendResponse: Response;
           const markProviderDispatch = async () => {
             const { error } = await supabase.rpc("mark_multiplix_item_dispatch_started", {
               p_item_id: item.item_id,
@@ -559,41 +589,51 @@ export async function handleMultiplixSend(
           const abortCtrl = new AbortController();
           sendTimeout = setTimeout(() => abortCtrl.abort(), 20_000);
 
+          // F56: o envio passa pelo adaptador (send) em vez de um POST montado a mao. Ele
+          // acrescenta duas coisas que o POST cru nao fazia: PRESENCA (composing; recording
+          // para nota de voz) e o fileName do documento — sem ele o PDF chega sem nome.
+          // prepareMedia (F40) e quem decide o tipo REAL do arquivo: "document" no dispatch
+          // podia esconder um JPEG, e o nome do arquivo so existe no bloco (F33).
+          let prepared: PreparedForSend | null = null;
           if (recipientHasMedia) {
-            const mediaEndpoint = getMediaEndpoint(dispatch.media_type);
-            const mediaSource = await mediaForSend(dispatch.media_url);
-            await markProviderDispatch();
-            providerPostAttempted = true;
-            sendResponse = await evoFetch(evolutionUrl, evolutionKey,
-              `/message/${mediaEndpoint}/${beforeSendInstanceId}`,
-              dispatch.media_type === "audio"
-                ? { number: phone, audio: mediaSource, delay: 0 }
-                : { number: phone, mediatype: dispatch.media_type, media: mediaSource, caption: personalizedMsg, delay: 0 },
-              undefined, undefined, abortCtrl.signal,
-            );
-          } else {
-            await markProviderDispatch();
-            providerPostAttempted = true;
-            sendResponse = await evoFetch(evolutionUrl, evolutionKey,
-              `/message/sendText/${beforeSendInstanceId}`,
-              { number: phone, text: personalizedMsg, delay: 0 },
-              undefined, undefined, abortCtrl.signal,
-            );
+            const pronto = await prepareMedia(await mediaForSend(dispatch.media_url), {
+              fileName: mediaFileNameFromBlock(block.content),
+            });
+            if (!pronto.ok) {
+              throw new Error(`multiplix_media_rejected: ${pronto.reason}: ${pronto.detail}`);
+            }
+            prepared = {
+              kind: kindForMedia(pronto.media.kind),
+              // signedUrl e a URL que o envio DEVE usar (TTL amarrado ao envio), nao a original.
+              url: pronto.media.signedUrl,
+              fileName: pronto.media.fileName,
+            };
           }
+          await markProviderDispatch();
+          providerPostAttempted = true;
+          const envio = await send(
+            prepared
+              ? {
+                kind: prepared.kind,
+                to: phone,
+                instanceId: beforeSendInstanceId,
+                text: personalizedMsg,
+                mediaUrl: prepared.url,
+                fileName: prepared.fileName,
+              }
+              : { kind: "text", to: phone, instanceId: beforeSendInstanceId, text: personalizedMsg },
+            { fetch: (u, o) => fetch(u, o), evolutionUrl, evolutionKey, signal: abortCtrl.signal },
+          );
           clearTimeout(sendTimeout);
 
-          if (sendResponse.status >= 500) {
-            throw new Error(`multiplix_provider_outcome_unknown: HTTP ${sendResponse.status}`);
+          if (envio.status >= 500) {
+            throw new Error(`multiplix_provider_outcome_unknown: HTTP ${envio.status}`);
           }
-          let sendResult: Record<string, unknown>;
-          try {
-            sendResult = await sendResponse.json();
-          } catch {
-            throw new Error("multiplix_provider_outcome_unknown: invalid_response_body");
-          }
-
-          const providerMessageId = extractMessageId(sendResult);
-          if (sendResponse.ok && !sendResult.error && providerMessageId && providerMessageId.length <= 512) {
+          const sendResult: Record<string, unknown> = envio.body && typeof envio.body === "object"
+            ? envio.body as Record<string, unknown>
+            : {};
+          const providerMessageId = envio.messageId ?? extractMessageId(sendResult);
+          if (envio.ok && !sendResult.error && providerMessageId && providerMessageId.length <= 512) {
             sentCount++;
             if (dailyRoom !== null) dailyRoom -= 1;
             const { error: completionError } = await supabase.rpc("record_multiplix_item_sent", {
@@ -602,7 +642,7 @@ export async function handleMultiplixSend(
               p_external_id: providerMessageId,
             });
             if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
-          } else if (sendResponse.ok && !sendResult.error) {
+          } else if (envio.ok && !sendResult.error) {
             throw new Error("multiplix_provider_outcome_unknown: missing_provider_message_id");
           } else {
             failedCount++;

@@ -136,6 +136,7 @@ interface MockOpts {
   /** Auditoria adversarial 29/09: a RPC de supressao responde ERRO — o envio
    * tem de seguir fail-closed (mata o fail-open do mutante M25). */
   suppressionRpcError?: boolean;
+  blockContent?: Record<string, unknown>;
   /** cota diaria restante da conexao (F17); null desliga a checagem */
   dailyRemaining?: number | null;
   /** F11a: reivindicacao que nao devolve token (lease de outro worker) */
@@ -187,7 +188,7 @@ function tableBuilder(table: string, opts: MockOpts, ctx: MockCtx): any {
           attempt_count: alvo.attempt_count ?? 0,
           status: "sending",
           recipient: alvo,
-          block: { id: "block-1", block_order: 0, content: {} },
+          block: { id: "block-1", block_order: 0, content: opts.blockContent ?? {} },
         },
         error: null,
       };
@@ -266,6 +267,11 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
           case "claim_multiplix_item":
             if (opts.claimReturnsNothing) return Promise.resolve({ data: [], error: null });
             return Promise.resolve({ data: [{ claim_token: `claim-${String(args.p_item_id)}` }], error: null });
+          case "persist_multiplix_item_message_snapshot":
+            // Fiel ao banco: a RPC grava o texto e devolve a string personalizada. O stub
+            // nao a implementava, entao devolvia undefined e o texto enviado era undefined
+            // — invisivel enquanto o POST nao validava; o adaptador (F56) valida.
+            return Promise.resolve({ data: String(args.p_personalized_message ?? ""), error: null });
           case "complete_multiplix_item": {
             ctx.completions.push(args);
             const id = String(args.p_item_id).replace(/^item-/, "");
@@ -346,7 +352,8 @@ function stubProviderFetch() {
   }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
   return {
     urls,
-    messagePosts: () => urls.filter((url) => url.includes("/message/")).length,
+    messagePosts: () =>
+      urls.filter((url) => url.includes("/message/") && !url.includes("presence")).length,
     restore: () => { globalThis.fetch = original; },
   };
 }
@@ -372,6 +379,65 @@ async function runWithProviderBlocked(opts: MockOpts): Promise<{ ctx: MockCtx; p
 /** Provedor respondendo com sucesso (v2 devolve key.id): permite exercitar o
  * caminho de envio concluido sem rede — e o unico jeito de a cota diaria ser
  * consumida, ja que ela so cai no envio que conclui. */
+/** PNG 1x1: bytes magicos reais para o prepareMedia (F40) reconhecer o tipo. */
+const PNG_1X1 = new Uint8Array([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
+  0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+]);
+
+/** Provedor que responde JSON de sucesso E serve bytes quando a URL e a midia do teste. */
+/** Bytes magicos de PDF (%PDF-1.4), para o prepareMedia classificar como documento. */
+const PDF_MINIMO = new TextEncoder().encode("%PDF-1.4\n%%EOF\n");
+
+/** Bytes magicos de OGG (OggS), o container das notas de voz. */
+const OGG_MINIMO = new Uint8Array([
+  0x4f, 0x67, 0x67, 0x53, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x01, 0x1e, 0x01, 0x76, 0x6f, 0x72, 0x62, 0x69,
+  0x73, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+]);
+
+function stubProviderComMidia(id = "WAMID-TESTE-1") {
+  const urls: string[] = [];
+  const posts: { url: string; body: Record<string, unknown> }[] = [];
+  const original = globalThis.fetch;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  globalThis.fetch = ((input: any, initArg?: { body?: string }) => {
+    const url = typeof input === "string" ? input : String(input?.url ?? input);
+    urls.push(url);
+    const init = initArg ?? (input?.init as { body?: string } | undefined);
+    if (url.includes("/message/") || url.endsWith("/send/media") || url.endsWith("/send/text")) {
+      let body: Record<string, unknown> = {};
+      try {
+        body = JSON.parse(String(init?.body ?? "{}")) as Record<string, unknown>;
+      } catch {
+        body = {};
+      }
+      posts.push({ url, body });
+    }
+    if (url.includes(".ogg")) {
+      return Promise.resolve(
+        new Response(OGG_MINIMO, { status: 200, headers: { "content-type": "audio/ogg" } }),
+      );
+    }
+    if (url.includes(".pdf")) {
+      return Promise.resolve(
+        new Response(PDF_MINIMO, { status: 200, headers: { "content-type": "application/pdf" } }),
+      );
+    }
+    if (url.includes("exemplo.test")) {
+      return Promise.resolve(
+        new Response(PNG_1X1, { status: 200, headers: { "content-type": "image/png" } }),
+      );
+    }
+    return Promise.resolve({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ key: { id } }),
+    });
+  }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  return { urls, posts, restore: () => { globalThis.fetch = original; } };
+}
+
 function stubProviderSuccess(id = "WAMID-TESTE-1") {
   const urls: string[] = [];
   const original = globalThis.fetch;
@@ -892,7 +958,10 @@ Deno.test("gap M32: dispatch com midia usa o endpoint de midia (nao sendText)", 
     recipients: [recipientRow(1, "5511955550004")],
   };
   const ctx = newCtx(opts);
-  const provider = stubProviderSuccess();
+  // F56: o envio de midia passa pelo prepareMedia, que BUSCA o arquivo para detectar o
+  // tipo real. O stub precisa servir bytes de verdade — com o stub de JSON a midia e
+  // recusada como invalida e nenhum POST sai.
+  const provider = stubProviderComMidia();
   try {
     await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
     const posts = provider.urls.filter((url) => url.includes("/message/"));
@@ -982,7 +1051,9 @@ Deno.test("gap M12/F17: a cota diaria e consumida por envio (remaining=1 -> 1 en
     await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
     const envios = rpcs(ctx, "record_multiplix_item_sent");
     assert(envios.length === 1, `cota de 1 deveria permitir 1 envio, houve ${envios.length}`);
-    const posts = provider.urls.filter((url) => url.includes("/message/"));
+    // F56: o envio manda PRESENCA antes da mensagem. A presenca nao pode contar como
+    // envio — senao a cota pareceria consumida duas vezes.
+    const posts = provider.urls.filter((url) => url.includes("/message/") && !url.includes("presence"));
     assert(posts.length === 1, `esperava 1 POST ao provedor, houve ${posts.length}`);
     const pausas = rpcs(ctx, "transition_multiplix_dispatch").filter((c) => c.args.p_action === "pause");
     assert(pausas.length === 1, `esperava 1 pausa por cota esgotada, houve ${pausas.length}`);
@@ -990,6 +1061,79 @@ Deno.test("gap M12/F17: a cota diaria e consumida por envio (remaining=1 -> 1 en
       pausas[0].args.p_pause_reason === "daily_limit",
       `motivo da pausa esperado 'daily_limit', veio '${String(pausas[0].args.p_pause_reason)}'`,
     );
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
+Deno.test("F56: documento sai com o fileName do bloco (o PDF chega com nome)", async () => {
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({
+      status: "sending",
+      media_type: "document",
+      media_url: "https://exemplo.test/contrato.pdf",
+      total_recipients: 1,
+    }),
+    recipients: [recipientRow(1, "5511955550008")],
+    // F33: o nome do arquivo vive no content do bloco, e e a unica fonte dele —
+    // a URL assinada do bucket nao preserva o nome.
+    blockContent: { media: { url: "https://exemplo.test/contrato.pdf", fileName: "Contrato Assinado.pdf" } },
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  try {
+    await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    const midia = provider.posts.filter((p) => p.url.includes("sendMedia"));
+    assert(midia.length === 1, `esperava 1 POST de midia, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    assert(
+      midia[0].body.fileName === "Contrato Assinado.pdf",
+      `o documento tem de sair com o nome do bloco, saiu: ${String(midia[0].body.fileName)}`,
+    );
+    assert(
+      midia[0].body.mediatype === "document",
+      `tipo real (detectado nos bytes) esperado document, veio ${String(midia[0].body.mediatype)}`,
+    );
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
+Deno.test("F56: audio do dispatch sai como PTT e avisa presenca 'recording'", async () => {
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({
+      status: "sending",
+      media_type: "audio",
+      media_url: "https://exemplo.test/nota.ogg",
+      total_recipients: 1,
+    }),
+    recipients: [recipientRow(1, "5511955550009")],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  try {
+    await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    const presenca = provider.posts.find((p) => p.url.includes("presence"));
+    assert(presenca !== undefined, `esperava POST de presenca, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    // O Evolution GO nao expressa "gravando" como presence:"recording": translateV2ToGo
+    // converte para { state: "composing", isAudio: true }. A assercao aceita as duas formas
+    // — o que importa e a INTENCAO (o destinatario ve que e audio), nao o dialeto da vez.
+    const avisaGravacao = presenca.body.isAudio === true || presenca.body.presence === "recording";
+    assert(
+      avisaGravacao,
+      `nota de voz tem de avisar gravacao, veio: ${JSON.stringify(presenca.body)}`,
+    );
+    const audio = provider.posts.find((p) => p.url.includes("audio") || p.url.includes("sendWhatsAppAudio"));
+    assert(audio !== undefined, `esperava POST de audio/PTT, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
   } finally {
     provider.restore();
     if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");

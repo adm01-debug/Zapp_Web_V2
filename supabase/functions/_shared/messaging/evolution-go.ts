@@ -12,12 +12,12 @@
 // A rede é injetável (`SendDeps.fetch`): o unit test exercita o payload real
 // sem tocar a internet.
 
-import { translateV2ToGo } from "../evolution-go-routes.ts";
+import { type GoRoute, translateV2ToGo } from "../evolution-go-routes.ts";
 import { extractMessageId } from "../evolution-send.ts";
 import { isRecord } from "../evolution-helpers.ts";
 
 /** Tipos de mensagem que o adaptador sabe enviar (F41). */
-export type MessageKind = "text" | "image" | "document" | "audio" | "ptt";
+export type MessageKind = "text" | "image" | "document" | "audio" | "ptt" | "video";
 
 /** Capacidades declaradas do canal Evolution GO (F41). */
 export interface Capabilities {
@@ -128,7 +128,7 @@ function delayFields(delayMs?: number): Record<string, number> {
 
 function sendMediaBody(
   item: SendItem,
-  type: "image" | "document" | "audio",
+  type: "image" | "document" | "audio" | "video",
 ): Record<string, unknown> {
   if (!item.mediaUrl) throw new MessagingError("missing_media_url", "mídia sem URL");
   if (type === "document" && !item.fileName) {
@@ -168,6 +168,11 @@ function planMessage(item: SendItem): { v2Path: string; v2Body: Record<string, u
       return { v2Path: `/message/sendMedia/${instance}`, v2Body: sendMediaBody(item, "document") };
     case "audio":
       return { v2Path: `/message/sendMedia/${instance}`, v2Body: sendMediaBody(item, "audio") };
+    // video nao estava no kernel; entrou aqui porque media_type e text sem CHECK e hoje o
+    // worker manda mediatype:"video" por POST cru. Sem esta rota, plugar o adaptador
+    // silenciosamente rebaixaria video para documento.
+    case "video":
+      return { v2Path: `/message/sendMedia/${instance}`, v2Body: sendMediaBody(item, "video") };
     case "ptt": {
       if (!item.mediaUrl) throw new MessagingError("missing_media_url", "PTT sem URL");
       return {
@@ -213,7 +218,13 @@ export async function send(item: SendItem, deps: SendDeps): Promise<SendResult> 
   // Valida/monta ANTES de qualquer efeito de rede: item inválido não gera POST
   // (nem a presença "digitando", que soaria falso para um envio que não sai).
   const plan = planMessage(item);
-  const go = translateV2ToGo(plan.v2Path, "POST", plan.v2Body);
+  // A flavor decide a rota, igual a todos os outros sitios do projeto
+  // (evolution-send, evolution-api-proxy, effect-reconcile, evolution-sync-actions).
+  // Sem isto, um ambiente em v2 teria a rota traduzida para GO sem ninguem pedir —
+  // e o envio mudaria de endpoint so porque passou pelo adaptador.
+  const go: GoRoute | null = (Deno.env.get("EVOLUTION_API_FLAVOR") ?? "go") !== "v2"
+    ? translateV2ToGo(plan.v2Path, "POST", plan.v2Body)
+    : { path: plan.v2Path, method: "POST", body: plan.v2Body, auth: "instance" };
   if (go?.invalid) throw new MessagingError("invalid_payload", go.invalid);
   if (!go) throw new MessagingError("unmapped_route", `rota GO não mapeada: ${plan.v2Path}`);
 
