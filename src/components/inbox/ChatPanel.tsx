@@ -103,7 +103,6 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
     setActiveTool(prev => prev === tool ? null : tool);
   }, []);
 
-  const [callDirection] = useState<'inbound' | 'outbound'>('outbound');
   const [highlightedMessageIds, setHighlightedMessageIds] = useState<Set<string>>(new Set());
   const [activeHighlightId, setActiveHighlightId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -303,7 +302,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
 
         <ChatDialogs
           dialogs={dialogs} openDialog={openDialog} closeDialog={closeDialog}
-          conversation={conversation} forwardMessage={handlers.forwardMessage} callDirection={callDirection}
+          conversation={conversation} forwardMessage={handlers.forwardMessage}
           contactId={conversation.contact.id} onTransfer={handleTransfer}
           onScheduleMessage={handleScheduleMessage} onSendInteractiveMessage={handlers.handleSendInteractiveMessage}
           onForwardToTargets={handlers.handleForwardToTargets} onSendLocation={handlers.handleSendLocation}
