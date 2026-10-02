@@ -445,4 +445,77 @@ describe('useLocationPicker', () => {
       await waitFor(() => expect(view.result.current.proximity).toEqual({ lng: -46.6, lat: -23.5 }));
     });
   });
+
+  // E50 — a origem da escolha é o que alimenta `location_sent` no picker; quem DECIDE o valor é
+  // este hook (o picker só o repassa). Sem isso, o evento não responde por onde o agente chegou.
+  describe('origem da escolha (E50)', () => {
+    it('clique no mapa registra origin click', async () => {
+      h.getToken.mockResolvedValue('pk.test');
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ features: [] }) }));
+      const view = await renderReadyOnMapTab();
+      act(() => FakeMap.instances[0].emit('load'));
+
+      act(() => FakeMap.instances[0].emit('click', { lngLat: { lng: -46.6, lat: -23.5 } }));
+      await waitFor(() => expect(view.result.current.selectedLocation).toEqual({ lat: -23.5, lng: -46.6 }));
+      expect(view.result.current.selectedOrigin).toBe('click');
+    });
+
+    it('localização atual (GPS) registra origin gps', async () => {
+      h.getToken.mockRejectedValue(new MapboxTokenError('server_error'));
+      mockGeolocation(-23.5, -46.6);
+      const view = renderPicker();
+      await waitFor(() => expect(view.result.current.mapError).not.toBeNull());
+
+      await act(async () => { view.result.current.getCurrentLocation(); });
+      await waitFor(() => expect(view.result.current.selectedLocation).toEqual({ lat: -23.5, lng: -46.6 }));
+      expect(view.result.current.selectedOrigin).toBe('gps');
+    });
+
+    it('busca por texto (candidato único) registra origin forward', async () => {
+      h.getToken.mockResolvedValue('pk.test');
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ features: [{ geometry: { coordinates: [-46.62, -23.57] }, properties: { name: 'XBZ Brindes', full_address: 'R. da Independência, São Paulo' } }] }),
+      }));
+      const view = await renderReadyOnMapTab();
+      act(() => FakeMap.instances[0].emit('load'));
+      act(() => view.result.current.setSearchQuery('xbz brindes'));
+
+      await act(async () => { await view.result.current.searchLocation(); });
+      expect(view.result.current.selectedOrigin).toBe('forward');
+    });
+
+    it('escolha de um candidato da lista registra origin suggest', async () => {
+      h.getToken.mockResolvedValue('pk.test');
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          features: [
+            { geometry: { coordinates: [-46.62, -23.57] }, properties: { name: 'XBZ Brindes', full_address: 'R. da Independência, São Paulo' } },
+            { geometry: { coordinates: [-49.27, -25.43] }, properties: { name: 'Brindes Curitiba', full_address: 'Curitiba - PR' } },
+          ],
+        }),
+      }));
+      const view = await renderReadyOnMapTab();
+      act(() => FakeMap.instances[0].emit('load'));
+      act(() => view.result.current.setSearchQuery('brindes'));
+      await act(async () => { await view.result.current.searchLocation(); });
+      expect(view.result.current.searchResults).toHaveLength(2);
+
+      act(() => view.result.current.chooseSearchResult(view.result.current.searchResults[0]));
+      expect(view.result.current.selectedOrigin).toBe('suggest');
+    });
+
+    it('reset limpa a origem junto com a seleção', async () => {
+      h.getToken.mockResolvedValue('pk.test');
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ features: [] }) }));
+      const view = await renderReadyOnMapTab();
+      act(() => FakeMap.instances[0].emit('load'));
+      act(() => FakeMap.instances[0].emit('click', { lngLat: { lng: -46.6, lat: -23.5 } }));
+      await waitFor(() => expect(view.result.current.selectedOrigin).toBe('click'));
+
+      act(() => view.result.current.reset());
+      expect(view.result.current.selectedOrigin).toBeNull();
+    });
+  });
 });

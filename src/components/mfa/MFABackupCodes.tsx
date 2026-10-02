@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { BASE36_MAIUSCULO, secureRandomChars } from '../../lib/secureRandom';
 import { motion } from 'framer-motion';
 import { Shield, Copy, Check, Download, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,12 +12,25 @@ interface MFABackupCodesProps {
   onClose?: () => void;
 }
 
-// Generate deterministic-looking backup codes (in production, these come from the auth server)
+/**
+ * Codigos de backup de MFA — a ultima credencial de recuperacao da conta.
+ *
+ * Aqui `Math.random()` nao era enfeite: PRNG previsivel torna os codigos
+ * adivinhaveis a partir de saidas observadas, e o Sonar classifica isso como
+ * vulnerabilidade (typescript:S2245). A fonte passa a ser criptografica
+ * (`secureRandomChars`, que sorteia por `crypto.getRandomValues`).
+ *
+ * O FORMATO fica intocado porque quem valida o codigo depois depende dele: duas
+ * partes de 4 caracteres do alfabeto base36 MAIUSCULO separadas por '-'
+ * (`XXXX-XXXX`). `toString(36).substring(2, 6)` podia devolver menos de 4
+ * caracteres em casos raros (string curta); `secureRandomChars(4, ...)` devolve
+ * sempre 4 — mais consistente, nunca menos.
+ */
 function generateBackupCodes(count: number = 10): string[] {
   const codes: string[] = [];
   for (let i = 0; i < count; i++) {
-    const part1 = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const part2 = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const part1 = secureRandomChars(4, BASE36_MAIUSCULO);
+    const part2 = secureRandomChars(4, BASE36_MAIUSCULO);
     codes.push(`${part1}-${part2}`);
   }
   return codes;

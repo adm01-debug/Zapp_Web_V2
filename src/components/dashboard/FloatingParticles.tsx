@@ -24,6 +24,7 @@
  */
 import { motion } from 'framer-motion';
 import { useMemo, forwardRef } from 'react';
+import { secureRandomFloat } from '../../lib/secureRandom';
 
 interface Particle {
   id: number;
@@ -39,12 +40,12 @@ export const FloatingParticles = forwardRef<HTMLDivElement>((_, ref) => {
   const particles = useMemo<Particle[]>(() => {
     return Array.from({ length: 30 }, (_, i) => ({
       id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      size: Math.random() * 4 + 2,
-      duration: Math.random() * 15 + 10,
-      delay: Math.random() * 5,
-      color: (['primary', 'secondary', 'accent'] as const)[Math.floor(Math.random() * 3)],
+      x: secureRandomFloat() * 100,
+      y: secureRandomFloat() * 100,
+      size: secureRandomFloat() * 4 + 2,
+      duration: secureRandomFloat() * 15 + 10,
+      delay: secureRandomFloat() * 5,
+      color: (['primary', 'secondary', 'accent'] as const)[Math.floor(secureRandomFloat() * 3)],
     }));
   }, []);
 

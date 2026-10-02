@@ -16,10 +16,11 @@ vi.mock('../location-picker/useAddressAutocomplete', () => ({ useAddressAutocomp
 
 import { LocationPicker } from '../LocationPicker';
 import type { SearchStatus } from '../location-picker/useAddressAutocomplete';
+import type { LocationOrigin } from '../location-picker/useLocationPicker';
 
 interface Selected { lat: number; lng: number; name?: string; address?: string }
 
-function hookState(selectedLocation: Selected | null) {
+function hookState(selectedLocation: Selected | null, selectedOrigin: LocationOrigin | null = 'gps') {
   return {
     mapContainer: vi.fn(),
     isMapLoaded: false,
@@ -31,6 +32,8 @@ function hookState(selectedLocation: Selected | null) {
     setSearchQuery: vi.fn(),
     isSearching: false,
     selectedLocation,
+    // E50: de ONDE veio a localização escolhida — 'suggest' | 'forward' | 'click' | 'gps'.
+    selectedOrigin,
     searchResults: [],
     chooseSearchResult: vi.fn(),
     getCurrentLocation: vi.fn(),
@@ -112,31 +115,33 @@ describe('LocationPicker', () => {
     expect(state.reset).toHaveBeenCalled();
   });
 
-  it('E50: o envio registra location_sent com a qualidade da escolha (sem dado do cliente)', async () => {
-    // O funil do Searchbox terminava sem medir o desfecho: dava para saber quantas buscas e
-    // selecoes houve, nunca quantas viraram uma localizacao de fato ENVIADA — e se ela tinha
-    // endereco (ajuda real) ou era so um pino no mapa. So booleanos: endereco e coordenada de
-    // cliente nao entram no evento.
-    const state = hookState({ lat: -23.5, lng: -46.6, name: 'Rua A', address: 'Rua A, São Paulo' });
-    h.hook.mockReturnValue(state);
-    h.autocomplete.mockReturnValue(autocompleteState());
-    render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn().mockResolvedValue(undefined)} />);
-  
-    fireEvent.click(screen.getByRole('button', { name: /Enviar Localização/ }));
-  
-    await waitFor(() =>
-      expect(h.logAudit).toHaveBeenCalledWith(
-        expect.objectContaining({
-          action: 'location_sent',
-          details: expect.objectContaining({ hasName: true, hasAddress: true }),
-        }),
-      ),
-    );
-    // Nada de endereco/coordenada no evento.
-    const detalhes = h.logAudit.mock.calls[0][0].details;
-    expect(JSON.stringify(detalhes)).not.toContain('Rua A');
-    expect(JSON.stringify(detalhes)).not.toContain('-23.5');
-  });
+  it.each(['suggest', 'forward', 'click', 'gps'] as const)(
+    'E50: o envio registra location_sent com origin=%s (sem dado do cliente)',
+    async (origin) => {
+      // O funil do Searchbox terminava sem medir o desfecho: dava para saber quantas buscas e
+      // selecoes houve, nunca quantas viraram uma localizacao de fato ENVIADA nem POR ONDE ela
+      // chegou. So a origem entra — termo, nome, endereco e coordenada do cliente nunca aparecem.
+      h.logAudit.mockReset();
+      const state = hookState({ lat: -23.5, lng: -46.6, name: 'Rua A', address: 'Rua A, São Paulo' }, origin);
+      h.hook.mockReturnValue(state);
+      h.autocomplete.mockReturnValue(autocompleteState());
+      render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn().mockResolvedValue(undefined)} />);
+
+      fireEvent.click(screen.getByRole('button', { name: /Enviar Localização/ }));
+
+      // 1× por envio — não duplica.
+      await waitFor(() => expect(h.logAudit).toHaveBeenCalledTimes(1));
+      const evento = h.logAudit.mock.calls[0][0];
+      expect(evento).toMatchObject({ action: 'location_sent', details: { origin } });
+      // Shape fechado: SÓ {origin} — nem hasName/hasAddress, nem campo extra.
+      expect(Object.keys(evento.details)).toEqual(['origin']);
+      // Sem PII: nome, endereço e coordenada do cliente fora do evento.
+      const json = JSON.stringify(evento.details);
+      expect(json).not.toContain('Rua A');
+      expect(json).not.toContain('São Paulo');
+      expect(json).not.toContain('-23.5');
+    },
+  );
   
   it('se o envio falha, mantém o diálogo aberto e a seleção para nova tentativa', async () => {
     const state = hookState({ lat: -23.5, lng: -46.6 });

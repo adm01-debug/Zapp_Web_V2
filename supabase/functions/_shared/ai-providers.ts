@@ -21,6 +21,7 @@
  */
 
 import { filterConfigBody, filterExtraBody, filterHeaders } from "./ai-routing.ts";
+import { secureRandomFloat } from "./secure-random.ts";
 
 export async function callLovableAI(params: {
   messages: Array<{ role: string; content: unknown }>;
@@ -224,7 +225,7 @@ export function classifyFailure(status: number | null, err?: unknown): AiFailure
 function backoffDelayMs(baseDelayMs: number, attempt: number): number {
   const ceiling = Math.max(0, baseDelayMs) * Math.pow(2, Math.max(0, attempt));
   if (!Number.isFinite(ceiling) || ceiling <= 1) return ceiling > 0 ? 1 : 0;
-  return Math.max(1, Math.floor(Math.random() * ceiling));
+  return Math.max(1, Math.floor(secureRandomFloat() * ceiling));
 }
 
 function sleep(ms: number): Promise<void> {

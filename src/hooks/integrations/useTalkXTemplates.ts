@@ -20,6 +20,13 @@ export interface TalkXTemplate {
   custom_variables: string[];
   created_at: string;
   updated_at: string;
+  /**
+   * V26 — versão (talkx_template_versions.id) correspondente ao conteúdo VIVO
+   * do template. Ponteiro mantido por update_talkx_template_with_snapshot; a
+   * listagem já traz a coluna via `select('*')`. Nulo quando o template ainda
+   * não tem versão corrente (ex.: criado antes do backfill e nunca editado).
+   */
+  current_version_id?: string | null;
   creator?: { name: string | null } | null;
 }
 
@@ -64,6 +71,8 @@ export function useTalkXTemplates() {
     queryKey: ['talkx-templates'],
     queryFn: async () => {
       const { data, error } = await fromTable('talkx_templates')
+        // `*` já inclui current_version_id (o ponteiro do conteúdo VIVO, V26),
+        // consumido pelo editor de campanha para gravar template_version_id.
         .select('*, creator:created_by(name)')
         .order('use_count', { ascending: false })
         .order('updated_at', { ascending: false });
