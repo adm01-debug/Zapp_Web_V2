@@ -1,7 +1,7 @@
 # Inbox — Plano SalesView + Journey: 50 etapas
 
 **Gerado em:** 2026-10-02 · **Base do levantamento:** `main` `e6fd391` (`fix(inbox): destaque do HighlightedText…`, #1594)
-**Estado:** proposto — nenhuma etapa executada. Passa a ser o plano vigente para o painel central e o painel direito do inbox quando a etapa S01 for executada.
+**Estado:** proposto — nenhuma etapa executada. Revisado em 02/10 após o Codex review na PR #1603: fases passam a ser seriais (2 e 3 tocam `ConversationTabContent.tsx`, `ConversationTabs.tsx` e `ContactAccordionSections.tsx`) e a SalesView mantém o botão "+ Novo" montado também no estado vazio (S14). Passa a ser o plano vigente para o painel central e o painel direito do inbox quando a etapa S01 for executada.
 **Pedido de Joaquim (literal, 02/10):** *"mesclar a função 'pedidos' com a função 'resumo comercial', deixar todas essas informações juntas somente no topo da página do chat panel e deixar apenas o nome de 'salesview' — o nome pedidos vai desaparecer, mas a função continua integrada à função resumo comercial; no sidebar do contato excluir o 'resumo comercial' para liberar espaço e não ficar redundante. Fazer algo semelhante com a função 'estatísticas' do sidebar: excluir dali e integrar ao 'histórico' da barra superior com o nome 'Journey'."*
 
 Entendimento confirmado em sessão (02/10): nomes em inglês mesmo (**SalesView**, **Journey**); a duplicata "Estatísticas" e "Compras & Propostas" dentro de "Mais detalhes" também saem do sidebar; os KPIs por período que a aba Histórico já tem continuam, lado a lado com as Estatísticas gerais do contato.
@@ -54,7 +54,7 @@ Entendimento confirmado em sessão (02/10): nomes em inglês mesmo (**SalesView*
 1. **Os "↗12%", "−8%" e "5%" das Estatísticas são inventados.** `ContactStatsSection.tsx:57-90` define `change: 12`, `change: -8`, `change: 0`, `change: 5` como constantes, e `sparkData` com séries fixas (`[3, 5, 2, 8, 6, 4, …]`) onde só o último ponto é real. O print do Joaquim mostra exatamente o "↗12%" em Mensagens. Mover isso para a Journey sem corrigir seria carregar um número falso para uma aba de maior destaque. O plano **remove** a variação e o sparkline falsos (S25) — não há série histórica disponível no hook para substituí-los por dado real sem query nova, e abrir query nova está fora do pedido.
 2. **"Conversas" não conta conversas.** `contact.service.ts:208,234`: `totalConversations = uniqueDays.size` — número de **dias distintos com mensagem** (das últimas 500). O rótulo vai continuar sendo o que o Joaquim já vê, mas o plano troca o `sublabel` para dizer o que o número é (S26), em vez de deixar o leitor supor.
 3. **`ContactPurchasesPanel` na aba Pedidos não recebe `profileId`.** `OrdersTab.tsx:36` chama `<ContactPurchasesPanel contactId={contactId} />`; o insert do botão "+ Novo" grava `created_by: profileId` (`ContactPurchasesPanel.tsx:74`) — na aba central isso entra como `NULL`, no sidebar entra com o usuário. Como a SalesView vira o **único** lugar com esse botão, o plano passa o `profileId` (S15), senão a remoção do sidebar piora a rastreabilidade de quem registrou a compra.
-4. **A aba Pedidos tem dois caminhos de empty state que divergem.** `OrdersTab.tsx:17` esconde tudo quando `crm360` não tem compras nem deals; mas `ContactPurchasesPanel` faz **sua própria query** em `contact_purchases` (`:56-60`) e tem seu próprio empty state ("Nenhum registro de compra/proposta"). Na fusão, o Resumo Comercial (que lê `crm360.resumo`) precisa aparecer **sempre**, inclusive no estado vazio — zero compras é informação comercial, não ausência de informação (S14).
+4. **A aba Pedidos tem dois caminhos de empty state que divergem.** `OrdersTab.tsx:17` esconde tudo quando `crm360` não tem compras nem deals; mas `ContactPurchasesPanel` faz **sua própria query** em `contact_purchases` (`:56-60`) e tem seu próprio empty state ("Nenhum registro de compra/proposta"). Na fusão, o Resumo Comercial (que lê `crm360.resumo`) precisa aparecer **sempre**, inclusive no estado vazio — zero compras é informação comercial, não ausência de informação. E o `ContactPurchasesPanel` precisa ficar **montado** no estado vazio: é ele que tem o botão "+ Novo"; com o `isEmpty` atual escondendo o painel e a Fase 4 tirando a cópia do sidebar, um contato sem compras ficaria sem lugar para registrar a primeira (S14).
 
 ---
 
@@ -63,7 +63,7 @@ Entendimento confirmado em sessão (02/10): nomes em inglês mesmo (**SalesView*
 - **Só front.** Nenhuma migration, nenhuma RPC nova, nenhuma edge function. Os hooks `useContactCrm360`, `useContactStats` e `useConversationHistoryTimeline` ficam como estão; os dados mudam de lugar, não de origem.
 - **Ids internos não mudam.** `'orders'` e `'history'` continuam sendo os ids de `ConversationTab`, dos `data-testid` (`conversation-tab-orders`, `conversation-tab-history`, `orders-tab`, `history-tab`) e da chave persistida em localStorage. Renomear id é churn: tocaria `useInboxUIState`, 3 arquivos de teste, `Crm360Tab` e o `TAB_REDIRECTS` só para o código "combinar" com o rótulo. O que o usuário vê é o **rótulo**; o id é contrato interno. Registrado como decisão D1 na seção 6.
 - **Arquivos ganham nome novo só quando o conteúdo muda de responsabilidade.** `OrdersTab.tsx` → `SalesViewTab.tsx` e `HistoryTab.tsx` → `JourneyTab.tsx` porque os dois passam a hospedar blocos que não hospedavam. Os dois widgets removidos do sidebar **mudam de pasta** (`contact-details/` → `tabs/`) porque deixam de pertencer ao painel direito. Rename = `git mv` em commit próprio para o diff de conteúdo ficar legível.
-- **Um PR por fase, 5 PRs no total** (seção 3). Cada PR fecha verde nos 6 required checks antes do próximo começar, para não acumular três renames em revisão ao mesmo tempo. Fases 2 e 3 são independentes e podem andar em paralelo por sessões diferentes **desde que** a Fase 1 já tenha mergeado (ela mexe em `ConversationTabs.tsx`, que as duas tocam).
+- **Um PR por fase, 5 PRs no total** (seção 3). Cada PR fecha verde nos 6 required checks antes do próximo começar, para não acumular três renames em revisão ao mesmo tempo. **Fases 2 e 3 são seriais, não paralelas**: as duas editam `ConversationTabContent.tsx` (S12/S22), o import de ícones de `ConversationTabs.tsx` (S17/S28) e os imports de `ContactAccordionSections.tsx` (S13/S23). Duas PRs abertas sobre esses três arquivos conflitariam no merge da segunda — exatamente o que a conferência de sobreposição (S01/S11/S21) existe para impedir.
 - **Diff mínimo.** Nada de reestilizar `KpiStrip`, `SectionCard`, `ContactPurchasesPanel` ou `OpenDealsList`. Onde a fusão precisa de layout novo, o novo bloco usa os componentes que já existem.
 - **Nome de branch** segue o fluxo Git do Joaquim: `claude/feat-salesview-journey-f<N>-<AAMMDD-HHMM>`; nome sem carimbo de hora não é aceito. Antes de abrir cada PR, listar PRs abertas e conferir se outra sessão toca `ConversationTabs.tsx`, `ContactAccordionSections.tsx`, `OrdersTab.tsx` ou `HistoryTab.tsx` — se tocar, parar e avisar.
 - **Gates por PR** (os mesmos do CI, rodados antes do push): `bun run typecheck`, `bun run lint`, `bun run test` (ou `bunx vitest run <pasta>` na pasta tocada, depois a suíte inteira), `bun run build`, `node scripts/ci/lint-ratchet.mjs`, `node scripts/ci/implicit-any-ratchet.mjs`, `node scripts/qa/medir-tipografia.cjs --check`. O guard de tipografia reprova `text-[Npx]` cru — os blocos novos usam só tokens da escala (`text-2xs`, `text-3xs`, `text-xs`…), como os vizinhos.
@@ -80,7 +80,7 @@ Entendimento confirmado em sessão (02/10): nomes em inglês mesmo (**SalesView*
 | 4 · Sidebar | `feat(inbox): sidebar do contato sem Resumo Comercial, Estatísticas e Compras & Propostas (S32–S40)` | S32–S40 | Sidebar mais curto. Nada some do sistema: tudo já está nas abas das fases 2 e 3. |
 | 5 · Fechamento | `docs(inbox): fechamento do plano SalesView + Journey (S41–S50)` | S41–S50 | Prints antes/depois, docs e status atualizados, graphify, placar do plano. |
 
-Ordem obrigatória: 1 → (2 ‖ 3) → 4 → 5. A Fase 4 **só** começa com 2 e 3 mergeadas: remover do sidebar antes de o destino existir deixaria o Joaquim sem o dado em lugar nenhum por um deploy inteiro (Vercel sobe `main` sozinho).
+Ordem obrigatória: 1 → 2 → 3 → 4 → 5, cada fase a partir de `main` com a anterior mergeada. A Fase 4 **só** começa com 2 e 3 mergeadas: remover do sidebar antes de o destino existir deixaria o Joaquim sem o dado em lugar nenhum por um deploy inteiro (Vercel sobe `main` sozinho).
 
 ---
 
@@ -157,8 +157,8 @@ Aceite: typecheck verde; o sidebar continua renderizando o Resumo Comercial (nad
 
 **S14 · Resumo comercial sempre visível no topo da SalesView**
 Hoje: `SalesViewTab.tsx` (ex-`OrdersTab`) esconde tudo no empty state (`isEmpty` na linha 17).
-Fazer: logo abaixo do `<header>`, renderizar `<CommercialSummaryStrip contactId={contactId} />` **fora** do `isEmpty ? … : …`, dentro de um `SectionCard icon={CircleDollarSign} title="Resumo comercial" tone="blue"`. A grade de 4 tiles passa de `grid-cols-2` para `grid-cols-2 xl:grid-cols-4` (a aba central tem largura; o sidebar não tinha). Empty state abaixo continua para a lista de compras/propostas, com título "Nenhum pedido registrado" → "Nenhuma compra ou proposta registrada" (a palavra "pedido" sai do vocabulário, como o Joaquim pediu).
-Aceite: contato sem compras mostra os 4 tiles com "—"/"0" **e** o empty state; contato com compras mostra os 4 tiles com valores + as duas seções. `data-testid="commercial-summary-strip"` no container da grade.
+Fazer: apagar o `isEmpty ? … : …` e o `EmptyState` de nível de aba (`OrdersTab.tsx:17, 25-31`). A aba passa a renderizar **sempre** três blocos, nesta ordem: (1) `SectionCard icon={CircleDollarSign} title="Resumo comercial" tone="blue"` com `<CommercialSummaryStrip contactId={contactId} />`, grade `grid-cols-2 xl:grid-cols-4` (a aba central tem largura; o sidebar não tinha); (2) `SectionCard` "Compras e propostas" com `ContactPurchasesPanel` — que já traz o botão "+ Novo" e o próprio empty state "Nenhum registro de compra/proposta" (`ContactPurchasesPanel.tsx:97-105`); (3) `SectionCard` "Propostas em aberto" com `OpenDealsList`, que já tem `emptyMessage` padrão "Nenhuma proposta em aberto" (`OpenDealsList.tsx:19`). Motivo: o painel de compras precisa ficar montado no estado vazio, senão depois da Fase 4 um contato sem compras não tem onde registrar a primeira (achado 4). A palavra "pedido" sai do vocabulário da aba, como o Joaquim pediu; o import de `EmptyState` e `isEmpty`/`hasPurchases`/`hasOpenDeals` somem.
+Aceite: contato sem compras mostra os 4 tiles com "—"/"0", o botão "+ Novo" e os dois empty states internos; contato com compras mostra os 4 tiles com valores + a lista + as propostas. `data-testid="commercial-summary-strip"` no container da grade; grep `Nenhum pedido` em `src/` vazio.
 
 **S15 · `profileId` na SalesView (achado 3)**
 Hoje: `SalesViewTab` não recebe `profileId`; `ContactPurchasesPanel` grava `created_by: NULL` quando chamado dali. `ConversationTabContent` não tem `profileId`; `RealtimeInboxView` tem via `useConversationActions()` (como `ContactDetails.tsx:26`).
@@ -177,7 +177,7 @@ Aceite: sem teste (ícone); print no S42.
 
 **S18 · Teste unitário de `SalesViewTab`**
 Hoje: `OrdersTab` nunca teve teste.
-Fazer: `src/components/inbox/tabs/__tests__/SalesViewTab.test.tsx` mockando `useContactCrm360` (padrão de `Crm360Tab.test.tsx`): (a) com `resumo` zerado mostra os 4 tiles e o empty state; (b) com 2 compras e 1 deal mostra "Compras (2)", seção "Propostas em aberto" e **não** mostra o empty state; (c) `profileId` chega ao `ContactPurchasesPanel` (mock do painel que ecoa a prop, como `NotesTab` faz no teste de `inbox/__tests__/ConversationTabs.test.tsx:25-33`); (d) nunca renderiza o texto "Pedidos".
+Fazer: `src/components/inbox/tabs/__tests__/SalesViewTab.test.tsx` mockando `useContactCrm360` (padrão de `Crm360Tab.test.tsx`): (a) com `resumo` zerado mostra os 4 tiles, o botão "+ Novo" e os empty states internos de compras e propostas (nunca um empty state de aba); (b) com 2 compras e 1 deal mostra "Compras (2)", seção "Propostas em aberto" e **não** mostra o empty state; (c) `profileId` chega ao `ContactPurchasesPanel` (mock do painel que ecoa a prop, como `NotesTab` faz no teste de `inbox/__tests__/ConversationTabs.test.tsx:25-33`); (d) nunca renderiza o texto "Pedidos".
 Aceite: 4 casos verdes; cobertura não cai (o piso do `test:coverage` é só `src/lib` + `src/services`, mas o arquivo novo entra no relatório).
 
 **S19 · Atualizar `INBOX_360_STATUS.md` (CP3)**
@@ -192,7 +192,7 @@ Aceite: PR mergeada, deploy `READY`, prints na sessão.
 ### Fase 3 — Journey absorve as Estatísticas (PR 3)
 
 **S21 · Branch da Fase 3**
-Fazer: `claude/feat-salesview-journey-f3-<AAMMDD-HHMM>` de `origin/main` (Fase 1 mergeada; Fase 2 pode estar aberta — não há arquivo em comum, mas conferir).
+Fazer: `claude/feat-salesview-journey-f3-<AAMMDD-HHMM>` de `origin/main` (Fases 1 **e 2** mergeadas — a Fase 3 edita `ConversationTabContent.tsx`, `ConversationTabs.tsx` e `ContactAccordionSections.tsx`, os mesmos arquivos da Fase 2).
 Aceite: idem S11.
 
 **S22 · Rename `HistoryTab.tsx` → `JourneyTab.tsx` (só o rename)**
@@ -358,7 +358,7 @@ Aceite: mensagem enviada; sessão encerrada sem PR aberta.
 | D3 | Ícones: SalesView = `CircleDollarSign`, Journey = `Route` | "sacola" e "relógio" remetem a pedido e histórico, os nomes que saem | **Opcional**: se quiser manter os ícones atuais, S17 e S28 são puladas |
 | D4 | Badge da SalesView soma compras + propostas em aberto (S16) | hoje só compras contam, mas a aba mostra as duas coisas | **Opcional**: se quiser badge só de compras, S16 é pulada |
 | D5 | Rename de arquivo em commit separado do diff de conteúdo | o guard `db-guard` reprova "edição de migration existente" por similaridade — não se aplica aqui, mas o mesmo princípio deixa a revisão legível | Não |
-| D6 | 5 PRs, não 1 | cada fase é deployável sozinha; a Fase 4 (remoção) só pode ir ao ar com 2 e 3 já no ar | Não |
+| D6 | 5 PRs seriais, não 1 nem paralelas | cada fase é deployável sozinha; 2 e 3 tocam os mesmos três arquivos; a Fase 4 (remoção) só pode ir ao ar com 2 e 3 já no ar | Não |
 
 Decisão de negócio que **não** cabe neste plano e vai para "Próximos passos" do S50: estatísticas com série real (precisa de RPC nova ou view materializada = DDL).
 
