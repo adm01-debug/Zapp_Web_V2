@@ -524,9 +524,13 @@ jobs:
           CALLS_TELEFONIA_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/calls-telefonia-contract.test.sh
 
+      # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
+      # Com o shim o banco criado é shim_zapp-notification-atomicity-<PID> e
+      # current_database() devolve esse nome, quebrando a asserção.
       - name: Simular notificações atômicas de chamadas e sentimento
         env:
           NOTIFICATION_ATOMICITY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/notification-delivery-atomicity.test.sh
 
       # Guarda o contrato runtime generico do db-migrate: se ele deixar de
