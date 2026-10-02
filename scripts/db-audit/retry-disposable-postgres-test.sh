@@ -74,7 +74,7 @@ pre_pull_images() {
       fi
       espelho="$(espelho_do_ecr "$imagem")"
       if [[ -n "$espelho" ]] && docker pull "$espelho" >/dev/null 2>&1; then
-        docker tag "$espelho" "$imagem"
+        docker tag "${espelho%%@*}" "${imagem%%@*}"
         printf 'INFO: imagem obtida do espelho %s (o ECR limita pull anonimo)\n' "$espelho"
         break
       fi
