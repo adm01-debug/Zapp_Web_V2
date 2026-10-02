@@ -45,51 +45,18 @@ import { LocationPicker } from '../LocationPicker';
 import type { LocationOrigin } from '../location-picker/useLocationPicker';
 import type { GeoSearchPlace } from '@/lib/mapboxGeocode';
 import { resetSearchSessionForTests } from '@/lib/mapboxSession';
+// E68: respostas reais da Mapbox em disco (Apêndice A) — o fetch destes testes serve estes arquivos.
+import suggestXbz from '@/lib/__fixtures__/mapbox/suggest-xbz.json';
+import suggestAsdkjh from '@/lib/__fixtures__/mapbox/suggest-asdkjh.json';
+import retrieveXbz from '@/lib/__fixtures__/mapbox/retrieve-xbz-brindes.json';
+import forwardAvenida from '@/lib/__fixtures__/mapbox/forward-avenida-paulista-1000.json';
+import rateLimit429 from '@/lib/__fixtures__/mapbox/rate-limit-429.json';
 
-// --- Shapes do Apêndice A (2026-09-25) --------------------------------------------------------
-// `/suggest` NÃO traz coordenada — só mapbox_id/name/full_address/feature_type.
-const SUGGEST_BODY = {
-  suggestions: [
-    {
-      name: 'XBZ Brindes',
-      full_address: 'R. da Independência, São Paulo, 01524, Brasil',
-      feature_type: 'poi',
-      mapbox_id: 'dXJuOm1ieHBvaTpiZW',
-    },
-  ],
-};
-// `/retrieve/{mapbox_id}` traz a coordenada em `geometry.coordinates` como [lng, lat].
-const RETRIEVE_BODY = {
-  features: [
-    {
-      geometry: { coordinates: [-46.61563441, -23.56672978] },
-      properties: {
-        name: 'XBZ Brindes',
-        full_address: 'R. da Independência, São Paulo, 01524, Brazil',
-        context: {
-          street: { name: 'R. da Independência' },
-          address: { address_number: '100' },
-          neighborhood: { name: 'Liberdade' },
-          place: { name: 'São Paulo' },
-          region: { region_code: 'SP' },
-          postcode: { name: '01524-000' },
-        },
-      },
-    },
-  ],
-};
-// `/forward` (fallback) já vem COM coordenada — a seleção dispensa `/retrieve` (E15).
-const FORWARD_BODY = {
-  features: [
-    {
-      geometry: { coordinates: [-46.6565, -23.5613] },
-      properties: {
-        name: 'Avenida Paulista, 1000',
-        full_address: 'Av. Paulista, 1000 - Bela Vista, São Paulo',
-      },
-    },
-  ],
-};
+// E68: os shapes do Apêndice A saíram daqui — vivem em `src/lib/__fixtures__/mapbox/*.json` e
+// este arquivo (mais o do cadastro) lê o MESMO arquivo. Nenhum shape inline sobrou.
+// `/suggest` NÃO traz coordenada (só mapbox_id/name/full_address/feature_type); `/retrieve/{id}`
+// traz em `geometry.coordinates` como [lng, lat]; `/forward` (fallback) já vem COM coordenada —
+// a seleção dispensa `/retrieve` (E15).
 
 type Resp = { ok: boolean; status: number; json: () => Promise<unknown> };
 function jsonResponse(body: unknown, status = 200): Resp {
@@ -164,7 +131,7 @@ afterEach(() => {
 describe('E67 · integração do picker de endereço (hook real, só fetch mockado)', () => {
   it('1) /suggest com o shape do Apêndice A vira UMA opção com nome e endereço numa única request de sessão', async () => {
     const { input } = await renderOnMapTab();
-    routeFetch({ suggest: jsonResponse(SUGGEST_BODY) });
+    routeFetch({ suggest: jsonResponse(suggestXbz) });
 
     digitar(input, 'xbz');
 
@@ -179,7 +146,7 @@ describe('E67 · integração do picker de endereço (hook real, só fetch mocka
 
   it('2) escolher a sugestão aplica no mapa a coordenada do /retrieve (lng,lat do Apêndice A) com o endereço decomposto', async () => {
     const { input, state } = await renderOnMapTab();
-    routeFetch({ suggest: jsonResponse(SUGGEST_BODY), retrieve: jsonResponse(RETRIEVE_BODY) });
+    routeFetch({ suggest: jsonResponse(suggestXbz), retrieve: jsonResponse(retrieveXbz) });
 
     digitar(input, 'xbz');
     fireEvent.click(await screen.findByRole('option', { name: /XBZ\s*Brindes/ }));
@@ -197,7 +164,7 @@ describe('E67 · integração do picker de endereço (hook real, só fetch mocka
 
   it('3) /suggest cai por rede e o /forward real alimenta a lista com coordenada (sem /retrieve)', async () => {
     const { input, state } = await renderOnMapTab();
-    routeFetch({ suggest: new TypeError('Failed to fetch'), forward: jsonResponse(FORWARD_BODY) });
+    routeFetch({ suggest: new TypeError('Failed to fetch'), forward: jsonResponse(forwardAvenida) });
 
     digitar(input, 'avenida paulista 1000');
 
@@ -215,10 +182,10 @@ describe('E67 · integração do picker de endereço (hook real, só fetch mocka
   it('4) /retrieve responde 200 sem coordenada e a cascata E16 repete no /forward com o nome da sugestão', async () => {
     const { input, state } = await renderOnMapTab();
     routeFetch({
-      suggest: jsonResponse(SUGGEST_BODY),
+      suggest: jsonResponse(suggestXbz),
       // 200 sem `geometry.coordinates` = "não encontrado", não falha de rota.
       retrieve: jsonResponse({ features: [{ properties: { name: 'XBZ Brindes' } }] }),
-      forward: jsonResponse(FORWARD_BODY),
+      forward: jsonResponse(forwardAvenida),
     });
 
     digitar(input, 'xbz');
@@ -235,7 +202,7 @@ describe('E67 · integração do picker de endereço (hook real, só fetch mocka
 
   it('5) ao escolher, a lista fecha e o anúncio do leitor de tela traz o nome escolhido (E64)', async () => {
     const { input } = await renderOnMapTab();
-    routeFetch({ suggest: jsonResponse(SUGGEST_BODY), retrieve: jsonResponse(RETRIEVE_BODY) });
+    routeFetch({ suggest: jsonResponse(suggestXbz), retrieve: jsonResponse(retrieveXbz) });
 
     digitar(input, 'xbz');
     fireEvent.click(await screen.findByRole('option', { name: /XBZ\s*Brindes/ }));
@@ -249,7 +216,7 @@ describe('E67 · integração do picker de endereço (hook real, só fetch mocka
 
   it('6) /suggest e /retrieve da MESMA escolha compartilham o session_token (1 sessão = N /suggest + 1 /retrieve)', async () => {
     const { input } = await renderOnMapTab();
-    routeFetch({ suggest: jsonResponse(SUGGEST_BODY), retrieve: jsonResponse(RETRIEVE_BODY) });
+    routeFetch({ suggest: jsonResponse(suggestXbz), retrieve: jsonResponse(retrieveXbz) });
 
     digitar(input, 'xbz');
     fireEvent.click(await screen.findByRole('option', { name: /XBZ\s*Brindes/ }));
@@ -264,5 +231,30 @@ describe('E67 · integração do picker de endereço (hook real, só fetch mocka
     const suggestUrl = new URL(String(callsTo('/search/searchbox/v1/suggest')[0][0]));
     expect(suggestUrl.searchParams.get('country')).toBe('br');
     expect(suggestUrl.searchParams.get('language')).toBe('pt');
+  });
+
+  // E68 · os dois casos abaixo existem para que a fixture corresponda a um comportamento observável:
+  // `suggest-asdkjh.json` (200 com `suggestions: []`) e `rate-limit-429.json`.
+  it('7) /suggest 200 com lista vazia (fixture "asdkjh") mostra "Nada encontrado" e não seleciona nada (E25/E47)', async () => {
+    const { input, state } = await renderOnMapTab();
+    routeFetch({ suggest: jsonResponse(suggestAsdkjh) });
+
+    digitar(input, 'asdkjh');
+
+    expect(await screen.findByText(/Nada encontrado/)).toBeInTheDocument();
+    expect(screen.queryByRole('option')).not.toBeInTheDocument();
+    expect(state.chooseSearchResult).not.toHaveBeenCalled();
+  });
+
+  it('8) /suggest 429 (fixture rate-limit-429.json) pausa a lista com aviso e "Tentar novamente" (E27)', async () => {
+    const { input } = await renderOnMapTab();
+    routeFetch({ suggest: jsonResponse(rateLimit429, 429) });
+
+    digitar(input, 'xbz');
+
+    expect(await screen.findByText(/Sugestões pausadas por \d+ s/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Tentar novamente' })).toBeInTheDocument();
+    // Limite de uso não é falha de rota: a tela não pode dizer "Falha ao buscar sugestões".
+    expect(screen.queryByText(/Falha ao buscar sugestões/)).not.toBeInTheDocument();
   });
 });
