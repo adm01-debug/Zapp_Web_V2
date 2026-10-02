@@ -344,6 +344,24 @@ describe('useAddressAutocomplete', () => {
     expect(h.suggestPlaces).toHaveBeenCalledWith('abcdefghij', 'tok', expect.objectContaining({ session: 'session-1' }));
   });
 
+  it('E80: 200 teclas em 5 s (25 ms cada) -> <= 17 requests e 1 sessao', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [] });
+    const { result } = setup();
+    let term = '';
+    // 200 teclas x 25 ms = 5000 ms de digitacao continua.
+    for (let i = 0; i < 200; i++) {
+      term += String.fromCharCode(97 + (i % 26));
+      act(() => { result.current.setQuery(term); });
+      act(() => { vi.advanceTimersByTime(25); });
+    }
+    await act(async () => { vi.advanceTimersByTime(300); });
+    const requests = h.suggestPlaces.mock.calls.length;
+    const sessoes = new Set(h.suggestPlaces.mock.calls.map((c) => (c[2] as { session?: string })?.session));
+    // O teto da E80 e <= 17 (1 a cada 300 ms); o medido e reportado no PR.
+    expect(requests).toBeLessThanOrEqual(17);
+    expect(sessoes.size).toBe(1);
+  });
+
   it('cancela a consulta anterior — resposta lenta da 1ª não sobrescreve a 2ª', async () => {
     let resolveFirst: (value: { ok: true; suggestions: GeoSuggestion[] }) => void = () => {};
     const firstPromise = new Promise<{ ok: true; suggestions: GeoSuggestion[] }>((resolve) => { resolveFirst = resolve; });
