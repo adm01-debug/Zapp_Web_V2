@@ -736,6 +736,14 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   `max-w-lg`, decisão de 24/09), "Novo Produto" (A), rail → `Accordion` `<1280px` (A).
 - [ ] **CT-91** — RLS testada com 2 usuários reais (agente vê só os próprios envios; supervisor vê todos; favoritos
   isolados). **Aceite:** resultado em `SECURITY.md`.
+  **◐ PARCIAL — 2026-10-02: o ESTADO da segurança foi medido em PRODUÇÃO; o teste com 2 usuários segue aberto.**
+  Com o banco canônico de volta, medi direto nele (gateway de leitura, `tnnnlkbymytvtqngbbqh`): RLS **ligada** nas duas
+  tabelas; policy de favoritos `FOR ALL TO authenticated USING (user_id = auth.uid())`; SELECT dos envios por
+  `agent_id IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid())`;
+  `WITH CHECK` do INSERT **sem** o furo `agent_id IS NULL`; grants do `authenticated` = `catalog_send_events` com
+  **INSERT/SELECT apenas** (append-only) e `catalog_favorites` com os quatro; **zero** linha de grant para `anon`. Tabela
+  com a saída crua em `docs/catalogo/SECURITY.md` §7. Segue **não** feito: exercitar a RLS com **dois JWTs distintos**
+  (agente × supervisor), que exige duas sessões autenticadas.
 - [x] **CT-92** — Service key do PromoGifts só em Edge secrets: grep no repo e no bundle de produção. **Aceite:** 0 hits.
   **✅ FEITO — provado em 01/10/2026:** no repositório a service key aparece **apenas como nome de variável**
   (`Deno.env.get("PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY")` em `supabase/functions/promogifts-catalog/index.ts:195`) e como
@@ -764,10 +772,11 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   view `catalog_send_stats` com `security_invoker=on` e por que respeita a RLS (`20260930740000_catalogo_send_stats.sql:18-19`);
   rate limit por ação da edge (`index.ts:141-177`, `:268-270`: 120/min `list_products`, 60/min nas demais); o que a `anon`
   não enxerga; e a service key do PromoGifts **só como nome** (`index.ts:276`), nunca literal.
-  **⚠️ PENDÊNCIA (o aceite original do CT-91 pedia teste com 2 usuários reais):** **NÃO foi testado** — exige duas sessões
-  autenticadas (agente × supervisor), indisponível neste ambiente. Provado por **código/migration** (os predicados das
-  policies); **não** provado em **runtime com 2 usuários**. Registrado como pendência explícita em
-  `docs/catalogo/SECURITY.md` §7.
+  **⚠️ PENDÊNCIA REFINADA — 2026-10-02:** o aceite original do CT-91 pedia teste com 2 usuários reais. O que ficou
+  **provado a mais**: com o banco de volta, o **estado de produção** foi medido direto no canônico (RLS ligada, predicados
+  das policies, `WITH CHECK` sem o furo do `anon`, grants — `anon` com **zero** privilégio, log append-only) e as **6/6**
+  migrations do módulo conferidas em `supabase_migrations.schema_migrations`. O que **não** foi feito e continua aberto:
+  exercitar a RLS com **dois JWTs distintos** (duas sessões autenticadas). Registrado em `docs/catalogo/SECURITY.md` §7.
 - [ ] **CT-97** — `deployment-manifest.json` final = versão deployada (digest confere). **Aceite:** `--check` ok.
   **◐ PARCIAL — 2026-10-02: o nível LOCAL passa; o nível REMOTO (digest contra o deployado) NÃO foi medido.**
   (a) `node scripts/edge-deploy/generate-manifest.mjs --check` → `Edge manifest OK: 67 functions, 123 source files,
