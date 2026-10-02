@@ -13,7 +13,10 @@ export const CONTACT_TAB_LABELS = [
 /** Abre `?view=contacts` e espera os KPIs e as abas carregarem. */
 export async function gotoContacts(page: Page) {
   await page.goto('/?view=contacts');
-  await expect(page.getByRole('heading', { level: 1, name: 'Contatos' })).toBeAttached();
+  // No mobile o banner também tem um <h1> "Contatos"; o da página fica dentro do <main>.
+  await expect(
+    page.getByRole('main', { name: 'Conteúdo principal' }).getByRole('heading', { level: 1, name: 'Contatos' }),
+  ).toBeAttached({ timeout: 20_000 });
   await expect(page.getByTestId('kpi-card').first()).toBeVisible({ timeout: 20_000 });
   await expect(page.getByRole('tab', { name: /Todos/ })).toBeVisible();
   await expect(page.getByText('Carregando contatos', { exact: false })).toHaveCount(0, { timeout: 20_000 });

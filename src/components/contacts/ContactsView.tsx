@@ -139,7 +139,7 @@ export function ContactsView() {
       <ContactBulkTagDialog
         open={isBulkTagOpen} onOpenChange={setIsBulkTagOpen}
         contactIds={selectedIds} allTags={uniqueTags}
-        onComplete={() => { setSelectedIds([]); refetch(); }}
+        onComplete={() => { setSelectedIds([]); refetch(); invalidateContactAggregates(); }}
       />
 
       <ContactStatsCards
@@ -239,7 +239,7 @@ export function ContactsView() {
       <BulkActionsBar
         selectedIds={selectedIds}
         onClearSelection={() => setSelectedIds([])}
-        onActionComplete={() => { setSelectedIds([]); refetch(); }}
+        onActionComplete={() => { setSelectedIds([]); refetch(); invalidateContactAggregates(); }}
         onCountersChanged={invalidateContactAggregates}
         availableTags={uniqueTags}
         canDeleteSelection={canDeleteSelection}

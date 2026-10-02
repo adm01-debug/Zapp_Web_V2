@@ -229,12 +229,34 @@ A parte de banco foi refeita via MCP read-only:
 |---|----------|------|------|
 | B1 | `DB Live Guard` vermelho: manifesto stale + 2 migrations fora do Git | — | Regenerar `schema-manifest.json` e regularizar/registrar as 2 migrations órfãs |
 | B2 | `deploy-functions.yml` vermelho: `extra=[sicoob-bridge,sicoob-bridge-reply]` | Joaquim/admin | Apagar as 2 edges remotas e re-disparar |
-| B3 | Etapa 98 incompleta: sem credencial do usuário QA | Joaquim | Rodar o Playwright logado (P4–P6) |
+| ~~B3~~ | ~~Etapa 98 incompleta: sem credencial do usuário QA~~ | — | **Resolvido em 02/10** (complemento abaixo) |
+| B7 | Etapa 90: baselines não versionadas (captura não determinística contra produção) | — | Mockar as RPCs de Contatos no spec (`page.route`) ou rodar contra ambiente com dados fixos; depois gerar e versionar |
 | B4 | Etapa 95: receitas do runbook não testadas por execução (DML proibido) | — | Testar na primeira janela com escrita |
 | B5 | Etapa 67: `text-success-foreground` sobre `bg-success` (2.60/2.30:1) | — | Escurecer `--success` (afeta o app todo) |
 | B6 | Etapas 52/55/58/59 (F5) dependem de apply de migration | — | Aplicar e refazer o `DB Live Guard` |
 
 ---
+
+## Complemento 2026-10-02 — Etapa 98 com usuário QA e etapa 90
+
+Usuário `devin-e2e@promobrindes.com.br`, papel `supervisor` (agente só vê contatos atribuídos).
+
+| # | Verificação | Resultado |
+|---|-------------|-----------|
+| P4 | Total (KPI) == badge Todos | ✅ 2.504 = 2.504 com legados ocultos; 3.100 com "Mostrar legados" (o banco mudou desde 01/10) |
+| P5 | Excluir `[E2E]` grava `deleted_at` | ✅ `delete_contact` 200 com o id; `contacts` vivos por telefone = `[]`; não reaparece após reload |
+| P6 | "Conversar" abre o inbox | ✅ `contacts-detail.spec.ts` contra produção |
+| — | Specs de Contatos autenticados (6 arquivos) | 14 passed / 1 skipped no app local de `94996eca`; o skip (Mesclar) virou pass em `c646d034` (`contacts-selection` 2/2) |
+
+Bugs achados nesta verificação e corrigidos no PR #1562:
+
+- contato excluído voltava ao limpar a busca: `refetch()` só refazia a entrada ativa de `contacts-search`; agora o prefixo inteiro é invalidado em toda escrita (também tags/ações em massa);
+- Esc que fechava um diálogo (Comparar) também limpava a seleção e escondia "Mesclar": o atalho roda em captura e ignora Esc com diálogo aberto;
+- layout: KPI estourava o card a 390px; resumo da lista (`h-9` fixo) ficava sob o seletor de vista; toolbar cortava "Filtros Salvos" a 1280px.
+
+**Etapa 90.** O spec gera (`--update-snapshots`) e compara a 0,2%, com toasts ocultos e dado vivo mascarado (valores, deltas, sparklines, contadores, cards/linhas). Em 3 comparações seguidas contra o Supabase de produção: 6/6, 5/6, 3/6. As falhas não foram de layout: banner global "Conexão 'PRINCIPAL' está desconectada" e KPIs que não carregaram em 20s. Por isso os PNGs **não** foram versionados (B7).
+
+Ressalva visual: no mobile o FAB "+" cobre parte do botão "Colunas".
 
 ## Conclusão
 

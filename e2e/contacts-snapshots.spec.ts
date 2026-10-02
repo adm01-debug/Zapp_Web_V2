@@ -59,8 +59,21 @@ function arquivoDaBaseline(nome: string, tema: Tema): string {
 
 /** Regiões com dado vivo (mudam a cada contato criado): mascaradas na comparação. */
 function mascarasDeDadoVivo(page: Page) {
-  return [page.getByTestId('kpi-value'), page.getByTestId('tab-count')];
+  return [
+    page.getByTestId('kpi-value'),
+    page.getByTestId('kpi-sparkline'),
+    page.getByTestId('kpi-delta'),
+    page.getByTestId('contacts-showing'),
+    page.getByTestId('contacts-page-indicator'),
+    page.getByTestId('tab-count'),
+    page.getByTestId('contact-card'),
+    page.getByTestId('contact-list-item'),
+    page.getByTestId('contacts-table-body'),
+  ];
 }
+
+/** Toasts globais (ex.: aviso de SIP não configurado) não fazem parte da tela de Contatos. */
+const SEM_TOASTS = '[data-sonner-toaster], [role="region"][aria-label^="Notifications"] { display: none !important; }';
 
 /** Espera a vista pedida estar de fato montada (mesmos marcadores de `contacts-views.spec.ts`). */
 async function abrirVista(page: Page, nome: string, label: string): Promise<void> {
@@ -116,13 +129,16 @@ for (const tema of ['light', 'dark'] as const) {
         );
 
         const baseline = arquivoDaBaseline(vista.nome, tema);
+        // `--update-snapshots` liga 'changed' (ou 'all'); o padrão 'missing' não conta como geração deliberada.
+        const gerandoBaseline = testInfo.config.updateSnapshots === 'all' || testInfo.config.updateSnapshots === 'changed';
         test.skip(
-          !existsSync(baseline),
+          !existsSync(baseline) && !gerandoBaseline,
           `baseline ${path.relative(process.cwd(), baseline)} ausente — a etapa 90 exige os PNGs ` +
             'versionados. Gere uma vez, em Linux, com E2E_TEST_EMAIL/E2E_TEST_PASSWORD definidas: ' +
             '`bun run test:e2e -- --project=setup --project=chromium-authenticated --update-snapshots`.',
         );
 
+        await page.addStyleTag({ content: SEM_TOASTS });
         await expect(page).toHaveScreenshot(`contacts-${vista.nome}-${tema}${SNAPSHOT_EXT}`, {
           maxDiffPixelRatio: 0.002,
           animations: 'disabled',

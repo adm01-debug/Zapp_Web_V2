@@ -149,7 +149,7 @@
 - [x] **87.** E2E `e2e/contacts-crud.spec.ts` com fixture própria (prefixo `[E2E]`, padrão de `e2e/fixtures/e2e-contact.ts`): criar → editar → **excluir** → confirmar que sumiu da lista e do banco. — DoD: verde; é o teste que teria pegado o P0.
 - [x] **88.** E2E `e2e/contacts-detail.spec.ts`: abrir painel, Esc fecha, "Conversar" leva ao inbox com o contato (etapa 61). — DoD: verde.
 - [x] **89.** E2E light mode + mobile 390px em `contacts-view.spec.ts` (`scrollWidth <= innerWidth`, header sem sobreposição — lição do CP11). — DoD: verde nos 2 viewports.
-- [ ] **90.** Screenshot de referência (light/dark) das 3 vistas em `e2e/__screenshots__/contacts-*.png` com `toHaveScreenshot` tolerância 0,2% (o que a etapa 48 do plano antigo nunca entregou). — DoD: PNGs versionados; CI compara.
+- [ ] **90.** Screenshot de referência (light/dark) das 3 vistas em `e2e/__screenshots__/contacts-*.png` com `toHaveScreenshot` tolerância 0,2% (o que a etapa 48 do plano antigo nunca entregou). — DoD: PNGs versionados; CI compara. — 🟡 spec gera e compara (`--update-snapshots`), toasts ocultos e dado vivo mascarado; PNGs **não** versionados: contra produção a comparação não é determinística (banner de conexão, KPIs que não carregam em 20s). Ver fechamento.
 
 ## F9 — Documentação e inventário (91–95) — junto da PR da F8
 
@@ -163,7 +163,7 @@
 
 - [ ] **96.** Ordem de merge: F1 (após approve + apply) → F2+F3 → F4 → F5 (após apply) → F6+F7 → F8+F9. Cada PR: 6 required checks verdes + `strict=false` conferido (CLAUDE.md 27/09). — DoD: 6 SHAs de merge aqui.
 - [ ] **97.** Edge functions: se a F1 apagar/alterar `sicoob-bridge*` ou `talkx-*`, disparar `deploy-functions.yml` (`workflow_dispatch`) + aprovação em `producao-edge-functions`; **merge não deploya edge**. — DoD: run id + `success`.
-- [ ] **98.** Verificação em produção (Playwright contra `https://zapp-web-v2.vercel.app/?view=contacts`, usuário QA): excluir contato `[E2E]` some do banco (`SELECT deleted_at FROM contacts WHERE id=…`); Total == Todos; toggle legados muda de 3.104 para ≈2.498; "Conversar" abre o chat. — DoD: 4 evidências (query + screenshot) aqui.
+- [x] **98.** Verificação em produção (Playwright contra `https://zapp-web-v2.vercel.app/?view=contacts`, usuário QA): excluir contato `[E2E]` some do banco (`SELECT deleted_at FROM contacts WHERE id=…`); Total == Todos; toggle legados muda de 3.104 para ≈2.498; "Conversar" abre o chat. — DoD: 4 evidências (query + screenshot) aqui. — ✅ 02/10, usuário QA `devin-e2e` (supervisor): ver complemento em `FECHAMENTO_PLANO_CONTATOS_2026-10-01.md`.
 - [ ] **99.** Guards pós-merge: `db-live-guard` verde no push de `main`; `supabase-usage-guard.mjs` `novas: 0`; paridade arquivos↔ledger (count + md5). — DoD: 3 saídas.
 - [ ] **100.** Fechamento: preencher a tabela "Status por fase" acima, apagar as 6 branches mergeadas, e escrever `docs/audits/FECHAMENTO_PLANO_CONTATOS_2026-XX-XX.md` com o diff entre esta auditoria e o estado final (mesmo formato do §0). Só então este plano vira "concluído". — DoD: arquivo de fechamento em `main`.
 
