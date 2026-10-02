@@ -110,6 +110,23 @@ describe('ContactForm — autocomplete de endereço (E41)', () => {
     ];
   });
 
+  it('E58 (2º consumidor): o combobox de endereço do cadastro não tem violação de acessibilidade (axe)', async () => {
+    h.suggestions = [
+      { id: 's1', name: 'Rua A, 1', address: 'Rua A, 1, São Paulo', kind: 'street' },
+      { id: 's2', name: 'Rua B, 2', address: 'Rua B, 2, São Paulo', kind: 'address' },
+      { id: 's3', name: 'Rua C, 3', address: 'Rua C, 3, São Paulo', kind: 'poi' },
+    ];
+    renderForm();
+    fireEvent.focus(screen.getByLabelText('Logradouro'));
+    expect(screen.getAllByRole('option').length).toBe(3);
+    // jsdom não calcula contraste (o axe não tem layout real) — fora da varredura, declarado.
+    const axe = (await import('axe-core')).default;
+    const r = await axe.run(document.body, {
+      rules: { region: { enabled: false }, 'color-contrast': { enabled: false } },
+    });
+    expect(r.violations.map((v) => `${v.id} (${v.nodes.length} nó(s)): ${v.help}`)).toEqual([]);
+  });
+
   it('escolher uma sugestão preenche logradouro, número, bairro, cidade, UF, CEP e coordenada — e o campo continua editável', async () => {
     h.select.mockResolvedValue({
       lat: -23.561300,
