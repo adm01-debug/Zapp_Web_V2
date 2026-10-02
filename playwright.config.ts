@@ -207,13 +207,23 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    // The application development server intentionally defaults to port 8080.
-    // E2E owns an isolated port so Playwright's readiness probe and its browser
-    // always exercise the same process, including while a developer is running
-    // the app locally on the default port.
-    command: 'bun run dev -- --host 127.0.0.1 --port 5173 --strictPort',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: (() => {
+    // A porta vem do proprio ambiente quando PLAYWRIGHT_BASE_URL e' definida.
+    // Sem isso, a suite e' fixa em 5173 e, com `reuseExistingServer` fora do CI,
+    // ela ADOTA o dev server que estiver la -- inclusive o de outro chat, o que
+    // fazia o e2e de um workspace exercitar o codigo de outro (medido 02/10).
+    const alvo = process.env.PLAYWRIGHT_BASE_URL;
+    const url = alvo ?? 'http://127.0.0.1:5173';
+    const porta = new URL(url).port || '5173';
+    return {
+      // O app de desenvolvimento usa 8080 por padrao; o E2E tem porta propria
+      // para que a sonda do Playwright e o navegador exercitem o MESMO processo.
+      command: `bun run dev -- --host 127.0.0.1 --port ${porta} --strictPort`,
+      url,
+      // Fora do CI o desenvolvedor costuma ja' ter o dev server no ar: reusar
+      // a propria porta e' o comportamento util. O que nao pode acontecer e'
+      // olhar para uma porta que nao e' a sua -- e isso o `url` acima resolve.
+      reuseExistingServer: !process.env.CI,
+    };
+  })(),
 });

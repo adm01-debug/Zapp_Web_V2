@@ -5,10 +5,12 @@ import {
   cleanupFixtureMessages,
   cleanupE2EReactions,
 } from './fixtures/e2e-contact';
+import { dispensarOnboarding } from './fixtures/onboarding';
 
 test.describe('Reactions flow', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    await dispensarOnboarding(page);
     // ensureFixtureConversationOpen valida o token do Supabase explicitamente
     // (lanca erro se nao encontrado). Chamar ANTES do cleanupE2EReactions garante
     // que o localStorage esta carregado quando o cleanup precisa do access_token.

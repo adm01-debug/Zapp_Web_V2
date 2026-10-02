@@ -1,6 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-env';
+import { dispensarOnboarding } from './onboarding';
 // Mesmos valores públicos de e2e/fixtures/e2e-contact.ts (URL do projeto + anon key).
 /** Ordem canônica das abas (CONTACT_TYPES em src/utils/whatsappFileTypes.ts). */
 export const CONTACT_TAB_LABELS = [
@@ -10,6 +11,9 @@ export const CONTACT_TAB_LABELS = [
 /** Abre `?view=contacts` e espera os KPIs e as abas carregarem. */
 export async function gotoContacts(page: Page) {
   await page.goto('/?view=contacts');
+  // O overlay de boas-vindas intercepta o ponteiro e faz o clique morrer em
+  // silencio (alvo visivel, estavel, e mesmo assim o click nao completa).
+  await dispensarOnboarding(page);
   // No mobile o banner também tem um <h1> "Contatos"; o da página fica dentro do <main>.
   await expect(
     page.getByRole('main', { name: 'Conteúdo principal' }).getByRole('heading', { level: 1, name: 'Contatos' }),
