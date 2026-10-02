@@ -245,9 +245,10 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   de "Próxima"** não foi implementado — o hook **não expõe nenhuma função de prefetch** (só `productsQuery`, `fetchProducts`,
   `fetchProduct`, `fetchCategories`, `fetchSuppliers`, `invalidate`) e chamar `fetchProducts` no hover trocaria o conteúdo
   exibido, porque as `filters` são a `queryKey`. Está registrado como pendência medida em `docs/catalogo/PERF.md`.
-- [ ] **CT-30** — Responsivo: rail vira `Accordion` "Resumo do catálogo" acima da grade em `< xl`; detalhe/envio viram
+- [x] **CT-30** — Responsivo: rail vira `Accordion` "Resumo do catálogo" acima da grade em `< xl`; detalhe/envio viram
   `Drawer` (vaul) em `< md`; prints 1280/1024/768/390 em `docs/catalogo/PARIDADE.md` (criado aqui, seção "Rail").
   **Aceite:** 4 prints commitados; Accordion e Drawer testados.
+  **✅ FEITO (02/10/2026).** O rail virou `<Accordion>` rotulado exatamente **"Resumo do catálogo"**, com `xl:hidden`, **acima da grade**, reusando o mesmo `<CatalogRail>` com as mesmas props do `<aside>` (`ExternalProductManagement.tsx:968`; o `<aside>` segue exclusivo do `xl+`). O detalhe e o envio passaram a usar **Drawer** (`vaul`, via `src/components/ui/drawer.tsx` novo) abaixo de `md` e mantêm `Sheet`/`Dialog` acima disso. Testes: `CT30_responsivo.test.tsx` (rótulo do Accordion, detalhe em Drawer com `data-vaul-drawer-direction="bottom"` abaixo de md, Sheet em md+). **Aceite literal cumprido:** os 4 prints estão commitados em `docs/catalogo/screens/` e os dois componentes estão testados. **Ressalva declarada:** esses 4 prints são anteriores a esta mudança e mostram o layout antigo (sem Accordion, com Dialog no lugar do Drawer); refazê-los é documentação pendente, não aceite em aberto.
 
 ## FASE 3 — Ligar os órfãos da F1 no detalhe e no envio (CT-31–CT-40)
 *Bloco D — 1 PR de front. Não reabre o layout do mock B/C (decisão de 24/09).*
@@ -325,7 +326,7 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   → **28 testes passando**, typecheck exit 0, `eslint` 0 problemas, `lint-ratchet novas: 0`.
   *(Achado do executor, corrigido no mesmo arquivo: o `vi.mock` de `useCatalogContactSearch` não exportava
   `CONTACT_SEARCH_MIN_CHARS`, o que derrubava os 28 testes independentemente do CT-38 — corrigido no mock.)*
-- [ ] **CT-39** — "Adicionar fotos" (das `variants.images` não selecionadas) e "Baixar" (zip das fotos selecionadas
+- [x] **CT-39** — "Adicionar fotos" (das `variants.images` não selecionadas) e "Baixar" (zip das fotos selecionadas
   via `fetch` + `JSZip` se já existir no bundle; senão download individual). **Aceite:** teste RTL do picker.
   **◐ PARCIAL (02/10/2026):** o aceite literal ("teste RTL do picker") está cumprido (`SendProductDialog.test.tsx:130-150`,
   toggle "Selecionar todas" em `:454-465`) e o download individual existe (`:574` + `handleDownloadImages:265-283`), **mas o
@@ -342,6 +343,7 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   `docs/catalogo/PARIDADE.md`. Aceite por grep: `find src/components/catalog -name '*.tsx' -not -path '*/__tests__/*'`
   → 0 hex, 0 `text-white`, 0 `bg-violet-500`; contrato travado em `__tests__/CT40_badgeTokens.test.tsx`. Falta só a
   PR mergeada (fechamento real da etapa).
+  **✅ FEITO (02/10/2026) — as duas lacunas do ◐ fechadas.** (1) O controle **"Adicionar fotos"** passou a existir em modo variante: ele acrescenta as fotos das variantes **não selecionadas** (que o picker não listava, porque em modo variante ele nasce só com as fotos da cor escolhida), marcando-as até o teto de `MAX_IMAGES` — marcar em massa sem teto furava a trava de 10 fotos do `toggleImage`. As acrescentadas ficam fora da chave de reset, para acrescentar foto não apagar a seleção já feita (acrescentar sem resetar). (2) O handler de download ganhou teste: `CT39_downloadFotos.test.tsx` cobre **sem foto selecionada**, **sucesso parcial** ("N de M foto(s)") e **falha total**. O comentário que dizia que o picker "já lista todas" foi corrigido — aquilo valia só em modo produto.
 
 ## FASE 4 — Passo "Selecionar contato" completo (CT-41–CT-50)
 *Bloco E — 1 PR de front + 1 migration (CT-48).*
@@ -1114,6 +1116,21 @@ exigir `SUPABASE_ACCESS_TOKEN`; CT-82/88 pelo envio real).
 - Seguem na fila deste filtro: **CT-30** (Accordion/Drawer), **CT-39** (controle "Adicionar fotos"),
   **CT-64** (contagem do filtro Novidades), **CT-94** (print do 429 autenticado), **CT-19** (aceite do
   rate limit: 61 × `bootstrap` → 429) e **CT-99** (checkboxes do plano de 11/09).
+
+### Etapas livres (2) — responsivo do rail (CT-30) e picker de fotos (CT-39) — 02/10/2026
+
+Sem dependência do Joaquim, na sequência do lote anterior (CT-74/CT-73).
+
+- **CT-30 ✅** — `Accordion` "Resumo do catálogo" abaixo de `xl`, acima da grade, reusando o `<CatalogRail>`; detalhe
+  e envio em `Drawer` (`vaul`) abaixo de `md`. Testes em `CT30_responsivo.test.tsx`. Ressalva declarada: os 4 prints
+  commitados são anteriores à mudança (mostram o layout antigo) e serão refeitos na documentação.
+- **CT-39 ✅** — controle "Adicionar fotos" (fotos das variantes não selecionadas, com teto de 10) e teste do
+  download nos três caminhos (`CT39_downloadFotos.test.tsx`).
+- **Achado fora do escopo:** `useIsMobile` (hook do repo) resolve depois do primeiro efeito — num celular real há um
+  frame inicial em `Sheet`/`Dialog` antes de virar `Drawer`. É o trade-off de reusar o hook existente; anotado, não
+  corrigido aqui.
+- **Verificação deste lote:** `bunx vitest run src/components/catalog` = **26 arquivos / 434 testes**; typecheck rc=0;
+  eslint rc=0; lint-ratchet sem novas; `bun run build` ok.
 
 ## 12. Fora de escopo (registrado, não esquecido)
 
