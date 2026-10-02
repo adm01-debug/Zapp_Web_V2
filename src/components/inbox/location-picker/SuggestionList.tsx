@@ -68,7 +68,7 @@ function PausedNotice({ blocked, pausedUntil, query, onRetry }: {
     <div className="px-3 py-3 space-y-1">
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm text-muted-foreground">{pausedNoticeText(blocked, segundos)}</p>
-        {podeTentar && <Button size="sm" variant="ghost" onClick={onRetry}>Tentar novamente</Button>}
+        {podeTentar && <Button size="sm" variant="ghost" className="min-h-11" onClick={onRetry}>Tentar novamente</Button>}
       </div>
       <p className="text-xs text-muted-foreground/70">
         Enquanto isso, o Enter busca &quot;{query.trim()}&quot; pelo endereço.
@@ -143,7 +143,7 @@ export function SuggestionList({
             <p className="text-sm font-medium">Falha ao buscar sugestões.</p>
             <p className="text-xs text-muted-foreground">{error ? searchFailureText(error) : 'Tente de novo em instantes.'}</p>
           </div>
-          <Button size="sm" variant="ghost" onClick={onRetry}>Tentar novamente</Button>
+          <Button size="sm" variant="ghost" className="min-h-11" onClick={onRetry}>Tentar novamente</Button>
         </div>
       )}
       {status === 'paused' && (
@@ -196,7 +196,7 @@ export function SuggestionList({
       )}
       <p className="px-3 py-1.5 text-3xs text-muted-foreground/70 bg-muted/30 border-t border-border">
         Powered by{' '}
-        <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer" className="underline">
+        <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer" className="underline inline-flex items-center min-h-11">
           Mapbox
         </a>
       </p>
