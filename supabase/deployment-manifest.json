@@ -164,8 +164,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "bytes": 17291,
-      "sha256": "7ee4602e062001d3a6e33eac386ae2a840a2b288bd24a66b703ff2ba515e3ec0"
+      "bytes": 17670,
+      "sha256": "afa3243d1ced154eda8da303da07011a679c064bb3df5fad85331d1dca0099bb"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
@@ -239,8 +239,8 @@
     },
     {
       "path": "supabase/functions/_shared/notification-events.ts",
-      "bytes": 3197,
-      "sha256": "38a957bcc07ca5e4415bed67a34debea89f34fb50896600c9e7c1611e550ed98"
+      "bytes": 4573,
+      "sha256": "33cd00991605bab1c6634c330818cc10462965857c356d751c8cdb943e910c28"
     },
     {
       "path": "supabase/functions/_shared/postgrest-filters.ts",
@@ -1031,7 +1031,7 @@
       "name": "connection-health-check",
       "entrypoint": "supabase/functions/connection-health-check/index.ts",
       "verify_jwt": false,
-      "source_sha256": "8ecef8bced5f8a2504802e8de24b3518ba23856f1bb29af491179998391c898b",
+      "source_sha256": "e2faf8b700e6e1372709f014452a5ebe83f44c144323d4c3ddb804f660819b30",
       "source_files": [
         "supabase/functions/_shared/cron-secret-auth.ts",
         "supabase/functions/_shared/edge-boot.ts",
@@ -1232,7 +1232,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "2d297b75529d5db33fddb4f4ae6bf1bbb54aa1fba57ecf6bfd6fb0b9e90656f2",
+      "source_sha256": "7ce872a6e1ca6cc9fe6875d4ec5a9ab5df632cd34bc33bb759c67b3bbf551420",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -1547,7 +1547,7 @@
       "name": "sentiment-alert",
       "entrypoint": "supabase/functions/sentiment-alert/index.ts",
       "verify_jwt": true,
-      "source_sha256": "b00f0b1480651dffdc25ce7e0e4b119e4bbe3eb605b28b6d1ae908d77c3bc068",
+      "source_sha256": "f0aa10f226537d6cbb074e33026a26691cc6981a24fb29f4e452a438baa7d997",
       "source_files": [
         "supabase/functions/_shared/email-font-stack.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1700,5 +1700,5 @@
       ]
     }
   ],
-  "manifest_sha256": "314c34a1d52fd44303d90e051e1ed19a22f3c214fe2da3cbbce164fde78fa407"
+  "manifest_sha256": "56096db65bc1da26179e41c68fc5135303a55ab7cf019788db2c687d543b6b79"
 }
