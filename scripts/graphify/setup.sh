@@ -25,6 +25,17 @@ case ":$PATH:" in
 esac
 graphify --version
 
+# O husky (prepare do bun install) aponta core.hooksPath para .husky/_; sem isso o git
+# ignora os hooks que o graphify grava em .husky/.
+if [ "$(git rev-parse --git-path hooks)" != ".husky/_" ]; then
+  if [ -x node_modules/.bin/husky ]; then
+    node_modules/.bin/husky
+  else
+    echo "graphify: rode bun install antes (instala o husky) e depois bun run graph:setup." >&2
+    exit 1
+  fi
+fi
+
 # post-commit/post-checkout em .husky/ (rebuild em background) + merge driver do graph.json.
 graphify hook install
 
