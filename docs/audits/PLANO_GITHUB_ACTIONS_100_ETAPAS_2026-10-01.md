@@ -10,6 +10,58 @@ via API do GitHub (runs das últimas 37 h, falhas por workflow, branch protectio
 artifacts, PRs abertas, issues de alerta, check-runs do HEAD). Toda afirmação abaixo tem a evidência ao lado.
 **Status:** PLANO. Nada foi executado nesta sessão. Nenhum arquivo além deste foi alterado.
 
+---
+
+## Atualização de 2026-10-02 — decisões e etapas superadas
+
+Registrado pelo chat `hermes/settings-guard-e14-e13-e16` a partir de medição ao vivo em 02/10.
+**A política vigente da casa prevalece sobre este plano.** A política de 01/10 (`strict=true` permanente,
+mantida por `settings-guard` + `auto-update-pr-branch` + `CLAUDE.md:168-170`) foi reafirmada pelo Joaquim
+em 02/10 — a opção (a) deste plano (`strict=false` permanente) fica **revogada**.
+
+### E15 — DECIDIDA: manter a política da casa (`strict=true`)
+
+| Opção | Situação |
+|---|---|
+| (a) `strict=false` permanente + settings-guard | **Revogada** em 02/10 |
+| (b) `strict=true` + `allow_auto_merge` + `auto-update-pr-branch` em `push` | **É a política vigente** (reativada em 01/10) |
+| (c) migrar para Organization + merge queue | não avaliada |
+
+### Etapas superadas pela política vigente
+
+| Etapa | Status | Evidência medida em 02/10 |
+|---|---|---|
+| **E01** restaurar `strict=false` | SUPERADA | medido `strict=false`, mas a política da casa é `true`; aplicar E01 deixaria o guard da casa em conflito permanente com a configuração |
+| **E13** criar `settings-guard.yml` | JÁ EXISTIA desde `#1436` (`4ba2e1b94`) | `.github/workflows/settings-guard.yml`, schedule de 6 h; a §1 deste plano não o listou |
+| **E14** `github-settings-guard.mjs` + testes | JÁ EXISTIA desde `#1436` (`4ba2e1b94`) | 6 testes verdes; o script **restaura via `PATCH`** — é ele que sustenta a política `strict=true` |
+| **E16** apagar `auto-update-pr-branch.yml` | SUPERADA | não é código morto: o cabeçalho do próprio arquivo registra reativação em 01/10 para a política `strict=true` |
+
+### O que a medição explicou: o "fantasma" das três regressões
+
+As três regressões de `strict` da §0 (25/09, 27/09, 01/10) **não têm autor desconhecido**:
+`settings-guard` (mergeado em `#1436`) roda a cada 6 h e **restaura `strict=true` via `PATCH`** por desenho.
+O guard e o `CLAUDE.md:168-170` estão coerentes entre si; era o plano que divergia dos dois.
+Nota operacional: com `strict=false` medido em 02/10, **a próxima execução do guard deve devolvê-lo para
+`true` sozinha** — nenhuma ação manual é necessária, e nenhuma deve ser tomada no sentido contrário.
+
+### Etapas de classe A executadas pelo Joaquim em 02/10 (~18:22)
+
+| Etapa | Resultado medido |
+|---|---|
+| E01 | cumprida na leitura; **superada** pela decisão acima |
+| E05 | `#1342` e `#888` fechadas; `#1665` e `#1454` são alertas **VIVOS** e ficam até o verde |
+| E06 | `ai-proxy`, `ai-suggest-reply`, `ai-conversation-summary` **3/3 success** em ~2 min (runs 37066205379/37066213520/37066224306); `multiplix-send` com mudança real ok |
+| E08 | **0** runs `waiting`/`queued` órfãos |
+
+### Outras medições desta rodada
+
+- **E04 superada**: a version duplicada `20260930390000` **não existe mais** — 1 arquivo (`endurece_l5_contrato_e_jobs.sql`) e 1 linha no ledger, zero versões duplicadas na `main`. O `#1343` mergeou em 01/10 14:46, **1 h 37 min após este plano ser escrito**.
+- **E02 entregue**: `docs/audits/evidence/branch-protection-2026-10-02.json` (PR #1701, merge `ee74556d9cec`).
+- **E09 tomada** pelo `#1430`; **E12** colide com `#1610` e `#1439`.
+- **`CLAUDE.md:182`** afirma "14 arquivos" em `.github/workflows/`: o repo tem **16**.
+
+---
+
 > Este plano **substitui** `PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-27.md` como plano vigente de Actions. O que
 > daquele plano já entrou na `main` está na seção 1; o que continua válido reaparece aqui com evidência de hoje e
 > número novo; o que perdeu sentido foi descartado com o motivo.
@@ -265,7 +317,7 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 
 ### Fase 0 — Destravar hoje (E01–E12)
 
-- [ ] **E01** · A · G-01 · Restaurar `required_status_checks.strict=false` via `github_update_branch_protection`
+- [x] **E01** · A · G-01 · Restaurar `required_status_checks.strict=false` via `github_update_branch_protection`
   (PUT completo: 6 contexts, `enforce_admins: true`, sem force-push/deleção). Verificação: `GET` devolve `false`;
   PR #1343 sai de `blocked` sem novo push.
 - [ ] **E02** · A · G-01 · Gravar o snapshot da branch protection **antes e depois** em `docs/audits/evidence/
@@ -302,18 +354,18 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 
 ### Fase 1 — Quebrar o ciclo `types-sync` ↔ `BEHIND` de forma estrutural (E13–E22)
 
-- [ ] **E13** · B · G-01 · Criar `.github/workflows/settings-guard.yml` (schedule a cada 6 h + dispatch, `permissions:
+- [x] **E13** · B · G-01 · Criar `.github/workflows/settings-guard.yml` (schedule a cada 6 h + dispatch, `permissions:
   contents: read, issues: write`): lê branch protection, environments, `allow_auto_merge`, `default_workflow_permissions`
   e `allowed_actions` via `GITHUB_TOKEN`, compara com `scripts/ci/github-settings-baseline.json` commitado e abre/
   comenta issue `[settings-guard]` com o diff. É o único jeito de a 4ª regressão de `strict` durar horas, não dias.
   Verificação: alterar `strict` de propósito num dispatch de teste → issue aberta em < 1 min; reverter → issue fechada.
-- [ ] **E14** · C · E13 · `scripts/ci/github-settings-guard.mjs` + `.unit.mjs` com fixtures (strict true/false,
+- [x] **E14** · C · E13 · `scripts/ci/github-settings-guard.mjs` + `.unit.mjs` com fixtures (strict true/false,
   reviewer ausente, auto-merge). Verificação: `node --test scripts/ci/*.unit.mjs` verde.
-- [ ] **E15** · D ⚠️ · G-01/G-06 · Decidir o modelo de fila: **(a)** `strict=false` permanente + `settings-guard`
+- [x] **E15** · D ⚠️ · G-01/G-06 · Decidir o modelo de fila: **(a)** `strict=false` permanente + `settings-guard`
   (recomendado; é o que funcionou de 25/09 a 27/09 e hoje), **(b)** `strict=true` + `allow_auto_merge=true` +
   `auto-update-pr-branch` em `push` (volta o ciclo de 40 min de 25/09), **(c)** transferir o repo para uma Organization
   e ligar merge queue (decisão de negócio). Registrar a decisão no CLAUDE.md.
-- [ ] **E16** · A · G-06 · Se E15=(a): **apagar** `auto-update-pr-branch.yml` (código morto desde sempre) e remover as
+- [x] **E16** · A · G-06 · Se E15=(a): **apagar** `auto-update-pr-branch.yml` (código morto desde sempre) e remover as
   referências no CLAUDE.md. Se E15=(b): ligar `allow_auto_merge` e reativar o gatilho `push`. Verificação: lista de
   workflows coerente com a decisão.
 - [ ] **E17** · B · G-02/G-26 · `types-sync.yml`: antes de "Gerar candidatos", se existir PR aberta em

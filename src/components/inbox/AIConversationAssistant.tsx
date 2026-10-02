@@ -116,6 +116,10 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
               contactName,
               contactId,
               periodDays: getPeriodDays(analysisPeriod),
+              // IA-051 — mesmo id em todas as tentativas de `withRetry`: as linhas
+              // de `ai_usage_logs` ficam agrupadas por clique, e um retry aparece
+              // como segunda linha em vez de virar gasto órfão.
+              requestId: request.requestId,
             },
           });
 

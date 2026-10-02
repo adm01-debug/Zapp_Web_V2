@@ -65,8 +65,15 @@ describe('mapboxSession', () => {
     expect(tokens.size).toBe(1);
   });
 
-  it('E35: abrir sessão nova registra searchbox_session em audit_logs, com source', () => {
+  // E100: o evento deixou de ser gravado na ABERTURA da sessão. Contar a abertura inflava
+  // `count_searchbox_sessions_this_month()` — o número que degrada o autocomplete em 450 e dispara
+  // o alerta de custo em 400 (E91) — fazendo freio e alerta agirem antes de o gasto existir. Agora
+  // ele só é gravado quando a sessão vira uso faturado (primeiro `/suggest` ou `/retrieve`).
+  it('E35/E100: abrir sessão NÃO grava evento; o evento sai no primeiro uso faturado, com source', () => {
     getSearchSession('contact-form');
+    expect(logAudit, 'abrir sessão não pode gravar evento (E98/E100)').not.toHaveBeenCalled();
+
+    noteSuggestCall();
     expect(logAudit).toHaveBeenCalledTimes(1);
     expect(logAudit).toHaveBeenCalledWith({
       action: 'searchbox_session',
@@ -76,13 +83,16 @@ describe('mapboxSession', () => {
 
   it('E35: reaproveitar a sessão dentro da janela não gera novo evento', () => {
     getSearchSession('picker');
+    noteSuggestCall();
     vi.advanceTimersByTime(60_000);
     getSearchSession('picker');
+    noteSuggestCall();
     expect(logAudit).toHaveBeenCalledTimes(1);
   });
 
   it('E35: sem source explícito, o evento usa "picker" como padrão', () => {
     getSearchSession();
+    noteSuggestCall();
     expect(logAudit).toHaveBeenCalledWith({
       action: 'searchbox_session',
       details: { source: 'picker' },
@@ -115,6 +125,8 @@ describe('mapboxSession', () => {
       expect(logAudit).not.toHaveBeenCalled();
       // e o estado não foi criado: a próxima sessão de verdade nasce limpa
       const token = getSearchSession('picker');
+      expect(logAudit, 'E100: abrir a sessão não grava evento').toHaveBeenCalledTimes(0);
+      noteSuggestCall();
       expect(logAudit).toHaveBeenCalledTimes(1);
       expect(logAudit).toHaveBeenCalledWith({
         action: 'searchbox_session',
