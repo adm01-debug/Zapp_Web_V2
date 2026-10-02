@@ -80,12 +80,22 @@ jobs:
       # specs autenticam por sessao FALSA (installFakeSession) com REST/RPC e a
       # Mapbox mockados, entao nao usam E2E_TEST_EMAIL/E2E_TEST_PASSWORD nem o
       # storageState de e2e/.auth/user.json -- nenhum secret novo e necessario.
+      #
+      # catalog.spec.ts (CT-82) e o fluxo de envio do catalogo. O Chromium e
+      # coberto pelo chromium-authenticated (catch-all); firefox-catalog e
+      # webkit-catalog dao a paridade dos 3 browsers pedida no aceite. O spec e
+      # SKIPADO enquanto E2E_CATALOG_PRODUCT_SKU_VERIFIED nao for true (pende a
+      # verificacao do SKU no PromoGifts, sistema externo). NAO entram no ci.yml.
       - name: 📐 Run Playwright E2E (login real)
-        run: bun run test:e2e -- --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=chromium-mapa --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation
+        run: bun run test:e2e -- --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=chromium-mapa --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
         env:
           CI: true
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
           E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+          # Chave publica do projeto, para os asserts por API do catalog.spec.ts
+          # (mesmo secret que o ci.yml entrega ao app; nao e privilegiada). Sem
+          # ela o spec pula em vez de falhar.
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
       # Teardown: apaga linhas de fixture geradas pelo E2E em producao.
       # contact_id 04dff4dc-c6b1-4283-ac22-bd8639804759 e o contato de teste
@@ -111,3 +121,27 @@ jobs:
             -H "Content-Type: application/json" \
             && echo "teardown OK" \
             || echo "teardown falhou - nao bloqueia CI"
+
+      # Teardown: catalog_send_events e log append-only -- depois do CT-02 o
+      # `authenticated` so tem SELECT/INSERT, entao o cliente NAO consegue apagar
+      # o que o CT-82 grava; a limpeza exige a service role. As mensagens do
+      # envio sao soft-deletadas (is_deleted=true) pelo afterEach do proprio spec.
+      # contact_id 04dff4dc-... e o contato de teste E2E (dedicado).
+      # Requer o secret SUPABASE_SERVICE_ROLE_KEY; se ausente, o step e pulado.
+      - name: 🧹 E2E teardown - limpar envios de catálogo (CT-82)
+        if: always()
+        continue-on-error: true
+        env:
+          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SERVICE_ROLE_KEY" ]; then
+            echo "SUPABASE_SERVICE_ROLE_KEY nao configurado - teardown de catalog_send_events pulado"
+            exit 0
+          fi
+          curl -sf -X DELETE \
+            "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/catalog_send_events?contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759" \
+            -H "apikey: $SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            && echo "teardown catalog_send_events OK" \
+            || echo "teardown catalog_send_events falhou - nao bloqueia CI"
