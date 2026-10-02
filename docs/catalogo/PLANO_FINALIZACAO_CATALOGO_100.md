@@ -655,15 +655,37 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   aqui, conforme instruído — como o teste deriva de `RATE_LIMIT`, ele passa a valer 120 automaticamente quando o CT-19 mudar.
 - [x] **CT-78** — Teste dedicado da lógica de `status` (`sent/partial/failed`) e de `logCatalogSendEvent` (pendência
   admitida na E28). **Aceite:** 3 casos verdes.
-  **✅ FEITO — 01/10/2026.** 3 testes travando o `status` no evento logado (`useSendProduct.test.tsx:287-351`, cobrindo
-  `sent`/`partial`/`failed`) + **4 testes da implementação real** do `logCatalogSendEvent` (novo
-  `src/hooks/integrations/__tests__/useCatalogContactSearch.test.ts`: payload snake_case completo, opcionais → `null`, os
-  3 status e a falha silenciosa que loga sem lançar) — antes ele era **sempre mockado**, nunca testado de verdade.
-- [ ] **CT-79** — Cobertura do módulo ≥ 80 % linhas (`vitest --coverage src/components/catalog`); registrar.
-  **Aceite:** número em `PERF.md`.
-- [ ] **CT-80** — Suíte do módulo em < 30 s. **Aceite:** tempo registrado.
-- [ ] **CT-81** — Fixtures E2E: contato de teste já existe (`04dff4dc-…`, "[E2E] Contato de teste"); produto de teste
+  **✅ FEITO — 01/10/2026; prova do `logCatalogSendEvent` CORRIGIDA em 02/10/2026.** Os 3 testes de `status` seguem
+  travando o evento logado (`useSendProduct.test.tsx:349-413`, `sent`/`partial`/`failed`). A evidência anterior era
+  **FALSA**: o arquivo citado (`useCatalogContactSearch.test.ts`) continha só os testes de **CT-43**
+  (`buildContactSearchFilter`/`contactSearchDigits`, 51 linhas) e o `logCatalogSendEvent` **nunca** foi testado de
+  verdade — era sempre mockado (`SendProductDialog.test.tsx:40`, `useSendProduct.test.tsx:19`, `CT67_a11y.test.tsx:94`).
+  **Corrigido:** o mesmo arquivo agora tem **5 testes da implementação real** (mock só do cliente Supabase, nunca da
+  função sob teste): payload snake_case completo, opcionais ausentes → `null`, os 3 `status`, sucesso silencioso (resolve
+  `void`, não loga) e falha silenciosa (insert com erro → resolve `void` sem lançar e loga a mensagem). Arquivo:
+  **11/11** (5 novos + 6 de CT-43). Comportamento da função: `src/hooks/integrations/useCatalogContactSearch.ts:85`.
+- [x] **CT-79** — Cobertura do módulo ≥ 80 % linhas; registrar. **Aceite:** número em `PERF.md`.
+  **✅ FEITO — medido em 02/10/2026: 84,41 % de linhas (1235/1463)** → acima de 80 %. **A config vigente do projeto
+  exclui o módulo** (`vitest.config.ts:17` limita `coverage.include` a `src/lib/**`+`src/services/**`), então o
+  argumento posicional de `vitest --coverage src/components/catalog` filtra os *testes*, não a cobertura. Medido **sem
+  editar `vitest.config.ts`**, sobrescrevendo o `include` por CLI:
+  `bunx vitest run src/components/catalog --coverage --coverage.include='src/components/catalog/**'`
+  (statements 80,56 %, branches 79,77 %, functions 75,88 %). Prova de escopo: o `coverage/lcov.info` tem 20 `SF:`, 0
+  fora de `src/components/catalog/`. Detalhes e saída crua em `PERF.md` §CT-79.
+- [x] **CT-80** — Suíte do módulo em < 30 s. **Aceite:** tempo registrado.
+  **✅ FEITO — remedido em 02/10/2026.** `bunx vitest run src/components/catalog` → **23 files, 426 tests, `Duration
+  11.51s` (WALL 11.82 s)** → dentro dos 30 s. Substitui, em `PERF.md`, o registro de CT-27 (14 files/298 tests/9.56s),
+  que fica mantido e marcado como **histórico/defasado**.
+- [x] **CT-81** — Fixtures E2E: contato de teste já existe (`04dff4dc-…`, "[E2E] Contato de teste"); produto de teste
   fixo (`PO-13153`); `e2e/fixtures/catalog.ts`. **Aceite:** ids no fixture.
+  **✅ FEITO (com pendência de produto) — 02/10/2026.** `e2e/fixtures/catalog.ts` criado: reaproveita o contato do
+  fixture existente **por import** (`./e2e-contact` → `E2E_FIXTURE_CONTACT_ID`/`..._NAME`/`..._DISPLAY_NAME`, sem
+  duplicar o id `04dff4dc-…`) e exporta o que o CT-82 precisa (`E2E_CATALOG_VIEW`/`PATH` = `?view=catalog`, template
+  "Informal", tabelas `catalog_send_events`/`messages`, marcador de fixture). **Pendência registrada:** o produto
+  `PO-13153` aparece só na doc do repo (`CHANGELOG_CATALOGO.md:12`) e **não foi possível verificar** que existe/is
+  buscável no catálogo PromoGifts (sistema EXTERNO) — por isso **não** é fixado cego: é parametrizado por env
+  (`E2E_CATALOG_PRODUCT_SKU`) e acompanhado de `E2E_CATALOG_PRODUCT_SKU_VERIFIED` (default `false`); o spec do CT-82
+  deve degradar com aviso até a verificação. Nenhum id foi inventado.
 - [ ] **CT-82** — `e2e/catalog.spec.ts`: login → `?view=catalog` → busca → card → detalhes → cor → Enviar → fotos →
   Informal → contato E2E → Enviar agora → toast; asserts em `messages`/`catalog_send_events` via API; limpeza
   (`is_deleted`). Habilitado no `e2e-logado.yml`; verificar antes que o usuário de teste enxerga a view. **Aceite:**
@@ -671,9 +693,19 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 - [ ] **CT-83** — `CatalogHelpSheet.tsx`: "Como usar o catálogo" (5 passos com prints reais) + tour de 4 dicas
   (`localStorage catalog.tourDone`). **Aceite:** teste RTL; só na 1ª visita.
 - [ ] **CT-84** — Link "Ajuda" no header do módulo e no dialog do chat. **Aceite:** teste RTL.
-- [ ] **CT-85** — Textos revisados (acentuação, "Qtd. mínima", "dias úteis") — lista em `PARIDADE.md`. **Aceite:** lista.
-- [ ] **CT-86** — `CHANGELOG_CATALOGO.md` completado com F6/F7 e correções (#577–#714) e com este plano por bloco.
+- [x] **CT-85** — Textos revisados (acentuação, "Qtd. mínima", "dias úteis") — lista em `PARIDADE.md`. **Aceite:** lista.
+  **✅ FEITO — 02/10/2026.** Seção "Textos revisados (CT-85)" em `PARIDADE.md` com a tabela `texto × arquivo:linha ×
+  resultado`. **Nenhuma correção foi necessária** — os textos já estavam corretos (`ProductDetailDialog.tsx:435` "Qtd.
+  mínima", `:436` "dias úteis", `catalogExport.ts:42` "Qtd. mínima", + `:41` "Prazo" e `sendProductUtils.ts:94`); todos
+  marcados como **verificado e correto**, nenhum "corrigido". Varredura das formas sem acento achou ocorrências só em
+  **comentários** de código, nenhuma em texto de UI.
+- [x] **CT-86** — `CHANGELOG_CATALOGO.md` completado com F6/F7 e correções (#577–#714) e com este plano por bloco.
   **Aceite:** toda PR de `catalog` desde 12/09 citada.
+  **✅ FEITO — 02/10/2026.** Acrescentadas as seções **FASE 6 (bloco G)** e **FASE 7 (bloco H)** com as PRs reais
+  (#1490 = bloco G; #1500 = bloco H; #1396/#1409 = etapas parciais) + **tabela com 41 PRs de escopo Catálogo** desde
+  12/09, enumeradas por `gh pr list --state merged --search "catalogo merged:>=2026-09-12"` (leitura; números/títulos
+  copiados, não inventados) — inclui #1396, #1409, #1426, #1467, #1482, #1490, #1500. **Aviso de merge:** o arquivo é
+  compartilhado; a edição foi só de acréscimo ao fim; em conflito, conciliar os dois lados.
 - [x] **CT-87** — `README.md` do módulo: a referência a `PARIDADE.md` **fica** (o arquivo existe agora) e aponta para o
   caminho certo — [`./PARIDADE.md`](./PARIDADE.md) —, junto com a referência a este plano e à auditoria. **Aceite:**
   nenhum link quebrado.

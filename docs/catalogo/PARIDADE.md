@@ -133,3 +133,33 @@ O módulo não usa cor literal: `text-white` → `text-primary-foreground` e
 `components.css` ainda repete o hex `268 83% 63%` em `.catalog-badge--new` — fora do
 escopo do módulo (não é `src/components/catalog/**`); consumir o token ali é
 follow-up.
+
+---
+
+## Textos revisados (CT-85)
+
+Revisão de **acentuação, grafia e rótulos** do fluxo de envio (Detalhes / Enviar /
+Contato). Conclusão honesta: **nenhuma correção foi necessária** — os textos já
+estavam corretos no código antes desta etapa. A coluna "resultado" distingue
+`verificado e correto` de `corrigido` (havia erro e foi ajustado); aqui **todos são
+"verificado"**, nenhum "corrigido".
+
+| Texto | Arquivo:linha | Onde aparece | Resultado |
+|---|---|---|---|
+| `Qtd. mínima` | `ProductDetailDialog.tsx:435` | rótulo do `MetaTile` (grade Qtd./Prazo/Origem) | ✅ verificado e correto — "mínima" acentuado |
+| `N dias úteis` | `ProductDetailDialog.tsx:436` | valor do `MetaTile` "Prazo" (`` `${dp.lead_time_days} dias úteis` ``) | ✅ verificado e correto — "úteis" acentuado |
+| `Origem` | `ProductDetailDialog.tsx:437` | rótulo do `MetaTile` | ✅ verificado e correto |
+| `Qtd. mínima` | `catalogExport.ts:42` | coluna do CSV (`CATALOG_EXPORT_COLUMNS`) | ✅ verificado e correto |
+| `Prazo` | `catalogExport.ts:41` | coluna do CSV (`CATALOG_EXPORT_COLUMNS`) | ✅ verificado e correto |
+| `Prazo de entrega: N dias úteis` | `sendProductUtils.ts:94` | trecho montado do template de mensagem | ✅ verificado e correto |
+
+**Varredura de acentuação.** Buscando as formas sem acento por todo o módulo
+(`dias uteis`, `Qtd. minima`, `minima`/`maxima`/`descricao`/`numero`/`endereco`/
+`historico`/`proprio`/etc.), **as únicas ocorrências ficam em comentários de
+código de produção** (ex.: `ExternalProductCatalog.tsx:155`, `SendProductDialog.tsx:208`,
+`catalogCategoryRoute.ts:4-5`) — **nenhuma em texto exibido ao usuário**. Ou seja: não
+havia erro de acentuação a corrigir nos rótulos/valores desta revisão.
+
+**Escopo desta lista.** As telas A (catálogo) e as seções Topo/Grade/Rail entram
+pelas etapas CT-66/CT-89; aqui a revisão cobre os textos do fluxo de envio citados
+no aceite (Detalhes/Enviar/Contato), sem afirmar revisão de telas não lidas.

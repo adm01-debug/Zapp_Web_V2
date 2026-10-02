@@ -25,6 +25,7 @@ import {
   Heart,
   Send,
   Download,
+  HelpCircle,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -50,6 +51,8 @@ import { CatalogKpiStrip, CategoryChips, AdvancedFilterChips, countAdvancedFilte
 const CatalogAdvancedFilters = lazy(() =>
   import('./CatalogAdvancedFilters').then((m) => ({ default: m.CatalogAdvancedFilters }))
 );
+// CT-84 — ponto de entrada da ajuda do catálogo (CatalogHelpSheet) no header.
+import { CatalogHelpSheet } from './CatalogHelpSheet';
 import { parseCatalogCategoryRoute, replaceCatalogCategoryRoute } from './catalogCategoryRoute';
 import { CatalogBulkBar } from './CatalogBulkBar';
 const CatalogBulkSendDialog = lazy(() =>
@@ -309,6 +312,8 @@ export const ExternalProductManagement: React.FC = () => {
   });
 
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  // CT-84 — ajuda do catálogo (CatalogHelpSheet), aberta pelo botão "Ajuda".
+  const [helpOpen, setHelpOpen] = useState(false);
   const advCount = countAdvancedFilters(advFilters);
 
   // E36-2: o edge promogifts-catalog (list_products) agora aceita array
@@ -756,6 +761,10 @@ export const ExternalProductManagement: React.FC = () => {
             right={(
               <>
                 <SyncStatusChip key={stats?.last_sync_at} lastSyncAt={stats?.last_sync_at} />
+                <Button variant="outline" size="sm" onClick={() => setHelpOpen(true)}>
+                  <HelpCircle className="w-4 h-4 mr-1" aria-hidden="true" />
+                  Ajuda
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => fetchProducts(buildFilters())} disabled={coolingDown}>
                   <RefreshCw className="w-4 h-4 mr-1" />
                   Atualizar
@@ -1041,6 +1050,9 @@ export const ExternalProductManagement: React.FC = () => {
           onClear={() => { dispatch({ type: 'advanced', filters: { ...DEFAULT_ADVANCED_FILTERS } }); setPage(0); }}
         />
       </Suspense>
+
+      {/* CT-84 — ajuda do catálogo (acionada pelo botão "Ajuda" do header). */}
+      <CatalogHelpSheet open={helpOpen} onOpenChange={setHelpOpen} />
 
       {selectedIds.size > 0 && (
         <CatalogBulkBar
