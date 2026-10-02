@@ -934,6 +934,12 @@ Sem flag (decisão `20261001-103207-6c0b`): não existe "ligar só para 2 operad
 2. Este plano só fecha com **0 PARCIAL sem motivo escrito**.
 **Checklist:** [ ] relatório · [ ] 0 parcial sem motivo
 
+> **FEITA em 2026-10-02.** Relatório de encerramento em `docs/mapa/ENCERRAMENTO_FASE8_E100.md`.
+> Fase 8 entregue em 10 PRs (E83–E99, E91, E98); auditoria adversarial achou 1 defeito real
+> (sessão fantasma — 3 sessões contadas com 0 requisições) e confirmou 4 frentes resistindo.
+> **Declarado fora:** E65/E90/E94, o segredo do e-mail do E91 (canal de e-mail em 403), o conserto
+> da sessão fantasma e o contraste do inbox — os dois últimos nasceram na E98 e são da próxima rodada.
+
 ---
 
 ## Ordem de execução sugerida
