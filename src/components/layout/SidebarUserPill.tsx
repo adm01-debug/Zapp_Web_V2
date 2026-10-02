@@ -65,6 +65,7 @@ export function SidebarUserPill({ profile, userEmail, signOut, onViewChange, col
         sideOffset={collapsed ? 12 : 10}
         align={collapsed ? 'end' : 'start'}
         className="w-48 p-2"
+        aria-label="Menu do usuário"
       >
         <ProfileMenuContent
           agent={{ name, status }}
