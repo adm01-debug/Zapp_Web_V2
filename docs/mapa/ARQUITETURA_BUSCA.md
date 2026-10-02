@@ -79,6 +79,40 @@ O termo digitado vai para a Mapbox (é o próprio autocomplete), mas nunca é pe
 - `src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx` — hook (debounce, cancelamento, seleção por teclado, encerramento de sessão).
 - `src/components/inbox/__tests__/LocationPicker.test.tsx` — UI do picker do Inbox.
 
+## Bundle (medido no build real)
+
+Seção exigida pelo **E78** (`docs/mapa/PLANO_FINALIZACAO_100_ETAPAS_2026-09-29.md:672`) para o número de bundle deste módulo viver no repo, e não só no corpo de uma PR.
+
+**Como foi medido (2026-10-02), com o mesmo env do CI (`ci.yml:297-302`):**
+
+```
+VITE_CRM_INTEGRATION_ENABLED=true bun run build   # gera dist/
+node scripts/ci/bundle-budget.mjs                 # compara dist/ com performance-budget.json
+```
+
+**Chunks do módulo** (gzip nível 9, igual ao `bundle-budget.mjs`):
+
+| Chunk | raw | gzip |
+|---|---|---|
+| `ContactForm-*.js` (cadastro de contato, lazy) | 18.124 B (17,70 KB) | 5.427 B (5,30 KB) |
+| `LocationPicker-*.js` (picker do Inbox, lazy via `ChatDialogs.tsx:13`) | 12.826 B (12,53 KB) | 4.730 B (4,62 KB) |
+| `SuggestionList-*.js` (compartilhado pelos dois) | 13.743 B (13,42 KB) | 4.903 B (4,79 KB) |
+
+`SuggestionList` **não** vira `React.lazy`: o E78 condiciona isso a "se passar do orçamento", e os três chunks são lazy e ficam muito abaixo de qualquer teto.
+
+**Orçamento (`performance-budget.json`) — saída crua do gate:**
+
+| Métrica | Medido (gzip) | Budget (`maxKB`) | Folga |
+|---|---|---|---|
+| `initial-js` | 336,6 KB | 341 | −4,4 KB |
+| `initial-css` | 40,0 KB | 80 | −40,0 KB |
+| `largest-chunk` (inclui lazy) | 492,3 KB | 550 | −57,7 KB |
+| `total-assets` (sem maps) | 2801,6 KB | 4100 | −1298,4 KB |
+
+`bundle-budget.mjs` sai **0** ("OK: bundle inicial dentro do budget"). O maior chunk não é deste módulo — é `vendor-maps` (mapbox-gl, lazy).
+
+**Quem verifica:** o gate existe e roda de verdade — `.github/workflows/ci.yml:314-315` (`node scripts/ci/bundle-budget.mjs`) no job `build` (`ci.yml:278`, `needs: [lint-and-typecheck, test]`, sem filtro de `paths`); o env `VITE_CRM_INTEGRATION_ENABLED: 'true'` está no `env:` do workflow (`ci.yml:27`). Não é o padrão "existe mas não roda". O que o gate **não** faz: comparar este número com o build a cada commit — `performance-budget.json` não tem entrada por chunk (`LocationPicker`/`ContactForm` caem sob `largest-chunk`/`total-assets`). O número acima é fotografia datada; o contrato contínuo é o budget agregado.
+
 ## Débito técnico conhecido
 
 Migrations `20260926152000_search_contacts_returns_latlng.sql` (PR #862) e `20260926160000_search_contacts_add_lat_lon.sql` (PR #859) corrigem o mesmo gap de forma redundante — ambas aplicadas em produção, nenhuma será removida (risco de drift maior que o ganho de limpeza). Ver nota na E43 do plano de 50 etapas.
