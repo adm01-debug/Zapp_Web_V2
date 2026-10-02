@@ -74,8 +74,14 @@ jobs:
       # (auth cookies do user.json sao browser-agnosticos).
       # firefox-conversation e webkit-conversation cobrem conversation.spec.ts e
       # messaging.spec.ts nos engines alternativos -- mesma logica de browser-agnosticismo.
+      # chromium-mapa cobre as specs do modulo MAPA (E71/E72 picker,
+      # e2e/location-picker.spec.ts; E73 cadastro, e2e/contact-address.spec.ts; E74
+      # mapa/pino, e2e/contact-map-pin.spec.ts). Projeto proprio e SEM setup: essas
+      # specs autenticam por sessao FALSA (installFakeSession) com REST/RPC e a
+      # Mapbox mockados, entao nao usam E2E_TEST_EMAIL/E2E_TEST_PASSWORD nem o
+      # storageState de e2e/.auth/user.json -- nenhum secret novo e necessario.
       - name: 📐 Run Playwright E2E (login real)
-        run: bun run test:e2e -- --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation
+        run: bun run test:e2e -- --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=chromium-mapa --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation
         env:
           CI: true
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
