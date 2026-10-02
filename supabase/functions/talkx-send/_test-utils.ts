@@ -92,6 +92,14 @@ export function makeDispatchDeps(opts: {
         if (name === "complete_talkx_campaign_if_drained") return Promise.resolve({ data: true, error: null });
         if (name === "reschedule_talkx_recipient") return Promise.resolve({ data: null, error: null });
         if (name === "release_talkx_recipient_claim") return Promise.resolve({ data: true, error: null });
+        if (name === "get_instance_token") return Promise.resolve({ data: "tok-principal", error: null });
+        if (name === "talkx_connection_send_budget") return Promise.resolve({
+          data: {
+            minute_limit: 6, minute_sent: 0, minute_remaining: 6,
+            day_limit: 500, day_sent: 0, day_remaining: 500, next_day_at: null,
+          },
+          error: null,
+        });
         return Promise.resolve({ data: null, error: null });
       },
       from(table: string) {
@@ -127,6 +135,7 @@ export function setDispatchEnv(): void {
   Deno.env.set("EVOLUTION_API_KEY", "test-evolution-api-key");
   Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
   Deno.env.set("EVOLUTION_INSTANCE_TOKEN", "test-instance-token");
+  Deno.env.set("EVOLUTION_INSTANCE_NAME", "PRINCIPAL");
 }
 
 export function setDispatchEnvGo(): void {
@@ -135,6 +144,7 @@ export function setDispatchEnvGo(): void {
   Deno.env.set("EVOLUTION_API_KEY", "test-evolution-api-key");
   Deno.env.set("EVOLUTION_API_FLAVOR", "go");
   Deno.env.set("EVOLUTION_INSTANCE_TOKEN", "test-instance-token");
+  Deno.env.set("EVOLUTION_INSTANCE_NAME", "PRINCIPAL");
 }
 
 export function mockGlobalFetch(failUrlFragment?: string): () => void {
@@ -293,6 +303,8 @@ export function makeContinueDeps(opts: {
   claimWorker?: (call: number) => boolean;
   suppressAll?: boolean;
   drainedResult?: boolean;
+  instanceToken?: string;
+  budget?: (sentCount: number) => Record<string, unknown>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }): { deps: any; ctx: ContinueMockCtx } {
   const campaign = opts.campaign ?? makeCampaign({ send_interval_min: 1000, send_interval_max: 1000, typing_delay_min: 0, typing_delay_max: 0 });
@@ -360,6 +372,20 @@ export function makeContinueDeps(opts: {
             case "complete_talkx_campaign_if_drained":
               ctx.completeDrainedCalls++;
               return Promise.resolve({ data: opts.drainedResult ?? true, error: null });
+            case "get_instance_token":
+              return Promise.resolve({ data: opts.instanceToken ?? "tok-principal", error: null });
+            case "talkx_connection_send_budget": {
+              const sentCount = opts.recipients.length - ctx.queue.length;
+              return Promise.resolve({
+                data: opts.budget
+                  ? opts.budget(sentCount)
+                  : {
+                      minute_limit: 6, minute_sent: 0, minute_remaining: 6,
+                      day_limit: 500, day_sent: 0, day_remaining: 500, next_day_at: null,
+                    },
+                error: null,
+              });
+            }
             default:
               return Promise.resolve({ data: null, error: null });
           }
