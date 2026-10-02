@@ -721,7 +721,7 @@ Deno.serve(async (req) => {
     if (!response.ok) {
       const errText = await bodyText(response);
       log.error("Final provider error", { status: response.status, error: errText.slice(0, 200) });
-      logAiUsage({
+      void logAiUsage({
         functionName: 'ai-proxy', userId,
         model: modelUsed,
         durationMs, status: 'error',
@@ -744,7 +744,7 @@ Deno.serve(async (req) => {
     const data = await response.json();
     const { inputTokens, outputTokens, model } = extractTokenUsage(data);
 
-    logAiUsage({
+    void logAiUsage({
       functionName: 'ai-proxy', userId,
       model: model || modelUsed || null,
       inputTokens, outputTokens, durationMs,
