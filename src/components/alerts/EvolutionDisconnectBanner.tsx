@@ -76,7 +76,10 @@ export function EvolutionDisconnectBanner() {
         role="region"
         aria-label="Status das conexões do WhatsApp"
         aria-live="polite"
-        className="fixed top-0 left-0 right-0 z-[90] bg-destructive text-destructive-foreground shadow-lg"
+        // E100-2 · contraste medido no navegador: branco sobre `bg-destructive` do tema padrao
+        // (hsl(0 84% 60%) = RGB 239,67,67) da 3.78:1 — abaixo dos 4.5:1 exigidos para texto normal
+        // (WCAG AA). `bg-red-700` da 6.47:1 e nao depende do tema. Ver e2e/inbox-contraste.spec.ts.
+        className="fixed top-0 left-0 right-0 z-[90] bg-red-700 text-white shadow-lg"
       >
         <div className="flex items-center justify-center gap-3 py-2.5 px-4 max-w-screen-xl mx-auto">
           <WifiOff className="w-5 h-5 shrink-0 animate-pulse" />
@@ -92,7 +95,7 @@ export function EvolutionDisconnectBanner() {
             <button
               onClick={() => handleReconnect(disconnected[0])}
               disabled={reconnecting === disconnected[0].instance_id}
-              className="ml-2 px-3 py-1 bg-destructive-foreground/20 hover:bg-destructive-foreground/30 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50"
+              className="ml-2 px-3 py-1 bg-white text-red-800 hover:bg-red-100 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50"
             >
               <RefreshCw className={cn('w-3 h-3', reconnecting && 'animate-spin')} />
               Reconectar
@@ -100,7 +103,7 @@ export function EvolutionDisconnectBanner() {
           )}
           <button
             onClick={() => setDismissed(true)}
-            className="ml-auto p-1 rounded hover:bg-destructive-foreground/20 transition-colors shrink-0"
+            className="ml-auto p-1 rounded hover:bg-white/20 transition-colors shrink-0"
             aria-label="Fechar alerta"
           >
             <X className="w-4 h-4" />
