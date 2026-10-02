@@ -219,8 +219,8 @@
     },
     {
       "path": "supabase/functions/_shared/messaging/personalize.ts",
-      "bytes": 6767,
-      "sha256": "a9b8405982d5c0bc81d8a010e5a5f0f8081402350a8316729e521621167245e3"
+      "bytes": 6774,
+      "sha256": "cff5ea4a1bd59763546e0cea849161b9c523c4e55a7168427dc16ca1a4d13144"
     },
     {
       "path": "supabase/functions/_shared/messaging/phone.ts",
@@ -534,13 +534,13 @@
     },
     {
       "path": "supabase/functions/gmail-sync/index.ts",
-      "bytes": 11385,
-      "sha256": "d2dcfabfff57b2177257ab2634a12b2142f457e25a7102bbfa70483611e2e0a5"
+      "bytes": 11392,
+      "sha256": "85ee9e4b525e6bf15e101ac1455ff08ccdf4d623ad98d05c831e62079cb0f18b"
     },
     {
       "path": "supabase/functions/gmail-webhook/index.ts",
-      "bytes": 11628,
-      "sha256": "daf1277d9949542e1d1cb300613b0948b4ba9ef18c41057e82d44efa57c98bfa"
+      "bytes": 11642,
+      "sha256": "ce7b56638d35522933152ce280c3034336d43caee024a40eb46d386c7211ff1e"
     },
     {
       "path": "supabase/functions/message-delivery/index.ts",
@@ -684,8 +684,8 @@
     },
     {
       "path": "supabase/functions/whatsapp-webhook/index.ts",
-      "bytes": 5297,
-      "sha256": "53bfe2ad59c07d2bc814c211126c7dddda4d160193e5d0f4f53aa2e7ca3769c3"
+      "bytes": 5304,
+      "sha256": "efba6dc0d7878ebe2d1ba0e559b62a75d84c82853355596137c614b8a6f0b0d1"
     }
   ],
   "functions": [
@@ -1371,7 +1371,7 @@
       "name": "gmail-sync",
       "entrypoint": "supabase/functions/gmail-sync/index.ts",
       "verify_jwt": true,
-      "source_sha256": "f909e2bf3d816d352f399be80f623bbb21798d8d2b39300ff7b92de78243450e",
+      "source_sha256": "ab6a3c7a3f420e2bec49d8d39ae5e38db4b2a2d671f78748d2b51742afa2e835",
       "source_files": [
         "supabase/functions/_shared/gmail-helpers.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1383,7 +1383,7 @@
       "name": "gmail-webhook",
       "entrypoint": "supabase/functions/gmail-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "7cf56788285cc79ee53593d24dd8948e679ee4ac31b45e4cf9a86569cec4a0c2",
+      "source_sha256": "ab5667856ce0ea183b628362150dc735ff62a4c7598e0c0da7532bb6cc7fb196",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1436,7 +1436,7 @@
       "name": "multiplix-dispatch",
       "entrypoint": "supabase/functions/multiplix-dispatch/index.ts",
       "verify_jwt": true,
-      "source_sha256": "20dcc7300c1a261b9a9dca9ea7067656a6a61302de12ec246c6fe60ae079c855",
+      "source_sha256": "28eac4329c3c14076e87328496e95da93bae2b9c73b302841fe57d9948fef27c",
       "source_files": [
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1470,7 +1470,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "6e2c6aa8c0ed301865766ca600a53e4af84ff8e474330e35e16f56c65165809b",
+      "source_sha256": "6e438b046f1cfe6763efda770b37818df1f587aae0c763b72e941c12d7733901",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1633,7 +1633,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ab293a58fb41269c2058d155c152fdc6456f369a96b0f86f747a9e19c6d65697",
+      "source_sha256": "f5564d085ff65a6d493cbf0ec97b3d5e56b12843e36055d58ec5f51e81d6c699",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/effect-reconcile.ts",
@@ -1735,7 +1735,7 @@
       "name": "whatsapp-webhook",
       "entrypoint": "supabase/functions/whatsapp-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "872d4e2af9d79876f35c048b043069c200e633fbd6daa65a02f522d7222fb765",
+      "source_sha256": "c57a786e73b1b9b7dc1db35177724aaaa75e95acb624959c2e4776d9b66ec1f9",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1743,5 +1743,5 @@
       ]
     }
   ],
-  "manifest_sha256": "120659e15199b2163c42490302352d0e24da52b61d5d6c047282fa9e84ac319b"
+  "manifest_sha256": "71c4d641e222822dd61d4cb45c4eb73f58671abcd404800986b688fb2701d3f1"
 }
