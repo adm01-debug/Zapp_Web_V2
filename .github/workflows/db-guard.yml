@@ -37,9 +37,32 @@ jobs:
     name: Contrato DB offline
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    # E47: um PostgreSQL 17 compartilhado para todos os ~48 testes de contrato.
+    # O docker-shim intercepta `docker run/exec/rm` e roteia cada teste para
+    # um banco isolado (CREATE/DROP DATABASE por invocação) no mesmo serviço,
+    # eliminando o overhead de inicialização individual de containers.
+    services:
+      postgres:
+        image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+        env:
+          POSTGRES_PASSWORD: shim_test_password
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       POSTGRES_TEST_IMAGE: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
       POSTGREST_TEST_IMAGE: public.ecr.aws/supabase/postgrest:v14.5@sha256:bb289d00570b569525e1e22fb77c49cd17c17ca3f41da9ee2b4351a35027551b
+      # E47: coordenadas do serviço compartilhado, lidas pelo docker-shim.
+      POSTGRES_SERVICE_HOST: localhost
+      POSTGRES_SERVICE_PORT: "5432"
+      POSTGRES_SERVICE_USER: postgres
+      POSTGRES_SERVICE_PASS: shim_test_password
+      DOCKER_SHIM_STATE_DIR: /tmp/docker-shim-state
     permissions:
       contents: read
       # pull-requests: read apenas para o passo de imutabilidade abaixo (lista
@@ -172,7 +195,26 @@ jobs:
       - name: Testar comparadores de catalogo, manifesto e migrations
         run: node --test scripts/db-audit/*.test.mjs
 
+      # E47: instala o docker-shim no PATH antes do primeiro step que usa docker.
+      # A partir daqui, `docker` aponta para o shim que roteia run/exec/rm para
+      # o serviço postgres compartilhado. SKIP_DOCKER_SHIM=1 no step do PostgREST
+      # (abaixo) desvia o shim e usa o docker real para subir o container PostgREST.
+      - name: Instalar docker-shim (E47)
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          cp scripts/db-audit/docker-shim "$HOME/.local/bin/docker"
+          chmod +x "$HOME/.local/bin/docker"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # E47: SKIP_DOCKER_SHIM=1 — este test cria dois bancos (db_a, db_b) no
+      # mesmo container e roda DDL identico em cada um. O shim mapeia um
+      # container a um unico banco; -d db_a e -d db_b roteariam para o mesmo
+      # banco, causando "already exists" na segunda iteracao. O test acessa
+      # postgres via docker exec (socket Unix interno), nao via localhost:5432,
+      # entao nao colide com o servico compartilhado.
       - name: Validar SQL de catalogo e manifesto no PostgreSQL 17
+        env:
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/catalog-manifest.test.sh
 
       - name: Testar normalizacao deterministica dos tipos gerados
@@ -205,9 +247,13 @@ jobs:
           CRM_OUTBOX_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/crm-sync-outbox-behavior.test.sh
 
+      # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
+      # Com o shim o banco criado é shim_zapp_v2_inbox_authz_test_<PID> e
+      # current_database() devolve esse nome, quebrando a asserção.
       - name: Simular autorização canônica do Inbox
         env:
           INBOX_AUTHZ_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/inbox-contact-authorization.test.sh
 
       - name: Simular exclusão, status e grants canônicos de Contatos
@@ -251,6 +297,9 @@ jobs:
       - name: Simular credencial dedicada de cron no Vault (L5)
         env:
           CRON_SECRET_L5_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          # E47: SKIP_DOCKER_SHIM=1 — o teste usa docker exec bash (BLOCO C/D),
+          # não suportado pelo shim (apenas psql é interceptado; exit 1 silencia o FAIL).
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/cron-secret-l5-contract.test.sh
 
       - name: Simular escopo das 14 policies TO public -> authenticated
@@ -283,9 +332,13 @@ jobs:
           TALK_ME_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talk-me-queue-contract.test.sh
 
+      # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
+      # Com o shim o banco criado é shim_zapp_talkx_history_<PID> e
+      # current_database() devolve esse nome, quebrando a asserção.
       - name: Simular histórico atômico de templates Talk X
         env:
           TALKX_HISTORY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
         run: |
           TALKX_HISTORY_PRECREATE_RUNTIME=false bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-history-behavior.test.sh
           TALKX_HISTORY_PRECREATE_RUNTIME=true bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-history-behavior.test.sh
@@ -467,10 +520,13 @@ jobs:
       # esta viva. Este passo sobe PostgREST de verdade e chama a RPC por HTTP,
       # sem mock: HTTP 300 PGRST203 antes da migration, 200 e o ciclo completo
       # depois.
+      # E47: SKIP_DOCKER_SHIM=1 — este step precisa do docker real para subir
+      # o container PostgREST; o shim não intercepta este step.
       - name: Provar ambiguidade do overload de transition_talkx_campaign no PostgREST
         env:
           TALKX_TRANSITION_POSTGREST_PG_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           TALKX_TRANSITION_POSTGREST_IMAGE: ${{ env.POSTGREST_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-transition-overload-postgrest.test.sh
 
       # V11: o contrato de eventos recusava os tipos que o servidor e a trilha
@@ -483,9 +539,13 @@ jobs:
           TALKX_EVENTS_CONTRACT_PG_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-events-contract.test.sh
 
+      # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
+      # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e
+      # current_database() devolve esse nome, quebrando a asserção.
       - name: Simular primitivas atômicas de mensagens e encerramento
         env:
           MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/message-delivery-phase1-behavior.test.sh
 
       - name: Simular contrato de dados da Telefonia v2
@@ -493,9 +553,13 @@ jobs:
           CALLS_TELEFONIA_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/calls-telefonia-contract.test.sh
 
+      # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
+      # Com o shim o banco criado é shim_zapp-notification-atomicity-<PID> e
+      # current_database() devolve esse nome, quebrando a asserção.
       - name: Simular notificações atômicas de chamadas e sentimento
         env:
           NOTIFICATION_ATOMICITY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/notification-delivery-atomicity.test.sh
 
       # Guarda o contrato runtime generico do db-migrate: se ele deixar de
@@ -504,6 +568,10 @@ jobs:
       - name: Simular contrato runtime generico de migration
         env:
           GENERIC_RUNTIME_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          # E47: SKIP_DOCKER_SHIM=1 — o contrato verifica proof.database === 'postgres'.
+          # Com o shim o banco criado e shim_zapp_generic_runtime_test_<PID> e
+          # current_database() devolve esse nome, quebrando a assercao.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/generic-migration-runtime.test.sh
 
       - name: Simular reconciliação segura do ledger
@@ -512,9 +580,18 @@ jobs:
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-reconcile-ledger-drift.test.sh
 
       - name: Simular auditoria somente-leitura de configuracao runtime
+        env:
+          # E47: SKIP_DOCKER_SHIM=1 — o readiness check usa `docker logs` para aguardar
+          # "PostgreSQL init process complete; ready for start up." — o shim devolve saida
+          # vazia nesse subcomando, fazendo o loop de 45s falhar por timeout.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/runtime-config.test.sh
 
       - name: Provar transporte libpq com cliente e PostgreSQL reais
+        env:
+          # E47: SKIP_DOCKER_SHIM=1 — o readiness check conecta sem -U, usando o usuario
+          # OS (root no container), causando "role root does not exist" no servico compartilhado.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh node scripts/db-audit/psql-environment.integration.mjs
 
       - name: Simular ambiguidade da RPC e recursao da policy do team chat (#1266)
@@ -533,6 +610,10 @@ jobs:
       - name: Simular ACL de escrita de departments (L11)
         env:
           L11_DEPARTMENTS_ACL_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          # E47: SKIP_DOCKER_SHIM=1 — o readiness check usa `docker logs` para aguardar
+          # "PostgreSQL init process complete; ready for start up." — o shim devolve saida
+          # vazia nesse subcomando, fazendo o loop de 90s falhar por timeout.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/l11-departments-acl-escrita.test.sh
 
       # Auditoria Onda 3, achado 2: a RPC de recibo de leitura e SECURITY DEFINER e nao checava
