@@ -95,6 +95,12 @@ export interface SendDeps {
   evolutionKey: string;
   /** Token da instância (rotas auth=instance). Sem ele, usa a key informada. */
   instanceToken?: string;
+  /**
+   * "go" | "v2". Ausente = le EVOLUTION_API_FLAVOR (default "go", igual ao resto do projeto).
+   * O parametro existe para o chamador/teste FIXAR a flavor: ela e uma env GLOBAL, e testes
+   * de arquivos diferentes rodam no mesmo processo — um que seta "v2" derrubaria os outros.
+   */
+  flavor?: "go" | "v2";
   signal?: AbortSignal;
 }
 
@@ -222,7 +228,8 @@ export async function send(item: SendItem, deps: SendDeps): Promise<SendResult> 
   // (evolution-send, evolution-api-proxy, effect-reconcile, evolution-sync-actions).
   // Sem isto, um ambiente em v2 teria a rota traduzida para GO sem ninguem pedir —
   // e o envio mudaria de endpoint so porque passou pelo adaptador.
-  const go: GoRoute | null = (Deno.env.get("EVOLUTION_API_FLAVOR") ?? "go") !== "v2"
+  const flavor = deps.flavor ?? ((Deno.env.get("EVOLUTION_API_FLAVOR") ?? "go") === "v2" ? "v2" : "go");
+  const go: GoRoute | null = flavor !== "v2"
     ? translateV2ToGo(plan.v2Path, "POST", plan.v2Body)
     : { path: plan.v2Path, method: "POST", body: plan.v2Body, auth: "instance" };
   if (go?.invalid) throw new MessagingError("invalid_payload", go.invalid);
