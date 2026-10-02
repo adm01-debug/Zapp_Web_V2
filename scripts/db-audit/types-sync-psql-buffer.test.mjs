@@ -78,7 +78,12 @@ const binPsql = criarStubPsql();
 test('types-sync.yml: o execFileSync do psql declara maxBuffer suficiente', () => {
   const m = /maxBuffer:\s*([0-9_*\s]+?)\s*[,}]/.exec(heredoc);
   assert.ok(m, 'psqlFile() sem maxBuffer — o default de 1 MB volta a estourar ENOBUFS');
-  const valor = eval(m[1].trim()); // eslint-disable-line no-eval
+  // Sem eval: o valor vem como expressao (`64 * 1024 * 1024`).
+  const valor = m[1]
+    .split('*')
+    .map((parte) => Number(parte.trim().replace(/_/g, '')))
+    .reduce((a, b) => a * b, 1);
+  assert.ok(Number.isFinite(valor), `nao consegui interpretar maxBuffer: ${m[1]}`);
   assert.ok(
     valor >= MINIMO_ESPERADO,
     `maxBuffer=${valor} e menor que o minimo de ${MINIMO_ESPERADO} bytes`,
