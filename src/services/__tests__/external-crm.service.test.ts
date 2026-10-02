@@ -50,3 +50,28 @@ describe('ExternalCRMService.getContact360Batch', () => {
       .rejects.toThrow('Todos os lotes');
   });
 });
+
+describe('ExternalCRMService.getContactSidebar', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('calls crm-integration contactLookup with lookup sidebar and returns data', async () => {
+    const payload = { found: true, contact_id: 'crm-1', professional: { whatsapp: { display: '+55 11 99999-9999' } } };
+    callCRMIntegration.mockResolvedValue({ data: payload });
+
+    const result = await ExternalCRMService.getContactSidebar('contact-1');
+
+    expect(callCRMIntegration).toHaveBeenCalledWith('contactLookup', { contactId: 'contact-1', lookup: 'sidebar' });
+    expect(result).toEqual(payload);
+  });
+
+  it('returns found:false payloads as-is', async () => {
+    callCRMIntegration.mockResolvedValue({ data: { found: false } });
+    const result = await ExternalCRMService.getContactSidebar('contact-1');
+    expect(result).toEqual({ found: false });
+  });
+
+  it('does not swallow errors — the hook needs the error state', async () => {
+    callCRMIntegration.mockRejectedValue(new Error('edge down'));
+    await expect(ExternalCRMService.getContactSidebar('contact-1')).rejects.toThrow('edge down');
+  });
+});
