@@ -73,6 +73,11 @@ jobs:
           deno check --config scripts/ci/deno.json --frozen
           supabase/functions/*/index.ts
 
+      - name: 🧪 Kernel de mensageria — mídia (precisa de rede local)
+        run: >-
+          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-net=127.0.0.1
+          supabase/functions/_shared/messaging/__tests__/media.test.ts
+
       - name: 🧪 Run executable Edge handler contracts
         run: >-
           deno test --config scripts/ci/deno.json --frozen --allow-env
@@ -87,6 +92,12 @@ jobs:
           supabase/functions/_shared/__tests__/webhook-auth-shadow.test.ts
           supabase/functions/_shared/__tests__/gmail-send-schema.test.ts
           supabase/functions/_shared/__tests__/multiplix-eligibility.test.ts
+          supabase/functions/_shared/__tests__/messaging-evolution-go.test.ts
+          supabase/functions/_shared/__tests__/messaging-errors.test.ts
+          supabase/functions/_shared/messaging/__tests__/personalize.test.ts
+          supabase/functions/_shared/messaging/__tests__/phone.test.ts
+          supabase/functions/_shared/messaging/__tests__/eligibility.test.ts
+          supabase/functions/_shared/messaging/__tests__/index.test.ts
           supabase/functions/crm-integration/index.test.ts
           supabase/functions/promogifts-catalog/index.test.ts
           supabase/functions/promogifts-catalog/index.actions.test.ts
