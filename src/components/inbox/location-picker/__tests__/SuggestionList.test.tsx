@@ -7,7 +7,7 @@
  * Ou seja: a pausa por limite de uso não tinha nenhuma saída na tela. Estes testes cobram o aviso
  * honesto (nada de "0 s") e o caminho de retry enquanto a espera é transitória.
  */
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { SuggestionList, type SuggestionListProps } from '../SuggestionList';
 
@@ -71,6 +71,39 @@ describe('SuggestionList — pausa de 429 (A3-04)', () => {
     expect(viva.toLowerCase()).toMatch(/nenhuma sugestão/i);
   });
   
+  it('E59: em tela pequena a lista ancora na tela com teto de 40vh (sem overflow em 360px)', () => {
+    render(<SuggestionList {...props({ status: 'ok' })} />);
+    const lista = screen.getByTestId('lista-sugestoes');
+    const cls = lista.className;
+    // < 640px (sem prefixo): fixa, presa as bordas da tela e com teto de 40vh — nao estoura a horizontal
+    expect(cls).toContain('fixed');
+    expect(cls).toContain('inset-x-4');
+    expect(cls).toContain('max-h-[40vh]');
+    // >= 640px (sm:): volta a ser ancorada no campo, com o teto de sempre
+    expect(cls).toContain('sm:absolute');
+    expect(cls).toContain('sm:max-h-64');
+  });
+
+  it('E60: o teclado virtual recalcula o teto da lista e o listener é removido no unmount', () => {
+    const listeners: Record<string, () => void> = {};
+    const add = vi.fn((t: string, fn: () => void) => { listeners[t] = fn; });
+    const remove = vi.fn();
+    Object.defineProperty(window, 'visualViewport', {
+      configurable: true,
+      value: { height: 500, addEventListener: add, removeEventListener: remove },
+    });
+    const { unmount } = render(<SuggestionList {...props({ status: 'ok' })} />);
+    expect(add).toHaveBeenCalledWith('resize', expect.any(Function));
+    const lista = screen.getByTestId('lista-sugestoes');
+    const tetoInicial = lista.style.maxHeight;
+    // o teclado abre: a area visivel encolhe e o teto da lista acompanha
+    (window.visualViewport as { height: number }).height = 200;
+    act(() => { listeners.resize?.(); });
+    expect(screen.getByTestId('lista-sugestoes').style.maxHeight).not.toBe(tetoInicial);
+    unmount();
+    expect(remove).toHaveBeenCalledWith('resize', expect.any(Function));
+  });
+
   it('teto de custo (não transitório) NÃO oferece botão de nova tentativa', () => {
     render(<SuggestionList {...props({ blocked: 'cost_guard', pausedUntil: null })} />);
 
