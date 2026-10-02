@@ -73,62 +73,12 @@ jobs:
           deno check --config scripts/ci/deno.json --frozen
           supabase/functions/*/index.ts
 
-      - name: 🧪 Kernel de mensageria — mídia (precisa de rede local)
-        run: >-
-          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-net=127.0.0.1
-          supabase/functions/_shared/messaging/__tests__/media.test.ts
-
-      - name: "API de dominio do Multiplix (Bloco E - roteador e acoes)"
-        run: >-
-          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read
-          supabase/functions/multiplix-dispatch/__tests__/f53-rate-limit.test.ts
-          supabase/functions/multiplix-dispatch/actions/__tests__/blocks.test.ts
-          supabase/functions/multiplix-dispatch/actions/__tests__/audience.test.ts
-          supabase/functions/multiplix-dispatch/actions/__tests__/inspect.test.ts
-          supabase/functions/multiplix-dispatch/actions/__tests__/lifecycle.test.ts
-
+      # E49: glob substitui lista hardcoded de ~45 arquivos. Flags combinadas
+      # cobrem os três grupos anteriores (mídia, multiplix, contratos gerais).
       - name: 🧪 Run executable Edge handler contracts
         run: >-
-          deno test --config scripts/ci/deno.json --frozen --allow-env
-          supabase/functions/_shared/__tests__/ssrf.test.ts
-          supabase/functions/_shared/__tests__/secure-egress.test.ts
-          supabase/functions/_shared/__tests__/crm-integration-contract.test.ts
-          supabase/functions/_shared/__tests__/talkx-delivery-connection.test.ts
-          supabase/functions/_shared/__tests__/avatar-storage-path.test.ts
-          supabase/functions/_shared/__tests__/gmail-helpers-account-scope.test.ts
-          supabase/functions/_shared/__tests__/evolution-go-routes.test.ts
-          supabase/functions/_shared/__tests__/evolution-send-instance-token.test.ts
-          supabase/functions/_shared/__tests__/webhook-auth-shadow.test.ts
-          supabase/functions/_shared/__tests__/gmail-send-schema.test.ts
-          supabase/functions/_shared/__tests__/multiplix-eligibility.test.ts
-          supabase/functions/_shared/__tests__/messaging-evolution-go.test.ts
-          supabase/functions/_shared/__tests__/messaging-errors.test.ts
-          supabase/functions/_shared/messaging/__tests__/personalize.test.ts
-          supabase/functions/_shared/messaging/__tests__/phone.test.ts
-          supabase/functions/_shared/messaging/__tests__/eligibility.test.ts
-          supabase/functions/_shared/messaging/__tests__/index.test.ts
-          supabase/functions/crm-integration/index.test.ts
-          supabase/functions/promogifts-catalog/index.test.ts
-          supabase/functions/promogifts-catalog/index.actions.test.ts
-          supabase/functions/message-delivery/index.test.ts
-          supabase/functions/sentiment-alert/index.test.ts
-          supabase/functions/talkx-send/index.test.ts
-          supabase/functions/talkx-scheduler/index.test.ts
-          supabase/functions/multiplix-audience/index.test.ts
-          supabase/functions/public-api/index.test.ts
-          supabase/functions/webhook-diagnostic/diagnostic.test.ts
-          supabase/functions/talkx-report/index.test.ts
-          supabase/functions/multiplix-send/index.test.ts
-          supabase/functions/get-sip-password/index.test.ts
-          supabase/functions/_shared/__tests__/cron-secret-authz-l5.test.ts
-          supabase/functions/_shared/__tests__/talkx-resume-policy.test.ts
-          supabase/functions/_shared/__tests__/webhook-signature.test.ts
-          supabase/functions/_shared/__tests__/ai-auth.test.ts
-          supabase/functions/_shared/__tests__/ai-audio-authz.test.ts
-          supabase/functions/_shared/__tests__/ai-audio-authz-runtime.test.ts
-          supabase/functions/_shared/__tests__/ai-auth-service-path.test.ts
-          supabase/functions/_shared/__tests__/webhook-signature-ambiguity.test.ts
-          supabase/functions/_shared/__tests__/voice-copilot-authz.test.ts
+          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1
+          $(git ls-files 'supabase/functions/**/*.test.ts')
 
       - name: 🧪 Test CI and Edge deployment guards
         run: >-
