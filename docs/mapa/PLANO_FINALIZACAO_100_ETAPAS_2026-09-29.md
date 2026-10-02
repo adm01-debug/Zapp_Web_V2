@@ -804,10 +804,22 @@ que rodou e o que nao rodou, sem afirmar verde nao medido.
 Substitui o antigo "desligar a flag": sem chave (decisão `20261001-103207-6c0b`), a reversão é de código.
 1. Aplicar o `git revert` do commit do autocomplete em **preview** e conferir que o campo de endereço volta ao input+Buscar e que `searchLocation` funciona (F2).
 2. Registrar horário, ambiente e resultado — sem tocar produção.
-**Checklist:** [ ] executado em preview · [ ] registrado
+**Checklist:** [x] reversibilidade medida · [~] executado em preview — **substituido por decisao do coordenador (2026-10-02)**: entregue como prova medida + registro do custo real, sem gastar CI e deploy de preview num branch que nao mergearia · [x] registrado (runbook + plano)
+> **Entregue como prova de reversibilidade medida (2026-10-02), sem experimento em preview** — decisão
+> do coordenador. Medido: `git revert` de `2b3eff380` + `4eb723c16` **não aplica** (`CONFLICT
+> modify/delete` no hook, porque as fases seguintes o modificaram) e a volta ao fluxo input + Buscar é
+> **manual, multi-arquivo** (apagar o hook + religar os consumidores), depois PR + CI + deploy. Registrado
+> em `docs/runbooks/mapa-searchbox.md` ("Custo real da reversão"), com a recomendação de reavaliar a
+> decisão `20261001-103207-6c0b`. Produção não foi tocada; árvore restaurada (`git revert --abort`).
 ### E90 · Restrição de URL do token público da Mapbox
 1. No painel da Mapbox, restringir o token servido por `get-mapbox-token` aos domínios de produção/preview da Vercel. Não é do repo — registrar como tarefa do Joaquim com o link da página de tokens e conferir depois com uma chamada de fora do domínio (deve dar 403).
 **Checklist:** [ ] restrito · [ ] 403 confirmado
+> **Não é do repo — é tarefa no painel da Mapbox** (registrada como decisão
+> `20261002-132223-320b-sem-tarefa`): restringir o token servido por `get-mapbox-token` aos domínios da
+> Vercel (`zapp-web-v2.vercel.app` e os previews `zapp-web-v2-*.vercel.app`) em
+> https://account.mapbox.com/access-tokens/ . O checklist só fecha com o 403 confirmado por chamada de
+> fora do domínio — enquanto isso, **os dois itens ficam abertos**, porque "restrito" sem prova é
+> exatamente o verde falso que esta fase existe para eliminar.
 
 ### E91 · Alerta de custo por e-mail/WhatsApp
 1. Workflow N8N (ou cron do Supabase, se já existir padrão no repo) que lê a view de E52 1×/dia e avisa se `sessoes_mes ≥ 400`. Registrar id do workflow no doc.

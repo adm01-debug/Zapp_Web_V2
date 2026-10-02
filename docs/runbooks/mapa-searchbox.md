@@ -148,3 +148,37 @@ O que **realmente** desliga cada parte:
 **Nunca** para conter custo: apagar `audit_logs` (é a trilha de auditoria) ou zerar a view (ela só
 lê os eventos). Nenhuma trava de custo do módulo é feita por DDL — todas são código + variável de
 ambiente, o que significa que **a reversão também é deploy**, e o deploy é por PR (não por console).
+
+## Custo real da reversão — medido, não suposto (E89, 2026-10-02)
+
+A decisão `20261001-103207-6c0b` trocou "desligar por flag" por "reverter o código". Esta seção
+registra **quanto custa** esse caminho, porque a diferença só aparece quando alguém tenta.
+
+**Medição:** `git revert` dos dois commits que introduziram o autocomplete —
+`2b3eff380` (E13-E20, o hook `useAddressAutocomplete`, 2026-09-25) e `4eb723c16` (E21-E27, o combobox
+ARIA no LocationPicker) — executado contra a `main` de 2026-10-02:
+
+```
+$ git revert --no-commit 2b3eff380 4eb723c16
+CONFLICT (modify/delete): src/components/inbox/location-picker/useAddressAutocomplete.ts
+  deleted in parent of 2b3eff380
+error: could not revert 2b3eff380
+```
+
+**Não existe revert limpo.** `2b3eff380` *criou* o hook; revertê-lo significa apagá-lo, mas o arquivo
+foi modificado por todas as fases seguintes (E79, E80, E81 inclusive), então o git recusa. E apagar o
+hook não encerra nada: os consumidores (`LocationPicker`, `ContactForm`, o picker de localização)
+passariam a apontar para um módulo inexistente. **A reversão real é uma operação manual multi-arquivo**
+— apagar o hook *e* religar cada consumidor de volta ao fluxo input + Buscar —, não um comando.
+
+O `searchLocation` continua existindo no código (é o fluxo antigo, referenciado em
+`LocationPicker.tsx:43`), então a volta é possível — mas é **trabalho de desenvolvimento + PR + deploy**,
+com o tempo de revisão e de CI que qualquer mudança de código tem.
+
+**Recomendação (registrada para o responsável decidir):** reavaliar a decisão
+`20261001-103207-6c0b`. Em incidente de custo, o teto é atingido **em uso**, não em horário de
+deploy — e hoje a única contenção disponível é `git revert` manual + PR + CI + deploy. Uma flag (ou um
+valor de teto em banco) permitiria conter em segundos, sem deploy. O argumento que sustentava "sem
+flag" era simplicidade; o número medido aqui é o **custo de não ter**: reversão por deploy, em
+horário de incidente. Isto é decisão de produto — o executor registra o custo e a recomendação, e não
+muda a decisão por conta própria.
