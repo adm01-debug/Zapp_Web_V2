@@ -551,6 +551,11 @@ jobs:
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-reconcile-ledger-drift.test.sh
 
       - name: Simular auditoria somente-leitura de configuracao runtime
+        env:
+          # E47: SKIP_DOCKER_SHIM=1 — o readiness check usa `docker logs` para aguardar
+          # "PostgreSQL init process complete; ready for start up." — o shim devolve saida
+          # vazia nesse subcomando, fazendo o loop de 45s falhar por timeout.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/runtime-config.test.sh
 
       - name: Provar transporte libpq com cliente e PostgreSQL reais
