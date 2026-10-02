@@ -359,6 +359,8 @@ export function VoIPPanel() {
                   callDuration={sip.callDuration}
                   isMuted={sip.isMuted}
                   currentNumber={sip.currentNumber}
+                  numeroInicial={sip.numeroPendente}
+                  key={`discador-${sip.numeroPendente ?? 'vazio'}`}
                   callDirection={sip.callDirection}
                   sipReason={sipReason}
                   onConnect={sip.connectWithStoredCredentials}

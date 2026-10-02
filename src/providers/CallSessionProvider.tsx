@@ -7,6 +7,7 @@ import {
   useMemo,
   useReducer,
   useRef,
+  useState,
   type ReactNode,
 } from 'react';
 import { useInRouterContext, useNavigate } from 'react-router-dom';
@@ -23,6 +24,7 @@ import {
   type CallSessionState,
   type CallSessionStatus,
 } from '@/lib/calls/session';
+import { onStartCall, type StartCallPayload } from '@/lib/calls/events';
 
 /**
  * T10 — o provider ganha a máquina de estados canônica (`src/lib/calls/session.ts`).
@@ -79,6 +81,11 @@ export type CallSessionApi = ReturnType<typeof useSipClient> & {
   reject: () => Promise<void>;
   hangup: () => void;
   openDialer: () => void;
+  /**
+   * Numero que o clique-para-discar deixou no discador sem discar (T29).
+   * `null` quando nao ha pedido pendente.
+   */
+  numeroPendente: string | null;
 };
 
 const CallSessionContext = createContext<CallSessionApi | undefined>(undefined);
@@ -345,6 +352,28 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
     [openDialer, novoId, reiniciarSeTerminal, sip],
   );
 
+  const [numeroPendente, setNumeroPendente] = useState<string | null>(null);
+
+  /**
+   * T29 - UNICO consumidor do clique-para-discar. Quem pede a ligacao
+   * (`ContactActionButtons`, `ContactHeaderSection`, `ChatHeader`) so emite
+   * `zapp:start-call`; o que fazer com o pedido e decidido aqui, num lugar so.
+   *
+   * `autoDial` ausente/falso (o padrao do contrato) NAO disca: guarda o numero e
+   * abre `?view=voip` - quem aperta o botao do painel e o agente. `autoDial:true`
+   * (botao "Ligar de volta" do historico) disca direto.
+   */
+  useEffect(() => {
+    return onStartCall((pedido: StartCallPayload) => {
+      setNumeroPendente(pedido.phone);
+      if (pedido.autoDial) {
+        void dial(pedido.phone);
+        return;
+      }
+      openDialer();
+    });
+  }, [dial, openDialer]);
+
   const accept = useCallback(async () => {
     // `ACCEPT` só vale a partir de `ringing_in` → `connecting`; sem ele o
     // `ESTABLISHED` seguinte (status `active` do motor) é transição inválida e a
@@ -428,8 +457,9 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
       reject,
       hangup,
       openDialer,
+      numeroPendente,
     }),
-    [sip, session, dial, accept, reject, hangup, openDialer],
+    [sip, session, dial, accept, reject, hangup, openDialer, numeroPendente],
   );
 
   return (
