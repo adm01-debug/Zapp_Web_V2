@@ -31,9 +31,16 @@ test('extractStepIds: título com (X001) vira etapa concluída (inclusive com su
 
 test('extractStepIds: título com (X999) → erro "etapa inexistente"', () => {
   assert.throws(
-    () => extractStepIds(['feat: algo (X999)'], IDS),
+    () => extractStepIds(['feat(talkx): algo (X999)'], IDS),
     /etapa inexistente: X999/,
   );
+});
+
+test('extractStepIds: commit sem escopo talkx (ex. fix(ci)) é ignorado, mesmo com (XNNN)', () => {
+  // Falso positivo real: `fix(ci): ... (X028)` — commit de CI que cita id de outro
+  // plano. X001 está em IDS, mas o escopo `ci` impede que conte como etapa do Talk X.
+  const done = extractStepIds(['fix(ci): E28 — algo (X001)'], IDS);
+  assert.deepEqual([...done], []);
 });
 
 test('computeStatus: etapa sem commit fica aberta', () => {
