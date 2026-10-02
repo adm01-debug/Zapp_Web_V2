@@ -639,7 +639,7 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 ### E76 · Teste de contrato da RPC `search_contacts`
 **Arquivos:** `scripts/db-audit/` (SQL de teste) ou `supabase/tests/`
 1. Query que falha se `search_contacts` deixar de devolver `latitude, longitude, address, city, state, postal_code` — roda no `db-live-guard` (adicionar ao contrato runtime, não criar workflow novo — CLAUDE.md §1 regra 9).
-**Checklist:** [x] contrato · [x] no `db-live-guard`
+**Checklist:** [x] contrato · [x] no `db-guard` (ajuste b)
 
 **Fechada em 2026-10-02.** O contrato scripts/db-audit/mapa-f1-address-contract.test.sh (126 linhas) JA existia e estava correto — faltava o fio que o liga a um guard: nao era referenciado em workflow nenhum. Passo novo no db-live-guard, registrado nos 5 pontos de consolidacao do veredito (env do outcome, OUTCOMES/STEP_LOGS/CANONICAL_ROOT, mapa JS e artifact), com o contador de vereditos de 10 para 11 — sem esse registro o continue-on-error engoliria a falha e o guard ficaria verde em silencio.
 
@@ -649,7 +649,9 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 
 **CONFLITO ENTRE PLANOS DO REPO (decisao 20261002-063721-047f-sem-tarefa):** o db-live-guard NAO roda em pull_request — a linha 4 diz que isso e deliberado e ha teste de paridade que assercao a ausencia do gatilho (on: push em main, schedule e dispatch). Logo o contrato roda pos-merge/agendado e NUNCA protege PR. O PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md (E50) manda os 4 .test.sh orfaos para o db-guard.yml, que RODA em pull_request (linha 17) e ja usa o mesmo wrapper; a AUDITORIA-W3-REPLAY.md:229 recomenda o mesmo. Decisao: manter aqui (a), mover para o db-guard (b) ou nos dois (c).
 
-**Divergencias:** o mapeamento fala 6 campos, o contrato cobre 8 (address_number e neighborhood alem dos 6) e mede ACL e trigger; e a imagem nao fica pinada por digest neste passo porque o db-live-guard nao tem POSTGRES_TEST_IMAGE e eu nao podia alterar env — perde a resiliencia a rate-limit que o db-guard tem.
+**AJUSTE (b) APLICADO em 2026-10-02 (supersede o posicionamento acima):** o passo foi MOVIDO do `db-live-guard` para o `.github/workflows/db-guard.yml`, sem `continue-on-error` (gate duro). Motivo: o `db-guard` tem gatilho `pull_request` (linha 17), entao o contrato passa a BARRAR o PR; o `db-live-guard` nao roda em pull_request — por design — logo ali o contrato so rodaria pos-merge/agendado e nunca protegeria PR. Alinha ao E50 do `PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` (levar os `.test.sh` orfaos, incluindo `mapa-f1-address-contract`, para o `db-guard.yml`) e a `AUDITORIA-W3-REPLAY.md:229` (plugar junto dos outros testes de banco no db-guard, que ja tem Docker e o mesmo wrapper). Bonus do ajuste: a imagem passa a ser repassada pinada por digest via `MAPA_F1_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}` (o db-guard define `POSTGRES_TEST_IMAGE` com `@sha256:...` na linha 41). No db-live-guard foram removidos o passo e seus 5 registros do veredito (env do outcome, OUTCOMES, STEP_LOGS, CANONICAL_ROOT, mapa JS do STEP_LOG_MAP), a entrada do upload-artifact e o contador de vereditos voltou de 11 para 10.
+
+**Divergencias:** o mapeamento fala 6 campos, o contrato cobre 8 (address_number e neighborhood alem dos 6) e mede ACL e trigger; e a imagem nao ficava pinada por digest no passo do db-live-guard (ele nao tem POSTGRES_TEST_IMAGE e eu nao podia alterar env) — o ajuste (b) acima resolve isso: no db-guard a imagem e repassada pinada por digest via MAPA_F1_TEST_POSTGRES_IMAGE, herdando a resiliencia a rate-limit.
 
 **Nao verificado:** o workflow nao foi executado no GitHub Actions (prova local, mesma imagem e mesmo wrapper); nao validei pull frio da imagem no runner nem o impacto no timeout de 25 min (estimativa).
 
