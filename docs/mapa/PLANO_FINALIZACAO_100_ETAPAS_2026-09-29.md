@@ -711,7 +711,15 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 
 ### E80 · Teste de carga leve do debounce (sanidade de custo)
 1. Simular 200 teclas em 5 s com fake timers → ≤ 17 requests (1 a cada 300 ms) e 1 sessão.
-**Checklist:** [ ] teste
+**Checklist:** [x] teste
+
+**Fechada em 2026-10-02.** Caso acrescentado ao arquivo de teste que ja cobria o debounce (__tests__/useAddressAutocomplete.test.tsx, caso de 10 teclas na linha 332): 200 teclas a cada 25 ms (5000 ms de digitacao) medindo requests=1 e sessoes=1, contra o teto de <= 17 da etapa.
+
+**O 300 ms do plano foi conferido no codigo**, nao presumido: useAddressAutocomplete.ts:11 declara DEBOUNCE_MS = 300 e a linha 394 agenda o setTimeout com ele.
+
+**Prova por mutacao:** com DEBOUNCE_MS = 0 o caso REPROVA por expected 198 to be less than or equal to 17 (198 requests contra 1 com debounce); restaurado por cp. O teste mede o debounce, nao a si mesmo.
+
+**Nota:** um arquivo de teste duplicado deixado por um subagente interrompido (useAddressAutocomplete.e80-load.test.tsx) foi removido - um caso, um lugar.
 
 ### E81 · Teste de que o autocomplete não chama a Mapbox sem uso
 **Sem flag** (decisão `20261001-103207-6c0b`): a contenção se prova por foco, não por chave.
