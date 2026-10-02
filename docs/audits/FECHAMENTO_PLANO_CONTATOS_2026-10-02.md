@@ -11,7 +11,7 @@ Base da medição: `main` em `de64c092f` (02/10) — PRs desta rodada: #1589, #1
 
 | Item | Auditoria 29/09 | Fechamento 01/10 | Final 02/10 |
 |---|---|---|---|
-| Etapas marcadas | 61/100 | 62/100 (declarado) | **84/100** (medido por script) → **90/100** (2, 3, 13, 16, 18, 58) → **97/100** (4, 5, 14, 17, 28, 39, 65) |
+| Etapas marcadas | 61/100 | 62/100 (declarado) | **84/100** (medido por script) → **90/100** (2, 3, 13, 16, 18, 58) → **97/100** (4, 5, 14, 17, 28, 39, 65) → **99/100** (11, 98) |
 | F0 Decisões | 0/6 | entregue | 2/6 — D1–D6 respondidas; 2–5 abertas |
 | F1 Banco (exclusão, Sicoob, grants) | 0/12 | entregue + DDL aplicada | 6/12 (`#1172` `41f66910`) |
 | F2 Tipografia/geometria | 6/10 | — | 9/10 — aberta 28 |
@@ -111,7 +111,7 @@ Base da medição: `main` em `de64c092f` (02/10) — PRs desta rodada: #1589, #1
 
 ## Conclusão
 
-O plano **não** está concluído: **97/100** etapas marcadas, com **3 abertas** — F1 **11** (DoD exige invocação de teste da `sicoob-bridge`), F9 **94** (escrita em `CLAUDE.md`, bloqueada por hook até o Joaquim aprovar) e F10 **98** (verificação em produção). O que mudou
+O plano está **a uma etapa do fim**: **99/100** marcadas, com **1 aberta** — F9 **94** (6 linhas na seção "Contatos" do `CLAUDE.md`), que depende da **aprovação do Joaquim** no hook de arquivo protegido (decisão `20261002-161204-9789-plano-contatos-etapas-abertas`). A **11** foi fechada pela via do deploy, com o teste de invocação registrado como **inexecutável por falta de fonte local**; a **98** fechou com **4/4 evidências** em produção. O que mudou
 em relação ao fechamento de 01/10 é a qualidade da prova: sete etapas passaram a ter número cru em vez
 de declaração, uma foi **desmarcada** por falta de evidência, uma foi **reaberta** com 2 de 4
 evidências, e um bug de produção com causa-raiz identificada foi retirado do limbo do "B7" e virou
