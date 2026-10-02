@@ -9,8 +9,8 @@ const AiTab = lazy(() =>
   import('../tabs/AiTab').then((m) => ({ default: m.AiTab })));
 const Crm360Tab = lazy(() =>
   import('../tabs/Crm360Tab').then((m) => ({ default: m.Crm360Tab })));
-const OrdersTab = lazy(() =>
-  import('../tabs/OrdersTab').then((m) => ({ default: m.OrdersTab })));
+const SalesViewTab = lazy(() =>
+  import('../tabs/SalesViewTab').then((m) => ({ default: m.SalesViewTab })));
 const TasksTab = lazy(() =>
   import('../tabs/TasksTab').then((m) => ({ default: m.TasksTab })));
 const NotesTab = lazy(() =>
@@ -97,7 +97,7 @@ export function ConversationTabContent({
 
       {activeTab === 'orders' && (
         <Panel name="SalesView">
-          <OrdersTab contactId={contactId} />
+          <SalesViewTab contactId={contactId} />
         </Panel>
       )}
 

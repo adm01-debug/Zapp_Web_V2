@@ -5,12 +5,12 @@ import { OpenDealsList } from './OpenDealsList';
 import { SectionCard } from './SectionCard';
 import { useContactCrm360 } from '@/hooks/crm/useContactCrm360';
 
-interface OrdersTabProps {
+interface SalesViewTabProps {
   contactId: string;
 }
 
-/** Aba Pedidos (23b) — compras/propostas do contato; reaproveita ContactPurchasesPanel e o CRM 360°. */
-export function OrdersTab({ contactId }: OrdersTabProps) {
+/** Aba SalesView — resumo comercial, compras e propostas do contato; reaproveita ContactPurchasesPanel e o CRM 360°. */
+export function SalesViewTab({ contactId }: SalesViewTabProps) {
   const { data: crm360, isLoading } = useContactCrm360(contactId);
   const hasPurchases = (crm360?.purchases.length ?? 0) > 0;
   const hasOpenDeals = (crm360?.openDeals.length ?? 0) > 0;
