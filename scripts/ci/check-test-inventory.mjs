@@ -31,6 +31,7 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/pg-cron-escalonamento.test.sh',
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
+  'scripts/db-audit/talkx-campaign-segments.test.sh',
 ]);
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────
