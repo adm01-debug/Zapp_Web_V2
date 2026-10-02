@@ -82,6 +82,8 @@ for (const caso of CASOS) {
     assertEquals(rpcCalls[0].args.p_provider_event_id, fixture.data.id);
     assertEquals(rpcCalls[0].args.p_is_video, false);
     assertEquals(rpcCalls[0].args.p_should_notify, caso.notifica);
+    // T26: a direcao derivada do payload chega na RPC (nao mais 'inbound' fixo).
+    assertEquals(rpcCalls[0].args.p_direction, "inbound");
     assertEquals(rpcCalls[0].args.p_contact_id, CONTATO.id);
     assertEquals(rpcCalls[0].args.p_whatsapp_connection_id, CONEXAO.id);
   });
@@ -95,6 +97,7 @@ Deno.test("T25 chamada de SAÍDA (fromMe) não gera notificação de chamada rec
 
   assertEquals(rpcCalls.length, 1);
   assertEquals(rpcCalls[0].args.p_should_notify, false);
+  assertEquals(rpcCalls[0].args.p_direction, "outbound");
 });
 
 Deno.test("T25 direção: fromMe e isOutgoing viram 'outbound'; sem marcação vira 'inbound'", () => {

@@ -295,6 +295,8 @@ export async function handleCallEvent(supabase: any, instance: string, data: unk
     p_is_video: isVideo,
     p_provider_event_id: eventId,
     p_should_notify: deveNotificarChamada(callStatus, direcao),
+    // T26: a RPC passou a receber a direcao; sem ela gravava 'inbound' fixo.
+    p_direction: direcao,
   });
   if (persistError) throw new Error('Unable to persist incoming call event');
 }
