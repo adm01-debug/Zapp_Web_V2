@@ -151,7 +151,13 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     // o valor do campo é imediato; o recorte (e a URL) vêm com o debounce
     expect((campo as HTMLInputElement).value).toBe('liga');
     await waitFor(() => expect(screen.queryByText('Feita')).toBeNull());
-    expect(window.location.search).toContain('q=liga');
+    // A URL acompanha o valor DEBOUNCED, mas quem a escreve é um `useEffect` do
+    // hook que roda DEPOIS do commit que recorta a lista. Esperar só pela lista
+    // deixava esta asserção correndo contra aquele efeito: sob carga (suíte
+    // completa) o `waitFor` resolvia no intervalo em que o DOM já recortou e a
+    // URL ainda estava vazia — `expected '' to contain 'q=liga'`, ~10% das vezes.
+    // Esperar pela URL é o que a asserção realmente quer provar.
+    await waitFor(() => expect(window.location.search).toContain('q=liga'));
   });
 });
 
@@ -167,8 +173,12 @@ describe('TasksModule — B13 (uma query para os tres modos)', () => {
     renderModule();
 
     // carga inicial das tarefas = 1 select
-    await waitFor(() => expect(h.select).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(screen.getByText('Ligar para o cliente')).toBeTruthy());
+    // `timeout` explícito: sob a suíte completa o primeiro render da carga
+    // (mock resolve + lista monta) passa de 1s com alguma frequência, e o
+    // `waitFor` padrão falhava aqui (`Unable to find the text: 'Ligar para o
+    // cliente'`) derrubando o job de Unit Tests de PRs alheios.
+    await waitFor(() => expect(h.select).toHaveBeenCalledTimes(1), { timeout: 4000 });
+    await waitFor(() => expect(screen.getByText('Ligar para o cliente')).toBeTruthy(), { timeout: 4000 });
 
     // Lista -> Quadro (o botao do ModeSwitcher)
     fireEvent.click(screen.getByText('Quadro'));
