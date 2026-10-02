@@ -190,3 +190,101 @@ describe('contraste AA — tokens que o axe reprovou (sem tocar na skin)', () =>
     expect(banner).not.toMatch(/text-xs opacity-\d+ hidden sm:inline/);
   });
 });
+
+/**
+ * E62 — contraste do combobox de endereços (SuggestionList.tsx) nos temas do produto.
+ *
+ * Pares que o componente realmente pinta (os mesmos de scripts/qa/contraste-combobox.mjs):
+ *  - texto secundário: `--muted-foreground` sobre `--popover` (a lista é `bg-popover`);
+ *  - `<mark>`: `HighlightedText.tsx` destaca com `bg-[hsl(var(--warning)/0.35)]` no claro e
+ *    `/0.25` quando há `.dark`, e o texto é `text-inherit` — na linha do nome herda
+ *    `--foreground`, na do endereço herda `--muted-foreground`.
+ *
+ * Reusa o medidor WCAG já presente neste arquivo (`razao`/`hslParaRgb`) e lê o alto contraste
+ * de `accessibility.css`. Um caso por tema; o CI pega a próxima regressão de token.
+ */
+const A11Y_CSS = readFileSync('src/styles/accessibility.css', 'utf8');
+
+/** Corpo de um bloco por cabeçalho EXATO (`seletor {`) — evita que `.high-contrast` case
+ *  também com `.dark.high-contrast` (substring) e sobrescreva o tema claro. */
+function tokensDoBlocoExato(css: string, cabecalho: string): Record<string, Rgb> {
+  const limpo = semComentarios(css);
+  const alvo = `${cabecalho} {`;
+  const i = limpo.indexOf(alvo);
+  if (i < 0) throw new Error(`bloco ${cabecalho} ausente em accessibility.css`);
+  const abre = i + alvo.length - 1;
+  let nivel = 0;
+  for (let j = abre; j < limpo.length; j++) {
+    if (limpo[j] === '{') nivel += 1;
+    else if (limpo[j] === '}') {
+      nivel -= 1;
+      if (nivel === 0) {
+        const out: Record<string, Rgb> = {};
+        for (const t of Array.from(
+          limpo
+            .slice(abre + 1, j)
+            .matchAll(/--([\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g),
+        )) {
+          out[t[1]] = hslParaRgb(Number(t[2]), Number(t[3]), Number(t[4]));
+        }
+        return out;
+      }
+    }
+  }
+  throw new Error(`bloco ${cabecalho} sem fechamento em accessibility.css`);
+}
+
+/** `cor` com alfa composta sobre `base` (como o navegador pinta o destaque do `<mark>`). */
+function compor(cor: Rgb, alfa: number, base: Rgb): Rgb {
+  return [0, 1, 2].map((i) => cor[i] * alfa + base[i] * (1 - alfa)) as Rgb;
+}
+
+describe('E62 — contraste do combobox de endereços nos temas', () => {
+  // `.dark.high-contrast` vence `.high-contrast` (mais específico e depois no arquivo).
+  const HC_CLARO: Record<string, Rgb> = { ...CLARO, ...tokensDoBlocoExato(A11Y_CSS, '.high-contrast') };
+  const HC_ESCURO: Record<string, Rgb> = {
+    ...ESCURO,
+    ...tokensDoBlocoExato(A11Y_CSS, '.high-contrast'),
+    ...tokensDoBlocoExato(A11Y_CSS, '.dark.high-contrast'),
+  };
+
+  const TEMAS: Array<[string, Record<string, Rgb>, number]> = [
+    ['claro', CLARO, 0.35],
+    ['escuro', ESCURO, 0.25],
+    ['alto contraste', HC_CLARO, 0.35],
+    ['alto contraste escuro', HC_ESCURO, 0.25],
+  ];
+
+  for (const [nome, tokens, alpha] of TEMAS) {
+    it(`${nome}: texto secundário e <mark> fecham 4,5:1 sobre o popover da lista`, () => {
+      const popover = parede(tokens, 'popover');
+      // Linha secundária (endereço/distância/rodapé).
+      expect(
+        razao(parede(tokens, 'muted-foreground'), popover),
+        `${nome}: muted-foreground sobre popover`,
+      ).toBeGreaterThanOrEqual(LIMIAR_TEXTO);
+
+      // `<mark>` da busca composto sobre o popover.
+      const destaque = compor(parede(tokens, 'warning'), alpha, popover);
+      expect(
+        razao(parede(tokens, 'foreground'), destaque),
+        `${nome}: mark da linha do nome (foreground)`,
+      ).toBeGreaterThanOrEqual(LIMIAR_TEXTO);
+      expect(
+        razao(parede(tokens, 'muted-foreground'), destaque),
+        `${nome}: mark da linha do endereço (muted-foreground)`,
+      ).toBeGreaterThanOrEqual(LIMIAR_TEXTO);
+    });
+  }
+
+  it('a fonte do componente ainda casa com os pares medidos (bg-popover + <mark> warning com alfa)', () => {
+    const lista = readFileSync('src/components/inbox/location-picker/SuggestionList.tsx', 'utf8');
+    expect(lista).toMatch(/bg-popover/);
+    expect(lista).toContain('HighlightedText');
+
+    const destaque = readFileSync('src/components/inbox/chat/HighlightedText.tsx', 'utf8');
+    expect(destaque).toMatch(/<mark/);
+    expect(destaque).toMatch(/bg-\[hsl\(var\(--warning\)\/0\.35\)\]/);
+    expect(destaque).toMatch(/dark:bg-\[hsl\(var\(--warning\)\/0\.25\)\]/);
+  });
+});
