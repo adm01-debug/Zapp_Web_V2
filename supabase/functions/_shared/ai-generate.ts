@@ -89,6 +89,7 @@ import {
   withRetry,
 } from "./ai-providers.ts";
 import { extractTokenUsage, logAiUsage } from "./ai-usage.ts";
+import { releaseBudget, reserveBudget, settleBudget } from "./ai-budget.ts";
 
 /**
  * Teto de tempo padrão do TEXTO PURO (mesmo valor do gateway antigo — IA-032).
@@ -155,15 +156,114 @@ function resolveDefaultTimeoutMs(purpose: unknown, modality: unknown): number {
  */
 export const AI_TIMEOUT_ERROR_CODE = "TIMEOUT";
 
+/**
+ * Código estável do bloqueio por ORÇAMENTO esgotado (IA-044). A decisão de gasto é
+ * do servidor: quando a reserva atômica NEGA (`allowed:false`), o provedor não é
+ * chamado e o desfecho sai como HTTP 429 com ESTE código — falha FECHADA, ao
+ * contrário da falha aberta do `reserveBudget` em erro de infraestrutura.
+ */
+export const AI_BUDGET_ERROR_CODE = "BUDGET_EXCEEDED";
+
 /** Todo código de erro que um desfecho do despacho pode carregar. */
 export type AiGenerateErrorCode =
   | AiRoutingErrorCode
   | AiCapabilityErrorCode
-  | typeof AI_TIMEOUT_ERROR_CODE;
+  | typeof AI_TIMEOUT_ERROR_CODE
+  | typeof AI_BUDGET_ERROR_CODE;
 
 /** Tentativas extras do `withRetry` e base do backoff (igual ao ai-proxy). */
 const RETRY_MAX = 2;
 const RETRY_BASE_DELAY_MS = 500;
+
+/**
+ * Teto padrão de orçamento de IA em tokens (IA-044). É o `limitTokens` da reserva
+ * quando o chamador não informa `params.budgetTokens`. `<= 0` (no override) desliga
+ * a reserva e a IA segue — orçamento degenerado não é bloqueio.
+ */
+export const DEFAULT_AI_BUDGET_TOKENS = 200_000;
+
+/**
+ * Estimativa de consumo em tokens, usada APENAS para dimensionar a RESERVA de
+ * orçamento (IA-044): `ceil(len(JSON.stringify(messages)) / 4)` da ENTRADA mais
+ * `maxTokens ?? 1024` da SAÍDA, com piso 1.
+ *
+ * ESTIMATIVA NUNCA É FATURAMENTO. Nada do que sai daqui é cobrado ou gravado como
+ * uso: quem grava o uso REAL é `settleBudget`, com `inputTokens + outputTokens`
+ * efetivamente medidos na resposta do provedor. Estimar a mais só reduz a folga da
+ * reserva; estimar a menos não subfatura, porque o `settle` corrige depois.
+ *
+ * Pura e determinística (não lê relógio nem ambiente) — por isso é testável direto.
+ */
+export function estimateAiTokens(messages: unknown, maxTokens: number | null | undefined): number {
+  let serialized = "";
+  try {
+    serialized = JSON.stringify(messages) ?? "";
+  } catch {
+    // Circular/exótico não pode derrubar o despacho: sem medida da entrada, fica a saída.
+    serialized = "";
+  }
+  const inputTokens = Math.ceil(serialized.length / 4);
+  const bruto = typeof maxTokens === "number" && Number.isFinite(maxTokens) ? maxTokens : 1024;
+  const outputTokens = Math.ceil(bruto);
+  return Math.max(1, inputTokens + outputTokens);
+}
+
+/** Serialização canônica (chaves de objeto ordenadas) para hash estável. Nunca lança. */
+function serializeCanonico(value: unknown): string {
+  try {
+    return JSON.stringify(canonicalize(value)) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+/** Cópia com as chaves de todo objeto ordenadas — mesma informação, forma estável. */
+function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value !== null && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const key of Object.keys(value as Record<string, unknown>).sort()) {
+      out[key] = canonicalize((value as Record<string, unknown>)[key]);
+    }
+    return out;
+  }
+  return value;
+}
+
+/** FNV-1a 32 bits em hex minúsculo de 8 dígitos — estável entre execuções. */
+function fnv1aHex(input: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
+}
+
+/**
+ * Chave de IDEMPOTÊNCIA determinística da solicitação (IA-044). A MESMA entrada
+ * (`functionName`, dono, modelo, mensagens e limite de saída) produz SEMPRE a mesma
+ * chave — é isto que faz "mesma solicitação ⇒ mesma reserva": um retry devolve a
+ * reserva já existente (`ai_budget_reserve` é idempotente pela chave) em vez de
+ * dobrar o consumo.
+ *
+ * Formato congelado: `<functionName>:<userId|anon>:<model>:<hash>`, onde o `hash` é
+ * FNV-1a de 32 bits sobre a serialização CANÔNICA do pedido (`messages` +
+ * `maxTokens`), então dois pedidos iguais com chaves em ordem diferente caem na
+ * mesma reserva. `params.idempotencyKey` explícito vence esta derivação.
+ */
+export function deriveAiIdempotencyKey(
+  functionName: string,
+  userId: string | null,
+  model: string,
+  messages: unknown,
+  maxTokens: unknown,
+): string {
+  const payload = serializeCanonico({ messages: messages ?? null, maxTokens: maxTokens ?? null });
+  const hash = fnv1aHex(payload);
+  const dono = userId ?? "anon";
+  return `${functionName}:${dono}:${model}:${hash}`;
+}
 
 /** Parâmetros da chamada roteada. */
 export interface GenerateParams {
@@ -185,6 +285,17 @@ export interface GenerateParams {
   /** Corpo extra filtrado por `RESERVED_BODY_KEYS` (IA-038). */
   extraBody?: Record<string, unknown> | null;
   timeoutMs?: number;
+  /**
+   * Chave de idempotência da RESERVA de orçamento (IA-044). Quando ausente, a chave
+   * é DERIVADA da própria solicitação (`deriveAiIdempotencyKey`), de modo que a
+   * mesma solicitação caia sempre na mesma reserva.
+   */
+  idempotencyKey?: string;
+  /**
+   * Override do teto de orçamento em tokens (IA-044). Ausente cai em
+   * `DEFAULT_AI_BUDGET_TOKENS`. `<= 0` DESLIGA a reserva e a IA segue.
+   */
+  budgetTokens?: number;
 }
 
 /** Desfecho da chamada, com a mesma forma que o consumidor antigo já tratava. */
@@ -661,6 +772,56 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
     throw err;
   }
 
+  // --- IA-044: RESERVA de orçamento ANTES de tocar o provedor -----------------
+  // `params.budgetTokens <= 0` (ausente cai no teto padrão) DESLIGA a política: segue
+  // sem reserva. A chave explícita vence a derivada, que existe para que a MESMA
+  // solicitação caia sempre na MESMA reserva (retry não dobra consumo).
+  const budgetTokens = params.budgetTokens ?? DEFAULT_AI_BUDGET_TOKENS;
+  const maxOutputTokens = params.need?.outputTokens ?? null;
+  const reserva: { id: string | null; allowed: boolean; usedTokens: number; limitTokens: number } =
+    budgetTokens > 0
+      ? await reserveBudget({
+          idempotencyKey:
+            params.idempotencyKey ??
+            deriveAiIdempotencyKey(functionName, userId, model ?? "", messages, maxOutputTokens),
+          userId,
+          functionName,
+          estimatedTokens: estimateAiTokens(messages, maxOutputTokens),
+          limitTokens: budgetTokens,
+          // A reserva tem de sobreviver à chamada INTEIRA: o TTL cobre todas as
+          // tentativas dentro do prazo da capacidade (2x de folga sobre `timeoutMs`).
+          ttlMs: 2 * timeoutMs,
+        })
+      : { id: null, allowed: true, usedTokens: 0, limitTokens: budgetTokens };
+
+  // Falha FECHADA de verdade (`allowed:false` é negação da RPC, não infraestrutura):
+  // o teto estourou e o provedor NÃO é chamado. Distinta da falha ABERTA de rede/db,
+  // em que `reserveBudget` devolve `allowed:true` e o despacho segue normalmente.
+  if (reserva.allowed === false) {
+    const motivo = `Orcamento de IA esgotado para ${functionName} (${reserva.usedTokens}/${reserva.limitTokens} tokens).`;
+    await logUsage({
+      model,
+      status: "error",
+      errorMessage: motivo,
+      providerId,
+      providerName,
+      modelSubstituted,
+    });
+    return finish(
+      false,
+      failureResponse(
+        429,
+        AI_BUDGET_ERROR_CODE,
+        `${motivo} Tente novamente apos o orcamento liberar.`,
+      ),
+      null,
+      providerId,
+      providerName,
+      model,
+      AI_BUDGET_ERROR_CODE,
+    );
+  }
+
   let response: Response;
   try {
     // IA-041: `budgetMs` é o prazo TOTAL da capacidade, somando todas as tentativas —
@@ -680,6 +841,8 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
       providerName,
       modelSubstituted,
     });
+    // IA-044: a execução morreu antes de gastar → a reserva volta ao orçamento.
+    if (reserva.id) await releaseBudget(reserva.id, timedOut ? "timeout" : "provider_error");
     return finish(
       false,
       failureResponse(
@@ -707,6 +870,8 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
       providerName,
       modelSubstituted,
     });
+    // IA-044: o provedor recusou → nenhum uso foi medido; a reserva volta ao orçamento.
+    if (reserva.id) await releaseBudget(reserva.id, `http_${response.status}`);
     return finish(false, response, null, providerId, providerName, model, null);
   }
 
@@ -721,6 +886,13 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
   const usage = data !== null
     ? extractTokenUsage(data)
     : { inputTokens: 0, outputTokens: 0, model: null };
+
+  // IA-044: liquida a reserva com o uso REAL medido (input+output da resposta) —
+  // NUNCA com a estimativa da reserva, que só dimensionou a folga.
+  if (reserva.id) {
+    const medido = usage.inputTokens + usage.outputTokens;
+    await settleBudget(reserva.id, Number.isFinite(medido) ? medido : 0);
+  }
 
   await logUsage({
     model: usage.model || model,
