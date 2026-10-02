@@ -15,9 +15,9 @@ export function findMutableActionRefs(source, file = "workflow.yml") {
     const rawValue = match[1].trim();
     const blockScalar = /^[>|][+-]?(?:\s+#.*)?$/u.test(rawValue);
     if (blockScalar) { violations.push({ file, line: index+1, reference: "<unsupported-or-multiline-value>" }); continue; }
-    const scalar = rawValue.match(/^(?:'([^']*)'|"([^"]*)"|(\S+(?:\s+#.*)?))(?:\s+#.*)?$/u);
+    const scalar = rawValue.match(/^(?:'([^']*)'|"([^"]*)"|([^\s#'"]+))(?:\s+#.*)?$/u);
     if (!scalar) { violations.push({ file, line: index+1, reference: rawValue ? "<unsupported-or-multiline-value>" : "<missing-or-multiline-value>" }); continue; }
-    const reference = (scalar[1] ?? scalar[2] ?? scalar[3]).replace(/\s+#.*$/, "").trim();
+    const reference = scalar[1] ?? scalar[2] ?? scalar[3];
     if (reference.startsWith("./") || reference.startsWith("docker://")) continue;
     if (!FULL_SHA.test(reference)) { violations.push({ file, line: index+1, reference }); }
   }
@@ -31,9 +31,9 @@ export function findUnauthorizedActionOwners(source, file = "workflow.yml", allo
     const match = line.match(/^\s*(?:-\s*)?(?:uses|["']uses["'])\s*:\s*(.*)$/u);
     if (!match) continue;
     const rawValue = match[1].trim();
-    const scalar = rawValue.match(/^(?:'([^']*)'|"([^"]*)"|(\S+(?:\s+#.*)?))(?:\s+#.*)?$/u);
+    const scalar = rawValue.match(/^(?:'([^']*)'|"([^"]*)"|([^\s#'"]+))(?:\s+#.*)?$/u);
     if (!scalar) continue;
-    const reference = (scalar[1] ?? scalar[2] ?? scalar[3]).replace(/\s+#.*$/, "").trim();
+    const reference = scalar[1] ?? scalar[2] ?? scalar[3];
     if (reference.startsWith("./") || reference.startsWith("docker://")) continue;
     const withoutPin = reference.split("@")[0];
     const segments = withoutPin.split("/");
