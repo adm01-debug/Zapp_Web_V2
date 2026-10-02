@@ -5,6 +5,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
+import { resolverExecutavel } from "../lib/seguranca-processo.mjs";
 
 const SCHEMA_VERSION = 1;
 const DEFAULT_BASELINE = "scripts/ci/eslint-baseline.json";
@@ -393,7 +394,7 @@ export function compareBaseline(baseline, report, root = process.cwd()) {
 // --no-renames: renomeacao aparece como remocao do caminho antigo + adicao do novo, que e
 // exatamente o par que o reconhecimento de renomeacao por hash do baseline precisa.
 function stagedPaths(root, diffFilter) {
-  const result = spawnSync("git", ["diff", "--cached", "--name-only", "--no-renames", `--diff-filter=${diffFilter}`, "-z"], {
+  const result = spawnSync(resolverExecutavel("git"), ["diff", "--cached", "--name-only", "--no-renames", `--diff-filter=${diffFilter}`, "-z"], {
     cwd: root,
     encoding: "utf8",
     maxBuffer: 16 * 1024 * 1024,

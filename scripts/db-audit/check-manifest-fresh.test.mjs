@@ -184,3 +184,37 @@ test('retorna 2 para JSON fresco malformado', () => {
   assert.equal(result.status, 2);
   assert.match(result.stderr, /manifesto fresco invalido/);
 });
+
+test('rejeita caminho fresco relativo que escapa das raizes permitidas', () => {
+  const result = spawnSync(process.execPath, [SCRIPT, '../../../../etc/passwd'], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      MANIFEST_PATH: 'supabase/schema-manifest.json',
+      CATALOG_IDENTITY_PATH: 'scripts/db-audit/database-identity.json',
+      DESTINO_URL,
+    },
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /fora das raizes permitidas/);
+});
+
+test('rejeita MANIFEST_PATH absoluto fora das raizes permitidas', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'manifest-fresh-escape-'));
+  const frescoPath = path.join(tmp, 'fresh-manifest.json');
+  fs.writeFileSync(frescoPath, JSON.stringify(base));
+  const result = spawnSync(process.execPath, [SCRIPT, frescoPath], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      MANIFEST_PATH: path.resolve(ROOT, '..', '..', 'manifesto-fora.json'),
+      CATALOG_IDENTITY_PATH: 'scripts/db-audit/database-identity.json',
+      DESTINO_URL,
+    },
+  });
+  fs.rmSync(tmp, { recursive: true, force: true });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /fora das raizes permitidas/);
+});
