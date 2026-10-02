@@ -11,13 +11,14 @@ const f = vi.hoisted(() => ({
   create: vi.fn(), update: vi.fn(), saveDraft: vi.fn(), replace: vi.fn(), start: vi.fn(), log: vi.fn(),
   resolveAudience: vi.fn(async (_rules: unknown, _limit?: number) => [] as unknown[]),
   countAudience: vi.fn(async (_rules: unknown) => 0),
-  // V26 — versão do template aplicado (talkx_template_versions).
+  // Histórico de versões: consumido pelo TalkXTemplateEditor (renderizado nesta
+  // suíte). O wizard NÃO o usa: resolve a versão por current_version_id.
   fetchVersionHistory: vi.fn(async (_templateId: string) => [] as { id: string; version_number: number }[]),
   contacts: [{ id: 'contact-1', name: 'Ana Silva', nickname: null, phone: '5511999999999', company: 'Acme', avatar_url: null, tags: ['VIP'] }],
   connections: [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }],
   blacklist: { ids: new Set<string>(), phones: new Set<string>() },
   persistedRecipientIds: [] as { contact_id: string }[] | undefined,
-  templates: [] as { id: string; content: string; media_url: string | null; media_type?: string | null; use_count: number }[],
+  templates: [] as { id: string; content: string; media_url: string | null; media_type?: string | null; use_count: number; current_version_id?: string | null }[],
   // V25 — usuário logado (profiles.id) e segmentos do passo 1.
   profile: { id: 'profile-1', name: 'Ana Silva', email: 'ana@example.com' } as { id: string; name: string; email: string } | null,
   segments: [] as { id: string; name: string; description: string; status: string; estimated_count: number }[],
@@ -64,7 +65,7 @@ vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
   useTalkXTemplates: () => ({
     templates: f.templates,
     registerUse: vi.fn(),
-    // V26 — o wizard consulta a versão do template aplicado.
+    // O editor de template (também renderizado nesta suíte) consome o histórico.
     fetchVersionHistory: f.fetchVersionHistory,
     createTemplate: { mutateAsync: vi.fn(), mutate: vi.fn() },
     updateTemplate: { mutateAsync: vi.fn(), mutate: vi.fn() },
@@ -792,15 +793,31 @@ describe('useCampaignEditor — V26 (editor de mensagem, só-mídia e versão do
     expect(result.current.canProceed[2]).toBe(true);
   });
 
-  it('aplicar um template NAO grava a versao arquivada: fica nulo nesta etapa', async () => {
-    f.templates = [{ id: 't-1', content: 'Olá {{nome}}', media_url: null, use_count: 0 }];
-    // Existe versão arquivada, mas ela é o estado ANTERIOR à edição
-    // (update_talkx_template_with_snapshot grava a linha lida antes do UPDATE):
-    // apontar para ela seria apontar para o template errado numa coluna de
-    // auditoria. O front tem que mandar null MESMO com versão disponível — a
-    // coluna e a RPC já persistem o campo; falta só o ponteiro correto
-    // (current_version_id em talkx_templates, tarefa própria).
-    f.fetchVersionHistory.mockResolvedValue([{ id: 'version-9', version_number: 3 }]);
+  it('aplicar um template grava a versão do conteúdo VIVO (current_version_id), não o histórico', async () => {
+    // A coluna talkx_templates.current_version_id aponta para a versão do conteúdo
+    // vivo; o histórico devolve uma versão DIFERENTE (version-9 / número 9). O
+    // payload tem que levar a COLUNA — se a origem fosse o max(version_number) do
+    // histórico, o valor gravado seria version-9 e este teste falharia.
+    f.templates = [{ id: 't-1', content: 'Olá {{nome}}', media_url: null, use_count: 0, current_version_id: 'version-current' }];
+    f.fetchVersionHistory.mockResolvedValue([{ id: 'version-9', version_number: 9 }]);
+    const campaign = { id: 'draft-1', name: 'Rascunho', status: 'draft' };
+    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+    await act(async () => {});
+    f.update.mockClear();
+
+    await act(async () => { result.current.applyTemplate('t-1'); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+
+    expect(result.current.templateVersionId).toBe('version-current');
+    expect(f.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'draft-1', template_version_id: 'version-current' }));
+    // A origem correta é a coluna; o caminho de aplicação nem consulta o histórico.
+    expect(f.fetchVersionHistory).not.toHaveBeenCalled();
+  });
+
+  it('template sem versão corrente (current_version_id nulo/ausente) grava template_version_id nulo', async () => {
+    // Sem ponteiro de versão corrente não há versão correta a gravar: o campo
+    // continua nulo (não se inventa uma versão a partir do histórico).
+    f.templates = [{ id: 't-1', content: 'Olá {{nome}}', media_url: null, use_count: 0, current_version_id: null }];
     const campaign = { id: 'draft-1', name: 'Rascunho', status: 'draft' };
     const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
     await act(async () => {});
@@ -813,19 +830,13 @@ describe('useCampaignEditor — V26 (editor de mensagem, só-mídia e versão do
     expect(f.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'draft-1', template_version_id: null }));
   });
 
-  it('template sem versão registrada grava template_version_id nulo', async () => {
-    f.templates = [{ id: 't-1', content: 'Olá {{nome}}', media_url: null, use_count: 0 }];
-    f.fetchVersionHistory.mockResolvedValue([]);
-    const campaign = { id: 'draft-1', name: 'Rascunho', status: 'draft' };
-    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+  it('abrir o wizard com um template inicial resolve a versão pelo current_version_id', async () => {
+    f.templates = [{ id: 't-1', content: 'Olá {{nome}}', media_url: null, use_count: 0, current_version_id: 'version-current' }];
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn(), { templateId: 't-1' }));
     await act(async () => {});
-    f.update.mockClear();
 
-    await act(async () => { result.current.applyTemplate('t-1'); });
-    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
-
-    expect(result.current.templateVersionId).toBeNull();
-    expect(f.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'draft-1', template_version_id: null }));
+    expect(result.current.messageTemplate).toBe('Olá {{nome}}');
+    expect(result.current.templateVersionId).toBe('version-current');
   });
 
   it('mesma entrada produz a mesma prévia no wizard e no editor de template', () => {

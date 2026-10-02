@@ -282,4 +282,35 @@ describe('tabLeaderStore', () => {
     expect(tabB.getSnapshot().role).toBe('leader');
     expect(readLock()?.tabId).toBe(tabB.getSnapshot().tabId);
   });
+
+  it('sorteia o jitter de boot por crypto.getRandomValues (nao por Math.random)', async () => {
+    vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel);
+    const store = await freshStore();
+    store.subscribe(vi.fn());
+
+    const espiao = vi.spyOn(globalThis.crypto, 'getRandomValues');
+    store.claimLeadership();
+
+    expect(espiao.mock.calls.length).toBeGreaterThanOrEqual(1);
+
+    vi.advanceTimersByTime(JITTER_MS);
+    expect(store.isLeader()).toBe(true);
+  });
+
+  /**
+   * O `Math.random()` que sobra neste arquivo e o id da aba, e ele fica de fora
+   * de proposito: e o ULTIMO recurso de `generateTabId()` para quando o navegador
+   * nao expoe `crypto.randomUUID` — e a fonte segura (`crypto.getRandomValues`,
+   * por tras de `secureRandomFloat`) lanca exatamente nesse cenario. O id nasce no
+   * topo do modulo (`const tabId = generateTabId()`), entao um throw aqui derruba
+   * o modulo e a eleicao de aba inteira. Este teste e a guarda: sem crypto
+   * nenhum, o modulo tem de carregar e o id continuar no formato `tab-...`.
+   */
+  it('sem crypto (bloqueado pelo navegador) o modulo ainda carrega e o id preserva o prefixo tab-', async () => {
+    vi.stubGlobal('crypto', undefined);
+
+    const store = await freshStore();
+
+    expect(store.getSnapshot().tabId).toMatch(/^tab-/);
+  });
 });

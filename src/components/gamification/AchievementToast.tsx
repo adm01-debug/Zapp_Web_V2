@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Zap, Clock, MessageSquare, Star, Flame, Rocket, Target, Award, PartyPopper, Crown, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { secureRandomFloat } from '../../lib/secureRandom';
 import { useEffect, useState } from 'react';
 
 export type AchievementType = 
@@ -101,8 +102,8 @@ function Particle({ delay, config }: { delay: number; config: AchievementConfig 
         opacity: 1 
       }}
       animate={{ 
-        x: (Math.random() - 0.5) * 200,
-        y: (Math.random() - 0.5) * 200,
+        x: (secureRandomFloat() - 0.5) * 200,
+        y: (secureRandomFloat() - 0.5) * 200,
         scale: [0, 1, 0],
         opacity: [1, 1, 0]
       }}

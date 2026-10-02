@@ -1,5 +1,6 @@
 import { useEffect, useRef, useMemo } from 'react';
 import type { VoiceAgentPhase } from '@/hooks/voice/types';
+import { secureRandomFloat } from '../../lib/secureRandom';
 
 interface FloatingParticlesProps {
   phase: VoiceAgentPhase;
@@ -60,9 +61,9 @@ export function FloatingParticles({ phase }: FloatingParticlesProps) {
       ctx.clearRect(0, 0, w, h);
       const count = Math.min(config.count, 15); // fewer for static view
       for (let i = 0; i < count; i++) {
-        const x = Math.random() * w;
-        const y = Math.random() * h;
-        const hue = config.hueRange[0] + Math.random() * (config.hueRange[1] - config.hueRange[0]);
+        const x = secureRandomFloat() * w;
+        const y = secureRandomFloat() * h;
+        const hue = config.hueRange[0] + secureRandomFloat() * (config.hueRange[1] - config.hueRange[0]);
         ctx.beginPath();
         ctx.arc(x, y, 1.5, 0, Math.PI * 2);
         ctx.fillStyle = `hsla(${hue}, 80%, 70%, 0.4)`;
@@ -76,22 +77,22 @@ export function FloatingParticles({ phase }: FloatingParticlesProps) {
 
     // Update existing particles' velocities and hues for new phase
     for (const p of particlesRef.current) {
-      p.vx = (Math.random() - 0.5) * config.speed;
-      p.vy = (Math.random() - 0.5) * config.speed;
-      p.hue = config.hueRange[0] + Math.random() * (config.hueRange[1] - config.hueRange[0]);
+      p.vx = (secureRandomFloat() - 0.5) * config.speed;
+      p.vy = (secureRandomFloat() - 0.5) * config.speed;
+      p.hue = config.hueRange[0] + secureRandomFloat() * (config.hueRange[1] - config.hueRange[0]);
     }
 
     // Add or trim particles to match target count
     while (particlesRef.current.length < config.count) {
       particlesRef.current.push({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        vx: (Math.random() - 0.5) * config.speed,
-        vy: (Math.random() - 0.5) * config.speed,
-        life: Math.random() * 200,
-        maxLife: 200 + Math.random() * 200,
-        hue: config.hueRange[0] + Math.random() * (config.hueRange[1] - config.hueRange[0]),
-        size: 1 + Math.random() * 2,
+        x: secureRandomFloat() * w,
+        y: secureRandomFloat() * h,
+        vx: (secureRandomFloat() - 0.5) * config.speed,
+        vy: (secureRandomFloat() - 0.5) * config.speed,
+        life: secureRandomFloat() * 200,
+        maxLife: 200 + secureRandomFloat() * 200,
+        hue: config.hueRange[0] + secureRandomFloat() * (config.hueRange[1] - config.hueRange[0]),
+        size: 1 + secureRandomFloat() * 2,
       });
     }
     particlesRef.current = particlesRef.current.slice(0, config.count);
@@ -107,10 +108,10 @@ export function FloatingParticles({ phase }: FloatingParticlesProps) {
         p.life++;
 
         if (p.life > p.maxLife || p.x < 0 || p.x > cw || p.y < 0 || p.y > ch) {
-          p.x = Math.random() * cw;
-          p.y = Math.random() * ch;
+          p.x = secureRandomFloat() * cw;
+          p.y = secureRandomFloat() * ch;
           p.life = 0;
-          p.hue = config.hueRange[0] + Math.random() * (config.hueRange[1] - config.hueRange[0]);
+          p.hue = config.hueRange[0] + secureRandomFloat() * (config.hueRange[1] - config.hueRange[0]);
         }
 
         const alpha = Math.min(1, p.life / 30) * Math.max(0, 1 - (p.life / p.maxLife));

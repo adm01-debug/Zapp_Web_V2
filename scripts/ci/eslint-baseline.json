@@ -46,7 +46,7 @@
     },
     {
       "path": "src/components/admin/TrainingMode.tsx",
-      "sha256": "6e7870800fac7e19845e200915da293702e6dd2bae30f1d323d19e6f891653f9"
+      "sha256": "981f8963350e5ea4a1fbdd0527c571cba515dbc57257706bfd0c98fc4191ab74"
     },
     {
       "path": "src/components/admin/useAdminData.ts",
@@ -86,7 +86,7 @@
     },
     {
       "path": "src/components/auth/PasswordStrengthMeter.tsx",
-      "sha256": "f8721d9ba48cda02421d1035ca7f5e76cee39701eabf968b4d51095b515a5fd3"
+      "sha256": "d37dd48843810f93d71efe69db2d3694dead753cf97923d3e12c83de8ca394b9"
     },
     {
       "path": "src/components/auth/ProtectedRoute.tsx",
@@ -186,7 +186,7 @@
     },
     {
       "path": "src/components/contacts/ContactSearchWithSuggestions.tsx",
-      "sha256": "3a90e2f361b553223d4b2a38a72b4666691db1d4269e37d38c86843d79de64d1"
+      "sha256": "c76e83dde2084fd37db7c1976305ff63111b30c92dd1839ba3dfa4dd09d74ecd"
     },
     {
       "path": "src/components/contacts/useContactFormValidation.ts",
@@ -194,7 +194,7 @@
     },
     {
       "path": "src/components/contacts/useContactsCRUD.ts",
-      "sha256": "562003e073d2df26abe8cf25c6d35b1ccc20ecb20b6939bae30c36acfc23c2f3"
+      "sha256": "0cf515cacb547fba88a896f3285d742b2ab3f4c37f5b46def80ee4d2aced90fe"
     },
     {
       "path": "src/components/crm360/CompanyFormDialog.tsx",
@@ -262,11 +262,11 @@
     },
     {
       "path": "src/components/effects/Confetti.tsx",
-      "sha256": "ca2c1fca5e061d7bbaef75b09d3102897fdc71fb093256fc6a0ad2162307fc79"
+      "sha256": "e7894b765e17b47106e567c55d7135abff01a3bfb4b1413ffc8da290bce8d062"
     },
     {
       "path": "src/components/effects/EasterEggs.tsx",
-      "sha256": "b8d063c19f2e5e5a51287d2f57609101ebf8e7928b28719434c2218d9f042711"
+      "sha256": "92a020d4fb71fc1a0c03d350285898011e5e41ab0b42c74322c0482ec524d35b"
     },
     {
       "path": "src/components/ErrorBoundary.tsx",
@@ -282,7 +282,7 @@
     },
     {
       "path": "src/components/gamification/AchievementToast.tsx",
-      "sha256": "203b64bc78ab5f77730a9109395d64dc6337d15fae8631e53f1e1865f567c92b"
+      "sha256": "126e1c32aa234d0f07d774346be4587d0c4797753b97d7f0f187d8da64ac87d3"
     },
     {
       "path": "src/components/gamification/GamificationProvider.tsx",
@@ -290,7 +290,7 @@
     },
     {
       "path": "src/components/gamification/MiniGameDialogs.tsx",
-      "sha256": "f0e592632087b13bea51b660955a959b63b3bf4af2ac9e1866fd488ebb738abd"
+      "sha256": "d32e2c38ad0d570a012ccfe24d03d47d77faf6f9c5654a3e15b7d812f2d3b2c0"
     },
     {
       "path": "src/components/gmail/EmailThreadView.tsx",
@@ -538,7 +538,7 @@
     },
     {
       "path": "src/components/leaderboard/LeaderboardHelpers.tsx",
-      "sha256": "96ef27c5f66620d40fe44df9f376a19316cc01275814ff701fbb1d9874c31927"
+      "sha256": "30c69cad0b8153baa9d322e2abd420d481d4ea35d914d215414cc11f7c5d63b6"
     },
     {
       "path": "src/components/mfa/__tests__/MFABackupCodes.test.tsx",
@@ -595,10 +595,6 @@
     {
       "path": "src/components/monitoring/MonitoringEventTimeline.tsx",
       "sha256": "5cb261bbe0469725c3f84122b5768763c4f07e863964aac5bb2615f6b6e3a5d9"
-    },
-    {
-      "path": "src/components/monitoring/MonitoringSkeletons.tsx",
-      "sha256": "18bca78d864c5cf53f1b1fedbc5ebe65bc29f38173518a6ce808ab023972dca1"
     },
     {
       "path": "src/components/omnichannel/__tests__/OmnichannelInbox.test.tsx",
@@ -678,7 +674,7 @@
     },
     {
       "path": "src/components/reports/DemandForecast.tsx",
-      "sha256": "1a265f1ddd493b799684bd204f42e8d9e0c0430dd01d42084f8a5e0c09312699"
+      "sha256": "2d481cd9370e01c4c895688feac822cf59f769333126ea2c0ec9cfd1250c4152"
     },
     {
       "path": "src/components/reports/PeriodComparison.tsx",
@@ -826,7 +822,7 @@
     },
     {
       "path": "src/components/talkx/useCampaignEditor.ts",
-      "sha256": "8fd47ce5b7de3e5211f8090f2e14f50b93dcea38a08f4502527d275f4b935920"
+      "sha256": "089e9c2c28f1a51138472d3b6a89f19710e79ca11d6d159ac8f2ab82ff27e614"
     },
     {
       "path": "src/components/team-chat/TeamChatInputArea.tsx",
@@ -850,7 +846,7 @@
     },
     {
       "path": "src/components/ui/accessible-toast.tsx",
-      "sha256": "f259bdcfcf9516869a8c00d125c85712acec1abeaa9cbb2d2d3800139f9f3b81"
+      "sha256": "8467cd6963fe26b28a2a778e05302eef3450020b387d587d44341090cd6ea7a0"
     },
     {
       "path": "src/components/ui/avatar.tsx",
@@ -918,7 +914,7 @@
     },
     {
       "path": "src/components/ui/sidebar/sidebar-menu.tsx",
-      "sha256": "0cfe26015a93cf16adc65444ba3c179b7ff9ebe96c19f26bcc8336ec781280e6"
+      "sha256": "976a654ca306695404793fdc00eb1d8f8448a0211a8d4f5dc7b9470a996696c7"
     },
     {
       "path": "src/components/ui/skeleton.tsx",
@@ -954,7 +950,7 @@
     },
     {
       "path": "src/components/voice/FloatingParticles.tsx",
-      "sha256": "c33f4fa15b7051a7de8fdb4252dd0de9089393edf1b9cd027e404c00d5824847"
+      "sha256": "16377f194a0ac98a697991f8ad30b29966e825e1ffeac8eaf776326fff30e9a2"
     },
     {
       "path": "src/components/voice/VoiceSearchOverlay.tsx",
@@ -1494,7 +1490,7 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-helpers.ts",
-      "sha256": "289c8f2cdd96aa1c4ece8053e65c94decc1be8ec630a62565d682ef3d6697e4a"
+      "sha256": "45cde170960972160abe6062bc0c39bfbda86cfa11c37ebc90b4acf615adca47"
     },
     {
       "path": "supabase/functions/_shared/evolution-media.ts",
@@ -1514,7 +1510,7 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "sha256": "60ebd58276e854a3d82141e661dab8b043bfdcbb3ac94ac187a4fac103809ea6"
+      "sha256": "efde1009be36d1ea932169260a91b257edb26ad71a680fc396693e0585b1dd9e"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
@@ -1824,32 +1820,32 @@
       "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "dc86bc4007cbc859357027dff22a49ad2a9c366da1e4675f7d59d40cac4963fa"
+      "contextHash": "305553a13b1830b7f48126bab6d8976035b9ffa7a255bd666f6b3de3c26e6433"
     },
     {
       "file": "src/components/admin/TrainingMode.tsx",
-      "line": 78,
+      "line": 79,
       "column": 5,
-      "endLine": 78,
+      "endLine": 79,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/admin/TrainingMode.tsx:78:5 76 | 77 | useEffect(() => { > 78 | loadProfile(); | ^^^^^^^^^^^ Avoid calling setState() directly within an effect 79 | }, [loadProfile]); 80 | 81 | useEffect(() => {",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/admin/TrainingMode.tsx:79:5 77 | 78 | useEffect(() => { > 79 | loadProfile(); | ^^^^^^^^^^^ Avoid calling setState() directly within an effect 80 | }, [loadProfile]); 81 | 82 | useEffect(() => {",
       "spanHash": "5dd64c198a6839c802b6ac6733346a197da19115071caaa9f8a5a8e8b25f891a",
       "lineHash": "0857ea83bf9e378d9054543020d895472e5d8446ad30b7ef8840c02e684e05b0",
       "contextHash": "118bff882ce42d9b8b25b0b919e664f3473db220e06043c861477997592c9075"
     },
     {
       "file": "src/components/admin/TrainingMode.tsx",
-      "line": 83,
+      "line": 84,
       "column": 7,
-      "endLine": 83,
+      "endLine": 84,
       "endColumn": 19,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/admin/TrainingMode.tsx:83:7 81 | useEffect(() => { 82 | if (profileId) { > 83 | loadSessions(); | ^^^^^^^^^^^^ Avoid calling setState() directly within an effect 84 | } 85 | }, [profileId, loadSessions]); 86 |",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/admin/TrainingMode.tsx:84:7 82 | useEffect(() => { 83 | if (profileId) { > 84 | loadSessions(); | ^^^^^^^^^^^^ Avoid calling setState() directly within an effect 85 | } 86 | }, [profileId, loadSessions]); 87 |",
       "spanHash": "541740f07063aff831ecccc90250078c240ed00673095b9a2d12fb195db650c5",
       "lineHash": "2811d1405e097fbdc4b9070ae6c3591a0e4d6a473e3e1ffff413695f1fa63e0b",
       "contextHash": "b9a21b29c74fe3255192ef654f5e88d14e73745905e323b901839950362f5ece"
@@ -2192,14 +2188,14 @@
     },
     {
       "file": "src/components/auth/PasswordStrengthMeter.tsx",
-      "line": 78,
+      "line": 83,
       "column": 7,
-      "endLine": 78,
+      "endLine": 83,
       "endColumn": 20,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/auth/PasswordStrengthMeter.tsx:78:7 76 | useEffect(() => { 77 | if (!password || password.length < 8) { > 78 | setIsBreached(null); | ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 79 | setBreachCount(0); 80 | return; 81 | }",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/auth/PasswordStrengthMeter.tsx:83:7 81 | useEffect(() => { 82 | if (!password || password.length < 8) { > 83 | setIsBreached(null); | ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 84 | setBreachCount(0); 85 | return; 86 | }",
       "spanHash": "cf5f3e53280d137ccea22e8b6b42d3d4631a5c5779dbac1f2ab169c1ef8fca1f",
       "lineHash": "f3860dbe0e4433aaec969ea2482ca7cd16517c8c6392a21fb766a364ca159f31",
       "contextHash": "7f184f552c35ff4d9c978992b1e51fee29d7bdb156ed48fc3a22fee31af44d9a"
@@ -2990,23 +2986,23 @@
     },
     {
       "file": "src/components/effects/Confetti.tsx",
-      "line": 155,
+      "line": 156,
       "column": 7,
-      "endLine": 155,
+      "endLine": 156,
       "endColumn": 14,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/effects/Confetti.tsx:155:7 153 | useEffect(() => { 154 | if (isActive) { > 155 | setShow(true); | ^^^^^^^ Avoid calling setState() directly within an effect 156 | const timer = setTimeout(() => { 157 | setShow(false); 158 | onComplete?.();",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/effects/Confetti.tsx:156:7 154 | useEffect(() => { 155 | if (isActive) { > 156 | setShow(true); | ^^^^^^^ Avoid calling setState() directly within an effect 157 | const timer = setTimeout(() => { 158 | setShow(false); 159 | onComplete?.();",
       "spanHash": "3ad16f1912de00d925f3ab91d93da359c79d3b68735592f97e8e8dd09a408daa",
       "lineHash": "14d4cec96394ddd9b10330565fa950a5f3e58ccee0034ca7d1cf61c39356d257",
       "contextHash": "aa3b52f65dc43b21c1556e5bda57ad878a6c5866e2d97e1398609d0260d04cfc"
     },
     {
       "file": "src/components/effects/Confetti.tsx",
-      "line": 268,
+      "line": 269,
       "column": 17,
-      "endLine": 268,
+      "endLine": 269,
       "endColumn": 31,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -3018,37 +3014,23 @@
     },
     {
       "file": "src/components/effects/Confetti.tsx",
-      "line": 65,
+      "line": 66,
       "column": 7,
-      "endLine": 65,
+      "endLine": 66,
       "endColumn": 19,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/effects/Confetti.tsx:65:7 63 | useEffect(() => { 64 | if (isActive) { > 65 | setParticles(createParticles()); | ^^^^^^^^^^^^ Avoid calling setState() directly within an effect 66 | setShowCelebration(true); 67 | 68 | const timer = setTimeout(() => {",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/effects/Confetti.tsx:66:7 64 | useEffect(() => { 65 | if (isActive) { > 66 | setParticles(createParticles()); | ^^^^^^^^^^^^ Avoid calling setState() directly within an effect 67 | setShowCelebration(true); 68 | 69 | const timer = setTimeout(() => {",
       "spanHash": "eeb90f1d29d8160e12fe6752e0b2d828f1d5e1d6686969ff94e7f0a525b852cd",
       "lineHash": "8d1828b95097c462f8281a1f2b7f9b96cf1cca51f210f916d001741216ed38ec",
       "contextHash": "dfcb627731edbc271836168098abb7d224a97084fcfd4ecef93ee313d5be2124"
     },
     {
-      "file": "src/components/effects/Confetti.tsx",
-      "line": 99,
-      "column": 29,
-      "endLine": 99,
-      "endColumn": 42,
-      "severity": 2,
-      "ruleId": "react-hooks/purity",
-      "messageId": null,
-      "message": "Error: Cannot call impure function during render `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/components/effects/Confetti.tsx:99:29 97 | }} 98 | transition={{ > 99 | duration: 2 + Math.random() * 2, | ^^^^^^^^^^^^^ Cannot call impure function 100 | ease: 'easeOut', 101 | }} 102 | className=\"absolute\"",
-      "spanHash": "70e9d248688717df77bfb739b2384e84959ac43eb35ff5df19415eb1ca72c7be",
-      "lineHash": "77bcf2993a87919401597ffb7af27c7f499f2d7d85b6a1fbb29efde99e13ea51",
-      "contextHash": "a94104daf3db668cf686a0a0b51112cd4c7d671f27cb3fab647c716b6d0eea76"
-    },
-    {
       "file": "src/components/effects/EasterEggs.tsx",
-      "line": 234,
+      "line": 235,
       "column": 17,
-      "endLine": 234,
+      "endLine": 235,
       "endColumn": 30,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -3102,51 +3084,23 @@
     },
     {
       "file": "src/components/gamification/AchievementToast.tsx",
-      "line": 104,
-      "column": 13,
-      "endLine": 104,
-      "endColumn": 26,
-      "severity": 2,
-      "ruleId": "react-hooks/purity",
-      "messageId": null,
-      "message": "Error: Cannot call impure function during render `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/components/gamification/AchievementToast.tsx:104:13 102 | }} 103 | animate={{ > 104 | x: (Math.random() - 0.5) * 200, | ^^^^^^^^^^^^^ Cannot call impure function 105 | y: (Math.random() - 0.5) * 200, 106 | scale: [0, 1, 0], 107 | opacity: [1, 1, 0]",
-      "spanHash": "70e9d248688717df77bfb739b2384e84959ac43eb35ff5df19415eb1ca72c7be",
-      "lineHash": "d51801a9b6b39e1bf35b12aff6bd5836b958a3c5662ab3e2a24dade81a7962c7",
-      "contextHash": "6f8e35a873132c76b4af54aa9c19454c73ff18a8efbc692feb81645755bdafe9"
-    },
-    {
-      "file": "src/components/gamification/AchievementToast.tsx",
-      "line": 105,
-      "column": 13,
-      "endLine": 105,
-      "endColumn": 26,
-      "severity": 2,
-      "ruleId": "react-hooks/purity",
-      "messageId": null,
-      "message": "Error: Cannot call impure function during render `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/components/gamification/AchievementToast.tsx:105:13 103 | animate={{ 104 | x: (Math.random() - 0.5) * 200, > 105 | y: (Math.random() - 0.5) * 200, | ^^^^^^^^^^^^^ Cannot call impure function 106 | scale: [0, 1, 0], 107 | opacity: [1, 1, 0] 108 | }}",
-      "spanHash": "70e9d248688717df77bfb739b2384e84959ac43eb35ff5df19415eb1ca72c7be",
-      "lineHash": "a650d3bb12db58a572bf9bc055613af1afc5816bfac827a6269760580ac5b68d",
-      "contextHash": "615e3415759ba665a1a0bdfcfe6e4165fb7bb124dc09a3dcd49edc112f4c7442"
-    },
-    {
-      "file": "src/components/gamification/AchievementToast.tsx",
-      "line": 132,
+      "line": 133,
       "column": 7,
-      "endLine": 132,
+      "endLine": 133,
       "endColumn": 19,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/gamification/AchievementToast.tsx:132:7 130 | useEffect(() => { 131 | if (isVisible) { > 132 | setParticles(Array.from({ length: 20 }, (_, i) => i)); | ^^^^^^^^^^^^ Avoid calling setState() directly within an effect 133 | const timer = setTimeout(onClose, duration); 134 | return () => clearTimeout(timer); 135 | }",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/gamification/AchievementToast.tsx:133:7 131 | useEffect(() => { 132 | if (isVisible) { > 133 | setParticles(Array.from({ length: 20 }, (_, i) => i)); | ^^^^^^^^^^^^ Avoid calling setState() directly within an effect 134 | const timer = setTimeout(onClose, duration); 135 | return () => clearTimeout(timer); 136 | }",
       "spanHash": "eeb90f1d29d8160e12fe6752e0b2d828f1d5e1d6686969ff94e7f0a525b852cd",
       "lineHash": "d1825635a23e6c1e46d198ad99d88f1e0e6b6059e55cc7e4e9f4c2ec7adce3fa",
       "contextHash": "0386416204be6146184d2ffba9d2ceb1a618fff28d98a591619a7025604641f7"
     },
     {
       "file": "src/components/gamification/AchievementToast.tsx",
-      "line": 265,
+      "line": 266,
       "column": 17,
-      "endLine": 265,
+      "endLine": 266,
       "endColumn": 32,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -3186,42 +3140,42 @@
     },
     {
       "file": "src/components/gamification/MiniGameDialogs.tsx",
-      "line": 135,
+      "line": 136,
       "column": 19,
-      "endLine": 135,
+      "endLine": 136,
       "endColumn": 38,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/gamification/MiniGameDialogs.tsx:135:19 133 | 134 | useEffect(() => { > 135 | if (isOpen) { setCurrentChallenge(0); setScore(0); setUserGuess(''); setShowHint(false); } | ^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 136 | }, [isOpen]); 137 | 138 | const challenge = EMOJI_CHALLENGES[currentChallenge];",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/gamification/MiniGameDialogs.tsx:136:19 134 | 135 | useEffect(() => { > 136 | if (isOpen) { setCurrentChallenge(0); setScore(0); setUserGuess(''); setShowHint(false); } | ^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 137 | }, [isOpen]); 138 | 139 | const challenge = EMOJI_CHALLENGES[currentChallenge];",
       "spanHash": "fbb28769764c3598c176abe5ba242c75797dcb6045a07f845d752287bdfb5835",
       "lineHash": "43dafcf0abb6cc6ff87461488e2a18f5edbc1a2714cd73165fa9b5e7ef9b19ac",
       "contextHash": "4c460e7389ee73e3cc744d568643a5a782ce006d0101179d7f3b83fca84bee27"
     },
     {
       "file": "src/components/gamification/MiniGameDialogs.tsx",
-      "line": 26,
+      "line": 27,
       "column": 7,
-      "endLine": 26,
+      "endLine": 27,
       "endColumn": 23,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/gamification/MiniGameDialogs.tsx:26:7 24 | useEffect(() => { 25 | if (isOpen) { > 26 | setCurrentPhrase(TYPING_PHRASES[Math.floor(Math.random() * TYPING_PHRASES.length)]); | ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 27 | setUserInput(''); setScore(0); setTimeLeft(60); setIsActive(true); 28 | } 29 | }, [isOpen]);",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/gamification/MiniGameDialogs.tsx:27:7 25 | useEffect(() => { 26 | if (isOpen) { > 27 | setCurrentPhrase(TYPING_PHRASES[Math.floor(secureRandomFloat() * TYPING_PHRASES.length)]); | ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 28 | setUserInput(''); setScore(0); setTimeLeft(60); setIsActive(true); 29 | } 30 | }, [isOpen]);",
       "spanHash": "9ac9b3eaa82116d23d312100c174eb93968aa2dfa45c997f1e203bbe28f9062a",
-      "lineHash": "b6821c953bd38d42ee5b88256a221a18c6f617a42f61a8310878bba01ebc7ca6",
-      "contextHash": "79edfc876a1e2584d45c9c075d36b65b4b430f1c927179b886f3b8a0982c3909"
+      "lineHash": "4b8d8171a335b828f96219ad1ac0ad8b939aae04df611e6a4ea6273576108979",
+      "contextHash": "3affa940cd4a2604153325618e960ff87662bd62df81fdd62f5b773c66d9e01d"
     },
     {
       "file": "src/components/gamification/MiniGameDialogs.tsx",
-      "line": 81,
+      "line": 82,
       "column": 19,
-      "endLine": 81,
+      "endLine": 82,
       "endColumn": 37,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/gamification/MiniGameDialogs.tsx:81:19 79 | 80 | useEffect(() => { > 81 | if (isOpen) { setCurrentQuestion(0); setScore(0); setAnswered(null); setShowResult(false); } | ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 82 | }, [isOpen]); 83 | 84 | const question = QUIZ_QUESTIONS[currentQuestion];",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/gamification/MiniGameDialogs.tsx:82:19 80 | 81 | useEffect(() => { > 82 | if (isOpen) { setCurrentQuestion(0); setScore(0); setAnswered(null); setShowResult(false); } | ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 83 | }, [isOpen]); 84 | 85 | const question = QUIZ_QUESTIONS[currentQuestion];",
       "spanHash": "514cc33b47bd0a544dce344b380c9d1956e761f8a8b7414bd868cdb85acee572",
       "lineHash": "b083cc34c37f77df2b12fdcc3d73621d7c1066e8538c603483f65c259a33c631",
       "contextHash": "8ca44b6397fe0e135a6e4c37598641d509688c0e8eaeed49e5a8736ed3159e44"
@@ -5692,23 +5646,23 @@
     },
     {
       "file": "src/components/leaderboard/LeaderboardHelpers.tsx",
-      "line": 103,
+      "line": 107,
       "column": 7,
-      "endLine": 103,
+      "endLine": 107,
       "endColumn": 25,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/leaderboard/LeaderboardHelpers.tsx:103:7 101 | useEffect(() => { 102 | if (agent.rank === 1 && agent.previousRank !== 1) { > 103 | setShowCelebration(true); | ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 104 | const timer = setTimeout(() => setShowCelebration(false), 2000); 105 | return () => clearTimeout(timer); 106 | }",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/leaderboard/LeaderboardHelpers.tsx:107:7 105 | useEffect(() => { 106 | if (agent.rank === 1 && agent.previousRank !== 1) { > 107 | setShowCelebration(true); | ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 108 | const timer = setTimeout(() => setShowCelebration(false), 2000); 109 | return () => clearTimeout(timer); 110 | }",
       "spanHash": "a4a16f92c439bdc39c92c27a60d8da41ccdd4ca57332512e17673235ed9f3e52",
       "lineHash": "475c061994fb16911642f166614c6e793ff09bdea14867e2df27a0a03f589b39",
       "contextHash": "e46eede9687f6c970b5bdebec604e33c151aa6b991b8cd74e7f53de93a9948aa"
     },
     {
       "file": "src/components/leaderboard/LeaderboardHelpers.tsx",
-      "line": 11,
+      "line": 12,
       "column": 14,
-      "endLine": 11,
+      "endLine": 12,
       "endColumn": 101,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -5717,90 +5671,6 @@
       "spanHash": "52babfc84876a60714eb78f898bf29362fd22737a269dd6ad23082367580f4c3",
       "lineHash": "e88734ab024c3ae38f086f7faed33135ec34047ecf5f67da49bd62a36fa8c37a",
       "contextHash": "7d1c729597c875522b8106309d0b4335a3ee6c53eaf0342f2ad95a10c0bd32c8"
-    },
-    {
-      "file": "src/components/leaderboard/LeaderboardHelpers.tsx",
-      "line": 72,
-      "column": 15,
-      "endLine": 72,
-      "endColumn": 28,
-      "severity": 2,
-      "ruleId": "react-hooks/purity",
-      "messageId": null,
-      "message": "Error: Cannot call impure function during render `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/components/leaderboard/LeaderboardHelpers.tsx:72:15 70 | export function CelebrationParticles({ isVisible }: { isVisible: boolean }) { 71 | const particles = Array.from({ length: 20 }, (_, i) => ({ > 72 | id: i, x: Math.random() * 100 - 50, y: Math.random() * -100 - 20, | ^^^^^^^^^^^^^ Cannot call impure function 73 | delay: Math.random() * 0.5, duration: 1 + Math.random() * 0.5, size: 4 + Math.random() * 8, 74 | color: [ 75 | getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(),",
-      "spanHash": "70e9d248688717df77bfb739b2384e84959ac43eb35ff5df19415eb1ca72c7be",
-      "lineHash": "291b1ae92c6f9745d3fe3cbb75be3b0acd65d40bdf2ce32bb6366b04b3ca15b5",
-      "contextHash": "bce9ae7e71b77d1853e5fbd277120568fca23b2e282d5cea74d1523f3bb25676"
-    },
-    {
-      "file": "src/components/leaderboard/LeaderboardHelpers.tsx",
-      "line": 72,
-      "column": 44,
-      "endLine": 72,
-      "endColumn": 57,
-      "severity": 2,
-      "ruleId": "react-hooks/purity",
-      "messageId": null,
-      "message": "Error: Cannot call impure function during render `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/components/leaderboard/LeaderboardHelpers.tsx:72:44 70 | export function CelebrationParticles({ isVisible }: { isVisible: boolean }) { 71 | const particles = Array.from({ length: 20 }, (_, i) => ({ > 72 | id: i, x: Math.random() * 100 - 50, y: Math.random() * -100 - 20, | ^^^^^^^^^^^^^ Cannot call impure function 73 | delay: Math.random() * 0.5, duration: 1 + Math.random() * 0.5, size: 4 + Math.random() * 8, 74 | color: [ 75 | getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(),",
-      "spanHash": "70e9d248688717df77bfb739b2384e84959ac43eb35ff5df19415eb1ca72c7be",
-      "lineHash": "291b1ae92c6f9745d3fe3cbb75be3b0acd65d40bdf2ce32bb6366b04b3ca15b5",
-      "contextHash": "bce9ae7e71b77d1853e5fbd277120568fca23b2e282d5cea74d1523f3bb25676"
-    },
-    {
-      "file": "src/components/leaderboard/LeaderboardHelpers.tsx",
-      "line": 73,
-      "column": 12,
-      "endLine": 73,
-      "endColumn": 25,
-      "severity": 2,
-      "ruleId": "react-hooks/purity",
-      "messageId": null,
-      "message": "Error: Cannot call impure function during render `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/components/leaderboard/LeaderboardHelpers.tsx:73:12 71 | const particles = Array.from({ length: 20 }, (_, i) => ({ 72 | id: i, x: Math.random() * 100 - 50, y: Math.random() * -100 - 20, > 73 | delay: Math.random() * 0.5, duration: 1 + Math.random() * 0.5, size: 4 + Math.random() * 8, | ^^^^^^^^^^^^^ Cannot call impure function 74 | color: [ 75 | getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(), 76 | getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim(),",
-      "spanHash": "70e9d248688717df77bfb739b2384e84959ac43eb35ff5df19415eb1ca72c7be",
-      "lineHash": "d0ddcebe58145e2882ee133f6415d6178a7691ba30c07eb9205cbb64cf532dcf",
-      "contextHash": "16deda6b45c31399432d9826768011619ea1cf1a0566276791502c237ecd6210"
-    },
-    {
-      "file": "src/components/leaderboard/LeaderboardHelpers.tsx",
-      "line": 73,
-      "column": 47,
-      "endLine": 73,
-      "endColumn": 60,
-      "severity": 2,
-      "ruleId": "react-hooks/purity",
-      "messageId": null,
-      "message": "Error: Cannot call impure function during render `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/components/leaderboard/LeaderboardHelpers.tsx:73:47 71 | const particles = Array.from({ length: 20 }, (_, i) => ({ 72 | id: i, x: Math.random() * 100 - 50, y: Math.random() * -100 - 20, > 73 | delay: Math.random() * 0.5, duration: 1 + Math.random() * 0.5, size: 4 + Math.random() * 8, | ^^^^^^^^^^^^^ Cannot call impure function 74 | color: [ 75 | getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(), 76 | getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim(),",
-      "spanHash": "70e9d248688717df77bfb739b2384e84959ac43eb35ff5df19415eb1ca72c7be",
-      "lineHash": "d0ddcebe58145e2882ee133f6415d6178a7691ba30c07eb9205cbb64cf532dcf",
-      "contextHash": "16deda6b45c31399432d9826768011619ea1cf1a0566276791502c237ecd6210"
-    },
-    {
-      "file": "src/components/leaderboard/LeaderboardHelpers.tsx",
-      "line": 73,
-      "column": 78,
-      "endLine": 73,
-      "endColumn": 91,
-      "severity": 2,
-      "ruleId": "react-hooks/purity",
-      "messageId": null,
-      "message": "Error: Cannot call impure function during render `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/components/leaderboard/LeaderboardHelpers.tsx:73:78 71 | const particles = Array.from({ length: 20 }, (_, i) => ({ 72 | id: i, x: Math.random() * 100 - 50, y: Math.random() * -100 - 20, > 73 | delay: Math.random() * 0.5, duration: 1 + Math.random() * 0.5, size: 4 + Math.random() * 8, | ^^^^^^^^^^^^^ Cannot call impure function 74 | color: [ 75 | getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(), 76 | getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim(),",
-      "spanHash": "70e9d248688717df77bfb739b2384e84959ac43eb35ff5df19415eb1ca72c7be",
-      "lineHash": "d0ddcebe58145e2882ee133f6415d6178a7691ba30c07eb9205cbb64cf532dcf",
-      "contextHash": "16deda6b45c31399432d9826768011619ea1cf1a0566276791502c237ecd6210"
-    },
-    {
-      "file": "src/components/leaderboard/LeaderboardHelpers.tsx",
-      "line": 78,
-      "column": 40,
-      "endLine": 78,
-      "endColumn": 53,
-      "severity": 2,
-      "ruleId": "react-hooks/purity",
-      "messageId": null,
-      "message": "Error: Cannot call impure function during render `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/components/leaderboard/LeaderboardHelpers.tsx:78:40 76 | getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim(), 77 | getComputedStyle(document.documentElement).getPropertyValue('--accent-foreground').trim(), > 78 | ].map(v => `hsl(${v})`)[Math.floor(Math.random() * 3)] || 'hsl(var(--primary))', | ^^^^^^^^^^^^^ Cannot call impure function 79 | })); 80 | 81 | return (",
-      "spanHash": "70e9d248688717df77bfb739b2384e84959ac43eb35ff5df19415eb1ca72c7be",
-      "lineHash": "204176da87e13a5ef6ec557a072adaa9455e6023204fb6c8a14a75cc1bf9710e",
-      "contextHash": "e49f6d8c9bef1494a3d6d2929bff7ff676dc8d13a61602350cbf3a55253b7d7b"
     },
     {
       "file": "src/components/mfa/__tests__/MFABackupCodes.test.tsx",
@@ -6221,20 +6091,6 @@
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "contextHash": "e63bbc18250984e3c79aad80584d8ada0d49efb43d14a30267cbc5ce0c7a49b0"
-    },
-    {
-      "file": "src/components/monitoring/MonitoringSkeletons.tsx",
-      "line": 40,
-      "column": 40,
-      "endLine": 40,
-      "endColumn": 53,
-      "severity": 2,
-      "ruleId": "react-hooks/purity",
-      "messageId": null,
-      "message": "Error: Cannot call impure function during render `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/components/monitoring/MonitoringSkeletons.tsx:40:40 38 | key={i} 39 | className=\"flex-1 rounded-t\" > 40 | style={{ height: `${25 + Math.random() * 65}%` }} | ^^^^^^^^^^^^^ Cannot call impure function 41 | /> 42 | ))} 43 | </div>",
-      "spanHash": "70e9d248688717df77bfb739b2384e84959ac43eb35ff5df19415eb1ca72c7be",
-      "lineHash": "9eb2a9b994f94a74e99e704be59e382c560e44ad9f06711dbb0aec15dba4593e",
-      "contextHash": "d4490dcd593de1d552132b25f472b4d4277d29c71df91526eef896a2d42ae69e"
     },
     {
       "file": "src/components/omnichannel/__tests__/OmnichannelInbox.test.tsx",
@@ -8002,9 +7858,9 @@
     },
     {
       "file": "src/components/ui/accessible-toast.tsx",
-      "line": 30,
+      "line": 31,
       "column": 17,
-      "endLine": 30,
+      "endLine": 31,
       "endColumn": 35,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -8534,9 +8390,9 @@
     },
     {
       "file": "src/components/ui/sidebar/sidebar-menu.tsx",
-      "line": 19,
+      "line": 20,
       "column": 14,
-      "endLine": 19,
+      "endLine": 20,
       "endColumn": 39,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -8660,9 +8516,9 @@
     },
     {
       "file": "src/components/voice/FloatingParticles.tsx",
-      "line": 153,
+      "line": 154,
       "column": 6,
-      "endLine": 153,
+      "endLine": 154,
       "endColumn": 13,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -13182,9 +13038,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 249,
+      "line": 253,
       "column": 7,
-      "endLine": 249,
+      "endLine": 253,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
@@ -13196,9 +13052,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 322,
+      "line": 326,
       "column": 55,
-      "endLine": 322,
+      "endLine": 326,
       "endColumn": 58,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -13210,9 +13066,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 344,
+      "line": 348,
       "column": 53,
-      "endLine": 344,
+      "endLine": 348,
       "endColumn": 56,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -13224,9 +13080,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 352,
+      "line": 356,
       "column": 25,
-      "endLine": 352,
+      "endLine": 356,
       "endColumn": 36,
       "severity": 1,
       "ruleId": "no-console",
@@ -13238,9 +13094,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 355,
+      "line": 359,
       "column": 36,
-      "endLine": 355,
+      "endLine": 359,
       "endColumn": 47,
       "severity": 1,
       "ruleId": "no-console",
@@ -13252,9 +13108,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 362,
+      "line": 366,
       "column": 7,
-      "endLine": 362,
+      "endLine": 366,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
@@ -13266,9 +13122,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 372,
+      "line": 376,
       "column": 7,
-      "endLine": 372,
+      "endLine": 376,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
@@ -13798,9 +13654,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 340,
+      "line": 341,
       "column": 13,
-      "endLine": 340,
+      "endLine": 341,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -13812,9 +13668,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 424,
+      "line": 425,
       "column": 58,
-      "endLine": 424,
+      "endLine": 425,
       "endColumn": 61,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",

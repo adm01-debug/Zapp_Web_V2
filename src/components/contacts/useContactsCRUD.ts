@@ -8,6 +8,7 @@ import { useActionFeedback } from '@/hooks/ui/useActionFeedback';
 import { useContactsSearch } from '@/hooks/crm/useContactsSearch';
 import { invalidateContactsAggregates } from '@/hooks/crm/contactsAggregates';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
+import { secureRandomChars, BASE36_MAIUSCULO } from '@/lib/secureRandom';
 
 interface ContactFormData {
   name: string;
@@ -128,7 +129,7 @@ export function useContactsCRUD() {
 
   const generateProtocol = useCallback(() => {
     const now = new Date();
-    return `CT-${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}-${Math.random().toString(36).slice(2,8).toUpperCase()}`;
+    return `CT-${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}-${secureRandomChars(6, BASE36_MAIUSCULO)}`;
   }, []);
 
   const handleAddContact = async () => {
