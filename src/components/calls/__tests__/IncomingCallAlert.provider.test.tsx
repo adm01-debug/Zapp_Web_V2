@@ -46,6 +46,20 @@ vi.mock('@/providers/CallSessionProvider', () => ({
   useCallSession: () => ({ accept: mockAccept, reject: mockReject }),
 }));
 
+vi.mock('@/hooks/calls/useCallChannels', () => ({
+  useCallChannels: () => ({
+    voip: { channel: 'voip', canDial: true, canReceive: true, canRecord: false, canReject: true },
+    whatsapp: {
+      channel: 'whatsapp',
+      canDial: false,
+      canReceive: true,
+      canRecord: false,
+      canReject: false,
+      reason: 'whatsapp_no_outbound',
+    },
+  }),
+}));
+
 vi.mock('@/hooks/system/useNotificationSettings', () => ({
   useNotificationSettings: () => ({
     settings: { soundEnabled: false, soundVolume: 70 },
@@ -76,13 +90,21 @@ describe('IncomingCallAlert — fiação ao provider da sessão', () => {
     expect(mockAnswerCall).not.toHaveBeenCalled();
   });
 
-  it('Recusar chama reject() do provider e NÃO chama mais missCall', () => {
+  it('no WhatsApp o segundo botão é "Ignorar" (D7=b) e chama reject() do provider, sem missCall', () => {
     render(<IncomingCallAlert />);
-    fireEvent.click(screen.getByRole('button', { name: /recusar/i }));
+
+    // A chamada deste mock tem `whatsapp_connection_id`, então o canal é WhatsApp e o
+    // rótulo do segundo botão é o de ignorar (T24/D7) — e não "Recusar".
+    expect(screen.queryByRole('button', { name: /recusar/i })).toBeNull();
+    // O botão de ignorar só existe no canal WhatsApp — é a prova direta de que o
+    // componente leu o canal do próprio chamado.
+    const botaoIgnorar = screen.getByRole('button', { name: /ignorar/i });
+    expect(botaoIgnorar).toBeTruthy();
+    fireEvent.click(botaoIgnorar);
 
     expect(mockReject).toHaveBeenCalledTimes(1);
     expect(mockMissCall).not.toHaveBeenCalled();
-    // Recusar só silencia o PRÓPRIO alerta; o desfecho (declined) é do provider.
+    // Ignorar só silencia o PRÓPRIO alerta; o desfecho (declined) é do provider.
     expect(mockDismissCall).toHaveBeenCalledTimes(1);
   });
 

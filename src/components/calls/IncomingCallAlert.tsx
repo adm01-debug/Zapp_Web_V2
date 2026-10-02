@@ -5,6 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { CallDialog } from './CallDialog';
 import { useIncomingCallListener, type IncomingCall } from '@/hooks/communication/useIncomingCallListener';
+import { CallChannelBadge } from './CallChannelBadge';
+import { useCallChannels } from '@/hooks/calls/useCallChannels';
+import { ROTULO_IGNORAR_WHATSAPP } from '@/lib/calls/WhatsAppCallAdapter';
+import { deveTocar, proximoToque, type EstadoDeToque } from '@/lib/calls/toqueDaChamada';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 import { useCallSession } from '@/providers/CallSessionProvider';
 import { cn } from '@/lib/utils';
@@ -32,13 +36,30 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
   // `accept()` → atendida, `reject()` → `declined` e persistência em `declined`).
   // O componente não escreve mais direto na tabela `calls` (legado `useCalls`).
   const { accept, reject } = useCallSession();
+  const { voip, whatsapp } = useCallChannels();
   const [showDialog, setShowDialog] = useState(false);
+  // O canal vem do próprio chamado: quem chega com `whatsapp_connection_id` é WhatsApp;
+  // sem ele, a linha é a do VoIP.
+  const canal = incomingCall?.whatsapp_connection_id ? 'whatsapp' : 'voip';
+  const capacidade = canal === 'whatsapp' ? whatsapp : voip;
+  /**
+   * Estado do toque na máquina PURA da etapa T27: a chamada chegando é o
+   * `INVITE_RECEIVED`; quando ela sai da tela (atendida, recusada, timeou ou o outro
+   * lado desligou) o listener para de entregá-la e o toque para. Quem decide o
+   * desfecho continua sendo a máquina da sessão — aqui só se decide se SOA.
+   */
+  const [toque, setToque] = useState<EstadoDeToque>('parado');
+
+  useEffect(() => {
+    setToque((atual) => proximoToque(atual, incomingCall ? 'INVITE_RECEIVED' : 'TIMEOUT'));
+  }, [incomingCall]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Play ringtone only if sound is enabled and not in quiet hours
   useEffect(() => {
     const soundAllowed = notifSettings.soundEnabled && !isQuietHours();
-    if (incomingCall && !showDialog && soundAllowed) {
+    // Não basta estar tocando: o canal precisa poder RECEBER (etapa T27).
+    if (incomingCall && !showDialog && soundAllowed && deveTocar(toque) && capacidade.canReceive) {
       try {
         const ctx = new AudioContext();
         // A chamada chega pelo Realtime, não por um gesto do usuário: o navegador cria
@@ -76,7 +97,7 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
         };
       } catch (err) { log.error('Unexpected error in IncomingCallAlert:', err); }
     }
-  }, [incomingCall, showDialog, notifSettings.soundEnabled, notifSettings.soundVolume, isQuietHours]);
+  }, [incomingCall, showDialog, notifSettings.soundEnabled, notifSettings.soundVolume, isQuietHours, toque, capacidade.canReceive]);
 
   // O timeout de toque NÃO mora mais aqui: quem conta os 30s é a máquina da sessão
   // (provider). O alerta só reage — quando a chamada sai de `ringing_in` o listener
@@ -148,6 +169,11 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
               {incomingCall.is_video ? <Video className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
             </motion.div>
             {incomingCall.is_video ? 'Chamada de vídeo' : 'Chamada de voz'}
+            <CallChannelBadge
+              channel={canal}
+              motivo={capacidade.reason ?? null}
+              className="ml-auto bg-primary-foreground/20 text-primary-foreground"
+            />
           </div>
 
           {/* Contact info */}
@@ -167,7 +193,7 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
             </div>
           </div>
 
-          {/* Actions */}
+          {/* Actions: o que aparece depende da capacidade REAL do canal (T23/T27). */}
           <div className="px-4 pb-4 flex gap-2">
             <Button
               variant="destructive"
@@ -175,8 +201,9 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
               onClick={handleDecline}
             >
               <PhoneOff className="h-4 w-4" />
-              Recusar
+              {canal === 'whatsapp' ? ROTULO_IGNORAR_WHATSAPP : 'Recusar'}
             </Button>
+            {capacidade.canReceive ? (
             <Button
               className={cn(
                 "flex-1 gap-2 text-primary-foreground",
@@ -189,6 +216,7 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
               <Phone className="h-4 w-4" />
               Atender
             </Button>
+            ) : null}
           </div>
         </div>
       </motion.div>

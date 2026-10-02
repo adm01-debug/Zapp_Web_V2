@@ -16,6 +16,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCallSession } from '@/providers/CallSessionProvider';
+import { useAuth } from '@/hooks/auth/useAuth';
 import type { SipStatus } from '@/hooks/sip/useSipConnection';
 import { type ChannelCapability, type CapabilityReason } from '@/lib/calls/capabilities';
 import type { CallChannel } from '@/lib/calls/callStatus';
@@ -41,6 +42,13 @@ export interface CapacidadesEntrada {
   micReason: CapabilityReason | null;
   /** Conexões candidatas; o mapper escolhe a `is_default` e descarta `[E2E]`. */
   whatsapp: readonly WhatsappConnectionRow[] | null | undefined;
+  /**
+   * O usuário enxerga a linha de WhatsApp? A RLS de `whatsapp_connections` só devolve
+   * linhas para admin/supervisor, então para o agente comum a ausência de linha NÃO
+   * significa "sem conexão" — significa "sem permissão". Ausente/true = comportamento
+   * antigo (não quebra quem já usava o mapper).
+   */
+  podeVerWhatsApp?: boolean;
 }
 
 /** Resultado do mapeamento: uma capacidade por canal. */
@@ -138,6 +146,7 @@ function capacidadeVoip(
  */
 function capacidadeWhatsapp(
   whatsapp: readonly WhatsappConnectionRow[] | null | undefined,
+  podeVerWhatsApp?: boolean,
 ): ChannelCapability {
   const conexao = (whatsapp ?? []).find(
     (linha) => linha.is_default === true && !ehLinhaE2E(linha.name),
@@ -150,7 +159,9 @@ function capacidadeWhatsapp(
       canReceive: false,
       canRecord: false,
       canReject: false,
-      reason: 'whatsapp_unavailable',
+      // D8: sem permissão, a linha é invisível por RLS — o canal não pode mentir
+      // "indisponível" e sim dizer por que ele não aparece para este usuário.
+      reason: podeVerWhatsApp === false ? 'whatsapp_restrito_supervisores' : 'whatsapp_unavailable',
     };
   }
 
@@ -170,10 +181,11 @@ export function capacidadesPorCanal({
   sipReason,
   micReason,
   whatsapp,
+  podeVerWhatsApp,
 }: CapacidadesEntrada): CapacidadesPorCanal {
   return {
     voip: capacidadeVoip(sipStatus, sipReason, micReason),
-    whatsapp: capacidadeWhatsapp(whatsapp),
+    whatsapp: capacidadeWhatsapp(whatsapp, podeVerWhatsApp),
   };
 }
 
@@ -187,7 +199,32 @@ export function capacidadesPorCanal({
  */
 export function useCallChannels(): { voip: ChannelCapability; whatsapp: ChannelCapability } {
   const { sipStatus, sipReason, micReason } = useCallSession();
+  const { user } = useAuth();
   const [whatsapp, setWhatsapp] = useState<WhatsappConnectionRow[] | null>(null);
+  // Mesma leitura de papéis que `usePermissions` já faz (user_roles do próprio usuário).
+  // Começa em `false` de propósito: se a leitura falhar, o canal aparece como restrito
+  // ("Disponível para supervisores") em vez de fingir "sem conexão".
+  const [podeVerWhatsApp, setPodeVerWhatsApp] = useState<boolean>(false);
+
+  useEffect(() => {
+    let ativo = true;
+    void (async () => {
+      if (!user) {
+        if (ativo) setPodeVerWhatsApp(false);
+        return;
+      }
+      try {
+        const { data } = await supabase.from('user_roles').select('role').eq('user_id', user.id);
+        const papeis = (data ?? []).map((linha) => linha.role);
+        if (ativo) setPodeVerWhatsApp(papeis.includes('admin') || papeis.includes('supervisor'));
+      } catch {
+        if (ativo) setPodeVerWhatsApp(false);
+      }
+    })();
+    return () => {
+      ativo = false;
+    };
+  }, [user]);
 
   useEffect(() => {
     let ativo = true;
@@ -213,7 +250,7 @@ export function useCallChannels(): { voip: ChannelCapability; whatsapp: ChannelC
   }, []);
 
   return useMemo(
-    () => capacidadesPorCanal({ sipStatus, sipReason, micReason, whatsapp }),
-    [sipStatus, sipReason, micReason, whatsapp],
+    () => capacidadesPorCanal({ sipStatus, sipReason, micReason, whatsapp, podeVerWhatsApp }),
+    [sipStatus, sipReason, micReason, whatsapp, podeVerWhatsApp],
   );
 }
