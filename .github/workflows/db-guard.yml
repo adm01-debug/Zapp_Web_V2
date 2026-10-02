@@ -421,6 +421,14 @@ jobs:
           TALKX_CAMPAIGN_TRANSITIONS_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-campaign-transitions.test.sh
 
+      # X010: trava por campanha (worker lease), start idempotente (sending ->
+      # sending sem tocar started_at), fila do worker em RPC e segredo de cron
+      # dedicado do Talk X.
+      - name: Simular trava por campanha, fila do worker e segredo de cron do Talk X (X010)
+        env:
+          TALKX_CAMPAIGN_WORKER_LEASE_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-campaign-worker-lease.test.sh
+
       # O teste existente acima monta o fixture aplicando SO a migration de
       # 20260911150000 (um overload), e por isso nunca viu a ambiguidade que
       # existe em producao quando a versao de 3 args de 20260916210000 tambem
