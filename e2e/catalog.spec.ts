@@ -232,14 +232,20 @@ test.describe('Catálogo — envio de produto no chat (CT-82)', () => {
 
     // 4) escolhe a cor no Sheet de detalhes (botão com aria-label `Cor <nome>`)
     const detailSheet = page.getByRole('dialog');
-    const cor = detailSheet.getByRole('button', { name: /^Cor / }).first();
-    await expect(cor).toBeVisible({ timeout: 20_000 });
-    // O Sheet re-renderiza quando as imagens/variantes chegam e o botao chega a
-    // ser recriado no meio do clique (medido: "element was detached from the
-    // DOM"). toPass repete a acao inteira ate ela valer.
+    // O Sheet chega a FECHAR depois de abrir (medido em 02/10: em algumas rodadas o
+    // dialog some entre o "Ver" e o clique da cor). O bloco reabre o Sheet e clica na
+    // cor, repetindo a acao inteira ate valer — sem afrouxar nenhum assert.
     await expect(async () => {
-      await cor.click({ timeout: 5_000 });
-    }).toPass({ timeout: 30_000 });
+      if ((await page.getByRole('dialog').count()) === 0) {
+        await ver.click({ timeout: 5_000 });
+        await expect(page.getByRole('dialog')).toHaveCount(1);
+      }
+      await page
+        .getByRole('dialog')
+        .getByRole('button', { name: /^Cor / })
+        .first()
+        .click({ timeout: 5_000 });
+    }).toPass({ timeout: 45_000 });
 
     // 5) aciona "Enviar variação (<cor>)" no rodapé do Sheet
     const enviarVariacao = detailSheet.getByRole('button', { name: /^Enviar variação \(/ });
