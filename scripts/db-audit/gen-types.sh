@@ -117,6 +117,10 @@ else
       --schema public \
       > "$TMP"
   else
+    if [ "${CI:-}" = "true" ]; then
+      echo "Erro: pgbouncer ausente em ambiente CI; a credencial DESTINO_URL nao pode ir direto no --db-url. Instale pgbouncer." >&2
+      exit 1
+    fi
     echo "Aviso: pgbouncer ausente; DESTINO_URL vai direto no --db-url (visivel via ps/proc a processos deste job). Instale pgbouncer para blindar a credencial." >&2
     supabase gen types typescript \
       --db-url "$DESTINO_URL" \
