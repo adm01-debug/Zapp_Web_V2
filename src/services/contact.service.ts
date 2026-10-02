@@ -204,10 +204,15 @@ export class ContactService {
     const windowStart = new Date(Date.now() - 30 * DAY_MS).toISOString();
     const prevWindowStart = new Date(Date.now() - 60 * DAY_MS).toISOString();
 
-    const headCount = async (table: 'messages' | 'conversation_sla', gte?: string, lt?: string) => {
+    const headCount = async (
+      table: 'messages' | 'conversation_sla',
+      dateColumn: 'created_at' | 'first_message_at',
+      gte?: string,
+      lt?: string,
+    ) => {
       let q = supabase.from(table).select('id', { count: 'exact', head: true }).eq('contact_id', contactId);
-      if (gte) q = q.gte('created_at', gte);
-      if (lt) q = q.lt('created_at', lt);
+      if (gte) q = q.gte(dateColumn, gte);
+      if (lt) q = q.lt(dateColumn, lt);
       const { count, error } = await q;
       if (error) throw error;
       return count ?? 0;
@@ -221,12 +226,12 @@ export class ContactService {
       recentConversationCount,
       prevConversationCount,
     ] = await Promise.all([
-      headCount('messages'),
-      headCount('messages', windowStart),
-      headCount('messages', prevWindowStart, windowStart),
-      headCount('conversation_sla'),
-      headCount('conversation_sla', windowStart),
-      headCount('conversation_sla', prevWindowStart, windowStart),
+      headCount('messages', 'created_at'),
+      headCount('messages', 'created_at', windowStart),
+      headCount('messages', 'created_at', prevWindowStart, windowStart),
+      headCount('conversation_sla', 'first_message_at'),
+      headCount('conversation_sla', 'first_message_at', windowStart),
+      headCount('conversation_sla', 'first_message_at', prevWindowStart, windowStart),
     ]);
 
     const { data: csatData } = await supabase.from('csat_surveys').select('rating').eq('contact_id', contactId);

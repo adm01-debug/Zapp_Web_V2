@@ -34,7 +34,7 @@ describe('ContactStatsStrip', () => {
     expect(strip).toHaveTextContent('4.5⭐');
     expect(strip).toHaveTextContent('Total trocado');
     expect(strip).toHaveTextContent('Resposta ao cliente');
-    expect(strip).toHaveTextContent('Sessões registradas');
+    expect(strip).toHaveTextContent('Episódios respondidos');
     expect(strip).toHaveTextContent('3 avaliações');
   });
 

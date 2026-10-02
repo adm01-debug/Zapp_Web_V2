@@ -60,9 +60,9 @@ export function ContactStatsStrip({ contactId, compact }: ContactStatsStripProps
     },
     {
       icon: Users,
-      label: 'Conversas',
+      label: 'Atendimentos',
       value: stats?.totalConversations ?? 0,
-      subtitle: 'Sessões registradas',
+      subtitle: 'Episódios respondidos',
       change: stats?.conversationsChangePercent,
     },
     {
