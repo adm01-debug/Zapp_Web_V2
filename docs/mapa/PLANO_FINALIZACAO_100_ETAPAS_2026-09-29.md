@@ -823,7 +823,14 @@ Substitui o antigo "desligar a flag": sem chave (decisão `20261001-103207-6c0b`
 
 ### E91 · Alerta de custo por e-mail/WhatsApp
 1. Workflow N8N (ou cron do Supabase, se já existir padrão no repo) que lê a view de E52 1×/dia e avisa se `sessoes_mes ≥ 400`. Registrar id do workflow no doc.
-**Checklist:** [ ] alerta · [ ] id no doc
+**Checklist:** [x] alerta · [x] id no doc
+> **FEITA em 2026-10-02** (canal definido pelo responsável: notificação no app + e-mail para
+> adm01@promobrindes.com.br). Job `searchbox-budget-alert`, 1×/dia às 12:00 UTC, limiar 400, idempotente
+> por mês. Migration `20261002601230_searchbox_budget_alert_cron.sql` (classe **contrato**, aplicada pelo
+> mergear após o merge) + edge `searchbox-budget-alert`. Padrões seguidos do próprio repo:
+> `notify_due_tasks` (notificação no app) e `gmail_incremental_sync_cron` (`net.http_post` com segredo do
+> Vault). **Pendência declarada:** o segredo `searchbox_alert_cron_secret` (Vault + `CRON_SECRET` da edge)
+> ainda não existe; até ele existir o e-mail **falha fechado** (403) e só o canal do app atua.
 > **Bloqueada por decisão de canal, não por técnica** (`20261002-134700-4620-sem-tarefa`). Medição que
 > reorienta a etapa: o aviso de orçamento que existe hoje (`searchbox_budget_warning`,
 > `mapboxCostGuard.ts:113`) roda **no navegador** e guarda "já avisei este mês" em `localStorage` — ou

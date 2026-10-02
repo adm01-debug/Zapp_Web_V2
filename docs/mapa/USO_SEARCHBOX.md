@@ -85,6 +85,37 @@ de seleção (`searchbox_selected`) só passou a existir em **2026-10-01** — d
 ainda não existia (ver a seção de fechamento do mês acima). O funil das primeiras 48 h é, portanto,
 **desconhecido e não recuperável**.
 
+## Alerta de custo — job `searchbox-budget-alert` (E91)
+
+**Canal escolhido pelo responsável (2026-10-02):** notificação no app **+** e-mail para
+`adm01@promobrindes.com.br`.
+
+| Item | Valor |
+|---|---|
+| Job do cron | **`searchbox-budget-alert`** (`cron.schedule`, idempotente por nome) |
+| Frequência | **1×/dia** às **12:00 UTC** (09:00 em São Paulo) |
+| Limiar | **400** sessões no mês (das 500 grátis; o guarda do client degrada em 450) |
+| Canal 1 — app | `public.notify_searchbox_budget()` → `INSERT` em `notifications` para `role IN ('admin','supervisor')`, no padrão do `notify_due_tasks` |
+| Canal 2 — e-mail | edge **`searchbox-budget-alert`** (`net.http_post` do cron), que envia via Resend |
+| Idempotência | **1 alerta por mês**: checada por `type='searchbox_budget_alert'` + `metadata->>'mes'` |
+| Migration | `supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql` (classe **contrato**) |
+
+### Por que isto existe: o aviso anterior não avisava
+
+Medição feita antes de escrever o job: o aviso de orçamento do client
+(`searchbox_budget_warning`, `mapboxCostGuard.ts:113`) roda **no navegador** e guarda "já avisei este
+mês" em `localStorage`. Consequência: **ninguém recebia aviso** — ele só disparava se alguém abrisse o
+app e usasse, e o controle de "já avisei" ficava preso naquele navegador. Se o consumo subisse num fim
+de semana sem ninguém usando, ninguém saberia. O job de servidor fecha esse buraco.
+
+### Pendência conhecida (declarada, não escondida)
+
+O **canal 2 exige um segredo** que ainda **não existe**: `searchbox_alert_cron_secret` no Vault
+(cada cron do projeto tem o seu — `gmail_cron_secret`, `multiplix_cron_secret` etc.) e o env
+`CRON_SECRET` desta função. Enquanto ele não for criado, a edge **falha fechada** (403, não envia
+nada) — comportamento correto e seguro. O **canal 1 (notificação no app) não depende de segredo** e
+funciona assim que a migration for aplicada.
+
 ## Fechamento do primeiro mês — setembro/2026 fechado, outubro/2026 parcial (E99)
 
 Medido em **2026-10-02** contra produção: view `searchbox_usage_daily` e `audit_logs`, **somente
