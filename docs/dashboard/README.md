@@ -75,3 +75,17 @@ local, sem `searchParams` (auditado no E37).
   E36 (`supabase/tests/dashboard_rpc_filters.sql`) também. Ver plano — não é mais débito.
 - E46 (smoke E2E Playwright) bloqueado por falha de conexão do MCP nesta sessão; E47 (Web Vitals real)
   sem ferramenta disponível (Speed Insights não habilitado no projeto Vercel).
+
+- **E53 (card "Sessões Search Box no mês / teto") — registrado como NÃO FEITO, com o motivo.** A etapa
+  pede o card "só se já existe painel de KPIs com slot". Este README tem a **matriz de escopo** por
+  audiência (**Agente comum** / **Staff**) e a **fonte de dados por card da Visão Geral** — não há slot
+  de **KPI de sistema** (quota/consumo de infraestrutura), que é a natureza desta métrica: ela não é por
+  agente nem por fila, é consumo do mês contra um teto. O lugar próprio seria o painel de telemetria
+  (`src/pages/AdminTelemetriaPage.tsx`, que já reúne os cards de sistema via `TelemetryStatsCards`),
+  o que é um card novo — não a inserção num slot existente. Decisão de produto, não deste plano.
+- **Correção de número:** o texto da etapa diz "/ 500", mas o teto real é
+  `VITE_SEARCHBOX_MONTHLY_SESSION_LIMIT`, cujo **padrão é 450** (E48, `src/lib/mapboxCostGuard.ts`).
+  Qualquer card que venha a existir deve ler o limite configurado, nunca cravar 500.
+- **A fonte de dado já existe** desde o E52: a view `public.searchbox_usage_daily` (aplicada no banco
+  canônico) traz sessões e degradações por dia, no fuso America/Sao_Paulo — o card seria uma soma por
+  mês sobre ela, sem RPC nova.
