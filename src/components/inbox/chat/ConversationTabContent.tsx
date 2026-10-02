@@ -96,7 +96,7 @@ export function ConversationTabContent({
       )}
 
       {activeTab === 'orders' && (
-        <Panel name="Pedidos">
+        <Panel name="SalesView">
           <OrdersTab contactId={contactId} />
         </Panel>
       )}
@@ -121,7 +121,7 @@ export function ConversationTabContent({
       )}
 
       {activeTab === 'history' && (
-        <Panel name="Histórico">
+        <Panel name="Journey">
           <HistoryTab contactId={contactId} />
         </Panel>
       )}
