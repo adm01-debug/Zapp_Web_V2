@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Keyboard, Brain, Target, Timer, Zap, Star, Trophy, RotateCcw } from 'lucide-react';
 import { TYPING_PHRASES, QUIZ_QUESTIONS, EMOJI_CHALLENGES } from './miniGamesData';
+import { secureRandomFloat } from '../../lib/secureRandom';
 
 interface GameDialogProps {
   isOpen: boolean;
@@ -23,7 +24,7 @@ export function SpeedTypingGame({ isOpen, onClose, onComplete }: GameDialogProps
 
   useEffect(() => {
     if (isOpen) {
-      setCurrentPhrase(TYPING_PHRASES[Math.floor(Math.random() * TYPING_PHRASES.length)]);
+      setCurrentPhrase(TYPING_PHRASES[Math.floor(secureRandomFloat() * TYPING_PHRASES.length)]);
       setUserInput(''); setScore(0); setTimeLeft(60); setIsActive(true);
     }
   }, [isOpen]);
@@ -39,7 +40,7 @@ export function SpeedTypingGame({ isOpen, onClose, onComplete }: GameDialogProps
     setUserInput(value);
     if (value === currentPhrase) {
       setScore(s => s + currentPhrase.length); setUserInput('');
-      setCurrentPhrase(TYPING_PHRASES[Math.floor(Math.random() * TYPING_PHRASES.length)]);
+      setCurrentPhrase(TYPING_PHRASES[Math.floor(secureRandomFloat() * TYPING_PHRASES.length)]);
     }
   };
 

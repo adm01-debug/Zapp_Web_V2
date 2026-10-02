@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useCallback, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle, Loader2 } from 'lucide-react';
+import { secureRandomChars } from '@/lib/secureRandom';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info' | 'loading';
 
@@ -59,7 +60,7 @@ export function AccessibleToastProvider({ children }: AccessibleToastProviderPro
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const addToast = useCallback((toast: Omit<Toast, 'id'>) => {
-    const id = Math.random().toString(36).substr(2, 9);
+    const id = secureRandomChars(9, '0123456789abcdefghijklmnopqrstuvwxyz');
     setToasts((prev) => [...prev, { ...toast, id }]);
     
     // Auto remove after duration (except loading)

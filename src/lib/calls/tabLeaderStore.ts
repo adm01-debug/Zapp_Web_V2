@@ -17,6 +17,8 @@
  * `localStorage`/canal indisponíveis em try/catch.
  */
 
+import { BASE36_MAIUSCULO, secureRandomChars, secureRandomFloat } from '../secureRandom';
+
 export const CALL_SESSION_CHANNEL_NAME = 'zapp-call-session';
 
 export const TAB_LEADER_STORAGE_KEY = 'zapp.call.tab-leader';
@@ -60,21 +62,48 @@ let broadcastChannelResolved = false;
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 let claimTimer: ReturnType<typeof setTimeout> | null = null;
 
+/** Contador do ultimo recurso de `generateTabId()` (sem `crypto` nenhum). */
+let contadorSemCrypto = 0;
+
 const tabId = generateTabId();
 
 /** Nasce seguidora: quem decide o papel é `claimLeadership()`, já com jitter. */
 let current: TabLeaderSnapshot = { role: 'follower', leaderId: null, expiresAt: null, tabId };
 
-/** Identidade da aba. `crypto.randomUUID` quando existe; fallback sem depender de Date. */
+/**
+ * Identidade da aba. Escada de recurso, do melhor para o pior:
+ * `crypto.randomUUID` -> `crypto.getRandomValues` -> relogio + contador.
+ *
+ * O id nasce no topo do modulo (`const tabId = generateTabId()`), entao NADA
+ * aqui pode lancar: um throw derruba o modulo e a eleicao de aba inteira. Foi
+ * por isso que este arquivo nao usa `secureRandomFloat()` direto — ele lanca
+ * quando `crypto.getRandomValues` nao existe, que e exatamente o cenario deste
+ * fallback. Os outros geradores do arquivo passaram a usar o helper.
+ *
+ * `crypto.randomUUID` exige contexto seguro (HTTPS); `getRandomValues` nao, e
+ * existe em qualquer navegador desde ~2013. Ou seja: o ramo 2 e o que roda de
+ * verdade em navegador sem `randomUUID`, e ele e criptografico.
+ *
+ * O valor e persistido (lock em localStorage) e trocado no BroadcastChannel,
+ * mas so por IGUALDADE de string: nao e comparado por regex, nao e enviado ao
+ * banco e o formato nao e lido por ninguem.
+ */
 function generateTabId(): string {
   try {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
       return crypto.randomUUID();
     }
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+      return `tab-${secureRandomChars(10, BASE36_MAIUSCULO).toLowerCase()}`;
+    }
   } catch {
-    // `crypto` bloqueado pelo navegador: cai no fallback abaixo.
+    // `crypto` bloqueado pelo navegador: cai no ultimo recurso abaixo.
   }
-  return `tab-${Math.random().toString(36).slice(2, 10)}`;
+  // Ultimo recurso, sem fonte aleatoria nenhuma. Duas abas abertas no mesmo
+  // milissegundo colidiriam — cenario que nao existe em navegador suportado e
+  // que e preferivel a derrubar o modulo por causa do id.
+  contadorSemCrypto += 1;
+  return `tab-${Date.now().toString(36)}-${contadorSemCrypto.toString(36)}`;
 }
 
 /** Leitura tolerante do lock: `localStorage` bloqueado/inexistente ou JSON inválido → sem lock. */
@@ -306,7 +335,7 @@ export function subscribe(listener: Listener): () => void {
  */
 export function claimLeadership(): void {
   if (current.role === 'leader' || claimTimer !== null) return;
-  const jitter = Math.floor(Math.random() * (LEADER_CLAIM_JITTER_MS + 1));
+  const jitter = Math.floor(secureRandomFloat() * (LEADER_CLAIM_JITTER_MS + 1));
   claimTimer = setTimeout(() => {
     claimTimer = null;
     performClaim();

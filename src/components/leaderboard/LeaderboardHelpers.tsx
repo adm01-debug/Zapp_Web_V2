@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import type { LeaderboardAgent } from '@/hooks/gamification/useLeaderboard';
+import { secureRandomFloat } from '../../lib/secureRandom';
 import {
   Trophy, Medal, Crown, Star, Flame, TrendingUp, TrendingDown, Minus,
   Sparkles, Zap, Target, Award, ChevronRight,
@@ -68,14 +69,17 @@ export function AchievementBadge({ achievementKey }: { achievementKey: string })
 }
 
 export function CelebrationParticles({ isVisible }: { isVisible: boolean }) {
+  // Enfeite: x/y/tamanho/tempo/cor morrem no estilo e na animacao do <motion.div>
+  // (nada e gravado, comparado por regex nem enviado ao servidor), por isso a
+  // fonte de aleatoriedade so precisou deixar de ser o PRNG previsivel (S2245).
   const particles = Array.from({ length: 20 }, (_, i) => ({
-    id: i, x: Math.random() * 100 - 50, y: Math.random() * -100 - 20,
-    delay: Math.random() * 0.5, duration: 1 + Math.random() * 0.5, size: 4 + Math.random() * 8,
+    id: i, x: secureRandomFloat() * 100 - 50, y: secureRandomFloat() * -100 - 20,
+    delay: secureRandomFloat() * 0.5, duration: 1 + secureRandomFloat() * 0.5, size: 4 + secureRandomFloat() * 8,
     color: [
       getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(),
       getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim(),
       getComputedStyle(document.documentElement).getPropertyValue('--accent-foreground').trim(),
-    ].map(v => `hsl(${v})`)[Math.floor(Math.random() * 3)] || 'hsl(var(--primary))',
+    ].map(v => `hsl(${v})`)[Math.floor(secureRandomFloat() * 3)] || 'hsl(var(--primary))',
   }));
 
   return (
