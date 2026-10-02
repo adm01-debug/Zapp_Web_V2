@@ -1,5 +1,5 @@
--- 20261002591230_f55_claimable_items_por_bloco.sql
--- Classe: CONTRATO (create or replace function).
+-- f55_claimable_items_por_bloco
+-- versão 20261002621230 reservada para hermes-bloco-f2-f55-f56-worker-por-item-261002140614c3 em 2026-10-02T15:01:33-03:00 (hermes-db-migrar --nova)
 --
 -- rollback: DROP FUNCTION IF EXISTS public.list_multiplix_claimable_items(uuid, integer); DROP FUNCTION IF EXISTS public.heartbeat_multiplix_item(uuid, uuid, integer);
 --

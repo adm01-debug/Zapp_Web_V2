@@ -276,7 +276,7 @@ migration "20261001231230_f32b_multiplix_item_queue_rpcs.sql"
 migration "20261002521230_f59_transition_dispatch_enum_cast.sql"
 # F55/F56 (bloco F2): a ESCOLHA do proximo item (list_multiplix_claimable_items, que traz a
 # regra de ordem por bloco do F56 para dentro do banco) e o heartbeat de lease do item.
-migration "20261002591230_f55_claimable_items_por_bloco.sql"
+migration "20261002621230_f55_claimable_items_por_bloco.sql"
 
 
 # ── F57: fila POR ITEM (multiplix_delivery_items) ──────────────────────────────
