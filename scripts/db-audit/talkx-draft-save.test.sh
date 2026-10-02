@@ -15,6 +15,8 @@ migrations=(
   "$repo_root/supabase/migrations/20260930770000_talkx_v23_draft_step.sql"
   "$repo_root/supabase/migrations/20261001271230_talkx_v25_campaign_owner.sql"
   "$repo_root/supabase/migrations/20261001281230_talkx_campaigns_draft_step_responsible.sql"
+  # X014: a RPC de rascunho passa a exigir admin/supervisor.
+  "$repo_root/supabase/migrations/20261002381230_talkx_role_gates.sql"
 )
 
 cleanup() { docker rm -f "$container_name" >/dev/null 2>&1 || true; }
@@ -75,7 +77,8 @@ CREATE TABLE public.user_roles (
 CREATE FUNCTION public.get_profile_id_for_user(uuid) RETURNS uuid LANGUAGE sql STABLE AS $$
   SELECT id FROM public.profiles WHERE user_id = $1
 $$;
-CREATE FUNCTION public.is_admin_or_supervisor(_user_id uuid) RETURNS boolean LANGUAGE sql STABLE AS $$
+CREATE FUNCTION public.is_admin_or_supervisor(_user_id uuid) RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.user_roles
     WHERE user_id = _user_id AND role IN ('admin', 'supervisor')
@@ -131,11 +134,28 @@ CREATE TABLE public.talkx_campaigns (
 INSERT INTO public.profiles (id, user_id) VALUES
   ('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001'),
   ('10000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002'),
-  ('10000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000003');
--- Perfil 3 é o responsável elegível (admin/supervisor). Perfil 2 fica sem papel,
--- para continuar servindo de "outro ator" nas checagens de autorização.
+  ('10000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000003'),
+  ('10000000-0000-0000-0000-000000000004', '20000000-0000-0000-0000-000000000004');
+-- X014: criar/editar rascunho passa a exigir admin/supervisor. Perfil 1 (ator) é
+-- admin; perfil 2 (outro ator) é supervisor, para provar o escopo da chave de
+-- criação entre atores com papel; perfil 4 é agente (sem papel) para a checagem
+-- negativa. Perfil 3 é o responsável elegível.
 INSERT INTO public.user_roles (user_id, role) VALUES
+  ('20000000-0000-0000-0000-000000000001', 'admin'),
+  ('20000000-0000-0000-0000-000000000002', 'supervisor'),
   ('20000000-0000-0000-0000-000000000003', 'supervisor');
+
+-- X014: colunas que o gatilho vigente (worker lease) referencia.
+ALTER TABLE public.talkx_campaigns
+  ADD COLUMN IF NOT EXISTS worker_id text,
+  ADD COLUMN IF NOT EXISTS worker_lease_expires_at timestamptz;
+
+-- X014: objetos que a migration de role gates cria/ajusta.
+CREATE TABLE public.talkx_settings (key text PRIMARY KEY, value jsonb NOT NULL);
+CREATE TABLE public.talkx_blacklist (id uuid PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE public.talkx_links (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), campaign_id uuid);
+CREATE TABLE public.talkx_link_clicks (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), link_id uuid);
+
 GRANT USAGE ON SCHEMA public, auth TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.talkx_campaigns TO authenticated;
 SQL
@@ -152,6 +172,7 @@ authenticated_can_execute="$(psql_test -Atqc "SELECT has_function_privilege('aut
 
 owner_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000001';"
 other_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000002';"
+agent_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000004';"
 creation_key='30000000-0000-0000-0000-000000000001'
 resp_id='10000000-0000-0000-0000-000000000003'
 msg_ok='Olá {{nome}}'
@@ -181,8 +202,8 @@ stale="$(psql_test -v VERBOSITY=verbose -c "$owner_session SELECT * FROM public.
 [[ "$stale" == *talkx_campaign_stale_revision* ]] || fail 'revisão antiga sobrescreveu edição recente'
 [[ "$(psql_test -Atqc "SELECT name FROM public.talkx_campaigns WHERE id='$campaign_id'")" == 'Rascunho atualizado' ]] || fail 'tentativa stale alterou o rascunho'
 
-forbidden="$(psql_test -v VERBOSITY=verbose -c "$other_session SELECT * FROM public.save_talkx_campaign_draft('$campaign_id'::uuid, 2, NULL, '$payload'::jsonb);" 2>&1 || true)"
-[[ "$forbidden" == *talkx_campaign_not_authorized* ]] || fail 'outro ator editou rascunho alheio'
+forbidden="$(psql_test -v VERBOSITY=verbose -c "$agent_session SELECT * FROM public.save_talkx_campaign_draft('$campaign_id'::uuid, 2, NULL, '$payload'::jsonb);" 2>&1 || true)"
+[[ "$forbidden" == *talkx_campaign_role_required* ]] || fail 'agente (sem papel) conseguiu editar rascunho (X014)'
 
 invalid="$(psql_test -v VERBOSITY=verbose -c "$owner_session SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000009'::uuid, '{\"name\":\"x\"}'::jsonb);" 2>&1 || true)"
 [[ "$invalid" == *invalid_talkx_campaign_draft* ]] || fail 'payload incompleto foi aceito'
@@ -231,8 +252,8 @@ resp_first="$(psql_test -Atqc "$owner_session SELECT campaign_id FROM public.sav
 [[ -n "$resp_first" ]] || fail '(c) criação com responsible_id falhou'
 resp_sel="$(psql_test -Atqc "SELECT draft_step || ':' || responsible_id FROM public.talkx_campaigns WHERE id='$resp_first'")"
 [[ "$resp_sel" == "3:$resp_id" ]] || fail "(c) draft_step/responsible_id não voltaram no SELECT (obtido: $resp_sel)"
-# responsável explícito fora de admin/supervisor é recusado.
-payload_resp_bad="${payload%?},\"draft_step\":3,\"responsible_id\":\"10000000-0000-0000-0000-000000000002\"}"
+# responsável explícito fora de admin/supervisor é recusado (agente, perfil 4).
+payload_resp_bad="${payload%?},\"draft_step\":3,\"responsible_id\":\"10000000-0000-0000-0000-000000000004\"}"
 resp_bad="$(psql_test -v VERBOSITY=verbose -c "$owner_session SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000023'::uuid, '$payload_resp_bad'::jsonb);" 2>&1 || true)"
 [[ "$resp_bad" == *talkx_responsible_not_authorized* ]] || fail '(c) responsável sem papel admin/supervisor foi aceito'
 
