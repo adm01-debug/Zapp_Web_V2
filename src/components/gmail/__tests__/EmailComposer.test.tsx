@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createElement } from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { EmailComposer } from '../EmailComposer';
-import type { EmailMessage } from '@/hooks/integrations/useGmail';
+import type { EmailAttachment, EmailMessage } from '@/hooks/integrations/useGmail';
 
 const ANIMATION_PROPS = new Set(['initial', 'animate', 'exit', 'whileHover', 'whileTap', 'variants', 'transition', 'layout']);
 function makeMotionEl(tag: string) {
@@ -20,11 +20,17 @@ vi.mock('framer-motion', () => ({
 
 const sendEmailMutateAsync = vi.fn().mockResolvedValue({});
 const replyEmailMutateAsync = vi.fn().mockResolvedValue({});
+const saveDraftMutateAsync = vi.fn().mockResolvedValue({ draft_id: 'draft-1' });
+const deleteDraftMutateAsync = vi.fn().mockResolvedValue({});
+const getAttachmentContent = vi.fn().mockResolvedValue('AQID');
 
 vi.mock('@/hooks/integrations/useGmail', () => ({
   useGmail: () => ({
     sendEmail: { mutateAsync: sendEmailMutateAsync, isPending: false },
     replyEmail: { mutateAsync: replyEmailMutateAsync, isPending: false },
+    saveDraft: { mutateAsync: saveDraftMutateAsync, isPending: false },
+    deleteDraft: { mutateAsync: deleteDraftMutateAsync, isPending: false },
+    getAttachmentContent,
     activeAccount: { email_address: 'eu@promobrindes.com.br' },
   }),
 }));
@@ -44,9 +50,14 @@ function makeMessage(overrides: Partial<EmailMessage> = {}): EmailMessage {
 
 describe('EmailComposer — inicialização e comportamento de envio', () => {
   beforeEach(() => {
-    sendEmailMutateAsync.mockClear();
-    replyEmailMutateAsync.mockClear();
+    sendEmailMutateAsync.mockReset().mockResolvedValue({});
+    replyEmailMutateAsync.mockReset().mockResolvedValue({});
+    saveDraftMutateAsync.mockReset().mockResolvedValue({ draft_id: 'draft-1' });
+    deleteDraftMutateAsync.mockClear();
+    getAttachmentContent.mockClear();
   });
+
+  afterEach(() => vi.useRealTimers());
 
   it('modo new: campo Para vazio e botão Enviar desabilitado', () => {
     render(<EmailComposer mode="new" onClose={vi.fn()} />);
@@ -114,16 +125,16 @@ describe('EmailComposer — inicialização e comportamento de envio', () => {
 
   it('modo reply-all: handleSend chama replyEmail.mutateAsync', async () => {
     const onClose = vi.fn();
-    render(<EmailComposer mode="reply-all" replyTo={makeMessage()} onClose={onClose} />);
+    render(<EmailComposer mode="reply-all" replyTo={makeMessage()} threadId="thread-abc" onClose={onClose} />);
     fireEvent.click(screen.getByRole('button', { name: /enviar/i }));
     await waitFor(() => expect(replyEmailMutateAsync).toHaveBeenCalled());
   });
 
-  it('Descartar chama onClose sem enviar', () => {
+  it('Descartar chama onClose sem enviar', async () => {
     const onClose = vi.fn();
     render(<EmailComposer mode="new" onClose={onClose} />);
     fireEvent.click(screen.getByRole('button', { name: /descartar/i }));
-    expect(onClose).toHaveBeenCalled();
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(sendEmailMutateAsync).not.toHaveBeenCalled();
   });
 
@@ -149,5 +160,53 @@ describe('EmailComposer — inicialização e comportamento de envio', () => {
       expect.objectContaining({ to: ['dest@email.com'], subject: 'Fwd: Orçamento' })
     ));
     expect(replyEmailMutateAsync).not.toHaveBeenCalled();
+  });
+
+  it('encaminha o anexo original selecionado com conteúdo autenticado', async () => {
+    const attachment = {
+      id: 'att-1', email_message_id: 'm1', gmail_attachment_id: 'gmail-att-1',
+      filename: 'proposta.pdf', mime_type: 'application/pdf', size_bytes: 3,
+      created_at: '2026-10-02T12:00:00Z', gmail_message_id: 'g1',
+    } as EmailAttachment & { gmail_message_id: string };
+    render(<EmailComposer mode="forward" replyTo={makeMessage()} forwardAttachments={[attachment]} onClose={vi.fn()} />);
+    fireEvent.change(screen.getByPlaceholderText('destinatario@email.com'), { target: { value: 'dest@email.com' } });
+    fireEvent.click(screen.getByRole('button', { name: /enviar/i }));
+
+    await waitFor(() => expect(getAttachmentContent).toHaveBeenCalledWith(attachment));
+    expect(sendEmailMutateAsync).toHaveBeenCalledWith(expect.objectContaining({
+      attachments: [{ filename: 'proposta.pdf', mimeType: 'application/pdf', content: 'AQID' }],
+    }));
+  });
+
+  it('bloqueia duplo clique desde o início da preparação do envio', async () => {
+    sendEmailMutateAsync.mockImplementation(() => new Promise(() => undefined));
+    render(<EmailComposer mode="new" defaultTo="dest@email.com" onClose={vi.fn()} />);
+    fireEvent.change(screen.getByPlaceholderText('Assunto do email'), { target: { value: 'Envio único' } });
+    const send = screen.getByRole('button', { name: /enviar/i });
+    fireEvent.click(send);
+    fireEvent.click(send);
+    await waitFor(() => expect(sendEmailMutateAsync).toHaveBeenCalledTimes(1));
+  });
+
+  it('serializa autosaves e atualiza o mesmo draft quando respostas chegam fora de ordem', async () => {
+    vi.useFakeTimers();
+    let resolveFirst: (value: { draft_id: string }) => void = () => undefined;
+    saveDraftMutateAsync
+      .mockImplementationOnce(() => new Promise(resolve => { resolveFirst = resolve; }))
+      .mockResolvedValueOnce({ draft_id: 'draft-1' });
+
+    render(<EmailComposer mode="new" defaultTo="dest@email.com" onClose={vi.fn()} />);
+    fireEvent.change(screen.getByPlaceholderText('Assunto do email'), { target: { value: 'Versão 1' } });
+    await act(async () => { vi.advanceTimersByTime(1200); await Promise.resolve(); });
+    expect(saveDraftMutateAsync).toHaveBeenCalledTimes(1);
+    expect(saveDraftMutateAsync).toHaveBeenNthCalledWith(1, expect.objectContaining({ draft_id: undefined, subject: 'Versão 1' }));
+
+    fireEvent.change(screen.getByPlaceholderText('Assunto do email'), { target: { value: 'Versão 2' } });
+    await act(async () => { vi.advanceTimersByTime(1200); await Promise.resolve(); });
+    expect(saveDraftMutateAsync).toHaveBeenCalledTimes(1);
+
+    await act(async () => { resolveFirst({ draft_id: 'draft-1' }); await Promise.resolve(); await Promise.resolve(); });
+    expect(saveDraftMutateAsync).toHaveBeenCalledTimes(2);
+    expect(saveDraftMutateAsync).toHaveBeenNthCalledWith(2, expect.objectContaining({ draft_id: 'draft-1', subject: 'Versão 2' }));
   });
 });

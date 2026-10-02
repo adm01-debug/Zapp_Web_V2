@@ -9,7 +9,14 @@ export { z };
 // ─── Common reusable schemas ─────────────────────────────────
 export const UUIDSchema = z.string().uuid("Must be a valid UUID");
 export const EmailSchema = z.string().email("Invalid email").max(255);
-export const SafeStringSchema = (maxLen = 10000) => z.string().max(maxLen).transform(s => s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim());
+const stripUnsafeControlCharacters = (value: string) => Array.from(value)
+  .filter(character => {
+    const code = character.charCodeAt(0);
+    return code === 9 || code === 10 || code === 13 || (code >= 32 && code !== 127);
+  })
+  .join('');
+
+export const SafeStringSchema = (maxLen = 10000) => z.string().max(maxLen).transform(s => stripUnsafeControlCharacters(s).trim());
 
 // ─── AI function schemas ─────────────────────────────────────
 // ─── Contrato de contexto de conversa (IA-024) ───────────────
@@ -282,14 +289,29 @@ export const ScheduledReportSchema = z.object({
 // (hex/base64url), sempre curtas. Restringe o charset a algo que nao permite
 // injecao de path (/, ?, #, espaco) quando interpolado direto na URL da API.
 const GMAIL_ID_RE = /^[0-9A-Za-z_-]{1,100}$/;
+const GmailHeaderValueSchema = z.string().max(1000).refine(value => !/[\r\n]/.test(value), 'Quebra de linha nao permitida em cabecalho');
+const GMAIL_MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;
+const GmailAttachmentsSchema = z.array(z.object({
+  filename: z.string().min(1).max(255).refine(value => !/[\r\n\\/"]/.test(value), 'Nome de anexo invalido'),
+  mimeType: z.string().max(100).regex(/^[\w.+-]+\/[\w.+-]+$/),
+  content: z.string().max(36_000_000).regex(/^[A-Za-z0-9+/]*={0,2}$/),
+})).max(10).superRefine((attachments, context) => {
+  const totalBytes = attachments.reduce((total, attachment) => {
+    const padding = attachment.content.endsWith('==') ? 2 : attachment.content.endsWith('=') ? 1 : 0;
+    return total + Math.max(0, Math.floor(attachment.content.length * 3 / 4) - padding);
+  }, 0);
+  if (totalBytes > GMAIL_MAX_ATTACHMENT_BYTES) {
+    context.addIssue({ code: z.ZodIssueCode.custom, message: 'Tamanho total dos anexos excede 25MB' });
+  }
+});
 
 export const GmailSendActionSchema = z.object({
-  action: z.enum(['send', 'reply', 'create-draft', 'modify-labels', 'mark-read', 'trash', 'trash-thread']),
+  action: z.enum(['send', 'reply', 'create-draft', 'update-draft', 'delete-draft', 'modify-labels', 'modify-thread-labels', 'mark-read', 'trash', 'trash-thread']),
   account_id: z.string().uuid("account_id must be a valid UUID"),
-  to: z.union([z.string(), z.array(z.string())]).optional(),
-  cc: z.array(z.string()).optional(),
-  bcc: z.array(z.string()).optional(),
-  subject: z.string().max(1000).optional(),
+  to: z.union([GmailHeaderValueSchema, z.array(GmailHeaderValueSchema).max(100)]).optional(),
+  cc: z.array(GmailHeaderValueSchema).max(100).optional(),
+  bcc: z.array(GmailHeaderValueSchema).max(100).optional(),
+  subject: GmailHeaderValueSchema.optional(),
   text_body: z.string().max(100000).optional(),
   html_body: z.string().max(500000).optional(),
   // IDs do Gmail sao interpolados direto na URL (/messages/{id}/modify,
@@ -297,14 +319,11 @@ export const GmailSendActionSchema = z.object({
   // injecao de path (/, ?, #, espaco) na validacao, uma vez, pra todos eles.
   thread_id: z.string().max(100).regex(GMAIL_ID_RE, 'Formato de thread_id invalido').optional(),
   message_id: z.string().max(100).regex(GMAIL_ID_RE, 'Formato de message_id invalido').optional(),
+  draft_id: z.string().max(100).regex(GMAIL_ID_RE, 'Formato de draft_id invalido').optional(),
   message_ids: z.array(z.string().max(100).regex(GMAIL_ID_RE, 'Formato de message_id invalido')).max(100).optional(),
   add_labels: z.array(z.string()).max(50).optional(),
   remove_labels: z.array(z.string()).max(50).optional(),
-  attachments: z.array(z.object({
-    filename: z.string().max(255),
-    mimeType: z.string().max(100),
-    content: z.string(), // base64
-  })).max(10).optional(),
+  attachments: GmailAttachmentsSchema.optional(),
 });
 
 // ─── Gmail OAuth ─────────────────────────────────────────────

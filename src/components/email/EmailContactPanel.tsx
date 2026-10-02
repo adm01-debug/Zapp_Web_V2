@@ -10,17 +10,17 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import {
-  X, Mail, Phone, Building2, Tag, Clock, BarChart3,
-  MessageSquare, FileText, Star, ExternalLink, User
+  X, Mail, Tag, Clock, BarChart3, MessageSquare, User
 } from 'lucide-react';
 import type { EmailThread } from '@/hooks/integrations/useGmail';
-import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface EmailContactPanelProps {
   thread: EmailThread;
+  labels?: Array<{ gmail_label_id: string; name: string }>;
   onClose: () => void;
+  onCompose?: (email: string) => void;
 }
 
 function getInitials(name?: string | null, email?: string): string {
@@ -29,15 +29,22 @@ function getInitials(name?: string | null, email?: string): string {
   return '?';
 }
 
-export function EmailContactPanel({ thread, onClose }: EmailContactPanelProps) {
+const SYSTEM_LABELS = new Set(['INBOX', 'UNREAD', 'SENT', 'IMPORTANT', 'DRAFT', 'TRASH', 'SPAM', 'STARRED']);
+
+export function EmailContactPanel({ thread, labels = [], onClose, onCompose }: EmailContactPanelProps) {
   const contact = thread.contact;
+  const displayName = contact?.name || contact?.email || thread.last_from_name || thread.last_from_address || 'Não vinculado ao CRM';
+  const displayEmail = contact?.email || thread.last_from_address || '';
+  const displayLabels = thread.label_ids
+    .filter(labelId => !SYSTEM_LABELS.has(labelId) && !labelId.startsWith('CATEGORY_'))
+    .map(labelId => labels.find(label => label.gmail_label_id === labelId)?.name || labelId);
   const [accordionValue, setAccordionValue] = useState<string[]>(['info', 'tags', 'stats']);
 
   return (
-    <div className="w-80 h-full bg-sidebar border-l border-border/30 flex flex-col overflow-hidden">
+    <div className="flex h-full w-80 flex-col overflow-hidden bg-[#041421] text-slate-100">
       {/* Header */}
-      <div className="p-4 border-b border-border/30 flex items-center justify-between shrink-0">
-        <h3 className="text-sm font-semibold text-foreground">Detalhes do Contato</h3>
+      <div className="flex shrink-0 items-center justify-between border-b border-cyan-300/10 bg-[#061827] p-4">
+        <h3 className="text-sm font-semibold text-slate-100">Detalhes do Contato</h3>
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} aria-label="Fechar">
           <X className="w-4 h-4" />
         </Button>
@@ -47,25 +54,23 @@ export function EmailContactPanel({ thread, onClose }: EmailContactPanelProps) {
         <div className="p-4 space-y-4">
           {/* Contact Avatar & Name */}
           <div className="flex flex-col items-center text-center pb-4 border-b border-border/30">
-            <Avatar className="h-20 w-20 mb-3">
+            <Avatar className="mb-3 h-20 w-20 ring-2 ring-blue-500/40 ring-offset-4 ring-offset-[#041421]">
               <AvatarFallback className="text-lg bg-primary/10 text-primary font-bold">
-                {getInitials(contact?.name, contact?.email)}
+                {getInitials(displayName, displayEmail)}
               </AvatarFallback>
             </Avatar>
             <h4 className="font-semibold text-foreground text-base">
-              {contact?.name || 'Desconhecido'}
+              {displayName}
             </h4>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {contact?.email || ''}
+              {displayEmail}
             </p>
 
             {/* Quick action buttons */}
             <div className="flex items-center gap-1 mt-3">
-              <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" title="Email">
+              <Button variant="outline" size="sm" className="h-8 rounded-full border-cyan-300/10 bg-[#071a2a]" title="Nova mensagem" disabled={!displayEmail || !onCompose} onClick={() => displayEmail && onCompose?.(displayEmail)}>
                 <Mail className="w-3.5 h-3.5" />
-              </Button>
-              <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" title="CRM">
-                <User className="w-3.5 h-3.5" />
+                <span className="ml-1.5 text-xs">E-mail</span>
               </Button>
             </div>
           </div>
@@ -82,7 +87,7 @@ export function EmailContactPanel({ thread, onClose }: EmailContactPanelProps) {
               </AccordionTrigger>
               <AccordionContent className="pb-3">
                 <div className="space-y-2.5">
-                  <InfoRow icon={Mail} label="Email" value={contact?.email} />
+                  <InfoRow icon={Mail} label="Email" value={displayEmail} />
                   <InfoRow icon={MessageSquare} label="Assunto" value={thread.subject || '(Sem assunto)'} />
                   <InfoRow
                     icon={Clock}
@@ -113,15 +118,7 @@ export function EmailContactPanel({ thread, onClose }: EmailContactPanelProps) {
                   ) : (
                     <p className="text-xs text-muted-foreground">Nenhuma tag</p>
                   )}
-                  {thread.label_ids && thread.label_ids.length > 0 && (
-                    <>
-                      {thread.label_ids.filter(l => !['INBOX', 'UNREAD', 'SENT', 'IMPORTANT'].includes(l)).map(label => (
-                        <Badge key={label} variant="outline" className="text-3xs">
-                          {label}
-                        </Badge>
-                      ))}
-                    </>
-                  )}
+                  {displayLabels.map(label => <Badge key={label} variant="outline" className="text-3xs">{label}</Badge>)}
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -139,7 +136,7 @@ export function EmailContactPanel({ thread, onClose }: EmailContactPanelProps) {
                   <StatCard label="Mensagens" value={thread.message_count} />
                   <StatCard label="Status" value={thread.is_unread ? 'Não lido' : 'Lido'} />
                   <StatCard label="Favorito" value={thread.is_starred ? 'Sim' : 'Não'} />
-                  <StatCard label="Anexos" value={thread.label_ids?.includes('HAS_ATTACHMENT') ? 'Sim' : 'Não'} />
+                  <StatCard label="Anexos" value={thread.has_attachments ? 'Sim' : 'Não'} />
                 </div>
               </AccordionContent>
             </AccordionItem>

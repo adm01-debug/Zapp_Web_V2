@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Mail, Search, RefreshCw, Pencil, Inbox, Star,
-  MailOpen, Paperclip, MailX
+  ChevronLeft, ChevronRight, MailX
 } from 'lucide-react';
 import type { EmailThread } from '@/hooks/integrations/useGmail';
 import { cn } from '@/lib/utils';
@@ -37,8 +37,11 @@ function formatDate(dateStr: string): string {
 interface EmailThreadListProps {
   threads: EmailThread[];
   threadsLoading: boolean;
+  threadsError?: Error | null;
   labels: { id: string; name: string; gmail_label_id: string; label_type: string; unread_count: number }[];
   unreadCount: number;
+  globalSearchQuery?: string;
+  onClearGlobalSearch?: () => void;
   selectedThreadId: string | null;
   activeAccountEmail: string;
   onSelectThread: (thread: EmailThread) => void;
@@ -48,55 +51,63 @@ interface EmailThreadListProps {
 }
 
 export function EmailThreadList({
-  threads, threadsLoading, labels, unreadCount,
+  threads, threadsLoading, threadsError, labels, unreadCount, globalSearchQuery = '', onClearGlobalSearch,
   selectedThreadId, activeAccountEmail,
   onSelectThread, onNewEmail, onSync, isSyncing
 }: EmailThreadListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState('all');
   const [labelFilter, setLabelFilter] = useState('all');
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
 
   const filteredThreads = useMemo(() => {
     let result = threads;
     if (filter === 'unread') result = result.filter(t => t.is_unread);
     if (filter === 'starred') result = result.filter(t => t.is_starred);
-    // E34: HAS_ATTACHMENT nao e label do Gmail - filtro por has_attachments em email_messages
-    // (conservativo: threads sem mensagens carregadas aparecem quando filtro ativo)
+    if (filter === 'has_attachment') result = result.filter(t => t.has_attachments);
     if (labelFilter !== 'all') {
       result = result.filter(t => t.label_ids?.includes(labelFilter));
     }
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
+    const effectiveSearch = (globalSearchQuery || searchQuery).trim();
+    if (effectiveSearch) {
+      const q = effectiveSearch.toLowerCase();
       result = result.filter(t =>
         t.subject?.toLowerCase().includes(q) ||
         t.snippet?.toLowerCase().includes(q) ||
+        t.last_from_name?.toLowerCase().includes(q) ||
+        t.last_from_address?.toLowerCase().includes(q) ||
         t.contact?.name?.toLowerCase().includes(q) ||
         t.contact?.email?.toLowerCase().includes(q)
       );
     }
     return result;
-  }, [threads, filter, labelFilter, searchQuery]);
+  }, [threads, filter, labelFilter, searchQuery, globalSearchQuery]);
+  const pageCount = Math.max(1, Math.ceil(filteredThreads.length / pageSize));
+  const effectivePage = Math.min(page, pageCount);
+  const visibleThreads = filteredThreads.slice((effectivePage - 1) * pageSize, effectivePage * pageSize);
 
   return (
     <>
       {/* Toolbar */}
-      <div className="p-3 border-b border-border/30 space-y-2 shrink-0">
+      <div className="shrink-0 space-y-2 border-b border-cyan-300/10 bg-[#051725] p-3">
         <div className="flex items-center gap-2">
-          <Mail className="w-5 h-5 text-destructive shrink-0" />
-          <h2 className="text-sm font-semibold flex-1">Email</h2>
+          <Mail className="h-5 w-5 shrink-0 text-blue-400" />
+          <h2 className="flex-1 text-sm font-semibold text-slate-100">Conversas</h2>
           {unreadCount > 0 && (
             <Badge variant="default" className="text-3xs px-1.5 py-0">
               {unreadCount}
             </Badge>
           )}
-          <Button variant="default" size="sm" className="h-7 text-xs" onClick={onNewEmail}>
+          <Button variant="default" size="sm" className="h-7 bg-blue-600 text-xs hover:bg-blue-500" onClick={onNewEmail}>
             <Pencil className="w-3 h-3 mr-1" />
             Novo
           </Button>
           <Button
-            variant="outline" size="icon" className="h-7 w-7"
+            variant="outline" size="icon" className="h-7 w-7 border-cyan-300/10 bg-[#081c2d] text-slate-300"
             onClick={onSync}
             disabled={isSyncing}
+            aria-label="Sincronizar conversas"
           >
             <RefreshCw className={cn('w-3.5 h-3.5', isSyncing && 'animate-spin')} />
           </Button>
@@ -106,14 +117,15 @@ export function EmailThreadList({
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input
+              aria-label="Buscar nas conversas"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
               placeholder="Buscar..."
-              className="h-8 pl-8 text-sm"
+              className="h-8 border-cyan-300/10 bg-[#071a2a] pl-8 text-sm text-slate-100 placeholder:text-slate-500"
             />
           </div>
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-[100px] h-8 text-xs">
+          <Select value={filter} onValueChange={value => { setFilter(value); setPage(1); }}>
+            <SelectTrigger aria-label="Filtrar conversas" className="h-8 w-[112px] border-cyan-300/10 bg-[#071a2a] text-xs text-slate-200">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -131,21 +143,21 @@ export function EmailThreadList({
             <Badge
               variant={labelFilter === 'all' ? 'default' : 'outline'}
               className="text-3xs px-2 py-0.5 cursor-pointer shrink-0 hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring"
-              onClick={() => setLabelFilter('all')}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLabelFilter('all'); } }}
+              onClick={() => { setLabelFilter('all'); setPage(1); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLabelFilter('all'); setPage(1); } }}
               role="button"
               tabIndex={0}
               aria-pressed={labelFilter === 'all'}
             >
               Todos
             </Badge>
-            {labels.filter(l => l.label_type === 'user' || ['INBOX', 'SENT', 'IMPORTANT', 'DRAFT'].includes(l.gmail_label_id)).map((label) => (
+            {labels.filter(l => l.label_type === 'user' || ['INBOX', 'SENT', 'IMPORTANT', 'DRAFT', 'TRASH', 'SPAM'].includes(l.gmail_label_id)).map((label) => (
               <Badge
                 key={label.id}
                 variant={labelFilter === label.gmail_label_id ? 'default' : 'outline'}
                 className="text-3xs px-2 py-0.5 cursor-pointer shrink-0 hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring"
-                onClick={() => setLabelFilter(label.gmail_label_id)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLabelFilter(label.gmail_label_id); } }}
+                onClick={() => { setLabelFilter(label.gmail_label_id); setPage(1); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLabelFilter(label.gmail_label_id); setPage(1); } }}
                 role="button"
                 tabIndex={0}
                 aria-pressed={labelFilter === label.gmail_label_id}
@@ -163,7 +175,14 @@ export function EmailThreadList({
 
       {/* Thread list */}
       <ScrollArea className="flex-1">
-        {threadsLoading ? (
+        {threadsError ? (
+          <div role="alert" className="flex flex-col items-center justify-center px-6 py-16 text-center text-slate-400">
+            <MailX className="mb-3 h-10 w-10 text-red-400/80" />
+            <p className="text-sm font-medium text-slate-200">Falha ao carregar conversas</p>
+            <p className="mt-1 text-xs">Sincronize novamente ou confira a conexão da conta.</p>
+            <Button variant="outline" size="sm" className="mt-4 border-cyan-300/10 bg-[#071a2a]" onClick={onSync}>Tentar novamente</Button>
+          </div>
+        ) : threadsLoading ? (
           <div className="p-3 space-y-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="flex items-center gap-3 animate-pulse">
@@ -179,12 +198,12 @@ export function EmailThreadList({
           </div>
         ) : filteredThreads.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground px-6">
-            {searchQuery ? (
+            {searchQuery || globalSearchQuery ? (
               <>
                 <MailX className="w-12 h-12 mb-3 opacity-20" />
                 <p className="text-sm font-medium mb-1">Nenhum resultado</p>
                 <p className="text-xs text-center">Tente buscar por outro termo ou remova os filtros.</p>
-                <Button variant="outline" size="sm" className="mt-3 text-xs" onClick={() => { setSearchQuery(''); setFilter('all'); setLabelFilter('all'); }}>
+                <Button variant="outline" size="sm" className="mt-3 text-xs" onClick={() => { setSearchQuery(''); onClearGlobalSearch?.(); setFilter('all'); setLabelFilter('all'); }}>
                   Limpar filtros
                 </Button>
               </>
@@ -208,7 +227,7 @@ export function EmailThreadList({
             )}
           </div>
         ) : (
-          filteredThreads.map(thread => (
+          visibleThreads.map(thread => (
             <ThreadItem
               key={thread.id}
               thread={thread}
@@ -220,9 +239,13 @@ export function EmailThreadList({
       </ScrollArea>
 
       {/* Footer */}
-      <div className="p-2 border-t border-border/30 text-3xs text-muted-foreground flex items-center gap-1 shrink-0">
+      <div className="flex shrink-0 items-center gap-1 border-t border-cyan-300/10 bg-[#041421] p-2 text-3xs text-slate-400">
         <Mail className="w-3 h-3" />
         <span className="truncate">{activeAccountEmail}</span>
+        <span className="ml-auto shrink-0">{filteredThreads.length === 0 ? 0 : (effectivePage - 1) * pageSize + 1}–{Math.min(effectivePage * pageSize, filteredThreads.length)} de {filteredThreads.length}</span>
+        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label="Página anterior" disabled={effectivePage <= 1} onClick={() => setPage(current => Math.max(1, current - 1))}><ChevronLeft className="h-3 w-3" /></Button>
+        <span aria-label={`Página ${effectivePage} de ${pageCount}`}>{effectivePage}/{pageCount}</span>
+        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label="Próxima página" disabled={effectivePage >= pageCount} onClick={() => setPage(current => Math.min(pageCount, current + 1))}><ChevronRight className="h-3 w-3" /></Button>
       </div>
     </>
   );
@@ -246,8 +269,8 @@ function ThreadItem({ thread, isSelected, onClick }: { thread: EmailThread; isSe
       animate={{ opacity: 1 }}
       onClick={onClick}
       className={cn(
-        'w-full text-left p-3 flex items-center gap-3 transition-all border-b border-border/10 min-h-[64px]',
-        isSelected ? 'bg-accent' : 'hover:bg-muted/50',
+        'w-full min-h-[72px] border-b border-cyan-300/5 p-3 text-left flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500',
+        isSelected ? 'bg-blue-600/20 shadow-[inset_3px_0_0_#3b82f6]' : 'hover:bg-cyan-300/5',
         thread.is_unread && 'font-medium'
       )}
     >
