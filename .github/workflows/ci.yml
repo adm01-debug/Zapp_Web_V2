@@ -169,7 +169,7 @@ jobs:
           actionlint_sha256="023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757"
           actionlint_dir="$RUNNER_TEMP/actionlint"
           mkdir -p "$actionlint_dir"
-          curl -sSL -o "$actionlint_dir/$actionlint_asset" \
+          curl --proto '=https' --tlsv1.2 -sSL -o "$actionlint_dir/$actionlint_asset" \
             "https://github.com/rhysd/actionlint/releases/download/v${actionlint_version}/${actionlint_asset}"
           echo "${actionlint_sha256}  ${actionlint_dir}/${actionlint_asset}" | sha256sum --check --strict
           tar -xzf "$actionlint_dir/$actionlint_asset" -C "$actionlint_dir" actionlint
