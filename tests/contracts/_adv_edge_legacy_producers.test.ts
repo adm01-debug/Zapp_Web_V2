@@ -23,6 +23,10 @@
  *    elegibilidade PT↔EN, a fronteira com o Singu) e `_shared/__tests__/multiplix-eligibility.test.ts`.
  *    São 2 arquivos novos e NENHUM dos dois produz token legado: o mapa INVENTARIO e a contagem de
  *    ocorrências (3) seguem idênticos — só o total varrido subiu. O ratchet é atualizado de propósito.
+ *  - 153: PR-B da Decisão 116b (01/10/2026) — `_shared/secure-random.ts` (substituto de `Math.random()`
+ *    para as edge functions, achado S2245). Não produz token legado nem entra no mapa INVENTARIO: o
+ *    total de arquivos varridos sobe de 169 para 170 e a contagem de ocorrências (3) segue idêntica.
+ *    O ratchet é atualizado de propósito.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -97,8 +101,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('169 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(169);
+  it('170 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(170);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );

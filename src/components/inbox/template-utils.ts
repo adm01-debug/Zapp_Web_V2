@@ -1,4 +1,5 @@
 import { User, Building2, Tag, Sparkles, Calendar, Hash, LucideIcon } from 'lucide-react';
+import { secureRandomFloat } from '@/lib/secureRandom';
 
 export interface TemplateVariable {
   key: string;
@@ -30,7 +31,7 @@ export function replaceVariables(
   if (hour >= 18 || hour < 6) saudacao = 'Boa noite';
 
   const firstName = contactData?.name?.split(' ')[0] || '';
-  const protocol = `#${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(Math.floor(Math.random() * 100000)).padStart(5, '0')}`;
+  const protocol = `#${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(Math.floor(secureRandomFloat() * 100000)).padStart(5, '0')}`;
 
   const defaultValues: Record<string, string> = {
     nome: contactData?.name || '',

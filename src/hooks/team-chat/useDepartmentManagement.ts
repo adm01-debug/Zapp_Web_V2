@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { BASE36_MAIUSCULO, secureRandomChars } from '../../lib/secureRandom';
 
 export interface DepartmentProfile {
   id: string;
@@ -33,13 +34,19 @@ export interface DepartmentWhatsAppCredentials {
   evolution_url: string | null;
 }
 
+/**
+ * Codigo do convite de departamento — credencial: quem digita entra no departamento.
+ * PRNG previsivel aqui e vulnerabilidade (typescript:S2245), nao enfeite.
+ *
+ * O formato e CONTRATO do banco: `department_invites.code` e `text NOT NULL
+ * UNIQUE` (migration 20260927400000) e a RPC `accept_department_invite` procura
+ * por `code = upper(trim(p_code))`. `secureRandomChars(8, BASE36_MAIUSCULO)`
+ * sorteia 8 caracteres do MESMO alfabeto de 36 do codigo antigo
+ * ('A-Z0-9'), sem vies de modulo — formato preservado byte a byte, agora sem
+ * codigo adivinhavel.
+ */
 function generateInviteCode(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = '';
-  for (let i = 0; i < 8; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
+  return secureRandomChars(8, BASE36_MAIUSCULO);
 }
 
 export function useDepartmentProfiles() {

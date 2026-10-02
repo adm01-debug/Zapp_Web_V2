@@ -284,7 +284,7 @@ function uniqueRenameAliases(baseline, current) {
 // (repo inteiro) bloqueiam o commit por causa disso. A posicao continua sendo exigida pelas fases de
 // localizacao e de ancora (line/column/spanHash/lineHash/contextHash); aqui sai apenas o ruido de
 // posicao que vive dentro do TEXTO da mensagem.
-const CODE_FRAME_LINE_NUMBER = /(^|\s)>?\s*\d{1,7}\s*\|(?=\s)/g;
+const CODE_FRAME_LINE_NUMBER = /(^|\s)>?\s*\d{1,7}\s*\|(?=\s|$)/g;
 const MESSAGE_FILE_LOCATION = /(?<=[A-Za-z_./\\-]):\d{1,7}:\d{1,7}(?=\s|$)/g;
 
 export function stripVolatilePosition(message) {

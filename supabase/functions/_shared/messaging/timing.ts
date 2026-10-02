@@ -11,9 +11,11 @@
  * o kernel continuar testável sem rede.
  */
 
+import { secureRandomFloat } from "../secure-random.ts";
+
 /** Inteiro uniforme em [min, max], limites inclusive. */
 export function randomBetween(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  return Math.floor(secureRandomFloat() * (max - min + 1)) + min;
 }
 
 /** Espera `ms` milissegundos antes do próximo passo do envio humanizado. */

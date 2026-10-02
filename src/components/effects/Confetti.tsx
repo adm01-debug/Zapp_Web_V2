@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
+import { secureRandomFloat } from '../../lib/secureRandom';
 
 interface Particle {
   id: number;
@@ -46,14 +47,14 @@ export function Confetti({
     for (let i = 0; i < particleCount; i++) {
       newParticles.push({
         id: i,
-        x: Math.random() * 100,
-        y: -10 - Math.random() * 20,
-        rotation: Math.random() * 360,
-        color: COLORS[Math.floor(Math.random() * COLORS.length)],
-        size: 8 + Math.random() * 8,
-        velocityX: (Math.random() - 0.5) * 4,
-        velocityY: 2 + Math.random() * 3,
-        type: ['confetti', 'star', 'circle'][Math.floor(Math.random() * 3)] as Particle['type'],
+        x: secureRandomFloat() * 100,
+        y: -10 - secureRandomFloat() * 20,
+        rotation: secureRandomFloat() * 360,
+        color: COLORS[Math.floor(secureRandomFloat() * COLORS.length)],
+        size: 8 + secureRandomFloat() * 8,
+        velocityX: (secureRandomFloat() - 0.5) * 4,
+        velocityY: 2 + secureRandomFloat() * 3,
+        type: ['confetti', 'star', 'circle'][Math.floor(secureRandomFloat() * 3)] as Particle['type'],
       });
     }
     
@@ -96,7 +97,7 @@ export function Confetti({
               opacity: [1, 1, 0.8, 0],
             }}
             transition={{
-              duration: 2 + Math.random() * 2,
+              duration: 2 + secureRandomFloat() * 2,
               ease: 'easeOut',
             }}
             className="absolute"
