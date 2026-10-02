@@ -78,7 +78,7 @@ jobs:
           deno test --config scripts/ci/deno.json --frozen --allow-env --allow-net=127.0.0.1
           supabase/functions/_shared/messaging/__tests__/media.test.ts
 
-      - name: 🧪 API de dominio do Multiplix (Bloco E: roteador + acoes)
+      - name: "API de dominio do Multiplix (Bloco E - roteador e acoes)"
         run: >-
           deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read
           supabase/functions/multiplix-dispatch/__tests__/f53-rate-limit.test.ts
