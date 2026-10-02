@@ -83,7 +83,8 @@ jobs:
       - name: 🧪 Test CI and Edge deployment guards
         run: >-
           node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs
-          scripts/db-audit/crm-sync-outbox-contract.test.mjs scripts/talkx/*.unit.mjs
+          scripts/db-audit/crm-sync-outbox-contract.test.mjs
+          scripts/db-audit/types-sync-psql-buffer.test.mjs scripts/talkx/*.unit.mjs
 
       - name: 🐹 Setup Go for egress-proxy contracts
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
