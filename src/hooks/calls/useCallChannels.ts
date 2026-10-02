@@ -239,6 +239,8 @@ export function useCallChannels(options?: {
   whatsapp: ChannelCapability;
   /** T30: a linha que decidiu o canal (null = nenhuma visível/utilizável). */
   linhaWhatsApp: WhatsappConnectionRow | null;
+  /** T30: texto pronto do painel ("pela linha X" / "Disponível para supervisores"). */
+  rotuloLinhaWhatsApp: string;
 } {
   const connectionId = options?.connectionId ?? null;
   const { sipStatus, sipReason, micReason } = useCallSession();
@@ -309,5 +311,7 @@ export function useCallChannels(options?: {
     [whatsapp, connectionId, podeVerWhatsApp],
   );
 
-  return { ...capacidades, linhaWhatsApp };
+  // T30/D8: o texto sai daqui porque só o hook sabe `podeVerWhatsApp` — o painel
+  // não pode escolher sozinho entre "pela linha X" e o motivo da restrição.
+  return { ...capacidades, linhaWhatsApp, rotuloLinhaWhatsApp: rotuloLinhaWhatsApp(linhaWhatsApp, podeVerWhatsApp) };
 }

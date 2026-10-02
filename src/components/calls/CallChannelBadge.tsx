@@ -16,6 +16,12 @@ interface CallChannelBadgeProps {
    * "Disponível para supervisores" para quem não enxerga a linha.
    */
   motivo?: CapabilityReason | null;
+  /**
+   * T30: por qual linha a chamada fala ("pela linha <nome>") ou o motivo de ela
+   * não aparecer ("Disponível para supervisores", D8). Texto pronto, vindo de
+   * `rotuloLinhaWhatsApp`; o selo não decide nada.
+   */
+  linha?: string | null;
   className?: string;
 }
 
@@ -23,7 +29,7 @@ interface CallChannelBadgeProps {
  * Selo do canal da chamada. Só apresentação: quem decide o canal e o motivo é
  * quem chama (`IncomingCallAlert`, a partir das capacidades de `useCallChannels`).
  */
-export function CallChannelBadge({ channel, motivo, className }: CallChannelBadgeProps) {
+export function CallChannelBadge({ channel, motivo, linha, className }: CallChannelBadgeProps) {
   const texto = describeReason(motivo);
 
   return (
@@ -35,6 +41,7 @@ export function CallChannelBadge({ channel, motivo, className }: CallChannelBadg
     >
       {NOME_DO_CANAL[channel]}
       {texto ? <span className="opacity-80">· {texto}</span> : null}
+      {!texto && linha ? <span className="opacity-80">· {linha}</span> : null}
     </span>
   );
 }

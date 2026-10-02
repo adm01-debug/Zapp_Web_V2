@@ -37,7 +37,7 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
   // `accept()` → atendida, `reject()` → `declined` e persistência em `declined`).
   // O componente não escreve mais direto na tabela `calls` (legado `useCalls`).
   const { accept, reject } = useCallSession();
-  const { voip, whatsapp } = useCallChannels();
+  const { voip, whatsapp, rotuloLinhaWhatsApp } = useCallChannels();
   // T28: quando o outro lado desliga, a linha em `calls` encerra a sessao e o alerta
   // sai de cena sozinho (o listener para de entrega-la).
   useTerminoRemoto(incomingCall?.callId);
@@ -174,6 +174,7 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
             </motion.div>
             {incomingCall.is_video ? 'Chamada de vídeo' : 'Chamada de voz'}
             <CallChannelBadge
+              linha={whatsapp.canReceive || whatsapp.canDial ? rotuloLinhaWhatsApp : null}
               channel={canal}
               motivo={capacidade.reason ?? null}
               className="ml-auto bg-primary-foreground/20 text-primary-foreground"
