@@ -4,14 +4,11 @@
   "_contexto": "docs/audits/EXECUCAO_2026-08-27.md, secao 'Acoplamento quebrado'",
   "known": [
     "from:department_whatsapp_configs:src/hooks/team-chat/useDepartmentManagement.ts",
-<<<<<<< HEAD
-    "rpc:multiplix_confirm_dispatch:supabase/functions/multiplix-dispatch/actions/lifecycle.ts"
-=======
+    "rpc:multiplix_confirm_dispatch:supabase/functions/multiplix-dispatch/actions/lifecycle.ts",
     "rpc:get_talkx_cron_secret:supabase/functions/talkx-send/index.ts",
     "rpc:claim_talkx_campaign_worker:supabase/functions/talkx-send/index.ts",
     "rpc:talkx_next_recipients:supabase/functions/talkx-send/index.ts",
     "rpc:release_talkx_campaign_worker:supabase/functions/talkx-send/index.ts"
->>>>>>> origin/main
   ],
   "_resolvido": {
     "retry_talkx_recipient": "RPC criado (migration 20260930630000_talkx_v19_retry_recipient.sql). A divida era falsa: o alvo passou a existir no banco e so nao aparecia no catalogo porque os artefatos derivados estavam desatualizados; a entrada ficou obsoleta e o guard manda remove-la.",
