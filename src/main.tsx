@@ -48,7 +48,14 @@ ReactDOM.createRoot(rootElement).render(
 if (import.meta.env.DEV) {
   window.setTimeout(() => {
     import('@axe-core/react').then((axe) => {
+      // O @axe-core/react audita a cada ciclo de render. Sem esperar o app montar,
+      // ele mede arvores TRANSITORIAS e reporta o que nao existe no estado final
+      // (medido em 02/10: landmark-one-main e page-has-heading-one "faltando",
+      // aria-hidden-focus em subarvores que o React remove na hidratacao). Isso
+      // gera falso positivo de ferramenta e queima tempo de quem investiga.
+      // Auditar so' quando houver <main> no DOM: e' o marco de que a pagina montou.
       axe.default(React, ReactDOM, 1000, undefined, undefined, (results) => {
+        if (!document.querySelector('main')) return;
         const violations = results?.violations;
         if (violations?.length) {
           log.warn(`[A11Y] ${violations.length} accessibility violation(s) detected`);
