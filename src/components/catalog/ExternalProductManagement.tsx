@@ -64,6 +64,7 @@ const CatalogBulkSendDialog = lazy(() =>
 import { buildCatalogCsv, catalogExportFilename, triggerCsvDownload } from './catalogExport';
 import { CatalogFavoritesTab } from './CatalogFavoritesTab';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
   useCatalogSendHistory,
   buildSendHistoryCsv,
@@ -959,6 +960,36 @@ export const ExternalProductManagement: React.FC = () => {
           </span>
         </div>
       )}
+
+      {/* CT-30 — abaixo de xl o rail vira um Accordion acima da grade; o
+          <aside> do rail continua exclusivo do xl+. Mesmo <CatalogRail/> e as
+          mesmas props nos dois lugares (nada duplicado). O Radix desmonta o
+          conteúdo recolhido, então o rail só entra no DOM quando aberto. */}
+      <Accordion
+        type="single"
+        collapsible
+        className="xl:hidden"
+        data-testid="catalog-rail-accordion"
+      >
+        <AccordionItem value="resumo" className="rounded-xl border border-border/60 bg-card px-4">
+          <AccordionTrigger className="text-sm font-semibold hover:no-underline">
+            Resumo do catálogo
+          </AccordionTrigger>
+          <AccordionContent className="px-0 pt-1">
+            <CatalogRail
+              stats={stats}
+              loading={statsLoading}
+              products={products}
+              onApplyFilter={handleKpiSelect}
+              recentSends={recentSends}
+              topSent={topSent}
+              onOpenProduct={handleOpenProductFromRail}
+              exportFilter={activeRailFilter}
+              onApplyLowStock={handleApplyLowStock}
+            />
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       <div ref={gridRef}>
         {loading ? (

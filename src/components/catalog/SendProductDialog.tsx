@@ -2,6 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
+import { Drawer, DrawerContent } from '@/components/ui/drawer';
+import { useIsMobile } from '@/hooks/ui/use-mobile';
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
@@ -193,7 +195,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
     : null;
 
   const allImages = useMemo(() => collectAllImages(fullProduct), [fullProduct]);
-  const visibleImages = useMemo(() => {
+  const baseImages = useMemo(() => {
     if (sendMode === 'variant' && activeGroup) {
       const imgs: { url: string; label: string }[] = [];
       if (fullProduct.primary_image_url) imgs.push({ url: fullProduct.primary_image_url, label: 'Principal' });
@@ -205,17 +207,26 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
     return allImages;
   }, [sendMode, activeGroup, allImages, fullProduct.primary_image_url]);
 
+  // CT-39 — "Adicionar fotos": em modo variante o picker nasce só com as fotos da
+  // cor escolhida (baseImages); o botão abaixo acrescenta as fotos das variantes
+  // NÃO selecionadas, que é o caso nomeado no plano. Elas vivem em `extraImages`
+  // justamente para não entrarem na chave de reset — acrescentar foto não pode
+  // apagar a seleção que o agente já fez.
+  const [extraImages, setExtraImages] = useState<{ url: string; label: string }[]>([]);
+  const visibleImages = useMemo(() => [...baseImages, ...extraImages], [baseImages, extraImages]);
+
   // Reseta a selecao de fotos sempre que o conjunto de imagens visiveis
   // muda (produto carregado, troca de modo produto/variante ou de cor) -
   // sem efeito e sem ref (o linter deste repo bane ref-durante-render):
   // duas useState comparadas no proprio corpo do render, no padrao
   // documentado em https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes.
-  const visibleImagesKey = visibleImages.map((i) => i.url).join('|');
-  const [selectedImages, setSelectedImages] = useState<Set<string>>(() => new Set(visibleImages.map((i) => i.url)));
-  const [prevVisibleImagesKey, setPrevVisibleImagesKey] = useState(visibleImagesKey);
-  if (prevVisibleImagesKey !== visibleImagesKey) {
-    setPrevVisibleImagesKey(visibleImagesKey);
-    setSelectedImages(new Set(visibleImages.map((i) => i.url)));
+  const baseImagesKey = baseImages.map((i) => i.url).join('|');
+  const [selectedImages, setSelectedImages] = useState<Set<string>>(() => new Set(baseImages.map((i) => i.url)));
+  const [prevVisibleImagesKey, setPrevVisibleImagesKey] = useState(baseImagesKey);
+  if (prevVisibleImagesKey !== baseImagesKey) {
+    setPrevVisibleImagesKey(baseImagesKey);
+    setSelectedImages(new Set(baseImages.map((i) => i.url)));
+    setExtraImages([]);
   }
 
   // CT-45 — a mensagem (do modelo ou editada à mão) é personalizada com o
@@ -242,6 +253,33 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
       return;
     }
     setSelectedImages((prev) => { const next = new Set(prev); next.add(url); return next; });
+  };
+
+  // CT-39 — acrescenta as fotos das variantes não selecionadas ao picker e já as
+  // marca, respeitando o teto de MAX_IMAGES (marcar em massa sem teto furava a
+  // trava de 10 fotos do toggleImage).
+  const handleAddPhotos = () => {
+    const faltantes = allImages.filter((i) => !visibleImages.some((v) => v.url === i.url));
+    if (faltantes.length === 0) {
+      toast.error('Não há outras fotos para adicionar');
+      return;
+    }
+    setExtraImages((prev) => {
+      const next = [...prev];
+      faltantes.forEach((f) => { if (!next.some((n) => n.url === f.url)) next.push(f); });
+      return next;
+    });
+    const cabem = Math.max(0, MAX_IMAGES - selectedImages.size);
+    setSelectedImages((prev) => {
+      const next = new Set(prev);
+      faltantes.slice(0, cabem).forEach((f) => next.add(f.url));
+      return next;
+    });
+    toast.success(
+      cabem >= faltantes.length
+        ? `${faltantes.length} foto(s) adicionada(s)`
+        : `${cabem} de ${faltantes.length} adicionada(s) — limite de ${MAX_IMAGES} fotos por envio`
+    );
   };
 
   const handleEditMessage = () => { if (!isEditing) setCustomMessage(message); setIsEditing(!isEditing); };
@@ -349,9 +387,14 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
     );
   };
 
-  return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) { requestClose(); return; } onOpenChange(v); }}>
-      <DialogContent aria-describedby={undefined} className="max-w-lg max-h-[85vh] p-0 gap-0" onKeyDown={handleContentKeyDown} onEscapeKeyDown={handleEscapeKeyDown}>
+  const isMobile = useIsMobile();
+
+  // CT-30 — o miolo do dialog (passos de configuração/contato) é único; abaixo
+  // de md (768px) ele é montado num Drawer (vaul) e acima disso no Dialog atual.
+  const requestOpenChange = (v: boolean) => { if (!v) { requestClose(); return; } onOpenChange(v); };
+
+  const panel = (
+    <>
         {step === 'configure' && (
           <>
             <DialogHeader className="p-5 pb-3">
@@ -451,18 +494,25 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
 
                 <Separator />
 
-                {/* CT-39 — "Adicionar fotos" (plano) NÃO foi criado: o picker já
-                    lista todas as fotos visíveis do produto/variante
-                    (collectAllImages) e as marca por padrão — o toggle
-                    "Selecionar todas/Desmarcar" abaixo cobre o mesmo caso. Um
-                    botão extra só duplicaria o controle existente. */}
+                {/* CT-39 — o botão "Adicionar fotos" só faz sentido em modo
+                    variante: ali o picker lista apenas as fotos da cor escolhida
+                    e o botão traz as das outras variantes. Em modo produto o
+                    picker já lista todas (collectAllImages), então ele nem
+                    aparece; o toggle "Selecionar/Desmarcar todas" continua. */}
                 {visibleImages.length > 0 && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">{selectedImages.size} de {visibleImages.length} fotos selecionadas</span>
-                      <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => selectedImages.size === visibleImages.length ? setSelectedImages(new Set()) : setSelectedImages(new Set(visibleImages.map((i) => i.url)))}>
-                        {selectedImages.size === visibleImages.length ? 'Desmarcar todas' : 'Selecionar todas'}
-                      </Button>
+                      <div className="flex items-center gap-3">
+                        {sendMode === 'variant' && allImages.some((i) => !visibleImages.some((v) => v.url === i.url)) && (
+                          <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={handleAddPhotos}>
+                            Adicionar fotos
+                          </Button>
+                        )}
+                        <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => selectedImages.size === visibleImages.length ? setSelectedImages(new Set()) : setSelectedImages(new Set(visibleImages.map((i) => i.url)))}>
+                          {selectedImages.size === visibleImages.length ? 'Desmarcar todas' : 'Selecionar todas'}
+                        </Button>
+                      </div>
                     </div>
                     <div className="flex gap-2 flex-wrap">
                       {visibleImages.map((img) => (
@@ -602,7 +652,36 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
             onSend={handleSendToContact}
           />
         )}
-      </DialogContent>
+    </>
+  );
+
+  return (
+    <>
+      {isMobile ? (
+        <Drawer open={open} onOpenChange={requestOpenChange}>
+          <DrawerContent
+            data-testid="send-product-drawer"
+            aria-describedby={undefined}
+            className="max-h-[85vh] gap-0 p-0"
+            onKeyDown={handleContentKeyDown}
+            onEscapeKeyDown={handleEscapeKeyDown}
+          >
+            {panel}
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <Dialog open={open} onOpenChange={requestOpenChange}>
+          <DialogContent
+            data-testid="send-product-dialog"
+            aria-describedby={undefined}
+            className="max-w-lg max-h-[85vh] p-0 gap-0"
+            onKeyDown={handleContentKeyDown}
+            onEscapeKeyDown={handleEscapeKeyDown}
+          >
+            {panel}
+          </DialogContent>
+        </Dialog>
+      )}
 
       <AlertDialog open={confirmCloseOpen} onOpenChange={setConfirmCloseOpen}>
         <AlertDialogContent>
@@ -618,6 +697,6 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Dialog>
+    </>
   );
 };
