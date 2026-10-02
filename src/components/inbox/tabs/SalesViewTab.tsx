@@ -1,20 +1,23 @@
-import { ShoppingBag, FileText } from 'lucide-react';
-import { EmptyState } from '@/components/ui/empty-state';
+import { CircleDollarSign, FileText, ShoppingBag } from 'lucide-react';
 import { ContactPurchasesPanel } from '../ContactPurchasesPanel';
 import { OpenDealsList } from './OpenDealsList';
 import { SectionCard } from './SectionCard';
+import { CommercialSummaryStrip } from './CommercialSummaryStrip';
 import { useContactCrm360 } from '@/hooks/crm/useContactCrm360';
 
 interface SalesViewTabProps {
   contactId: string;
+  /** Perfil do agente logado — o ContactPurchasesPanel grava como `created_by`. */
+  profileId: string | null;
 }
 
-/** Aba SalesView — resumo comercial, compras e propostas do contato; reaproveita ContactPurchasesPanel e o CRM 360°. */
-export function SalesViewTab({ contactId }: SalesViewTabProps) {
-  const { data: crm360, isLoading } = useContactCrm360(contactId);
-  const hasPurchases = (crm360?.purchases.length ?? 0) > 0;
-  const hasOpenDeals = (crm360?.openDeals.length ?? 0) > 0;
-  const isEmpty = !isLoading && !hasPurchases && !hasOpenDeals;
+/**
+ * Aba SalesView — resumo comercial, compras e propostas do contato.
+ * Os três blocos ficam sempre montados: o ContactPurchasesPanel detém o botão
+ * "+ Novo", e sem ele um contato sem compras não teria onde registrar a primeira.
+ */
+export function SalesViewTab({ contactId, profileId }: SalesViewTabProps) {
+  const { data: crm360 } = useContactCrm360(contactId);
 
   return (
     <div className="flex flex-col gap-4" data-testid="orders-tab">
@@ -23,24 +26,17 @@ export function SalesViewTab({ contactId }: SalesViewTabProps) {
         <p className="text-sm text-muted-foreground">Resumo comercial, compras e propostas deste contato.</p>
       </header>
 
-      {isEmpty ? (
-        <EmptyState
-          icon={ShoppingBag}
-          title="Nenhum pedido registrado"
-          description="Compras e propostas deste contato aparecerão aqui."
-          size="sm"
-        />
-      ) : (
-        <>
-          <SectionCard icon={ShoppingBag} title="Compras e propostas" tone="blue">
-            <ContactPurchasesPanel contactId={contactId} />
-          </SectionCard>
+      <SectionCard icon={CircleDollarSign} title="Resumo comercial" tone="blue">
+        <CommercialSummaryStrip contactId={contactId} />
+      </SectionCard>
 
-          <SectionCard icon={FileText} title="Propostas em aberto" tone="blue">
-            <OpenDealsList deals={crm360?.openDeals ?? []} />
-          </SectionCard>
-        </>
-      )}
+      <SectionCard icon={ShoppingBag} title="Compras e propostas" tone="blue">
+        <ContactPurchasesPanel contactId={contactId} profileId={profileId} />
+      </SectionCard>
+
+      <SectionCard icon={FileText} title="Propostas em aberto" tone="blue">
+        <OpenDealsList deals={crm360?.openDeals ?? []} />
+      </SectionCard>
     </div>
   );
 }

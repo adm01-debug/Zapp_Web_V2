@@ -21,11 +21,11 @@ export function CommercialSummaryStrip({ contactId }: CommercialSummaryStripProp
   const ticketMedio = data?.ticketMedio;
 
   if (isLoading) {
-    return <div className="grid grid-cols-2 gap-2 animate-pulse">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-14 rounded-lg bg-muted/20" />)}</div>;
+    return <div data-testid="commercial-summary-strip" className="grid grid-cols-2 xl:grid-cols-4 gap-2 animate-pulse">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-14 rounded-lg bg-muted/20" />)}</div>;
   }
 
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div data-testid="commercial-summary-strip" className="grid grid-cols-2 xl:grid-cols-4 gap-2">
       <Tile value={resumo ? formatCurrency(resumo.comprasTotal) : '—'} label={`Compras (${resumo?.comprasCount ?? 0})`} />
       <Tile value={ticketMedio ? formatCurrency(ticketMedio) : '—'} label="Ticket médio" />
       <Tile value={resumo?.propostas ?? '—'} label="Propostas" />

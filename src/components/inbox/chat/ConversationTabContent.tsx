@@ -48,10 +48,12 @@ interface ConversationTabContentProps {
   children: ReactNode;
   /** "Usar resposta" (aba IA) — leva o texto para o input do Chat e troca de aba. */
   onUseSuggestion?: (text: string) => void;
+  /** Perfil do agente logado — a SalesView grava como `created_by` nas compras. */
+  profileId?: string | null;
 }
 
 export function ConversationTabContent({
-  activeTab, onTabChange, conversation, messages, children, onUseSuggestion,
+  activeTab, onTabChange, conversation, messages, children, onUseSuggestion, profileId,
 }: ConversationTabContentProps) {
   const contactId = conversation.contact.id;
 
@@ -97,7 +99,7 @@ export function ConversationTabContent({
 
       {activeTab === 'orders' && (
         <Panel name="SalesView">
-          <SalesViewTab contactId={contactId} />
+          <SalesViewTab contactId={contactId} profileId={profileId ?? null} />
         </Panel>
       )}
 

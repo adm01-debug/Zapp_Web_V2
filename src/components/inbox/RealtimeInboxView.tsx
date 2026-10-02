@@ -131,7 +131,10 @@ export function RealtimeInboxView() {
   const { counts: tabCounts } = useConversationTabCounts(inbox.selectedContactId);
   // Badge da aba SalesView vem do CRM 360° (client-side) — a RPC get_conversation_tab_counts não muda.
   const { data: crm360ForOrdersBadge } = useContactCrm360(inbox.selectedContactId);
-  const tabExtraCounts = { orders: crm360ForOrdersBadge?.purchases.length ?? 0 };
+  // Badge da SalesView = compras + propostas em aberto — a aba mostra as duas coisas.
+  const tabExtraCounts = {
+    orders: (crm360ForOrdersBadge?.purchases.length ?? 0) + (crm360ForOrdersBadge?.openDeals.length ?? 0),
+  };
 
   // "Usar resposta" (aba IA) — leva o texto sugerido para o input do Chat e troca de aba.
   const [pendingDraft, setPendingDraft] = useState<string | null>(null);
@@ -285,6 +288,7 @@ export function RealtimeInboxView() {
                     conversation={inbox.legacyConversation}
                     messages={inbox.legacyMessages}
                     onUseSuggestion={handleUseSuggestion}
+                    profileId={inbox.profile?.id ?? null}
                   >
                   <SectionErrorBoundary sectionName="Chat" className="h-full">
                     <ChatPanel
