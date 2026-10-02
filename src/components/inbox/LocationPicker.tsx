@@ -226,7 +226,7 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
                   <Button size="sm" variant="outline" onClick={retryMap}>Tentar novamente</Button>
                 </div>
               )}
-              <Button size="icon" variant="secondary" className="absolute bottom-3 right-3 shadow-lg" onClick={getCurrentLocation} disabled={isLoadingLocation}>
+              <Button size="icon" variant="secondary" aria-label="Usar minha localização atual" className="absolute bottom-3 right-3 shadow-lg" onClick={getCurrentLocation} disabled={isLoadingLocation}>
                 {isLoadingLocation ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crosshair className="w-4 h-4" />}
               </Button>
             </div>
