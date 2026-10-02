@@ -533,3 +533,15 @@ jobs:
         env:
           TEAM_RECEIPTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-receipts-membership.test.sh
+
+      # E76 (plano MAPA Fase 7), ajuste (b) da decisao 20261002-063721: o contrato da
+      # RPC `search_contacts` (8 campos de endereco, ACL sem anon/PUBLIC e trigger de
+      # auditoria) vive aqui porque este workflow tem gatilho `pull_request` (linha 17) —
+      # entao o contrato passa a BARRAR o PR; o db-live-guard nao roda em pull_request por
+      # design. Alinha ao E50 do PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md e a
+      # AUDITORIA-W3-REPLAY.md:229. De bonus, a imagem fica pinada por digest: o valor
+      # vem de POSTGRES_TEST_IMAGE, como nos passos vizinhos.
+      - name: Provar contrato de endereco da RPC search_contacts (mapa F1)
+        env:
+          MAPA_F1_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/mapa-f1-address-contract.test.sh
