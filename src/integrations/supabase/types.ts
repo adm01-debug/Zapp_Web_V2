@@ -7205,6 +7205,65 @@ export type Database = {
           },
         ]
       }
+      talkx_campaign_segments: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          paused_at: string | null
+          position: number
+          segment_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          paused_at?: string | null
+          position: number
+          segment_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          paused_at?: string | null
+          position?: number
+          segment_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talkx_campaign_segments_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaign_metrics"
+            referencedColumns: ["campaign_id"]
+          },
+          {
+            foreignKeyName: "talkx_campaign_segments_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaign_metrics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_campaign_segments_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_campaign_segments_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_segments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       talkx_campaigns: {
         Row: {
           audience_filters: Json
@@ -7696,6 +7755,7 @@ export type Database = {
           replied_at: string | null
           reply_message_id: string | null
           retry_after: string | null
+          segment_id: string | null
           sent_at: string | null
           status: string
           updated_at: string
@@ -7728,6 +7788,7 @@ export type Database = {
           replied_at?: string | null
           reply_message_id?: string | null
           retry_after?: string | null
+          segment_id?: string | null
           sent_at?: string | null
           status?: string
           updated_at?: string
@@ -7760,6 +7821,7 @@ export type Database = {
           replied_at?: string | null
           reply_message_id?: string | null
           retry_after?: string | null
+          segment_id?: string | null
           sent_at?: string | null
           status?: string
           updated_at?: string
@@ -10286,6 +10348,10 @@ export type Database = {
         Args: { p_created_at: string }
         Returns: string
       }
+      count_multiplix_dead_letters: {
+        Args: { p_dispatch_id?: string }
+        Returns: number
+      }
       count_searchbox_sessions_this_month: { Args: never; Returns: number }
       create_department_invite: {
         Args: {
@@ -10869,6 +10935,23 @@ export type Database = {
           recipient_id: string
         }[]
       }
+      list_multiplix_dead_letters: {
+        Args: { p_dispatch_id?: string; p_limit?: number }
+        Returns: {
+          attempt_count: number
+          block_id: string
+          block_order: number
+          destino_mascarado: string
+          dispatch_id: string
+          dispatch_name: string
+          error_class: string
+          error_message: string
+          failed_at: string
+          item_id: string
+          next_attempt_at: string
+          recipient_id: string
+        }[]
+      }
       log_audit_event: {
         Args: {
           p_action: string
@@ -11044,22 +11127,40 @@ export type Database = {
           locked_until: string
         }[]
       }
-      record_incoming_call_event: {
-        Args: {
-          p_contact_id: string
-          p_is_video: boolean
-          p_provider_event_id?: string
-          p_should_notify?: boolean
-          p_status: string
-          p_whatsapp_connection_id: string
-        }
-        Returns: {
-          call_id: string
-          duplicate: boolean
-          notification_created: boolean
-          notification_id: string
-        }[]
-      }
+      record_incoming_call_event:
+        | {
+            Args: {
+              p_contact_id: string
+              p_is_video: boolean
+              p_provider_event_id?: string
+              p_should_notify?: boolean
+              p_status: string
+              p_whatsapp_connection_id: string
+            }
+            Returns: {
+              call_id: string
+              duplicate: boolean
+              notification_created: boolean
+              notification_id: string
+            }[]
+          }
+        | {
+            Args: {
+              p_contact_id: string
+              p_direction?: string
+              p_is_video: boolean
+              p_provider_event_id?: string
+              p_should_notify?: boolean
+              p_status: string
+              p_whatsapp_connection_id: string
+            }
+            Returns: {
+              call_id: string
+              duplicate: boolean
+              notification_created: boolean
+              notification_id: string
+            }[]
+          }
       record_multiplix_item_delivered: {
         Args: {
           p_connection_id: string
@@ -11441,6 +11542,16 @@ export type Database = {
           waiting_since: string
         }[]
       }
+      talkx_analytics_scope: {
+        Args: {
+          p_audience_source?: string
+          p_channel?: string
+          p_department_id?: string
+        }
+        Returns: {
+          campaign_id: string
+        }[]
+      }
       talkx_audience_query: {
         Args: {
           p_contact_ids?: string[]
@@ -11483,7 +11594,14 @@ export type Database = {
       }
       talkx_normalize_optout_text: { Args: { p_text: string }; Returns: string }
       talkx_overview_stats: {
-        Args: { p_from: string; p_to: string }
+        Args: {
+          p_audience_source?: string
+          p_channel?: string
+          p_department_id?: string
+          p_from: string
+          p_timezone?: string
+          p_to: string
+        }
         Returns: Json
       }
       talkx_recipient_is_suppressed: {
