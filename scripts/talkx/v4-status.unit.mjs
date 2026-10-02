@@ -11,9 +11,15 @@ import {
   detectDoneSteps,
   computeStatus,
   generateMarkdown,
+  resolveGit,
 } from './v4-status.mjs';
 
 const IDS = new Set(['X001', 'X002', 'X003']);
+
+// `git` resolvido para caminho ABSOLUTO no processo pai (o mesmo binário que o shell
+// usaria — no workspace, o shim de guarda). S4036 é atendido pelo caminho absoluto;
+// o filho herda o ambiente do pai, sem PATH fixo (que trocaria o binário resolvido).
+const GIT = resolveGit();
 
 test('extractStepIds: título com (X001) vira etapa concluída (inclusive com sufixo de squash)', () => {
   const done = extractStepIds(
@@ -106,15 +112,15 @@ test('detectDoneSteps: lê commits de um repositório de fixture', (t) => {
   let dir;
   try {
     dir = mkdtempSync(join(tmpdir(), 'v4-status-'));
-    execFileSync('git', ['init', '-q'], { cwd: dir });
-    execFileSync('git', ['config', 'user.email', 't@t.co'], { cwd: dir });
-    execFileSync('git', ['config', 'user.name', 't'], { cwd: dir });
+    execFileSync(GIT, ['init', '-q'], { cwd: dir });
+    execFileSync(GIT, ['config', 'user.email', 't@t.co'], { cwd: dir });
+    execFileSync(GIT, ['config', 'user.name', 't'], { cwd: dir });
     writeFileSync(join(dir, 'a.txt'), 'x');
-    execFileSync('git', ['add', '.'], { cwd: dir });
-    execFileSync('git', ['commit', '-q', '-m', 'docs(talkx): um (X001)'], { cwd: dir });
+    execFileSync(GIT, ['add', '.'], { cwd: dir });
+    execFileSync(GIT, ['commit', '-q', '-m', 'docs(talkx): um (X001)'], { cwd: dir });
     writeFileSync(join(dir, 'b.txt'), 'y');
-    execFileSync('git', ['add', '.'], { cwd: dir });
-    execFileSync('git', ['commit', '-q', '-m', 'feat(talkx): dois (X002)'], { cwd: dir });
+    execFileSync(GIT, ['add', '.'], { cwd: dir });
+    execFileSync(GIT, ['commit', '-q', '-m', 'feat(talkx): dois (X002)'], { cwd: dir });
   } catch (e) {
     t.skip(`git indisponível/bloqueado neste ambiente: ${e.message}`);
     return;

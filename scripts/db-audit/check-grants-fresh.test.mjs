@@ -130,3 +130,28 @@ test('exige argumento com o caminho do arquivo fresco', () => {
   assert.equal(result.status, 2);
   assert.match(result.stderr, /uso: node check-grants-fresh\.mjs/);
 });
+
+test('rejeita caminho fresco relativo que escapa das raizes permitidas', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'grants-fresh-escape-'));
+  const commitadoPath = path.join(tmp, 'baseline.json');
+  fs.writeFileSync(commitadoPath, JSON.stringify(base));
+  const result = spawnSync(process.execPath, [SCRIPT, '../../../../etc/passwd'], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    env: { ...process.env, GRANTS_BASELINE_PATH: commitadoPath },
+  });
+  fs.rmSync(tmp, { recursive: true, force: true });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /fora das raizes permitidas/);
+});
+
+test('rejeita GRANTS_BASELINE_PATH absoluto fora das raizes permitidas', () => {
+  const fresco = path.join(os.tmpdir(), 'grants-fresh-escape-fresco.json');
+  const result = spawnSync(process.execPath, [SCRIPT, fresco], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    env: { ...process.env, GRANTS_BASELINE_PATH: path.resolve(ROOT, '..', '..', 'fora.json') },
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /fora das raizes permitidas/);
+});

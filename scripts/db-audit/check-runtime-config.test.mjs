@@ -4,7 +4,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { evaluateRuntimeConfig, loadRealtimeBaseline } from './check-runtime-config.mjs';
+
+const SCRIPT = fileURLToPath(new URL('./check-runtime-config.mjs', import.meta.url));
+const ROOT = path.resolve(path.dirname(SCRIPT), '../..');
 
 const realtimeBaseline = loadRealtimeBaseline();
 
@@ -89,4 +93,23 @@ test('collection is read-only, bounded and never selects commands/object/custome
   assert.match(sql, /statement_timeout = '10s'/);
   assert.match(sql, /ROLLBACK/);
   assert.doesNotMatch(sql, /SELECT\s+\*|cron\.job_run_details|storage\.objects|FROM public\.|\bcommand\b/i);
+});
+
+test('CLI rejeita caminho de saida absoluto fora das raizes permitidas', () => {
+  const fora = path.resolve(ROOT, '..', '..', 'runtime-fora.json');
+  const result = spawnSync(process.execPath, ['scripts/db-audit/check-runtime-config.mjs', fora], {
+    encoding: 'utf8',
+    env: { ...process.env, DESTINO_URL: 'postgres://fixture-private@wrong.invalid/postgres' },
+  });
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /fora das raizes permitidas/);
+});
+
+test('CLI rejeita caminho de saida com travessia', () => {
+  const result = spawnSync(process.execPath, ['scripts/db-audit/check-runtime-config.mjs', '../../../../etc/runtime.json'], {
+    encoding: 'utf8',
+    env: { ...process.env, DESTINO_URL: 'postgres://fixture-private@wrong.invalid/postgres' },
+  });
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /fora das raizes permitidas/);
 });

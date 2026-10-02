@@ -72,7 +72,7 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
           document.removeEventListener('pointerdown', retomar);
           document.removeEventListener('keydown', retomar);
           osc.stop();
-          ctx.close();
+          void ctx.close();
         };
       } catch (err) { log.error('Unexpected error in IncomingCallAlert:', err); }
     }

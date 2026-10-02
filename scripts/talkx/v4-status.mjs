@@ -19,12 +19,21 @@ import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { resolverExecutavel } from '../lib/seguranca-processo.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 export const ROOT = join(__dirname, '..', '..');
 const ETAPAS_JSON = join(ROOT, 'docs/talkx/v4/etapas.json');
 const INVENTARIO_DIR = join(ROOT, 'docs/talkx/v4/inventario');
 const STATUS_PATH = join(ROOT, 'docs/talkx/v4/STATUS.md');
+
+/**
+ * Fachada fina sobre o módulo compartilhado: caminho ABSOLUTO do `git`, resolvido
+ * pelo PATH do processo pai — o mesmo binário que o shell usaria (no workspace, o
+ * shim de guarda). O filho recebe um caminho absoluto, então não procura o binário
+ * no PATH: é o que a regra S4036 exige.
+ */
+export const resolveGit = () => resolverExecutavel('git');
 
 const FASE_NAMES = {
   0: 'Régua e governança',
@@ -122,10 +131,12 @@ export function extractStepIds(titles, knownIds) {
 
 /** Devolve as linhas de `git log --format=%s <ref>` (uma por commit). */
 export function gitLogTitles(ref, cwd = ROOT) {
-  const out = execFileSync('git', ['log', '--format=%s', ref], {
+  const out = execFileSync(resolveGit(), ['log', '--format=%s', ref], {
     encoding: 'utf8',
     cwd,
     maxBuffer: 64 * 1024 * 1024,
+    // Sem `env`: o filho herda o ambiente do pai (inclusive o PATH), preservando
+    // exatamente o binário resolvido acima — o S4036 já é atendido pelo caminho absoluto.
   });
   return out.split('\n').map((s) => s.trim()).filter(Boolean);
 }

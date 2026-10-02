@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Ratchet: fails CI if noImplicitAny error count grows above baseline.
 // To tighten: fix errors, update baseline.json to the new lower count.
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -11,10 +11,15 @@ const baselinePath = join(__dirname, 'implicit-any-baseline.json');
 const { baseline } = JSON.parse(readFileSync(baselinePath, 'utf8'));
 const rootDir = join(__dirname, '../..');
 
+// tsc local por caminho absoluto (node + node_modules/typescript/bin/tsc): nao
+// passa por npx nem deixa o processo filho resolver o comando pelo PATH (S4036).
+const tscEntry = join(rootDir, 'node_modules', 'typescript', 'bin', 'tsc');
+
 let output = '';
 try {
-  output = execSync(
-    'npx tsc -p tsconfig.app.json --noEmit --noImplicitAny 2>&1',
+  output = execFileSync(
+    process.execPath,
+    [tscEntry, '-p', 'tsconfig.app.json', '--noEmit', '--noImplicitAny'],
     { encoding: 'utf8', cwd: rootDir }
   );
 } catch (err) {

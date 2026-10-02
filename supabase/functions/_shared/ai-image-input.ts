@@ -203,7 +203,7 @@ function buildObjectEndpoint(supabaseUrl: string, bucket: string, path: string):
 function releaseBody(response: Response): void {
   try {
     // `body.cancel()` é opcional no tipo Response; mock/edge podem não ter.
-    response.body?.cancel?.();
+    void response.body?.cancel?.();
   } catch {
     // Cancelar é higiene: falha aqui não muda o desfecho já decidido.
   }

@@ -421,6 +421,29 @@ Deno.test('F22: email ausente entra como string vazia (nunca "null")', () => {
   assert(payload === 'v1|admin||1800000000', `payload fora do contrato: ${payload}`);
 });
 
+// O comparador e de code-unit UTF-16, NAO `localeCompare`. A diferenca aparece
+// quando caixa ou acento entram: em code-unit todas as MAIUSCULAS vem antes de
+// todas as minusculas (`Zebra` < `abelha`, porque `Z` = 0x5A < `a` = 0x61); com
+// `localeCompare` a colacao ordena alfabeticamente por letra e inverte. Trocar um
+// pelo outro mudaria o payload assinado — este caso existe para quebrar se
+// alguem tentar. (Mutacao: trocar `compararCodeUnit` por `localeCompare` deixa
+// este teste vermelho.)
+//
+// Nota de honestidade: para as permissoes que existem hoje (identificadores
+// minusculos, sem acento) os dois comparadores dao a MESMA ordem — e por isso a
+// troca de `.sort()` puro por `compararCodeUnit` nao altera assinatura nenhuma.
+// O caso abaixo prova a propriedade para entradas que ainda nao existem.
+Deno.test('F22: a ordenacao e por code-unit, nao por colacao de idioma', () => {
+  const payload = scopeSignaturePayload(['abelha', 'Zebra'], 'vendedor@exemplo.com', 1_800_000_000);
+  assert(
+    payload === 'v1|Zebra,abelha|vendedor@exemplo.com|1800000000',
+    `ordem nao e code-unit (localeCompare inverteria): ${payload}`,
+  );
+  // Prova que o caso discrimina: pela colacao a ordem seria a oposta.
+  const viaLocale = ['abelha', 'Zebra'].sort((a, b) => a.localeCompare(b)).join(',');
+  assert(viaLocale === 'abelha,Zebra', `o caso perdeu o poder de discriminar as duas ordens: ${viaLocale}`);
+});
+
 Deno.test('F22: a assinatura bate com o vetor de referencia do guard no SQL', async () => {
   const { hmac, exp } = await signScope(
     ['suppliers', 'admin'], 'vendedor@exemplo.com', SEGREDO_DE_TESTE, NOW_PARA_EXP_FIXO,

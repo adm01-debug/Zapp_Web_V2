@@ -217,12 +217,23 @@ function serializeCanonico(value: unknown): string {
   }
 }
 
+/**
+ * Comparador de ordem de code-unit UTF-16 — exatamente o que `.sort()` sem
+ * argumento faz.
+ *
+ * NAO troque por `localeCompare`: a ordem daqui alimenta a forma canonica que
+ * vira hash, e `localeCompare` depende do locale do runtime (muda a posicao de
+ * pontuacao e caixa — `a_b` vs `ab`), o que faria o mesmo payload gerar hash
+ * diferente em ambientes diferentes.
+ */
+const compararCodeUnit = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+
 /** Cópia com as chaves de todo objeto ordenadas — mesma informação, forma estável. */
 function canonicalize(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value !== null && typeof value === "object") {
     const out: Record<string, unknown> = {};
-    for (const key of Object.keys(value as Record<string, unknown>).sort()) {
+    for (const key of Object.keys(value as Record<string, unknown>).sort(compararCodeUnit)) {
       out[key] = canonicalize((value as Record<string, unknown>)[key]);
     }
     return out;
