@@ -574,6 +574,29 @@ describe('useCampaignEditor — draft integrity', () => {
     expect(f.log).not.toHaveBeenCalledWith('draft-1', 'started', 'Envio iniciado manualmente');
   });
 
+  it('resolves launch as soon as the async start is accepted, without waiting for the send', async () => {
+    // X013: o hook (useTalkX) devolve true quando a edge responde
+    // `{ accepted: true, status: 'sending' }` — o lote roda em outra invocação.
+    // O wizard não pode bloquear esperando o envio terminar.
+    f.start.mockResolvedValue(true);
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    act(() => {
+      result.current.setName('Campanha de teste');
+      result.current.toggleContact('contact-1');
+      result.current.setMessageTemplate('Olá {{nome}}');
+      result.current.setConfirmConsent(true);
+      result.current.setConfirmContent(true);
+      result.current.setConfirmSuppression(true);
+    });
+
+    let launchedId: string | null = null;
+    await act(async () => {
+      launchedId = await result.current.handleSave('launch');
+    });
+    expect(launchedId).toBe('draft-1');
+    expect(f.start).toHaveBeenCalledWith('draft-1');
+  });
+
   it('rejects direct launch when required review confirmations or content are missing', async () => {
     const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
     act(() => {

@@ -93,6 +93,7 @@ export interface TalkXRecipient {
 
 type TalkXActionResponse = {
   success?: unknown;
+  accepted?: unknown;
   reason?: unknown;
   error?: unknown;
 };
@@ -101,11 +102,13 @@ type TalkXActionResponse = {
  * Edge Functions can deliberately return HTTP 200 for an operational refusal
  * (for example, a campaign outside its send window). Supabase exposes that as
  * `error: null`, so every lifecycle action must validate the body as well.
+ * X013: o lançamento assíncrono responde `{ accepted: true, status: 'sending' }`
+ * (o lote roda em outra invocação) — o corpo não traz `success`.
  */
-function assertTalkXActionAccepted(data: unknown): asserts data is TalkXActionResponse & { success: true } {
-  if (data && typeof data === 'object' && (data as TalkXActionResponse).success === true) return;
-
+function assertTalkXActionAccepted(data: unknown): asserts data is TalkXActionResponse {
   const response = data && typeof data === 'object' ? data as TalkXActionResponse : null;
+  if (response && (response.success === true || response.accepted === true)) return;
+
   const reason = typeof response?.reason === 'string'
     ? response.reason
     : typeof response?.error === 'string'
@@ -372,7 +375,7 @@ export function useTalkX() {
       if (error) throw error;
       assertTalkXActionAccepted(data);
       queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
-      toast.success('Processamento da campanha confirmado.');
+      toast.success('Envio iniciado; acompanhe no monitor');
       return true;
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Erro desconhecido';

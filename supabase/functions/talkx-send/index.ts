@@ -78,13 +78,14 @@ export async function handleTalkxSend(
         if (authError || !user) {
           return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
         }
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .in("role", ["admin", "supervisor"])
-          .maybeSingle();
-        if (!roleData) {
+        // X013: a RPC pública resolve admin/supervisor numa linha booleana. O
+        // `.in([...]).maybeSingle()` antigo devolvia DUAS linhas (e virava erro
+        // → 403) para quem tem admin E supervisor ao mesmo tempo.
+        const { data: isPrivileged, error: roleError } = await supabase.rpc(
+          "is_admin_or_supervisor",
+          { _user_id: user.id },
+        );
+        if (roleError || isPrivileged !== true) {
           return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
         }
         actorId = user.id;
@@ -756,46 +757,31 @@ export async function handleTalkxSend(
       return new Response(JSON.stringify({ error: transitionError.message }), { status: 409, headers });
     }
 
-    // Get pending recipients with contact info
-    const { data: recipients, error: recipientsError } = await supabase
-      .from("talkx_recipients")
-      .select("*, contacts:contact_id(name, nickname, phone, company)")
-      .eq("campaign_id", campaignId)
-      .in("status", ["pending", "sending"])
-      // E91: exclui recipients cujo retry_after ainda não venceu
-      .or("retry_after.is.null,retry_after.lte." + new Date().toISOString())
-      .order("created_at");
-    if (recipientsError) throw new Error(`talkx_recipients_lookup_failed: ${recipientsError.message}`);
-
-    const trackingUrlFor = await loadTrackingUrlFor();
-    const customFieldsByContact = await loadCustomFieldsByContact((recipients ?? []) as ProcessRecipientRow[]);
-    const state = await buildEngineState(
-      campaign, `talkx-send:${crypto.randomUUID()}`, initialInstanceId,
-      dailyLimit, sentTodayTotal, businessHours, trackingUrlFor,
-    );
-
-    for (const recipient of recipients || []) {
-      const step = await runRecipient(state, recipient as ProcessRecipientRow, customFieldsByContact);
-      if (step === "stop") break;
+    // X013: o limite diário é conferido aqui, não mais no laço inline. A
+    // campanha acabou de virar 'sending' na transição acima, então a pausa
+    // (válida só a partir de 'sending') reproduz o comportamento antigo: não
+    // dispara um lote que a primeira passada já pausaria por cota esgotada.
+    if (dailyLimit > 0 && sentTodayTotal >= dailyLimit) {
+      await pauseCampaign("daily_limit");
+      return new Response(JSON.stringify({ ok: false, reason: "daily_limit" }), { headers });
     }
 
-    const { data: completed, error: completionError } = await supabase.rpc(
-      "complete_talkx_campaign_if_drained",
-      { p_campaign_id: campaignId },
-    );
-    if (completionError) throw new Error(`talkx_campaign_completion_failed: ${completionError.message}`);
+    // X013: lançamento assíncrono — o lote roda em OUTRA invocação da edge
+    // (action=continue). Aqui só sinalizamos a fila: nenhum destinatário é lido
+    // e nenhum POST sai para o provedor nesta requisição. Se o kick falhar, o
+    // lançamento não foi agendado — a resposta é 500, nunca "accepted".
+    const { error: kickError } = await supabase.rpc("kick_talkx_campaign", {
+      p_campaign_id: campaignId,
+    });
+    if (kickError) {
+      return new Response(JSON.stringify({ error: kickError.message }), { status: 500, headers });
+    }
 
-    log.done(200, { correlationId, campaignId, sent: state.sent, failed: state.failed, outcomeUnknown: state.outcomeUnknown });
+    log.done(200, { correlationId, campaignId, accepted: true });
 
     return new Response(
-      JSON.stringify({
-        success: true, sent: state.sent, failed: state.failed,
-        total: (recipients || []).length,
-        blacklisted: state.blacklisted,
-        outcome_unknown: state.outcomeUnknown,
-        completed: completed === true,
-      }),
-      { headers }
+      JSON.stringify({ success: true, accepted: true, status: "sending" }),
+      { headers },
     );
   } catch (err) {
     log.error("Talk X error", { correlationId, error: err instanceof Error ? err.message : String(err) });
