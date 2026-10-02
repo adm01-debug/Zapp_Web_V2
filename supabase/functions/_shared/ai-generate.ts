@@ -23,7 +23,8 @@
  *     filtros do módulo de roteamento: model/messages/system/tools do config nunca
  *     sobrescrevem a decisão do servidor;
  *  7. despacha por `provider_type` reusando `_shared/ai-providers.ts`, sempre com
- *     `withRetry` e teto de tempo (30s por padrão);
+ *     `withRetry` e teto de tempo POR CAPACIDADE (IA-041): 30s para texto puro,
+ *     mais para visão/áudio (ver `DEFAULT_TIMEOUT_MS_BY_CAPABILITY`);
  *  8. chama `logAiUsage` em TODOS os desfechos (sucesso, erro HTTP, exceção, erro de
  *     roteamento/capacidade): nenhuma chamada paga fica invisível;
  *  9. devolve `data` = JSON do provedor (`choices[0].message.content` continua
@@ -40,11 +41,21 @@
  * Diferença esperada em relação aos módulos puros (`ai-routing`/`ai-capabilities`):
  * aqui usa-se `Deno.env`, `fetch` e o client Supabase com service role.
  *
+ * IA-041 (prazos ponta a ponta + cancelamento propagado): o despacho SEMPRE manda um
+ * teto de tempo, decidido por CAPACIDADE — texto (e toda finalidade, que só produz
+ * texto) mantém os 30s históricos; visão/áudio, comprovadamente mais lentos, ganham
+ * prazos maiores. Um `timeoutMs` explícito do chamador continua vencendo o padrão. O
+ * estouro aciona o `AbortController` DENTRO do provedor (IA-040, via `options.timeoutMs`)
+ * e volta do `catch` como `AbortError`/`TimeoutError`, classificado como `TIMEOUT` (504)
+ * — distinguível de uma falha 502 qualquer, e auditado em `ai_usage_logs` como sempre.
+ *
  * Limites do desenho congelado (não são bugs, são contrato):
  *  - `callLovableAI` não aceita `config`: para `lovable_ai` só viajam os campos que o
  *    adaptador monta (model/messages/tools/tool_choice), então `temperature` e
  *    `extraBody` são descartados nesse ramo — "o que o filtro do adaptador permitir";
- *  - `callCustomWebhook` não aceita `options`: o ramo webhook não tem teto próprio;
+ *  - `callCustomWebhook` recebe o MESMO `options.timeoutMs` por capacidade dos demais
+ *    ramos (interface congelada `options?: { timeoutMs?: number }`), fechando o teto
+ *    do ramo webhook;
  *  - não há fallback aqui: `status` nunca vale 'fallback' e `fallbackUsed` é sempre
  *    `false` (a troca explícita de fornecedor é do `ai-proxy`, IA-039).
  */
@@ -79,8 +90,76 @@ import {
 } from "./ai-providers.ts";
 import { extractTokenUsage, logAiUsage } from "./ai-usage.ts";
 
-/** Teto de tempo padrão por chamada (mesmo valor do gateway antigo). */
+/**
+ * Teto de tempo padrão do TEXTO PURO (mesmo valor do gateway antigo — IA-032).
+ * É o valor que os consumidores de texto sempre tiveram: NÃO pode regredir.
+ */
 const DEFAULT_TIMEOUT_MS = 30_000;
+
+/**
+ * Prazo padrão (ms) por CAPACIDADE (IA-041).
+ *
+ * A regra é não regredir: `text` — e TODAS as finalidades, que só produzem texto —
+ * mantêm os 30s históricos. Só as capacidades comprovadamente MAIS LENTAS que texto
+ * ganham prazo maior:
+ *  - `vision`: o corpo carrega imagem (base64 grande) e o modelo multimodal leva mais
+ *    para responder; 60s é o dobro com folga, sem pendurar a requisição;
+ *  - `audio_stt`/`audio_tts`: áudio é ordens de grandeza maior que texto e a
+ *    transcrição/síntese escala com a duração — 120s;
+ *  - `audio_sts`: reconhecimento + síntese na MESMA chamada, então precisa de mais
+ *    que cada etapa isolada — 150s.
+ *
+ * A chave é o tipo REAL de `_shared/ai-capabilities.ts` (`AiModality`) e o de
+ * `ai-routing.ts` (`AiPurpose`): assim o mapa é obrigado a cobrir toda capacidade
+ * existente (chave nova sem valor vira erro de compilação, não uma chamada sem teto).
+ */
+const DEFAULT_TIMEOUT_MS_BY_CAPABILITY: Record<AiModality | AiPurpose, number> = {
+  text: DEFAULT_TIMEOUT_MS,
+  vision: 60_000,
+  audio_stt: 120_000,
+  audio_tts: 120_000,
+  audio_sts: 150_000,
+  // Finalidades são texto puro: mantêm o valor antigo (ninguém ganhou prazo maior
+  // sem justificativa de capacidade).
+  copilot: DEFAULT_TIMEOUT_MS,
+  analysis: DEFAULT_TIMEOUT_MS,
+  summary: DEFAULT_TIMEOUT_MS,
+  tagging: DEFAULT_TIMEOUT_MS,
+  auto_reply: DEFAULT_TIMEOUT_MS,
+};
+
+/**
+ * Prazo padrão da chamada: a MODALIDADE manda quando declarada (`need.modality`),
+ * porque é ela que muda a latência real; sem ela, a FINALIDADE decide. Chave
+ * desconhecida em runtime (modalidade/finalidade fora do enum) cai no
+ * `DEFAULT_TIMEOUT_MS` — falha fechada no valor histórico, nunca uma chamada sem teto.
+ */
+function resolveDefaultTimeoutMs(purpose: unknown, modality: unknown): number {
+  let key = "";
+  if (typeof modality === "string" && modality !== "") {
+    key = modality;
+  } else if (typeof purpose === "string") {
+    key = purpose;
+  }
+  const value = (DEFAULT_TIMEOUT_MS_BY_CAPABILITY as Record<string, number>)[key];
+  return typeof value === "number" && Number.isFinite(value) && value > 0
+    ? value
+    : DEFAULT_TIMEOUT_MS;
+}
+
+/**
+ * Código estável do estouro de prazo (IA-041). Não vem de `ai-routing`/
+ * `ai-capabilities` (que tratam de configuração/pedido): é o desfecho do
+ * cancelamento propagado pelo provedor e precisa ser distinguível de um 502 de
+ * rede qualquer.
+ */
+export const AI_TIMEOUT_ERROR_CODE = "TIMEOUT";
+
+/** Todo código de erro que um desfecho do despacho pode carregar. */
+export type AiGenerateErrorCode =
+  | AiRoutingErrorCode
+  | AiCapabilityErrorCode
+  | typeof AI_TIMEOUT_ERROR_CODE;
 
 /** Tentativas extras do `withRetry` e base do backoff (igual ao ai-proxy). */
 const RETRY_MAX = 2;
@@ -120,7 +199,7 @@ export interface GenerateResult {
   model: string | null;
   durationMs: number;
   status: string;
-  errorCode?: AiRoutingErrorCode | AiCapabilityErrorCode | null;
+  errorCode?: AiGenerateErrorCode | null;
   fallbackUsed?: boolean;
 }
 
@@ -139,6 +218,26 @@ class ProviderConfigError extends Error {
 /** Mensagem de erro legível (nunca "undefined"). */
 function errorText(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
+}
+
+/** Nome do erro sem lançar (`Error` e `DOMException` do fetch abortado). */
+function errorName(err: unknown): string {
+  if (typeof err === "object" && err !== null) {
+    const name = (err as { name?: unknown }).name;
+    if (typeof name === "string") return name;
+  }
+  return "";
+}
+
+/**
+ * O estouro do prazo aborta o `AbortController` do provedor (IA-040) e chega aqui
+ * como `AbortError` (ou `TimeoutError`, de algumas implementações de fetch). Para o
+ * chamador é a MESMA causa: o prazo estourou. Nunca confundir com um erro de rede
+ * genérico — por isso a classificação é por `name`, não pela mensagem.
+ */
+function isAbortOrTimeoutError(err: unknown): boolean {
+  const name = errorName(err);
+  return name === "AbortError" || name === "TimeoutError";
 }
 
 /** Objeto simples (sem array/null) — base dos filtros. */
@@ -300,8 +399,10 @@ function buildDispatch(args: DispatchArgs): () => Promise<Response> {
           ...filterExtraBody(args.extraBody),
         },
       };
-      // `callCustomWebhook` não recebe `options`: sem teto próprio neste ramo.
-      return () => callCustomWebhook({ endpoint, apiKey, messages: args.messages, config });
+      // IA-041: o webhook recebe o MESMO prazo por capacidade dos demais ramos
+      // (interface congelada `options?: { timeoutMs?: number }`), fechando o teto
+      // que antes não existia neste ramo.
+      return () => callCustomWebhook({ endpoint, apiKey, messages: args.messages, config, options: { timeoutMs: args.timeoutMs } });
     }
     case "custom_agent":
       // Tipo sem caminho de chamada neste módulo: falha explícita, nunca um chute.
@@ -394,7 +495,7 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
     throw new TypeError('generateWithRouting: "extraBody" deve ser um objeto ou null.');
   }
 
-  const timeoutMs = params.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const timeoutMs = params.timeoutMs ?? resolveDefaultTimeoutMs(purpose, need?.modality);
   if (typeof timeoutMs !== "number" || !Number.isFinite(timeoutMs) || timeoutMs <= 0) {
     throw new TypeError('generateWithRouting: "timeoutMs" deve ser um numero finito e positivo.');
   }
@@ -441,7 +542,7 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
     providerId: string | null,
     providerName: string | null,
     model: string | null,
-    errorCode: AiRoutingErrorCode | AiCapabilityErrorCode | null,
+    errorCode: AiGenerateErrorCode | null,
   ): GenerateResult => ({
     ok,
     response,
@@ -562,26 +663,37 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
 
   let response: Response;
   try {
-    response = await withRetry(callFn, RETRY_MAX, RETRY_BASE_DELAY_MS);
+    // IA-041: `budgetMs` é o prazo TOTAL da capacidade, somando todas as tentativas —
+    // sem ele, um estouro de 60s (visão) poderia virar 3 estouros em fila.
+    response = await withRetry(callFn, RETRY_MAX, RETRY_BASE_DELAY_MS, { budgetMs: timeoutMs });
   } catch (err) {
     // Exceção/aborto (rede, timeout): desfecho auditado, sem lançar para o chamador.
     const message = errorText(err);
+    // IA-041: o estouro do prazo abortou o AbortController do provedor. Voltar como
+    // 504/TIMEOUT torna o cancelamento distinguível de um 502 de rede qualquer.
+    const timedOut = isAbortOrTimeoutError(err);
     await logUsage({
       model,
       status: "error",
-      errorMessage: message,
+      errorMessage: timedOut ? `Timeout apos ${timeoutMs}ms: ${message}` : message,
       providerId,
       providerName,
       modelSubstituted,
     });
     return finish(
       false,
-      failureResponse(502, null, `Falha na chamada do provedor: ${message}`),
+      failureResponse(
+        timedOut ? 504 : 502,
+        timedOut ? AI_TIMEOUT_ERROR_CODE : null,
+        timedOut
+          ? `Tempo esgotado na chamada do provedor apos ${timeoutMs}ms: ${message}`
+          : `Falha na chamada do provedor: ${message}`,
+      ),
       null,
       providerId,
       providerName,
       model,
-      null,
+      timedOut ? AI_TIMEOUT_ERROR_CODE : null,
     );
   }
 
