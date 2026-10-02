@@ -4,13 +4,13 @@
   "legacy_unmanaged_functions": [],
   "config": {
     "path": "supabase/config.toml",
-    "sha256": "4ce1acb56ca0cd8efb82cc269a4942c306e1863b79ed9b887e784b7ca8c70375"
+    "sha256": "40e2279a35e80baa6ca0c7dcc4f93b2220afed7269c766754c24fc4010479e74"
   },
   "summary": {
-    "function_count": 69,
-    "source_file_count": 132,
+    "function_count": 70,
+    "source_file_count": 133,
     "verify_jwt_true": 57,
-    "verify_jwt_false": 12
+    "verify_jwt_false": 13
   },
   "orphan_allowlist": [
     "sicoob-bridge",
@@ -601,6 +601,11 @@
       "path": "supabase/functions/recover-corrupted-audios/index.ts",
       "bytes": 6647,
       "sha256": "dd6f1d50dfdbfa10d3385cbcc123af43904718d8372212c0d7b55f3e0383c1ac"
+    },
+    {
+      "path": "supabase/functions/searchbox-budget-alert/index.ts",
+      "bytes": 2867,
+      "sha256": "2909d2324bfb71d4e298c370280b8cdd45d77a1b2a9ca044dc7092394bbfa1d1"
     },
     {
       "path": "supabase/functions/send-email/index.ts",
@@ -1520,6 +1525,18 @@
       ]
     },
     {
+      "name": "searchbox-budget-alert",
+      "entrypoint": "supabase/functions/searchbox-budget-alert/index.ts",
+      "verify_jwt": false,
+      "source_sha256": "19f600d4f30d03cf30c8c26e731dba4e406c384eb1d60cc2f8f45e06d8dd7374",
+      "source_files": [
+        "supabase/functions/_shared/cron-secret-auth.ts",
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/searchbox-budget-alert/index.ts"
+      ]
+    },
+    {
       "name": "send-email",
       "entrypoint": "supabase/functions/send-email/index.ts",
       "verify_jwt": true,
@@ -1720,5 +1737,5 @@
       ]
     }
   ],
-  "manifest_sha256": "239ecfc134c512764c188878272d31fa7d571b60d1d704141c1560387e160502"
+  "manifest_sha256": "c86f99024f0b0a5f59ab7b1b45f53d295f46e7a461c8d7d8e4d5b99a5a68d85c"
 }
