@@ -506,6 +506,8 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 
 # FASE 7 — Testes de integração, mutação e E2E (E67–E82)
 
+> **Mapeamento contra o código real (2026-10-02):** `docs/mapa/mapeamento-fase7.md` — **0 feitas · 2 parciais · 14 não feitas**. Cada linha traz evidência arquivo:linha; o que não tem evidência conta como não feito.
+
 > Defeitos P2, P3, P4. É a fase que impede a auditoria de 29/09 de se repetir.
 
 ### E67 · Suíte de integração hook + UI (consolidar E33)
