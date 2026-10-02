@@ -1,4 +1,4 @@
--- talkx_templates_current_version
+-- talkx_templates_current_version_v2
 --
 -- rollback: DROP FUNCTION IF EXISTS public.update_talkx_template_with_snapshot(uuid, timestamp with time zone, text, text, text, text, text, text, text[], text, text[]); e recriar o corpo de supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql (md5 do corpo: d31df280ef0813c1ba475704b4dc30f0), depois ALTER TABLE public.talkx_templates DROP COLUMN IF EXISTS current_version_id;. As linhas de versao criadas por esta migration (o estado corrente de cada template) podem ficar: sao historico valido.
 
