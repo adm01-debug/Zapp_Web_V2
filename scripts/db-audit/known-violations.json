@@ -4,7 +4,6 @@
   "_contexto": "docs/audits/EXECUCAO_2026-08-27.md, secao 'Acoplamento quebrado'",
   "known": [
     "from:department_whatsapp_configs:src/hooks/team-chat/useDepartmentManagement.ts",
-    "rpc:multiplix_confirm_dispatch:supabase/functions/multiplix-dispatch/actions/lifecycle.ts",
     "rpc:get_talkx_cron_secret:supabase/functions/talkx-send/index.ts",
     "rpc:claim_talkx_campaign_worker:supabase/functions/talkx-send/index.ts",
     "rpc:talkx_next_recipients:supabase/functions/talkx-send/index.ts",
