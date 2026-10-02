@@ -640,3 +640,36 @@ Uma publicação de edge mais nova apareceu no repositório
 (`edge-deploy/20261002-221654-7beb799c-37071463796`) e o resultado **não mudou**: segue **sem 429**. Agora são
 três medições independentes (61, 120 e 300 chamadas paralelas, em três momentos) com o mesmo veredito — o
 balde em memória do isolate não limita sob concorrência.
+
+## CT-74 — atribuição do CLS refeita depois da correção (2026-10-02): quem se move é o strip, quem empurra está acima
+
+Refiz a atribuição lendo o artefato cru da medição pós-correção (`audits["layout-shifts"]`), em vez de correr
+o Lighthouse de novo — o dado já estava lá.
+
+```console
+0.2211299987485109  div#radix-...-content-produtos > div.w-full > div.space-y-6 > div.grid
+0.0221630653540655  div.w-full > div.space-y-6 > div.flex > button.catalog-category-chip
+0.0018030944418027  (sem seletor)
+0.0006058630719204  div.h-full > div.w-full > div.inline-flex > button#radix-...-trigger-favoritos
+```
+
+O item maior não é "um grid qualquer": o próprio Lighthouse entrega o `snippet` e o retângulo.
+
+```json
+{"selector": "div#radix-_-content-produtos > div.w-full > div.space-y-6 > div.grid",
+ "snippet": "<div data-testid=\"catalog-kpi-strip\" class=\"grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3\">",
+ "boundingRect": {"top": 369, "bottom": 609, "left": 16, "right": 396, "width": 380, "height": 240}}
+```
+
+Leitura, agora com o dado certo:
+
+- **É a faixa de KPIs que se move** (0,2211, o mesmo valor de antes — coerente com a correção não ter mexido no CLS).
+- Mas ela **não muda de tamanho**: em mobile são 6 cards em `grid-cols-2` = 3 linhas = **240 px**, e a altura por
+  card é a mesma nos dois estados (o esqueleto é `h-[72px]`, e em 1440 px eu conferi 72 px = 72 px). O que a
+  medição de 1440 px mediu foi a altura de **uma linha**; em mobile o bloco tem 3 linhas.
+- Logo, **quem a empurra está acima dela**: o `top = 369` a coloca logo abaixo do cabeçalho/abas, e o próprio
+  relatório mostra a aba "favoritos" shiftando também (0,0006). O Lighthouse nomeia o elemento que **se move** —
+  não quem cresce.
+- **Próximo passo (não feito aqui):** medir a altura do bloco **acima** do strip (cabeçalho, subtítulo com a
+  contagem de produtos, abas) antes e depois de os dados chegarem — com a rede atrasada de propósito, para ter
+  o antes. É a medição que aponta o culpado; a minha tese anterior (o próprio strip) já está descartada.
