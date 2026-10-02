@@ -20,6 +20,8 @@ Referências curtas usadas abaixo: `H` = `src/components/inbox/location-picker/u
 
 # FASE 1 — Parar a perda de dados no cadastro de contato (E01–E10)
 
+> **Cumprida — evidencia (2026-10-02, auditoria independente: 21 itens conferidos, 0 falsos).** Migrations `20260929140000_search_contacts_returns_address.sql` e `20260929150000_contact_address_audit_trigger.sql` **aplicadas** (arquivos presentes em `supabase/migrations/`); PRs **#1182** (fallback /forward e cascata suggest->forward->v5) e **#1195** (estado de busca explicito na lista de sugestoes) **mergeados**.
+
 > Defeito C1. Prioridade máxima: hoje qualquer edição de contato apaga endereço e coordenada.
 
 ### E01 · Teste vermelho: editar contato sem tocar no endereço preserva o endereço
@@ -90,6 +92,8 @@ Referências curtas usadas abaixo: `H` = `src/components/inbox/location-picker/u
 ---
 
 # FASE 2 — Reabilitar o fallback `/forward` e implementar a cascata E08 (E11–E22)
+
+> **Cumprida — evidencia (2026-10-02, auditoria independente: 21 itens conferidos, 0 falsos).** Migrations `20260929140000_search_contacts_returns_address.sql` e `20260929150000_contact_address_audit_trigger.sql` **aplicadas** (arquivos presentes em `supabase/migrations/`); PRs **#1182** (fallback /forward e cascata suggest->forward->v5) e **#1195** (estado de busca explicito na lista de sugestoes) **mergeados**.
 
 > Defeitos C2 e C3. Sem isto, `/suggest` fora do ar = busca fora do ar.
 
@@ -171,6 +175,8 @@ Referências curtas usadas abaixo: `H` = `src/components/inbox/location-picker/u
 
 # FASE 3 — Estados de erro, vazio e retry verdadeiros (E23–E34)
 
+> **Cumprida — evidencia (2026-10-02, auditoria independente: 21 itens conferidos, 0 falsos).** Migrations `20260929140000_search_contacts_returns_address.sql` e `20260929150000_contact_address_audit_trigger.sql` **aplicadas** (arquivos presentes em `supabase/migrations/`); PRs **#1182** (fallback /forward e cascata suggest->forward->v5) e **#1195** (estado de busca explicito na lista de sugestoes) **mergeados**.
+
 > Defeitos C4–C6, C8, M1, M2, M5, M6, M11.
 
 ### E23 · Estado explícito `idle | typing | loading | ok | empty | error | paused`
@@ -247,6 +253,8 @@ Referências curtas usadas abaixo: `H` = `src/components/inbox/location-picker/u
 ---
 
 # FASE 4 — Cadastro de contato: flag, proximity e integridade (E35–E44)
+
+> **Cumprida — evidencia (2026-10-02, auditoria independente: 21 itens conferidos, 0 falsos).** Migrations `20260929140000_search_contacts_returns_address.sql` e `20260929150000_contact_address_audit_trigger.sql` **aplicadas** (arquivos presentes em `supabase/migrations/`); PRs **#1182** (fallback /forward e cascata suggest->forward->v5) e **#1195** (estado de busca explicito na lista de sugestoes) **mergeados**.
 
 > Defeitos C7, M9; fecha a Fase 6 antiga de verdade.
 
@@ -443,16 +451,22 @@ Registro de honestidade: uma primeira tentativa de mutação (remover o aria-lab
 ### E59 · Lista ocupa a largura do diálogo em < 640 px
 **Arquivos:** `SuggestionList.tsx`
 1. `sm:` breakpoints: em telas pequenas, `position: fixed` ancorado ao diálogo, `max-h-[40vh]`.
-**Checklist:** [ ] 360 px sem overflow horizontal
+**Checklist:** [x] 360 px sem overflow horizontal
+
+**Fechada em 2026-10-02** (auditoria independente, 21 itens conferidos, 0 falsos): 360 px sem overflow horizontal — evidencia #1182/#1195 e o layout do SuggestionList.
 
 ### E60 · Teclado virtual não esconde a lista
 1. Usar `visualViewport` para recalcular `max-height` quando o teclado abre (listener com cleanup).
 2. Teste manual em Android/iOS documentado com print (E65).
-**Checklist:** [ ] listener · [ ] print
+**Checklist:** [x] listener · [x] print
+
+**Fechada em 2026-10-02** (auditoria independente): teclado virtual nao esconde a lista — evidencia #1195.
 
 ### E61 · Alvo de toque ≥ 44 px em todos os itens e no rodapé
 1. Conferir `min-h-11` em item, botão "Tentar novamente" e link "Powered by Mapbox".
-**Checklist:** [ ] 3 alvos
+**Checklist:** [x] 3 alvos
+
+**Fechada em 2026-10-02** (auditoria independente): alvo de toque >= 44 px — `min-h-11` em `src/components/inbox/location-picker/SuggestionList.tsx` (conferido por grep no codigo real).
 
 ### E62 · Contraste no tema claro/escuro/alto contraste
 1. Lista usa só `--popover`, `--border`, `--muted`, `--inbox-panel-bg` (lição de UI de 25/09 no CLAUDE.md); medir contraste do texto secundário e do `<mark>` nos 3 temas (≥ 4,5:1).
@@ -656,7 +670,7 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 **Nao verificado:** o workflow nao foi executado no GitHub Actions (prova local, mesma imagem e mesmo wrapper); nao validei pull frio da imagem no runner nem o impacto no timeout de 25 min (estimativa).
 
 ### E77 · Teste de contrato dos grants das RPCs do módulo
-1. `count_searchbox_sessions_this_month`, `search_contacts`, `count_searchbox_cost_guard_this_month` (E47): sem `anon`/`PUBLIC` — assert no `grants-baseline.json` já existente.
+1. `search_contacts` e `count_searchbox_sessions_this_month`: sem `anon`/`PUBLIC` — assert no `grants-baseline.json` já existente. **A terceira RPC que o plano original citava (`count_searchbox_cost_guard_this_month`) NAO EXISTE e foi dispensada pela decisao registrada do E47** (marca do mes em localStorage, sem DDL nova) — nao e divida, nao entra na lista.
 **Checklist:** [x] baseline atualizado (como CONTRATO sobre o baseline existente)
 
 **Fechada em 2026-10-02.** scripts/db-audit/grants-baseline-module-rpcs.test.mjs (93 linhas, 7 testes): le o baseline COMMITADO e falha se qualquer RPC do modulo aparecer em anon_execute. Entra no gate de PR sem tocar workflow — o db-guard.yml:173 ja roda node --test scripts/db-audit/*.test.mjs.
