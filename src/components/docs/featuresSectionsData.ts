@@ -225,7 +225,7 @@ export const sections: FeatureSection[] = [
     id: 22, title: "Localização e Mapas", icon: MapPin, color: "text-destructive",
     items: [
       "Mapa interativo (Mapbox)", "Seletor de localização",
-      "Exibição de localização recebida", "Edge function para token Mapbox"
+      "Exibição de localização recebida", "Edge function para token Mapbox",
       "Autocomplete de endereço (Inbox e Contatos)",
       "Mapa de contatos com endereço confirmado",
     ]
