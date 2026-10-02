@@ -388,19 +388,25 @@ interface CatalogKpiStripProps {
 
 /**
  * 6 KPIs do topo do mock A. Cada card só aparece se o campo vier como
- * número (a RPC catalog_stats da E24 ainda não existe — hoje `stats` é
- * `undefined` e o strip inteiro fica oculto, sem "—" decorativo).
+ * número (nada de "—" decorativo). Sem nenhum número, o strip **mantém o
+ * espaço** com o esqueleto em vez de sumir — ver o comentário de CLS abaixo.
  */
 export function CatalogKpiStrip({ stats, loading, onSelect }: CatalogKpiStripProps) {
-  if (loading) {
+  const visible = CATALOG_KPI_DEFS.filter((d) => typeof stats?.[d.key] === 'number');
+  // CT-74 — CLS medido em produção (02/10): 0,2211 dos 0,2455 vinham deste bloco, porque
+  // ele devolvia `null` sem dados e assim NASCIA depois do primeiro paint, empurrando a
+  // grade para baixo. Sem dados, o esqueleto ocupa o lugar (mesma grade, mesma altura).
+  if (loading || visible.length === 0) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+      <div
+        data-testid="catalog-kpi-strip-placeholder"
+        className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3"
+        aria-hidden="true"
+      >
         {Array.from({ length: 6 }).map((_, i) => <KpiCardSkeleton key={i} compact />)}
       </div>
     );
   }
-  const visible = CATALOG_KPI_DEFS.filter((d) => typeof stats?.[d.key] === 'number');
-  if (visible.length === 0) return null;
   return (
     <div data-testid="catalog-kpi-strip" className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
       {visible.map((d, i) => (

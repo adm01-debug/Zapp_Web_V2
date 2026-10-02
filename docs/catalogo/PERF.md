@@ -468,5 +468,47 @@ FCP 3,4 s | LCP 7,3 s | TBT 680 ms | SI 3,8 s | TTI 7,3 s
 
 Leitura: duas medições independentes dão o **mesmo CLS (~0,245)** e perf na mesma faixa (39–44) —
 o veredito do aceite (≥ 90 e < 0,05) **não muda** com o banco saudável, e a causa dominante do CLS
-(a faixa de KPIs) fica confirmada. Artefatos crus: `~/.cache/hermes-pr/ct74-20261002-lh-prod.json`
-(1ª) e `.tmp/lh-prod-2.json` (2ª, nesta rodada).
+(a faixa de KPIs) fica confirmada. Artefatos crus (fora dos workspaces, que são apagados na limpeza):
+`~/.cache/hermes-pr/ct74-20261002-lh-prod.json` (1ª) e
+`~/.cache/hermes-pr/ct74-20261002-lh-prod-2.json` (2ª).
+
+## CT-73 — payload de `list_products compact` (medido em 2026-10-02)
+
+**Aceite do plano:** *payload de `list_products compact` medido (< 30 KB por página de 24) —
+se passar, cortar campos. Aceite: medição em `PERF.md`.*
+
+Método: sessão autenticada real em produção, medindo o corpo de cada resposta da edge
+`promogifts-catalog`, com a ação lida do **corpo da requisição** (o `action` vai na requisição,
+não na resposta).
+
+```console
+list_products | limit=24 | offset=0 | 81,5 KB
+bootstrap     | limit=null | offset=null | 186,1 KB
+```
+
+Leitura: o alvo de **< 30 KB por página de 24 NÃO é atingido** — a página de 24 produtos traz
+**81,5 KB** (2,7× o teto). O `bootstrap` (que não é o alvo deste item) traz 186,1 KB. O aceite
+do CT-73 é a **medição**, que está feita; o corte de campos fica como o próximo passo, com o
+número agora conhecido.
+
+## CT-74 — correção aplicada (2026-10-02): o strip de KPIs reserva o espaço
+
+**Causa medida:** o layout shift de 0,2211 (dos 0,2455 totais) vinha de
+`data-testid="catalog-kpi-strip"`. No código (`catalogShared.tsx`), o `CatalogKpiStrip` devolvia
+**`null`** quando não havia número em `stats` — o strip nascia **depois** do primeiro paint e
+empurrava a grade.
+
+**Correção:** sem dados (ou carregando), o esqueleto **ocupa o lugar** (mesma grade, elemento
+`data-testid="catalog-kpi-strip-placeholder"`, `aria-hidden`), em vez de o componente sumir.
+
+**Prova de que a altura casa:** medido em produção, na view autenticada —
+`alturaStrip = 72 px`, `alturaCardKpi = 72 px`, 6 KPIs. O esqueleto é `h-[72px]`, ou seja a
+troca de estado **não muda a altura** (que era o mecanismo do shift).
+
+**Teste:** `src/components/catalog/__tests__/CT74_kpiStripCls.test.tsx` (vermelho antes: o
+placeholder era `null`; verde depois). O caso antigo de `catalogShared.test.tsx`
+("sem stats, não renderiza nada") foi atualizado com o porquê, porque codificava o comportamento
+que causava o shift.
+
+**Pendente:** a re-medição do CLS em produção **depois do deploy** desta correção (o número
+esperado é CLS próximo de 0; o desempenho geral exige mais que isso — ver a medição acima).
