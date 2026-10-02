@@ -56,7 +56,18 @@ jobs:
           node-version: '24'
 
       - name: 🧄 Setup Bun
-        run: npm install -g bun@1.4.0
+        run: |
+          BUN_VERSION="1.4.0"
+          bun_asset="bun-linux-x64.zip"
+          bun_sha256="2d03fb5fb83ac8b567aca0a281b2ce1a1a19d488f56c2968d88c3f25e92fe452"
+          bun_dir="$RUNNER_TEMP/bun"
+          mkdir -p "$bun_dir"
+          curl --proto '=https' --tlsv1.2 -sSL \
+            -o "$bun_dir/$bun_asset" \
+            "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${bun_asset}"
+          echo "${bun_sha256}  ${bun_dir}/${bun_asset}" | sha256sum --check --strict
+          unzip -q "$bun_dir/$bun_asset" -d "$bun_dir"
+          echo "$bun_dir/bun-linux-x64" >> "$GITHUB_PATH"
 
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
@@ -202,7 +213,18 @@ jobs:
           persist-credentials: false
 
       - name: 🧄 Setup Bun
-        run: npm install -g bun@1.4.0
+        run: |
+          BUN_VERSION="1.4.0"
+          bun_asset="bun-linux-x64.zip"
+          bun_sha256="2d03fb5fb83ac8b567aca0a281b2ce1a1a19d488f56c2968d88c3f25e92fe452"
+          bun_dir="$RUNNER_TEMP/bun"
+          mkdir -p "$bun_dir"
+          curl --proto '=https' --tlsv1.2 -sSL \
+            -o "$bun_dir/$bun_asset" \
+            "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${bun_asset}"
+          echo "${bun_sha256}  ${bun_dir}/${bun_asset}" | sha256sum --check --strict
+          unzip -q "$bun_dir/$bun_asset" -d "$bun_dir"
+          echo "$bun_dir/bun-linux-x64" >> "$GITHUB_PATH"
 
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
@@ -246,7 +268,18 @@ jobs:
           persist-credentials: false
 
       - name: 🧄 Setup Bun
-        run: npm install -g bun@1.4.0
+        run: |
+          BUN_VERSION="1.4.0"
+          bun_asset="bun-linux-x64.zip"
+          bun_sha256="2d03fb5fb83ac8b567aca0a281b2ce1a1a19d488f56c2968d88c3f25e92fe452"
+          bun_dir="$RUNNER_TEMP/bun"
+          mkdir -p "$bun_dir"
+          curl --proto '=https' --tlsv1.2 -sSL \
+            -o "$bun_dir/$bun_asset" \
+            "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${bun_asset}"
+          echo "${bun_sha256}  ${bun_dir}/${bun_asset}" | sha256sum --check --strict
+          unzip -q "$bun_dir/$bun_asset" -d "$bun_dir"
+          echo "$bun_dir/bun-linux-x64" >> "$GITHUB_PATH"
 
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
@@ -299,7 +332,18 @@ jobs:
           fetch-depth: 0
 
       - name: 🧄 Setup Bun
-        run: npm install -g bun@1.4.0
+        run: |
+          BUN_VERSION="1.4.0"
+          bun_asset="bun-linux-x64.zip"
+          bun_sha256="2d03fb5fb83ac8b567aca0a281b2ce1a1a19d488f56c2968d88c3f25e92fe452"
+          bun_dir="$RUNNER_TEMP/bun"
+          mkdir -p "$bun_dir"
+          curl --proto '=https' --tlsv1.2 -sSL \
+            -o "$bun_dir/$bun_asset" \
+            "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${bun_asset}"
+          echo "${bun_sha256}  ${bun_dir}/${bun_asset}" | sha256sum --check --strict
+          unzip -q "$bun_dir/$bun_asset" -d "$bun_dir"
+          echo "$bun_dir/bun-linux-x64" >> "$GITHUB_PATH"
 
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
@@ -338,7 +382,18 @@ jobs:
           persist-credentials: false
 
       - name: 🧄 Setup Bun
-        run: npm install -g bun@1.4.0
+        run: |
+          BUN_VERSION="1.4.0"
+          bun_asset="bun-linux-x64.zip"
+          bun_sha256="2d03fb5fb83ac8b567aca0a281b2ce1a1a19d488f56c2968d88c3f25e92fe452"
+          bun_dir="$RUNNER_TEMP/bun"
+          mkdir -p "$bun_dir"
+          curl --proto '=https' --tlsv1.2 -sSL \
+            -o "$bun_dir/$bun_asset" \
+            "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${bun_asset}"
+          echo "${bun_sha256}  ${bun_dir}/${bun_asset}" | sha256sum --check --strict
+          unzip -q "$bun_dir/$bun_asset" -d "$bun_dir"
+          echo "$bun_dir/bun-linux-x64" >> "$GITHUB_PATH"
 
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
@@ -416,7 +471,18 @@ jobs:
 
       - name: 🧄 Setup Bun
         if: steps.paths.outputs.map_changed == 'true'
-        run: npm install -g bun@1.4.0
+        run: |
+          BUN_VERSION="1.4.0"
+          bun_asset="bun-linux-x64.zip"
+          bun_sha256="2d03fb5fb83ac8b567aca0a281b2ce1a1a19d488f56c2968d88c3f25e92fe452"
+          bun_dir="$RUNNER_TEMP/bun"
+          mkdir -p "$bun_dir"
+          curl --proto '=https' --tlsv1.2 -sSL \
+            -o "$bun_dir/$bun_asset" \
+            "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${bun_asset}"
+          echo "${bun_sha256}  ${bun_dir}/${bun_asset}" | sha256sum --check --strict
+          unzip -q "$bun_dir/$bun_asset" -d "$bun_dir"
+          echo "$bun_dir/bun-linux-x64" >> "$GITHUB_PATH"
 
       - name: 📚 Install dependencies
         if: steps.paths.outputs.map_changed == 'true'
