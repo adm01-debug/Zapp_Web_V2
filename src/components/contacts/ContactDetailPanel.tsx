@@ -25,6 +25,10 @@ import { normalizeE164BR } from '@/lib/calls/phone';
 // CT-51/CT-52 — o catálogo do chat reusado no painel do contato: abre o mesmo
 // Dialog de envio (CT-14), já com este contato como `presetContact`.
 import { ExternalProductCatalog } from '@/components/catalog/ExternalProductCatalog';
+// CT-54 — histórico dos produtos já enviados PARA este contato: lê
+// `catalog_send_events` filtrando por `contact_id`. Reusa o hook da aba
+// "Enviados" (CT-57); o filtro SÓ estreita, a RLS por agente segue valendo.
+import { useCatalogSendHistory } from '@/hooks/integrations/useCatalogSendHistory';
 interface ContactDetail {
   id: string;
   name: string;
@@ -47,6 +51,72 @@ interface ContactDetailPanelProps<T extends ContactDetail> {
   onEdit: (contact: T) => void;
   messageCount?: number;
   lastMessageAt?: string | null;
+}
+
+const SEND_STATUS_LABEL: Record<string, string> = {
+  sent: 'Enviado',
+  partial: 'Parcial',
+  failed: 'Falhou',
+};
+
+/**
+ * CT-54 — bloco "Produtos enviados" no perfil do contato.
+ *
+ * Usa `useCatalogSendHistory({ contactId })` (mesma consulta da aba
+ * "Enviados", agora recortada por destinatário). Estados de carregamento,
+ * erro e vazio são explicitamente tratados — contato sem envio não pode
+ * parecer "carregando para sempre".
+ */
+export function ContactCatalogSendHistory({ contactId }: { contactId: string }) {
+  const { rows, isLoading, error } = useCatalogSendHistory({ contactId });
+
+  return (
+    <div>
+      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+        <Package className="w-3 h-3" />
+        Produtos enviados
+      </h3>
+
+      {isLoading ? (
+        <div className="space-y-2" data-testid="send-history-loading">
+          {[1, 2].map((i) => (
+            <div key={i} className="h-14 rounded-lg bg-muted/20 animate-pulse" />
+          ))}
+        </div>
+      ) : error ? (
+        <p className="text-xs text-muted-foreground/50" data-testid="send-history-error">
+          Não foi possível carregar o histórico de envios.
+        </p>
+      ) : rows.length === 0 ? (
+        <div className="text-center py-4" data-testid="send-history-empty">
+          <Package className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+          <p className="text-xs text-muted-foreground/50">Nenhum produto enviado para este contato</p>
+        </div>
+      ) : (
+        <div className="space-y-2" data-testid="send-history-list">
+          {rows.map((row) => (
+            <div key={row.id} className="p-3 rounded-lg bg-muted/20 border border-border/20">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-foreground truncate">{row.product_name}</p>
+                  {row.variant_label && <p className="text-caption">{row.variant_label}</p>}
+                </div>
+                {row.status && (
+                  <Badge variant="secondary" className="text-[9px] h-4 px-1.5 shrink-0">
+                    {SEND_STATUS_LABEL[row.status] || row.status}
+                  </Badge>
+                )}
+              </div>
+              <span className="text-caption flex items-center gap-1 mt-2">
+                <Calendar className="w-2.5 h-2.5" />
+                {format(new Date(row.created_at), 'dd/MM/yyyy', { locale: ptBR })}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function ContactDetailPanel<T extends ContactDetail>({
@@ -266,6 +336,9 @@ export function ContactDetailPanel<T extends ContactDetail>({
 
             {/* Purchases */}
             <ContactPurchaseHistory contactId={contact.id} />
+
+            {/* CT-54 — Produtos enviados a este contato */}
+            <ContactCatalogSendHistory contactId={contact.id} />
           </div>
         </ScrollArea>
       </motion.div>
