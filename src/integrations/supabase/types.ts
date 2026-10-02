@@ -2287,6 +2287,7 @@ export type Database = {
           next_steps: string[] | null
           period_days: number | null
           relationship_type: string | null
+          request_key: string | null
           sales_opportunity: string | null
           sentiment: string | null
           sentiment_score: number | null
@@ -2313,6 +2314,7 @@ export type Database = {
           next_steps?: string[] | null
           period_days?: number | null
           relationship_type?: string | null
+          request_key?: string | null
           sales_opportunity?: string | null
           sentiment?: string | null
           sentiment_score?: number | null
@@ -2339,6 +2341,7 @@ export type Database = {
           next_steps?: string[] | null
           period_days?: number | null
           relationship_type?: string | null
+          request_key?: string | null
           sales_opportunity?: string | null
           sentiment?: string | null
           sentiment_score?: number | null
@@ -2712,6 +2715,7 @@ export type Database = {
       conversation_tasks: {
         Row: {
           assigned_to: string | null
+          client_task_id: string | null
           completed_at: string | null
           contact_id: string | null
           created_at: string
@@ -2732,6 +2736,7 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string | null
+          client_task_id?: string | null
           completed_at?: string | null
           contact_id?: string | null
           created_at?: string
@@ -2752,6 +2757,7 @@ export type Database = {
         }
         Update: {
           assigned_to?: string | null
+          client_task_id?: string | null
           completed_at?: string | null
           contact_id?: string | null
           created_at?: string
@@ -5264,6 +5270,7 @@ export type Database = {
       notifications: {
         Row: {
           created_at: string
+          dedupe_key: string | null
           id: string
           is_read: boolean | null
           message: string
@@ -5275,6 +5282,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          dedupe_key?: string | null
           id?: string
           is_read?: boolean | null
           message: string
@@ -5286,6 +5294,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          dedupe_key?: string | null
           id?: string
           is_read?: boolean | null
           message?: string
@@ -8022,6 +8031,30 @@ export type Database = {
           },
         ]
       }
+      talkx_test_send_claims: {
+        Row: {
+          created_at: string
+          id: string
+          provider_message_id: string | null
+          request_key: string
+          sent_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          provider_message_id?: string | null
+          request_key: string
+          sent_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          provider_message_id?: string | null
+          request_key?: string
+          sent_at?: string | null
+        }
+        Relationships: []
+      }
       team_conversation_members: {
         Row: {
           conversation_id: string
@@ -10485,7 +10518,6 @@ export type Database = {
         Returns: {
           files_total: number
           notes_total: number
-          reminders_pending: number
           tasks_open: number
         }[]
       }
