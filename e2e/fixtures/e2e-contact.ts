@@ -152,3 +152,51 @@ export async function cleanupE2EReactions(page: Page): Promise<void> {
     );
   }
 }
+
+// `true` quando o contato fixture ja tem encerramento registrado HOJE.
+//
+// Medido (run local com o usuario de QA): `close_conversation_atomic` insere em
+// `conversation_closures`, que tem indice unico
+// `conversation_closures_contact_day_uidx (contact_id, conversation_closure_day(created_at))`
+// — ou seja, **um encerramento por contato por dia** (migration
+// 20260927590000_conversation_closures_dedupe_and_unique_per_day.sql, com
+// `conversation_closure_day = (created_at AT TIME ZONE 'America/Sao_Paulo')::date`).
+// Consequencias medidas:
+//   - o 2o encerramento do dia devolve HTTP 409 / code 23505 e o app mostra
+//     "Nao foi possivel encerrar a conversa...". Confirmado no trace do Playwright
+//     (CONSOLE warning [CloseConversationDialog] Falha no encerramento atomico
+//     {code: 23505, details: Key (contact_id, conversation_closure_day(created_...)}).
+//   - o token do usuario NAO consegue limpar a linha: DELETE com RLS devolve 200 e
+//     remove 0 linhas (confirmado com `Prefer: return=representation`). O teardown
+//     do e2e-logado.yml limpa com service role apenas ENTRE RUNS, nunca entre
+//     tentativas do mesmo run.
+// Por isso um retry do Playwright depois de um encerramento bem-sucedido nunca
+// podia passar. Os testes usam esta checagem para validar o comportamento correto
+// nos dois cenarios (encerra quando o dia esta livre; recusa quando ja encerrou).
+export async function fixtureHasClosureToday(page: Page): Promise<boolean> {
+  const accessToken = await getAccessToken(page);
+  const response = await page.request.get(
+    `${SUPABASE_URL}/rest/v1/conversation_closures` +
+      `?contact_id=eq.${E2E_FIXTURE_CONTACT_ID}&select=created_at&order=created_at.desc&limit=1`,
+    {
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  if (!response.ok()) return false; // indisponivel nao bloqueia o caminho feliz
+  const rows = (await response.json()) as Array<{ created_at?: string }>;
+  const criadoEm = Array.isArray(rows) ? rows[0]?.created_at : null;
+  if (!criadoEm) return false;
+  // Mesma regra do indice unico: o dia do encerramento e o dia em America/Sao_Paulo.
+  const diaSp = (iso: string | Date) =>
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Sao_Paulo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(typeof iso === 'string' ? new Date(iso) : iso);
+  return diaSp(criadoEm) === diaSp(new Date());
+}
