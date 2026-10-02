@@ -363,7 +363,9 @@ jobs:
                   echo ""
                   echo "#### \`$falha\`"
                   echo '```'
-                  head -20 "$log_file"
+                  head -20 "$log_file" | sed -E \
+                    -e 's|postgres(ql)?://[^@[:space:]]+@[^[:space:]]+|postgres://***@***|g' \
+                    -e 's|password=[^[:space:]&]+|password=***|g'
                   echo '```'
                 } >> "$GITHUB_STEP_SUMMARY"
               fi
@@ -447,13 +449,16 @@ jobs:
               'Auditar configuracao runtime sem dados de clientes': '/tmp/step-runtime-config.log',
             };
             const failedSteps = passos.split('\n').filter(s => s.startsWith('- ')).map(s => s.slice(2));
+            const redact = t => t
+              .replace(/postgres(?:ql)?:\/\/[^@\s]+@\S+/gi, 'postgres://***@***')
+              .replace(/password=[^\s&"']+/gi, 'password=***');
             let logSection = '';
             for (const step of failedSteps) {
               const logFile = STEP_LOG_MAP[step];
               if (logFile) {
                 try {
                   const content = fs.readFileSync(logFile, 'utf8');
-                  const snippet = content.split('\n').slice(0, 20).join('\n');
+                  const snippet = redact(content.split('\n').slice(0, 20).join('\n'));
                   logSection += `\n**${step}:**\n\`\`\`\n${snippet}\n\`\`\`\n`;
                 } catch {}
               }
