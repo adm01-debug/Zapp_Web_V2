@@ -126,12 +126,27 @@ async function mockSupabaseBackend(page: Page, registro: Registro): Promise<void
  * lê (`features[0].geometry.coordinates` + `properties.name`/`full_address`) — mesmo dado
  * do E47, portanto, e nenhum shape inventado. É ele que responde o `/retrieve` aqui, para
  * o cartão de confirmação sair com o nome "Avenida Paulista, 1000".
+ *
+ * E72: com `failSuggest: true`, o `/suggest` responde 500 — o E68 NÃO tem fixture de 500
+ * (só `rate-limit-429.json`), então esta falha é montada INLINE aqui (status 500 + corpo de
+ * erro genérico), e o `/forward` continua respondendo com a fixture do E68. É o cenário do
+ * E72: `/suggest` cai por rota → a cascata de fallback do `useAddressAutocomplete` chama
+ * `searchPlaces()` → `/forward` → a lista se preenche.
  */
-async function mockMapboxSearchbox(page: Page, registro: Registro): Promise<void> {
+async function mockMapboxSearchbox(
+  page: Page,
+  registro: Registro,
+  opts: { failSuggest?: boolean } = {},
+): Promise<void> {
   await page.route('**/searchbox/v1/**', (route) => {
     const url = route.request().url();
     registro.mapbox.push(url);
-    if (url.includes('/searchbox/v1/suggest')) return json(route, fixture('suggest-avenida-paulista-1000.json'));
+    if (url.includes('/searchbox/v1/suggest')) {
+      // E72: 500 inline (o E68 não tem fixture de 500) — causa `kind: 'http'`, que É rota
+      // quebrada e por isso cai no `/forward` (FORWARD_FALLBACK_KINDS em useAddressAutocomplete).
+      if (opts.failSuggest) return json(route, { message: 'Internal Server Error' }, 500);
+      return json(route, fixture('suggest-avenida-paulista-1000.json'));
+    }
     if (url.includes('/searchbox/v1/retrieve/')) return json(route, fixture('forward-avenida-paulista-1000.json'));
     if (url.includes('/searchbox/v1/forward')) return json(route, fixture('forward-avenida-paulista-1000.json'));
     return json(route, {});
@@ -198,5 +213,62 @@ test.describe('E71 · picker de localização (combobox de endereço, sem enviar
     expect(registro.mapbox.filter((u) => u.includes('/searchbox/v1/suggest')).length).toBeGreaterThan(0);
     expect(registro.mapbox.filter((u) => u.includes('/searchbox/v1/retrieve/')).length).toBeGreaterThan(0);
     expect(registro.mapbox.every((u) => u.startsWith('https://api.mapbox.com/'))).toBe(true);
+  });
+
+  // E72 — mesmo setup do E71, com o `/suggest` devolvendo 500. O caso prova o FALLBACK:
+  // `/suggest` cai por rota (http → FORWARD_FALLBACK_KINDS) e o `/forward` resolve (200),
+  // então a lista NÃO fica vazia nem em erro — mostra o resultado do forward e o Enter
+  // seleciona. É a diferença de um caso "só /suggest 200": aqui o caminho exercitado é a
+  // cascata de fallback, não a busca normal.
+  test('E72 · /suggest 500 → lista mostra o resultado do /forward e Enter seleciona', async ({ page }) => {
+    const registro: Registro = { writesApp: [], mapbox: [] };
+
+    await mockSupabaseBackend(page, registro);
+    // Única diferença do E71: `failSuggest` responde 500 no /suggest (inline, sem fixture).
+    await mockMapboxSearchbox(page, registro, { failSuggest: true });
+    await installFakeSession(page);
+
+    await page.goto('/');
+    const conversa = page.locator('[data-testid="conversation-item"]').filter({ hasText: '[E2E]' });
+    await expect(conversa).toBeVisible();
+    await conversa.click();
+
+    await page.getByTestId('chip-more').click();
+    await page.getByRole('button', { name: 'Enviar localização' }).click();
+
+    const dialogo = page.getByRole('dialog');
+    await expect(dialogo.getByText('Compartilhar Localização')).toBeVisible();
+
+    await dialogo.getByRole('tab', { name: /Escolher no Mapa/ }).click();
+    const combo = dialogo.getByRole('combobox');
+    await combo.click();
+    await combo.fill('avenida paulista 1000');
+
+    // O /suggest responde 500, mas a lista aparece com o resultado do /forward (fallback):
+    // se o fallback não existisse, aqui seria o estado de erro "Falha ao buscar sugestões.".
+    const listbox = dialogo.getByRole('listbox');
+    await expect(listbox).toBeVisible();
+    const opcao = dialogo.getByRole('option', { name: /Avenida Paulista, 1000/ });
+    await expect(opcao).toBeVisible();
+
+    // Enter seleciona o item do forward (passo 1 da etapa). A sugestão do /forward já traz
+    // coordenada, então a seleção NÃO dispara um /retrieve.
+    await combo.press('ArrowDown');
+    await expect(opcao).toHaveAttribute('aria-selected', 'true');
+    await combo.press('Enter');
+
+    // Cartão de confirmação com o nome vindo do próprio /forward.
+    await expect(dialogo.getByText('Avenida Paulista, 1000', { exact: true })).toBeVisible();
+
+    // Não envia: fecha sem gerar WhatsApp (mesma prova do E71).
+    await dialogo.getByRole('button', { name: 'Cancelar' }).click();
+    await expect(dialogo).toBeHidden();
+    expect(registro.writesApp.filter((w) => w.startsWith('POST /rest/v1/messages'))).toEqual([]);
+
+    // Prova do fallback: o /suggest foi chamado (e respondeu 500), o /forward foi chamado e
+    // alimentou a lista, e NENHUM /retrieve ocorreu — a coordenada veio junto do /forward (E15).
+    expect(registro.mapbox.filter((u) => u.includes('/searchbox/v1/suggest')).length).toBeGreaterThan(0);
+    expect(registro.mapbox.filter((u) => u.includes('/searchbox/v1/forward')).length).toBeGreaterThan(0);
+    expect(registro.mapbox.filter((u) => u.includes('/searchbox/v1/retrieve/')).length).toBe(0);
   });
 });

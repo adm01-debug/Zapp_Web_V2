@@ -577,7 +577,13 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 
 ### E72 · E2E: fallback quando `/suggest` falha
 1. Mesma spec, `page.route` devolvendo 500 no `/suggest` e 200 no `/forward`: lista mostra resultado do forward; Enter funciona.
-**Checklist:** [ ] caso
+**Checklist:** [x] caso
+
+**Fechada em 2026-10-02.** Caso acrescentado à MESMA spec do E71 (`e2e/location-picker.spec.ts`) — nenhum segundo arquivo, setup não duplicado: o helper `mockMapboxSearchbox` ganhou a opção `failSuggest`, e nesse modo o `/suggest` responde 500 INLINE (status 500 + corpo de erro), porque o E68 só tem fixture de 429 (`rate-limit-429.json`), não de 500. O `/forward` segue respondendo com `forward-avenida-paulista-1000.json`. O combobox digita "avenida paulista 1000", o `/suggest` cai (causa `http`, que É rota quebrada e por isso cai no fallback), a lista se preenche com o resultado do `/forward`, `ArrowDown`+`Enter` seleciona e o cartão de confirmação sai com "Avenida Paulista, 1000" — sem `/retrieve` (a sugestão do forward já traz coordenada) e sem POST em `messages`.
+
+**Prova:** verde em `chromium-authenticated --no-deps`; `--repeat-each=3` = 6/6 (2 casos × 3), zero flaky. Mutação que esvazia `FORWARD_FALLBACK_KINDS` (cascata `/suggest`→`/forward` desligada, `useAddressAutocomplete.ts`) derruba SÓ o caso do E72, com timeout de `getByRole('listbox')` ("element(s) not found") — o E71 (suggest 200) permanece verde, provando que o caso tem dentes no fallback. Restaurado por backup+cp (nunca git checkout/stash); `git diff -- src/` vazio, sha256 do arquivo igual ao do backup. Ratchets de typecheck e lint com 0 novas ocorrências.
+
+**Divergência operacional:** o project `chromium-authenticated` exige `e2e/.auth/user.json` mesmo com `--no-deps` (o `storageState` é lido pelo project, independente da dependência `setup`); sem o arquivo, a spec nem coleta. Criado um stub `{"cookies":[],"origins":[]}` em `e2e/.auth/user.json` (pasta gitignored) — a sessão real vem do `installFakeSession`, o stub só satisfaz o leitor de arquivo.
 
 ### E73 · E2E: cadastro de contato com endereço e edição sem perda
 **Arquivos:** `e2e/contact-address.spec.ts` (novo)
