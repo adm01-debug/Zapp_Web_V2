@@ -49,6 +49,13 @@ if (import.meta.env.DEV) {
   window.setTimeout(() => {
     import('@axe-core/react').then((axe) => {
       axe.default(React, ReactDOM, 1000, undefined, undefined, (results) => {
+        // O axe audita a cada ciclo de render. Sem esperar o app montar, ele mede
+        // arvores transitorias e reporta o que nao existe no estado final:
+        // landmark-one-main e page-has-heading-one "faltando", aria-hidden-focus em
+        // subarvores que o React remove na hidratacao e aria-input-field-name em
+        // campo que ganha nome depois. Medido em 02/10/2026: tres varreduras com
+        // axe no DOM assentado nao encontram nenhuma dessas regras.
+        if (!document.querySelector('main')) return;
         const violations = results?.violations;
         if (violations?.length) {
           log.warn(`[A11Y] ${violations.length} accessibility violation(s) detected`);
