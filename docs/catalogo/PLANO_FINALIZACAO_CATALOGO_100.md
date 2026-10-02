@@ -670,6 +670,7 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   saída normal do build + do guard do repo.
 - [x] **CT-76** — Fechamento H: PR mergeada; `PERF.md` e `CONTRASTE.md` commitados. **Aceite:** CI verde.
   **🔴 RE-MEDIDO DEPOIS DA CORREÇÃO (02/10/2026) — o CLS NÃO mudou: 0,2452 contra 0,2455/0,2451.** A correção do #1682 está publicada e é inofensiva (o strip reserva o espaço), mas **não** é a causa do CLS: as três medições são indistinguíveis e o perf segue 44 (aceite pede ≥ 90). **A atribuição anterior ("a causa é a faixa de KPIs") estava ERRADA** — elemento que se move aparece na atribuição do Lighthouse mesmo quando quem cresce está acima dele, e a altura do próprio strip eu conferi (72 px nos dois estados). Próximo passo: refazer a atribuição de layout-shift DEPOIS desta correção. Aceite continua não cumprido.
+  **🔎 ATRIBUIÇÃO REFEITA (02/10/2026):** o elemento que se move é mesmo a faixa de KPIs (0,2211), mas o `snippet` cru mostra que ela **não** muda de altura — em mobile são 6 cards em `grid-cols-2` = 3 linhas = 240 px, com a mesma altura por card nos dois estados. Logo **quem empurra está acima**: `top = 369`, logo abaixo do cabeçalho/abas (a aba "favoritos" também aparece shiftando, 0,0006). Próximo passo: medir a altura do bloco acima do strip antes/depois dos dados, com a rede atrasada de propósito. Minha tese anterior (o próprio strip) está descartada por medição.
 
 ## FASE 8 — Testes, e2e e ajuda (CT-77–CT-88)
 *Bloco I — 2 PRs.*
