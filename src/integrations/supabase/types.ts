@@ -4613,41 +4613,130 @@ export type Database = {
         }
         Relationships: []
       }
+      multiplix_audience_members: {
+        Row: {
+          added_reason: string | null
+          audience_id: string
+          created_at: string
+          id: string
+          singu_company_id: string | null
+          singu_contact_id: string | null
+        }
+        Insert: {
+          added_reason?: string | null
+          audience_id: string
+          created_at?: string
+          id?: string
+          singu_company_id?: string | null
+          singu_contact_id?: string | null
+        }
+        Update: {
+          added_reason?: string | null
+          audience_id?: string
+          created_at?: string
+          id?: string
+          singu_company_id?: string | null
+          singu_contact_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "multiplix_audience_members_audience_id_fkey"
+            columns: ["audience_id"]
+            isOneToOne: false
+            referencedRelation: "multiplix_audiences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      multiplix_audiences: {
+        Row: {
+          cached_count: number | null
+          created_at: string
+          definition: Json
+          id: string
+          kind: string
+          last_used_at: string | null
+          name: string
+          owner_id: string | null
+          shared_with_roles: string[]
+          updated_at: string
+        }
+        Insert: {
+          cached_count?: number | null
+          created_at?: string
+          definition?: Json
+          id?: string
+          kind: string
+          last_used_at?: string | null
+          name: string
+          owner_id?: string | null
+          shared_with_roles?: string[]
+          updated_at?: string
+        }
+        Update: {
+          cached_count?: number | null
+          created_at?: string
+          definition?: Json
+          id?: string
+          kind?: string
+          last_used_at?: string | null
+          name?: string
+          owner_id?: string | null
+          shared_with_roles?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       multiplix_blocks: {
         Row: {
+          asset_id: string | null
           block_order: number
-          block_type: string
+          block_type: Database["public"]["Enums"]["multiplix_block_type"]
+          content: Json
+          content_hash: string | null
+          content_version: number
           created_at: string
           dispatch_id: string
           id: string
           media_caption: string | null
           media_url: string | null
+          personalization_mode: string | null
           template_text: string | null
           updated_at: string
           voice_id: string | null
           voice_script: string | null
         }
         Insert: {
+          asset_id?: string | null
           block_order?: number
-          block_type: string
+          block_type: Database["public"]["Enums"]["multiplix_block_type"]
+          content?: Json
+          content_hash?: string | null
+          content_version?: number
           created_at?: string
           dispatch_id: string
           id?: string
           media_caption?: string | null
           media_url?: string | null
+          personalization_mode?: string | null
           template_text?: string | null
           updated_at?: string
           voice_id?: string | null
           voice_script?: string | null
         }
         Update: {
+          asset_id?: string | null
           block_order?: number
-          block_type?: string
+          block_type?: Database["public"]["Enums"]["multiplix_block_type"]
+          content?: Json
+          content_hash?: string | null
+          content_version?: number
           created_at?: string
           dispatch_id?: string
           id?: string
           media_caption?: string | null
           media_url?: string | null
+          personalization_mode?: string | null
           template_text?: string | null
           updated_at?: string
           voice_id?: string | null
@@ -4663,21 +4752,121 @@ export type Database = {
           },
         ]
       }
+      multiplix_delivery_items: {
+        Row: {
+          attempt_count: number
+          block_id: string
+          created_at: string
+          delivered_at: string | null
+          dispatch_id: string
+          dispatch_version: number
+          error_class: string | null
+          error_message: string | null
+          external_id: string | null
+          id: string
+          idempotency_key: string | null
+          lease_token: string | null
+          lease_until: string | null
+          next_attempt_at: string | null
+          personalized_message: string | null
+          provider_dispatch_started_at: string | null
+          read_at: string | null
+          recipient_id: string
+          sent_at: string | null
+          status: Database["public"]["Enums"]["multiplix_item_status"]
+          updated_at: string
+          worker_id: string | null
+        }
+        Insert: {
+          attempt_count?: number
+          block_id: string
+          created_at?: string
+          delivered_at?: string | null
+          dispatch_id: string
+          dispatch_version: number
+          error_class?: string | null
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          idempotency_key?: string | null
+          lease_token?: string | null
+          lease_until?: string | null
+          next_attempt_at?: string | null
+          personalized_message?: string | null
+          provider_dispatch_started_at?: string | null
+          read_at?: string | null
+          recipient_id: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["multiplix_item_status"]
+          updated_at?: string
+          worker_id?: string | null
+        }
+        Update: {
+          attempt_count?: number
+          block_id?: string
+          created_at?: string
+          delivered_at?: string | null
+          dispatch_id?: string
+          dispatch_version?: number
+          error_class?: string | null
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          idempotency_key?: string | null
+          lease_token?: string | null
+          lease_until?: string | null
+          next_attempt_at?: string | null
+          personalized_message?: string | null
+          provider_dispatch_started_at?: string | null
+          read_at?: string | null
+          recipient_id?: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["multiplix_item_status"]
+          updated_at?: string
+          worker_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "multiplix_delivery_items_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "multiplix_blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "multiplix_delivery_items_dispatch_id_fkey"
+            columns: ["dispatch_id"]
+            isOneToOne: false
+            referencedRelation: "multiplix_dispatches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "multiplix_delivery_items_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "multiplix_recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       multiplix_dispatches: {
         Row: {
           audience_filters: Json
+          audience_version: number
           business_hours_only: boolean
           client_request_id: string | null
           completed_at: string | null
           created_at: string
-          created_by: string | null
+          created_by: string
           delivered_count: number
+          dispatch_version: number
           failed_count: number
           id: string
           media_type: string | null
           media_url: string | null
           message_template: string
           name: string
+          origin: string | null
           outcome_unknown_count: number
           pause_reason: string | null
           paused_at: string | null
@@ -4690,7 +4879,7 @@ export type Database = {
           sent_count: number
           speed_profile: string
           started_at: string | null
-          status: string
+          status: Database["public"]["Enums"]["multiplix_dispatch_status"]
           total_recipients: number
           typing_delay_max: number
           typing_delay_min: number
@@ -4699,18 +4888,21 @@ export type Database = {
         }
         Insert: {
           audience_filters?: Json
+          audience_version?: number
           business_hours_only?: boolean
           client_request_id?: string | null
           completed_at?: string | null
           created_at?: string
-          created_by?: string | null
+          created_by: string
           delivered_count?: number
+          dispatch_version?: number
           failed_count?: number
           id?: string
           media_type?: string | null
           media_url?: string | null
           message_template: string
           name: string
+          origin?: string | null
           outcome_unknown_count?: number
           pause_reason?: string | null
           paused_at?: string | null
@@ -4723,7 +4915,7 @@ export type Database = {
           sent_count?: number
           speed_profile?: string
           started_at?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["multiplix_dispatch_status"]
           total_recipients?: number
           typing_delay_max?: number
           typing_delay_min?: number
@@ -4732,18 +4924,21 @@ export type Database = {
         }
         Update: {
           audience_filters?: Json
+          audience_version?: number
           business_hours_only?: boolean
           client_request_id?: string | null
           completed_at?: string | null
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           delivered_count?: number
+          dispatch_version?: number
           failed_count?: number
           id?: string
           media_type?: string | null
           media_url?: string | null
           message_template?: string
           name?: string
+          origin?: string | null
           outcome_unknown_count?: number
           pause_reason?: string | null
           paused_at?: string | null
@@ -4756,18 +4951,96 @@ export type Database = {
           sent_count?: number
           speed_profile?: string
           started_at?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["multiplix_dispatch_status"]
           total_recipients?: number
           typing_delay_max?: number
           typing_delay_min?: number
           updated_at?: string
           whatsapp_connection_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "multiplix_dispatches_whatsapp_connection_id_fkey"
+            columns: ["whatsapp_connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "multiplix_dispatches_whatsapp_connection_id_fkey"
+            columns: ["whatsapp_connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections_agent"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "multiplix_dispatches_whatsapp_connection_id_fkey"
+            columns: ["whatsapp_connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "multiplix_dispatches_whatsapp_connection_id_fkey"
+            columns: ["whatsapp_connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      multiplix_events: {
+        Row: {
+          correlation_id: string | null
+          created_at: string
+          dispatch_id: string
+          id: string
+          item_id: string | null
+          kind: string
+          payload: Json | null
+          recipient_id: string | null
+        }
+        Insert: {
+          correlation_id?: string | null
+          created_at?: string
+          dispatch_id: string
+          id?: string
+          item_id?: string | null
+          kind: string
+          payload?: Json | null
+          recipient_id?: string | null
+        }
+        Update: {
+          correlation_id?: string | null
+          created_at?: string
+          dispatch_id?: string
+          id?: string
+          item_id?: string | null
+          kind?: string
+          payload?: Json | null
+          recipient_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "multiplix_events_dispatch_id_fkey"
+            columns: ["dispatch_id"]
+            isOneToOne: false
+            referencedRelation: "multiplix_dispatches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "multiplix_events_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "multiplix_recipients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       multiplix_recipients: {
         Row: {
           attempt_count: number
+          audience_version: number | null
           company_id: string
           company_name_snapshot: string | null
           created_at: string
@@ -4780,18 +5053,24 @@ export type Database = {
           destino_e164: string | null
           destino_origem: string | null
           dispatch_id: string
+          eligibility: Database["public"]["Enums"]["multiplix_eligibility"]
+          eligibility_reason: string | null
           error_message: string | null
           external_id: string | null
           id: string
+          inclusion_reason: string | null
           personalized_message: string | null
           provider_dispatch_started_at: string | null
           retry_after: string | null
           sent_at: string | null
-          status: string
+          singu_contact_id: string | null
+          status: Database["public"]["Enums"]["multiplix_recipient_status"]
           updated_at: string
+          variables_snapshot: Json | null
         }
         Insert: {
           attempt_count?: number
+          audience_version?: number | null
           company_id: string
           company_name_snapshot?: string | null
           created_at?: string
@@ -4804,18 +5083,24 @@ export type Database = {
           destino_e164?: string | null
           destino_origem?: string | null
           dispatch_id: string
+          eligibility?: Database["public"]["Enums"]["multiplix_eligibility"]
+          eligibility_reason?: string | null
           error_message?: string | null
           external_id?: string | null
           id?: string
+          inclusion_reason?: string | null
           personalized_message?: string | null
           provider_dispatch_started_at?: string | null
           retry_after?: string | null
           sent_at?: string | null
-          status?: string
+          singu_contact_id?: string | null
+          status?: Database["public"]["Enums"]["multiplix_recipient_status"]
           updated_at?: string
+          variables_snapshot?: Json | null
         }
         Update: {
           attempt_count?: number
+          audience_version?: number | null
           company_id?: string
           company_name_snapshot?: string | null
           created_at?: string
@@ -4828,15 +5113,20 @@ export type Database = {
           destino_e164?: string | null
           destino_origem?: string | null
           dispatch_id?: string
+          eligibility?: Database["public"]["Enums"]["multiplix_eligibility"]
+          eligibility_reason?: string | null
           error_message?: string | null
           external_id?: string | null
           id?: string
+          inclusion_reason?: string | null
           personalized_message?: string | null
           provider_dispatch_started_at?: string | null
           retry_after?: string | null
           sent_at?: string | null
-          status?: string
+          singu_contact_id?: string | null
+          status?: Database["public"]["Enums"]["multiplix_recipient_status"]
           updated_at?: string
+          variables_snapshot?: Json | null
         }
         Relationships: [
           {
@@ -6780,13 +7070,17 @@ export type Database = {
           audience_source: string
           business_hours_only: boolean
           completed_at: string | null
+          confirm_consent: boolean
           created_at: string
           created_by: string | null
           delivered_count: number
           description: string | null
           draft_creation_key: string | null
+          draft_step: number | null
           failed_count: number
           id: string
+          launched_at: string | null
+          launched_by: string | null
           media_type: string | null
           media_url: string | null
           message_template: string
@@ -6796,6 +7090,7 @@ export type Database = {
           pause_reason: string | null
           paused_at: string | null
           replied_count: number
+          respect_suppression: boolean
           revision: number
           schedule_timezone: string
           scheduled_at: string | null
@@ -6821,13 +7116,17 @@ export type Database = {
           audience_source?: string
           business_hours_only?: boolean
           completed_at?: string | null
+          confirm_consent?: boolean
           created_at?: string
           created_by?: string | null
           delivered_count?: number
           description?: string | null
           draft_creation_key?: string | null
+          draft_step?: number | null
           failed_count?: number
           id?: string
+          launched_at?: string | null
+          launched_by?: string | null
           media_type?: string | null
           media_url?: string | null
           message_template: string
@@ -6837,6 +7136,7 @@ export type Database = {
           pause_reason?: string | null
           paused_at?: string | null
           replied_count?: number
+          respect_suppression?: boolean
           revision?: number
           schedule_timezone?: string
           scheduled_at?: string | null
@@ -6862,13 +7162,17 @@ export type Database = {
           audience_source?: string
           business_hours_only?: boolean
           completed_at?: string | null
+          confirm_consent?: boolean
           created_at?: string
           created_by?: string | null
           delivered_count?: number
           description?: string | null
           draft_creation_key?: string | null
+          draft_step?: number | null
           failed_count?: number
           id?: string
+          launched_at?: string | null
+          launched_by?: string | null
           media_type?: string | null
           media_url?: string | null
           message_template?: string
@@ -6878,6 +7182,7 @@ export type Database = {
           pause_reason?: string | null
           paused_at?: string | null
           replied_count?: number
+          respect_suppression?: boolean
           revision?: number
           schedule_timezone?: string
           scheduled_at?: string | null
@@ -6909,6 +7214,20 @@ export type Database = {
           {
             foreignKeyName: "talkx_campaigns_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_campaigns_launched_by_fkey"
+            columns: ["launched_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_campaigns_launched_by_fkey"
+            columns: ["launched_by"]
             isOneToOne: false
             referencedRelation: "profiles_public"
             referencedColumns: ["id"]
@@ -7137,6 +7456,7 @@ export type Database = {
           message_snapshot_at: string | null
           personalized_message: string | null
           provider_dispatch_started_at: string | null
+          read_at: string | null
           replied_at: string | null
           reply_message_id: string | null
           retry_after: string | null
@@ -7168,6 +7488,7 @@ export type Database = {
           message_snapshot_at?: string | null
           personalized_message?: string | null
           provider_dispatch_started_at?: string | null
+          read_at?: string | null
           replied_at?: string | null
           reply_message_id?: string | null
           retry_after?: string | null
@@ -7199,6 +7520,7 @@ export type Database = {
           message_snapshot_at?: string | null
           personalized_message?: string | null
           provider_dispatch_started_at?: string | null
+          read_at?: string | null
           replied_at?: string | null
           reply_message_id?: string | null
           retry_after?: string | null
@@ -8807,6 +9129,20 @@ export type Database = {
       }
     }
     Views: {
+      catalog_send_stats: {
+        Row: {
+          chave: string | null
+          enviados: number | null
+          falhas: number | null
+          grao: string | null
+          parciais: number | null
+          rotulo: string | null
+          taxa_falha: number | null
+          taxa_parcial: number | null
+          total: number | null
+        }
+        Relationships: []
+      }
       channel_connections_safe: {
         Row: {
           channel_type: Database["public"]["Enums"]["channel_type"] | null
@@ -9009,6 +9345,15 @@ export type Database = {
           job_title?: string | null
           name?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      searchbox_usage_daily: {
+        Row: {
+          degradacoes: number | null
+          dia: string | null
+          sessoes: number | null
+          ultimo_evento_em: string | null
         }
         Relationships: []
       }
@@ -9329,6 +9674,23 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_multiplix_item: {
+        Args: {
+          p_dispatch_id: string
+          p_item_id: string
+          p_lease_seconds?: number
+          p_worker: string
+        }
+        Returns: {
+          block_id: string
+          claim_expires_at: string
+          claim_token: string
+          company_id: string
+          delivery_attempt_count: number
+          item_id: string
+          recipient_id: string
+        }[]
+      }
       claim_multiplix_recipient: {
         Args: {
           p_dispatch_id: string
@@ -9436,6 +9798,19 @@ export type Database = {
       complete_multiplix_dispatch_if_drained: {
         Args: { p_dispatch_id: string }
         Returns: boolean
+      }
+      complete_multiplix_dispatch_if_items_drained: {
+        Args: { p_dispatch_id: string }
+        Returns: boolean
+      }
+      complete_multiplix_item: {
+        Args: {
+          p_claim_token: string
+          p_error_message?: string
+          p_item_id: string
+          p_status: string
+        }
+        Returns: undefined
       }
       complete_multiplix_recipient: {
         Args: {
@@ -10000,10 +10375,6 @@ export type Database = {
         Args: { p_profile_id: string }
         Returns: Json
       }
-      increment_talkx_template_use: {
-        Args: { p_template_id: string }
-        Returns: number
-      }
       ingest_inbound_message: {
         Args: {
           p_connection_id: string
@@ -10077,6 +10448,10 @@ export type Database = {
         Args: { p_contact_id: string }
         Returns: undefined
       }
+      mark_multiplix_item_dispatch_started: {
+        Args: { p_claim_token: string; p_item_id: string }
+        Returns: undefined
+      }
       mark_multiplix_recipient_dispatch_started: {
         Args: { p_claim_token: string; p_recipient_id: string }
         Returns: undefined
@@ -10120,6 +10495,7 @@ export type Database = {
         Returns: {
           created: boolean
           dispatch_id: string
+          duplicated_count: number
           recipient_count: number
         }[]
       }
@@ -10148,6 +10524,14 @@ export type Database = {
       persist_conversation_analysis: {
         Args: { p_analysis: Json; p_analyzed_at?: string; p_contact_id: string }
         Returns: Json
+      }
+      persist_multiplix_item_message_snapshot: {
+        Args: {
+          p_claim_token: string
+          p_item_id: string
+          p_personalized_message: string
+        }
+        Returns: string
       }
       persist_multiplix_recipient_message_snapshot: {
         Args: {
@@ -10218,6 +10602,18 @@ export type Database = {
           notification_id: string
         }[]
       }
+      record_multiplix_item_delivered: {
+        Args: { p_connection_id: string; p_external_id: string }
+        Returns: boolean
+      }
+      record_multiplix_item_sent: {
+        Args: {
+          p_claim_token: string
+          p_external_id: string
+          p_item_id: string
+        }
+        Returns: undefined
+      }
       record_multiplix_recipient_delivered: {
         Args: { p_connection_id: string; p_external_id: string }
         Returns: boolean
@@ -10240,7 +10636,11 @@ export type Database = {
         Returns: Json
       }
       record_talkx_recipient_delivered: {
-        Args: { p_connection_id: string; p_external_id: string }
+        Args: {
+          p_connection_id: string
+          p_event?: string
+          p_external_id: string
+        }
         Returns: boolean
       }
       record_talkx_recipient_sent: {
@@ -10258,6 +10658,10 @@ export type Database = {
           p_responded_at: string
         }
         Returns: undefined
+      }
+      release_multiplix_item_claim: {
+        Args: { p_claim_token: string; p_item_id: string }
+        Returns: boolean
       }
       release_multiplix_recipient_claim: {
         Args: { p_claim_token: string; p_recipient_id: string }
@@ -10283,6 +10687,13 @@ export type Database = {
         Args: { p_label_prefix: string; p_new_tag: string }
         Returns: undefined
       }
+      reorder_multiplix_blocks: {
+        Args: { p_block_ids: string[]; p_dispatch_id: string }
+        Returns: {
+          block_id: string
+          block_order: number
+        }[]
+      }
       replace_ai_conversation_tags: {
         Args: { p_contact_id: string; p_tags: Json }
         Returns: Json
@@ -10296,6 +10707,15 @@ export type Database = {
         Returns: undefined
       }
       require_contact_global_admin: { Args: never; Returns: undefined }
+      reschedule_multiplix_item: {
+        Args: {
+          p_claim_token: string
+          p_error_message?: string
+          p_item_id: string
+          p_retry_after: string
+        }
+        Returns: Json
+      }
       reschedule_multiplix_recipient: {
         Args: {
           p_claim_token: string
@@ -10315,6 +10735,10 @@ export type Database = {
         Returns: Json
       }
       resolve_contact_guard_actor: { Args: never; Returns: string }
+      retry_talkx_recipient: {
+        Args: { p_recipient_id: string }
+        Returns: boolean
+      }
       save_talkx_campaign_draft: {
         Args: {
           p_campaign_id: string
@@ -10467,6 +10891,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      sweep_multiplix_stuck_items: {
+        Args: { p_limit?: number }
+        Returns: number
+      }
       sweep_multiplix_stuck_recipients: {
         Args: { p_limit?: number }
         Returns: number
@@ -10588,6 +11016,7 @@ export type Database = {
       transition_talkx_campaign: {
         Args: {
           p_action: string
+          p_actor_id?: string
           p_campaign_id: string
           p_pause_reason?: string
         }
@@ -10690,6 +11119,45 @@ export type Database = {
         | "messenger"
         | "webchat"
         | "email"
+      multiplix_block_type: "text" | "voice_ai" | "audio_recorded" | "file"
+      multiplix_dispatch_status:
+        | "draft"
+        | "scheduled"
+        | "sending"
+        | "paused"
+        | "completed"
+        | "completed_with_failures"
+        | "failed"
+        | "cancelled"
+      multiplix_eligibility:
+        | "eligible"
+        | "no_destination"
+        | "suppressed"
+        | "out_of_scope"
+        | "media_pending"
+        | "connection_unavailable"
+        | "requires_template"
+      multiplix_item_status:
+        | "pending"
+        | "sending"
+        | "sent"
+        | "delivered"
+        | "read"
+        | "failed"
+        | "failed_transient"
+        | "skipped"
+        | "cancelled"
+        | "outcome_unknown"
+      multiplix_recipient_status:
+        | "pending"
+        | "sending"
+        | "sent"
+        | "delivered"
+        | "read"
+        | "failed"
+        | "skipped"
+        | "cancelled"
+        | "outcome_unknown"
       service_account_type:
         | "google_sheets"
         | "google_docs"
@@ -10845,6 +11313,49 @@ export const Constants = {
         "messenger",
         "webchat",
         "email",
+      ],
+      multiplix_block_type: ["text", "voice_ai", "audio_recorded", "file"],
+      multiplix_dispatch_status: [
+        "draft",
+        "scheduled",
+        "sending",
+        "paused",
+        "completed",
+        "completed_with_failures",
+        "failed",
+        "cancelled",
+      ],
+      multiplix_eligibility: [
+        "eligible",
+        "no_destination",
+        "suppressed",
+        "out_of_scope",
+        "media_pending",
+        "connection_unavailable",
+        "requires_template",
+      ],
+      multiplix_item_status: [
+        "pending",
+        "sending",
+        "sent",
+        "delivered",
+        "read",
+        "failed",
+        "failed_transient",
+        "skipped",
+        "cancelled",
+        "outcome_unknown",
+      ],
+      multiplix_recipient_status: [
+        "pending",
+        "sending",
+        "sent",
+        "delivered",
+        "read",
+        "failed",
+        "skipped",
+        "cancelled",
+        "outcome_unknown",
       ],
       service_account_type: [
         "google_sheets",

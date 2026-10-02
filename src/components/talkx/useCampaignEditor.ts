@@ -6,6 +6,7 @@ import { useTalkXSegments, resolveAudience, countAudience, RULE_FIELDS, RULE_OPS
 import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
 import { useTalkXEventLogger } from '@/hooks/integrations/useTalkXEvents';
 import { fromTable } from '@/lib/supabaseHelpers';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { SPEED_PROFILES, estimateSeconds, fmtDurationShort } from './talkxShared';
 
 export const VARIABLES = [
@@ -310,6 +311,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const { segments } = useTalkXSegments();
   const { templates } = useTalkXTemplates();
   const logEvent = useTalkXEventLogger();
+  const { profile } = useAuth();
 
   const [step, setStep] = useState<WizardStep>(() => initial?.step ?? initialWizardStep(campaign?.draft_step));
   const [name, setName] = useState(campaign?.name || '');
@@ -341,6 +343,9 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   ]);
   const [speedProfile, setSpeedProfileState] = useState<'slow' | 'moderate' | 'fast'>(campaign?.speed_profile || 'moderate');
   const [connectionId, setConnectionId] = useState(campaign?.whatsapp_connection_id || '');
+  // V25 — responsável da campanha (profiles.id). Hidrata do rascunho; sem
+  // responsável gravado, cai no perfil do usuário logado (efeito abaixo).
+  const [owner, setOwner] = useState<string | null>(campaign?.owner ?? null);
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
   const [hydratedRecipientCampaignId, setHydratedRecipientCampaignId] = useState<string | null>(null);
   // Estado React sozinho não é suficiente para saves enfileirados: o callback
@@ -417,6 +422,26 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!connectionId && connections && connections.length > 0) setConnectionId(connections[0].id);
   }, [connections, connectionId]);
+
+  // V25 — responsáveis elegíveis: perfis ativos. Exibimos `name` (fallback
+  // e-mail) e gravamos `id` (uuid de profiles.id), como em TalkXSuppression.
+  const { data: ownerProfiles } = useQuery({
+    queryKey: ['talkx-owner-profiles'],
+    queryFn: async () => {
+      const { data } = await supabase.from('profiles')
+        .select('id, name, email')
+        .eq('is_active', true)
+        .order('name');
+      return (data ?? []) as { id: string; name: string | null; email: string | null }[];
+    },
+  });
+
+  // Sem responsável gravado no rascunho, assume o perfil do usuário logado.
+  // Nunca sobrescreve uma escolha explícita (owner já definido).
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!owner && profile?.id) setOwner(profile.id);
+  }, [owner, profile?.id]);
 
 
 
@@ -674,7 +699,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   }, [filteredContacts, selectedContacts]);
 
   const canProceed = useMemo(() => ({
-    1: name.trim().length > 0 && !!connectionId && (audienceSource === 'segment' ? !!segmentId : audienceSource === 'contacts' ? selectedContacts.length > 0 : false),
+    1: name.trim().length >= 3 && !!connectionId && (audienceSource === 'segment' ? !!segmentId : audienceSource === 'contacts' ? selectedContacts.length > 0 : false),
     2: messageTemplate.trim().length > 0,
     3: scheduleConfigIsValid,
     4: confirmConsent && confirmContent && confirmSuppression,
@@ -694,6 +719,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     send_interval_min: Math.round(sendInterval[0] * 1000), send_interval_max: Math.round(sendInterval[1] * 1000),
     speed_profile: speedProfile,
     whatsapp_connection_id: connectionId || null,
+    owner: owner || null,
     media_url: hasMedia ? mediaUrl || null : null,
     media_type: hasMedia ? mediaType || null : null,
     scheduled_at: isScheduled && scheduledAt ? localToUTCInTimezone(scheduledAt, scheduleTimezone) : null,
@@ -705,7 +731,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     confirm_consent: confirmConsent,
     // V23: o passo atual do wizard é persistido para reabrir o rascunho no mesmo passo.
     draft_step: step,
-  }), [name, description, objective, messageTemplate, audienceSource, audienceRules, contactSearch, segmentId, templateId, typingDelay, sendInterval, speedProfile, connectionId, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly, respectSuppression, confirmConsent, step]);
+  }), [name, description, objective, messageTemplate, audienceSource, audienceRules, contactSearch, segmentId, templateId, typingDelay, sendInterval, speedProfile, connectionId, owner, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly, respectSuppression, confirmConsent, step]);
 
   /** Salva (rascunho/agendada) e, se `launch`, dispara imediatamente. Devolve o id da campanha. */
   const persistSave = useCallback(async (mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
@@ -797,7 +823,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   // E68: autosave debounce 3s -- dispara apenas apos mudanca real (nao na abertura)
   const autosaveFields = JSON.stringify({
     name, description, objective, messageTemplate, mediaUrl, hasMedia, mediaType,
-    audienceSource, segmentId, templateId, connectionId, speedProfile,
+    audienceSource, segmentId, templateId, connectionId, owner, speedProfile,
     typingDelay, sendInterval, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly,
     isScheduled, scheduledAt, scheduleTimezone, respectSuppression, selectedContacts,
     audienceRules, contactSearch,
@@ -870,6 +896,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     messageTemplate, setMessageTemplate,
     typingDelay, setTypingDelay, sendInterval, setSendInterval, speedProfile, setSpeedProfile, messagesPerMinute,
     connectionId, setConnectionId, selectedContacts, showPreview, setShowPreview,
+    // V25 — responsável (profiles.id) e perfis ativos para o seletor do passo 1.
+    owner, setOwner, owners: ownerProfiles ?? [],
     contactSearch, setContactSearch, saving, companyFilter, setCompanyFilter,
     tagFilter, setTagFilter,
     // V24 — regras de audiência (mesmo motor dos segmentos)

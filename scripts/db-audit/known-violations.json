@@ -3,10 +3,10 @@
   "_gerado_em": "2026-08-27",
   "_contexto": "docs/audits/EXECUCAO_2026-08-27.md, secao 'Acoplamento quebrado'",
   "known": [
-    "from:department_whatsapp_configs:src/hooks/team-chat/useDepartmentManagement.ts",
-    "rpc:retry_talkx_recipient:supabase/functions/talkx-send/index.ts"
+    "from:department_whatsapp_configs:src/hooks/team-chat/useDepartmentManagement.ts"
   ],
   "_resolvido": {
+    "retry_talkx_recipient": "RPC criado (migration 20260930630000_talkx_v19_retry_recipient.sql). A divida era falsa: o alvo passou a existir no banco e so nao aparecia no catalogo porque os artefatos derivados estavam desatualizados; a entrada ficou obsoleta e o guard manda remove-la.",
     "store_reset_token": "DROP do subsistema de reset custom - migration 20260827170000; chamada removida do edge approve-password-reset",
     "inbox.service.ts": "modulo morto removido - src/services/inbox.service.ts deletado + linha do barrel services/index.ts",
     "evolution-health": "edge function orfa removida - 0 invocacoes no front, tabelas inexistentes (messages_whatsapp, message_queue, system_logs). _shared/evolution-send.ts preservado (usado por 8 outras funcoes).",

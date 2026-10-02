@@ -230,6 +230,8 @@ export async function getContactByPhone(
     .select('id, avatar_url, assigned_to, name')
     .in('phone', phonesVariants)
     .eq('whatsapp_connection_id', connectionId)
+    .order('created_at', { ascending: true })
+    .order('id', { ascending: true })
     .limit(1)
     .maybeSingle();
   
@@ -239,6 +241,8 @@ export async function getContactByPhone(
       .from('contacts')
       .select('id, avatar_url, assigned_to, name')
       .in('phone', phonesVariants)
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
       .limit(1)
       .maybeSingle();
     if (anyConnection) {
