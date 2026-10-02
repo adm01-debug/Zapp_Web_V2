@@ -622,7 +622,19 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 ### E75 · E2E entra no `e2e-logado.yml`
 **Arquivos:** `.github/workflows/e2e-logado.yml`
 1. Adicionar as 2 specs à lista habilitada (mesmo padrão de `conversation.spec.ts`/`messaging.spec.ts`).
-**Checklist:** [ ] workflow · [ ] verde no primeiro run
+**Checklist:** [x] workflow · [ ] verde no primeiro run (depende do CI, pós-merge)
+
+**Fechada em 2026-10-02.** As specs do mapa entram no e2e-logado.yml via projeto dedicado chromium-mapa, porque o workflow seleciona PROJETOS (‑‑project=), não arquivos — a “lista de specs” do enunciado não existe. Mudança: playwright.config.ts (+17/-1, projeto novo sem dependencies e sem storageState), e2e-logado.yml (+8/-1, ‑‑project=chromium-mapa) e e2e/README.md (+24/-7). Gatilhos, permissões, jobs e secrets INALTERADOS. actionlint 1.7.12 exit 0.
+
+**Por que sem storageState:** as specs autenticam por installFakeSession (sessão falsa, sem secret) e antes eram coletadas pelo chromium-authenticated, que depende do login real — ficavam penduradas nele sem precisar. O projeto novo as desacopla e nenhum secret novo é necessário.
+
+**Prova:** as 3 specs passam SEM credencial alguma (4 passed, 10.7s). Coleta por --list: chromium-mapa = 4 tests in 3 files; chromium-authenticated caiu de 64 para 60 (sem rodar em duplicidade).
+
+**ACHADO (com decisão registrada 20261002-061824-7c06-sem-tarefa):** as specs do mapa NÃO rodam no check obrigatório — ci.yml:385 roda chromium, chromium-theme, firefox-auth e webkit-auth, e nenhum coleta o mapa. Logo os PRs #1555, #1557 e #1558 passaram com E2E SUCCESS SEM executar spec alguma do mapa. Verde e sem cobertura. Decisão: incluir ou não chromium-mapa no job obrigatório.
+
+**Divergências medidas:** o plano fala em 2 specs (são 3 arquivos/4 testes; o E74 não existia quando ele foi escrito) e a premissa do mapeamento (nenhuma spec habilitada) era obsoleta — elas já rodavam pelo catch-all do chromium-authenticated. O ganho desta etapa é tornar a habilitação explícita e desacoplar sessão falsa de login real, não criar cobertura do zero.
+
+**Correção minha:** eu havia afirmado em três relatos que o check E2E passou “com a spec dentro”. Falso — ele roda outros projetos. O executor mediu; eu extrapolei.
 
 ### E76 · Teste de contrato da RPC `search_contacts`
 **Arquivos:** `scripts/db-audit/` (SQL de teste) ou `supabase/tests/`

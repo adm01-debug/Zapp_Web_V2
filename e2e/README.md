@@ -57,7 +57,8 @@ npm run test:e2e
 - `.github/workflows/e2e-logado.yml`: roda depois de cada merge na `main` e
   sob demanda (Actions → E2E logado → Run workflow). Numa única invocação:
   `--project=setup --project=chromium-e2e-core --project=chromium-authenticated
-  --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation
+  --project=chromium-mapa --project=firefox-talkx --project=webkit-talkx
+  --project=firefox-conversation
   --project=webkit-conversation`. `setup` gera `e2e/.auth/user.json` uma vez;
   todos os projects com `dependencies: ['setup']` reutilizam o mesmo arquivo de
   sessão — o `storageState` gerado pelo Chrome é browser-agnostic e funciona
@@ -76,11 +77,19 @@ navegação real do job cai num vite frio e estoura o timeout de 30s
 os dois problemas numa invocação só.
 
 `chromium-authenticated` (mesma dependência de `setup`, mas com
-`testIgnore` cobrindo auth + os 2 specs acima) é invocado pelo
-`e2e-logado.yml` junto de `chromium-e2e-core` — uma única chamada do
-Playwright com os 3 projects explícitos (`setup`, `chromium-e2e-core`,
-`chromium-authenticated`). `talkx.spec.ts` roda sob este project: o
-usuário de teste é supervisor e enxerga "Campanhas".
+`testIgnore` cobrindo auth, os 2 specs acima e as 3 specs do módulo MAPA) é
+invocado pelo `e2e-logado.yml` junto de `chromium-e2e-core` — uma única
+chamada do Playwright com os projects explícitos (`setup`,
+`chromium-e2e-core`, `chromium-authenticated`, `chromium-mapa`).
+`talkx.spec.ts` roda sob este project: o usuário de teste é supervisor e
+enxerga "Campanhas".
+
+`chromium-mapa` cobre só as specs do módulo MAPA (`location-picker.spec.ts` —
+E71/E72, `contact-address.spec.ts` — E73, `contact-map-pin.spec.ts` — E74).
+Diferente de `chromium-e2e-core`/`chromium-authenticated`, **não** declara
+`dependencies: ['setup']` nem `storageState`: essas specs autenticam por sessão
+FALSA (`installFakeSession`) com REST/RPC e Mapbox mockados, então rodam sem
+`E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` — nenhum secret novo no `e2e-logado.yml`.
 
 ## Fixture de dados (contato seedado)
 
@@ -193,4 +202,5 @@ esperar `role=listbox` → `ArrowDown` + `Enter` → conferir o cartão de
 confirmação → **fechar sem enviar**. O spec asserta que nenhum POST (insert)
 saiu para `rest/v1/messages`, então nenhum WhatsApp real é gerado (o único
 PATCH é o `is_read` do markAsRead ao abrir a conversa). Roda em
-`chromium-authenticated`.
+`chromium-mapa` (E75) — projeto sem `setup`/`storageState`, pois a sessão é
+falsa.

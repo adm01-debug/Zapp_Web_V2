@@ -64,13 +64,28 @@ export default defineConfig({
     {
       // Demais specs assumem uma sessão já logada, produzida pelo projeto
       // "setup" e salva em e2e/.auth/user.json.
+      // As specs do módulo MAPA (E71-E74) ficam de fora: usam sessão FALSA e não
+      // podem depender do login real — ver o projeto `chromium-mapa` abaixo.
       name: 'chromium-authenticated',
-      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts/,
+      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts/,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'e2e/.auth/user.json',
       },
+    },
+    {
+      // Módulo MAPA (E71/E72 picker, E73 cadastro, E74 mapa com pino): sessão
+      // FALSA injetada por `installFakeSession` (e2e/fixtures/talkx-demo.ts) com
+      // REST/RPC do Supabase e a API da Mapbox 100% mockados — NÃO usam
+      // E2E_TEST_EMAIL/E2E_TEST_PASSWORD nem o storageState do projeto "setup".
+      // Projeto dedicado (mesmo padrão de `chromium-e2e-core` para
+      // conversation/messaging e de `chromium-talkx-visual` para a régua visual)
+      // para que as specs do mapa entrem EXPLICITAMENTE no `e2e-logado.yml` sem
+      // arrastar a dependência do login real (etapa E75 do plano MAPA).
+      name: 'chromium-mapa',
+      testMatch: [/location-picker\.spec\.ts/, /contact-address\.spec\.ts/, /contact-map-pin\.spec\.ts/],
+      use: { ...devices['Desktop Chrome'] },
     },
     {
       // talkx.spec.ts on Chromium — cobertura focada do Talk X usada pelo
