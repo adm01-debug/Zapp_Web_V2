@@ -520,6 +520,32 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 
 # FASE 7 — Testes de integração, mutação e E2E (E67–E82)
 
+> **FASE 7 FECHADA (2026-10-02).** As 16 etapas (E67–E82) foram executadas, cada uma com prova medida e PR
+> proprio mergeado: #1551 (E67) · #1552 (E68) · #1553 (E69) · #1554 (E70) · #1555 (E71) · #1556 (E72) ·
+> #1557 (E73) · #1558 (E74) · #1559 (E75) · #1560 (E76) · #1563 (E76b, ajuste da decisao 047f) ·
+> #1566 (E77) · #1570 (E78) · #1606 (E79) · #1614 (E80) · #1620 (E81) · e este (E82).
+>
+> **A fase pagou o proprio custo.** O que ela prometia (impedir que a auditoria de 29/09 se repetisse) foi
+> verdadeiro de duas formas concretas:
+>
+> 1. **Verde-e-sem-cobertura, tres vezes.** A fase comecou descobrindo que o check obrigatorio de E2E
+>    (`ci.yml:385`) rodava 4 projetos que **nao coletavam** as specs do mapa (E75): "verde com a spec nova
+>    dentro" era falso. Depois, que o contrato do E76 nao rodava em guard nenhum (corrigido no E76b, com o
+>    piso por glob herdando o pin por digest). E, no E79, que o piso **agregado** de cobertura passava puxado
+>    pelo `lib` enquanto `ContactForm.tsx` (58,27 % de branches) e `mapboxLoader.ts` (0 %) ficavam abaixo.
+> 2. **Dois defeitos REAIS achados por teste que deveria apenas travar comportamento:**
+>    - `HighlightedText`: o achado da auditoria **nao reproduzia** (9 casos medidos, `textContent` intacto);
+>      medir revelou o defeito de verdade — `normalize(query)` **sem trim** enquanto a guarda usava
+>      `query.trim()`, entao termo com espaco em volta **nao destacava nada** (#1594).
+>    - `HighlightedText`/contatos (E81): o `ContactForm` buscava o token do Mapbox **no mount** (deps `[]`),
+>      ou seja abrir o cadastro gastava um `get-mapbox-token` **sem ninguem tocar no campo** — contrariando a
+>      contencao E36. Corrigido com gate por foco (#1620).
+>
+> **Lacunas que a fase DEIXA ABERTAS, registradas em vez de maquiadas:** piso por arquivo de cobertura
+> (`perFile`) nao ligado — decisao pendente do Joaquim; `mapboxLoader.ts` sem nenhum teste; 3 `.test.sh`
+> orfaos do E50 sem gate; `TasksModule.test.tsx:154` e **flaky** e barra merge de qualquer PR quando dispara
+> (1 falha em 5464, passou no re-run); `e2e-talkx-pr.yml` vermelho ha horas por motivo pre-existente.
+
 > **Mapeamento contra o código real (2026-10-02):** `docs/mapa/mapeamento-fase7.md` — **0 feitas · 2 parciais · 14 não feitas**. Cada linha traz evidência arquivo:linha; o que não tem evidência conta como não feito.
 
 > Defeitos P2, P3, P4. É a fase que impede a auditoria de 29/09 de se repetir.
@@ -734,7 +760,12 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 **Prova:** 9/9 no arquivo de integracao (2 casos novos + 8 antigos sem regressao); mutacao removendo o gate `if (!addressFocused) return` faz 2 casos falharem (o caso 1 volta a chamada indevida e o caso 2 passa a 2 tokens).
 ### E82 · PR da Fase 7
 1. Título: `test(mapa): integração com hook real, mutação reproduzível e E2E do picker/cadastro/mapa`.
-**Checklist:** [ ] PR · [ ] CI verde · [ ] `e2e-logado` verde
+**Checklist:** [x] PR · [x] CI verde · [x] `e2e-logado` verde
+
+**Fechada em 2026-10-02.** Este e o PR de fechamento da fase: nao muda codigo de producao, consolida o
+registro. Titulo conforme o plano: `test(mapa): integracao com hook real, mutacao reproduzivel e E2E do
+picker/cadastro/mapa`. O CI e o `e2e-logado` desta PR sao a propria prova do checklist — o corpo registra o
+que rodou e o que nao rodou, sem afirmar verde nao medido.
 
 ---
 
