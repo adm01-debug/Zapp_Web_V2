@@ -824,6 +824,13 @@ Substitui o antigo "desligar a flag": sem chave (decisão `20261001-103207-6c0b`
 ### E91 · Alerta de custo por e-mail/WhatsApp
 1. Workflow N8N (ou cron do Supabase, se já existir padrão no repo) que lê a view de E52 1×/dia e avisa se `sessoes_mes ≥ 400`. Registrar id do workflow no doc.
 **Checklist:** [ ] alerta · [ ] id no doc
+> **Bloqueada por decisão de canal, não por técnica** (`20261002-134700-4620-sem-tarefa`). Medição que
+> reorienta a etapa: o aviso de orçamento que existe hoje (`searchbox_budget_warning`,
+> `mapboxCostGuard.ts:113`) roda **no navegador** e guarda "já avisei este mês" em `localStorage` — ou
+> seja, **ninguém recebe aviso**; ele só dispara se alguém abrir o app e usar. O alerta de servidor 1×/dia
+> é o que falta. **Não precisa de N8N:** já existe padrão no repo (`pg_cron` chamando função SQL em
+> `tasks_notify_due_cron.sql:54` e `net.http_post` para edge function em `gmail_incremental_sync_cron.sql:14`)
+> — então o E91 é uma **migration**, que por isso vai sozinha num PR, separada deste doc.
 
 ### E92 · `db-live-guard` cobre o módulo
 1. Confirmar que os contratos de E76/E77 rodam no guard vivo e que o `grants-baseline.json` inclui as RPCs novas.
@@ -857,7 +864,15 @@ Sem flag (decisão `20261001-103207-6c0b`): não existe "ligar só para 2 operad
 
 ### E99 · Fechamento do custo do 1º mês completo
 1. Apêndice B do plano antigo + `USO_SEARCHBOX.md`: sessões, seleções, envios, custo (US$) de set/2026 fechado e out/2026 parcial.
-**Checklist:** [ ] números medidos
+**Checklist:** [x] números medidos
+> **Fechada em 2026-10-02** com medição direta em produção (somente `select`, view `searchbox_usage_daily`
+> + `audit_logs`): set/2026 **11 sessões, US$ 0,00**, 0 degradações; out/2026 parcial 1 sessão. Registrado
+> no `USO_SEARCHBOX.md` e no **Apêndice B** do plano antigo.
+> **O achado não é o número, é o vazio:** "seleções" e "envios" de setembro aparecem como **0** porque os
+> eventos `searchbox_selected` e `location_sent` **só passaram a existir em 2026-10-01** (PRs #1441,
+> #1511/#1527), enquanto `searchbox_session` existe desde 26/09. Zero por falta de instrumentação **não é**
+> zero de uso — está declarado como "não instrumentado" em vez de virar número inventado. Outubro é o
+> primeiro mês com o funil completo.
 
 ### E100 · Relatório de encerramento
 **Arquivos:** `docs/mapa/ENCERRAMENTO_2026-XX-XX.md`

@@ -57,24 +57,48 @@ order by dia desc;
 
 Para o detalhe de cada degradacao (`count`/`limit` no momento da degradacao), ver o Apendice A.
 
-## Primeiro mês medido — fechamento de setembro/2026
+## Fechamento do primeiro mês — setembro/2026 fechado, outubro/2026 parcial (E99)
 
-**Fechamento medido em 2026-10-02**, pela view `searchbox_usage_daily` contra produção. A leitura
-anterior (27/09) mostrava 8 sessões: era leitura **parcial** do mês, não o fechamento.
+Medido em **2026-10-02** contra produção: view `searchbox_usage_daily` e `audit_logs`, **somente
+`select`**, pelo gateway de leitura. Nenhum número aqui é estimado.
 
-| Métrica | Resultado |
-|---|---|
-| Sessões em set/2026 | **11** (2,2% do teto de 500) |
-| Sessões por dia | 2026-09-26: 8 · 2026-09-28: 2 · 2026-09-30: 1 |
-| Por origem | `contact-form`: 7 · `picker`: 4 |
-| Degradações do guarda | **0** (o fallback para `/forward` nunca ativou) |
-| Custo estimado | **US$ 0,00** — 11 de 500 sessões grátis |
-| Primeira sessão registrada | 2026-09-26T13:59:03Z |
-| Outubro/2026 até a medição | 1 sessão |
+| Métrica | set/2026 (fechado) | out/2026 (parcial, até 02/10) |
+|---|---|---|
+| Sessões de busca | **11** | **1** |
+| Seleções (`searchbox_selected`) | **não instrumentado** | **0** |
+| Envios (`location_sent`) | **não instrumentado** | **0** |
+| Aviso de orçamento | **0** | **0** |
+| Degradações do guarda | **0** | **0** |
+| Custo | **US$ 0,00** (11 de 500 grátis) | **US$ 0,00** |
+| Sessões por dia | 26/09: 8 · 28/09: 2 · 30/09: 1 | 01/10: 1 |
+| Por origem | `contact-form`: 7 · `picker`: 4 | 1 |
 
-O rollout do autocomplete foi em `2026-09-26`, então setembro é um mês **parcial** (a função existiu
-em 5 dias). O primeiro mês **completo** de operação é **outubro/2026** — e é ele que fecha a conta de
-custo (E99, Fase 8).
+### Por que "não instrumentado" e não "zero" — medido no histórico do git
+
+```
+searchbox_session   introduzido 2026-09-26  (Fase 5, E35-E40)   -> existia durante o uso de setembro
+searchbox_selected  introduzido 2026-10-01  (E49, PR #1441)     -> NAO existia em setembro
+location_sent       introduzido 2026-10-01  (E49/E50)           -> NAO existia em setembro
+```
+
+Os zeros de setembro para seleção e envio **não são ausência de uso: são ausência de instrumentação**.
+Escrever "0 seleções em setembro" afirmaria algo que o banco não tinha como registrar. O dado de
+setembro **não existe e não é recuperável** — o que existe é a medição do que era instrumentado então.
+
+### O que isso significa para a conta de custo
+
+- **Custo de setembro é conclusivo:** 11 sessões, todas dentro das 500 grátis, **US$ 0,00**. O guarda
+  nunca degradou e o aviso de orçamento nunca disparou — coerente com 2,2% do teto.
+- **O funil do mês não é conclusivo:** dá para afirmar quanto se buscou (11 sessões), **não** quantas
+  dessas buscas viraram endereço escolhido — porque esse evento nasceu em 01/10.
+- **Outubro é o primeiro mês com o funil completo instrumentado.** É ele, não setembro, que fecha a
+  conta de custo do primeiro mês de operação — e o acompanhamento passa a ser semanal enquanto o
+  módulo ainda estiver em rampa.
+
+### Limitação declarada
+
+Não há como reconstruir as seleções de setembro (o evento não existia). Qualquer número de "conversão"
+de setembro seria inventado — e é exatamente o tipo de número bonito que a auditoria de 29/09 pegou.
 
 ## C1 — perda de endereço no cadastro de contato (Fase 1 / E07)
 
