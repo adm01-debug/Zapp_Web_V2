@@ -899,7 +899,7 @@ export function FilterBarV2({
           <div key={fd.key} className='flex flex-col'>
             {fd.labeled && <label className='text-3xs font-medium text-muted-foreground mb-0.5 px-0.5 uppercase tracking-wide'>{fd.label}</label>}
             <Select value={values?.[fd.key] ?? 'all'} onValueChange={v => onFilter?.(fd.key, v)}>
-              <SelectTrigger className='h-9 text-xs bg-input/40 border-border/70 rounded-lg min-w-[120px]'>
+              <SelectTrigger aria-label={fd.label} className='h-9 text-xs bg-input/40 border-border/70 rounded-lg min-w-[120px]'>
                 <SelectValue placeholder={!fd.labeled ? fd.label : undefined} />
               </SelectTrigger>
               <SelectContent>
