@@ -521,11 +521,11 @@ leituras foram descartadas.
 suite **404 arquivos / 5284 testes / 0 falhas**. O `bun run lint` cru acusa 937 problemas **legados** — ja
 registrados como "nao e gate do CI"; o gate real e o `lint-ratchet`, que passa.
 
-**92. E.5 funcional (24 checks) — 17/24, DoD NAO atingido.** Trajetoria convergente: 1 → 8 → 14 → **17**.
-As 7 restantes: `criar-do-chat-com-contato` (o usuario de QA nao tem conversa — **nao testavel com essa conta**),
-`fazendo-x3-bloqueia-4a` e `mobile-mover-pelo-menu` (nome do `menuitem` nao bate — harness),
-`filtro-por-prioridade-nos-3-modos` (strict mode: `quick-add-input` resolve 2 elementos — harness),
-`toast-do-alarme` e `adiar-15min` (passaram em outra rodada = **flake**), `central-notificacoes-abrir`.
+**92. E.5 funcional (24 checks) — 18/24, DoD NAO atingido.** Trajetoria: 1 → 8 → 14 → 17 → **18** (com harness corrigido: entram `fazendo-x3-bloqueia-4a`, `filtro-por-prioridade-nos-3-modos`, `mobile-mover-pelo-menu`, `toast-do-alarme` e `adiar-15min`).
+As 6 restantes, classificadas: `criar-do-chat-com-contato` — **nao testavel com as contas de escopo** (nenhuma
+tem conversa na inbox); `concluir-e-desfazer`, `apagar-e-undo`, `atalhos-altk-altp-n-1-2-3` e
+`console-sem-erro` — **PASSARAM em outras rodadas = flake** (a UI e realtime e o headless perde a corrida);
+`central-notificacoes-abrir` — a unica persistente (o Sheet nao abre pelo caminho sino -> notificacao -> Abrir).
 Nenhuma provada como bug do app.
 **Prova independente do alarme (checada por mim no banco, nao pelo relato do subagente):** a tabela e
 `notifications`; existem **7 linhas de `type='reminder_due'`**, a ultima em `2026-10-02T00:28:00Z` (21:28 BRT,
