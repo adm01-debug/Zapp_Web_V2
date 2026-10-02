@@ -28,8 +28,6 @@ interface PageHeaderProps {
   className?: string;
   variant?: 'card' | 'plain';
   topRight?: React.ReactNode;
-  /** T34: icone antes do titulo. Opcional de proposito: sem ele o header fica igual ao de sempre. */
-  icon?: React.ReactNode;
 }
 
 /**
@@ -46,7 +44,6 @@ export function PageHeader({
   className,
   variant = 'card',
   topRight,
-  icon,
 }: PageHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -149,7 +146,7 @@ export function PageHeader({
               variant === 'plain'
                 ? 'text-page-title font-extrabold tracking-[-0.02em] leading-none text-foreground truncate'
                 : 'text-xl font-display font-bold text-foreground truncate'
-            )}>{icon ? <span className="shrink-0">{icon}</span> : null}{title}</h1>
+            )}>{title}</h1>
             {subtitle && (
               <p className={cn(
                 variant === 'plain' ? 'text-lg text-muted-foreground mt-2 truncate' : 'text-sm text-muted-foreground truncate'
