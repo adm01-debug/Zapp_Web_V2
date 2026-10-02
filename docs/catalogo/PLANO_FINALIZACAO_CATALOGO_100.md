@@ -251,6 +251,7 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   **✅ FEITO (02/10/2026).** O rail virou `<Accordion>` rotulado exatamente **"Resumo do catálogo"**, com `xl:hidden`, **acima da grade**, reusando o mesmo `<CatalogRail>` com as mesmas props do `<aside>` (`ExternalProductManagement.tsx:968`; o `<aside>` segue exclusivo do `xl+`). O detalhe e o envio passaram a usar **Drawer** (`vaul`, via `src/components/ui/drawer.tsx` novo) abaixo de `md` e mantêm `Sheet`/`Dialog` acima disso. Testes: `CT30_responsivo.test.tsx` (rótulo do Accordion, detalhe em Drawer com `data-vaul-drawer-direction="bottom"` abaixo de md, Sheet em md+). **Aceite literal cumprido:** os 4 prints estão commitados em `docs/catalogo/screens/` e os dois componentes estão testados. **Ressalva declarada:** esses 4 prints são anteriores a esta mudança e mostram o layout antigo (sem Accordion, com Dialog no lugar do Drawer); refazê-los é documentação pendente, não aceite em aberto.
   **🔴 MEDIDO EM PRODUÇÃO (02/10/2026) — o aceite NÃO é cumprido: o limite não está ativo.** Com o mesmo cabeçalho que o app usa na edge, **61 `bootstrap` em paralelo, todos respondidos em 8,3 s (dentro da janela de 60 s) → zero respostas 429**; e 100 `list_products` → todas 200. A causa já estava escrita no próprio item (falta o deploy da edge) e foi confirmada: o deploy de edge só sai pelo `hermes-tarefa-mergear` e só para função alterada — o código está mergeado e inalterado desde então. O "100 → 200" é verdade trivial, não prova de limite. Não contornei o caminho de deploy.
   **🔴 RE-MEDIDO COM O DEPLOY PUBLICADO (02/10/2026, run 37068703384 SUCCESS) — aceite inatingível por construção, e a causa NÃO é o deploy.** 61 `bootstrap` em paralelo (12,6 s) → zero 429; rajadas de 120 → 120×200 e de 300 → 299×200 + 1×503; **nenhum 429 em 421 chamadas**. Causa no código: o balde é um `Map` em memória do isolate (`index.ts:135`, `checkRateLimit:166-177`), então requisições paralelas caem em isolates diferentes e o contador nunca soma 60 num só; cold start/deploy zeram. Limitador por usuário exige estado compartilhado (tabela/RPC ou KV) — **achado registrado para o Claude planejar**, não corrigido aqui. Corrige a nota anterior, que culpava o deploy.
+  **🔴 TERCEIRA MEDIÇÃO (02/10/2026), após novo edge-deploy (`edge-deploy/20261002-221654-...`): segue sem 429** — 61 `bootstrap` em paralelo em 8,5 s, todas 200. Três medições independentes (61, 120 e 300 chamadas) com o mesmo veredito confirmam o achado do balde em memória do isolate.
 
 ## FASE 3 — Ligar os órfãos da F1 no detalhe e no envio (CT-31–CT-40)
 *Bloco D — 1 PR de front. Não reabre o layout do mock B/C (decisão de 24/09).*
@@ -668,6 +669,8 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   **Nenhum plugin de visualizer foi instalado** (instalar dependência está proibido neste bloco): os números saem da
   saída normal do build + do guard do repo.
 - [x] **CT-76** — Fechamento H: PR mergeada; `PERF.md` e `CONTRASTE.md` commitados. **Aceite:** CI verde.
+  **🔴 RE-MEDIDO DEPOIS DA CORREÇÃO (02/10/2026) — o CLS NÃO mudou: 0,2452 contra 0,2455/0,2451.** A correção do #1682 está publicada e é inofensiva (o strip reserva o espaço), mas **não** é a causa do CLS: as três medições são indistinguíveis e o perf segue 44 (aceite pede ≥ 90). **A atribuição anterior ("a causa é a faixa de KPIs") estava ERRADA** — elemento que se move aparece na atribuição do Lighthouse mesmo quando quem cresce está acima dele, e a altura do próprio strip eu conferi (72 px nos dois estados). Próximo passo: refazer a atribuição de layout-shift DEPOIS desta correção. Aceite continua não cumprido.
+  **🔎 ATRIBUIÇÃO REFEITA (02/10/2026):** o elemento que se move é mesmo a faixa de KPIs (0,2211), mas o `snippet` cru mostra que ela **não** muda de altura — em mobile são 6 cards em `grid-cols-2` = 3 linhas = 240 px, com a mesma altura por card nos dois estados. Logo **quem empurra está acima**: `top = 369`, logo abaixo do cabeçalho/abas (a aba "favoritos" também aparece shiftando, 0,0006). Próximo passo: medir a altura do bloco acima do strip antes/depois dos dados, com a rede atrasada de propósito. Minha tese anterior (o próprio strip) está descartada por medição.
 
 ## FASE 8 — Testes, e2e e ajuda (CT-77–CT-88)
 *Bloco I — 2 PRs.*
@@ -1164,6 +1167,19 @@ Medição repetida: **zero 429 em 421 chamadas paralelas** (61 → 0; 120 → 12
 - **CT-94 🔴 continua impossível** — sem 429 não existe reação da UI para fotografar.
 - **Correção do meu registro anterior:** eu havia atribuído a ausência de 429 à falta de deploy; com o deploy
   publicado e o resultado idêntico, a causa é o código. Registrado também no `PERF.md`.
+
+### Re-medições de fechamento — CT-74 (CLS) e CT-19 (rate limit) — 02/10/2026
+
+- **CT-74 🔴 a correção não resolveu o CLS.** Pós-deploy: **perf 44 / CLS 0,2452** contra 0,2455 e 0,2451 das
+  medições anteriores — indistinguíveis. **Minha atribuição anterior estava errada**: eu apontei a faixa de KPIs
+  como causa e a corrigi; o número não se moveu. A correção fica (reservar espaço é correto), mas o CLS real
+  precisa de nova atribuição de layout-shift **depois** desta correção — próximo passo do CT-74.
+- **CT-19 🔴 terceira medição, mesmo veredito:** 61 `bootstrap` em paralelo (8,5 s) → zero 429, após uma publicação
+  de edge mais nova. O balde em memória do isolate (`index.ts:135`) segue sendo a causa; o achado de estado
+  compartilhado continua esperando planejamento.
+- **Lição minha, registrada:** "causa medida" só vale com **antes/depois do número final**. Eu tratei a atribuição
+  do Lighthouse como causa e a geometria do elemento como prova — as duas estavam certas e mesmo assim o efeito
+  não era aquele. O que fecha uma investigação de performance é o número agregado mexer.
 
 ## 12. Fora de escopo (registrado, não esquecido)
 

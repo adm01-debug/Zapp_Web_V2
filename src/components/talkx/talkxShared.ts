@@ -11,3 +11,4 @@ export * from './kit/kpi';
 export * from './kit/rail';
 export * from './kit/dialogs';
 export * from './kit/insight';
+export * from './kit/cells';

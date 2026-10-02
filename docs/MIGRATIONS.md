@@ -355,6 +355,20 @@ WHERE name ILIKE '%f51%' ORDER BY version;
 
 ---
 
+### A condicao repetida na f59 (inofensiva, registrada para nao virar duvida)
+
+A `20261002651230_f59_dead_letters_consultavel.sql` tem, no `list_multiplix_dead_letters`, a
+condicao `AND i.status = 'failed'` **duas vezes** — uma antes do comentario que explica o criterio
+do dead letter e outra depois. As duas são a **mesma** condicao, então o resultado e identico e a
+consulta esta correta (provada verde no harness de banco descartavel e conferida no ledger).
+
+**Nao corrija reescrevendo o arquivo**: a migration esta registrada e e imutavel (regra 7 do
+CLAUDE.md) — e o proprio `hermes-db-migrar` recusa, porque a reserva da versao pertence a tarefa
+que a aplicou. Reescrever criaria divergencia arquivo × ledger (o caso da f51 acima) sem ganho
+nenhum, ja que a linha extra nao muda o plano de execucao. Criar uma migration NOVA so para
+reescrever a funcao inteira seria pior: duplicaria ~70 linhas de corpo para tirar uma linha
+repetida. **Fica como esta** — aqui registrado para que ninguem gaste tempo investigando depois.
+
 ## 5. Operacao pontual nao e migration
 
 `VACUUM`, limpeza de bloat, backfill de uma vez — nada disso deve virar migration

@@ -61,3 +61,27 @@ Deno.test('GmailSendActionSchema rejeita thread_id com percent-encoding (%2F = /
   const result = GmailSendActionSchema.safeParse(baseBody({ thread_id: 'abc%2Fadmin' }));
   assertEquals(result.success, false);
 });
+
+Deno.test('GmailSendActionSchema rejeita CRLF em destinatario, assunto e nome de anexo', () => {
+  assertEquals(GmailSendActionSchema.safeParse(baseBody({ to: 'ok@example.com\r\nBcc: bad@example.com' })).success, false);
+  assertEquals(GmailSendActionSchema.safeParse(baseBody({ subject: 'Oi\nBcc: bad@example.com' })).success, false);
+  assertEquals(GmailSendActionSchema.safeParse(baseBody({ attachments: [{ filename: 'x\r\ny.txt', mimeType: 'text/plain', content: 'eA==' }] })).success, false);
+});
+
+Deno.test('GmailSendActionSchema aceita operacoes de thread e rascunho com ids seguros', () => {
+  assertEquals(GmailSendActionSchema.safeParse(baseBody({ action: 'modify-thread-labels', thread_id: '18abf3c2e9d4f1a2' })).success, true);
+  assertEquals(GmailSendActionSchema.safeParse(baseBody({ action: 'update-draft', draft_id: 'draft_123' })).success, true);
+});
+
+Deno.test('GmailSendActionSchema rejeita mais de 25MB agregados mesmo com anexos individuais validos', () => {
+  const base64TenMb = 'A'.repeat(14_000_000);
+  const result = GmailSendActionSchema.safeParse(baseBody({
+    action: 'send',
+    attachments: [
+      { filename: 'a.bin', mimeType: 'application/octet-stream', content: base64TenMb },
+      { filename: 'b.bin', mimeType: 'application/octet-stream', content: base64TenMb },
+      { filename: 'c.bin', mimeType: 'application/octet-stream', content: base64TenMb },
+    ],
+  }));
+  assertEquals(result.success, false);
+});

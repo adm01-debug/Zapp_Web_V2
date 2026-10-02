@@ -5,7 +5,8 @@ import DOMPurify from 'dompurify';
  * Usado por: EmailChatBubble, EmailThreadView (legado) e EmailFullViewDialog.
  *
  * Política:
- * - Imagens permitidas (lazy, no-referrer); data: URL > 32KB vira placeholder.
+ * - Imagens remotas e cid: bloqueadas por padrão para não acionar pixels de
+ *   rastreamento; data: URL > 32KB também vira placeholder.
  * - Links sempre externos e seguros (target=_blank + rel=noopener noreferrer).
  * - Dimensões fixas do remetente neutralizadas (somente '%' e 'auto' permitidos;
  *   px, em, rem, vh, vw, cm, calc etc. são todos removidos); comentários CSS removidos
@@ -68,6 +69,12 @@ function installHooks(p: PurifyInstance): void {
       node.setAttribute('loading', 'lazy');
       node.setAttribute('referrerpolicy', 'no-referrer');
       const src = node.getAttribute('src') || '';
+      if (/^(https?:|cid:)/i.test(src)) {
+        node.removeAttribute('src');
+        node.setAttribute('alt', node.getAttribute('alt') || '[imagem externa bloqueada por privacidade]');
+        node.setAttribute('title', 'Imagem externa bloqueada por privacidade');
+        return;
+      }
       if (src.startsWith('data:') && src.length > 32768) {
         node.removeAttribute('src');
         node.setAttribute('alt', node.getAttribute('alt') || '[imagem incorporada muito grande — ver e-mail completo]');

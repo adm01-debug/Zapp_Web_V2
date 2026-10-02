@@ -24,13 +24,18 @@ const SOCKET_ERR =
   'psql: error: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: ' +
   'No such file or directory';
 
+// /bin/bash explicito, nao 'bash': o primeiro argumento de spawnSync nao pode ser
+// um literal resolvido por PATH (javascript:S4036, CWE-427) -- com o literal, um
+// PATH adulterado trocaria o interpretador que roda o wrapper do contrato.
+const BASH = '/bin/bash';
+
 /** Roda o wrapper com um contrato falso. Devolve status, saida e tempo. */
 function rodaWrapper(corpoDoStub, env = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'pg-backoff-'));
   const comando = join(dir, 'falso-contrato.sh');
   writeFileSync(comando, corpoDoStub, { mode: 0o755 });
   const inicio = Date.now();
-  const r = spawnSync('bash', [WRAPPER, comando], {
+  const r = spawnSync(BASH, [WRAPPER, comando], {
     encoding: 'utf8',
     env: { ...process.env, ...env },
   });
