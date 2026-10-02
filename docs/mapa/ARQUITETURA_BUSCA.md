@@ -79,6 +79,28 @@ O termo digitado vai para a Mapbox (é o próprio autocomplete), mas nunca é pe
 - `src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx` — hook (debounce, cancelamento, seleção por teclado, encerramento de sessão).
 - `src/components/inbox/__tests__/LocationPicker.test.tsx` — UI do picker do Inbox.
 
+## Cobertura de teste do modulo (E79, medido 2026-10-02)
+
+Escopo: `src/lib/mapbox*`, `src/components/inbox/location-picker/**` e
+`src/components/contacts/ContactForm.tsx`. Comando: `vitest run --coverage` restrito a esses
+caminhos e aos testes do modulo (14 arquivos, 203 testes, todos passando).
+
+| nivel | Stmts | Branch | Funcs | Lines |
+|---|---|---|---|---|
+| escopo agregado | 87,94 | 79,13 | 81,76 | 91,97 |
+| lib (mapbox*) | 94,46 | 86,66 | 96,82 | 95,50 |
+| location-picker | 89,97 | 83,92 | 91,66 | 94,26 |
+| contacts/ContactForm.tsx | 66,42 | 58,27 | 48,93 | 74,50 |
+| lib/mapboxLoader.ts | 0 | 0 | 0 | 0 |
+
+Piso: linhas >= 85 % e branches >= 75 % para o escopo agregado - cumprido (91,97 / 79,13),
+e configurado como threshold por glob no vitest.config.ts (provado por mutacao: subir o piso
+para 99 faz a cobertura REPROVAR).
+
+**Ressalva conhecida:** o agregado passa puxado pelo `lib`; `ContactForm.tsx` (58,27 % branches)
+e `mapboxLoader.ts` (0 %) ficam abaixo do piso por arquivo. Um gate que soma arquivos nao garante
+piso por arquivo - ver decisao pendente sobre `perFile: true`.
+
 ## Bundle (medido no build real)
 
 Seção exigida pelo **E78** (`docs/mapa/PLANO_FINALIZACAO_100_ETAPAS_2026-09-29.md:672`) para o número de bundle deste módulo viver no repo, e não só no corpo de uma PR.
