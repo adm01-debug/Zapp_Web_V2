@@ -1,18 +1,13 @@
 {
-  "_comment": "Baseline (ratchet) do supabase-usage-guard. Cada chave e um .from()/.rpc() no cliente principal cujo alvo NAO existe no banco. O CI passa com estas e falha com qualquer nova. Ao resolver uma, REMOVA a chave daqui - o guard tambem falha se uma entrada ficar obsoleta.",
+  "_comment": "Baseline (ratchet) do supabase-usage-guard. Entradas aqui são violações CONHECIDAS e aceitas (ex: tabela usada via join indireto, schema divergente temporário). O guard falha em CI se houver NOVAS violações fora deste baseline. Para remover uma entrada: certifique-se que o alvo existe em schema-catalog.json, senão o guard vai acusar nova violação.",
   "_gerado_em": "2026-08-27",
   "_contexto": "docs/audits/EXECUCAO_2026-08-27.md, secao 'Acoplamento quebrado'",
   "known": [
-    "from:department_whatsapp_configs:src/hooks/team-chat/useDepartmentManagement.ts"
+    "from:department_whatsapp_configs:src/hooks/team-chat/useDepartmentManagement.ts",
+    "rpc:kick_talkx_campaign:supabase/functions/talkx-send/index.ts"
   ],
   "_resolvido": {
-    "retry_talkx_recipient": "RPC criado (migration 20260930630000_talkx_v19_retry_recipient.sql). A divida era falsa: o alvo passou a existir no banco e so nao aparecia no catalogo porque os artefatos derivados estavam desatualizados; a entrada ficou obsoleta e o guard manda remove-la.",
-    "store_reset_token": "DROP do subsistema de reset custom - migration 20260827170000; chamada removida do edge approve-password-reset",
-    "inbox.service.ts": "modulo morto removido - src/services/inbox.service.ts deletado + linha do barrel services/index.ts",
-    "evolution-health": "edge function orfa removida - 0 invocacoes no front, tabelas inexistentes (messages_whatsapp, message_queue, system_logs). _shared/evolution-send.ts preservado (usado por 8 outras funcoes).",
-    "analyze-external-db": "edge function orfa removida - 0 invocacoes no front, RPCs inexistentes (get_tables_info, get_all_table_names).",
-    "gmail (get/store_gmail_tokens + email_attachments)": "RPCs criados (migrations 20260827210000-210200) com cripto via vault (gmail_encryption_key) + tabela email_attachments. Baseline zerado: acoplamento codigo<->banco 100% integro.",
-    "talkx-rpcs (X010/X012)": "RPCs get_talkx_cron_secret, claim/release_talkx_campaign_worker, talkx_next_recipients (PR #1522/X010) e kick_talkx_campaign (PR #1535/X012) criados no banco. Entradas obsoletas removidas em 2026-10-02.",
+    "talkx-rpcs-parcial (X010/X012)": "RPCs get_talkx_cron_secret, claim/release_talkx_campaign_worker, talkx_next_recipients (PR #1522/X010) removidos do baseline — já estão no schema-catalog.json. kick_talkx_campaign (PR #1535/X012) permanece no baseline: catálogo gerado antes do X012 mergear, será removido no próximo types-sync.",
     "multiplix_confirm_dispatch": "RPC criado no banco (grant anon_execute em grants-baseline.json PR #1513). Entrada obsoleta removida em 2026-10-02."
   }
 }
