@@ -299,6 +299,13 @@ describe('WelcomeModal', () => {
   it('se anuncia como diálogo modal', () => {
     render(<WelcomeModal isOpen onClose={vi.fn()} onStartTour={vi.fn()} />);
 
-    expect(screen.getByRole('dialog', { name: /boas-vindas/i })).toHaveAttribute('aria-modal', 'true');
+    // UM diálogo só, no card, com o nome acessível vindo do h2 (aria-labelledby="welcome-modal-title"
+    // -> "Bem-vindo!"). Antes o overlay também era role=dialog com aria-label="Boas-vindas", o que
+    // aninhava dois diálogos.
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(screen.getByRole('dialog', { name: /bem-vindo/i })).toHaveAttribute(
+      'aria-modal',
+      'true',
+    );
   });
 });

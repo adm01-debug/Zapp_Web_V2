@@ -18,6 +18,7 @@ export type CapabilityReason =
   | 'whatsapp_unavailable'
   | 'whatsapp_no_outbound'
   | 'whatsapp_disconnected'
+  | 'whatsapp_restrito_supervisores'
   | 'line_in_use_other_user'
   | 'line_in_use_other_tab'
   | 'line_busy_here'
@@ -44,6 +45,7 @@ export const REASON_LABEL: Record<CapabilityReason, string> = {
   whatsapp_unavailable: 'Linha de WhatsApp indisponível',
   whatsapp_no_outbound: 'Ligação por WhatsApp não disponível nesta linha',
   whatsapp_disconnected: 'WhatsApp desconectado nesta linha',
+  whatsapp_restrito_supervisores: 'Disponível para supervisores',
   line_in_use_other_user: 'Linha em uso por outro usuário',
   line_in_use_other_tab: 'Ligação em andamento em outra aba',
   line_busy_here: 'Você já está em uma ligação',

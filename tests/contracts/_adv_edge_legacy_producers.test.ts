@@ -62,6 +62,11 @@
  *    idênticos — só o total varrido sobe (195 → 196: os dois lados somam, o 195 acima é do X019,
  *    que entrou na main no mesmo rebase) e o ratchet é atualizado de propósito. O valor certo
  *    não é o de nenhum dos dois lados, é o que a varredura mede depois do merge.
+ *  - 197: Telefonia Fase 2 (02/10/2026) — `_shared/__tests__/evolution-call-events.test.ts`
+ *    (prova Deno dos eventos de chamada do webhook, com as fixtures offer/accept/reject/terminate).
+ *    É arquivo de teste, não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3)
+ *    seguem idênticos — só o total varrido sobe (196 → 197), medido pela varredura depois do merge,
+ *    que é a regra declarada neste arquivo.
  *    De propósito NÃO usa o "regex antigo": o fatiamento das chamadas é por `indexOf`.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -137,8 +142,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('196 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(196);
+  it('197 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(197);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );

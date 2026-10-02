@@ -516,7 +516,10 @@ describe('useSipClient', () => {
 
   it('should not crash sendDTMF without active session', () => {
     const { result } = renderHook(() => useSipClient());
-    act(() => { result.current.sendDTMF('1'); });
+    // Sem sessão ativa o DTMF não tem por onde sair. O contrato do hook é não
+    // lançar: `sendDTMF` só repassa para o motor (useSipClient.ts:74), então o
+    // que este teste guarda é justamente o caminho sem sessão não explodir.
+    expect(() => act(() => { result.current.sendDTMF('1'); })).not.toThrow();
   });
 
   it('should reject a second makeCall while one is already in progress', async () => {

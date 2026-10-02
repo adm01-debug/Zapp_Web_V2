@@ -126,14 +126,18 @@ describe('useCalls', () => {
 
   it('should handle startCall with empty contactId', async () => {
     const { result } = renderHook(() => useCalls());
+    let callId: string | null = 'nao-chamado';
     await act(async () => {
-      await result.current.startCall({
+      callId = await result.current.startCall({
         contactPhone: '123',
         contactName: 'Test',
         direction: 'inbound',
       });
     });
-    // Should not crash
+    // Sem contactId a chamada não deixa de ser registrada: o hook grava
+    // `contact_id: params.contactId || null` e devolve o id da linha criada
+    // (useCalls.ts). O que não pode acontecer é cair no caminho de erro.
+    expect(callId).toBe('call-1');
   });
 
   it('should handle endCall with zero duration', async () => {

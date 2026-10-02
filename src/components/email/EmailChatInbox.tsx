@@ -37,7 +37,7 @@ export function EmailChatInbox() {
         <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
           <Mail className="w-8 h-8 text-primary" />
         </div>
-        <h3 className="text-lg font-semibold mb-2 text-foreground">Gmail não conectado</h3>
+        <h1 className="text-lg font-semibold mb-2 text-foreground">Gmail não conectado</h1>
         <p className="text-sm text-muted-foreground text-center max-w-xs mb-6">
           Conecte sua conta Gmail para gerenciar e-mails diretamente pela plataforma, com interface de chat.
         </p>

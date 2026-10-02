@@ -1,4 +1,4 @@
-import { test as setup } from '@playwright/test';
+import { expect, test as setup } from '@playwright/test';
 import path from 'node:path';
 
 const AUTH_FILE = path.join(import.meta.dirname, '.auth', 'user.json');
@@ -31,7 +31,25 @@ setup('authenticate', async ({ page }) => {
   await page.getByRole('button', { name: /^entrar$/i }).click();
 
   // Sidebar da app shell (#main-navigation) so aparece apos login bem-sucedido.
-  await page.locator('#main-navigation').waitFor({ state: 'visible', timeout: 30_000 });
+  //
+  // Espera o DESFECHO, nao so' o sucesso: sem isso, um login RECUSADO vira
+  // "timeout aguardando #main-navigation" e nao diz nada sobre a causa (medido
+  // em 02/10: senha invalida reproduz exatamente essa mensagem muda).
+  const shell = page.locator('#main-navigation');
+  const erroLogin = page
+    .getByRole('alert')
+    .or(page.getByText(/inv[aá]lid|credenci|senha incorreta|e-?mail ou senha/i));
+  await expect(shell.or(erroLogin).first()).toBeVisible({ timeout: 30_000 });
+
+  const entrou = await shell.isVisible().catch(() => false);
+  if (!entrou) {
+    const resposta = ((await erroLogin.first().textContent().catch(() => null)) ?? '').trim();
+    throw new Error(
+      'Login nao concluiu (o app nao montou a sidebar). O app respondeu: ' +
+        (resposta || '(nenhuma mensagem visivel na tela)'),
+    );
+  }
+  await shell.waitFor({ state: 'visible', timeout: 10_000 });
 
   await page.context().storageState({ path: AUTH_FILE });
 });

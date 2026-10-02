@@ -70,6 +70,12 @@ export function EvolutionDisconnectBanner() {
         initial={{ opacity: 0, y: -40 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -40 }}
+        // Faixa de status do app: sem papel de landmark, o axe acusa todo o texto do aviso como
+        // "conteúdo fora de landmark" em todas as telas. `region` + rótulo resolve a estrutura e
+        // `aria-live` faz o aviso ser anunciado quando aparece.
+        role="region"
+        aria-label="Status das conexões do WhatsApp"
+        aria-live="polite"
         className="fixed top-0 left-0 right-0 z-[90] bg-destructive text-destructive-foreground shadow-lg"
       >
         <div className="flex items-center justify-center gap-3 py-2.5 px-4 max-w-screen-xl mx-auto">

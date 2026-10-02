@@ -15,6 +15,7 @@ import { useSyncToCRM } from '@/hooks/integrations/useSyncToCRM';
 import type { Conversation } from '@/types/chat';
 import { RealtimeCollaboration } from '../RealtimeCollaboration';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
+import { dispatchStartCall } from '@/lib/calls/events';
 import { useFeatureFlag } from '@/hooks/system/useFeatureFlag';
 
 interface ContactActionButtonsProps {
@@ -121,12 +122,17 @@ export function ContactActionButtons({
             <Tile icon={<Phone className="w-[18px] h-[18px]" />} label="Ligar" title="Opções de chamada" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="center" className="min-w-[160px]">
-            <DropdownMenuItem onClick={() => onStartCall('whatsapp')} className="gap-2 text-xs">
+            <DropdownMenuItem onClick={() => {
+              onStartCall('whatsapp');
+              // T29: caminho unificado (o consumidor unico decide o que fazer).
+              dispatchStartCall({ channel: 'whatsapp', phone: contact.phone, contactId: contact.id, name: contact.name, source: 'inbox' });
+            }} className="gap-2 text-xs">
               <PhoneCall className="w-3.5 h-3.5 text-success" />Ligar via WhatsApp
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => {
               onStartCall('voip');
-              window.dispatchEvent(new CustomEvent('start-voip-call', { detail: { phone: contact.phone, name: contact.name } }));
+              // T29: o caminho unificado substitui o evento legado por window.
+              dispatchStartCall({ channel: 'voip', phone: contact.phone, contactId: contact.id, name: contact.name, source: 'inbox' });
             }} className="gap-2 text-xs">
               <Headphones className="w-3.5 h-3.5 text-info" />Ligar via Telefone
             </DropdownMenuItem>

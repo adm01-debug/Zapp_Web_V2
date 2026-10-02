@@ -52,10 +52,7 @@ interface ContactHeaderSectionProps {
   onCollapseAll?: () => void;
 }
 
-const CallDialog = lazy(() => import('@/components/calls/CallDialog').then(m => ({ default: m.CallDialog })));
-
 export function ContactHeaderSection({ contact, enrichedData, conversation, onQuickAction, isCompact = false, hasExpandedSections = false, onCollapseAll }: ContactHeaderSectionProps) {
-  const [showCallDialog, setShowCallDialog] = useState(false);
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
 
@@ -213,17 +210,10 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
           contact={contact} conversation={conversation}
           hasExpandedSections={hasExpandedSections} onCollapseAll={onCollapseAll}
           onQuickAction={onQuickAction}
-          onStartCall={(type) => setShowCallDialog(true)}
+          onStartCall={() => {}}
         />
       </motion.div>
 
-      {showCallDialog && (
-        <Suspense fallback={null}>
-          <CallDialog open={showCallDialog} onOpenChange={setShowCallDialog}
-            contact={{ id: contact.id, name: contact.name, phone: contact.phone, avatar: contact.avatar }}
-            direction="outbound" onEnd={() => setShowCallDialog(false)} />
-        </Suspense>
-      )}
       {showAvatarPreview && contact.avatar && (
         <ImagePreview src={contact.avatar} alt={contact.name} onClose={() => setShowAvatarPreview(false)} />
       )}
