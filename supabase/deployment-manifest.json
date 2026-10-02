@@ -8,7 +8,7 @@
   },
   "summary": {
     "function_count": 69,
-    "source_file_count": 131,
+    "source_file_count": 132,
     "verify_jwt_true": 57,
     "verify_jwt_false": 12
   },
@@ -573,9 +573,14 @@
       "sha256": "7de69af12fdc8be08099f2703f67ad731d5d501ff8b58949dd0b45bef343eeda"
     },
     {
+      "path": "supabase/functions/multiplix-dispatch/actions/listing.ts",
+      "bytes": 10320,
+      "sha256": "1b32bd3b291b2a723e72dba52e6ceff8b78459a3a47861a64129b3c99da99e7e"
+    },
+    {
       "path": "supabase/functions/multiplix-dispatch/index.ts",
-      "bytes": 12998,
-      "sha256": "6fc96fd103de166c4ad6cacad977c68533a9e26efc1cca75034d64eaae815160"
+      "bytes": 13239,
+      "sha256": "e58423e12d10ac7b66d7f10d4388cf7c0b3eff03a138ce961265ae9c586a18ea"
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
@@ -1413,7 +1418,7 @@
       "name": "multiplix-dispatch",
       "entrypoint": "supabase/functions/multiplix-dispatch/index.ts",
       "verify_jwt": true,
-      "source_sha256": "e69a16c9acc75846c23359cb01d4e78b079c5c71d899a21ce568d45e1d2ff520",
+      "source_sha256": "e4ee5948d86e3615221198a04dd2ddf1e80d56e855cc0c9f575f3d3eae2033a5",
       "source_files": [
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1439,6 +1444,7 @@
         "supabase/functions/multiplix-dispatch/actions/blocks.ts",
         "supabase/functions/multiplix-dispatch/actions/inspect.ts",
         "supabase/functions/multiplix-dispatch/actions/lifecycle.ts",
+        "supabase/functions/multiplix-dispatch/actions/listing.ts",
         "supabase/functions/multiplix-dispatch/index.ts"
       ]
     },
@@ -1700,5 +1706,5 @@
       ]
     }
   ],
-  "manifest_sha256": "314c34a1d52fd44303d90e051e1ed19a22f3c214fe2da3cbbce164fde78fa407"
+  "manifest_sha256": "3149e20ac32dc79bcde66d2555f9dd6ed2afa3a06715e5a679559d4ceae6fd08"
 }
