@@ -20,7 +20,7 @@ describe('axe — view talkx: tablist sem filhos proibidos', () => {
 
 
   it('os filtros de campanha anunciam o proprio rotulo (combobox com nome)', () => {
-    const v = readFileSync(resolve(raiz, 'src/components/talkx/talkxShared.tsx'), 'utf8');
+    const v = readFileSync(resolve(raiz, 'src/components/talkx/kit/filters.tsx'), 'utf8');
     const i = v.indexOf('min-w-[120px]');
     expect(i).toBeGreaterThan(-1);
     expect(v.slice(Math.max(0, i - 200), i)).toMatch(/aria-label=\{fd\.label\}/);
