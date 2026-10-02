@@ -467,46 +467,55 @@ export type Database = {
       }
       ai_usage_logs: {
         Row: {
+          attempt: number | null
           created_at: string
           duration_ms: number | null
           error_message: string | null
           function_name: string
           id: string
           input_tokens: number | null
+          job_id: string | null
           metadata: Json | null
           model: string | null
           output_tokens: number | null
           profile_id: string | null
+          request_id: string | null
           status: string
           total_tokens: number | null
           user_id: string | null
         }
         Insert: {
+          attempt?: number | null
           created_at?: string
           duration_ms?: number | null
           error_message?: string | null
           function_name: string
           id?: string
           input_tokens?: number | null
+          job_id?: string | null
           metadata?: Json | null
           model?: string | null
           output_tokens?: number | null
           profile_id?: string | null
+          request_id?: string | null
           status?: string
           total_tokens?: number | null
           user_id?: string | null
         }
         Update: {
+          attempt?: number | null
           created_at?: string
           duration_ms?: number | null
           error_message?: string | null
           function_name?: string
           id?: string
           input_tokens?: number | null
+          job_id?: string | null
           metadata?: Json | null
           model?: string | null
           output_tokens?: number | null
           profile_id?: string | null
+          request_id?: string | null
           status?: string
           total_tokens?: number | null
           user_id?: string | null
@@ -7621,6 +7630,45 @@ export type Database = {
           },
         ]
       }
+      talkx_optout_keywords: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          keyword: string
+          match_mode: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          keyword: string
+          match_mode?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          keyword?: string
+          match_mode?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talkx_optout_keywords_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_optout_keywords_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       talkx_recipients: {
         Row: {
           attempt_count: number
@@ -9654,6 +9702,37 @@ export type Database = {
           },
         ]
       }
+      talkx_campaign_optouts: {
+        Row: {
+          auto_optout_count: number | null
+          campaign_id: string | null
+          last_optout_at: string | null
+          optout_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talkx_blacklist_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaign_metrics"
+            referencedColumns: ["campaign_id"]
+          },
+          {
+            foreignKeyName: "talkx_blacklist_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaign_metrics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_blacklist_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_connections_agent: {
         Row: {
           id: string | null
@@ -10699,6 +10778,14 @@ export type Database = {
         Args: { p_id: string; p_lease_seconds?: number; p_lease_token: string }
         Returns: boolean
       }
+      heartbeat_multiplix_item: {
+        Args: {
+          p_claim_token: string
+          p_item_id: string
+          p_lease_seconds?: number
+        }
+        Returns: boolean
+      }
       increment_agent_messages: {
         Args: { p_profile_id: string; p_type: string }
         Returns: Json
@@ -10770,6 +10857,18 @@ export type Database = {
         Returns: undefined
       }
       leave_team_group: { Args: { p_conversation_id: string }; Returns: Json }
+      list_multiplix_claimable_items: {
+        Args: { p_dispatch_id: string; p_limit?: number }
+        Returns: {
+          attempt_count: number
+          block_id: string
+          block_order: number
+          company_id: string
+          item_id: string
+          next_attempt_at: string
+          recipient_id: string
+        }[]
+      }
       log_audit_event: {
         Args: {
           p_action: string
@@ -10878,6 +10977,7 @@ export type Database = {
       }
       notify_due_reminders: { Args: never; Returns: number }
       notify_due_tasks: { Args: never; Returns: number }
+      notify_searchbox_budget: { Args: never; Returns: number }
       persist_conversation_analysis: {
         Args: { p_analysis: Json; p_analyzed_at?: string; p_contact_id: string }
         Returns: Json
@@ -11365,6 +11465,7 @@ export type Database = {
         Args: { p_campaign_id: string }
         Returns: undefined
       }
+      talkx_match_optout: { Args: { p_text: string }; Returns: string }
       talkx_next_recipients: {
         Args: { p_campaign_id: string; p_limit?: number }
         Returns: {
@@ -11380,6 +11481,7 @@ export type Database = {
           status: string
         }[]
       }
+      talkx_normalize_optout_text: { Args: { p_text: string }; Returns: string }
       talkx_overview_stats: {
         Args: { p_from: string; p_to: string }
         Returns: Json
@@ -11417,6 +11519,7 @@ export type Database = {
       talkx_segment_tags: { Args: { p_segment: string }; Returns: Json }
       talkx_suppress_contact: {
         Args: {
+          p_campaign_id?: string
           p_contact_id: string
           p_origin: string
           p_phone: string
