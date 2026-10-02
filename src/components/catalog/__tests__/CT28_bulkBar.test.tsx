@@ -253,13 +253,15 @@ describe('CT-28 — seleção em massa no catálogo do chat', () => {
     expect(toggle).not.toHaveBeenCalledWith(expect.objectContaining({ id: 'p2' }));
   });
 
-  it('"Enviar" da barra abre o envio em massa com os selecionados', () => {
+  it('"Enviar" da barra abre o envio em massa com os selecionados', async () => {
     renderCatalog();
 
     selecionarPrimeiros(2);
     fireEvent.click(screen.getByRole('button', { name: 'Enviar (2)' }));
 
-    expect(screen.getByTestId('bulk-send-dialog')).toHaveTextContent('p1,p2');
+    // CT-71 — o dialog entra por React.lazy: precisa aguardar o chunk.
+    const dialog = await screen.findByTestId('bulk-send-dialog');
+    expect(dialog).toHaveTextContent('p1,p2');
   });
 
   it('sair do modo seleção limpa a seleção e esconde a barra', () => {
@@ -277,20 +279,24 @@ describe('CT-28 — seleção em massa no catálogo do chat', () => {
 
 // ─── CT-34 / CT-36 — fiação entre catálogo, card e detalhe ─────────────────
 describe('CT-34/CT-36 — fiação catálogo → card → detalhe/envio', () => {
-  it('CT-34: a cor escolhida no detalhe chega ao SendProductDialog (initialVariantColor)', () => {
+  it('CT-34: a cor escolhida no detalhe chega ao SendProductDialog (initialVariantColor)', async () => {
     renderCatalog();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Enviar cor' })[0]);
 
-    expect(screen.getByTestId('send-dialog')).toHaveAttribute('data-variant', 'Vermelho');
+    // CT-71 — SendProductDialog lazy.
+    const dialog = await screen.findByTestId('send-dialog');
+    expect(dialog).toHaveAttribute('data-variant', 'Vermelho');
   });
 
-  it('CT-34: envio sem cor escolhida não inventa variante', () => {
+  it('CT-34: envio sem cor escolhida não inventa variante', async () => {
     renderCatalog();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Enviar' })[0]);
 
-    expect(screen.getByTestId('send-dialog')).toHaveAttribute('data-variant', '');
+    // CT-71 — SendProductDialog lazy.
+    const dialog = await screen.findByTestId('send-dialog');
+    expect(dialog).toHaveAttribute('data-variant', '');
   });
 
   it('CT-36: o card recebe os produtos do resultado atual, na ordem exibida', () => {
