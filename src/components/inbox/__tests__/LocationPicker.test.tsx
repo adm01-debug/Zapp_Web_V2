@@ -87,6 +87,8 @@ function baseAutocomplete() {
     status: 'idle' as SearchStatus,
     pausedUntil: null as number | null,
     retrieveError: null as { id: string; kind: string } | null,
+    // E64: anúncio do leitor de tela preenchido dentro do select() — o mock começa vazio.
+    selectionAnnouncement: '',
   };
 }
 
@@ -232,6 +234,42 @@ describe('LocationPicker', () => {
 
       expect(ac.select).toHaveBeenCalledWith(0);
       await waitFor(() => expect(state.chooseSearchResult).toHaveBeenCalledWith(place));
+    });
+
+    it('E64: após a seleção o anúncio aparece numa região viva (role=status) com o nome escolhido', async () => {
+      const state = hookState(null);
+      const place = { name: 'XBZ Brindes', address: 'SP', lat: -23.5, lng: -46.6 };
+      const ac = autocompleteState({
+        status: 'ok',
+        query: 'xbz',
+        suggestions: [{ id: 'a', name: 'XBZ Brindes', address: 'SP', kind: 'poi' }],
+      });
+      // O hook real preenche `selectionAnnouncement` DENTRO do select(); o mock reproduz isso.
+      ac.select = vi.fn(async () => {
+        ac.selectionAnnouncement = 'Endereço escolhido: XBZ Brindes';
+        return place;
+      });
+      h.hook.mockReturnValue(state);
+      h.autocomplete.mockReturnValue(ac);
+      const view = render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
+      const mapTab = screen.getByRole('tab', { name: /Escolher no Mapa/ });
+      fireEvent.click(mapTab);
+      fireEvent.focus(mapTab);
+      const input = await screen.findByRole('combobox');
+      fireEvent.focusIn(input);
+
+      fireEvent.click(screen.getByRole('option', { name: /^XBZ/ }));
+      await waitFor(() => expect(ac.select).toHaveBeenCalledWith(0));
+
+      // Re-render com o anúncio preenchido: é o que o hook real produz depois do select().
+      view.rerender(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
+      const viva = screen.getByTestId('sr-selecao');
+      expect(viva).toHaveAttribute('role', 'status');
+      expect(viva).toHaveAttribute('aria-live', 'polite');
+      expect(viva.className).toContain('sr-only');
+      expect(viva.textContent).toBe('Endereço escolhido: XBZ Brindes');
+      // O nome escolhido não vaza para a auditoria (E50).
+      expect(JSON.stringify(h.logAudit.mock.calls)).not.toContain('XBZ');
     });
 
     it('navegação por teclado delega ao hook e Esc fecha a lista', async () => {

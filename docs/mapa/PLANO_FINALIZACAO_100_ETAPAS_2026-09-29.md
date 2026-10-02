@@ -423,7 +423,9 @@ A flag `mapa.searchbox-autocomplete` foi removida como órfã (`20260930210000`)
 **Arquivos:** `SuggestionList.tsx` (E32)
 1. `<div role="status" aria-live="polite" class="sr-only">` com "N sugestões", "Buscando…", "Nenhum resultado", "Sugestões pausadas".
 2. Sem repetir a cada tecla: só quando `status` ou `length` mudam.
-**Checklist:** [ ] anúncio · [ ] sem spam · [ ] teste com `getByRole('status')`
+**Checklist:** [x] anúncio · [x] sem spam · [x] teste com `getByRole('status')`
+
+**Conformidade fechada em 2026-10-02.** A versão anterior usava texto próprio e não tinha role status; agora é role=status mais aria-live=polite mais sr-only, com os textos literais da etapa: N sugestões, Buscando, Nenhum resultado, Sugestões pausadas (o texto de erro foi mantido, a etapa não define um). O anúncio depende só de status e da contagem — nunca de query —, então teclar não gera anúncio. Testado com getByRole(status), como a etapa pede.
 
 ### E58 · Foco e `aria-activedescendant` auditados com axe
 **Arquivos:** `LPT`, `ContactFormEndereco.test.tsx`
@@ -470,7 +472,11 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 
 ### E64 · Leitor de tela anuncia a seleção
 1. Após `select()`, `aria-live` diz "Endereço escolhido: <nome>".
-**Checklist:** [ ] anúncio · [ ] teste
+**Checklist:** [x] anúncio · [x] teste
+
+**Fechada em 2026-10-02.** Após select() bem-sucedido a região viva anuncia Endereço escolhido seguido do nome da sugestão, nos três caminhos de sucesso (forward com coordenadas, retrieve ok e o fallback E16). Valor único que substitui o anterior, sem acumular.
+
+**Privacidade travada por teste:** o nome vai para o leitor de tela do próprio usuário e NUNCA para a auditoria — os dois logAudit do hook seguem com o shape fechado source e kind (o E50), e um caso novo percorre o JSON dos eventos e falha se o nome ou a frase aparecerem.
 
 ### E65 · Prints obrigatórios
 1. Desktop (1280), 360 px, teclado virtual aberto, tema escuro — 4 prints em `docs/mapa/prints/` (PNG ≤ 200 KB cada).

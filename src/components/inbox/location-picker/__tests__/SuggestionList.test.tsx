@@ -49,26 +49,71 @@ describe('SuggestionList — pausa de 429 (A3-04)', () => {
     expect(screen.getByRole('button', { name: /tentar novamente/i })).toBeTruthy();
   });
 
-  it('E57: a contagem de sugestões é anunciada em região viva (leitor de tela)', () => {
+  it('E57: a contagem de sugestões é anunciada em região viva (getByRole("status"))', () => {
     // Quem usa leitor de tela não "vê" a lista aparecer: sem região viva, a busca pode
     // devolver 5 sugestões e o operador não ouve nada. A contagem vem do próprio DOM para o
     // teste não depender do formato dos fixtures.
     const tres = [
-    { id: 's1', name: 'Rua A, 1', address: 'Rua A, 1, São Paulo', kind: 'street' },
-    { id: 's2', name: 'Rua B, 2', address: 'Rua B, 2, São Paulo', kind: 'address' },
-    { id: 's3', name: 'Rua C, 3', address: 'Rua C, 3, São Paulo', kind: 'poi' },
-  ] as unknown as SuggestionListProps['suggestions'];
-  render(<SuggestionList {...props({ status: 'ok', suggestions: tres })} />);
-    const opcoes = document.querySelectorAll('[role="option"]').length;
-    const viva = [...document.querySelectorAll('[aria-live]')].map((e) => e.textContent ?? '').join(' ');
-    expect(opcoes).toBeGreaterThan(0);
-    expect(viva).toContain(String(opcoes));
+      { id: 's1', name: 'Rua A, 1', address: 'Rua A, 1, São Paulo', kind: 'street' },
+      { id: 's2', name: 'Rua B, 2', address: 'Rua B, 2, São Paulo', kind: 'address' },
+      { id: 's3', name: 'Rua C, 3', address: 'Rua C, 3, São Paulo', kind: 'poi' },
+    ] as unknown as SuggestionListProps['suggestions'];
+    render(<SuggestionList {...props({ status: 'ok', suggestions: tres })} />);
+
+    const viva = screen.getByRole('status');
+    expect(viva).toHaveAttribute('aria-live', 'polite');
+    expect(viva.className).toContain('sr-only');
+    expect(viva.textContent).toBe('3 sugestões');
   });
-  
-  it('E57: a mudança de estado também é anunciada — "nada encontrado"', () => {
-    render(<SuggestionList {...props({ status: 'empty' })} />);
-    const viva = [...document.querySelectorAll('[aria-live]')].map((e) => e.textContent ?? '').join(' ');
-    expect(viva.toLowerCase()).toMatch(/nenhuma sugestão/i);
+
+  it('E57: cada estado anuncia o texto da etapa (Buscando… / Nenhum resultado / Sugestões pausadas)', () => {
+    const casos: Array<[SuggestionListProps['status'], string]> = [
+      ['typing', 'Buscando…'],
+      ['loading', 'Buscando…'],
+      ['empty', 'Nenhum resultado'],
+      ['paused', 'Sugestões pausadas'],
+    ];
+    for (const [status, texto] of casos) {
+      const { unmount } = render(<SuggestionList {...props({ status })} />);
+      expect(screen.getByRole('status').textContent).toBe(texto);
+      unmount();
+    }
+  });
+
+  it('E57: a região viva NÃO duplica o texto visível no DOM (evita "Found multiple elements")', () => {
+    // O texto visível é o do operador; o vivo é outra redação. Se os dois fossem iguais, qualquer
+    // `getByText` de terceiro acharia dois nós. Este caso pina a separação.
+    const { unmount } = render(<SuggestionList {...props({ status: 'empty' })} />);
+    expect(screen.getByText(/Nada encontrado para/)).toBeTruthy();
+    expect(screen.getAllByText('Nenhum resultado')).toHaveLength(1);
+    unmount();
+
+    render(<SuggestionList {...props({ status: 'paused', blocked: 'rate_limited', pausedUntil: Date.now() + 45_000 })} />);
+    expect(screen.getByText(/Sugestões pausadas por \d+ s/)).toBeTruthy();
+    expect(screen.getAllByText('Sugestões pausadas')).toHaveLength(1);
+  });
+
+  it('E57: sem spam por tecla — o anúncio só muda quando `status` ou a contagem mudam', () => {
+    const tres = [
+      { id: 's1', name: 'Rua A, 1', address: 'Rua A, 1, São Paulo', kind: 'street' },
+      { id: 's2', name: 'Rua B, 2', address: 'Rua B, 2, São Paulo', kind: 'address' },
+      { id: 's3', name: 'Rua C, 3', address: 'Rua C, 3, São Paulo', kind: 'poi' },
+    ] as unknown as SuggestionListProps['suggestions'];
+
+    const { rerender } = render(<SuggestionList {...props({ status: 'typing', query: 'rua a' })} />);
+    expect(screen.getByRole('status').textContent).toBe('Buscando…');
+
+    // Digitar mais (mesmo status, mesma contagem) NÃO troca o anúncio… 
+    rerender(<SuggestionList {...props({ status: 'typing', query: 'rua ab' })} />);
+    expect(screen.getByRole('status').textContent).toBe('Buscando…');
+    // …e o termo digitado nunca vaza para a região viva.
+    expect(screen.getByRole('status').textContent).not.toContain('rua');
+
+    // Na lista cheia, trocar o termo também não reanuncia a contagem.
+    rerender(<SuggestionList {...props({ status: 'ok', suggestions: tres, query: 'rua a' })} />);
+    expect(screen.getByRole('status').textContent).toBe('3 sugestões');
+    rerender(<SuggestionList {...props({ status: 'ok', suggestions: tres, query: 'rua ab' })} />);
+    expect(screen.getByRole('status').textContent).toBe('3 sugestões');
   });
   
   it('E59: em tela pequena a lista ancora na tela com teto de 40vh (sem overflow em 360px)', () => {

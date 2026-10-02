@@ -916,4 +916,73 @@ describe('useAddressAutocomplete', () => {
     await act(async () => { resolveRetrieve({ ok: true, place: forwardA }); });
     expect(await selecao).toBeNull();
   });
+
+  // E64 · o leitor de tela do PRÓPRIO operador ouve a escolha. O anúncio é texto de DOM (região
+  // viva) — nunca auditoria: os eventos do E50 seguem com shape fechado {source, kind}.
+  describe('E64 — o leitor de tela anuncia a seleção', () => {
+    it('E64: após select() a escolha é anunciada com o nome da sugestão', async () => {
+      h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
+      h.retrievePlaceResult.mockResolvedValue({
+        ok: true,
+        place: { lat: -23.5613, lng: -46.6565, name: 'Rua A, 1', address: 'Rua A, 1, São Paulo' },
+      });
+      const { result } = setup();
+      expect(result.current.selectionAnnouncement).toBe('');
+      act(() => { result.current.setQuery('rua a'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      await act(async () => { await result.current.select(0); });
+
+      expect(result.current.selectionAnnouncement).toBe('Endereço escolhido: Rua A');
+    });
+
+    it('E64: sugestão do /forward (já com coords, sem /retrieve) também é anunciada', async () => {
+      h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionPoiForward] });
+      const { result } = setup();
+      act(() => { result.current.setQuery('rua a'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      await act(async () => { await result.current.select(0); });
+
+      expect(h.retrievePlaceResult).not.toHaveBeenCalled();
+      expect(result.current.selectionAnnouncement).toBe('Endereço escolhido: Rua A');
+    });
+
+    it('E64: a mensagem anterior é substituída — nunca acumula', async () => {
+      h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA, suggestionB] });
+      h.retrievePlaceResult.mockResolvedValue({
+        ok: true,
+        place: { lat: -23.5, lng: -46.6, name: 'Rua B, 2', address: 'Rua B, 2, São Paulo' },
+      });
+      const { result } = setup();
+      act(() => { result.current.setQuery('rua'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      await act(async () => { await result.current.select(0); });
+      expect(result.current.selectionAnnouncement).toBe('Endereço escolhido: Rua A');
+
+      await act(async () => { await result.current.select(1); });
+      expect(result.current.selectionAnnouncement).toBe('Endereço escolhido: Rua B');
+      // a antiga foi SUBSTITUÍDA, não somada
+      expect(result.current.selectionAnnouncement).not.toContain('Rua A');
+    });
+
+    it('E64: o nome NÃO entra em logAudit — o anúncio é só do leitor de tela', async () => {
+      h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
+      h.retrievePlaceResult.mockResolvedValue({
+        ok: true,
+        place: { lat: -23.5, lng: -46.6, name: 'Rua A, 1', address: 'Rua A, 1, São Paulo' },
+      });
+      const { result } = setup();
+      act(() => { result.current.setQuery('rua a'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      await act(async () => { await result.current.select(0); });
+
+      // E50: shape fechado {source, kind}. O anúncio do E64 vive no DOM, não na auditoria.
+      const json = JSON.stringify(h.logAudit.mock.calls);
+      expect(json).not.toContain('Rua A');
+      expect(json).not.toContain('Endereço escolhido');
+    });
+  });
 });
