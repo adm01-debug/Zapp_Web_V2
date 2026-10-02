@@ -189,8 +189,8 @@ Totais da auditoria final: 56 aprovados localmente, 20 parciais, 3 pendentes e 1
 | ESLint dos arquivos tocados | Aprovado, zero erro/warning |
 | Vitest global | 464 arquivos, 5.744 testes aprovados, 1 falha esperada e 38 `todo`, zero falha inesperada |
 | Vitest direcionado após ajustes finais | 19/19 aprovados |
-| Deno helpers/MIME | 18/18 aprovados |
-| `deno check` handlers/helpers | Aprovado |
+| Deno Edge Functions completo | 690 testes aprovados, zero falha, incluindo typecheck dos testes |
+| `deno check` handlers/helpers | Aprovado; fake de escopo atualizado para o contrato tipado de reconciliação |
 | Playwright Email NAVY | 14/14 aprovados |
 | Acessibilidade Playwright/axe | Zero violação no cenário avaliado |
 | Chamadas mutáveis externas | Interceptadas e bloqueadas; zero envio real |
