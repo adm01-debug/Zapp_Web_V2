@@ -11,6 +11,14 @@ import {
 import { FILES_COLUMNS, useFilesViewState, type FilesTypeFilter } from '@/hooks/chat/useFilesViewState';
 import { useFilesSelection } from '@/hooks/chat/useFilesSelection';
 import { useFilesActions } from '@/hooks/chat/useFilesActions';
+import {
+  createForwardRunState,
+  forwardMediaMessages,
+  type ForwardMediaItem,
+  type ForwardRunState,
+} from '@/hooks/chat/useForwardMedia';
+import type { ForwardCallback } from '@/hooks/chat/useForwardMessage';
+import { forwardLimitError } from '@/lib/forward-limits';
 import { FilesToolbar } from './FilesToolbar';
 import { FilesContent } from './FilesContent';
 import { FilesSelectionBar } from './FilesSelectionBar';
@@ -20,7 +28,6 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
-import type { Message } from '@/types/chat';
 
 const MediaPreviewDialog = lazy(() =>
   import('../media-gallery/MediaPreviewDialog').then((m) => ({ default: m.MediaPreviewDialog })));
@@ -60,7 +67,9 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
 
   const [selected, setSelected] = useState<ContactMediaItem | null>(null);
   const [previewItem, setPreviewItem] = useState<ContactMediaItem | null>(null);
-  const [forwardItem, setForwardItem] = useState<ContactMediaItem | null>(null);
+  // Etapa 38: o diálogo de encaminhar recebe um ou N itens da seleção.
+  const [forwardItems, setForwardItems] = useState<ContactMediaItem[]>([]);
+  const forwardStateRef = useRef<ForwardRunState | null>(null);
   // Etapa 35: item cuja exclusao aguarda confirmacao no AlertDialog (no lugar do window.confirm).
   const [deleteTarget, setDeleteTarget] = useState<ContactMediaItem | null>(null);
 
@@ -132,9 +141,36 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [selection]);
 
-  const forwardMessage: Message | null = forwardItem
-    ? { id: forwardItem.id, content: forwardItem.caption ?? '', sender: (forwardItem.sender as 'agent' | 'contact') ?? 'contact', timestamp: new Date(forwardItem.created_at), type: forwardItem.type === 'document' ? 'document' : forwardItem.type }
-    : null;
+  // Etapa 38: os itens selecionados (dentro do recorte atual) alimentam o diálogo.
+  const selectedItems = useMemo(
+    () => filtered.filter((item) => selection.selectedIds.has(item.id)),
+    [filtered, selection.selectedIds],
+  );
+
+  const forwardMediaItems = useMemo<ForwardMediaItem[]>(
+    () => forwardItems.map((item) => ({
+      id: item.id, url: item.url, type: item.type, filename: item.filename, caption: item.caption,
+    })),
+    [forwardItems],
+  );
+
+  // Etapa 36/38: abre o diálogo com seleção nova e um estado de execução limpo. O retry
+  // dentro do diálogo reusa o MESMO estado, que guarda os pares (item, destino) concluídos.
+  const openForward = useCallback((targets: ContactMediaItem[]) => {
+    if (targets.length === 0) return;
+    forwardStateRef.current = createForwardRunState();
+    setForwardItems(targets);
+  }, []);
+
+  const handleForwardToTargets = useCallback<ForwardCallback>(async (targetIds, targetType, onProgress) => {
+    const state = forwardStateRef.current ?? createForwardRunState();
+    forwardStateRef.current = state;
+    return forwardMediaMessages(
+      forwardMediaItems,
+      targetIds.map((id) => ({ id, type: targetType })),
+      { state, onProgress },
+    );
+  }, [forwardMediaItems]);
 
   const detailProps = selected
     ? { item: selected, contactName, onClose: () => setSelected(null), onRequestDelete: setDeleteTarget }
@@ -197,6 +233,8 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
           onSelectAllVisible={selection.selectAllVisible}
           onClear={selection.clear}
           onCancel={selection.exit}
+          onForward={() => openForward(selectedItems)}
+          forwardLimitReason={forwardLimitError(selection.selectedCount, 1)}
         />
       )}
 
@@ -210,7 +248,7 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
             contactName={contactName}
             loading={isLoading}
             selection={{ mode: selection.selectionMode, selectedIds: selection.selectedIds, toggle: selection.toggle }}
-            actions={{ onPreview: setPreviewItem, onOpenDetails: setSelected, onForward: setForwardItem, onRequestDelete: setDeleteTarget }}
+            actions={{ onPreview: setPreviewItem, onOpenDetails: setSelected, onForward: (item) => openForward([item]), onRequestDelete: setDeleteTarget }}
             sort={view.sort}
             onSortChange={view.setSort}
             selectedId={selected?.id ?? null}
@@ -270,13 +308,14 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
         </Suspense>
       )}
 
-      {forwardMessage && (
+      {forwardItems.length > 0 && (
         <Suspense fallback={null}>
           <ForwardMessageDialog
-            open={!!forwardItem}
-            onOpenChange={(open) => !open && setForwardItem(null)}
-            message={forwardMessage}
-            onForward={() => {}}
+            open={forwardItems.length > 0}
+            onOpenChange={(open) => { if (!open) setForwardItems([]); }}
+            items={forwardMediaItems}
+            targets="contacts"
+            onForward={handleForwardToTargets}
           />
         </Suspense>
       )}
