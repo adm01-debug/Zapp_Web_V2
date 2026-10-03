@@ -86,6 +86,8 @@ jobs:
       contents: write
       # Leitura dos runs deste workflow para o passo de serializacao do escopo `all`.
       actions: read
+      # E60: registrar o Deployment de rastreabilidade (aba Deployments).
+      deployments: write
     steps:
       # E09 (auditoria de GitHub Actions, 2026-09-26), corrigido em 30/09/2026:
       # a concurrency NAO enfileira mais de um dispatch — ela mantem 1 em
@@ -435,26 +437,23 @@ jobs:
           appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join('\n')}\n`);
           NODE
 
-      - name: Registrar tag de deploy
-        # Cria tag leve de rastreabilidade no commit deployado usando o
-        # GITHUB_TOKEN (job elevado a contents:write) — sem PAT. Best-effort:
-        # falha ao criar a tag apenas avisa, nao derruba o deploy.
+      - name: Registrar Deployment de rastreabilidade
+        # E60 (auditoria de 01/10/2026): o objeto de rastreabilidade passa a ser um
+        # Deployment do GitHub com `ref` = sha DEPLOYADO. A tag `edge-deploy/*` saiu
+        # de cena: nao aparece na aba Deployments, nao carrega o link do run e nao
+        # prende o que interessa. Medido em 03/10/2026: o job declara
+        # `environment: producao-edge-functions`, entao o GitHub JA cria um
+        # Deployment por run -- mas apontando para `main`, que ANDA. Em rollback o
+        # sha publicado e' um ancestral da main, e e' esse sha que precisa ficar
+        # preso. Best-effort: falha ao registrar apenas avisa.
         if: success() && inputs.dry_run != true
+        id: deployment
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ESCOPO: ${{ inputs.function_name }}
         run: |
-          # run_id no nome: com deploys paralelos, dois runs podem terminar no mesmo segundo.
           set -euo pipefail
-          TAG="edge-deploy/$(date -u +%Y%m%d-%H%M%S)-${DEPLOYED_GIT_SHA:0:8}-${GITHUB_RUN_ID}"
-          git -c user.name="github-actions[bot]" \
-              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
-              tag -a "$TAG" "$DEPLOYED_GIT_SHA" \
-              -m "Deploy de edge functions em producao — run $GITHUB_RUN_ID"
-          if git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$TAG"; then
-            echo "::notice::Tag de rastreabilidade criada: $TAG"
-          else
-            echo "::warning::Falha ao criar tag de rastreabilidade $TAG (deploy nao afetado)."
-          fi
+          node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/register-deployment.mjs"
 
       - name: Arquivar manifesto, atestado e smokes
         if: always() && inputs.dry_run != true
