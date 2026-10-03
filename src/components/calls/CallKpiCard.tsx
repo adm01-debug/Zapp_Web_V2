@@ -21,7 +21,7 @@ export function CallKpiCard({ rotulo, valor, carregando = false, dica }: CallKpi
       className="h-[78px] rounded-lg border border-border bg-card px-3 py-2 flex flex-col justify-between min-w-0"
     >
       <span
-        className="text-[11px] uppercase tracking-wide text-muted-foreground truncate"
+        className="text-3xs uppercase tracking-wide text-muted-foreground truncate"
         title={dica ?? rotulo}
       >
         {rotulo}
