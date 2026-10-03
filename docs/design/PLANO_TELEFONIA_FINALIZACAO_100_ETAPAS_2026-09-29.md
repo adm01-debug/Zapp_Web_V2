@@ -119,18 +119,18 @@ Fecha a etapa quando: (1) existir **uma** linha com `provider_call_id` **não nu
 ## FASE 4 — Histórico (T43–T54)
 *1 PR de front.*
 
-- [ ] **T43** — `CallHistoryCard.tsx`: título "Histórico de ligações" + `Badge total_count` + escopo (texto "Minhas ligações" ou `Select` Minhas/Todas para admin/supervisor via `useUserRole`). **Aceite:** seletor só com papel; muda `scope` na URL.
-- [ ] **T44** — Abas de canal (Radix `Tabs`, sublinhado 2 px `primary`, `data-testid="tel-channel-tab"`): Todos/VoIP/WhatsApp. **Aceite:** ativa h 40 ±2.
-- [ ] **T45** — `src/hooks/calls/useMyCalls.ts`: `useQuery(['calls', …])` → **`search_my_calls(p_limit=8, p_offset=(page-1)*8)`** (já existe); `keepPreviousData`; `{ rows, total, pages }`; `page > pages` → `page=1`. **Aceite:** teste com mock; página 2 ≠ página 1.
-- [ ] **T46** — `CallHistoryToolbar.tsx`: busca (debounce 300 ms → `q`), `Select` Direção, `Select` Resultado (8 opções da tabela 2.7 via `RESULT_LABEL`). **Aceite:** 3 controles h 40 ±2 na mesma linha.
-- [ ] **T47** — `CallHistoryTable.tsx`: colunas Contato · Canal · Direção · Resultado · Data e hora · Duração · Ações; `tr h-[57px]`, selecionada `bg-primary/5 border-l-2 border-l-primary` + `aria-selected`; `data-testid="tel-row"`. **Aceite:** linhas 57 ±3.
-- [ ] **T48** — Célula Contato: avatar 40 (`getAvatarColor`/`getInitials`; foto se `contact_avatar_url`), `peer_name ?? contact_name ?? formatPhoneBR(peer_number)`, "Número não identificado". **Aceite:** 3 variantes em teste.
-- [ ] **T49** — `CallChannelBadge.tsx` (WhatsApp `success`, VoIP `primary`) — reutilizado em alerta/painéis/`ActiveCallBar`. **Aceite:** componente testado.
-- [ ] **T50** — `CallDirectionCell.tsx` + `CallResultCell.tsx` (dot + `RESULT_LABEL`, tons via `RESULT_TONE` resolvidos em classe no componente; `in_progress|ringing` `animate-pulse` sob reduced-motion). **Aceite:** matriz 10 × 2 em snapshot.
-- [ ] **T51** — Data `dd MMM · HH:mm` (ptBR, mês minúsculo) e duração `formatClock(talkSeconds(row))`, `—` sem atendimento. **Aceite:** 4 casos.
-- [ ] **T52** — Ações: "Ligar de volta" → `openDialer({ phone, contactId, channel, autoDial:true })` (respeita capacidade); "Ouvir gravação" **só** se `recording_status==='available'` (hoje nunca). **Aceite:** Play ausente em todas as linhas reais.
-- [ ] **T53** — `CallsPagination.tsx` (janela de 7, `aria-current`) + 4 estados do corpo (loading 8×57, vazio por filtro + "Limpar filtros", vazio total + "Fazer uma ligação", erro + "Tentar novamente"). **Aceite:** pager 36 ±2; teste dos 4 estados.
-- [ ] **T54** — Fechamento Fase 4: gates; `06-after.png`. **Aceite:** seção 11.
+- [x] **T43** — `CallHistoryCard.tsx`: título "Histórico de ligações" + `Badge total_count` + escopo (texto "Minhas ligações" ou `Select` Minhas/Todas para admin/supervisor via `useUserRole`). **Aceite:** seletor só com papel; muda `scope` na URL. → **FEITO.** `CallHistoryCard.tsx`: título, `Badge` com o **`total_count` do servidor** (não o tamanho da página) e escopo Minhas/Todas, o `Select` só aparecendo para admin/supervisor via `useUserRole` — agente comum vê o rótulo "Minhas ligações". O escopo é o mesmo parâmetro `scope` da URL (T36), então trocar aqui refaz a consulta pelo caminho normal dos filtros.
+- [x] **T44** — Abas de canal (Radix `Tabs`, sublinhado 2 px `primary`, `data-testid="tel-channel-tab"`): Todos/VoIP/WhatsApp. **Aceite:** ativa h 40 ±2. → **FEITO.** `CallHistoryTabs.tsx`: Radix `Tabs` com Todos/VoIP/WhatsApp, sublinhado de 2 px no `primary`, aba de **40 px**, `data-testid="tel-channel-tab"`. Controlada pela URL, não por estado local: o link compartilhado abre no mesmo recorte.
+- [x] **T45** — `src/hooks/calls/useMyCalls.ts`: `useQuery(['calls', …])` → **`search_my_calls(p_limit=8, p_offset=(page-1)*8)`** (já existe); `keepPreviousData`; `{ rows, total, pages }`; `page > pages` → `page=1`. **Aceite:** teste com mock; página 2 ≠ página 1. → **FEITO.** `src/hooks/calls/useMyCalls.ts`: `useQuery(['calls', page, period, channel, direction, result, q, scope])` sobre **`search_my_calls`** com `p_limit=8` e `p_offset=(page-1)*8`, `placeholderData: keepPreviousData` (trocar de página não pisca o skeleton) e `{ rows, total, pages }`; `page > pages` resolve para 1. **Divergência medida:** a RPC devolve um **array de linhas** com `total_count` **dentro de cada linha** (padrão de window function), não `{ rows, total_count }` — o hook foi escrito para a forma real, lida dos types gerados, e os mocks dos testes seguem a mesma forma.
+- [x] **T46** — `CallHistoryToolbar.tsx`: busca (debounce 300 ms → `q`), `Select` Direção, `Select` Resultado (8 opções da tabela 2.7 via `RESULT_LABEL`). **Aceite:** 3 controles h 40 ±2 na mesma linha. → **FEITO.** `CallHistoryToolbar.tsx`: busca com **debounce de 300 ms** (digitar não dispara uma consulta por tecla), `Select` de direção e de resultado, os três controles com 40 px. **Divergência:** o plano cita "8 opções da tabela 2.7"; o `RESULT_LABEL` do código tem **9** resultados. Uso os 9 — o domínio é a fonte — e registro em vez de esconder um resultado que existe no banco. O sync do campo com a URL ajusta estado **durante o render** (padrão que o React documenta), porque `react-hooks/set-state-in-effect` barra o `setState` dentro de efeito.
+- [x] **T47** — `CallHistoryTable.tsx`: colunas Contato · Canal · Direção · Resultado · Data e hora · Duração · Ações; `tr h-[57px]`, selecionada `bg-primary/5 border-l-2 border-l-primary` + `aria-selected`; `data-testid="tel-row"`. **Aceite:** linhas 57 ±3. → **FEITO.** `CallHistoryTable.tsx`: 7 colunas (Contato · Canal · Direção · Resultado · Data e hora · Duração · Ações), linha de **57 px**, selecionada com `bg-primary/5` + `border-l-2 border-l-primary` (a borda transparente nas demais evita o pulo de 2 px ao selecionar), `aria-selected` e `Enter`/`Espaço` para navegar por teclado. A seleção vive na **URL** (`call`), não em estado local.
+- [x] **T48** — Célula Contato: avatar 40 (`getAvatarColor`/`getInitials`; foto se `contact_avatar_url`), `peer_name ?? contact_name ?? formatPhoneBR(peer_number)`, "Número não identificado". **Aceite:** 3 variantes em teste. → **FEITO.** `CallContactCell.tsx`: avatar de 40 com foto quando há `contact_avatar_url`, senão iniciais por `getAvatarColor`/`getInitials`; nome por `peer_name` → `contact_name` → `formatPhoneBR(peer_number)` → **"Número não identificado"**. O telefone só é usado com **10+ dígitos**: `formatPhoneBR` de entrada vazia devolve algo que não identifica ninguém (o teste pegou isso). A função `nomeDoContato` ficou em `src/lib/calls/nomeDoContato.ts` — arquivo de componente só exporta componente.
+- [x] **T49** — `CallChannelBadge.tsx` (WhatsApp `success`, VoIP `primary`) — reutilizado em alerta/painéis/`ActiveCallBar`. **Aceite:** componente testado. → **FEITO.** `CallChannelBadge` **já existia** (Fase 2) e foi reusado direto na coluna Canal — nenhum componente novo. O reuso em alerta/painéis/`ActiveCallBar` é Fase 6 (T69).
+- [x] **T50** — `CallDirectionCell.tsx` + `CallResultCell.tsx` (dot + `RESULT_LABEL`, tons via `RESULT_TONE` resolvidos em classe no componente; `in_progress|ringing` `animate-pulse` sob reduced-motion). **Aceite:** matriz 10 × 2 em snapshot. → **FEITO.** `CallDirectionCell.tsx` (seta entrando/saindo, com rótulo em `sr-only`) e `CallResultCell.tsx` (ponto + `RESULT_LABEL`), com o tom vindo de `RESULT_TONE` e resolvido em **classe no componente** — o módulo de domínio não carrega classe. `in_progress`/`ringing` pulsam sob **`motion-safe`**, então quem pediu menos movimento não recebe animação nenhuma.
+- [x] **T51** — Data `dd MMM · HH:mm` (ptBR, mês minúsculo) e duração `formatClock(talkSeconds(row))`, `—` sem atendimento. **Aceite:** 4 casos. → **FEITO.** `src/lib/calls/historyFormat.ts`: `02 out · 14:35` (o ptBR do date-fns devolve "out." com ponto; o ponto sai e o resto fica) e duração por `formatClock(talkSeconds(row))`. Sem atendimento mostra **traço**, não `00:00` — que pareceria ligação de zero segundo.
+- [x] **T52** — Ações: "Ligar de volta" → `openDialer({ phone, contactId, channel, autoDial:true })` (respeita capacidade); "Ouvir gravação" **só** se `recording_status==='available'` (hoje nunca). **Aceite:** Play ausente em todas as linhas reais. → **FEITO.** Ações na linha: "Ligar de volta" e "Ouvir gravação" **somente** com `recording_status === 'available'` (hoje nunca, então o Play não aparece em linha real — o aceite é justamente esse). **Divergência:** o plano manda `openDialer({ phone, contactId, channel, autoDial:true })`, mas o provider expõe `openDialer: () => void`, **sem argumentos**. Usado o `dispatchStartCall` com `source: 'history'` — a mesma origem de discagem do click-to-call do T29 — em vez de inventar uma API paralela.
+- [x] **T53** — `CallsPagination.tsx` (janela de 7, `aria-current`) + 4 estados do corpo (loading 8×57, vazio por filtro + "Limpar filtros", vazio total + "Fazer uma ligação", erro + "Tentar novamente"). **Aceite:** pager 36 ±2; teste dos 4 estados. → **FEITO.** `CallsPagination.tsx` com janela de 7 (`janelaDePaginas` em `paginas.ts`) e `aria-current="page"`; os 4 estados do corpo em `CallHistoryStates.tsx`: carregando (8 linhas de **57 px**, a mesma altura da linha real, para a tabela não pular), vazio por filtro com "Limpar filtros", vazio total com "Fazer uma ligação" e erro com "Tentar novamente".
+- [x] **T54** — Fechamento Fase 4: gates; `06-after.png`. **Aceite:** seção 11. → **FEITO (com o visual bloqueado por defeito de produção, como a linha 58 já registra).** Gates rodados no branch, **todos verdes**: `tsc -b --force` 0 · suíte completa **exit 0 — 512 arquivos / 6046 testes** · `test:contracts` **exit 0 — 60 arquivos / 1041 testes** · `medir-tipografia.cjs --check` **aprovado** · `build` 0 · `lint-ratchet` **novas=0** (587 = 587) · `typecheck-ratchet` **novas=0** · `db:guard` **sem violação nova**. `06-after.png` **não produzido**: depende do POST de autenticação do projeto, que não responde — o mesmo defeito que a linha 58 deste plano lista para T06, T42, T54, T61, T70, T80, T81–T84, T95 e T96. Fica como bloqueio externo documentado, não como pendência da fase.
 
 ## FASE 5 — Painel lateral: Nova ligação (T55–T61)
 *1 PR de front.*
@@ -420,3 +420,39 @@ deveriam ser um **helper compartilhado**. `vi.mock` com caminho errado não dá 
 roda e estoura pedindo provider; e o caminho de `useCallSession` é `@/providers/CallSessionProvider`
 (não `@/hooks/...`). Forma também importa: `calls` precisa ser **array** onde o componente faz
 `.find`, e função onde ele chama.
+
+### 11.3 FASE 4 — Histórico (T43–T54) — PR
+
+**PR:** `feat(telefonia): historico com card, abas, tabela, filtros e paginacao (T43-T53)` · branch
+`hermes/telefonia-fase4-historico-2610031003f8d9` · base `origin/main` · **1 PR de front**, merge no gate T54.
+
+**O que muda de fato:** a tela de Telefonia parava de ler o histórico do cliente (`useCallHistory`, que o
+T41 depreciou) e passa a ler a **RPC `search_my_calls`**, que já existia e faz o recorte no banco. A
+contagem exibida é o `total_count` do servidor, não o tamanho da página.
+
+**Etapas:** T43 card com escopo por papel · T44 abas de canal · T45 `useMyCalls` (paginação no servidor) ·
+T46 toolbar com debounce · T47 tabela de 7 colunas com seleção na URL · T48 célula de contato · T49 badge
+reusado · T50 células de direção/resultado · T51 data e duração · T52 ações · T53 paginação e os 4 estados
+do corpo.
+
+**Decisões do executor (não previstas no plano):**
+1. `openDialer` **não tem** a assinatura do plano (o provider expõe `() => void`, sem argumentos) —
+   "Ligar de volta" usa `dispatchStartCall` (`source: 'history'`), a mesma origem do T29.
+2. A RPC devolve **array de linhas com `total_count` em cada linha**, não `{ rows, total_count }`.
+3. `RESULT_LABEL` tem **9** resultados, não os 8 da tabela 2.7 do documento — usados os 9.
+4. O painel de detalhe antigo lia `contact.*`, `duration_seconds` e `recording_url`, que a RPC não
+   devolve: adaptados para `contact_phone`/`peer_number` e `talkSeconds`, e o `<audio src={recording_url}>`
+   cru saiu — que é exatamente o que o T67 pede.
+5. Fechar o detalhe **passou a limpar `call` na URL**: o botão limpava um estado local paralelo e o painel
+   continuava aberto. Quem pegou foi o teste, não eu.
+6. Funções puras fora do arquivo do componente (`janelaDePaginas`, `nomeDoContato`) por causa de
+   `react-refresh/only-export-components` — regra que a guarda cobrou **quatro vezes** nesta fase.
+
+**Lição de harness que se confirmou (e agora tem prova):** os mocks de render da telefonia deviam ser um
+helper compartilhado. Nesta fase o `useMyCalls` virou o **5º** mock (`PageHeader`, `useCallChannels`,
+`useTelefoniaFilters`, `useCallsKpi`, `useMyCalls`). Pior: o mock de filtros precisou ser **stateful** — 
+estático, o `setFilter` virava espião, a URL nunca mudava e o teste **media a si mesmo** em vez da tela.
+Isso é dívida de harness, não do produto, e vale virar tarefa própria.
+
+**Bloqueio externo:** `06-after.png` não foi produzido (POST de autenticação do projeto sem resposta — a
+linha 58 já lista o T54 entre as etapas impedidas). Gates, testes e db:guard fecham a fase no lugar dele.
