@@ -63,6 +63,11 @@ test('buildDeploymentManifest is deterministic and follows shared imports', asyn
   assert.throws(() => verifyManifestDigest({ ...first, project_ref: 'tampered' }), /digest mismatch/);
 });
 
+test('serializeManifest keeps the orphan allowlist Prettier-compatible', () => {
+  const serialized = serializeManifest({ orphan_allowlist: ['sicoob-bridge', 'sicoob-bridge-reply'] });
+  assert.match(serialized, /"orphan_allowlist": \["sicoob-bridge", "sicoob-bridge-reply"\]/);
+});
+
 test('buildDeploymentManifest rejects config for a missing function', async (t) => {
   const root = await createFixture();
   t.after(() => rm(root, { recursive: true, force: true }));

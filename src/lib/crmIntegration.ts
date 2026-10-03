@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 
-export type CRMIntegrationAction = 'rpc' | 'select' | 'mutate' | 'contactLookup' | 'contactLookupBatch' | 'enqueueSync' | 'health';
+export type CRMIntegrationAction = 'rpc' | 'select' | 'mutate' | 'contactLookup' | 'contactLookupBatch' | 'emailContactContext' | 'enqueueSync' | 'health';
 
 export interface CRMIntegrationResponse<T> {
   data: T;

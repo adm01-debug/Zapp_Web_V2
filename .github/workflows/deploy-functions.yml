@@ -252,6 +252,29 @@ jobs:
               echo "::error::Preflight read-only do CRM falhou (HTTP $STATUS)."
               exit 1
             fi
+            # O contexto empresarial do Email usa estas projeções específicas.
+            # Consultas limitadas a uma linha provam schema + privilégio server-side
+            # sem registrar nem expor conteúdo do CRM externo no log do deploy.
+            while IFS='|' read -r TABELA COLUNAS; do
+              [ -n "$TABELA" ] || continue
+              STATUS=$(curl --proto '=https' --tlsv1.2 --silent --show-error --output /dev/null --write-out '%{http_code}' \
+                --connect-timeout 10 --max-time 30 --get "$EXTERNAL_SUPABASE_URL/rest/v1/$TABELA" \
+                -H "apikey: $EXTERNAL_SUPABASE_SERVICE_ROLE_KEY" \
+                -H "Authorization: Bearer $EXTERNAL_SUPABASE_SERVICE_ROLE_KEY" \
+                --data-urlencode "select=$COLUNAS" --data-urlencode 'limit=1')
+              if [ "$STATUS" != "200" ]; then
+                echo "::error::Preflight do contrato empresarial falhou para $TABELA (HTTP $STATUS)."
+                exit 1
+              fi
+            done <<'CRM_EMAIL_CONTEXT_SCHEMA'
+            companies|id,nome_crm,razao_social,nome_fantasia,website,ramo_atividade,logo_url,updated_at
+            contacts|id,company_id
+            company_social_media|company_id,plataforma,url,is_active
+            company_addresses|company_id,cidade,estado,pais,is_primary
+            customers|company_id,sobre
+            suppliers|id,company_id
+            carriers|id,company_id
+            CRM_EMAIL_CONTEXT_SCHEMA
             if [ "$REESCREVER" = "true" ]; then
               supabase secrets set \
                 EXTERNAL_SUPABASE_URL="$EXTERNAL_SUPABASE_URL" \

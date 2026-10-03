@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type { EmailMessage, EmailThread } from '@/hooks/integrations/useGmail';
 
@@ -35,7 +35,18 @@ vi.mock('@/hooks/crm/useContactNotes', () => ({
   }),
 }));
 
+vi.mock('@/hooks/crm/useEmailContactContext', () => ({
+  useEmailContactContext: vi.fn(),
+}));
+
 import { EmailContactPanel } from '../EmailContactPanel';
+import { useEmailContactContext } from '@/hooks/crm/useEmailContactContext';
+
+const contextQuery = vi.mocked(useEmailContactContext);
+
+beforeEach(() => {
+  contextQuery.mockReturnValue({ data: null, status: 'not_linked', isFetching: false, error: null, refetch: vi.fn() } as never);
+});
 
 const BASE_THREAD: EmailThread = {
   id: 'thread1',
@@ -62,9 +73,43 @@ const BASE_THREAD: EmailThread = {
 };
 
 describe('EmailContactPanel', () => {
+  it('renders only the safe company fields returned by the Email context', () => {
+    contextQuery.mockReturnValue({
+      data: {
+        status: 'available',
+        company: {
+          id: 'company-1', name: 'ACME Ltda', legalName: null, website: 'https://acme.example.com', logoUrl: null,
+          industry: 'Brindes', location: 'São Paulo, SP, Brasil', about: 'Descrição empresarial',
+          relationships: ['cliente', 'fornecedor'], relationshipsKnown: true,
+          socials: [
+            { platform: 'linkedin', url: 'https://linkedin.com/company/acme' },
+            { platform: 'instagram', url: 'https://instagram.com/acme' },
+          ],
+          socialsKnown: true, aboutKnown: true,
+          updatedAt: null,
+        },
+        source: { linked: true, consultedAt: '2026-10-03T12:00:00Z' },
+      },
+      status: 'available', isFetching: false, error: null, refetch: vi.fn(),
+    } as never);
+    render(<EmailContactPanel accountId="acc1" thread={BASE_THREAD} onClose={vi.fn()} />);
+    expect(screen.getByText('ACME Ltda')).toBeDefined();
+    expect(screen.getByText('Cliente')).toBeDefined();
+    expect(screen.getByText('Fornecedor')).toBeDefined();
+    expect(screen.getByRole('link', { name: /abrir linkedin/i }).getAttribute('href')).toBe('https://linkedin.com/company/acme');
+    expect(screen.getByRole('link', { name: /abrir instagram/i }).getAttribute('href')).toBe('https://instagram.com/acme');
+    expect(screen.getByText(/vinculada ao singu crm/i)).toBeDefined();
+  });
+
+  it('does not mistake a disabled CRM integration for a missing company', () => {
+    contextQuery.mockReturnValue({ data: null, status: 'disabled', isFetching: false, error: null, refetch: vi.fn() } as never);
+    render(<EmailContactPanel accountId="acc1" thread={BASE_THREAD} onClose={vi.fn()} />);
+    expect(screen.getByText(/integração crm desativada/i)).toBeDefined();
+  });
+
   describe('exibição do contato', () => {
     it('exibe nome do contato quando disponível', () => {
-      render(<EmailContactPanel thread={BASE_THREAD} onClose={vi.fn()} />);
+      render(<EmailContactPanel accountId="acc1" thread={BASE_THREAD} onClose={vi.fn()} />);
       expect(screen.getByText('Alice Smith')).toBeDefined();
     });
 
@@ -222,6 +267,18 @@ describe('EmailContactPanel', () => {
     expect(screen.getByText('financeiro@example.com')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Baixar proposta.pdf' }));
     expect(onDownloadAttachment).toHaveBeenCalledWith(attachment);
+  });
+
+  it('preserva conversas relacionadas além da amostra inicial', () => {
+    const relatedThreads = Array.from({ length: 6 }, (_, index) => ({
+      ...BASE_THREAD,
+      id: `related-${index}`,
+      subject: `Conversa relacionada ${index + 1}`,
+    }));
+    render(<EmailContactPanel accountId="acc1" thread={BASE_THREAD} relatedThreads={relatedThreads} onClose={vi.fn()} onSelectRelated={vi.fn()} />);
+    expect(screen.queryByText('Conversa relacionada 6')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Ver todos (+1)' }));
+    expect(screen.getByText('Conversa relacionada 6')).toBeDefined();
   });
 
   it('exibe somente dados CRM que realmente existem', () => {
