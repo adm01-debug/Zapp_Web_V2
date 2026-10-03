@@ -786,9 +786,15 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   arquivo de instrução de agente exige aprovação do dono e o prompt expirou — texto pronto no relatório, decisão
   `20261003-110826-2ff5`. Checkbox fica aberto até a tabela entrar. Achado colateral: `strict` está `false`,
   contrariando a E15(b).
-- [ ] **E96** · C · G-42 · `docs/ci/README.md` (novo): 1 parágrafo por workflow (gatilho, o que prova, o que acontece
+- [x] **E96** · C · G-42 · `docs/ci/README.md` (novo): 1 parágrafo por workflow (gatilho, o que prova, o que acontece
   quando falha, quem é avisado), gerado a partir de um bloco `# docs:` no topo de cada YAML por
   `scripts/ci/render-workflow-docs.mjs --check` (falha se divergir). Verificação: `--check` verde no CI.
+  **FEITO 2026-10-03** (PR do repo, ver `docs/audits/e96-workflow-docs-2026-10-03.md`): bloco `# docs:` nos **16**
+  workflows + gerador + README + step `--check` no job `Lint & TypeCheck` do `ci.yml`. Verificação cumprida:
+  `--check` verde (16 workflows). Mutação: gatilho alterado → "README divergiu"; bloco removido → "workflow sem
+  bloco". O gerador também falha se um workflow **novo** entrar sem bloco, em vez de deixá-lo fora da doc em
+  silêncio. Nota: o `ci.yml` é o mesmo arquivo que o #1610 (aberto) reescreve — meu step entra após o
+  `actionlint`, longe dos setups que ele toca. A E96 não depende do #1610, só compartilha o arquivo.
 - [x] **E97** · B · G-41 · `set -euo pipefail` como primeira linha de todo `run:` multi-linha (ou `defaults.run.shell:
   bash -euo pipefail {0}` por workflow) nos 8 workflows que não têm. Verificação: `actionlint`/`shellcheck` sem SC2086/
   SC2181.

@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: agendado e dispatch
+#   prova: o perimetro do GitHub (branch protection, merge, environments) contra o baseline versionado
+#   falha: issue aberta; sem escopo suficiente o guarda reporta ponto cego em vez de falhar em silencio
+#   avisa: issue de settings
 name: Settings Guard
 
 on:

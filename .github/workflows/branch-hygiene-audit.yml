@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: agendado (semanal) e dispatch
+#   prova: quais branches sao podaveis e quais PRs estao paradas ha mais de 7 dias
+#   falha: relatorio nao e publicado nem a issue e atualizada
+#   avisa: issue `[branch-hygiene]` no repositorio
 # ==================================================================
 # Auditoria semanal de higiene de branches (somente leitura)
 # ==================================================================

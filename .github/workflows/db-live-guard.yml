@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: push na main, agendado e dispatch sobre main
+#   prova: o contrato do banco de PRODUCAO (drift, paridade, runtime config)
+#   falha: issue aberta ou comentada com a causa; o guarda vivo nao passa em silencio
+#   avisa: issue de guardas vivos
 # ==================================================================
 # ZAPP-WEB · Guardas VIVOs do banco oficial
 # ==================================================================

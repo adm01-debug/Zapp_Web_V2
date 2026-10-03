@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: pull_request, push na main, merge_group e dispatch
+#   prova: lint, tipos, testes, build, security e E2E do codigo
+#   falha: PR fica vermelho e o merge e bloqueado pelos required checks
+#   avisa: autor do PR e revisor, via checks do GitHub
 # =================================================
 # ZAPP-WEB CI/CD Pipeline
 # =================================================
@@ -132,6 +137,13 @@ jobs:
           chmod +x "$actionlint_dir/actionlint"
           echo "$actionlint_dir" >> "$GITHUB_PATH"
           "$actionlint_dir/actionlint" -shellcheck ''
+
+      - name: 📖 Verify workflow docs are fresh
+        run: |
+          # E96: docs/ci/README.md e' GERADO a partir do bloco `# docs:` no topo de
+          # cada workflow. Se divergir, o README descreve um pipeline que nao existe
+          # mais — pior que nao ter README, porque ninguem confere o que esta escrito.
+          node scripts/ci/render-workflow-docs.mjs --check
 
       - name: 🛡️ Audit workflow security (zizmor)
         run: |
