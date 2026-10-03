@@ -1,6 +1,10 @@
  import { useState, useEffect, useCallback, useRef } from 'react';
+ import { useQueryClient } from '@tanstack/react-query';
  import { mapMessageRowToMessage } from '@/adapters/inboxAdapter';
  import { useSupabaseRealtime } from '@/hooks/realtime/useSupabaseRealtime';
+ import { contactMediaKey } from '@/hooks/chat/useContactMedia';
+ import { contactMediaCountsKey } from '@/hooks/chat/useContactMediaCounts';
+ import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
  import { ChatService, Message } from '@/services/chat.service';
  import type { MessageRow } from '@/types/chat';
  import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
@@ -14,6 +18,7 @@ interface UseMessagesOptions {
 const MESSAGES_PAGE_SIZE = 1000;
 
 export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
+  const queryClient = useQueryClient();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingOlder, setLoadingOlder] = useState(false);
@@ -145,7 +150,8 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
   // Handle new message from realtime
   const handleNewMessage = useCallback(
     (payload: RealtimePostgresChangesPayload<MessageRow>) => {
-      const newMessage = mapMessageRowToMessage(payload.new as MessageRow);
+      const row = payload.new as MessageRow;
+      const newMessage = mapMessageRowToMessage(row);
 
       // Only add if it's for the current contact and not already present
       if (newMessage.contact_id === contactId) {
@@ -159,9 +165,20 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
             new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
           );
         });
+
+        // Etapa 45: mensagem nova COM midia muda a galeria da aba Arquivos e as contagens dela.
+        // Invalidamos as TRES chaves envolvidas: a lista (`contactMediaKey`), o badge da aba
+        // (`conversationTabCountsKey`, `staleTime` de 30 s) e os chips por tipo
+        // (`contactMediaCountsKey`, etapa 42). Sem invalidar as tres, chip e badge divergem
+        // logo apos a midia chegar — exatamente o G11 que a etapa 42 corrige.
+        if (row.media_url) {
+          queryClient.invalidateQueries({ queryKey: contactMediaKey(contactId) });
+          queryClient.invalidateQueries({ queryKey: conversationTabCountsKey(contactId as string) });
+          queryClient.invalidateQueries({ queryKey: contactMediaCountsKey(contactId) });
+        }
       }
     },
-    [contactId]
+    [contactId, queryClient]
   );
 
   // Handle message update from realtime

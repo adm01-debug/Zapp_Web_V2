@@ -6,11 +6,16 @@ import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
 import { __resetFilesViewSession } from '@/hooks/chat/useFilesViewState';
 
 const mockUseContactMedia = vi.fn();
+const mockUseContactMediaCounts = vi.fn();
 
 vi.mock('@/hooks/chat/useContactMedia', async () => {
   const actual = await vi.importActual<typeof import('@/hooks/chat/useContactMedia')>('@/hooks/chat/useContactMedia');
   return { ...actual, useContactMedia: (...args: unknown[]) => mockUseContactMedia(...args) };
 });
+
+vi.mock('@/hooks/chat/useContactMediaCounts', () => ({
+  useContactMediaCounts: (...args: unknown[]) => mockUseContactMediaCounts(...args),
+}));
 
 vi.mock('@/hooks/storage/useResolvedStorageUrl', () => ({
   useResolvedStorageUrl: (source: string) => ({ url: source, isLoading: false, error: null, refresh: vi.fn() }),
@@ -40,7 +45,14 @@ const ITEMS: ContactMediaItem[] = [
   { id: 'm2', url: 'https://x/b.pdf', type: 'document', filename: 'contrato.pdf', displayName: 'contrato.pdf', extension: 'pdf', senderLabel: 'Atendente', created_at: '2026-01-11T10:00:00.000Z', caption: null, mimetype: 'application/pdf', size: 2048, meta: null, sender: 'agent' },
 ];
 
-function renderTab(items: ContactMediaItem[] = ITEMS) {
+interface MediaOverrides {
+  hasMore?: boolean;
+  isFetchingNextPage?: boolean;
+  fetchNextPage?: () => Promise<{ hasNextPage: boolean } | undefined>;
+  isError?: boolean;
+}
+
+function renderTab(items: ContactMediaItem[] = ITEMS, overrides: MediaOverrides = {}) {
   const counts = {
     all: items.length,
     image: items.filter((i) => i.type === 'image').length,
@@ -48,7 +60,18 @@ function renderTab(items: ContactMediaItem[] = ITEMS) {
     audio: items.filter((i) => i.type === 'audio').length,
     document: items.filter((i) => i.type === 'document').length,
   };
-  mockUseContactMedia.mockReturnValue({ data: { items, counts }, isLoading: false });
+  mockUseContactMedia.mockReturnValue({
+    items,
+    hasMore: false,
+    isLoading: false,
+    isFetchingNextPage: false,
+    isError: false,
+    error: null,
+    fetchNextPage: vi.fn().mockResolvedValue({ hasNextPage: false }),
+    refetch: vi.fn(),
+    ...overrides,
+  });
+  mockUseContactMediaCounts.mockReturnValue({ counts, isLoading: false, isError: false, refetch: vi.fn() });
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
@@ -61,9 +84,6 @@ describe('FilesTab', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('etapa 16: a grade vem do mapa literal de colunas, sem breakpoint de viewport', () => {
-    // O jsdom não tem layout (o contêiner mede 0 → grid-cols-1), então forço a largura de
-    // 959 px da tabela do plano: a capacidade dá 5, mas a preferência padrão é 4 e a
-    // regra da etapa 07 é "preferência menor que a capacidade manda" → 4 colunas.
     const rect = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
       width: 959, height: 400, top: 0, left: 0, right: 959, bottom: 400, x: 0, y: 0,
       toJSON: () => ({}),
@@ -107,14 +127,40 @@ describe('FilesTab', () => {
     expect(screen.getByText('contrato.pdf')).toBeInTheDocument();
   });
 
-  it('mostra o empty state honesto quando não há arquivos', () => {
+  it('estado 2 (etapa 44): vazio real quando não há arquivos', () => {
     renderTab([]);
-    expect(screen.getByText('Nenhum arquivo encontrado')).toBeInTheDocument();
+    expect(screen.getByText('Nenhum arquivo nesta conversa')).toBeInTheDocument();
+  });
+
+  it('estado 3 (etapa 44): busca sem resultado cita o termo e limpa', () => {
+    renderTab();
+    fireEvent.change(screen.getByPlaceholderText('Buscar arquivos...'), { target: { value: 'inexistente' } });
+    expect(screen.getByText('Nada corresponde a "inexistente"')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Limpar busca/ }));
+    expect(screen.getByText('foto-praia.jpg')).toBeInTheDocument();
   });
 
   it('abre o painel de detalhe ao selecionar um card', () => {
     renderTab();
     fireEvent.click(screen.getByText('foto-praia.jpg'));
     expect(screen.getByTestId('file-detail-panel')).toBeInTheDocument();
+  });
+
+  it('etapa 43: com páginas pendentes avisa o recorte carregado e "Carregar tudo" pagina até o fim', async () => {
+    const fetchNextPage = vi.fn()
+      .mockResolvedValueOnce({ hasNextPage: true })
+      .mockResolvedValueOnce({ hasNextPage: false });
+    renderTab(ITEMS, { hasMore: true, fetchNextPage });
+
+    expect(screen.getByTestId('files-pagination-notice')).toHaveTextContent('Buscando entre os 2 carregados');
+
+    fireEvent.click(screen.getByRole('button', { name: /Carregar tudo/ }));
+    await vi.waitFor(() => expect(fetchNextPage).toHaveBeenCalledTimes(2));
+  });
+
+  it('etapa 41: sem páginas pendentes não há aviso nem rodapé de paginação', () => {
+    renderTab();
+    expect(screen.queryByTestId('files-pagination-notice')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('files-load-more')).not.toBeInTheDocument();
   });
 });
