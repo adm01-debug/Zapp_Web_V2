@@ -598,6 +598,17 @@ jobs:
           TALKX_LIFECYCLE_EVENTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-lifecycle-events.test.sh
 
+      # X026: contadores íntegros (replied_count/skipped_count no guard de
+      # enforce_talkx_campaign_mutability), destinatário pulado entra em
+      # skipped_count, lançar com template não conta use_count em dobro, checklist
+      # de retomada com ator, duplicar/excluir por RPC no banco e policy de INSERT
+      # de eventos limitada a note|checklist|segments_reviewed. Harness RED→GREEN
+      # em PostgreSQL 17 descartável.
+      - name: Provar contadores, checklist, duplicar/excluir e policy de eventos (X026)
+        env:
+          TALKX_COUNTERS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-counters-integrity.test.sh
+
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e
       # current_database() devolve esse nome, quebrando a asserção.
