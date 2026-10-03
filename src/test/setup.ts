@@ -49,5 +49,27 @@ class MockIntersectionObserver {
 }
 Object.defineProperty(window, 'IntersectionObserver', {
   writable: true,
+  configurable: true,
   value: MockIntersectionObserver,
+});
+
+// Mock ResizeObserver (etapa 46): o jsdom não traz o observer, e o hook de capacidade
+// da aba Arquivos (`useFilesContainerColumns`) mede o contêiner por ele. Antes existia
+// só em `volumeControlMocks.ts`, por causa do Popper do Radix — agora vale para a suíte.
+// `configurable: true` é obrigatório: sem isso, os arquivos de teste que definem o
+// próprio stub caem em "Cannot redefine property: ResizeObserver" na inicialização.
+class MockResizeObserver {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+Object.defineProperty(window, 'ResizeObserver', {
+  writable: true,
+  configurable: true,
+  value: MockResizeObserver,
+});
+Object.defineProperty(globalThis, 'ResizeObserver', {
+  writable: true,
+  configurable: true,
+  value: MockResizeObserver,
 });

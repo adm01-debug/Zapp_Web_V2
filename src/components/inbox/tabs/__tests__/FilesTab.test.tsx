@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { FilesTab } from '../FilesTab';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
+import { __resetFilesViewSession } from '@/hooks/chat/useFilesViewState';
 
 const mockUseContactMedia = vi.fn();
 
@@ -14,6 +15,25 @@ vi.mock('@/hooks/chat/useContactMedia', async () => {
 vi.mock('@/hooks/storage/useResolvedStorageUrl', () => ({
   useResolvedStorageUrl: (source: string) => ({ url: source, isLoading: false, error: null, refresh: vi.fn() }),
 }));
+
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ user: { id: 'user-1' } }),
+}));
+
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    auth: { onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }) },
+    from: vi.fn(),
+    storage: { from: () => ({ createSignedUrls: vi.fn() }) },
+  },
+}));
+
+// O filtro/ordenação vivem na memória de sessão por conversa (etapa 06) — sem zerar,
+// um caso vaza o filtro para o próximo (todos usam o mesmo contactId).
+beforeEach(() => {
+  __resetFilesViewSession();
+  localStorage.clear();
+});
 
 const ITEMS: ContactMediaItem[] = [
   { id: 'm1', url: 'https://x/a.jpg', type: 'image', filename: 'foto-praia.jpg', displayName: 'foto-praia.jpg', extension: 'jpg', senderLabel: null, created_at: '2026-01-10T10:00:00.000Z', caption: null, mimetype: 'image/jpeg', size: 1024, meta: null, sender: 'contact' },
