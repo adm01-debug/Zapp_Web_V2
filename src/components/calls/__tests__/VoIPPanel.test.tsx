@@ -285,13 +285,7 @@ describe('VoIPPanel', () => {
     expect(campoAnotacao().value).toBe('Cliente pediu retorno amanhã');
   });
 
-  it('delegates the connect button to the shared call session (credential fetch lives in useSipClient)', async () => {
-    renderWithProviders(<VoIPPanel />);
-    fireEvent.click(screen.getByRole('button', { name: /conectar sip/i }));
-    await waitFor(() => {
-      expect(mockConnectWithStoredCredentials).toHaveBeenCalledOnce();
-    });
-  });
+  
 
   // T20(A): a eleição de aba líder tem de COMEÇAR no boot do painel — sem esta
   // reivindicação nenhuma aba assume e o portão de `connect()` (useSipConnection)
@@ -310,7 +304,10 @@ describe('VoIPPanel', () => {
     renderWithProviders(<VoIPPanel />);
 
     expect(screen.getByText('Ligação em andamento em outra aba')).toBeInTheDocument();
-    expect(screen.getByText('Conectar SIP').closest('button')).toBeDisabled();
+    // T40: o botao foi removido da tela; a prova agora afirma a AUSENCIA (o inverso),
+    // em vez de ser apagada - apagar a expectativa esconderia a regressao.
+    expect(screen.queryByText('Conectar SIP')).toBeNull();
+    expect(screen.queryByText('Desconectar')).toBeNull();
   });
 });
 vi.mock('@/hooks/calls/useCallsKpi', () => ({
