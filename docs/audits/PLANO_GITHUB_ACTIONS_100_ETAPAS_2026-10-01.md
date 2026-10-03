@@ -392,10 +392,25 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 
 ### Fase 2 — Perímetro de segurança (E23–E40)
 
-- [ ] **E23** · B · G-09 · `e2e-logado.yml:58` → `bun install --frozen-lockfile --ignore-scripts`; idem `ci.yml`
+> ### Medicao da Fase 2 — 02/10/2026
+>
+> Varredura feita **antes de executar**, apos tres etapas seguidas (E23, E28, E29) se revelarem ja cumpridas.
+> Cada linha abaixo tem a evidencia do comando que a produziu. **Nao execute pelo texto desta fase sem
+> re-medir:** o documento foi escrito em 01/10 as 13:10 UTC e o repositorio mudou no mesmo dia.
+>
+> **Ja cumpridas (8):** E23, E27, E28, E29, E30, E31, E33, E38.
+> **Vivas e executaveis (3):** E32 (bloqueada pela PR #1610 em `ci.yml`), E39, E40.
+> **Aguardando o Joaquim (6):** E24, E34, E35, E36, E37 e a parte de decisao da E25/E26 (DDL de role/RPC).
+>
+> O padrao medido nas Fases 0 e 2 e consistente: **em 11 etapas conferidas uma a uma, 9 ja estavam prontas e 1
+> estava pela metade, no ponto que o texto nao apontava** (E33). O plano vale como inventario de riscos, nao
+> como roteiro de execucao.
+
+- [x] **E23** · B · G-09 · `e2e-logado.yml:58` → `bun install --frozen-lockfile --ignore-scripts`; idem `ci.yml`
   (5 ocorrências), `db-guard.yml:153`, `types-sync.yml:287`. Se algum pacote precisar de postinstall (ex.: `esbuild`
   binário), listar e rodar `bun pm trust <pkg>` explícito. Verificação: `bun run build` e `bun run test` verdes com
   `--ignore-scripts`.
+  > **Medido 02/10: os 16 workflows instalam com `--frozen-lockfile --ignore-scripts` (nenhuma ocorrencia sem as flags, em bun/npm/pnpm/yarn/deno). O achado de seguranca da etapa estava fechado.**
 - [ ] **E24** · A+B · G-09 · Mover `SUPABASE_SERVICE_ROLE_KEY` para um environment `e2e-producao` (sem revisor, branch
   policy `main`) e apontar o job `e2e-logado` para ele; apagar do nível repo. Verificação: `GET /actions/secrets` sem a
   chave; `GET /environments/e2e-producao/secrets` com ela; run verde.
@@ -408,14 +423,16 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   `types-sync`, `targeted-ledger-evidence` passam a usar ela. `DESTINO_URL` (escrita) fica só em `producao-ddl` e
   `legacy-import-destrutivo`. **Envolve DDL de role** → ⚠️. Verificação: `check-migration-drift.mjs` roda com a role RO;
   `supabase db push` com ela falha com `permission denied`.
-- [ ] **E27** · B · G-10 · `e2e-talkx-pr.yml`: trocar `push` por `pull_request` **sem secrets** (só o projeto
+- [x] **E27** · B · G-10 · `e2e-talkx-pr.yml`: trocar `push` por `pull_request` **sem secrets** (só o projeto
   `chromium` deslogado dos 3 engines) **ou** manter `push` restrito a `branches: [hermes/**, claude/**, codex/**]`
   (nunca `devin/**` ou qualquer bot externo) e exigir `if: github.actor == 'adm01-debug'`. Recomendação: a 1ª para o
   check de PR, e o teste logado continua só na `main`. Verificação: push de `devin/*` não dispara; PR dispara sem
   `E2E_TEST_*` no `env`.
-- [ ] **E28** · C · G-10 · `check-pr-workflow-secrets.mjs`: cobrir também `push` com `branches-ignore: main` ou
+  > **Medido 02/10: feito por outro chat. O gatilho do `e2e-talkx-pr.yml` hoje e `pull_request:` e o `E2E_TEST_EMAIL/PASSWORD` saiu do env; o comentario do proprio arquivo registra a mudanca.**
+- [x] **E28** · C · G-10 · `check-pr-workflow-secrets.mjs`: cobrir também `push` com `branches-ignore: main` ou
   `branches: ['**']` (qualquer gatilho que rode código de branch não protegida) — exceção só por lista explícita no
   próprio script com justificativa. Verificação: unit test com o `e2e-talkx-pr.yml` atual → violação; com E27 → OK.
+  > **Medido 02/10: o script ja reprovava todos os gatilhos citados (sonda com 6 formas: `branches-ignore: [main]`, `branches: ['**']` inline e em lista de bloco, `push:` vazio). Faltavam os casos como teste nomeado - entregues na PR #1734, suite 33 -> 36 testes.**
   > **Medido em 02/10:** o script **já cobria** todos os gatilhos que a E28 pede — sonda direta com
   > `push: branches-ignore: [main]`, `branches: ['**']` (inline e lista de bloco) e `push:` vazio
   > reprovam; só `branches: [main]` passa. A verificação da E28 também já existia: teste
@@ -426,39 +443,51 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   > `e2e-talkx-pr.yml` hoje é `pull_request:`; o comentário no próprio arquivo registra a remoção de
   > `E2E_TEST_EMAIL/PASSWORD`). **E23 já estava cumprida**: nenhum dos 16 workflows instala sem
   > `--frozen-lockfile --ignore-scripts`.
-- [ ] **E29** · B · G-12 · `db-migrate.yml`: adotar o mesmo bloco de `endurecerDestinoTls` + `PGSSLMODE=verify-full`
+- [x] **E29** · B · G-12 · `db-migrate.yml`: adotar o mesmo bloco de `endurecerDestinoTls` + `PGSSLMODE=verify-full`
   dos outros 3 workflows (passo "Provar identidade"), e trocar `supabase db push --db-url "$DESTINO_URL"` por leitura
   via `PGPASSFILE`/`SUPABASE_DB_URL` em `env:` do passo (não argv). Verificação: `ps` no runner durante o dry-run sem
   a URL; `psql-environment.integration.mjs` cobre o caso.
-- [ ] **E30** · A · G-18 · `allowed_actions: selected` com `patterns_allowed` = as 12 actions em uso + `github_owned_allowed:
+  > **Medido 02/10: `db-migrate.yml` ja tem `endurecerDestinoTls` (2x) + `PGSSLMODE`, e a URL nao esta no argv - vai por `env: SUPABASE_DB_URL` (linha 1159) com `supabase db push --include-all` (1161).**
+- [x] **E30** · A · G-18 · `allowed_actions: selected` com `patterns_allowed` = as 12 actions em uso + `github_owned_allowed:
   true` + `verified_allowed: false`. Verificação: PR que adiciona `uses: foo/bar@sha` falha no GitHub antes do CI.
-- [ ] **E31** · C · G-18 · `check-workflow-pins.mjs`: validar também que o `owner/repo` está na mesma lista de E30
+  > **Medido 02/10 pela API: `allowed_actions: selected` com os 12 padroes exatos, `github_owned_allowed: true`, `verified_allowed: false`, `sha_pinning_required: true`. Coincide item a item com o que a etapa pede.**
+- [x] **E31** · C · G-18 · `check-workflow-pins.mjs`: validar também que o `owner/repo` está na mesma lista de E30
   (commitada em `scripts/ci/allowed-actions.json`), para o erro aparecer no CI local antes do GitHub. Verificação:
   unit test.
+  > **Medido 02/10: `check-workflow-pins.mjs` ja valida o `owner/repo` contra `scripts/ci/allowed-actions.json` (le o arquivo nas linhas 68-70 e compara na 42).**
 - [ ] **E32** · B · G-24 · Adicionar `actionlint` (binário pinado por SHA, via `rhysd/actionlint` release checksum) e
   `zizmor` (`pip`/binário pinado) ao job `lint-and-typecheck`, falhando em `error`; `zizmor` em modo `--persona
   regular` com baseline. Verificação: os 14 YAML passam ou cada achado vira etapa.
-- [ ] **E33** · C · G-19 · Fechar o alerta #13: `validation.ts:143` deixa de devolver `error.stack`/mensagem interna ao
+  > **VIVA - verificada em 02/10: `actionlint` e `zizmor` nao existem no CI. **Bloqueada**: o job `lint-and-typecheck` fica em `ci.yml`, com a PR #1610 aberta de outro chat. Observacao: o texto da etapa diz "os 14 YAML"; o repositorio tem **16**.**
+- [x] **E33** · C · G-19 · Fechar o alerta #13: `validation.ts:143` deixa de devolver `error.stack`/mensagem interna ao
   cliente; logar no servidor. Verificação: CodeQL do PR sem `js/stack-trace-exposure`; alerta `fixed`.
+  > **Entregue 02/10 na PR #1727 (merge `e4abd5f8de01`). O alvo declarado (`validation.ts:143`) ja estava corrigido desde 28/09, mas a classe do problema nao: `send-scheduled-report/index.ts:114` devolvia mensagem interna num 500. Corrigido para `internalErrorResponse` e travado por guarda nova (`check-edge-error-exposure.mjs`, suite 10/10, roda nos unitarios).**
 - [ ] **E34** · A · G-40 · `prevent_self_review: true` nos 3 environments com `required_reviewers` **só depois** de
   existir uma segunda identidade (ver E36); até lá, documentar que o gate é "branch protegida", não "aprovação".
   Verificação: `GET /environments` coerente com o CLAUDE.md.
+  > **Aguardando o Joaquim: `prevent_self_review` esta `false` nos 3 environments com revisor - coerente com a propria etapa, que depende da E36 (segunda identidade).**
 - [ ] **E35** · D ⚠️ · G-07 · Decidir `producao-edge-functions`: adicionar `required_reviewers` (volta o "Waiting"
   que travou 26–27/09) **ou** manter sem revisor e corrigir o CLAUDE.md (E11). Recomendação: sem revisor enquanto
   agentes e humano usam a mesma conta; registrar.
+  > **Aguardando o Joaquim (decisao): `producao-edge-functions` segue com 1 protection rule e sem revisor.**
 - [ ] **E36** · D ⚠️ · G-40 · Criar uma conta/GitHub App dedicada aos agentes (`zapp-bots`) com permissão `write`, e
   deixar `adm01-debug` como único revisor humano. Pré-requisito de qualquer gate de aprovação real. Decisão de negócio
   (custo zero, 1 seat em repo público).
+  > **Aguardando o Joaquim (decisao de negocio): conta/GitHub App dedicada aos agentes.**
 - [ ] **E37** · A · G-39 · Ligar `secret_scanning_validity_checks` (grátis em público). Verificação: `GET /repos` →
   `enabled`.
-- [ ] **E38** · A · G-21 · Apagar `VITE_CLIENTES_SUPABASE_URL` e `VITE_CLIENTES_SUPABASE_ANON_KEY` do repo (0 usos).
+  > **VIVA e da classe A (Joaquim): `secret_scanning_validity_checks` esta **disabled**; `secret_scanning` e `push_protection` estao `enabled`.**
+- [x] **E38** · A · G-21 · Apagar `VITE_CLIENTES_SUPABASE_URL` e `VITE_CLIENTES_SUPABASE_ANON_KEY` do repo (0 usos).
   Verificação: `GET /actions/secrets` → 15.
+  > **Medido 02/10 pela API: 14 secrets no repositorio e nenhum `VITE_CLIENTES_*` entre eles - os dois alvos da etapa nao existem mais.**
 - [ ] **E39** · B · G-30 · `SUPABASE_PROJECT_REF`: trocar o secret por `env: PROJECT_REF: tnnnlkbymytvtqngbbqh` no
   topo dos 4 workflows (valor público; já literal em 4 lugares) e manter a asserção de igualdade. Apagar o secret.
   Verificação: logs mostram a URL da função legível; `deploy-functions` ✅.
+  > **VIVA - verificada em 02/10: `SUPABASE_PROJECT_REF` ainda e secret, com 9 usos em `deploy-functions.yml` e `crm-sync-worker.yml`. Metade executavel por mim (trocar por `env:` literal); apagar o secret e acao do lado do GitHub.**
 - [ ] **E40** · B · G-22 · Trocar `if: github.ref == 'refs/heads/main'` do job por um passo "Exigir ref confiável da
   main" que falha com `::error::` em `db-migrate`, `db-live-guard`, `e2e-logado`, `targeted-ledger-evidence` (mesmo
   padrão de `deploy-functions:87-92`). Verificação: dispatch em branch ≠ main → run ❌ com mensagem, não `skipped`.
+  > **VIVA - verificada em 02/10: `db-migrate`, `db-live-guard`, `e2e-logado` e `targeted-ledger-evidence` ainda usam `if: github.ref == 'refs/heads/main'` e nenhum tem o passo "Exigir ref". O padrao existe em `deploy-functions.yml`.**
 
 ### Fase 3 — Guarda vivo e `types-sync` confiáveis (E41–E54)
 
