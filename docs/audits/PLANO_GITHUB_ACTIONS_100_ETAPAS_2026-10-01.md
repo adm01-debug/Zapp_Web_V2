@@ -807,8 +807,14 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   só via `run: |`, regex que casava com o texto da mutação) — corrigidas. Achado não corrigido: `supabase-sync.yml`
   usa `DESTINO_URL` sem `endurecerDestinoTls` (import manual legado, desarmado); exceção nomeada no teste, travada
   pelo caso 7.
-- [ ] **E99** · C · G-37 · Fechar o plano de 27/09: marcar os 17 itens entregues como `[x]` com o PR, e os demais como
+- [x] **E99** · C · G-37 · Fechar o plano de 27/09: marcar os 17 itens entregues como `[x]` com o PR, e os demais como
   "substituído por E-xx deste plano". Verificação: `grep -c '\[x\]'` ≥ 17 naquele arquivo.
+  **FEITO 2026-10-03** (`docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-27.md`): **18** itens marcados
+  (`grep -c '[x]'` = 18 ≥ 17), cada um com a evidência ao lado — arquivo:linha no HEAD, saída de script ou
+  medição de API da seção 1 deste plano. Nenhum item marcado por semelhança. Cabeçalho do plano antigo
+  reescrito: a frase "Nenhuma etapa deste plano foi executada" era falsa e o próprio documento provava o
+  problema (100 checkboxes `[ ]` por 6 dias enquanto o código mudava). O documento passa a ser histórico;
+  este plano de 01/10 é a fonte viva.
 - [ ] **E100** · A · E70 · Após 7 dias de `🦕 Edge contracts` verde em todas as PRs, adicioná-lo aos required checks
   (PUT completo da branch protection, preservando `strict` conforme E15). Verificação: `GET` lista 7 contexts; nenhuma
   PR aberta fica bloqueada por check ausente.

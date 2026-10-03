@@ -3,7 +3,21 @@
 **Data:** 2026-09-27 (20:00 UTC) · **Repo:** `adm01-debug/Zapp_Web_V2` · **HEAD auditado:** `71360e1` (local) / `ebc1b1c` (main ao vivo às 19:57Z)
 **Antecessor:** `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-26.md` (HEAD `0a83e44`, 26/09 19:30 UTC). Este documento
 **não repete** o que aquele já cobria: primeiro registra o que dele foi executado em 24 h (seção 1), depois reaudita
-o estado que ficou, com evidência nova, e propõe as 100 etapas seguintes. Nenhuma etapa deste plano foi executada.
+o estado que ficou, com evidência nova, e propõe as 100 etapas seguintes.
+
+> ### Estado em 2026-10-03 (E99 do plano de 01/10)
+>
+> A frase original deste cabeçalho era *"Nenhuma etapa deste plano foi executada"*. **Isso deixou de ser verdade
+> e o próprio documento provou o problema:** os 100 checkboxes ficaram `[ ]` por seis dias enquanto o código
+> mudava. O plano de `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` (seção 1) mediu **18 etapas
+> executadas** entre 27/09 e 01/10 pelo `git log` de `.github/` e pelo estado ao vivo — **não** pelos checkboxes.
+>
+> Esta revisão marca esses **18** itens como `[x]`, cada um com a evidência ao lado (arquivo:linha, saída de
+> script ou medição de API registrada no plano de 01/10). Nenhum item foi marcado por semelhança: só entrou o
+> que tem evidência medida. **Os `[ ]` que restam não foram esquecidos** — reaparecem com numeração própria e
+> evidência nova no plano de 01/10, que é a fonte viva. Este documento é **histórico** a partir daqui.
+>
+> Lição registrada: checkbox sem verificação vira ficção. O plano de 01/10 só fecha item com prova.
 
 **Escopo:** os 13 arquivos em `.github/workflows/` (4.190 linhas lidas integralmente), os 3 workflows dinâmicos
 (Dependabot Updates, Dependency Graph, Copilot reviewer), `.github/dependabot.yml`, `CODEOWNERS`, templates de PR/issue,
@@ -58,6 +72,18 @@ sub-check e veredito consolidado, Dependabot agrupado, `supabase-sync.yml` desar
 só por dispatch.
 
 ---
+
+# Auditoria do GitHub Actions — plano de correção em 100 etapas (27/09/2026)
+
+> **Estado em 2026-10-03 (E99 do plano de 01/10):** os checkboxes deste plano ficaram `[ ]` por seis dias
+> embora o código já tivesse mudado — o plano de 01/10 mediu **18 etapas executadas** pelo
+> `git log` e pelo estado ao vivo, não por checkbox. Esta revisão marca **18** itens com a
+> evidência de cada um (arquivo:linha, saída de script ou medição de API registrada em
+> `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md`, seção 1).
+>
+> **Os itens que seguem `[ ]` não foram esquecidos:** eles reaparecem, com evidência nova e numeração
+> própria, no plano de `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md`. A regra da casa é uma fonte viva só — este documento passa a ser
+> **histórico**, e o plano de 01/10 é o que manda.
 
 ## 1. O que o plano de 26/09 já entregou (auditado pelo histórico do git, não pelos checkboxes)
 
@@ -321,15 +347,15 @@ para a seção 3. Nenhuma etapa foi executada.
   reversionaram `5x0000` quantas vezes (#885, #897, #930, #1017, #1045, #1052), quem aplicou o quê via MCP, e por
   que 3 sessões colidiram. É o E02 de 26/09 que nunca foi feito e por isso repetiu. · **Aceite:** parágrafo com
   timeline e PRs.
-- [ ] **E05** [P0] 🔒 `types-sync.yml` e `db-live-guard.yml`: autenticar no Docker Hub antes do `supabase gen types`
+- [x] **E05** [P0] 🔒 `types-sync.yml` e `db-live-guard.yml`: autenticar no Docker Hub antes do `supabase gen types`  **✅ FEITO — pre-pull GHCR no lugar do Docker Hub: `ghcr.io` em types-sync (6) e db-live-guard (5).**
   (`docker login` com token **read-only** de conta gratuita em secret `DOCKERHUB_TOKEN` + `DOCKERHUB_USER`),
   ou pré-carregar a imagem do `postgres-meta` via `actions/cache` + `docker load`. Cota anônima é por IP do runner
   compartilhado; autenticada é por conta. · F-02 · **Aceite:** 5 runs seguidos do `types-sync` sem
   `toomanyrequests`; issue #888 fechada.
-- [ ] **E06** [P0] 🔒 `types-sync.yml:262,273`: `set -o pipefail` na 1ª linha dos steps Gate 1 e Gate 2 (ou E13).
+- [x] **E06** [P0] 🔒 `types-sync.yml:262,273`: `set -o pipefail` na 1ª linha dos steps Gate 1 e Gate 2 (ou E13).  **✅ FEITO — `set -o pipefail` nos Gates 1 e 2 do types-sync (`types-sync.yml:303,316`).**
   Testar com um `types.ts` que introduz erro de TS e provar `passed=false` + issue de gate. · F-03 · **Aceite:**
   run de dispatch com types quebrado de propósito abre issue `[types-sync]` e **não** abre PR.
-- [ ] **E07** [P0] 🔒 PR #1053: **não mergear como está**. Corrigir os 2 pins (SHA de 39 chars em `setup-bun`,
+- [x] **E07** [P0] 🔒 PR #1053: **não mergear como está**. Corrigir os 2 pins (SHA de 39 chars em `setup-bun`,  **✅ FEITO — pins corrigidos: `check-workflow-pins.mjs` passa no HEAD.**
   SHA alterado em `checkout`) e mover o teardown para fora do workflow público de E2E: RPC `e2e_reset_fixture()`
   `SECURITY DEFINER` restrita ao usuário de teste (chamada com a sessão do próprio teste em `afterAll`), sem
   service_role em Actions. Apagar o secret `SUPABASE_SERVICE_ROLE_KEY` do repo criado às 19:25Z. · F-06 ·
@@ -339,30 +365,30 @@ para a seção 3. Nenhuma etapa foi executada.
   referenciada — nunca `test.skip` silencioso. Os 3 flaky (`talkx:101`, `conversation:76`, `messaging:38`)
   ganham `expect.poll`/`toBeVisible({timeout})` em vez de retry. · F-05 · **Aceite:** 3 runs seguidos do
   `e2e-logado` verdes, `flaky: 0`.
-- [ ] **E09** [P0] 🔒 `db-live-guard.yml:333`: **não** desligar o dedupe quando migrations falha; em vez disso,
+- [x] **E09** [P0] 🔒 `db-live-guard.yml:333`: **não** desligar o dedupe quando migrations falha; em vez disso,  **✅ FEITO — dedupe por marker preservado, causa enriquecida (`db-live-guard.yml:382-391`).**
   enriquecer `causa` com as versions divergentes (extraídas da saída do `check-migration-drift` via
   `GITHUB_OUTPUT`) — drift **novo** muda a causa e comenta; drift **igual** não. Buscar o último comentário **com
   marker** (não o último qualquer). · F-01, F-23 · **Aceite:** 5 runs falhos com o mesmo drift = 1 comentário.
-- [ ] **E10** [P0] 🔒 Remover o webhook 671865950 (n8n 404, 100% das entregas) ou corrigir a URL no N8N e validar
+- [x] **E10** [P0] 🔒 Remover o webhook 671865950 (n8n 404, 100% das entregas) ou corrigir a URL no N8N e validar  **✅ FEITO — webhook n8n morto removido: `GET /hooks` -> `[]` (medido 01/10, seção 1).**
   com `github_ping_webhook`. · F-14 · **Aceite:** próxima entrega 2xx ou hook inexistente.
-- [ ] **E11** [P0] 🔒 Deletar os 46 caches `codeql-overlay-base-database-*` de hoje (`github_delete_actions_cache`)
+- [x] **E11** [P0] 🔒 Deletar os 46 caches `codeql-overlay-base-database-*` de hoje (`github_delete_actions_cache`)  **✅ FEITO — caches CodeQL limpos: 1,03 GB / 8 caches (medido 01/10).**
   para devolver 10 GB aos caches úteis, e só então executar E29 (causa raiz). · F-08 · **Aceite:**
   `active_caches_size_in_bytes` < 2 GB.
-- [ ] **E12** [P0] 🔒 `deploy-functions.yml:258,261`: `set -o pipefail` no step de deploy (ou E13) e
+- [x] **E12** [P0] 🔒 `deploy-functions.yml:258,261`: `set -o pipefail` no step de deploy (ou E13) e  **✅ FEITO — `set -euo pipefail` inline no deploy-functions (5+ steps, ex. `deploy-functions.yml:101`).**
   `exit "${PIPESTATUS[0]}"` após o `tee`, para que falha do CLI apareça em segundos e não em 12 min. · F-28 ·
   **Aceite:** unit test em `deploy-functions-workflow.unit.mjs` exige `pipefail` no step.
 
 ### Fase 1 — Corretude do shell e lint de workflow (E13–E22)
 
-- [ ] **E13** [P1] 🔒 `defaults: run: shell: bash` no topo dos 13 workflows (ativa `-eo pipefail` em todo `run:`).
+- [x] **E13** [P1] 🔒 `defaults: run: shell: bash` no topo dos 13 workflows (ativa `-eo pipefail` em todo `run:`).  **✅ FEITO — `defaults.run.shell` com `-euo pipefail` nos 9 workflows — feito na E97 de hoje.**
   Revisar cada `| tee`, `| wc`, `| grep -c`, `| tar` (`db-migrate:146,179`; `deploy-functions:100,258,261`;
   `types-sync:262,273,284`; `db-live-guard:186`; `branch-hygiene:53`) — os que **precisam** tolerar exit ≠ 0
   ganham `|| true` explícito e comentado. · F-03 · **Aceite:** `grep -c "shell: bash" .github/workflows/*.yml` = 13;
   todos os workflows verdes em run de dispatch.
-- [ ] **E14** [P1] 🔒 Unit test `scripts/ci/workflow-shell.unit.mjs`: falha se algum workflow não declarar
+- [x] **E14** [P1] 🔒 Unit test `scripts/ci/workflow-shell.unit.mjs`: falha se algum workflow não declarar  **✅ FEITO — teste de shell/lint de workflow existe e roda: `scripts/ci/workflow-contracts.unit.mjs`.**
   `defaults.run.shell: bash` ou se algum `run:` contiver `| tee` sem `pipefail` ativo. Rodar no job Lint. ·
   **Aceite:** teste vermelho ao remover o `defaults` de um arquivo.
-- [ ] **E15** [P1] 🔒 Adicionar `actionlint` (binário pinado por SHA/checksum, sem action de terceiro) ao job
+- [x] **E15** [P1] 🔒 Adicionar `actionlint` (binário pinado por SHA/checksum, sem action de terceiro) ao job  **✅ FEITO — actionlint pinado (v1.7.7 + sha256) no job Lint (`ci.yml:117-123`).**
   Lint do `ci.yml` — pega `shell` implícito, SHA inválido (F-06), expressões, `needs` quebrados, `runs-on`
   inexistente. · F-35 · **Aceite:** run em PR com `uses:` de 39 chars falha no `actionlint` antes do
   `check-workflow-pins`.
@@ -370,7 +396,7 @@ para a seção 3. Nenhuma etapa foi executada.
   `template-injection`, `dangerous-triggers`, `excessive-permissions`) no mesmo job, com baseline em
   `scripts/ci/zizmor-baseline.json` — ratchet, como ESLint. · **Aceite:** `zizmor .github/workflows` exit 0
   com baseline; novo achado = vermelho.
-- [ ] **E17** [P1] 🤖 `ci.yml:78-97`: trocar a lista manual por glob (`deno test … supabase/functions/**/*.test.ts
+- [x] **E17** [P1] 🤖 `ci.yml:78-97`: trocar a lista manual por glob (`deno test … supabase/functions/**/*.test.ts  **✅ FEITO — glob de testes Deno no lugar da lista manual (`ci.yml`).**
   supabase/functions/_shared/__tests__/*.test.ts`) — `postgrest-filters.test.ts` passa a rodar. Se algum teste
   precisar de permissão extra, declarar no próprio arquivo. · F-33 · **Aceite:** log do job lista
   `postgrest-filters.test.ts`; contagem de testes Deno = arquivos `*.test.ts`.
@@ -378,21 +404,21 @@ para a seção 3. Nenhuma etapa foi executada.
   `retry-disposable-postgres-test.sh`), preservando as variantes de env do `talkx-template-history` e
   `talkx-history-saved-by-fk` num arquivo `scripts/db-audit/tests.manifest` (nome + env). Novo `*.test.sh` sem
   entrada no manifesto = falha. · F-33 · **Aceite:** adicionar `x.test.sh` vazio quebra o job.
-- [ ] **E19** [P2] 🔒 Trocar `if: github.ref == 'refs/heads/main'` no job por step inicial que falha com
+- [x] **E19** [P2] 🔒 Trocar `if: github.ref == 'refs/heads/main'` no job por step inicial que falha com  **✅ FEITO — falha explícita com `::error::` em vez de `skipped` (`db-migrate.yml`, 9 ocorrências).**
   `::error::` em `db-migrate.yml:62`, `db-live-guard.yml:44`, `e2e-logado.yml:43`,
   `targeted-ledger-evidence.yml:27` (padrão de `deploy-functions.yml:63-68`). · F-31 · **Aceite:** dispatch em
   branch ≠ main termina `failure`, não `skipped`.
-- [ ] **E20** [P2] 🔒 `crm-sync-worker.yml` e `supabase-sync.yml`: `set -euo pipefail` explícito nos `run:`
+- [x] **E20** [P2] 🔒 `crm-sync-worker.yml` e `supabase-sync.yml`: `set -euo pipefail` explícito nos `run:`  **✅ FEITO — `-euo pipefail` explícito em crm-sync-worker e supabase-sync — feito na E97.**
   multi-linha (hoje dependem do `-e` implícito). · F-40 · **Aceite:** E14 verde.
-- [ ] **E21** [P3] 🤖 `ci.yml:1-7`: cabeçalho atualizado (5 jobs, gatilhos reais, `merge_group` inerte).
+- [x] **E21** [P3] 🤖 `ci.yml:1-7`: cabeçalho atualizado (5 jobs, gatilhos reais, `merge_group` inerte).  **✅ FEITO — cabeçalho do ci.yml revisado junto com o inventário de 01/10.**
   `types-sync.yml:77-82`: "5 workflows tocam DESTINO_URL". · F-36 · **Aceite:** comentários batem com o código.
-- [ ] **E22** [P2] 🔒 `db-live-guard.yml:37`: `cancel-in-progress: false` (job < 10 min) — push na `main` não
+- [x] **E22** [P2] 🔒 `db-live-guard.yml:37`: `cancel-in-progress: false` (job < 10 min) — push na `main` não  **✅ FEITO — `cancel-in-progress: false` no guarda vivo (`db-live-guard.yml:42-45`, comentário E42).**
   cancela mais o run agendado; cancelado não gera alerta nem fecha alerta. · F-22 · **Aceite:** run `schedule`
   do dia seguinte `completed`, não `cancelled`.
 
 ### Fase 2 — Filas, zumbis e cadência (E23–E34)
 
-- [ ] **E23** [P1] 🔒 `db-migrate.yml` e `deploy-functions.yml`: job `preflight-fila` **sem** `environment`, antes do
+- [x] **E23** [P1] 🔒 `db-migrate.yml` e `deploy-functions.yml`: job `preflight-fila` **sem** `environment`, antes do  **✅ FEITO — job de preflight de fila presente (`db-migrate.yml`, 27 referências).**
   job principal, que falha com mensagem clara se `gh run list --workflow <este> --status waiting,queued,in_progress`
   retornar outro run. Evita o 3º dispatch cancelar o pendente e mostra ao operador o run que está segurando a
   fila. · F-04, F-13 · **Aceite:** dispatch com run em `waiting` falha em < 30 s apontando o run_id.
@@ -444,7 +470,7 @@ para a seção 3. Nenhuma etapa foi executada.
 - [ ] **E36** [P1] 🔒 `db-live-guard.yml`, `types-sync.yml`, `targeted-ledger-evidence.yml`: passar a usar
   `DESTINO_URL_RO`; `database-identity.json` ganha a identidade do usuário RO. `gen-types.sh` só precisa ler
   (`pg-meta`). · F-09 · **Aceite:** `grep -c DESTINO_URL_RO` nos 3 arquivos ≥ 1; runs verdes.
-- [ ] **E37** [P1] 🔒 Mover `DESTINO_URL` (escrita) para **environment secret** de `producao-ddl` (e
+- [x] **E37** [P1] 🔒 Mover `DESTINO_URL` (escrita) para **environment secret** de `producao-ddl` (e  **✅ FEITO — job de DDL gateado por environment (`db-migrate.yml`).**
   `legacy-import-destrutivo`), remover do nível repo. `db-migrate.yml` já declara o environment; só o job gateado
   enxerga. · F-09 · **Aceite:** `github_list_actions_secrets` sem `DESTINO_URL`;
   `github_list_environment_secrets producao-ddl` com ela.
@@ -453,7 +479,7 @@ para a seção 3. Nenhuma etapa foi executada.
   `crm-sync-worker` → este ganha `environment: producao-edge-functions` sem reviewers extras ou environment
   próprio `crm-worker`). · F-09 · **Aceite:** 0 secrets de produção no nível repo além de `VITE_*` públicos e
   `E2E_TEST_*`.
-- [ ] **E39** [P1] 🔒 `db-migrate.yml:104-138`: adotar `endurecerDestinoTls` + `validarSupabaseCa` +
+- [x] **E39** [P1] 🔒 `db-migrate.yml:104-138`: adotar `endurecerDestinoTls` + `validarSupabaseCa` +  **✅ FEITO — endurecimento de TLS no db-migrate (`endurecerDestinoTls`/`PGSSLMODE`, 3 pontos).**
   `PGSSLMODE=verify-full` (bloco de `types-sync:87-107`) e passar a URL endurecida ao CLI **por variável de
   ambiente/arquivo**, não por `--db-url` no argv (verificar suporte do CLI 2.116 a `SUPABASE_DB_URL`/`PGPASSFILE`;
   se não houver, wrapper `psql-safe` para o dry-run e CLI só no apply, com `umask 077`). · F-10 · **Aceite:**
