@@ -64,7 +64,7 @@ export function useSentimentData(period: string) {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const daysAgo = parseInt(period);
+    const daysAgo = Number.parseInt(period);
     const startDate = appDayStart(daysAgo).toISOString();
 
     try {
@@ -141,7 +141,7 @@ export function useSentimentData(period: string) {
   }, [analyses, alerts]);
 
   const dailyData = useMemo(() => {
-    const days = parseInt(period);
+    const days = Number.parseInt(period);
     const data: { date: string; positive: number; neutral: number; negative: number; avgScore: number | null }[] = [];
 
     for (let i = days - 1; i >= 0; i--) {
@@ -163,7 +163,7 @@ export function useSentimentData(period: string) {
   }, [analyses, period]);
 
   const agentData = useMemo((): AgentSentimentData[] => {
-    const days = parseInt(period);
+    const days = Number.parseInt(period);
     const halfPeriod = Math.floor(days / 2);
 
     return agents.map(agent => {

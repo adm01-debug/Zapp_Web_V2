@@ -26,7 +26,7 @@ export function useReportsData() {
   // `in_last_days`: com o fuso do navegador o mesmo período recortava janelas diferentes para
   // pessoas em fusos diferentes e não batia com os números contados no banco.
   const dateRange = useMemo(() => {
-    const days = parseInt(period);
+    const days = Number.parseInt(period);
     return {
       from: appDayStart(days),
       to: appDayEnd(0),
@@ -34,7 +34,7 @@ export function useReportsData() {
   }, [period]);
 
   const previousDateRange = useMemo(() => {
-    const days = parseInt(period);
+    const days = Number.parseInt(period);
     return {
       from: appDayStart(days * 2),
       to: appDayEnd(days + 1),
@@ -204,9 +204,9 @@ export function useReportsData() {
     };
     return {
       totalMessages, sentMessages, receivedMessages, totalContacts, activeAgents,
-      avgMessagesPerDay: Math.round(totalMessages / parseInt(period)),
+      avgMessagesPerDay: Math.round(totalMessages / Number.parseInt(period)),
       prevTotalMessages, prevSentMessages, prevReceivedMessages, prevTotalContacts, prevActiveAgents,
-      prevAvgMessagesPerDay: Math.round(prevTotalMessages / parseInt(period)),
+      prevAvgMessagesPerDay: Math.round(prevTotalMessages / Number.parseInt(period)),
       messagesTrend: calculateTrend(totalMessages, prevTotalMessages),
       sentTrend: calculateTrend(sentMessages, prevSentMessages),
       contactsTrend: calculateTrend(totalContacts, prevTotalContacts),

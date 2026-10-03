@@ -175,7 +175,7 @@ serve(async (req) => {
         const watchData = await response.json();
         await supabase.from("gmail_accounts").update({
           history_id: watchData.historyId,
-          watch_expiration: new Date(parseInt(watchData.expiration)).toISOString(),
+          watch_expiration: new Date(Number.parseInt(watchData.expiration)).toISOString(),
         }).eq("id", account.id);
         log.done(200);
         return jsonResponse({ success: true, ...watchData }, 200, req);

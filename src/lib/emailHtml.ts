@@ -48,7 +48,7 @@ function cssUnescape(s: string): string {
     // continuação de linha: backslash + newline/CRLF/form-feed desaparece (CSS spec)
     .replace(/\\(\r\n|\r|\n|\f|\u2028|\u2029)/g, '')
     .replace(/\\([0-9a-fA-F]{1,6})(\r\n|[ \t\r\n\f])?/g, (_m, hex: string) => {
-      const cp = parseInt(hex, 16);
+      const cp = Number.parseInt(hex, 16);
       try { return cp > 0x10ffff || cp < 0 ? '' : String.fromCodePoint(cp); } catch { return ''; }
     })
     .replace(/\\(.)/g, '$1');

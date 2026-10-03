@@ -71,7 +71,7 @@ export function AutoCloseSettings() {
             min={1}
             max={168}
             value={hours}
-            onChange={(e) => setHours(parseInt(e.target.value) || 24)}
+            onChange={(e) => setHours(Number.parseInt(e.target.value) || 24)}
             disabled={!enabled}
           />
           <p className="text-xs text-muted-foreground">

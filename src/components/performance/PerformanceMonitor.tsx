@@ -62,8 +62,8 @@ export function PerformanceMonitor() {
 
     const cacheKeys = Object.keys(localStorage).filter(k => k.startsWith('cache_') || k.startsWith('tanstack'));
     setCacheStats({
-      hits: parseInt(localStorage.getItem('cache_hits') || '0'),
-      misses: parseInt(localStorage.getItem('cache_misses') || '0'),
+      hits: Number.parseInt(localStorage.getItem('cache_hits') || '0'),
+      misses: Number.parseInt(localStorage.getItem('cache_misses') || '0'),
       size: cacheKeys.length,
     });
 
@@ -93,7 +93,7 @@ export function PerformanceMonitor() {
 
   // Load DB history on mount and when period changes
   useEffect(() => {
-    loadHistory(parseInt(period));
+    loadHistory(Number.parseInt(period));
   }, [loadHistory, period]);
 
   const overallScore = Math.round((metrics.filter(m => m.status === 'good').length / Math.max(metrics.length, 1)) * 100);

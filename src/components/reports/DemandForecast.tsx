@@ -64,7 +64,7 @@ export function DemandForecast() {
 
     // Peak hours
     const peaks = Object.entries(hourBuckets)
-      .map(([h, counts]) => ({ hour: parseInt(h), avg: Math.round(counts.length / 28) }))
+      .map(([h, counts]) => ({ hour: Number.parseInt(h), avg: Math.round(counts.length / 28) }))
       .sort((a, b) => b.avg - a.avg);
     setPeakHours(peaks);
 
