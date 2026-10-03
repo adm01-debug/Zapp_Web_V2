@@ -110,6 +110,7 @@ export interface ProcessRecipientDeps {
   supabaseUrl: string;
   workerId: string;
   trackingUrlFor: (recipientId: string) => string | undefined;
+  linksByLabelFor: (recipientId: string) => Record<string, string>;
   customFieldsByContact: Map<string, Record<string, string>>;
   log: Logger;
   correlationId: string;
@@ -171,7 +172,7 @@ export async function processRecipient(
   const {
     supabase, campaignId, businessHours, initialInstanceId, instanceToken,
     evolutionUrl, evolutionKey, supabaseUrl, workerId,
-    trackingUrlFor, customFieldsByContact, log, correlationId,
+    trackingUrlFor, linksByLabelFor, customFieldsByContact, log, correlationId,
     isRecipientSuppressed, mediaForSend,
   } = deps;
   // Campanha da passada (o chamador já revalidou estado/janela/cota antes).
@@ -286,6 +287,7 @@ export async function processRecipient(
           customValues,
           typeof campaign.schedule_timezone === "string" ? campaign.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
           trackingUrlFor(recipient.id as string),
+          linksByLabelFor(recipient.id as string),
         );
         calculatedMessage = personalized.text;
         recipientMissing = personalized.missing;
