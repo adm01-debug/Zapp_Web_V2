@@ -95,6 +95,15 @@ export const FUNCTION_LABELS: Record<string, string> = {
   'chatbot-l1': 'Chatbot L1',
 };
 
+/**
+ * Um ponto da série: as chaves são os nomes das funções (o gráfico é uma área
+ * empilhada por função), então a série TEM chaves dinâmicas — o tipo declara
+ * isso em vez de deixar o consumidor indexar por `any`.
+ */
+export interface PontoDaSerie extends Record<string, number | string> {
+  time: string;
+}
+
 function getTimeRange(filter: TimeFilter): Date {
   switch (filter) {
     case '1h': return subHours(new Date(), 1);
@@ -202,7 +211,7 @@ export function useAIUsageDashboard() {
     [resumo],
   );
 
-  const timelineData = useMemo(
+  const timelineData = useMemo<PontoDaSerie[]>(
     () => (resumo?.serie ?? []).map(b => ({
       ...b.por_funcao,
       time: format(new Date(b.inicio), timeFilter === '1h' || timeFilter === '6h' ? 'HH:mm' : 'dd/MM HH:mm', { locale: ptBR }),
