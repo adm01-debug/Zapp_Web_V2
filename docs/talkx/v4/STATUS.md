@@ -5,16 +5,16 @@
 
 ## Etapas concluídas
 
-**28 de 200** concluídas.
+**32 de 200** concluídas.
 
 | Fase | Concluídas | Total |
 |---|---|---|
 | 0 · Régua e governança | 5 | 5 |
 | 1 · Correções imediatas | 4 | 4 |
-| 2 · Motor seguro para o primeiro disparo | 12 | 14 |
+| 2 · Motor seguro para o primeiro disparo | 14 | 14 |
 | 3 · Integridade, observabilidade e ensaio real | 1 | 12 |
 | 4 · Dados comerciais e vínculo com o CRM | 0 | 6 |
-| 5 · Kit, estados, modais e navegação | 4 | 15 |
+| 5 · Kit, estados, modais e navegação | 6 | 15 |
 | 6 · Capacidades novas do motor e agregações | 2 | 20 |
 | 7 · Visão geral | 0 | 6 |
 | 8 · Templates | 0 | 16 |
@@ -29,7 +29,7 @@
 
 ## Elementos do mock por tela
 
-**234 de 1135** elementos fechados.
+**242 de 1135** elementos fechados.
 
 | Tela | Fechados | Total |
 |---|---|---|
@@ -49,4 +49,4 @@
 | 14 · Relatório de campanha concluída | 3 | 81 |
 | 15 · Importação e vinculação CRM 360° | 0 | 59 |
 | 16 · Ajuda do Talk X | 0 | 40 |
-| 17 · Estados do sistema e modais | 7 | 52 |
+| 17 · Estados do sistema e modais | 15 | 52 |
