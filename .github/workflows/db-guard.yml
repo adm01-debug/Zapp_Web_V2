@@ -609,6 +609,17 @@ jobs:
           TALKX_COUNTERS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-counters-integrity.test.sh
 
+      # X027: recibos de leitura idempotentes e atribuição de resposta no banco —
+      # read sem delivered preenche delivered_at/read_at e sobe delivered_count/read_count
+      # uma única vez; record_talkx_recipient_delivered vira invólucro; attribute_talkx_reply
+      # atribui por contact_id OU telefone normalizado na janela de reply_window_hours;
+      # talkx_campaign_reply_stats devolve replied/avg/median; read_at na publicação realtime.
+      # Harness RED→GREEN em PostgreSQL 17 descartável.
+      - name: Provar recibos de leitura, atribuicao de resposta e tempo de resposta (X027)
+        env:
+          TALKX_RECEIPTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-receipts-replies.test.sh
+
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e
       # current_database() devolve esse nome, quebrando a asserção.
