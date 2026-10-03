@@ -1,4 +1,4 @@
--- Migration 20261003112707 — leitura da mídia RECEBIDA do WhatsApp pelo dono da mensagem.
+-- Migration 20261003142707 — leitura da mídia RECEBIDA do WhatsApp pelo dono da mensagem.
 --
 -- PROBLEMA. As policies de SELECT de storage.objects autorizam pelo PRIMEIRO segmento do
 -- caminho (`storage.foldername(name)[1]` comparado com id de contato atribuído, ou auth.uid()).
