@@ -789,9 +789,14 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [ ] **E96** · C · G-42 · `docs/ci/README.md` (novo): 1 parágrafo por workflow (gatilho, o que prova, o que acontece
   quando falha, quem é avisado), gerado a partir de um bloco `# docs:` no topo de cada YAML por
   `scripts/ci/render-workflow-docs.mjs --check` (falha se divergir). Verificação: `--check` verde no CI.
-- [ ] **E97** · B · G-41 · `set -euo pipefail` como primeira linha de todo `run:` multi-linha (ou `defaults.run.shell:
+- [x] **E97** · B · G-41 · `set -euo pipefail` como primeira linha de todo `run:` multi-linha (ou `defaults.run.shell:
   bash -euo pipefail {0}` por workflow) nos 8 workflows que não têm. Verificação: `actionlint`/`shellcheck` sem SC2086/
   SC2181.
+  **FEITO 2026-10-03** (PR do repo, ver `docs/audits/e97-pipefail-workflows-2026-10-03.md`): opção (b) em **9**
+  workflows (o `settings-guard` entrou depois, pela E95) — `defaults.run.shell: bash --noprofile --norc -euo pipefail {0}`.
+  Critério cumprido: **0 SC2086, 0 SC2181**. Ressalva importante: o `shellcheck` **não estava instalado** neste WSL e a
+  1ª rodada de `actionlint` checou só sintaxe — instalei o binário 0.10.0 e refiz a medição. Caso `E97` novo em
+  `workflow-contracts.unit.mjs` (9/9, mutação confere). Risco do `-u` medido pelo próprio CI deste PR.
 - [x] **E98** · C · todos · `scripts/ci/workflow-contracts.unit.mjs`: um teste por invariante deste plano que pode
   regredir em YAML (sem `pull_request` com secret; `persist-credentials: false`; `cancel-in-progress` só em PR;
   `--ignore-scripts`; pgbouncer sem `continue-on-error`; `paths` do guarda vivo sem `functions/**`; TLS em todo workflow

@@ -173,6 +173,30 @@ test('E98: a lista de exceções não cresce em silêncio', () => {
   assert.equal(EXCECOES_TLS.size, 1, 'exceção de TLS mudou: confirme se o motivo ainda vale');
 });
 
+// E97 (auditoria de GitHub Actions, 2026-10-01): todo workflow com passo shell
+// roda com `-euo pipefail`. Sem isto, um `run:` multi-linha segue depois do
+// primeiro comando que falha — e o gate passa sem ter testado nada.
+//
+// O GitHub já usa `bash -e` por padrão; o que a E97 acrescenta é `-u` (variável
+// não definida é erro, não string vazia) e `pipefail` (o código de saída do pipe
+// é o do primeiro comando que falhar, não o do último).
+test('E97: todo workflow com run: roda com -euo pipefail', () => {
+  const sem = [];
+  for (const nome of nomes) {
+    const texto = wf[nome];
+    const temRun = /^\s*-?\s*run:/m.test(texto);
+    if (!temRun) continue;
+    const temDefaults = /^\s*defaults:\s*$/m.test(texto) && /-euo pipefail \{0\}/.test(texto);
+    const temInline = /set -euo pipefail/.test(texto);
+    if (!temDefaults && !temInline) sem.push(nome);
+  }
+  assert.deepEqual(
+    sem,
+    [],
+    `workflow com run: sem -euo pipefail (defaults.run.shell ou set inline): ${sem.join(', ')}`,
+  );
+});
+
 test('E98: workflow disparado por pull_request não recebe segredo de banco', () => {
   // Reforça o invariante central: código de PR de terceiro não pode alcançar
   // DESTINO_URL. O `check-pr-workflow-secrets.mjs` é o gate oficial; aqui a
