@@ -50,15 +50,7 @@ describe('DialPad', () => {
     expect(screen.getByPlaceholderText('Digite o número')).toBeInTheDocument();
   });
 
-  it('renders connect button when disconnected', () => {
-    render(<DialPad {...defaultProps} />);
-    expect(screen.getByText('Conectar SIP')).toBeInTheDocument();
-  });
 
-  it('renders disconnect button when connected', () => {
-    render(<DialPad {...defaultProps} sipStatus="registered" />);
-    expect(screen.getByText('Desconectar')).toBeInTheDocument();
-  });
 
   it('shows Desconectado badge when disconnected', () => {
     render(<DialPad {...defaultProps} />);
@@ -102,23 +94,8 @@ describe('DialPad', () => {
     expect(defaultProps.onDTMF).toHaveBeenCalledWith('5');
   });
 
-  it('calls onConnect when Conectar SIP is clicked', () => {
-    render(<DialPad {...defaultProps} />);
-    fireEvent.click(screen.getByText('Conectar SIP'));
-    expect(defaultProps.onConnect).toHaveBeenCalled();
-  });
 
-  it('calls onDisconnect when Desconectar is clicked', () => {
-    render(<DialPad {...defaultProps} sipStatus="registered" />);
-    fireEvent.click(screen.getByText('Desconectar'));
-    expect(defaultProps.onDisconnect).toHaveBeenCalled();
-  });
 
-  it('disables connect button when connecting', () => {
-    render(<DialPad {...defaultProps} sipStatus="connecting" />);
-    const btn = screen.getByText('Conectar SIP').closest('button');
-    expect(btn).toBeDisabled();
-  });
 
   it('disables call button when not connected', () => {
     render(<DialPad {...defaultProps} />);
@@ -307,40 +284,15 @@ describe('DialPad', () => {
 
 // === T20 — a aba que NÃO é dona do registro SIP ===
 
-describe('DialPad — T20: linha em uso em outra aba', () => {
-  /**
-   * O texto é o do domínio (`REASON_LABEL`), não uma string solta no DialPad.
-   * O literal continua fixado aqui para o teste falhar se o rótulo do domínio
-   * mudar sem intenção.
-   */
-  const ROTULO_OUTRA_ABA = 'Ligação em andamento em outra aba';
 
-  beforeEach(() => vi.clearAllMocks());
 
-  it('com o motivo line_in_use_other_tab mostra o rótulo e NÃO oferece conectar', () => {
-    render(<DialPad {...defaultProps} sipReason="line_in_use_other_tab" />);
-
-    expect(REASON_LABEL.line_in_use_other_tab).toBe(ROTULO_OUTRA_ABA);
-    expect(screen.getByText(ROTULO_OUTRA_ABA)).toBeInTheDocument();
-    // O rótulo de estado da conexão dá lugar ao motivo.
-    expect(screen.queryByText('Desconectado')).not.toBeInTheDocument();
-    // Esta aba não é a dona do registro: o botão não oferece conectar.
-    expect(screen.getByText('Conectar SIP').closest('button')).toBeDisabled();
-  });
-
-  it('sem o motivo nada muda: estado antigo e conectar habilitado', () => {
+describe('DialPad (T40)', () => {
+  it('nao oferece mais conectar/desconectar SIP na tela', () => {
+    // T40: os botoes sairam. A prova dos testes antigos (que afirmavam o botao
+    // habilitado/desabilitado) foi SUBSTITUIDA por esta, que afirma a ausencia -
+    // remover a expectativa sem deixar nada esconderia a regressao.
     render(<DialPad {...defaultProps} />);
-
-    expect(screen.getByText('Desconectado')).toBeInTheDocument();
-    expect(screen.queryByText(ROTULO_OUTRA_ABA)).not.toBeInTheDocument();
-    expect(screen.getByText('Conectar SIP').closest('button')).not.toBeDisabled();
-  });
-
-  it('outro motivo não sequestra o rótulo de estado (escopo é só a outra aba)', () => {
-    render(<DialPad {...defaultProps} sipReason="mic_blocked" />);
-
-    expect(screen.getByText('Desconectado')).toBeInTheDocument();
-    expect(screen.queryByText(ROTULO_OUTRA_ABA)).not.toBeInTheDocument();
-    expect(screen.getByText('Conectar SIP').closest('button')).not.toBeDisabled();
+    expect(screen.queryByText('Conectar SIP')).toBeNull();
+    expect(screen.queryByText('Desconectar')).toBeNull();
   });
 });
