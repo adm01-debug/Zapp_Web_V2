@@ -140,8 +140,8 @@ export function TalkXErrorState({
           {open && (
           <div className="mt-2 rounded-xl border border-border/70 bg-muted/30 p-3 space-y-1.5">
             <p className="text-xs text-foreground-secondary break-words">{detail}</p>
-            {rawCode && <p className="text-[11px] text-muted-foreground">Código: <span className="font-mono">{rawCode}</span></p>}
-            <p className="text-[11px] text-muted-foreground">Horário: {when}</p>
+            {rawCode && <p className="text-2xs text-muted-foreground">Código: <span className="font-mono">{rawCode}</span></p>}
+            <p className="text-2xs text-muted-foreground">Horário: {when}</p>
             <GhostButton icon={Copy} onClick={() => { void navigator.clipboard?.writeText(copyText); }}>Copiar</GhostButton>
           </div>
           )}
