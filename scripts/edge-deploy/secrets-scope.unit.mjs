@@ -92,7 +92,7 @@ test('preflight empresarial do CRM e sintaticamente valido no shell do runner', 
     .split('\n')
     .map((linha) => (linha.startsWith('          ') ? linha.slice(10) : linha))
     .join('\n');
-  const resultado = spawnSync('bash', ['-n'], { input: trechoDoRunner, encoding: 'utf8' });
+  const resultado = spawnSync('/usr/bin/bash', ['-n'], { input: trechoDoRunner, encoding: 'utf8' });
 
   assert.equal(resultado.status, 0, resultado.stderr);
 });
