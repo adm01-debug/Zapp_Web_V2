@@ -290,7 +290,7 @@ describe('DialPad (T40)', () => {
     // T40: os botoes sairam. A prova dos testes antigos (que afirmavam o botao
     // habilitado/desabilitado) foi SUBSTITUIDA por esta, que afirma a ausencia -
     // remover a expectativa sem deixar nada esconderia a regressao.
-    render(<DialPad />);
+    render(<DialPad {...defaultProps} />);
     expect(screen.queryByText('Conectar SIP')).toBeNull();
     expect(screen.queryByText('Desconectar')).toBeNull();
   });
