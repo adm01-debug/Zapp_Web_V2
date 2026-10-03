@@ -329,10 +329,14 @@ export async function handleIncomingMessage(
     }
   }
 
-  // E88: atribuir resposta TalkX (janela 72 h), exceto opt-out
+  // E88/X028: atribuir resposta TalkX, exceto opt-out. O handler AGUARDA a RPC
+  // (attribute_talkx_reply) — não é mais fire-and-forget: o efeito no banco precisa
+  // estar garantido antes de o webhook responder, senão uma resposta podia ser
+  // perdida se a função fosse congelada logo após o retorno. O telefone resolvido
+  // (bestJid/normalizePhone) cobre o contato que chegou por outro contact_id (LID).
   if (tx.outcome === 'inserted' && !key.fromMe && tx.contact_id && tx.message_id) {
     if (!TALKX_OPT_OUT_RE.test((content ?? '').trim())) {
-      void attributeTalkXReply(supabase, tx.contact_id, tx.message_id);
+      await attributeTalkXReply(supabase, tx.contact_id, phone ?? null, tx.message_id);
       // F62: a MESMA resposta tambem fecha o item do Multiplix. A citacao (quando existe)
       // e o unico jeito de saber QUAL envio gerou a resposta — sem ela a atribuicao e por
       // janela + numero e a funcao grava `inferred` em vez de `linked`. Por isso a citacao

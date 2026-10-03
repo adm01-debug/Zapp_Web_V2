@@ -2,51 +2,18 @@
  * talkx-reply.ts — Atribuição de resposta do contato a uma campanha Talk X
  *
  * Quando um contato responde a uma mensagem recebida via campanha Talk X,
- * atualiza talkx_recipients.replied_at (e reply_message_id) no
- * destinatário mais recente dentro da janela de 72 h.
+ * chama a RPC attribute_talkx_reply (X027/X028), que atualiza
+ * talkx_recipients.replied_at (e reply_message_id) no destinatário mais recente
+ * dentro da janela configurada em talkx_settings.reply_window_hours.
  * O trigger trg_talkx_replied_count cuida de incrementar
  * talkx_campaigns.replied_count automaticamente.
  *
  * Não deve ser chamado para keywords de opt-out (verificar antes).
  */
 
-// V18: janela de atribuição configurável via talkx_settings.reply_window_hours
-// (cache de 5 min). O default é 72 h — mesmo comportamento de antes.
-const DEFAULT_REPLY_WINDOW_HOURS = 72;
-let cachedReplyWindowHours: number | null = null;
-let cachedReplyWindowAt = 0;
-
-// deno-lint-ignore no-explicit-any
-async function getReplyWindowHours(supabase: any): Promise<number> { // eslint-disable-line @typescript-eslint/no-explicit-any
-  const now = Date.now();
-  if (cachedReplyWindowHours !== null && now - cachedReplyWindowAt < 5 * 60 * 1000) {
-    return cachedReplyWindowHours;
-  }
-  try {
-    const { data } = await supabase
-      .from('talkx_settings')
-      .select('value')
-      .eq('key', 'reply_window_hours')
-      .maybeSingle();
-    const parsed = Number(data?.value);
-    if (Number.isFinite(parsed) && parsed > 0) {
-      cachedReplyWindowHours = parsed;
-      cachedReplyWindowAt = now;
-      return parsed;
-    }
-  } catch {
-    // cai no default
-  }
-  cachedReplyWindowHours = DEFAULT_REPLY_WINDOW_HOURS;
-  cachedReplyWindowAt = now;
-  return DEFAULT_REPLY_WINDOW_HOURS;
-}
-
-// Só para teste: reseta o cache de 5 min (o teste prova que a janela muda).
-export function __resetReplyWindowCache(): void {
-  cachedReplyWindowHours = null;
-  cachedReplyWindowAt = 0;
-}
+// X028: a janela (talkx_settings.reply_window_hours) é lida DENTRO da RPC
+// attribute_talkx_reply. O cálculo client-side que existia aqui e o cache de
+// 5 min viraram código morto com a troca e foram removidos.
 
 /**
  * Fonte unica das keywords de opt-out. Era duplicada verbatim entre o
@@ -93,48 +60,41 @@ export async function attributeMultiplixReply(
 }
 
 /**
- * Atribui a mensagem messageId como resposta de contactId à
- * campanha mais recente que o atingiu nos últimos 72 h.
- * Fire-and-forget: erros são logados mas não propagados.
+ * Atribui a mensagem messageId como resposta do contato à campanha Talk X mais
+ * recente que o atingiu dentro de `talkx_settings.reply_window_hours`.
+ *
+ * X028: a atribuição agora é feita pela RPC `attribute_talkx_reply`
+ * (SECURITY DEFINER, service_role). Ela casa por contact_id OU pelo telefone
+ * normalizado (sufixo de 8 dígitos, cobre contato LID/duplicado) e lê a janela
+ * do banco — por isso o telefone resolvido entra como `p_phone`: sem ele uma
+ * resposta de contato duplicado ficaria sem atribuição.
+ *
+ * Erros são logados mas NÃO propagados: a resposta do contato não pode falhar
+ * porque a atribuição falhou. O chamador no webhook AGUARDA (await) esta função
+ * para garantir o efeito no banco antes de encerrar o processamento.
  */
 // deno-lint-ignore no-explicit-any
 export async function attributeTalkXReply(
   supabase: any, // eslint-disable-line @typescript-eslint/no-explicit-any
-  contactId: string,
+  contactId: string | null,
+  phone: string | null,
   messageId: string,
 ): Promise<void> {
   try {
-    const windowHours = await getReplyWindowHours(supabase);
-    const cutoff = new Date(
-      Date.now() - windowHours * 60 * 60 * 1000,
-    ).toISOString();
-
-    const { data: candidate } = await supabase
-      .from('talkx_recipients')
-      .select('id, campaign_id')
-      .eq('contact_id', contactId)
-      .gte('sent_at', cutoff)
-      .is('replied_at', null)
-      .not('sent_at', 'is', null)
-      .order('sent_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (!candidate?.id) return;
-
-    const { error } = await supabase
-      .from('talkx_recipients')
-      .update({
-        replied_at: new Date().toISOString(),
-        reply_message_id: messageId,
-      })
-      .eq('id', candidate.id)
-      .is('replied_at', null);
+    const { data, error } = await supabase.rpc('attribute_talkx_reply', {
+      p_contact_id: contactId,
+      p_phone: phone,
+      p_message_id: messageId,
+    });
 
     if (error) {
       console.warn('[E88] Falha ao atribuir resposta TalkX:', error.message);
-    } else {
-      console.warn('[E88] Resposta atribuida: contact=' + contactId + ' recipient=' + candidate.id + ' campaign=' + candidate.campaign_id);
+      return;
+    }
+    if (data?.attributed === true) {
+      console.warn(
+        `[E88] Resposta atribuida (${data.attribution}): recipient=${data.recipient_id} campaign=${data.campaign_id}`,
+      );
     }
   } catch (err) {
     console.warn('[E88] Erro inesperado em attributeTalkXReply:', err instanceof Error ? err.message : String(err));
