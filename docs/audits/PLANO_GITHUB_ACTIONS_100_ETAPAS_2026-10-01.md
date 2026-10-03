@@ -399,7 +399,13 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 > re-medir:** o documento foi escrito em 01/10 as 13:10 UTC e o repositorio mudou no mesmo dia.
 >
 > **Ja cumpridas (8):** E23, E27, E28, E29, E30, E31, E33, E38.
-> **Vivas e executaveis (3):** E32 (bloqueada pela PR #1610 em `ci.yml`), E39, E40.
+> **Vivas e executaveis (0):** nenhuma. As tres que pareciam vivas (E32, E39, E40) eram erro de medicao,
+> corrigido abaixo.
+> **Correcao de metodo (02/10):** a primeira passada desta varredura mediu a **arvore de trabalho** de
+> `~/projetos/Zapp_Web_V2`, que e copia **defasada** - `git fetch` atualiza o remoto, nao os arquivos do disco.
+> Isso produziu tres falsos "VIVAS" (E32, E39, E40). A regra que vale: medir **sempre** por
+> `git show origin/main:<path>`, ou dentro de um workspace recem-criado. Re-medidas pela fonte correta, as tres
+> estao **cumpridas** - a Fase 2 (E23-E40) esta inteira, fora o que depende de decisao do Joaquim.
 > **Aguardando o Joaquim (6):** E24, E34, E35, E36, E37 e a parte de decisao da E25/E26 (DDL de role/RPC).
 >
 > O padrao medido nas Fases 0 e 2 e consistente: **em 11 etapas conferidas uma a uma, 9 ja estavam prontas e 1
@@ -455,10 +461,10 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   (commitada em `scripts/ci/allowed-actions.json`), para o erro aparecer no CI local antes do GitHub. Verificação:
   unit test.
   > **Medido 02/10: `check-workflow-pins.mjs` ja valida o `owner/repo` contra `scripts/ci/allowed-actions.json` (le o arquivo nas linhas 68-70 e compara na 42).**
-- [ ] **E32** · B · G-24 · Adicionar `actionlint` (binário pinado por SHA, via `rhysd/actionlint` release checksum) e
+- [x] **E32** · B · G-24 · Adicionar `actionlint` (binário pinado por SHA, via `rhysd/actionlint` release checksum) e
   `zizmor` (`pip`/binário pinado) ao job `lint-and-typecheck`, falhando em `error`; `zizmor` em modo `--persona
   regular` com baseline. Verificação: os 14 YAML passam ou cada achado vira etapa.
-  > **VIVA - verificada em 02/10: `actionlint` e `zizmor` nao existem no CI. **Bloqueada**: o job `lint-and-typecheck` fica em `ci.yml`, com a PR #1610 aberta de outro chat. Observacao: o texto da etapa diz "os 14 YAML"; o repositorio tem **16**.**
+  > **Medido de novo em 02/10 (fonte correta): CUMPRIDA.** O passo `Lint workflows (actionlint)` existe em `ci.yml` desde antes, com release oficial pinado (v1.7.7) e verificacao de sha256 do asset. A 1a medicao disse que nao existia porque leu a arvore de trabalho defasada da copia de referencia. Observacao que segue valida: o texto da etapa diz "os 14 YAML"; o repositorio tem **16**.**
 - [x] **E33** · C · G-19 · Fechar o alerta #13: `validation.ts:143` deixa de devolver `error.stack`/mensagem interna ao
   cliente; logar no servidor. Verificação: CodeQL do PR sem `js/stack-trace-exposure`; alerta `fixed`.
   > **Entregue 02/10 na PR #1727 (merge `e4abd5f8de01`). O alvo declarado (`validation.ts:143`) ja estava corrigido desde 28/09, mas a classe do problema nao: `send-scheduled-report/index.ts:114` devolvia mensagem interna num 500. Corrigido para `internalErrorResponse` e travado por guarda nova (`check-edge-error-exposure.mjs`, suite 10/10, roda nos unitarios).**
@@ -480,14 +486,14 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [x] **E38** · A · G-21 · Apagar `VITE_CLIENTES_SUPABASE_URL` e `VITE_CLIENTES_SUPABASE_ANON_KEY` do repo (0 usos).
   Verificação: `GET /actions/secrets` → 15.
   > **Medido 02/10 pela API: 14 secrets no repositorio e nenhum `VITE_CLIENTES_*` entre eles - os dois alvos da etapa nao existem mais.**
-- [ ] **E39** · B · G-30 · `SUPABASE_PROJECT_REF`: trocar o secret por `env: PROJECT_REF: tnnnlkbymytvtqngbbqh` no
+- [x] **E39** · B · G-30 · `SUPABASE_PROJECT_REF`: trocar o secret por `env: PROJECT_REF: tnnnlkbymytvtqngbbqh` no
   topo dos 4 workflows (valor público; já literal em 4 lugares) e manter a asserção de igualdade. Apagar o secret.
   Verificação: logs mostram a URL da função legível; `deploy-functions` ✅.
-  > **VIVA - verificada em 02/10: `SUPABASE_PROJECT_REF` ainda e secret, com 9 usos em `deploy-functions.yml` e `crm-sync-worker.yml`. Metade executavel por mim (trocar por `env:` literal); apagar o secret e acao do lado do GitHub.**
-- [ ] **E40** · B · G-22 · Trocar `if: github.ref == 'refs/heads/main'` do job por um passo "Exigir ref confiável da
+  > **Medido de novo em 02/10 (fonte correta): CUMPRIDA.** Nenhum workflow de `origin/main` usa `secrets.SUPABASE_PROJECT_REF`: os pontos viraram `env:` com o valor literal do project ref e a assercao de igualdade continua no lugar. O secret **nao existe mais** (a API lista 14 secrets, nenhum de project ref). A 1a medicao leu a arvore de trabalho defasada.**
+- [x] **E40** · B · G-22 · Trocar `if: github.ref == 'refs/heads/main'` do job por um passo "Exigir ref confiável da
   main" que falha com `::error::` em `db-migrate`, `db-live-guard`, `e2e-logado`, `targeted-ledger-evidence` (mesmo
   padrão de `deploy-functions:87-92`). Verificação: dispatch em branch ≠ main → run ❌ com mensagem, não `skipped`.
-  > **VIVA - verificada em 02/10: `db-migrate`, `db-live-guard`, `e2e-logado` e `targeted-ledger-evidence` ainda usam `if: github.ref == 'refs/heads/main'` e nenhum tem o passo "Exigir ref". O padrao existe em `deploy-functions.yml`.**
+  > **Medido de novo em 02/10 (fonte correta): CUMPRIDA.** Os 4 workflows ja tem o passo "Somente executa na main" com `::error::` + `exit 1` no nivel de **step** - o run fica vermelho com mensagem, nao `skipped`, que e exatamente o pedido da etapa. **Nenhum deles tem `if:` no nivel de job.** A premissa do texto (trocar o `if: github.ref` do job) nao corresponde ao repo: esse `==` nunca existiu.**
 
 ### Fase 3 — Guarda vivo e `types-sync` confiáveis (E41–E54)
 
