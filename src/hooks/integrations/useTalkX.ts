@@ -435,6 +435,8 @@ export function useTalkX() {
     campaigns: campaignsQuery.data || [],
     isLoading: campaignsQuery.isLoading,
     isError: campaignsQuery.isError,
+    error: (campaignsQuery.error as Error | null) ?? null,
+    isFetching: campaignsQuery.isFetching,
     isLive,
     recipients: recipientsQuery.data || [],
     recipientsLoading: recipientsQuery.isLoading,
