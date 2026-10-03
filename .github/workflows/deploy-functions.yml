@@ -455,6 +455,18 @@ jobs:
           set -euo pipefail
           node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/register-deployment.mjs"
 
+      - name: Limpar segredos do log de deploy
+        # E74: o log carrega URL com `access_token` embutido e o artifact vai para o
+        # storage do GitHub. A credencial precisa sair do ARQUIVO antes do upload --
+        # `::add-mask::` esconde no log do run, nao no artefato. O valor vem do
+        # ambiente pelo nome da variavel: nunca aparece no codigo nem na saida.
+        if: always() && inputs.dry_run != true
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/redigir-log.mjs" "$RUNNER_TEMP/edge-deployment-evidence/deploy-output.log" --segredo-env=SUPABASE_ACCESS_TOKEN
+
       - name: Arquivar manifesto, atestado e smokes
         if: always() && inputs.dry_run != true
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -462,4 +474,4 @@ jobs:
           name: edge-deployment-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/edge-deployment-evidence/
           if-no-files-found: warn
-          retention-days: 30
+          retention-days: 14
