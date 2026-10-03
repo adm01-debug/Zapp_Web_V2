@@ -473,8 +473,8 @@ investigado no banco canonico — o erro no log **nao** decide se ha trabalho a 
 | `20260927450000_fix_indexes_checks_cleanup.sql` | `syntax error at or near "VAFIDD"` | **Superada.** O ledger atribui esta versao a `gamification_guard_fix_xp_cap`; o arquivo **nunca aplicou**. As constraints que ele cria existem e estao `validated=true`. **Nada a reparar.** |
 | `20260916230000_talkx_e93_settings.sql` | `syntax error at or near "NOT"` (`CREATE POLICY IF NOT EXISTS` nao existe no PG) | **Superada** por `20260930112833_talkx_settings_policies_replay_safe` e `20260930410000_talkx_settings_replay_idempotent`. `talkx_settings` existe, RLS on, 2 politicas. **Nada a reparar.** |
 | `20260929370000_contacts_soft_delete_and_search_filters.sql` | `cannot change return type` | **Superada.** O filtro `deleted_at IS NULL` que ela queria **ja existia** em producao, adicionado antes por `20260929140000_search_contacts_returns_address`; a versao vigente e a de `20260930450000_contacts_include_legacy_filter`. **Nada a reparar.** |
-| `20260925170000_add_reminders_pending_to_tab_counts.sql` | `cannot change return type` | **Intencao nao chegou.** `get_conversation_tab_counts` em producao devolve 3 colunas; `reminders_pending` **nunca existiu**. Causa: `create or replace` nao muda tipo de retorno e o `DROP FUNCTION` que resolveria esta comentado no arquivo irmao. Impacto zero hoje (o app removeu o campo em `useConversationTabCounts.ts`). **Decisao pendente:** reparar por versao nova ou formalizar o abandono. |
-| `20260928140200_tab_counts_tasks_own.sql` | `cannot change return type` | Mesma funcao e mesma situacao do anterior. |
+| `20260925170000_add_reminders_pending_to_tab_counts.sql` | `cannot change return type` | **Superada — abandono formalizado** (decisao `20261003-121143`, opcao b). `get_conversation_tab_counts` em producao devolve 3 colunas; `reminders_pending` **nunca existiu**. Causa: `create or replace` nao muda tipo de retorno e o `DROP FUNCTION` que resolveria esta comentado no arquivo irmao. Impacto zero — nao ha codigo consumindo o campo. **Nao introduzir codigo especulativo:** se a aba algum dia precisar de lembretes pendentes, entra por **versao nova** (`DROP FUNCTION` + `CREATE` da funcao com a coluna, mais o consumo no app). |
+| `20260928140200_tab_counts_tasks_own.sql` | `cannot change return type` | Mesma funcao e mesma situacao do anterior — superada pelo mesmo motivo. |
 | `20260926410000_add_fk_support_indexes.sql` | `relation ... already exists` | **Nao idempotente**, inerte no banco real (o indice ja existe). **Nada a reparar.** |
 
 ### Como medir isso (o metodo importa)
@@ -501,4 +501,26 @@ que define a funcao (`20260930450000_contacts_include_legacy_filter.sql`) usa `g
 ou seja, o modelo de visibilidade foi **substituido de proposito**. "Reparar" ali teria reintroduzido
 um caminho de autorizacao aposentado. **Compare marcador ausente com o ultimo arquivo que define o
 objeto antes de tratar como defeito.**
+
+### Cascatas: 5 medidas, 4 sao artefato de ordem
+
+O replay classificou 5 falhas como "cascata" (dependem de objeto que outra migration nao criou). O
+mesmo metodo responde: **o objeto existe no banco canonico?**
+
+| Falha | Em producao | Veredito |
+|---|---|---|
+| `notify_due_reminders()` | existe | artefato de ordem — nada a reparar |
+| coluna `notified_at` | existe (2 tabelas) | artefato de ordem — nada a reparar |
+| `sync_contact_status_on_closure()` | existe | artefato de ordem — nada a reparar |
+| coluna `conversation_id` | existe (4 tabelas) | artefato de ordem — nada a reparar |
+| `relation "public.conversations"` | **nao existe** — a tabela e `public.team_conversations` | **real**, baixa severidade: `20260927540000_security_gamification_guards_e2e_cleanup_avg_null.sql` faz limpeza de e2e contra nome renomeado. Reparo por versao nova, em PR proprio. |
+
+```sql
+-- objeto existe no canonico? (o que separa artefato de defeito)
+select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public' and p.proname = '<funcao>';
+select table_schema, table_name from information_schema.tables
+where table_name ilike '%<nome>%';   -- confirma rename (ex.: conversations -> team_conversations)
+```
+
 
