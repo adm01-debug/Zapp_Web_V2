@@ -6,7 +6,7 @@ const mockFunctionsInvoke = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    functions: { invoke: (...args: any[]) => mockFunctionsInvoke(...args) },
+    functions: { invoke: (...args: unknown[]) => mockFunctionsInvoke(...args) },
   },
 }));
 
@@ -155,7 +155,7 @@ describe('useBitrixApi', () => {
   });
 
   it('sets loading during API call', async () => {
-    let resolvePromise: (value: any) => void;
+    let resolvePromise: (value: unknown) => void;
     mockFunctionsInvoke.mockReturnValue(new Promise(r => { resolvePromise = r; }));
     const { result } = renderHook(() => useBitrixApi());
     

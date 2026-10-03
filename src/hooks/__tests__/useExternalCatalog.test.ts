@@ -10,7 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 const mockInvoke = vi.fn();
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    functions: { invoke: (...args: any[]) => mockInvoke(...args) },
+    functions: { invoke: (...args: unknown[]) => mockInvoke(...args) },
   },
 }));
 
@@ -98,8 +98,8 @@ const mockVariant = (overrides: Partial<ExternalProductVariant> = {}): ExternalP
 });
 
 // ─── Helper ───────────────────────────────────────────────────
-function setupMockInvoke(responses: Record<string, any>) {
-  const defaults: Record<string, any> = {
+function setupMockInvoke(responses: Record<string, unknown>) {
+  const defaults: Record<string, unknown> = {
     list_products: { data: [], meta: { total: 0, duration_ms: 1 } },
     list_categories: { data: [] },
     list_suppliers: { data: [] },
@@ -108,7 +108,7 @@ function setupMockInvoke(responses: Record<string, any>) {
     bootstrap: { data: { categories: [], suppliers: [], stats: null } },
   };
   const merged = { ...defaults, ...responses };
-  mockInvoke.mockImplementation(async (fnName: string, opts: any) => {
+  mockInvoke.mockImplementation(async (fnName: string, opts: unknown) => {
     const action = opts?.body?.action;
     if (merged[action]) {
       return { data: merged[action], error: null };
@@ -171,7 +171,7 @@ describe('useExternalCatalog', () => {
     });
 
     it('sets loading state during fetch', async () => {
-      let resolvePromise: (v: any) => void;
+      let resolvePromise: (v: unknown) => void;
       mockInvoke.mockReturnValue(new Promise(r => { resolvePromise = r; }));
 
       const { result } = renderHook(() => useExternalCatalog(), { wrapper: createWrapper() });
@@ -573,7 +573,7 @@ describe('Edge Function Contract', () => {
     await waitFor(() => {
       expect(mockInvoke).toHaveBeenCalled();
     });
-    const productCall = mockInvoke.mock.calls.find((c: any) => c[1]?.body?.action === 'list_products');
+    const productCall = mockInvoke.mock.calls.find((c) => c[1]?.body?.action === 'list_products');
     expect(productCall).toBeTruthy();
     expect(productCall[1].body.action).toBe('list_products');
   });
@@ -584,7 +584,7 @@ describe('Edge Function Contract', () => {
     const { result } = renderHook(() => useExternalCatalog(), { wrapper: createWrapper() });
     await act(async () => { await result.current.fetchProduct('p1'); });
 
-    const call = mockInvoke.mock.calls.find((c: any) => c[1]?.body?.action === 'get_product');
+    const call = mockInvoke.mock.calls.find((c) => c[1]?.body?.action === 'get_product');
     expect(call).toBeTruthy();
     expect(call[1].body.action).toBe('get_product');
     expect(call[1].body.params.product_id).toBe('p1');
@@ -704,7 +704,7 @@ describe('Data Integrity', () => {
     });
 
     const { result } = renderHook(() => useExternalCatalog(), { wrapper: createWrapper() });
-    let fetched: any;
+    let fetched: unknown;
     await act(async () => {
       fetched = await result.current.fetchProduct('p1');
     });
@@ -807,7 +807,7 @@ describe('Edge Cases & Boundaries', () => {
     });
 
     await waitFor(() => {
-      const call = mockInvoke.mock.calls.find((c: any) => c[1]?.body?.action === 'list_products' && c[1]?.body?.params?.search);
+      const call = mockInvoke.mock.calls.find((c) => c[1]?.body?.action === 'list_products' && c[1]?.body?.params?.search);
       expect(call).toBeTruthy();
       expect(call[1].body.params.search).toBe("caneta d'água & %");
     }, { timeout: 5000 });

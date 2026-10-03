@@ -9,7 +9,7 @@ vi.mock('@/integrations/supabase/client', () => ({
     from: () => ({
       select: () => ({
         order: () => ({
-          then: (r: any) => r({
+          then: (r: (value: unknown) => void) => r({
             data: [
               {
                 id: 'sla-1',
@@ -38,9 +38,9 @@ vi.mock('@/integrations/supabase/client', () => ({
           }),
         }),
       }),
-      insert: () => ({ then: (r: any) => r({ error: null }) }),
-      update: () => ({ eq: () => ({ then: (r: any) => r({ error: null }) }) }),
-      delete: () => ({ eq: () => ({ then: (r: any) => r({ error: null }) }) }),
+      insert: () => ({ then: (r: (value: unknown) => void) => r({ error: null }) }),
+      update: () => ({ eq: () => ({ then: (r: (value: unknown) => void) => r({ error: null }) }) }),
+      delete: () => ({ eq: () => ({ then: (r: (value: unknown) => void) => r({ error: null }) }) }),
     }),
   },
 }));

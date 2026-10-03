@@ -7,7 +7,7 @@ const TELEFONE = '+5511999999999';
 // Mock useWhatsAppStatus
 const mockRefresh = vi.fn();
 let mockData = {
-  statusMessages: [] as any[],
+  statusMessages: [] as unknown[],
   presence: { isOnline: false, lastSeen: null as string | null, loading: false },
   loading: false,
   error: null as string | null,

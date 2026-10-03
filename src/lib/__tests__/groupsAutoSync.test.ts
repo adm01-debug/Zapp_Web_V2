@@ -9,7 +9,7 @@ interface EvolutionGroup {
   subject?: string;
   name?: string;
   size?: number;
-  participants?: any[];
+  participants?: unknown[];
   desc?: string;
   description?: string;
   announce?: boolean;
