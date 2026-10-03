@@ -1,9 +1,66 @@
 import { test, expect } from '@playwright/test';
 import {
+  E2E_FIXTURE_CONTACT_ID,
   E2E_FIXTURE_CONTACT_DISPLAY_NAME,
   ensureFixtureConversationOpen,
   cleanupFixtureMessages,
 } from './fixtures/e2e-contact';
+
+const CRM_ROUTE = '**/functions/v1/crm-integration';
+const FLAGS_ROUTE = '**/rest/v1/feature_flags*';
+
+const fullSidebar = {
+  found: true,
+  contact_id: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+  professional: {
+    whatsapp: { numero_e164: '+5511988776655', numero: '(11) 98877-6655', phone_type: 'celular_corporativo' },
+    email_corporativo: { email: 'e2e.sidebar@example.com', is_verified: true },
+    empresa: { id: 'bbbbbbbb-cccc-4ddd-8eee-ffffffffffff', nome: 'Empresa E2E', logo_url: null },
+    departamento: 'Comercial',
+    cargo: 'Diretor',
+  },
+  personal: { social: [], data_nascimento: null },
+  singu_profile: {
+    disc: { primary: 'C', blend: null, confidence: 95, notes: null },
+    vak: null, big_five: null, mbti: null, enneagram: null, temperament: null,
+    metaprograms: {
+      toward: 80, away_from: 20, internal: 70, external: 30,
+      options: null, procedures: null, proactive: null, reactive: null,
+      global: null, detail: null, notes: 'Fixture determinística do E2E',
+    },
+    fears_motivation: null, decision: null, budget: null, influencers: [],
+    rapport: null, objection_scripts: [], assessed_at: '2026-10-03T12:00:00Z',
+  },
+};
+
+async function installSidebarMocks(page: import('@playwright/test').Page, sidebarData: unknown = fullSidebar) {
+  await page.route(FLAGS_ROUTE, async (route) => {
+    const response = await route.fetch();
+    const flags = await response.json() as Array<Record<string, unknown>>;
+    const next = flags.filter((flag) => flag.key !== 'crm.integration');
+    next.push({ key: 'crm.integration', enabled: true, description: 'E2E', updated_at: '2026-10-03T12:00:00Z' });
+    await route.fulfill({ response, json: next });
+  });
+  await page.route(CRM_ROUTE, async (route) => {
+    const body = route.request().postDataJSON() as Record<string, unknown> | null;
+    if (body?.action !== 'contactLookup' || body?.lookup !== 'sidebar' || body?.contactId !== E2E_FIXTURE_CONTACT_ID) {
+      await route.continue();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ data: sidebarData, meta: { record_count: 1, duration_ms: 4, severity: 'ok' } }),
+    });
+  });
+}
+
+async function openContactPanel(page: import('@playwright/test').Page) {
+  await page.getByTestId('status-chip-all').click();
+  await page.getByTestId('conversation-item').filter({ hasText: E2E_FIXTURE_CONTACT_DISPLAY_NAME }).first().click();
+  await page.getByRole('button', { name: 'Detalhes do contato' }).first().click();
+  await expect(page.getByTestId('contact-panel')).toBeVisible();
+}
 
 // e2e/inbox-contact-sidebar.spec.ts — etapa 90 do plano
 // `docs/design/PLANO_SIDEBAR_CONTATO_3_SECOES_100_ETAPAS_2026-10-02.md`.
@@ -22,14 +79,11 @@ import {
 
 test.describe('Sidebar "Detalhes do Contato" — 3 seções', () => {
   test.beforeEach(async ({ page }) => {
+    await installSidebarMocks(page);
     await page.goto('/');
     await ensureFixtureConversationOpen(page);
     await page.reload();
-    await page.getByTestId('status-chip-all').click();
-    await page.getByTestId('conversation-item').filter({ hasText: E2E_FIXTURE_CONTACT_DISPLAY_NAME }).first().click();
-    // Abre o painel pelo botão "Detalhes do contato" do header do chat.
-    await page.getByRole('button', { name: 'Detalhes do contato' }).first().click();
-    await expect(page.getByTestId('contact-panel')).toBeVisible();
+    await openContactPanel(page);
   });
 
   test.afterAll(async ({ browser }) => {
@@ -67,14 +121,21 @@ test.describe('Sidebar "Detalhes do Contato" — 3 seções', () => {
     await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toMatch(/^\+\d{10,15}$/);
   });
 
-  test('Perfil Singu mostra estado honesto para contato sem vínculo/avaliação', async ({ page }) => {
+  test('Perfil Singu mostra seis métricas honestas quando ainda não há avaliação', async ({ page }) => {
+    await page.unroute(CRM_ROUTE);
+    await page.route(CRM_ROUTE, async (route) => {
+      const body = route.request().postDataJSON() as Record<string, unknown> | null;
+      if (body?.action !== 'contactLookup' || body?.lookup !== 'sidebar') return route.continue();
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({ data: { ...fullSidebar, singu_profile: null }, meta: { record_count: 1, duration_ms: 4, severity: 'ok' } }),
+      });
+    });
+    await page.reload();
+    await openContactPanel(page);
     const singu = page.getByTestId('contact-panel').getByTestId('sidebar-section-singu');
-    // Flag off → "Integração com o Singu desligada"; flag on + contato [E2E]
-    // inexistente no Singu → "Contato não vinculado ao Singu"; vinculado sem
-    // avaliação → "Sem avaliação no Singu". Nunca inventa perfil.
-    await expect(
-      singu.getByText(/Integração com o Singu desligada|Contato não vinculado ao Singu|Sem avaliação no Singu/),
-    ).toBeVisible();
+    await expect(singu.getByText('Não avaliado')).toHaveCount(6);
+    await expect(singu.getByText('Sem avaliação no Singu')).toHaveCount(1);
   });
 
   test('Sheet de Metaprogramas abre e Esc fecha sem fechar o painel', async ({ page, browserName }) => {
@@ -84,15 +145,7 @@ test.describe('Sidebar "Detalhes do Contato" — 3 seções', () => {
       'Radix portal + Esc coberto em Chromium (mesmo padrão de conversation.spec.ts)');
 
     const metaprogramas = page.getByTestId('singu-row-metaprograms');
-    // A linha só fica habilitada quando a RPC devolve metaprograms para o
-    // contato — o [E2E] não tem avaliação no Singu até a Fase 9. Skip com
-    // motivo honesto em vez de assert falso.
-    const habilitada = await metaprogramas.isVisible().catch(() => false)
-      && await metaprogramas.isEnabled().catch(() => false);
-    test.skip(!habilitada,
-      'Linha Metaprogramas desabilitada — sem perfil Singu neste contato ' +
-      '(flag crm.integration desligada até a Fase 9 ou contato sem avaliação)');
-
+    await expect(metaprogramas).toBeEnabled();
     await metaprogramas.click();
     const sheet = page.getByRole('dialog');
     await expect(sheet).toBeVisible();
