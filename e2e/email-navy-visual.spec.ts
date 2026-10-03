@@ -9,6 +9,17 @@ async function clearTransientToasts(page: import('@playwright/test').Page) {
   await page.locator('[data-sonner-toast]').evaluateAll(toasts => toasts.forEach(toast => toast.remove()));
 }
 
+/**
+ * O tema global anima a troca de variáveis de cor. Para a aferição estática do
+ * axe, uma cor interpolada não representa o estado que o usuário recebe ao
+ * final da troca e pode gerar falsos contrastes no WebKit.
+ */
+async function freezeVisualTransitions(page: import('@playwright/test').Page) {
+  await page.addStyleTag({
+    content: '*, *::before, *::after { animation: none !important; transition: none !important; }',
+  });
+}
+
 interface AxeViolationResult {
   violations: Array<{
     id: string;
@@ -60,6 +71,7 @@ test('rota real renderiza lista, conversa e compositor com o tema do sistema sem
 test('workspace do Email não introduz violações axe', async ({ page }) => {
   await page.goto('/?view=email-chat');
   await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
+  await freezeVisualTransitions(page);
   await page.waitForTimeout(400);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
   const violations = await page.evaluate(async () => {
@@ -84,6 +96,7 @@ test('superfícies do Email herdam os mesmos tokens do sistema em claro e escuro
   mkdirSync(output, { recursive: true });
   await page.goto('/?view=email-chat');
   await expect(page.getByTestId('email-workspace')).toBeVisible();
+  await freezeVisualTransitions(page);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
 
   for (const mode of ['light', 'dark'] as const) {
@@ -205,6 +218,7 @@ test('painel CRM completo preserva ações, acessibilidade e fechamento em 320 p
   await expect(drawer.getByRole('link', { name: /abrir instagram da empresa/i })).toBeVisible();
   const close = await drawer.getByRole('button', { name: 'Fechar detalhes' }).boundingBox();
   expect(close && close.x >= 0 && close.x + close.width <= 320).toBeTruthy();
+  await freezeVisualTransitions(page);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
   const violations = await page.evaluate(async () => (await (window as unknown as Window & { axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult> } }).axe.run('[role="dialog"]', {})).violations.map(violation => violation.id));
   expect(violations).toEqual([]);
@@ -351,6 +365,7 @@ test('alto contraste e movimento reduzido mantêm o workspace acessível', async
   await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await expect(page.locator('html')).toHaveClass(/high-contrast/);
   await expect(page.locator('html')).toHaveClass(/reduced-motion/);
+  await freezeVisualTransitions(page);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
   const violations = await page.evaluate(async () => {
     const axe = (window as unknown as Window & { axe: { run: (target: string) => Promise<AxeViolationResult> } }).axe;
