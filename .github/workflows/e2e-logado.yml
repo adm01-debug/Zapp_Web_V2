@@ -86,6 +86,20 @@ jobs:
       # webkit-catalog dao a paridade dos 3 browsers pedida no aceite. O spec e
       # SKIPADO enquanto E2E_CATALOG_PRODUCT_SKU_VERIFIED nao for true (pende a
       # verificacao do SKU no PromoGifts, sistema externo). NAO entram no ci.yml.
+      # E82: o e-mail do usuario de teste entra no log do Playwright (o fill() imprime o
+      # valor). Mascarar ANTES de qualquer saida, para o ::add-mask:: valer o run todo.
+      - name: 🔒 Mascarar o e-mail do E2E no log
+        env:
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+        run: |
+          set -euo pipefail
+          if [ -n "$E2E_TEST_EMAIL" ]; then
+            echo "::add-mask::$E2E_TEST_EMAIL"
+            echo "e-mail do E2E mascarado no log"
+          else
+            echo "aviso: secret E2E_TEST_EMAIL vazio - nada a mascarar"
+          fi
+
       - name: 📐 Run Playwright E2E (login real)
         run: bun run test:e2e -- --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=chromium-mapa --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
         env:
@@ -96,6 +110,33 @@ jobs:
           # (mesmo secret que o ci.yml entrega ao app; nao e privilegiada). Sem
           # ela o spec pula em vez de falhar.
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+
+      # E82: o ::add-mask:: protege o LOG. O `playwright-report` e um artifact HTML com o
+      # e-mail gravado dentro (titulo de teste, argumento do fill(), URL) -- subir o
+      # relatorio cru publicaria o endereco num repositorio publico, que e exatamente o
+      # risco que o cabecalho deste workflow ja registra. Sao superficies diferentes.
+      # Por isso: redige o arquivo e SO ENTAO sobe -- e o upload exige que a redacao
+      # tenha dado certo. Se a redacao falhar, o relatorio NAO sobe.
+      - name: 🔒 Redigir o relatorio antes de arquivar
+        if: failure()
+        id: redigir
+        env:
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+        run: |
+          set -euo pipefail
+          node scripts/ci/redigir-relatorio.mjs playwright-report \
+            --segredo-env=E2E_TEST_EMAIL \
+            --segredo-env=E2E_TEST_PASSWORD
+
+      - name: 📎 Arquivar relatorio do Playwright (so em falha)
+        if: failure() && steps.redigir.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-report-logado-${{ github.run_id }}
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 3
 
       # Teardown: apaga linhas de fixture geradas pelo E2E em producao.
       # contact_id 04dff4dc-c6b1-4283-ac22-bd8639804759 e o contato de teste

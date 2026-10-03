@@ -671,6 +671,17 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [ ] **E82** · B · G-05 · `e2e-logado.yml`: `::add-mask::` do `E2E_TEST_EMAIL` antes do Playwright e upload do
   `playwright-report` **só** `if: failure()` com 3 dias — com o e-mail mascarado, o risco documentado no cabeçalho
   deixa de existir e o diagnóstico fica acessível. Verificação: artifact de uma falha sem o e-mail em claro.
+  - ⚠️ **Nota de execução (03/10/2026) — a premissa acima é falsa nos dois pontos, e a execução mudou por isso.**
+    (1) `::add-mask::` esconde o valor no **log do run**, não no **arquivo**: o `playwright-report` é HTML e vira
+    artifact baixável por qualquer um enquanto existir. (2) O vazamento que o repositório **já** documenta em
+    `scripts/ci/check-e2e-artifact-secrets.mjs` **não é o e-mail**: quando o `auth.setup` falha, o Playwright grava
+    a árvore de acessibilidade em `test-results/.../error-context.md` e o relatório embute esse conteúdo — o
+    **valor digitado no campo de senha** aparece em texto claro. Subir o report com só o e-mail mascarado publicaria
+    a senha. O upload só é seguro com redação de **todas** as credenciais (`E2E_TEST_EMAIL` **e**
+    `E2E_TEST_PASSWORD`) antes do upload, e com o upload condicionado ao sucesso da redação
+    (`steps.redigir.outcome == 'success'`). A guarda do repo passou a aceitar a exceção por esse critério; a
+    proibição do upload cru continua de pé. Verificação real: artifact de falha **sem nenhuma** das duas
+    credenciais em claro — não "sem o e-mail".
 - [ ] **E83** · B · G-05/G-23 · `e2e-logado.yml`: passo `if: failure()` que abre/comenta issue `[e2e-logado] Suíte
   logada quebrada na main` com dedupe por spec que falhou (mesmo mecanismo de E44) e fecha ao recuperar. Verificação:
   próxima falha gera issue; sucesso fecha.
