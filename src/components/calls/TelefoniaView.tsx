@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,11 +17,20 @@ import { DialPad } from './DialPad';
 import { useCallSession } from '@/providers/CallSessionProvider';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useCalls } from '@/hooks/communication/useCalls';
-import { useCallHistory, type CallHistoryRow as Call, type CallHistoryFilters, type CallResultFilter } from '@/hooks/communication/useCallHistory';
 import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
 import { claimLeadership } from '@/lib/calls/tabLeaderStore';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { TelefoniaTopActions } from './TelefoniaTopActions';
+import { CallHistoryCard } from './CallHistoryCard';
+import { CallHistoryTabs } from './CallHistoryTabs';
+import { CallHistoryToolbar } from './CallHistoryToolbar';
+import { CallHistoryTable } from './CallHistoryTable';
+import { CallHistoryEmpty, CallHistoryError, CallHistorySkeleton } from './CallHistoryStates';
+import { CallsPagination } from './CallsPagination';
+import { useMyCalls, type SearchMyCallsRow } from '@/hooks/calls/useMyCalls';
+import { useUserRole } from '@/hooks/system/useUserRole';
+import { dispatchStartCall } from '@/lib/calls/events';
+import { formatClock, talkSeconds } from '@/lib/calls/duration';
 import { CallsKpiGrid } from './CallsKpiGrid';
 import { useTelefoniaFilters } from '@/hooks/calls/useTelefoniaFilters';
 import type { PeriodoValue } from './periodos';
@@ -38,7 +47,7 @@ const CHANNEL_OPTIONS: { value: 'all' | 'voip' | 'whatsapp'; label: string }[] =
   { value: 'whatsapp', label: 'WhatsApp' },
 ];
 
-const RESULT_OPTIONS: { value: 'all' | CallResultFilter; label: string }[] = [
+const RESULT_OPTIONS: { value: 'all' | string; label: string }[] = [
   { value: 'all', label: 'Todos' },
   { value: 'ended_answered', label: 'Concluída' },
   { value: 'ended_missed', label: 'Não atendida' },
@@ -50,7 +59,7 @@ const RESULT_OPTIONS: { value: 'all' | CallResultFilter; label: string }[] = [
 export function TelefoniaView() {
   const { profile } = useAuth();
   // T36: os filtros vivem na URL; o periodo da tela e o da URL.
-  const { filtros, setFilter } = useTelefoniaFilters();
+  const { filtros, setFilter, limpar } = useTelefoniaFilters();
   const period = filtros.period as PeriodoValue;
   const sip = useCallSession();
   // T20: o motivo da linha VoIP (é o `line_in_use_other_tab` que importa aqui)
@@ -64,7 +73,7 @@ export function TelefoniaView() {
   const [searchDebounced, setSearchDebounced] = useState('');
   const [direction, setDirection] = useState<'all' | 'inbound' | 'outbound'>('all');
   const [channel, setChannel] = useState<'all' | 'voip' | 'whatsapp'>('all');
-  const [result, setResult] = useState<'all' | CallResultFilter>('all');
+  const [result, setResult] = useState<'all' | string>('all');
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState('');
   const [noteSaving, setNoteSaving] = useState(false);
@@ -87,16 +96,49 @@ export function TelefoniaView() {
     return () => clearTimeout(t);
   }, [search]);
 
-  const filters: CallHistoryFilters = {
+  const filters: Record<string, unknown> = {
     ...(direction !== 'all' ? { direction } : {}),
     ...(channel !== 'all' ? { channel } : {}),
     ...(result !== 'all' ? { result } : {}),
     ...(searchDebounced ? { search: searchDebounced } : {}),
   };
 
-  const { calls, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useCallHistory(profile?.id, filters);
+  const historicos = useMyCalls({
+    page: Number(filtros.page) || 1,
+    period: filtros.period,
+    channel: filtros.channel,
+    direction: filtros.dir,
+    result: filtros.result,
+    q: filtros.q,
+    scope: filtros.scope,
+  });
 
-  const selectedCall = calls.find(c => c.id === selectedCallId) ?? null;
+  const { hasRole } = useUserRole();
+  // Escopo so para quem enxerga a operacao inteira (T43); agente comum ve
+  // apenas as proprias ligacoes.
+  const podeEscolherEscopo = hasRole('admin') || hasRole('supervisor');
+
+  const temFiltro =
+    filtros.q !== '' || filtros.dir !== 'all' || filtros.result !== 'all' || filtros.channel !== 'all';
+
+  // "Ligar de volta" usa a MESMA origem de discagem do click-to-call (evento zapp:start-call),
+  // porque o `openDialer` do provider nao recebe argumentos - a assinatura que o plano
+  // sugeria nao existe no codigo.
+  const ligarDeVolta = useCallback((row: SearchMyCallsRow) => {
+    const phone = row.contact_phone || row.peer_number;
+    if (!phone) return;
+    dispatchStartCall({
+      channel: row.channel === 'whatsapp' ? 'whatsapp' : 'voip',
+      phone,
+      contactId: row.contact_id || undefined,
+      name: row.peer_name || row.contact_name || undefined,
+      source: 'history',
+    });
+  }, []);
+
+  // A linha selecionada vem da pagina atual do historico. Deep link para uma
+  // linha de outra pagina e o T68 (Fase 6); aqui e so a selecao visivel.
+  const selectedCall = historicos.rows.find((c) => c.id === (filtros.call || selectedCallId)) ?? null;
 
   useEffect(() => {
     // T16 (D7): a anotação do agente mora em `agent_notes` (T13 grava ali, via
@@ -106,7 +148,9 @@ export function TelefoniaView() {
     setNoteDraft(selectedCall?.agent_notes ?? '');
   }, [selectedCall?.id, selectedCall?.agent_notes]);
 
-  const resetSelection = () => setSelectedCallId(null);
+  // A linha selecionada vive na URL (T36/T47). Fechar o detalhe limpa o parametro -
+  // um estado local paralelo deixaria o painel aberto depois do clique.
+  const resetSelection = () => setFilter('call', '');
 
   const getDirectionIcon = (direction: string, status: string) => {
     if (status === 'missed') return <PhoneMissed className="w-4 h-4 text-destructive" />;
@@ -120,12 +164,12 @@ export function TelefoniaView() {
     return formatDuration(duration, { format: ['hours', 'minutes', 'seconds'], locale: ptBR });
   };
 
-  const getChannelLabel = (call: Call) => (call.whatsapp_connection_id ? 'WhatsApp' : 'VoIP');
+  const getChannelLabel = (call: SearchMyCallsRow) => (call.channel === 'whatsapp' ? 'WhatsApp' : 'VoIP');
 
-  const getContactLabel = (call: Call) => call.contact?.name
-    || (call.direction === 'inbound' ? 'Chamada recebida' : 'Chamada realizada');
+  const getContactLabel = (call: SearchMyCallsRow) =>
+    call.peer_name || call.contact_name || call.peer_number || (call.direction === 'inbound' ? 'Chamada recebida' : 'Chamada realizada');
 
-  const getStatusBadge = (call: Call) => {
+  const getStatusBadge = (call: SearchMyCallsRow) => {
     if (call.status === 'ended') {
       return call.answered_at
         ? <Badge className="text-3xs">Concluída</Badge>
@@ -170,109 +214,51 @@ export function TelefoniaView() {
 
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-4 items-start">
-        {/* Histórico */}
-        <div className="space-y-3 min-w-0">
-          <div className="flex flex-col sm:flex-row gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); resetSelection(); }}
-                placeholder="Buscar por nome ou telefone..."
-                className="pl-8"
-              />
-            </div>
-            <Select value={channel} onValueChange={(v) => { setChannel(v as typeof channel); resetSelection(); }}>
-              <SelectTrigger className="sm:w-32"><SelectValue placeholder="Canal" /></SelectTrigger>
-              <SelectContent>
-                {CHANNEL_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={direction} onValueChange={(v) => { setDirection(v as typeof direction); resetSelection(); }}>
-              <SelectTrigger className="sm:w-36"><SelectValue placeholder="Direção" /></SelectTrigger>
-              <SelectContent>
-                {DIRECTION_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={result} onValueChange={(v) => { setResult(v as typeof result); resetSelection(); }}>
-              <SelectTrigger className="sm:w-36"><SelectValue placeholder="Resultado" /></SelectTrigger>
-              <SelectContent>
-                {RESULT_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+        {/* Fase 4 (T43-T53): o historico agora vem da RPC `search_my_calls`, paginado no
+            servidor (8 por pagina). Os filtros continuam sendo os da URL (T36), entao
+            trocar busca, direcao, resultado, aba de canal, escopo ou pagina refaz a
+            consulta e o link compartilhado abre no mesmo recorte. */}
+        <CallHistoryCard
+          total={historicos.total}
+          escopo={filtros.scope}
+          onEscopoChange={(v) => setFilter('scope', v)}
+          podeEscolherEscopo={podeEscolherEscopo}
+        >
+          <CallHistoryTabs canal={filtros.channel} onCanalChange={(v) => setFilter('channel', v)} />
+          <CallHistoryToolbar
+            busca={filtros.q}
+            direcao={filtros.dir}
+            resultado={filtros.result}
+            onBuscaChange={(v) => setFilter('q', v)}
+            onDirecaoChange={(v) => setFilter('dir', v)}
+            onResultadoChange={(v) => setFilter('result', v)}
+          />
 
-          {isLoading ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map(i => <div key={i} className="h-16 bg-muted/50 rounded-lg animate-pulse" />)}
-            </div>
-          ) : calls.length === 0 ? (
-            <Card className="border-secondary/30 border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <PhoneCall className="w-12 h-12 text-muted-foreground/30 mb-3" />
-                <p className="text-sm text-muted-foreground">Nenhuma chamada encontrada</p>
-              </CardContent>
-            </Card>
+          {historicos.isError ? (
+            <CallHistoryError onTentarNovamente={() => historicos.refetch()} />
+          ) : historicos.isLoading ? (
+            <CallHistorySkeleton />
+          ) : historicos.rows.length === 0 ? (
+            <CallHistoryEmpty
+              porFiltro={temFiltro}
+              onLimparFiltros={() => limpar()}
+              onNovaLigacao={() => limpar()}
+            />
           ) : (
-            <>
-              {calls.map((call, i) => (
-                <motion.div key={call.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: Math.min(i, 10) * 0.03 }}>
-                  <Card
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setSelectedCallId(call.id)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedCallId(call.id); }}
-                    className={`border-secondary/30 hover:border-primary/40 transition-colors cursor-pointer ${selectedCallId === call.id ? 'border-primary' : ''}`}
-                  >
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                            {getDirectionIcon(call.direction, call.status)}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-medium text-foreground truncate">
-                                {getContactLabel(call)}
-                              </p>
-                              <Badge variant="outline" className="text-3xs shrink-0">{getChannelLabel(call)}</Badge>
-                            </div>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-3xs text-muted-foreground">
-                                {format(new Date(call.started_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                              </span>
-                              {call.duration_seconds != null && (
-                                <span className="text-3xs text-muted-foreground flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  {formatCallDuration(call.duration_seconds)}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {call.recording_url && (
-                            <FileAudio className="w-3.5 h-3.5 text-primary" aria-label="Tem gravação" />
-                          )}
-                          {getStatusBadge(call)}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-              {hasNextPage && (
-                <div className="flex justify-center pt-2">
-                  <Button variant="outline" size="sm" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
-                    {isFetchingNextPage && <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />}
-                    Carregar mais
-                  </Button>
-                </div>
-              )}
-            </>
+            <CallHistoryTable
+              rows={historicos.rows}
+              selecionadaId={filtros.call || null}
+              onSelecionar={(id) => setFilter('call', id)}
+              onLigarDeVolta={ligarDeVolta}
+            />
           )}
-        </div>
 
+          <CallsPagination
+            page={historicos.page}
+            pages={historicos.pages}
+            onPageChange={(p) => setFilter('page', String(p))}
+          />
+        </CallHistoryCard>
         {/* Painel lateral: discador ou detalhe da chamada selecionada */}
         <div className="xl:sticky xl:top-4">
           <Card className="border-secondary/30">
@@ -288,8 +274,10 @@ export function TelefoniaView() {
 
                   <div>
                     <p className="text-base font-medium text-foreground">{getContactLabel(selectedCall)}</p>
-                    {selectedCall.contact?.phone && (
-                      <p className="text-sm text-muted-foreground">{selectedCall.contact.phone}</p>
+                    {(selectedCall.contact_phone || selectedCall.peer_number) && (
+                      <p className="text-sm text-muted-foreground">
+                        {selectedCall.contact_phone || selectedCall.peer_number}
+                      </p>
                     )}
                   </div>
 
@@ -306,17 +294,15 @@ export function TelefoniaView() {
                     {selectedCall.ended_at && (
                       <p>Fim: {format(new Date(selectedCall.ended_at), 'dd/MM/yyyy HH:mm:ss', { locale: ptBR })}</p>
                     )}
-                    {selectedCall.duration_seconds != null && (
-                      <p>Duração: {formatCallDuration(selectedCall.duration_seconds)}</p>
+                    {talkSeconds(selectedCall) != null && (
+                      <p>Duração: {formatClock(talkSeconds(selectedCall))}</p>
                     )}
                   </div>
 
-                  {selectedCall.recording_url && (
-                    <div>
-                      <p className="text-xs font-medium text-foreground mb-1">Gravação</p>
-                      <audio ref={recordingAudioRef} controls src={selectedCall.recording_url} className="w-full h-9" />
-                    </div>
-                  )}
+                  {/* T67 (antecipado): o <audio src={recording_url}> cru saiu. A linha da RPC
+                      nao carrega mais a URL da gravacao - o que existe e `recording_status`.
+                      O player definitivo (so quando `recording_status === 'available'`) e o
+                      RecordingPlayer do T67, na Fase 6. */}
 
                   <div className="space-y-1.5">
                     <p className="text-xs font-medium text-foreground">Anotações</p>
