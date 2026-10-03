@@ -1,4 +1,4 @@
-import { escapeIlikeExact, externalParticipantEmail, handleCRMIntegrationRequest } from './index.ts';
+import { emailCompanySocials, escapeIlikeExact, externalParticipantEmail, handleCRMIntegrationRequest } from './index.ts';
 
 function assertStatus(actual: number, expected: number) {
   if (actual !== expected) throw new Error(`expected HTTP ${expected}, got ${actual}`);
@@ -22,6 +22,18 @@ Deno.test('keeps the first external participant when a later reply-all sender ap
 
 Deno.test('escapes SQL pattern characters before exact insensitive email lookup', () => {
   if (escapeIlikeExact('person_%@example.com') !== 'person\\_\\%@example.com') throw new Error('email wildcard was not escaped');
+});
+
+Deno.test('projects only social networks accepted by the Email company contract', () => {
+  const socials = emailCompanySocials([
+    { plataforma: 'linkedin', url: 'https://linkedin.example/acme' },
+    { plataforma: 'Facebook', url: 'https://facebook.example/acme' },
+    { plataforma: 'instagram', url: 'https://instagram.example/acme' },
+  ]);
+  if (JSON.stringify(socials) !== JSON.stringify([
+    { platform: 'linkedin', url: 'https://linkedin.example/acme' },
+    { platform: 'instagram', url: 'https://instagram.example/acme' },
+  ])) throw new Error('unsupported CRM social network escaped the Email projection');
 });
 
 Deno.test('rejects anonymous request before consuming its body', async () => {

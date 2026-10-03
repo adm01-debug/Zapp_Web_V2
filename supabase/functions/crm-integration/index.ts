@@ -178,6 +178,18 @@ export function escapeIlikeExact(value: string): string {
   return value.replace(/[\\%_]/g, '\\$&');
 }
 
+/** Keep the Edge projection aligned with the narrow Email runtime contract. */
+export function emailCompanySocials(rows: unknown[]): Array<{ platform: 'linkedin' | 'instagram'; url: string }> {
+  return rows.flatMap((row: unknown) => {
+    const social = objectValue(row);
+    const platform = nonEmptyText(social?.plataforma)?.toLowerCase();
+    const url = nonEmptyText(social?.url);
+    // The CRM can store other networks (for example Facebook), but returning
+    // one here would invalidate the entire client-side boundary guard.
+    return platform && url && (platform === 'linkedin' || platform === 'instagram') ? [{ platform, url }] : [];
+  });
+}
+
 export async function handleCRMIntegrationRequest(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
@@ -273,15 +285,7 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
     const address = objectValue((addressResult.data || [])[0]);
     const location = [address?.cidade, address?.estado, address?.pais]
       .map(nonEmptyText).filter((part): part is string => Boolean(part)).join(', ') || null;
-    const socials = (socialResult.data || []).flatMap((row: unknown) => {
-      const social = objectValue(row);
-      const platform = nonEmptyText(social?.plataforma)?.toLowerCase();
-      const url = nonEmptyText(social?.url);
-      // The Email DTO is intentionally a small, typed projection.  The CRM can
-      // store other networks (for example Facebook), but returning one here
-      // would invalidate the entire client-side boundary guard.
-      return platform && url && (platform === 'linkedin' || platform === 'instagram') ? [{ platform, url }] : [];
-    });
+    const socials = emailCompanySocials(socialResult.data || []);
     const name = nonEmptyText(company.nome_fantasia) || nonEmptyText(company.nome_crm) || nonEmptyText(company.razao_social);
     if (!name) return null;
     return {
