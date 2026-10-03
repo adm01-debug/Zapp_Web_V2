@@ -31,13 +31,17 @@
 
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
 import {
+  contaParaQuota,
   extractAiRequestId,
   extrairUsageDoStream,
+  identidadeDaAcao,
   logAiUsageDetached,
   medirStream,
   normalizeAttempt,
   normalizeCorrelationId,
   normalizeModality,
+  reconciliarConsumo,
+  type LinhaDeConsumo,
   type StreamOutcome,
 } from "./ai-usage.ts";
 
@@ -676,4 +680,119 @@ Deno.test("IA-053 logAiUsage: consumo medido grava o número e NÃO marca unknow
     restaurar();
     restaurarEnv();
   }
+});
+
+// ---------------------------------------------------------------------------
+// (h) IA-054 — ação, tentativa e cobrança
+// ---------------------------------------------------------------------------
+// Aceite da etapa: "Totais de ações, tentativas, falhas e consumo se
+// reconciliam com a execução observada", com o risco nomeado de DUPLA CONTAGEM
+// por logs de fallback. Os testes abaixo são o que separa "reconciliar" de
+// "somar linhas".
+function linha(parcial: Partial<LinhaDeConsumo> & { id: string }): LinhaDeConsumo {
+  return { status: "success", inputTokens: 10, outputTokens: 5, ...parcial };
+}
+
+Deno.test("IA-054 o fallback NÃO vira duas ações: origem que falhou + destino que atendeu", () => {
+  const r = reconciliarConsumo([
+    linha({ id: "l1", requestId: "req-1", status: "error", inputTokens: 30, outputTokens: 0 }),
+    linha({ id: "l2", requestId: "req-1", status: "fallback", inputTokens: 40, outputTokens: 20 }),
+  ]);
+
+  assertEquals(r.acoes, 1, "um clique = UMA ação, mesmo com dois saltos de provedor");
+  assertEquals(r.tentativas, 2, "duas chamadas ao provedor = duas tentativas");
+  assertEquals(r.sucessos, 1, "o fallback que atendeu conta como sucesso");
+  assertEquals(r.falhas, 1, "a origem que falhou continua sendo falha observada");
+  assertEquals(r.acoesComMaisDeUmaTentativa, 1);
+  assertEquals(r.tokensMedidos, 90, "os tokens são reais nas DUAS chamadas: somam");
+});
+
+Deno.test("IA-054 retry da fila: três tentativas do mesmo job continuam UMA ação", () => {
+  const r = reconciliarConsumo([
+    linha({ id: "t1", jobId: "job-9", attempt: 1, status: "error", inputTokens: 5, outputTokens: 0 }),
+    linha({ id: "t2", jobId: "job-9", attempt: 2, status: "error", inputTokens: 5, outputTokens: 0 }),
+    linha({ id: "t3", jobId: "job-9", attempt: 3, status: "success", inputTokens: 5, outputTokens: 9 }),
+  ]);
+
+  assertEquals(r.acoes, 1, "tentativa NÃO é ação");
+  assertEquals(r.tentativas, 3);
+  assertEquals(r.falhas, 2);
+  assertEquals(r.sucessos, 1);
+  assertEquals(r.acoesComMaisDeUmaTentativa, 1);
+});
+
+Deno.test("IA-054 consumo sem medição não entra na soma como zero", () => {
+  const r = reconciliarConsumo([
+    linha({ id: "l1", requestId: "req-1", inputTokens: null, outputTokens: null, usageUnknown: true }),
+    linha({ id: "l2", requestId: "req-1", inputTokens: 10, outputTokens: 5 }),
+  ]);
+
+  assertEquals(r.linhasSemMedicao, 1, "a linha sem medição tem de ser declarada como tal");
+  assertEquals(r.tokensMedidos, 15, "só o que foi medido soma — a outra JAMAIS entra como 0");
+  assertEquals(r.acoes, 1);
+  assertEquals(r.tentativas, 2);
+});
+
+Deno.test("IA-054 falha e cancelamento COM consumo cobram; negação sem chamada não", () => {
+  const cobra = contaParaQuota(
+    linha({ id: "x", status: "cancelled", inputTokens: 200, outputTokens: 0 }),
+  );
+  assertEquals(cobra.cobra, true, "stream interrompido que consumiu tokens gastou dinheiro");
+  assertEquals(cobra.motivo, "medido_cancelled");
+
+  const falha = contaParaQuota(linha({ id: "y", status: "error", inputTokens: 7, outputTokens: 3 }));
+  assertEquals(falha.cobra, true, "falha após consumir também é gasto real");
+
+  const negado = contaParaQuota(
+    linha({ id: "z", status: "denied", inputTokens: null, outputTokens: null }),
+  );
+  assertEquals(negado.cobra, false, "negado por quota não chamou o provedor: não há o que cobrar");
+  assertEquals(negado.motivo, "sem_chamada_ao_provedor");
+
+  const semMedicao = contaParaQuota(
+    linha({ id: "w", inputTokens: null, outputTokens: null, usageUnknown: true }),
+  );
+  assertEquals(semMedicao.cobra, false);
+  assertEquals(semMedicao.motivo, "sem_medicao");
+
+  // PRECEDÊNCIA: `usage_unknown` vence número residual. Se um dia um chamador
+  // (ou um insert de outro caminho) gravar a marca de "não medido" junto de
+  // valores, a marca manda — senão o relatório cobraria o que a própria linha
+  // declara não ter sido medido.
+  const unknownComNumeros = contaParaQuota(
+    linha({ id: "v", usageUnknown: true, inputTokens: 99, outputTokens: 99 }),
+  );
+  assertEquals(unknownComNumeros.cobra, false, "`usage_unknown` tem PRECEDÊNCIA sobre resíduo");
+  assertEquals(unknownComNumeros.motivo, "sem_medicao");
+});
+
+Deno.test("IA-054 a mesma linha duas vezes conta UMA (reentrega de insert não dobra)", () => {
+  const uma = linha({ id: "l1", requestId: "req-1", inputTokens: 100, outputTokens: 50 });
+  const r = reconciliarConsumo([uma, { ...uma }]);
+
+  assertEquals(r.linhasDuplicadasIgnoradas, 1, "a repetição tem de ser visível no relatório");
+  assertEquals(r.tentativas, 1);
+  assertEquals(r.acoes, 1);
+  assertEquals(r.tokensMedidos, 150, "dobrar a linha dobraria o custo");
+});
+
+Deno.test("IA-054 linha sem identidade de ação conta tentativa, nunca ação", () => {
+  const r = reconciliarConsumo([linha({ id: "solto", requestId: null, jobId: null })]);
+
+  assertEquals(r.acoes, 0, "não se inventa ação a partir de linha órfã");
+  assertEquals(r.linhasSemIdentidadeDeAcao, 1, "a lacuna fica declarada, não escondida");
+  assertEquals(r.tentativas, 1);
+});
+
+Deno.test("IA-054 identidade da ação: o clique manda, o job é o plano B", () => {
+  assertEquals(identidadeDaAcao({ id: "a", requestId: "r1", jobId: "j1" }), "req:r1");
+  assertEquals(identidadeDaAcao({ id: "b", requestId: null, jobId: "j1" }), "job:j1");
+  assertEquals(identidadeDaAcao({ id: "c", requestId: null, jobId: null }), null);
+});
+
+Deno.test("IA-054 reconciliação vazia não inventa número", () => {
+  const r = reconciliarConsumo([]);
+  assertEquals(r.acoes, 0);
+  assertEquals(r.tentativas, 0);
+  assertEquals(r.tokensMedidos, 0);
 });
