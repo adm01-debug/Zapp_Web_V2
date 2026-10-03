@@ -768,6 +768,14 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   protection, environments, secrets por escopo, apps, `allowed_actions`), e a regra: toda mudança nesses campos
   atualiza a tabela **e** o `github-settings-baseline.json` (E13) no mesmo PR. Verificação: `settings-guard` verde
   contra a tabela.
+  **PARCIAL 2026-10-03** (PR do repo, ver `docs/audits/e95-perimetro-github-2026-10-03.md`): o
+  `github-settings-baseline.json` da E13 **não existia** — foi criado nesta etapa, com o estado medido da API.
+  O `settings-guard` estava **quebrado desde a criação** (6 runs, 6 falhas, `403 Resource not accessible by
+  integration` — o `GITHUB_TOKEN` não tem o escopo `administration`): morria no primeiro GET sem comparar nada
+  **e sem abrir a issue**. Consertado para distinguir regressão de ponto cego. **Falta a tabela no `CLAUDE.md`**:
+  arquivo de instrução de agente exige aprovação do dono e o prompt expirou — texto pronto no relatório, decisão
+  `20261003-110826-2ff5`. Checkbox fica aberto até a tabela entrar. Achado colateral: `strict` está `false`,
+  contrariando a E15(b).
 - [ ] **E96** · C · G-42 · `docs/ci/README.md` (novo): 1 parágrafo por workflow (gatilho, o que prova, o que acontece
   quando falha, quem é avisado), gerado a partir de um bloco `# docs:` no topo de cada YAML por
   `scripts/ci/render-workflow-docs.mjs --check` (falha se divergir). Verificação: `--check` verde no CI.
