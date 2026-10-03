@@ -26,6 +26,13 @@ concurrency:
 jobs:
   audit:
     name: Relatorio de branches
+    # E79: as permissoes de escrita ficam no JOB, nunca no nivel do workflow. O zizmor
+    # (regra excessive-permissions, severidade alta) reprova `write` no topo porque o
+    # escopo vale para todos os jobs; no job, o escopo e' exatamente o que ele usa.
+    permissions:
+      contents: read # o passo de relatorio faz git fetch/cherry
+      actions: read # listar os runs do proprio repositorio (KPI)
+      issues: write # criar/atualizar a issue semanal [kpi-actions]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -34,6 +41,19 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+
+      - name: KPI do GitHub Actions
+        # E79: mede o proprio uso do Actions -- runs/semana por workflow, taxa de
+        # cancelamento, taxa de falha, minutos e os 5 jobs mais lentos. Publica no Job
+        # Summary e mantem uma issue aberta `[kpi-actions]` atualizada a cada semana.
+        # A duracao sai de `run_started_at`/`updated_at`: o endpoint de faturamento
+        # devolve `billable: {}` em repositorio publico (medido em 03/10/2026).
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JANELA_DIAS: '7'
+        run: |
+          set -euo pipefail
+          node scripts/ci/actions-kpi.mjs
 
       - name: Gerar relatorio
         env:
