@@ -96,7 +96,7 @@ export default defineConfig({
     },
     {
       // talkx.spec.ts on Chromium — cobertura focada do Talk X usada pelo
-      // workflow e2e-talkx-pr.yml (PR), espelhando firefox-talkx/webkit-talkx.
+      // workflow e2e-talkx.yml (PR), espelhando firefox-talkx/webkit-talkx.
       // Reusa o storageState gerado pelo projeto "setup".
       name: 'chromium-talkx',
       testMatch: /talkx\.spec\.ts/,
@@ -109,7 +109,7 @@ export default defineConfig({
     {
       // talkx-visual.spec.ts — régua visual (X004): captura 1672×941, tema
       // escuro, com a sessão falsa + fixture de X003 (mockTalkXVisual). Roda
-      // DESLOGADO (sem setup, sem secrets) no e2e-talkx-pr.yml — a sessão é
+      // DESLOGADO (sem setup, sem secrets) no e2e-talkx.yml — a sessão é
       // injetada no localStorage pelo próprio spec.
       name: 'chromium-talkx-visual',
       testMatch: /talkx-visual\.spec\.ts/,

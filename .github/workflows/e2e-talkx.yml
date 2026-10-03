@@ -12,7 +12,7 @@
 # NÃO é required no branch protection — é informativo.
 # ==========================================================================
 
-name: E2E Talk X (PR)
+name: E2E Talk X
 
 on:
   pull_request:
@@ -26,20 +26,23 @@ on:
       - 'e2e/fixtures/talkx-demo.ts'
       - 'e2e/fixtures/talkx-demo/**'
       - 'scripts/talkx/lado-a-lado.mjs'
-      - 'playwright.config.ts'
-      - '.github/workflows/e2e-talkx-pr.yml'
+      # E84: `playwright.config.ts` saiu daqui. Ele é config global da suíte — foi
+      # tocado em 20 dos últimos 60 commits, quase sempre por trabalho que não é do
+      # Talk X, disparando este workflow sem motivo ("PR de Contatos não dispara").
+      # A config global continua coberta pelo job E2E do ci.yml, que é required.
+      - '.github/workflows/e2e-talkx.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: e2e-talkx-pr-${{ github.ref }}
+  group: e2e-talkx-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  e2e-talkx-pr:
-    name: 🎭 E2E Talk X (PR, Chromium, deslogado)
+  e2e-talkx:
+    name: 🎭 E2E Talk X (Chromium, deslogado)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
