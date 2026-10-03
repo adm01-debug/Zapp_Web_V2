@@ -27,8 +27,10 @@ window.addEventListener('error', (event) => {
   reportClientError(event.error ?? event.message, { source: 'window.onerror' });
 });
 
-// Initialize Web Vitals monitoring
+// Initialize Web Vitals monitoring (alvos de performance-budget.json) + envio ao Speed Insights
 initWebVitals();
+// Speed Insights num módulo lazy: não entra no bundle inicial (a folga do orçamento é pequena).
+void import("./lib/speed-insights").then((m) => m.initSpeedInsights());
 
 const rootElement = document.getElementById("root");
 

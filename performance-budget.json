@@ -20,29 +20,34 @@
   "web-vitals": {
     "LCP": {
       "target": 2500,
+      "poor": 4000,
       "unit": "ms",
       "rating": "good"
     },
     "FID": {
       "target": 100,
+      "poor": 300,
       "unit": "ms",
       "rating": "good"
     },
     "INP": {
       "target": 200,
+      "poor": 500,
       "unit": "ms",
       "rating": "good"
     },
     "CLS": {
       "target": 0.1,
+      "poor": 0.25,
       "unit": "score",
       "rating": "good"
     },
     "TTFB": {
       "target": 800,
+      "poor": 1800,
       "unit": "ms",
       "rating": "good"
     }
   },
-  "notes": "Run 'npx vite-bundle-visualizer' to audit. Check Web Vitals via src/lib/web-vitals.ts"
+  "notes": "Run 'npx vite-bundle-visualizer' to audit. Os alvos de Web Vitals desta seção sao LIDOS por src/lib/web-vitals.ts (secao 'target' = limite de good; 'poor' = limite de poor). Coleta real: Speed Insights da Vercel, instrumentado em src/lib/web-vitals.ts (initSpeedInsights)."
 }
