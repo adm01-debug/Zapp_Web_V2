@@ -304,7 +304,6 @@ migration "20261002621230_f55_claimable_items_por_bloco.sql"
 # A f60 grava na trilha (multiplix_events, da f34) e le os itens (f32a/f32b). A f34 nao
 # estava na cadeia deste harness — sem ela a trilha nao existiria e o teste provaria nada.
 migration "20261002671230_f60_conexao_capacidades_e_risco.sql"
-migration "20261002701230_f62_resposta_correlacionada.sql"
 migration "20261003092707_f62b_leitura_janela_jsonb.sql"
 
 
