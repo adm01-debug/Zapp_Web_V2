@@ -12,10 +12,7 @@
     "verify_jwt_true": 57,
     "verify_jwt_false": 13
   },
-  "orphan_allowlist": [
-    "sicoob-bridge",
-    "sicoob-bridge-reply"
-  ],
+  "orphan_allowlist": ["sicoob-bridge", "sicoob-bridge-reply"],
   "source_files": [
     {
       "path": "supabase/functions/_shared/ai-audio-authz.ts",
@@ -419,8 +416,8 @@
     },
     {
       "path": "supabase/functions/crm-integration/index.ts",
-      "bytes": 26101,
-      "sha256": "d4f5d62881a5efe398436d1a4663e152aab1c937110403ff26dd60435122e16e"
+      "bytes": 33009,
+      "sha256": "93515d1d1629feb00ad5366d967bc8c328f26a2f9264051266357ef12c62c644"
     },
     {
       "path": "supabase/functions/csp-report/index.ts",
@@ -594,8 +591,8 @@
     },
     {
       "path": "supabase/functions/promogifts-catalog/index.ts",
-      "bytes": 23801,
-      "sha256": "6b9530028073bf184955575320e0258d6986a6224a3a91eaa3d9873ddd7e832a"
+      "bytes": 24423,
+      "sha256": "534039a3352b661c5dbdd113024b338d0339abd5454796a05b4efc64e4a50418"
     },
     {
       "path": "supabase/functions/public-api/index.ts",
@@ -1081,7 +1078,7 @@
       "name": "crm-integration",
       "entrypoint": "supabase/functions/crm-integration/index.ts",
       "verify_jwt": false,
-      "source_sha256": "65b8ded7146d548fc5a8de912c41b140bdcdf3b4a858282c8af3ad55a7943182",
+      "source_sha256": "71b3023e44457430703e6e9bf9ebd886bd7864c9bd7158e3060e1ba1d87cbd5c",
       "source_files": [
         "supabase/functions/_shared/ai-vocabulary.ts",
         "supabase/functions/_shared/crm-integration-contract.ts",
@@ -1499,7 +1496,7 @@
       "name": "promogifts-catalog",
       "entrypoint": "supabase/functions/promogifts-catalog/index.ts",
       "verify_jwt": true,
-      "source_sha256": "5b3b5d657040257781e3b95ded6258ee7938d225bcff8310b5875c14144a7e13",
+      "source_sha256": "22a8a455e86aa09a655e97e2b51ae10546e993447710b840075a4663bc73e1c9",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1743,5 +1740,5 @@
       ]
     }
   ],
-  "manifest_sha256": "f86c146498040d7701cb85450a470b92f57b8af165d92f95b18913d37fd1e752"
+  "manifest_sha256": "2a2d727f362bc99e30b77ad63b1ca76737cb828740e4c5c39e3e472d9b49783d"
 }
