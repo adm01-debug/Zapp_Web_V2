@@ -86,6 +86,7 @@ jobs:
       # MESMA funcao, confira se ja nao ha um run dela pendente/em execucao.
       - name: Exigir ref confiavel da main
         run: |
+          set -euo pipefail
           if [ "$GITHUB_REF" != "refs/heads/main" ]; then
             echo "::error::Deploy de producao so pode executar a partir de refs/heads/main."
             exit 1
@@ -102,6 +103,7 @@ jobs:
         env:
           SOURCE_REF: ${{ inputs.source_ref }}
         run: |
+          set -euo pipefail
           DEPLOYED_GIT_SHA=$(git rev-parse HEAD)
           if [ -z "$SOURCE_REF" ]; then
             test "$DEPLOYED_GIT_SHA" = "$GITHUB_SHA"
@@ -118,6 +120,7 @@ jobs:
 
       - name: Fixar coletor confiavel mesmo durante rollback
         run: |
+          set -euo pipefail
           mkdir -p "$RUNNER_TEMP/edge-tooling"
           git archive "$GITHUB_SHA" scripts/edge-deploy | tar -x -C "$RUNNER_TEMP/edge-tooling"
 
@@ -130,6 +133,7 @@ jobs:
 
       - name: Validar gerador e manifesto de deployment
         run: |
+          set -euo pipefail
           node --test scripts/edge-deploy/*.unit.mjs
           node scripts/edge-deploy/generate-manifest.mjs --check
 
@@ -144,6 +148,7 @@ jobs:
           PROJECT_REF: tnnnlkbymytvtqngbbqh
           FN: ${{ inputs.function_name }}
         run: |
+          set -euo pipefail
           if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
             echo "::error::SUPABASE_ACCESS_TOKEN ausente."
             exit 1
@@ -176,6 +181,7 @@ jobs:
           PREVIEW_EGRESS_SHARED_SECRET: ${{ secrets.PREVIEW_EGRESS_SHARED_SECRET }}
           FN: ${{ inputs.function_name }}
         run: |
+          set -euo pipefail
           if [ -n "$CRON_SECRET" ]; then
             echo "Setando CRON_SECRET nas edges"
             supabase secrets set CRON_SECRET="$CRON_SECRET" --project-ref "$PROJECT_REF"
@@ -266,6 +272,7 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           PROJECT_REF: tnnnlkbymytvtqngbbqh
         run: |
+          set -euo pipefail
           umask 077
           mkdir -p "$RUNNER_TEMP/edge-deployment-evidence"
           node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/collect-remote.mjs" --snapshot \
@@ -281,7 +288,7 @@ jobs:
           # F-02 (auditoria 2026-09-27): sem pipefail, falha do CLI do supabase
           # era mascarada pelo tee (exit 0) e só aparecia ~12 min depois quando
           # a verificação pós-deploy não encontrava o deploy esperado.
-          set -o pipefail
+          set -euo pipefail
           EVIDENCE_DIR="$RUNNER_TEMP/edge-deployment-evidence"
           mkdir -p "$EVIDENCE_DIR"
           DEPLOY_LOG="$EVIDENCE_DIR/deploy-output.log"
@@ -321,6 +328,7 @@ jobs:
           PROJECT_REF: tnnnlkbymytvtqngbbqh
           FN: ${{ inputs.function_name }}
         run: |
+          set -euo pipefail
           umask 077
           EVIDENCE_DIR="$RUNNER_TEMP/edge-deployment-evidence"
           mkdir -p "$EVIDENCE_DIR"
@@ -339,6 +347,7 @@ jobs:
         env:
           PROJECT_REF: tnnnlkbymytvtqngbbqh
         run: |
+          set -euo pipefail
           node scripts/edge-deploy/smoke-functions.mjs \
             --manifest supabase/deployment-manifest.json \
             --base-url "https://$PROJECT_REF.supabase.co/functions/v1" \
@@ -349,6 +358,7 @@ jobs:
       - name: Publicar resumo da evidencia
         if: always()
         run: |
+          set -euo pipefail
           node --input-type=module <<'NODE'
           import { appendFileSync, existsSync, readFileSync } from 'node:fs';
           const evidenceDir = `${process.env.RUNNER_TEMP}/edge-deployment-evidence`;
@@ -381,6 +391,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # run_id no nome: com deploys paralelos, dois runs podem terminar no mesmo segundo.
+          set -euo pipefail
           TAG="edge-deploy/$(date -u +%Y%m%d-%H%M%S)-${DEPLOYED_GIT_SHA:0:8}-${GITHUB_RUN_ID}"
           git -c user.name="github-actions[bot]" \
               -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
