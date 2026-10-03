@@ -12,6 +12,24 @@ import { supabase } from '@/integrations/supabase/client';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+/**
+ * Linha da view `whatsapp_connections_safe`. A view nao esta no types.ts gerado
+ * (depende do types-sync), entao o contrato fica declarado aqui; o `.from(... as any)`
+ * continua sendo o contorno do tipo faltante, nao um atalho de leitura.
+ */
+interface SafeConnectionRow {
+  id: string;
+  name: string;
+  status?: string | null;
+  [k: string]: unknown;
+}
+
+/** Corpo devolvido pela edge function evolution-api (erro vem com HTTP 200). */
+interface EvolutionApiResponse {
+  error?: unknown;
+  message?: string;
+}
+
 export interface EvolutionInstance {
   id: string;
   instance_name: string;
@@ -59,7 +77,7 @@ export async function getEvolutionInstances(): Promise<EvolutionInstance[]> {
     .order('name' as any, { ascending: true });
 
   if (error) throw error;
-  return (data ?? []).map((item: any) => ({
+  return ((data ?? []) as unknown as SafeConnectionRow[]).map((item) => ({
     ...item,
     instance_name: item.name,
     is_connected: item.status === 'connected' || item.status === 'open'
@@ -79,7 +97,7 @@ export async function getEvolutionInstanceById(
     .single();
 
   if (error) return null;
-  const item = data as any;
+  const item = data as unknown as SafeConnectionRow;
   return {
     ...item,
     instance_name: item.name,
@@ -100,7 +118,7 @@ export async function getEvolutionInstanceByName(
     .single();
 
   if (error) return null;
-  const item = data as any;
+  const item = data as unknown as SafeConnectionRow;
   return {
     ...item,
     instance_name: item.name,
@@ -119,7 +137,7 @@ export async function getConnectedEvolutionInstances(): Promise<EvolutionInstanc
     .in('status', ['connected', 'open']);
 
   if (error) throw error;
-  return (data ?? []).map((item: any) => ({
+  return ((data ?? []) as unknown as SafeConnectionRow[]).map((item) => ({
     ...item,
     instance_name: item.name,
     is_connected: item.status === 'connected' || item.status === 'open'
@@ -144,7 +162,7 @@ export async function updateEvolutionInstanceStatus(
   // A coluna que carrega o nome da instância Evolution é instance_id
   // (instance_name não existe em whatsapp_connections).
   const { error } = await supabase
-    .from('whatsapp_connections' as any)
+    .from('whatsapp_connections')
     .update({ ...update, updated_at: new Date().toISOString() } as any)
     .eq('instance_id', instanceName);
 
@@ -172,8 +190,9 @@ export async function sendEvolutionMessage(
     },
   });
 
-  if (error || (data as any)?.error) {
-    throw new Error((data as any)?.message || 'Failed to send message via Evolution API');
+  const res = data as EvolutionApiResponse | null;
+  if (error || res?.error) {
+    throw new Error(res?.message || 'Failed to send message via Evolution API');
   }
 }
 
@@ -195,7 +214,8 @@ export async function sendEvolutionMedia(
     },
   });
 
-  if (error || (data as any)?.error) {
-    throw new Error((data as any)?.message || 'Failed to send media via Evolution API');
+  const res = data as EvolutionApiResponse | null;
+  if (error || res?.error) {
+    throw new Error(res?.message || 'Failed to send media via Evolution API');
   }
 }
