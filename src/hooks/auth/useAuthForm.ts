@@ -100,7 +100,8 @@ export function useAuthForm() {
     // um e-mail que o proprio estado nunca viu. Medido em producao: estado com A
     // e DOM com B -> a requisicao saiu com B. Por isso o e-mail prefere o estado
     // quando ele existe; a senha segue o caminho antigo, onde o DOM e essencial.
-    const fd = new FormData(e.currentTarget as HTMLFormElement);
+    const formEl = e.currentTarget as HTMLFormElement;
+    const fd = new FormData(formEl);
     const credentials = {
       ...formData,
       email: formData.email.trim() || ((fd.get("email") as string | null) ?? "").trim(),
@@ -132,7 +133,15 @@ export function useAuthForm() {
 
     if (error) {
       if (lock) setLockStatus(lock);
+      // Decisao de produto (03/10): depois de uma recusa a senha sai do estado E do
+      // DOM. O handler prefere o valor do DOM (`fd.get("password") || ...`), entao
+      // limpar so o estado deixava a senha RECUSADA voltar no proximo envio — o
+      // campo exibia uma senha que o app tinha acabado de rejeitar. O autofill
+      // continua valendo no primeiro envio; o que muda e so o pos-recusa, onde os
+      // dois ficam vazios de proposito e o usuario redigita.
       setFormData((prev) => ({ ...prev, password: '' }));
+      const campoSenha = formEl.querySelector<HTMLInputElement>('input[name="password"]');
+      if (campoSenha) campoSenha.value = '';
       if (lock?.isLocked) {
         toast({ title: 'Conta bloqueada temporariamente', description: `Após ${lock.attempts} tentativas, sua conta foi bloqueada por ${formatLockTime(lock.remainingTime)}.`, variant: 'destructive' });
       } else {
