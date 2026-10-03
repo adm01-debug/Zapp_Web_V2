@@ -12,6 +12,14 @@ Deno.test('derives the external participant without treating the active Gmail ac
   if (participant !== 'customer@example.com') throw new Error(`expected customer@example.com, got ${participant}`);
 });
 
+Deno.test('keeps the first external participant when a later reply-all sender appears', () => {
+  const participant = externalParticipantEmail([
+    { from_address: 'owner@example.com', to_addresses: ['agent@example.com'], cc_addresses: [], direction: 'inbound' },
+    { from_address: 'copied@example.com', to_addresses: ['agent@example.com'], cc_addresses: [], direction: 'inbound' },
+  ], 'agent@example.com');
+  if (participant !== 'owner@example.com') throw new Error(`expected owner@example.com, got ${participant}`);
+});
+
 Deno.test('escapes SQL pattern characters before exact insensitive email lookup', () => {
   if (escapeIlikeExact('person_%@example.com') !== 'person\\_\\%@example.com') throw new Error('email wildcard was not escaped');
 });

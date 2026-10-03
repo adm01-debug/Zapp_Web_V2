@@ -26,4 +26,12 @@ describe('resolveEmailConversationPerson', () => {
     ], 'agent@example.com');
     expect(result).toEqual({ email: 'primary@example.com', name: null });
   });
+
+  it('keeps the original external participant when another address replies later', () => {
+    const result = resolveEmailConversationPerson([
+      message({ id: 'first', from_address: 'owner@example.com', from_name: 'Owner', internal_date: '2026-10-03T10:00:00.000Z' }),
+      message({ id: 'later', from_address: 'copied@example.com', from_name: 'Copied', internal_date: '2026-10-03T14:00:00.000Z' }),
+    ], 'agent@example.com');
+    expect(result).toEqual({ email: 'owner@example.com', name: 'Owner' });
+  });
 });

@@ -12,15 +12,18 @@ function normalizeEmail(value: string | null | undefined): string | null {
 
 /**
  * Selects the actual external interlocutor without trusting `last_from_address`.
- * Incoming senders take precedence; for outbound messages Gmail's To order is the
- * explicit primary-recipient order. CC is only a fallback.
+ * The first external participant is stable for the lifetime of the thread.
+ * A later reply-all sender must not silently replace the person/company shown
+ * in the sidebar; for outbound-only threads Gmail's To order is authoritative
+ * and CC remains only a fallback.
  */
 export function resolveEmailConversationPerson(
   messages: EmailMessage[],
   accountEmail?: string | null,
 ): EmailConversationPerson | null {
   const ownEmail = normalizeEmail(accountEmail);
-  const ordered = [...messages].sort((left, right) => right.internal_date.localeCompare(left.internal_date));
+  const ordered = [...messages].sort((left, right) =>
+    left.internal_date.localeCompare(right.internal_date) || left.id.localeCompare(right.id));
   for (const message of ordered) {
     const sender = normalizeEmail(message.from_address);
     if (message.direction === 'inbound' && sender && sender !== ownEmail) {

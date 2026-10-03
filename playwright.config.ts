@@ -249,7 +249,11 @@ export default defineConfig({
     return {
       // O app de desenvolvimento usa 8080 por padrao; o E2E tem porta propria
       // para que a sonda do Playwright e o navegador exercitem o MESMO processo.
-      command: `bun run dev -- --host 127.0.0.1 --port ${porta} --strictPort`,
+      // Fixture tests exercise both sides of the runtime kill switch.  This is
+      // test-server-only; production still requires the build env and the
+      // feature flag.  Without it, a complete CRM fixture can never reach the
+      // panel and falsely validates only the disabled state.
+      command: `VITE_CRM_INTEGRATION_ENABLED=true bun run dev -- --host 127.0.0.1 --port ${porta} --strictPort`,
       url,
       // Fora do CI o desenvolvedor costuma ja' ter o dev server no ar: reusar
       // a propria porta e' o comportamento util. O que nao pode acontecer e'
