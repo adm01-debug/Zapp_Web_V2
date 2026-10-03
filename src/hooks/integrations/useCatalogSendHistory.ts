@@ -58,17 +58,35 @@ function embeddedName(raw: unknown): string | null {
   return typeof name === 'string' && name.trim() ? name : null;
 }
 
-export function useCatalogSendHistory() {
+export interface UseCatalogSendHistoryOptions {
+  /**
+   * Recorta o histórico por destinatário (ex.: perfil do contato / CT-54).
+   * É só um `eq('contact_id', ...)`: estreita o resultado, nunca amplia — a
+   * policy de RLS da tabela continua sendo a fonte de verdade do escopo por
+   * agente (o filtro não fura o recorte do agente logado).
+   */
+  contactId?: string | null;
+}
+
+export function useCatalogSendHistory(options: UseCatalogSendHistoryOptions = {}) {
+  // `null`/vazio = comportamento antigo (aba "Enviados": histórico completo).
+  const contactId = options.contactId || null;
   const query = useQuery({
-    queryKey: [...CATALOG_SEND_EVENTS_KEY, 'history', CATALOG_SEND_HISTORY_LIMIT],
+    // Chave idêntica à de antes quando não há filtro (não invalida o cache da
+    // aba "Enviados"); ganha o sufixo do contato quando o filtro é usado.
+    queryKey: contactId
+      ? [...CATALOG_SEND_EVENTS_KEY, 'history', 'contact', contactId, CATALOG_SEND_HISTORY_LIMIT]
+      : [...CATALOG_SEND_EVENTS_KEY, 'history', CATALOG_SEND_HISTORY_LIMIT],
     queryFn: async (): Promise<CatalogSendHistoryRow[]> => {
-      const { data, error } = await supabase
+      let builder = supabase
         .from('catalog_send_events')
         .select(
           'id, product_id, product_name, product_sku, variant_label, contact_id, agent_id, template, images_count, status, created_at, contacts(name), profiles!catalog_send_events_agent_id_fkey(name)',
         )
         .order('created_at', { ascending: false })
         .limit(CATALOG_SEND_HISTORY_LIMIT);
+      if (contactId) builder = builder.eq('contact_id', contactId);
+      const { data, error } = await builder;
       if (error) throw error;
       return (data || []).map((r) => {
         const row = r as unknown as Record<string, unknown>;

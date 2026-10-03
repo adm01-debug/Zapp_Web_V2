@@ -142,3 +142,53 @@ test('snapshot whitelists metadata and rejects duplicates', () => {
   assert.doesNotMatch(JSON.stringify(inventorySnapshot(rows.map(fn => ({ ...fn, secret: 'fixture-private' })), CANONICAL_PROJECT)), /fixture-private/);
   assert.throws(() => inventorySnapshot([...rows, rows[0]], CANONICAL_PROJECT), /duplicate/);
 });
+
+// Regressao do run 36983102901 (02/10, 25m08s): uma funcao do escopo que nao
+// aparecia no inventario remoto fez a atestacao esgotar as 144 amostras (~24 min)
+// e entregar so "Remote inventory did not stabilize", sem NUNCA dizer qual funcao
+// faltava -- o catch descartava a mensagem. Agora a causa e preservada e nomeada.
+test('exaustao nomeia a funcao faltante em vez de so "did not stabilize"', async () => {
+  const faltando = rows[0].slug;
+  const semUma = rows.slice(1);
+  const linhas = [];
+  await assert.rejects(
+    simulate([semUma], { log: (linha) => linhas.push(linha) }),
+    (err) => {
+      assert.match(err.message, /did not stabilize after 18 attempts/);
+      assert.ok(err.message.includes(faltando),
+        'a mensagem final tem de nomear a funcao que faltou');
+      return true;
+    },
+  );
+  assert.ok(linhas.length >= 18, 'deve emitir uma linha de progresso por amostra');
+  assert.ok(linhas.some((linha) => linha.includes(faltando)),
+    'o log por amostra tem de nomear a funcao que falta');
+});
+
+test('nunca emite conteudo de resposta da API no log de progresso', async () => {
+  const linhas = [];
+  const segredo = 'SEGREDO-QUE-NAO-PODE-VAZAR';
+  await assert.rejects(
+    simulate([new Error(`401 body: ${segredo}`), new Error(`connect ECONNRESET ${segredo}`)],
+      { log: (linha) => linhas.push(linha) }),
+  );
+  assert.ok(linhas.length > 0);
+  assert.ok(!linhas.some((linha) => linha.includes(segredo)),
+    'falha transitoria de API deve virar rotulo generico, sem corpo de resposta');
+});
+
+// E55 (auditoria de GitHub Actions, 2026-10-01): alem de nomear a funcao
+// faltante, a exaustao passa a rotular a ULTIMA causa observada como
+// `lastReason`, para o operador nao precisar reconstruir as amostras.
+test('E55: exaustao entrega lastReason com a ultima causa observada', async () => {
+  const faltando = rows[0].slug;
+  await assert.rejects(
+    simulate([rows.slice(1)], { maxAttempts: 3 }),
+    (err) => {
+      assert.match(err.message, /did not stabilize after 3 attempts/);
+      assert.match(err.message, /lastReason=/, 'a falha tem de rotular a ultima causa');
+      assert.ok(err.message.includes(faltando), 'lastReason nomeia a funcao que faltou');
+      return true;
+    },
+  );
+});

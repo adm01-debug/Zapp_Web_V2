@@ -1,169 +1,136 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import {
-  X, Mail, Phone, Building2, Tag, Clock, BarChart3,
-  MessageSquare, FileText, Star, ExternalLink, User
-} from 'lucide-react';
-import type { EmailThread } from '@/hooks/integrations/useGmail';
-import { cn } from '@/lib/utils';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Building2, Clock, Download, FileText, Mail, MessageSquare, NotebookPen, Phone, Tag, User, Users, X } from 'lucide-react';
+import type { EmailAttachment, EmailMessage, EmailThread } from '@/hooks/integrations/useGmail';
+import { useContactNotes } from '@/hooks/crm/useContactNotes';
+import { formatEmailFileSize } from '@/lib/emailAttachments';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+type ContextAttachment = EmailAttachment & { gmail_message_id?: string };
+
 interface EmailContactPanelProps {
   thread: EmailThread;
+  messages?: EmailMessage[];
+  attachments?: ContextAttachment[];
+  relatedThreads?: EmailThread[];
+  labels?: Array<{ gmail_label_id: string; name: string }>;
   onClose: () => void;
+  onCompose?: (email: string) => void;
+  onDownloadAttachment?: (attachment: ContextAttachment) => void;
+  onSelectRelated?: (thread: EmailThread) => void;
 }
 
 function getInitials(name?: string | null, email?: string): string {
-  if (name) return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  if (name) return name.split(' ').map(word => word[0]).slice(0, 2).join('').toUpperCase();
   if (email) return email[0]?.toUpperCase() || '?';
   return '?';
 }
 
-export function EmailContactPanel({ thread, onClose }: EmailContactPanelProps) {
+const SYSTEM_LABELS = new Set(['INBOX', 'UNREAD', 'SENT', 'IMPORTANT', 'DRAFT', 'TRASH', 'SPAM', 'STARRED']);
+
+function uniqueParticipants(messages: EmailMessage[]): string[] {
+  const participants = new Set<string>();
+  messages.forEach(message => {
+    if (message.from_address) participants.add(message.from_address);
+    message.to_addresses.forEach(address => participants.add(address));
+    message.cc_addresses.forEach(address => participants.add(address));
+  });
+  return Array.from(participants);
+}
+
+export function EmailContactPanel({
+  thread, messages = [], attachments = [], relatedThreads = [], labels = [], onClose, onCompose,
+  onDownloadAttachment, onSelectRelated,
+}: EmailContactPanelProps) {
   const contact = thread.contact;
-  const [accordionValue, setAccordionValue] = useState<string[]>(['info', 'tags', 'stats']);
+  const displayName = contact?.name || contact?.email || thread.last_from_name || thread.last_from_address || 'Não vinculado ao CRM';
+  const displayEmail = contact?.email || thread.last_from_address || '';
+  const participants = useMemo(() => uniqueParticipants(messages), [messages]);
+  const displayLabels = thread.label_ids
+    .filter(labelId => !SYSTEM_LABELS.has(labelId) && !labelId.startsWith('CATEGORY_'))
+    .map(labelId => labels.find(label => label.gmail_label_id === labelId)?.name || labelId);
+  const [accordionValue, setAccordionValue] = useState<string[]>(['info', 'participants', 'files', 'tags']);
 
   return (
-    <div className="w-80 h-full bg-sidebar border-l border-border/30 flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="p-4 border-b border-border/30 flex items-center justify-between shrink-0">
-        <h3 className="text-sm font-semibold text-foreground">Detalhes do Contato</h3>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} aria-label="Fechar">
-          <X className="w-4 h-4" />
-        </Button>
+    <div className="flex h-full w-80 flex-col overflow-hidden bg-inbox-panel text-foreground">
+      <div className="flex shrink-0 items-center justify-between border-b border-border bg-inbox-panel p-4">
+        <h3 className="text-sm font-semibold">Detalhes da conversa</h3>
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} aria-label="Fechar detalhes"><X className="h-4 w-4" /></Button>
       </div>
-
       <ScrollArea className="flex-1">
-        <div className="p-4 space-y-4">
-          {/* Contact Avatar & Name */}
-          <div className="flex flex-col items-center text-center pb-4 border-b border-border/30">
-            <Avatar className="h-20 w-20 mb-3">
-              <AvatarFallback className="text-lg bg-primary/10 text-primary font-bold">
-                {getInitials(contact?.name, contact?.email)}
-              </AvatarFallback>
+        <div className="space-y-4 p-4">
+          <div className="flex flex-col items-center border-b border-border pb-4 text-center">
+            <Avatar className="mb-3 h-20 w-20 ring-2 ring-primary/40 ring-offset-4 ring-offset-background">
+              <AvatarFallback className="bg-primary/10 text-lg font-bold text-primary">{getInitials(displayName, displayEmail)}</AvatarFallback>
             </Avatar>
-            <h4 className="font-semibold text-foreground text-base">
-              {contact?.name || 'Desconhecido'}
-            </h4>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {contact?.email || ''}
-            </p>
-
-            {/* Quick action buttons */}
-            <div className="flex items-center gap-1 mt-3">
-              <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" title="Email">
-                <Mail className="w-3.5 h-3.5" />
-              </Button>
-              <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" title="CRM">
-                <User className="w-3.5 h-3.5" />
-              </Button>
-            </div>
+            <h4 className="text-base font-semibold text-foreground">{displayName}</h4>
+            {displayEmail && <p className="mt-0.5 max-w-full truncate text-xs text-muted-foreground">{displayEmail}</p>}
+            <Button variant="outline" size="sm" className="mt-3 h-8 rounded-full" disabled={!displayEmail || !onCompose} onClick={() => displayEmail && onCompose?.(displayEmail)}>
+              <Mail className="mr-1.5 h-3.5 w-3.5" />E-mail
+            </Button>
           </div>
 
-          {/* Accordion Sections */}
           <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue}>
-            {/* Info */}
-            <AccordionItem value="info" className="border-border/30">
-              <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline py-2">
-                <span className="flex items-center gap-2">
-                  <User className="w-3.5 h-3.5" />
-                  Informações
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="pb-3">
-                <div className="space-y-2.5">
-                  <InfoRow icon={Mail} label="Email" value={contact?.email} />
-                  <InfoRow icon={MessageSquare} label="Assunto" value={thread.subject || '(Sem assunto)'} />
-                  <InfoRow
-                    icon={Clock}
-                    label="Última mensagem"
-                    value={thread.last_message_at ? format(new Date(thread.last_message_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : '-'}
-                  />
-                  <InfoRow icon={BarChart3} label="Mensagens" value={`${thread.message_count} mensagens na thread`} />
-                </div>
-              </AccordionContent>
-            </AccordionItem>
+            <PanelSection value="info" icon={User} title="Sobre">
+              <div className="space-y-2.5">
+                <InfoRow icon={Mail} label="Email" value={displayEmail} />
+                <InfoRow icon={Phone} label="Telefone" value={contact?.phone} />
+                <InfoRow icon={Building2} label="Empresa" value={contact?.company} />
+                <InfoRow icon={User} label="Cargo" value={contact?.job_title} />
+                <InfoRow icon={MessageSquare} label="Assunto" value={thread.subject || '(Sem assunto)'} />
+                <InfoRow icon={Clock} label="Última mensagem" value={thread.last_message_at ? format(new Date(thread.last_message_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : '-'} />
+                <InfoRow icon={MessageSquare} label="Mensagens" value={`${thread.message_count} mensagens na thread`} />
+              </div>
+            </PanelSection>
 
-            {/* Labels/Tags */}
-            <AccordionItem value="tags" className="border-border/30">
-              <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline py-2">
-                <span className="flex items-center gap-2">
-                  <Tag className="w-3.5 h-3.5" />
-                  Tags
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="pb-3">
-                <div className="flex flex-wrap gap-1.5">
-                  {thread.tags && thread.tags.length > 0 ? (
-                    thread.tags.map(tag => (
-                      <Badge key={tag} variant="secondary" className="text-3xs">
-                        {tag}
-                      </Badge>
-                    ))
-                  ) : (
-                    <p className="text-xs text-muted-foreground">Nenhuma tag</p>
-                  )}
-                  {thread.label_ids && thread.label_ids.length > 0 && (
-                    <>
-                      {thread.label_ids.filter(l => !['INBOX', 'UNREAD', 'SENT', 'IMPORTANT'].includes(l)).map(label => (
-                        <Badge key={label} variant="outline" className="text-3xs">
-                          {label}
-                        </Badge>
-                      ))}
-                    </>
-                  )}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
+            <PanelSection value="participants" icon={Users} title={`Participantes (${participants.length || (displayEmail ? 1 : 0)})`}>
+              <div className="space-y-2">
+                {(participants.length ? participants : displayEmail ? [displayEmail] : []).map(address => (
+                  <div key={address} className="flex items-center gap-2 rounded-lg bg-muted/50 px-2 py-2 text-xs"><Mail className="h-3.5 w-3.5 text-primary" /><span className="min-w-0 truncate">{address}</span></div>
+                ))}
+                {!participants.length && !displayEmail && <p className="text-xs text-muted-foreground">Participantes ainda não disponíveis.</p>}
+              </div>
+            </PanelSection>
 
-            {/* Thread Stats */}
-            <AccordionItem value="stats" className="border-border/30">
-              <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline py-2">
-                <span className="flex items-center gap-2">
-                  <BarChart3 className="w-3.5 h-3.5" />
-                  Estatísticas
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="pb-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <StatCard label="Mensagens" value={thread.message_count} />
-                  <StatCard label="Status" value={thread.is_unread ? 'Não lido' : 'Lido'} />
-                  <StatCard label="Favorito" value={thread.is_starred ? 'Sim' : 'Não'} />
-                  <StatCard label="Anexos" value={thread.label_ids?.includes('HAS_ATTACHMENT') ? 'Sim' : 'Não'} />
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* History */}
-            <AccordionItem value="history" className="border-border/30">
-              <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline py-2">
-                <span className="flex items-center gap-2">
-                  <Clock className="w-3.5 h-3.5" />
-                  Histórico
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="pb-3">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                    <span>Thread criada</span>
-                    <span className="ml-auto text-3xs">
-                      {thread.last_message_at ? format(new Date(thread.last_message_at), 'dd/MM/yy', { locale: ptBR }) : '-'}
-                    </span>
+            <PanelSection value="files" icon={FileText} title={`Anexos (${attachments.length})`}>
+              <div className="space-y-2">
+                {attachments.map(attachment => (
+                  <div key={attachment.id} className="flex items-center gap-2 rounded-lg border border-border bg-card p-2">
+                    <FileText className="h-4 w-4 shrink-0 text-primary" />
+                    <div className="min-w-0 flex-1"><p className="truncate text-xs text-foreground">{attachment.filename || 'Anexo'}</p><p className="text-3xs text-muted-foreground">{formatEmailFileSize(attachment.size_bytes || 0)}</p></div>
+                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7" aria-label={`Baixar ${attachment.filename || 'anexo'}`} disabled={!attachment.gmail_message_id || !onDownloadAttachment} onClick={() => onDownloadAttachment?.(attachment)}><Download className="h-3.5 w-3.5" /></Button>
                   </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
+                ))}
+                {!attachments.length && <p className="text-xs text-muted-foreground">Nenhum anexo nesta conversa.</p>}
+              </div>
+            </PanelSection>
+
+            <PanelSection value="related" icon={MessageSquare} title={`Conversas relacionadas (${relatedThreads.length})`}>
+              <div className="space-y-2">
+                {relatedThreads.map(related => (
+                  <button key={related.id} type="button" className="block w-full rounded-lg border border-border bg-card p-2 text-left hover:bg-accent" onClick={() => onSelectRelated?.(related)} disabled={!onSelectRelated}>
+                    <p className="truncate text-xs font-medium text-foreground">{related.subject || '(Sem assunto)'}</p><p className="mt-1 truncate text-3xs text-muted-foreground">{related.snippet}</p>
+                  </button>
+                ))}
+                {!relatedThreads.length && <p className="text-xs text-muted-foreground">Nenhuma outra conversa vinculada a este contato.</p>}
+              </div>
+            </PanelSection>
+
+            <PanelSection value="tags" icon={Tag} title="Tags e marcadores">
+              <div className="flex flex-wrap gap-1.5">
+                {[...(thread.tags || []), ...(contact?.tags || [])].map(tag => <Badge key={tag} variant="secondary" className="text-3xs">{tag}</Badge>)}
+                {displayLabels.map(label => <Badge key={label} variant="outline" className="text-3xs">{label}</Badge>)}
+                {!(thread.tags?.length || contact?.tags?.length || displayLabels.length) && <p className="text-xs text-muted-foreground">Nenhuma tag</p>}
+              </div>
+            </PanelSection>
+
+            {thread.contact_id && <ContactNotes contactId={thread.contact_id} />}
           </Accordion>
         </div>
       </ScrollArea>
@@ -171,24 +138,36 @@ export function EmailContactPanel({ thread, onClose }: EmailContactPanelProps) {
   );
 }
 
-function InfoRow({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value?: string | null }) {
-  if (!value) return null;
+function ContactNotes({ contactId }: { contactId: string }) {
+  const { notes, addNote, isAdding, isLoading, error } = useContactNotes(contactId);
+  const [content, setContent] = useState('');
+  const submit = async () => {
+    const trimmed = content.trim();
+    if (!trimmed) return;
+    await addNote(trimmed, 'note');
+    setContent('');
+  };
   return (
-    <div className="flex items-start gap-2">
-      <Icon className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
-      <div className="min-w-0">
-        <p className="text-3xs text-muted-foreground">{label}</p>
-        <p className="text-xs text-foreground truncate">{value}</p>
+    <PanelSection value="notes" icon={NotebookPen} title={`Notas internas (${notes.length})`}>
+      <div className="space-y-2">
+        {isLoading && <p className="text-xs text-muted-foreground">Carregando notas…</p>}
+        {error && <p role="alert" className="text-xs text-destructive">Não foi possível carregar as notas.</p>}
+        {notes.slice(0, 5).map(note => <div key={note.id} className="rounded-lg bg-muted/50 p-2 text-xs text-foreground">{note.content}</div>)}
+        {!isLoading && !error && notes.length === 0 && <p className="text-xs text-muted-foreground">Nenhuma nota para este contato.</p>}
+        <div className="flex gap-1">
+          <Input aria-label="Nova nota do contato" value={content} onChange={event => setContent(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') void submit(); }} placeholder="Adicionar nota…" className="h-8 border-input bg-input text-xs" />
+          <Button type="button" size="sm" className="h-8" disabled={!content.trim() || isAdding} onClick={() => void submit()}>Salvar</Button>
+        </div>
       </div>
-    </div>
+    </PanelSection>
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="bg-muted/50 rounded-lg p-2 text-center">
-      <p className="text-sm font-semibold text-foreground">{value}</p>
-      <p className="text-3xs text-muted-foreground">{label}</p>
-    </div>
-  );
+function PanelSection({ value, icon: Icon, title, children }: { value: string; icon: React.ComponentType<{ className?: string }>; title: string; children: React.ReactNode }) {
+  return <AccordionItem value={value} className="border-border"><AccordionTrigger className="py-2 text-xs font-semibold uppercase text-muted-foreground hover:no-underline"><span className="flex items-center gap-2"><Icon className="h-3.5 w-3.5" />{title}</span></AccordionTrigger><AccordionContent className="pb-3">{children}</AccordionContent></AccordionItem>;
+}
+
+function InfoRow({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value?: string | null }) {
+  if (!value) return null;
+  return <div className="flex items-start gap-2"><Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" /><div className="min-w-0"><p className="text-3xs text-muted-foreground">{label}</p><p className="truncate text-xs text-foreground">{value}</p></div></div>;
 }

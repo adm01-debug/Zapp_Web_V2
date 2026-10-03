@@ -9,6 +9,7 @@
 import { readFileSync } from 'fs';
 import { spawnSync } from 'child_process';
 import { join } from 'path';
+import { resolverExecutavel } from '../lib/seguranca-processo.mjs';
 import { fileURLToPath } from 'url';
 
 const root = join(fileURLToPath(import.meta.url), '../../..');
@@ -25,11 +26,17 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-v23-draft-step.test.sh',
   'scripts/db-audit/talkx-v25-owner.test.sh',
   'scripts/db-audit/talkx-v26-template-version.test.sh',
+  // --- .test.sh — prova em container descartável (docker); passo de YAML
+  // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
+  'scripts/db-audit/pg-cron-escalonamento.test.sh',
+  'scripts/db-audit/talkx-optout.test.sh',
+  'scripts/db-audit/talkx-overview-stats.test.sh',
+  'scripts/db-audit/talkx-campaign-segments.test.sh',
 ]);
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────
 
-const testTsOnDisk = spawnSync('git', ['ls-files', 'supabase/functions'], { cwd: root, encoding: 'utf8' })
+const testTsOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'supabase/functions'], { cwd: root, encoding: 'utf8' })
   .stdout
   .split('\n')
   .filter(f => f.endsWith('.test.ts'));
@@ -42,7 +49,7 @@ const ciUsesGlob = ciYaml.includes(CI_TS_GLOB);
 
 // ── 2. .test.sh: disco vs db-guard.yml ────────────────────────────────────────
 
-const testShOnDisk = spawnSync('git', ['ls-files', 'scripts/db-audit'], { cwd: root, encoding: 'utf8' })
+const testShOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'scripts/db-audit'], { cwd: root, encoding: 'utf8' })
   .stdout
   .split('\n')
   .filter(f => f.endsWith('.test.sh'));

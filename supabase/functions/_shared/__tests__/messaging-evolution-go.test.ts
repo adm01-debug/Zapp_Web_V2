@@ -39,13 +39,22 @@ function recordingFetcher(response: () => Response = okResponse): { calls: Fetch
   return { calls, fetcher };
 }
 
-function depsFor(fetcher: Fetcher): SendDeps {
+function depsForFlavor(f: "go" | "v2", fetcher: Fetcher): SendDeps {
   return {
     fetch: fetcher,
     evolutionUrl: "https://go.exemplo.com",
     evolutionKey: "admin-key",
     instanceToken: "token-instancia",
+    // FIXA a flavor: este arquivo testa o adaptador GO. Sem fixar, um teste de outro
+    // arquivo que seta EVOLUTION_API_FLAVOR=v2 (env e global no mesmo processo) faz
+    // estes casos falharem por um motivo que nao tem nada a ver com o adaptador.
+    flavor: f,
   };
+}
+
+/** Casos do adaptador GO — a flavor que ele implementa. */
+function depsFor(fetcher: Fetcher): SendDeps {
+  return depsForFlavor("go", fetcher);
 }
 
 // ── (a) capabilities por tipo ───────────────────────────────────────────────

@@ -41,7 +41,7 @@ export default function GmailInboxView() {
     return (
       <div className="flex flex-col items-center justify-center h-full py-20">
         <Mail className="w-16 h-16 text-muted-foreground/20 mb-4" />
-        <h3 className="text-lg font-semibold mb-2">Gmail não conectado</h3>
+        <h1 className="text-lg font-semibold mb-2">Gmail não conectado</h1>
         <p className="text-sm text-muted-foreground text-center max-w-sm mb-4">Conecte sua conta Gmail nas Integracoes para visualizar e gerenciar seus emails aqui.</p>
         <Badge variant="outline" className="text-xs">Integracoes &rarr; Gmail &rarr; Conectar</Badge>
       </div>

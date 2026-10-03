@@ -161,7 +161,7 @@ export function AdminView() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2"><Label htmlFor="edit_tel">Telefone</Label><Input id="edit_tel" value={editingUser.phone || ''} onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })} /></div>
-                <div className="space-y-2"><Label htmlFor="edit_maxchats">Limite de Chats</Label><Input id="edit_maxchats" type="number" min={1} max={50} value={editingUser.max_chats || 5} onChange={(e) => setEditingUser({ ...editingUser, max_chats: parseInt(e.target.value) })} /></div>
+                <div className="space-y-2"><Label htmlFor="edit_maxchats">Limite de Chats</Label><Input id="edit_maxchats" type="number" min={1} max={50} value={editingUser.max_chats || 5} onChange={(e) => setEditingUser({ ...editingUser, max_chats: Number.parseInt(e.target.value) })} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">

@@ -141,6 +141,21 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
             console.warn(`Multiplix delivery acknowledged: ${key.id}`);
           }
         }
+
+        // F58: o recibo tambem resolve o ITEM da fila (multiplix_delivery_items, F32b).
+        // E um registro distinto do destinatario e pode existir mesmo quando o TalkX ja
+        // confirmou o dele — por isso fica FORA do encadeamento acima, que so roda quando
+        // o anterior nao confirmou. A RPC e idempotente e devolve false quando nao ha
+        // item com esse external_id (o caso comum enquanto o worker nao migra para a fila).
+        const { data: itemRecorded, error: itemError } = await supabase.rpc('record_multiplix_item_delivered', {
+          p_external_id: key.id,
+          p_connection_id: connection.id,
+        });
+        if (itemError) {
+          console.error(`Multiplix item delivery acknowledgement failed for ${key.id}: ${itemError.message}`);
+        } else if (itemRecorded === true) {
+          console.warn(`Multiplix item delivery acknowledged: ${key.id}`);
+        }
       } else if (newStatus === 'read' && key?.fromMe === true && connection?.id) {
         // V17: READ/PLAYED marca read_at no destinatário Talk X (idempotente via RPC).
         const { data: readRecorded, error: readError } = await supabase.rpc('record_talkx_recipient_delivered', {
@@ -152,6 +167,19 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
           console.error(`TalkX read acknowledgement failed for ${key.id}: ${readError.message}`);
         } else if (readRecorded === true) {
           console.warn(`TalkX read acknowledged: ${key.id}`);
+        }
+        // F58: ate aqui o READ so falava com o TalkX — um READ do provedor nunca marcava
+        // read_at no ITEM do Multiplix. Mesmo encadeamento do delivered, com o evento
+        // explicito; a RPC so eleva (item ja em 'read' devolve false, sem rebaixar).
+        const { data: itemReadRecorded, error: itemReadError } = await supabase.rpc('record_multiplix_item_delivered', {
+          p_external_id: key.id,
+          p_connection_id: connection.id,
+          p_event: 'read',
+        });
+        if (itemReadError) {
+          console.error(`Multiplix item read acknowledgement failed for ${key.id}: ${itemReadError.message}`);
+        } else if (itemReadRecorded === true) {
+          console.warn(`Multiplix item read acknowledged: ${key.id}`);
         }
       } else if (key.fromMe === true) {
         // Recibo de mensagem NOSSA que o frontend ainda nao estampou com

@@ -54,11 +54,17 @@ A duração das falhas (até 285 s) é **o tempo esperando um backend até desis
 
 ### 2.4 Agravante de pico
 
-**Três jobs disparam no mesmo segundo**, todos `* * * * *`:
+Dois jobs disparam a **cada minuto** (`* * * * *`), e um terceiro **também a cada minuto**, apenas
+pulando o minuto 0:
 
-- `talkx-scheduler-1min` (11)
-- `ai-jobs-tick-1min` (19)
-- `tasks-notify-due` (16)
+- `talkx-scheduler-1min` (11) — `* * * * *`
+- `tasks-notify-due` (16) — `* * * * *`
+- `ai-jobs-tick-1min` (19) — **`1-59 * * * *`** (já escalonado por quem o criou; é o motivo de o
+  minuto 0 ter 2 jobs e não 3 — mitigação já em produção, sem registro até agora)
+
+Além disso, os jobs diários se somavam à rotina de minuto no mesmo horário: `cleanup-link-preview-cache`
+e `vacuum-contacts-daily` caíam os dois às 03:xx, o que produzia o **pico real de 10 jobs simultâneos**
+(medido: `03:00=10`).
 
 ## 3. As 4 propostas (nada aplicado)
 
@@ -88,3 +94,43 @@ Critério de sucesso: **zero** `job startup timeout`, e a janela de falha não r
 ## 6. Escopo desta investigação
 
 Somente leitura: `cron.job`, `cron.job_run_details`, `pg_settings` e o ledger. **Nenhuma** alteração em cron, configuração ou código do Talk X.
+
+## 7. Mitigação aplicada — escalonamento dos horários (migration `20261002541230`)
+
+Mitigação que **não depende de upgrade**: só **offsets de minuto**, sem mudar a cadência de nenhum
+job. Mecanismo: `cron.alter_job()` (muda o horário sem reescrever o comando do job, e sem DML direto
+em `cron.job`, proibido desde `20260930430000`). O job é localizado por **nome**, nunca por `jobid`
+— `jobid` é sequência e muda em restore ou clone.
+
+### Resultado medido (PG descartável, dia inteiro = 1440 slots)
+
+| métrica | antes | depois |
+|---|---|---|
+| máximo de jobs no mesmo minuto | **10** | **7** |
+| slots com ≥5 jobs | 864 (60%) | 552 (38%) |
+| **slots com ≥7 jobs** | **144** | **24** (−83%) |
+| pior slot | `03:00=10` | `00:07=7` |
+
+O terceiro número é o que interessa: **7 jobs simultâneos já é mais do que os 6 worker slots do
+banco** (`max_worker_processes=6`) — a condição exata do `job startup timeout`. 144 minutos por dia
+nessa condição passaram a 24.
+
+### O que a mitigação NÃO resolve
+
+- **Os três jobs de cadência por minuto** (`talkx-scheduler-1min`, `tasks-notify-due`,
+  `ai-jobs-tick-1min`) não têm offset possível: todo minuto é todo minuto. Isso exigiria mudar
+  cadência — decisão de outro dono. O `talkx-scheduler-1min` **não foi tocado**: o TALK X 02 é o dono.
+- **A capacidade do banco** (propostas 1 e 2 acima) continua pendente de decisão do Joaquim. O
+  escalonamento reduz a concorrência; não aumenta o número de backends disponíveis.
+
+### Rollback
+
+`SELECT public.apply_pg_cron_escalonamento(true);` — devolve os 9 jobs aos horários originais.
+É um `SELECT`, não uma migration nova. **Provado** no harness.
+
+### Prova
+
+`scripts/db-audit/pg-cron-escalonamento.test.sh` + `pg-cron-concorrencia.py` — PG descartável
+(`postgres:17-alpine`), API `cron` reproduzida, 12 jobs reais semeados. Prova os 9 offsets,
+que os 3 jobs de minuto ficam intocados, a queda de concorrência, a idempotência, o rollback e
+o aborto com erro claro se um job sumir.

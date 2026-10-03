@@ -755,6 +755,19 @@
       "reason": "safer-replay",
       "related_migration": null,
       "justification": "O corpo do arquivo no repo usa DELETE FROM cron.job, que nao executa no banco (postgres nao tem DELETE em cron.job: relacl postgres=r*/supabase_admin, erro 42501); o ledger preserva o SQL efetivamente aplicado, com o guard v_intruso + cron.unschedule, e pg_get_functiondef(apply_zapp_cron_secrets_l5()) bate com o ledger. Migration ja aplicada e imutavel: o arquivo nao pode ser reescrito, entao o replay do arquivo fica fixado por hash proprio. Medido em 01/10/2026: SELECT statements do schema_migrations comparado ao dry-run de register-migration.mjs, com os 4 hashes conferidos contra o que o db-live-guard imprimiu no run 36865197699."
+    },
+    {
+      "version": "20261001341230",
+      "filename": "20261001341230_f51_multiplix_confirm_dispatch.sql",
+      "file_sha256": "edeb3b2d42ae47bc82ba9a4d33db965d91fb0a39558827dc0b0899510abff340",
+      "file_sql_sha256": "7cec99db0bfd0385121eb782623bda37eef5db4c6ffcb73caed43e5338e34f16",
+      "ledger_name": "f51_multiplix_confirm_dispatch",
+      "ledger_statements_sha256": "0339f3bb6985b34476b06fc1f05c32e00c1867e7ce4e07de8ea916987d5f1641",
+      "ledger_sql_sha256": "ba9faefdbaa2fe6924565bd97f3f70606f6fef02b974dc3abe8b598d7515047f",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "O arquivo declara a funcao com CREATE FUNCTION sem OR REPLACE e aborta com 42723 onde ela ja existe (desde a 20261001351230_f51a). Na aplicacao pos-merge de 02/10/2026 rodou a versao equivalente COM OR REPLACE — unica diferenca de conteudo —, e e essa que o ledger preserva. O arquivo nao pode ser reescrito (migration registrada e imutavel, regra 7 do CLAUDE.md). A substituta canonica e a 20261002461230_f51c, que repete CHECK, ACL e triggers; a f51a cobre funcao, colunas e indice, entao o arquivo nao carrega objeto exclusivo. Ele fica no lugar com o replay fixado por hash proprio; mover para _superseded criaria 'registro no banco sem arquivo no repo'. Medido em 02/10/2026: sha256 dos bytes (edeb3b2d) e do SQL canonico (7cec99db) do arquivo; os hashes do ledger (0339f3bb, ba9faefd) calculados com o lexer do guard e o splitStatements do register-migration.mjs, conferidos contra o Postgres."
     }
   ]
 }

@@ -73,6 +73,9 @@ describe('Evolution call handler contract', () => {
           p_is_video: false,
           p_provider_event_id: 'event-1',
           p_should_notify: true,
+          // T26: a RPC passou a receber a direcao. O evento do fixture nao traz
+          // `fromMe`, entao a direcao normalizada e 'inbound'.
+          p_direction: 'inbound',
         },
       },
     ]);

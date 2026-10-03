@@ -3,6 +3,7 @@ import {
   E2E_FIXTURE_CONTACT_DISPLAY_NAME,
   ensureFixtureConversationOpen,
   cleanupFixtureMessages,
+  fixtureHasClosureToday,
 } from './fixtures/e2e-contact';
 
 // beforeEach navega para "/" (raiz) e clica no chip "Todas" ANTES de reabrir
@@ -62,6 +63,13 @@ test.describe('Conversation state transitions', () => {
     test.skip(browserName !== 'chromium',
       'CloseConversationDialog coberto em Chromium; Radix Select portal nao responde a' +
       " getByRole('option') de forma confiavel em Firefox/WebKit no CI");
+    // O schema permite 1 encerramento por contato por DIA e o token do usuario
+    // nao apaga a linha (ver fixtureHasClosureToday). Sem esta checagem, um
+    // retry depois de um encerramento bem-sucedido recebia 23505 e NUNCA podia
+    // passar -- derrubando o job e2e-logado mesmo quando a 1a tentativa so tinha
+    // esbarrado em instabilidade de rede.
+    const jaEncerradaHoje = await fixtureHasClosureToday(page);
+
     const conversation = page.locator('[data-testid="conversation-item"]').first();
     await conversation.click();
 
@@ -85,7 +93,16 @@ test.describe('Conversation state transitions', () => {
     await page.getByRole('option', { name: /^resolvido$/i }).click();
     await page.getByRole('button', { name: /^encerrar$/i }).click();
 
-    await expect(page.getByText(/conversa encerrada com registro/i)).toBeVisible();
+    if (jaEncerradaHoje) {
+      // Pre-condicao medida: o dia ja tem encerramento registrado para o contato
+      // fixture, entao a RPC close_conversation_atomic responde 23505 e a UI recusa
+      // o duplicado com a mensagem de erro. Este e o comportamento correto do app.
+      await expect(
+        page.getByText(/não foi possível encerrar a conversa/i)
+      ).toBeVisible();
+    } else {
+      await expect(page.getByText(/conversa encerrada com registro/i)).toBeVisible();
+    }
   });
 
   test('"Todas" filter shows the seeded conversation', async ({ page }) => {

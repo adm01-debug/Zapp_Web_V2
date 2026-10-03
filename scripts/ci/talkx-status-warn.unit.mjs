@@ -10,7 +10,10 @@
  *
  * Correção em duas frentes:
  *   1. No PR, o check só AVISA (`continue-on-error: true`) — não derruba o job.
- *   2. No push da main, um workflow novo regenera e commita o STATUS.md sozinho.
+ *   2. No push da main, um workflow regenera o STATUS.md e abre/atualiza um PR.
+ *      Não commita direto na main: ela é protegida, e o envio direto é recusado
+ *      com `GH006: Protected branch update failed` (medido no run 37061271438,
+ *      02/10/2026 — o desenho antigo só funcionava antes da branch protection).
  *
  * Vermelho-antes: este teste falha (sem `continue-on-error` e sem o workflow).
  * Verde-depois: passa com os dois artefatos no lugar.
@@ -49,7 +52,11 @@ test('existe workflow de auto-regen no push da main (bot, sem loop)', () => {
   assert.ok(existsSync(join(ROOT, path)), 'workflow de auto-regen ausente');
   const wf = read(path);
   assert.match(wf, /on:\s*\n\s*push:\s*\n\s*branches:\s*\[main\]/, 'deve disparar no push da main');
-  assert.match(wf, /contents:\s*write/, 'precisa de contents: write para commitar');
+  assert.match(wf, /contents:\s*write/, 'precisa de contents: write para publicar o placar');
   assert.match(wf, /node scripts\/talkx\/v4-status\.mjs/, 'deve regenerar o STATUS.md');
-  assert.match(wf, /github-actions\[bot\]/, 'deve commitar como bot');
+  // A main é protegida (6 checks obrigatórios): o placar sai por PR, nunca por
+  // envio direto — que era o defeito medido no run 37061271438 (GH006).
+  assert.match(wf, /create-pull-request/, 'deve abrir/atualizar um PR com o placar');
+  assert.match(wf, /branch:\s*automation\/talkx-status/, 'branch do PR do placar');
+  assert.doesNotMatch(wf, /^\s*git push\s*$/m, 'não pode empurrar direto na main');
 });

@@ -283,6 +283,18 @@ export interface GenerateParams {
   /** `ai_usage_logs.function_name`. */
   functionName: string;
   userId?: string | null;
+  /**
+   * IA-051 — correlação da execução.
+   *
+   * `requestId` é o id opaco que o cliente manda no header
+   * `x-ai-request-id` (a identidade criada pelo IA-048 no clique); `jobId` e
+   * `attempt` vêm do worker, quando a execução nasce na fila. Todos
+   * opcionais de propósito: ausência vira NULL no log — nunca um id
+   * inventado no servidor, que não teria como ser correlacionado com nada.
+   */
+  requestId?: string | null;
+  jobId?: string | null;
+  attempt?: number | null;
   /** Mensagens do CLIENTE (sem system). */
   messages: unknown[];
   /** Política do SERVIDOR (IA-037, composeMessages). */
@@ -629,6 +641,25 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
 
   const userId = params.userId ?? null;
 
+  // IA-051 — correlação. Aqui só repassamos: quem normaliza é o logger, que
+  // descarta qualquer coisa que não seja uuid (ver `normalizeCorrelationId`).
+  const requestId = params.requestId ?? null;
+  const jobId = params.jobId ?? null;
+  const attempt = params.attempt ?? null;
+
+  // IA-052 — rota EFETIVA, preenchida conforme a execução avança.
+  //
+  // São `let` de propósito: `logUsage` é DEFINIDO antes de o roteamento
+  // acontecer e é CHAMADO na falha de roteamento — quando provedor e modelo
+  // ainda não existem. Referenciar `provider`/`model` direto na closure
+  // estouraria TDZ, e o `logAiUsage` engole o erro por contrato: o registro
+  // sumiria em silêncio justamente no desfecho que mais precisa dele. Nulos
+  // até haver o que medir — "não houve rota" é informação, não lacuna.
+  let rotaProviderType: string | null = null;
+  let rotaModelRequested: string | null = null;
+  /** Modalidade declarada (IA-036/IA-033). Sem declaração, a chamada é texto. */
+  const rotaModality: string = params.need?.modality ?? "text";
+
   // --- (8) auditoria: SEMPRE, em todos os desfechos ---------------------------
   const logUsage = (entry: {
     model: string | null;
@@ -643,16 +674,24 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
     logAiUsage({
       functionName,
       userId,
+      requestId,
+      jobId,
+      attempt,
       model: entry.model,
       inputTokens: entry.inputTokens,
       outputTokens: entry.outputTokens,
       durationMs: Date.now() - startedAt,
       status: entry.status,
       errorMessage: entry.errorMessage ?? null,
+      // IA-052 — o caminho efetivo desta execução, gravado por TODA saída de
+      // log deste roteador (sucesso, erro HTTP, exceção e falha de roteamento).
+      providerId: entry.providerId,
+      providerType: rotaProviderType,
+      providerName: entry.providerName,
+      purpose,
+      modality: rotaModality,
+      modelRequested: rotaModelRequested,
       metadata: {
-        purpose,
-        provider_id: entry.providerId,
-        provider_name: entry.providerName,
         model_substituted: entry.modelSubstituted,
       },
     });
@@ -733,6 +772,12 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
   const providerName = provider.name ?? null;
   const model = routing.model;
   const modelSubstituted = routing.modelSubstituted;
+
+  // IA-052 — daqui para baixo EXISTE rota resolvida: o log passa a ter como
+  // dizer qual foi. Antes daqui (falha de roteamento) os campos ficam nulos,
+  // que é a resposta honesta.
+  rotaProviderType = provider.provider_type ?? null;
+  rotaModelRequested = model;
 
   // --- (3) capacidades: só quando o chamador declarou a necessidade -----------
   if (need !== null) {

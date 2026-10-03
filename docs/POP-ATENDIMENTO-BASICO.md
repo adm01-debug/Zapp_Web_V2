@@ -168,6 +168,24 @@ Precisando, é só chamar aqui! 👍
 
 ---
 
+### 6.6 Como enviar uma localização
+
+Com a conversa aberta, toque no ícone de localização no campo de mensagem e escolha **"Compartilhar
+localização atual"** ou digite o endereço no campo. Enquanto você digita, aparecem sugestões —
+**toque na sugestão correta**, não apenas digite: é esse toque que confirma o endereço. Se preferir,
+marque o ponto direto no mapa. O cliente recebe um cartão com o mapa e o endereço. **Confira a prévia
+antes de enviar**: localização errada manda o entregador para o lugar errado, e a mensagem não pode
+ser corrigida depois de enviada.
+
+### 6.7 Como cadastrar endereço de entrega
+
+Abra o contato em **Contatos**, clique em editar e vá até o campo **Endereço**. Digite o logradouro,
+o número e o complemento; as sugestões aparecem conforme você digita — **toque na sugestão correta**,
+porque é a confirmação dela que grava a coordenada que depois vira o pino no mapa. Depois clique em
+salvar. Se as sugestões não aparecerem, **recarregue a página**: em geral é a sessão que expirou, não
+é o endereço. Ao final, confira se o pino apareceu no mapa do contato — sem pino, o endereço ficou
+só como texto e o mapa não vai conseguir mostrar a rota.
+
 ## 7. ATALHOS DE TECLADO
 
 | Atalho | Ação |

@@ -47,8 +47,11 @@ async function embutirImagem(imageUrl: string, userId: string | null): Promise<I
       userId,
       status: 'error',
       errorMessage: motivo,
+      // IA-052 — degradação registrada como rota: finalidade e modalidade são
+      // conhecidas mesmo sem provedor (a chamada de visão nem chegou a sair).
+      purpose: 'tagging',
+      modality: 'vision',
       metadata: {
-        purpose: 'tagging',
         reason: 'image_input_failed',
         ...detalhesDoErroDeImagem(err),
       },
@@ -82,7 +85,10 @@ Deno.serve(async (req) => {
         userId: identity.userId,
         status: 'error',
         errorMessage: 'image_url e file_name ausentes: nenhuma entrada para classificar.',
-        metadata: { purpose: 'tagging', reason: 'missing_image_url' },
+        // IA-052 — modalidade declarada mesmo sem provedor: a etapa é de visão.
+        purpose: 'tagging',
+        modality: 'vision',
+        metadata: { reason: 'missing_image_url' },
       });
       log.warn("Empty input, defaulting to outros");
       return jsonResponse({ category: 'outros' }, 200, req);
@@ -155,7 +161,10 @@ Categorias: ${EMOJI_CATEGORIES.join(', ')}`;
       userId: identity.userId,
       status: 'error',
       errorMessage: motivo,
-      metadata: { purpose: 'tagging', reason: 'unhandled_exception' },
+      // IA-052 — exceção fora dos caminhos tratados também declara a rota.
+      purpose: 'tagging',
+      modality: 'vision',
+      metadata: { reason: 'unhandled_exception' },
     });
     log.error("Error", { error: motivo });
     return jsonResponse({ category: 'outros' }, 200, req);

@@ -182,7 +182,7 @@ valer (confira antes de propor mudança de CI, para não refazer o que já exist
 **Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions):** são 14 arquivos em
 `.github/workflows/` (`auto-update-pr-branch.yml`, `branch-hygiene-audit.yml`, `ci.yml`,
 `codeql.yml`, `crm-sync-worker.yml`, `db-guard.yml`, `db-live-guard.yml`, `db-migrate.yml`,
-`deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx-pr.yml`, `supabase-sync.yml`, `targeted-ledger-evidence.yml`,
+`deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx.yml`, `supabase-sync.yml`, `targeted-ledger-evidence.yml`,
 `types-sync.yml`), mais 3 workflows dinâmicos que não têm arquivo próprio no repo (Dependabot
 Updates, Dependency Graph, Copilot reviewer) — 17 no total. Plano completo em
 `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md`.
@@ -375,6 +375,13 @@ por tema em `src/styles/tokens.css`, classe Tailwind `bg-inbox-panel`) — usa-l
 `bg-black`/`dark:bg-black` literal sempre que escurecer um painel novo do inbox, para não repetir
 o bug. Referência: `docs/audits/` não tem entrada dedicada; a auditoria completa (5 agentes,
 cálculo de contraste WCAG) ficou só na sessão que corrigiu.
+
+## Lição de UI (2026-10-02) — SalesView/Journey: renomear rótulo ≠ renomear id
+
+SalesView/Journey (2026-10-02): os ids internos `orders`/`history` ficaram; só rótulo, conteúdo
+e pasta mudaram. Quem for renomear id precisa de `TAB_REDIRECTS` em `useInboxUIState.ts`
+(precedente `reminders → tasks`). Estatísticas do contato não têm série histórica — não
+reintroduzir % de variação sem query real. Plano: `docs/design/PLANO_SALESVIEW_JOURNEY_50_ETAPAS_2026-10-02.md`.
 
 ## Decisões de 2026-09-26 — como DDL entra em produção, e por que merge ≠ deploy
 

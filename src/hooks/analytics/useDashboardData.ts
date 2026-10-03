@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { startOfDay, endOfDay } from 'date-fns';
+import { appDayEnd, appDayStart } from '@/lib/localDay';
 import { useDashboardStats, DashboardFilters, DashboardQueueBreakdown } from '../dashboard/useDashboardStats';
 import { useDashboardKpi } from '../dashboard/useDashboardKpi';
 import { useAgentPresenceMap } from '../crm/useAgentPresence';
@@ -17,7 +17,7 @@ interface QueueRow {
 }
 
 const getDefaultFilters = (): DashboardFilters => ({
-  dateRange: { from: startOfDay(new Date()), to: endOfDay(new Date()) },
+  dateRange: { from: appDayStart(0), to: appDayEnd(0) },
   queueId: null,
   agentId: null,
 });

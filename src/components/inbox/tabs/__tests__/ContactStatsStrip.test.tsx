@@ -34,7 +34,7 @@ describe('ContactStatsStrip', () => {
     expect(strip).toHaveTextContent('4.5⭐');
     expect(strip).toHaveTextContent('Total trocado');
     expect(strip).toHaveTextContent('Resposta ao cliente');
-    expect(strip).toHaveTextContent('Dias com mensagens');
+    expect(strip).toHaveTextContent('Episódios respondidos');
     expect(strip).toHaveTextContent('3 avaliações');
   });
 
@@ -50,9 +50,19 @@ describe('ContactStatsStrip', () => {
     expect(strip).toHaveTextContent('Sem avaliações');
   });
 
-  it('não exibe variação percentual (achado 1: sparkData/change eram inventados)', () => {
+  it('sem dados de variação não exibe badge de percentual', () => {
     renderStrip();
-    expect(screen.queryByText(/%/)).not.toBeInTheDocument();
+    expect(screen.queryAllByTestId('stats-change-badge')).toHaveLength(0);
+  });
+
+  it('exibe badge de variação real quando o hook devolve o percentual', () => {
+    renderStrip({ ...STATS, messagesChangePercent: 25, conversationsChangePercent: -50 });
+    const badges = screen.getAllByTestId('stats-change-badge');
+    expect(badges).toHaveLength(2);
+    expect(badges[0]).toHaveTextContent('25%');
+    expect(badges[0].className).toContain('text-success');
+    expect(badges[1]).toHaveTextContent('50%');
+    expect(badges[1].className).toContain('text-destructive');
   });
 
   it('isLoading renderiza skeleton com 4 blocos', () => {

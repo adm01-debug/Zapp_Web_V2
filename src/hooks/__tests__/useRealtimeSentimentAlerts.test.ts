@@ -8,7 +8,7 @@ let realtimeCallback: ((payload: Record<string, unknown>) => void | Promise<void
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    channel: (...args: any[]) => mockChannel(...args),
+    channel: (...args: unknown[]) => mockChannel(...args),
     removeChannel: mockRemoveChannel,
   },
 }));

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 
@@ -11,9 +10,9 @@ const mockRemoveChannel = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: (...args: any[]) => mockFrom(...args),
-    channel: (...args: any[]) => mockChannel(...args),
-    removeChannel: (...args: any[]) => mockRemoveChannel(...args),
+    from: (...args: unknown[]) => mockFrom(...args),
+    channel: (...args: unknown[]) => mockChannel(...args),
+    removeChannel: (...args: unknown[]) => mockRemoveChannel(...args),
   },
 }));
 
@@ -26,7 +25,7 @@ vi.mock('@/lib/logger', () => ({
 
 import { useMessages } from '@/hooks/chat/useMessages';
 
-function makeQueryChain(data: any[] = [], error: any = null) {
+function makeQueryChain(data: unknown[] = [], error: unknown = null) {
   const rangeMock = vi.fn()
     .mockResolvedValueOnce({ data, error })
     .mockResolvedValue({ data: [], error: null });
@@ -83,7 +82,7 @@ describe('useMessages', () => {
   });
 
   it('sets error when fetch fails', async () => {
-    mockFrom.mockReturnValue(makeQueryChain(null, new Error('Network error')));
+    mockFrom.mockReturnValue(makeQueryChain(undefined, new Error('Network error')));
 
     const { result } = renderHook(() => useMessages({ contactId: 'c1' }));
 

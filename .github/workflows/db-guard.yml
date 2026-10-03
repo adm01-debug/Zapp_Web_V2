@@ -399,6 +399,11 @@ jobs:
           TALKX_SEND_INTERVAL_TETO_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-send-interval-teto-24h.test.sh
 
+      - name: Simular limites de ritmo por minuto/dia/conexão e perfis de velocidade (X018)
+        env:
+          TALKX_SEND_BUDGET_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-send-budget.test.sh
+
       - name: Simular eventos do ciclo de vida gravados no servidor (V12)
         env:
           TALKX_V12_LIFECYCLE_EVENTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
@@ -457,6 +462,14 @@ jobs:
         env:
           MULTIPLIX_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/multiplix-rls.test.sh
+
+      # F57 do plano do Multiplix: prova a fila de entrega por ITEM — claim com lease, ordem por
+      # bloco, heartbeat e cancelamento — e trava o defeito em que o cancel encerrava apenas os
+      # destinatarios, deixando item pending na fila para o worker enviar depois do cancel.
+      - name: Simular a fila de entrega por item do Multiplix
+        env:
+          MULTIPLIX_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/multiplix-delivery-leases.test.sh
 
       # F24 do plano do Multiplix: prova que a edge multiplix-audience deriva o
       # escopo do JWT (matriz F25) e IGNORA escopo forjado no corpo. O bloco
@@ -558,6 +571,14 @@ jobs:
         env:
           TALKX_EVENTS_CONTRACT_PG_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-events-contract.test.sh
+
+      # X021: escrita de links (UTM/created_by/rótulo único), leitura de cliques e
+      # conversões (admin/supervisor + dono), deduplicação de conversão, teto de valor
+      # e investimento por campanha — prova em PostgreSQL descartável.
+      - name: Provar escrita de links, leitura de cliques/conversões e investimento (X021)
+        env:
+          TALKX_LINKS_CONV_PG_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-links-conversions.test.sh
 
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e

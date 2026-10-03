@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,11 +14,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useGmail, type EmailMessage } from '@/hooks/integrations/useGmail';
 import { toast } from 'sonner';
+import { fileToEmailAttachment, formatEmailFileSize, validateEmailAttachments } from '@/lib/emailAttachments';
+import { invalidEmailTokens, parseEmailAddressList, prefixEmailSubject, resolveReplyRecipients } from '@/lib/emailRecipients';
 
 import { getLogger } from '@/lib/logger';
 const log = getLogger('EmailChatReplyBar');
 
 interface EmailChatReplyBarProps {
+  accountId?: string;
   threadId: string;
   lastMessage: EmailMessage | null;
   accountEmail?: string;
@@ -27,28 +30,8 @@ interface EmailChatReplyBarProps {
   onSent?: () => void;
 }
 
-// Convert File to base64 string for Gmail API
-function fileToBase64(file: File): Promise<{ filename: string; mimeType: string; content: string }> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = (reader.result as string).split(',')[1];
-      resolve({ filename: file.name, mimeType: file.type || 'application/octet-stream', content: base64 });
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes}B`;
-  if (bytes < 1048576) return `${(bytes / 1024).toFixed(0)}KB`;
-  return `${(bytes / 1048576).toFixed(1)}MB`;
-}
-
-const MAX_ATTACHMENT_SIZE = 25 * 1024 * 1024; // 25MB Gmail limit
-
 export function EmailChatReplyBar({
+  accountId,
   threadId,
   lastMessage,
   accountEmail,
@@ -56,7 +39,7 @@ export function EmailChatReplyBar({
   onModeChange,
   onSent,
 }: EmailChatReplyBarProps) {
-  const { sendEmail, replyEmail } = useGmail();
+  const { sendEmail, replyEmail } = useGmail(accountId);
 
   const [body, setBody] = useState('');
   const [to, setTo] = useState('');
@@ -64,64 +47,64 @@ export function EmailChatReplyBar({
   const [newSubject, setNewSubject] = useState(''); // E26
   const fileRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const sendLockRef = useRef(false);
 
   const isSending = sendEmail.isPending || replyEmail.isPending;
 
   // Resolve recipients based on mode
-  const resolvedTo = (() => {
-    if (mode === 'forward') return to;
-    if (!lastMessage) return '';
-    if (mode === 'reply-all') {
-      // Collect all addresses except self
-      const allAddrs = new Set<string>();
-      if (lastMessage.direction === 'inbound') {
-        allAddrs.add(lastMessage.from_address);
-        lastMessage.to_addresses?.forEach(a => allAddrs.add(a));
-        lastMessage.cc_addresses?.forEach(a => allAddrs.add(a));
-      } else {
-        lastMessage.to_addresses?.forEach(a => allAddrs.add(a));
-        lastMessage.cc_addresses?.forEach(a => allAddrs.add(a));
-      }
-      if (accountEmail) allAddrs.delete(accountEmail);
-      return Array.from(allAddrs).join(', ');
-    }
-    return lastMessage.direction === 'inbound' ? lastMessage.from_address : (lastMessage.to_addresses[0] || '');
-  })();
+  const replyRecipients = useMemo(
+    () => lastMessage && (mode === 'reply' || mode === 'reply-all')
+      ? resolveReplyRecipients(lastMessage, mode === 'reply-all' ? 'reply-all' : 'reply', accountEmail)
+      : { to: [], cc: [] },
+    [accountEmail, lastMessage, mode],
+  );
+  const resolvedTo = mode === 'forward' || mode === 'new' ? to : replyRecipients.to.join(', ');
 
   const handleAddFiles = useCallback((files: FileList | null) => {
     if (!files) return;
-    const newFiles = Array.from(files);
-    const totalSize = [...attachments, ...newFiles].reduce((sum, f) => sum + f.size, 0);
-    if (totalSize > MAX_ATTACHMENT_SIZE) {
-      toast.error('Tamanho total dos anexos excede 25MB');
-      return;
-    }
-    setAttachments(prev => [...prev, ...newFiles]);
+    const next = [...attachments, ...Array.from(files)];
+    const error = validateEmailAttachments(next);
+    if (error) toast.error(error);
+    else setAttachments(next);
   }, [attachments]);
 
   const handleSend = async () => {
-    if (!body.trim() && attachments.length === 0) return;
+    if (sendLockRef.current || (!body.trim() && attachments.length === 0)) return;
     const target = resolvedTo || to;
     if (!target.trim()) {
       toast.error('Informe o destinatário');
       return;
     }
 
+    const invalid = invalidEmailTokens(target);
+    if (invalid.length > 0) {
+      toast.error(`Revise os destinatários inválidos: ${invalid.join(', ')}`);
+      return;
+    }
+    const toAddresses = parseEmailAddressList(target);
+    const toPayload = toAddresses.length === 1 ? toAddresses[0] : toAddresses;
+    if (toAddresses.length === 0) {
+      toast.error('Informe ao menos um destinatário válido.');
+      return;
+    }
+    const attachmentError = validateEmailAttachments(attachments);
+    if (attachmentError) {
+      toast.error(attachmentError);
+      return;
+    }
+
+    sendLockRef.current = true;
     try {
       // Convert attachments to base64
-      const base64Attachments = await Promise.all(attachments.map(fileToBase64));
+      const base64Attachments = await Promise.all(attachments.map(fileToEmailAttachment));
 
       if ((mode === 'reply' || mode === 'reply-all') && lastMessage) {
-        const ccAddresses = mode === 'reply-all' && lastMessage
-          ? [...(lastMessage.cc_addresses || [])].filter(a => a !== accountEmail)
-          : undefined;
-
-        await (replyEmail.mutateAsync as unknown as (v: { thread_id: string; message_id: string | null | undefined; to: string | string[]; text_body: string; cc?: string[]; attachments?: unknown[] }) => Promise<void>)({
+        await replyEmail.mutateAsync({
           thread_id: threadId,
           message_id: lastMessage.gmail_message_id,
-          to: mode === 'reply-all' ? target.split(', ').filter(Boolean) : target,
+          to: toPayload,
           text_body: body,
-          cc: ccAddresses?.length ? ccAddresses : undefined,
+          cc: replyRecipients.cc.length ? replyRecipients.cc : undefined,
           attachments: base64Attachments.length > 0 ? base64Attachments : undefined,
         });
       } else if (mode === 'forward') {
@@ -129,15 +112,15 @@ export function EmailChatReplyBar({
           ? `${body}\n\n---------- Mensagem encaminhada ----------\nDe: ${lastMessage.from_name || lastMessage.from_address}\n\n${lastMessage.body_text || lastMessage.snippet}`
           : body;
         await sendEmail.mutateAsync({
-          to: target,
-          subject: lastMessage ? `Fwd: ${lastMessage.subject}` : '',
+          to: toPayload,
+          subject: lastMessage ? prefixEmailSubject(lastMessage.subject, 'Fwd') : '',
           text_body: fwdBody,
           attachments: base64Attachments.length > 0 ? base64Attachments : undefined,
         });
       } else {
         if (!newSubject?.trim()) { toast.error('Informe o assunto do e-mail'); return; }
         await sendEmail.mutateAsync({
-          to: target,
+          to: toPayload,
           subject: newSubject.trim(),
           text_body: body,
           attachments: base64Attachments.length > 0 ? base64Attachments : undefined,
@@ -148,11 +131,15 @@ export function EmailChatReplyBar({
       setTo('');
       setAttachments([]);
       onSent?.();
-    } catch (err) { log.error('Unexpected error in EmailChatReplyBar:', err); }
+    } catch (err) {
+      log.error('Unexpected error in EmailChatReplyBar:', err);
+    } finally {
+      sendLockRef.current = false;
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && !e.nativeEvent.isComposing) {
       e.preventDefault();
       void handleSend();
     }
@@ -175,12 +162,12 @@ export function EmailChatReplyBar({
   const ModeIcon = modeIcon[mode];
 
   return (
-    <div className="border-t bg-card/50 p-3 space-y-2">
+    <div className="space-y-2 border-t border-border bg-inbox-panel p-3">
       {/* Mode selector + forward destination */}
       <div className="flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-7 text-3xs gap-1 shrink-0">
+            <Button variant="outline" size="sm" className="h-7 shrink-0 gap-1 text-3xs">
               <ModeIcon className="w-3 h-3" />
               {modeLabel[mode]}
               <ChevronDown className="w-2.5 h-2.5" />
@@ -199,21 +186,23 @@ export function EmailChatReplyBar({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {mode === 'forward' && (
+        {(mode === 'forward' || mode === 'new') && (
           <Input
             value={to}
             onChange={(e) => setTo(e.target.value)}
             placeholder="email@destinatario.com"
-            className="h-7 text-xs flex-1"
+            className="h-7 flex-1 border-input bg-input text-xs text-foreground"
           />
         )}
 
         {(mode === 'reply' || mode === 'reply-all') && resolvedTo && (
           <span className="text-3xs text-muted-foreground truncate flex-1">
-            para: {resolvedTo}
+            para: {resolvedTo}{mode === 'reply-all' && replyRecipients.cc.length > 0 ? ` · cc: ${replyRecipients.cc.join(', ')}` : ''}
           </span>
         )}
       </div>
+
+      {mode === 'new' && <Input value={newSubject} onChange={(event) => setNewSubject(event.target.value)} placeholder="Assunto do email" className="h-8 border-input bg-input text-xs text-foreground" />}
 
       {/* Input area */}
       <div className="flex items-end gap-2">
@@ -224,7 +213,8 @@ export function EmailChatReplyBar({
             onChange={(e) => setBody(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={mode === 'forward' ? 'Adicione uma mensagem...' : 'Digite sua resposta...'}
-            className="min-h-[44px] max-h-[200px] text-sm resize-none pr-10"
+            aria-describedby="email-reply-shortcut"
+            className="min-h-[52px] max-h-[200px] resize-none border-input bg-input pr-10 text-sm text-foreground placeholder:text-muted-foreground"
             rows={1}
           />
           <Button
@@ -250,7 +240,7 @@ export function EmailChatReplyBar({
 
         <Button
           size="icon"
-          className="h-10 w-10 rounded-full shrink-0"
+          className="h-10 w-10 shrink-0 rounded-full"
           onClick={handleSend}
           disabled={(!body.trim() && attachments.length === 0) || isSending || (!resolvedTo && !to.trim())}
           aria-label="Enviar"
@@ -258,6 +248,7 @@ export function EmailChatReplyBar({
           {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </Button>
       </div>
+      <p id="email-reply-shortcut" className="sr-only">Use Control ou Command mais Enter para enviar. Enter cria uma nova linha.</p>
 
       {/* Attachments preview */}
       {attachments.length > 0 && (
@@ -266,7 +257,7 @@ export function EmailChatReplyBar({
             <Badge key={i} variant="secondary" className="text-3xs gap-1 py-0.5 max-w-[180px]">
               <Paperclip className="w-2.5 h-2.5 shrink-0" />
               <span className="truncate">{f.name}</span>
-              <span className="text-muted-foreground shrink-0">({formatFileSize(f.size)})</span>
+              <span className="text-muted-foreground shrink-0">({formatEmailFileSize(f.size)})</span>
               <button
                 onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))}
                 aria-label={`Remover ${f.name}`}
@@ -277,7 +268,7 @@ export function EmailChatReplyBar({
             </Badge>
           ))}
           <span className="text-[9px] text-muted-foreground self-center">
-            {formatFileSize(attachments.reduce((s, f) => s + f.size, 0))} / 25MB
+            {formatEmailFileSize(attachments.reduce((s, f) => s + f.size, 0))} / 25 MB
           </span>
         </div>
       )}

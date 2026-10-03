@@ -108,3 +108,6 @@ jobs:
             supabase-export/validation_result.json
             supabase-export/validation_log.csv
           if-no-files-found: ignore
+          # E74: retencao explicita. Sem ela o artifact herda o default do repositorio
+          # (90 dias) e passa a ser o maior acumulador de storage do workflow.
+          retention-days: 7

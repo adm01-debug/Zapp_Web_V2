@@ -1,4 +1,4 @@
-import { MessageSquare, Clock, Star, Users } from 'lucide-react';
+import { MessageSquare, Clock, Star, Users, TrendingUp, TrendingDown } from 'lucide-react';
 import { useContactStats } from '@/hooks/crm/useContactStats';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
@@ -13,6 +13,19 @@ function formatAvgResponse(minutes: number | undefined): string {
   if (!minutes) return '—';
   if (minutes < 60) return `${minutes}min`;
   return `${Math.floor(minutes / 60)}h${minutes % 60}m`;
+}
+
+function ChangeBadge({ percent }: { percent: number }) {
+  const Icon = percent >= 0 ? TrendingUp : TrendingDown;
+  return (
+    <span
+      data-testid="stats-change-badge"
+      className={`text-3xs font-medium ml-1.5 ${percent >= 0 ? 'text-success' : 'text-destructive'}`}
+    >
+      <Icon className="w-3 h-3 inline-block mr-0.5 -mt-px" />
+      {Math.abs(percent)}%
+    </span>
+  );
 }
 
 export function ContactStatsStrip({ contactId, compact }: ContactStatsStripProps) {
@@ -36,18 +49,21 @@ export function ContactStatsStrip({ contactId, compact }: ContactStatsStripProps
       label: 'Mensagens',
       value: stats?.totalMessages ?? 0,
       subtitle: 'Total trocado',
+      change: stats?.messagesChangePercent,
     },
     {
       icon: Clock,
       label: 'Tempo médio',
       value: formatAvgResponse(stats?.avgResponseTimeMinutes),
       subtitle: 'Resposta ao cliente',
+      change: undefined,
     },
     {
       icon: Users,
-      label: 'Conversas',
+      label: 'Atendimentos',
       value: stats?.totalConversations ?? 0,
-      subtitle: 'Dias com mensagens',
+      subtitle: 'Episódios respondidos',
+      change: stats?.conversationsChangePercent,
     },
     {
       icon: Star,
@@ -56,6 +72,7 @@ export function ContactStatsStrip({ contactId, compact }: ContactStatsStripProps
         ? `${stats.csatAverage.toFixed(1)}⭐`
         : '—',
       subtitle: stats?.csatCount ? `${stats.csatCount} avaliações` : 'Sem avaliações',
+      change: undefined,
     },
   ];
 
@@ -74,6 +91,7 @@ export function ContactStatsStrip({ contactId, compact }: ContactStatsStripProps
             <span className="text-3xs uppercase tracking-wider">{item.label}</span>
           </div>
           <span className="text-lg font-semibold text-primary leading-none">{item.value}</span>
+          {item.change !== null && item.change !== undefined && <ChangeBadge percent={item.change} />}
           <p className="text-3xs text-muted-foreground mt-0.5">{item.subtitle}</p>
         </motion.div>
       ))}

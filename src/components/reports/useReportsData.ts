@@ -2,9 +2,17 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAgents } from '@/hooks/crm/useAgents';
-import { format, subDays, startOfDay, endOfDay, eachDayOfInterval, parseISO } from 'date-fns';
+import { format, parseISO } from 'date-fns';
+import { appDayEnd, appDayKey, appDayKeyLabel as dayKeyLabel, appDayStart, appShiftDayKey } from '@/lib/localDay';
 import { ptBR } from 'date-fns/locale';
 import { CONTACT_TYPES as CANONICAL_TYPES } from '@/utils/whatsappFileTypes';
+
+/** Chaves `yyyy-MM-dd` (no fuso do app) cobertas pelo recorte, na ordem. */
+function dayKeysOf(range: { from: Date; to: Date }): string[] {
+  const chaves: string[] = [];
+  for (let k = appDayKey(range.from); k <= appDayKey(range.to); k = appShiftDayKey(k, 1)) chaves.push(k);
+  return chaves;
+}
 
 export function useReportsData() {
   const [period, setPeriod] = useState('30');
@@ -14,19 +22,22 @@ export function useReportsData() {
 
   const { agents } = useAgents();
 
+  // Recortes ancorados no fuso do app (America/Sao_Paulo), o mesmo que o servidor usa em
+  // `in_last_days`: com o fuso do navegador o mesmo período recortava janelas diferentes para
+  // pessoas em fusos diferentes e não batia com os números contados no banco.
   const dateRange = useMemo(() => {
-    const days = parseInt(period);
+    const days = Number.parseInt(period);
     return {
-      from: startOfDay(subDays(new Date(), days)),
-      to: endOfDay(new Date()),
+      from: appDayStart(days),
+      to: appDayEnd(0),
     };
   }, [period]);
 
   const previousDateRange = useMemo(() => {
-    const days = parseInt(period);
+    const days = Number.parseInt(period);
     return {
-      from: startOfDay(subDays(new Date(), days * 2)),
-      to: endOfDay(subDays(new Date(), days + 1)),
+      from: appDayStart(days * 2),
+      to: appDayEnd(days + 1),
     };
   }, [period]);
 
@@ -103,13 +114,11 @@ export function useReportsData() {
   // Process data for charts
   const chartData = useMemo(() => {
     if (!messagesData) return { daily: [], byAgent: [], bySender: [] };
-    const days = eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
-    const daily = days.map(day => {
-      const dayStr = format(day, 'yyyy-MM-dd');
-      const dayMessages = messagesData.filter(m => format(parseISO(m.created_at), 'yyyy-MM-dd') === dayStr);
+    const daily = dayKeysOf(dateRange).map(key => {
+      const dayMessages = messagesData.filter(m => appDayKey(m.created_at) === key);
       const sent = dayMessages.filter(m => m.sender === 'agent').length;
       const received = dayMessages.filter(m => m.sender === 'contact').length;
-      return { date: format(day, 'dd/MM', { locale: ptBR }), enviadas: sent, recebidas: received, total: sent + received };
+      return { date: dayKeyLabel(key), enviadas: sent, recebidas: received, total: sent + received };
     });
     const agentCounts: Record<string, number> = {};
     messagesData.forEach(m => { if (m.agent_id) agentCounts[m.agent_id] = (agentCounts[m.agent_id] || 0) + 1; });
@@ -124,10 +133,8 @@ export function useReportsData() {
 
   const previousChartData = useMemo(() => {
     if (!previousMessagesData || !compareEnabled) return { daily: [], byAgent: [], bySender: [], totals: { sent: 0, received: 0, total: 0 } };
-    const days = eachDayOfInterval({ start: previousDateRange.from, end: previousDateRange.to });
-    const daily = days.map((day, index) => {
-      const dayStr = format(day, 'yyyy-MM-dd');
-      const dayMessages = previousMessagesData.filter(m => format(parseISO(m.created_at), 'yyyy-MM-dd') === dayStr);
+    const daily = dayKeysOf(previousDateRange).map((key, index) => {
+      const dayMessages = previousMessagesData.filter(m => appDayKey(m.created_at) === key);
       const sent = dayMessages.filter(m => m.sender === 'agent').length;
       const received = dayMessages.filter(m => m.sender === 'contact').length;
       return { date: `Dia ${index + 1}`, enviadas: sent, recebidas: received, total: sent + received };
@@ -173,11 +180,10 @@ export function useReportsData() {
     const tagCounts: Record<string, number> = {};
     contactsData.forEach(c => { (c.tags || []).forEach((tag: string) => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; }); });
     const byTag = Object.entries(tagCounts).map(([tag, count]) => ({ name: tag, contatos: count })).sort((a, b) => b.contatos - a.contatos).slice(0, 10);
-    const days = eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
-    const daily = days.map(day => {
-      const dayStr = format(day, 'yyyy-MM-dd');
-      return { date: format(day, 'dd/MM', { locale: ptBR }), novos: contactsData.filter(c => format(parseISO(c.created_at), 'yyyy-MM-dd') === dayStr).length };
-    });
+    const daily = dayKeysOf(dateRange).map(key => ({
+      date: dayKeyLabel(key),
+      novos: contactsData.filter(c => appDayKey(c.created_at) === key).length,
+    }));
     return { byType, byTag, daily };
   }, [contactsData, dateRange]);
 
@@ -198,9 +204,9 @@ export function useReportsData() {
     };
     return {
       totalMessages, sentMessages, receivedMessages, totalContacts, activeAgents,
-      avgMessagesPerDay: Math.round(totalMessages / parseInt(period)),
+      avgMessagesPerDay: Math.round(totalMessages / Number.parseInt(period)),
       prevTotalMessages, prevSentMessages, prevReceivedMessages, prevTotalContacts, prevActiveAgents,
-      prevAvgMessagesPerDay: Math.round(prevTotalMessages / parseInt(period)),
+      prevAvgMessagesPerDay: Math.round(prevTotalMessages / Number.parseInt(period)),
       messagesTrend: calculateTrend(totalMessages, prevTotalMessages),
       sentTrend: calculateTrend(sentMessages, prevSentMessages),
       contactsTrend: calculateTrend(totalContacts, prevTotalContacts),

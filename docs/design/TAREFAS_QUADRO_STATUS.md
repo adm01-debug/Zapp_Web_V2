@@ -511,7 +511,7 @@ leituras foram descartadas.
 ## CP-I Testes      [x] arquivos=398 · casos=5219 (46 novos de tarefas) · bundle=12,2 KB gz (do modulo; teto 45) · TTI 300 itens=Lista 1606 ms · Quadro 1633 ms · Agenda 1584 ms (Playwright chromium 1672x941, login pela UI, `performance.now()` da navegacao ate o 1o `[data-testid=work-item-card]`; cards no DOM: 175/250/250)
   - (O DoD pedia ">= 50 cards no DOM"; por modo a Lista agrupa e o Quadro recorta por coluna, entao 50 simultaneos nao acontecem — medido ate o 1o card com o total no DOM registrado.)
   - Seed do QA: 300 tarefas `[E2E seed 89]` — contagem ANTES `0-0/300`, DELETE 204 (`*/300`), DEPOIS `*/0`. Rodado 2x, zerado nas duas.
-## CP-J Entrega     [~] (E.5 **24/24 medido em producao** em 02/10; a premissa de 30d5 — '23/24 declarado' e '1 check e pendencia do Joaquim' — foi CORRIGIDA: nao havia pendencia do dono, o bloqueio era bug de app, o canal realtime `work-items:<uid>` reusado por 2 instancias de `useMyWorkItems`, corrigido na main) gates 8/8=8 OK · func 24/24=**24** (E.5, 3 rodadas: 18 -> 21 -> 24) · geometria 8/8=OK · cores 10/10=OK (ΔE76) · isolamento=OK na RLS com agent (supervisor ve tudo por desenho) · migração=OK (ID conferido) · PR drop n (aguarda APROVADO)=PENDENTE (workspace 2) · docs=OK (README do modulo criado) · prod final=cron OK + E.1 6/6 OK; falta abrir a migrada na Lista/Sheet do dono (credencial Admin 01)
+## CP-J Entrega     [~] (E.5 **24/24 medido em producao** em 02/10; a premissa de 30d5 — '23/24 declarado' e '1 check e pendencia do Joaquim' — foi CORRIGIDA: nao havia pendencia do dono, o bloqueio era bug de app, o canal realtime `work-items:<uid>` reusado por 2 instancias de `useMyWorkItems`, corrigido na main) gates 8/8=8 OK · func 24/24=**24** (E.5, 3 rodadas: 18 -> 21 -> 24) · geometria 8/8=OK · cores 10/10=OK (ΔE76) · isolamento=OK na RLS com agent (supervisor ve tudo por desenho) · migração=OK (ID conferido) · PR drop n (etapa 97)=**MERGEADA** #1516 `2d4e8e4b` com `DDL_POS_MERGE=aplicadas` e prova no banco · docs=OK (README do modulo criado) · prod final=cron OK + E.1 6/6 OK; falta abrir a migrada na Lista/Sheet do dono (credencial Admin 01)
 
 ### Decisao 30d5 (Joaquim, 2026-10-01) — como tratar o E.5
 
@@ -753,7 +753,7 @@ Etapas 35–41 fechadas; 42 entregue (commit/PR/CI/merge), restando só o screen
 - Virtualização: v2 (>500 itens)
 - Agenda sem arrastar entre dias: v2
 - Delegação / recorrência / subtarefas / colunas personalizáveis / anexos / comentários: v2
-- Migration de drop de reminders_pending: aguarda APROVADO (etapa 97)
+- Migration de drop de reminders_pending (etapa 97): **APROVADA, MERGEADA e APLICADA** — PR #1516 `2d4e8e4b`, `DDL_POS_MERGE=aplicadas`, provado no banco: a RPC devolve `TABLE(tasks_open, notes_total, files_total)`
 - e2e/reactions.spec.ts (reacoes do inbox) falha de forma cronica no e2e-logado da main desde antes desta entrega — nao e regressao das Tarefas; vira tarefa separada
 - Guarda git do Hermes trava durante rebase: com HEAD destacado `git branch --show-current` devolve vazio e a checagem nega TODO comando git, inclusive `git rebase --abort/--continue` (deadlock). Contorno usado: integrar com `git merge origin/main`. Sugestao de correcao registrada no corpo do PR #1133
 - `bun run lint` (eslint cru, que NAO e gate do CI) falha com 967 problemas legados; o gate real e o lint-ratchet, que passa (0 novas)
@@ -813,3 +813,22 @@ Armadilha registrada: `CREATE OR REPLACE FUNCTION` **nao troca o tipo de retorno
 - **67** (concluir antes do horario -> 0 notificacoes): **nao medida**; o roteiro nao cria a tarefa (3 tentativas, 20s e 60s — nao e timing). Destrava com roteiro instrumentado (screenshot + console no momento da criacao).
 - **96** (dados migrados): a query fecha (`migrated_task_id IS NULL` = 0); falta abrir a tarefa migrada na Lista/Sheet **do dono** — precisa de credencial do Admin 01.
 - **100** (verificacao final): cron ativo e `reminder_due` > 0 nas 24h ja provados, e os 3 PNGs `J-100-prod-*` existem; falta a conferencia presencial do dono.
+
+
+---
+
+## CP-N Entrega (2026-10-02) — etapas 66 e 67 FECHADAS com medicao em producao
+
+**Etapa 66 (idempotencia do alarme) — exit code 0.** Criada as 12:29:16 com alarme +2 min; **1o disparo as 12:31:00 com `count=1`** e toast visivel na UI; **adiar 15 min** as 12:31:03 confirmou "Aviso adiado" e moveu `remind_at` de 15:31:00Z para **15:46:01.527Z**; **2o disparo as 12:47:02 com `count=2`** (id novo, sem duplicar o anterior); **concluir** -> **`status=done` + `remind_at=null`** + `notified_at=null`, `completed_at=15:47:03.397764Z`; limpeza final DELETE 200 (tarefa) e 204 (notificacoes). Sequencia completa: 1 -> 2 -> done, todas as pernas medidas.
+
+**Etapa 67 (concluir antes do horario -> 0 notificacoes) — exit code 0.** Criada as 12:20:16 com alarme +5 min (`remind_at` 15:25:14.950Z) e **concluida 6 segundos depois** (`status=done`, `remind_at=null`); **as 12:26:17, ja no horario do alarme, `count = 0` notificacoes.** Limpeza: DELETE 200 (tarefa) e 204 (notificacoes).
+
+**Causa real das falhas anteriores (medida, nao suposta):**
+- **67** — **era ambiente, nao o roteiro.** Sem mudar logica, o mesmo roteiro criou a tarefa de primeira. As tentativas de 08:11/08:17 caíram na janela em que a Vercel republicava a cada ~5 min e a app devolvia **503**: a Lista nao renderizava o card e o `waitCard` estourava. A rodada de hoje tambem registrou `503` de console e passou.
+- **66** — **era instrumentacao.** O clique de concluir vivia dentro de um `.catch()` que engolia a falha do clique; o roteiro seguia e reportava "status continuou backlog" sem dizer por que. Com o helper `concluir()` (click -> `force` -> botao do toast) o clique registra `ok="click"` e o efeito aparece no banco em 3 s.
+
+**Instrumentacao minima que passou a valer no roteiro:** `pageerror` / `console.error` / `requestfailed` no JSONL; `quickCreate` confirma que a tarefa nasceu (e, se nao nascer, grava o valor do campo, o dump dos cards e screenshot, abortando com mensagem clara); `waitCard` grava o mesmo dump no timeout; `concluir()` nao engole erro.
+
+**Producao conferida depois dos runs:** `conversation_tasks where title like 'QA-E5-idem%'` = **0** e **0** notificacoes orfas dessas tarefas.
+
+**Placar: 98 de 100.** Ficam abertas apenas **96** (abrir a migrada na Lista/Sheet do dono — credencial do Admin 01) e **100** (conferencia presencial do dono).

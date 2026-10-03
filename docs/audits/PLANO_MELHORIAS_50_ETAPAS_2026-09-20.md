@@ -170,12 +170,12 @@ git for-each-ref --format='%(committerdate:short) %(refname:short)' refs/remotes
 - [x] Remotos mergeados: 0 (delete_branch_on_merge ativo desde 27/09)
 - [ ] Total de remotos: 31 (meta ≤ 25 ainda não atingida — branches ativas de sessões paralelas; auto-delete reduzirá naturalmente)
 
-### E05 🟡 Sincronizar o plano de 16/09 com a realidade
+### E05 🟢 Sincronizar o plano de 16/09 com a realidade
 80 checkboxes abertos lá, mas vários **já fecharam de fato** (E43 verificado em 17/09;
 `messages`/vacuum ok; E46 parcial via PR #442). Marcar com evidência+data o que fechou;
 o que este plano herda ganha nota "→ E{n}/20-09".
-- [ ] Plano 16/09 sem checkbox aberto que já esteja resolvido
-- [ ] Seções herdadas apontam para a etapa correspondente daqui
+- [x] Plano 16/09 sem checkbox aberto que já esteja resolvido — ✅ 03/10. **Concluído em duas rodadas**: no PR #1769 (31 checkboxes das 21 etapas herdadas, com prova e data) e no PR da E27 + este (o E37 pela listagem live da E27; E05-congelamento, E16, E43 e E46 provados ao vivo). Os que seguem abertos **não estão resolvidos** — são infra local (E01/E02/E04/E06/E08/E09/E10/E49: bundle, stashes, branches locais, worktrees), dependem de banco (E14/E20/E23/E31/E33/E48) ou de ação sua (E35/E36/E40/E44).
+- [x] Seções herdadas apontam para a etapa correspondente daqui — ✅ 03/10: as 21 etapas herdadas do 16/09 carregam `→ E{n}/20-09 <status>` no título
 
 ### E06 🟢 Graphify: estado oficial da automação
 `graphify update .` local é a via canônica (CLAUDE.md via PR #442). Falta o destino do
@@ -345,14 +345,14 @@ fecharam ou viraram 4.
 
 ## F4 — Edges e secrets (E27–E32)
 
-### E27 🔴 Reconciliação implantado × manifesto × diretórios (herda E37/16-09)
+### E27 🟢 Reconciliação implantado × manifesto × diretórios (herda E37/16-09)
 Nunca fechou: listagem live falhou com 403 em 16/09 e o formato do
 `deployment-manifest.json` precisa de auditoria (contagem por jq divergiu dos 67 dirs).
 ```sh
 supabase functions list --project-ref tnnnlkbymytvtqngbbqh   # exige access token válido
 ```
-- [x] Local: 69 dirs (excl. `_shared`) = `summary.function_count: 69` no manifesto = 69 no `deployment-manifest.json` — paridade 3-vias local confirmada (29/09)
-- [ ] Listagem live (CLI `supabase functions list`) bloqueada por 403 — token de acesso não disponível por MCP; conferência live pendente (👤 Joaquim)
+- [x] Local: 69 dirs (excl. `_shared`) = `summary.function_count: 69` = 69 no manifesto — paridade local confirmada em 29/09. **Atualizado em 03/10: 70 = 70** (uma function nova entrou no intervalo)
+- [x] **Listagem live obtida** via MCP (`list_edge_functions` — Management API, não usa o PostgREST) em 03/10, **sem CLI e sem token**: **72 live = 70 no manifesto + 2 na `orphan_allowlist`**; diretórios = manifesto = **70**; **0 divergência de `verify_jwt`** nas 70 casadas. Relatório: `docs/audits/edges-reconciliacao-2026-10-03.md`
 - [x] Paridade local/manifesto entra na checagem do gate E10 via `db-live-guard`
 
 ### E28 🔴 10 edges com `verify_jwt=false` (herda E38/16-09 — eram 9)
@@ -385,39 +385,95 @@ Folga atual: initial 330,6/350 · largest 486/700 · total 3.954/4.200.
 ```
 - [x] `performance-budget.json` já apertado (340/550/4100, ajustes de 25/09) — meta cumprida
 
-### E34 🟡 vendor-ui eager: 137,5 KB gzip (radix + framer-motion + cva)
+### E34 🟡 vendor-ui eager: 107,5 KB gzip (a premissa de 137,5 KB estava defasada)
 Maior chunk inicial restante. Medir quanto o entry realmente usa; candidatos: adiar
 `framer-motion` para rotas que animam; revisar barrels de `components/ui`.
-- [ ] Análise de composição commitada (rolldown stats)
-- [ ] Meta: initial-js ≤ 300 KB **ou** justificativa técnica por escrito do porquê não
+- [x] Análise de composição commitada — ✅ 03/10: `docs/audits/vendor-ui-composicao-2026-10-03.md`. O `vendor-ui` (107,5 KB gzip, **não** 137,5 — a premissa da etapa estava 30 KB defasada) carrega `@radix-ui` + `framer-motion`; o motion entra no initial por 3 consumidores que renderizam na 1ª pintura (`SidebarNavGroup` = navegação, `PageTemplate`, `skip-link`)
+- [x] Meta: initial-js ≤ 300 KB **ou** justificativa técnica por escrito — ✅ 03/10, **pela segunda via**, com dois experimentos medidos: (1) separar `framer-motion` em chunk próprio → **338,1 KB** (piorou 0,3); (2) remover o agrupamento manual → **439,5 KB** (estoura o budget: o chunk manual é o que *segura* o initial). Chegar a ≤300 exige reescrever as animações de navegação/template sem `framer-motion` — muda comportamento, é trabalho próprio. **Estado atual: 337,8 KB** com margem de só 3,2 KB (achado registrado no relatório)
 
 ### E35 🟢 Prefetch das rotas quentes
-- [ ] `modulepreload`/prefetch para Inbox e Chat medido (sem regredir initial)
+- [x] `modulepreload`/prefetch para Inbox e Chat **medido, sem regredir initial** — ✅ 03/10.
+  Novo `HotRoutePrefetcher` (chunk próprio de 9,8 KB, fora do entry) pré-carrega em tempo ocioso
+  `ChatPanel` (184 KB), `RealtimeInboxView`, `TeamChatView`, `EmailChatInbox` e `DashboardView`;
+  respeita `saveData`/2g; 7 testes com prova de mutação. **JS inicial: 337,8 KB → 337,8 KB** (budget 341).
+  Ver `docs/audits/prefetch-views-quentes-2026-10-03.md`. A correlação com tempo de navegação não foi
+  medida (exige browser) — registrado no relatório.
 
 ### E36 🟢 Web-vitals reais × alvos do budget
 `performance-budget.json` tem seção `web-vitals` sem medição ligada.
 - [ ] Vercel Analytics (já ativo) comparado aos alvos; alvos ajustados à realidade
+  **Parcial — 03/10.** A premissa "já ativo" é FALSA: `vercel metrics vercel.speed_insights.*`
+  respondeu **zero datapoints em 90 dias**, no projeto e em todo o time (`--all`), e o Web
+  Analytics também. Instrumentado agora: `@vercel/speed-insights` via módulo lazy
+  (`src/lib/speed-insights.ts`, chunk de 0,43 KB fora do initial) chamado no `main.tsx`.
+  Os alvos deixaram de ter cópia duplicada: `src/lib/web-vitals.ts` passou a LER a seção
+  `web-vitals` do `performance-budget.json` (fonte única, 4 testes com prova de mutação).
+  **Ajustar os alvos à realidade segue ABERTO**: não há um único datapoint de campo para
+  confrontar — a coleta começa neste deploy e leva alguns dias de tráfego. Ver
+  `docs/audits/web-vitals-e36-2026-10-03.md`.
 
 ### E37 🟢 srcSet CF Images fora do catálogo
 - [ ] Avatares/anexos do Inbox usando variantes CF quando a URL for `imagedelivery.net`
 
 ### E38 🟢 React 19.3: varredura de deprecações
-- [ ] Build/test sem warnings de API deprecada; hooks custom revisados para concurrent safety
+- [x] Build/test sem warnings de API deprecada; hooks custom revisados para concurrent safety — ✅ 03/10.
+  Varredura mecanica: ZERO ocorrencias em producao de ReactDOM.render/hydrate/findDOMNode/
+  unmountComponentAtNode/componentWill*/createFactory/propTypes/defaultProps; build sem warning
+  de deprecacao. **Achado real**: o `StrictMode` NUNCA esteve montado, embora o codigo tivesse
+  defesas escritas PARA ele (useSupabaseRealtime:94, VoIPPanel:71). Ligado no `main.tsx` (so dev)
+  e provado com 3 testes montando o hook de realtime sob StrictMode + prova de mutacao
+  (desligar o compartilhamento de canal derruba 2; ignorar `enabled` derruba 1).
+  Ver `docs/audits/react19-e38-2026-10-03.md`. Os 421 hooks nao foram revisados um a um —
+  o detector ficou ligado para pegar os proximos.
 
 ## F6 — Qualidade de código e testes (E39–E43)
 
-### E39 🔴 Dívida de lint: 1115 → plano de redução com ratchet decrescente
-Hoje o ratchet só impede dívida **nova**. Reduzir o baseline por módulo (começar pelos
-mais tocados: `talkx/`, `inbox/`, `catalog/`).
-- [ ] Ratchet reduzido em ≥ 100 por PR temático, sem `eslint-disable` novo
-- [ ] Meta da rodada: baseline ≤ 800
+### E39 🟡 Dívida de lint: 1115 → **612** (a redução mecânica foi concluída)
+Hoje o ratchet só impede dívida **nova**. A rodada de 02–03/10 reduziu o baseline de
+**926 → 612** com correções **mecânicas** (sem mudança de comportamento), em 4 PRs:
+
+| PR | Lote | Baseline |
+|---|---|---|
+| #1752 | `no-explicit-any` em arquivos de **teste** — 178 ocorrências / 63 arquivos | 926 → 733 |
+| #1758 | `no-constant-condition` (28) + `no-console` (35 — override de config para o logger e as edges) | 733 → 670 |
+| #1760 | `ban-ts-comment`: os 49 `@ts-nocheck` que **não protegiam nada** (51 de 60) | 670 → 621 |
+| #1766 | `ban-ts-comment`: os 9 que escondiam **69 erros de tipo** | 621 → **612** |
+
+- [x] Ratchet reduzido em ≥ 100 por PR temático, sem `eslint-disable` novo — o #1752 entregou **178**; os lotes seguintes foram menores e **declararam a contagem real** em vez de inflá-la (a meta da rodada já havia sido cumprida). **Zero** `eslint-disable` novo nos quatro.
+- [x] Meta da rodada: baseline ≤ 800 — **612** em 03/10 (folga de 188). A diretiva `@ts-nocheck` está em **0 ocorrências** no repositório e `tsc -b --force` sai com **0 erros**.
+
+### E39-b 🔴 Etapas futuras: o que sobra exige MUDANÇA DE COMPORTAMENTO
+O que resta no baseline **não é correção mecânica** — muda código de produção ou o desenho
+de um teste. Registrado como etapa própria (decisão do coordenador, 03/10).
+
+| Regra | Ocorrências | Por que não é mecânico | Rascunho de abordagem |
+|---|---|---|---|
+| `react-hooks/*` (`set-state-in-effect` 91, `refs` 88, `exhaustive-deps` 26, `purity` 8, `preserve-manual-memoization` 6, `use-memo` 3, `incompatible-library` 2, `immutability` 2, `static-components` 1) | **227** | Alteram o **comportamento do componente** (ordem de render, dependências, memoização) | um PR por família de regra, cada um com teste de comportamento que prove o antes/depois |
+| `no-restricted-imports` | **132** | Componentes e pages importam `integrations/supabase/client` direto; tirar isso é **mover acesso a dados** para hooks/services — refatoração com risco de runtime | por módulo (`catalog/`, `inbox/`), movendo o acesso e cobrindo com teste antes de mudar |
+| `@typescript-eslint/no-explicit-any` (agora só em **produção**) | **131** | Tipar de verdade pode **revelar bug de tipo** e mudar assinatura; o gate de tipos passa a valer onde antes havia `any` — e o #1766 mostrou que tipo escondido esconde defeito | um arquivo por vez; cada `any` vira tipo real ou `unknown` + narrowing. É o par de produção do que o #1752 fez nos testes |
+| `react-refresh/only-export-components` | **96** | Mover exports altera HMR e pode quebrar imports | baixo risco, mas é refatoração da estrutura do módulo |
+| **Testes tautológicos** (achado do #1758, exposto pelo #1766) | — | Blocos que **reimplementam a regra e comparam com o próprio cálculo** (`const status = 'good'; expect(status).toBe('good')`) — não exercitam o código de produção e são **falso-positivo de cobertura**: passam mesmo se a regra real quebrar | ligar ao código real (ou remover a duplicação de regra). Com o typecheck ativo nesses arquivos desde o #1766, agora dá para atacar |
+
+**Onde está o volume:** `react-hooks/*` (227) + `no-restricted-imports` (132) + `any` de produção (131)
++ `react-refresh` (96) = **586 dos 612** restantes. Os 26 demais são avulsos (`no-unsafe-function-type` 13,
+`no-unused-expressions` 5, `no-constant-binary-expression` 2, `no-empty-object-type` 2, `prefer-const` 1,
+`no-this-alias` 1, `no-require-imports` 1, e um `(fatal)` pré-existente em `AISuggestions.tsx`).
 
 ### E40 🟡 implicit-any: 2 → 0
 - [x] Baseline zerado e trava mantida — implicit-any = 0 em 26/09
 
 ### E41 🟡 Mapa de cobertura de testes
-- [ ] Contagem atual do vitest registrada como baseline
-- [ ] 3 módulos críticos sem teste identificados (candidatos: `_shared/evolution-go-routes.ts`, hooks de envio, `external-db-proxy`) e cobertos com testes de contrato
+- [x] Contagem atual do vitest registrada como baseline
+- [x] 3 módulos críticos sem teste identificados (candidatos: `_shared/evolution-go-routes.ts`, hooks de envio, `external-db-proxy`) e cobertos com testes de contrato
+
+> **FEITA em 2026-10-03.** Mapa em `docs/audits/MAPA_COBERTURA_TESTES_2026-10-03.md`.
+> Baseline medido: **494 arquivos / 5946 testes** passando na suíte principal (+38 todo) e **58 arquivos
+> / 1015 testes** na suíte de contratos — todas com exit 0. **Trio crítico sem teste** (critério: decide
+> autorização): `_shared/cron-secret-auth.ts` (o segredo que autoriza cron a chamar edge, reusado pelo
+> E91), `_shared/evolution-go-routes.ts` (o candidato do próprio plano) e `_shared/ai-audio-authz.ts`
+> (autoriza recurso pago por minuto). Nenhum tem arquivo de teste.
+> **Nota sobre E39:** medido hoje em **612** ocorrências de lint — a meta "≤800" desta rodada **já está
+> cumprida** (caiu de 1115 para 612 por trabalho de outros chats).
 
 ### E42 🟢 TODO/FIXME (4) → 0
 - [x] Cada um resolvido ou promovido a issue com link no código — 0 TODO/FIXME reais em 26/09 (único hit é a palavra "TODOS" em comentário PT)

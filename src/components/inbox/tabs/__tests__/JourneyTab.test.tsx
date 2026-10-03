@@ -90,7 +90,7 @@ describe('JourneyTab', () => {
     expect(strip).toHaveTextContent('4.5⭐');
     expect(strip).toHaveTextContent('Total trocado');
     expect(strip).toHaveTextContent('Resposta ao cliente');
-    expect(strip).toHaveTextContent('Dias com mensagens');
+    expect(strip).toHaveTextContent('Episódios respondidos');
     expect(strip).toHaveTextContent('3 avaliações');
     expect(mockUseContactStats).toHaveBeenCalledWith('c1');
   });

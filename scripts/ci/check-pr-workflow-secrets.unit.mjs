@@ -141,6 +141,34 @@ test('hasPushTriggerUnrestricted: push com branches: [main] mas tambem com tags 
   assert.equal(hasPushTriggerUnrestricted(workflow), true);
 });
 
+// --- E28: qualquer gatilho de push que roda codigo de branch nao protegida ---
+
+test("hasPushTriggerUnrestricted: push com branches: ['**'] — irrestrito (E28)", () => {
+  assert.equal(hasPushTriggerUnrestricted('on:\n  push:\n    branches: ["**"]\n'), true);
+  assert.equal(hasPushTriggerUnrestricted("on:\n  push:\n    branches: ['**']\n"), true);
+});
+
+test('hasPushTriggerUnrestricted: branches-ignore em lista de bloco (nao inline) — irrestrito (E28)', () => {
+  const workflow = 'on:\n  push:\n    branches-ignore:\n      - main\n';
+  assert.equal(hasPushTriggerUnrestricted(workflow), true);
+});
+
+test('E28: o gatilho antigo do e2e-talkx.yml (push + branches-ignore: main) com secret privilegiado — violacao', () => {
+  // Fixture do gatilho que a E27 removeu: era o contorno citado no comentario do proprio workflow.
+  const workflow = [
+    'on:',
+    '  push:',
+    '    branches-ignore: [main]',
+    'jobs:',
+    '  e2e:',
+    '    steps:',
+    '      - run: echo ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}',
+  ].join('\n');
+  const violacoes = findPushSecretLeaks(workflow, 'e2e-talkx.yml');
+  assert.ok(violacoes.length > 0, 'o gatilho de contorno deveria reprovar');
+  assert.equal(violacoes[0].secret, 'SUPABASE_SERVICE_ROLE_KEY');
+});
+
 // --- findPushSecretLeaks ---
 
 test('findPushSecretLeaks: push irrestrito com secret — detecta', () => {

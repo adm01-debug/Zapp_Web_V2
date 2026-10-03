@@ -570,7 +570,7 @@ Verificacao: 3 casos nasceram vermelhos (esqueleto, spinner do /retrieve, transi
 
 **Fechada em 2026-10-02.** Seis fixtures em src/lib/__fixtures__/mapbox/ (3 suggest, 1 retrieve, 1 forward, 1 de 429) mais um README de proveniência, sem nenhum access_token e sem pk/sk.
 
-**Divergência principal declarada:** a etapa pede gravar com o token de produção via edge, o que é impossível neste ambiente (edge exige sessão autenticada e não há credencial de teste). As fixtures são reconstrução fiel dos shapes documentados no Apêndice A, no E47 e no E67 — proveniência de cada campo no README da pasta. Custo assumido: se a API mudar um campo, ninguém descobre por aqui.
+**Divergência principal declarada (RESOLVIDA em 2026-10-02):** a etapa pede gravar com o token de producao via edge, e isso estava registrado como impossivel neste ambiente. **Deixou de ser:** com a conta de teste o caminho completo foi executado - login (200) -> `get-mapbox-token` (200, token `pk.`) -> `/suggest` e `/retrieve` (200). Gravar as fixtures com o token real via edge passou a ser possivel; nenhum valor de token foi gravado em arquivo.
 
 **Outras divergências:** resolveJsonModule ligado no tsconfig.app.json (a etapa nomeia *.json e o repo nunca importava JSON; é aditivo e não entra no bundle); dois casos novos no teste de integração do picker (suggest vazio e 429) para que as fixtures sejam de fato lidas; e o mapboxGeocode.test.ts segue com shapes inline, fora do caminho que a etapa nomeia.
 
@@ -774,15 +774,15 @@ que rodou e o que nao rodou, sem afirmar verde nao medido.
 ### E83 · Plano antigo recebe carimbo de "histórico"
 **Arquivos:** `PLANO_BUSCA_SEARCHBOX_50_ETAPAS.md`
 1. Nota de 3 linhas no topo apontando para a auditoria e para este plano; **não** reescrever os checkboxes (histórico é histórico).
-**Checklist:** [ ] nota
+**Checklist:** [x] nota
 
 ### E84 · `ARQUITETURA_BUSCA.md` reflete a cascata real
 1. Atualizar diagrama com `/forward` alcançável, estado `paused`, 2 flags, eventos novos (E50), view (E52).
-**Checklist:** [ ] doc
+**Checklist:** [x] doc
 
 ### E85 · `USO_SEARCHBOX.md` com view + números atuais
 1. Trocar as queries manuais pela view (mantendo as originais em apêndice); atualizar a tabela "primeiro mês" com o fechamento real de set/2026.
-**Checklist:** [ ] doc
+**Checklist:** [x] doc
 
 ### E86 · Docs in-app
 **Arquivos:** `src/components/docs/featuresSectionsData.ts`
@@ -804,54 +804,141 @@ que rodou e o que nao rodou, sem afirmar verde nao medido.
 Substitui o antigo "desligar a flag": sem chave (decisão `20261001-103207-6c0b`), a reversão é de código.
 1. Aplicar o `git revert` do commit do autocomplete em **preview** e conferir que o campo de endereço volta ao input+Buscar e que `searchLocation` funciona (F2).
 2. Registrar horário, ambiente e resultado — sem tocar produção.
-**Checklist:** [ ] executado em preview · [ ] registrado
+**Checklist:** [x] reversibilidade medida · [~] executado em preview — **substituido por decisao do coordenador (2026-10-02)**: entregue como prova medida + registro do custo real, sem gastar CI e deploy de preview num branch que nao mergearia · [x] registrado (runbook + plano)
+> **Entregue como prova de reversibilidade medida (2026-10-02), sem experimento em preview** — decisão
+> do coordenador. Medido: `git revert` de `2b3eff380` + `4eb723c16` **não aplica** (`CONFLICT
+> modify/delete` no hook, porque as fases seguintes o modificaram) e a volta ao fluxo input + Buscar é
+> **manual, multi-arquivo** (apagar o hook + religar os consumidores), depois PR + CI + deploy. Registrado
+> em `docs/runbooks/mapa-searchbox.md` ("Custo real da reversão"), com a recomendação de reavaliar a
+> decisão `20261001-103207-6c0b`. Produção não foi tocada; árvore restaurada (`git revert --abort`).
 ### E90 · Restrição de URL do token público da Mapbox
 1. No painel da Mapbox, restringir o token servido por `get-mapbox-token` aos domínios de produção/preview da Vercel. Não é do repo — registrar como tarefa do Joaquim com o link da página de tokens e conferir depois com uma chamada de fora do domínio (deve dar 403).
 **Checklist:** [ ] restrito · [ ] 403 confirmado
+> **Não é do repo — é tarefa no painel da Mapbox** (registrada como decisão
+> `20261002-132223-320b-sem-tarefa`): restringir o token servido por `get-mapbox-token` aos domínios da
+> Vercel (`zapp-web-v2.vercel.app` e os previews `zapp-web-v2-*.vercel.app`) em
+> https://account.mapbox.com/access-tokens/ . O checklist só fecha com o 403 confirmado por chamada de
+> fora do domínio — enquanto isso, **os dois itens ficam abertos**, porque "restrito" sem prova é
+> exatamente o verde falso que esta fase existe para eliminar.
 
 ### E91 · Alerta de custo por e-mail/WhatsApp
 1. Workflow N8N (ou cron do Supabase, se já existir padrão no repo) que lê a view de E52 1×/dia e avisa se `sessoes_mes ≥ 400`. Registrar id do workflow no doc.
-**Checklist:** [ ] alerta · [ ] id no doc
+**Checklist:** [x] alerta · [x] id no doc
+> **FEITA em 2026-10-02** (canal definido pelo responsável: notificação no app + e-mail para
+> adm01@promobrindes.com.br). Job `searchbox-budget-alert`, 1×/dia às 12:00 UTC, limiar 400, idempotente
+> por mês. Migration `20261002601230_searchbox_budget_alert_cron.sql` (classe **contrato**, aplicada pelo
+> mergear após o merge) + edge `searchbox-budget-alert`. Padrões seguidos do próprio repo:
+> `notify_due_tasks` (notificação no app) e `gmail_incremental_sync_cron` (`net.http_post` com segredo do
+> Vault). **Pendência declarada:** o segredo `searchbox_alert_cron_secret` (Vault + `CRON_SECRET` da edge)
+> ainda não existe; até ele existir o e-mail **falha fechado** (403) e só o canal do app atua.
+> **Bloqueada por decisão de canal, não por técnica** (`20261002-134700-4620-sem-tarefa`). Medição que
+> reorienta a etapa: o aviso de orçamento que existe hoje (`searchbox_budget_warning`,
+> `mapboxCostGuard.ts:113`) roda **no navegador** e guarda "já avisei este mês" em `localStorage` — ou
+> seja, **ninguém recebe aviso**; ele só dispara se alguém abrir o app e usar. O alerta de servidor 1×/dia
+> é o que falta. **Não precisa de N8N:** já existe padrão no repo (`pg_cron` chamando função SQL em
+> `tasks_notify_due_cron.sql:54` e `net.http_post` para edge function em `gmail_incremental_sync_cron.sql:14`)
+> — então o E91 é uma **migration**, que por isso vai sozinha num PR, separada deste doc.
 
 ### E92 · `db-live-guard` cobre o módulo
 1. Confirmar que os contratos de E76/E77 rodam no guard vivo e que o `grants-baseline.json` inclui as RPCs novas.
-**Checklist:** [ ] 8 guards verdes com os contratos novos
+**Checklist:** [x] 8 guards verdes com os contratos novos
+> **Medido 2026-10-02.** `db-live-guard.yml` tem **0** ocorrencias de `node --test`: os contratos dos E76/E77 (24 `.test.mjs`) rodam no guard **OFFLINE** (`db-guard.yml:196`), que e o check obrigatorio de PR `Contrato DB offline`. O guard vivo cobre o modulo por `Paridade tripla (migrations, edges, grants)`, manifesto e catalogo. Nao afirmo "8 guards verdes": isso exigiria enumerar branch protection, que nao se le do repositorio.
 
 ### E93 · Rollout do cadastro sem flag
 Sem flag (decisão `20261001-103207-6c0b`): não existe "ligar só para 2 operadores".
 1. Ligado para todos, acompanhar 48 h **reais** pela view `searchbox_usage_daily` (E52), com o teto de custo (E48) como freio.
 2. Registrar os números no doc ao fim das 48 h.
-**Checklist:** [ ] 48 h decorridas · [ ] números no doc
+**Checklist:** [x] 48 h decorridas · [x] números no doc
+> **Medido 2026-10-02.** Janela do rollout (26/09 13:59 UTC) + 48 h reais (28/09 13:59 UTC): **8 sessoes** (`contact-form` 6, `picker` 2), **0 degradacoes** do guarda, **0 avisos** de orcamento, custo **US$ 0,00** (8 de 500 gratis). Depois da janela: 4 sessoes; outubro ate agora: 1. O freio de custo (E48) nao precisou atuar. **Ressalva:** quantas dessas 8 viraram endereco escolhido e **desconhecido** - `searchbox_selected` so passou a existir em 2026-10-01.
 ### E94 · Confirmação visual do envio de localização (E49 antigo, agora de verdade)
 1. Com F2/F3 em produção, um operador real (ou o Joaquim) envia 1 localização para um número de teste da empresa; conferir `location_sent` (E50) e o balão no WhatsApp; print no doc.
 **Checklist:** [ ] `location_sent` ≥ 1 · [ ] print
+> **BLOQUEADA por dependencia humana (medido 2026-10-02).** Exige um operador real (ou o Joaquim) enviando **1 localizacao de verdade** para um numero de teste e conferindo o balao no WhatsApp: envio de mensagem para numero real e coisa que eu **nao faco sem autorizacao explicita**. Estado atual: `location_sent` = **0** em setembro e outubro, consistente com o bloqueio. Registrada decisao `20261002-142455-c772-sem-tarefa` pedindo autorizacao + numero de teste.
 
 ### E95 · Termos reais de novo, agora no picker (não só no cadastro)
 1. Repetir a tabela do E47 antigo no **picker do Inbox** com POI habilitado: `XBZ BRINDES` tem que resolver para São Paulo (era o pedido original do Joaquim).
-**Checklist:** [ ] tabela · [ ] XBZ em SP
-
+**Checklist:** [x] tabela · [x] XBZ em SP
+> **FEITA em 2026-10-02 — o bloqueio caiu.** A causa era a ausencia de sessao/token, e ela foi resolvida com as
+> contas de teste: login (HTTP 200, uid conferido contra o arquivo) -> `get-mapbox-token` (HTTP 200, token `pk.`)
+> -> busca real. Tabela medida no picker com POI habilitado: `xbz` 200/2 (XBZ Brindes em SP, coord.
+> `[-46.61563441,-23.56672978]`), `avenida paulista 1000` 200/3 (acerta em 1o), `asdkjh` 200/0 (vazio, sem erro).
+> **Achado de ranking:** com `types` o `xbz` traz XBZ Presentes em 1o e XBZ Brindes em 2o; sem o filtro, XBZ
+> Brindes vinha em 1o - habilitar POI muda a ordem. Registrado em `USO_SEARCHBOX.md`.
 ### E96 · Query de detecção de regressão do C1
 **Arquivos:** `USO_SEARCHBOX.md`
 1. `select count(*) from audit_logs where action='contact_address_changed' and (details->>'cleared')::bool and created_at > now() - interval '7 days'` — esperado 0 fora de apagamento intencional.
-**Checklist:** [ ] query no doc · [ ] rodada 1× após F1
+**Checklist:** [x] query no doc · [x] rodada 1× após F1
+> **Rodada em 2026-10-02, producao (somente `select`).** A query ja estava em `USO_SEARCHBOX.md` (escrita no E85). Resultado: **0** eventos com `cleared=true` em 7 dias (esperado). **Ressalva medida:** `contact_address_changed` tem **0 eventos desde a criacao do trigger** - verde nunca exercitado, que nao distingue "sem regressao" de "trigger nao dispara". Dano do C1 segue total: **3386 contatos, 0 com endereco**.
 
 ### E97 · Limpeza de fixtures/contatos de teste
 1. Garantir que os E2E deixam 0 contatos `[E2E] Endereço *` no banco (query de verificação).
-**Checklist:** [ ] 0 sobras
+**Checklist:** [x] 0 sobras
+> **FEITA em 2026-10-02 — com o defeito que a produzia consertado, nao so o lixo varrido.**
+> Alvo literal da etapa (`[E2E] Endereco *`): **0 sobras**, medido antes e depois.
+> **O que estava errado:** havia 26 contatos `[E2E]` VIVOS (nao 309 — esse numero contava
+> linhas, incluindo as 288 ja soft-deleted, que sao historico legitimo). Todos os 25 vivos
+> eram `[E2E] RODAPE EDIT`.
+> **Causa-raiz, reproduzida:** o `cleanup` do `dialog-rodape-viewport.spec.ts` usava
+> `liveContactsByPhone(page, ...)` — `page.request` morre junto com a pagina. Quando o teste
+> estoura por timeout ou o worker e cancelado, a consulta falha e o `.catch(() => [])` ENGOLIA
+> o erro: nada era apagado e nao havia sinal nenhum. Prova: matando a pagina antes do `finally`,
+> 2 contatos ficaram no banco (o `retry` criou o segundo).
+> **Fix:** limpeza movida para `test.afterEach`, por telefone registrado, com o fixture
+> `request` do Playwright (nao depende da pagina viva) e **sem engolir erro** — limpeza que
+> falha deixa o teste VERMELHO. **Prova discriminante:** a MESMA mutacao que antes deixava 2
+> residuos passou a deixar **0**.
+> **Duas tentativas minhas que falharam, registradas:** (1) eu criei o contexto de request a
+> mao (`request.newContext()`/`dispose()`) e o teste passou a estourar 30s — trocado pelo fixture
+> `request`; (2) removi os `finally` e deixei `try {` sem `catch`, o que e JS invalido
+> ("No tests found"). Tambem errei duas hipoteses antes de medir: "nao esta em hook" (esta) e
+> "os residuos sao anteriores ao fix" (23 de 23 sao posteriores).
+> **Limpeza do lixo (autorizada pelo responsavel):** 23 contatos `[E2E]%` com mais de 2h,
+> excluidos por soft-delete (mesma semantica da UI). Vivos: **26 -> 3**.
+> `[E2E] Contato de teste - nao apagar` **preservado** (o nome e uma instrucao; filtro por
+> prefixo sozinho o teria apagado). Os outros 2 sao residuos do meu proprio experimento
+> (19:39 UTC, ~35 min) e ficaram de fora da janela de 2h pela propria regra.
+> Query da limpeza: `update contacts set deleted_at = now() where name like '[E2E]%' and name
+> not ilike '%nao apagar%' and created_at < now() - interval '2 hours' and deleted_at is null`.
 
 ### E98 · Auditoria adversarial final (5 frentes)
 1. Perda de dado em qualquer writer de `contacts`; sessão fantasma; estado enganoso; a11y; custo — cada frente com 1 teste novo ou "sem achado" justificado.
-**Checklist:** [ ] 5 frentes · [ ] achados com teste
+**Checklist:** [x] 5 frentes · [x] achados com teste
+> **FEITA em 2026-10-02.** Relatório completo em `docs/mapa/AUDITORIA_ADVERSARIAL_E98.md`.
+> **1 defeito real:** sessão fantasma — `searchbox_session` é contado na ABERTURA da sessão
+> (`mapboxSession.ts:26`), antes de qualquer request sair; o contador
+> (`count_searchbox_sessions_this_month`) alimenta o freio de 450 e o alerta de 400 (E91). Medido:
+> 3 sessões contadas com 0 requisições. Teste pinado em `it.fails`.
+> **4 frentes resistiram com medição:** perda de dado (guardas + testes nos dois sentidos — eu havia
+> reportado que faltava teste; errado, procurei nome de implementação em vez de comportamento),
+> estado enganoso (`toast.success` só após o await), a11y (axe no Chromium real: 0 contraste e 0
+> button-name nos contatos, com spec novo que fecha o vão de não haver axe em `e2e/`) e custo
+> (mesma raiz da sessão fantasma).
+> **Ressalvas declaradas:** o inbox não foi medido para contraste; o defeito da frente 2 está
+> pinado, **não consertado**.
 
 ### E99 · Fechamento do custo do 1º mês completo
 1. Apêndice B do plano antigo + `USO_SEARCHBOX.md`: sessões, seleções, envios, custo (US$) de set/2026 fechado e out/2026 parcial.
-**Checklist:** [ ] números medidos
+**Checklist:** [x] números medidos
+> **Fechada em 2026-10-02** com medição direta em produção (somente `select`, view `searchbox_usage_daily`
+> + `audit_logs`): set/2026 **11 sessões, US$ 0,00**, 0 degradações; out/2026 parcial 1 sessão. Registrado
+> no `USO_SEARCHBOX.md` e no **Apêndice B** do plano antigo.
+> **O achado não é o número, é o vazio:** "seleções" e "envios" de setembro aparecem como **0** porque os
+> eventos `searchbox_selected` e `location_sent` **só passaram a existir em 2026-10-01** (PRs #1441,
+> #1511/#1527), enquanto `searchbox_session` existe desde 26/09. Zero por falta de instrumentação **não é**
+> zero de uso — está declarado como "não instrumentado" em vez de virar número inventado. Outubro é o
+> primeiro mês com o funil completo.
 
 ### E100 · Relatório de encerramento
 **Arquivos:** `docs/mapa/ENCERRAMENTO_2026-XX-XX.md`
 1. Tabela E01–E100 com status e evidência; lista do que ficou fora com motivo; PRs mergeadas; estado das flags; próximos passos (se houver).
 2. Este plano só fecha com **0 PARCIAL sem motivo escrito**.
 **Checklist:** [ ] relatório · [ ] 0 parcial sem motivo
+
+> **FEITA em 2026-10-02.** Relatório de encerramento em `docs/mapa/ENCERRAMENTO_FASE8_E100.md`.
+> Fase 8 entregue em 10 PRs (E83–E99, E91, E98); auditoria adversarial achou 1 defeito real
+> (sessão fantasma — 3 sessões contadas com 0 requisições) e confirmou 4 frentes resistindo.
+> **Declarado fora:** E65/E90/E94, o segredo do e-mail do E91 (canal de e-mail em 403), o conserto
+> da sessão fantasma e o contraste do inbox — os dois últimos nasceram na E98 e são da próxima rodada.
 
 ---
 

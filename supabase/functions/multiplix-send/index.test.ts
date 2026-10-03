@@ -5,14 +5,14 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 Deno.test('personalize resolve {{empresa}} com o nome da empresa', () => {
-  const result = personalize('Ola, aqui é da {{empresa}}', { company: 'Empresa Teste' });
+  const result = personalize('Ola, aqui é da {{empresa}}', { company: 'Empresa Teste' }).text;
   assert(result === 'Ola, aqui é da Empresa Teste', `unexpected result: ${result}`);
 });
 
 Deno.test('personalize resolve {{saudacao}} para um período válido do dia', () => {
   // getGreeting() usa a hora real — só valida que retorna uma das 3 saudações
   // esperadas, sem travar o teste a um horário fixo de execução do CI.
-  const result = personalize('{{saudacao}}, {{empresa}}!', { company: 'Acme' });
+  const result = personalize('{{saudacao}}, {{empresa}}!', { company: 'Acme' }).text;
   const validGreetings = ['Bom dia, Acme!', 'Boa tarde, Acme!', 'Boa noite, Acme!'];
   assert(validGreetings.includes(result), `unexpected greeting result: ${result}`);
 });
@@ -21,7 +21,7 @@ Deno.test('personalize usa string vazia quando company é ausente/null (built-in
   // Comportamento do kernel para um built-in SEM valor: {{empresa}} resolve para
   // '' — o fallback "[variavel]" cobre apenas chaves FORA do conjunto de
   // built-ins. Idêntico ao antigo personalizeMultiplix; nada a corrigir aqui.
-  const result = personalize('Empresa: {{empresa}}', {});
+  const result = personalize('Empresa: {{empresa}}', {}).text;
   assert(result === 'Empresa: ', `unexpected result: ${result}`);
 });
 
@@ -30,12 +30,12 @@ Deno.test('personalize usa fallback [variavel] para placeholder fora do conjunto
   // NUNCA lança unknown_placeholder. Uma variável sem valor — {{cargo}}, que o
   // Multiplix não resolve — vira "[cargo]" em vez de derrubar o envio do
   // destinatário inteiro. O dialeto antigo (personalizeMultiplix) lançava.
-  const result = personalize('Seu cargo é {{cargo}}', { company: 'Acme' });
+  const result = personalize('Seu cargo é {{cargo}}', { company: 'Acme' }).text;
   assert(result === 'Seu cargo é [cargo]', `unexpected result: ${result}`);
 });
 
 Deno.test('personalize é case-insensitive nos placeholders conhecidos', () => {
-  const result = personalize('{{SAUDACAO}}, {{Empresa}}!', { company: 'Acme' });
+  const result = personalize('{{SAUDACAO}}, {{Empresa}}!', { company: 'Acme' }).text;
   const validGreetings = ['Bom dia, Acme!', 'Boa tarde, Acme!', 'Boa noite, Acme!'];
   assert(validGreetings.includes(result), `unexpected greeting result: ${result}`);
 });
@@ -136,6 +136,7 @@ interface MockOpts {
   /** Auditoria adversarial 29/09: a RPC de supressao responde ERRO — o envio
    * tem de seguir fail-closed (mata o fail-open do mutante M25). */
   suppressionRpcError?: boolean;
+  blockContent?: Record<string, unknown>;
   /** cota diaria restante da conexao (F17); null desliga a checagem */
   dailyRemaining?: number | null;
   /** F11a: reivindicacao que nao devolve token (lease de outro worker) */
@@ -148,6 +149,7 @@ interface MockCtx {
   rpcCalls: Array<{ name: string; args: Record<string, unknown> }>;
   limits: number[];
   completions: Array<Record<string, unknown>>;
+  events: Array<Record<string, unknown>>;
   dispatch: DispatchRow | null;
   remaining: Array<ReturnType<typeof recipientRow>>;
   recipientSelects: number;
@@ -160,6 +162,16 @@ interface MockCtx {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function tableBuilder(table: string, opts: MockOpts, ctx: MockCtx): any {
   let limit: number | null = null;
+  // F61: o worker grava o codigo cru do provedor na trilha de eventos. Sem capturar aqui,
+  // o insert cairia no vazio e o teste passaria sem provar nada (teste decorativo).
+  if (table === "multiplix_events") {
+    return {
+      insert: (row: Record<string, unknown>) => {
+        ctx.events.push(row);
+        return Promise.resolve({ data: null, error: null });
+      },
+    };
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rows = (): { data: any; error: any } => {
     if (table === "multiplix_dispatches") return { data: ctx.dispatch, error: null };
@@ -171,6 +183,26 @@ function tableBuilder(table: string, opts: MockOpts, ctx: MockCtx): any {
       // Estourar aqui faz o teste FALHAR em vez de travar o CI.
       if (ctx.recipientSelects > 12) throw new Error("laco do worker nao encerrou (selecoes repetidas)");
       return { data: ctx.remaining.slice(0, limit ?? 1000), error: null };
+    }
+    // F55: o worker nao le mais item por SELECT — a escolha vem da RPC
+    // list_multiplix_claimable_items. Esta leitura existe so para os detalhes de envio
+    // (destino, nome da empresa, conteudo do bloco), e o stub devolve o destinatario da
+    // fila embrulhado nos dois relacionamentos, que e a forma que o worker consome.
+    if (table === "multiplix_delivery_items") {
+      const alvo = ctx.remaining[0];
+      if (!alvo) return { data: null, error: null };
+      return {
+        data: {
+          id: `item-${String(alvo.id)}`,
+          recipient_id: alvo.id,
+          block_id: "block-1",
+          attempt_count: alvo.attempt_count ?? 0,
+          status: "sending",
+          recipient: alvo,
+          block: { id: "block-1", block_order: 0, content: opts.blockContent ?? {} },
+        },
+        error: null,
+      };
     }
     if (table === "whatsapp_connections") return { data: opts.connection ?? null, error: null };
     if (table === "profiles") return { data: opts.ownProfileId ? { id: opts.ownProfileId } : null, error: null };
@@ -219,19 +251,50 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             }
             return Promise.resolve({ data: [{ current_status: ctx.dispatch?.status ?? null }], error: null });
           }
-          case "claim_multiplix_recipient":
+          // F55: a ESCOLHA vem daqui. Devolve a fila embrulhada como item — o id do item e
+          // derivado do id do destinatario para o resto do stub continuar casando.
+          case "list_multiplix_claimable_items":
+            // O tamanho do lote agora e o p_limit desta RPC, nao um .limit() de SELECT. As
+            // assercoes do F11a (que sempre perguntaram "qual o tamanho do lote") continuam
+            // valendo sem reescrita porque o stub registra o mesmo valor no mesmo lugar.
+            ctx.limits.push(Number(args.p_limit ?? 20));
+            ctx.recipientSelects++;
+            if (ctx.recipientSelects > 12) throw new Error("laco do worker nao encerrou (selecoes repetidas)");
+            // claimReturnsNothing e sobre o CLAIM, nao sobre a lista: a fila existe (o worker
+            // tenta reivindicar), mas outro worker levou o item. Antes do F55 isso caia no
+            // SELECT; agora a lista entrega e o claim e que recusa.
+            return Promise.resolve({
+              data: ctx.remaining.slice(0, Number(args.p_limit ?? 20)).map((r) => ({
+                item_id: `item-${String(r.id)}`,
+                recipient_id: r.id,
+                block_id: "block-1",
+                block_order: 0,
+                company_id: r.company_id,
+                attempt_count: r.attempt_count ?? 0,
+                next_attempt_at: null,
+              })),
+              error: null,
+            });
+          case "claim_multiplix_item":
             if (opts.claimReturnsNothing) return Promise.resolve({ data: [], error: null });
-            return Promise.resolve({ data: [{ claim_token: `claim-${String(args.p_recipient_id)}` }], error: null });
-          case "complete_multiplix_recipient": {
+            return Promise.resolve({ data: [{ claim_token: `claim-${String(args.p_item_id)}` }], error: null });
+          case "persist_multiplix_item_message_snapshot":
+            // Fiel ao banco: a RPC grava o texto e devolve a string personalizada. O stub
+            // nao a implementava, entao devolvia undefined e o texto enviado era undefined
+            // — invisivel enquanto o POST nao validava; o adaptador (F56) valida.
+            return Promise.resolve({ data: String(args.p_personalized_message ?? ""), error: null });
+          case "complete_multiplix_item": {
             ctx.completions.push(args);
-            ctx.remaining = ctx.remaining.filter((r) => r.id !== args.p_recipient_id);
+            const id = String(args.p_item_id).replace(/^item-/, "");
+            ctx.remaining = ctx.remaining.filter((r) => r.id !== id);
             return Promise.resolve({ data: true, error: null });
           }
-          case "record_multiplix_recipient_sent": {
+          case "record_multiplix_item_sent": {
             // Espelha o efeito no banco: quem foi enviado sai da fila de
             // 'pending' (sem isso o worker re-seleciona o mesmo destinatario e a
             // rede de seguranca do mock derruba o teste por laco infinito).
-            ctx.remaining = ctx.remaining.filter((r) => r.id !== args.p_recipient_id);
+            const id = String(args.p_item_id).replace(/^item-/, "");
+            ctx.remaining = ctx.remaining.filter((r) => r.id !== id);
             return Promise.resolve({ data: true, error: null });
           }
           case "talkx_recipient_is_suppressed": {
@@ -280,6 +343,7 @@ function newCtx(opts: MockOpts): MockCtx {
   }
   return {
     rpcCalls: [],
+    events: [],
     limits: [],
     completions: [],
     dispatch,
@@ -300,7 +364,8 @@ function stubProviderFetch() {
   }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
   return {
     urls,
-    messagePosts: () => urls.filter((url) => url.includes("/message/")).length,
+    messagePosts: () =>
+      urls.filter((url) => url.includes("/message/") && !url.includes("presence")).length,
     restore: () => { globalThis.fetch = original; },
   };
 }
@@ -326,6 +391,65 @@ async function runWithProviderBlocked(opts: MockOpts): Promise<{ ctx: MockCtx; p
 /** Provedor respondendo com sucesso (v2 devolve key.id): permite exercitar o
  * caminho de envio concluido sem rede — e o unico jeito de a cota diaria ser
  * consumida, ja que ela so cai no envio que conclui. */
+/** PNG 1x1: bytes magicos reais para o prepareMedia (F40) reconhecer o tipo. */
+const PNG_1X1 = new Uint8Array([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
+  0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+]);
+
+/** Provedor que responde JSON de sucesso E serve bytes quando a URL e a midia do teste. */
+/** Bytes magicos de PDF (%PDF-1.4), para o prepareMedia classificar como documento. */
+const PDF_MINIMO = new TextEncoder().encode("%PDF-1.4\n%%EOF\n");
+
+/** Bytes magicos de OGG (OggS), o container das notas de voz. */
+const OGG_MINIMO = new Uint8Array([
+  0x4f, 0x67, 0x67, 0x53, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x01, 0x1e, 0x01, 0x76, 0x6f, 0x72, 0x62, 0x69,
+  0x73, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+]);
+
+function stubProviderComMidia(id = "WAMID-TESTE-1") {
+  const urls: string[] = [];
+  const posts: { url: string; body: Record<string, unknown> }[] = [];
+  const original = globalThis.fetch;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  globalThis.fetch = ((input: any, initArg?: { body?: string }) => {
+    const url = typeof input === "string" ? input : String(input?.url ?? input);
+    urls.push(url);
+    const init = initArg ?? (input?.init as { body?: string } | undefined);
+    if (url.includes("/message/") || url.endsWith("/send/media") || url.endsWith("/send/text")) {
+      let body: Record<string, unknown> = {};
+      try {
+        body = JSON.parse(String(init?.body ?? "{}")) as Record<string, unknown>;
+      } catch {
+        body = {};
+      }
+      posts.push({ url, body });
+    }
+    if (url.includes(".ogg")) {
+      return Promise.resolve(
+        new Response(OGG_MINIMO, { status: 200, headers: { "content-type": "audio/ogg" } }),
+      );
+    }
+    if (url.includes(".pdf")) {
+      return Promise.resolve(
+        new Response(PDF_MINIMO, { status: 200, headers: { "content-type": "application/pdf" } }),
+      );
+    }
+    if (url.includes("exemplo.test")) {
+      return Promise.resolve(
+        new Response(PNG_1X1, { status: 200, headers: { "content-type": "image/png" } }),
+      );
+    }
+    return Promise.resolve({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ key: { id } }),
+    });
+  }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  return { urls, posts, restore: () => { globalThis.fetch = original; } };
+}
+
 function stubProviderSuccess(id = "WAMID-TESTE-1") {
   const urls: string[] = [];
   const original = globalThis.fetch;
@@ -583,7 +707,7 @@ Deno.test("F17: sem cota diária sobrando o disparo é pausado com motivo 'daily
   const pause = rpcs(ctx, "transition_multiplix_dispatch").find((call) => call.args.p_action === "pause");
   assert(pause, "esperava a pausa automatica do disparo");
   assert(pause.args.p_pause_reason === "daily_limit", `motivo esperado 'daily_limit', veio ${pause.args.p_pause_reason}`);
-  assert(rpcs(ctx, "claim_multiplix_recipient").length === 0, "nao deveria reivindicar destinatario sem cota");
+  assert(rpcs(ctx, "claim_multiplix_item").length === 0, "nao deveria reivindicar destinatario sem cota");
   assert(providerPosts === 0, `nenhum POST ao provedor era esperado, houve ${providerPosts}`);
 });
 
@@ -602,7 +726,7 @@ Deno.test("F17: com cota sobrando o disparo segue (não pausa por cota)", async 
   const quotaPause = rpcs(ctx, "transition_multiplix_dispatch")
     .find((call) => call.args.p_action === "pause" && call.args.p_pause_reason === "daily_limit");
   assert(!quotaPause, "nao deveria pausar por cota diaria com espaco disponivel");
-  assert(rpcs(ctx, "claim_multiplix_recipient").length === 1, "esperava reivindicar o destinatario");
+  assert(rpcs(ctx, "claim_multiplix_item").length === 1, "esperava reivindicar o destinatario");
 });
 
 Deno.test("F17: a cota da conexão é consumida por envio concluído (1 enviado, depois pausa o lote)", async () => {
@@ -630,15 +754,15 @@ Deno.test("F17: a cota da conexão é consumida por envio concluído (1 enviado,
     provider.restore();
   }
   assert(
-    rpcs(ctx, "record_multiplix_recipient_sent").length === 1,
-    `esperava 1 envio concluido, houve ${rpcs(ctx, "record_multiplix_recipient_sent").length}`,
+    rpcs(ctx, "record_multiplix_item_sent").length === 1,
+    `esperava 1 envio concluido, houve ${rpcs(ctx, "record_multiplix_item_sent").length}`,
   );
   const pause = rpcs(ctx, "transition_multiplix_dispatch").find((call) => call.args.p_action === "pause");
   assert(pause, "esperava pausa por cota depois de consumir o unico envio do dia");
   assert(pause.args.p_pause_reason === "daily_limit", `motivo esperado 'daily_limit', veio ${pause.args.p_pause_reason}`);
   assert(
-    rpcs(ctx, "claim_multiplix_recipient").length === 1,
-    `esperava 1 reivindicacao (a cota acaba depois dela), houve ${rpcs(ctx, "claim_multiplix_recipient").length}`,
+    rpcs(ctx, "claim_multiplix_item").length === 1,
+    `esperava 1 reivindicacao (a cota acaba depois dela), houve ${rpcs(ctx, "claim_multiplix_item").length}`,
   );
 });
 
@@ -665,7 +789,7 @@ Deno.test("F10: start fora da janela não dispara nada (ok:false, sem pausa e se
   }
   assert(body.ok === false, `esperava ok:false, veio ${JSON.stringify(body)}`);
   assert(body.reason === "outside_send_window", `motivo esperado 'outside_send_window', veio ${body.reason}`);
-  assert(rpcs(ctx, "claim_multiplix_recipient").length === 0, "nao pode reivindicar fora da janela");
+  assert(rpcs(ctx, "claim_multiplix_item").length === 0, "nao pode reivindicar fora da janela");
   assert(provider.messagePosts() === 0, "nao pode enviar fora da janela");
 });
 
@@ -684,7 +808,7 @@ Deno.test("F10: janela que fecha no meio do disparo pausa com motivo 'outside_wi
   const pause = rpcs(ctx, "transition_multiplix_dispatch").find((call) => call.args.p_action === "pause");
   assert(pause, "esperava pausa quando a janela fecha no meio do disparo");
   assert(pause.args.p_pause_reason === "outside_window", `motivo esperado 'outside_window', veio ${pause.args.p_pause_reason}`);
-  assert(rpcs(ctx, "claim_multiplix_recipient").length === 0, "nao pode reivindicar com a janela fechada");
+  assert(rpcs(ctx, "claim_multiplix_item").length === 0, "nao pode reivindicar com a janela fechada");
   assert(providerPosts === 0, "nao pode enviar com a janela fechada");
 });
 
@@ -703,8 +827,8 @@ Deno.test("F11a: passada sem reivindicação encerra o laço (não gira contra a
   const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
   assert(res.status === 200, `esperado 200, recebido ${res.status}`);
   assert(
-    rpcs(ctx, "claim_multiplix_recipient").length === 1,
-    `esperava 1 tentativa de reivindicacao, houve ${rpcs(ctx, "claim_multiplix_recipient").length}`,
+    rpcs(ctx, "claim_multiplix_item").length === 1,
+    `esperava 1 tentativa de reivindicacao, houve ${rpcs(ctx, "claim_multiplix_item").length}`,
   );
   assert(
     ctx.recipientSelects === 1,
@@ -846,7 +970,10 @@ Deno.test("gap M32: dispatch com midia usa o endpoint de midia (nao sendText)", 
     recipients: [recipientRow(1, "5511955550004")],
   };
   const ctx = newCtx(opts);
-  const provider = stubProviderSuccess();
+  // F56: o envio de midia passa pelo prepareMedia, que BUSCA o arquivo para detectar o
+  // tipo real. O stub precisa servir bytes de verdade — com o stub de JSON a midia e
+  // recusada como invalida e nenhum POST sai.
+  const provider = stubProviderComMidia();
   try {
     await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
     const posts = provider.urls.filter((url) => url.includes("/message/"));
@@ -881,7 +1008,7 @@ Deno.test("envio bem-sucedido: WAMID do provedor vira 'sent' com external_id reg
     assert(res.status === 200, `esperado 200, recebido ${res.status}`);
     const posts = provider.urls.filter((url) => url.includes("/message/sendText/"));
     assert(posts.length === 1, `esperava 1 POST sendText, urls: ${JSON.stringify(provider.urls)}`);
-    const registrados = rpcs(ctx, "record_multiplix_recipient_sent");
+    const registrados = rpcs(ctx, "record_multiplix_item_sent");
     assert(registrados.length === 1, `esperava 1 registro de envio, houve ${registrados.length}`);
     assert(
       registrados[0].args.p_external_id === "WAMID-TESTE-1",
@@ -934,9 +1061,11 @@ Deno.test("gap M12/F17: a cota diaria e consumida por envio (remaining=1 -> 1 en
   const provider = stubProviderSuccess();
   try {
     await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
-    const envios = rpcs(ctx, "record_multiplix_recipient_sent");
+    const envios = rpcs(ctx, "record_multiplix_item_sent");
     assert(envios.length === 1, `cota de 1 deveria permitir 1 envio, houve ${envios.length}`);
-    const posts = provider.urls.filter((url) => url.includes("/message/"));
+    // F56: o envio manda PRESENCA antes da mensagem. A presenca nao pode contar como
+    // envio — senao a cota pareceria consumida duas vezes.
+    const posts = provider.urls.filter((url) => url.includes("/message/") && !url.includes("presence"));
     assert(posts.length === 1, `esperava 1 POST ao provedor, houve ${posts.length}`);
     const pausas = rpcs(ctx, "transition_multiplix_dispatch").filter((c) => c.args.p_action === "pause");
     assert(pausas.length === 1, `esperava 1 pausa por cota esgotada, houve ${pausas.length}`);
@@ -948,5 +1077,193 @@ Deno.test("gap M12/F17: a cota diaria e consumida por envio (remaining=1 -> 1 en
     provider.restore();
     if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
     else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
+Deno.test("F56: documento sai com o fileName do bloco (o PDF chega com nome)", async () => {
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({
+      status: "sending",
+      media_type: "document",
+      media_url: "https://exemplo.test/contrato.pdf",
+      total_recipients: 1,
+    }),
+    recipients: [recipientRow(1, "5511955550008")],
+    // F33: o nome do arquivo vive no content do bloco, e e a unica fonte dele —
+    // a URL assinada do bucket nao preserva o nome.
+    blockContent: { media: { url: "https://exemplo.test/contrato.pdf", fileName: "Contrato Assinado.pdf" } },
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  try {
+    await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    const midia = provider.posts.filter((p) => p.url.includes("sendMedia"));
+    assert(midia.length === 1, `esperava 1 POST de midia, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    assert(
+      midia[0].body.fileName === "Contrato Assinado.pdf",
+      `o documento tem de sair com o nome do bloco, saiu: ${String(midia[0].body.fileName)}`,
+    );
+    assert(
+      midia[0].body.mediatype === "document",
+      `tipo real (detectado nos bytes) esperado document, veio ${String(midia[0].body.mediatype)}`,
+    );
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
+Deno.test("F56: audio do dispatch sai como PTT e avisa presenca 'recording'", async () => {
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({
+      status: "sending",
+      media_type: "audio",
+      media_url: "https://exemplo.test/nota.ogg",
+      total_recipients: 1,
+    }),
+    recipients: [recipientRow(1, "5511955550009")],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  try {
+    await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    const presenca = provider.posts.find((p) => p.url.includes("presence"));
+    assert(presenca !== undefined, `esperava POST de presenca, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    // O Evolution GO nao expressa "gravando" como presence:"recording": translateV2ToGo
+    // converte para { state: "composing", isAudio: true }. A assercao aceita as duas formas
+    // — o que importa e a INTENCAO (o destinatario ve que e audio), nao o dialeto da vez.
+    const avisaGravacao = presenca.body.isAudio === true || presenca.body.presence === "recording";
+    assert(
+      avisaGravacao,
+      `nota de voz tem de avisar gravacao, veio: ${JSON.stringify(presenca.body)}`,
+    );
+    const audio = provider.posts.find((p) => p.url.includes("audio") || p.url.includes("sendWhatsAppAudio"));
+    assert(audio !== undefined, `esperava POST de audio/PTT, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// F61 — o operador le TEXTO; o codigo cru vai para a trilha de eventos
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Provedor que RECUSA: devolve o corpo CRU (JSON do provedor) com status 400. */
+function stubProviderRejecting(body: unknown, status = 400) {
+  const original = globalThis.fetch;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  globalThis.fetch = ((input: any) => {
+    const url = typeof input === "string" ? input : String(input?.url ?? input);
+    // A chamada de presenca nao e a mensagem: quem recusa e o POST da mensagem.
+    if (url.includes("presence")) {
+      return Promise.resolve(new Response("{}", { status: 200 }));
+    }
+    return Promise.resolve(
+      new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } }),
+    );
+  }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  return { restore: () => { globalThis.fetch = original; } };
+}
+
+Deno.test("F61: erro do provedor vira texto legivel — nunca JSON cru — e o codigo vai para os eventos", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    recipients: [recipientRow(0, "5511999990000")],
+  };
+  const ctx = newCtx(opts);
+  // Corpo REAL do provedor: e isto que o operador via no campo de diagnostico.
+  const provider = stubProviderRejecting({ status: 400, error: { code: "400", message: "number not exists" } });
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+
+    const completions = rpcs(ctx, "complete_multiplix_item");
+    assert(completions.length >= 1, "esperava ao menos um complete_multiplix_item");
+    const p_error_message = String(completions[0].args.p_error_message ?? "");
+
+    // O ponto do F61: o campo que a TELA mostra nao pode ser o corpo do provedor.
+    assert(
+      !p_error_message.includes("{") && !p_error_message.includes("number not exists"),
+      `error_message vazou o corpo do provedor: ${p_error_message}`,
+    );
+    assert(
+      p_error_message.includes("Número não existe no WhatsApp"),
+      `error_message nao esta legivel para o operador: ${p_error_message}`,
+    );
+
+    // Segunda metade: o codigo CRU fica na trilha de eventos, para quem depura.
+    const falha = ctx.events.find((e: Record<string, unknown>) => e.kind === "item_failed");
+    assert(falha !== undefined, "esperava um evento item_failed com o codigo do provedor");
+    const payload = falha.payload as Record<string, unknown>;
+    assert(payload.error_code === "number_not_exists", `error_code inesperado: ${String(payload.error_code)}`);
+    assert(payload.error_class === "permanent", `error_class inesperado: ${String(payload.error_class)}`);
+    assert(payload.provider_status === 400, `provider_status inesperado: ${String(payload.provider_status)}`);
+
+    // O corpo do provedor NAO entra no evento: pode carregar dado de cliente.
+    const bruto = JSON.stringify(payload);
+    assert(!bruto.includes("number not exists"), "o evento carregou o corpo bruto do provedor");
+  } finally {
+    provider.restore();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// F60 (gatilho) — o erro PERMANENTE nao fica no item: marca a CONEXAO em risco
+// ─────────────────────────────────────────────────────────────────────────────
+
+Deno.test("F60: erro PERMANENTE no item marca a conexao em risco (o gatilho do worker)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    recipients: [recipientRow(0, "5511999990000")],
+    connection: { id: "conn-0001", status: "connected", instance_id: "inst-1" },
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderRejecting({ status: 400, error: { code: "400", message: "number not exists" } });
+  try {
+    await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    const risco = rpcs(ctx, "register_multiplix_connection_failure");
+    assert(risco.length === 1, `esperava UMA marcacao de risco, veio ${risco.length}`);
+    assert(
+      risco[0].args.p_error_class === "permanent",
+      `p_error_class inesperado: ${String(risco[0].args.p_error_class)}`,
+    );
+    assert(
+      risco[0].args.p_connection_id === "conn-0001",
+      `marcou a conexao errada: ${String(risco[0].args.p_connection_id)}`,
+    );
+    // Sem sinal de banimento: quem decide o limiar das tres e a funcao, nao o worker.
+    assert(risco[0].args.p_signal === null, `o worker nao deveria mandar sinal: ${String(risco[0].args.p_signal)}`);
+  } finally {
+    provider.restore();
+  }
+});
+
+Deno.test("F60: erro do item que NAO e permanente nao marca risco (nao pausa por qualquer coisa)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    recipients: [recipientRow(0, "5511999990000")],
+    connection: { id: "conn-0001", status: "connected", instance_id: "inst-1" },
+  };
+  const ctx = newCtx(opts);
+  // 503 = indisponibilidade temporaria do provedor: o item falha, mas a conexao esta bem.
+  const provider = stubProviderRejecting({ status: 503, error: { code: "503", message: "service unavailable" } }, 503);
+  try {
+    await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    const risco = rpcs(ctx, "register_multiplix_connection_failure");
+    assert(
+      risco.length === 0,
+      `erro transitorio NAO pode pausar a conexao (marcou ${risco.length}x — pausaria disparo bom)`,
+    );
+  } finally {
+    provider.restore();
   }
 });

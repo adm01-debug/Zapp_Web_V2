@@ -335,7 +335,7 @@ export function renderForRecipient(
   variables: Record<string, string>,
   timezone: string,
 ): string {
-  return personalize(template, { company: asString(companyName) }, variables, timezone);
+  return personalize(template, { company: asString(companyName) }, variables, timezone).text;
 }
 
 /** Ativo exato do bloco (o que o worker enviaria). */
@@ -568,7 +568,7 @@ function evaluatePlaceholder(
 ): PlaceholderReport {
   const key = rawKey.toLowerCase();
   // O que o kernel realmente produz para esta chave — a fonte da verdade.
-  const rendersTo = personalize(`{{${rawKey}}}`, { company: companyName }, variables, timezone);
+  const rendersTo = personalize(`{{${rawKey}}}`, { company: companyName }, variables, timezone).text;
 
   if (sharedAudio) {
     return {

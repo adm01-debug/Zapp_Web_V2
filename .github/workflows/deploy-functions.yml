@@ -31,6 +31,16 @@ on:
         required: false
         default: ''
         type: string
+      rotate_secrets:
+        description: 'Reescrever os secrets das edges mesmo sem divergencia (use apos rotacionar um valor).'
+        required: false
+        default: false
+        type: boolean
+      dry_run:
+        description: 'Ensaio: roda tudo ate o Deploy exclusive, publica o plano e nao publica nada.'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -76,6 +86,8 @@ jobs:
       contents: write
       # Leitura dos runs deste workflow para o passo de serializacao do escopo `all`.
       actions: read
+      # E60: registrar o Deployment de rastreabilidade (aba Deployments).
+      deployments: write
     steps:
       # E09 (auditoria de GitHub Actions, 2026-09-26), corrigido em 30/09/2026:
       # a concurrency NAO enfileira mais de um dispatch — ela mantem 1 em
@@ -86,6 +98,7 @@ jobs:
       # MESMA funcao, confira se ja nao ha um run dela pendente/em execucao.
       - name: Exigir ref confiavel da main
         run: |
+          set -euo pipefail
           if [ "$GITHUB_REF" != "refs/heads/main" ]; then
             echo "::error::Deploy de producao so pode executar a partir de refs/heads/main."
             exit 1
@@ -102,6 +115,7 @@ jobs:
         env:
           SOURCE_REF: ${{ inputs.source_ref }}
         run: |
+          set -euo pipefail
           DEPLOYED_GIT_SHA=$(git rev-parse HEAD)
           if [ -z "$SOURCE_REF" ]; then
             test "$DEPLOYED_GIT_SHA" = "$GITHUB_SHA"
@@ -118,6 +132,7 @@ jobs:
 
       - name: Fixar coletor confiavel mesmo durante rollback
         run: |
+          set -euo pipefail
           mkdir -p "$RUNNER_TEMP/edge-tooling"
           git archive "$GITHUB_SHA" scripts/edge-deploy | tar -x -C "$RUNNER_TEMP/edge-tooling"
 
@@ -130,6 +145,7 @@ jobs:
 
       - name: Validar gerador e manifesto de deployment
         run: |
+          set -euo pipefail
           node --test scripts/edge-deploy/*.unit.mjs
           node scripts/edge-deploy/generate-manifest.mjs --check
 
@@ -144,6 +160,7 @@ jobs:
           PROJECT_REF: tnnnlkbymytvtqngbbqh
           FN: ${{ inputs.function_name }}
         run: |
+          set -euo pipefail
           if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
             echo "::error::SUPABASE_ACCESS_TOKEN ausente."
             exit 1
@@ -163,6 +180,29 @@ jobs:
           fi
           echo "OK: destino oficial confirmado."
 
+      - name: Decidir se os secrets das edges precisam ser reescritos
+        id: decisoes_secrets
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: tnnnlkbymytvtqngbbqh
+          FN: ${{ inputs.function_name }}
+          ROTATE_SECRETS: ${{ inputs.rotate_secrets }}
+          SOURCE_REF: ${{ inputs.source_ref }}
+        run: |
+          set -euo pipefail
+          ARQUIVO="$RUNNER_TEMP/secrets-list.json"
+          if ! supabase secrets list --project-ref "$PROJECT_REF" --output-format json > "$ARQUIVO" 2>/dev/null; then
+            echo "::warning::Nao foi possivel ler os secrets do projeto; a decisao cai no comportamento anterior."
+            rm -f "$ARQUIVO"
+          fi
+          set -- --fn "$FN" --lista "$ARQUIVO"
+          if [ -n "$SOURCE_REF" ]; then
+            set -- "$@" --rollback
+          elif [ "$ROTATE_SECRETS" = "true" ]; then
+            set -- "$@" --rotate
+          fi
+          node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/secrets-scope.mjs" "$@"
+
       - name: Configurar secrets nas edges
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -175,10 +215,14 @@ jobs:
           PREVIEW_EGRESS_PROXY_URL: ${{ secrets.PREVIEW_EGRESS_PROXY_URL }}
           PREVIEW_EGRESS_SHARED_SECRET: ${{ secrets.PREVIEW_EGRESS_SHARED_SECRET }}
           FN: ${{ inputs.function_name }}
+          REESCREVER: ${{ steps.decisoes_secrets.outputs.reescrever }}
         run: |
+          set -euo pipefail
           if [ -n "$CRON_SECRET" ]; then
             echo "Setando CRON_SECRET nas edges"
-            supabase secrets set CRON_SECRET="$CRON_SECRET" --project-ref "$PROJECT_REF"
+            if [ "$REESCREVER" = "true" ]; then
+              supabase secrets set CRON_SECRET="$CRON_SECRET" --project-ref "$PROJECT_REF"
+            fi
           fi
           # Deploy total (FN vazio) também inclui crm-integration e deve falhar
           # fechado se suas dependências server-side não estiverem prontas.
@@ -208,10 +252,12 @@ jobs:
               echo "::error::Preflight read-only do CRM falhou (HTTP $STATUS)."
               exit 1
             fi
-            supabase secrets set \
-              EXTERNAL_SUPABASE_URL="$EXTERNAL_SUPABASE_URL" \
-              EXTERNAL_SUPABASE_SERVICE_ROLE_KEY="$EXTERNAL_SUPABASE_SERVICE_ROLE_KEY" \
-              --project-ref "$PROJECT_REF"
+            if [ "$REESCREVER" = "true" ]; then
+              supabase secrets set \
+                EXTERNAL_SUPABASE_URL="$EXTERNAL_SUPABASE_URL" \
+                EXTERNAL_SUPABASE_SERVICE_ROLE_KEY="$EXTERNAL_SUPABASE_SERVICE_ROLE_KEY" \
+                --project-ref "$PROJECT_REF"
+            fi
           fi
           if [ "$FN" = "promogifts-catalog" ] || [ -z "$FN" ]; then
             if [ -z "$PROMOGIFTS_SUPABASE_URL" ] || [ -z "$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" ]; then
@@ -229,10 +275,12 @@ jobs:
             fi
             node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('/tmp/promogifts-preflight.json','utf8'));if(!Array.isArray(d))process.exit(1);console.log('OK: catalogo acessivel; linhas amostradas='+d.length)"
             echo "Setando endpoint e credencial server-side do catalogo nas edges"
-            supabase secrets set \
-              PROMOGIFTS_SUPABASE_URL="$PROMOGIFTS_SUPABASE_URL" \
-              PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY="$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" \
-              --project-ref "$PROJECT_REF"
+            if [ "$REESCREVER" = "true" ]; then
+              supabase secrets set \
+                PROMOGIFTS_SUPABASE_URL="$PROMOGIFTS_SUPABASE_URL" \
+                PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY="$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" \
+                --project-ref "$PROJECT_REF"
+            fi
           fi
           # fetch-link-preview nunca pode ser promovida sem o proxy HTTPS e
           # seu segredo HMAC. Sem eles, a funcao fica segura mas deixa de
@@ -255,10 +303,12 @@ jobs:
           }
           console.log('OK: configuracao do proxy de previews validada.');
           NODE
-            supabase secrets set \
-              PREVIEW_EGRESS_PROXY_URL="$PREVIEW_EGRESS_PROXY_URL" \
-              PREVIEW_EGRESS_SHARED_SECRET="$PREVIEW_EGRESS_SHARED_SECRET" \
-              --project-ref "$PROJECT_REF"
+            if [ "$REESCREVER" = "true" ]; then
+              supabase secrets set \
+                PREVIEW_EGRESS_PROXY_URL="$PREVIEW_EGRESS_PROXY_URL" \
+                PREVIEW_EGRESS_SHARED_SECRET="$PREVIEW_EGRESS_SHARED_SECRET" \
+                --project-ref "$PROJECT_REF"
+            fi
           fi
 
       - name: Capturar inventario estrutural antes do deploy
@@ -266,13 +316,23 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           PROJECT_REF: tnnnlkbymytvtqngbbqh
         run: |
+          set -euo pipefail
           umask 077
           mkdir -p "$RUNNER_TEMP/edge-deployment-evidence"
           node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/collect-remote.mjs" --snapshot \
             --manifest supabase/deployment-manifest.json \
             --output "$RUNNER_TEMP/edge-deployment-evidence/edge-before.json"
 
+      - name: Publicar plano do deploy (digest local x remoto)
+        env:
+          FN: ${{ inputs.function_name }}
+        run: |
+          set -euo pipefail
+          EVIDENCIA="$RUNNER_TEMP/edge-deployment-evidence"
+          node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/deploy-plan.mjs" --manifest supabase/deployment-manifest.json --remoto "$EVIDENCIA/edge-before.json" --escopo "$FN" --saida "$EVIDENCIA/deploy-plan.json"
+
       - name: Deploy
+        if: inputs.dry_run != true
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           PROJECT_REF: tnnnlkbymytvtqngbbqh
@@ -281,7 +341,7 @@ jobs:
           # F-02 (auditoria 2026-09-27): sem pipefail, falha do CLI do supabase
           # era mascarada pelo tee (exit 0) e só aparecia ~12 min depois quando
           # a verificação pós-deploy não encontrava o deploy esperado.
-          set -o pipefail
+          set -euo pipefail
           EVIDENCE_DIR="$RUNNER_TEMP/edge-deployment-evidence"
           mkdir -p "$EVIDENCE_DIR"
           DEPLOY_LOG="$EVIDENCE_DIR/deploy-output.log"
@@ -300,25 +360,29 @@ jobs:
           # 01/10/2026 (run 36852598923): essa linha sai no STDERR -- sem o 2>&1
           # acima o log capturado ficou com 197 bytes, sem ela, e a atestacao
           # queimou as 144 amostras (~24 min) para falhar com "did not stabilize".
-          node --input-type=module <<'NODE'
-          import { readFileSync, writeFileSync } from 'node:fs';
-          const evidenceDir = `${process.env.RUNNER_TEMP}/edge-deployment-evidence`;
-          const rawLog = readFileSync(`${evidenceDir}/deploy-output.log`, 'utf8');
-          // F-03 (run 36583351162, 2026-09-29): supabase CLI emite ANSI mesmo piped para tee;
-          // strip de ANSI + padrao sem ancoras ^/$ evita falso-negativo que esvaziava unchangedSet
-          // e fazia a attestacao esgotar 144 tentativas esperando version bumps que nunca viriam.
-          const log = rawLog.replace(/\x1b\[[0-9;]*[mGKHF]/g, '');
-          const unchanged = [...log.matchAll(/No change found in Function: (\S+)/g)].map((m) => m[1]);
-          writeFileSync(`${evidenceDir}/unchanged-functions.json`, JSON.stringify(unchanged));
-          console.log(`Funcoes sem mudanca de bundle: ${unchanged.length ? unchanged.join(', ') : 'nenhuma'}`);
-          NODE
+          # E56 (auditoria de 01/10/2026): o extrator saiu do YAML e virou
+          # scripts/edge-deploy/unchanged-from-log.mjs, com fixture dos logs reais
+          # dos runs 36852598923 e 36583351162. O teste trava as duas propriedades
+          # que este trecho ja precisou acertar: (a) casar a linha COM ANSI, que o
+          # CLI emite mesmo piped para tee -- o padrao com ancoras ^...$ nao casava
+          # e a attestacao esgotava as 144 amostras esperando bump que nunca vinha
+          # (F-03, run 36583351162); e (b) NAO aceitar o eco deste proprio script,
+          # que o runner imprime, como se fosse funcao sem mudanca.
+          node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/unchanged-from-log.mjs" "$EVIDENCE_DIR/deploy-output.log" "$EVIDENCE_DIR/unchanged-functions.json"
 
       - name: Capturar e validar manifesto remoto pos-deploy
+        if: inputs.dry_run != true
+        # E55 (auditoria de 01/10/2026): teto proprio do passo. O job inteiro tem
+        # 100 min, mas a atestacao nao pode consumir esse orcamento: se a Management
+        # API nao estabilizar em 10 min, o passo falha com a ultima causa observada
+        # (lastReason) e o run NAO termina em success.
+        timeout-minutes: 10
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           PROJECT_REF: tnnnlkbymytvtqngbbqh
           FN: ${{ inputs.function_name }}
         run: |
+          set -euo pipefail
           umask 077
           EVIDENCE_DIR="$RUNNER_TEMP/edge-deployment-evidence"
           mkdir -p "$EVIDENCE_DIR"
@@ -334,9 +398,11 @@ jobs:
             --unchanged "$EVIDENCE_DIR/unchanged-functions.json"
 
       - name: Executar smoke positivo e negativo por funcao
+        if: inputs.dry_run != true
         env:
           PROJECT_REF: tnnnlkbymytvtqngbbqh
         run: |
+          set -euo pipefail
           node scripts/edge-deploy/smoke-functions.mjs \
             --manifest supabase/deployment-manifest.json \
             --base-url "https://$PROJECT_REF.supabase.co/functions/v1" \
@@ -345,8 +411,9 @@ jobs:
             --run-id "$GITHUB_RUN_ID"
 
       - name: Publicar resumo da evidencia
-        if: always()
+        if: always() && inputs.dry_run != true
         run: |
+          set -euo pipefail
           node --input-type=module <<'NODE'
           import { appendFileSync, existsSync, readFileSync } from 'node:fs';
           const evidenceDir = `${process.env.RUNNER_TEMP}/edge-deployment-evidence`;
@@ -370,31 +437,41 @@ jobs:
           appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join('\n')}\n`);
           NODE
 
-      - name: Registrar tag de deploy
-        # Cria tag leve de rastreabilidade no commit deployado usando o
-        # GITHUB_TOKEN (job elevado a contents:write) — sem PAT. Best-effort:
-        # falha ao criar a tag apenas avisa, nao derruba o deploy.
-        if: success()
+      - name: Registrar Deployment de rastreabilidade
+        # E60 (auditoria de 01/10/2026): o objeto de rastreabilidade passa a ser um
+        # Deployment do GitHub com `ref` = sha DEPLOYADO. A tag `edge-deploy/*` saiu
+        # de cena: nao aparece na aba Deployments, nao carrega o link do run e nao
+        # prende o que interessa. Medido em 03/10/2026: o job declara
+        # `environment: producao-edge-functions`, entao o GitHub JA cria um
+        # Deployment por run -- mas apontando para `main`, que ANDA. Em rollback o
+        # sha publicado e' um ancestral da main, e e' esse sha que precisa ficar
+        # preso. Best-effort: falha ao registrar apenas avisa.
+        if: success() && inputs.dry_run != true
+        id: deployment
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ESCOPO: ${{ inputs.function_name }}
         run: |
-          # run_id no nome: com deploys paralelos, dois runs podem terminar no mesmo segundo.
-          TAG="edge-deploy/$(date -u +%Y%m%d-%H%M%S)-${DEPLOYED_GIT_SHA:0:8}-${GITHUB_RUN_ID}"
-          git -c user.name="github-actions[bot]" \
-              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
-              tag -a "$TAG" "$DEPLOYED_GIT_SHA" \
-              -m "Deploy de edge functions em producao — run $GITHUB_RUN_ID"
-          if git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$TAG"; then
-            echo "::notice::Tag de rastreabilidade criada: $TAG"
-          else
-            echo "::warning::Falha ao criar tag de rastreabilidade $TAG (deploy nao afetado)."
-          fi
+          set -euo pipefail
+          node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/register-deployment.mjs"
+
+      - name: Limpar segredos do log de deploy
+        # E74: o log carrega URL com `access_token` embutido e o artifact vai para o
+        # storage do GitHub. A credencial precisa sair do ARQUIVO antes do upload --
+        # `::add-mask::` esconde no log do run, nao no artefato. O valor vem do
+        # ambiente pelo nome da variavel: nunca aparece no codigo nem na saida.
+        if: always() && inputs.dry_run != true
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/redigir-log.mjs" "$RUNNER_TEMP/edge-deployment-evidence/deploy-output.log" --segredo-env=SUPABASE_ACCESS_TOKEN
 
       - name: Arquivar manifesto, atestado e smokes
-        if: always()
+        if: always() && inputs.dry_run != true
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: edge-deployment-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/edge-deployment-evidence/
           if-no-files-found: warn
-          retention-days: 30
+          retention-days: 14

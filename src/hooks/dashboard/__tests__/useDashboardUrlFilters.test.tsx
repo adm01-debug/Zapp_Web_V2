@@ -9,6 +9,13 @@ vi.mock('react-router-dom', () => ({
 }));
 
 import { useDashboardUrlFilters } from '../useDashboardUrlFilters';
+import {
+  appDayEnd,
+  appDayEndOfLocalDate,
+  appDayKey,
+  appDayStart,
+  appDayStartOfLocalDate,
+} from '@/lib/localDay';
 
 describe('useDashboardUrlFilters', () => {
   beforeEach(() => {
@@ -35,15 +42,18 @@ describe('useDashboardUrlFilters', () => {
     expect(filters.agentId).toBe('agent-456');
   });
 
-  it('period=custom com from/to válidos na URL usa esse range exato', () => {
+  it('period=custom com from/to válidos na URL usa esse range exato (dias no fuso do app)', () => {
     mockSearchParams.set('period', 'custom');
     mockSearchParams.set('from', '2026-01-10');
     mockSearchParams.set('to', '2026-01-15');
     const { result } = renderHook(() => useDashboardUrlFilters());
     const [filters] = result.current;
     expect(filters.period).toBe('custom');
-    expect(filters.dateRange.from.getDate()).toBe(10);
-    expect(filters.dateRange.to.getDate()).toBe(15);
+    // As datas da URL são date-only: o recorte é o dia de calendário inteiro no fuso do app.
+    expect(appDayKey(filters.dateRange.from)).toBe('2026-01-10');
+    expect(appDayKey(filters.dateRange.to)).toBe('2026-01-15');
+    expect(filters.dateRange.from.toISOString()).toBe('2026-01-10T03:00:00.000Z');
+    expect(filters.dateRange.to.toISOString()).toBe('2026-01-16T02:59:59.999Z');
   });
 
   it('period=custom sem from/to na URL (link incompleto) cai para today em vez de quebrar', () => {
@@ -85,7 +95,10 @@ describe('useDashboardUrlFilters', () => {
     act(() => {
       setFilters({
         period: 'custom',
-        dateRange: { from: new Date(2026, 0, 10), to: new Date(2026, 0, 15) },
+        dateRange: {
+          from: appDayStartOfLocalDate(new Date(2026, 0, 10)),
+          to: appDayEndOfLocalDate(new Date(2026, 0, 15)),
+        },
         queueId: null,
         agentId: null,
       });
@@ -109,5 +122,41 @@ describe('useDashboardUrlFilters', () => {
     const result_ = updater(params);
     expect(result_.has('from')).toBe(false);
     expect(result_.has('to')).toBe(false);
+  });
+
+  it('period=today recorta o dia de calendário em America/Sao_Paulo (não no fuso do navegador)', () => {
+    const { result } = renderHook(() => useDashboardUrlFilters());
+    const [filters] = result.current;
+    // Âncora fixa: com o fuso do navegador, em UTC isto seria 00:00Z do mesmo dia (21:00 de ontem em SP).
+    expect(filters.dateRange.from.toISOString()).toBe(appDayStart(0).toISOString());
+    expect(filters.dateRange.to.toISOString()).toBe(appDayEnd(0).toISOString());
+  });
+
+  it('period=yesterday recorta o dia anterior em America/Sao_Paulo', () => {
+    mockSearchParams.set('period', 'yesterday');
+    const { result } = renderHook(() => useDashboardUrlFilters());
+    const [filters] = result.current;
+    expect(filters.dateRange.from.toISOString()).toBe(appDayStart(1).toISOString());
+    expect(filters.dateRange.to.toISOString()).toBe(appDayEnd(1).toISOString());
+  });
+
+  it('setFilters do custom grava from/to como o dia no fuso do app', () => {
+    const { result } = renderHook(() => useDashboardUrlFilters());
+    const [, setFilters] = result.current;
+    act(() => {
+      setFilters({
+        period: 'custom',
+        dateRange: {
+          from: appDayStartOfLocalDate(new Date(2026, 0, 10)),
+          to: appDayEndOfLocalDate(new Date(2026, 0, 15)),
+        },
+        queueId: null,
+        agentId: null,
+      });
+    });
+    const updater = mockSetSearchParams.mock.calls[0][0] as (p: URLSearchParams) => URLSearchParams;
+    const params = updater(new URLSearchParams());
+    expect(params.get('from')).toBe('2026-01-10');
+    expect(params.get('to')).toBe('2026-01-15');
   });
 });

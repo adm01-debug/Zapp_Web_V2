@@ -22,6 +22,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet';
+import { Drawer, DrawerContent } from '@/components/ui/drawer';
+import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
   Send, Heart, Palette, Ruler, Weight, Globe, Clock, Layers, Tag, Box,
@@ -315,11 +317,13 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend, produ
    */
   const categoryLabel = dp.categories?.full_path_readable?.trim() || dp.categories?.name?.trim() || null;
 
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      {/* largura: sobreescrita via className pq sheetVariants fixa sm:max-w-sm */}
-      <SheetContent side="right" className="w-full sm:max-w-xl p-0 flex flex-col overflow-hidden">
-        <ScrollArea className="flex-1 overflow-y-auto">
+  const isMobile = useIsMobile();
+
+  // CT-30 — o conteúdo (galeria + detalhes + rodapé) é único para os dois
+  // invólucros: o Sheet lateral em >= md e o Drawer (vaul) abaixo de 768px.
+  const panel = (
+    <>
+      <ScrollArea className="flex-1 overflow-y-auto">
           {/* galeria */}
           <ImageGallery product={dp} focusUrl={activePick.image} focusToken={activePick.token} colorLabel={selectedColor} />
 
@@ -623,6 +627,29 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend, produ
             )}
           </div>
         )}
+    </>
+  );
+
+  // CT-30 — abaixo de md (768px) o detalhe vira Drawer (vaul); em telas
+  // maiores continua o Sheet lateral de sempre.
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent
+          data-testid="product-detail-drawer"
+          className="max-h-[92vh] p-0 overflow-hidden"
+        >
+          {panel}
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      {/* largura: sobreescrita via className pq sheetVariants fixa sm:max-w-sm */}
+      <SheetContent side="right" data-testid="product-detail-sheet" className="w-full sm:max-w-xl p-0 flex flex-col overflow-hidden">
+        {panel}
       </SheetContent>
     </Sheet>
   );

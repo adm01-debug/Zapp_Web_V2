@@ -17,7 +17,6 @@ import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talk
 import { pauseReasonForWindow } from "../_shared/talkx-resume-policy.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
-import { secureRandomFloat } from "../_shared/secure-random.ts";
 import {
   getMediaEndpoint,
   personalize,
@@ -30,8 +29,31 @@ import {
   enqueueEffectReconcile,
 } from "../_shared/effect-reconcile.ts";
 
-/** E49: sorteia variante A/B pelo peso. Retorna null se nao houver variantes. */
-export async function pickVariant(supabase: SupabaseClient, templateId: string): Promise<{ id: string; content: string; media_url: string | null; media_type: string | null } | null> {
+/**
+ * FNV-1a de 32 bits — hash ESTÁVEL do id do destinatário (X020). Substitui o
+ * `secureRandomFloat()` do sorteio A/B: o mesmo destinatário cai SEMPRE na
+ * mesma variante (retry, auditoria e export herdam a decisão), e a proporção
+ * entre variantes continua sendo a dos pesos. Sem `Math.random`/`secureRandom`
+ * — o sorteio deixa de ser não-determinístico e passa a ter teste de estabilidade.
+ */
+function stableVariantHash(input: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
+}
+
+/**
+ * E49 + X020: escolhe a variante A/B por HASH ESTÁVEL do destinatário, pelo
+ * peso. Retorna null se não houver variantes.
+ */
+export async function pickVariant(
+  supabase: SupabaseClient,
+  templateId: string,
+  recipientId: string,
+): Promise<{ id: string; content: string; media_url: string | null; media_type: string | null } | null> {
   const { data: variants, error: varErr } = await supabase
     .from('talkx_template_variants')
     .select('id,content,media_url,media_type,weight')
@@ -39,8 +61,14 @@ export async function pickVariant(supabase: SupabaseClient, templateId: string):
   if (varErr) throw new Error(`variant_lookup_failed: ${varErr.message}`);
   if (!variants || variants.length === 0) return null;
   const total = variants.reduce((s: number, v: { weight: number }) => s + v.weight, 0);
-  let roll = secureRandomFloat() * total;
-  for (const v of variants) { roll -= v.weight; if (roll <= 0) return v; }
+  if (!(total > 0)) return variants[variants.length - 1];
+  // Hash do id (não random): determinístico e sem viés de ordem das variantes.
+  const roll = stableVariantHash(recipientId) % total;
+  let acc = 0;
+  for (const v of variants) {
+    acc += v.weight;
+    if (roll < acc) return v;
+  }
   return variants[variants.length - 1];
 }
 
@@ -76,6 +104,7 @@ export interface ProcessRecipientDeps {
   campaign: Record<string, unknown>;
   businessHours: { start?: string; end?: string; days?: number[] } | null;
   initialInstanceId: string;
+  instanceToken: string | null;
   evolutionUrl: string;
   evolutionKey: string;
   supabaseUrl: string;
@@ -92,6 +121,7 @@ export type ProcessResult =
   | { kind: "no_claim" }
   | { kind: "skipped_blacklisted" }
   | { kind: "skipped_no_phone" }
+  | { kind: "skipped_missing_variable" }
   | { kind: "message_failed" }
   | { kind: "sent" }
   | { kind: "failed" }
@@ -139,7 +169,7 @@ export async function processRecipient(
   recipient: ProcessRecipientRow,
 ): Promise<ProcessResult> {
   const {
-    supabase, campaignId, businessHours, initialInstanceId,
+    supabase, campaignId, businessHours, initialInstanceId, instanceToken,
     evolutionUrl, evolutionKey, supabaseUrl, workerId,
     trackingUrlFor, customFieldsByContact, log, correlationId,
     isRecipientSuppressed, mediaForSend,
@@ -221,7 +251,19 @@ export async function processRecipient(
         variant = vData;
       }
     } else if (campaign.template_id) {
-      variant = await pickVariant(supabase, campaign.template_id as string);
+      // X020 — PRECEDÊNCIA A/B: se o texto próprio da campanha difere do
+      // conteúdo do template, vale o texto da campanha e NENHUMA variante é
+      // sorteada. Só com o texto igual (ou vazio) a variante decide.
+      const { data: templateRow, error: templateError } = await supabase
+        .from('talkx_templates').select('content').eq('id', campaign.template_id).maybeSingle();
+      if (templateError) throw new Error(`talkx_template_lookup_failed: ${templateError.message}`);
+      const templateContent = (templateRow as { content?: unknown } | null)?.content;
+      const campaignTemplateText = typeof campaign.message_template === "string" ? campaign.message_template : "";
+      const campaignOverridesTemplate = campaignTemplateText.trim().length > 0
+        && campaignTemplateText !== templateContent;
+      if (!campaignOverridesTemplate) {
+        variant = await pickVariant(supabase, campaign.template_id as string, recipient.id as string);
+      }
     }
 
     const contentToSend = legacyPersonalizedMessage ?? variant?.content ?? campaign.message_template;
@@ -231,15 +273,24 @@ export async function processRecipient(
       throw new Error("talkx_invalid_media_snapshot_source");
     }
     let calculatedMessage: string;
+    let recipientMissing: string[] = [];
+    let recipientUnknown: string[] = [];
     const customValues = customFieldsByContact.get(recipient.contact_id as string) ?? {};
     try {
-      calculatedMessage = legacyPersonalizedMessage ?? personalize(
-        contentToSend as string,
-        contact as { name: string; nickname?: string; company?: string },
-        customValues,
-        typeof campaign.schedule_timezone === "string" ? campaign.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
-        trackingUrlFor(recipient.id as string),
-      );
+      if (legacyPersonalizedMessage) {
+        calculatedMessage = legacyPersonalizedMessage;
+      } else {
+        const personalized = personalize(
+          contentToSend as string,
+          contact as { name?: string; nickname?: string; company?: string; phone?: string; vendedor?: string },
+          customValues,
+          typeof campaign.schedule_timezone === "string" ? campaign.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
+          trackingUrlFor(recipient.id as string),
+        );
+        calculatedMessage = personalized.text;
+        recipientMissing = personalized.missing;
+        recipientUnknown = personalized.unknown;
+      }
     } catch (e) {
       // Placeholder desconhecido no roteiro: falha permanente deste destinatário (não do
       // provedor, nenhum POST foi feito). Não pode derrubar o lote inteiro nem deixar
@@ -252,6 +303,22 @@ export async function processRecipient(
       });
       if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
       return { kind: "message_failed" };
+    }
+    // X020 — POLÍTICA DE ERRO: variável conhecida SEM valor e sem padrão
+    // (ou nome desconhecido para este contato) NÃO vira "[variavel]" enviado.
+    // O destinatário é marcado `skipped` com `missing_variable:<nome>` e NENHUM
+    // POST sai ao provedor — o texto errado nunca chega ao cliente.
+    const firstUnresolved = recipientMissing[0] ?? recipientUnknown[0] ?? null;
+    if (firstUnresolved) {
+      const prefix = recipientMissing.length > 0 ? "missing_variable" : "unknown_variable";
+      const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
+        p_recipient_id: recipient.id,
+        p_claim_token: claim.claim_token,
+        p_status: "skipped",
+        p_error_message: `${prefix}:${firstUnresolved}`,
+      });
+      if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
+      return { kind: "skipped_missing_variable" };
     }
     const { data: snapshotRows, error: snapshotError } = await supabase.rpc("persist_talkx_recipient_message_snapshot", {
       p_recipient_id: recipient.id,
@@ -293,7 +360,8 @@ export async function processRecipient(
     try {
       await evoFetch(evolutionUrl, evolutionKey,
         `/chat/updatePresence/${initialInstanceId}`,
-        { number: phone, presence: "composing" });
+        { number: phone, presence: "composing" },
+        undefined, undefined, undefined, instanceToken ?? undefined);
     } catch { /* Presence update is best-effort */ }
 
     await sleep(typingDelay);
@@ -388,7 +456,7 @@ export async function processRecipient(
         effectiveMediaType === "audio"
           ? { number: phone, audio: mediaSource, delay: 0 }
           : { number: phone, mediatype: effectiveMediaType!, media: mediaSource, caption: personalizedMsg, delay: 0 },
-        undefined, undefined, abortCtrl.signal,
+        undefined, undefined, abortCtrl.signal, instanceToken ?? undefined,
       );
     } else {
       await markProviderDispatch();
@@ -396,7 +464,7 @@ export async function processRecipient(
       sendResponse = await evoFetch(evolutionUrl, evolutionKey,
         `/message/sendText/${beforeSendInstanceId}`,
         { number: phone, text: personalizedMsg, delay: 0 },
-        undefined, undefined, abortCtrl.signal,
+        undefined, undefined, abortCtrl.signal, instanceToken ?? undefined,
       );
     }
     clearTimeout(sendTimeout);

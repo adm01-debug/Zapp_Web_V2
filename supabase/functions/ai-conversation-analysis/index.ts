@@ -166,6 +166,8 @@ Responda em português brasileiro.`;
       functionName: 'ai-conversation-analysis',
       purpose: 'analysis',
       userId,
+      // IA-051 — o id do clique (IA-048) atravessa o pipeline até o log de consumo.
+      requestId,
       body: buildConversationModelBody({ systemPrompt, contactName, conversationText, tool: conversationTool }),
       log,
       req,

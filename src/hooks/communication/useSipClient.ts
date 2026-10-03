@@ -36,7 +36,9 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
   const directionRef = useRef<CallDirection | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stopTimer = useCallback(() => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } }, []);
-  const startTimer = useCallback(() => { setCallDuration(0); timerRef.current = setInterval(() => setCallDuration(p => p + 1), 1000); }, []);
+  // Idempotente de propósito: um `Established` reemitido (re-INVITE/reconexão) não pode somar um
+  // SEGUNDO intervalo — com dois, o cronômetro anda 2x por segundo e o `stopTimer` mata só um deles.
+  const startTimer = useCallback(() => { stopTimer(); setCallDuration(0); timerRef.current = setInterval(() => setCallDuration(p => p + 1), 1000); }, [stopTimer]);
   // T14: correspondência só por E.164 completo (nunca por sufixo de 8 dígitos).
   const findContactByPhone = useCallback(async (phone: string): Promise<string | null> => {
     const variants = phoneQueryVariants(phone);

@@ -143,6 +143,9 @@ Responda APENAS em formato JSON com a seguinte estrutura:
       purpose: 'copilot',
       functionName: 'ai-suggest-reply',
       userId,
+      // IA-051 — o id do clique (IA-048) chega ao log de consumo: dá para ir do
+      // gasto de volta até a requisição que o originou, sem tocar no conteúdo.
+      requestId,
       system: systemPrompt,
       messages: [
         ...conversationHistory,

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
@@ -8,7 +7,7 @@ const mockFrom = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: (...args: any[]) => mockFrom(...args),
+    from: (...args: unknown[]) => mockFrom(...args),
   },
 }));
 
@@ -34,7 +33,7 @@ const mockHours = [
   { id: 'bh2', whatsapp_connection_id: 'wc1', day_of_week: 0, is_open: false, open_time: null, close_time: null },
 ];
 
-function makeMockChain(data: any[] | null, error: any = null) {
+function makeMockChain(data: unknown[] | null, error: unknown = null) {
   return {
     select: vi.fn().mockReturnValue({
       eq: vi.fn().mockReturnValue({
@@ -68,7 +67,7 @@ describe('useBusinessHours', () => {
   it('identifies closed days correctly', async () => {
     const { result } = renderHook(() => useBusinessHours('wc1'), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    const sunday = result.current.businessHours?.find((h: any) => h.day_of_week === 0);
+    const sunday = result.current.businessHours?.find((h) => h.day_of_week === 0);
     expect(sunday?.is_open).toBe(false);
   });
 });

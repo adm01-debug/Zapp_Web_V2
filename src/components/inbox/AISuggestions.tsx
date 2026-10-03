@@ -83,6 +83,10 @@ export function AISuggestions({ messages, contactName, contactId, onSelectSugges
           })),
           contactName,
           contactId,
+          // IA-051 — o id do clique (IA-048) viaja junto para o log de consumo
+          // poder responder de qual requisição veio o gasto. É uuid opaco: nada
+          // de conteúdo de conversa nem de contato.
+          requestId: request.requestId,
         }
       });
 

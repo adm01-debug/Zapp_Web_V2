@@ -31,7 +31,7 @@ export function BlockIPDialog({ open, onClose, onSuccess }: BlockIPDialogProps) 
     if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(newIP)) { toast.error('Formato de IP inválido'); return; }
 
     setUpdating(true);
-    const expiresAt = isPermanent ? null : new Date(Date.now() + parseInt(duration) * 60 * 1000).toISOString();
+    const expiresAt = isPermanent ? null : new Date(Date.now() + Number.parseInt(duration) * 60 * 1000).toISOString();
     const { error } = await supabase.from('blocked_ips').insert({ ip_address: newIP, reason, is_permanent: isPermanent, expires_at: expiresAt, blocked_by: user?.id });
 
     if (error) { toast.error(error.code === '23505' ? 'Este IP já está bloqueado' : 'Erro ao bloquear IP'); }

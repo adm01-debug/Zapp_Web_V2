@@ -155,6 +155,12 @@ test.describe('Talk X module', () => {
   test('wizard advances to step 2 (Mensagem) after filling step 1', async ({ page }) => {
     // Navigate directly to campaigns overview via URL deep-link.
     await page.goto('/?view=talkx');
+
+    // O parametro `view` so' e' aplicado depois que o SPA hidrata. Sem esperar o
+    // shell, a assercao do titulo corre contra o boot -- e o Firefox, que hidrata
+    // mais devagar, e' quem perde a corrida no CI (nao reproduzido localmente em
+    // 3 execucoes em 02/10; endurecido pelo mecanismo, nao por timeout maior).
+    await page.locator('#main-navigation').waitFor({ state: 'visible', timeout: 15_000 });
     await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
 
     // .first() because TalkXView and TalkXOverview both render a 'Nova campanha' button.
