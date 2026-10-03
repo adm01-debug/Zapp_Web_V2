@@ -589,6 +589,15 @@ jobs:
           TALKX_LINKS_CONV_PG_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-links-conversions.test.sh
 
+      # X024: delta de ciclo de vida — start->pause->resume->cancel grava 4 eventos em
+      # ordem com ator e motivo; retomada sem ator grava resumed_auto; cancel fecha a
+      # fila (pendentes viram cancelled, leases soltas); cancelado não vira completed;
+      # conclusão drenada grava 1 completed com resumo.
+      - name: Provar o ciclo de vida com ator/motivo e o fechamento da fila (X024)
+        env:
+          TALKX_LIFECYCLE_EVENTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-lifecycle-events.test.sh
+
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e
       # current_database() devolve esse nome, quebrando a asserção.
