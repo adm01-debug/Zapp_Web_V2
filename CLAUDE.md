@@ -182,7 +182,7 @@ valer (confira antes de propor mudança de CI, para não refazer o que já exist
 **Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions):** são 14 arquivos em
 `.github/workflows/` (`auto-update-pr-branch.yml`, `branch-hygiene-audit.yml`, `ci.yml`,
 `codeql.yml`, `crm-sync-worker.yml`, `db-guard.yml`, `db-live-guard.yml`, `db-migrate.yml`,
-`deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx-pr.yml`, `supabase-sync.yml`, `targeted-ledger-evidence.yml`,
+`deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx.yml`, `supabase-sync.yml`, `targeted-ledger-evidence.yml`,
 `types-sync.yml`), mais 3 workflows dinâmicos que não têm arquivo próprio no repo (Dependabot
 Updates, Dependency Graph, Copilot reviewer) — 17 no total. Plano completo em
 `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md`.

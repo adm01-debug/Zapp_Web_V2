@@ -674,9 +674,14 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [ ] **E83** · B · G-05/G-23 · `e2e-logado.yml`: passo `if: failure()` que abre/comenta issue `[e2e-logado] Suíte
   logada quebrada na main` com dedupe por spec que falhou (mesmo mecanismo de E44) e fecha ao recuperar. Verificação:
   próxima falha gera issue; sucesso fecha.
-- [ ] **E84** · B · G-10 · `e2e-talkx-pr.yml`: após E27, renomear para `e2e-talkx.yml` e usar `paths` que casem com o
+- [x] **E84** · B · G-10 · `e2e-talkx-pr.yml`: após E27, renomear para `e2e-talkx.yml` e usar `paths` que casem com o
   diff da **PR** (gatilho `pull_request` já faz isso corretamente — o problema era o `push` de merge commit).
   Verificação: PR de Contatos não dispara.
+  **FEITO 2026-10-03** (PR do repo, ver `docs/audits/e84-workflow-talkx-2026-10-03.md`): renomeado para
+  `.github/workflows/e2e-talkx.yml` (também `name`, job id e `concurrency.group`); **`playwright.config.ts` removido
+  dos `paths`** — era config global, tocada em 20 dos últimos 60 commits, quase sempre por trabalho alheio ao Talk X,
+  e era o que fazia uma PR de Contatos disparar. Verificação executada por simulação de glob (minimatch) contra 6
+  diffs: PR de Contatos = não dispara; PR que só mexe na config global = não dispara; PR do Talk X = dispara.
 - [ ] **E85** · C · G-05 · Fixtures E2E em produção (`e2e0e2e0-…`, segmento `621521f3-…`, contato `04dff4dc-…`):
   documentar em `e2e/fixtures/README.md` **e** criar `scripts/db-audit/e2e-fixtures.test.sh` que prova a presença
   deles no banco (rodado no `db-live-guard` agendado). Verificação: remover um fixture num Postgres descartável → teste
