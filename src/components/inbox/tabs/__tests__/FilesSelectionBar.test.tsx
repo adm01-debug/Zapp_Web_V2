@@ -12,6 +12,7 @@ function renderBar(overrides: Partial<React.ComponentProps<typeof FilesSelection
     onSelectAllVisible: vi.fn(),
     onClear: vi.fn(),
     onCancel: vi.fn(),
+    onForward: vi.fn(),
     ...overrides,
   };
   return { ...render(<FilesSelectionBar {...props} />), props };
@@ -30,13 +31,22 @@ describe('FilesSelectionBar (etapas 32-33)', () => {
     expect(screen.getByText('1 selecionado')).toBeInTheDocument();
   });
 
-  it('etapa 32: Compartilhar/Encaminhar fica desabilitado com o title da etapa 19; sem ZIP nem excluir em massa', () => {
-    renderBar({ selectedCount: 4 });
+  it('etapa 38: "Encaminhar N" fica habilitado e chama o handler real; sem ZIP nem excluir em massa', () => {
+    const { props } = renderBar({ selectedCount: 4 });
     const encaminhar = screen.getByRole('button', { name: /Encaminhar 4/ });
-    expect(encaminhar).toBeDisabled();
-    expect(encaminhar).toHaveAttribute('title', 'Disponível em breve');
+    expect(encaminhar).toBeEnabled();
+    fireEvent.click(encaminhar);
+    expect(props.onForward).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole('button', { name: /ZIP/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Excluir/i })).not.toBeInTheDocument();
+  });
+
+  it('etapa 39: acima de 10 arquivos o encaminhamento fica desabilitado com o motivo visível', () => {
+    renderBar({ selectedCount: 11, forwardLimitReason: 'Máximo de 10 arquivos por operação (você selecionou 11).' });
+    const encaminhar = screen.getByRole('button', { name: /Encaminhar 11/ });
+    expect(encaminhar).toBeDisabled();
+    expect(encaminhar).toHaveAttribute('title', 'Máximo de 10 arquivos por operação (você selecionou 11).');
+    expect(screen.getByText('Máximo de 10 arquivos por operação (você selecionou 11).')).toBeInTheDocument();
   });
 
   it('etapa 32: cada ação habilitada tem handler real (Selecionar todos, Limpar, Cancelar)', () => {

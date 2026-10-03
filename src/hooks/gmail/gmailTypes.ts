@@ -77,6 +77,7 @@ export interface EmailAttachment {
   filename: string | null;
   mime_type: string | null;
   size_bytes: number | null;
+  created_at?: string;
 }
 
 export interface EmailLabel {

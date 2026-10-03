@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
 import { toast } from '@/hooks/ui/use-toast';
+import { forwardLimitError } from '@/lib/forward-limits';
+import type { ForwardResult } from './useForwardMedia';
 
 interface Contact {
   id: string;
@@ -17,11 +19,73 @@ interface Group {
   participant_count: number;
 }
 
-export function useForwardMessage(
-  open: boolean,
-  onForward: (targetIds: string[], targetType: 'contact' | 'group') => void,
-  onOpenChange: (open: boolean) => void,
-) {
+export interface ForwardTargetSummary {
+  id: string;
+  name: string;
+  type: 'contact' | 'group';
+}
+
+/**
+ * Callback de envio (etapa 37). Devolve `Promise<ForwardResult>` para o caminho honesto
+ * (aba Arquivos) ou `void` para o caminho legado do chat. O `onProgress` alimenta o
+ * contador "X/Y enviados" (etapa 38).
+ */
+export type ForwardCallback = (
+  targetIds: string[],
+  targetType: 'contact' | 'group',
+  onProgress?: (done: number, total: number) => void,
+) => void | Promise<ForwardResult | void>;
+
+export interface UseForwardMessageOptions {
+  open: boolean;
+  /** Etapa 36: com `false`, a aba Grupos fica oculta e nao e buscada. */
+  allowGroups?: boolean;
+  /** Quantidade de arquivos da operacao — entra na conta dos limites da etapa 39. */
+  itemCount?: number;
+  /**
+   * Etapa 39: limites de protecao SO valem para a aba Arquivos. O caminho legado do chat
+   * passa `false` (default) e mantem o comportamento anterior, sem bloqueio nem confirmacao.
+   */
+  enforceLimits?: boolean;
+  onForward: ForwardCallback;
+  onOpenChange: (open: boolean) => void;
+}
+
+export interface ForwardProgress {
+  done: number;
+  total: number;
+}
+
+function combineResults(results: ForwardResult[]): ForwardResult {
+  const pairOutcomes = results.flatMap((result) => result.pairOutcomes);
+  const nonForwardable = results.flatMap((result) => result.nonForwardable);
+  const sent = pairOutcomes.filter((outcome) => outcome.ok).length;
+  return {
+    pairOutcomes,
+    nonForwardable,
+    attempted: pairOutcomes.length,
+    sent,
+    failed: pairOutcomes.length - sent,
+  };
+}
+
+/** Destinos distintos sem nenhum par falhando — o "N destinos" do toast de sucesso. */
+function successfulTargetCount(result: ForwardResult): number {
+  const failedTargets = new Set(result.pairOutcomes.filter((outcome) => !outcome.ok).map((outcome) => outcome.targetId));
+  const successfulTargets = new Set(result.pairOutcomes.filter((outcome) => outcome.ok).map((outcome) => outcome.targetId));
+  let count = 0;
+  for (const targetId of Array.from(successfulTargets)) if (!failedTargets.has(targetId)) count += 1;
+  return count;
+}
+
+export function useForwardMessage({
+  open,
+  allowGroups = true,
+  itemCount = 1,
+  enforceLimits = false,
+  onForward,
+  onOpenChange,
+}: UseForwardMessageOptions) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
@@ -30,6 +94,8 @@ export function useForwardMessage(
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [activeTab, setActiveTab] = useState<'contacts' | 'groups'>('contacts');
+  const [progress, setProgress] = useState<ForwardProgress | null>(null);
+  const [lastResult, setLastResult] = useState<ForwardResult | null>(null);
 
   const fetchContacts = useCallback(async () => {
     setIsLoading(true);
@@ -64,9 +130,9 @@ export function useForwardMessage(
     if (open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-open padrão, sem estado derivado de props para sincronizar.
       fetchContacts();
-      fetchGroups();
+      if (allowGroups) fetchGroups();
     }
-  }, [open, fetchContacts, fetchGroups]);
+  }, [open, allowGroups, fetchContacts, fetchGroups]);
 
   const filteredContacts = contacts.filter(c =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.phone.includes(searchQuery)
@@ -88,36 +154,145 @@ export function useForwardMessage(
     setSelectedContacts([]);
     setSelectedGroups([]);
     setSearchQuery('');
+    setProgress(null);
+    setLastResult(null);
   }, []);
 
-  const handleForward = async () => {
-    if (selectedContacts.length === 0 && selectedGroups.length === 0) {
+  const runForward = useCallback(
+    async (targetIds: string[], targetType: 'contact' | 'group'): Promise<ForwardResult | null> => {
+      const result = await onForward(targetIds, targetType, (done, total) => setProgress({ done, total }));
+      if (typeof result === 'object' && result !== null) return result;
+      return null;
+    },
+    [onForward],
+  );
+
+  const applyResult = useCallback(
+    (result: ForwardResult) => {
+      setLastResult(result);
+      if (result.failed === 0 && result.nonForwardable.length === 0) {
+        const count = successfulTargetCount(result);
+        toast({
+          title: 'Encaminhado!',
+          description: `Encaminhado para ${count} ${count === 1 ? 'destino' : 'destinos'}.`,
+        });
+        reset();
+        onOpenChange(false);
+        return;
+      }
+      const parts: string[] = [];
+      if (result.failed > 0) parts.push(`${result.failed} ${result.failed === 1 ? 'envio falhou' : 'envios falharam'}`);
+      if (result.nonForwardable.length > 0) {
+        parts.push(`${result.nonForwardable.length} ${result.nonForwardable.length === 1 ? 'arquivo não pode ser encaminhado' : 'arquivos não podem ser encaminhados'}`);
+      }
+      toast({
+        title: 'Encaminhamento parcial',
+        description: parts.join(' · ') || 'Alguns destinos falharam.',
+        variant: 'destructive',
+      });
+    },
+    [onOpenChange, reset],
+  );
+
+  const handleForward = useCallback(async () => {
+    if (isSending) return;
+    const contactIds = [...selectedContacts];
+    const groupIds = allowGroups ? [...selectedGroups] : [];
+    const totalTargets = contactIds.length + groupIds.length;
+    if (totalTargets === 0) {
       toast({ title: 'Selecione destinatários', description: 'Escolha pelo menos um contato ou grupo para encaminhar.', variant: 'destructive' });
       return;
     }
 
-    setIsSending(true);
-    try {
-      if (selectedContacts.length > 0) onForward(selectedContacts, 'contact');
-      if (selectedGroups.length > 0) onForward(selectedGroups, 'group');
+    const limit = forwardLimitError(itemCount, totalTargets);
+    if (limit) {
+      toast({ title: 'Limite excedido', description: limit, variant: 'destructive' });
+      return;
+    }
 
-      const total = selectedContacts.length + selectedGroups.length;
-      toast({ title: 'Mensagem encaminhada!', description: `Encaminhada para ${total} ${total === 1 ? 'destinatário' : 'destinatários'}.` });
-      reset();
-      onOpenChange(false);
-    } catch {
+    setIsSending(true);
+    setProgress(null);
+    setLastResult(null);
+    try {
+      const collected: ForwardResult[] = [];
+      if (contactIds.length > 0) {
+        const result = await runForward(contactIds, 'contact');
+        if (result) collected.push(result);
+      }
+      if (groupIds.length > 0) {
+        const result = await runForward(groupIds, 'group');
+        if (result) collected.push(result);
+      }
+
+      if (collected.length === 0) {
+        // Caminho legado (chat): callback sem resultado — mantem o fechamento simples.
+        toast({ title: 'Mensagem encaminhada!', description: `Encaminhada para ${totalTargets} ${totalTargets === 1 ? 'destinatário' : 'destinatários'}.` });
+        reset();
+        onOpenChange(false);
+        return;
+      }
+
+      applyResult(combineResults(collected));
+    } catch (error) {
+      log.error('Error forwarding:', error);
       toast({ title: 'Erro ao encaminhar', description: 'Não foi possível encaminhar a mensagem.', variant: 'destructive' });
     } finally {
       setIsSending(false);
     }
-  };
+  }, [isSending, selectedContacts, selectedGroups, allowGroups, itemCount, runForward, applyResult, reset, onOpenChange]);
+
+  const failedTargets = useMemo<ForwardTargetSummary[]>(() => {
+    if (!lastResult) return [];
+    const seen = new Set<string>();
+    const summaries: ForwardTargetSummary[] = [];
+    for (const outcome of lastResult.pairOutcomes) {
+      if (outcome.ok || seen.has(outcome.targetId)) continue;
+      seen.add(outcome.targetId);
+      const name = outcome.targetType === 'contact'
+        ? contacts.find((contact) => contact.id === outcome.targetId)?.name ?? 'Contato'
+        : groups.find((group) => group.id === outcome.targetId)?.name ?? 'Grupo';
+      summaries.push({ id: outcome.targetId, name, type: outcome.targetType });
+    }
+    return summaries;
+  }, [lastResult, contacts, groups]);
+
+  const retryFailed = useCallback(async () => {
+    if (isSending || failedTargets.length === 0) return;
+    const contactIds = Array.from(new Set(failedTargets.filter((t) => t.type === 'contact').map((t) => t.id)));
+    const groupIds = Array.from(new Set(failedTargets.filter((t) => t.type === 'group').map((t) => t.id)));
+
+    setIsSending(true);
+    setProgress(null);
+    try {
+      const collected: ForwardResult[] = [];
+      if (contactIds.length > 0) {
+        const result = await runForward(contactIds, 'contact');
+        if (result) collected.push(result);
+      }
+      if (groupIds.length > 0) {
+        const result = await runForward(groupIds, 'group');
+        if (result) collected.push(result);
+      }
+      if (collected.length === 0) {
+        reset();
+        onOpenChange(false);
+        return;
+      }
+      applyResult(combineResults(collected));
+    } catch (error) {
+      log.error('Error retrying forward:', error);
+      toast({ title: 'Erro ao encaminhar', description: 'Não foi possível reenviar aos destinos que falharam.', variant: 'destructive' });
+    } finally {
+      setIsSending(false);
+    }
+  }, [isSending, failedTargets, runForward, applyResult, reset, onOpenChange]);
 
   const handleClose = () => {
     reset();
     onOpenChange(false);
   };
 
-  const totalSelected = selectedContacts.length + selectedGroups.length;
+  const totalSelected = selectedContacts.length + (allowGroups ? selectedGroups.length : 0);
 
   return {
     searchQuery, setSearchQuery,
@@ -128,6 +303,10 @@ export function useForwardMessage(
     toggleContact, toggleGroup,
     handleForward, handleClose,
     totalSelected,
+    progress,
+    lastResult,
+    failedTargets,
+    retryFailed,
   };
 }
 
