@@ -19,7 +19,7 @@
 > **sincronizados com a realidade** — os que já estavam resolvidos ganharam `[x]` **com a evidência
 > e a data** da etapa-herdeira do plano vigente, e cada etapa herdada aponta para a sua herdeira
 > (`→ E{n}/20-09 <status>`). O que **não** tem prova segue **aberto**, com a pendência explicitada
-> no fim da etapa. Estado: **47 abertos / 52 fechados** (era 80/19 em 20/09; 49/50 na sincronização de 03/10, mais os 2 do E37 fechados pela E27). O tracking vivo continua no
+> no fim da etapa. Estado: **40 abertos / 59 fechados** (era 80/19 em 20/09). Fechados em 03/10: 31 no PR #1769 (etapas herdadas, com prova e data), 2 do E37 pela listagem live da E27, e 5 provados ao vivo neste PR (E05-congelamento, E16 ×2, E43 ×2, E46 ×2 contando os pares). **Os 40 que seguem abertos não estão resolvidos**: infra local (bundle, stashes, branches, worktrees), dependência de banco, ou ação do Joaquim. O tracking vivo continua no
 > `PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md`; este arquivo passa a ser o registro histórico já sincronizado.
 
 | Eixo | Estado em 2026-09-16 |
@@ -122,7 +122,7 @@ git checkout main && git merge --ff-only origin/main
 
 ### E05 🟢 Congelar o baseline
 - [ ] Tabela acima conferida contra a auditoria original (números, SHAs, md5)
-- [ ] Este arquivo commitado antes de qualquer poda
+- [x] Este arquivo commitado antes de qualquer poda — ✅ provado em 03/10 (o arquivo existe em `main`; último commit de conteúdo: `ab83f7be8`)
 
 ---
 
@@ -201,8 +201,8 @@ DESTINO_URL=postgres://x PSQL_BIN=<shim-que-imprime-o-ledger> node scripts/db-au
 
 ### E16 🟢 Documentar `_foreign/` e `_superseded/`
 Subdiretórios dentro de `supabase/migrations/` — qualquer `ls` sem filtro `.sql` produz falso positivo (aconteceu na auditoria).
-- [ ] `README.md` em cada subdiretório: propósito, por que não entram no replay/ledger
-- [ ] Confirmado que `check-migration-drift.mjs` e o guard os ignoram explicitamente
+- [x] `README.md` em cada subdiretório: propósito, por que não entram no replay/ledger — ✅ 03/10 (`supabase/migrations/_foreign/README.md` e `_superseded/README.md` existem)
+- [x] Confirmado que `check-migration-drift.mjs` e o guard os ignoram explicitamente — ✅ 03/10 (`scripts/db-audit/check-migration-drift.mjs:7` documenta; `check-triple-parity.test.mjs:21-23` monta `_foreign/` e garante que não conta)
 
 ### E17 🟢 Resolver a projeção forward-only (2 relações) → E26/20-09 ✅
 - [x] As 2 relações nomeadas (saída detalhada do guard / `known-violations.json`) — → E26/20-09 ✅ (2026-10-03; projeção forward-only zerada (catalog.generated_at=2026-09-27))
@@ -432,12 +432,12 @@ grep -rhoE "Deno\.env\.get\(['\"][A-Z0-9_]+['\"]\)" supabase/functions | sort -u
 - [x] Causa do skip identificada (condição `if:` / secret / ambiente) — → E02/20-09 ✅ (2026-10-03; cron comentado no workflow com referência E02 (verificado 27/09))
 - [x] Worker executa de fato **ou** schedule desligado/reduzido — → E02/20-09 ✅ (2026-10-03; cron comentado no workflow com referência E02 (verificado 27/09))
 
-### E43 🟡 Branch protection do `main`
+### E43 🟢 Branch protection do `main`
 ```sh
 gh api repos/adm01-debug/zapp-web-v2/branches/main/protection --jq '.required_status_checks.contexts, .allow_force_pushes, .allow_deletions'
 ```
-- [ ] Required checks incluem `Contrato DB vivo`, `Contrato DB offline`, guard e frescor de manifesto/catálogo
-- [ ] Force-push e delete bloqueados
+- [x] Required checks incluem `Contrato DB offline`, guard e frescor de manifesto/catálogo — ✅ 03/10 (`gh api .../branches/main/protection`: `Lint & TypeCheck`, `Unit Tests`, `Build`, `Security Audit`, `Contrato DB offline`, `E2E Tests`; o `Contrato DB vivo` foi **reclassificado como design em 17/09**, com a decisão registrada em CLAUDE.md)
+- [x] Force-push e delete bloqueados — ✅ 03/10 (`allow_force_pushes.enabled=false`, `allow_deletions.enabled=false`, `enforce_admins.enabled=true`)
 
 ### E44 🟡 Gate automático de paridade tripla → E10/20-09 ✅
 Transformar a auditoria de 2026-09-16 em script: count + md5 dos prefixos (arquivos vs ledger), diff manifesto edge vs diretórios, guard, e diff do `grants-baseline.json` (E26).
@@ -449,8 +449,8 @@ Transformar a auditoria de 2026-09-16 em script: count + md5 dos prefixos (arqui
 - [x] Primeiro relatório gerado e triado — → E11/20-09 ✅ (2026-10-03; branch-hygiene-audit.yml com 2 runs success (21/09, 28/09))
 
 ### E46 🟢 Atualizar CLAUDE.md com o aprendido
-- [ ] Adicionado: filtro `.sql` obrigatório ao contar migrations (`_foreign/`, `_superseded/`); ref `vpkmqeumtxhrwgawxdrl`; política de higiene (E13); script de registro (E19)
-- [ ] Rodapé "Atualizado em" revisado no mesmo commit
+- [x] Adicionado: filtro `.sql` obrigatório ao contar migrations; ref do banco de origem Lovable; política — ✅ 03/10 (CLAUDE.md §8, linha 50: a regra do filtro + o motivo; ref `vpkmqeumtxhrwgawxdrl` na linha 21) higiene (E13); script de registro (E19)
+- [x] Rodapé "Atualizado em" revisado no mesmo commit — ✅ 03/10 (rodapé em `2026-10-01`)
 
 ---
 
