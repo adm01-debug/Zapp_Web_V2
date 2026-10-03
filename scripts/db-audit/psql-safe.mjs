@@ -23,10 +23,25 @@ if (!url) {
 const PSQL_BIN = process.env.PSQL_BIN || 'psql';
 const args = process.argv.slice(2);
 
+// E66 (auditoria de GitHub Actions, 2026-10-01): o psql sai com codigo 2 quando
+// NAO CONSEGUE CONECTAR (o manual do psql reserva 2 para "bad connection"; 1 e'
+// erro de SQL). Sem sinalizar isso, a politica de retry compartilhada de
+// psql-environment.mjs nunca disparava para este chamador: o callback devolvia o
+// exit code em vez de lancar, entao PSQL_CONNECT_RETRIES=2 no preflight do
+// db-migrate.yml nao tinha efeito e uma oscilacao do pooler derrubava o passo de
+// primeira. O sinal e' booleano de proposito: a regra do modulo e' nunca ecoar
+// stderr, que pode conter a URI da conexao.
+const EXIT_FALHA_CONEXAO = 2;
+
 let result;
 try {
-  result = withPsqlEnvironment(url, env =>
-    spawnSync(PSQL_BIN, args, { stdio: 'inherit', env }));
+  result = withPsqlEnvironment(url, env => {
+    const r = spawnSync(PSQL_BIN, args, { stdio: 'inherit', env });
+    if (r.status === EXIT_FALHA_CONEXAO) {
+      throw Object.assign(new Error('psql: falha de conexao (exit 2)'), { transporte: true });
+    }
+    return r;
+  });
 } catch (error) {
   console.error('ERRO: ' + error.message);
   process.exit(2);

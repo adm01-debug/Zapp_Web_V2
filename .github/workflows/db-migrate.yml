@@ -65,7 +65,9 @@ jobs:
     # ao dry-run + confirmacao de hash; nao substitui nenhum dos dois.
     environment: producao-ddl
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    # E66 (auditoria de 01/10/2026): 25 min nao cobriam preflight + dry-run +
+    # apply + as validacoes de ledger/runtime do file completo.
+    timeout-minutes: 45
     steps:
       - name: ✋ Somente executa na main
         if: github.ref != 'refs/heads/main'
@@ -155,8 +157,12 @@ jobs:
 
       - name: Exigir alvo unico ou bundle atomico conhecido
         id: preflight
+        # E66: repeticao SO de falha de conexao, e SO aqui -- este passo e somente
+        # leitura (SELECT do ledger). O apply nunca define a variavel: repetir o
+        # push seria reaplicar DDL.
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
+          PSQL_CONNECT_RETRIES: '2'
           TARGET_VERSION: ${{ inputs.migration_version }}
           APPLY: ${{ inputs.apply }}
         run: |

@@ -72,3 +72,15 @@ test('timeout do job cobre a espera maxima do gate mais um deploy completo', asy
   assert.ok(timeout >= MAX_WAIT_MINUTES + 60, `timeout-minutes=${timeout} < ${MAX_WAIT_MINUTES} + 60`);
 });
 
+
+test('E55: o passo de atestacao tem teto proprio de 10 min', () => {
+  // O job tem 100 min, mas a atestacao nao pode consumir esse orcamento: se a
+  // Management API nao estabilizar, o passo falha com lastReason e o run nao
+  // termina em success.
+  const inicio = workflow.indexOf('- name: Capturar e validar manifesto remoto pos-deploy');
+  const fim = workflow.indexOf('- name: Executar smoke positivo e negativo por funcao');
+  assert.ok(inicio > 0 && fim > inicio);
+  const bloco = workflow.slice(inicio, fim);
+  assert.match(bloco, /^        timeout-minutes: 10$/m);
+  assert.ok(workflow.indexOf('    timeout-minutes: 100') < inicio, 'o job mantem os 100 min');
+});
