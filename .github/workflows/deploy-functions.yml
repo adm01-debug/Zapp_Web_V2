@@ -300,18 +300,15 @@ jobs:
           # 01/10/2026 (run 36852598923): essa linha sai no STDERR -- sem o 2>&1
           # acima o log capturado ficou com 197 bytes, sem ela, e a atestacao
           # queimou as 144 amostras (~24 min) para falhar com "did not stabilize".
-          node --input-type=module <<'NODE'
-          import { readFileSync, writeFileSync } from 'node:fs';
-          const evidenceDir = `${process.env.RUNNER_TEMP}/edge-deployment-evidence`;
-          const rawLog = readFileSync(`${evidenceDir}/deploy-output.log`, 'utf8');
-          // F-03 (run 36583351162, 2026-09-29): supabase CLI emite ANSI mesmo piped para tee;
-          // strip de ANSI + padrao sem ancoras ^/$ evita falso-negativo que esvaziava unchangedSet
-          // e fazia a attestacao esgotar 144 tentativas esperando version bumps que nunca viriam.
-          const log = rawLog.replace(/\x1b\[[0-9;]*[mGKHF]/g, '');
-          const unchanged = [...log.matchAll(/No change found in Function: (\S+)/g)].map((m) => m[1]);
-          writeFileSync(`${evidenceDir}/unchanged-functions.json`, JSON.stringify(unchanged));
-          console.log(`Funcoes sem mudanca de bundle: ${unchanged.length ? unchanged.join(', ') : 'nenhuma'}`);
-          NODE
+          # E56 (auditoria de 01/10/2026): o extrator saiu do YAML e virou
+          # scripts/edge-deploy/unchanged-from-log.mjs, com fixture dos logs reais
+          # dos runs 36852598923 e 36583351162. O teste trava as duas propriedades
+          # que este trecho ja precisou acertar: (a) casar a linha COM ANSI, que o
+          # CLI emite mesmo piped para tee -- o padrao com ancoras ^...$ nao casava
+          # e a attestacao esgotava as 144 amostras esperando bump que nunca vinha
+          # (F-03, run 36583351162); e (b) NAO aceitar o eco deste proprio script,
+          # que o runner imprime, como se fosse funcao sem mudanca.
+          node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/unchanged-from-log.mjs" "$EVIDENCE_DIR/deploy-output.log" "$EVIDENCE_DIR/unchanged-functions.json"
 
       - name: Capturar e validar manifesto remoto pos-deploy
         env:

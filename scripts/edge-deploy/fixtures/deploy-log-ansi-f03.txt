@@ -1,0 +1,3 @@
+Downloading edge-runtime image
+[36;1mNo change found in Function: ai-conversation-analysis[0m
+Deployed Functions on project abc: ai-conversation-analysis
