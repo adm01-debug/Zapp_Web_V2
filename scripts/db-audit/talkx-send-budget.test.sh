@@ -201,7 +201,9 @@ psql_test >/dev/null <<'SQL'
 INSERT INTO public.talkx_campaigns (id, name, message_template, typing_delay_min, typing_delay_max, send_interval_min, send_interval_max, whatsapp_connection_id, created_by)
 VALUES ('60000000-0000-0000-0000-000000000002', 'c2', '', 1500, 4000, 8000, 20000, '50000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001');
 INSERT INTO public.talkx_recipients (campaign_id, sent_at)
-SELECT '60000000-0000-0000-0000-000000000002', statement_timestamp() - interval '1 hour' FROM generate_series(1,500);
+-- Use o instante atual para que o cenário continue no mesmo dia civil de
+-- America/Sao_Paulo mesmo quando o CI roda na primeira hora após a meia-noite.
+SELECT '60000000-0000-0000-0000-000000000002', statement_timestamp() FROM generate_series(1,500);
 SQL
 day_remaining=$(psql_test -Atqc "SET request.jwt.claim.role = 'service_role'; SELECT (public.talkx_connection_send_budget('50000000-0000-0000-0000-000000000002') ->> 'day_remaining')::int")
 [[ "$day_remaining" == '0' ]] || fail "day_remaining esperado 0, obtido $day_remaining"
