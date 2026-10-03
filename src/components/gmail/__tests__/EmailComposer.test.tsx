@@ -218,6 +218,19 @@ describe('EmailComposer — inicialização e comportamento de envio', () => {
     await waitFor(() => expect(sendEmailMutateAsync).toHaveBeenCalledTimes(1));
   });
 
+  it('preserva o rascunho e orienta conferir Enviados quando o resultado é inconclusivo', async () => {
+    sendEmailMutateAsync.mockRejectedValueOnce({ name: 'FunctionsFetchError', message: 'Failed to fetch' });
+    const onClose = vi.fn();
+    render(<EmailComposer accountId="acc-outcome" mode="new" defaultTo="dest@email.com" onClose={onClose} />);
+    fireEvent.change(screen.getByPlaceholderText('Assunto do email'), { target: { value: 'Envio incerto' } });
+    fireEvent.click(screen.getByRole('button', { name: /enviar/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Resultado do envio não confirmado');
+    expect(screen.getByRole('alert')).toHaveTextContent('Confira a pasta Enviados');
+    expect(onClose).not.toHaveBeenCalled();
+    expect(localStorage.getItem(emailDraftSessionKey({ accountId: 'acc-outcome', mode: 'new' })!)).toContain('Envio incerto');
+  });
+
   it('serializa autosaves e atualiza o mesmo draft quando respostas chegam fora de ordem', async () => {
     vi.useFakeTimers();
     let resolveFirst: (value: { draft_id: string }) => void = () => undefined;

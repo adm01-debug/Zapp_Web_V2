@@ -2,8 +2,11 @@ import type { Page, Route } from '@playwright/test';
 import { installFakeSession, mockTalkXAuth } from './talkx-demo';
 
 const ACCOUNT_ID = '10000000-0000-4000-8000-000000000001';
+const SECOND_ACCOUNT_ID = '10000000-0000-4000-8000-000000000002';
 const THREAD_ID = '20000000-0000-4000-8000-000000000001';
+const EXTREME_THREAD_ID = '20000000-0000-4000-8000-000000000099';
 const MESSAGE_ID = '30000000-0000-4000-8000-000000000001';
+const EXTREME_MESSAGE_ID = '30000000-0000-4000-8000-000000000099';
 
 const json = (route: Route, body: unknown, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 const isRead = (method: string) => method === 'GET' || method === 'HEAD';
@@ -30,6 +33,13 @@ const threads = [
     last_from_name: item[0], last_from_address: item[3], assigned_to: null, status: 'open', priority: 'medium', tags: index === 0 ? ['Cotação'] : [],
     created_at: '2026-10-02T12:00:00.000Z', updated_at: '2026-10-02T12:00:00.000Z', contact: null,
   })),
+  {
+    id: EXTREME_THREAD_ID, gmail_account_id: ACCOUNT_ID, gmail_thread_id: 'gmail-thread-extreme', contact_id: null,
+    subject: `Corpus extremo — ${'ASSUNTOSEMQUEBRA'.repeat(180)}`, snippet: 'TRECHOSEMQUEBRA'.repeat(420),
+    label_ids: ['INBOX'], message_count: 1, is_unread: false, is_starred: false, is_important: false,
+    last_message_at: '2026-10-01T12:00:00.000Z', last_from_name: 'REMETENTESEMQUEBRA'.repeat(80), last_from_address: 'extremo@example.com',
+    assigned_to: null, status: 'open', priority: 'medium', tags: ['Extremo'], created_at: '2026-10-01T12:00:00.000Z', updated_at: '2026-10-01T12:00:00.000Z', contact: null,
+  },
 ];
 
 const messages = [
@@ -50,7 +60,22 @@ const messages = [
   },
 ];
 
-export async function mockEmailNavy(page: Page) {
+const extremeMessages = [{
+  id: EXTREME_MESSAGE_ID, thread_id: EXTREME_THREAD_ID, gmail_message_id: 'gmail-message-extreme', gmail_account_id: ACCOUNT_ID,
+  from_address: 'extremo@example.com', from_name: 'REMETENTESEMQUEBRA'.repeat(80), to_addresses: ['admin@zapp.local'], cc_addresses: [], bcc_addresses: [],
+  reply_to_address: null, subject: threads.at(-1)?.subject, body_text: `${'CORPOSEMQUEBRA'.repeat(900)}\n${'Linha extensa com espaços. '.repeat(500)}`,
+  body_html: '', snippet: 'CORPOSEMQUEBRA'.repeat(100), label_ids: ['INBOX'], is_read: true, is_starred: false, has_attachments: true,
+  in_reply_to: null, references_header: null, message_id_header: '<extreme@example.com>', internal_date: '2026-10-01T12:00:00.000Z', direction: 'inbound', created_at: '2026-10-01T12:00:00.000Z',
+}];
+
+const extremeAttachments = Array.from({ length: 40 }, (_, index) => ({
+  id: `60000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
+  email_message_id: EXTREME_MESSAGE_ID, gmail_attachment_id: `extreme-attachment-${index + 1}`,
+  filename: `ARQUIVO_EXTREMAMENTE_LONGO_SEM_QUEBRA_${'X'.repeat(180)}_${index + 1}.txt`,
+  mime_type: 'text/plain', size_bytes: 1024 + index, created_at: '2026-10-01T12:00:00.000Z',
+}));
+
+export async function mockEmailNavy(page: Page, options: { includeExtreme?: boolean } = {}) {
   await installFakeSession(page);
   await mockTalkXAuth(page);
 
@@ -62,7 +87,10 @@ export async function mockEmailNavy(page: Page) {
   await page.route(/\/functions\/v1\/gmail-oauth/, async route => {
     const request = route.request().postDataJSON() as { action?: string };
     if (request.action !== 'list-accounts') return json(route, { message: 'mutação OAuth bloqueada no E2E' }, 403);
-    return json(route, { accounts: [{ id: ACCOUNT_ID, user_id: '00000000-0000-4000-8000-000000000001', email_address: 'admin@zapp.local', is_active: true, sync_status: 'synced', last_sync_at: '2026-10-02T17:40:00.000Z', last_error: null, created_at: '2026-01-01T00:00:00.000Z' }] });
+    return json(route, { accounts: [
+      { id: ACCOUNT_ID, user_id: '00000000-0000-4000-8000-000000000001', email_address: 'admin@zapp.local', is_active: true, sync_status: 'synced', last_sync_at: '2026-10-02T17:40:00.000Z', last_error: null, created_at: '2026-01-01T00:00:00.000Z' },
+      { id: SECOND_ACCOUNT_ID, user_id: '00000000-0000-4000-8000-000000000001', email_address: 'financeiro@zapp.local', is_active: true, sync_status: 'synced', last_sync_at: '2026-10-02T17:40:00.000Z', last_error: null, created_at: '2026-01-02T00:00:00.000Z' },
+    ] });
   });
   await page.route(/\/functions\/v1\/gmail-(send|sync)/, async route => {
     const request = route.request().postDataJSON() as { action?: string };
@@ -71,14 +99,22 @@ export async function mockEmailNavy(page: Page) {
     return request.action === 'get-attachment' ? json(route, { data: 'Zml4dHVyZQ==', size: 7 }) : json(route, { success: true });
   });
 
-  await page.route(/\/rest\/v1\/email_threads/, route => isRead(route.request().method()) ? json(route, threads) : json(route, { message: 'escrita bloqueada' }, 403));
-  await page.route(/\/rest\/v1\/email_messages/, route => isRead(route.request().method()) ? json(route, messages) : json(route, { message: 'escrita bloqueada' }, 403));
+  await page.route(/\/rest\/v1\/email_threads/, route => isRead(route.request().method()) ? json(route, options.includeExtreme ? threads : threads.filter(thread => thread.id !== EXTREME_THREAD_ID)) : json(route, { message: 'escrita bloqueada' }, 403));
+  await page.route(/\/rest\/v1\/email_messages/, route => {
+    if (!isRead(route.request().method())) return json(route, { message: 'escrita bloqueada' }, 403);
+    const threadFilter = new URL(route.request().url()).searchParams.get('thread_id');
+    return json(route, threadFilter === `eq.${EXTREME_THREAD_ID}` ? extremeMessages : messages);
+  });
   await page.route(/\/rest\/v1\/email_labels/, route => isRead(route.request().method()) ? json(route, [
     { id: '50000000-0000-4000-8000-000000000001', gmail_account_id: ACCOUNT_ID, gmail_label_id: 'INBOX', name: 'Caixa de entrada', label_type: 'system', color: null, message_count: 6, unread_count: 2 },
     { id: '50000000-0000-4000-8000-000000000002', gmail_account_id: ACCOUNT_ID, gmail_label_id: 'SENT', name: 'Enviados', label_type: 'system', color: null, message_count: 3, unread_count: 0 },
     { id: '50000000-0000-4000-8000-000000000003', gmail_account_id: ACCOUNT_ID, gmail_label_id: 'Label_Clientes', name: 'Clientes importantes', label_type: 'user', color: null, message_count: 2, unread_count: 0 },
   ]) : json(route, { message: 'escrita bloqueada' }, 403));
-  await page.route(/\/rest\/v1\/email_attachments/, route => isRead(route.request().method()) ? json(route, [
-    { id: '60000000-0000-4000-8000-000000000001', email_message_id: MESSAGE_ID, gmail_attachment_id: 'attachment-1', filename: 'deployment-log.txt', mime_type: 'text/plain', size_bytes: 12288, created_at: '2026-10-02T17:35:00.000Z' },
-  ]) : json(route, { message: 'escrita bloqueada' }, 403));
+  await page.route(/\/rest\/v1\/email_attachments/, route => {
+    if (!isRead(route.request().method())) return json(route, { message: 'escrita bloqueada' }, 403);
+    const messageFilter = new URL(route.request().url()).searchParams.get('email_message_id') || '';
+    return json(route, messageFilter.includes(EXTREME_MESSAGE_ID) ? extremeAttachments : [
+      { id: '60000000-0000-4000-8000-000000000001', email_message_id: MESSAGE_ID, gmail_attachment_id: 'attachment-1', filename: 'deployment-log.txt', mime_type: 'text/plain', size_bytes: 12288, created_at: '2026-10-02T17:35:00.000Z' },
+    ]);
+  });
 }

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Send, X, Paperclip, ChevronDown, ChevronUp, Loader2, Minimize2, Maximize2 } from 'lucide-react';
+import { AlertTriangle, Send, X, Paperclip, ChevronDown, ChevronUp, Loader2, Minimize2, Maximize2 } from 'lucide-react';
 import { useGmail, type EmailAttachment, type EmailMessage } from '@/hooks/integrations/useGmail';
 import { toast } from 'sonner';
 import { fileToEmailAttachment, formatEmailFileSize, validateEmailAttachments } from '@/lib/emailAttachments';
@@ -21,6 +21,7 @@ import {
   removeEmailDraftSession,
   writeEmailDraftSession,
 } from '@/lib/emailDraftSession';
+import { isEmailOutcomeUnknown } from '@/lib/emailErrorState';
 
 interface EmailComposerProps {
   accountId?: string;
@@ -105,6 +106,7 @@ export function EmailComposer({
   const [draftDirty, setDraftDirty] = useState(false);
   const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [discardConfirmationOpen, setDiscardConfirmationOpen] = useState(false);
+  const [sendOutcomeUnknown, setSendOutcomeUnknown] = useState(false);
   const saveDraftMutateAsync = saveDraft?.mutateAsync;
   const draftIdRef = useRef<string | undefined>(restoredDraft?.draftId);
   const draftRevisionRef = useRef(0);
@@ -214,6 +216,7 @@ export function EmailComposer({
     }
 
     sendLockRef.current = true;
+    setSendOutcomeUnknown(false);
     try {
       if (draftTimerRef.current !== undefined) {
         window.clearTimeout(draftTimerRef.current);
@@ -252,7 +255,12 @@ export function EmailComposer({
       removeEmailDraftSession(draftStorageKey);
       onClose();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Não foi possível enviar o email.');
+      if (isEmailOutcomeUnknown(error)) {
+        setSendOutcomeUnknown(true);
+        toast.warning('Não foi possível confirmar o resultado do envio. Confira a pasta Enviados antes de tentar novamente.');
+      } else {
+        toast.error(error instanceof Error ? error.message : 'Não foi possível enviar o email.');
+      }
     } finally {
       sendLockRef.current = false;
     }
@@ -412,6 +420,13 @@ export function EmailComposer({
                   <div role="status" className="rounded-lg border border-amber-400/25 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
                     O rascunho foi restaurado, mas o navegador não pode reabrir arquivos locais. Anexe novamente: {missingAttachmentNames.join(', ')}.
                     <Button type="button" variant="ghost" size="sm" className="ml-2 h-6 px-2 text-amber-100" onClick={() => setMissingAttachmentNames([])}>Dispensar</Button>
+                  </div>
+                )}
+
+                {sendOutcomeUnknown && (
+                  <div role="alert" className="flex gap-2 rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <div><p className="font-medium">Resultado do envio não confirmado</p><p className="mt-0.5 text-amber-100/80">A conexão terminou sem uma resposta conclusiva. O email pode ter sido aceito pelo Gmail. Confira a pasta Enviados antes de tentar novamente para evitar duplicidade.</p></div>
                   </div>
                 )}
 

@@ -4,7 +4,8 @@ import { clearOfflineCache } from '@/hooks/system/useOfflineCache';
  import { User, Session } from '@supabase/supabase-js';
  import { AuthService, type SignInResult } from '@/services/auth.service';
  import { Profile } from '@/types';
- import { log } from '@/lib/logger';
+import { log } from '@/lib/logger';
+import { clearEmailDraftSessions } from '@/lib/emailDraftSession';
 
 interface AuthContextType {
   user: User | null;
@@ -112,6 +113,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         // anterior (contatos, mensagens, galeria) antes de qualquer consulta nova.
         queryClient.clear();
         clearOfflineCache();
+        clearEmailDraftSessions();
       }
     });
 
@@ -175,6 +177,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
        // deixe dados do usuario anterior para tras.
        queryClient.clear();
        clearOfflineCache();
+       clearEmailDraftSessions();
      }
    };
 

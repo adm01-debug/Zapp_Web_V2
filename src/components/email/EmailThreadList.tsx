@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import type { EmailThread } from '@/hooks/integrations/useGmail';
 import { cn } from '@/lib/utils';
+import { emailLoadErrorCopy } from '@/lib/emailErrorState';
 
 function getInitials(name?: string | null, email?: string): string {
   if (name) return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
@@ -36,6 +37,7 @@ function formatDate(dateStr: string): string {
 
 interface EmailThreadListProps {
   threads: EmailThread[];
+  totalCount?: number;
   threadsLoading: boolean;
   threadsError?: Error | null;
   labels: { id: string; name: string; gmail_label_id: string; label_type: string; unread_count: number }[];
@@ -51,7 +53,7 @@ interface EmailThreadListProps {
 }
 
 export function EmailThreadList({
-  threads, threadsLoading, threadsError, labels, unreadCount, globalSearchQuery = '', onClearGlobalSearch,
+  threads, totalCount, threadsLoading, threadsError, labels, unreadCount, globalSearchQuery = '', onClearGlobalSearch,
   selectedThreadId, activeAccountEmail,
   onSelectThread, onNewEmail, onSync, isSyncing
 }: EmailThreadListProps) {
@@ -95,6 +97,9 @@ export function EmailThreadList({
   const pageCount = Math.max(1, Math.ceil(filteredThreads.length / pageSize));
   const effectivePage = Math.min(page, pageCount);
   const visibleThreads = filteredThreads.slice((effectivePage - 1) * pageSize, effectivePage * pageSize);
+  const hasActiveFilters = filter !== 'all' || hasAttachmentFilter || labelFilter !== 'all' || periodFilter !== 'all' || Boolean(searchQuery || globalSearchQuery);
+  const displayedTotal = hasActiveFilters ? filteredThreads.length : (totalCount ?? filteredThreads.length);
+  const threadsErrorCopy = useMemo(() => emailLoadErrorCopy(threadsError), [threadsError]);
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -180,8 +185,8 @@ export function EmailThreadList({
         {threadsError ? (
           <div role="alert" className="flex flex-col items-center justify-center px-6 py-16 text-center text-slate-400">
             <MailX className="mb-3 h-10 w-10 text-red-400/80" />
-            <p className="text-sm font-medium text-slate-200">Falha ao carregar conversas</p>
-            <p className="mt-1 text-xs">Sincronize novamente ou confira a conexão da conta.</p>
+            <p className="text-sm font-medium text-slate-200">{threadsErrorCopy.title}</p>
+            <p className="mt-1 text-xs">{threadsErrorCopy.description}</p>
             <Button variant="outline" size="sm" className="mt-4 border-cyan-300/10 bg-[#071a2a]" onClick={onSync}>Tentar novamente</Button>
           </div>
         ) : threadsLoading ? (
@@ -244,7 +249,7 @@ export function EmailThreadList({
       <div className="flex shrink-0 items-center gap-1 border-t border-cyan-300/10 bg-[#041421] p-2 text-3xs text-slate-400">
         <Mail className="w-3 h-3" />
         <span className="truncate">{activeAccountEmail}</span>
-        <span className="ml-auto shrink-0">{filteredThreads.length === 0 ? 0 : (effectivePage - 1) * pageSize + 1}–{Math.min(effectivePage * pageSize, filteredThreads.length)} de {filteredThreads.length}</span>
+        <span className="ml-auto shrink-0">{filteredThreads.length === 0 ? 0 : (effectivePage - 1) * pageSize + 1}–{Math.min(effectivePage * pageSize, filteredThreads.length)} de {displayedTotal}</span>
         <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label="Página anterior" disabled={effectivePage <= 1} onClick={() => setPage(current => Math.max(1, current - 1))}><ChevronLeft className="h-3 w-3" /></Button>
         <span aria-label={`Página ${effectivePage} de ${pageCount}`}>{effectivePage}/{pageCount}</span>
         <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label="Próxima página" disabled={effectivePage >= pageCount} onClick={() => setPage(current => Math.min(pageCount, current + 1))}><ChevronRight className="h-3 w-3" /></Button>

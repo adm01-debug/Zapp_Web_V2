@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { ReactNode } from 'react';
+import { forwardRef, type ReactNode } from 'react';
 import type { EmailThread, EmailMessage } from '@/hooks/integrations/useGmail';
 
 const mocks = vi.hoisted(() => ({
@@ -50,7 +50,7 @@ vi.mock('@/components/ui/tooltip', () => ({
 }));
 
 vi.mock('@/components/ui/scroll-area', () => ({
-  ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  ScrollArea: forwardRef<HTMLDivElement, { children: ReactNode }>(({ children }, ref) => <div ref={ref}><div data-radix-scroll-area-viewport>{children}</div></div>),
 }));
 
 import { EmailChatThread } from '../EmailChatThread';
@@ -110,6 +110,34 @@ describe('EmailChatThread', () => {
     mocks.threadMessages = [];
     mocks.messagesLoading = false;
     window.HTMLElement.prototype.scrollIntoView = vi.fn();
+    document.documentElement.classList.remove('reduced-motion');
+  });
+
+  it('preserva a leitura antiga, avisa sobre nova mensagem e desce sob comando', () => {
+    mocks.threadMessages = [MOCK_MSG];
+    const view = render(<EmailChatThread thread={MOCK_THREAD} onBack={vi.fn()} />);
+    const viewport = view.container.querySelector<HTMLElement>('[data-radix-scroll-area-viewport]')!;
+    Object.defineProperties(viewport, {
+      scrollHeight: { configurable: true, value: 1000 },
+      clientHeight: { configurable: true, value: 200 },
+      scrollTop: { configurable: true, value: 0, writable: true },
+    });
+    fireEvent.scroll(viewport);
+    const nextMessage = { ...MOCK_MSG, id: 'msg2', gmail_message_id: 'gmail-m2', internal_date: '2026-09-06T11:00:00Z' };
+    mocks.threadMessages = [MOCK_MSG, nextMessage];
+    view.rerender(<EmailChatThread thread={MOCK_THREAD} onBack={vi.fn()} />);
+
+    const notice = screen.getByRole('button', { name: 'Novas mensagens' });
+    expect(notice).toBeVisible();
+    fireEvent.click(notice);
+    expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenLastCalledWith({ behavior: 'smooth' });
+  });
+
+  it('não usa rolagem animada quando movimento reduzido está ativo', () => {
+    document.documentElement.classList.add('reduced-motion');
+    mocks.threadMessages = [MOCK_MSG];
+    render(<EmailChatThread thread={MOCK_THREAD} onBack={vi.fn()} />);
+    expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({ behavior: 'auto' });
   });
 
   describe('lifecycle: setSelectedThreadId', () => {
