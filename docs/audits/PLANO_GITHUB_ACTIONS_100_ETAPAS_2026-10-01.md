@@ -735,9 +735,14 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   `[branch-hygiene]` (o upsert idempotente já é o padrão da casa em `[kpi-actions]`), então a #378 fica intacta como
   registro. Corte passou de 14 dias por **criação** para 7 dias por **`updatedAt`** = "sem push", que é o que a etapa
   pede. Executado de verdade: issue **#1810** criada, 2ª execução atualizou (não duplicou).
-- [ ] **E92** · C · G-38 · Corrigir `.github/ISSUE_TEMPLATE/config.yml` (URL do repo, remover telefone placeholder) e
+- [x] **E92** · C · G-38 · Corrigir `.github/ISSUE_TEMPLATE/config.yml` (URL do repo, remover telefone placeholder) e
   o PR template (tirar "staging"; adicionar "Migration? → arquivo + ledger + catálogo" e "Edge? → disparar
   deploy-functions após merge"). Verificação: revisão.
+  **FEITO 2026-10-03** (PR do repo, ver `docs/audits/e92-templates-issue-pr-2026-10-03.md`): o link errado
+  não dava 404 — `adm01-debug/zapp-web` existe, é privado e tem `/docs` próprio, então levava em silêncio
+  para documentação de outro projeto. Telefone placeholder removido (bloco de WhatsApp sai inteiro).
+  "staging" não existe neste projeto: a caixa saiu. Invariantes presos em `scripts/ci/issue-templates.unit.mjs`
+  (5 casos, 5/5 derrubados por mutação).
 - [ ] **E93** · A · G-39 · Repo: `allow_merge_commit: false`, `allow_rebase_merge: false`,
   `squash_merge_commit_message: PR_BODY`, `use_squash_pr_title_as_default: true`. Verificação: `GET /repos`.
 - [ ] **E94** · A · G-40 · Apagar environments `copilot`, `Preview`, `Production` (sem regra, sem uso por workflow;
