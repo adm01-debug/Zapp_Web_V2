@@ -702,3 +702,9 @@ jobs:
           SOUND_INTEGRITY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/user-settings-sound-integrity-contract.test.sh
+
+      - name: Provar grants e revogação das vozes do Multiplix (F64)
+        env:
+          F64_VOZ_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/f64-voz-assets-e-grants.test.sh

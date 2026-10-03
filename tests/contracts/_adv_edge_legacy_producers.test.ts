@@ -87,6 +87,11 @@
  *    o código realmente usa — `from/rpc/storage/channel`).
  *    É arquivo de tipos, não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3)
  *    seguem idênticos — só o total varrido sobe (203 → 204), medido pela varredura depois do merge.
+ *  - 206: Bloco H / F64 (03/10/2026) — `multiplix-voices/index.ts` (edge que lista as vozes com grant
+ *    do chamador e assina o ativo do bucket privado) e `multiplix-voices/index.test.ts` (13 testes
+ *    Deno das decisões de autorização). São implementação e teste, não produzem token legado: o mapa
+ *    INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total varrido sobe
+ *    (204 → 206), medido pela varredura depois do merge.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -161,8 +166,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('204 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(204);
+  it('206 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(206);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );
