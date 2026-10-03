@@ -2,11 +2,15 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * D3 = Bitrix24: a gravacao ainda nao tem servico contratado (T67). Com isto em `false`
- * o hook NAO chama `get-call-recording` e o `RecordingPlayer` devolve `null` - a tela nao
- * oferece um player que nao tem de onde tocar.
+ * D3 (revisado por Joaquim em 29/09) = reconciliar com o Bitrix24 via `voximplant.statistic.get`,
+ * e a Fase 7 entregou a Edge `get-call-recording`. Com isto em `true` o hook chama a funcao
+ * quando a chamada diz que tem gravacao; a funcao responde 404 se o audio nao existir, e o
+ * player trata isso como "sem gravacao" em vez de quebrar a tela.
+ *
+ * Enquanto `BITRIX_WEBHOOK_URL` nao estiver configurado na Edge, `recording_status` continua
+ * 'none' em toda chamada - ou seja, na pratica nada muda ate a fonte existir.
  */
-export const SERVICO_DE_GRAVACAO_ATIVO = false;
+export const SERVICO_DE_GRAVACAO_ATIVO = true;
 
 export interface GravacaoDaChamada {
   disponivel: boolean;

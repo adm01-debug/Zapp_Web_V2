@@ -92,6 +92,8 @@
  *    Deno das decisões de autorização). São implementação e teste, não produzem token legado: o mapa
  *    INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total varrido sobe
  *    (204 → 206), medido pela varredura depois do merge.
+ *  - 210: Fase 7 da telefonia (03/10/2026) — `get-call-recording/index.ts` + `sync-call-records/index.ts`
+ *    e seus testes (206 → 210). O mapa pinado nao muda: as duas sao produtoras novas, nao legadas.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -166,8 +168,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('206 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(206);
+  it('210 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(210);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );
