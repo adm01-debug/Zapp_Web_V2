@@ -7,9 +7,9 @@
     "sha256": "40e2279a35e80baa6ca0c7dcc4f93b2220afed7269c766754c24fc4010479e74"
   },
   "summary": {
-    "function_count": 70,
-    "source_file_count": 135,
-    "verify_jwt_true": 57,
+    "function_count": 71,
+    "source_file_count": 136,
+    "verify_jwt_true": 58,
     "verify_jwt_false": 13
   },
   "orphan_allowlist": ["sicoob-bridge", "sicoob-bridge-reply"],
@@ -593,6 +593,11 @@
       "path": "supabase/functions/multiplix-send/index.ts",
       "bytes": 40505,
       "sha256": "c14c543d34b52761a77dccf371cbdb3a26d8952aa2e35d1e4c00fc4acebcadfc"
+    },
+    {
+      "path": "supabase/functions/multiplix-voices/index.ts",
+      "bytes": 8499,
+      "sha256": "8a7783b6ce72ab6245371171fdb3351aa6bf0a2bb3e313904ab8eaefb2e7fc2f"
     },
     {
       "path": "supabase/functions/promogifts-catalog/index.ts",
@@ -1504,6 +1509,19 @@
       ]
     },
     {
+      "name": "multiplix-voices",
+      "entrypoint": "supabase/functions/multiplix-voices/index.ts",
+      "verify_jwt": true,
+      "source_sha256": "bda93d0ce559fdbbd3a32a08164d55129baad080b4b81b37ec4c7d7542e3604b",
+      "source_files": [
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/messaging/media.ts",
+        "supabase/functions/_shared/ssrf.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/multiplix-voices/index.ts"
+      ]
+    },
+    {
       "name": "promogifts-catalog",
       "entrypoint": "supabase/functions/promogifts-catalog/index.ts",
       "verify_jwt": true,
@@ -1752,5 +1770,5 @@
       ]
     }
   ],
-  "manifest_sha256": "95224f3e3232f0846695c1bd9b040da001a73aba033f164fdc7b19dc3cb80718"
+  "manifest_sha256": "2aa8534c655beee96bbd5f595aab3170a2de958340ebb1466b2b3bec32ea1317"
 }
