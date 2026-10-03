@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 
@@ -37,8 +36,8 @@ function emitRealtimeEvent(tableSuffix: string, payload: MockRealtimePayload) {
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: (...args: unknown[]) => mockFrom(...args),
-    channel: (...args: unknown[]) => mockChannel(...args),
+    from: (table: string) => mockFrom(table),
+    channel: (topic: string) => mockChannel(topic),
     removeChannel: (...args: unknown[]) => mockRemoveChannel(...args),
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } } }),

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { DialPad } from '../DialPad';
@@ -10,6 +9,8 @@ const defaultProps = {
   callDuration: 0,
   isMuted: false,
   currentNumber: '',
+  callDirection: null,
+  onAcceptIncoming: vi.fn(),
   onConnect: vi.fn(),
   onDisconnect: vi.fn(),
   onCall: vi.fn(),

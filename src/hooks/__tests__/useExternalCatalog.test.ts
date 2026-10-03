@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -108,9 +107,9 @@ function setupMockInvoke(responses: Record<string, unknown>) {
     bootstrap: { data: { categories: [], suppliers: [], stats: null } },
   };
   const merged = { ...defaults, ...responses };
-  mockInvoke.mockImplementation(async (fnName: string, opts: unknown) => {
+  mockInvoke.mockImplementation(async (fnName: string, opts: { body?: { action?: string; params?: { product_id?: string; search?: string } } }) => {
     const action = opts?.body?.action;
-    if (merged[action]) {
+    if (action && merged[action]) {
       return { data: merged[action], error: null };
     }
     return { data: { data: [], meta: { total: 0 } }, error: null };
@@ -575,7 +574,7 @@ describe('Edge Function Contract', () => {
     });
     const productCall = mockInvoke.mock.calls.find((c) => c[1]?.body?.action === 'list_products');
     expect(productCall).toBeTruthy();
-    expect(productCall[1].body.action).toBe('list_products');
+    expect(productCall![1].body.action).toBe('list_products');
   });
 
   it('sends get_product action for single product', async () => {
@@ -586,8 +585,8 @@ describe('Edge Function Contract', () => {
 
     const call = mockInvoke.mock.calls.find((c) => c[1]?.body?.action === 'get_product');
     expect(call).toBeTruthy();
-    expect(call[1].body.action).toBe('get_product');
-    expect(call[1].body.params.product_id).toBe('p1');
+    expect(call![1].body.action).toBe('get_product');
+    expect(call![1].body.params.product_id).toBe('p1');
   });
 
   it('sends bootstrap action for categories (E26 — substitui list_categories isolado)', async () => {
@@ -704,14 +703,14 @@ describe('Data Integrity', () => {
     });
 
     const { result } = renderHook(() => useExternalCatalog(), { wrapper: createWrapper() });
-    let fetched: unknown;
+    let fetched: ExternalProduct | null = null;
     await act(async () => {
       fetched = await result.current.fetchProduct('p1');
     });
 
-    expect(fetched.variants[0].color_hex).toBe('#4169E1');
-    expect(fetched.variants[1].color_name).toBe('Laranja');
-    expect(fetched.variants[0].stock_quantity).toBe(29982);
+    expect(fetched!.variants![0].color_hex).toBe('#4169E1');
+    expect(fetched!.variants![1].color_name).toBe('Laranja');
+    expect(fetched!.variants![0].stock_quantity).toBe(29982);
   });
 });
 
@@ -809,7 +808,7 @@ describe('Edge Cases & Boundaries', () => {
     await waitFor(() => {
       const call = mockInvoke.mock.calls.find((c) => c[1]?.body?.action === 'list_products' && c[1]?.body?.params?.search);
       expect(call).toBeTruthy();
-      expect(call[1].body.params.search).toBe("caneta d'água & %");
+      expect(call![1].body.params.search).toBe("caneta d'água & %");
     }, { timeout: 5000 });
   });
 

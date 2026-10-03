@@ -66,7 +66,7 @@
     },
     {
       "path": "src/components/ai/__tests__/AutoTicketClassifier.test.tsx",
-      "sha256": "b2a0d9880aff7422588f63f3936cd5ac9f1a53a552f564bc23681ae68bfacc6c"
+      "sha256": "9517720509730353e428d27b2f579aa498aa7a85f010564aff7899f5399725d9"
     },
     {
       "path": "src/components/ai/AutoTicketClassifier.tsx",
@@ -91,14 +91,6 @@
     {
       "path": "src/components/automations/useAutomations.ts",
       "sha256": "10ef7bbb42ea375ff21eb5247d3dfc1b05c1843d15dc284c31f4b1ed487fc4b5"
-    },
-    {
-      "path": "src/components/calls/__tests__/DialPad.test.tsx",
-      "sha256": "bd2a415a8ab2e5b6a5b2d96bd5c4ea05caa2ad387539bfa1433fb81bb49e1d60"
-    },
-    {
-      "path": "src/components/calls/__tests__/VoIPPanel.test.tsx",
-      "sha256": "f25f1c35e8db3d1498b216c4e534096b57f65ae022cef629b74c099a3b8deb57"
     },
     {
       "path": "src/components/campaigns/CampaignABTesting.tsx",
@@ -657,10 +649,6 @@
       "sha256": "cf547ff2a2b3c3da494b24d4ba1dea491af7db4b1e05c9cb4317072e84b85225"
     },
     {
-      "path": "src/components/settings/__tests__/MediaLibraryAdmin.test.tsx",
-      "sha256": "872f267d883ce67df582032486d760d60d82831c480da45a0bbdbf746badc2dc"
-    },
-    {
       "path": "src/components/settings/__tests__/SLARulesManager.test.tsx",
       "sha256": "9913e66437141798fbf3bb8057a55c0274896f0de01e50ccc7c9b9feaf127a83"
     },
@@ -887,26 +875,6 @@
     {
       "path": "src/contexts/LayoutScrollContext.tsx",
       "sha256": "c5bd24720c1b7ee3acbdf0c507ca5fcf2e75a685d0c937aedc9d35ba2a2636c8"
-    },
-    {
-      "path": "src/hooks/__tests__/useDashboardData.test.tsx",
-      "sha256": "ca82a77a2bd22d08429425dfdd5f80b0a0bc49bfbbcb7d319787ad3b1746a3df"
-    },
-    {
-      "path": "src/hooks/__tests__/useExternalCatalog.test.ts",
-      "sha256": "599caf104d9b26791677d912cf6c6b5fce230fd905ac6c3ac6f5e25d50a14e90"
-    },
-    {
-      "path": "src/hooks/__tests__/useMessages.test.tsx",
-      "sha256": "f82fa00c23399b4c136c8bbc1c782d1fb2b40781a7bff85e4f3a1b298db726c5"
-    },
-    {
-      "path": "src/hooks/__tests__/useMessageStatus.test.tsx",
-      "sha256": "fc39986a08681650bd5b0755dde8bb7ef0a172ce7b79f771f503740e0ee4e6dc"
-    },
-    {
-      "path": "src/hooks/__tests__/useRealtimeMessages.test.tsx",
-      "sha256": "f631f39cf06278616576675b07c8ac56f1b7db20f1502eb6dcf9ef00e2a07706"
     },
     {
       "path": "src/hooks/analytics/usePerformanceOptimizations.ts",
@@ -1630,23 +1598,9 @@
     },
     {
       "file": "src/components/ai/__tests__/AutoTicketClassifier.test.tsx",
-      "line": 1,
-      "column": 1,
-      "endLine": 1,
-      "endColumn": 15,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/ban-ts-comment",
-      "messageId": "tsDirectiveComment",
-      "message": "Do not use \"@ts-nocheck\" because it alters compilation errors.",
-      "spanHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "lineHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "contextHash": "4a50b3839012b6d9063836bf70d7b6675c5a6091bb26fe8e8236eb327b36b57a"
-    },
-    {
-      "file": "src/components/ai/__tests__/AutoTicketClassifier.test.tsx",
-      "line": 180,
+      "line": 179,
       "column": 27,
-      "endLine": 180,
+      "endLine": 179,
       "endColumn": 28,
       "severity": 2,
       "ruleId": "no-constant-binary-expression",
@@ -1795,34 +1749,6 @@
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "contextHash": "2ee71fd33d8e21467cfc8a2f3d4523469b65f42ee4e5f8a878cae4c5c3af71ad"
-    },
-    {
-      "file": "src/components/calls/__tests__/DialPad.test.tsx",
-      "line": 1,
-      "column": 1,
-      "endLine": 1,
-      "endColumn": 15,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/ban-ts-comment",
-      "messageId": "tsDirectiveComment",
-      "message": "Do not use \"@ts-nocheck\" because it alters compilation errors.",
-      "spanHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "lineHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "contextHash": "4a50b3839012b6d9063836bf70d7b6675c5a6091bb26fe8e8236eb327b36b57a"
-    },
-    {
-      "file": "src/components/calls/__tests__/VoIPPanel.test.tsx",
-      "line": 1,
-      "column": 1,
-      "endLine": 1,
-      "endColumn": 15,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/ban-ts-comment",
-      "messageId": "tsDirectiveComment",
-      "message": "Do not use \"@ts-nocheck\" because it alters compilation errors.",
-      "spanHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "lineHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "contextHash": "4a50b3839012b6d9063836bf70d7b6675c5a6091bb26fe8e8236eb327b36b57a"
     },
     {
       "file": "src/components/campaigns/CampaignABTesting.tsx",
@@ -5535,20 +5461,6 @@
       "contextHash": "969a76751dee3b435b51b2bc6b7dd4b825a7ccd1119d04c63fe4cb33a8a807b5"
     },
     {
-      "file": "src/components/settings/__tests__/MediaLibraryAdmin.test.tsx",
-      "line": 1,
-      "column": 1,
-      "endLine": 1,
-      "endColumn": 15,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/ban-ts-comment",
-      "messageId": "tsDirectiveComment",
-      "message": "Do not use \"@ts-nocheck\" because it alters compilation errors.",
-      "spanHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "lineHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "contextHash": "a9b496d596887534c085de855d6013220301a6da1c196db0b3f981bea23e2ea5"
-    },
-    {
       "file": "src/components/settings/__tests__/SLARulesManager.test.tsx",
       "line": 16,
       "column": 47,
@@ -7031,76 +6943,6 @@
       "spanHash": "2d660602771068d04323c18d227c236b31d5e08cb081ad1100602d64f9eb75a5",
       "lineHash": "740a61b924d3874b251048d858b50b999eb5e145e0e83c39bb366b458a9e26e3",
       "contextHash": "7349e37f1e009a57721653286d77e40bbdf16547c8821cf717fdb1b7515030b3"
-    },
-    {
-      "file": "src/hooks/__tests__/useDashboardData.test.tsx",
-      "line": 1,
-      "column": 1,
-      "endLine": 1,
-      "endColumn": 15,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/ban-ts-comment",
-      "messageId": "tsDirectiveComment",
-      "message": "Do not use \"@ts-nocheck\" because it alters compilation errors.",
-      "spanHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "lineHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "contextHash": "4a50b3839012b6d9063836bf70d7b6675c5a6091bb26fe8e8236eb327b36b57a"
-    },
-    {
-      "file": "src/hooks/__tests__/useExternalCatalog.test.ts",
-      "line": 1,
-      "column": 1,
-      "endLine": 1,
-      "endColumn": 15,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/ban-ts-comment",
-      "messageId": "tsDirectiveComment",
-      "message": "Do not use \"@ts-nocheck\" because it alters compilation errors.",
-      "spanHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "lineHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "contextHash": "4a50b3839012b6d9063836bf70d7b6675c5a6091bb26fe8e8236eb327b36b57a"
-    },
-    {
-      "file": "src/hooks/__tests__/useMessages.test.tsx",
-      "line": 1,
-      "column": 1,
-      "endLine": 1,
-      "endColumn": 15,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/ban-ts-comment",
-      "messageId": "tsDirectiveComment",
-      "message": "Do not use \"@ts-nocheck\" because it alters compilation errors.",
-      "spanHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "lineHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "contextHash": "4a50b3839012b6d9063836bf70d7b6675c5a6091bb26fe8e8236eb327b36b57a"
-    },
-    {
-      "file": "src/hooks/__tests__/useMessageStatus.test.tsx",
-      "line": 1,
-      "column": 1,
-      "endLine": 1,
-      "endColumn": 15,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/ban-ts-comment",
-      "messageId": "tsDirectiveComment",
-      "message": "Do not use \"@ts-nocheck\" because it alters compilation errors.",
-      "spanHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "lineHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "contextHash": "4a50b3839012b6d9063836bf70d7b6675c5a6091bb26fe8e8236eb327b36b57a"
-    },
-    {
-      "file": "src/hooks/__tests__/useRealtimeMessages.test.tsx",
-      "line": 1,
-      "column": 1,
-      "endLine": 1,
-      "endColumn": 15,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/ban-ts-comment",
-      "messageId": "tsDirectiveComment",
-      "message": "Do not use \"@ts-nocheck\" because it alters compilation errors.",
-      "spanHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "lineHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "contextHash": "4a50b3839012b6d9063836bf70d7b6675c5a6091bb26fe8e8236eb327b36b57a"
     },
     {
       "file": "src/hooks/analytics/usePerformanceOptimizations.ts",
