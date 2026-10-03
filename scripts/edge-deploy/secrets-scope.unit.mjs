@@ -21,10 +21,10 @@ const workflow = await readFile(new URL('../../.github/workflows/deploy-function
 const TODOS = [...NOMES_GERAIS, ...Object.values(NOMES_POR_ESCOPO).flat()];
 
 test('E58: o escopo define exatamente os nomes que o deploy escreveria', () => {
-  assert.deepEqual(nomesDeSecretsParaEscopo(''), [...TODOS].sort(), 'deploy total escreve todos');
-  assert.deepEqual(nomesDeSecretsParaEscopo('crm-integration'), ['CRON_SECRET', 'EXTERNAL_SUPABASE_SERVICE_ROLE_KEY', 'EXTERNAL_SUPABASE_URL'].sort());
-  assert.deepEqual(nomesDeSecretsParaEscopo('promogifts-catalog'), ['CRON_SECRET', 'PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY', 'PROMOGIFTS_SUPABASE_URL'].sort());
-  assert.deepEqual(nomesDeSecretsParaEscopo('fetch-link-preview'), ['CRON_SECRET', 'PREVIEW_EGRESS_PROXY_URL', 'PREVIEW_EGRESS_SHARED_SECRET'].sort());
+  assert.deepEqual(nomesDeSecretsParaEscopo(''), [...TODOS].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)), 'deploy total escreve todos');
+  assert.deepEqual(nomesDeSecretsParaEscopo('crm-integration'), ['CRON_SECRET', 'EXTERNAL_SUPABASE_SERVICE_ROLE_KEY', 'EXTERNAL_SUPABASE_URL'].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)));
+  assert.deepEqual(nomesDeSecretsParaEscopo('promogifts-catalog'), ['CRON_SECRET', 'PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY', 'PROMOGIFTS_SUPABASE_URL'].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)));
+  assert.deepEqual(nomesDeSecretsParaEscopo('fetch-link-preview'), ['CRON_SECRET', 'PREVIEW_EGRESS_PROXY_URL', 'PREVIEW_EGRESS_SHARED_SECRET'].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)));
   assert.deepEqual(nomesDeSecretsParaEscopo('talkx-send'), ['CRON_SECRET'], 'escopo sem bloco de secrets nao inventa nome');
 });
 
