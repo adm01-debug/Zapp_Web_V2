@@ -4,13 +4,13 @@
   "legacy_unmanaged_functions": [],
   "config": {
     "path": "supabase/config.toml",
-    "sha256": "40e2279a35e80baa6ca0c7dcc4f93b2220afed7269c766754c24fc4010479e74"
+    "sha256": "872b4f055b24411929c0a8f0af1a72a220bd4326acd813b44aeb47bc6cd113af"
   },
   "summary": {
-    "function_count": 71,
-    "source_file_count": 136,
-    "verify_jwt_true": 58,
-    "verify_jwt_false": 13
+    "function_count": 73,
+    "source_file_count": 138,
+    "verify_jwt_true": 59,
+    "verify_jwt_false": 14
   },
   "orphan_allowlist": ["sicoob-bridge", "sicoob-bridge-reply"],
   "source_files": [
@@ -510,6 +510,11 @@
       "sha256": "8f4823a35cb1cb3ec54d0d7b9941033bc952cef9032a2d12ab9b6de74a3402ef"
     },
     {
+      "path": "supabase/functions/get-call-recording/index.ts",
+      "bytes": 4645,
+      "sha256": "5ba90705954488851434e3e4787431d85a64ad907c8f8b63956fa18831aa156d"
+    },
+    {
       "path": "supabase/functions/get-mapbox-token/index.ts",
       "bytes": 1019,
       "sha256": "d91eb1de6543baac98e24ffa666770ad4d6fb7e17d925e4e138650a2c6211613"
@@ -638,6 +643,11 @@
       "path": "supabase/functions/sentiment-alert/index.ts",
       "bytes": 9659,
       "sha256": "75e637b94ec99ac0ce5994b2b6e40ce697e58e418ebd69b5490a2d87d1987e7b"
+    },
+    {
+      "path": "supabase/functions/sync-call-records/index.ts",
+      "bytes": 6632,
+      "sha256": "638c8decef51d8f214bb3860dd95040aba4bdc6ae6be24e57107b4aaca30c4ae"
     },
     {
       "path": "supabase/functions/talkx-link/index.ts",
@@ -1320,6 +1330,17 @@
       ]
     },
     {
+      "name": "get-call-recording",
+      "entrypoint": "supabase/functions/get-call-recording/index.ts",
+      "verify_jwt": true,
+      "source_sha256": "4e4b25b3513574129f804aba1124d8b81a76ae431111a80e6776e0f9cd92bd6f",
+      "source_files": [
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/get-call-recording/index.ts"
+      ]
+    },
+    {
       "name": "get-mapbox-token",
       "entrypoint": "supabase/functions/get-mapbox-token/index.ts",
       "verify_jwt": true,
@@ -1620,6 +1641,17 @@
       ]
     },
     {
+      "name": "sync-call-records",
+      "entrypoint": "supabase/functions/sync-call-records/index.ts",
+      "verify_jwt": false,
+      "source_sha256": "db2162382d14f48566241662acfb282807c51f9fa0ab0fbabdf6c1b8348b5a7e",
+      "source_files": [
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/sync-call-records/index.ts"
+      ]
+    },
+    {
       "name": "talkx-link",
       "entrypoint": "supabase/functions/talkx-link/index.ts",
       "verify_jwt": false,
@@ -1770,5 +1802,5 @@
       ]
     }
   ],
-  "manifest_sha256": "92098e4ce794a48d75869dab6b42b07a5c5ec8f7591fa9c062cb2691accb89d2"
+  "manifest_sha256": "df2756efad8502b9174dee2bcd528078bac00710de95d4820c5371cbf877c1fe"
 }

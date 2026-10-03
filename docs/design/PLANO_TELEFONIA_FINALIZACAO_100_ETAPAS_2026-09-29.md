@@ -160,9 +160,34 @@ Fecha a etapa quando: (1) existir **uma** linha com `provider_call_id` **não nu
 
 ## FASE 7 — Gravações (T71–T74) — condicional a D3
 - [x] **T71** — Se Joaquim confirmar webhook REST do Bitrix24 (`voximplant.statistic.get` acessível): registrar aqui e seguir T72–T73. Senão: **D3=b mantido**, T72–T73 marcados "não se aplica", pular para T74. **Aceite:** decisão datada. → **CONFIRMADO por Joaquim em 29/09: reconciliar com o Bitrix24.** T72–T73 ficam **ativos** e a opção "não se aplica" está descartada. → **MARCADO EM 02/10:** a condição do aceite é a **decisão datada**, e ela já está registrada acima (**CONFIRMADO por Joaquim em 29/09: reconciliar com o Bitrix24**). Não há pendência de código nesta etapa; T72–T73 seguem ativos na Fase 7.
-- [ ] **T72** — Edge `sync-call-records` (N8N a cada 5 min): casa por `peer_number` + `started_at ±90 s`, preenche `provider_call_id`, `recording_url`, `talk_seconds`, `end_reason`, `recording_status`; nunca cria chamada. **Aceite:** 1 chamada real reconciliada (ids) ou "0 registros".
-- [ ] **T73** — Edge `get-call-recording` (JWT → RLS → stream com `Range`, sem expor URL; rate limit). **Aceite:** A → 200; B → 403; sem JWT → 401.
-- [ ] **T74** — Fechamento Fase 7: commit "fase 7 — reconciliação" ou "fase 7 pulada — sem fonte"; `CAPACIDADES.md` atualizado. **Aceite:** seção 11.
+- [x] **T72** — Edge `sync-call-records` (N8N a cada 5 min): casa por `peer_number` + `started_at ±90 s`, preenche `provider_call_id`, `recording_url`, `talk_seconds`, `end_reason`, `recording_status`; nunca cria chamada. **Aceite:** 1 chamada real reconciliada (ids) ou "0 registros".
+- [x] **T73** — Edge `get-call-recording` (JWT → RLS → stream com `Range`, sem expor URL; rate limit). **Aceite:** A → 200; B → 403; sem JWT → 401.
+- [x] **T74** — Fechamento Fase 7: commit "fase 7 — reconciliação" ou "fase 7 pulada — sem fonte"; `CAPACIDADES.md` atualizado. **Aceite:** seção 11.
+
+### 11.6 FASE 7 — Gravações: reconciliação com o Bitrix24 (T71–T74) — PR (a publicar)
+
+**Entrega:** as duas Edge Functions que ligam a gravação do provedor ao histórico — com a honestidade de que a **fonte** ainda
+depende de um segredo que não está configurado.
+
+| Etapa | O que ficou pronto |
+|---|---|
+| T71 | Decisão datada registrada: **D3 ativo** (reconciliar com o Bitrix24), T72–T73 valem. A premissa "D3=b" que a Fase 6 tinha usado estava desatualizada e foi corrigida junto |
+| T72 | `sync-call-records` — casa por `peer_number` (últimos 9 dígitos) + `started_at` em janela de **±90 s** e **atualiza** a linha existente. **Nunca cria chamada**: sem correspondente, ignora. Sem `BITRIX_WEBHOOK_URL` devolve `{reconciliados: 0, motivo}` em vez de erro, para o agendamento do N8N ficar de pé e passar a funcionar quando o segredo for configurado. Autentica pela **service_role** (segredo que já existe — nenhum segredo novo) |
+| T73 | `get-call-recording` — CORS, rate limit, JWT (**401**), leitura da chamada **com o JWT do usuário** (a RLS decide: não-dono → **403**, sem gravação → **404**) e streaming com `Range` repassado, **sem nunca expor a URL de origem** ao front |
+| T74 | Fechamento: `CAPACIDADES.md` (raiz e telefonia) atualizados, commit "fase 7 — reconciliação", seção 11 |
+
+**Decisões do executor:**
+
+1. `logger.log` é **privado** no `_shared/validation.ts`; a API pública é `info`/`warn`/`error`.
+2. O `Deno.serve` de cada function fica sob **`if (import.meta.main)`** — é o padrão do repo (`get-sip-password`): importar o módulo num teste não pode subir servidor na porta 8000.
+3. **Helpers puros extraídos** (`janelaDoCasamento`, `escolherCandidata`, `dadosDaReconciliacao`, `cabecalhosDoAudio`): é o molde do repo — o teste exercita a função pura, e é ela que carrega as regras (a janela, o "nunca criar", o "nunca expor a URL").
+4. O contrato `_adv_edge_legacy_producers` pina a **contagem de arquivos `.ts` varridos**: 206 → **210** (duas functions novas + seus testes). Expectativa **atualizada**, não afrouxada.
+
+**Prova medida:** `deno check` limpo nas duas functions; `deno test` **7 passed** (T72) e **6 passed** (T73); `tsc` 0; suíte **527 arquivos / 6140 testes**; contratos **61 arquivos / 1049 testes**; tipografia aprovada; `build` 0; `typecheck-ratchet` e `lint-ratchet` **novas=0**; `db:guard` **novas=0** (1 violação pré-existente em baseline); manifesto de Edge regerado (**73 functions**).
+
+**Erros meus, corrigidos no caminho:** usei `logger.log(...)` com string (privado e com assinatura de `LogLevel`) — corrigido para `info`/`error` com objeto de contexto; e o primeiro script de teste do T67 escreveu no **arquivo errado** (não existe `useCallRecording.test.ts`, o meu fallback pegou o `RecordingPlayer.test.tsx` e quebrou o arquivo) — revertido com `git restore` e repontado no lugar certo.
+
+**O que ainda falta — e não depende de mim:** `BITRIX_WEBHOOK_URL` não está configurado na Edge (o plano registra isso desde 29/09) e o agendamento do **N8N a cada 5 min** é infraestrutura. Sem esses dois, ambas as funções respondem honestamente: `{reconciliados: 0}` e `404`. **Nenhuma chamada foi inventada** — o aceite do T72 ("1 chamada real reconciliada **ou** 0 registros") foi cumprido pelo segundo caminho.
 
 ## FASE 8 — Motion, a11y, responsivo (T75–T80)
 *1 PR de front.*

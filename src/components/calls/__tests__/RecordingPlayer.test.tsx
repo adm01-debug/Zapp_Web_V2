@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RecordingPlayer } from '../RecordingPlayer';
 
@@ -27,10 +27,11 @@ describe('RecordingPlayer (T67)', () => {
     expect(invoke).not.toHaveBeenCalled();
   });
 
-  it('com gravacao disponivel mas sem servico ligado (D3=b) continua devolvendo null', () => {
+  it('com gravacao disponivel o player existe e pede o audio pela Edge (nunca pela URL)', async () => {
     renderPlayer(<RecordingPlayer callId="c3" recordingStatus="available" />);
-    expect(screen.queryByTestId('tel-recording-player')).toBeNull();
-    // O servico esta desligado: nao se chama a funcao que nao existe.
-    expect(invoke).not.toHaveBeenCalled();
+    // D3 revisado em 29/09 (reconciliar com o Bitrix24): a Edge get-call-recording existe, entao
+    // o player deixa de devolver null e passa a buscar o audio - sem que a URL chegue ao front.
+    await waitFor(() => expect(invoke).toHaveBeenCalledWith('get-call-recording', expect.objectContaining({ body: { callId: 'c3' } })));
+    expect(JSON.stringify(document.body.innerHTML)).not.toContain('http');
   });
 });

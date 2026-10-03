@@ -18,7 +18,7 @@ Quem decide o canal é o hook; a tela (`CallChannelBadge`) só apresenta.
 | `unavailable` | não | não | não | `voip_unavailable` |
 | `idle` | não | não | não | `voip_not_configured` |
 
-`canRecord` é `false` em todos os estados — não há gravação implementada.
+`canRecord` continua `false` em todos os estados: o app **não captura áudio**. A gravação, quando existir, vem do provedor (Bitrix24) — o front só entrega o áudio já gravado, pela Edge `get-call-recording`, e só com `recording_status = 'available'`. Falta configurar `BITRIX_WEBHOOK_URL`.
 
 ## WhatsApp
 
