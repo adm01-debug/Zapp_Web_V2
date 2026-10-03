@@ -56,6 +56,32 @@ Deno.test("personalize falls back to a bracket placeholder for {{link}} when no 
   assert(result === "Veja aqui: [link]", `unexpected result: ${result}`);
 });
 
+Deno.test("personalize resolves {{link:rotulo}} to the URL of that label (X022)", () => {
+  const links = { promo: "https://zapp.example/l/promo", oferta: "https://zapp.example/l/oferta" };
+  const result = personalize(
+    "Promo: {{link:promo}} | Oferta: {{link:oferta}}",
+    contact,
+    {},
+    "America/Sao_Paulo",
+    "https://zapp.example/l/abc",
+    links,
+  ).text;
+  assert(result === "Promo: https://zapp.example/l/promo | Oferta: https://zapp.example/l/oferta", `unexpected result: ${result}`);
+});
+
+Deno.test("personalize marks {{link:rotulo}} with an unregistered label as unknown, never [link:rotulo] (X022)", () => {
+  const result = personalize(
+    "Veja: {{link:naoexiste}}",
+    contact,
+    {},
+    "America/Sao_Paulo",
+    "https://zapp.example/l/abc",
+    { promo: "https://zapp.example/l/promo" },
+  );
+  assert(result.text === "Veja: [link:naoexiste]", `unexpected result: ${result.text}`);
+  assert(result.unknown.includes("link:naoexiste"), `unknown deveria conter link:naoexiste: ${JSON.stringify(result.unknown)}`);
+});
+
 Deno.test("personalize matches a custom field key case-insensitively", () => {
   // Regressão: o CRM guarda o nome do campo como foi digitado (ex.: "CPF"),
   // mas o editor de template força minúsculo no placeholder ({{cpf}}) — o

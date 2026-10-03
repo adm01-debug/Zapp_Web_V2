@@ -101,6 +101,7 @@ export function personalize(
   customValues: PersonalizeCustomValues = {},
   timeZone = DEFAULT_SCHEDULE_TIMEZONE,
   trackingUrl?: string,
+  linksByLabel?: Record<string, string>,
 ): PersonalizeResult {
   const firstName = (contact.name || '').split(' ')[0] || '';
   const today = formatDateInTimezone(timeZone);
@@ -142,6 +143,17 @@ export function personalize(
       // Sem link cadastrado: conhecida e sem valor -> missing (o destinatário
       // vira skipped; nunca sai "[link]" para o cliente).
       missing.add("link");
+      return `[${rawKey}]`;
+    }
+    // X022: {{link:rotulo}} -> URL do link daquele rótulo (vários por mensagem).
+    if (key.startsWith("link:")) {
+      const label = key.slice("link:".length).trim();
+      const url = linksByLabel?.[label];
+      if (url) return url;
+      if (fallback !== null) return fallback;
+      // Rótulo não cadastrado: nome desconhecido (erro de lançamento, via
+      // unknown), nunca sai "[link:rotulo]" para o cliente.
+      unknown.add(`link:${label}`);
       return `[${rawKey}]`;
     }
     // hasOwnProperty (não "in"): "in" também acha propriedades herdadas de
