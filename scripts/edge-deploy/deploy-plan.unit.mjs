@@ -87,6 +87,10 @@ test('E57: o workflow tem dry_run, publica o plano antes do Deploy e nao escreve
   assert.ok(passos.length >= 5, `esperava os passos pos-deploy, achei ${passos.length}`);
   for (const passo of passos) {
     const nome = passo.split('\n')[0];
-    assert.match(passo.slice(0, 400), /inputs\.dry_run != true/, `passo "${nome}" nao esta atras do dry_run`);
+    // A janela cobre o cabecalho do passo INTEIRO: os comentarios de auditoria vem
+    // entre o `- name:` e o `if:` (o passo da E60 tem 9 linhas de comentario), e uma
+    // janela curta demais passaria a acusar um passo que ESTA atras do input.
+    const cabecalho = passo.split(/\n        (?:run|uses|env):/)[0];
+    assert.match(cabecalho, /inputs\.dry_run != true/, `passo "${nome}" nao esta atras do dry_run`);
   }
 });

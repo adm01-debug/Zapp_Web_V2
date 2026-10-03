@@ -61,8 +61,17 @@ test('escopo all e serializado contra deploys por funcao antes do Deploy', () =>
   assert.match(workflow.slice(gate, deploy), /edge-tooling\/scripts\/edge-deploy\/serialize-scope\.mjs/);
 });
 
-test('tag de deploy e unica por run (deploys paralelos no mesmo segundo)', () => {
-  assert.match(workflow, /TAG="edge-deploy\/[^"\n]*\$\{GITHUB_RUN_ID\}"/);
+test('registro de deploy e unico por run (deploys paralelos no mesmo segundo)', async () => {
+  // E60 (03/10/2026): o rastro de deploy deixou de ser a tag
+  // `edge-deploy/<data>-<sha8>-<run>` e passou a ser um Deployment do GitHub. A
+  // propriedade que importa continua a mesma -- registros de runs diferentes nao
+  // podem colidir, mesmo terminando no mesmo segundo -- e agora vive no payload,
+  // que carrega o run id e o sha deployado.
+  assert.match(workflow, /register-deployment\.mjs/, 'o passo tem de registrar o Deployment');
+  const cli = await readFile(new URL('../edge-deploy/register-deployment.mjs', import.meta.url), 'utf8');
+  assert.match(cli, /GITHUB_RUN_ID/, 'o registro tem de carregar o run id (unicidade por run)');
+  assert.match(cli, /DEPLOYED_GIT_SHA/, 'e o sha deployado (o que esta no ar, nao a branch)');
+  assert.doesNotMatch(workflow, /TAG="edge-deploy\//, 'a tag de rastreabilidade saiu de cena na E60');
 });
 
 test('timeout do job cobre a espera maxima do gate mais um deploy completo', async () => {
