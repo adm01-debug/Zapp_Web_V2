@@ -22,6 +22,7 @@ import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolu
 import { claimLeadership } from '@/lib/calls/tabLeaderStore';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { TelefoniaTopActions } from './TelefoniaTopActions';
+import { CallsKpiGrid } from './CallsKpiGrid';
 import { useTelefoniaFilters } from '@/hooks/calls/useTelefoniaFilters';
 import type { PeriodoValue } from './periodos';
 
@@ -93,7 +94,7 @@ export function TelefoniaView() {
     ...(searchDebounced ? { search: searchDebounced } : {}),
   };
 
-  const { calls, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, statsRows } = useCallHistory(profile?.id, filters);
+  const { calls, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useCallHistory(profile?.id, filters);
 
   const selectedCall = calls.find(c => c.id === selectedCallId) ?? null;
 
@@ -141,17 +142,6 @@ export function TelefoniaView() {
     return <Badge variant={s.variant} className="text-3xs">{s.label}</Badge>;
   };
 
-  const callStats = {
-    total: statsRows.length,
-    inbound: statsRows.filter(c => c.direction === 'inbound').length,
-    outbound: statsRows.filter(c => c.direction === 'outbound').length,
-    missed: statsRows.filter(c => c.status === 'missed').length,
-    avgDuration: (() => {
-      const withDuration = statsRows.filter(c => c.duration_seconds != null);
-      if (!withDuration.length) return 0;
-      return withDuration.reduce((acc, c) => acc + (c.duration_seconds || 0), 0) / withDuration.length;
-    })(),
-  };
 
   const handleSaveNote = async () => {
     if (!selectedCall) return;
@@ -175,26 +165,9 @@ export function TelefoniaView() {
         topRight={<TelefoniaTopActions period={period} onPeriodChange={(v) => setFilter('period', v)} />}
       />
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        {[
-          { label: 'Total', value: callStats.total, icon: Phone },
-          { label: 'Recebidas', value: callStats.inbound, icon: PhoneIncoming },
-          { label: 'Realizadas', value: callStats.outbound, icon: PhoneOutgoing },
-          { label: 'Perdidas', value: callStats.missed, icon: PhoneMissed },
-          { label: 'Duração Média', value: `${Math.round(callStats.avgDuration / 60)}min`, icon: Clock },
-        ].map((stat, i) => (
-          <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-            <Card className="border-secondary/30">
-              <CardContent className="p-3 text-center">
-                <stat.icon className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-                <p className="text-xl font-bold text-foreground">{stat.value}</p>
-                <p className="text-3xs text-muted-foreground">{stat.label}</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
+      {/* T38/T39: KPIs do periodo/canal/escopo que estao na URL. */}
+      <CallsKpiGrid period={filtros.period} channel={filtros.channel} scope={filtros.scope} />
+
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-4 items-start">
         {/* Histórico */}

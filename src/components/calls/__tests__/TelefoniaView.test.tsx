@@ -55,6 +55,15 @@ describe('TelefoniaView (T33)', () => {
     expect(alias.VoIPPanel).toBe(direto.TelefoniaView);
   });
 });
+vi.mock('@/hooks/calls/useCallsKpi', () => ({
+  useCallsKpi: () => ({
+    data: { total: 12, answered: 8, missed_inbound: 2, inbound: 9, outbound: 3, avg_talk_seconds: 190 },
+    isLoading: false,
+    isError: false,
+    refetch: () => {},
+  }),
+}));
+
 vi.mock('@/hooks/calls/useTelefoniaFilters', () => ({
   useTelefoniaFilters: () => ({
     filtros: { period: '7d', channel: 'all', dir: 'all', result: 'all', q: '', page: 1, scope: 'mine', call: '' },

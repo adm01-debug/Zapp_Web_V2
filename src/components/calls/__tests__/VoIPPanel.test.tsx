@@ -108,19 +108,39 @@ describe('VoIPPanel', () => {
     expect(screen.queryByText('Servidor SIP')).not.toBeInTheDocument();
   });
 
-  it('renders stat cards', () => {
+  it('renders KPI tiles com os numeros do servidor (T38/T39)', () => {
+    // Antes esta prova cobria os cards antigos da tela, que liam statsRows do
+    // useCallHistory. Os KPIs do plano vem da RPC my_calls_kpi, entao a expectativa
+    // foi repontada para os tiles novos - e ficou MAIS FORTE: antes so existia o
+    // rotulo, agora o valor real aparece na tela.
     renderWithProviders(<VoIPPanel />);
     expect(screen.getByText('Total')).toBeInTheDocument();
-    expect(screen.getByText('Recebidas')).toBeInTheDocument();
-    expect(screen.getByText('Realizadas')).toBeInTheDocument();
+    expect(screen.getByText('Atendidas')).toBeInTheDocument();
     expect(screen.getByText('Perdidas')).toBeInTheDocument();
-    expect(screen.getByText('Duração Média')).toBeInTheDocument();
+    expect(screen.getByText('Realizadas')).toBeInTheDocument();
+    expect(screen.getByText('Tempo medio')).toBeInTheDocument();
+    // Pelos testid e na ORDEM dos tiles: getByText colide com numero do historico
+    // (um '8' de duracao, por exemplo). Aqui os 5 valores do servidor sao exatos.
+    expect(screen.getAllByTestId('tel-kpi-value').map((e) => e.textContent)).toEqual([
+      '12', '8', '2', '3', '3:10',
+    ]);
+    expect(screen.getAllByTestId('tel-kpi-card').length).toBe(5);
   });
 
-  it('calculates stats correctly with empty calls', () => {
+  it('mostra os tiles com altura fixa de 78px (T38)', () => {
     renderWithProviders(<VoIPPanel />);
-    const zeros = screen.getAllByText('0');
-    expect(zeros.length).toBeGreaterThanOrEqual(4);
+    const tiles = screen.getAllByTestId('tel-kpi-card');
+    expect(tiles.length).toBe(5);
+    tiles.forEach((t) => expect(t.className).toContain('h-[78px]'));
+  });
+
+  it('os KPIs sao os mesmos 5 tiles, sem fileira duplicada de numeros (T38/T39)', () => {
+    renderWithProviders(<VoIPPanel />);
+    // A tela tinha OUTRA fileira de stats (Total/Recebidas/... lendo useCallHistory).
+    // Duas fileiras com os mesmos numeros seria bug; o valor do servidor aparece uma vez.
+    expect(screen.getAllByTestId('tel-kpi-card').length).toBe(5);
+    const valores = screen.getAllByTestId('tel-kpi-value').map((e) => e.textContent);
+    expect(valores.filter((x) => x === '12').length).toBe(1);
   });
 
   it('scopes both the history and the stats query to the signed-in agent', async () => {
@@ -293,6 +313,15 @@ describe('VoIPPanel', () => {
     expect(screen.getByText('Conectar SIP').closest('button')).toBeDisabled();
   });
 });
+vi.mock('@/hooks/calls/useCallsKpi', () => ({
+  useCallsKpi: () => ({
+    data: { total: 12, answered: 8, missed_inbound: 2, inbound: 9, outbound: 3, avg_talk_seconds: 190 },
+    isLoading: false,
+    isError: false,
+    refetch: () => {},
+  }),
+}));
+
 vi.mock('@/hooks/calls/useTelefoniaFilters', () => ({
   useTelefoniaFilters: () => ({
     filtros: { period: '7d', channel: 'all', dir: 'all', result: 'all', q: '', page: 1, scope: 'mine', call: '' },
