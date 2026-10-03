@@ -277,7 +277,10 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
       const social = objectValue(row);
       const platform = nonEmptyText(social?.plataforma)?.toLowerCase();
       const url = nonEmptyText(social?.url);
-      return platform && url ? [{ platform, url }] : [];
+      // The Email DTO is intentionally a small, typed projection.  The CRM can
+      // store other networks (for example Facebook), but returning one here
+      // would invalidate the entire client-side boundary guard.
+      return platform && url && (platform === 'linkedin' || platform === 'instagram') ? [{ platform, url }] : [];
     });
     const name = nonEmptyText(company.nome_fantasia) || nonEmptyText(company.nome_crm) || nonEmptyText(company.razao_social);
     if (!name) return null;
@@ -471,15 +474,10 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
         }
         companyId = nonEmptyText(external.company_id);
         resolution = 'stable_link';
-      } else if (contact && phone) {
-        const lookup = await withTimeout(externalClient.rpc('get_contact_360_by_phone', { p_phone: phone }));
-        if (lookup.error) throw new Error(`CRM_RPC:${lookup.error.code || 'unknown'}`);
-        const lookupCompany = objectValue(objectValue(lookup.data)?.company);
-        companyId = nonEmptyText(lookupCompany?.id);
-        resolution = 'phone';
-      }
-
-      if (!companyId && !stableLink && participantEmail) {
+      } else if (!stableLink && participantEmail) {
+        // A verified, explicit email identity wins over a heuristic phone
+        // lookup.  In particular, never render Company A after the user chose
+        // Company B merely because an old phone number still resolves to A.
         const candidates = await findExactEmailCandidates(participantEmail);
         const chosen = selectedExternalContactId
           ? candidates.find(candidate => candidate.externalContactId === selectedExternalContactId)
@@ -498,7 +496,19 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
           companyId = candidates[0].companyId;
           resolution = 'email_exact';
           resolvedExternalContactId = candidates[0].externalContactId;
+        } else if (contact && phone) {
+          const lookup = await withTimeout(externalClient.rpc('get_contact_360_by_phone', { p_phone: phone }));
+          if (lookup.error) throw new Error(`CRM_RPC:${lookup.error.code || 'unknown'}`);
+          const lookupCompany = objectValue(objectValue(lookup.data)?.company);
+          companyId = nonEmptyText(lookupCompany?.id);
+          resolution = 'phone';
         }
+      } else if (!stableLink && contact && phone) {
+        const lookup = await withTimeout(externalClient.rpc('get_contact_360_by_phone', { p_phone: phone }));
+        if (lookup.error) throw new Error(`CRM_RPC:${lookup.error.code || 'unknown'}`);
+        const lookupCompany = objectValue(objectValue(lookup.data)?.company);
+        companyId = nonEmptyText(lookupCompany?.id);
+        resolution = 'phone';
       }
 
       if (!data) {

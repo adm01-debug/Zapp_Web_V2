@@ -124,7 +124,10 @@ export function EmailContactPanel({
             canLink={companyContext?.source.canLink ?? false}
             isLinking={linkCompany?.isPending ?? false}
             onSelectCandidate={setSelectedExternalContactId}
-            onLink={externalContactId => { if (linkCompany) void linkCompany.mutateAsync(externalContactId); }}
+            onLink={async externalContactId => {
+              if (!linkCompany) throw new Error('O vínculo CRM não está disponível para esta conversa');
+              await linkCompany.mutateAsync(externalContactId);
+            }}
           />
 
           <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue}>
@@ -228,8 +231,18 @@ function CompanyContextSection({
   canLink: boolean;
   isLinking: boolean;
   onSelectCandidate: (externalContactId: string) => void;
-  onLink: (externalContactId: string) => void;
+  onLink: (externalContactId: string) => Promise<void>;
 }) {
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const linkSelectedCompany = async () => {
+    if (!selectedExternalContactId) return;
+    setLinkError(null);
+    try {
+      await onLink(selectedExternalContactId);
+    } catch {
+      setLinkError('Não foi possível vincular esta empresa. Revise a escolha e tente novamente.');
+    }
+  };
   if (status === 'disabled') return <div className="rounded-lg border border-border bg-card p-3 text-xs text-muted-foreground">Dados empresariais indisponíveis: integração CRM desativada.</div>;
   if (status === 'loading' && isFetching) return <div className="flex items-center gap-2 rounded-lg border border-border bg-card p-3 text-xs text-muted-foreground"><RefreshCw className="h-3.5 w-3.5 animate-spin" />Buscando dados da empresa no Singu CRM…</div>;
   if (status === 'permission_denied') return <div role="alert" className="rounded-lg border border-border bg-card p-3 text-xs text-muted-foreground">Você não tem permissão para consultar os dados empresariais desta conversa.</div>;
@@ -251,7 +264,8 @@ function CompanyContextSection({
         <CompanyLink href={linkedin} icon={Linkedin} label="LinkedIn" known={company.socialsKnown} />
         <CompanyLink href={instagram} icon={Instagram} label="Instagram" known={company.socialsKnown} />
       </div>
-      {!linked && canLink && selectedExternalContactId && <Button type="button" variant="outline" size="sm" className="w-full" disabled={isLinking} onClick={() => onLink(selectedExternalContactId)}>{isLinking ? 'Vinculando…' : 'Vincular empresa ao contato'}</Button>}
+      {!linked && canLink && selectedExternalContactId && <Button type="button" variant="outline" size="sm" className="w-full" disabled={isLinking} onClick={() => void linkSelectedCompany()}>{isLinking ? 'Vinculando…' : 'Vincular empresa ao contato'}</Button>}
+      {linkError && <p role="alert" className="rounded bg-destructive/10 px-2 py-1 text-3xs text-destructive">{linkError}</p>}
       {!linked && !canLink && selectedExternalContactId && <p className="text-3xs text-muted-foreground">Empresa consultada apenas para esta conversa. Um administrador ou supervisor pode confirmar o vínculo.</p>}
       <CompanyDescription key={company.id} company={company} website={website} />
       <p className="text-3xs text-muted-foreground">{linked ? 'Vinculada ao Singu CRM.' : 'Dados consultados no Singu CRM.'}{formatContextTimestamp(company.updatedAt, 'dd/MM/yyyy') ? ` Atualizado no CRM em ${formatContextTimestamp(company.updatedAt, 'dd/MM/yyyy')}.` : ''}{formatContextTimestamp(consultedAt, 'dd/MM/yyyy HH:mm') ? ` Consultado em ${formatContextTimestamp(consultedAt, 'dd/MM/yyyy HH:mm')}.` : ''}</p>

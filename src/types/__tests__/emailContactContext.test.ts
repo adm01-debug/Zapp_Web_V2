@@ -23,6 +23,18 @@ describe('isEmailContactContext', () => {
     })).toBe(false);
   });
 
+  it('rejects social platforms outside the deliberately projected Email contract', () => {
+    expect(isEmailContactContext({
+      status: 'available', source,
+      company: {
+        id: 'company', name: 'Empresa', legalName: null, website: null, logoUrl: null,
+        industry: null, location: null, about: null, relationships: [], relationshipsKnown: true,
+        socials: [{ platform: 'facebook', url: 'https://facebook.example/empresa' }], socialsKnown: true,
+        aboutKnown: true, updatedAt: null,
+      },
+    })).toBe(false);
+  });
+
   it('accepts only bounded, typed explicit choices in the ambiguous state', () => {
     expect(isEmailContactContext({
       status: 'ambiguous', company: null, source,

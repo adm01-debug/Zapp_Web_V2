@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { beforeEach, describe, it, expect, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type { EmailMessage, EmailThread } from '@/hooks/integrations/useGmail';
@@ -105,6 +105,27 @@ describe('EmailContactPanel', () => {
     contextQuery.mockReturnValue({ data: null, status: 'disabled', isFetching: false, error: null, refetch: vi.fn() } as never);
     render(<EmailContactPanel accountId="acc1" thread={BASE_THREAD} onClose={vi.fn()} />);
     expect(screen.getByText(/integração crm desativada/i)).toBeDefined();
+  });
+
+  it('informs an authorized user when the explicit company link fails', async () => {
+    const mutateAsync = vi.fn().mockRejectedValue(new Error('CRM identity conflict'));
+    contextQuery.mockReturnValue({
+      data: {
+        status: 'available',
+        company: {
+          id: 'company-1', name: 'ACME Ltda', legalName: null, website: null, logoUrl: null,
+          industry: null, location: null, about: null, relationships: [], relationshipsKnown: true,
+          socials: [], socialsKnown: true, aboutKnown: true, updatedAt: null,
+        },
+        source: { linked: false, consultedAt: '2026-10-03T12:00:00Z', selectedExternalContactId: 'external-1', canLink: true },
+      },
+      status: 'available', isFetching: false, error: null, refetch: vi.fn(),
+      linkCompany: { isPending: false, mutateAsync },
+    } as never);
+    render(<EmailContactPanel accountId="acc1" thread={BASE_THREAD} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /vincular empresa ao contato/i }));
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/não foi possível vincular esta empresa/i));
+    expect(mutateAsync).toHaveBeenCalledWith('external-1');
   });
 
   describe('exibição do contato', () => {
