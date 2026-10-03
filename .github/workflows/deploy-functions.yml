@@ -267,14 +267,14 @@ jobs:
                 exit 1
               fi
             done <<'CRM_EMAIL_CONTEXT_SCHEMA'
-            companies|id,nome_crm,razao_social,nome_fantasia,website,ramo_atividade,logo_url,updated_at
-            contacts|id,company_id
-            company_social_media|company_id,plataforma,url,is_active
-            company_addresses|company_id,cidade,estado,pais,is_primary
-            customers|company_id,sobre
-            suppliers|id,company_id
-            carriers|id,company_id
-            CRM_EMAIL_CONTEXT_SCHEMA
+          companies|id,nome_crm,razao_social,nome_fantasia,website,ramo_atividade,logo_url,updated_at
+          contacts|id,company_id
+          company_social_media|company_id,plataforma,url,is_active
+          company_addresses|company_id,cidade,estado,pais,is_primary
+          customers|company_id,sobre
+          suppliers|id,company_id
+          carriers|id,company_id
+          CRM_EMAIL_CONTEXT_SCHEMA
             if [ "$REESCREVER" = "true" ]; then
               supabase secrets set \
                 EXTERNAL_SUPABASE_URL="$EXTERNAL_SUPABASE_URL" \
