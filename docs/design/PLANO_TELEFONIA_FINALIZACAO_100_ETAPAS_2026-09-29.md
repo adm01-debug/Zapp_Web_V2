@@ -141,7 +141,8 @@ Fecha a etapa quando: (1) existir **uma** linha com `provider_call_id` **não nu
 - [x] **T58** — `Keypad.tsx` extraído de `DialPad.tsx` (`{ onKey, disabled, mode:'edit'|'dtmf' }`); `DialPad` compõe `Keypad` mantendo export/props; teclado físico sob `data-keypad-scope`. **Aceite:** `DialPad.test` (39) verde; 12 teclas 46 ±2.
 - [x] **T59** — Display do número (`formatPhoneBR` ao vivo, `Delete`); `normalizeE164BR` inválido → CTA `disabled` + "Número incompleto". **Aceite:** 3 entradas testadas.
 - [x] **T60** — CTA "Ligar via VoIP | WhatsApp": `canDial=false` → `disabled` + `describeReason`; `reconnecting` → "Reconectando…"; `dialing` → "Cancelar"; hint "Confira o número antes de ligar." **Aceite:** 4 estados em teste.
-- [ ] **T61** — Fechamento Fase 5: gates; `07-after.png`. **Aceite:** seção 11.
+- [x] **T61** — Fechamento Fase 5: gates; `07-after.png`. **Aceite:** seção 11.
+  **FEITO.** Gates: `tsc` 0 · suíte **519 arquivos / 6086 testes** · contratos **61 arquivos / 1049 testes** · tipografia aprovada · `build` 0 · typecheck-ratchet **novas=0** · lint-ratchet **novas=0** · `db:guard` **novas=0**. **Prova visual medida** (Playwright, login pela UI): painel com **408 px exatos** em 1672 (aceite 408±8) e **zero overflow horizontal em 1366** (`scrollWidth` = viewport); "Número incompleto" aparece e o CTA trava com número curto; com número completo o CTA **segue travado porque a conta de QA não tem telefone configurado**, com o motivo do domínio na tela ("Telefone não configurado nesta conta") — é o T60, não defeito. `qa/tel/07-after.png` gravado (1672×1050, 4701 cores, 93% de pixels claros).
 
 ## FASE 6 — Chamada ativa e ligação selecionada (T62–T70)
 *1 PR de front.*
