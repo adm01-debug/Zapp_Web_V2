@@ -27,7 +27,7 @@ psql_test() { docker exec -i "$container_name" psql -X -v ON_ERROR_STOP=1 -U pos
 
 migration() {
   local file="$migrations_dir/$1"
-  [ -f "$file" ] || fail "migration ausente: $1"
+  [[ -f "$file" ]] || fail "migration ausente: $1"
   printf '  · %s\n' "$1" >&2
   psql_test < "$file" >/dev/null
 }
@@ -229,7 +229,7 @@ migration "20261002651230_f59_dead_letters_consultavel.sql"
 # o arquivo, o teste cobra o estado ANTERIOR (INSERT/UPDATE ainda concedidos);
 # com o arquivo, cobra anon/authenticated sem o caminho de escrita.
 REVOKE_MIGRATION="$(ls "$migrations_dir"/*_multiplix_revoke_recipient_writes.sql 2>/dev/null | head -1 || true)"
-if [ -n "$REVOKE_MIGRATION" ]; then
+if [[ -n "$REVOKE_MIGRATION" ]]; then
   migration "$(basename "$REVOKE_MIGRATION")"
   RECIPIENT_WRITES_REVOKED=true
 else

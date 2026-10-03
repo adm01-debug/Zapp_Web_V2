@@ -17,7 +17,7 @@ for _ in $(seq 1 90); do
   # shutdown. Require the final (second) readiness marker and a live query.
   ready_markers="$(docker logs "$container_name" 2>&1 \
     | grep -c 'database system is ready to accept connections' || true)"
-  if [ "$ready_markers" -ge 2 ] \
+  if [[ "$ready_markers" -ge 2 ]] \
     && docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' \
       >/dev/null 2>&1; then
     postgres_ready=true
@@ -26,7 +26,7 @@ for _ in $(seq 1 90); do
   sleep 1
 done
 
-if [ "$postgres_ready" != true ]; then
+if [[ "$postgres_ready" != true ]]; then
   echo "PostgreSQL test container did not reach final readiness." >&2
   docker logs --tail 100 "$container_name" >&2 || true
   exit 1
