@@ -258,6 +258,8 @@ psql_test >/dev/null <<'SQL'
 CREATE SCHEMA IF NOT EXISTS extensions;
 CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
 
+-- F60 aplica DEPOIS deste fixture: no banco real a tabela vem de migration antiga,
+-- mas aqui ela e criada como tabela minima — a f60 recebe o ALTER logo abaixo.
 CREATE TABLE IF NOT EXISTS public.whatsapp_connections (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   status text NOT NULL DEFAULT 'connected',
@@ -267,7 +269,9 @@ CREATE TABLE IF NOT EXISTS public.whatsapp_connections (
 INSERT INTO public.whatsapp_connections (id, status, instance_id)
 VALUES ('70000000-0000-0000-0000-000000000001', 'connected', 'inst-f57')
 ON CONFLICT (id) DO NOTHING;
+
 SQL
+
 
 migration "20261001201230_f30_multiplix_enums_modelo_v2.sql"
 migration "20261001211230_f31_multiplix_dispatch_recipient_columns.sql"
@@ -280,6 +284,10 @@ migration "20261002521230_f59_transition_dispatch_enum_cast.sql"
 # F55/F56 (bloco F2): a ESCOLHA do proximo item (list_multiplix_claimable_items, que traz a
 # regra de ordem por bloco do F56 para dentro do banco) e o heartbeat de lease do item.
 migration "20261002621230_f55_claimable_items_por_bloco.sql"
+# A f60 grava na trilha (multiplix_events, da f34) e le os itens (f32a/f32b). A f34 nao
+# estava na cadeia deste harness — sem ela a trilha nao existiria e o teste provaria nada.
+migration "20261001251230_f34_multiplix_events_append_only.sql"
+migration "20261002671230_f60_conexao_capacidades_e_risco.sql"
 
 
 # ── F57: fila POR ITEM (multiplix_delivery_items) ──────────────────────────────
@@ -571,6 +579,72 @@ itens_depois="$(psql_test -Atqc "$service_session SELECT count(*) FROM public.mu
 [[ "$itens_depois" == "$itens_antes" ]]   || fail "F59.5: o opt-out MUDOU a lista do disparo agendado (itens antes=$itens_antes, depois=$itens_depois) — recalcular elegibilidade nao pode re-resolver publico"
 alvo_r_depois="$(psql_test -Atqc "$service_session SELECT recipient_id FROM public.multiplix_delivery_items WHERE id='$o1';" 2>&1 | tail -1 || true)"
 [[ "$alvo_r_depois" == "$alvo_r" ]]   || fail "F59.5: o item trocou de destinatario apos o opt-out (antes=$alvo_r, depois=$alvo_r_depois)"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# F60: capacidades da conexao e conexao em risco (ADR D2.4)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# (F60.1) A conexao declara capacidades, e o default e 'vazio' — nao 'tudo pode'.
+# Default permissivo seria pior que default vazio: quem nao declarou nao sabe, e tratar
+# desconhecido como permitido faz o bloco incompativel chegar na fila.
+cap_col="$(psql_test -Atqc "SELECT data_type || '|' || is_nullable || '|' || coalesce(column_default,'-') FROM information_schema.columns WHERE table_schema='public' AND table_name='whatsapp_connections' AND column_name='capabilities';" 2>&1 | tail -1 || true)"
+[[ "$cap_col" == "jsonb|NO|'{}'::jsonb" ]] \
+  || fail "F60.1: capabilities ausente ou com default errado (veio: $cap_col)"
+
+# (F60.2) Duas falhas permanentes NAO pausam: o limiar e a terceira.
+psql_test >/dev/null <<SQL
+$service_session
+INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, whatsapp_connection_id)
+VALUES ('30000000-0000-0000-0000-00000000f600','risco','t','sending','10000000-0000-0000-0000-000000000001',1,'70000000-0000-0000-0000-000000000001'),
+       ('30000000-0000-0000-0000-00000000f601','risco2','t','scheduled','10000000-0000-0000-0000-000000000001',1,'70000000-0000-0000-0000-000000000001')
+ON CONFLICT (id) DO NOTHING;
+SQL
+falha_permanente() {
+  psql_test -Atqc "$service_session SELECT public.register_multiplix_connection_failure('70000000-0000-0000-0000-000000000001', NULL, 'permanent');" 2>&1 | tail -1
+}
+r1="$(falha_permanente)"
+r2="$(falha_permanente)"
+[[ "$r2" == *'"action": "counted"'* ]] \
+  || fail "F60.2: duas falhas permanentes ja pausaram (esperava 'counted', veio: $r2)"
+pausados_antes="$(psql_test -Atqc "$service_session SELECT count(*) FROM public.multiplix_dispatches WHERE whatsapp_connection_id='70000000-0000-0000-0000-000000000001' AND status='paused';" 2>&1 | tail -1 || true)"
+[[ "$pausados_antes" == "0" ]] \
+  || fail "F60.2: houve dispatch pausado antes da terceira falha ($pausados_antes)"
+
+# (F60.3) A TERCEIRA pausa TODOS os dispatches ativos da conexao, com o motivo certo.
+r3="$(falha_permanente)"
+[[ "$r3" == *'"paused_at_risk"'* ]] \
+  || fail "F60.3: a terceira falha permanente nao marcou a conexao em risco (veio: $r3)"
+pausados="$(psql_test -Atqc "$service_session SELECT count(*) FROM public.multiplix_dispatches WHERE id IN ('30000000-0000-0000-0000-00000000f600','30000000-0000-0000-0000-00000000f601') AND status='paused' AND pause_reason='connection_at_risk';" 2>&1 | tail -1 || true)"
+[[ "$pausados" == "2" ]] \
+  || fail "F60.3: esperava 2 dispatches pausados (sending + scheduled), veio $pausados"
+
+# A trilha registra POR QUE parou: sem isso o operador ve 'pausado' sem causa.
+evento="$(psql_test -Atqc "$service_session SELECT count(*) FROM public.multiplix_events WHERE kind='connection_at_risk';" 2>&1 | tail -1 || true)"
+[[ "$evento" -ge 1 ]] \
+  || fail "F60.3: nenhum evento connection_at_risk registrado na trilha"
+
+# (F60.4) Sinal de banimento NAO espera contar tres: pausa na hora.
+psql_test >/dev/null <<SQL
+$service_session
+UPDATE public.multiplix_dispatches SET status='sending', pause_reason=NULL, paused_at=NULL
+ WHERE id='30000000-0000-0000-0000-00000000f600';
+SQL
+rb="$(psql_test -Atqc "$service_session SELECT public.register_multiplix_connection_failure('70000000-0000-0000-0000-000000000001', 'TemporaryBan', NULL);" 2>&1 | tail -1)"
+[[ "$rb" == *'"paused_banned"'* ]] \
+  || fail "F60.4: TemporaryBan nao pausou imediatamente (veio: $rb)"
+
+# (F60.5) Um sucesso ZERA a contagem: 'consecutivas' nao e 'acumuladas'.
+# Sem isto, uma conexao saudavel com falhas esparsas ao longo do dia acabaria pausada.
+psql_test >/dev/null <<SQL
+$service_session
+UPDATE public.multiplix_dispatches SET status='sending', pause_reason=NULL, paused_at=NULL
+ WHERE whatsapp_connection_id='70000000-0000-0000-0000-000000000001';
+INSERT INTO public.multiplix_events (dispatch_id, kind, payload)
+VALUES ('30000000-0000-0000-0000-00000000f600','item_sent','{}'::jsonb);
+SQL
+depois_sucesso="$(falha_permanente)"
+[[ "$depois_sucesso" == *'"consecutive_failures": 1'* ]] \
+  || fail "F60.5: um sucesso nao zerou a contagem de consecutivas (veio: $depois_sucesso)"
 
 printf 'PASS: fila por item — dois workers nao pegam o mesmo item, lease vencido nao completa e devolve o item a fila (renovando o token), pausa nao entrega pending novo sem interromper o que esta em voo, cancel encerra pendentes sem tocar no que foi ao provedor, e timeout vira outcome_unknown sem reenvio (F57). Escolha do proximo item respeita a ORDEM POR BLOCO do destinatario (bloco k so depois do k-1 sent, tres blocos) e o heartbeat de lease renova so para o dono do claim (F55/F56)\n'
 
