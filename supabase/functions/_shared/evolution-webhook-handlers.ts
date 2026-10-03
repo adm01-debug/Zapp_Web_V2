@@ -13,6 +13,7 @@ import {
   direcaoDaChamada,
   deveNotificarChamada,
 } from "./notification-events.ts";
+import type { EvolutionDbClient } from "./evolution-types.ts";
 
 // Re-export message handlers for backward compatibility
 export {
@@ -21,7 +22,7 @@ export {
 } from "./evolution-webhook-msg-handlers.ts";
 
 // deno-lint-ignore no-explicit-any
-export async function handleConnectionUpdate(supabase: any, instance: string, baseData: Record<string, unknown>) {
+export async function handleConnectionUpdate(supabase: EvolutionDbClient, instance: string, baseData: Record<string, unknown>) {
   const rawState = (baseData.status ?? baseData.state) as string;
   const incoming = rawState === 'open' ? 'connected' :
     rawState === 'close' ? 'disconnected' :
@@ -119,7 +120,7 @@ export async function handleConnectionUpdate(supabase: any, instance: string, ba
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleContactsUpsert(supabase: any, instance: string, data: unknown) {
+export async function handleContactsUpsert(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const contacts = Array.isArray(data) ? data : [data];
   for (const contact of contacts) {
     const contactData = contact as Record<string, unknown>;
@@ -169,7 +170,7 @@ export async function handleContactsUpsert(supabase: any, instance: string, data
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handlePresenceUpdate(supabase: any, instance: string, data: unknown) {
+export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const presenceData = isRecord(data) ? data : {};
   const jid = (presenceData.id as string) || (presenceData.remoteJid as string);
   const presences = presenceData.presences as Record<string, Record<string, unknown>> | undefined;
@@ -201,7 +202,7 @@ export async function handlePresenceUpdate(supabase: any, instance: string, data
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleChatsUpdate(supabase: any, instance: string, data: unknown) {
+export async function handleChatsUpdate(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const chats = Array.isArray(data) ? data : [data];
   for (const chat of chats) {
     const chatData = chat as Record<string, unknown>;
@@ -224,7 +225,7 @@ export async function handleChatsUpdate(supabase: any, instance: string, data: u
   }
 }
 
-export async function handleLabelsEdit(supabase: any, _instance: string, data: unknown) { // eslint-disable-line @typescript-eslint/no-explicit-any
+export async function handleLabelsEdit(supabase: EvolutionDbClient, _instance: string, data: unknown) {
   const labelData = isRecord(data) ? data : {};
   const labelId = labelData.id as string;
   const labelName = labelData.name as string;
@@ -241,7 +242,7 @@ export async function handleLabelsEdit(supabase: any, _instance: string, data: u
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleLabelsAssociation(supabase: any, instance: string, data: unknown) {
+export async function handleLabelsAssociation(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const assocData = isRecord(data) ? data : {};
   const labelId = assocData.labelId as string || (assocData.label as Record<string, unknown>)?.id as string;
   const chatId = assocData.chatId as string;
@@ -266,7 +267,7 @@ export async function handleLabelsAssociation(supabase: any, instance: string, d
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleCallEvent(supabase: any, instance: string, data: unknown) {
+export async function handleCallEvent(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const callData = isRecord(data) ? data : {};
   const from = callData.from as string;
   const isVideo = normalizeEvolutionCallVideo(callData.isVideo);
@@ -291,7 +292,7 @@ export async function handleCallEvent(supabase: any, instance: string, data: unk
         .in('phone', [...new Set(phonesVariants)]).limit(1).maybeSingle();
       if (existingError) throw new Error('Unable to recover concurrent call contact');
       if (existing) {
-        contact = existing;
+        contact = existing as NonNullable<typeof contact>;
         const { error: updateError } = await supabase.from('contacts')
           .update({ whatsapp_connection_id: connection.id, updated_at: new Date().toISOString() })
           .eq('id', existing.id);
@@ -300,7 +301,7 @@ export async function handleCallEvent(supabase: any, instance: string, data: unk
     } else if (insertErr) {
       throw new Error('Unable to persist incoming call contact');
     } else {
-      contact = newContact;
+      contact = newContact as NonNullable<typeof contact>;
     }
   }
   if (!contact) throw new Error('Unable to resolve incoming call contact');
@@ -324,7 +325,7 @@ export async function handleCallEvent(supabase: any, instance: string, data: unk
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleChatsDelete(supabase: any, instance: string, data: unknown) {
+export async function handleChatsDelete(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const chats = Array.isArray(data) ? data : [data];
   for (const chat of chats) {
     const chatData = isRecord(chat) ? chat : {};
@@ -345,7 +346,7 @@ export async function handleChatsDelete(supabase: any, instance: string, data: u
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleApplicationStartup(supabase: any, instance: string) {
+export async function handleApplicationStartup(supabase: EvolutionDbClient, instance: string) {
   console.log(`Application startup event from instance: ${instance}`);
   // Also invalidate cache on startup so stale connection data is refreshed.
   invalidateConnectionCache(instance);
@@ -358,7 +359,7 @@ export async function handleApplicationStartup(supabase: any, instance: string) 
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleContactsSet(supabase: any, instance: string, data: unknown) {
+export async function handleContactsSet(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const contacts = toEventRecords(data, ['contacts']);
   if (contacts.length === 0) return;
 
@@ -385,7 +386,7 @@ export async function handleContactsSet(supabase: any, instance: string, data: u
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleChatsSet(supabase: any, instance: string, data: unknown) {
+export async function handleChatsSet(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const chats = toEventRecords(data, ['chats']);
   const connection = await getConnectionByInstance(supabase, instance);
   if (!connection || chats.length === 0) return;

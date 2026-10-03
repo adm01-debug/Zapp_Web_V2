@@ -1,6 +1,7 @@
 // Shared media persistence helpers for Evolution API functions
 import { isRecord } from "./evolution-helpers.ts";
 import { evoFetch, extractBase64Media } from "./evolution-send.ts";
+import type { EvolutionDbClient } from "./evolution-types.ts";
 
 export function isValidMediaBytes(bytes: Uint8Array, messageType: string): boolean {
   if (bytes.length < 4) return false;
@@ -42,7 +43,7 @@ function detectExtension(respContentType: string, defaultExt: string): string {
 
 // deno-lint-ignore no-explicit-any
 export async function persistMediaToStorage(
-  supabase: any,
+  supabase: EvolutionDbClient,
   cdnUrl: string,
   messageType: string,
   messageId: string,
@@ -93,7 +94,7 @@ export async function persistMediaToStorage(
 // e pelo fallback via API.
 // deno-lint-ignore no-explicit-any
 export async function persistBase64Media(
-  supabase: any,
+  supabase: EvolutionDbClient,
   b64: string,
   mimetypeHint: string,
   messageType: string,
@@ -147,7 +148,7 @@ export async function persistBase64Media(
 
 // deno-lint-ignore no-explicit-any
 export async function persistMediaViaApi(
-  supabase: any,
+  supabase: EvolutionDbClient,
   instance: string,
   data: Record<string, unknown>,
   messageType: string,
