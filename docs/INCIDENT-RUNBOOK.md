@@ -327,6 +327,7 @@ construir painel. Fundamento em `docs/adr/ADR-007-multiplix-ponte-singu-canal-e-
 
 ### Documentação
 - [Backup & Recovery](./BACKUP-RECOVERY-STRATEGY.md)
+- [Runbook: Auth pendurado por saturação do Postgres](./runbooks/auth-pendurado-saturacao-postgres.md)
 - [Arquitetura do Sistema](./ZAPP-ESPECIFICACAO-TECNICA-COMPLETA-V2.md)
 - [API Reference](./API-REFERENCE-COMPLETA.md)
 
