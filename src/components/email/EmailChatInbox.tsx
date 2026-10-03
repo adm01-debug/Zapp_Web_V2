@@ -10,7 +10,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import type { EmailAttachment, EmailMessage } from '@/hooks/integrations/useGmail';
+
+function matchesWideDetailsLayout(): boolean {
+  return typeof window.matchMedia !== 'function' || window.matchMedia('(min-width: 1280px)').matches;
+}
 
 export function EmailChatInbox() {
   const [accountId, setAccountId] = useState<string>();
@@ -18,11 +24,14 @@ export function EmailChatInbox() {
   const {
     accounts, accountsLoading, accountsError, refetchAccounts, activeAccount,
     threads, threadsLoading, threadsError, connectGmail, labels, syncInbox,
-    syncLabels, unreadCount, subscribeToThreads, requestedThread,
+    syncLabels, unreadCount, subscribeToThreads, requestedThread, downloadAttachment,
   } = useGmail(accountId, selectedThreadId);
   const [showComposer, setShowComposer] = useState(false);
   const [composerTo, setComposerTo] = useState('');
-  const [showDetails, setShowDetails] = useState(true);
+  const [showDetails, setShowDetails] = useState(matchesWideDetailsLayout);
+  const [isWideDetailsLayout, setIsWideDetailsLayout] = useState(matchesWideDetailsLayout);
+  const [threadContext, setThreadContext] = useState<{ messages: EmailMessage[]; attachments: Array<EmailAttachment & { gmail_message_id?: string }> }>({ messages: [], attachments: [] });
+  const detailsTriggerRef = useRef<HTMLElement | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   const helpButtonRef = useRef<HTMLButtonElement>(null);
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
@@ -32,6 +41,15 @@ export function EmailChatInbox() {
   );
 
   useEffect(() => subscribeToThreads(), [subscribeToThreads]);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const media = window.matchMedia('(min-width: 1280px)');
+    const update = () => setIsWideDetailsLayout(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
 
   useEffect(() => {
     const handlePopState = () => setSelectedThreadId(new URLSearchParams(window.location.search).get('emailThread'));
@@ -45,6 +63,15 @@ export function EmailChatInbox() {
     else url.searchParams.delete('emailThread');
     window.history[replace ? 'replaceState' : 'pushState']({}, '', url);
     setSelectedThreadId(threadId);
+    setThreadContext({ messages: [], attachments: [] });
+    if (threadId) setShowDetails(matchesWideDetailsLayout());
+  }, []);
+
+  const toggleDetails = useCallback(() => {
+    setShowDetails(open => {
+      if (!open && document.activeElement instanceof HTMLElement) detailsTriggerRef.current = document.activeElement;
+      return !open;
+    });
   }, []);
 
   useEffect(() => {
@@ -111,12 +138,20 @@ export function EmailChatInbox() {
           <EmailThreadList threads={threads} threadsLoading={threadsLoading} threadsError={threadsError} labels={labels} unreadCount={unreadCount} globalSearchQuery={globalSearchQuery} onClearGlobalSearch={() => setGlobalSearchQuery('')} selectedThreadId={selectedThread?.id || null} activeAccountEmail={activeAccount.email_address} onSelectThread={thread => navigateToThread(thread.id)} onNewEmail={() => { setComposerTo(''); setShowComposer(true); }} onSync={() => syncInbox.mutate({})} isSyncing={syncInbox.isPending} />
         </aside>
         <section aria-label="Conteúdo da conversa" className={cn('min-w-0 flex-1 flex-col bg-[radial-gradient(circle_at_45%_20%,#082641_0%,#03111f_50%,#020c16_100%)]', !selectedThread ? 'hidden md:flex' : 'flex')}>
-          {selectedThread ? <EmailChatThread key={`${activeAccount.id}:${selectedThread.id}`} accountId={activeAccount.id} thread={selectedThread} onBack={() => navigateToThread(null, true)} onToggleDetails={() => setShowDetails(value => !value)} showDetailsButton /> : (
+          {selectedThread ? <EmailChatThread key={`${activeAccount.id}:${selectedThread.id}`} accountId={activeAccount.id} thread={selectedThread} labels={labels} onContextDataChange={setThreadContext} onBack={() => navigateToThread(null, true)} onToggleDetails={toggleDetails} showDetailsButton /> : (
             <div className="flex flex-1 flex-col items-center justify-center text-slate-500"><div className="mb-4 rounded-2xl border border-cyan-300/10 bg-[#06192a] p-5"><Mail className="h-12 w-12 opacity-40" /></div><p className="text-sm font-medium text-slate-300">Selecione uma conversa para começar</p><p className="mt-1 text-xs">A leitura e a resposta acontecerão no painel central.</p></div>
           )}
         </section>
-        {selectedThread && showDetails && <aside className="hidden shrink-0 border-l border-cyan-300/10 xl:block"><EmailContactPanel thread={selectedThread} labels={labels} onClose={() => setShowDetails(false)} onCompose={email => { setComposerTo(email); setShowComposer(true); }} /></aside>}
+        {selectedThread && showDetails && isWideDetailsLayout && <aside className="shrink-0 border-l border-cyan-300/10"><EmailContactPanel thread={selectedThread} messages={threadContext.messages} attachments={threadContext.attachments} relatedThreads={threads.filter(item => item.id !== selectedThread.id && item.contact_id && item.contact_id === selectedThread.contact_id).slice(0, 5)} labels={labels} onClose={() => setShowDetails(false)} onCompose={email => { setComposerTo(email); setShowComposer(true); }} onSelectRelated={thread => navigateToThread(thread.id)} onDownloadAttachment={attachment => attachment.gmail_message_id && downloadAttachment.mutate({ ...attachment, gmail_message_id: attachment.gmail_message_id })} /></aside>}
       </div>
+      {selectedThread && !isWideDetailsLayout && (
+        <Sheet open={showDetails} onOpenChange={setShowDetails}>
+          <SheetContent side="right" onCloseAutoFocus={event => { event.preventDefault(); detailsTriggerRef.current?.focus(); }} className="w-[min(92vw,360px)] border-cyan-300/15 bg-[#041421] p-0 text-slate-100 sm:max-w-[360px] [&>button]:hidden">
+            <SheetTitle className="sr-only">Detalhes da conversa</SheetTitle>
+            <EmailContactPanel thread={selectedThread} messages={threadContext.messages} attachments={threadContext.attachments} relatedThreads={threads.filter(item => item.id !== selectedThread.id && item.contact_id && item.contact_id === selectedThread.contact_id).slice(0, 5)} labels={labels} onClose={() => setShowDetails(false)} onCompose={email => { setComposerTo(email); setShowComposer(true); }} onSelectRelated={thread => navigateToThread(thread.id)} onDownloadAttachment={attachment => attachment.gmail_message_id && downloadAttachment.mutate({ ...attachment, gmail_message_id: attachment.gmail_message_id })} />
+          </SheetContent>
+        </Sheet>
+      )}
       <AnimatePresence>{showComposer && <EmailComposer key={activeAccount.id} accountId={activeAccount.id} mode="new" defaultTo={composerTo} onClose={() => setShowComposer(false)} onSent={() => setShowComposer(false)} />}</AnimatePresence>
       <Dialog open={showHelp} onOpenChange={setShowHelp}>
         <DialogContent onCloseAutoFocus={event => { event.preventDefault(); helpButtonRef.current?.focus(); }} className="border-cyan-300/15 bg-[#061827] text-slate-100">

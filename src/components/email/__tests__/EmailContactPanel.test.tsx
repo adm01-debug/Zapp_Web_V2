@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import type { ReactNode } from 'react';
-import type { EmailThread } from '@/hooks/integrations/useGmail';
+import type { EmailMessage, EmailThread } from '@/hooks/integrations/useGmail';
 
 vi.mock('@/components/ui/accordion', () => ({
   Accordion: ({ children }: { children: ReactNode }) => <div data-testid="accordion">{children}</div>,
@@ -23,6 +23,16 @@ vi.mock('@/components/ui/avatar', () => ({
 
 vi.mock('@/components/ui/badge', () => ({
   Badge: ({ children }: { children: ReactNode }) => <span data-testid="badge">{children}</span>,
+}));
+
+vi.mock('@/hooks/crm/useContactNotes', () => ({
+  useContactNotes: () => ({
+    notes: [],
+    addNote: vi.fn(),
+    isAdding: false,
+    isLoading: false,
+    error: null,
+  }),
 }));
 
 import { EmailContactPanel } from '../EmailContactPanel';
@@ -196,5 +206,29 @@ describe('EmailContactPanel', () => {
       fireEvent.click(closeBtn);
       expect(onClose).toHaveBeenCalled();
     });
+  });
+
+  it('deriva participantes reais das mensagens e permite baixar anexos autenticados', () => {
+    const onDownloadAttachment = vi.fn();
+    const messages = [{
+      id: 'm1', thread_id: 'thread1', gmail_message_id: 'gmail-m1', gmail_account_id: 'acc1',
+      from_address: 'alice@example.com', from_name: 'Alice', to_addresses: ['admin@example.com'], cc_addresses: ['financeiro@example.com'], bcc_addresses: [],
+      reply_to_address: null, subject: 'Hello World', body_text: '', body_html: '', snippet: '', label_ids: [], is_read: true, is_starred: false,
+      has_attachments: true, in_reply_to: null, references_header: null, internal_date: '2026-09-06T10:00:00Z', direction: 'inbound', created_at: '2026-09-06T10:00:00Z',
+    }] as EmailMessage[];
+    const attachment = { id: 'a1', email_message_id: 'm1', gmail_attachment_id: 'ga1', gmail_message_id: 'gmail-m1', filename: 'proposta.pdf', mime_type: 'application/pdf', size_bytes: 1024 };
+    render(<EmailContactPanel thread={BASE_THREAD} messages={messages} attachments={[attachment]} onClose={vi.fn()} onDownloadAttachment={onDownloadAttachment} />);
+    expect(screen.getByText('admin@example.com')).toBeDefined();
+    expect(screen.getByText('financeiro@example.com')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Baixar proposta.pdf' }));
+    expect(onDownloadAttachment).toHaveBeenCalledWith(attachment);
+  });
+
+  it('exibe somente dados CRM que realmente existem', () => {
+    render(<EmailContactPanel thread={{ ...BASE_THREAD, contact: { ...BASE_THREAD.contact!, company: 'ZBZ Brindes', job_title: 'Diretor', phone: '+55 11 99999-0000' } }} onClose={vi.fn()} />);
+    expect(screen.getByText('ZBZ Brindes')).toBeDefined();
+    expect(screen.getByText('Diretor')).toBeDefined();
+    expect(screen.getByText('+55 11 99999-0000')).toBeDefined();
+    expect(screen.queryByText('Sim')).toBeNull();
   });
 });

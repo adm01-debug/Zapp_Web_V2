@@ -6,6 +6,7 @@ import { createGmailOAuthState, storeGmailOAuthReturnContext } from '@/lib/gmail
 import { callGmailFunction } from '../gmail/gmailApi';
 import { RESERVED_HASHES } from '@/hooks/system/useNavigationHistory';
 import { normalizeEmailBase64 } from '@/lib/emailAttachments';
+import { chunkEmailIds, collectEmailPages } from '@/lib/emailPagination';
 
 // Re-export types
 export type { GmailAccount, EmailThread, EmailMessage, EmailAttachment, EmailLabel } from '../gmail/gmailTypes';
@@ -38,7 +39,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
         const { data, error } = await supabase.rpc('get_own_gmail_accounts');
         if (error) throw error;
         return (data || []).map((a: Record<string, unknown>) => ({
-          id: a.id, email_address: a.email_address, is_active: a.is_active,
+          id: a.id, user_id: a.user_id, email_address: a.email_address, is_active: a.is_active,
           sync_status: a.sync_status || 'pending', last_sync_at: a.last_sync_at,
           last_error: a.last_error ?? null, created_at: a.created_at,
         })) as GmailAccount[];
@@ -74,18 +75,29 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
     queryKey: ['gmail-threads', activeAccount?.id],
     queryFn: async () => {
       if (!activeAccount) return [];
-      const { data, error } = await supabase.from('email_threads').select('*, contact:contacts(id, name, email, avatar_url)').eq('gmail_account_id', activeAccount.id).order('last_message_at', { ascending: false }).order('id', { ascending: false }).range(0, 999);
-      if (error) throw error;
-      const rows = (data || []) as EmailThread[];
+      const rows = await collectEmailPages<EmailThread>(async (from, to) => {
+        const { data, error } = await supabase
+          .from('email_threads')
+          .select('*, contact:contacts(id, name, email, avatar_url, phone, company, job_title, tags)')
+          .eq('gmail_account_id', activeAccount.id)
+          .order('last_message_at', { ascending: false })
+          .order('id', { ascending: false })
+          .range(from, to);
+        if (error) throw error;
+        return (data || []) as EmailThread[];
+      });
       if (rows.length === 0) return rows;
-      const { data: attachmentRows, error: attachmentError } = await supabase
-        .from('email_messages')
-        .select('thread_id')
-        .eq('gmail_account_id', activeAccount.id)
-        .eq('has_attachments', true)
-        .in('thread_id', rows.map(row => row.id));
-      if (attachmentError) throw attachmentError;
-      const withAttachments = new Set((attachmentRows || []).map(row => row.thread_id));
+      const attachmentRows = await Promise.all(chunkEmailIds(rows.map(row => row.id)).map(async threadIds => {
+        const { data, error } = await supabase
+          .from('email_messages')
+          .select('thread_id')
+          .eq('gmail_account_id', activeAccount.id)
+          .eq('has_attachments', true)
+          .in('thread_id', threadIds);
+        if (error) throw error;
+        return data || [];
+      }));
+      const withAttachments = new Set(attachmentRows.flat().map(row => row.thread_id));
       return rows.map(row => ({ ...row, has_attachments: withAttachments.has(row.id) }));
     },
     enabled: !!activeAccount,
@@ -99,7 +111,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
       if (cached) return cached;
       const { data, error } = await supabase
         .from('email_threads')
-        .select('*, contact:contacts(id, name, email, avatar_url)')
+        .select('*, contact:contacts(id, name, email, avatar_url, phone, company, job_title, tags)')
         .eq('gmail_account_id', activeAccount.id)
         .eq('id', requestedThreadId)
         .maybeSingle();

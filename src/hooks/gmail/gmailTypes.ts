@@ -1,5 +1,6 @@
 export interface GmailAccount {
   id: string;
+  user_id?: string;
   email_address: string;
   is_active: boolean;
   sync_status: 'pending' | 'syncing' | 'synced' | 'error';
@@ -30,7 +31,16 @@ export interface EmailThread {
   created_at: string;
   updated_at: string;
   has_attachments?: boolean;
-  contact?: { id: string; name: string; email: string; avatar_url: string | null };
+  contact?: {
+    id: string;
+    name: string;
+    email: string;
+    avatar_url: string | null;
+    phone?: string | null;
+    company?: string | null;
+    job_title?: string | null;
+    tags?: string[] | null;
+  };
 }
 
 export interface EmailMessage {

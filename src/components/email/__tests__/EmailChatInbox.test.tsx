@@ -25,13 +25,14 @@ vi.mock('@/hooks/integrations/useGmail', () => ({
     refetchAccounts: vi.fn(), connectGmail: { mutate: vi.fn(), isPending: false }, labels: [],
     threadsLoading: false, threadsError: null, syncInbox: { mutate: vi.fn(), isPending: false },
     syncLabels: { mutate: vi.fn(), isPending: false }, unreadCount: state.threads.filter(thread => thread.is_unread).length,
+    downloadAttachment: { mutate: vi.fn(), isPending: false },
     subscribeToThreads: () => vi.fn(),
   }),
 }));
 vi.mock('../EmailThreadList', () => ({
   EmailThreadList: ({ threads, onSelectThread, onNewEmail }: { threads: EmailThread[]; onSelectThread: (thread: EmailThread) => void; onNewEmail: () => void }) => <div data-testid="thread-list"><button onClick={() => threads[0] && onSelectThread(threads[0])}>Selecionar primeira</button><button onClick={onNewEmail}>Compor pela lista</button></div>,
 }));
-vi.mock('../EmailChatThread', () => ({ EmailChatThread: ({ accountId }: { accountId?: string }) => <div data-testid="thread-account">{accountId}</div> }));
+vi.mock('../EmailChatThread', () => ({ EmailChatThread: ({ accountId, onToggleDetails }: { accountId?: string; onToggleDetails?: () => void }) => <div data-testid="thread-account">{accountId}<button type="button" onClick={onToggleDetails}>Detalhes</button></div> }));
 vi.mock('../EmailContactPanel', () => ({ EmailContactPanel: () => <div data-testid="contact-panel" /> }));
 vi.mock('@/components/gmail/EmailComposer', () => ({ EmailComposer: ({ accountId }: { accountId?: string }) => <div data-testid="composer-account">{accountId}</div> }));
 
@@ -90,5 +91,14 @@ describe('EmailChatInbox', () => {
     render(<EmailChatInbox />);
     fireEvent.click(screen.getByRole('button', { name: 'Ajuda' }));
     expect(screen.getByRole('dialog')).toHaveTextContent('Gmail não fornece esse sinal');
+  });
+
+  it('abre o painel contextual como drawer em largura intermediária', () => {
+    state.threads = [THREAD];
+    render(<EmailChatInbox />);
+    fireEvent.click(screen.getByRole('button', { name: 'Selecionar primeira' }));
+    expect(screen.queryByTestId('contact-panel')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Detalhes' }));
+    expect(screen.getByRole('dialog')).toContainElement(screen.getByTestId('contact-panel'));
   });
 });
