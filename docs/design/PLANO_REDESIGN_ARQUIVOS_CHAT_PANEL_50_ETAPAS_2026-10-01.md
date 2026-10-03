@@ -59,7 +59,7 @@ Tudo dimensionado pelo painel central real (não pela janela) e alimentado só p
 
 ---
 
-## 3. Capacidade real de colunas (medida pelo código, a confirmar na etapa 02)
+## 3. Capacidade real de colunas (medida pelo código e confirmada ao vivo na etapa 02)
 
 Largura útil do painel central em 1920 px = 1920 − sidebar − conversas (350) − detalhes do contato (323, se aberto) − padding (32). Capacidade = ⌊(largura + 12) ÷ (168 + 12)⌋, com cartão mínimo 168 px e espaçamento 12 px (valores de projeto; validar na etapa 17).
 
@@ -69,6 +69,19 @@ Largura útil do painel central em 1920 px = 1920 − sidebar − conversas (350
 | Sidebar colapsada + contato aberto | 1151 px | 6 | 875 px → 4 |
 | Sidebar expandida + contato fechado | 1282 px | capacidade 7 → efetivo 6 | 1006 px → 5 |
 | Sidebar colapsada + contato fechado | 1474 px | 8 | 1198 px → 6 |
+
+**Medição ao vivo (etapa 02, 03/10/2026 — Playwright 1920×1080, dev server local, `getBoundingClientRect().width` do contêiner da grade, duas execuções independentes com o mesmo resultado):**
+
+| Laterais | Previsto pela fórmula | **Medido** | Diferença |
+|---|---|---|---|
+| Sidebar expandida + contato aberto | 959 px | **959 px** | 0 |
+| Sidebar expandida + contato fechado | 1282 px | **1282 px** | 0 |
+| Sidebar colapsada + contato fechado | 1474 px | **1474 px** | 0 |
+| Sidebar colapsada + contato aberto | 1151 px | **não medido** — com a sidebar colapsada o painel do contato não abriu pelo caminho testado (`chat-header-more-actions` → "Detalhes do contato"); o valor é da fórmula, não de observação |
+
+Diferença máxima observada: **0 px** → a regra dos ">24 px" da etapa 02 **não dispara** e os limiares da etapa 07 (limiar de capacidade por contêiner, `MIN_CARD = 168`, `GAP = 12`) **seguem como estão**. Confirmado também na medição: com 959 px a grade real estava em **4 colunas** (a capacidade permite 5, mas a preferência padrão 4 manda — o contêiner não decide sozinho), exatamente o comportamento que a etapa 07 especifica.
+
+Evidência completa, harness e a lacuna do combo 3: `~/auditorias/fase-j/arquivos-etapas-01-02-medicao-larguras.md`.
 
 Leitura: as cinco opções do Promo Gifts são legítimas no chat, mas **8 colunas só existe com as duas laterais recolhidas**. Por isso o seletor mostra as 5 opções sempre e desabilita (com motivo) as que não cabem agora, em vez de escondê-las — o operador entende o que precisa recolher para ganhar densidade.
 
