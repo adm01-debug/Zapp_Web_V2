@@ -18,9 +18,6 @@ on:
 permissions:
   contents: read
   pull-requests: read
-  # E79: listar os runs do proprio repositório e manter a issue semanal `[kpi-actions]`.
-  actions: read
-  issues: write
 
 concurrency:
   group: branch-hygiene-audit
@@ -29,6 +26,13 @@ concurrency:
 jobs:
   audit:
     name: Relatorio de branches
+    # E79: as permissoes de escrita ficam no JOB, nunca no nivel do workflow. O zizmor
+    # (regra excessive-permissions, severidade alta) reprova `write` no topo porque o
+    # escopo vale para todos os jobs; no job, o escopo e' exatamente o que ele usa.
+    permissions:
+      contents: read # o passo de relatorio faz git fetch/cherry
+      actions: read # listar os runs do proprio repositorio (KPI)
+      issues: write # criar/atualizar a issue semanal [kpi-actions]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:

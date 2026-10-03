@@ -70,6 +70,13 @@ test('E79: a tabela traz as colunas pedidas e o total', () => {
 test('E79: o workflow semanal chama o KPI com as permissoes que ele precisa', () => {
   const y = readFileSync(new URL('../../.github/workflows/branch-hygiene-audit.yml', import.meta.url), 'utf8');
   assert.match(y, /node scripts\/ci\/actions-kpi\.mjs/, 'o workflow tem de rodar o KPI');
-  assert.match(y, /actions:\s*read/, 'listar runs exige actions: read');
-  assert.match(y, /issues:\s*write/, 'publicar a issue semanal exige issues: write');
+  // O zizmor reprova `write` no nivel do WORKFLOW (excessive-permissions, severidade
+  // alta): o escopo vale para todos os jobs. As permissoes extras ficam no job, onde
+  // o escopo e exatamente o que ele usa -- foi o que o CI pegou no primeiro PR.
+  const topo = y.slice(0, y.indexOf('jobs:'));
+  assert.doesNotMatch(topo, /issues:\s*write/, 'write no nivel do workflow o zizmor reprova');
+  assert.doesNotMatch(topo, /actions:\s*read/, 'nem actions: read deve ficar no topo');
+  const job = y.slice(y.indexOf('jobs:'));
+  assert.match(job, /actions:\s*read/, 'listar runs exige actions: read (no job)');
+  assert.match(job, /issues:\s*write/, 'publicar a issue semanal exige issues: write (no job)');
 });
