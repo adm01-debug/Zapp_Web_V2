@@ -93,10 +93,17 @@ export function useAuthForm() {
     // O browser pode autopreencher os campos sem disparar onChange — acontece
     // sobretudo depois que a senha e limpada num login recusado. Lemos o DOM do
     // proprio form para nao validar contra um estado desatualizado.
+    //
+    // Mas o DOM so pode PREENCHER o que o estado nao tem, nunca SOBRESCREVER o
+    // que o usuario digitou: com o e-mail vindo do DOM, uma sobra de autofill
+    // (a conta anterior, num aparelho compartilhado) fazia o app autenticar por
+    // um e-mail que o proprio estado nunca viu. Medido em producao: estado com A
+    // e DOM com B -> a requisicao saiu com B. Por isso o e-mail prefere o estado
+    // quando ele existe; a senha segue o caminho antigo, onde o DOM e essencial.
     const fd = new FormData(e.currentTarget as HTMLFormElement);
     const credentials = {
       ...formData,
-      email: ((fd.get("email") as string | null) ?? formData.email).trim(),
+      email: formData.email.trim() || ((fd.get("email") as string | null) ?? "").trim(),
       password: (fd.get("password") as string | null) || formData.password,
     };
     if (credentials.email !== formData.email || credentials.password !== formData.password) {
