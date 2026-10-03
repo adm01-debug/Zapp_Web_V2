@@ -1,5 +1,6 @@
 import { assertEquals, assertMatch } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { avatarObjectPath, persistProfilePicture } from "../evolution-helpers.ts";
+import type { EvolutionDbClient } from "../evolution-types.ts";
 
 Deno.test("avatarObjectPath e fixo por telefone e ignora formatacao", () => {
   assertEquals(avatarObjectPath("5511999998888"), "avatars/5511999998888.jpg");
@@ -38,7 +39,7 @@ Deno.test("persistProfilePicture sobrescreve o arquivo do telefone e nunca apaga
   const fetchOriginal = globalThis.fetch;
   globalThis.fetch = () => Promise.resolve(new Response(new Uint8Array(1024), { status: 200 }));
   try {
-    const url = await persistProfilePicture(supabase, "5511999998888", "https://pps.whatsapp.net/foto.jpg");
+    const url = await persistProfilePicture(supabase as unknown as EvolutionDbClient, "5511999998888", "https://pps.whatsapp.net/foto.jpg");
 
     assertEquals(caminho, "avatars/5511999998888.jpg");
     assertEquals(opcoes.upsert, true);

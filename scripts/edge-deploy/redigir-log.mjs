@@ -6,7 +6,8 @@
 //
 // O valor NUNCA entra no codigo nem na saida: vem do ambiente pelo nome da variavel
 // (--segredo-env=SUPABASE_ACCESS_TOKEN). O que este modulo imprime e' so' a contagem.
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, realpathSync } from 'node:fs';
+import { resolve, relative, isAbsolute } from 'node:path';
 
 const CHAVE_ALVO = /access[_%-]?token/gi;
 
@@ -25,18 +26,59 @@ export function redigir(texto, segredos = []) {
   return saida;
 }
 
+/**
+ * S8707: confina o caminho de escrita ao diretorio-base autorizado.
+ *
+ * O caminho chega por argumento de CLI e o modulo ESCREVE nele. Sem confinamento, `..`
+ * ou um caminho absoluto fora da base fazem o script sobrescrever arquivo arbitrario.
+ * O uso legitimo e' um so' (deploy-functions.yml:491): caminho absoluto sob $RUNNER_TEMP.
+ * A base vem de REDIGIR_LOG_BASE, com RUNNER_TEMP como padrao no CI.
+ */
+export function confinar(arquivo, base) {
+  const raiz = resolve(base);
+  const alvo = resolve(arquivo);
+  const rel = relative(raiz, alvo);
+  if (rel === '' || rel.startsWith('..') || isAbsolute(rel)) {
+    throw new Error(`caminho fora da base permitida (${raiz}): ${arquivo}`);
+  }
+  // symlink: o alvo REAL tambem precisa estar dentro da base
+  const raizReal = existsSync(raiz) ? realpathSync(raiz) : raiz;
+  const alvoReal = existsSync(alvo) ? realpathSync(alvo) : alvo;
+  const relReal = relative(raizReal, alvoReal);
+  if (relReal === '' || relReal.startsWith('..') || isAbsolute(relReal)) {
+    throw new Error(`caminho resolve para fora da base via link (${raizReal}): ${arquivo}`);
+  }
+  return alvo;
+}
+
+/** Base autorizada: explicita no CI, com RUNNER_TEMP como padrao do runner. */
+function baseAutorizada() {
+  return process.env.REDIGIR_LOG_BASE || process.env.RUNNER_TEMP || process.cwd();
+}
+
 function principal(argv) {
   const arquivo = argv[2];
   const nomes = argv.slice(3).filter((a) => a.startsWith('--segredo-env=')).map((a) => a.split('=')[1]);
-  if (!arquivo || !existsSync(arquivo)) {
-    console.error(`::error::log de deploy nao encontrado: ${arquivo ?? '(vazio)'}`);
+  if (!arquivo) {
+    console.error('::error::log de deploy nao informado');
     process.exit(2);
   }
-  const original = readFileSync(arquivo, 'utf8');
+  let caminho;
+  try {
+    caminho = confinar(arquivo, baseAutorizada());
+  } catch (erro) {
+    console.error(`::error::${erro.message}`);
+    process.exit(2);
+  }
+  if (!existsSync(caminho)) {
+    console.error(`::error::log de deploy nao encontrado: ${caminho}`);
+    process.exit(2);
+  }
+  const original = readFileSync(caminho, 'utf8');
   const segredos = nomes.map((n) => process.env[n]).filter(Boolean);
   const limpo = redigir(original, segredos);
   const removidos = (original.match(CHAVE_ALVO) || []).length;
-  writeFileSync(arquivo, limpo);
+  writeFileSync(caminho, limpo);
   console.log(`log redigido: ${removidos} ocorrencia(s) de chave de token, ${segredos.length} valor(es) literal(is) removido(s)`);
 }
 

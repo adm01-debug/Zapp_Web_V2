@@ -21,6 +21,7 @@ import {
   handleIncomingMessage, handleOutgoingWhatsAppMessage,
 } from "../_shared/evolution-webhook-messages.ts";
 import { WebhookSecurityService, timingSafeEqual } from "../_shared/hmac-validation.ts";
+import type { EvolutionDbClient } from "../_shared/evolution-types.ts";
 
 // ---------------------------------------------------------------------------
 // HMAC validation (D2 — security hardening)
@@ -155,7 +156,10 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    // Cast unico (ver evolution-types.ts): comparar o client real com EvolutionDbClient
+    // a cada chamada de handler estoura o TS2589 do Deno. Uma vez so, aqui, sai barato.
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const db = supabase as unknown as EvolutionDbClient;
 
     let payload: WebhookPayload = rawBody as WebhookPayload;
     if (isGoPayload(payload)) payload = translateGoPayload(payload) as unknown as WebhookPayload;
@@ -172,7 +176,7 @@ serve(async (req) => {
 
     console.log('Evolution webhook received:', payload.event, '->', event, instance);
 
-    if (event === 'connection.update') await handleConnectionUpdate(supabase, instance, baseData);
+    if (event === 'connection.update') await handleConnectionUpdate(db, instance, baseData);
 
     if (event === 'qrcode.updated') {
       const qrCode = (baseData.qrcode as Record<string, string>)?.base64;
@@ -234,26 +238,26 @@ serve(async (req) => {
         const msg = (entry.message || baseData.message) as Record<string, unknown> | undefined;
         if (msg?.reactionMessage) {
           console.log(`[MSG_UPSERT] Processing reaction for ${externalId}`);
-          await handleReactionEvent(supabase, msg.reactionMessage as Record<string, unknown>, !!key.fromMe);
+          await handleReactionEvent(db, msg.reactionMessage as Record<string, unknown>, !!key.fromMe);
           continue;
         }
 
         if (!key.fromMe) {
           console.log(`[MSG_UPSERT] -> handleIncomingMessage for ${externalId}`);
-          await handleIncomingMessage(supabase, instance, { ...baseData, ...entry }, key, supabaseUrl, supabaseServiceKey);
+          await handleIncomingMessage(db, instance, { ...baseData, ...entry }, key, supabaseUrl, supabaseServiceKey);
         } else {
           console.log(`[MSG_UPSERT] -> handleOutgoingWhatsAppMessage for ${externalId}`);
-          await handleOutgoingWhatsAppMessage(supabase, instance, { ...baseData, ...entry }, key);
+          await handleOutgoingWhatsAppMessage(db, instance, { ...baseData, ...entry }, key);
         }
       }
     }
 
-    if (event === 'send.message') await handleSendMessage(supabase, instance, data, baseData);
-    if (event === 'messages.update') await handleMessagesUpdate(supabase, instance, data, baseData);
-    if (event === 'messages.delete') await handleMessagesDelete(supabase, instance, data, baseData);
-    if (event === 'contacts.upsert' || event === 'contacts.update') await handleContactsUpsert(supabase, instance, data);
-    if (event === 'presence.update') await handlePresenceUpdate(supabase, instance, data);
-    if (event === 'chats.upsert' || event === 'chats.update') await handleChatsUpdate(supabase, instance, data);
+    if (event === 'send.message') await handleSendMessage(db, instance, data, baseData);
+    if (event === 'messages.update') await handleMessagesUpdate(db, instance, data, baseData);
+    if (event === 'messages.delete') await handleMessagesDelete(db, instance, data, baseData);
+    if (event === 'contacts.upsert' || event === 'contacts.update') await handleContactsUpsert(db, instance, data);
+    if (event === 'presence.update') await handlePresenceUpdate(db, instance, data);
+    if (event === 'chats.upsert' || event === 'chats.update') await handleChatsUpdate(db, instance, data);
 
     if (event === 'groups.upsert' || event === 'group.update') {
       const groupData = isRecord(data) ? data : {};
@@ -267,15 +271,15 @@ serve(async (req) => {
       console.warn(`Group ${participantData.id ? String(participantData.id).substring(0, 6) + '...' : ''} participants ${participantData.action}: ${(participantData.participants as string[])?.length ?? 0} members`);
     }
 
-    if (event === 'labels.edit') await handleLabelsEdit(supabase, instance, data);
-    if (event === 'labels.association') await handleLabelsAssociation(supabase, instance, data);
-    if (event === 'call') await handleCallEvent(supabase, instance, data);
-    if (event === 'chats.delete') await handleChatsDelete(supabase, instance, data);
-    if (event === 'application.startup') await handleApplicationStartup(supabase, instance);
-    if (event === 'messages.set') await handleMessagesSet(supabase, instance, data);
-    if (event === 'contacts.set') await handleContactsSet(supabase, instance, data);
-    if (event === 'chats.set') await handleChatsSet(supabase, instance, data);
-    if (event === 'messages.edited' || event === 'messages.edit') await handleMessagesEdited(supabase, data, baseData);
+    if (event === 'labels.edit') await handleLabelsEdit(db, instance, data);
+    if (event === 'labels.association') await handleLabelsAssociation(db, instance, data);
+    if (event === 'call') await handleCallEvent(db, instance, data);
+    if (event === 'chats.delete') await handleChatsDelete(db, instance, data);
+    if (event === 'application.startup') await handleApplicationStartup(db, instance);
+    if (event === 'messages.set') await handleMessagesSet(db, instance, data);
+    if (event === 'contacts.set') await handleContactsSet(db, instance, data);
+    if (event === 'chats.set') await handleChatsSet(db, instance, data);
+    if (event === 'messages.edited' || event === 'messages.edit') await handleMessagesEdited(db, data, baseData);
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },

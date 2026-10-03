@@ -17,6 +17,7 @@
  */
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { handleMessagesUpdate } from "../evolution-webhook-msg-handlers.ts";
+import type { EvolutionDbClient } from "../evolution-types.ts";
 
 type Chamada = { nome: string; args: Record<string, unknown> };
 
@@ -44,7 +45,7 @@ function fakeSupabase(chamadas: Chamada[], rpcRetorno: Record<string, unknown> =
       chamadas.push({ nome, args });
       return { data: rpcRetorno[nome] ?? false, error: null };
     },
-  };
+  } as unknown as EvolutionDbClient;
 }
 
 function chamadasDe(chamadas: Chamada[], nome: string): Chamada[] {

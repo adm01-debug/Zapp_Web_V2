@@ -52,6 +52,21 @@ declare p text[]; begin p := string_to_array(name,'.'); return p[array_length(p,
 create schema if not exists supabase_migrations;
 create table if not exists supabase_migrations.schema_migrations(
   version text primary key, statements text[], name text);
+
+-- Colunas de auth.users que as migrations referenciam (a imagem traz a tabela, mas nao todas
+-- as colunas que o Supabase adiciona com o passar das versoes).
+alter table auth.users add column if not exists banned_until timestamptz;
+alter table auth.users add column if not exists banned boolean not null default false;
+alter table auth.users add column if not exists phone text;
+alter table auth.users add column if not exists email_confirmed_at timestamptz;
+alter table auth.users add column if not exists last_sign_in_at timestamptz;
+alter table auth.users add column if not exists raw_user_meta_data jsonb not null default '{}'::jsonb;
+
+-- A imagem ja traz a publicacao supabase_realtime populada e o pg_cron funcionando. NAO mexer:
+-- tentar recriar (`drop publication` + `create`) ou instalar (`create schema cron` +
+-- `create extension pg_cron`) piora o resultado — medido em 03/10: quebrou o pg_cron da imagem
+-- e levou 10 migrations a falhar com `cron.schedule(...) does not exist`.
+
 alter database postgres set app.settings.trusted_domains = 'localhost,127.0.0.1';
 SQL
 

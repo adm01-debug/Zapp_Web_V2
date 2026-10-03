@@ -7,6 +7,7 @@ import {
   getConnectionByInstance, getContactByPhone, fetchProfilePicFromApi, persistProfilePicture,
 } from "./evolution-helpers.ts";
 import { persistMediaToStorage, persistMediaViaApi, persistBase64Media, parseMessageContent } from "./evolution-media.ts";
+import type { EvolutionDbClient } from "./evolution-types.ts";
 
 // Resolve a mídia na ordem mais barata: base64 do próprio webhook (Evolution GO
 // com WEBHOOKFILES=true; v2 com webhookBase64) → URL direta (CDN/MinIO) →
@@ -25,7 +26,7 @@ function isWhatsAppCdnUrl(url: string | null | undefined): boolean {
 }
 
 async function persistIncomingMedia(
-  supabase: any, instance: string, data: Record<string, unknown>,
+  supabase: EvolutionDbClient, instance: string, data: Record<string, unknown>,
   messageType: string, msgId: string, parsedUrl: string | null,
   contactId?: string,
 ): Promise<string | null> {
@@ -48,7 +49,7 @@ const URL_REGEX = /https?:\/\/[^\s<>"'`]+/i;
 // Fire-and-forget OG enrichment for received messages.
 // deno-lint-ignore no-explicit-any
 async function enrichIncomingLinkPreview(
-  supabase: any, messageId: string, content: string | null | undefined,
+  supabase: EvolutionDbClient, messageId: string, content: string | null | undefined,
   supabaseUrl: string, supabaseServiceKey: string,
 ): Promise<void> {
   try {
@@ -76,7 +77,7 @@ async function enrichIncomingLinkPreview(
 
 // deno-lint-ignore no-explicit-any
 export async function handleOutgoingWhatsAppMessage(
-  supabase: any, instance: string, data: Record<string, unknown>,
+  supabase: EvolutionDbClient, instance: string, data: Record<string, unknown>,
   key: { remoteJid?: string; remoteJidAlt?: string; participant?: string; participantAlt?: string; fromMe: boolean; id: string },
 ) {
   const externalId = key.id;
@@ -171,7 +172,7 @@ export async function handleOutgoingWhatsAppMessage(
 
 // deno-lint-ignore no-explicit-any
 export async function handleIncomingMessage(
-  supabase: any, instance: string, data: Record<string, unknown>,
+  supabase: EvolutionDbClient, instance: string, data: Record<string, unknown>,
   key: { remoteJid?: string; remoteJidAlt?: string; participant?: string; participantAlt?: string; fromMe: boolean; id: string },
   supabaseUrl: string, supabaseServiceKey: string
 ) {
@@ -375,7 +376,7 @@ function extractQuotedExternalId(data: any): string | null { // eslint-disable-l
 
 // deno-lint-ignore no-explicit-any
 export async function handleStickerMedia(
-  supabase: any, instance: string, data: Record<string, unknown>,
+  supabase: EvolutionDbClient, instance: string, data: Record<string, unknown>,
   message: Record<string, unknown> | undefined, key: { id: string }
 ): Promise<string | null> {
   let mediaUrl: string | null = null;
@@ -459,7 +460,7 @@ export async function handleStickerMedia(
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleAudioTranscription(supabase: any, _contactId: string, messageId: string, mediaUrl: string, supabaseUrl: string, supabaseServiceKey: string) {
+export async function handleAudioTranscription(supabase: EvolutionDbClient, _contactId: string, messageId: string, mediaUrl: string, supabaseUrl: string, supabaseServiceKey: string) {
   const { data: globalSetting } = await supabase.from('global_settings')
     .select('value').eq('key', 'auto_transcription_enabled').maybeSingle();
   if (globalSetting?.value === 'false') return;

@@ -70,7 +70,11 @@
   }
 }
 
-@media (prefers-contrast: high) {
+/* `more` e o valor VALIDO da spec atual (`no-preference | more | less | custom`);
+   o `high` que estava aqui nao casa em navegador nenhum — medido em 03/10: emulando
+   `prefers-contrast: more`, matchMedia devolvia `{high: false, more: true}`. Ou seja, quem
+   pedia mais contraste no sistema operacional nao recebia nada. */
+@media (prefers-contrast: more) {
   :root { --border: 0 0% 0%; }
   .dark { --border: 0 0% 100%; }
 }

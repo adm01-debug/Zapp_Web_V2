@@ -119,9 +119,18 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
 ## FASE 2 — Pendências das Fases 2–5 (CT-19–CT-30)
 *Bloco C — 1 PR de front + 1 mudança de edge (CT-19, CT-22) com deploy.*
 
-- [ ] **CT-19** — Edge: rate limit 120/min só para `list_products` (60 para o resto), como E26.3 pedia; `deploy-functions`
+- [x] **CT-19** — Edge: rate limit 120/min só para `list_products` (60 para o resto), como E26.3 pedia; `deploy-functions`
   disparado e aprovado. **Aceite:** 61 chamadas de `bootstrap` em 1 min → 429; 100 de `list_products` → 200.
-  **🟡 PARCIAL — código feito e provado em 01/10/2026; falta o deploy da edge, que o próprio aceite exige.** Cota **por ação**
+  **✅ FEITO E MEDIDO EM PRODUÇÃO — 03/10/2026.** Aceite cumprido literalmente contra a edge publicada:
+  **61 `bootstrap` em paralelo em 9,2 s → `429=2`, status `[200,429]`** (antes: `[200,503]` com `429=0` em 49,8 s) e
+  **100 `list_products` → todos 200**. Caminho até aqui, em três PRs: **#1802** trocou o `Map` por isolate (que fazia o
+  teto valer "por isolate", não "por usuário": 421 chamadas paralelas sem um único 429) pela função
+  `catalog_rate_limit_hit`; **#1746** criou o contador; **#1822** o reescreveu como **append-only**
+  (`catalog_rate_limit_hits`). A 1ª versão do contador (uma linha por usuário/ação com `on conflict do update`)
+  **estourava `statement timeout` sob concorrência** — medido em produção em `function_logs`:
+  `canceling statement due to statement timeout`, 34,6 s — e como a edge falha **aberto**, isso virava `429=0` na
+  medição. A versão final: 61 concorrentes na mesma chave com `statement_timeout = '8s'` (o de produção) →
+  **60 permitidas / 1 negada / 517 ms**, em PostgreSQL descartável. Cota **por ação**
   ancorada no enum (`ACTION_RATE_LIMITS`, `supabase/functions/promogifts-catalog/index.ts:151`; `checkRateLimit` com balde
   próprio `${userId}:${action}`, `:166-167`): `list_products` **120/min**, as outras 5 ações 60/min, e corpo inválido no teto
   global de 60 (fail-closed). **Prova:** 7 `Deno.test` novos com prefixo CT-19 em `index.actions.test.ts` (`:386`, `:418`,
@@ -503,6 +512,14 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   --include=*.tsx` (fora de testes) = 0.
 - [ ] **CT-64** — Filtro "Novidades" = `is_new OR created_at > now()-30d` (`new_or_recent` na edge) — deploy.
   **Aceite:** contagem bate com `new_30d` do stats.
+  **🟡 MEDIÇÃO NOVA (03/10/2026) — o bloqueio antigo ("a contagem não é legível") caiu pela metade.** Na rajada de
+  aceite do CT-19, a tela em produção devolveu os KPIs **legíveis**: `Produtos no total` **7.748**, `Categorias` **27**,
+  `Fornecedores` **4**, `Em estoque` **6.113**, `Em destaque` **2.147** e **`Novidades` 366** — este último é
+  exatamente a contagem do filtro deste item, que antes vinha vazia. O que **continua sem prova** é o outro lado do
+  aceite ("bate com `new_30d` do stats"): a ação `new_or_recent`/`new_30d` **não existe** no `ActionSchema` da edge
+  (só as 6 ações — ver a ressalva registrada no CT-77) e a medição confirmou o sintoma, `total da edge com o filtro
+  aplicado: null`. Falta o **lado da edge** (ação + contagem), não o lado da tela. Segue aberto, agora com o número
+  da tela medido em produção.
 - [x] **CT-65** — Chip de estado acima da grade quando filtro de flag ativo ("Mostrando só Novidades · limpar").
   **Aceite:** teste RTL.
   **✅ FEITO — provado em 01/10/2026.** Chip `data-testid="catalog-flag-chip"` renderizado **acima da grade**
