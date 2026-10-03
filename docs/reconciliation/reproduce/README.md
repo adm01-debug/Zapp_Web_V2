@@ -18,6 +18,16 @@ Para conferir também hashes e linhas das fontes, forneça um checkout que conte
 python docs/reconciliation/reproduce/validate_package.py --repo /caminho/do/checkout-auditado
 ```
 
+O validador usa Python 3.9 ou superior e verifica o pacote que contém o próprio script; não aceita `--package`. A consulta opcional às fontes requer Git em `/usr/bin/git` ou `/bin/git`, sem busca pelo `PATH`. Caminhos declarados nos planos e no manifesto devem ser relativos e permanecer dentro da raiz correspondente. Referências de objetos Git aceitam somente IDs hexadecimais fixados, de 7 a 40 caracteres; links simbólicos não podem levar a leitura para fora do pacote.
+
+Sem `--output`, o resultado é exibido apenas na saída padrão. Para também salvar o relatório, use a opção sem argumento de caminho:
+
+```bash
+python docs/reconciliation/reproduce/validate_package.py --repo /caminho/do/checkout-auditado --output
+```
+
+O único destino de gravação é `evidence/artifact-validation.json` dentro deste pacote. O validador recusa um link simbólico nesse destino ou na pasta `evidence`.
+
 O [resultado desta entrega](../evidence/artifact-validation.json) e a [revisão independente](../evidence/independent-consolidation-review.json) registram as verificações feitas. O manifesto SHA256 cobre os arquivos entregues, exceto o próprio manifesto.
 
 ## Probes em uma cópia temporária
@@ -48,6 +58,10 @@ node --experimental-strip-types "$RECONCILIATION_PROBES/volume/volume_offline_pr
 | Volume | Store, binding e liberação de AudioContext | WebAudio e players simulados; sem audição real em aparelho. |
 
 Os quatro conjuntos foram testados novamente em cópias com outra profundidade de diretório. [Resultado da portabilidade](../evidence/portable-probe-retest-results.json). O arquivo TypeScript do cliente Functions incluído no conjunto Cross-module corresponde à versão2.117.2, fixada pelo lock auditado, e serve à reprodução de desserialização.
+
+A referência do SDK é preservada em `supabase-functions-client-2.117.2.ts.txt`, com os bytes originais. O probe lê esse dado e remove os tipos somente na cópia de execução. Essa separação mantém o código de terceiro como evidência e evita introduzi-lo no conjunto de fontes de aplicação verificado pelo ratchet de lint. Nenhuma regra ou baseline foi relaxado.
+
+Cross-module e Multiplix exigem a raiz do checkout no baseline indicado, Git em `/usr/bin/git` e os hashes fixos de todas as fontes antes de executá-las. Skins também confere previamente os quatro fontes por SHA256. As entradas aceitas são os bytes revisados; os scripts não funcionam como avaliadores de código arbitrário. Os testes de compatibilidade e de recusa estão em [hardening dos artefatos](../evidence/publication-harness-hardening.json), com contexto na [validação da publicação](../reports/git/PUBLICATION_VALIDATION.md).
 
 Os dois conjuntos adicionais Skins/Volume também passaram por [reteste de portabilidade](../evidence/secondary-portable-probe-validation.json), preservando os 307 critérios originais. Eles aceitam `RECONCILIATION_OUTPUT` para escolher a pasta dos resultados.
 

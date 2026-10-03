@@ -15,6 +15,7 @@ Este pacote encerra a auditoria documental autorizada do baseline [`2e7cf81c6c4d
 5. [Achados](FINDINGS.md) e [riscos ativos](OPEN_RISKS.md): efeito, prioridade e prova.
 6. [Trabalho Git ativo](ACTIVE_WORK_REGISTRY_2026-10-03.md) e [ordem futura de correções](EXECUTION_WAVES.md).
 7. [Metodologia](METHODOLOGY.md), [reprodução](reproduce/README.md) e [manifesto de integridade](evidence/ARTIFACT_MANIFEST.json).
+8. [Validação da publicação](reports/git/PUBLICATION_VALIDATION.md): diagnóstico do CI, correção dos artefatos de reprodução e limites do Sonar.
 
 Cada arquivo em `tasks/Pxxx.json` é legível isoladamente e contém os requisitos daquele plano com cinco dimensões de evidência. O texto integral e as adjudicações completas ficam em [TASK_LEDGER_FULL.json.gz](evidence/TASK_LEDGER_FULL.json.gz). Os relatórios de especialidade estão em `reports/`; os inventários estruturais completos, em `evidence/`.
 

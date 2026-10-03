@@ -6,6 +6,8 @@
 
 Entrega: 5.166 registros em 62 fontes, 3.062 avaliações individuais, 2.104 registros históricos somente de linhagem e 104 registros de achados. A referência Dashboard50 não foi recuperada; as 100 etapas do documento externo Dashboard foram preservadas com SHA256.
 
+A primeira publicação está no commit `9a1c370c1979b5e3f1c59291a2bfac331f689e3d`. A [validação da publicação](reports/git/PUBLICATION_VALIDATION.md) registra as falhas observadas no CI e a correção documental dos probes. O diagnóstico Sonar está fixado nesse commit; um resultado de CI posterior não deve ser confundido com o diagnóstico original nem presumido verde.
+
 ## Para uma missão posterior
 
 1. Ler o [relatório final](FINAL_RECONCILIATION_REPORT_2026-10-03.md) e selecionar uma frente concreta da [ordem de correções](EXECUTION_WAVES.md).
