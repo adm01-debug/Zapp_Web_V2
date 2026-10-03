@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: pull_request, push na main, merge_group e dispatch
+#   prova: guardas OFFLINE do banco (nunca recebe DESTINO_URL, roda codigo de PR)
+#   falha: PR fica vermelho; nenhum codigo de PR alcanca o banco de producao
+#   avisa: autor do PR e revisor
 # ==================================================================
 # ZAPP-WEB · Guardas de banco OFFLINE
 # ==================================================================

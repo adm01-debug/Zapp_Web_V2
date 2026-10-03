@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: push na main e dispatch sobre main
+#   prova: o fluxo logado (Playwright com login real) contra producao
+#   falha: artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro
+#   avisa: issue de E2E e autor do push
 # ==========================================================================
 # ZAPP-WEB · E2E logado (Playwright, login real)
 # ==========================================================================

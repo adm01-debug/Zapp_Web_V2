@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: push na main, agendado e dispatch
+#   prova: os tipos gerados batem com o banco oficial (Gates 1 e 2)
+#   falha: PR em `automation/types-sync` ou issue `[types-sync]`; nunca passa com tipo divergente
+#   avisa: PR de types e issue de gate
 # ==================================================================
 # ZAPP-WEB · Sincronizacao assistida dos artefatos do banco
 # ==================================================================

@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: pull_request e agendado
+#   prova: analise estatica de seguranca (SAST) de src, scripts, functions e dos workflows
+#   falha: alerta aparece em Security -> Code scanning
+#   avisa: aba Security e revisores do PR
 # =================================================
 # CodeQL — analise estatica de seguranca (SAST)
 # =================================================
