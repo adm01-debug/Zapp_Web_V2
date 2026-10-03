@@ -13,7 +13,8 @@ import { AIUsageUsersTab } from './AIUsageUsersTab';
 export function AIUsageDashboard() {
   const {
     logs, isLoading, refetch, timeFilter, setTimeFilter,
-    logsPage, setLogsPage, profileMap, stats,
+    logsPage, setLogsPage, logsTotal, profileMap, stats,
+    cobertura, filtros,
     userUsage, functionUsage, timelineData,
   } = useAIUsageDashboard();
 
@@ -100,8 +101,23 @@ export function AIUsageDashboard() {
         </TabsContent>
 
         <TabsContent value="users" className="space-y-4"><AIUsageUsersTab userUsage={userUsage} profileMap={profileMap as Map<string, { name?: string; email?: string }>} /></TabsContent>
-        <TabsContent value="logs"><AIUsageLogsTab logs={logs} logsPage={logsPage} setLogsPage={setLogsPage} profileMap={profileMap as Map<string, { name?: string; email?: string }>} /></TabsContent>
+        <TabsContent value="logs"><AIUsageLogsTab logs={logs} logsTotal={logsTotal} logsPage={logsPage} setLogsPage={setLogsPage} profileMap={profileMap as Map<string, { name?: string; email?: string }>} /></TabsContent>
       </Tabs>
+
+      {/* Sobre o que os números foram calculados: a agregação é da janela inteira
+          no servidor, e o escopo é o de quem está vendo (RLS). Fica no fim de
+          propósito — subir o bloco deslocaria linhas acima e o ratchet de lint
+          leria o `any` pré-existente do gráfico como dívida nova. */}
+      {cobertura && (
+        <p className="text-xs text-muted-foreground">
+          {cobertura.chamadas.toLocaleString()} chamadas na janela completa
+          {cobertura.primeiro_registro && cobertura.ultimo_registro && (
+            <> • de {new Date(cobertura.primeiro_registro).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} a {new Date(cobertura.ultimo_registro).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</>
+          )}
+          {cobertura.chamadas_sem_tokens > 0 && <> • {cobertura.chamadas_sem_tokens.toLocaleString()} sem medição de tokens</>}
+          {filtros?.balde_segundos ? <> • baldes de {Math.round(filtros.balde_segundos / 60)}min</> : null}
+        </p>
+      )}
     </div>
   );
 }

@@ -28,6 +28,55 @@ interface ProfileInfo {
   avatar_url: string | null;
 }
 
+/**
+ * Resposta da agregacao autorizada `ai_usage_summary` (IA-056).
+ *
+ * Este contrato existe porque os totais NAO sao mais calculados no cliente: eles
+ * vem do servidor sobre a janela inteira. Antes, o painel buscava as linhas com
+ * corte de mil registros e somava o que coubesse nesse corte — com mais de mil
+ * registros na janela o total ficava errado, sem avisar. `cobertura` e `filtros`
+ * vem junto para que a tela possa DIZER sobre o que o numero foi calculado.
+ */
+export interface AiUsageSummary {
+  fonte: string;
+  escopo: string;
+  gerado_em: string;
+  filtros: {
+    inicio: string;
+    fim: string;
+    janela_segundos: number;
+    balde_segundos: number;
+    limite_funcoes: number;
+    limite_usuarios: number;
+  };
+  cobertura: {
+    chamadas: number;
+    primeiro_registro: string | null;
+    ultimo_registro: string | null;
+    truncado: boolean;
+    chamadas_sem_tokens: number;
+    amostra_duracao: number;
+    funcoes_distintas: number;
+    usuarios_distintos: number;
+  };
+  totais: {
+    chamadas: number;
+    erros: number;
+    usuarios: number;
+    tokens: number;
+    tokens_entrada: number;
+    tokens_saida: number;
+  };
+  duracao_ms: { media: number | null; p95: number | null; amostra: number };
+  situacoes: Record<string, number>;
+  por_funcao: { funcao: string; chamadas: number; tokens: number; erros: number; sem_tokens: number }[];
+  por_usuario: { usuario: string; chamadas: number; tokens: number }[];
+  serie: { inicio: string; chamadas: number; tokens: number; erros: number; por_funcao: Record<string, number> }[];
+}
+
+/** Quantas linhas cruas por pagina. A paginacao e do servidor (ver `range`). */
+export const LOGS_PER_PAGE = 50;
+
 export const FUNCTION_COLORS: Record<string, string> = {
   'ai-suggest-reply': '#3b82f6',
   'ai-enhance-message': '#8b5cf6',
@@ -56,20 +105,55 @@ function getTimeRange(filter: TimeFilter): Date {
   }
 }
 
+/** Mesmos baldes de antes (5/30/60/360 min), em segundos porque quem agrupa e o servidor. */
+function getBucketSeconds(filter: TimeFilter): number {
+  return filter === '1h' ? 300 : filter === '6h' ? 1800 : filter === '24h' ? 3600 : 21600;
+}
+
 export function useAIUsageDashboard() {
   const [logsPage, setLogsPage] = useState(0);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('24h');
 
-  const { data: logs = [], isLoading, refetch } = useQuery({
-    queryKey: ['ai-usage-logs', timeFilter],
+  const since = useMemo(() => getTimeRange(timeFilter).toISOString(), [timeFilter]);
+  const bucketSeconds = useMemo(() => getBucketSeconds(timeFilter), [timeFilter]);
+
+  // (1) TOTAIS: agregados no servidor, sobre a JANELA INTEIRA. Nenhuma soma e
+  // feita no cliente, entao nada depende de qual pagina esta visivel.
+  const { data: resumo, isLoading, refetch: refetchResumo } = useQuery({
+    queryKey: ['ai-usage-summary', timeFilter],
     queryFn: async () => {
-      const since = getTimeRange(timeFilter).toISOString();
-      const { data, error } = await supabase
-        .from('ai_usage_logs').select('*')
-        .gte('created_at', since)
-        .order('created_at', { ascending: false }).limit(1000);
+      // O tipo gerado ainda nao conhece esta RPC (types.ts e regenerado do banco,
+      // que esta indisponivel); o cast some quando a regeneracao rodar.
+      const { data, error } = await (supabase.rpc as unknown as (
+        fn: string,
+        args: Record<string, unknown>,
+      ) => Promise<{ data: unknown; error: unknown }>)('ai_usage_summary', {
+        p_since: since,
+        p_until: null,
+        p_bucket_seconds: bucketSeconds,
+        p_top_functions: 50,
+        p_top_users: 20,
+      });
       if (error) throw error;
-      return (data || []) as UsageLog[];
+      return data as AiUsageSummary;
+    },
+    refetchInterval: 30_000,
+  });
+
+  // (2) LISTA: paginacao REAL. O `range` corta no servidor e o `count: 'exact'`
+  // diz quantas linhas existem de verdade — nao quantas vieram na resposta.
+  const { data: pagina, isLoading: isLoadingLogs, refetch: refetchLogs } = useQuery({
+    queryKey: ['ai-usage-logs', timeFilter, logsPage],
+    queryFn: async () => {
+      const de = logsPage * LOGS_PER_PAGE;
+      const { data, error, count } = await supabase
+        .from('ai_usage_logs')
+        .select('*', { count: 'exact' })
+        .gte('created_at', since)
+        .order('created_at', { ascending: false })
+        .range(de, de + LOGS_PER_PAGE - 1);
+      if (error) throw error;
+      return { linhas: (data || []) as UsageLog[], total: count ?? 0 };
     },
     refetchInterval: 30_000,
   });
@@ -82,64 +166,62 @@ export function useAIUsageDashboard() {
     },
   });
 
+  // Trocar a janela zera a página: sem isto o usuário ficaria numa página que pode
+  // não existir mais no filtro novo. Feito no próprio setter (e não num efeito)
+  // para não disparar render em cascata.
+  const trocarFiltro = (filtro: TimeFilter) => {
+    setLogsPage(0);
+    setTimeFilter(filtro);
+  };
+
   const profileMap = useMemo(() => {
     const map = new Map<string, ProfileInfo>();
     profiles.forEach(p => { if (p.user_id) map.set(p.user_id, p); map.set(p.id, p); });
     return map;
   }, [profiles]);
 
-  const stats = useMemo(() => {
-    const totalCalls = logs.length;
-    const totalTokens = logs.reduce((sum, l) => sum + (l.total_tokens || 0), 0);
-    const avgDuration = logs.length > 0 ? Math.round(logs.reduce((sum, l) => sum + (l.duration_ms || 0), 0) / logs.length) : 0;
-    const errorCount = logs.filter(l => l.status === 'error').length;
-    const uniqueUsers = new Set(logs.map(l => l.user_id).filter(Boolean)).size;
-    return { totalCalls, totalTokens, avgDuration, errorCount, uniqueUsers };
-  }, [logs]);
+  const logs = pagina?.linhas ?? [];
+  const logsTotal = pagina?.total ?? 0;
+  const logsTotalPaginas = Math.max(1, Math.ceil(logsTotal / LOGS_PER_PAGE));
 
-  const userUsage = useMemo(() => {
-    const map = new Map<string, { calls: number; tokens: number; userId: string }>();
-    logs.forEach(l => {
-      const uid = l.user_id || 'unknown';
-      const existing = map.get(uid) || { calls: 0, tokens: 0, userId: uid };
-      existing.calls++; existing.tokens += l.total_tokens || 0;
-      map.set(uid, existing);
-    });
-    return Array.from(map.values()).sort((a, b) => b.tokens - a.tokens).slice(0, 20);
-  }, [logs]);
+  const stats = useMemo(() => ({
+    totalCalls: resumo?.totais.chamadas ?? 0,
+    totalTokens: resumo?.totais.tokens ?? 0,
+    avgDuration: resumo?.duracao_ms.media ?? 0,
+    errorCount: resumo?.totais.erros ?? 0,
+    uniqueUsers: resumo?.totais.usuarios ?? 0,
+  }), [resumo]);
 
-  const functionUsage = useMemo(() => {
-    const map = new Map<string, { calls: number; tokens: number; name: string }>();
-    logs.forEach(l => {
-      const existing = map.get(l.function_name) || { calls: 0, tokens: 0, name: l.function_name };
-      existing.calls++; existing.tokens += l.total_tokens || 0;
-      map.set(l.function_name, existing);
-    });
-    return Array.from(map.values()).sort((a, b) => b.tokens - a.tokens);
-  }, [logs]);
+  const userUsage = useMemo(
+    () => (resumo?.por_usuario ?? []).map(u => ({ userId: u.usuario, calls: u.chamadas, tokens: u.tokens })),
+    [resumo],
+  );
 
-  const timelineData = useMemo(() => {
-    const buckets = new Map<string, Record<string, string | number>>();
-    const bucketSize = timeFilter === '1h' ? 5 : timeFilter === '6h' ? 30 : timeFilter === '24h' ? 60 : 360;
-    logs.forEach(l => {
-      const date = new Date(l.created_at);
-      const bucketTime = new Date(Math.floor(date.getTime() / (bucketSize * 60000)) * bucketSize * 60000);
-      const key = bucketTime.toISOString();
-      const bucket = buckets.get(key) || { time: key };
-      bucket[l.function_name] = ((bucket[l.function_name] as number) || 0) + 1;
-      buckets.set(key, bucket);
-    });
-    return Array.from(buckets.values())
-      .sort((a, b) => String(a.time).localeCompare(String(b.time)))
-      .map(b => ({
-        ...b,
-        time: format(new Date(String(b.time)), timeFilter === '1h' || timeFilter === '6h' ? 'HH:mm' : 'dd/MM HH:mm', { locale: ptBR }),
-      }));
-  }, [logs, timeFilter]);
+  const functionUsage = useMemo(
+    () => (resumo?.por_funcao ?? []).map(f => ({ name: f.funcao, calls: f.chamadas, tokens: f.tokens })),
+    [resumo],
+  );
+
+  const timelineData = useMemo(
+    () => (resumo?.serie ?? []).map(b => ({
+      ...b.por_funcao,
+      time: format(new Date(b.inicio), timeFilter === '1h' || timeFilter === '6h' ? 'HH:mm' : 'dd/MM HH:mm', { locale: ptBR }),
+    })),
+    [resumo, timeFilter],
+  );
+
+  const refetch = () => { void refetchResumo(); void refetchLogs(); };
 
   return {
-    logs, isLoading, refetch, timeFilter, setTimeFilter,
-    logsPage, setLogsPage, profileMap, stats,
+    logs, isLoading, isLoadingLogs, refetch, timeFilter, setTimeFilter: trocarFiltro,
+    logsPage, setLogsPage, logsTotal, logsTotalPaginas, pageSize: LOGS_PER_PAGE,
+    profileMap, stats,
+    // Declaracoes de escopo: sobre o que os numeros foram calculados.
+    cobertura: resumo?.cobertura ?? null,
+    filtros: resumo?.filtros ?? null,
+    situacoes: resumo?.situacoes ?? null,
+    duracao: resumo?.duracao_ms ?? null,
+    escopo: resumo?.escopo ?? null,
     userUsage, functionUsage, timelineData,
   };
 }

@@ -3,9 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { FUNCTION_COLORS, FUNCTION_LABELS } from '@/hooks/analytics/useAIUsageDashboard';
-
-const LOGS_PER_PAGE = 50;
+import { FUNCTION_COLORS, FUNCTION_LABELS, LOGS_PER_PAGE } from '@/hooks/analytics/useAIUsageDashboard';
 
 interface LogEntry {
   id: string; created_at: string; user_id: string | null; function_name: string;
@@ -14,18 +12,20 @@ interface LogEntry {
 
 interface AIUsageLogsTabProps {
   logs: LogEntry[];
+  /** Total EXATO de registros na janela (do servidor), não o tamanho da página. */
+  logsTotal: number;
   logsPage: number;
   setLogsPage: (fn: (p: number) => number) => void;
   profileMap: Map<string, { name?: string; email?: string }>;
 }
 
-export function AIUsageLogsTab({ logs, logsPage, setLogsPage, profileMap }: AIUsageLogsTabProps) {
+export function AIUsageLogsTab({ logs, logsTotal, logsPage, setLogsPage, profileMap }: AIUsageLogsTabProps) {
   return (
     <Card>
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
         <CardTitle className="text-sm font-medium">Últimas Chamadas</CardTitle>
         <span className="text-xs text-muted-foreground">
-          {logs.length} registros • Página {logsPage + 1} de {Math.max(1, Math.ceil(logs.length / LOGS_PER_PAGE))}
+          {logsTotal.toLocaleString()} registros • Página {logsPage + 1} de {Math.max(1, Math.ceil(logsTotal / LOGS_PER_PAGE))}
         </span>
       </CardHeader>
       <CardContent>
@@ -43,7 +43,7 @@ export function AIUsageLogsTab({ logs, logsPage, setLogsPage, profileMap }: AIUs
               </tr>
             </thead>
             <tbody>
-              {logs.slice(logsPage * LOGS_PER_PAGE, (logsPage + 1) * LOGS_PER_PAGE).map(l => {
+              {logs.map(l => {
                 const profile = l.user_id ? profileMap.get(l.user_id) : null;
                 return (
                   <tr key={l.id} className="border-b last:border-0 hover:bg-muted/30">
@@ -63,15 +63,15 @@ export function AIUsageLogsTab({ logs, logsPage, setLogsPage, profileMap }: AIUs
                   </tr>
                 );
               })}
-              {logs.length === 0 && <tr><td colSpan={7} className="px-3 py-12 text-center text-muted-foreground">Nenhum log encontrado</td></tr>}
+              {logs.length === 0 && <tr><td colSpan={7} className="px-3 py-12 text-center text-muted-foreground">{logsTotal > 0 ? `Página vazia — há ${logsTotal.toLocaleString()} registros nas páginas anteriores` : 'Nenhum log encontrado'}</td></tr>}
             </tbody>
           </table>
         </div>
-        {logs.length > LOGS_PER_PAGE && (
+        {logsTotal > LOGS_PER_PAGE && (
           <div className="flex items-center justify-between mt-3">
             <Button variant="outline" size="sm" disabled={logsPage === 0} onClick={() => setLogsPage(p => p - 1)}>← Anterior</Button>
-            <span className="text-xs text-muted-foreground">{logsPage * LOGS_PER_PAGE + 1}–{Math.min((logsPage + 1) * LOGS_PER_PAGE, logs.length)} de {logs.length}</span>
-            <Button variant="outline" size="sm" disabled={(logsPage + 1) * LOGS_PER_PAGE >= logs.length} onClick={() => setLogsPage(p => p + 1)}>Próximo →</Button>
+            <span className="text-xs text-muted-foreground">{logsPage * LOGS_PER_PAGE + 1}–{Math.min((logsPage + 1) * LOGS_PER_PAGE, logsTotal)} de {logsTotal.toLocaleString()}</span>
+            <Button variant="outline" size="sm" disabled={(logsPage + 1) * LOGS_PER_PAGE >= logsTotal} onClick={() => setLogsPage(p => p + 1)}>Próximo →</Button>
           </div>
         )}
       </CardContent>
