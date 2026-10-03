@@ -415,3 +415,161 @@ export function medirStream(
     },
   });
 }
+
+// ---------------------------------------------------------------------------
+// IA-054 — ação, tentativa e cobrança
+// ---------------------------------------------------------------------------
+// O problema que estas funções resolvem, medido no desenho atual: uma AÇÃO do
+// usuário pode virar VÁRIAS linhas em `ai_usage_logs` — uma por tentativa
+// (retry da fila, `attempt`) e uma por salto de fallback (origem que falhou +
+// destino que atendeu). Ler essas linhas ingenuamente infla a conta duas vezes:
+// conta-se 2 "ações" onde houve 1 clique, e soma-se tarifa por linha onde parte
+// das linhas é a MESMA intenção.
+//
+// Regras adotadas (e por quê):
+//  1. AÇÃO = `request_id` (a intenção do usuário, levada do clique ao log pela
+//     IA-051). Sem `request_id`, cai para `job_id`: é a melhor identidade de
+//     intenção disponível, e é honesto assumir que uma ação ficou sem id.
+//  2. TENTATIVA = uma LINHA = uma chamada ao provedor. Tentativa NÃO é ação:
+//     três tentativas do mesmo request_id continuam sendo UMA ação.
+//  3. COBRANÇA = só consumo MEDIDO entra em token. Linha sem medição
+//     (`usage_unknown`) não vira zero: fica de fora da soma e é contada à
+//     parte. É a mesma regra já congelada em `_shared/ai-budget.ts`
+//     ("valores estimados nunca são faturamento confirmado") — a IA-054 estende
+//     esse critério em vez de criar um segundo.
+//  4. FALHA/CANCELAMENTO COM CONSUMO COBRA: um stream interrompido ou uma
+//     resposta que falhou depois de consumir tokens gastou dinheiro de verdade
+//     (IA-053). O que NÃO cobra é falha sem chamada ao provedor (negado por
+//     quota, bloqueado por guarda, pulado).
+//  5. A MESMA LINHA DUAS VEZES CONTA UMA: deduplicação por `id`, porque
+//     reentrega de insert é o modo mais banal de dobrar um relatório.
+
+/** Uma linha de consumo — do banco ou de um stub de teste. */
+export interface LinhaDeConsumo {
+  id: string;
+  requestId?: string | null;
+  jobId?: string | null;
+  attempt?: number | null;
+  status?: string | null;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
+  usageUnknown?: boolean | null;
+  createdAt?: string | null;
+}
+
+/** Estados que significam "não houve chamada paga ao provedor". */
+const STATUS_SEM_CHAMADA = new Set(["denied", "skipped", "rate_limited", "budget_denied"]);
+
+/** A linha representa consumo REAL que deve entrar na conta? */
+export function contaParaQuota(linha: LinhaDeConsumo): { cobra: boolean; motivo: string } {
+  const status = (linha.status ?? "").toLowerCase();
+
+  if (STATUS_SEM_CHAMADA.has(status)) {
+    return { cobra: false, motivo: "sem_chamada_ao_provedor" };
+  }
+  if (linha.usageUnknown === true) {
+    return { cobra: false, motivo: "sem_medicao" };
+  }
+
+  const entrada = linha.inputTokens ?? null;
+  const saida = linha.outputTokens ?? null;
+  if (entrada === null && saida === null) {
+    return { cobra: false, motivo: "sem_medicao" };
+  }
+
+  // Falha e cancelamento COM medição cobram: o provedor foi chamado e consumiu.
+  return { cobra: true, motivo: status === "" ? "medido" : "medido_" + status };
+}
+
+/** Identidade da AÇÃO: o id do clique; sem ele, o job é a melhor aproximação. */
+export function identidadeDaAcao(linha: LinhaDeConsumo): string | null {
+  if (linha.requestId) return "req:" + linha.requestId;
+  if (linha.jobId) return "job:" + linha.jobId;
+  return null;
+}
+
+/** Totais reconciliados de um conjunto de linhas de consumo. */
+export interface ReconciliacaoDeConsumo {
+  /** Intenções distintas do usuário — NUNCA o número de linhas. */
+  acoes: number;
+  /** Chamadas ao provedor (linhas únicas). */
+  tentativas: number;
+  sucessos: number;
+  falhas: number;
+  cancelamentos: number;
+  /** Tokens somados APENAS de linhas com medição. */
+  tokensMedidos: number;
+  /** Linhas sem medição: ausência declarada, nunca somada como zero. */
+  linhasSemMedicao: number;
+  linhasCobradas: number;
+  /** Ações que tiveram mais de uma tentativa (retry ou fallback). */
+  acoesComMaisDeUmaTentativa: number;
+  /** Linhas repetidas (`id` igual) descartadas: prova de que não dobrou. */
+  linhasDuplicadasIgnoradas: number;
+  /** Linhas sem identidade de ação: contam como tentativa, não como ação. */
+  linhasSemIdentidadeDeAcao: number;
+}
+
+/**
+ * Reconcilia linhas de consumo em ações, tentativas, falhas e consumo.
+ *
+ * Propriedade que o aceite exige, e que os testes provam: **duas linhas do
+ * mesmo `request_id` (origem que falhou + fallback que atendeu) são UMA ação e
+ * DUAS tentativas** — não duas ações. E tokens nunca são somados a partir de
+ * linha sem medição.
+ */
+export function reconciliarConsumo(linhas: LinhaDeConsumo[]): ReconciliacaoDeConsumo {
+  const vistas = new Set<string>();
+  const acoes = new Set<string>();
+  const tentativasPorAcao = new Map<string, number>();
+
+  const totais: ReconciliacaoDeConsumo = {
+    acoes: 0,
+    tentativas: 0,
+    sucessos: 0,
+    falhas: 0,
+    cancelamentos: 0,
+    tokensMedidos: 0,
+    linhasSemMedicao: 0,
+    linhasCobradas: 0,
+    acoesComMaisDeUmaTentativa: 0,
+    linhasDuplicadasIgnoradas: 0,
+    linhasSemIdentidadeDeAcao: 0,
+  };
+
+  for (const linha of linhas) {
+    if (vistas.has(linha.id)) {
+      totais.linhasDuplicadasIgnoradas += 1;
+      continue;
+    }
+    vistas.add(linha.id);
+    totais.tentativas += 1;
+
+    const status = (linha.status ?? "").toLowerCase();
+    if (status === "error") totais.falhas += 1;
+    else if (status === "cancelled") totais.cancelamentos += 1;
+    else if (status === "success" || status === "fallback") totais.sucessos += 1;
+
+    const acao = identidadeDaAcao(linha);
+    if (acao === null) {
+      totais.linhasSemIdentidadeDeAcao += 1;
+    } else {
+      if (!acoes.has(acao)) acoes.add(acao);
+      tentativasPorAcao.set(acao, (tentativasPorAcao.get(acao) ?? 0) + 1);
+    }
+
+    const veredito = contaParaQuota(linha);
+    if (veredito.cobra) {
+      totais.linhasCobradas += 1;
+      totais.tokensMedidos += (linha.inputTokens ?? 0) + (linha.outputTokens ?? 0);
+    } else if (veredito.motivo === "sem_medicao") {
+      totais.linhasSemMedicao += 1;
+    }
+  }
+
+  totais.acoes = acoes.size;
+  for (const quantidade of tentativasPorAcao.values()) {
+    if (quantidade > 1) totais.acoesComMaisDeUmaTentativa += 1;
+  }
+  return totais;
+}
