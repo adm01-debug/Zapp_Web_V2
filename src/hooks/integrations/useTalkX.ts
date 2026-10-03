@@ -422,9 +422,9 @@ export function useTalkX() {
     queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
   }, [queryClient]);
 
-  const cancelCampaign = useCallback(async (campaignId: string) => {
+  const cancelCampaign = useCallback(async (campaignId: string, reason?: string) => {
     const { data, error } = await supabase.functions.invoke('talkx-send', {
-      body: { campaignId, action: 'cancel' },
+      body: { campaignId, action: 'cancel', reason: reason ?? null },
     });
     if (error) throw error;
     assertTalkXActionAccepted(data);

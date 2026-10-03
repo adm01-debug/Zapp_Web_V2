@@ -294,3 +294,27 @@ Deno.test("X015 limites: timeout de produção é 10 s e o teto do tick é 10", 
   assert(TALKX_SEND_TIMEOUT_MS === 10_000, `timeout de produção deveria ser 10 s, é ${TALKX_SEND_TIMEOUT_MS}`);
   assert(MAX_CAMPAIGNS_PER_TICK === 10, `teto do tick deveria ser 10, é ${MAX_CAMPAIGNS_PER_TICK}`);
 });
+
+// --------------------------------------------------------------------------- X025
+
+Deno.test("X025: retomada automática NÃO grava evento próprio (a transição grava)", async () => {
+  const paused = [
+    pausedRow("c-conn", {
+      pause_reason: "connection_lost",
+      whatsapp_connection_id: "conn-1",
+      send_window_start: null,
+      send_window_end: null,
+    }),
+  ];
+  const { client, ctx } = makeClient({ paused, connections: [{ id: "conn-1", status: "connected" }] });
+  const fake = makeFetch();
+  const res = await handleTalkxScheduler(
+    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+    makeDeps({ client, fetch: fake.impl, cronSecretValue: TEST_CRON_SECRET }),
+  );
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(fake.posts.length === 1, `esperado 1 POST de retomada, recebido ${fake.posts.length}`);
+  const body = await res.json();
+  assert(body.resumed === 1, `esperado resumed:1, recebido ${body.resumed}`);
+  assert(ctx.events.length === 0, `o scheduler não pode gravar evento (gravou ${ctx.events.length})`);
+});

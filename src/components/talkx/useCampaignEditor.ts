@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTalkX, TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useTalkXSegments, resolveAudience, countAudience, RULE_FIELDS, RULE_OPS, emptyRules, type SegmentRules, type SegmentRule, type SegmentRuleGroup, type RuleField, type RuleOp } from '@/hooks/integrations/useTalkXSegments';
 import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
-import { useTalkXEventLogger } from '@/hooks/integrations/useTalkXEvents';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { SPEED_PROFILES, estimateSeconds, fmtDurationShort } from './talkxShared';
@@ -310,7 +309,6 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const { saveDraftCampaign, updateCampaign, snapshotDraftAudience, startCampaign } = useTalkX();
   const { segments } = useTalkXSegments();
   const { templates } = useTalkXTemplates();
-  const logEvent = useTalkXEventLogger();
   const { profile } = useAuth();
 
   const [step, setStep] = useState<WizardStep>(() => initial?.step ?? initialWizardStep(campaign?.draft_step));
@@ -777,12 +775,12 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       const id = savedDraft.campaignId;
       draftRevisionRef.current = savedDraft.revision;
       setDraftRevision(savedDraft.revision);
-      if (persistedCampaignId) {
-        await logEvent(id, 'updated', 'Campanha atualizada');
-      } else {
+      if (!persistedCampaignId) {
+        // X025: os eventos 'created'/'updated' passaram a ser gravados pelo
+        // trigger do servidor (X024). O cliente não escreve mais eventos de
+        // ciclo de vida — só a trilha de operador (note/checklist).
         draftCampaignIdRef.current = id;
         setDraftCampaignId(id);
-        await logEvent(id, 'created', 'Campanha criada');
       }
 
       // X017: os destinatários são gerados NO SERVIDOR a partir do rascunho
@@ -811,7 +809,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     } finally {
       setSaving(false);
     }
-  }, [recipientSnapshotReady, canProceed, buildPayload, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, logEvent, audienceSource, selectedSegment, snapshotDraftAudience, startCampaign]);
+  }, [recipientSnapshotReady, canProceed, buildPayload, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, audienceSource, selectedSegment, snapshotDraftAudience, startCampaign]);
 
   // Serializa autosave, salvar manual e lançamento. Uma falha não bloqueia a
   // próxima operação, mas nenhuma mutação posterior começa antes do término da

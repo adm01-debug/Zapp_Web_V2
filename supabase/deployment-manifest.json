@@ -661,18 +661,18 @@
     },
     {
       "path": "supabase/functions/talkx-scheduler/index.ts",
-      "bytes": 15445,
-      "sha256": "afab211a5ea3680571702947eb39789031c9157e25fb566a8bd2e8cccbfcd97b"
+      "bytes": 14944,
+      "sha256": "c3f17fb176be463dda3332d617c710737da2ababef52ae721d721df1d7489843"
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
-      "bytes": 51769,
-      "sha256": "6438c50cdeede638ee85ef0c4a02c72e6bcfa064342f00310cffe7fd9174ceac"
+      "bytes": 54807,
+      "sha256": "914f2027d6c64b19071c1ba03ac328ede5d2c9a267c32303fb3b979b300625ac"
     },
     {
       "path": "supabase/functions/talkx-send/process-recipient.ts",
-      "bytes": 27230,
-      "sha256": "a32358516e8d9b5f52edab27ac0c0a87ba3a5dae9f785d4d358de7504a963370"
+      "bytes": 27544,
+      "sha256": "a4b5db6fc4eec0ae64e6e88f0516eddbcffb185c2e6accddf9a4ee2c5149e558"
     },
     {
       "path": "supabase/functions/voice-agent/index.ts",
@@ -1678,7 +1678,7 @@
       "name": "talkx-scheduler",
       "entrypoint": "supabase/functions/talkx-scheduler/index.ts",
       "verify_jwt": true,
-      "source_sha256": "94e7a74caf08745ed0e3e912fcc9d922cd3c00b4ebfe8f7e0b9772991e88031d",
+      "source_sha256": "1b0626a2137be9642f64c317e76c7b81710e01ea4442a5a7d46d2c07f4160c91",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/talkx-resume-policy.ts",
@@ -1691,7 +1691,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "eb3a53b61974e63fffdff12f3cd75c917dc917e4796faa2f55e6232340ddd06d",
+      "source_sha256": "ffd88d8763126ece1da41ac89198d3328430ec6c7a672c81041101ab1fb6ea85",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/effect-reconcile.ts",
@@ -1802,5 +1802,5 @@
       ]
     }
   ],
-  "manifest_sha256": "df2756efad8502b9174dee2bcd528078bac00710de95d4820c5371cbf877c1fe"
+  "manifest_sha256": "172276b6bd500d89a39b826cfff9648fd4401bd88c39b03fb4d094347f1c0b19"
 }
