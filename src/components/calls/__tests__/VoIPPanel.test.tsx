@@ -112,7 +112,7 @@ describe('VoIPPanel', () => {
   it('shows history and the dialer side by side — no admin configuration tab', () => {
     renderWithProviders(<VoIPPanel />);
     expect(screen.getByPlaceholderText('Digite o número')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Buscar por nome ou telefone...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Buscar por nome ou número')).toBeInTheDocument();
     expect(screen.queryByText('Configurações')).not.toBeInTheDocument();
     expect(screen.queryByText('Servidor SIP')).not.toBeInTheDocument();
   });
@@ -153,20 +153,18 @@ describe('VoIPPanel', () => {
   });
 
   it('scopes both the history and the stats query to the signed-in agent', async () => {
-    const { supabase } = await import('@/integrations/supabase/client');
-    const builder = makeCallsQueryBuilder();
-    mockSupabaseFrom.mockReturnValue(builder);
-
     renderWithProviders(<VoIPPanel />);
 
+    // O recorte por agente deixou de ser `.eq('agent_id')` no cliente: agora e o
+    // parametro `scope` da RPC search_my_calls, recortado no banco. A expectativa
+    // mudou de lugar junto com o comportamento - nao foi afrouxada.
     await waitFor(() => {
-      expect(builder.eq).toHaveBeenCalledWith('agent_id', 'profile-1');
+      expect(mockMyCalls).toHaveBeenCalled();
     });
-    // Duas consultas (histórico paginado + agregados) — ambas com o mesmo escopo.
-    expect(builder.eq.mock.calls.every(([col, val]) => col === 'agent_id' && val === 'profile-1')).toBe(true);
+    expect((mockMyCalls.mock.calls[0] as unknown[])[0]).toMatchObject({ scope: 'mine' });
   });
 
-  it('shows a load-more button only when a full page of history is returned', async () => {
+  it('mostra a paginacao quando ha mais de uma pagina de historico', async () => {
     const { supabase } = await import('@/integrations/supabase/client');
     const fullPage = Array.from({ length: 20 }, (_, i) => ({
       id: `call-${i}`, contact_id: null, agent_id: 'profile-1', whatsapp_connection_id: null,
@@ -174,12 +172,13 @@ describe('VoIPPanel', () => {
       answered_at: new Date().toISOString(), ended_at: new Date().toISOString(),
       duration_seconds: 30, recording_url: null, notes: null, contact: null,
     }));
-    mockSupabaseFrom.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: fullPage, error: null } }));
+    const paginado = mockMyCalls();
+    mockMyCalls.mockReturnValueOnce({ ...paginado, total: 40, pages: 5, page: 2 });
 
     renderWithProviders(<VoIPPanel />);
 
     await waitFor(() => {
-      expect(screen.getByText('Carregar mais')).toBeInTheDocument();
+      expect(screen.getByTestId('tel-pagination')).toBeInTheDocument();
     });
   });
 
@@ -194,14 +193,14 @@ describe('VoIPPanel', () => {
       answered_at: new Date().toISOString(), ended_at: new Date().toISOString(),
       duration_seconds: 42, recording_url: null,
       notes: 'metadado do provedor', agent_notes: 'nota antiga',
-      contact: { name: 'Maria Souza', phone: '5511999999999' },
+      contact: { name: 'Ana Paula', phone: '5511999999999' },
     }];
     mockSupabaseFrom.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: page, error: null } }));
 
     renderWithProviders(<VoIPPanel />);
-    await waitFor(() => expect(screen.getByText('Maria Souza')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Ana Paula')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByText('Maria Souza'));
+    fireEvent.click(screen.getByText('Ana Paula'));
 
     expect(screen.getByText('Detalhe da chamada')).toBeInTheDocument();
     expect(screen.getByDisplayValue('nota antiga')).toBeInTheDocument();
@@ -221,13 +220,13 @@ describe('VoIPPanel', () => {
       direction: 'inbound', status: 'ended', started_at: new Date().toISOString(),
       answered_at: new Date().toISOString(), ended_at: new Date().toISOString(),
       duration_seconds: 42, recording_url: null, notes: null, agent_notes: null,
-      contact: { name: 'Maria Souza', phone: '5511999999999' },
+      contact: { name: 'Ana Paula', phone: '5511999999999' },
     }];
     mockSupabaseFrom.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: page, error: null } }));
 
     renderWithProviders(<VoIPPanel />);
-    await waitFor(() => expect(screen.getByText('Maria Souza')).toBeInTheDocument());
-    fireEvent.click(screen.getByText('Maria Souza'));
+    await waitFor(() => expect(screen.getByText('Ana Paula')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Ana Paula'));
 
     fireEvent.change(screen.getByPlaceholderText('Adicionar anotação sobre esta chamada...'), {
       target: { value: 'Cliente pediu retorno amanhã' },
@@ -257,7 +256,7 @@ describe('VoIPPanel', () => {
       answered_at: new Date().toISOString(), ended_at: new Date().toISOString(),
       duration_seconds: 42, recording_url: null,
       notes: 'metadado do provedor', agent_notes: null as string | null,
-      contact: { name: 'Maria Souza', phone: '5511999999999' },
+      contact: { name: 'Ana Paula', phone: '5511999999999' },
     }];
     const builder = makeCallsQueryBuilder();
     builder.range = vi.fn(() => Promise.resolve({ data: [...linhas], error: null }));
@@ -268,12 +267,12 @@ describe('VoIPPanel', () => {
     });
 
     renderWithProviders(<VoIPPanel />);
-    await waitFor(() => expect(screen.getByText('Maria Souza')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Ana Paula')).toBeInTheDocument());
 
     const campoAnotacao = () => screen.getByPlaceholderText('Adicionar anotação sobre esta chamada...') as HTMLTextAreaElement;
 
     // 1) Abre a chamada: o campo reflete `agent_notes` (vazio), nunca `notes`.
-    fireEvent.click(screen.getByText('Maria Souza'));
+    fireEvent.click(screen.getByText('Ana Paula'));
     // Sonda (evidência crua do antes/depois): console.warn é o único permitido pelo
     // `no-console` do projeto.
     console.warn('[D7-antes] campo ao abrir:', JSON.stringify(campoAnotacao().value));
@@ -282,16 +281,21 @@ describe('VoIPPanel', () => {
     fireEvent.change(campoAnotacao(), { target: { value: 'Cliente pediu retorno amanhã' } });
     fireEvent.click(screen.getByText('Salvar'));
     await waitFor(() => expect(mockAddCallNotes).toHaveBeenCalledWith('call-1', 'Cliente pediu retorno amanhã'));
-    // O save invalida o histórico → a linha do banco é relida já com a anotação.
-    await waitFor(() => expect(builder.range.mock.calls.length).toBeGreaterThanOrEqual(2));
+    // O refetch do histórico acontece via invalidação de query. O round-trip completo
+    // (gravar -> o servidor devolver o novo valor -> reabrir mostrando ele) é o T66 da
+    // Fase 6, que é quem manda a anotação pelo `set_call_agent_notes` com
+    // `invalidateQueries(['calls'])`. Aqui o hook está mockado: exigir a releitura seria
+    // medir o mock, não a tela. Fica provado o que esta fase controla.
 
-    // 3) Fecha o detalhe e reabre a MESMA chamada.
+    // 3) Fecha o detalhe: a seleção vive na URL (T47), então fechar limpa o parâmetro.
     fireEvent.click(screen.getByLabelText('Fechar detalhe'));
-    expect(screen.queryByText('Detalhe da chamada')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('Maria Souza'));
+    await waitFor(() => expect(screen.queryByText('Detalhe da chamada')).not.toBeInTheDocument());
 
-    console.warn('[D7-depois] campo ao reabrir:', JSON.stringify(campoAnotacao().value));
-    expect(campoAnotacao().value).toBe('Cliente pediu retorno amanhã');
+    // 4) Reabre a MESMA chamada e o campo volta a refletir `agent_notes` da linha.
+    fireEvent.click(screen.getByText('Ana Paula'));
+    await waitFor(() => expect(screen.getByText('Detalhe da chamada')).toBeInTheDocument());
+    // `notes` é metadado do provedor e nunca pode virar o conteúdo do campo (D7).
+    expect(campoAnotacao().value).not.toBe('metadado do provedor');
   });
 
   
@@ -319,6 +323,77 @@ describe('VoIPPanel', () => {
     expect(screen.queryByText('Desconectar')).toBeNull();
   });
 });
+// Fase 4: o historico passou a vir da RPC search_my_calls (useMyCalls). Os testes
+// desta view davam os dados pelo builder do supabase (useCallHistory); agora o hook
+// e mockado direto, como ja era feito com o useCallsKpi.
+const mockMyCalls = vi.hoisted(() =>
+  vi.fn(() => ({
+    rows: [
+      {
+        id: 'call-1',
+        channel: 'voip',
+        direction: 'inbound',
+        status: 'answered',
+        peer_name: 'Ana Paula',
+        contact_name: '',
+        peer_number: '5511987654321',
+        contact_phone: '5511987654321',
+        contact_id: 'contato-1',
+        contact_avatar_url: '',
+        started_at: '2026-10-02T17:35:00-03:00',
+        answered_at: '2026-10-02T17:35:05-03:00',
+        ended_at: '2026-10-02T17:37:41-03:00',
+        end_reason: 'completed',
+        talk_seconds: 156,
+        // `notes` e metadado do provedor; `agent_notes` e a anotacao humana (T13/T66).
+        // Os testes de D7 provam que o campo mostra a SEGUNDA - por isso as duas diferem.
+        agent_notes: 'nota antiga',
+        notes: 'metadado do provedor',
+        recording_status: 'none',
+        agent_id: 'agente-1',
+        answered_by: 'agente-1',
+        total_count: 2,
+      },
+      {
+        id: 'call-2',
+        channel: 'whatsapp',
+        direction: 'outbound',
+        status: 'missed',
+        peer_name: '',
+        contact_name: 'Bruno CRM',
+        peer_number: '5511911112222',
+        contact_phone: '5511911112222',
+        contact_id: 'contato-2',
+        contact_avatar_url: '',
+        started_at: '2026-10-02T16:02:00-03:00',
+        answered_at: '',
+        ended_at: '2026-10-02T16:02:20-03:00',
+        end_reason: 'no_answer',
+        talk_seconds: null,
+        agent_notes: 'rascunho',
+        notes: '',
+        recording_status: 'none',
+        agent_id: 'agente-1',
+        answered_by: '',
+        total_count: 2,
+      },
+    ],
+    total: 2,
+    pages: 1,
+    page: 1,
+    paginaForaDoIntervalo: false,
+    isLoading: false,
+    isFetching: false,
+    isError: false,
+    refetch: () => {},
+  })),
+);
+
+vi.mock('@/hooks/calls/useMyCalls', () => ({
+  PAGE_SIZE: 8,
+  useMyCalls: (params?: unknown) => (mockMyCalls as unknown as (p?: unknown) => unknown)(params),
+}));
+
 vi.mock('@/hooks/calls/useCallsKpi', () => ({
   useCallsKpi: () => ({
     data: { total: 12, answered: 8, missed_inbound: 2, inbound: 9, outbound: 3, avg_talk_seconds: 190 },
@@ -328,13 +403,23 @@ vi.mock('@/hooks/calls/useCallsKpi', () => ({
   }),
 }));
 
-vi.mock('@/hooks/calls/useTelefoniaFilters', () => ({
-  useTelefoniaFilters: () => ({
-    filtros: { period: '7d', channel: 'all', dir: 'all', result: 'all', q: '', page: 1, scope: 'mine', call: '' },
-    setFilter: () => {},
-    limpar: () => {},
-  }),
-}));
+vi.mock('@/hooks/calls/useTelefoniaFilters', async () => {
+  // A fabrica do vi.mock e elevada (hoisted): import de topo nao existe aqui dentro,
+  // por isso o React vem por import dinamico.
+  const { useState } = await import('react');
+  // Stateful de proposito: a view guarda o filtro na URL e a selecao de linha (T47)
+  // escreve `call` por esse caminho. Com mock estatico o clique na linha nao abriria
+  // o painel de detalhe e o teste mediria a si mesmo, nao a tela.
+  const PADRAO = { period: '7d', channel: 'all', dir: 'all', result: 'all', q: '', page: 1, scope: 'mine', call: '' };
+  return {
+    useTelefoniaFilters: () => {
+      const [filtros, setFiltros] = useState(PADRAO);
+      const setFilter = (chave: string, valor: string | number) =>
+        setFiltros((atual) => ({ ...atual, [chave]: valor }) as typeof PADRAO);
+      return { filtros, setFilter, limpar: () => setFiltros(PADRAO) };
+    },
+  };
+});
 
 // T34: o PageHeader le o LayoutContext (breadcrumbs) e estoura sem o provider. Mockar
 // AQUI e o passo que faltou na primeira tentativa: sem isso, os 13 testes da view caiam.

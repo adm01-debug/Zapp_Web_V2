@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const [sender, linkFn, sharedValidation, linksMigration, idorMigration, caseInsensitiveMigration, personalizeKit, contactService, campaignWizard, wizardDelivery, messagingPersonalize, recipientProcessor] = await Promise.all([
+const [sender, linkFn, sharedValidation, linksMigration, idorMigration, caseInsensitiveMigration, personalizeKit, contactService, campaignWizard, wizardDelivery, messagingPersonalize, recipientProcessor, x021Migration] = await Promise.all([
   readFile(new URL('../../supabase/functions/talkx-send/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/talkx-link/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/_shared/validation.ts', import.meta.url), 'utf8'),
@@ -19,6 +19,8 @@ const [sender, linkFn, sharedValidation, linksMigration, idorMigration, caseInse
   // X011: o corpo por-destinatário (onde o `personalize` real é chamado com o
   // trackingUrl) saiu de index.ts para process-recipient.ts.
   readFile(new URL('../../supabase/functions/talkx-send/process-recipient.ts', import.meta.url), 'utf8'),
+  // X022: a gravação de conversão por RPC (com o IDOR do link) vive na migration X021.
+  readFile(new URL('../../supabase/migrations/20261002691230_talkx_v4_x021_links_conversoes_investimento.sql', import.meta.url), 'utf8'),
 ]);
 
 test('Talk X {{link}} resolves to a real per-recipient tracking URL at the real send call site', () => {
@@ -30,11 +32,12 @@ test('Talk X {{link}} resolves to a real per-recipient tracking URL at the real 
   assert.match(sender, /from\("talkx_links"\)/);
   assert.match(sender, /order\("created_at", \{ ascending: true \}\)/);
   assert.match(sender, /const trackingUrlFor = \(recipientId: string\)/);
-  // X020: a base agora vem de TALKX_LINK_BASE_URL (ou supabaseUrl) — o path
-  // `functions/v1/talkx-link` e a query `s=slug&r=recipient` continuam iguais.
+  // X022: a base vem de TALKX_LINK_BASE_URL (domínio próprio, rewrite /l/:slug no
+  // vercel.json) ou, sem o secret, do caminho direto da edge (?s=slug&r=recipient).
   assert.match(sender, /TALKX_LINK_BASE_URL/);
   assert.match(sender, /functions\/v1\/talkx-link/);
-  assert.match(sender, /\?s=\$\{encodeURIComponent\(trackingLink\.slug\)\}&r=\$\{encodeURIComponent\(recipientId\)\}/);
+  assert.match(sender, /\/l\/\$\{encodeURIComponent\(slug\)\}\?r=\$\{encodeURIComponent\(recipientId\)\}/);
+  assert.match(sender, /\?s=\$\{encodeURIComponent\(slug\)\}&r=\$\{encodeURIComponent\(recipientId\)\}/);
   const realCallIdx = recipientProcessor.indexOf('const personalized = personalize(');
   const trackingArgIdx = recipientProcessor.indexOf('trackingUrlFor(recipient.id as string)');
   assert.ok(realCallIdx > -1 && trackingArgIdx > -1, 'o call site real de personalize() e o argumento trackingUrlFor devem existir');
@@ -60,11 +63,13 @@ test('Talk X personalize() resolves every placeholder in a single pass over the 
   assert.ok(singlePassIdx > -1, 'personalize() deve resolver tudo num unico regex.replace() sobre o template original');
   const saudacaoIdx = messagingPersonalize.indexOf('key === "saudacao"', singlePassIdx);
   const linkIdx = messagingPersonalize.indexOf('key === "link"', singlePassIdx);
+  // X022: {{link:rotulo}} resolve depois do {{link}} e antes do dado de contato.
+  const linkByLabelIdx = messagingPersonalize.indexOf('key.startsWith("link:")', singlePassIdx);
   const contactValuesIdx = messagingPersonalize.indexOf('Object.prototype.hasOwnProperty.call(contactValues, key)', singlePassIdx);
   const customValuesIdx = messagingPersonalize.indexOf('normalizedCustomValues.has(key)', singlePassIdx);
   assert.ok(
-    saudacaoIdx > singlePassIdx && linkIdx > saudacaoIdx && contactValuesIdx > linkIdx && customValuesIdx > contactValuesIdx,
-    'ordem de resolucao dentro do passe unico: saudacao, link, dado de contato, campo customizado',
+    saudacaoIdx > singlePassIdx && linkIdx > saudacaoIdx && linkByLabelIdx > linkIdx && contactValuesIdx > linkByLabelIdx && customValuesIdx > contactValuesIdx,
+    'ordem de resolucao dentro do passe unico: saudacao, link, link:rotulo, dado de contato, campo customizado',
   );
 });
 
@@ -175,7 +180,12 @@ test('Talk X link click IP hash salt is not a hardcoded public literal', () => {
 });
 
 test('Talk X link click/convert reject cross-campaign recipient and link_id (IDOR)', () => {
-  assert.match(linkFn, /link_id does not belong to recipient's campaign/);
+  // X022: a gravação de conversão saiu do INSERT inline do edge para a RPC
+  // record_talkx_conversion (migration X021), que rejeita link de outra campanha
+  // (talkx_conversion_link_campaign_mismatch). O clique segue com o IDOR na
+  // migration de origem.
+  assert.match(linkFn, /supabase\.rpc\("record_talkx_conversion"/);
+  assert.match(x021Migration, /talkx_conversion_link_campaign_mismatch/);
   assert.match(idorMigration, /v_recipient_campaign IS NULL OR v_recipient_campaign <> v_link\.campaign_id/);
   assert.match(idorMigration, /p_recipient := NULL/);
 });

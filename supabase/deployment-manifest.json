@@ -12,7 +12,6 @@
     "verify_jwt_true": 57,
     "verify_jwt_false": 13
   },
-  "orphan_allowlist": ["sicoob-bridge", "sicoob-bridge-reply"],
   "source_files": [
     {
       "path": "supabase/functions/_shared/ai-audio-authz.ts",
@@ -221,8 +220,8 @@
     },
     {
       "path": "supabase/functions/_shared/messaging/personalize.ts",
-      "bytes": 9347,
-      "sha256": "c21346f393849156b7f61523bc1c041277e1e52f53d01eabc3c58e5fad34ce4d"
+      "bytes": 9884,
+      "sha256": "04f9405526d62f1d9b42278697073b6d4451dfe4e51a6644d6cd51dd257fb33a"
     },
     {
       "path": "supabase/functions/_shared/messaging/phone.ts",
@@ -636,8 +635,8 @@
     },
     {
       "path": "supabase/functions/talkx-link/index.ts",
-      "bytes": 6103,
-      "sha256": "59b47f29ac63635c847596d26982b39270e9e9a677d21a0ec18933718be7d84d"
+      "bytes": 10504,
+      "sha256": "a59b1b67a392b3e347f1ddc975f32de2d5a0b3bd5618d580eb665fca7d048c15"
     },
     {
       "path": "supabase/functions/talkx-report/index.ts",
@@ -651,13 +650,13 @@
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
-      "bytes": 49642,
-      "sha256": "0e16c29e90ca414bea744cb8feda7ee6c3c822ec10e08f21e10647d595c46dd7"
+      "bytes": 51769,
+      "sha256": "6438c50cdeede638ee85ef0c4a02c72e6bcfa064342f00310cffe7fd9174ceac"
     },
     {
       "path": "supabase/functions/talkx-send/process-recipient.ts",
-      "bytes": 27094,
-      "sha256": "844bfccb27e908c785acf67bbe432feeddeda902cf1bf8a7a2ef688bf652d721"
+      "bytes": 27230,
+      "sha256": "a32358516e8d9b5f52edab27ac0c0a87ba3a5dae9f785d4d358de7504a963370"
     },
     {
       "path": "supabase/functions/voice-agent/index.ts",
@@ -1442,7 +1441,7 @@
       "name": "multiplix-dispatch",
       "entrypoint": "supabase/functions/multiplix-dispatch/index.ts",
       "verify_jwt": true,
-      "source_sha256": "e7e68499f366a4619953432f9ac84243801fc6ed90527684dc758ffb5a936076",
+      "source_sha256": "ddc20e7e3f8ef1b1897027f9657f617960c56a83e45c9dd1f44875819526c779",
       "source_files": [
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1477,7 +1476,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "870fc33016e62e31573cebc09557e300d644683a546b5b66ed7fb6ffd1491b60",
+      "source_sha256": "ef32c0003bb0fa733a586fbaaa24a2b5be51d509c4ee062bacbcecc9811c3a39",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1605,7 +1604,7 @@
       "name": "talkx-link",
       "entrypoint": "supabase/functions/talkx-link/index.ts",
       "verify_jwt": false,
-      "source_sha256": "a2d88c40538dc8b4b458be8bc0dca444d730340a1812d99ad1c6973313fff130",
+      "source_sha256": "bfda47cc709b983a9497f0f029248170501f4e5829c168796ab2840d425ddfb7",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1641,7 +1640,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "bb0f0ae845fa8dd5643fc4f274fef2c4ca86e297b194991adc2fb91c80ebab91",
+      "source_sha256": "cdb35bd35a56506d97f03ff85744e5c29c20ce8d246dfda1033069fa29b37f3d",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/effect-reconcile.ts",
@@ -1752,5 +1751,5 @@
       ]
     }
   ],
-  "manifest_sha256": "273731154210d95fa77348aef0142398bd6bb9e2cc93c6e2102a64388f588657"
+  "manifest_sha256": "93618f7319d33f7451713b013082abd8127543d916bb0224b7eb0662ceccc739"
 }
