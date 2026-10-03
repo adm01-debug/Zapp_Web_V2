@@ -1,6 +1,6 @@
 import {
   isExpectedExternalAnonKey, isExpectedExternalServerKey, isExpectedExternalUrl, normalizePhone, parseSyncResult, validateMutation, validateRpc, validIdentifier,
-  extractContact360Id,
+  extractContact360Id, extractSidebarContactId,
 } from '../crm-integration-contract.ts';
 
 Deno.test('normalizes valid phones and rejects malformed values', () => {
@@ -26,6 +26,9 @@ Deno.test('external configuration is pinned to the companies CRM project', () =>
 
 Deno.test('RPC contract is fail-closed', () => {
   if (validateRpc('get_contact_360_by_phone', { p_phone: '5511999990000' })) throw new Error('valid RPC rejected');
+  if (validateRpc('get_contact_sidebar_by_phone', { p_phone: '5511999990000' })) throw new Error('valid sidebar RPC rejected');
+  if (!validateRpc('get_contact_sidebar_by_phone', { p_phone: '5511999990000', injected: true })) throw new Error('sidebar RPC param injection accepted');
+  if (!validateRpc('get_contact_sidebar_by_phone', { p_phone: '123' })) throw new Error('sidebar RPC short phone accepted');
   if (!validateRpc('unknown_rpc', {})) throw new Error('unknown RPC accepted');
   if (!validateRpc('get_companies_by_phones_batch', { p_phones: Array(101).fill('5511999990000') })) throw new Error('oversized batch accepted');
   if (!validateRpc('search_contacts_advanced', { p_page: -1, p_page_size: 1000 })) throw new Error('invalid pagination accepted');
@@ -49,6 +52,17 @@ Deno.test('mutation contract limits tables, actions, fields and match', () => {
   if (!validateMutation('companies', 'update', { status: 'ativo' }, { id: 'a', tenant: 'b' })) throw new Error('broad match accepted');
   if (!validateMutation('contacts', 'insert', { notes: { nested: true } }, undefined)) throw new Error('nested mutation accepted');
   if (!validateMutation('contacts', 'insert', { notes: 'x'.repeat(5001) }, undefined)) throw new Error('oversized mutation accepted');
+});
+
+Deno.test('sidebar contact id is extracted only from a found UUID payload', () => {
+  const id = '11111111-2222-3333-4444-555555555555';
+  if (extractSidebarContactId({ found: true, contact_id: id }) !== id) throw new Error('valid sidebar id rejected');
+  if (extractSidebarContactId({ found: false }) !== null) throw new Error('not-found payload accepted');
+  if (extractSidebarContactId({ found: true }) !== null) throw new Error('missing contact_id accepted');
+  if (extractSidebarContactId({ found: true, contact_id: 'not-a-uuid' }) !== null) throw new Error('non-UUID contact_id accepted');
+  if (extractSidebarContactId({ found: true, contact_id: 42 }) !== null) throw new Error('numeric contact_id accepted');
+  if (extractSidebarContactId(null) !== null) throw new Error('null payload accepted');
+  if (extractSidebarContactId('x') !== null) throw new Error('string payload accepted');
 });
 
 Deno.test('identifier validation rejects PostgREST injection syntax', () => {

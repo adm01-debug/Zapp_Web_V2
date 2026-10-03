@@ -3,13 +3,14 @@ import {
   enforceRateLimit, errorResponse, getClientIP, handleCors, isValidUUID, jsonResponse, requireAuth, requireEnv,
 } from '../_shared/validation.ts';
 import {
-  CRM_TABLE_ALLOWLIST, extractContact360Id, FILTER_OPERATORS, isExpectedExternalServerKey, isExpectedExternalUrl,
+  CRM_TABLE_ALLOWLIST, extractContact360Id, extractSidebarContactId, FILTER_OPERATORS, isExpectedExternalServerKey, isExpectedExternalUrl,
   normalizePhone, parseSyncResult, validateMutation, validateRpc, validIdentifier,
 } from '../_shared/crm-integration-contract.ts';
 import { normalizeSentiment, type Sentiment } from '../_shared/ai-vocabulary.ts';
 
 const TIMEOUT_MS = 12_000;
 const MAX_REQUEST_BYTES = 64 * 1024;
+const MAX_RESPONSE_BYTES = 512_000;
 const MAX_BATCH_SIZE = 10;
 
 /**
@@ -124,6 +125,89 @@ async function withTimeout<T>(operation: PromiseLike<T>): Promise<T> {
   } finally {
     if (timer) clearTimeout(timer);
   }
+}
+
+type ContactLookupKind = '360' | 'intelligence' | 'sidebar';
+
+interface ContactLookupDependencies {
+  getContact: (contactId: string) => PromiseLike<{
+    data: { id: string; phone: string | null } | null;
+    error: { code?: string } | null;
+  }>;
+  getStableLink: (contactId: string) => PromiseLike<{
+    data: { external_contact_id: string; normalized_phone: string | null } | null;
+    error: { code?: string } | null;
+  }>;
+  callRpc: (rpc: string, params: { p_phone: string }) => PromiseLike<{
+    data: unknown;
+    error: { code?: string } | null;
+  }>;
+  now?: () => number;
+  logSidebar?: (entry: { event: 'crm_sidebar_lookup'; found: boolean; ms: number }) => void;
+}
+
+export type ContactLookupResolution =
+  | { ok: true; data: unknown }
+  | { ok: false; status: 400 | 404 | 409; error: string };
+
+/**
+ * Núcleo testável do lookup individual. Mantém validação, vínculo estável,
+ * limite de resposta e telemetria sem PII em um único caminho para os três
+ * tipos de consulta.
+ */
+export async function resolveContactLookup(
+  input: { contactId: unknown; lookup: unknown },
+  deps: ContactLookupDependencies,
+): Promise<ContactLookupResolution> {
+  if (!isValidUUID(input.contactId) || !['360', 'intelligence', 'sidebar'].includes(String(input.lookup))) {
+    return { ok: false, status: 400, error: 'Contact lookup is invalid' };
+  }
+
+  const contactId = input.contactId as string;
+  const lookup = input.lookup as ContactLookupKind;
+  const started = deps.now?.() ?? performance.now();
+  const { data: contact, error: contactError } = await deps.getContact(contactId);
+  if (contactError || !contact) return { ok: false, status: 404, error: 'Contact not found or not visible' };
+
+  const phone = normalizePhone(contact.phone);
+  if (!phone) return { ok: false, status: 409, error: 'Contact phone is invalid' };
+
+  const { data: stableLink, error: linkError } = await deps.getStableLink(contact.id);
+  if (linkError) throw new Error(`CRM_LINK_READ:${linkError.code || 'unknown'}`);
+  if (stableLink?.normalized_phone && stableLink.normalized_phone !== phone) {
+    return { ok: false, status: 409, error: 'Contact CRM identity requires reverification' };
+  }
+
+  const rpc = lookup === '360'
+    ? 'get_contact_360_by_phone'
+    : lookup === 'intelligence'
+      ? 'get_contact_intelligence_by_phone'
+      : 'get_contact_sidebar_by_phone';
+  const result = await withTimeout(deps.callRpc(rpc, { p_phone: phone }));
+  if (result.error) throw new Error(`CRM_RPC:${result.error.code || 'unknown'}`);
+
+  if (stableLink && (
+    (lookup === '360' && extractContact360Id(result.data) !== stableLink.external_contact_id) ||
+    (lookup === 'sidebar' && extractSidebarContactId(result.data) !== stableLink.external_contact_id)
+  )) {
+    return { ok: false, status: 409, error: 'Contact CRM identity mismatch' };
+  }
+
+  const serialized = JSON.stringify(result.data);
+  if (new TextEncoder().encode(serialized).byteLength > MAX_RESPONSE_BYTES) {
+    throw new Error('CRM_RESPONSE_TOO_LARGE');
+  }
+
+  if (lookup === 'sidebar') {
+    const found = typeof result.data === 'object' && result.data !== null &&
+      (result.data as { found?: unknown }).found === true;
+    deps.logSidebar?.({
+      event: 'crm_sidebar_lookup',
+      found,
+      ms: Math.round((deps.now?.() ?? performance.now()) - started),
+    });
+  }
+  return { ok: true, data: result.data };
 }
 
 interface OutboxRow {
@@ -378,27 +462,20 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
         data = context || { status: 'not_linked', company: null, source: { linked: Boolean(stableLink), consultedAt: new Date().toISOString() } };
       }
     } else if (action === 'contactLookup') {
-      if (isServiceRequest || isCronRequest || !isValidUUID(body.contactId) ||
-        !['360', 'intelligence'].includes(String(body.lookup))) return errorResponse('Contact lookup is invalid', 400, req);
-      const { data: contact, error: contactError } = await canonicalUser.from('contacts')
-        .select('id,phone').eq('id', body.contactId).maybeSingle();
-      if (contactError || !contact) return errorResponse('Contact not found or not visible', 404, req);
-      const phone = normalizePhone(contact.phone);
-      if (!phone) return errorResponse('Contact phone is invalid', 409, req);
-      const { data: stableLink, error: linkError } = await canonical.from('crm_contact_links')
-        .select('external_contact_id,normalized_phone').eq('zapp_contact_id', contact.id).maybeSingle();
-      if (linkError) throw new Error(`CRM_LINK_READ:${linkError.code || 'unknown'}`);
-      if (stableLink?.normalized_phone && stableLink.normalized_phone !== phone) {
-        return errorResponse('Contact CRM identity requires reverification', 409, req);
-      }
-      const rpc = body.lookup === '360' ? 'get_contact_360_by_phone' : 'get_contact_intelligence_by_phone';
-      const result = await withTimeout(externalClient.rpc(rpc, { p_phone: phone }));
-      if (result.error) throw new Error(`CRM_RPC:${result.error.code || 'unknown'}`);
-      if (stableLink && body.lookup === '360' && extractContact360Id(result.data) !== stableLink.external_contact_id) {
-        return errorResponse('Contact CRM identity mismatch', 409, req);
-      }
-      if (JSON.stringify(result.data).length > 512_000) throw new Error('CRM_RESPONSE_TOO_LARGE');
-      data = result.data;
+      if (isServiceRequest || isCronRequest) return errorResponse('Contact lookup is invalid', 400, req);
+      const lookup = await resolveContactLookup(
+        { contactId: body.contactId, lookup: body.lookup },
+        {
+          getContact: (contactId) => canonicalUser.from('contacts')
+            .select('id,phone').eq('id', contactId).maybeSingle(),
+          getStableLink: (contactId) => canonical.from('crm_contact_links')
+            .select('external_contact_id,normalized_phone').eq('zapp_contact_id', contactId).maybeSingle(),
+          callRpc: (rpc, params) => externalClient.rpc(rpc, params),
+          logSidebar: (entry) => console.warn(JSON.stringify(entry)),
+        },
+      );
+      if (!lookup.ok) return errorResponse(lookup.error, lookup.status, req);
+      data = lookup.data;
     } else if (action === 'contactLookupBatch') {
       if (isServiceRequest || isCronRequest || !Array.isArray(body.contactIds) || body.contactIds.length < 1 ||
         body.contactIds.length > 100 || body.contactIds.some((id) => !isValidUUID(id))) {

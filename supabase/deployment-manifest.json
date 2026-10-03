@@ -12,7 +12,6 @@
     "verify_jwt_true": 57,
     "verify_jwt_false": 13
   },
-  "orphan_allowlist": ["sicoob-bridge", "sicoob-bridge-reply"],
   "source_files": [
     {
       "path": "supabase/functions/_shared/ai-audio-authz.ts",
@@ -101,8 +100,8 @@
     },
     {
       "path": "supabase/functions/_shared/crm-integration-contract.ts",
-      "bytes": 8856,
-      "sha256": "fe7af6c83ab19c85de7e1581c4d32862fbfb35f63b8fbac6ec852ca958590e4c"
+      "bytes": 9472,
+      "sha256": "2f5e57e0fc9589205a68cbf7ad143b295e39fb1eed7e7d363c69f9fb01402980"
     },
     {
       "path": "supabase/functions/_shared/cron-secret-auth.ts",
@@ -421,8 +420,8 @@
     },
     {
       "path": "supabase/functions/crm-integration/index.ts",
-      "bytes": 33009,
-      "sha256": "93515d1d1629feb00ad5366d967bc8c328f26a2f9264051266357ef12c62c644"
+      "bytes": 35588,
+      "sha256": "c5cea0dbd3dcd2ff2459979addadc6a2eaab21ec8bf114fcd70a08f12a9cf8f5"
     },
     {
       "path": "supabase/functions/csp-report/index.ts",
@@ -1084,7 +1083,7 @@
       "name": "crm-integration",
       "entrypoint": "supabase/functions/crm-integration/index.ts",
       "verify_jwt": false,
-      "source_sha256": "71b3023e44457430703e6e9bf9ebd886bd7864c9bd7158e3060e1ba1d87cbd5c",
+      "source_sha256": "0163714c618153161b0362cfd625c872f86309316d28d5095ff0aeabb3fa7014",
       "source_files": [
         "supabase/functions/_shared/ai-vocabulary.ts",
         "supabase/functions/_shared/crm-integration-contract.ts",
@@ -1429,7 +1428,7 @@
       "name": "multiplix-audience",
       "entrypoint": "supabase/functions/multiplix-audience/index.ts",
       "verify_jwt": true,
-      "source_sha256": "a3e84e30f14cd19235610823fbc474725c09af0bec7206793f958ef830e7b091",
+      "source_sha256": "c9bf7d3eb24e247b4e94ca17114afd4df6c25102c3f00eee12549846de4b6b24",
       "source_files": [
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1442,7 +1441,7 @@
       "name": "multiplix-dispatch",
       "entrypoint": "supabase/functions/multiplix-dispatch/index.ts",
       "verify_jwt": true,
-      "source_sha256": "76ce65f3926e08c2296114775d041ba33f58df5a0f6ce2a80403f6c9d0e78e01",
+      "source_sha256": "ddc20e7e3f8ef1b1897027f9657f617960c56a83e45c9dd1f44875819526c779",
       "source_files": [
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1752,5 +1751,5 @@
       ]
     }
   ],
-  "manifest_sha256": "8bfc874de5f6cd96775e34808d1a892908305602ae9257f4791f1066686fe5bb"
+  "manifest_sha256": "93618f7319d33f7451713b013082abd8127543d916bb0224b7eb0662ceccc739"
 }
