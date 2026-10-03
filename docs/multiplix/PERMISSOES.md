@@ -258,3 +258,29 @@ Escopo forjado no corpo: o vendedor mandou `["admin"]` e continuou contando **5.
 > contas devolvem **exatamente o mesmo** número para os 4 filtros — não há separação
 > fina entre os perfis com a matriz como está escrita (ver §3).
 
+## Voz (F64) — quem enxerga qual voz
+
+`multiplix_voice_grants` concede o uso de uma voz **por papel** (`roles`, enum `app_role`) **ou por
+perfil** (`perfis`, uuid de `profiles`), com `origem` (o contrato/autorização) e `revoked_at`. A
+revogação é a única forma de tirar o acesso: corta **a lista** (`multiplix-voices` → `voices.list`,
+que responde "quais vozes eu posso usar", e por isso **não** oferece voz revogada nem ao admin) e
+corta **a recuperação do asset** (`assets.sign` → `403`) mesmo que o áudio continue no bucket.
+
+Duas armadilhas medidas na implementação, que valem para qualquer tabela nova do módulo:
+
+1. **Policy que lê outra tabela sofre a RLS dessa outra tabela.** A policy de leitura de
+   `multiplix_voice_assets` consulta `multiplix_voice_grants`; como a RLS de `multiplix_voice_grants`
+   já filtra `revoked_at IS NULL` para o chamador, a checagem de revogação escrita na policy dos
+   ativos fica **mascarada** — mutar só ela não derruba nenhum teste. Por isso o red-first muta a
+   policy de `multiplix_voice_grants` (`scripts/db-audit/f64-voz-assets-e-grants.test.sh`).
+2. **`authenticated` não lê `user_roles`.** Policy escrita com `exists (select 1 from user_roles ...)`
+   funciona em teste de fixture e **quebra em produção** com `permission denied for table user_roles`.
+   O padrão do módulo é chamar `public.has_role(auth.uid(), papel)` e
+   `public.is_admin_or_supervisor(auth.uid())` — ambas `SECURITY DEFINER`.
+
+ACL de `multiplix_voice_assets`/`multiplix_voice_grants`: `anon` fora; `authenticated` **só
+`SELECT`** (as policies apenas leem — quem grava é a edge, com a service key); `service_role` no
+módulo. A edge `multiplix-voices` usa o cliente service e **reimplementa a mesma regra de forma
+explícita** (`grantReachesCaller`/`canRecoverAsset`, testadas sem banco em `index.test.ts`): a policy
+é a segunda camada, para quem consultar a tabela por outro caminho.
+
