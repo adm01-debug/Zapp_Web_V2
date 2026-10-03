@@ -728,9 +728,13 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [ ] **E90** · B · G-23 · Notificação de falha na `main` por WhatsApp via N8N (webhook `workflow_run` →
   Evolution GO `PRINCIPAL` → número do Joaquim), só para `conclusion: failure` em `e2e-logado`, `db-live-guard`,
   `deploy-functions`, `types-sync`, com dedupe de 1 h por workflow. Verificação: forçar 1 falha → 1 mensagem.
-- [ ] **E91** · B · G-36 · `branch-hygiene-audit.yml`: além do Job Summary, atualizar o corpo da issue #378 (ou abrir
+- [x] **E91** · B · G-36 · `branch-hygiene-audit.yml`: além do Job Summary, atualizar o corpo da issue #378 (ou abrir
   `[branch-hygiene]`) com a tabela; listar também PRs abertas há > 7 dias sem push (hoje #1153, #1206 de 29/09).
   Verificação: issue atualizada na próxima segunda.
+  **FEITO 2026-10-03** (PR do repo, ver `docs/audits/e91-branch-hygiene-issue-2026-10-03.md`): escolhida a opção
+  `[branch-hygiene]` (o upsert idempotente já é o padrão da casa em `[kpi-actions]`), então a #378 fica intacta como
+  registro. Corte passou de 14 dias por **criação** para 7 dias por **`updatedAt`** = "sem push", que é o que a etapa
+  pede. Executado de verdade: issue **#1810** criada, 2ª execução atualizou (não duplicou).
 - [ ] **E92** · C · G-38 · Corrigir `.github/ISSUE_TEMPLATE/config.yml` (URL do repo, remover telefone placeholder) e
   o PR template (tirar "staging"; adicionar "Migration? → arquivo + ledger + catálogo" e "Edge? → disparar
   deploy-functions após merge"). Verificação: revisão.
