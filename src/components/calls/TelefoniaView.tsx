@@ -20,6 +20,7 @@ import { useCalls } from '@/hooks/communication/useCalls';
 import { useCallHistory, type CallHistoryRow as Call, type CallHistoryFilters, type CallResultFilter } from '@/hooks/communication/useCallHistory';
 import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
 import { claimLeadership } from '@/lib/calls/tabLeaderStore';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 const DIRECTION_OPTIONS: { value: 'all' | 'inbound' | 'outbound'; label: string }[] = [
   { value: 'all', label: 'Todas' },
@@ -158,15 +159,14 @@ export function TelefoniaView() {
 
   return (
     <div data-testid="tel-view" className="w-full flex flex-col gap-4 min-w-0">
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <Phone className="w-6 h-6 text-primary" />
-          Telefonia
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Suas ligações por VoIP e WhatsApp
-        </p>
-      </motion.div>
+      {/* T34: header da tela passa a ser o PageHeader do app, na variante plain, com o icone
+          que o T34 acrescentou la. O motion.div local saiu. O topRight entra no T35. */}
+      <PageHeader
+        variant="plain"
+        icon={<Phone className="w-6 h-6 text-primary" />}
+        title="Telefonia"
+        subtitle="Suas ligações por VoIP e WhatsApp"
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">

@@ -293,3 +293,14 @@ describe('VoIPPanel', () => {
     expect(screen.getByText('Conectar SIP').closest('button')).toBeDisabled();
   });
 });
+// T34: o PageHeader le o LayoutContext (breadcrumbs) e estoura sem o provider. Mockar
+// AQUI e o passo que faltou na primeira tentativa: sem isso, os 13 testes da view caiam.
+vi.mock('@/components/layout/PageHeader', () => ({
+  PageHeader: ({ title, subtitle }: { title?: string; subtitle?: string }) => (
+    <div data-testid="page-header">
+      {title}
+      {subtitle ? <p>{subtitle}</p> : null}
+    </div>
+  ),
+}));
+
