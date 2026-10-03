@@ -385,11 +385,11 @@ Folga atual: initial 330,6/350 · largest 486/700 · total 3.954/4.200.
 ```
 - [x] `performance-budget.json` já apertado (340/550/4100, ajustes de 25/09) — meta cumprida
 
-### E34 🟡 vendor-ui eager: 137,5 KB gzip (radix + framer-motion + cva)
+### E34 🟡 vendor-ui eager: 107,5 KB gzip (a premissa de 137,5 KB estava defasada)
 Maior chunk inicial restante. Medir quanto o entry realmente usa; candidatos: adiar
 `framer-motion` para rotas que animam; revisar barrels de `components/ui`.
-- [ ] Análise de composição commitada (rolldown stats)
-- [ ] Meta: initial-js ≤ 300 KB **ou** justificativa técnica por escrito do porquê não
+- [x] Análise de composição commitada — ✅ 03/10: `docs/audits/vendor-ui-composicao-2026-10-03.md`. O `vendor-ui` (107,5 KB gzip, **não** 137,5 — a premissa da etapa estava 30 KB defasada) carrega `@radix-ui` + `framer-motion`; o motion entra no initial por 3 consumidores que renderizam na 1ª pintura (`SidebarNavGroup` = navegação, `PageTemplate`, `skip-link`)
+- [x] Meta: initial-js ≤ 300 KB **ou** justificativa técnica por escrito — ✅ 03/10, **pela segunda via**, com dois experimentos medidos: (1) separar `framer-motion` em chunk próprio → **338,1 KB** (piorou 0,3); (2) remover o agrupamento manual → **439,5 KB** (estoura o budget: o chunk manual é o que *segura* o initial). Chegar a ≤300 exige reescrever as animações de navegação/template sem `framer-motion` — muda comportamento, é trabalho próprio. **Estado atual: 337,8 KB** com margem de só 3,2 KB (achado registrado no relatório)
 
 ### E35 🟢 Prefetch das rotas quentes
 - [ ] `modulepreload`/prefetch para Inbox e Chat medido (sem regredir initial)
