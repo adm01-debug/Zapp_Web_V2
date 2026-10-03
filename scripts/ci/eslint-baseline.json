@@ -14,7 +14,7 @@
     },
     {
       "path": "src/components/admin/AIUsageDashboard.tsx",
-      "sha256": "c861f9f29773c60e20fe6db35147c59f72c492ad3d916a51f95761ab784cc4a3"
+      "sha256": "995bd1a7b3f4a9ddda61a711334506d21a3c91f48d8d947e0c16a53e1bb47cfb"
     },
     {
       "path": "src/components/admin/AIUsageUsersTab.tsx",
@@ -63,10 +63,6 @@
     {
       "path": "src/components/agents/InviteAgentDialog.tsx",
       "sha256": "5dbcab72c3cb92a1f44f5373b3a8450af6e03954710994068539e456fc6564e9"
-    },
-    {
-      "path": "src/components/ai/__tests__/AutoTicketClassifier.test.tsx",
-      "sha256": "9517720509730353e428d27b2f579aa498aa7a85f010564aff7899f5399725d9"
     },
     {
       "path": "src/components/ai/AutoTicketClassifier.tsx",
@@ -211,10 +207,6 @@
     {
       "path": "src/components/dashboard/metrics/AnimatedMetricCard.tsx",
       "sha256": "a58f95776d3af4839ac8c7162fb146c4db669eddb3a8d0a333011c3f0a451750"
-    },
-    {
-      "path": "src/components/dashboard/ProgressiveDisclosureDashboard.tsx",
-      "sha256": "f7b29337500caec861c542c54c4a3e6b60596350b85d93f23a7ad9a1d536bd63"
     },
     {
       "path": "src/components/dashboard/SentimentHelpers.tsx",
@@ -538,7 +530,7 @@
     },
     {
       "path": "src/components/omnichannel/OmnichannelInbox.tsx",
-      "sha256": "e6cd3f07c091ff77aa2fee4936e724f6769ddfef4c9ce0a29f2b0ccb0cc7f064"
+      "sha256": "fa4eefb0677bd4226b66f6bd04b9c7f445166099211d50c6ff1396cbf0928efe"
     },
     {
       "path": "src/components/omnichannel/OmnichannelManager.tsx",
@@ -649,10 +641,6 @@
       "sha256": "cf547ff2a2b3c3da494b24d4ba1dea491af7db4b1e05c9cb4317072e84b85225"
     },
     {
-      "path": "src/components/settings/__tests__/SLARulesManager.test.tsx",
-      "sha256": "9913e66437141798fbf3bb8057a55c0274896f0de01e50ccc7c9b9feaf127a83"
-    },
-    {
       "path": "src/components/settings/ai-providers/AIProviderHealthPanel.tsx",
       "sha256": "3e3bd8f9b2d7cf5d935cc494b72c555e09d4e9c83996f90b746ccc41b9450e3e"
     },
@@ -694,7 +682,7 @@
     },
     {
       "path": "src/components/settings/media-library/useMediaLibrary.ts",
-      "sha256": "7800f64ceef29cc98803a38e1eb8a872e68e15427bba38e8a619fa4035a23097"
+      "sha256": "17d8e6ecac9e5bee3f8f026fa042205a538e69997a3caeb6be9118ce80ff5b54"
     },
     {
       "path": "src/components/settings/media-library/useMediaUpload.ts",
@@ -750,7 +738,7 @@
     },
     {
       "path": "src/components/transcriptions/TranscriptionsHistoryView.tsx",
-      "sha256": "1a11eae153dfe3743499797dea7d4906646cafdda7ab6e4842fd9810513cfc6b"
+      "sha256": "533d89294a6e95b2207b15d7221335fafd9173ddac82b90bc4bdc74821bb40d9"
     },
     {
       "path": "src/components/ui/accessible-toast.tsx",
@@ -833,10 +821,6 @@
       "sha256": "4fd69acf94a61fe969b3eb9380a7eaf60d3ad5f19d9f4d0b51bd7ad6def3c6bf"
     },
     {
-      "path": "src/components/ui/textarea.tsx",
-      "sha256": "2f5b24d28dc5c41817ca69653a396adcb2fe495200f8184777d086a62fc70461"
-    },
-    {
       "path": "src/components/ui/toggle.tsx",
       "sha256": "fb0f786bce638fd414f220e31ad3c902f5c6e25eee9c95ac955cacd50638d6ff"
     },
@@ -878,7 +862,7 @@
     },
     {
       "path": "src/hooks/analytics/usePerformanceOptimizations.ts",
-      "sha256": "23912a497433c1a1c3eef8a2dfdd2f5b2db205f3c2ed741f064dac80b0400e98"
+      "sha256": "c1b3f6454720beb7402079ef00f54db84be4e8b1a438ca2215c724f14d4eade5"
     },
     {
       "path": "src/hooks/analytics/usePerformanceSnapshots.ts",
@@ -890,7 +874,7 @@
     },
     {
       "path": "src/hooks/auth/useAuth.tsx",
-      "sha256": "699c52ee5df78eb04309879eb5244f53b70460de32cdede61b75eb249953964d"
+      "sha256": "285cd3336dceec5278b306cc67b1eddc7d23b346cb89cd1b2d30cc3f10a1ed26"
     },
     {
       "path": "src/hooks/business/useClientWallet.ts",
@@ -1057,10 +1041,6 @@
       "sha256": "3e246e2e6ec84399756d97f9303240232d008077a853ca6a2738e717d25c3058"
     },
     {
-      "path": "src/hooks/ui/useActionFeedback.ts",
-      "sha256": "095314a99016756281b56bd80e7e5b25dbc230a3a5519d07ab4c54016ca60969"
-    },
-    {
       "path": "src/hooks/ui/useCustomShortcuts.ts",
       "sha256": "f916b35f4dc1a6547d4e614c54f46a11025182a242595325f88e55ee46999561"
     },
@@ -1085,20 +1065,12 @@
       "sha256": "db31498cf8810f05f2326514dd234a1107e6daeeec2acf7b9f9693a64047aa4f"
     },
     {
-      "path": "src/lib/__tests__/utils.test.ts",
-      "sha256": "52512c6d13923695e5a1d92f7f141731332c32d594b07ebe8a9d5816eec81bb9"
-    },
-    {
       "path": "src/lib/debounce.ts",
       "sha256": "77d9b30b706fefce7fe8bc55d270dedcc27dc17d4fda25301d3cb88e9e2ab800"
     },
     {
       "path": "src/lib/lazyWithRetry.ts",
       "sha256": "51f65b31b928f659b2fa05863a9bf168d845097909ee239009d8952f04807598"
-    },
-    {
-      "path": "src/lib/logger.ts",
-      "sha256": "6a6eaca32edd55119aa619cc21f1d382d6eb1766747df872d0a8e3eb859b0328"
     },
     {
       "path": "src/pages/admin/useRolesPageState.ts",
@@ -1122,7 +1094,7 @@
     },
     {
       "path": "src/pages/Index.tsx",
-      "sha256": "bedb7c5c66f8cf8f686d2d742c2103db2a955cff7024ff6973460f6c4b3633d2"
+      "sha256": "971796f4112ea03b82db11b40592e340314767f4dd1a8d0df6ac5b80335e2268"
     },
     {
       "path": "src/pages/Install.tsx",
@@ -1173,12 +1145,8 @@
       "sha256": "3460a7f745289c4d7434ad4e65b5ef943496d7d89a96f236ca9565119c2ec03b"
     },
     {
-      "path": "src/types/queue.ts",
-      "sha256": "b3fb6334492034733045c0a12f335fc97b9100d597f3cce5b618417cd0355906"
-    },
-    {
       "path": "supabase/functions/_shared/ai-usage.ts",
-      "sha256": "fcd49962411eba72161e850df9cc8ed8e2c40528f0315e1e9f66ffd1fbb0c536"
+      "sha256": "9056c49ae190dc60fd1fc34fee89fc3e4a21e14628fc9bf68d33a6576f3ab0d9"
     },
     {
       "path": "supabase/functions/_shared/evolution-api-proxy.ts",
@@ -1239,10 +1207,6 @@
     {
       "path": "supabase/functions/migrate-media-storage/index.ts",
       "sha256": "b0cc79888645b4bced95ed5890d90ab04daf4282598a963b7e20a3ba38bd9644"
-    },
-    {
-      "path": "tailwind.config.ts",
-      "sha256": "4ed0e45405187deb5b5e74ae567715fa87fa3b96f1004294cf5837571cccfe0c"
     }
   ],
   "issues": [
@@ -1332,9 +1296,9 @@
     },
     {
       "file": "src/components/admin/AIUsageDashboard.tsx",
-      "line": 85,
+      "line": 86,
       "column": 275,
-      "endLine": 85,
+      "endLine": 86,
       "endColumn": 278,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -1595,20 +1559,6 @@
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "contextHash": "d7bb594c7eb4635e01bbed46c8fe3b3785c2325b22d67c466b775244614a77a3"
-    },
-    {
-      "file": "src/components/ai/__tests__/AutoTicketClassifier.test.tsx",
-      "line": 179,
-      "column": 27,
-      "endLine": 179,
-      "endColumn": 28,
-      "severity": 2,
-      "ruleId": "no-constant-binary-expression",
-      "messageId": "constantShortCircuit",
-      "message": "Unexpected constant truthiness on the left-hand side of a `||` expression.",
-      "spanHash": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
-      "lineHash": "dff31fb32db2e82c0b65d7bc9fecf723cd77f150e8a93cc73d8aa3ed00209cc5",
-      "contextHash": "4a0b8787d4cf37d4ce19fe94411d6abea4928cf3169036cd4e0e9d123bcc2ab5"
     },
     {
       "file": "src/components/ai/AutoTicketClassifier.tsx",
@@ -2211,20 +2161,6 @@
       "spanHash": "b0f50e8cfc0c13887902fb3208295edff820660b64a58b75c5ad168655be14a2",
       "lineHash": "4326c7a1d79e5dc59aaad850a02dbdb037cb3d4c1a11353b79bf2411c1c578b2",
       "contextHash": "2542d7af999223ac2cb4ec5d231fdf12a44cacabf79d953ea904bd6b33cbcbde"
-    },
-    {
-      "file": "src/components/dashboard/ProgressiveDisclosureDashboard.tsx",
-      "line": 45,
-      "column": 7,
-      "endLine": 45,
-      "endColumn": 53,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unused-expressions",
-      "messageId": "unusedExpression",
-      "message": "Expected an assignment or function call and instead saw an expression.",
-      "spanHash": "44b27b2d9a3c033413007415e5bdcbf7fa4aa21f2b1a7dca5d5e74895024ca11",
-      "lineHash": "44b27b2d9a3c033413007415e5bdcbf7fa4aa21f2b1a7dca5d5e74895024ca11",
-      "contextHash": "06f893bbd230c09e8443563849b7dbf4800372e9c2447ad658b3e7a403545511"
     },
     {
       "file": "src/components/dashboard/SentimentHelpers.tsx",
@@ -5461,160 +5397,6 @@
       "contextHash": "969a76751dee3b435b51b2bc6b7dd4b825a7ccd1119d04c63fe4cb33a8a807b5"
     },
     {
-      "file": "src/components/settings/__tests__/SLARulesManager.test.tsx",
-      "line": 16,
-      "column": 47,
-      "endLine": 16,
-      "endColumn": 55,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unsafe-function-type",
-      "messageId": "bannedFunctionType",
-      "message": "The `Function` type accepts any function-like value. Prefer explicitly defining any function parameters and return type.",
-      "spanHash": "c803710302d5769d8fcd51958c516ff27f2a3c5ad9373c348d1d180c04a74624",
-      "lineHash": "64cde5bf8c2077f2d7cb2ebd813fd7a57aa5e34cf18e1db32370c6309d370123",
-      "contextHash": "e2b8d5dc5607cc8bd3b5c57d0e5c8472935523cd295e03c5cbcfb8d542954f52"
-    },
-    {
-      "file": "src/components/settings/__tests__/SLARulesManager.test.tsx",
-      "line": 18,
-      "column": 45,
-      "endLine": 18,
-      "endColumn": 53,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unsafe-function-type",
-      "messageId": "bannedFunctionType",
-      "message": "The `Function` type accepts any function-like value. Prefer explicitly defining any function parameters and return type.",
-      "spanHash": "c803710302d5769d8fcd51958c516ff27f2a3c5ad9373c348d1d180c04a74624",
-      "lineHash": "64cde5bf8c2077f2d7cb2ebd813fd7a57aa5e34cf18e1db32370c6309d370123",
-      "contextHash": "ace165610e80926db815971076d2b315318175262cc6d44f4cc637c0d25f98d6"
-    },
-    {
-      "file": "src/components/settings/__tests__/SLARulesManager.test.tsx",
-      "line": 20,
-      "column": 43,
-      "endLine": 20,
-      "endColumn": 51,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unsafe-function-type",
-      "messageId": "bannedFunctionType",
-      "message": "The `Function` type accepts any function-like value. Prefer explicitly defining any function parameters and return type.",
-      "spanHash": "c803710302d5769d8fcd51958c516ff27f2a3c5ad9373c348d1d180c04a74624",
-      "lineHash": "64cde5bf8c2077f2d7cb2ebd813fd7a57aa5e34cf18e1db32370c6309d370123",
-      "contextHash": "ace165610e80926db815971076d2b315318175262cc6d44f4cc637c0d25f98d6"
-    },
-    {
-      "file": "src/components/settings/__tests__/SLARulesManager.test.tsx",
-      "line": 22,
-      "column": 41,
-      "endLine": 22,
-      "endColumn": 49,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unsafe-function-type",
-      "messageId": "bannedFunctionType",
-      "message": "The `Function` type accepts any function-like value. Prefer explicitly defining any function parameters and return type.",
-      "spanHash": "c803710302d5769d8fcd51958c516ff27f2a3c5ad9373c348d1d180c04a74624",
-      "lineHash": "64cde5bf8c2077f2d7cb2ebd813fd7a57aa5e34cf18e1db32370c6309d370123",
-      "contextHash": "ace165610e80926db815971076d2b315318175262cc6d44f4cc637c0d25f98d6"
-    },
-    {
-      "file": "src/components/settings/__tests__/SLARulesManager.test.tsx",
-      "line": 24,
-      "column": 39,
-      "endLine": 24,
-      "endColumn": 47,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unsafe-function-type",
-      "messageId": "bannedFunctionType",
-      "message": "The `Function` type accepts any function-like value. Prefer explicitly defining any function parameters and return type.",
-      "spanHash": "c803710302d5769d8fcd51958c516ff27f2a3c5ad9373c348d1d180c04a74624",
-      "lineHash": "64cde5bf8c2077f2d7cb2ebd813fd7a57aa5e34cf18e1db32370c6309d370123",
-      "contextHash": "ace165610e80926db815971076d2b315318175262cc6d44f4cc637c0d25f98d6"
-    },
-    {
-      "file": "src/components/settings/__tests__/SLARulesManager.test.tsx",
-      "line": 27,
-      "column": 39,
-      "endLine": 27,
-      "endColumn": 47,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unsafe-function-type",
-      "messageId": "bannedFunctionType",
-      "message": "The `Function` type accepts any function-like value. Prefer explicitly defining any function parameters and return type.",
-      "spanHash": "c803710302d5769d8fcd51958c516ff27f2a3c5ad9373c348d1d180c04a74624",
-      "lineHash": "64cde5bf8c2077f2d7cb2ebd813fd7a57aa5e34cf18e1db32370c6309d370123",
-      "contextHash": "1fee4256e20a417ecc83be7b546141b13761fb4d7afbc2f43428b1f51e77f6a0"
-    },
-    {
-      "file": "src/components/settings/__tests__/SLARulesManager.test.tsx",
-      "line": 30,
-      "column": 39,
-      "endLine": 30,
-      "endColumn": 47,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unsafe-function-type",
-      "messageId": "bannedFunctionType",
-      "message": "The `Function` type accepts any function-like value. Prefer explicitly defining any function parameters and return type.",
-      "spanHash": "c803710302d5769d8fcd51958c516ff27f2a3c5ad9373c348d1d180c04a74624",
-      "lineHash": "64cde5bf8c2077f2d7cb2ebd813fd7a57aa5e34cf18e1db32370c6309d370123",
-      "contextHash": "8b3d5b83d7c9f7bfdca6c8a35d64700f49d3962a4117662f310bd6f2118d77bf"
-    },
-    {
-      "file": "src/components/settings/__tests__/SLARulesManager.test.tsx",
-      "line": 32,
-      "column": 37,
-      "endLine": 32,
-      "endColumn": 45,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unsafe-function-type",
-      "messageId": "bannedFunctionType",
-      "message": "The `Function` type accepts any function-like value. Prefer explicitly defining any function parameters and return type.",
-      "spanHash": "c803710302d5769d8fcd51958c516ff27f2a3c5ad9373c348d1d180c04a74624",
-      "lineHash": "64cde5bf8c2077f2d7cb2ebd813fd7a57aa5e34cf18e1db32370c6309d370123",
-      "contextHash": "ace165610e80926db815971076d2b315318175262cc6d44f4cc637c0d25f98d6"
-    },
-    {
-      "file": "src/components/settings/__tests__/SLARulesManager.test.tsx",
-      "line": 34,
-      "column": 52,
-      "endLine": 34,
-      "endColumn": 60,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unsafe-function-type",
-      "messageId": "bannedFunctionType",
-      "message": "The `Function` type accepts any function-like value. Prefer explicitly defining any function parameters and return type.",
-      "spanHash": "c803710302d5769d8fcd51958c516ff27f2a3c5ad9373c348d1d180c04a74624",
-      "lineHash": "6eafdb014c393a72c0c28554bd53b343cbc8655cdc91006f2fa9d4ac0669bc38",
-      "contextHash": "f0279c69af76f8bc8a419fae8018c32fcc323a1d89adf94d188f547d249b2837"
-    },
-    {
-      "file": "src/components/settings/__tests__/SLARulesManager.test.tsx",
-      "line": 36,
-      "column": 50,
-      "endLine": 36,
-      "endColumn": 58,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unsafe-function-type",
-      "messageId": "bannedFunctionType",
-      "message": "The `Function` type accepts any function-like value. Prefer explicitly defining any function parameters and return type.",
-      "spanHash": "c803710302d5769d8fcd51958c516ff27f2a3c5ad9373c348d1d180c04a74624",
-      "lineHash": "f4a35268fa0ace5bcee2dfc28038faf52bbcade9381a5a3d21907a1bd31a9f04",
-      "contextHash": "e8a8e441c96c31b13cc061bdc338f27b9fb5083c0d74c5041eb2134be0e37e3e"
-    },
-    {
-      "file": "src/components/settings/__tests__/SLARulesManager.test.tsx",
-      "line": 39,
-      "column": 50,
-      "endLine": 39,
-      "endColumn": 58,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unsafe-function-type",
-      "messageId": "bannedFunctionType",
-      "message": "The `Function` type accepts any function-like value. Prefer explicitly defining any function parameters and return type.",
-      "spanHash": "c803710302d5769d8fcd51958c516ff27f2a3c5ad9373c348d1d180c04a74624",
-      "lineHash": "f4a35268fa0ace5bcee2dfc28038faf52bbcade9381a5a3d21907a1bd31a9f04",
-      "contextHash": "df1c22c9db3c8c77a6bfe4226514f2bd1aa676f6cae1d67233dd5c69d89a6588"
-    },
-    {
       "file": "src/components/settings/ai-providers/AIProviderHealthPanel.tsx",
       "line": 2,
       "column": 1,
@@ -5809,48 +5591,6 @@
       "spanHash": "93872d5419eb6fa1f053a2528ba2b149fd16f39b6dc90ce3dfb78223502d7bf6",
       "lineHash": "05e1457bdc169940f7defdf56c395a54ee3be4d57af59cd62c31201c9946b740",
       "contextHash": "5d0f0a79591ac817b14a3feec61b2cf96cf6fea9bb475b70f1a2027977925a33"
-    },
-    {
-      "file": "src/components/settings/media-library/useMediaLibrary.ts",
-      "line": 128,
-      "column": 92,
-      "endLine": 128,
-      "endColumn": 138,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unused-expressions",
-      "messageId": "unusedExpression",
-      "message": "Expected an assignment or function call and instead saw an expression.",
-      "spanHash": "44b27b2d9a3c033413007415e5bdcbf7fa4aa21f2b1a7dca5d5e74895024ca11",
-      "lineHash": "d64426f8731dd2186960a15b9b5533b63aaf2d87ce56aa06fc1a5e38fa4e7098",
-      "contextHash": "d190c0a025eded4a4a13a86f28d1d464d5d61216fa664420ca9e2483e1028c14"
-    },
-    {
-      "file": "src/components/settings/media-library/useMediaLibrary.ts",
-      "line": 129,
-      "column": 35,
-      "endLine": 129,
-      "endColumn": 142,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unused-expressions",
-      "messageId": "unusedExpression",
-      "message": "Expected an assignment or function call and instead saw an expression.",
-      "spanHash": "1fed95b45177ac67197835efa8b2f5572ef3317ff864f6038dcf4f9394027cbe",
-      "lineHash": "330cd3bda2b0e4345f9a8d9f9761530b6afceef4267260217f2bdbd1eb5db13d",
-      "contextHash": "73c265896142ed7db42caeb6a1054d1e7af508aad1cb11376951e29b1ce5443c"
-    },
-    {
-      "file": "src/components/settings/media-library/useMediaLibrary.ts",
-      "line": 186,
-      "column": 5,
-      "endLine": 186,
-      "endColumn": 78,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unused-expressions",
-      "messageId": "unusedExpression",
-      "message": "Expected an assignment or function call and instead saw an expression.",
-      "spanHash": "12df7874b99c25f9618c4b5624a7fe9a534689085540a2766d8dd7aebbd83f95",
-      "lineHash": "12df7874b99c25f9618c4b5624a7fe9a534689085540a2766d8dd7aebbd83f95",
-      "contextHash": "37229e741eda5226fc1b8d1a159f02551d6c486156a2bb5657c8f64b890f9fe8"
     },
     {
       "file": "src/components/settings/media-library/useMediaLibrary.ts",
@@ -6173,20 +5913,6 @@
       "spanHash": "2c737b7a0ae81e54dae5ada04f22f518737560991ff0d9de1c3a6fcf3d66cca0",
       "lineHash": "b5dddeca9998c8191f326c7dce386aa4137abe772edc2ab3276a67e603dcfefd",
       "contextHash": "507e0adb9d66ccb542fc0d48488a7f05b9f16e55bcb469eff4a4209039d5bc0e"
-    },
-    {
-      "file": "src/components/transcriptions/TranscriptionsHistoryView.tsx",
-      "line": 78,
-      "column": 99,
-      "endLine": 78,
-      "endColumn": 145,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unused-expressions",
-      "messageId": "unusedExpression",
-      "message": "Expected an assignment or function call and instead saw an expression.",
-      "spanHash": "44b27b2d9a3c033413007415e5bdcbf7fa4aa21f2b1a7dca5d5e74895024ca11",
-      "lineHash": "cab81ddd0da97a229877363ca76d8ed8f1d97f602f38c49474f1a22901121831",
-      "contextHash": "f3ded1e8af39eda1704b8782d0ec19726753bbb0cd0754e54b5340d8fffdf188"
     },
     {
       "file": "src/components/ui/accessible-toast.tsx",
@@ -6763,20 +6489,6 @@
       "contextHash": "4f821b7a0a082a34e49fd3b802fe9c52c5df20beb4b08d2048aabc7263cdc134"
     },
     {
-      "file": "src/components/ui/textarea.tsx",
-      "line": 5,
-      "column": 18,
-      "endLine": 5,
-      "endColumn": 31,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-empty-object-type",
-      "messageId": "noEmptyInterfaceWithSuper",
-      "message": "An interface declaring no members is equivalent to its supertype.",
-      "spanHash": "ba412bf529f12b908960fc9402c7d38db556a3972fa69b64c3edf1542786b924",
-      "lineHash": "06708b9335218f9e0b707edbe609da5d1fd380f48bbcccc78c4ac3fcb760684b",
-      "contextHash": "47eca4e4c2015e940a0a3c4c2af06e368f5d5ba9d7ebf3664e4b151c06895ff7"
-    },
-    {
       "file": "src/components/ui/toggle.tsx",
       "line": 37,
       "column": 18,
@@ -6988,34 +6700,6 @@
     },
     {
       "file": "src/hooks/analytics/usePerformanceOptimizations.ts",
-      "line": 212,
-      "column": 130,
-      "endLine": 212,
-      "endColumn": 138,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unsafe-function-type",
-      "messageId": "bannedFunctionType",
-      "message": "The `Function` type accepts any function-like value. Prefer explicitly defining any function parameters and return type.",
-      "spanHash": "c803710302d5769d8fcd51958c516ff27f2a3c5ad9373c348d1d180c04a74624",
-      "lineHash": "c1eca99d149e6dc528f8e6e09676432817f3bdc44ff0d37d7f5dfb6e4bf56b25",
-      "contextHash": "95720c59602cd3314b25c6ac98512426d4b023a9744a053563ead0d04b41e673"
-    },
-    {
-      "file": "src/hooks/analytics/usePerformanceOptimizations.ts",
-      "line": 212,
-      "column": 162,
-      "endLine": 212,
-      "endColumn": 170,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unsafe-function-type",
-      "messageId": "bannedFunctionType",
-      "message": "The `Function` type accepts any function-like value. Prefer explicitly defining any function parameters and return type.",
-      "spanHash": "c803710302d5769d8fcd51958c516ff27f2a3c5ad9373c348d1d180c04a74624",
-      "lineHash": "c1eca99d149e6dc528f8e6e09676432817f3bdc44ff0d37d7f5dfb6e4bf56b25",
-      "contextHash": "95720c59602cd3314b25c6ac98512426d4b023a9744a053563ead0d04b41e673"
-    },
-    {
-      "file": "src/hooks/analytics/usePerformanceOptimizations.ts",
       "line": 214,
       "column": 7,
       "endLine": 214,
@@ -7023,7 +6707,7 @@
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/analytics/usePerformanceOptimizations.ts:214:7 212 | const connection = (navigator as Navigator & { connection?: { effectiveType?: string; saveData?: boolean; addEventListener?: Function; removeEventListener?: Function } }).connection; 213 | if (connection) { > 214 | setConnectionType(connection.effectiveType ?? ''); | ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 215 | setIsSlowConnection( 216 | connection.saveData || 217 | connection.effectiveType === 'slow-2g' ||",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/analytics/usePerformanceOptimizations.ts:214:7 212 | const connection = (navigator as Navigator & { connection?: { effectiveType?: string; saveData?: boolean; addEventListener?: (type: string, listener: () => void) => void; removeEventListener?: (type: string, listener: () => void) => void } }).connection; 213 | if (connection) { > 214 | setConnectionType(connection.effectiveType ?? ''); | ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 215 | setIsSlowConnection( 216 | connection.saveData || 217 | connection.effectiveType === 'slow-2g' ||",
       "spanHash": "53e2d5beea44f0aeb5333ae20fe49974c20de0fee8cf8a4203c160326090cb07",
       "lineHash": "9e900e4cfc20a5d4cb369eef6517caa79b205bbe5936c2cbd9b79ea808efc816",
       "contextHash": "45e31be8666f61d1747c888beede503c93d169e55e2e04582e90f55afce0a5cc"
@@ -7072,9 +6756,9 @@
     },
     {
       "file": "src/hooks/auth/useAuth.tsx",
-      "line": 188,
+      "line": 191,
       "column": 17,
-      "endLine": 188,
+      "endLine": 191,
       "endColumn": 24,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -7925,20 +7609,6 @@
       "contextHash": "b17cc1b7127f7fc8f0478047e019d11a4190e909d97366b4767be84f5fcc5c04"
     },
     {
-      "file": "src/hooks/ui/useActionFeedback.ts",
-      "line": 52,
-      "column": 11,
-      "endLine": 52,
-      "endColumn": 36,
-      "severity": 2,
-      "ruleId": "prefer-const",
-      "messageId": "useConst",
-      "message": "'timeoutId' is never reassigned. Use 'const' instead.",
-      "spanHash": "da08ed06ce4221491a11e2c82773e5956e5355a76ca046ebb87c4bb8cab5bbfe",
-      "lineHash": "a620e9b4f08f5f77a1acf033aefd76f5b59197ca6493534134976e85e6673c8c",
-      "contextHash": "75dcbf0a7467151714819903c44111f3d3aca8db4592e399875182fb59844e45"
-    },
-    {
       "file": "src/hooks/ui/useCustomShortcuts.ts",
       "line": 53,
       "column": 9,
@@ -8037,20 +7707,6 @@
       "contextHash": "4bdf820d1818638811b9b0c389b2871203740768084c896bb80b8be52941414b"
     },
     {
-      "file": "src/lib/__tests__/utils.test.ts",
-      "line": 10,
-      "column": 23,
-      "endLine": 10,
-      "endColumn": 28,
-      "severity": 2,
-      "ruleId": "no-constant-binary-expression",
-      "messageId": "constantShortCircuit",
-      "message": "Unexpected constant truthiness on the left-hand side of a `&&` expression.",
-      "spanHash": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
-      "lineHash": "4cd2ab56ea9eb5a3163548580ed4159e0e1e61d7cf1117d6cf7c3e434f31895a",
-      "contextHash": "45b811e57600b6fcbb99c7ab324f4ed16314fa9072db4485a846b60e49d4b2b6"
-    },
-    {
       "file": "src/lib/debounce.ts",
       "line": 41,
       "column": 3,
@@ -8091,20 +7747,6 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "9c90c80e7117852f5be8c56009a6254c964d36b78c05be79c15d06c3087600a1",
       "contextHash": "92485ab8ed7869f677753a4750d3ece6c47c0896c769de12dd713ea1675a093f"
-    },
-    {
-      "file": "src/lib/logger.ts",
-      "line": 79,
-      "column": 11,
-      "endLine": 79,
-      "endColumn": 15,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-this-alias",
-      "messageId": "thisAssignment",
-      "message": "Unexpected aliasing of 'this' to local variable.",
-      "spanHash": "06c604b332b386b6cce8355ccf27fffd3a98b7a7a5b9b3a550c039c6ebae38e4",
-      "lineHash": "30301a916ed155175e61c03c0e9f17431c07530212c2bc1a71559220007c875d",
-      "contextHash": "4edf666fad6652d7bd84f936d66ef573bec5c23c20bba3a5cdc98b5756323671"
     },
     {
       "file": "src/pages/admin/useRolesPageState.ts",
@@ -8220,6 +7862,20 @@
     },
     {
       "file": "src/pages/Index.tsx",
+      "line": 101,
+      "column": 7,
+      "endLine": 101,
+      "endColumn": 21,
+      "severity": 2,
+      "ruleId": "react-hooks/set-state-in-effect",
+      "messageId": null,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/pages/Index.tsx:101:7 99 | useEffect(() => { 100 | if (!loadingOnboarding && hasCompletedOnboarding === false && user) { > 101 | setShowWelcome(true); | ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 102 | } 103 | }, [loadingOnboarding, hasCompletedOnboarding, user]); 104 |",
+      "spanHash": "65c3d638653821691acaeb9fb74a3681b0e2b1514cbf5b66d6a559e6a91e17a3",
+      "lineHash": "032160aa3a7e26182c364f1bad6449b5dc498cc2c570fff68b829fac65bbf7b6",
+      "contextHash": "c61fedcd9a18740baf555f97abc5b5f76b7f78f880681cac7f9197422edb5958"
+    },
+    {
+      "file": "src/pages/Index.tsx",
       "line": 5,
       "column": 1,
       "endLine": 5,
@@ -8231,20 +7887,6 @@
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "contextHash": "818e1bf46e4a799a46031eb2675fe655cfa8d0e8662229ebc4b40d89b7fa7682"
-    },
-    {
-      "file": "src/pages/Index.tsx",
-      "line": 98,
-      "column": 7,
-      "endLine": 98,
-      "endColumn": 21,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/pages/Index.tsx:98:7 96 | useEffect(() => { 97 | if (!loadingOnboarding && hasCompletedOnboarding === false && user) { > 98 | setShowWelcome(true); | ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 99 | } 100 | }, [loadingOnboarding, hasCompletedOnboarding, user]); 101 |",
-      "spanHash": "65c3d638653821691acaeb9fb74a3681b0e2b1514cbf5b66d6a559e6a91e17a3",
-      "lineHash": "032160aa3a7e26182c364f1bad6449b5dc498cc2c570fff68b829fac65bbf7b6",
-      "contextHash": "c61fedcd9a18740baf555f97abc5b5f76b7f78f880681cac7f9197422edb5958"
     },
     {
       "file": "src/pages/Install.tsx",
@@ -8735,20 +8377,6 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "de742c888a174b7aa9f913090029252993b8a1ebbb3743787e1bb05b15eb3684",
       "contextHash": "1a4178b5e26e59395602d695cec3276350618ccad10fd725467c45857ef3f061"
-    },
-    {
-      "file": "src/types/queue.ts",
-      "line": 6,
-      "column": 18,
-      "endLine": 6,
-      "endColumn": 23,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-empty-object-type",
-      "messageId": "noEmptyInterfaceWithSuper",
-      "message": "An interface declaring no members is equivalent to its supertype.",
-      "spanHash": "3b2fe03e368939166bc6e318840b23fcade3ee55d6681b6ef16e7f08c00f23af",
-      "lineHash": "bfb5c61c51acaa13a5991c3adc4804bad6ee60ff84c9d329b1893a0ee06ebeb2",
-      "contextHash": "9513fd5b704af54587015c40013af75fef1e0ed8869756dc6239b2f1dfd5da07"
     },
     {
       "file": "supabase/functions/_shared/ai-usage.ts",
@@ -9799,20 +9427,6 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "a668a3b10c214bfaea640815b8717c943fb815a33dac70cdbe3b08b268e6f71b",
       "contextHash": "3a301704ca934c1b9ba3d7af6de21312d5aeb63d8e42dcd03444f95b8c97f07b"
-    },
-    {
-      "file": "tailwind.config.ts",
-      "line": 433,
-      "column": 13,
-      "endLine": 433,
-      "endColumn": 43,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-require-imports",
-      "messageId": "noRequireImports",
-      "message": "A `require()` style import is forbidden.",
-      "spanHash": "290c6d6331892851796afe8e0bb146cd7bfc69d6bcadd90dabac6637578341aa",
-      "lineHash": "ad2cf92e670ae291fcebc8e5eba416d4bec7023e47979eca755ee1ee4a2c218b",
-      "contextHash": "9e17e7bfc4b49569a3005aefb1bfc0644199d3c6d3abe81a85e963d46de59312"
     }
   ]
 }
