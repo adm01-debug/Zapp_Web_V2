@@ -36,7 +36,7 @@ for _attempt in $(seq 1 60); do
   fi
   sleep 1
 done
-if [ "$ready" != true ]; then
+if [[ "$ready" != true ]]; then
   echo "PostgreSQL de teste nao ficou pronto em 60 segundos." >&2
   exit 1
 fi

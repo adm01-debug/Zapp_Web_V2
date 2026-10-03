@@ -27,7 +27,7 @@ psql_test() { docker exec -i "$container_name" psql -X -v ON_ERROR_STOP=1 -U pos
 
 migration() {
   local file="$migrations_dir/$1"
-  [ -f "$file" ] || fail "migration ausente: $1"
+  [[ -f "$file" ]] || fail "migration ausente: $1"
   printf '  · %s\n' "$1" >&2
   psql_test < "$file" >/dev/null
 }
@@ -226,7 +226,7 @@ migration "20261001261230_f35_multiplix_audiences.sql"
 # o arquivo, o teste cobra o estado ANTERIOR (INSERT/UPDATE ainda concedidos);
 # com o arquivo, cobra anon/authenticated sem o caminho de escrita.
 REVOKE_MIGRATION="$(ls "$migrations_dir"/*_multiplix_revoke_recipient_writes.sql 2>/dev/null | head -1 || true)"
-if [ -n "$REVOKE_MIGRATION" ]; then
+if [[ -n "$REVOKE_MIGRATION" ]]; then
   migration "$(basename "$REVOKE_MIGRATION")"
   RECIPIENT_WRITES_REVOKED=true
 else
@@ -305,10 +305,10 @@ owner_d_own_recipients="$(psql_test -Atqc "$owner_d SELECT count(*) FROM public.
 [[ "$(psql_test -Atqc "SELECT count(*) FROM pg_policies WHERE tablename LIKE 'multiplix%' AND 'public' = ANY(roles)")" == '0' ]] \
   || fail 'replay limpo terminou com policy TO public (F04)'
 EXPECTED_POLICIES=9
-if [ "$RECIPIENT_WRITES_REVOKED" = true ]; then EXPECTED_POLICIES=7; fi
+if [[ "$RECIPIENT_WRITES_REVOKED" = true ]]; then EXPECTED_POLICIES=7; fi
 [[ "$(psql_test -Atqc "SELECT count(*) FROM pg_policies WHERE tablename IN ('multiplix_dispatches','multiplix_recipients') AND 'authenticated' = ANY(roles)")" == "$EXPECTED_POLICIES" ]] \
   || fail "replay limpo nao terminou com $EXPECTED_POLICIES policies TO authenticated (F04/F08)"
-if [ "$RECIPIENT_WRITES_REVOKED" = true ]; then
+if [[ "$RECIPIENT_WRITES_REVOKED" = true ]]; then
   [[ "$(psql_test -Atqc "SELECT count(*) FROM information_schema.role_table_grants WHERE table_name='multiplix_recipients' AND grantee='authenticated' AND privilege_type IN ('INSERT','UPDATE')")" == '0' ]] \
     || fail 'authenticated ainda tem INSERT/UPDATE em multiplix_recipients depois da revogacao (F08)'
   [[ "$(psql_test -Atqc "SELECT count(*) FROM information_schema.role_table_grants WHERE table_name='multiplix_recipients' AND grantee='authenticated' AND privilege_type IN ('SELECT','DELETE')")" == '2' ]] \

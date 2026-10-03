@@ -26,7 +26,7 @@ OUT="${1:?uso: prova-orcamento-rate-limit.sh <dir-de-saida>}"
 BASE="${ZAPP_SUPABASE_URL:-https://tnnnlkbymytvtqngbbqh.supabase.co}"
 FUNCAO="${ZAPP_FUNCAO_PROVA:-classify-audio-meme}"
 
-if [ "${PROVA_PRODUCAO:-}" != "sim" ]; then
+if [[ "${PROVA_PRODUCAO:-}" != "sim" ]]; then
   echo "RECUSADO: esta prova chama producao e consome credito de IA."
   echo "Confirme com: PROVA_PRODUCAO=sim bash $0 $OUT"
   exit 2
@@ -52,7 +52,7 @@ LOGIN_HTTP=$(curl -sS -o "$OUT/login.json" -w '%{http_code}' \
 echo "LOGIN_HTTP=$LOGIN_HTTP  CONTA=$ZAPP_MULTIPLIX_MULTIPLIX_COMPRAS_EMAIL"
 
 JWT=$(jq -r '.access_token // empty' "$OUT/login.json")
-if [ -z "$JWT" ]; then
+if [[ -z "$JWT" ]]; then
   echo "ERRO: login nao devolveu access_token"
   jq -c '{error,error_description,msg}' "$OUT/login.json" 2>/dev/null | head -c 300; echo
   exit 1
