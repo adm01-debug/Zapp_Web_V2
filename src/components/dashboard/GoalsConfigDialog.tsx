@@ -234,7 +234,7 @@ export function GoalsConfigDialog({ open, onOpenChange }: GoalsConfigDialogProps
                           type="number"
                           min={0}
                           value={goal.daily_target}
-                          onChange={(e) => handleGoalChange(goal.goal_type, 'daily_target', parseInt(e.target.value) || 0)}
+                          onChange={(e) => handleGoalChange(goal.goal_type, 'daily_target', Number.parseInt(e.target.value) || 0)}
                           disabled={!goal.is_active}
                         />
                       </div>
@@ -247,7 +247,7 @@ export function GoalsConfigDialog({ open, onOpenChange }: GoalsConfigDialogProps
                           type="number"
                           min={0}
                           value={goal.weekly_target}
-                          onChange={(e) => handleGoalChange(goal.goal_type, 'weekly_target', parseInt(e.target.value) || 0)}
+                          onChange={(e) => handleGoalChange(goal.goal_type, 'weekly_target', Number.parseInt(e.target.value) || 0)}
                           disabled={!goal.is_active}
                         />
                       </div>
@@ -260,7 +260,7 @@ export function GoalsConfigDialog({ open, onOpenChange }: GoalsConfigDialogProps
                           type="number"
                           min={0}
                           value={goal.monthly_target}
-                          onChange={(e) => handleGoalChange(goal.goal_type, 'monthly_target', parseInt(e.target.value) || 0)}
+                          onChange={(e) => handleGoalChange(goal.goal_type, 'monthly_target', Number.parseInt(e.target.value) || 0)}
                           disabled={!goal.is_active}
                         />
                       </div>

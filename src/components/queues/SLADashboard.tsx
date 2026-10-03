@@ -39,7 +39,7 @@ export const SLADashboard = () => {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
     if (e.key >= '1' && e.key <= '4') {
       e.preventDefault();
-      setPeriod(periodKeys[parseInt(e.key) - 1]);
+      setPeriod(periodKeys[Number.parseInt(e.key) - 1]);
     }
     if (e.key === 'h' || e.key === 'H') {
       e.preventDefault();

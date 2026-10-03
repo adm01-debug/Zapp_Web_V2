@@ -113,7 +113,7 @@ export function QueueGoalsDialog({
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    max_waiting_contacts: parseInt(e.target.value) || 0,
+                    max_waiting_contacts: Number.parseInt(e.target.value) || 0,
                   }))
                 }
                 className="w-20 bg-muted/20 border-border/30"
@@ -147,7 +147,7 @@ export function QueueGoalsDialog({
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    max_avg_wait_minutes: parseInt(e.target.value) || 0,
+                    max_avg_wait_minutes: Number.parseInt(e.target.value) || 0,
                   }))
                 }
                 className="w-20 bg-muted/20 border-border/30"
@@ -181,7 +181,7 @@ export function QueueGoalsDialog({
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    min_assignment_rate: parseInt(e.target.value) || 0,
+                    min_assignment_rate: Number.parseInt(e.target.value) || 0,
                   }))
                 }
                 className="w-20 bg-muted/20 border-border/30"
@@ -215,7 +215,7 @@ export function QueueGoalsDialog({
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    max_messages_pending: parseInt(e.target.value) || 0,
+                    max_messages_pending: Number.parseInt(e.target.value) || 0,
                   }))
                 }
                 className="w-20 bg-muted/20 border-border/30"

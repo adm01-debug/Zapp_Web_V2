@@ -5,7 +5,7 @@ const storageKey = (cid: string) => `team-chat-unread-${cid}`;
 
 export function useTeamUnreadCount(conversationId: string) {
   const [unread, setUnread] = useState<number>(() => {
-    try { return parseInt(localStorage.getItem(storageKey(conversationId)) ?? '0', 10) || 0; } catch { return 0; }
+    try { return Number.parseInt(localStorage.getItem(storageKey(conversationId)) ?? '0', 10) || 0; } catch { return 0; }
   });
 
   const markRead = useCallback(() => {

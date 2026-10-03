@@ -227,7 +227,7 @@ serve(async (req) => {
           snippet: msg.snippet,
           label_ids: msg.labelIds || [],
           is_unread: (msg.labelIds || []).includes("UNREAD"),
-          last_message_at: new Date(parseInt(msg.internalDate)).toISOString(),
+          last_message_at: new Date(Number.parseInt(msg.internalDate)).toISOString(),
         }, { onConflict: "gmail_account_id,gmail_thread_id" }).select().single();
 
         // Upsert email message
@@ -249,7 +249,7 @@ serve(async (req) => {
           has_attachments: (msg.payload.parts || []).some((p: any) => p.filename && p.body?.attachmentId),
           in_reply_to: getHeader(headers, "In-Reply-To") || null,
           references_header: getHeader(headers, "References") || null,
-          internal_date: new Date(parseInt(msg.internalDate)).toISOString(),
+          internal_date: new Date(Number.parseInt(msg.internalDate)).toISOString(),
           direction: isOutbound ? "outbound" : "inbound",
         }, { onConflict: "gmail_account_id,gmail_message_id" });
 

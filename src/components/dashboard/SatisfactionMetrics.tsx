@@ -129,7 +129,7 @@ export function SatisfactionMetrics() {
               right={(
                 <div className="flex items-center gap-2">
                   <CardSelect value={chartMode} onValueChange={setChartMode} options={[{ value: 'both', label: 'CSAT e NPS' }, { value: 'csat', label: 'Somente CSAT' }]} testid="sat-chart-mode" />
-                  <CardSelect value={String(periodDays)} onValueChange={(v) => setPeriodDays(parseInt(v))} options={PERIOD_OPTIONS.map(o => ({ value: o.value, label: o.label }))} testid="sat-period" />
+                  <CardSelect value={String(periodDays)} onValueChange={(v) => setPeriodDays(Number.parseInt(v))} options={PERIOD_OPTIONS.map(o => ({ value: o.value, label: o.label }))} testid="sat-period" />
                 </div>
               )}
             />
@@ -230,7 +230,7 @@ export function SatisfactionMetrics() {
                 <EmptyBlock icon={User} title="Sem dados para exibir" sub="Ainda não há avaliações de satisfação para os agentes neste período." />
               ) : (
                 <div className="w-full p-3 space-y-2.5">
-                  {breakdown.byAgent.slice(0, parseInt(topN)).map((a, i) => (
+                  {breakdown.byAgent.slice(0, Number.parseInt(topN)).map((a, i) => (
                     <div key={a.agentId} className="flex items-center justify-between gap-2 text-[13px]">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <span className="text-2xs font-bold text-muted-foreground w-3">{i + 1}.</span>

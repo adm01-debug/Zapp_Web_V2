@@ -109,7 +109,7 @@ serve(async (req) => {
                 .from('messages')
                 .update({
                   status: status.status,
-                  status_updated_at: new Date(parseInt(status.timestamp) * 1000).toISOString(),
+                  status_updated_at: new Date(Number.parseInt(status.timestamp) * 1000).toISOString(),
                 })
                 .eq('external_id', status.id);
 
