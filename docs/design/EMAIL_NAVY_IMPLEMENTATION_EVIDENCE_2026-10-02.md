@@ -174,7 +174,7 @@ Legenda: **Aprovado localmente**, **Parcial**, **Bloqueado** ou **Pendente**. �
 | 077 | Aprovado localmente | Além das 1.000 threads/50 páginas, a fixture cobre uma thread extrema com corpo longo e 40 anexos. |
 | 078 | Aprovado localmente | Projeto `chromium-email-navy` coleta 24 testes sem login real ou envio real. |
 | 079 | Aprovado localmente | Typechecks app/E2E, build, lint tocado, 5.852 unitários e E2E completo foram executados. |
-| 080 | Aprovado | PR #1751 foi mergeada em `bc9cf299`; Vercel Production publicou esse build; `gmail-oauth` v563 foi conferida fonte a fonte e a rota pública passou 19/19 testes. |
+| 080 | Aprovado | PR #1762 foi mergeada em `c2892ad6`; os seis gates obrigatórios passaram, a Vercel Production publicou exatamente esse build e a rota pública passou 24/24 testes. |
 
 Totais da auditoria deste fechamento: 78 aprovados, nenhum parcial, nenhum pendente e 2 bloqueados pelo mesmo artefato visual ausente (AC-002 e AC-010). Não resta gap tecnicamente executável conhecido no escopo da especificação disponível.
 
@@ -192,12 +192,12 @@ Totais da auditoria deste fechamento: 78 aprovados, nenhum parcial, nenhum pende
 | Playwright Email NAVY | 24/24 aprovados, incluindo WYSIWYG, drawer, labels, zoom, A→B→A, Omnichannel, extremos e matriz responsiva |
 | Acessibilidade Playwright/axe | Zero violação no cenário padrão e em alto contraste + movimento reduzido |
 | Chamadas mutáveis externas | Interceptadas e bloqueadas; zero envio real |
-| CI da branch | Build, unitários, Playwright, lint/typecheck, segurança, DB Guard, CodeQL, SonarCloud, mutation e E2E Talk X aprovados no commit remoto auditado |
+| CI da finalização | Os seis gates obrigatórios — build, unitários, Playwright, lint/typecheck, segurança e contrato DB offline — aprovados na PR #1762; CodeQL JavaScript/TypeScript e Actions também concluíram sem falha bloqueante |
 | Edge Functions canônicas | `gmail-oauth` v563, `gmail-send` v562 e `gmail-sync` v560 ativas; as três mantêm JWT obrigatório |
 | Smoke remoto sem autenticação | 401 para ambas as funções; zero envio real |
-| GitHub | PR #1751 validada por 12 checks bem-sucedidos, sem falhas, e mergeada por squash em `bc9cf299317423e09493e6164486d062acfbd5ed` |
-| Vercel Production | Deployment concluído; `version.json` confirmou exatamente `bc9cf299317423e09493e6164486d062acfbd5ed` |
-| Playwright na URL pública | 19/19 aprovados em `https://zapp-web-v2.vercel.app`; mutações externas interceptadas e zero envio real |
+| GitHub | PR #1762 mergeada por squash em `c2892ad6851c24efafbce1a78a52836e7d5975fd`, após aprovação de todos os gates obrigatórios |
+| Vercel Production | Deployment concluído; `version.json` confirmou exatamente `c2892ad6851c24efafbce1a78a52836e7d5975fd` |
+| Playwright na URL pública | 24/24 aprovados em `https://zapp-web-v2.vercel.app/?view=email-chat`; mutações externas interceptadas e zero envio real |
 | `gmail-oauth` canônica | v563 `ACTIVE`, JWT obrigatório, quatro fontes remotas idênticas ao `main`; smoke anônimo HTTP 401 |
 
 O lint global continua contendo dívida histórica fora do diff; não foi enfraquecido. O critério aplicado à entrega é lint estrito em todos os arquivos tocados, além de typecheck/build/teste global.
