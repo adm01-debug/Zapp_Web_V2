@@ -286,6 +286,40 @@ qualquer banco onde a funcao ja exista — e neste banco ela existe desde
 supabase/migrations/20261002461230_f51c_multiplix_confirm_dispatch_contrato.sql
 ```
 
+### Caso concreto: `20261002701230_f62_*` foi superada — a substituta e a `f62b`
+
+`20261002701230_f62_resposta_correlacionada.sql` cria `attribute_multiplix_item_reply(...)` e o
+`CREATE FUNCTION` **passa sem reclamar** — mas a funcao quebra na **primeira chamada**:
+
+- `SELECT COALESCE(NULLIF(value, '')::numeric, 72) INTO v_window FROM public.talkx_settings ...`
+  → `talkx_settings.value` e **jsonb** (nao `text`), e `NULLIF(jsonb, '')` nao existe em Postgres.
+  O sintoma que chega ao log e so o `CONTEXT: PL/pgSQL function
+  attribute_multiplix_item_reply(text,text,text) line 31 at SQL statement`.
+
+O erro nao aparece na criacao da funcao, em `deno check`, nem em revisao de texto: so no primeiro
+contato que responder — isto e, em producao. Um erro irmao (`column item.replied_at does not
+exist`) apareceu so no harness de banco, porque o fixture nao carregava a f51.
+
+**No mesmo PR a `f62` foi descartada da arvore** — ela **nunca chegou a ser aplicada**. A migration
+entregue e a `f62b`, que cria a funcao corrigida na **mesma assinatura** `(text, text, text)`, entao
+nenhum chamador (o edge `_shared/talkx-reply.ts`) precisa mudar.
+
+### Armadilha: editar uma migration ja registrada como pendente nao tem saida pelo caminho feliz
+
+O `hermes-db-migrar` grava o sha256 do arquivo no momento do registro
+(`~/.local/share/hermes-guard/mig-sha/<arquivo>.sql`) e o `hermes-tarefa-fechar` **recusa** fechar
+enquanto o sha do arquivo divergir do registrado. A mensagem orienta a rodar `hermes-db-migrar
+<arquivo>` de novo "para revalidar e registrar" — mas isso **nao funciona**: a guarda de versao exige
+`version > max(version)` do ledger, e basta **outro chat** ter aplicado uma versao maior nesse
+meio-tempo para a revalidacao virar impossivel (`ERRO: versao ... nao e maior que max(version)=... no
+ledger`). O `--dry-run` tambem nao atualiza o sha (so imprime o SQL que seria rodado).
+
+Regra pratica: **nao edite uma migration depois de registra-la como pendente.** Se errou, registre
+uma substituta com `--nova` e **remova o arquivo errado da arvore** (foi o que este PR fez: o
+`hermes-tarefa-fechar` aceita quando o arquivo nao esta mais la, e o `hermes-tarefa-mergear`
+recalcula os pendentes a partir do PR). Deixar o arquivo errado na arvore, com conteudo diferente do
+registrado, trava o fechamento nos dois caminhos.
+
 ### O hash da f51 no ledger diverge do arquivo — e a excecao registrada
 
 O `O_MIGRATIONS` do `db-live-guard.yml` fica **vermelho** por causa dessa migration, e nao por

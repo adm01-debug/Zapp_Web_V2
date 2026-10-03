@@ -267,7 +267,14 @@ CREATE TABLE IF NOT EXISTS public.whatsapp_connections (
   created_at timestamp with time zone NOT NULL DEFAULT now()
 );
 INSERT INTO public.whatsapp_connections (id, status, instance_id)
-VALUES ('70000000-0000-0000-0000-000000000001', 'connected', 'inst-f57')
+VALUES ('70000000-0000-0000-0000-000000000001', 'connected', 'inst-f57'),
+       -- conexao PROPRIA dos casos do F60: eles pausam TODOS os dispatches da conexao
+       -- (esse e o comportamento sob teste), e usar a conexao do F57 aqui derrubaria a
+       -- elegibilidade de um teste que nao tem nada a ver — foi o que aconteceu.
+       ('70000000-0000-0000-0000-0000000000c6', 'connected', 'inst-f60'),
+       -- e outra PROPRIA dos casos do F62: o F57 escolhe item elegivel por conexao, e
+       -- compartilhar a conexao fazia o F62 interferir no claim dele.
+       ('70000000-0000-0000-0000-0000000000c2', 'connected', 'inst-f62')
 ON CONFLICT (id) DO NOTHING;
 
 SQL
@@ -276,7 +283,17 @@ SQL
 migration "20261001201230_f30_multiplix_enums_modelo_v2.sql"
 migration "20261001211230_f31_multiplix_dispatch_recipient_columns.sql"
 migration "20261001221230_f32a_multiplix_delivery_items_table.sql"
+
+# replied_at/reply_attribution vem da f51; o harness nao carrega a f51 inteira,
+# entao as duas colunas que a F62 usa sao criadas aqui. Sem SET ROLE: ALTER TABLE
+# exige o owner da tabela e o service_role nao e.
+psql_test >/dev/null <<SQL
+ALTER TABLE public.multiplix_delivery_items
+  ADD COLUMN IF NOT EXISTS replied_at timestamptz,
+  ADD COLUMN IF NOT EXISTS reply_attribution text CHECK (reply_attribution IN ('linked','inferred'));
+SQL
 migration "20261001231230_f32b_multiplix_item_queue_rpcs.sql"
+migration "20261001251230_f34_multiplix_events_append_only.sql"
 # F59: conserta transition_multiplix_dispatch, que a f30 deixou quebrada ao converter
 # status para enum (42804). Sem ela, os casos 3 e 4 deste teste nao tem como passar — e
 # e justamente o teste que expoe o defeito.
@@ -286,8 +303,8 @@ migration "20261002521230_f59_transition_dispatch_enum_cast.sql"
 migration "20261002621230_f55_claimable_items_por_bloco.sql"
 # A f60 grava na trilha (multiplix_events, da f34) e le os itens (f32a/f32b). A f34 nao
 # estava na cadeia deste harness — sem ela a trilha nao existiria e o teste provaria nada.
-migration "20261001251230_f34_multiplix_events_append_only.sql"
 migration "20261002671230_f60_conexao_capacidades_e_risco.sql"
+migration "20261003092707_f62b_leitura_janela_jsonb.sql"
 
 
 # ── F57: fila POR ITEM (multiplix_delivery_items) ──────────────────────────────
@@ -595,18 +612,18 @@ cap_col="$(psql_test -Atqc "SELECT data_type || '|' || is_nullable || '|' || coa
 psql_test >/dev/null <<SQL
 $service_session
 INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, whatsapp_connection_id)
-VALUES ('30000000-0000-0000-0000-00000000f600','risco','t','sending','10000000-0000-0000-0000-000000000001',1,'70000000-0000-0000-0000-000000000001'),
-       ('30000000-0000-0000-0000-00000000f601','risco2','t','scheduled','10000000-0000-0000-0000-000000000001',1,'70000000-0000-0000-0000-000000000001')
+VALUES ('30000000-0000-0000-0000-00000000f600','risco','t','sending','10000000-0000-0000-0000-000000000001',1,'70000000-0000-0000-0000-0000000000c6'),
+       ('30000000-0000-0000-0000-00000000f601','risco2','t','scheduled','10000000-0000-0000-0000-000000000001',1,'70000000-0000-0000-0000-0000000000c6')
 ON CONFLICT (id) DO NOTHING;
 SQL
 falha_permanente() {
-  psql_test -Atqc "$service_session SELECT public.register_multiplix_connection_failure('70000000-0000-0000-0000-000000000001', NULL, 'permanent');" 2>&1 | tail -1
+  psql_test -Atqc "$service_session SELECT public.register_multiplix_connection_failure('70000000-0000-0000-0000-0000000000c6', NULL, 'permanent');" 2>&1 | tail -1
 }
 r1="$(falha_permanente)"
 r2="$(falha_permanente)"
 [[ "$r2" == *'"action": "counted"'* ]] \
   || fail "F60.2: duas falhas permanentes ja pausaram (esperava 'counted', veio: $r2)"
-pausados_antes="$(psql_test -Atqc "$service_session SELECT count(*) FROM public.multiplix_dispatches WHERE whatsapp_connection_id='70000000-0000-0000-0000-000000000001' AND status='paused';" 2>&1 | tail -1 || true)"
+pausados_antes="$(psql_test -Atqc "$service_session SELECT count(*) FROM public.multiplix_dispatches WHERE whatsapp_connection_id='70000000-0000-0000-0000-0000000000c6' AND status='paused';" 2>&1 | tail -1 || true)"
 [[ "$pausados_antes" == "0" ]] \
   || fail "F60.2: houve dispatch pausado antes da terceira falha ($pausados_antes)"
 
@@ -629,7 +646,7 @@ $service_session
 UPDATE public.multiplix_dispatches SET status='sending', pause_reason=NULL, paused_at=NULL
  WHERE id='30000000-0000-0000-0000-00000000f600';
 SQL
-rb="$(psql_test -Atqc "$service_session SELECT public.register_multiplix_connection_failure('70000000-0000-0000-0000-000000000001', 'TemporaryBan', NULL);" 2>&1 | tail -1)"
+rb="$(psql_test -Atqc "$service_session SELECT public.register_multiplix_connection_failure('70000000-0000-0000-0000-0000000000c6', 'TemporaryBan', NULL);" 2>&1 | tail -1)"
 [[ "$rb" == *'"paused_banned"'* ]] \
   || fail "F60.4: TemporaryBan nao pausou imediatamente (veio: $rb)"
 
@@ -638,13 +655,89 @@ rb="$(psql_test -Atqc "$service_session SELECT public.register_multiplix_connect
 psql_test >/dev/null <<SQL
 $service_session
 UPDATE public.multiplix_dispatches SET status='sending', pause_reason=NULL, paused_at=NULL
- WHERE whatsapp_connection_id='70000000-0000-0000-0000-000000000001';
+ WHERE whatsapp_connection_id='70000000-0000-0000-0000-0000000000c6';
 INSERT INTO public.multiplix_events (dispatch_id, kind, payload)
 VALUES ('30000000-0000-0000-0000-00000000f600','item_sent','{}'::jsonb);
 SQL
 depois_sucesso="$(falha_permanente)"
 [[ "$depois_sucesso" == *'"consecutive_failures": 1'* ]] \
   || fail "F60.5: um sucesso nao zerou a contagem de consecutivas (veio: $depois_sucesso)"
+
+# ==============================================================================
+# F62: resposta do contato correlacionada ao ITEM (linked vs inferred)
+# ==============================================================================
+
+psql_test <<SQL
+$service_session
+INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, whatsapp_connection_id)
+VALUES ('30000000-0000-0000-0000-00000000f620','f62','t','sending','10000000-0000-0000-0000-000000000001',1,'70000000-0000-0000-0000-0000000000c6')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, company_name_snapshot, destino_e164, status)
+VALUES ('40000000-0000-0000-0000-00000000f620','30000000-0000-0000-0000-00000000f620','50000000-0000-0000-0000-000000000001','Empresa F62','+55 11 99999-0620','pending')
+ON CONFLICT (id) DO NOTHING;
+-- O bloco precisa existir: o item aponta para ele. Sem este INSERT o SELECT de baixo
+-- devolve zero linha, o item nunca nasce e TODOS os casos do F62 falham em cascata.
+INSERT INTO public.multiplix_blocks (id, dispatch_id, block_order, block_type, template_text)
+VALUES ('60000000-0000-0000-0000-00000000f620','30000000-0000-0000-0000-00000000f620',1,'text','Ola {{empresa}}')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.multiplix_delivery_items (id, dispatch_id, recipient_id, block_id, dispatch_version, status, external_id, sent_at)
+VALUES ('80000000-0000-0000-0000-00000000f621','30000000-0000-0000-0000-00000000f620','40000000-0000-0000-0000-00000000f620','60000000-0000-0000-0000-00000000f620',1,'delivered','EXT-F62-LINKED', now() - interval '1 hour')
+ON CONFLICT (id) DO NOTHING;
+SQL
+
+# (F62.1) Sem citacao: atribui por JANELA + NUMERO e marca `inferred`.
+# A flag e o ponto: o operador precisa poder ver que essa atribuicao e palpite, nao certeza.
+r="$(psql_test -Atqc "$service_session SELECT public.attribute_multiplix_item_reply('5511999990620','msg-f62-1',NULL);" 2>&1 | tail -1)"
+[[ "$r" == *'"attribution": "inferred"'* ]] \
+  || fail "F62.1: sem citacao deveria atribuir como inferred (veio: $r)"
+[[ "$r" == *'"attributed": true'* ]] \
+  || fail "F62.1: nao atribuiu a resposta ao item (veio: $r)"
+
+# (F62.2) Idempotencia: a segunda chegada NAO reescreve (reentrega de webhook e real).
+r2="$(psql_test -Atqc "$service_session SELECT public.attribute_multiplix_item_reply('5511999990620','msg-f62-2',NULL);" 2>&1 | tail -1)"
+[[ "$r2" == *'"attributed": false'* ]] \
+  || fail "F62.2: reentrega deveria devolver attributed=false (veio: $r2)"
+attr="$(psql_test -Atqc "$service_session SELECT reply_attribution FROM public.multiplix_delivery_items WHERE id='80000000-0000-0000-0000-00000000f621';" 2>&1 | tail -1)"
+[[ "$attr" == "inferred" ]] \
+  || fail "F62.2: a atribuicao original foi reescrita (agora: $attr)"
+
+# (F62.3) Com citacao que CASA o external_id: `linked` — a correlacao exata, o caso bom.
+psql_test <<SQL
+$service_session
+UPDATE public.multiplix_delivery_items SET replied_at=NULL, reply_attribution=NULL WHERE id='80000000-0000-0000-0000-00000000f621';
+SQL
+r3="$(psql_test -Atqc "$service_session SELECT public.attribute_multiplix_item_reply('5511999990620','msg-f62-3','EXT-F62-LINKED');" 2>&1 | tail -1)"
+[[ "$r3" == *'"attribution": "linked"'* ]] \
+  || fail "F62.3: citacao que casa deveria dar linked (veio: $r3)"
+
+# (F62.4) Citacao que NAO casa cai para `inferred` — nunca inventa `linked`.
+psql_test <<SQL
+$service_session
+UPDATE public.multiplix_delivery_items SET replied_at=NULL, reply_attribution=NULL WHERE id='80000000-0000-0000-0000-00000000f621';
+SQL
+r4="$(psql_test -Atqc "$service_session SELECT public.attribute_multiplix_item_reply('5511999990620','msg-f62-4','EXT-QUE-NAO-EXISTE');" 2>&1 | tail -1)"
+[[ "$r4" == *'"attribution": "inferred"'* ]] \
+  || fail "F62.4: citacao que nao casa deveria cair para inferred (veio: $r4)"
+
+# (F62.5) Item FORA DA JANELA nao recebe atribuicao — a resposta nao pode ser pendurada
+# num envio de semanas atras so porque foi o ultimo daquele numero.
+psql_test <<SQL
+$service_session
+UPDATE public.multiplix_delivery_items SET replied_at=NULL, reply_attribution=NULL, sent_at = now() - interval '200 hours' WHERE id='80000000-0000-0000-0000-00000000f621';
+SQL
+r5="$(psql_test -Atqc "$service_session SELECT public.attribute_multiplix_item_reply('5511999990620','msg-f62-5',NULL);" 2>&1 | tail -1)"
+[[ "$r5" == *'"attributed": false'* ]] \
+  || fail "F62.5: item fora da janela (200h) nao pode ser atribuido (veio: $r5)"
+
+# (F62.6) A resposta de OUTRO contato nao pode fechar este item.
+psql_test <<SQL
+$service_session
+UPDATE public.multiplix_delivery_items SET replied_at=NULL, reply_attribution=NULL, sent_at = now() - interval '1 hour' WHERE id='80000000-0000-0000-0000-00000000f621';
+SQL
+r6="$(psql_test -Atqc "$service_session SELECT public.attribute_multiplix_item_reply('5511888888888','msg-f62-6',NULL);" 2>&1 | tail -1)"
+[[ "$r6" == *'"attributed": false'* ]] \
+  || fail "F62.6: contato diferente nao pode atribuir a este item (veio: $r6)"
+
 
 printf 'PASS: fila por item — dois workers nao pegam o mesmo item, lease vencido nao completa e devolve o item a fila (renovando o token), pausa nao entrega pending novo sem interromper o que esta em voo, cancel encerra pendentes sem tocar no que foi ao provedor, e timeout vira outcome_unknown sem reenvio (F57). Escolha do proximo item respeita a ORDEM POR BLOCO do destinatario (bloco k so depois do k-1 sent, tres blocos) e o heartbeat de lease renova so para o dono do claim (F55/F56)\n'
 

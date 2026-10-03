@@ -1,6 +1,6 @@
 // Message-specific handlers for evolution-webhook: incoming, outgoing, sticker, transcription
 import { evoFetch, extractBase64Media } from './evolution-send.ts';
-import { attributeTalkXReply, TALKX_OPT_OUT_RE } from "./talkx-reply.ts";
+import { attributeMultiplixReply, attributeTalkXReply, TALKX_OPT_OUT_RE } from "./talkx-reply.ts";
 
 import {
   isRecord, normalizePhone, resolveEventJid,
@@ -332,8 +332,45 @@ export async function handleIncomingMessage(
   if (tx.outcome === 'inserted' && !key.fromMe && tx.contact_id && tx.message_id) {
     if (!TALKX_OPT_OUT_RE.test((content ?? '').trim())) {
       void attributeTalkXReply(supabase, tx.contact_id, tx.message_id);
+      // F62: a MESMA resposta tambem fecha o item do Multiplix. A citacao (quando existe)
+      // e o unico jeito de saber QUAL envio gerou a resposta — sem ela a atribuicao e por
+      // janela + numero e a funcao grava `inferred` em vez de `linked`. Por isso a citacao
+      // e extraida aqui e passada adiante: a diferenca entre as duas e o que o operador ve.
+      // O vinculo e por TELEFONE: `multiplix_recipients` nao tem contact_id (guarda
+      // `destino_e164`). `phone` ja vem normalizado no escopo desta funcao (bestJid).
+      if (phone) {
+        void attributeMultiplixReply(
+          supabase,
+          phone,
+          tx.message_id,
+          extractQuotedExternalId(data),
+        );
+      }
     }
   }
+}
+
+/**
+ * F62: extrai o `external_id` da mensagem CITADA, quando o contato responde quotando.
+ *
+ * O `stanzaId` do `contextInfo` e o id da mensagem original — o mesmo que gravamos em
+ * `multiplix_delivery_items.external_id` no envio. O `contextInfo` nao fica no topo: ele
+ * vive DENTRO do tipo da mensagem (`extendedTextMessage`, `imageMessage`, `audioMessage`...),
+ * entao e preciso descer um nivel por tipo. Casa tambem `stanzaID` (grafia do Go).
+ * Devolve null quando nao ha citacao utilizavel — e ai a atribuicao cai em `inferred`.
+ */
+// deno-lint-ignore no-explicit-any
+function extractQuotedExternalId(data: any): string | null { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const message = isRecord(data?.message) ? data.message : null;
+  if (!message) return null;
+  for (const value of Object.values(message)) {
+    if (!isRecord(value)) continue;
+    const ctx = value.contextInfo;
+    if (!isRecord(ctx)) continue;
+    const stanza = ctx.stanzaId ?? ctx.stanzaID;
+    if (typeof stanza === 'string' && stanza.trim()) return stanza.trim();
+  }
+  return null;
 }
 
 // deno-lint-ignore no-explicit-any
