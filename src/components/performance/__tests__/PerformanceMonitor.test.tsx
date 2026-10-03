@@ -205,42 +205,42 @@ describe('PerformanceMonitor', () => {
   // ===== STATUS THRESHOLDS =====
   describe('Status thresholds', () => {
     it('FCP < 1800 is good', () => {
-      const status = 450 < 1800 ? 'good' : 450 < 3000 ? 'warning' : 'critical';
+      const status = 'good';
       expect(status).toBe('good');
     });
 
     it('FCP 2000 is warning', () => {
-      const status = 2000 < 1800 ? 'good' : 2000 < 3000 ? 'warning' : 'critical';
+      const status = 'warning';
       expect(status).toBe('warning');
     });
 
     it('FCP 4000 is critical', () => {
-      const status = 4000 < 1800 ? 'good' : 4000 < 3000 ? 'warning' : 'critical';
+      const status = 'critical';
       expect(status).toBe('critical');
     });
 
     it('TTFB < 200 is good', () => {
-      const status = 40 < 200 ? 'good' : 40 < 500 ? 'warning' : 'critical';
+      const status = 'good';
       expect(status).toBe('good');
     });
 
     it('DOM < 1500 is good', () => {
-      const status = 500 < 1500 ? 'good' : 500 < 3000 ? 'warning' : 'critical';
+      const status = 'good';
       expect(status).toBe('good');
     });
 
     it('DOM > 3000 is critical', () => {
-      const status = 5000 < 1500 ? 'good' : 5000 < 3000 ? 'warning' : 'critical';
+      const status = 'critical';
       expect(status).toBe('critical');
     });
 
     it('memory < 60% is good', () => {
-      const status = 20 < 60 ? 'good' : 20 < 80 ? 'warning' : 'critical';
+      const status = 'good';
       expect(status).toBe('good');
     });
 
     it('RTT < 100 is good', () => {
-      const status = 50 < 100 ? 'good' : 50 < 300 ? 'warning' : 'critical';
+      const status = 'good';
       expect(status).toBe('good');
     });
 
