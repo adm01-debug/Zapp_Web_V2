@@ -40,6 +40,9 @@ export interface FilesContainerColumns {
   effective: number;
   /** Capacidade medida do contêiner; `null` antes da primeira medicao. */
   capacity: number | null;
+  /** Largura medida do contêiner em px; `null` antes da primeira medicao. A Lista (etapa 22) e a
+   * Tabela (etapa 24) decidem densidade por ela — nunca por `window.innerWidth`. */
+  width: number | null;
   /** As 5 opcoes do seletor, com `fits` para desabilitar (nunca esconder). */
   available: ColumnOption[];
 }
@@ -77,6 +80,7 @@ export function useFilesContainerColumns(
   return {
     effective: capacity === null ? preferred : effectiveColumns(capacity, preferred),
     capacity,
+    width,
     available: FILES_COLUMNS.map((n) => ({ n, fits: capacity === null ? true : n <= capacity })),
   };
 }

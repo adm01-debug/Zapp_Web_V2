@@ -1,15 +1,11 @@
 import { useState } from 'react';
-import { Eye, File, Image, Lock, MoreVertical, Play, Share2, Trash2 } from 'lucide-react';
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Eye, File, Image, Play, Share2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { formatSmartDate } from '@/lib/formatters';
 import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
-import { formatSize, TYPE_LABEL } from './fileDisplay';
+import { formatMeta } from './fileDisplay';
+import { FileActionsMenu } from './FileActionsMenu';
 
 interface FileCardProps {
   item: ContactMediaItem;
@@ -45,20 +41,9 @@ export function FileCard({
   // continua como fallback para item sem URL assinada (objeto público ou lote que falhou).
   const { url: resolvedUrl, refresh } = useResolvedStorageUrl(item.signedUrl ? '' : item.url);
   const displayUrl = item.signedUrl ?? resolvedUrl;
-  const size = formatSize(item.size);
   const mostraRemetente = effectiveColumns <= 4;
-  // Etapa 18: "Imagem · 1,2 MB · 24/09 17:54" num só parágrafo; tamanho ausente sai fora,
-  // nunca "0 KB".
-  const meta = [TYPE_LABEL[item.type], size, formatSmartDate(item.created_at)].filter(Boolean).join(' · ');
-
-  const deleteMessage = async () => {
-    if (!window.confirm('Apagar esta mensagem para você?')) return;
-    const { supabase } = await import('@/integrations/supabase/client');
-    const { error } = await supabase.from('messages').update({ is_deleted: true, content: '[Mensagem apagada]' }).eq('id', item.id);
-    if (error) { toast.error('Erro ao apagar mensagem'); return; }
-    toast.success('Mensagem removida');
-    onDeleted();
-  };
+  // Etapas 18/25: meta unica vinda do fileDisplay — nenhum renderer formata data ou tamanho.
+  const meta = formatMeta(item);
 
   const acao = selectionMode ? onToggleSelection : undefined;
 
@@ -149,28 +134,7 @@ export function FileCard({
         >
           <Share2 className="w-3.5 h-3.5" />
         </button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              aria-label="Mais ações"
-              className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <MoreVertical className="w-3.5 h-3.5" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem disabled title="Bloqueado pela política de segurança">
-              <Lock className="w-4 h-4 mr-2" />
-              Baixar · Bloqueado pela política de segurança
-            </DropdownMenuItem>
-            {item.sender === 'agent' && (
-              <DropdownMenuItem onClick={deleteMessage} className="text-destructive">
-                <Trash2 className="w-4 h-4 mr-2" />Excluir mensagem
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <FileActionsMenu item={item} onDeleted={onDeleted} />
       </div>
     </article>
   );

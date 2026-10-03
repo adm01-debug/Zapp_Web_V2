@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react';
-import { Paperclip } from 'lucide-react';
-import { EmptyState } from '@/components/ui/empty-state';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useContactMedia, type ContactMediaItem } from '@/hooks/chat/useContactMedia';
@@ -11,7 +9,7 @@ import { useFilesViewState, type FilesTypeFilter } from '@/hooks/chat/useFilesVi
 import { useFilesContainerColumns } from '@/hooks/chat/useFilesContainerColumns';
 import { useFilesSelection } from '@/hooks/chat/useFilesSelection';
 import { FilesToolbar } from './FilesToolbar';
-import { FileCard } from './FileCard';
+import { FilesContent } from './FilesContent';
 import { FileDetailPanel } from './FileDetailPanel';
 import type { Message } from '@/types/chat';
 
@@ -28,22 +26,6 @@ const CHIPS: { id: FilesTypeFilter; label: string }[] = [
   { id: 'document', label: 'Docs' },
 ];
 
-/**
- * Etapa 16: mapa literal de colunas. O Tailwind precisa das strings completas (nada de
- * template) e quem decide é o contêiner (`effective` da etapa 07) — sem breakpoint de
- * viewport, porque o mesmo componente roda na aba do contato e em painéis estreitos.
- */
-const COLS: Record<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8, string> = {
-  1: 'grid-cols-1',
-  2: 'grid-cols-2',
-  3: 'grid-cols-3',
-  4: 'grid-cols-4',
-  5: 'grid-cols-5',
-  6: 'grid-cols-6',
-  7: 'grid-cols-7',
-  8: 'grid-cols-8',
-};
-
 interface FilesTabProps {
   contactId: string;
   contactName: string;
@@ -54,7 +36,7 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
   const { user } = useAuth();
   const view = useFilesViewState(user?.id, contactId);
   const gridRef = useRef<HTMLDivElement>(null);
-  const { effective, available } = useFilesContainerColumns(gridRef, view.columns);
+  const { effective, available, width } = useFilesContainerColumns(gridRef, view.columns);
   const { data, isLoading } = useContactMedia(contactId);
 
   const [selected, setSelected] = useState<ContactMediaItem | null>(null);
@@ -148,32 +130,19 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
 
       <div className="flex gap-4 items-start">
         <div ref={gridRef} className="flex-1 min-w-0">
-          {isLoading ? (
-            <div className={cn('grid gap-3', COLS[effective as keyof typeof COLS])}>
-              {[...Array(6)].map((_, i) => <div key={i} className="aspect-[4/5] rounded-xl bg-muted/30 animate-pulse" />)}
-            </div>
-          ) : filtered.length === 0 ? (
-            <EmptyState icon={Paperclip} title="Nenhum arquivo encontrado" description="Arquivos, imagens e documentos desta conversa aparecerão aqui." size="sm" />
-          ) : (
-            <div className={cn('grid gap-3', COLS[effective as keyof typeof COLS])}>
-              {filtered.map((item) => (
-                <FileCard
-                  key={item.id}
-                  item={item}
-                  contactName={contactName}
-                  selected={selected?.id === item.id}
-                  selectionMode={selection.selectionMode}
-                  selectionChecked={selection.selectedIds.has(item.id)}
-                  effectiveColumns={effective}
-                  onSelect={() => setSelected(item)}
-                  onToggleSelection={() => selection.toggle(item.id)}
-                  onPreview={() => setPreviewItem(item)}
-                  onForward={() => setForwardItem(item)}
-                  onDeleted={handleDeleted}
-                />
-              ))}
-            </div>
-          )}
+          <FilesContent
+            items={filtered}
+            viewMode={view.viewMode}
+            effectiveColumns={effective}
+            containerWidth={width}
+            contactName={contactName}
+            loading={isLoading}
+            selection={{ mode: selection.selectionMode, selectedIds: selection.selectedIds, toggle: selection.toggle }}
+            actions={{ onPreview: setPreviewItem, onOpenDetails: setSelected, onForward: setForwardItem, onDeleted: handleDeleted }}
+            sort={view.sort}
+            onSortChange={view.setSort}
+            selectedId={selected?.id ?? null}
+          />
         </div>
 
         {selected && (
