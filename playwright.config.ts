@@ -27,7 +27,10 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // The Email fixture boots a full Vite app and captures visual artifacts. A
+  // bounded local pool prevents cold-start starvation that made otherwise
+  // independent specs observe the module-loading fallback after five seconds.
+  workers: process.env.CI ? 1 : 2,
   reporter: 'html',
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5173',
