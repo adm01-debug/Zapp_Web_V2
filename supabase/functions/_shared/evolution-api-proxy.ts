@@ -55,7 +55,7 @@ export function normalizeGoResponse(goPath: string | null, data: unknown): unkno
       };
     });
   }
-  if (goPath === '/instance/all' && Array.isArray(d.data)) {
+  if (goPath === '/instance/all' && Array.isArray(d?.data)) {
     const instances = d.data.map((instance: Record<string, unknown>) => {
       const safe = { ...instance };
       delete safe.token;
