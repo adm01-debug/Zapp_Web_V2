@@ -38,7 +38,7 @@ setup('authenticate', async ({ page }) => {
   const shell = page.locator('#main-navigation');
   const erroLogin = page
     .getByRole('alert')
-    .or(page.getByText(/inv[aá]lid|credenci|senha incorreta|e-?mail ou senha/i));
+    .or(page.getByText(/inv[aá]lid|credenci|senha incorreta|e-?mail ou senha|erro ao entrar|temporariamente indispon[ií]vel|tente novamente|sem resposta|timeout/i));
   await expect(shell.or(erroLogin).first()).toBeVisible({ timeout: 30_000 });
 
   const entrou = await shell.isVisible().catch(() => false);
