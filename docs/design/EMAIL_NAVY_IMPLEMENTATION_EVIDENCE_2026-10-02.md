@@ -13,7 +13,7 @@ A implementação tornou o workspace Email substancialmente mais seguro, íntegr
 Ainda não é correto declarar a entrega “100% homologada” por dois gaps objetivos:
 
 1. O arquivo formal `referencias/01_EMAIL_DIRECAO_VISUAL.png` não está no pacote ou no repositório. A captura anexada orientou a composição, mas não substitui uma comparação pixel a pixel certificada.
-2. A reexecução dos advisors de segurança e performance ficou temporariamente impedida por timeout do conector, embora o inventário SQL, o ledger, a publicação e os smokes das funções tenham sido concluídos. A homologação final da rota publicada também depende do merge e do deploy do frontend.
+2. Os advisors de segurança e performance continuam intermitentes: performance respondeu uma vez com achados informativos preexistentes e novas tentativas, inclusive de segurança, encerraram por timeout. O inventário SQL, o ledger, a publicação, os smokes das funções e a homologação da rota publicada foram concluídos.
 
 Esses gaps não foram mascarados com mocks de produção, DDL improvisado ou envio real.
 
@@ -64,7 +64,6 @@ Esses gaps não foram mascarados com mocks de produção, DDL improvisado ou env
 - Filtros e busca são avaliados sobre todo o corpus paginado pelo servidor, mas a expressão de busca ainda não é enviada ao PostgREST como query própria.
 - Logout isola imediatamente os rascunhos pela chave usuário+conta; a remoção física de chaves expiradas ocorre na leitura e não por um listener global de logout.
 - O cenário de 1.000 threads está coberto; benchmark de uma thread individual extremamente longa permanece fora da fixture.
-- Homologação visual final da rota após o merge/deploy do frontend.
 - Reexecução dos advisors Supabase quando o endpoint de auditoria deixar de responder com timeout.
 
 ## Auditoria do backend canônico
@@ -81,9 +80,9 @@ Inspeção e validação controlada do projeto canônico usado pela URL publicad
 | `email_attachments` | Presente; RLS ativo; 2 policies; 3 índices; 2.220 linhas no instante da auditoria |
 | `email_labels` | Presente; RLS ativo; 2 policies; 3 índices; 24 linhas no instante da auditoria |
 | Ledger de migrations | 762 entradas; migrations Gmail `20260403105341`, `20260827210200`, `20260828220100` e `20260901100001` registradas |
-| `gmail-oauth` | Ativa; versão 543; JWT obrigatório |
-| `gmail-send` | Publicada na versão 543; ativa; JWT obrigatório; fontes remotas idênticas à branch |
-| `gmail-sync` | Publicada na versão 541; ativa; JWT obrigatório; fontes remotas idênticas à branch |
+| `gmail-oauth` | Publicada na versão 563; ativa; JWT obrigatório; quatro fontes remotas idênticas ao `main` |
+| `gmail-send` | Ativa na versão 562; JWT obrigatório; não alterada nesta continuação |
+| `gmail-sync` | Ativa na versão 560; JWT obrigatório; não alterada nesta continuação |
 | `gmail-webhook` / `gmail-cron-sync` | Ativas com autenticação própria; não alteradas nesta entrega |
 | Smoke anônimo de `gmail-send` / `gmail-sync` | HTTP 401 em ambas; nenhuma mensagem enviada |
 
@@ -176,9 +175,9 @@ Legenda: **Aprovado localmente**, **Parcial**, **Bloqueado** ou **Pendente**. �
 | 077 | Parcial | Teste com 1.000 threads monta apenas a página visível e confirma 50 páginas; fixture de thread individual extrema ainda falta. |
 | 078 | Aprovado localmente | Projeto `chromium-email-navy` coleta 19 testes sem login real ou envio real. |
 | 079 | Aprovado localmente | Typecheck, build, lint tocado, Deno, 5.816 unitários e E2E completo foram executados. |
-| 080 | Parcial | Diff, screenshots, contratos e evidências foram revisados; merge, deploy frontend e publicação do `gmail-oauth` desta continuação serão registrados no fechamento operacional. |
+| 080 | Aprovado | PR #1751 foi mergeada em `bc9cf299`; Vercel Production publicou esse build; `gmail-oauth` v563 foi conferida fonte a fonte e a rota pública passou 19/19 testes. |
 
-Totais da auditoria neste marco: 64 aprovados localmente, 15 parciais, nenhum pendente e 1 bloqueado visual. O único bloqueio é a comparação formal com o PNG ausente; merge, deploy e homologação online ainda serão registrados no fechamento operacional.
+Totais da auditoria neste marco: 65 aprovados, 14 parciais, nenhum pendente e 1 bloqueado visual. O único bloqueio é a comparação formal com o PNG ausente; merge, backend canônico, deploy e homologação online foram concluídos.
 
 ## Validações executadas
 
@@ -195,8 +194,12 @@ Totais da auditoria neste marco: 64 aprovados localmente, 15 parciais, nenhum pe
 | Acessibilidade Playwright/axe | Zero violação no cenário avaliado |
 | Chamadas mutáveis externas | Interceptadas e bloqueadas; zero envio real |
 | CI da branch | Build, unitários, Playwright, lint/typecheck, segurança, DB Guard, CodeQL, SonarCloud, mutation e E2E Talk X aprovados no commit remoto auditado |
-| Edge Functions canônicas | `gmail-send` v543 e `gmail-sync` v541 ativas, JWT obrigatório e fontes remotas iguais à branch |
+| Edge Functions canônicas | `gmail-oauth` v563, `gmail-send` v562 e `gmail-sync` v560 ativas; as três mantêm JWT obrigatório |
 | Smoke remoto sem autenticação | 401 para ambas as funções; zero envio real |
+| GitHub | PR #1751 validada por 12 checks bem-sucedidos, sem falhas, e mergeada por squash em `bc9cf299317423e09493e6164486d062acfbd5ed` |
+| Vercel Production | Deployment concluído; `version.json` confirmou exatamente `bc9cf299317423e09493e6164486d062acfbd5ed` |
+| Playwright na URL pública | 19/19 aprovados em `https://zapp-web-v2.vercel.app`; mutações externas interceptadas e zero envio real |
+| `gmail-oauth` canônica | v563 `ACTIVE`, JWT obrigatório, quatro fontes remotas idênticas ao `main`; smoke anônimo HTTP 401 |
 
 O lint global continua contendo dívida histórica fora do diff; não foi enfraquecido. O critério aplicado à entrega é lint estrito em todos os arquivos tocados, além de typecheck/build/teste global.
 
@@ -213,11 +216,10 @@ As capturas usam dados sintéticos e não contêm e-mails, tokens ou sessões re
 
 ## Rollback e fechamento operacional
 
-O trabalho permanece isolado em branch revisável. As funções publicadas podem ser revertidas republicando a versão anterior registrada no histórico do Supabase. Para fechar a entrega:
+A implementação foi mergeada e homologada. O frontend pode ser revertido pelo histórico de deployments da Vercel/GitHub, e `gmail-oauth` pode ser revertida republicando a versão anterior registrada no Supabase. Não houve DDL nesta continuação; portanto não existe rollback de schema.
 
-1. reexecutar advisors e catálogo detalhado de RLS/grants quando o endpoint responder;
-2. publicar esta atualização documental e aguardar o CI do novo HEAD;
-3. promover a PR para revisão final e efetuar merge preservando as proteções do repositório;
-4. aguardar o deploy automático do frontend;
-5. validar a rota publicada em múltiplos viewports sem realizar envio real;
-6. registrar o SHA final, o estado do deploy e qualquer gap residual.
+Permanece como acompanhamento não bloqueante:
+
+1. anexar `referencias/01_EMAIL_DIRECAO_VISUAL.png` para a certificação visual formal do AC-002;
+2. reexecutar integralmente os advisors e o catálogo detalhado de RLS/grants quando o endpoint deixar de responder com timeout;
+3. tratar a dívida informativa de índices em uma iniciativa própria, com migration, análise de carga e rollback separados.
