@@ -26,10 +26,14 @@ function stub(modo) {
     injecao: "send({ required_status_checks: { strict: 'false\\n::error::forged', contexts: ['ci'] }, enforce_admins: { enabled: true } })",
   }[modo];
 
+  // S3923: aqui havia `modo === 'injecao' ? A : B` com A e B IDENTICOS -- ramo morto,
+  // o valor nao mudava com a condicao. A correcao NAO foi apagar a distincao: foi fazer
+  // os ramos diferirem de verdade, que era a intencao. Em injecao o campo repo carrega
+  // quebra de linha, o que o guard precisa neutralizar antes de imprimir.
   const repo =
     modo === 'injecao'
-      ? "send({ allow_auto_merge: true, allow_squash_merge: true, allow_merge_commit: false, allow_rebase_merge: false, delete_branch_on_merge: true, squash_merge_commit_message: 'PR_BODY', squash_merge_commit_title: 'PR_TITLE' })"
-      : "send({ allow_auto_merge: true, allow_squash_merge: true, allow_merge_commit: false, allow_rebase_merge: false, delete_branch_on_merge: true, squash_merge_commit_message: 'PR_BODY', squash_merge_commit_title: 'PR_TITLE' })";
+      ? "send({ allow_auto_merge: true, allow_squash_merge: 'true\\n::error::forged3', allow_merge_commit: false, allow_rebase_merge: false, delete_branch_on_merge: true, squash_merge_commit_message: 'PR_BODY', squash_merge_commit_title: 'PR_TITLE' })"
+      : "send({ allow_auto_merge: true, allow_squash_merge: true, allow_merge_commit: false, allow_rebase_merge: false, delete_branch_on_merge: true, squash_merge_commit_message: 'PR_BODY', squash_merge_commit_title: 'PR_TITLE' })"
 
   const actions = "send({ enabled: true, allowed_actions: 'selected', sha_pinning_required: true })";
   const envs =
