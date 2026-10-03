@@ -13,13 +13,15 @@ interface CallHistoryTableProps {
   rows: SearchMyCallsRow[];
   selecionadaId: string | null;
   onSelecionar: (id: string) => void;
+  /** T68: Esc limpa a selecao sem listener global. */
+  onLimparSelecao?: () => void;
   /** "Ligar de volta": mesma origem de discagem do click-to-call (evento `zapp:start-call`). */
   onLigarDeVolta: (row: SearchMyCallsRow) => void;
 }
 
 const COLUNAS = ['Contato', 'Canal', 'Direção', 'Resultado', 'Data e hora', 'Duração', 'Ações'];
 
-export function CallHistoryTable({ rows, selecionadaId, onSelecionar, onLigarDeVolta }: CallHistoryTableProps) {
+export function CallHistoryTable({ rows, selecionadaId, onSelecionar, onLimparSelecao, onLigarDeVolta }: CallHistoryTableProps) {
   return (
     <table className="w-full table-fixed border-collapse" data-testid="tel-history-table">
       <thead>
@@ -47,6 +49,11 @@ export function CallHistoryTable({ rows, selecionadaId, onSelecionar, onLigarDeV
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
                   onSelecionar(row.id);
+                } else if (e.key === 'Escape' && selecionada) {
+                  // T68: Esc limpa a selecao. Fica no proprio item (e nao num listener
+                  // global) para nao fechar o detalhe enquanto o agente digita a anotacao.
+                  e.preventDefault();
+                  onLimparSelecao?.();
                 }
               }}
               className={`h-[57px] cursor-pointer border-b border-border transition-colors hover:bg-muted/40 ${

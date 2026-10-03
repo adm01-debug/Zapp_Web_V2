@@ -24,6 +24,7 @@ function baseSession(overrides: Record<string, unknown> = {}) {
     isMuted: false,
     currentNumber: '',
     callDirection: null,
+    session: { status: 'active', channel: 'voip', phone: '5511999999999', name: null },
     acceptIncomingCall: vi.fn(),
     toggleMute: vi.fn(),
     hangUp: vi.fn(),
@@ -73,20 +74,23 @@ describe('ActiveCallBar', () => {
     expect(session.acceptIncomingCall).toHaveBeenCalledOnce();
   });
 
-  it('sobe acima da pilha de botões flutuantes na view Contatos', () => {
-    mockUseCallSession.mockReturnValue(baseSession({ callStatus: 'active', currentNumber: '5511999999999' }));
-    const { container } = renderAt('contacts');
-    const bar = container.querySelector('div.fixed') as HTMLElement;
-    expect(bar.className).toContain('md:bottom-56');
-    expect(bar.className).toContain('bottom-[calc(284px+env(safe-area-inset-bottom,0px))]');
-    expect(bar.className).not.toContain('bottom-24');
+
+
+  it('T69: e uma faixa de 48px no topo, nao mais um cartao flutuante', () => {
+    mockUseCallSession.mockReturnValue(baseSession({ callStatus: 'active', callDuration: 65, currentNumber: '5511999999999' }));
+    renderAt('inbox');
+    const faixa = screen.getByTestId('tel-active-bar');
+    expect(faixa.className).toContain('h-12');
+    expect(faixa.className).toContain('shrink-0');
+    // O flutuante saiu de proposito (T69): nada de fixed/bottom neste componente.
+    expect(faixa.className).not.toContain('fixed');
+    expect(faixa.className).not.toContain('bottom-');
   });
 
-  it('mantém a posição original fora da view Contatos', () => {
-    mockUseCallSession.mockReturnValue(baseSession({ callStatus: 'active', currentNumber: '5511999999999' }));
-    const { container } = renderAt('inbox');
-    const bar = container.querySelector('div.fixed') as HTMLElement;
-    expect(bar.className).toContain('bottom-24');
-    expect(bar.className).not.toContain('md:bottom-56');
+  it('T69: o clique na faixa leva para o painel da telefonia', () => {
+    mockUseCallSession.mockReturnValue(baseSession({ callStatus: 'active', callDuration: 65, currentNumber: '5511999999999' }));
+    renderAt('inbox');
+    fireEvent.click(screen.getByLabelText('Abrir a chamada em curso na telefonia'));
+    expect(window.location.search).toContain('view=voip');
   });
 });

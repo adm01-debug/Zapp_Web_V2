@@ -1,6 +1,7 @@
  import { Suspense, useCallback, forwardRef, lazy, useState, useMemo } from 'react';
  import { ZenModeToggle } from '@/components/layout/ZenModeToggle';
  import { VoiceCopilotFAB } from '@/components/layout/VoiceCopilotFAB';
+import { ActiveCallBar } from '@/components/calls/ActiveCallBar';
 import { LayoutProvider } from '@/contexts/LayoutContext';
 import { useViewTransition } from '@/hooks/ui/useViewTransition';
 import { cn } from '@/lib/utils';
@@ -131,6 +132,11 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
             isMobile && 'pt-12 pb-[56px]'
           )}
         >
+          {/* T69: a chamada em curso vive no topo do main, acima do conteudo. */}
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <ActiveCallBar />
+            <div className="flex min-h-0 min-w-0 flex-1 items-stretch overflow-hidden">
+
            {!isMobile && showFloatingZenToggle && <ZenModeToggle isZen={isZen} toggleZen={toggleZen} />}
           {showChecklist && currentView === 'dashboard' && (
             <div className="absolute top-4 right-4 z-20 w-96 max-w-[calc(100%-2rem)]">
@@ -150,7 +156,9 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
                   onNavigateTo={handleViewChange}
                 />
           </Suspense>
-        </main>
+              </div>
+          </div>
+      </main>
       </div>
       </LayoutProvider>
 
