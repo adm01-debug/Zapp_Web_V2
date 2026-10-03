@@ -95,7 +95,8 @@ describe('useAuthForm — senha depois de uma recusa', () => {
     // de novo e o signIn rodava duas vezes.
     // A contagem E a prova: antes da correcao este envio mandava a senha velha de novo.
     expect(signIn).toHaveBeenCalledTimes(1);
-    expect(signIn.mock.calls.filter((c) => c[1] === SENHA)).toHaveLength(1);
+    const chamadas = signIn.mock.calls as unknown as [string, string][];
+    expect(chamadas.filter((c) => c[1] === SENHA)).toHaveLength(1);
   });
 
   it('o primeiro envio continua usando o que o campo tem (autofill preservado)', async () => {
