@@ -180,6 +180,21 @@ jobs:
           node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
             -f scripts/db-audit/check-talkx-view-invoker.sql 2>&1 | tee /tmp/step-acl-talkx-metrics.log
 
+      # E85: os tres fixtures de E2E vivem em PRODUCAO, porque a suite logada roda contra
+      # producao (nao ha staging). Se um deles sumir -- DELETE de limpeza, reset de
+      # ambiente, migration -- o sintoma nao e "fixture sumiu": e um spec logado falhando
+      # com erro que parece bug de aplicacao (dropdown vazio, contato sem conversa). O
+      # check cobra a presenca dos tres e as duas exigencias da conexao (status connected
+      # e instance_id preenchido, que e o que useCampaignEditor filtra).
+      # NAO e um .test.sh de proposito: esse caminho nao existe neste workflow, e teste
+      # que ninguem executa da sensacao de cobertura sem cobrir nada.
+      - name: Fixtures de E2E em producao (E85)
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
+            -f scripts/db-audit/check-e2e-fixtures.sql 2>&1 | tee /tmp/step-e2e-fixtures.log
+
       # V02 (plano Talk X V3): transition_talkx_campaign precisa continuar com
       # UMA assinatura — a de 3 args com p_pause_reason DEFAULT. Com dois
       # overloads vivos o PostgREST responde HTTP 300 PGRST203 para a chamada
