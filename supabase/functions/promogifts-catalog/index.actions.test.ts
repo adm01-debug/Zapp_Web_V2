@@ -120,13 +120,37 @@ class MockCatalogClient {
   }
 }
 
-/** Client local falso — só o suficiente para a validação do JWT (auth.getUser). */
+/**
+ * Client local falso — JWT (auth.getUser) + o contador compartilhado do CT-19.
+ *
+ * O contador aqui e um Map por instancia de fake, com a MESMA semantica da funcao
+ * `public.catalog_rate_limit_hit` (janela fixa por `(usuario, acao)`, cota por acao).
+ * Isso e o que prova que a edge passou a delegar o limite ao store compartilhado: os
+ * testes de aceite do CT-19 (60 passam / 61a devolve 429, cotas por acao independentes)
+ * atravessam este fake sem tocar no `index.ts` do rate limit.
+ */
 function localClient(userId: string | null): LocalClient {
+  const contadores = new Map<string, { count: number; resetAt: number }>();
   return {
     auth: {
       getUser: async () => (userId
         ? { data: { user: { id: userId } }, error: null }
         : { data: { user: null }, error: { message: 'invalid token' } }),
+    },
+    rpc: (fn: string, args: Record<string, number | string>) => {
+      if (fn !== 'catalog_rate_limit_hit') {
+        return Promise.resolve({ data: null, error: { message: `rpc inesperada no fake local: ${fn}` } });
+      }
+      const chave = `${args.p_user}:${args.p_action}`;
+      const limite = Number(args.p_limit);
+      const agora = Date.now();
+      const atual = contadores.get(chave);
+      if (!atual || agora > atual.resetAt) {
+        contadores.set(chave, { count: 1, resetAt: agora + Number(args.p_window_ms) });
+        return Promise.resolve({ data: true, error: null });
+      }
+      atual.count++;
+      return Promise.resolve({ data: atual.count <= limite, error: null });
     },
   } as unknown as LocalClient;
 }
@@ -373,14 +397,48 @@ Deno.test('CT-77 rate limit: as RATE_LIMIT primeiras requisições do mesmo usu�
   const userId = `ct77-ratelimit-${crypto.randomUUID()}`;
   const ext = new MockCatalogClient();
 
+  // CT-19: o contador agora e ESTADO COMPARTILHADO, entao o fake tem que ser a MESMA
+  // instancia ao longo da rajada — e assim que o banco se comporta (uma linha por
+  // usuario+acao). Criar um `deps` novo por chamada zeraria o contador a cada volta e a
+  // rajada nunca chegaria ao teto, que era o que este teste fazia antes.
+  const mesmoCliente = deps(ext, userId);
+
   for (let i = 0; i < RATE_LIMIT; i++) {
-    const { status } = await invoke({ action: 'catalog_stats' }, deps(ext, userId));
+    const { status } = await invoke({ action: 'catalog_stats' }, mesmoCliente);
     assertEquals(status, 200, `requisição ${i + 1}/${RATE_LIMIT} deveria passar`);
   }
 
-  const { status, body } = await invoke({ action: 'catalog_stats' }, deps(ext, userId));
+  const { status, body } = await invoke({ action: 'catalog_stats' }, mesmoCliente);
   assertEquals(status, 429);
   assertEquals(body.error, 'Too many requests. Try again in 1 minute.');
+});
+
+Deno.test('CT-19 falha aberta: contador compartilhado com erro nao derruba o catalogo (200) e vai para o log', async () => {
+  // Decisao explicita do CT-19: o limite e protecao, nao caminho critico. Se a funcao
+  // catalog_rate_limit_hit estiver indisponivel (erro do PostgREST, funcao ausente),
+  // a edge NAO pode derrubar o catalogo nem inventar um 429 -- ela deixa passar e
+  // registra o erro para nao falhar em silencio.
+  const userId = `ct19-failopen-${crypto.randomUUID()}`;
+  const ext = new MockCatalogClient();
+  const d = deps(ext, userId);
+  (d.localClient as unknown as { rpc: () => Promise<unknown> }).rpc = () =>
+    Promise.resolve({ data: null, error: { message: 'contador fora do ar' } });
+
+  const originalError = console.error;
+  const linhas: string[] = [];
+  console.error = (...args: unknown[]) => { linhas.push(args.map(String).join(' ')); };
+  let status = 0;
+  try {
+    ({ status } = await invoke({ action: 'catalog_stats' }, d));
+  } finally {
+    console.error = originalError;
+  }
+
+  assertEquals(status, 200, 'falha do contador nao pode virar 429 nem 500');
+  assert(
+    linhas.some((linha) => linha.includes('Rate limit store unavailable')),
+    `o erro do contador deveria aparecer no log; veio: ${JSON.stringify(linhas)}`,
+  );
 });
 
 Deno.test('CT-19 limites por ação: list_products 120/min e as demais no teto global de 60/min', () => {
