@@ -304,6 +304,10 @@ exigidos existem no projeto. Para divergência → disparar `deploy-functions.ym
 (§4) e repetir; para segredo ausente → `supabase secrets set` (o valor nunca é
 listado nem logado — só o nome).
 
+> A rastreabilidade do deploy é o **run id do `deploy-functions.yml`** (o GitHub
+> Deployment com `ref` = SHA publicado — a antiga tag `edge-deploy/*` saiu de cena
+> na E60); cite esse run id na evidência quando houver redeploy.
+
 **Regra 2 — enquanto CAP-066 não estiver no ar, campanha real não usa `{{link}}`.**
 A autenticação do POST de conversão (`talkx-link`, HMAC via `TALKX_CONVERT_SECRET`)
 precisa estar publicada e com o segredo configurado no site antes de qualquer
