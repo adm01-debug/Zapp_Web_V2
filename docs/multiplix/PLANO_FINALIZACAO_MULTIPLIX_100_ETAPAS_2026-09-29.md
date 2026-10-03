@@ -134,7 +134,8 @@ Regras que não mudam: DDL do ZAPP segue `CLAUDE.md` §1 (arquivo → PR → mer
 
 ## BLOCO H — Voz (F64–F69)
 
-- [ ] **F64** · 🔒 `multiplix_voice_assets` (hash, caminho, duração, caracteres, modelo, `created_by`, `invalidated_at`) + `multiplix_voice_grants` (voice_id, titular, roles/perfis, `revoked_at`, origem) + edge `multiplix-voices` (lista só vozes com grant do chamador; revogação impede geração **e** recuperação do asset). **Feito quando:** sem grant = lista vazia; revogado → 403 em preparar e em assinar URL.
+- [x] **F64** · 🔒 `multiplix_voice_assets` (hash, caminho, duração, caracteres, modelo, `created_by`, `invalidated_at`) + `multiplix_voice_grants` (voice_id, titular, roles/perfis, `revoked_at`, origem) + edge `multiplix-voices` (lista só vozes com grant do chamador; revogação impede geração **e** recuperação do asset). **Feito quando:** sem grant = lista vazia; revogado → 403 em preparar e em assinar URL.
+  - **Evidência (03/10):** migration `supabase/migrations/20261003132707_f64_voz_assets_e_grants.sql` (2 tabelas + bucket privado `multiplix-voice` + ACL: `anon` fora, `authenticated` só `SELECT`, policies por `has_role`/`is_admin_or_supervisor` SECURITY DEFINER) provada em PostgreSQL descartável por `scripts/db-audit/f64-voz-assets-e-grants.test.sh` (**GREEN**); **red-first**: mutar `revoked_at IS NULL` mata o teste por ASSERÇÃO (0 erros de sintaxe). Edge `supabase/functions/multiplix-voices/index.ts` (`voices.list` filtra grant vivo por papel/perfil/staff; `assets.sign` devolve 403 sem grant, 403 `multiplix_voice_asset_invalidated` em ativo invalidado pelo F45, e assina no TTL do envio) com 13 testes Deno verdes em `index.test.ts`; mutante da revogação mata 4 casos. DDL pendente pós-merge (classe contrato).
 - [ ] **F65** · Edge `multiplix-prepare-voice` em fila: 1 chamada ao `elevenlabs-tts` por roteiro **distinto** (hash = sha256(roteiro final, voice_id, modelo, voice_settings)); asset gravado em bucket privado `multiplix-voice/<departamento>/` com signed URL de TTL do envio; respeita 20 req/min. **Feito quando:** 50 contatos com roteiro comum = 1 chamada; URL sem assinatura = 403.
 - [ ] **F66** · Estimativa de consumo (caracteres × versões × modelo, ±5% do realizado) + 🔒 teto por envio e por departamento (ultrapassar exige confirmação explícita, gravada em evento); `elevenlabs-webhook` documentado em `CANAL.md` §3. **Feito quando:** estimativa vs realizado em 3 envios reais dentro de ±5%.
 - [ ] **F67** · Modo `same_audio` (variável no roteiro bloqueia a revisão) e `personalized` (N versões = `DISTINCT` dos roteiros finais, contador visível); invalidação automática ao mudar roteiro/voz/parâmetro (F45). **Feito quando:** nunca usa o nome do primeiro contato; contador bate.
@@ -235,11 +236,18 @@ Antes de cada branch: `github_list_pull_requests` e conferir sobreposição com 
 ```
 Bloco A  [~]  19/20    Bloco F  [x]  5/5
 Bloco B  [x]  9/9      Bloco G  [~]  2/4
-Bloco C  [x]  6/6      Bloco H  [ ]  0/6
+Bloco C  [x]  6/6      Bloco H  [~]  1/6
 Bloco D  [x]  8/8      Bloco I  [ ]  0/18
 Bloco E  [x]  11/11    Bloco J  [ ]  0/13
-                       TOTAL    [~]  60/100
+                       TOTAL    [~]  61/100
 ```
+
+> Atualizado em 03/10/2026 (Hora oficial do Brasil): **Bloco H aberto em 1/6** — o **F64** (tabelas
+> `multiplix_voice_assets`/`multiplix_voice_grants`, bucket privado `multiplix-voice` e edge
+> `multiplix-voices`) esta implementado: harness de banco em PostgreSQL descartavel **GREEN** com
+> red-first que mata por assercao, e 13 testes Deno verdes na edge. O DDL e **classe contrato**
+> (`PENDENTE_POS_MERGE`: aplicado pelo `hermes-tarefa-mergear` apos merge + deploy). Na mesma PR
+> seguem F65 (fila de TTS) e F67.
 
 > Atualizado em 03/10/2026 (Hora oficial do Brasil): o Bloco F esta **fechado 5/5** (as linhas
 > F55-F59 ja estavam `[x]` com evidencia; a tabela-resumo e que estava atrasada) e o **Bloco G vai
