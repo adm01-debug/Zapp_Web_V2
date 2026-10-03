@@ -331,8 +331,8 @@ WHERE EXISTS (SELECT 1 FROM unnest(statements) s WHERE s ~ '\.\.\.'' OR s ~* '\(
       "Re-verificação ao vivo"); as 10 restantes eram falso-positivo do regex (SQL completo)
 
 ### E24 🟢 Replay integral das 443 migrations em PG 17.6 efêmero (herda E20/16-09)
-- [ ] Job (ou doc de execução local) com replay verde ponta a ponta
-- [ ] Divergências (se houver) viram exceção documentada ou fix
+- [ ] Job (ou doc de execução local) com replay verde ponta a ponta — **PARCIAL 03/10**: script em `scripts/db-audit/replay-local.sh`, replay em container descartável aplicou **749 de 768** (3 rodadas depois: 746 -> 731 numa tentativa minha que piorou -> 749 ao reverter) como `supabase_admin` com o bootstrap de `storage`/`supabase_migrations`. As **21 restantes** estão nomeadas em `docs/audits/REPLAY_LOCAL_MIGRATIONS_2026-10-03.md` (4 a inspecionar, o resto é cascata/idempotência/assertiva de dados). **Não é verde**: falta inspecionar os 4 e tratar as assertivas.
+- [x] Divergências (se houver) viram exceção documentada ou fix — ✅ 03/10: as 21 falhas estão nomeadas e classificadas no relatório do replay. Achado real: `20260927450000_fix_indexes_checks_cleanup.sql` tem `NOT VAFIDD;` (SQL inválido) e **nunca foi aplicado** — o ledger tem essa versão com outro nome (`gamification_guard_fix_xp_cap`). Produção sã: as constraints existem e estão `validated=true`.
 
 ### E25 🟢 Inventário das exceções pinned-replay (herda E15/16-09)
 - [x] 0 exceções pinned-replay necessárias em 26/09 — as 7 violações reais foram corrigidas na
@@ -413,7 +413,7 @@ Maior chunk inicial restante. Medir quanto o entry realmente usa; candidatos: ad
   `docs/audits/web-vitals-e36-2026-10-03.md`.
 
 ### E37 🟢 srcSet CF Images fora do catálogo
-- [ ] Avatares/anexos do Inbox usando variantes CF quando a URL for `imagedelivery.net`
+- [x] Avatares/anexos do Inbox usando variantes CF quando a URL for `imagedelivery.net` — ✅ 03/10: `cfImagesSrcSet` saiu de `catalogShared.tsx` (era privado, usado só pelo `ProductThumb`) para `src/lib/cfImages.ts` e passou a ser aplicado nos dois renderizadores de imagem do Inbox (`ThumbImage` em `FileThumb.tsx` e `MessageImage` em `ImagePreview.tsx`), com `srcSet`+`sizes` condicionais. **Medição de escopo:** hoje nenhuma superfície do Inbox produz URL de CF — o avatar está no Supabase Storage (`batch-fetch-avatars`) e os anexos vêm do WhatsApp/Evolution; o item é condicional e a mudança é inerte (`null` fora do CF). Prova: 4 testes do helper + caso de componente no `FileThumb` (17/17), mutação derruba só o alvo, e o catálogo segue 82/82 + 10/10.
 
 ### E38 🟢 React 19.3: varredura de deprecações
 - [x] Build/test sem warnings de API deprecada; hooks custom revisados para concurrent safety — ✅ 03/10.

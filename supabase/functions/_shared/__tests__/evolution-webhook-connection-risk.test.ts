@@ -8,6 +8,7 @@
 // instancia banida. E um teste que nao existe para passar; existe para falhar se o fio soltar.
 import { assert } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { handleConnectionUpdate } from "../evolution-webhook-handlers.ts";
+import type { EvolutionDbClient } from "../evolution-types.ts";
 
 type RpcCall = { name: string; args: Record<string, unknown> };
 
@@ -60,7 +61,7 @@ function mockSupabase(opts: {
         rpcCalls.push({ name, args });
         return Promise.resolve({ data: null, error: rpcError });
       },
-    },
+    } as unknown as EvolutionDbClient,
   };
 }
 

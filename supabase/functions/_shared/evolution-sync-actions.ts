@@ -1,5 +1,6 @@
 // Shared sync action handlers for evolution-sync/index.ts
 import { evoFetch } from './evolution-send.ts';
+import type { EvolutionDbClient } from "./evolution-types.ts";
 
 const isGoFlavor = () => (Deno.env.get('EVOLUTION_API_FLAVOR') ?? 'go') !== 'v2';
 
@@ -31,7 +32,7 @@ async function fetchEvolutionContacts(evolutionApiUrl: string, evolutionApiKey: 
 
 // deno-lint-ignore no-explicit-any
 export async function syncContacts(
-  supabase: any, evolutionApiUrl: string, evolutionApiKey: string,
+  supabase: EvolutionDbClient, evolutionApiUrl: string, evolutionApiKey: string,
   instanceName: string, corsHeaders: Record<string, string>, page: number, offset: number
 ): Promise<Response> {
   console.log(`[Sync] Fetching contacts from instance ${instanceName}`);
@@ -89,7 +90,7 @@ export function goHistoryNotSupported(actionName: string, corsHeaders: Record<st
 
 // deno-lint-ignore no-explicit-any
 export async function syncMessages(
-  supabase: any, evolutionApiUrl: string, evolutionApiKey: string,
+  supabase: EvolutionDbClient, evolutionApiUrl: string, evolutionApiKey: string,
   instanceName: string, contactPhone: string, corsHeaders: Record<string, string>
 ): Promise<Response> {
   if (!contactPhone) throw new Error('contactPhone is required');
@@ -142,7 +143,7 @@ export async function syncMessages(
 
 // deno-lint-ignore no-explicit-any
 export async function syncAllMessages(
-  supabase: any, evolutionApiUrl: string, evolutionApiKey: string,
+  supabase: EvolutionDbClient, evolutionApiUrl: string, evolutionApiKey: string,
   instanceName: string, messagesPerContact: number, corsHeaders: Record<string, string>
 ): Promise<Response> {
   if (isGoFlavor()) return goHistoryNotSupported('sync-all-messages', corsHeaders);
@@ -216,10 +217,10 @@ export async function setupWebhook(
 }
 
 // deno-lint-ignore no-explicit-any
-export async function cleanupMock(supabase: any, corsHeaders: Record<string, string>): Promise<Response> {
+export async function cleanupMock(supabase: EvolutionDbClient, corsHeaders: Record<string, string>): Promise<Response> {
   const { data: mockContacts } = await supabase.from('contacts').select('id').like('id', 'c1000001-%');
   if (mockContacts?.length) {
-    const mockIds = mockContacts.map((c: { id: string }) => c.id);
+    const mockIds = mockContacts.map((c) => (c as { id: string }).id);
     await supabase.from('messages').delete().in('contact_id', mockIds);
     await supabase.from('contact_notes').delete().in('contact_id', mockIds);
     await supabase.from('contacts').delete().in('id', mockIds);
@@ -230,7 +231,7 @@ export async function cleanupMock(supabase: any, corsHeaders: Record<string, str
 
 // deno-lint-ignore no-explicit-any
 export async function fullSync(
-  supabase: any, evolutionApiUrl: string, evolutionApiKey: string,
+  supabase: EvolutionDbClient, evolutionApiUrl: string, evolutionApiKey: string,
   instanceName: string, supabaseUrl: string, corsHeaders: Record<string, string>
 ): Promise<Response> {
   const results: Record<string, unknown> = {};
@@ -238,7 +239,7 @@ export async function fullSync(
   // Cleanup
   const { data: mockContacts } = await supabase.from('contacts').select('id').like('id', 'c1000001-%');
   if (mockContacts?.length) {
-    const mockIds = mockContacts.map((c: { id: string }) => c.id);
+    const mockIds = mockContacts.map((c) => (c as { id: string }).id);
     await supabase.from('messages').delete().in('contact_id', mockIds);
     await supabase.from('contact_notes').delete().in('contact_id', mockIds);
     await supabase.from('contacts').delete().in('id', mockIds);
@@ -266,7 +267,7 @@ export async function fullSync(
       if (!jid.endsWith('@s.whatsapp.net') || c.isGroup) { totalSkipped++; continue; }
       const phone = jid.replace('@s.whatsapp.net', '');
       if (!phone || phone.length < 6) { totalSkipped++; continue; }
-      validContacts.push({ phone, name: name.trim() || phone, avatar_url: avatarUrl, whatsapp_connection_id: conn!.id });
+      validContacts.push({ phone, name: name.trim() || phone, avatar_url: avatarUrl, whatsapp_connection_id: conn!.id as string });
     }
     const limit = Math.min(validContacts.length, 500);
     for (let i = 0; i < limit; i++) {

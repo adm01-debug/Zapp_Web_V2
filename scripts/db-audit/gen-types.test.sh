@@ -24,7 +24,7 @@ printf 'export type Example = {\n\n  id: string\n}\n' > "$EXPECTED"
 cmp "$EXPECTED" "$OUTPUT"
 
 LAST_TWO_BYTES=$(tail -c 2 "$OUTPUT" | od -An -t x1 | tr -d ' \n')
-if [ "$LAST_TWO_BYTES" = '0a0a' ]; then
+if [[ "$LAST_TWO_BYTES" = '0a0a' ]]; then
   echo 'ERRO: gen-types.sh deixou linha vazia extra no EOF.' >&2
   exit 1
 fi
@@ -63,7 +63,7 @@ PATH="$FLAKY_BIN:$PATH" \
   bash scripts/db-audit/gen-types.sh "$OUTPUT_FLAKY" >/dev/null 2>"$TEST_ROOT/flaky.err"
 
 CHAMADAS=$(cat "$COUNT_FILE")
-if [ "$CHAMADAS" != '3' ]; then
+if [[ "$CHAMADAS" != '3' ]]; then
   echo "ERRO: esperava 3 chamadas ao supabase (2 falhas + 1 sucesso), houve ${CHAMADAS}." >&2
   exit 1
 fi
@@ -93,7 +93,7 @@ if PATH="$FLAKY_BIN:$PATH" \
 fi
 
 CHAMADAS_PERSIST=$(cat "$COUNT_PERSIST")
-if [ "$CHAMADAS_PERSIST" != '3' ]; then
+if [[ "$CHAMADAS_PERSIST" != '3' ]]; then
   echo "ERRO: esperava 3 tentativas na falha persistente, houve ${CHAMADAS_PERSIST}." >&2
   exit 1
 fi

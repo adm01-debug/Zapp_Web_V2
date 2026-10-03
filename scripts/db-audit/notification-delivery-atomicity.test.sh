@@ -22,14 +22,14 @@ docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD="$test_password
 ready=false
 for _ in $(seq 1 90); do
   markers="$(docker logs "$container_name" 2>&1 | grep -c 'database system is ready to accept connections' || true)"
-  if [ "$markers" -ge 2 ] && docker exec "$container_name" \
+  if [[ "$markers" -ge 2 ]] && docker exec "$container_name" \
     psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then
     ready=true
     break
   fi
   sleep 1
 done
-[ "$ready" = true ] || fail 'PostgreSQL 17 descartavel nao ficou pronto'
+[[ "$ready" = true ]] || fail 'PostgreSQL 17 descartavel nao ficou pronto'
 
 psql_test >/dev/null <<'SQL'
 CREATE ROLE anon NOLOGIN;

@@ -3,8 +3,8 @@
 Item do `PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md`: *"Replay integral das migrations — job (ou doc de
 execução local) com replay verde ponta a ponta"* e *"divergências viram exceção documentada ou fix"*.
 
-**Banco canônico não foi tocado.** O replay roda em container Docker descartável, criado e removido
-pelo próprio script.
+**O banco canônico não foi tocado em nenhuma rodada.** O replay roda em container Docker descartável,
+criado e removido pelo próprio script.
 
 ## Como rodar
 
@@ -12,51 +12,75 @@ pelo próprio script.
 bash scripts/db-audit/replay-local.sh
 ```
 
-Sobe `public.ecr.aws/supabase/postgres:17.6.1.159` (a imagem traz roles, `auth` e as extensões),
-aplica `supabase/migrations/*.sql` em ordem por `psql -v ON_ERROR_STOP=1`, e reporta
-`ok/falha` por arquivo. Container próprio (`hermes-e24-replay`), porta 5499, removido no fim.
+Sobe `public.ecr.aws/supabase/postgres:17.6.1.159`, completa o bootstrap que os **serviços** do
+Supabase trazem, aplica `supabase/migrations/*.sql` em ordem como `supabase_admin` e grava o **erro ao
+lado do arquivo** em `replay-erros.tsv`. Container próprio (`hermes-e24-replay`), porta 5499.
 
-## Resultado medido (2026-10-03)
+## Resultado medido
+
+| Rodada | Resultado | O que mudou |
+|---|---|---|
+| 1ª | **28 / 737 falhas** | Banco **vazio**: as extensões só podem ser criadas no banco `postgres` — falha 100% do harness |
+| 2ª | **695 / 70** | Banco certo, usuário `postgres`: 279 `permission denied for schema public` |
+| 3ª | **746 / 21** | Usuário `supabase_admin` + bootstrap de `storage`/`supabase_migrations` |
+| 4ª | **731 / 37** ⚠️ | **Regressão minha**: tentei "ajudar" com `create schema cron` + `create extension pg_cron` e `drop/create publication` — **quebrei o pg_cron que a imagem já trazia** (10 `cron.schedule(...) does not exist` + 6 `cron.job does not exist`) |
+| 5ª | **749 / 19** | Revertido, mantendo só o que ajudou (colunas de `auth.users`) |
 
 | | |
 |---|---|
-| Migrations no repo | **765** (o plano dizia 443 — quase dobrou) |
-| Aplicadas com sucesso | **695** |
-| Falhas | **70** |
+| Migrations no repo | **768** (o plano dizia 443) |
+| Aplicadas com sucesso | **749** |
+| Falhas | **19**, todas nomeadas abaixo |
 
-## Classificação das 70 falhas
+**Não é verde.** E a lição mais cara das cinco rodadas não é sobre as migrations, é sobre o
+instrumento: **quatro números diferentes saíram do mesmo repositório**, e só o último merece ser lido
+como fato. Os anteriores estão aqui de propósito — um "737 migrations quebradas" ou um "37 falhas"
+lidos sem contexto viram pânico sobre um banco que está são.
 
-**Nenhuma delas, até agora, é divergência do repositório.** A esmagadora maioria é lacuna do
-container local, e a distribuição prova:
+## As 19 falhas, nomeadas e classificadas
 
-| Erro | Nº | Natureza |
+### Defeito real no arquivo (SQL que nunca roda) — 2
+
+| Arquivo | Erro | Situação em produção |
 |---|---|---|
-| `relation "storage.objects"/"storage.buckets" does not exist` | **35** | **Lacuna do harness.** O schema `storage` é criado pelos serviços do Supabase (Storage API), não pelo Postgres. O container não o tem. |
-| `relation "public.X" does not exist` | 7 | **Cascata** — depende de objeto de uma migration que já falhou por lacuna acima. |
-| `already member of publication "supabase_realtime"` | 3 | **Idempotência esperada** — a imagem já traz a publicação com esses membros. Não é erro de migration. |
-| `schema "supabase_migrations" does not exist` | 2 | **Lacuna do harness** — schema do CLI do Supabase. |
-| `cannot change return type of existing function` | **4** | **Precisa inspeção** — pode ser ordem de aplicação ou divergência real; sozinho, não se conclui. |
-| `syntax error at or near` | **3** | **Precisa inspeção** — idem. |
-| outros (cascata de função/tabela) | ~16 | Cascata. |
+| `20260927450000_fix_indexes_checks_cleanup.sql` | `NOT VAFIDD;` (deveria ser `NOT VALID`) | **Inerte**: o ledger tem essa versão com outro nome (`gamification_guard_fix_xp_cap`), então o arquivo nunca foi aplicado. As constraints existem e estão `validated=true` ✓ |
+| `20260916230000_talkx_e93_settings.sql` | `CREATE POLICY IF NOT EXISTS` — **não existe no PostgreSQL** (é `DROP POLICY IF EXISTS` + `CREATE POLICY`) | **Inerte**: superseded por `talkx_settings_policies_replay_safe` e `talkx_settings_replay_idempotent`, que já consertaram o padrão. `talkx_settings` existe, RLS ligado, 2 políticas, 10 linhas ✓ |
 
-### Primeira tentativa (registrada por honestidade)
+Os dois **só quebram reconstrução a partir dos arquivos** — exatamente o que este replay faz.
 
-A tentativa 1 usou um banco **vazio** (`POSTGRES_DB=replay`): **28 ok / 737 falhas**. O log trouxe a
-prova de que o erro era do harness, não do repo — `can only create extension in database postgres`.
-Usar o banco `postgres` da imagem (que tem o bootstrap) levou de 28 para **695 ok**. Fica registrado
-porque um número desses, lido sem contexto, viraria um alarme falso sobre a saúde das migrations.
+### Artefato de ordem/idempotência (inertes no banco real) — 6
 
-## O que falta para "verde ponta a ponta"
+`already member of publication` ×3 (`talkx_campaign_events`, `conversation_tasks` ×2) ·
+`idx_gmail_accounts_user_id already exists` · `multiplix_confirm_dispatch already exists` ·
+`policy "talkx_blacklist_update" does not exist`.
 
-1. **Bootstrap do schema `storage`** antes do loop (as tabelas `storage.objects`/`storage.buckets` e
-   o schema `supabase_migrations`) — resolve ~37 das 70.
-2. **Inspecionar as 7 de `cannot change return type` e `syntax error`** — são as únicas candidatas a
-   divergência real; 4+3 é o universo a olhar.
-3. Reavaliar: com 1 e 2 feitos, o replay deve chegar a ~765/765 ou a um conjunto pequeno e nomeado de
-   exceções.
+### Assertiva que exige ambiente real — 3
+
+`E31: contagem inesperada de LIDs marcados: 0. Esperado 400-700` ·
+`Job 8 does not exist or you don't own it` · `job vacuum-contacts-daily esperado 1x, encontrado 0`.
+
+### Cascata de falha anterior — 5
+
+`notify_due_reminders()` · `column "notified_at"` · `sync_contact_status_on_closure()` ·
+`relation "public.conversations"` · `column "conversation_id"`.
+
+### A inspecionar — 3
+
+`20260925170000_add_reminders_pending_to_tab_counts.sql`,
+`20260928140200_tab_counts_tasks_own.sql` e
+`20260929370000_contacts_soft_delete_and_search_filters.sql` → `cannot change return type of existing
+function`. Pode ser ordem de aplicação ou divergência real; **sozinho, o erro não decide**.
+
+## O que falta para o replay ficar cheio
+
+1. **Inspecionar os 3** `cannot change return type` comparando o corpo das funções entre as migrations.
+2. **Reduzir as 5 de cascata** — cada uma depende de um objeto que outra migration não chegou a criar.
+3. **Decidir o destino dos 2 arquivos com SQL inválido** — não editar migration aplicada (regra 7);
+   aqui cabe remover a versão duplicada ou consertar por versão nova.
 
 ## Limites declarados
 
-- **Isto não é replay no Supabase de verdade.** Faltam os serviços (Storage, Auth, Realtime), então
-  migrations que dependem deles não são exercidas de forma completa.
-- O alvo de "443 migrations" do plano está desatualizado: são **765** arquivos hoje.
+- **Isto não é o Supabase de verdade.** Faltam os serviços (Storage, Auth, Realtime, pg_cron *em
+  execução*); migrations que dependem deles não são exercidas de verdade.
+- **Não mexa no pg_cron nem na `supabase_realtime` da imagem.** Está medido: tentar recriar piora.
+- O alvo de "443 migrations" do plano está desatualizado: são **768**.

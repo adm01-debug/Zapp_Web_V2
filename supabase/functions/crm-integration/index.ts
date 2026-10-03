@@ -219,6 +219,14 @@ interface OutboxRow {
   payload: Record<string, unknown>;
 }
 
+function nonEmptyText(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function objectValue(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
+}
+
 export async function handleCRMIntegrationRequest(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
@@ -282,6 +290,60 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
     auth: { persistSession: false }, global: { headers: { Authorization: authHeader } },
   });
   const started = performance.now();
+
+  // This is deliberately a narrow, read-only projection. The generic `select`
+  // action remains administrator-only; Email callers receive only the company
+  // fields that their visible Gmail thread is allowed to expose.
+  const readEmailCompanyContext = async (companyId: string, linked: boolean) => {
+    const [companyResult, socialResult, addressResult, customerResult, supplierResult, carrierResult] = await Promise.all([
+      withTimeout(externalClient.from('companies').select('id,nome_crm,razao_social,nome_fantasia,website,ramo_atividade,logo_url,updated_at').eq('id', companyId).maybeSingle()),
+      withTimeout(externalClient.from('company_social_media').select('plataforma,url,is_active').eq('company_id', companyId).eq('is_active', true).limit(20)),
+      withTimeout(externalClient.from('company_addresses').select('cidade,estado,pais,is_primary').eq('company_id', companyId).order('is_primary', { ascending: false }).limit(1)),
+      withTimeout(externalClient.from('customers').select('sobre').eq('company_id', companyId).maybeSingle()),
+      withTimeout(externalClient.from('suppliers').select('id').eq('company_id', companyId).limit(1)),
+      withTimeout(externalClient.from('carriers').select('id').eq('company_id', companyId).limit(1)),
+    ]);
+    if (companyResult.error) throw new Error(`CRM_COMPANY:${companyResult.error.code || 'unknown'}`);
+    const company = objectValue(companyResult.data);
+    if (!company) return null;
+
+    const relationshipsKnown = !supplierResult.error && !carrierResult.error && !customerResult.error;
+    const relationships: string[] = [];
+    if (customerResult.data) relationships.push('cliente');
+    if ((supplierResult.data || []).length > 0) relationships.push('fornecedor');
+    if ((carrierResult.data || []).length > 0) relationships.push('transportadora');
+    const address = objectValue((addressResult.data || [])[0]);
+    const location = [address?.cidade, address?.estado, address?.pais]
+      .map(nonEmptyText).filter((part): part is string => Boolean(part)).join(', ') || null;
+    const socials = (socialResult.data || []).flatMap((row: unknown) => {
+      const social = objectValue(row);
+      const platform = nonEmptyText(social?.plataforma)?.toLowerCase();
+      const url = nonEmptyText(social?.url);
+      return platform && url ? [{ platform, url }] : [];
+    });
+    const name = nonEmptyText(company.nome_fantasia) || nonEmptyText(company.nome_crm) || nonEmptyText(company.razao_social);
+    if (!name) return null;
+    return {
+      status: 'available',
+      company: {
+        id: companyId,
+        name,
+        legalName: nonEmptyText(company.razao_social),
+        website: nonEmptyText(company.website),
+        logoUrl: nonEmptyText(company.logo_url),
+        industry: nonEmptyText(company.ramo_atividade),
+        location,
+        about: nonEmptyText(objectValue(customerResult.data)?.sobre),
+        relationships,
+        relationshipsKnown,
+        socials,
+        socialsKnown: !socialResult.error,
+        aboutKnown: !customerResult.error,
+        updatedAt: nonEmptyText(company.updated_at),
+      },
+      source: { linked, consultedAt: new Date().toISOString() },
+    };
+  };
 
   const userHasPermission = async (permission: string): Promise<boolean> => {
     if (!userId) return false;
@@ -348,7 +410,58 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
     const action = body.action;
     let data: unknown;
 
-    if (action === 'contactLookup') {
+    if (action === 'emailContactContext') {
+      if (isServiceRequest || isCronRequest || !isValidUUID(body.accountId) || !isValidUUID(body.threadId) || !isValidUUID(body.contactId)) {
+        return errorResponse('Email contact context is invalid', 400, req);
+      }
+      const [threadResult, accountResult, contactResult] = await Promise.all([
+        canonicalUser.from('email_threads').select('id,gmail_account_id,contact_id').eq('id', body.threadId).maybeSingle(),
+        canonicalUser.from('gmail_accounts').select('id').eq('id', body.accountId).maybeSingle(),
+        canonicalUser.from('contacts').select('id,phone').eq('id', body.contactId).maybeSingle(),
+      ]);
+      const thread = threadResult.data;
+      const account = accountResult.data;
+      const contact = contactResult.data;
+      if (threadResult.error || accountResult.error || contactResult.error || !thread || !account || !contact ||
+        thread.gmail_account_id !== body.accountId || thread.contact_id !== body.contactId) {
+        return errorResponse('Email contact context is not visible', 404, req);
+      }
+      const { data: stableLink, error: linkError } = await canonical.from('crm_contact_links')
+        .select('external_contact_id,normalized_phone').eq('zapp_contact_id', contact.id).maybeSingle();
+      if (linkError) throw new Error(`CRM_LINK_READ:${linkError.code || 'unknown'}`);
+
+      let companyId: string | null = null;
+      const phone = normalizePhone(contact.phone);
+      if (phone) {
+        if (stableLink?.normalized_phone && stableLink.normalized_phone !== phone) {
+          return errorResponse('Contact CRM identity requires reverification', 409, req);
+        }
+        const lookup = await withTimeout(externalClient.rpc('get_contact_360_by_phone', { p_phone: phone }));
+        if (lookup.error) throw new Error(`CRM_RPC:${lookup.error.code || 'unknown'}`);
+        if (stableLink && extractContact360Id(lookup.data) !== stableLink.external_contact_id) {
+          return errorResponse('Contact CRM identity mismatch', 409, req);
+        }
+        const lookupCompany = objectValue(objectValue(lookup.data)?.company);
+        companyId = nonEmptyText(lookupCompany?.id);
+      } else if (stableLink?.external_contact_id) {
+        // An e-mail-only contact is resolved only through a prior stable link.
+        // Domain and display-name matching are intentionally never attempted.
+        const externalContact = await withTimeout(externalClient.from('contacts').select('id,company_id').eq('id', stableLink.external_contact_id).maybeSingle());
+        if (externalContact.error) throw new Error(`CRM_CONTACT:${externalContact.error.code || 'unknown'}`);
+        const external = objectValue(externalContact.data);
+        if (!external || nonEmptyText(external.id) !== stableLink.external_contact_id) {
+          return errorResponse('Contact CRM identity mismatch', 409, req);
+        }
+        companyId = nonEmptyText(external.company_id);
+      }
+
+      if (!companyId) {
+        data = { status: 'not_linked', company: null, source: { linked: Boolean(stableLink), consultedAt: new Date().toISOString() } };
+      } else {
+        const context = await readEmailCompanyContext(companyId, Boolean(stableLink));
+        data = context || { status: 'not_linked', company: null, source: { linked: Boolean(stableLink), consultedAt: new Date().toISOString() } };
+      }
+    } else if (action === 'contactLookup') {
       if (isServiceRequest || isCronRequest) return errorResponse('Contact lookup is invalid', 400, req);
       const lookup = await resolveContactLookup(
         { contactId: body.contactId, lookup: body.lookup },

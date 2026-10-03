@@ -56,7 +56,7 @@ export function arquivosDeTexto(dir) {
       else if (entrada.isFile() && !BINARIOS.has(extensaoDe(caminho))) saida.push(caminho);
     }
   }
-  return saida.sort();
+  return saida.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
 
 /** Redige todos os segredos da lista, numa passada só por arquivo. */

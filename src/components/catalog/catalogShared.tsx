@@ -6,6 +6,8 @@
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
+// E37: helper de srcSet do CF Images extraído para src/lib/ para ser usável fora do catálogo.
+import { cfImagesSrcSet } from '@/lib/cfImages';
 import { Package, type LucideIcon, X } from 'lucide-react';
 // CatalogStats vem de useExternalCatalog.ts (E24 — formato exato de
 // public.zapp_catalog_stats()); reimportado aqui para não duplicar.
@@ -236,37 +238,8 @@ export function LowStockPill({ qty, threshold = 10 }: { qty: number; threshold?:
 }
 
 // ─── ProductThumb (E15) ─────────────────────────────────────────
-/**
- * Variantes reais do Cloudflare Images da conta do PromoGifts, confirmadas
- * via CF Images API em 2026-09-12 (todas JPEG): thumbnail 150×150,
- * small 300×300, card 400×400, medium/public 600×600, large 1200×1200.
- */
-const CF_IMAGES_HOST = 'imagedelivery.net';
-const CF_VARIANT_WIDTHS: Record<string, number> = {
-  thumbnail: 150,
-  small: 300,
-  card: 400,
-  medium: 600,
-  public: 600,
-  large: 1200,
-};
-
-function cfImagesSrcSet(url: string): string | null {
-  let parsed: URL;
-  try {
-    parsed = new URL(url);
-  } catch {
-    return null;
-  }
-  if (parsed.hostname !== CF_IMAGES_HOST) return null;
-  const parts = parsed.pathname.split('/').filter(Boolean); // [accountHash, imageId, variant]
-  if (parts.length < 3) return null;
-  const base = `${parsed.origin}/${parts.slice(0, -1).join('/')}`;
-  return Object.entries(CF_VARIANT_WIDTHS)
-    .filter(([variant]) => variant !== 'public') // 'public' == 'medium' (mesmo byte a byte); evita w duplicado
-    .map(([variant, w]) => `${base}/${variant} ${w}w`)
-    .join(', ');
-}
+// As variantes do CF Images e o `cfImagesSrcSet` vivem em src/lib/cfImages.ts (E37) para
+// serem usáveis fora do catálogo — o Inbox também renderiza imagem que pode vir do CF.
 
 interface ProductThumbProps {
   src: string | null;

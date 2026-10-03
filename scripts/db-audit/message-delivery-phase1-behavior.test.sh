@@ -25,14 +25,14 @@ docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD="$test_password
 ready=false
 for _ in $(seq 1 90); do
   markers="$(docker logs "$container_name" 2>&1 | grep -c 'database system is ready to accept connections' || true)"
-  if [ "$markers" -ge 2 ] && docker exec "$container_name" \
+  if [[ "$markers" -ge 2 ]] && docker exec "$container_name" \
     psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then
     ready=true
     break
   fi
   sleep 1
 done
-[ "$ready" = true ] || fail 'PostgreSQL 17 descartavel nao ficou pronto'
+[[ "$ready" = true ]] || fail 'PostgreSQL 17 descartavel nao ficou pronto'
 
 psql_test >/dev/null <<'SQL'
 CREATE EXTENSION pgcrypto;
@@ -236,7 +236,7 @@ expect_failure() {
   output="$(psql_test -v VERBOSITY=verbose -c "$sql" 2>&1)"
   status=$?
   set -e
-  [ "$status" -ne 0 ] || fail "$expected deveria falhar"
+  [[ "$status" -ne 0 ]] || fail "$expected deveria falhar"
   grep -q "$expected" <<<"$output" || fail "erro esperado ausente: $expected"
 }
 agent_one="BEGIN; SET LOCAL ROLE authenticated; SELECT set_config('request.jwt.claim.role','authenticated',true); SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true);"
@@ -538,7 +538,7 @@ THEN 'expired-lease=ok' ELSE 'expired-lease=fail' END;
 COMMIT;
 SQL
 expired_proof="$(psql_test -Atqc "SELECT CASE WHEN delivery_attempt_count=2 AND delivery_claimed_by='edge-expired-2' THEN 'expired-lease=ok' ELSE 'expired-lease=fail' END FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-000000000003'")"
-[ "$expired_proof" = 'expired-lease=ok' ] || fail 'recuperacao de lease expirado'
+[[ "$expired_proof" = 'expired-lease=ok' ]] || fail 'recuperacao de lease expirado'
 
 close_output="$(psql_test -At <<'SQL'
 BEGIN;
@@ -588,7 +588,7 @@ FOR EACH ROW EXECUTE FUNCTION public.reject_event();
 SQL
 expect_failure 'forced event failure' "$agent_two SELECT * FROM public.close_conversation_atomic('50000000-0000-0000-0000-000000000002',gen_random_uuid(),'spam',NULL,NULL,NULL); COMMIT;"
 rollback_proof="$(psql_test -Atqc "SELECT CASE WHEN conversation_status='open' AND NOT EXISTS(SELECT 1 FROM public.conversation_closures cc WHERE cc.contact_id=contacts.id) THEN 'rollback=ok' ELSE 'rollback=fail' END FROM public.contacts WHERE id='50000000-0000-0000-0000-000000000002'")"
-[ "$rollback_proof" = 'rollback=ok' ] || fail 'rollback do fechamento'
+[[ "$rollback_proof" = 'rollback=ok' ]] || fail 'rollback do fechamento'
 
 # Phase 1 compatibility invariant: legacy grants and direct writes still exist.
 psql_test >/dev/null <<'SQL'
@@ -634,13 +634,13 @@ revoker_sql="BEGIN; SET LOCAL application_name='zapp-auth-revoker'; UPDATE publi
 psql_test -qAtc "$revoker_sql" >"$concurrency_dir/revoker" 2>"$concurrency_dir/revoker.err" & revoker_pid=$!
 revoker_ready=false
 for _ in $(seq 1 100); do
-  if [ "$(psql_test -Atqc "SELECT count(*) FROM pg_stat_activity WHERE application_name='zapp-auth-revoker' AND wait_event='PgSleep'")" = 1 ]; then
+  if [[ "$(psql_test -Atqc "SELECT count(*) FROM pg_stat_activity WHERE application_name='zapp-auth-revoker' AND wait_event='PgSleep'")" = 1 ]]; then
     revoker_ready=true
     break
   fi
   sleep 0.02
 done
-[ "$revoker_ready" = true ] || fail 'reassign concorrente nao adquiriu os locks'
+[[ "$revoker_ready" = true ]] || fail 'reassign concorrente nao adquiriu os locks'
 set +e
 psql_test -v VERBOSITY=verbose -c "$agent_one SELECT public.enqueue_outbound_message('50000000-0000-0000-0000-000000000005','60000000-0000-0000-0000-000000000098','revoked','text',NULL,NULL,NULL); COMMIT;" >"$concurrency_dir/revoked-enqueue" 2>"$concurrency_dir/revoked-enqueue.err" & revoked_enqueue_pid=$!
 psql_test -v VERBOSITY=verbose -c "$agent_one SELECT * FROM public.close_conversation_atomic('50000000-0000-0000-0000-000000000006','70000000-0000-0000-0000-000000000098','resolved',NULL,NULL,NULL); COMMIT;" >"$concurrency_dir/revoked-close" 2>"$concurrency_dir/revoked-close.err" & revoked_close_pid=$!
@@ -648,15 +648,15 @@ wait "$revoker_pid"; revoker_status=$?
 wait "$revoked_enqueue_pid"; revoked_enqueue_status=$?
 wait "$revoked_close_pid"; revoked_close_status=$?
 set -e
-[ "$revoker_status" -eq 0 ] || fail 'reassign concorrente falhou'
-[ "$revoked_enqueue_status" -ne 0 ] \
+[[ "$revoker_status" -eq 0 ]] || fail 'reassign concorrente falhou'
+[[ "$revoked_enqueue_status" -ne 0 ]] \
   && grep -q 'message_contact_not_authorized' "$concurrency_dir/revoked-enqueue.err" \
   || fail 'enqueue aceitou autorizacao revogada durante espera por lock'
-[ "$revoked_close_status" -ne 0 ] \
+[[ "$revoked_close_status" -ne 0 ]] \
   && grep -q 'contact_not_authorized' "$concurrency_dir/revoked-close.err" \
   || fail 'close aceitou autorizacao revogada durante espera por lock'
 revocation_proof="$(psql_test -Atqc "SELECT CASE WHEN NOT EXISTS(SELECT 1 FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-000000000098') AND NOT EXISTS(SELECT 1 FROM public.conversation_closures WHERE client_request_id='70000000-0000-0000-0000-000000000098') AND (SELECT conversation_status='open' FROM public.contacts WHERE id='50000000-0000-0000-0000-000000000006') THEN 'revocation-race=ok' ELSE 'revocation-race=fail' END")"
-[ "$revocation_proof" = 'revocation-race=ok' ] \
+[[ "$revocation_proof" = 'revocation-race=ok' ]] \
   || fail 'reassign concorrente deixou escrita parcial'
 
 enqueue_sql="BEGIN; SET LOCAL ROLE authenticated; SELECT set_config('request.jwt.claim.role','authenticated',true); SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); SELECT (public.enqueue_outbound_message('50000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-000000000099','concurrent','text',NULL,NULL,NULL)).id; COMMIT;"
@@ -666,10 +666,10 @@ psql_test -qAtc "$enqueue_sql" >"$concurrency_dir/enqueue-2" 2>"$concurrency_dir
 wait "$pid_1"; status_1=$?
 wait "$pid_2"; status_2=$?
 set -e
-[ "$status_1" -eq 0 ] && [ "$status_2" -eq 0 ] || fail 'enqueue concorrente falhou'
+[[ "$status_1" -eq 0 ]] && [ "$status_2" -eq 0 ] || fail 'enqueue concorrente falhou'
 message_1="$(grep -E '^[0-9a-f-]{36}$' "$concurrency_dir/enqueue-1" | tail -1)"
 message_2="$(grep -E '^[0-9a-f-]{36}$' "$concurrency_dir/enqueue-2" | tail -1)"
-[ -n "$message_1" ] && [ "$message_1" = "$message_2" ] \
+[[ -n "$message_1" ]] && [ "$message_1" = "$message_2" ] \
   || fail 'enqueue concorrente nao convergiu'
 
 claim_sql="SELECT set_config('request.jwt.claim.role','service_role',false); SELECT count(*) FROM public.claim_outbound_message('$message_1','10000000-0000-0000-0000-000000000001','edge-concurrent',90);"
@@ -679,10 +679,10 @@ psql_test -qAtc "$claim_sql" >"$concurrency_dir/claim-2" 2>"$concurrency_dir/cla
 wait "$pid_1"; status_1=$?
 wait "$pid_2"; status_2=$?
 set -e
-[ "$status_1" -eq 0 ] && [ "$status_2" -eq 0 ] || fail 'claim concorrente falhou'
+[[ "$status_1" -eq 0 ]] && [ "$status_2" -eq 0 ] || fail 'claim concorrente falhou'
 claim_1="$(tail -1 "$concurrency_dir/claim-1")"
 claim_2="$(tail -1 "$concurrency_dir/claim-2")"
-[ $((claim_1 + claim_2)) -eq 1 ] || fail 'claim concorrente entregou mais de um lease'
+[[ $((claim_1 + claim_2)) -eq 1 ]] || fail 'claim concorrente entregou mais de um lease'
 
 close_sql="BEGIN; SET LOCAL ROLE authenticated; SELECT set_config('request.jwt.claim.role','authenticated',true); SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000003',true); SELECT closure_id || ':' || event_id FROM public.close_conversation_atomic('50000000-0000-0000-0000-000000000004','70000000-0000-0000-0000-000000000099','resolved',NULL,NULL,'concurrent'); COMMIT;"
 set +e
@@ -691,10 +691,10 @@ psql_test -qAtc "$close_sql" >"$concurrency_dir/close-2" 2>"$concurrency_dir/clo
 wait "$pid_1"; status_1=$?
 wait "$pid_2"; status_2=$?
 set -e
-[ "$status_1" -eq 0 ] && [ "$status_2" -eq 0 ] || fail 'close concorrente falhou'
+[[ "$status_1" -eq 0 ]] && [ "$status_2" -eq 0 ] || fail 'close concorrente falhou'
 close_1="$(grep -E '^[0-9a-f-]{36}:[0-9a-f-]{36}$' "$concurrency_dir/close-1" | tail -1)"
 close_2="$(grep -E '^[0-9a-f-]{36}:[0-9a-f-]{36}$' "$concurrency_dir/close-2" | tail -1)"
-[ -n "$close_1" ] && [ "$close_1" = "$close_2" ] \
+[[ -n "$close_1" ]] && [ "$close_1" = "$close_2" ] \
   || fail 'close concorrente nao convergiu'
 
 runtime_proof="$(psql_test -At < "$repo_root/scripts/db-audit/message-delivery-phase1-runtime.sql")"
