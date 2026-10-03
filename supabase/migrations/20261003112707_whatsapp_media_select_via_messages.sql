@@ -21,8 +21,9 @@
 -- O DROP abaixo é do PRÓPRIO nome desta migration (torna o replay idempotente). Nenhuma policy
 -- existente é removida ou alterada.
 --
--- ROLLBACK:
---   DROP POLICY IF EXISTS "whatsapp media readable via visible message" ON storage.objects;
+-- rollback: DROP POLICY IF EXISTS "whatsapp media readable via visible message" ON storage.objects;
+--
+-- (o rollback acima é o caminho de volta completo: esta migration só cria a policy nova.)
 
 DROP POLICY IF EXISTS "whatsapp media readable via visible message" ON storage.objects;
 
