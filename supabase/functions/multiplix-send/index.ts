@@ -682,6 +682,21 @@ export async function handleMultiplixSend(
                 provider_status: envio.status,
               },
             });
+            // F60 (gatilho): um erro PERMANENTE nao e azar de um item — e sinal de que a
+            // CONEXAO esta em risco. Tres consecutivos, ou um banimento, pausam todos os
+            // dispatches dela (a funcao decide o limiar; o worker so reporta o sinal).
+            // `unknown` NAO conta: nao sabemos o que aconteceu, e pausar por duvida
+            // derrubaria disparo bom.
+            if (providerError.class === "permanent" && connection?.id) {
+              const { error: riskError } = await supabase.rpc("register_multiplix_connection_failure", {
+                p_connection_id: connection.id,
+                p_signal: null,
+                p_error_class: "permanent",
+              });
+              // Nao derruba o envio: o item ja foi concluido acima. A marcacao de risco e
+              // defesa em profundidade — falhar nela nao pode fazer o worker perder o item.
+              if (riskError) console.error(`multiplix_connection_risk_failed: ${riskError.message}`);
+            }
           }
           stopHeartbeat();
         } catch (err) {

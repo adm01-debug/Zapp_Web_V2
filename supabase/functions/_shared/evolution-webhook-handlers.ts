@@ -86,6 +86,28 @@ export async function handleConnectionUpdate(supabase: any, instance: string, ba
     });
   }
 
+  // F60 (gatilho): motivo TERMINAL nao e soluço de rede — a instancia esta fora e nao volta
+  // sozinha. Pausa todos os dispatches ativos da conexao (a funcao decide; aqui so
+  // reportamos o sinal). O mapeamento e EXPLICITO: casar por nome parecido entre o
+  // vocabulario do Evolution e o da funcao seria o jeito de o gatilho nunca disparar.
+  if (status === 'disconnected' && TERMINAL_DISCONNECT_REASONS.has(disconnectReason)) {
+    const signalByReason: Record<string, string> = {
+      Banned: 'banned',
+      TempBanned: 'TemporaryBan',
+      connectFailure: 'ConnectFailure',
+    };
+    const { data: riskConn } = await supabase.from('whatsapp_connections')
+      .select('id').eq('instance_id', instance).maybeSingle();
+    if (riskConn?.id) {
+      const { error: riskError } = await supabase.rpc('register_multiplix_connection_failure', {
+        p_connection_id: riskConn.id,
+        p_signal: signalByReason[disconnectReason] ?? 'connection_lost',
+        p_error_class: 'permanent',
+      });
+      if (riskError) console.error(`multiplix_connection_risk_failed: ${riskError.message}`);
+    }
+  }
+
   if (status === 'connected' && prevConn?.status !== 'connected') {
     await supabase.from('warroom_alerts').insert({
       alert_type: 'info',

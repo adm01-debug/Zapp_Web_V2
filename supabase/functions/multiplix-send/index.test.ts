@@ -1215,3 +1215,55 @@ Deno.test("F61: erro do provedor vira texto legivel — nunca JSON cru — e o c
     provider.restore();
   }
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// F60 (gatilho) — o erro PERMANENTE nao fica no item: marca a CONEXAO em risco
+// ─────────────────────────────────────────────────────────────────────────────
+
+Deno.test("F60: erro PERMANENTE no item marca a conexao em risco (o gatilho do worker)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    recipients: [recipientRow(0, "5511999990000")],
+    connection: { id: "conn-0001", status: "connected", instance_id: "inst-1" },
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderRejecting({ status: 400, error: { code: "400", message: "number not exists" } });
+  try {
+    await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    const risco = rpcs(ctx, "register_multiplix_connection_failure");
+    assert(risco.length === 1, `esperava UMA marcacao de risco, veio ${risco.length}`);
+    assert(
+      risco[0].args.p_error_class === "permanent",
+      `p_error_class inesperado: ${String(risco[0].args.p_error_class)}`,
+    );
+    assert(
+      risco[0].args.p_connection_id === "conn-0001",
+      `marcou a conexao errada: ${String(risco[0].args.p_connection_id)}`,
+    );
+    // Sem sinal de banimento: quem decide o limiar das tres e a funcao, nao o worker.
+    assert(risco[0].args.p_signal === null, `o worker nao deveria mandar sinal: ${String(risco[0].args.p_signal)}`);
+  } finally {
+    provider.restore();
+  }
+});
+
+Deno.test("F60: erro do item que NAO e permanente nao marca risco (nao pausa por qualquer coisa)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    recipients: [recipientRow(0, "5511999990000")],
+    connection: { id: "conn-0001", status: "connected", instance_id: "inst-1" },
+  };
+  const ctx = newCtx(opts);
+  // 503 = indisponibilidade temporaria do provedor: o item falha, mas a conexao esta bem.
+  const provider = stubProviderRejecting({ status: 503, error: { code: "503", message: "service unavailable" } }, 503);
+  try {
+    await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    const risco = rpcs(ctx, "register_multiplix_connection_failure");
+    assert(
+      risco.length === 0,
+      `erro transitorio NAO pode pausar a conexao (marcou ${risco.length}x — pausaria disparo bom)`,
+    );
+  } finally {
+    provider.restore();
+  }
+});
