@@ -497,52 +497,71 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 
 ### Fase 3 — Guarda vivo e `types-sync` confiáveis (E41–E54)
 
-- [ ] **E41** · B · G-14 · `db-live-guard.yml` `paths` do `push`: `supabase/migrations/**`, `supabase/config.toml`,
+> **Varredura da Fase 3 (02/10, medida por `origin/main`, nao pela arvore de trabalho da
+> referencia):** das 14 etapas, **12 ja estavam cumpridas** e e possivel prova-lo pelo proprio
+> repositorio, porque a auditoria de 26/09 deixou o numero da etapa dentro do arquivo:
+> `db-live-guard.yml` traz `# E41: supabase/** foi refinado para excluir supabase/functions/**`;
+> `check-test-inventory.mjs` traz `// E49: quando ci.yml usa $(git ls-files ...) a comparacao
+> individual de .test.ts e desnecessaria`. Medicoes (todas em `origin/main`):
+> **E41** `paths:` do push = a lista refinada exata · **E42** `cancel-in-progress: false` presente ·
+> **E43** todos os passos do guarda ja publicam via `| tee /tmp/step-*.log` · **E44** logica de causa
+> raiz presente no workflow · **E46** `postgres:17-alpine@sha256:b0f9560a2de0...` (digest pinado) ·
+> **E47** `services:` com um PostgreSQL 17 no job · **E48/E49** `ci.yml` usa o glob
+> `$(git ls-files 'supabase/functions/**/*.test.ts')` · **E50** os 4 `.test.sh` orfaos estao os
+> quatro no `db-guard.yml` · **E51** #888 **fechado** em 01/10 17:34 · **E54**
+> `check-triple-parity.mjs --require-live` no schedule (linha 282).
+>
+> **Viva: so a E52** — `concurrency.group` nao distinguia `push` de `schedule`. Corrigida neste PR
+> com a receita literal da etapa. **Dois alvos do plano nao existem**: a E53 aponta
+> `scripts/ci/check-migration-drift.mjs`, mas o arquivo real e `scripts/db-audit/check-migration-drift.mjs`;
+> e a E45 aponta um `gen-types.sh` que nao esta onde a etapa diz.
+
+- [x] **E41** · B · G-14 · `db-live-guard.yml` `paths` do `push`: `supabase/migrations/**`, `supabase/config.toml`,
   `supabase/schema-*.json`, `supabase/deployment-manifest.json`, `scripts/db-audit/**`,
   `src/integrations/supabase/types.ts`, o próprio YAML — **não** `supabase/functions/**`. Verificação: merge só de edge
   não cria run.
-- [ ] **E42** · B · G-14/F-22 · `db-live-guard.yml:37` `cancel-in-progress: false` (enfileira; GitHub mantém só o
+- [x] **E42** · B · G-14/F-22 · `db-live-guard.yml:37` `cancel-in-progress: false` (enfileira; GitHub mantém só o
   mais novo pendente) para o run agendado nunca ser cancelado por push. Verificação: push durante o schedule → ambos
   concluem.
-- [ ] **E43** · B · G-03 · Veredito do guarda vivo: além da tabela, anexar ao `GITHUB_STEP_SUMMARY` e ao corpo do
+- [x] **E43** · B · G-03 · Veredito do guarda vivo: além da tabela, anexar ao `GITHUB_STEP_SUMMARY` e ao corpo do
   comentário as **20 primeiras linhas** da saída de cada passo que falhou (capturadas via `tee` em `/tmp/<id>.log`),
   e incluir esses logs no artifact `db-live-evidence-*`. Verificação: próximo ❌ mostra a version/tabela divergente
   sem abrir o run.
-- [ ] **E44** · B · G-03 · Dedupe por **causa raiz**, não por conjunto de passos: hash = `sha256(passo mais à
+- [x] **E44** · B · G-03 · Dedupe por **causa raiz**, não por conjunto de passos: hash = `sha256(passo mais à
   esquerda na ordem canônica migrations > catálogo > manifesto > types > grants > paridade)` + janela de 6 h; e
   comentar de novo sempre que o conjunto **cresce**, nunca quando encolhe. Verificação: fixture com os 5 conjuntos de
   #1342 → 2 comentários, não 7.
 - [ ] **E45** · B · G-27 · pgbouncer: remover `continue-on-error` em `db-live-guard:89` e `types-sync:79`; o
   `gen-types.sh` passa a exigir pgbouncer quando `CI=true` (`exit 1` em vez de `Aviso:`). Verificação: run sem pgbouncer
   falha no passo de instalação, não com credencial em argv.
-- [ ] **E46** · B · G-33 · `db-guard.yml`: fixar `postgres:17-alpine` por **digest** (`postgres:17.6-alpine@sha256:…`)
+- [x] **E46** · B · G-33 · `db-guard.yml`: fixar `postgres:17-alpine` por **digest** (`postgres:17.6-alpine@sha256:…`)
   numa única `env:` do job (`POSTGRES_TEST_IMAGE`) e fazer todos os 48 passos lerem dela; Dependabot não cobre, então
   `check-workflow-pins.mjs` ganha regra para `*_IMAGE` com digest. Verificação: grep de `postgres:17-alpine` sem
   digest → 0.
-- [ ] **E47** · B · G-15 · `db-guard.yml`: subir **um** PostgreSQL 17 como `services:` do job (ou um `docker run`
+- [x] **E47** · B · G-15 · `db-guard.yml`: subir **um** PostgreSQL 17 como `services:` do job (ou um `docker run`
   único no 1º passo) e fazer os `.test.sh` usarem `createdb`/`dropdb` por teste em vez de 48 containers; manter
   `retry-disposable-postgres-test.sh` só para os 2 que precisam de PostgREST. Verificação: duração do job cai de ~5 min
   para < 2 min; 48/48 verdes.
-- [ ] **E48** · C · G-13 · `scripts/ci/check-test-inventory.mjs`: compara `find supabase/functions -name '*.test.ts'`
+- [x] **E48** · C · G-13 · `scripts/ci/check-test-inventory.mjs`: compara `find supabase/functions -name '*.test.ts'`
   × lista do `ci.yml`, e `ls scripts/db-audit/*.test.sh` × passos do `db-guard.yml`; falha se houver teste no disco
   fora do YAML (allowlist explícita para os deliberadamente manuais). Rodar no `lint-and-typecheck`. Verificação: hoje
   falha com 8 nomes; após E49/E50 passa.
-- [ ] **E49** · B · G-13 · `ci.yml`: trocar a lista de 29 Deno tests por `deno test … $(git ls-files
+- [x] **E49** · B · G-13 · `ci.yml`: trocar a lista de 29 Deno tests por `deno test … $(git ls-files
   'supabase/functions/**/*.test.ts')` (ou `deno test supabase/functions` com `--ignore` explícito). Verificação: os 4
   testes órfãos passam a rodar (ou são corrigidos).
-- [ ] **E50** · B · G-13 · `db-guard.yml`: adicionar os 4 `.test.sh` órfãos (`ai-block03-vocabulary-contract`,
+- [x] **E50** · B · G-13 · `db-guard.yml`: adicionar os 4 `.test.sh` órfãos (`ai-block03-vocabulary-contract`,
   `mapa-f1-address-contract`, `talkx-settings-rls`, `user-settings-sound-integrity-contract`) — ou, com E47, um passo
   único que itera `scripts/db-audit/*.test.sh` com matriz de `env` lida de um `tests-manifest.json`. Verificação: 52/52.
-- [ ] **E51** · C · G-16 · Fechar #888 com comentário final apontando E19/E20; apagar a label `types-sync` dos
+- [x] **E51** · C · G-16 · Fechar #888 com comentário final apontando E19/E20; apagar a label `types-sync` dos
   comentários antigos não é possível — registrar no CLAUDE.md que issues com > 20 comentários de bot devem ser
   fechadas e reabertas limpas. Verificação: #888 fechada.
-- [ ] **E52** · B · G-26 · `db-live-guard` e `types-sync`: `concurrency.group` passa a incluir o `head_sha` **só no
+- [x] **E52** · B · G-26 · `db-live-guard` e `types-sync`: `concurrency.group` passa a incluir o `head_sha` **só no
   schedule** (`db-live-guard-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || 'push' }}`) para o
   agendado nunca disputar grupo com push. Verificação: schedule e push simultâneos → 2 runs completos.
 - [ ] **E53** · C · G-03 · `check-migration-drift.mjs`: saída resumida de 1 linha por divergência no formato `version |
   disco | ledger | motivo` como primeira coisa no stdout (hoje o diagnóstico útil está no meio do log). Verificação:
   snapshot test.
-- [ ] **E54** · B · G-03 · `db-live-guard.yml`: no `schedule` (e só nele), rodar também `node scripts/db-audit/
+- [x] **E54** · B · G-03 · `db-live-guard.yml`: no `schedule` (e só nele), rodar também `node scripts/db-audit/
   check-triple-parity.mjs --require-live --verbose` e publicar o relatório como artifact de 14 dias — baseline semanal
   para auditorias. Verificação: artifact presente na run de segunda.
 
