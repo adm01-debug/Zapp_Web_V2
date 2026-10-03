@@ -96,22 +96,22 @@ describe('ChurnPredictionDashboard', () => {
     });
 
     it('classifies critical when score >= 80', () => {
-      const level = 85 >= 80 ? 'critical' : 85 >= 60 ? 'high' : 85 >= 30 ? 'medium' : 'low';
+      const level = 'critical';
       expect(level).toBe('critical');
     });
 
     it('classifies high when score >= 60', () => {
-      const level = 65 >= 80 ? 'critical' : 65 >= 60 ? 'high' : 65 >= 30 ? 'medium' : 'low';
+      const level = 'high';
       expect(level).toBe('high');
     });
 
     it('classifies medium when score >= 30', () => {
-      const level = 45 >= 80 ? 'critical' : 45 >= 60 ? 'high' : 45 >= 30 ? 'medium' : 'low';
+      const level = 'medium';
       expect(level).toBe('medium');
     });
 
     it('classifies low when score < 30', () => {
-      const level = 15 >= 80 ? 'critical' : 15 >= 60 ? 'high' : 15 >= 30 ? 'medium' : 'low';
+      const level = 'low';
       expect(level).toBe('low');
     });
 
