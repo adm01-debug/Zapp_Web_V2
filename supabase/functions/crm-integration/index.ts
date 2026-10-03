@@ -320,9 +320,7 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
   };
 
   const canManageEmailContactLink = async (): Promise<boolean> => {
-    if (!userId) return false;
-    const { data, error } = await canonical.rpc('is_admin_or_supervisor', { _user_id: userId });
-    return !error && data === true;
+    return userHasPermission('crm.email_contact_link.manage');
   };
 
   // The browser gate is for UX only.  The Edge repeats the kill switch so a
@@ -551,12 +549,19 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
       const candidate = objectValue(candidateResult.data);
       const externalContactId = nonEmptyText(candidate?.id);
       if (!externalContactId || normalizeEmail(candidate?.email) !== participantEmail) return errorResponse('The selected CRM company is no longer available', 409, req);
+      // `linked_by` references profiles.id, while requireAuth gives auth.users.id.
+      // Resolve the profile using the service client only after the request has
+      // passed both the named permission and all thread/contact visibility checks.
+      const { data: profile, error: profileError } = await canonical.from('profiles')
+        .select('id').eq('user_id', userId).maybeSingle();
+      const profileId = nonEmptyText(objectValue(profile)?.id);
+      if (profileError || !profileId) return errorResponse('Your profile is unavailable for CRM linking', 409, req);
       const { error: linkError } = await canonical.rpc('link_email_crm_contact_guarded', {
         p_zapp_contact_id: contact.id,
         p_external_contact_id: externalContactId,
         p_external_company_id: nonEmptyText(candidate?.company_id),
         p_normalized_phone: normalizePhone(contact.phone),
-        p_linked_by: userId,
+        p_linked_by: profileId,
       });
       if (linkError) return errorResponse('CRM contact link could not be saved', linkError.code === '23505' ? 409 : 502, req);
       data = { linked: true };

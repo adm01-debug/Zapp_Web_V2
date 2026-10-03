@@ -177,6 +177,16 @@ export default defineConfig({
       },
     },
     {
+      name: 'firefox-email-navy',
+      testMatch: /email-navy-visual\.spec\.ts/,
+      use: { ...devices['Desktop Firefox'], viewport: { width: 1280, height: 900 }, colorScheme: 'dark' },
+    },
+    {
+      name: 'webkit-email-navy',
+      testMatch: /email-navy-visual\.spec\.ts/,
+      use: { ...devices['Desktop Safari'], viewport: { width: 1280, height: 900 }, colorScheme: 'dark' },
+    },
+    {
       // auth.spec.ts on Firefox — cross-browser login UI coverage.
       // No dependencies, no storageState: runs without E2E_TEST_EMAIL/E2E_TEST_PASSWORD,
       // safe to include in ci.yml (PR checks cannot reference those secrets).

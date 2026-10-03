@@ -90,6 +90,12 @@ const completeCompany = {
   socialsKnown: true, aboutKnown: true, updatedAt: '2026-10-01T10:00:00.000Z',
 };
 
+const completeOtherCompany = {
+  ...completeCompany,
+  id: 'crm-company-other', name: 'Outra Empresa', legalName: 'Outra Empresa S.A.',
+  website: 'https://outra-empresa.example.test/',
+};
+
 export async function mockEmailNavy(page: Page, options: { includeExtreme?: boolean; crmContext?: CrmFixtureMode } = {}) {
   await installFakeSession(page);
   await mockTalkXAuth(page);
@@ -133,16 +139,24 @@ export async function mockEmailNavy(page: Page, options: { includeExtreme?: bool
     ]);
   });
   const crmContext = options.crmContext ?? 'disabled';
+  let linkedExternalContactId: string | null = null;
   if (crmContext !== 'disabled') {
     await page.route(/\/rest\/v1\/feature_flags/, route => isRead(route.request().method())
       ? json(route, [{ key: 'crm.integration', enabled: true, description: 'Fixture CRM Email', updated_at: '2026-10-03T12:00:00.000Z' }])
       : json(route, { message: 'escrita bloqueada' }, 403));
     await page.route(/\/functions\/v1\/crm-integration/, route => {
-      const request = route.request().postDataJSON() as { action?: string; contactId?: string; selectedExternalContactId?: string };
-      if (request.action === 'linkEmailContactCompany') return json(route, { data: { linked: true } });
+      const request = route.request().postDataJSON() as { action?: string; contactId?: string; externalContactId?: string; selectedExternalContactId?: string };
+      if (request.action === 'linkEmailContactCompany') {
+        if (crmContext !== 'ambiguous' || !['crm-contact-acme', 'crm-contact-other'].includes(request.externalContactId || '')) {
+          return json(route, { error: 'vínculo CRM inválido na fixture' }, 409);
+        }
+        linkedExternalContactId = request.externalContactId || null;
+        return json(route, { data: { linked: true } });
+      }
       if (request.action !== 'emailContactContext') return json(route, { error: 'ação CRM inesperada na fixture' }, 403);
       if (crmContext === 'permission_denied') return json(route, { error: 'Email contact context is not visible' }, 404);
-      const source = { linked: false, consultedAt: '2026-10-03T12:00:00.000Z', resolution: 'email_exact', participantEmail: 'notifications@vercel.com', selectedExternalContactId: 'crm-contact-acme', canLink: Boolean(request.contactId) };
+      const selectedExternalContactId = request.selectedExternalContactId || (crmContext === 'ambiguous' ? null : 'crm-contact-acme');
+      const source = { linked: linkedExternalContactId === selectedExternalContactId, consultedAt: '2026-10-03T12:00:00.000Z', resolution: 'email_exact', participantEmail: 'notifications@vercel.com', selectedExternalContactId, canLink: Boolean(request.contactId) };
       if (crmContext === 'ambiguous' && !request.selectedExternalContactId) return json(route, {
         data: {
           status: 'ambiguous', company: null, source,
@@ -152,7 +166,8 @@ export async function mockEmailNavy(page: Page, options: { includeExtreme?: bool
           ],
         },
       });
-      return json(route, { data: { status: 'available', company: completeCompany, source } });
+      const company = request.selectedExternalContactId === 'crm-contact-other' ? completeOtherCompany : completeCompany;
+      return json(route, { data: { status: 'available', company, source } });
     });
   }
 }

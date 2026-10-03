@@ -359,7 +359,7 @@ jobs:
       # referenciar esses secrets (scripts/ci/check-pr-workflow-secrets.mjs), então
       # o login real roda em .github/workflows/e2e-logado.yml, depois do merge na main.
       - name: 🧪 Run Playwright E2E (chromium + firefox + webkit, sem autenticação)
-        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=firefox-auth --project=webkit-auth --project=chromium-contacts-visual
+        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=firefox-auth --project=webkit-auth --project=chromium-contacts-visual --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
         env:
           CI: true
 
