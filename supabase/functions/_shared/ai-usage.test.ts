@@ -31,6 +31,7 @@
 
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
 import {
+  calcularCusto,
   contaParaQuota,
   extractAiRequestId,
   extrairUsageDoStream,
@@ -41,8 +42,10 @@ import {
   normalizeCorrelationId,
   normalizeModality,
   reconciliarConsumo,
+  tarifaAplicavel,
   type LinhaDeConsumo,
   type StreamOutcome,
+  type TarifaDeModelo,
 } from "./ai-usage.ts";
 
 type EdgeRuntimeType = { waitUntil?: (promise: Promise<unknown>) => void };
@@ -795,4 +798,200 @@ Deno.test("IA-054 reconciliação vazia não inventa número", () => {
   assertEquals(r.acoes, 0);
   assertEquals(r.tentativas, 0);
   assertEquals(r.tokensMedidos, 0);
+});
+
+// ---------------------------------------------------------------------------
+// (i) IA-055 — tarifa versionada por vigência
+// ---------------------------------------------------------------------------
+// Aceite da etapa: "Um relatório histórico usa a tarifa aplicável e diferencia
+// estimativa interna de custo reconciliado." Os dois erros que estes testes
+// barram são silenciosos: (1) um reajuste de preço reescrevendo o relatório do
+// passado e (2) "não sei o preço" entrando na conta como zero.
+const TARIFA_SETEMBRO: TarifaDeModelo = {
+  model: "deepseek-v4-pro",
+  unit: "token",
+  currency: "USD",
+  unitPrice: 0.000001,
+  validFrom: "2026-09-01T00:00:00Z",
+  validTo: "2026-10-01T00:00:00Z",
+};
+
+const TARIFA_OUTUBRO: TarifaDeModelo = {
+  model: "deepseek-v4-pro",
+  unit: "token",
+  currency: "USD",
+  unitPrice: 0.000002,
+  validFrom: "2026-10-01T00:00:00Z",
+  validTo: null,
+};
+
+Deno.test("IA-055 reajuste de preço NÃO reescreve o relatório do passado", () => {
+  const tarifas = [TARIFA_SETEMBRO, TARIFA_OUTUBRO];
+
+  const setembro = calcularCusto(tarifas, {
+    model: "deepseek-v4-pro",
+    unit: "token",
+    em: "2026-09-15T12:00:00Z",
+    quantidade: 1_000_000,
+  });
+  const outubro = calcularCusto(tarifas, {
+    model: "deepseek-v4-pro",
+    unit: "token",
+    em: "2026-10-15T12:00:00Z",
+    quantidade: 1_000_000,
+  });
+
+  assertEquals(setembro.custo, 1, "setembro tem de usar a tarifa de SETEMBRO");
+  assertEquals(outubro.custo, 2, "outubro usa a tarifa nova");
+  assertEquals(setembro.moeda, "USD");
+});
+
+Deno.test("IA-055 fronteira da vigência: início inclusivo, fim exclusivo", () => {
+  const tarifas = [TARIFA_SETEMBRO, TARIFA_OUTUBRO];
+
+  const umSegundoAntes = tarifaAplicavel(tarifas, {
+    model: "deepseek-v4-pro",
+    unit: "token",
+    em: "2026-09-30T23:59:59Z",
+  });
+  const noInstanteExato = tarifaAplicavel(tarifas, {
+    model: "deepseek-v4-pro",
+    unit: "token",
+    em: "2026-10-01T00:00:00Z",
+  });
+
+  assertEquals(umSegundoAntes?.unitPrice, 0.000001, "um segundo antes vale a tarifa antiga");
+  assertEquals(noInstanteExato?.unitPrice, 0.000002, "no instante da virada vale a nova");
+  assert(
+    umSegundoAntes !== null && noInstanteExato !== null,
+    "a virada não pode deixar buraco: todo instante tem UMA tarifa",
+  );
+});
+
+Deno.test("IA-055 sem tarifa vigente o custo é NULL, nunca zero", () => {
+  const antesDeExistir = calcularCusto([TARIFA_SETEMBRO], {
+    model: "deepseek-v4-pro",
+    unit: "token",
+    em: "2026-08-01T00:00:00Z",
+    quantidade: 5000,
+  });
+  assertEquals(antesDeExistir.custo, null, "preço desconhecido não pode virar zero");
+  assertEquals(antesDeExistir.motivo, "sem_tarifa_vigente");
+  assertEquals(antesDeExistir.moeda, null);
+
+  const modeloDesconhecido = calcularCusto([TARIFA_SETEMBRO], {
+    model: "modelo-que-nao-existe",
+    unit: "token",
+    em: "2026-09-15T00:00:00Z",
+    quantidade: 10,
+  });
+  assertEquals(modeloDesconhecido.custo, null);
+  assertEquals(modeloDesconhecido.motivo, "sem_tarifa_vigente");
+});
+
+Deno.test("IA-055 unidade não se mistura: tarifa de segundo não paga token", () => {
+  const porSegundo: TarifaDeModelo = {
+    model: "deepseek-v4-pro",
+    unit: "second",
+    currency: "USD",
+    unitPrice: 0.0002,
+    validFrom: "2026-09-01T00:00:00Z",
+  };
+
+  const comoToken = calcularCusto([porSegundo], {
+    model: "deepseek-v4-pro",
+    unit: "token",
+    em: "2026-09-15T00:00:00Z",
+    quantidade: 1000,
+  });
+  assertEquals(comoToken.custo, null, "unidade diferente não é comparável: nada de converter por conta");
+  assertEquals(comoToken.motivo, "sem_tarifa_vigente");
+
+  const segundos = calcularCusto([porSegundo], {
+    model: "deepseek-v4-pro",
+    unit: "second",
+    em: "2026-09-15T00:00:00Z",
+    quantidade: 30,
+  });
+  assertEquals(segundos.custo, 0.006);
+});
+
+Deno.test("IA-055 empate de vigência: a tarifa reconciliada vence a interna", () => {
+  const interna: TarifaDeModelo = { ...TARIFA_OUTUBRO, source: "internal" };
+  const reconciliada: TarifaDeModelo = {
+    ...TARIFA_OUTUBRO,
+    unitPrice: 0.0000019,
+    source: "provider_statement",
+  };
+
+  // A ordem do array NÃO pode decidir: o número conferido no extrato manda.
+  for (const ordem of [[interna, reconciliada], [reconciliada, interna]]) {
+    const escolhida = tarifaAplicavel(ordem, {
+      model: "deepseek-v4-pro",
+      unit: "token",
+      em: "2026-10-15T00:00:00Z",
+    });
+    assertEquals(escolhida?.source, "provider_statement", "a tarifa conferida no extrato vence");
+    assertEquals(escolhida?.unitPrice, 0.0000019);
+  }
+});
+
+Deno.test("IA-055 o resultado declara a FONTE da tarifa usada", () => {
+  const reconciliada: TarifaDeModelo = { ...TARIFA_SETEMBRO, source: "provider_statement" };
+  const comFonte = calcularCusto([reconciliada], {
+    model: "deepseek-v4-pro",
+    unit: "token",
+    em: "2026-09-15T00:00:00Z",
+    quantidade: 100,
+  });
+  assertEquals(
+    comFonte.fonte,
+    "provider_statement",
+    "o relatório precisa distinguir estimativa interna de custo reconciliado",
+  );
+
+  const semFonte = calcularCusto([TARIFA_SETEMBRO], {
+    model: "deepseek-v4-pro",
+    unit: "token",
+    em: "2026-09-15T00:00:00Z",
+    quantidade: 100,
+  });
+  assertEquals(semFonte.fonte, "internal", "sem marcação explícita, a tarifa é interna");
+});
+
+Deno.test("IA-055 zero medido ≠ preço ausente, e valor inválido não passa", () => {
+  const zero = calcularCusto([TARIFA_SETEMBRO], {
+    model: "deepseek-v4-pro",
+    unit: "token",
+    em: "2026-09-15T00:00:00Z",
+    quantidade: 0,
+  });
+  assertEquals(zero.custo, 0, "zero medido é número: havia tarifa e não houve consumo");
+  assertEquals(zero.motivo, "zero_medido");
+
+  const negativo = calcularCusto([TARIFA_SETEMBRO], {
+    model: "deepseek-v4-pro",
+    unit: "token",
+    em: "2026-09-15T00:00:00Z",
+    quantidade: -1,
+  });
+  assertEquals(negativo.custo, null);
+  assertEquals(negativo.motivo, "quantidade_invalida");
+
+  const nan = calcularCusto([TARIFA_SETEMBRO], {
+    model: "deepseek-v4-pro",
+    unit: "token",
+    em: "2026-09-15T00:00:00Z",
+    quantidade: Number.NaN,
+  });
+  assertEquals(nan.motivo, "quantidade_invalida");
+
+  const tarifaRuim = calcularCusto([{ ...TARIFA_SETEMBRO, unitPrice: -1 }], {
+    model: "deepseek-v4-pro",
+    unit: "token",
+    em: "2026-09-15T00:00:00Z",
+    quantidade: 10,
+  });
+  assertEquals(tarifaRuim.custo, null);
+  assertEquals(tarifaRuim.motivo, "tarifa_invalida");
 });

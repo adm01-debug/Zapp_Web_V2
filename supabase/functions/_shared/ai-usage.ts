@@ -573,3 +573,135 @@ export function reconciliarConsumo(linhas: LinhaDeConsumo[]): ReconciliacaoDeCon
   }
   return totais;
 }
+
+// ---------------------------------------------------------------------------
+// IA-055 — tarifa versionada por vigência
+// ---------------------------------------------------------------------------
+// O problema: o consumo está medido em tokens (IA-051..054) e o dinheiro não
+// existe. Transformar token em custo com um número solto tem duas falhas
+// previsíveis — (a) um reajuste de preço reescreve o relatório do passado e
+// (b) "não sei o preço" vira zero no relatório, que é o modo mais silencioso de
+// mentir sobre custo.
+//
+// Por isso a tarifa tem VIGÊNCIA e a busca é por data:
+//  - `valid_from` INCLUSIVO e `valid_to` EXCLUSIVO (NULL = vigente): fronteira
+//    meio-aberta para que duas vigências nunca cubram o mesmo instante;
+//  - entre as candidatas, vence a de `valid_from` mais recente (a tarifa nova
+//    substitui a antiga sem apagar o histórico);
+//  - sem tarifa aplicável o custo é `null` com motivo — NUNCA zero;
+//  - unidade faz parte da identidade: tarifa de `second` não paga `token`.
+//
+// `source` viaja junto da tarifa escolhida para o relatório poder dizer se o
+// número é ESTIMATIVA INTERNA ou CUSTO RECONCILIADO com o extrato do provedor.
+
+/** Grandezas que se cobram, uma a uma (não se converte entre elas). */
+export type UnidadeCobravel = "token" | "character" | "second" | "request";
+
+/** Uma linha de tarifa, como vem da tabela `ai_model_prices`. */
+export interface TarifaDeModelo {
+  model: string;
+  unit: UnidadeCobravel;
+  currency: string;
+  unitPrice: number;
+  /** Início da vigência (inclusivo). */
+  validFrom: string | Date;
+  /** Fim da vigência (EXCLUSIVO); `null`/ausente = vigente. */
+  validTo?: string | Date | null;
+  /** `internal` = tarifa nossa; `provider_statement` = conferida no extrato. */
+  source?: string | null;
+}
+
+function instante(valor: string | Date): number {
+  const ms = valor instanceof Date ? valor.getTime() : Date.parse(valor);
+  return Number.isFinite(ms) ? ms : Number.NaN;
+}
+
+/**
+ * Tarifa vigente para (modelo, unidade) no instante `em`.
+ *
+ * Devolve `null` quando não há tarifa vigente — ausência declarada, porque um
+ * preço inventado é pior que um custo desconhecido.
+ */
+export function tarifaAplicavel(
+  tarifas: TarifaDeModelo[],
+  consulta: { model: string; unit: UnidadeCobravel; em: string | Date },
+): TarifaDeModelo | null {
+  const em = instante(consulta.em);
+  if (!Number.isFinite(em)) return null;
+
+  let escolhida: TarifaDeModelo | null = null;
+  let inicioEscolhido = Number.NEGATIVE_INFINITY;
+
+  for (const tarifa of tarifas) {
+    if (tarifa.model !== consulta.model || tarifa.unit !== consulta.unit) continue;
+
+    const inicio = instante(tarifa.validFrom);
+    if (!Number.isFinite(inicio) || inicio > em) continue;
+
+    if (tarifa.validTo !== null && tarifa.validTo !== undefined) {
+      const fim = instante(tarifa.validTo);
+      if (!Number.isFinite(fim) || em >= fim) continue; // fim EXCLUSIVO
+    }
+
+    // Desempate DECLARADO, não dependente da ordem do array: com o mesmo início
+    // de vigência podem coexistir a tarifa interna e a reconciliada com o
+    // extrato. A reconciliada é o número conferido, então ela vence.
+    const reconciliada = (tarifa.source ?? "internal") === "provider_statement" ? 1 : 0;
+    const reconciliadaEscolhida =
+      escolhida !== null && (escolhida.source ?? "internal") === "provider_statement" ? 1 : 0;
+
+    const vence = escolhida === null ||
+      inicio > inicioEscolhido ||
+      (inicio === inicioEscolhido && reconciliada > reconciliadaEscolhida);
+
+    if (vence) {
+      escolhida = tarifa;
+      inicioEscolhido = inicio;
+    }
+  }
+  return escolhida;
+}
+
+/** Resultado do custo de uma quantidade, com o motivo quando não dá para calcular. */
+export interface CustoCalculado {
+  /** `null` quando não há tarifa aplicável (NUNCA zero por falta de dado). */
+  custo: number | null;
+  moeda: string | null;
+  tarifa: TarifaDeModelo | null;
+  fonte: string | null;
+  motivo: string;
+}
+
+/**
+ * Custo de `quantidade` unidades de (modelo, unidade) na data `em`.
+ *
+ * `quantidade` zero com tarifa aplicável é custo **zero medido** — diferente de
+ * "não sei o preço", que devolve `custo: null`.
+ */
+export function calcularCusto(
+  tarifas: TarifaDeModelo[],
+  consulta: { model: string; unit: UnidadeCobravel; em: string | Date; quantidade: number },
+): CustoCalculado {
+  if (!Number.isFinite(consulta.quantidade) || consulta.quantidade < 0) {
+    return { custo: null, moeda: null, tarifa: null, fonte: null, motivo: "quantidade_invalida" };
+  }
+
+  const tarifa = tarifaAplicavel(tarifas, consulta);
+  if (tarifa === null) {
+    return { custo: null, moeda: null, tarifa: null, fonte: null, motivo: "sem_tarifa_vigente" };
+  }
+  if (!Number.isFinite(tarifa.unitPrice) || tarifa.unitPrice < 0) {
+    return { custo: null, moeda: null, tarifa: null, fonte: null, motivo: "tarifa_invalida" };
+  }
+
+  // Arredonda na menor fração praticável da coluna (8 casas): somar muitos
+  // centésimos de fração gera centavo fantasma no relatório.
+  const custo = Number((tarifa.unitPrice * consulta.quantidade).toFixed(8));
+  return {
+    custo,
+    moeda: tarifa.currency,
+    tarifa,
+    fonte: tarifa.source ?? "internal",
+    motivo: consulta.quantidade === 0 ? "zero_medido" : "calculado",
+  };
+}
