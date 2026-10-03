@@ -18,6 +18,9 @@ on:
 permissions:
   contents: read
   pull-requests: read
+  # E79: listar os runs do proprio repositório e manter a issue semanal `[kpi-actions]`.
+  actions: read
+  issues: write
 
 concurrency:
   group: branch-hygiene-audit
@@ -34,6 +37,19 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+
+      - name: KPI do GitHub Actions
+        # E79: mede o proprio uso do Actions -- runs/semana por workflow, taxa de
+        # cancelamento, taxa de falha, minutos e os 5 jobs mais lentos. Publica no Job
+        # Summary e mantem uma issue aberta `[kpi-actions]` atualizada a cada semana.
+        # A duracao sai de `run_started_at`/`updated_at`: o endpoint de faturamento
+        # devolve `billable: {}` em repositorio publico (medido em 03/10/2026).
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JANELA_DIAS: '7'
+        run: |
+          set -euo pipefail
+          node scripts/ci/actions-kpi.mjs
 
       - name: Gerar relatorio
         env:
