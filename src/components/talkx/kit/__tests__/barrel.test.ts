@@ -11,6 +11,7 @@ import * as talkxShared from '../../talkxShared';
  * cobertos pelo `tsc`; a lista aqui é só o que o JavaScript enxerga.
  */
 const EXPORTED_NAMES = [
+  'TalkXNoData',
   'CAMPAIGN_STATUS',
   'RECIPIENT_STATUS',
   'OBJECTIVES',
