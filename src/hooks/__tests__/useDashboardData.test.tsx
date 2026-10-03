@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
@@ -56,7 +55,8 @@ vi.mock('@/integrations/supabase/client', () => {
   };
 });
 
-import { useDashboardData, DashboardFilters } from '@/hooks/analytics/useDashboardData';
+import { useDashboardData } from '@/hooks/analytics/useDashboardData';
+import type { DashboardFilters } from '@/hooks/dashboard/useDashboardStats';
 
 function createWrapper() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });

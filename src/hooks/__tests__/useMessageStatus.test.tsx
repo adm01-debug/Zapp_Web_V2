@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 
@@ -80,7 +79,7 @@ describe('useMessageStatus', () => {
   it('clears status when contactId changes to undefined', async () => {
     const { result, rerender } = renderHook(
       ({ id }: { id?: string }) => useMessageStatus(id),
-      { initialProps: { id: 'c1' } }
+      { initialProps: { id: 'c1' } as { id?: string } }
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));

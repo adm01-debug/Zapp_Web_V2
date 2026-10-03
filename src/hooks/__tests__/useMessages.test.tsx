@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 
@@ -83,7 +82,7 @@ describe('useMessages', () => {
   });
 
   it('sets error when fetch fails', async () => {
-    mockFrom.mockReturnValue(makeQueryChain(null, new Error('Network error')));
+    mockFrom.mockReturnValue(makeQueryChain(undefined, new Error('Network error')));
 
     const { result } = renderHook(() => useMessages({ contactId: 'c1' }));
 

@@ -1,22 +1,30 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // vi.hoisted ensures this reference is available inside the vi.mock() factory closure.
-const { mockConnectWithStoredCredentials, mockAddCallNotes, mockSipExtras, mockClaimLeadership } = vi.hoisted(() => ({
+const { mockConnectWithStoredCredentials, mockAddCallNotes, mockSipExtras, mockClaimLeadership, mockSupabaseFrom } = vi.hoisted(() => ({
   mockConnectWithStoredCredentials: vi.fn(),
   mockAddCallNotes: vi.fn().mockResolvedValue(true),
   // T20: campos extra do `useCallSession` que cada teste pode ligar (ex.: `sipReason`).
   mockSipExtras: { current: {} as Record<string, unknown> },
   // T20(A): prova que o painel dispara a eleição de aba no boot.
   mockClaimLeadership: vi.fn(),
+  // Query builder do supabase: tem de ser um mock de verdade — o tipo real do
+  // `from` e generico e nao expoe mockReturnValue.
+  mockSupabaseFrom: vi.fn(),
 }));
 
-function makeCallsQueryBuilder({ historyResult = { data: [], error: null }, statsResult = { data: [], error: null } } = {}) {
+function makeCallsQueryBuilder({
+  historyResult = { data: [] as unknown[], error: null },
+  statsResult = { data: [] as unknown[], error: null },
+}: {
+  historyResult?: { data: unknown[]; error: unknown };
+  statsResult?: { data: unknown[]; error: unknown };
+} = {}) {
   const builder = {
     select: vi.fn(() => builder),
-    eq: vi.fn(() => builder),
+    eq: vi.fn((..._args: unknown[]) => builder),
     or: vi.fn(() => builder),
     is: vi.fn(() => builder),
     not: vi.fn(() => builder),
@@ -31,7 +39,7 @@ function makeCallsQueryBuilder({ historyResult = { data: [], error: null }, stat
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: vi.fn(() => makeCallsQueryBuilder()),
+    from: mockSupabaseFrom,
   },
 }));
 
@@ -88,7 +96,7 @@ describe('VoIPPanel', () => {
   beforeEach(async () => {
     vi.resetAllMocks();
     const { supabase } = await import('@/integrations/supabase/client');
-    supabase.from.mockReturnValue(makeCallsQueryBuilder());
+    mockSupabaseFrom.mockReturnValue(makeCallsQueryBuilder());
     mockConnectWithStoredCredentials.mockReset();
     mockAddCallNotes.mockReset().mockResolvedValue(true);
     mockSipExtras.current = {};
@@ -126,7 +134,7 @@ describe('VoIPPanel', () => {
   it('scopes both the history and the stats query to the signed-in agent', async () => {
     const { supabase } = await import('@/integrations/supabase/client');
     const builder = makeCallsQueryBuilder();
-    supabase.from.mockReturnValue(builder);
+    mockSupabaseFrom.mockReturnValue(builder);
 
     renderWithProviders(<VoIPPanel />);
 
@@ -145,7 +153,7 @@ describe('VoIPPanel', () => {
       answered_at: new Date().toISOString(), ended_at: new Date().toISOString(),
       duration_seconds: 30, recording_url: null, notes: null, contact: null,
     }));
-    supabase.from.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: fullPage, error: null } }));
+    mockSupabaseFrom.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: fullPage, error: null } }));
 
     renderWithProviders(<VoIPPanel />);
 
@@ -167,7 +175,7 @@ describe('VoIPPanel', () => {
       notes: 'metadado do provedor', agent_notes: 'nota antiga',
       contact: { name: 'Maria Souza', phone: '5511999999999' },
     }];
-    supabase.from.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: page, error: null } }));
+    mockSupabaseFrom.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: page, error: null } }));
 
     renderWithProviders(<VoIPPanel />);
     await waitFor(() => expect(screen.getByText('Maria Souza')).toBeInTheDocument());
@@ -194,7 +202,7 @@ describe('VoIPPanel', () => {
       duration_seconds: 42, recording_url: null, notes: null, agent_notes: null,
       contact: { name: 'Maria Souza', phone: '5511999999999' },
     }];
-    supabase.from.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: page, error: null } }));
+    mockSupabaseFrom.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: page, error: null } }));
 
     renderWithProviders(<VoIPPanel />);
     await waitFor(() => expect(screen.getByText('Maria Souza')).toBeInTheDocument());
@@ -232,7 +240,7 @@ describe('VoIPPanel', () => {
     }];
     const builder = makeCallsQueryBuilder();
     builder.range = vi.fn(() => Promise.resolve({ data: [...linhas], error: null }));
-    supabase.from.mockReturnValue(builder);
+    mockSupabaseFrom.mockReturnValue(builder);
     mockAddCallNotes.mockImplementation(async () => {
       linhas = [{ ...linhas[0], agent_notes: 'Cliente pediu retorno amanhã' }];
       return true;

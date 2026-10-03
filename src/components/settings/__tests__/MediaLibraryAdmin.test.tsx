@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 
@@ -1365,7 +1364,7 @@ describe('MediaLibraryAdmin - Pure Logic', () => {
     });
 
     it('empty items returns empty', () => {
-      const cats = [...new Set(([] as unknown[]).map(i => i.category))].sort();
+      const cats = [...new Set(([] as { category: string }[]).map(i => i.category))].sort();
       expect(cats).toEqual([]);
     });
   });
