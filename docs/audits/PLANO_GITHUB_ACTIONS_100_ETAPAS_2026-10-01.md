@@ -594,6 +594,16 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   validações pós-apply viram `docs/audits/evidence/db-migrate-contratos-historicos.md`), **(c)** arquivar em
   `_superseded/`. Recomendação: (b). O arquivo de 1.748 linhas é o maior risco de manutenção do repo e não roda desde
   26/09.
+  - **Estado medido pelo executor (03/10/2026), antes de implementar a (b):** o `db-migrate.yml` tem **1812
+    linhas** (não 1748) e **30 passos**. O passo "Provar estado runtime antes do push" ocupa sozinho as linhas
+    **233–1187** (~955 linhas em um único passo): é ali que vivem os contratos. As **17 validações pós-apply**
+    foram contadas e conferem (passos `Validar …`, linhas 1211–1745). **Achado lateral:** existem **106**
+    arquivos `*.test.{sh,mjs}` em `scripts/db-audit/` e o `db-migrate.yml` **não executa nenhum deles** — a
+    suíte de contratos de banco não é exercitada pelo pipeline de migration.
+  - **Alerta de segurança que a (b) carrega:** as 17 validações pós-apply são a rede de proteção que roda
+    **depois** de uma migration em produção. Reduzir o workflow a ~150 linhas as retira da rota automática.
+    Por isso `docs/audits/evidence/db-migrate-contratos-historicos.md` deve trazer, **por contrato**, o comando
+    exato que o reexecuta sob demanda — sem isso a (b) é perda líquida de verificação, não enxugamento.
 - [ ] **E63** · B · G-29 · `db-migrate.yml`: parsear a saída do `--dry-run` e exigir que a lista de migrations a
   aplicar seja **exatamente** `[TARGET_VERSION]` (ou o bundle); abortar caso contrário. Verificação: fixture de saída
   do CLI com 2 versions → `exit 1`.
