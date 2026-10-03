@@ -65,3 +65,16 @@ export function TalkXSkeletonRows({ rows = 4 }: { rows?: number }) {
     </div>
   );
 }
+
+/** Estado vazio de um KPI sem valor. */
+export function TalkXNoData({ hint }: { hint?: string } = {}) {
+  return (
+    <div
+      className="bg-card border border-border/70 rounded-xl h-24 flex items-center justify-center text-muted-foreground"
+      title={hint}
+    >
+      <span className="text-sm font-medium">Sem dados ainda</span>
+    </div>
+  );
+}
+
