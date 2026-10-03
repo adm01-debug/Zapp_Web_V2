@@ -22,7 +22,7 @@ test.beforeEach(async ({ page }, testInfo) => {
   await mockEmailNavy(page, { includeExtreme: testInfo.title.includes('corpus extremo') });
 });
 
-test('rota real renderiza lista, conversa e compositor NAVY sem chamadas externas mutáveis', async ({ page }) => {
+test('rota real renderiza lista, conversa e compositor com o tema do sistema sem chamadas externas mutáveis', async ({ page }) => {
   mkdirSync(output, { recursive: true });
   await page.goto('/?view=email-chat');
   await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
@@ -52,7 +52,7 @@ test('rota real renderiza lista, conversa e compositor NAVY sem chamadas externa
   await page.screenshot({ path: join(output, '03-compositor.png'), fullPage: true, animations: 'disabled' });
 });
 
-test('workspace NAVY não introduz violações axe', async ({ page }) => {
+test('workspace do Email não introduz violações axe', async ({ page }) => {
   await page.goto('/?view=email-chat');
   await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await page.waitForTimeout(400);
@@ -61,7 +61,7 @@ test('workspace NAVY não introduz violações axe', async ({ page }) => {
     const axe = (window as unknown as Window & {
       axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult> };
     }).axe;
-    const result = await axe.run('.email-navy', {
+    const result = await axe.run('.email-workspace', {
       rules: {
         'color-contrast': { enabled: true },
       },
@@ -73,6 +73,62 @@ test('workspace NAVY não introduz violações axe', async ({ page }) => {
     }));
   });
   expect(violations).toEqual([]);
+});
+
+test('superfícies do Email herdam os mesmos tokens do sistema em claro e escuro', async ({ page }) => {
+  mkdirSync(output, { recursive: true });
+  await page.goto('/?view=email-chat');
+  await expect(page.getByTestId('email-workspace')).toBeVisible();
+  await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
+
+  for (const mode of ['light', 'dark'] as const) {
+    const themeToggle = page.getByRole('button', { name: mode === 'light' ? 'Modo claro' : 'Modo escuro' });
+    if (await themeToggle.count()) await themeToggle.click();
+    await expect(page.locator('html')).toHaveClass(new RegExp(`(?:^|\\s)${mode}(?:\\s|$)`));
+    await page.waitForTimeout(400); // aguarda a transição global de tema (300 ms)
+
+    const colors = await page.evaluate(() => {
+      const resolveBackground = (className: string) => {
+        const probe = document.createElement('div');
+        probe.className = className;
+        document.body.appendChild(probe);
+        const color = getComputedStyle(probe).backgroundColor;
+        probe.remove();
+        return color;
+      };
+      const background = resolveBackground('bg-background');
+      const inboxPanel = resolveBackground('bg-inbox-panel');
+      const colorOf = (testId: string) => getComputedStyle(document.querySelector(`[data-testid="${testId}"]`) as HTMLElement).backgroundColor;
+
+      return {
+        background,
+        inboxPanel,
+        workspace: colorOf('email-workspace'),
+        header: colorOf('email-header'),
+        threadList: colorOf('email-thread-list'),
+        conversation: colorOf('email-conversation'),
+      };
+    });
+
+    expect(colors.workspace, `${mode}: workspace`).toBe(colors.background);
+    expect(colors.conversation, `${mode}: conversation`).toBe(colors.background);
+    expect(colors.header, `${mode}: header`).toBe(colors.inboxPanel);
+    expect(colors.threadList, `${mode}: thread list`).toBe(colors.inboxPanel);
+
+    const contrastViolations = await page.evaluate(async () => {
+      const axe = (window as unknown as Window & {
+        axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult> };
+      }).axe;
+      const result = await axe.run('.email-workspace', { rules: { 'color-contrast': { enabled: true } } });
+      return result.violations.filter(violation => violation.id === 'color-contrast').map(violation => ({
+        id: violation.id,
+        nodes: violation.nodes.map(node => ({ target: node.target, failureSummary: node.failureSummary })),
+      }));
+    });
+    expect(contrastViolations, `${mode}: contrast`).toEqual([]);
+    await clearTransientToasts(page);
+    await page.screenshot({ path: join(output, mode === 'light' ? '05-tema-claro.png' : '06-tema-escuro.png'), fullPage: true, animations: 'disabled' });
+  }
 });
 
 test('busca, ajuda e foco do diálogo funcionam por teclado', async ({ page }) => {
@@ -102,7 +158,7 @@ test('ações históricas permanecem visíveis e acionáveis no touch', async ({
   await expect(page.getByText(/Respondendo à mensagem de Vercel/)).toBeVisible();
 });
 
-test('sidebar expandida e recolhida preservam a composição NAVY', async ({ page }) => {
+test('sidebar expandida e recolhida preservam a composição do sistema', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('zapp-sidebar-collapsed', 'false'));
   await page.setViewportSize({ width: 1672, height: 941 });
   await page.goto('/?view=email-chat');
@@ -225,25 +281,29 @@ test('alto contraste e movimento reduzido mantêm o workspace acessível', async
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
   const violations = await page.evaluate(async () => {
     const axe = (window as unknown as Window & { axe: { run: (target: string) => Promise<AxeViolationResult> } }).axe;
-    return (await axe.run('.email-navy')).violations.map(item => item.id);
+    return (await axe.run('.email-workspace')).violations.map(item => ({
+      id: item.id,
+      impact: item.impact,
+      nodes: item.nodes.map(node => ({ target: node.target, failureSummary: node.failureSummary })),
+    }));
   });
   expect(violations).toEqual([]);
 });
 
-test('escopo NAVY não vaza ao alternar entre módulos', async ({ page }) => {
+test('workspace do Email é desmontado ao alternar entre módulos', async ({ page }) => {
   await page.goto('/?view=email-chat');
-  await expect(page.locator('.email-navy')).toHaveCount(1);
+  await expect(page.locator('.email-workspace')).toHaveCount(1);
   await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
   await expect(page).toHaveURL(/view=dashboard/);
-  await expect(page.locator('.email-navy')).toHaveCount(0);
+  await expect(page.locator('.email-workspace')).toHaveCount(0);
   await page.getByRole('button', { name: 'Email', exact: true }).click();
-  await expect(page.locator('.email-navy')).toHaveCount(1);
+  await expect(page.locator('.email-workspace')).toHaveCount(1);
 });
 
 test('consumidor Omnichannel incorpora Email sem duplicar o cabeçalho autônomo', async ({ page }) => {
   await page.goto('/?view=omni-inbox');
   await page.getByRole('tab', { name: 'Email Chat' }).click();
-  await expect(page.locator('.email-navy')).toBeVisible();
+  await expect(page.locator('.email-workspace')).toBeVisible();
   await expect(page.getByText('Comunicação profissional, organizada como uma conversa.')).toHaveCount(0);
   await expect(page.getByText('admin@zapp.local').first()).toBeVisible();
 });

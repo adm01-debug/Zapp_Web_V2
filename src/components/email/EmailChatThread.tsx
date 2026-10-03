@@ -205,16 +205,16 @@ export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, sh
 
   return (
     <TooltipProvider>
-      <div className="relative flex h-full flex-col text-slate-100">
+      <div className="relative flex h-full flex-col text-foreground">
         {/* Header */}
-        <div className="flex items-center gap-3 border-b border-cyan-300/10 bg-[#061827]/90 p-3 backdrop-blur">
+        <div className="flex items-center gap-3 border-b border-border bg-inbox-panel p-3">
           <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onBack} aria-label="Voltar">
             <ArrowLeft className="w-4 h-4" />
           </Button>
 
           <div className="flex-1 min-w-0">
-            <h3 className="truncate text-sm font-semibold text-slate-100">{thread.subject || '(Sem assunto)'}</h3>
-            <div className="flex items-center gap-2 text-3xs text-slate-400">
+            <h3 className="truncate text-sm font-semibold text-foreground">{thread.subject || '(Sem assunto)'}</h3>
+            <div className="flex items-center gap-2 text-3xs text-muted-foreground">
               {thread.contact && <span className="truncate">{thread.contact.name}</span>}
               <span>•</span>
               <span>{thread.message_count} msg</span>
@@ -236,7 +236,7 @@ export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, sh
                   </TooltipTrigger>
                   <TooltipContent>Marcadores</TooltipContent>
                 </Tooltip>
-                <DropdownMenuContent align="end" className="max-h-72 w-64 overflow-y-auto border-cyan-300/15 bg-[#071a2a] text-slate-100">
+                <DropdownMenuContent align="end" className="max-h-72 w-64 overflow-y-auto border-border bg-popover text-popover-foreground">
                   <DropdownMenuLabel>Marcadores do Gmail</DropdownMenuLabel>
                   {labels.filter(label => label.label_type === 'user').map(label => {
                     const checked = thread.label_ids.includes(label.gmail_label_id);
@@ -267,7 +267,7 @@ export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, sh
                   aria-label={thread.is_starred ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
                   onClick={() => modifyThreadLabels.mutate({ thread_id: thread.gmail_thread_id, ...(thread.is_starred ? { remove_labels: ['STARRED'] } : { add_labels: ['STARRED'] }) })}
                 >
-                  <Star className={cn('w-4 h-4', thread.is_starred && 'fill-amber-400 text-amber-400')} />
+                  <Star className={cn('w-4 h-4', thread.is_starred && 'fill-warning text-warning')} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{thread.is_starred ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}</TooltipContent>
@@ -303,16 +303,16 @@ export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, sh
         </div>
 
         {/* Messages as chat bubbles */}
-        <ScrollArea ref={messagesAreaRef} className="flex-1 bg-[radial-gradient(circle_at_50%_0%,rgba(12,53,86,.45),transparent_55%)]">
+        <ScrollArea ref={messagesAreaRef} className="flex-1 bg-background">
           <div className="p-4">
             {messagesLoading ? (
               <div className="flex items-center justify-center py-16">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
             ) : messagesError ? (
-              <div role="alert" className="flex flex-col items-center justify-center py-16 text-center text-slate-400">
-                <Mail className="mb-3 h-10 w-10 text-red-400/80" />
-                <p className="text-sm font-medium text-slate-200">{messagesErrorCopy.title}</p>
+              <div role="alert" className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
+                <Mail className="mb-3 h-10 w-10 text-destructive/80" />
+                <p className="text-sm font-medium text-foreground">{messagesErrorCopy.title}</p>
                 <p className="mt-1 text-xs">{messagesErrorCopy.description}</p>
               </div>
             ) : threadMessages.length === 0 ? (
@@ -350,7 +350,7 @@ export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, sh
           <Button
             type="button"
             size="sm"
-            className="absolute bottom-20 left-1/2 z-10 -translate-x-1/2 rounded-full bg-blue-600 shadow-lg hover:bg-blue-500"
+            className="absolute bottom-20 left-1/2 z-10 -translate-x-1/2 rounded-full shadow-lg"
             onClick={() => { messagesEndRef.current?.scrollIntoView({ behavior: preferredScrollBehavior() }); setHasNewMessagesBelow(false); }}
           >
             <ArrowDown className="mr-1.5 h-4 w-4" />Novas mensagens
@@ -358,7 +358,7 @@ export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, sh
         )}
 
         {replyTargetId && replyTarget && replyTarget.id !== lastMessage?.id && (
-          <div className="flex items-center gap-2 border-t border-blue-400/20 bg-blue-500/10 px-3 py-2 text-xs text-blue-100" role="status">
+          <div className="flex items-center gap-2 border-t border-primary/20 bg-primary/10 px-3 py-2 text-xs text-foreground" role="status">
             <Reply className="h-3.5 w-3.5 shrink-0" />
             <span className="min-w-0 flex-1 truncate">Respondendo à mensagem de {replyTarget.from_name || replyTarget.from_address}, enviada em {format(new Date(replyTarget.internal_date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}.</span>
             <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => setReplyTargetId(null)} aria-label="Responder à mensagem mais recente"><X className="h-3.5 w-3.5" /></Button>

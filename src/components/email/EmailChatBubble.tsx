@@ -142,8 +142,8 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
             className={cn(
               'rounded-2xl px-3.5 py-2.5 shadow-sm relative',
               isSent
-                ? 'rounded-br-md border border-blue-400/20 bg-blue-600 text-white shadow-[0_10px_28px_rgba(0,45,120,.24)]'
-                : 'rounded-bl-md border border-cyan-300/10 bg-[#092035] text-slate-100 shadow-[0_10px_28px_rgba(0,0,0,.16)]'
+                ? 'rounded-br-md border border-primary/20 bg-chat-sent text-chat-sent-foreground shadow-sm'
+                : 'rounded-bl-md border border-border bg-chat-received text-chat-received-foreground shadow-sm'
             )}
           >
             {/* Subject line if present */}
@@ -196,12 +196,12 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
 
             {/* Attachments */}
             {message.has_attachments && (
-              <div className={cn('mt-2 space-y-1 border-t pt-2 text-3xs', isSent ? 'border-white/20' : 'border-cyan-300/10')}>
+              <div className={cn('mt-2 space-y-1 border-t pt-2 text-3xs', isSent ? 'border-primary-foreground/20' : 'border-border')}>
                 {attachments.length === 0 ? <span className="flex items-center gap-1 opacity-70"><Paperclip className="h-3 w-3" />Metadados do anexo indisponíveis</span> : attachments.map(attachment => (
-                  <div key={attachment.id} className="flex w-full items-center gap-2 rounded-lg bg-black/15 px-2 py-1.5">
+                  <div key={attachment.id} className="flex w-full items-center gap-2 rounded-lg bg-foreground/10 px-2 py-1.5">
                     <Paperclip className="h-3 w-3 shrink-0" /><span className="min-w-0 flex-1 truncate" title={attachment.filename || 'Anexo'}>{attachment.filename || 'Anexo'}</span><span className="opacity-60">{formatEmailFileSize(attachment.size_bytes || 0)}</span>
-                    {canPreviewEmailAttachment(attachment.mime_type) && <button type="button" aria-label={`Visualizar ${attachment.filename || 'anexo'}`} className="rounded p-1 hover:bg-black/25 focus-visible:ring-2 focus-visible:ring-blue-400" onClick={() => onPreviewAttachment?.(attachment)}><Eye className="h-3 w-3" /></button>}
-                    <button type="button" aria-label={`Baixar ${attachment.filename || 'anexo'}`} className="rounded p-1 hover:bg-black/25 focus-visible:ring-2 focus-visible:ring-blue-400" onClick={() => onDownloadAttachment?.(attachment)} disabled={downloadingAttachmentId === attachment.id}>{downloadingAttachmentId === attachment.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}</button>
+                    {canPreviewEmailAttachment(attachment.mime_type) && <button type="button" aria-label={`Visualizar ${attachment.filename || 'anexo'}`} className="rounded p-1 hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring" onClick={() => onPreviewAttachment?.(attachment)}><Eye className="h-3 w-3" /></button>}
+                    <button type="button" aria-label={`Baixar ${attachment.filename || 'anexo'}`} className="rounded p-1 hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring" onClick={() => onDownloadAttachment?.(attachment)} disabled={downloadingAttachmentId === attachment.id}>{downloadingAttachmentId === attachment.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}</button>
                   </div>
                 ))}
               </div>

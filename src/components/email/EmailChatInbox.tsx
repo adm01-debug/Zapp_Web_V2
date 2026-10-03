@@ -87,15 +87,15 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
   }, [activeAccount?.id, labels.length]);
 
   if (accountsLoading) {
-    return <section aria-label="Carregando Email" className="flex h-full items-center justify-center bg-[#03111f] text-slate-300"><Loader2 className="mr-3 h-6 w-6 animate-spin text-blue-400" />Carregando suas contas de email…</section>;
+    return <section aria-label="Carregando Email" className="flex h-full items-center justify-center bg-background text-muted-foreground"><Loader2 className="mr-3 h-6 w-6 animate-spin text-primary" />Carregando suas contas de email…</section>;
   }
 
   if (accountsError) {
     return (
-      <section role="alert" className="flex h-full flex-col items-center justify-center bg-[#03111f] px-6 text-center text-slate-200">
-        <Mail className="mb-4 h-12 w-12 text-red-400" />
+      <section role="alert" className="flex h-full flex-col items-center justify-center bg-background px-6 text-center text-foreground">
+        <Mail className="mb-4 h-12 w-12 text-destructive" />
         <h2 className="text-lg font-semibold">{accountsErrorCopy.title}</h2>
-        <p className="mt-2 max-w-md text-sm text-slate-400">{accountsErrorCopy.description}</p>
+        <p className="mt-2 max-w-md text-sm text-muted-foreground">{accountsErrorCopy.description}</p>
         <Button className="mt-5" variant="outline" onClick={() => void refetchAccounts()}><RefreshCw className="mr-2 h-4 w-4" />Tentar novamente</Button>
       </section>
     );
@@ -103,11 +103,11 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
 
   if (!activeAccount) {
     return (
-      <section className="flex h-full w-full flex-col items-center justify-center bg-[radial-gradient(circle_at_top,#0a3154_0%,#03111f_48%,#020b14_100%)] px-6 py-16 text-slate-100">
-        <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-400/30 bg-blue-500/15 shadow-[0_0_36px_rgba(37,99,235,.2)]"><Mail className="h-8 w-8 text-blue-300" /></div>
+      <section className="flex h-full w-full flex-col items-center justify-center bg-background px-6 py-16 text-foreground">
+        <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 shadow-glow-primary-sm"><Mail className="h-8 w-8 text-primary" /></div>
         <h1 className="text-xl font-semibold">Conecte seu Gmail ao ZAPP</h1>
-        <p className="mb-6 mt-2 max-w-md text-center text-sm text-slate-400">Gerencie conversas, anexos, rascunhos e respostas em uma experiência única e segura.</p>
-        <Button onClick={() => connectGmail.mutate()} disabled={connectGmail.isPending} className="bg-blue-600 hover:bg-blue-500">
+        <p className="mb-6 mt-2 max-w-md text-center text-sm text-muted-foreground">Gerencie conversas, anexos, rascunhos e respostas em uma experiência única e segura.</p>
+        <Button onClick={() => connectGmail.mutate()} disabled={connectGmail.isPending}>
           {connectGmail.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
           {connectGmail.isPending ? 'Conectando…' : 'Conectar Gmail'}
         </Button>
@@ -116,45 +116,45 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
   }
 
   return (
-    <section aria-label="Email" className="email-navy flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#03111f] text-slate-100">
-      {!embedded && <header className="shrink-0 border-b border-cyan-300/10 bg-[linear-gradient(110deg,#041522_0%,#06233a_55%,#061a2d_100%)] px-4 py-3 shadow-[0_10px_30px_rgba(0,0,0,.18)] md:px-5">
+    <section data-testid="email-workspace" aria-label="Email" className="email-workspace flex h-full min-h-0 w-full flex-col overflow-hidden bg-background text-foreground">
+      {!embedded && <header data-testid="email-header" className="shrink-0 border-b border-border bg-inbox-panel px-4 py-3 shadow-header md:px-5">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 shadow-[0_0_24px_rgba(37,99,235,.35)]"><Mail className="h-6 w-6" /></div>
-            <div className="min-w-0"><h1 className="text-xl font-semibold tracking-tight">Email</h1><p className="hidden text-xs text-slate-400 sm:block">Comunicação profissional, organizada como uma conversa.</p></div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-glow-primary-sm"><Mail className="h-6 w-6" /></div>
+            <div className="min-w-0"><h1 className="text-xl font-semibold tracking-tight">Email</h1><p className="hidden text-xs text-muted-foreground sm:block">Comunicação profissional, organizada como uma conversa.</p></div>
           </div>
           <div className="relative order-3 hidden w-full flex-1 sm:block md:order-none md:ml-4 md:max-w-xl">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-            <Input aria-label="Busca global do Email" value={globalSearchQuery} onChange={event => setGlobalSearchQuery(event.target.value)} placeholder="Buscar e-mails, remetentes, assuntos, anexos…" className="h-10 border-cyan-300/10 bg-[#071d30]/80 pl-10 text-slate-100 placeholder:text-slate-500 focus-visible:ring-blue-500" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input aria-label="Busca global do Email" value={globalSearchQuery} onChange={event => setGlobalSearchQuery(event.target.value)} placeholder="Buscar e-mails, remetentes, assuntos, anexos…" className="h-10 border-input bg-input pl-10 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring" />
           </div>
           {accounts.length > 1 && (
             <Select value={activeAccount.id} onValueChange={nextAccountId => { navigateToThread(null, true); setShowComposer(false); setComposerTo(''); setAccountId(nextAccountId); }}>
-              <SelectTrigger aria-label="Conta de email ativa" className="hidden h-9 w-[220px] border-cyan-300/10 bg-[#071d30] text-xs lg:flex"><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Conta de email ativa" className="hidden h-9 w-[220px] border-input bg-input text-xs lg:flex"><SelectValue /></SelectTrigger>
               <SelectContent>{accounts.filter(account => account.is_active).map(account => <SelectItem key={account.id} value={account.id}>{account.email_address}</SelectItem>)}</SelectContent>
             </Select>
           )}
-          <Button ref={helpButtonRef} variant="outline" onClick={() => setShowHelp(true)} className="ml-auto hidden border-blue-400/30 bg-transparent text-slate-200 hover:bg-blue-500/10 hover:text-white sm:inline-flex"><CircleHelp className="mr-2 h-4 w-4" />Ajuda</Button>
-          <Button onClick={() => { setComposerTo(''); setShowComposer(true); }} className="bg-blue-600 shadow-[0_0_18px_rgba(37,99,235,.25)] hover:bg-blue-500"><Plus className="mr-2 h-4 w-4" />Nova mensagem</Button>
+          <Button ref={helpButtonRef} variant="outline" onClick={() => setShowHelp(true)} className="ml-auto hidden sm:inline-flex"><CircleHelp className="mr-2 h-4 w-4" />Ajuda</Button>
+          <Button onClick={() => { setComposerTo(''); setShowComposer(true); }}><Plus className="mr-2 h-4 w-4" />Nova mensagem</Button>
         </div>
-        <div className="mt-2 flex items-center gap-2 text-2xs text-emerald-300/90"><Wifi className="h-3 w-3" />{activeAccount.email_address}<span className="text-slate-600">•</span><span className="text-slate-400">{unreadCount} não {unreadCount === 1 ? 'lido' : 'lidos'}</span></div>
+        <div className="mt-2 flex items-center gap-2 text-2xs text-success"><Wifi className="h-3 w-3" />{activeAccount.email_address}<span className="text-border">•</span><span className="text-muted-foreground">{unreadCount} não {unreadCount === 1 ? 'lido' : 'lidos'}</span></div>
       </header>}
 
-      {embedded && <div className="flex shrink-0 items-center gap-2 border-b border-cyan-300/10 bg-[#041522] px-3 py-2 text-xs text-slate-300"><Mail className="h-4 w-4 text-blue-400" /><span className="font-medium">Email</span><span className="truncate text-slate-500">{activeAccount.email_address}</span><Button size="sm" className="ml-auto h-7 bg-blue-600 px-2 text-xs hover:bg-blue-500" onClick={() => { setComposerTo(''); setShowComposer(true); }}><Plus className="mr-1 h-3.5 w-3.5" />Nova mensagem</Button></div>}
+      {embedded && <div className="flex shrink-0 items-center gap-2 border-b border-border bg-inbox-panel px-3 py-2 text-xs text-foreground"><Mail className="h-4 w-4 text-primary" /><span className="font-medium">Email</span><span className="truncate text-muted-foreground">{activeAccount.email_address}</span><Button size="sm" className="ml-auto h-7 px-2 text-xs" onClick={() => { setComposerTo(''); setShowComposer(true); }}><Plus className="mr-1 h-3.5 w-3.5" />Nova mensagem</Button></div>}
 
       <div className="flex min-h-0 flex-1">
-        <aside className={cn('w-full shrink-0 border-r border-cyan-300/10 bg-[#041421] md:w-[330px] xl:w-[370px]', selectedThread ? 'hidden md:flex md:flex-col' : 'flex flex-col')}>
+        <aside data-testid="email-thread-list" className={cn('w-full shrink-0 border-r border-border bg-inbox-panel md:w-[330px] xl:w-[370px]', selectedThread ? 'hidden md:flex md:flex-col' : 'flex flex-col')}>
           <EmailThreadList threads={threads} totalCount={threadsTotalCount} threadsLoading={threadsLoading} threadsError={threadsError} labels={labels} unreadCount={unreadCount} globalSearchQuery={globalSearchQuery} onClearGlobalSearch={() => setGlobalSearchQuery('')} selectedThreadId={selectedThread?.id || null} activeAccountEmail={activeAccount.email_address} onSelectThread={thread => navigateToThread(thread.id)} onNewEmail={() => { setComposerTo(''); setShowComposer(true); }} onSync={() => syncInbox.mutate({})} isSyncing={syncInbox.isPending} />
         </aside>
-        <section aria-label="Conteúdo da conversa" className={cn('min-w-0 flex-1 flex-col bg-[radial-gradient(circle_at_45%_20%,#082641_0%,#03111f_50%,#020c16_100%)]', !selectedThread ? 'hidden md:flex' : 'flex')}>
+        <section data-testid="email-conversation" aria-label="Conteúdo da conversa" className={cn('min-w-0 flex-1 flex-col bg-background', !selectedThread ? 'hidden md:flex' : 'flex')}>
           {selectedThread ? <EmailChatThread key={`${activeAccount.id}:${selectedThread.id}`} accountId={activeAccount.id} thread={selectedThread} labels={labels} onContextDataChange={setThreadContext} onBack={() => navigateToThread(null, true)} onToggleDetails={toggleDetails} showDetailsButton /> : (
-            <div className="flex flex-1 flex-col items-center justify-center text-slate-500"><div className="mb-4 rounded-2xl border border-cyan-300/10 bg-[#06192a] p-5"><Mail className="h-12 w-12 opacity-40" /></div><p className="text-sm font-medium text-slate-300">Selecione uma conversa para começar</p><p className="mt-1 text-xs">A leitura e a resposta acontecerão no painel central.</p></div>
+            <div className="flex flex-1 flex-col items-center justify-center text-muted-foreground"><div className="mb-4 rounded-2xl border border-border bg-card p-5"><Mail className="h-12 w-12 opacity-40" /></div><p className="text-sm font-medium text-foreground">Selecione uma conversa para começar</p><p className="mt-1 text-xs">A leitura e a resposta acontecerão no painel central.</p></div>
           )}
         </section>
-        {selectedThread && showDetails && isWideDetailsLayout && <aside className="shrink-0 border-l border-cyan-300/10"><EmailContactPanel thread={selectedThread} messages={threadContext.messages} attachments={threadContext.attachments} relatedThreads={threads.filter(item => item.id !== selectedThread.id && item.contact_id && item.contact_id === selectedThread.contact_id).slice(0, 5)} labels={labels} onClose={() => setShowDetails(false)} onCompose={email => { setComposerTo(email); setShowComposer(true); }} onSelectRelated={thread => navigateToThread(thread.id)} onDownloadAttachment={attachment => attachment.gmail_message_id && downloadAttachment.mutate({ ...attachment, gmail_message_id: attachment.gmail_message_id })} /></aside>}
+        {selectedThread && showDetails && isWideDetailsLayout && <aside data-testid="email-contact-panel" className="shrink-0 border-l border-border"><EmailContactPanel thread={selectedThread} messages={threadContext.messages} attachments={threadContext.attachments} relatedThreads={threads.filter(item => item.id !== selectedThread.id && item.contact_id && item.contact_id === selectedThread.contact_id).slice(0, 5)} labels={labels} onClose={() => setShowDetails(false)} onCompose={email => { setComposerTo(email); setShowComposer(true); }} onSelectRelated={thread => navigateToThread(thread.id)} onDownloadAttachment={attachment => attachment.gmail_message_id && downloadAttachment.mutate({ ...attachment, gmail_message_id: attachment.gmail_message_id })} /></aside>}
       </div>
       {selectedThread && !isWideDetailsLayout && (
         <Sheet open={showDetails} onOpenChange={setShowDetails}>
-          <SheetContent side="right" onCloseAutoFocus={event => { event.preventDefault(); detailsTriggerRef.current?.focus(); }} className="w-[min(92vw,360px)] border-cyan-300/15 bg-[#041421] p-0 text-slate-100 sm:max-w-[360px] [&>button]:hidden">
+          <SheetContent side="right" onCloseAutoFocus={event => { event.preventDefault(); detailsTriggerRef.current?.focus(); }} className="w-[min(92vw,360px)] border-border bg-inbox-panel p-0 text-foreground sm:max-w-[360px] [&>button]:hidden">
             <SheetTitle className="sr-only">Detalhes da conversa</SheetTitle>
             <EmailContactPanel thread={selectedThread} messages={threadContext.messages} attachments={threadContext.attachments} relatedThreads={threads.filter(item => item.id !== selectedThread.id && item.contact_id && item.contact_id === selectedThread.contact_id).slice(0, 5)} labels={labels} onClose={() => setShowDetails(false)} onCompose={email => { setComposerTo(email); setShowComposer(true); }} onSelectRelated={thread => navigateToThread(thread.id)} onDownloadAttachment={attachment => attachment.gmail_message_id && downloadAttachment.mutate({ ...attachment, gmail_message_id: attachment.gmail_message_id })} />
           </SheetContent>
@@ -162,12 +162,12 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
       )}
       <AnimatePresence>{showComposer && <EmailComposer key={activeAccount.id} accountId={activeAccount.id} mode="new" defaultTo={composerTo} onClose={() => setShowComposer(false)} onSent={() => setShowComposer(false)} />}</AnimatePresence>
       <Dialog open={showHelp} onOpenChange={setShowHelp}>
-        <DialogContent onCloseAutoFocus={event => { event.preventDefault(); helpButtonRef.current?.focus(); }} className="border-cyan-300/15 bg-[#061827] text-slate-100">
+        <DialogContent onCloseAutoFocus={event => { event.preventDefault(); helpButtonRef.current?.focus(); }} className="border-border bg-popover text-popover-foreground">
           <DialogHeader>
             <DialogTitle>Ajuda do Email</DialogTitle>
-            <DialogDescription className="text-slate-400">Use a busca para localizar conversas, selecione uma conta quando houver mais de uma e abra uma thread para responder, encaminhar ou baixar anexos.</DialogDescription>
+            <DialogDescription className="text-muted-foreground">Use a busca para localizar conversas, selecione uma conta quando houver mais de uma e abra uma thread para responder, encaminhar ou baixar anexos.</DialogDescription>
           </DialogHeader>
-          <p className="text-sm text-slate-300">Rascunhos são salvos automaticamente. Antes do envio, confira destinatários, assunto e anexos. Nenhuma confirmação de leitura é exibida porque o Gmail não fornece esse sinal ao módulo.</p>
+          <p className="text-sm text-foreground">Rascunhos são salvos automaticamente. Antes do envio, confira destinatários, assunto e anexos. Nenhuma confirmação de leitura é exibida porque o Gmail não fornece esse sinal ao módulo.</p>
         </DialogContent>
       </Dialog>
     </section>
