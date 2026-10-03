@@ -4,9 +4,10 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import {
-  ArrowLeft, Star, Archive, Trash2, Loader2, Mail, PanelRightOpen, Reply, RotateCcw, X
+  ArrowLeft, Star, Archive, Trash2, Loader2, Mail, PanelRightOpen, Reply, RotateCcw, Tags, X
 } from 'lucide-react';
-import { useGmail, type EmailThread, type EmailMessage } from '@/hooks/integrations/useGmail';
+import { useGmail, type EmailAttachment, type EmailLabel, type EmailThread, type EmailMessage } from '@/hooks/integrations/useGmail';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { EmailChatBubble } from './EmailChatBubble';
 import { EmailChatReplyBar } from './EmailChatReplyBar';
 import { EmailComposer } from '@/components/gmail/EmailComposer';
@@ -22,6 +23,8 @@ interface EmailChatThreadProps {
   onBack: () => void;
   onToggleDetails?: () => void;
   showDetailsButton?: boolean;
+  labels?: EmailLabel[];
+  onContextDataChange?: (data: { messages: EmailMessage[]; attachments: Array<EmailAttachment & { gmail_message_id?: string }> }) => void;
 }
 
 function DateSeparator({ date }: { date: string }) {
@@ -47,7 +50,7 @@ function DateSeparator({ date }: { date: string }) {
   );
 }
 
-export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, showDetailsButton }: EmailChatThreadProps) {
+export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, showDetailsButton, labels = [], onContextDataChange }: EmailChatThreadProps) {
   const {
     threadMessages, messagesLoading, messagesError, threadAttachments, markAsRead,
     trashThread, modifyThreadLabels, downloadAttachment, getAttachmentContent, setSelectedThreadId, activeAccount
@@ -100,6 +103,17 @@ export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, sh
     () => forwardMsg ? threadAttachments.filter(attachment => attachment.email_message_id === forwardMsg.id).map(attachment => ({ ...attachment, gmail_message_id: forwardMsg.gmail_message_id })) : [],
     [forwardMsg, threadAttachments],
   );
+  const contextualAttachments = useMemo(
+    () => threadAttachments.map(attachment => ({
+      ...attachment,
+      gmail_message_id: threadMessages.find(message => message.id === attachment.email_message_id)?.gmail_message_id,
+    })),
+    [threadAttachments, threadMessages],
+  );
+
+  useEffect(() => {
+    onContextDataChange?.({ messages: threadMessages, attachments: contextualAttachments });
+  }, [contextualAttachments, onContextDataChange, threadMessages]);
 
   // Group messages by date for separators
   const messagesWithDates = useMemo(() => {
@@ -188,6 +202,38 @@ export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, sh
             {thread.tags.map(tag => (
               <Badge key={tag} variant="outline" className="text-[9px] px-1 py-0">{tag}</Badge>
             ))}
+            {labels.some(label => label.label_type === 'user') && (
+              <DropdownMenu>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Gerenciar marcadores"><Tags className="h-4 w-4" /></Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Marcadores</TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end" className="max-h-72 w-64 overflow-y-auto border-cyan-300/15 bg-[#071a2a] text-slate-100">
+                  <DropdownMenuLabel>Marcadores do Gmail</DropdownMenuLabel>
+                  {labels.filter(label => label.label_type === 'user').map(label => {
+                    const checked = thread.label_ids.includes(label.gmail_label_id);
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={label.id}
+                        checked={checked}
+                        disabled={modifyThreadLabels.isPending}
+                        onSelect={event => event.preventDefault()}
+                        onCheckedChange={() => modifyThreadLabels.mutate({
+                          thread_id: thread.gmail_thread_id,
+                          ...(checked ? { remove_labels: [label.gmail_label_id] } : { add_labels: [label.gmail_label_id] }),
+                        })}
+                      >
+                        {label.name}
+                      </DropdownMenuCheckboxItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button

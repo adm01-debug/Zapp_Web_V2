@@ -4,6 +4,8 @@ Data da validação: 2 de outubro de 2026
 Branch isolada: `codex/email-navy-implementation-20261002`  
 Rota: `?view=email-chat`
 
+> **Continuação auditada em 3 de outubro de 2026:** a implementação foi retomada na branch isolada `codex/email-navy-completion-20261003`. Os gaps de paginação acima de 1.000 registros, filtros persistidos na URL, restauração segura de rascunho, editor WYSIWYG, labels Gmail, rail contextual real, notas internas, drawer intermediário, zoom a 200% e teste com 1.000 threads foram tratados e revalidados. Os números e a matriz abaixo incorporam esta continuação; o histórico de versões canônicas permanece identificado pelo marco em que foi medido.
+
 ## Veredito executivo
 
 A implementação tornou o workspace Email substancialmente mais seguro, íntegro e próximo da direção NAVY: a rota real, lista, conversa, contexto, composição, anexos, respostas históricas, isolamento por conta, rascunhos e contratos das Edge Functions foram corrigidos no código real. A bateria local e o CI da branch estão verdes, sem envio real de e-mail. Após autorização explícita, `gmail-send` e `gmail-sync` foram publicados no projeto Supabase canônico e conferidos arquivo a arquivo contra a branch.
@@ -59,14 +61,9 @@ Esses gaps não foram mascarados com mocks de produção, DDL improvisado ou env
 ### Pendente ou parcial
 
 - Referência visual formal ausente.
-- Busca e paginação inteiramente server-side acima de 1.000 threads.
-- Filtros por período e combinação completa refletida na URL.
-- Restauração de rascunho remoto após reload, inclusive política explícita para arquivos locais.
-- Editor HTML WYSIWYG completo; a formatação segura atual não é um editor rico de nível suíte office.
-- Aplicação arbitrária de labels de usuário pela UI.
-- Notas internas e conversas relacionadas no rail, sem fabricar vínculo CRM.
-- Rail como drawer em breakpoints intermediários e validação formal de zoom a 200%.
-- Benchmark de 1.000 threads e thread longa.
+- Filtros e busca são avaliados sobre todo o corpus paginado pelo servidor, mas a expressão de busca ainda não é enviada ao PostgREST como query própria.
+- Logout isola imediatamente os rascunhos pela chave usuário+conta; a remoção física de chaves expiradas ocorre na leitura e não por um listener global de logout.
+- O cenário de 1.000 threads está coberto; benchmark de uma thread individual extremamente longa permanece fora da fixture.
 - Homologação visual final da rota após o merge/deploy do frontend.
 - Reexecução dos advisors Supabase quando o endpoint de auditoria deixar de responder com timeout.
 
@@ -110,12 +107,12 @@ Legenda: **Aprovado localmente**, **Parcial**, **Bloqueado** ou **Pendente**. �
 | 008 | Parcial | Truncamento e quebra foram aplicados; corpus E2E de extremos ainda incompleto. |
 | 009 | Aprovado localmente | Dados demonstrativos estão restritos à fixture E2E. |
 | 010 | Parcial | Capturas inspecionadas; comparação formal depende do AC-002. |
-| 011 | Parcial | `has_attachments` real é consultado; universo ainda limitado a 1.000 threads. |
+| 011 | Aprovado localmente | `has_attachments` real é consultado em lotes e o corpus não é truncado em 1.000 threads. |
 | 012 | Aprovado localmente | Busca inclui `last_from`, contato e assunto sem exigir CRM. |
-| 013 | Parcial | O teto de 1.000 substitui o antigo lote pequeno, mas não é busca server-side ilimitada. |
+| 013 | Aprovado localmente | Paginação server-side coleta mais de 2.200 registros em teste; busca opera sobre todo o corpus coletado. |
 | 014 | Aprovado localmente | Ordenação usa data e ID como desempate; paginação local é estável. |
 | 015 | Aprovado localmente | INBOX/SENT/TRASH/SPAM e labels reais filtram o conjunto consultado. |
-| 016 | Parcial | Conta, pasta, leitura, anexo e busca combinam; período/URL ainda faltam. |
+| 016 | Aprovado localmente | Busca, pasta/label, leitura, anexo e período combinam e são restaurados pela URL. |
 | 017 | Parcial | Contadores não confundem mensagens, porém representam o universo carregado, não total remoto. |
 | 018 | Aprovado localmente | Busca é derivada sincronicamente do cache; resultado antigo assíncrono não substitui consulta nova. |
 | 019 | Aprovado localmente | `emailThread` preserva `view`, histórico e deep link autorizado. |
@@ -128,15 +125,15 @@ Legenda: **Aprovado localmente**, **Parcial**, **Bloqueado** ou **Pendente**. �
 | 026 | Aprovado localmente | Minimizar/expandir preserva estado da mesma instância. |
 | 027 | Aprovado localmente | Fechar mantém draft; descartar exige confirmação e exclui draft remoto. |
 | 028 | Aprovado localmente | Fila serial de create/update usa um draft ID; teste cobre ACK fora de ordem. |
-| 029 | Pendente | Não há hidratação de draft remoto após reload. |
-| 030 | Parcial | Chaves incluem conta e sessão corrente; logout/login cruzado não tem E2E específico. |
+| 029 | Aprovado localmente | Conteúdo e ID remoto são restaurados após reload; bytes locais nunca são persistidos e exigem reanexo explícito. |
+| 030 | Parcial | Chaves incluem usuário, conta, modo e alvo, com expiração em 7 dias; não há listener global que apague fisicamente todas as chaves no logout. |
 | 031 | Aprovado localmente | Reply histórico transporta target local e Gmail/RFC correto. |
 | 032 | Aprovado localmente | Forward usa mensagem e anexos selecionados do alvo histórico. |
 | 033 | Aprovado localmente | Parser prioriza Reply-To válido. |
 | 034 | Aprovado localmente | To/Cc disjuntos, deduplicados e sem autoendereçamento. |
 | 035 | Aprovado localmente | Bcc recebido não é inferido nem reinserido. |
 | 036 | Aprovado localmente | Testes cobrem nome com vírgula, Unicode, inválidos e CR/LF. |
-| 037 | Parcial | Bold/italic/list/link produzem HTML/texto seguro; não é WYSIWYG completo com paste/undo avançado. |
+| 037 | Aprovado localmente | TipTap WYSIWYG aplica bold/italic/listas/link, undo/redo e produz HTML + plain-text coerentes. |
 | 038 | Aprovado localmente | MIME usa RFC Message-ID real; IDs Gmail/UUID/RFC não são intercambiados. |
 | 039 | Aprovado localmente | Trava síncrona, IME e Ctrl/Cmd+Enter testados. |
 | 040 | Parcial | Aceite+falha local e rejeição são distintos; UX de `outcome-unknown` ainda não está completa. |
@@ -153,13 +150,13 @@ Legenda: **Aprovado localmente**, **Parcial**, **Bloqueado** ou **Pendente**. �
 | 051 | Aprovado localmente | Archive modifica INBOX na thread inteira. |
 | 052 | Aprovado localmente | Sem remoção otimista enganosa; falha mantém estado e mostra erro. |
 | 053 | Aprovado localmente | Trash e restore usam semântica Gmail própria. |
-| 054 | Parcial | Favorito é real; aplicação arbitrária de label de usuário ainda não tem seletor. |
+| 054 | Aprovado localmente | Favorito e labels reais de usuário têm mutations e seletor persistente. |
 | 055 | Aprovado localmente | Resultado parcial retorna 207 e só confirma mensagens aceitas. |
 | 056 | Aprovado localmente | Cursor não avança quando a página é parcial. |
 | 057 | Aprovado localmente | History pagina added/deleted/labels e reconcilia cada tipo. |
 | 058 | Aprovado localmente | Agregação determinística independe da ordem de chegada. |
-| 059 | Parcial | Identidade sem/com CRM está coerente; conversas relacionadas ainda não são resolvidas. |
-| 060 | Pendente | Notas internas não foram adicionadas ao rail; nenhum ID fictício foi criado. |
+| 059 | Aprovado localmente | Identidade, participantes, anexos e conversas relacionadas usam dados reais, deduplicados e isolados pela conta. |
+| 060 | Aprovado localmente | Notas internas usam `useContactNotes` somente quando há contato real vinculado; nada entra no MIME. |
 | 061 | Aprovado localmente | Handlers validam usuário→conta→thread/mensagem/anexo. |
 | 062 | Aprovado localmente | CR/LF e campos malformados são rejeitados no schema e no MIME. |
 | 063 | Aprovado localmente | Suíte de bypass do sanitizador continua verde. |
@@ -170,31 +167,31 @@ Legenda: **Aprovado localmente**, **Parcial**, **Bloqueado** ou **Pendente**. �
 | 068 | Aprovado localmente | UI não inventa empresa verificada, entrega ou leitura. |
 | 069 | Aprovado localmente | `cid:` não resolvido e imagem remota viram placeholder sem fetch arbitrário. |
 | 070 | Aprovado localmente | Fixture intercepta escrita externa; nenhum secret/sessão privada em artefatos. |
-| 071 | Parcial | Dez viewports de 320–1920 passam; falta zoom 200% e drawer explícito para o rail. |
+| 071 | Aprovado localmente | Dez viewports de 320–1920, drawer intermediário com foco restaurado e reflow equivalente a zoom 200% passam. |
 | 072 | Aprovado localmente | E2E valida teclado, Esc e restauração de foco. |
 | 073 | Aprovado localmente | Ações históricas permanecem visíveis e acionáveis em touch. |
 | 074 | Parcial | Axe não encontrou violações no workspace; temas alternativos não foram medidos. |
 | 075 | Parcial | Scroll é preservado; aviso de nova mensagem e reduced-motion ainda não têm cenário completo. |
 | 076 | Aprovado localmente | Matriz verifica que compositor e FAB não cobrem a ação primária. |
-| 077 | Pendente | Não foi produzido benchmark com 1.000 threads e thread longa. |
-| 078 | Aprovado localmente | Projeto `chromium-email-navy` coleta 14 testes sem login real. |
-| 079 | Aprovado localmente | Typecheck, build, lint tocado, Deno, unitários e suíte global executados. |
-| 080 | Parcial | Diff, screenshots, contratos e evidências foram revisados e separados em commits; Edge Functions foram publicadas e verificadas, mas merge/deploy visual do frontend ainda estavam pendentes no fechamento deste documento. |
+| 077 | Parcial | Teste com 1.000 threads monta apenas a página visível e confirma 50 páginas; fixture de thread individual extrema ainda falta. |
+| 078 | Aprovado localmente | Projeto `chromium-email-navy` coleta 19 testes sem login real ou envio real. |
+| 079 | Aprovado localmente | Typecheck, build, lint tocado, Deno, 5.816 unitários e E2E completo foram executados. |
+| 080 | Parcial | Diff, screenshots, contratos e evidências foram revisados; merge, deploy frontend e publicação do `gmail-oauth` desta continuação serão registrados no fechamento operacional. |
 
-Totais da auditoria neste marco: 55 aprovados localmente, 21 parciais, 3 pendentes e 1 bloqueado visual. O bloqueio anterior de backend foi removido; falta concluir merge, deploy e homologação visual do frontend.
+Totais da auditoria neste marco: 64 aprovados localmente, 15 parciais, nenhum pendente e 1 bloqueado visual. O único bloqueio é a comparação formal com o PNG ausente; merge, deploy e homologação online ainda serão registrados no fechamento operacional.
 
 ## Validações executadas
 
 | Validação | Resultado real |
 |---|---|
 | TypeScript | Aprovado (`tsc -b --force`) |
-| Build Vite | Aprovado pós-rebase; 5.468 módulos; somente warning preexistente de chunk grande |
+| Build Vite | Aprovado; 5.521 módulos; somente warning preexistente de chunk grande |
 | ESLint dos arquivos tocados | Aprovado, zero erro/warning |
-| Vitest global | 464 arquivos, 5.744 testes aprovados, 1 falha esperada e 38 `todo`, zero falha inesperada |
-| Vitest direcionado após ajustes finais | 19/19 aprovados |
+| Vitest global | 473 arquivos, 5.816 testes aprovados e 38 `todo`, zero falha inesperada |
+| Vitest direcionado após ajustes finais | Compositor 18/18 e utilitários novos incluídos na suíte global |
 | Deno Edge Functions completo | 690 testes aprovados, zero falha, incluindo typecheck dos testes |
 | `deno check` handlers/helpers | Aprovado; fake de escopo atualizado para o contrato tipado de reconciliação |
-| Playwright Email NAVY | 14/14 aprovados |
+| Playwright Email NAVY | 19/19 aprovados, incluindo WYSIWYG, drawer, labels, zoom e matriz responsiva |
 | Acessibilidade Playwright/axe | Zero violação no cenário avaliado |
 | Chamadas mutáveis externas | Interceptadas e bloqueadas; zero envio real |
 | CI da branch | Build, unitários, Playwright, lint/typecheck, segurança, DB Guard, CodeQL, SonarCloud, mutation e E2E Talk X aprovados no commit remoto auditado |
@@ -207,7 +204,7 @@ O lint global continua contendo dívida histórica fora do diff; não foi enfraq
 
 Diretório: `e2e/email-navy-visual/`
 
-- Estados: `01-lista.png`, `02-conversa.png`, `03-compositor.png`.
+- Estados: `01-lista.png`, `02-conversa.png`, `03-compositor.png` e `04-sidebar-expandida.png`.
 - Mobile: 320×800, 360×800 e 390×844.
 - Tablet: 768×1024 e 1024×768.
 - Desktop: 1280×720, 1366×768, 1440×900, 1672×941 e 1920×1080.

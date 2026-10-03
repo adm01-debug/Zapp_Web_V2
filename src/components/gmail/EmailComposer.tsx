@@ -1,21 +1,26 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import {
-  Send, X, Paperclip, ChevronDown, ChevronUp,
-  Bold, Italic, Link2, List, Loader2, Minimize2, Maximize2
-} from 'lucide-react';
+import { Send, X, Paperclip, ChevronDown, ChevronUp, Loader2, Minimize2, Maximize2 } from 'lucide-react';
 import { useGmail, type EmailAttachment, type EmailMessage } from '@/hooks/integrations/useGmail';
 import { toast } from 'sonner';
 import { fileToEmailAttachment, formatEmailFileSize, validateEmailAttachments } from '@/lib/emailAttachments';
 import { invalidEmailTokens, parseEmailAddressList, prefixEmailSubject, resolveReplyRecipients } from '@/lib/emailRecipients';
-import { formatEmailComposerHtml, formatEmailComposerText } from '@/lib/emailComposeFormat';
+import { formatEmailComposerHtml } from '@/lib/emailComposeFormat';
+import { emailHtmlToText } from '@/lib/emailRichText';
+import { EmailRichTextEditor } from './EmailRichTextEditor';
+import {
+  emailDraftSessionKey,
+  readEmailDraftSession,
+  removeEmailDraftSession,
+  writeEmailDraftSession,
+} from '@/lib/emailDraftSession';
 
 interface EmailComposerProps {
   accountId?: string;
@@ -39,51 +44,69 @@ export function EmailComposer({
   onSent,
 }: EmailComposerProps) {
   const { sendEmail, replyEmail, saveDraft, deleteDraft, getAttachmentContent, activeAccount } = useGmail(accountId);
+  const resolvedAccountId = accountId || activeAccount?.id;
   const replyRecipients = replyTo && (mode === 'reply' || mode === 'reply-all')
     ? resolveReplyRecipients(replyTo, mode, activeAccount?.email_address)
     : { to: [], cc: [] };
+  const draftStorageKey = useMemo(() => emailDraftSessionKey({
+    userId: activeAccount?.user_id,
+    accountId: resolvedAccountId,
+    mode,
+    threadId,
+    messageId: replyTo?.id,
+  }), [activeAccount?.user_id, mode, replyTo?.id, resolvedAccountId, threadId]);
+  const [restoredDraft] = useState(() => readEmailDraftSession(draftStorageKey));
 
   const [to, setTo] = useState(() => {
+    if (restoredDraft) return restoredDraft.to;
     if (defaultTo) return defaultTo;
     if ((mode === 'reply' || mode === 'reply-all') && replyTo) return replyRecipients.to.join(', ');
     return '';
   });
 
   const [cc, setCc] = useState(() => {
+    if (restoredDraft) return restoredDraft.cc;
     if (mode === 'reply-all' && replyTo?.cc_addresses?.length) {
       return replyRecipients.cc.join(', ');
     }
     return '';
   });
-  const [bcc, setBcc] = useState('');
+  const [bcc, setBcc] = useState(() => restoredDraft?.bcc || '');
   const [subject, setSubject] = useState(() => {
+    if (restoredDraft) return restoredDraft.subject;
     if (!replyTo) return '';
     if (mode === 'forward') return prefixEmailSubject(replyTo.subject || '', 'Fwd');
     return prefixEmailSubject(replyTo.subject || '', 'Re');
   });
-  const [body, setBody] = useState(() => {
+  const [initialBody] = useState(() => {
+    if (restoredDraft) {
+      return restoredDraft.isUsingHtml
+        ? { html: restoredDraft.body, text: emailHtmlToText(restoredDraft.body) }
+        : { html: formatEmailComposerHtml(restoredDraft.body), text: restoredDraft.body };
+    }
+    let text = '';
     if (mode === 'forward' && replyTo) {
-      return `\n\n---------- Mensagem encaminhada ----------\nDe: ${replyTo.from_name || replyTo.from_address}\nData: ${new Date(replyTo.internal_date).toLocaleString('pt-BR')}\nAssunto: ${replyTo.subject}\nPara: ${replyTo.to_addresses.join(', ')}\n\n${replyTo.body_text || ''}`;
+      text = `\n\n---------- Mensagem encaminhada ----------\nDe: ${replyTo.from_name || replyTo.from_address}\nData: ${new Date(replyTo.internal_date).toLocaleString('pt-BR')}\nAssunto: ${replyTo.subject}\nPara: ${replyTo.to_addresses.join(', ')}\n\n${replyTo.body_text || ''}`;
+    } else if ((mode === 'reply' || mode === 'reply-all') && replyTo) {
+      text = `\n\nEm ${new Date(replyTo.internal_date).toLocaleString('pt-BR')}, ${replyTo.from_name || replyTo.from_address} escreveu:\n> ${(replyTo.body_text || '').split('\n').join('\n> ')}`;
     }
-    if ((mode === 'reply' || mode === 'reply-all') && replyTo) {
-      return `\n\nEm ${new Date(replyTo.internal_date).toLocaleString('pt-BR')}, ${replyTo.from_name || replyTo.from_address} escreveu:\n> ${(replyTo.body_text || '').split('\n').join('\n> ')}`;
-    }
-    return '';
+    return { html: formatEmailComposerHtml(text), text };
   });
+  const [body, setBody] = useState(initialBody.html);
+  const [bodyText, setBodyText] = useState(initialBody.text);
 
   const [showCcBcc, setShowCcBcc] = useState(cc !== '' || bcc !== '');
   const [isMinimized, setIsMinimized] = useState(false);
-  const [isUsingHtml, setIsUsingHtml] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sendLockRef = useRef(false);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [missingAttachmentNames, setMissingAttachmentNames] = useState<string[]>(() => restoredDraft?.attachmentNames || []);
   const [selectedForwardAttachmentIds, setSelectedForwardAttachmentIds] = useState(() => new Set(forwardAttachments.map(attachment => attachment.id)));
   const [draftDirty, setDraftDirty] = useState(false);
   const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [discardConfirmationOpen, setDiscardConfirmationOpen] = useState(false);
   const saveDraftMutateAsync = saveDraft?.mutateAsync;
-  const draftIdRef = useRef<string | undefined>(undefined);
+  const draftIdRef = useRef<string | undefined>(restoredDraft?.draftId);
   const draftRevisionRef = useRef(0);
   const draftSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const draftTimerRef = useRef<number | undefined>(undefined);
@@ -91,13 +114,33 @@ export function EmailComposer({
 
   useEffect(() => () => { mountedRef.current = false; }, []);
 
+  useEffect(() => {
+    if (!draftStorageKey) return;
+    const hasPersistableContent = Boolean(to.trim() || cc.trim() || bcc.trim() || subject.trim() || bodyText.trim() || attachments.length || missingAttachmentNames.length);
+    if (!hasPersistableContent && !draftIdRef.current) {
+      removeEmailDraftSession(draftStorageKey);
+      return;
+    }
+    writeEmailDraftSession(draftStorageKey, {
+      draftId: draftIdRef.current,
+      to,
+      cc,
+      bcc,
+      subject,
+      body,
+      isUsingHtml: true,
+      attachmentNames: attachments.length ? attachments.map(file => file.name) : missingAttachmentNames,
+      updatedAt: new Date().toISOString(),
+    });
+  }, [attachments, bcc, body, bodyText, cc, draftStatus, draftStorageKey, missingAttachmentNames, subject, to]);
+
   const markDraftDirty = useCallback(() => {
     draftRevisionRef.current += 1;
     setDraftDirty(true);
   }, []);
 
   const isSending = sendEmail.isPending || replyEmail.isPending;
-  const hasDraftContent = Boolean(to.trim() || cc.trim() || bcc.trim() || subject.trim() || body.trim() || attachments.length || selectedForwardAttachmentIds.size);
+  const hasDraftContent = Boolean(to.trim() || cc.trim() || bcc.trim() || subject.trim() || bodyText.trim() || attachments.length || selectedForwardAttachmentIds.size);
   const selectedForwardAttachments = useMemo(
     () => forwardAttachments.filter(attachment => selectedForwardAttachmentIds.has(attachment.id)),
     [forwardAttachments, selectedForwardAttachmentIds],
@@ -114,7 +157,7 @@ export function EmailComposer({
   }, [attachments, getAttachmentContent, selectedForwardAttachments]);
 
   useEffect(() => {
-    if (!draftDirty || !saveDraftMutateAsync || (!to.trim() && !subject.trim() && !body.trim() && attachments.length === 0)) return;
+    if (!draftDirty || !saveDraftMutateAsync || (!to.trim() && !subject.trim() && !bodyText.trim() && attachments.length === 0)) return;
     const revision = draftRevisionRef.current;
     let queued = false;
     const timer = window.setTimeout(() => {
@@ -128,7 +171,7 @@ export function EmailComposer({
             draft_id: draftIdRef.current,
             thread_id: threadId,
             to: parseEmailAddressList(to), cc: parseEmailAddressList(cc), bcc: parseEmailAddressList(bcc),
-            subject, text_body: isUsingHtml ? formatEmailComposerText(body) : body, html_body: isUsingHtml ? formatEmailComposerHtml(body) : undefined,
+            subject, text_body: bodyText, html_body: body,
             attachments: preparedAttachments.length ? preparedAttachments : undefined,
           });
           const remoteDraftId = response?.draft_id as string | undefined;
@@ -146,7 +189,7 @@ export function EmailComposer({
     }, 1200);
     draftTimerRef.current = timer;
     return () => { if (!queued) window.clearTimeout(timer); };
-  }, [attachments.length, bcc, body, cc, draftDirty, isUsingHtml, prepareAttachments, saveDraftMutateAsync, subject, threadId, to]);
+  }, [attachments.length, bcc, body, bodyText, cc, draftDirty, prepareAttachments, saveDraftMutateAsync, subject, threadId, to]);
 
   const handleSend = async () => {
     if (sendLockRef.current || !to.trim()) return;
@@ -188,8 +231,8 @@ export function EmailComposer({
           cc: ccList,
           bcc: bccList,
           subject,
-          text_body: isUsingHtml ? formatEmailComposerText(body) : body,
-          html_body: isUsingHtml ? formatEmailComposerHtml(body) : undefined,
+          text_body: bodyText,
+          html_body: body,
           attachments: preparedAttachments.length ? preparedAttachments : undefined,
         });
       } else {
@@ -198,14 +241,15 @@ export function EmailComposer({
           cc: ccList,
           bcc: bccList,
           subject,
-          text_body: isUsingHtml ? formatEmailComposerText(body) : body,
-          html_body: isUsingHtml ? formatEmailComposerHtml(body) : undefined,
+          text_body: bodyText,
+          html_body: body,
           attachments: preparedAttachments.length ? preparedAttachments : undefined,
         });
       }
 
       onSent?.();
       if (draftIdRef.current && deleteDraft) await deleteDraft.mutateAsync(draftIdRef.current).catch(() => undefined);
+      removeEmailDraftSession(draftStorageKey);
       onClose();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Não foi possível enviar o email.');
@@ -219,19 +263,8 @@ export function EmailComposer({
     const next = [...attachments, ...files];
     const error = validateEmailAttachments(next, selectedForwardAttachments.map(attachment => ({ name: attachment.filename || 'anexo', size: attachment.size_bytes || 0 })));
     if (error) toast.error(error);
-    else { setAttachments(next); markDraftDirty(); }
+    else { setAttachments(next); setMissingAttachmentNames([]); markDraftDirty(); }
     e.target.value = '';
-  };
-
-  const wrapSelection = (before: string, after = before) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    setBody(`${body.slice(0, start)}${before}${body.slice(start, end)}${after}${body.slice(end)}`);
-    setIsUsingHtml(true);
-    markDraftDirty();
-    requestAnimationFrame(() => textarea.focus());
   };
 
   const removeAttachment = (index: number) => {
@@ -247,6 +280,7 @@ export function EmailComposer({
     setDraftDirty(false);
     await draftSaveQueueRef.current;
     if (draftIdRef.current && deleteDraft) await deleteDraft.mutateAsync(draftIdRef.current).catch(() => undefined);
+    removeEmailDraftSession(draftStorageKey);
     onClose();
   };
 
@@ -257,7 +291,7 @@ export function EmailComposer({
     forward: 'Encaminhar',
   };
 
-  return (
+  return createPortal((
     <motion.div
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -290,10 +324,9 @@ export function EmailComposer({
         <AnimatePresence>
           {!isMinimized && (
             <motion.div
-              initial={{ height: 0 }}
-              animate={{ height: 'auto' }}
-              exit={{ height: 0 }}
-              className="overflow-hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
             >
               <CardContent className="space-y-2 bg-[#061827] p-3">
                 {/* To */}
@@ -349,21 +382,13 @@ export function EmailComposer({
                   />
                 </div>
 
-                {/* Toolbar */}
-                <div className="flex items-center gap-1 border-b pb-1">
-                  <Button type="button" variant="ghost" size="icon" className="h-7 w-7" title="Negrito" aria-label="Negrito" onClick={() => wrapSelection('**')}>
-                    <Bold className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button type="button" variant="ghost" size="icon" className="h-7 w-7" title="Itálico" aria-label="Itálico" onClick={() => wrapSelection('_')}>
-                    <Italic className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button type="button" variant="ghost" size="icon" className="h-7 w-7" title="Link" aria-label="Inserir link" onClick={() => wrapSelection('[', '](https://)')}>
-                    <Link2 className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button type="button" variant="ghost" size="icon" className="h-7 w-7" title="Lista" aria-label="Lista" onClick={() => wrapSelection('- ', '')}>
-                    <List className="w-3.5 h-3.5" />
-                  </Button>
-                  <div className="flex-1" />
+                <EmailRichTextEditor
+                  content={body}
+                  onChange={(html, text) => { setBody(html); setBodyText(text); markDraftDirty(); }}
+                  onSubmit={() => void handleSend()}
+                />
+
+                <div className="flex items-center justify-end border-b border-cyan-300/10 pb-1">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -383,15 +408,12 @@ export function EmailComposer({
                   />
                 </div>
 
-                {/* Body */}
-                <Textarea
-                  ref={textareaRef}
-                  value={body}
-                  placeholder="Escreva sua mensagem..."
-                  className="min-h-[200px] resize-y border-cyan-300/10 bg-[#071a2a] text-sm text-slate-100"
-                  onChange={(e) => { setBody(e.target.value); markDraftDirty(); }}
-                  onKeyDown={(event) => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.nativeEvent.isComposing) { event.preventDefault(); void handleSend(); } }}
-                />
+                {missingAttachmentNames.length > 0 && (
+                  <div role="status" className="rounded-lg border border-amber-400/25 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
+                    O rascunho foi restaurado, mas o navegador não pode reabrir arquivos locais. Anexe novamente: {missingAttachmentNames.join(', ')}.
+                    <Button type="button" variant="ghost" size="sm" className="ml-2 h-6 px-2 text-amber-100" onClick={() => setMissingAttachmentNames([])}>Dispensar</Button>
+                  </div>
+                )}
 
                 {/* Attachments */}
                 {attachments.length > 0 && (
@@ -454,5 +476,5 @@ export function EmailComposer({
         </AlertDialogContent>
       </AlertDialog>
     </motion.div>
-  );
+  ), document.body);
 }

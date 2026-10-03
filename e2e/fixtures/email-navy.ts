@@ -62,11 +62,11 @@ export async function mockEmailNavy(page: Page) {
   await page.route(/\/functions\/v1\/gmail-oauth/, async route => {
     const request = route.request().postDataJSON() as { action?: string };
     if (request.action !== 'list-accounts') return json(route, { message: 'mutação OAuth bloqueada no E2E' }, 403);
-    return json(route, { accounts: [{ id: ACCOUNT_ID, email_address: 'admin@zapp.local', is_active: true, sync_status: 'synced', last_sync_at: '2026-10-02T17:40:00.000Z', last_error: null, created_at: '2026-01-01T00:00:00.000Z' }] });
+    return json(route, { accounts: [{ id: ACCOUNT_ID, user_id: '00000000-0000-4000-8000-000000000001', email_address: 'admin@zapp.local', is_active: true, sync_status: 'synced', last_sync_at: '2026-10-02T17:40:00.000Z', last_error: null, created_at: '2026-01-01T00:00:00.000Z' }] });
   });
   await page.route(/\/functions\/v1\/gmail-(send|sync)/, async route => {
     const request = route.request().postDataJSON() as { action?: string };
-    const allowed = ['mark-read', 'get-attachment'];
+    const allowed = ['mark-read', 'get-attachment', 'modify-thread-labels'];
     if (!allowed.includes(request.action || '')) return json(route, { message: 'envio e mutação externa bloqueados no E2E' }, 403);
     return request.action === 'get-attachment' ? json(route, { data: 'Zml4dHVyZQ==', size: 7 }) : json(route, { success: true });
   });
@@ -76,6 +76,7 @@ export async function mockEmailNavy(page: Page) {
   await page.route(/\/rest\/v1\/email_labels/, route => isRead(route.request().method()) ? json(route, [
     { id: '50000000-0000-4000-8000-000000000001', gmail_account_id: ACCOUNT_ID, gmail_label_id: 'INBOX', name: 'Caixa de entrada', label_type: 'system', color: null, message_count: 6, unread_count: 2 },
     { id: '50000000-0000-4000-8000-000000000002', gmail_account_id: ACCOUNT_ID, gmail_label_id: 'SENT', name: 'Enviados', label_type: 'system', color: null, message_count: 3, unread_count: 0 },
+    { id: '50000000-0000-4000-8000-000000000003', gmail_account_id: ACCOUNT_ID, gmail_label_id: 'Label_Clientes', name: 'Clientes importantes', label_type: 'user', color: null, message_count: 2, unread_count: 0 },
   ]) : json(route, { message: 'escrita bloqueada' }, 403));
   await page.route(/\/rest\/v1\/email_attachments/, route => isRead(route.request().method()) ? json(route, [
     { id: '60000000-0000-4000-8000-000000000001', email_message_id: MESSAGE_ID, gmail_attachment_id: 'attachment-1', filename: 'deployment-log.txt', mime_type: 'text/plain', size_bytes: 12288, created_at: '2026-10-02T17:35:00.000Z' },

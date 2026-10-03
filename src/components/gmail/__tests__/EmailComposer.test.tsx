@@ -3,6 +3,7 @@ import { createElement } from 'react';
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { EmailComposer } from '../EmailComposer';
 import type { EmailAttachment, EmailMessage } from '@/hooks/integrations/useGmail';
+import { emailDraftSessionKey, writeEmailDraftSession } from '@/lib/emailDraftSession';
 
 const ANIMATION_PROPS = new Set(['initial', 'animate', 'exit', 'whileHover', 'whileTap', 'variants', 'transition', 'layout']);
 function makeMotionEl(tag: string) {
@@ -50,6 +51,7 @@ function makeMessage(overrides: Partial<EmailMessage> = {}): EmailMessage {
 
 describe('EmailComposer — inicialização e comportamento de envio', () => {
   beforeEach(() => {
+    localStorage.clear();
     sendEmailMutateAsync.mockReset().mockResolvedValue({});
     replyEmailMutateAsync.mockReset().mockResolvedValue({});
     saveDraftMutateAsync.mockReset().mockResolvedValue({ draft_id: 'draft-1' });
@@ -63,6 +65,34 @@ describe('EmailComposer — inicialização e comportamento de envio', () => {
     render(<EmailComposer mode="new" onClose={vi.fn()} />);
     expect(screen.getByPlaceholderText('destinatario@email.com')).toHaveValue('');
     expect(screen.getByRole('button', { name: /enviar/i })).toBeDisabled();
+  });
+
+  it('restaura rascunho isolado da conta e sinaliza anexos que precisam ser selecionados novamente', () => {
+    const key = emailDraftSessionKey({ accountId: 'acc-restore', mode: 'new' });
+    writeEmailDraftSession(key, {
+      draftId: 'draft-remote', to: 'cliente@example.com', cc: '', bcc: '', subject: 'Proposta restaurada',
+      body: 'Conteúdo preservado', isUsingHtml: false, attachmentNames: ['proposta.pdf'], updatedAt: new Date().toISOString(),
+    });
+
+    render(<EmailComposer accountId="acc-restore" mode="new" onClose={vi.fn()} />);
+
+    expect(screen.getByPlaceholderText('destinatario@email.com')).toHaveValue('cliente@example.com');
+    expect(screen.getByPlaceholderText('Assunto do email')).toHaveValue('Proposta restaurada');
+    expect(screen.getByRole('textbox', { name: 'Mensagem' })).toHaveTextContent('Conteúdo preservado');
+    expect(screen.getByRole('status')).toHaveTextContent('proposta.pdf');
+  });
+
+  it('remove a sessão local e o draft remoto ao confirmar descarte de conteúdo restaurado', async () => {
+    const key = emailDraftSessionKey({ accountId: 'acc-discard', mode: 'new' });
+    writeEmailDraftSession(key, {
+      draftId: 'draft-remote', to: 'cliente@example.com', cc: '', bcc: '', subject: 'Descartar', body: 'Texto',
+      isUsingHtml: false, attachmentNames: [], updatedAt: new Date().toISOString(),
+    });
+    render(<EmailComposer accountId="acc-discard" mode="new" onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Descartar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Descartar rascunho' }));
+    await waitFor(() => expect(deleteDraftMutateAsync).toHaveBeenCalledWith('draft-remote'));
+    expect(localStorage.getItem(key!)).toBeNull();
   });
 
   it('modo reply (inbound): Para = from_address, assunto = "Re: Orçamento"', () => {
@@ -79,7 +109,7 @@ describe('EmailComposer — inicialização e comportamento de envio', () => {
   it('modo forward: assunto = "Fwd: Orçamento", corpo inclui header de encaminhamento', () => {
     render(<EmailComposer mode="forward" replyTo={makeMessage()} onClose={vi.fn()} />);
     expect(screen.getByPlaceholderText('Assunto do email')).toHaveValue('Fwd: Orçamento');
-    expect((screen.getByPlaceholderText('Escreva sua mensagem...') as HTMLTextAreaElement).value).toContain('Mensagem encaminhada');
+    expect(screen.getByRole('textbox', { name: 'Mensagem' })).toHaveTextContent('Mensagem encaminhada');
   });
 
   it('modo reply-all (inbound): Para inclui from + to exceto conta ativa; Cc inclui cc_addresses', () => {
