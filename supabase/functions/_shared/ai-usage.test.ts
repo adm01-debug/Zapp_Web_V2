@@ -35,6 +35,7 @@ import {
   logAiUsageDetached,
   normalizeAttempt,
   normalizeCorrelationId,
+  normalizeModality,
 } from "./ai-usage.ts";
 
 type EdgeRuntimeType = { waitUntil?: (promise: Promise<unknown>) => void };
@@ -322,4 +323,163 @@ Deno.test("IA-051 logAiUsage: PII entregue como identificador é gravada como NU
     restaurar();
     restaurarEnv();
   }
+});
+
+// ---------------------------------------------------------------------------
+// (f) IA-052 — a linha diz QUAL rota atendeu, e não a rota configurada
+// ---------------------------------------------------------------------------
+// A etapa exige "gravar provedor, modelo efetivo, finalidade, versões,
+// modalidade, latência, status e unidades", com o aceite: "Cada execução informa
+// seu caminho efetivo, inclusive fallback e modalidade de áudio" — e a proibição
+// explícita de "inferir provedor apenas pela configuração padrão".
+//
+// Os testes abaixo fixam: (1) a rota medida chega ao log sob chaves canônicas;
+// (2) sem rota (falha de roteamento) os campos NÃO são inventados; (3) id de
+// provedor que não é uuid e modalidade fora da lista canônica não viram lixo no
+// jsonb; (4) o metadata do chamador continua preservado junto da rota.
+const ROTA_PROVEDOR = "926d3eec-3324-47a8-872f-fd369bd187ac";
+
+function metadataDaLinha(capturas: Captura[]): Record<string, unknown> {
+  const linha = linhaEnviada(capturas);
+  assert(linha !== null, "nenhuma linha foi enviada ao PostgREST");
+  return (linha!.metadata ?? {}) as Record<string, unknown>;
+}
+
+Deno.test("IA-052 logAiUsage: a rota EFETIVA chega ao log sob chaves canônicas", async () => {
+  const restaurarEnv = stubEnv();
+  const { capturas, restaurar } = stubFetch();
+
+  try {
+    await logAiUsageDetached({
+      ...ENTRADA,
+      providerId: ROTA_PROVEDOR,
+      providerType: "openai_compatible",
+      providerName: "DeepSeek (Padrao)",
+      purpose: "tagging",
+      modality: "vision",
+      modelRequested: "deepseek-v4-flash",
+      fallbackUsed: false,
+    });
+
+    const md = metadataDaLinha(capturas);
+    assertEquals(md.provider_id, ROTA_PROVEDOR, "o provedor que atendeu não chegou ao log");
+    assertEquals(md.provider_type, "openai_compatible", "provider_type não chegou ao log");
+    assertEquals(md.provider_name, "DeepSeek (Padrao)", "provider_name não chegou ao log");
+    assertEquals(md.purpose, "tagging", "a finalidade não chegou ao log");
+    assertEquals(
+      md.modality,
+      "vision",
+      "a modalidade de VISÃO não chegou ao log — é o caso de aceite explícito da etapa",
+    );
+    assertEquals(md.model_requested, "deepseek-v4-flash", "o modelo pedido não chegou ao log");
+    assertEquals(md.fallback_used, false);
+  } finally {
+    restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-052 logAiUsage: provedor de fallback é registrado como quem atendeu", async () => {
+  const restaurarEnv = stubEnv();
+  const { capturas, restaurar } = stubFetch();
+
+  try {
+    await logAiUsageDetached({
+      ...ENTRADA,
+      providerId: ROTA_PROVEDOR,
+      providerType: "openai_compatible",
+      purpose: "copilot",
+      modality: "text",
+      fallbackUsed: true,
+    });
+
+    const md = metadataDaLinha(capturas);
+    assertEquals(md.fallback_used, true, "a execução por fallback tem de ficar visível no log");
+    assertEquals(md.provider_id, ROTA_PROVEDOR);
+  } finally {
+    restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-052 logAiUsage: SEM rota, os campos ficam ausentes — nunca inferidos do padrão", async () => {
+  const restaurarEnv = stubEnv();
+  const { capturas, restaurar } = stubFetch();
+
+  try {
+    // Falha de roteamento: a execução nunca chegou a ter provedor.
+    await logAiUsageDetached({ ...ENTRADA, status: "error", errorMessage: "sem provedor ativo" });
+
+    const md = metadataDaLinha(capturas);
+    for (const chave of ["provider_id", "provider_type", "provider_name", "purpose", "modality", "model_requested"]) {
+      assert(
+        !(chave in md),
+        `"${chave}" foi gravado numa execução sem rota: o log está afirmando um caminho que não existiu`,
+      );
+    }
+    assertEquals(md.fallback_used, false, "sem rota não é fallback, mas o campo tem de estar declarado");
+  } finally {
+    restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-052 logAiUsage: id de provedor não-uuid e modalidade desconhecida não viram lixo", async () => {
+  const restaurarEnv = stubEnv();
+  const { capturas, restaurar } = stubFetch();
+
+  try {
+    await logAiUsageDetached({
+      ...ENTRADA,
+      providerId: "openai",            // nome, não id
+      providerType: "  ",              // só espaços
+      purpose: "",
+      modality: "video",               // fora da lista canônica
+      modelRequested: "   ",
+    });
+
+    const md = metadataDaLinha(capturas);
+    assert(!("provider_id" in md), "um nome virou provider_id: o campo não pode virar depósito");
+    assert(!("provider_type" in md), "string em branco virou provider_type");
+    assert(!("modality" in md), "modalidade inventada virou dado do log");
+    assert(!("model_requested" in md), "modelo em branco virou dado do log");
+    assert(houveInsert(capturas), "o consumo tinha de ser registrado mesmo com rota inválida");
+  } finally {
+    restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-052 logAiUsage: o metadata do chamador é preservado junto da rota", async () => {
+  const restaurarEnv = stubEnv();
+  const { capturas, restaurar } = stubFetch();
+
+  try {
+    await logAiUsageDetached({
+      ...ENTRADA,
+      purpose: "tagging",
+      modality: "vision",
+      metadata: { reason: "image_input_failed", image_bytes: 1024 },
+    });
+
+    const md = metadataDaLinha(capturas);
+    assertEquals(md.reason, "image_input_failed", "o motivo da degradação foi perdido");
+    assertEquals(md.image_bytes, 1024, "o detalhe do chamador foi perdido");
+    assertEquals(md.modality, "vision", "a rota não foi anexada ao metadata do chamador");
+  } finally {
+    restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-052 normalizeModality: aceita a lista canônica e rejeita o resto", () => {
+  assertEquals(normalizeModality("text"), "text");
+  assertEquals(normalizeModality("  VISION  "), "vision", "normaliza caixa e espaço");
+  assertEquals(normalizeModality("audio_stt"), "audio_stt");
+  assertEquals(normalizeModality("audio_tts"), "audio_tts");
+  assertEquals(normalizeModality("audio_sts"), "audio_sts");
+  assertEquals(normalizeModality("video"), null, "modalidade desconhecida não passa");
+  assertEquals(normalizeModality(42), null);
+  assertEquals(normalizeModality(null), null);
+  assertEquals(normalizeModality(undefined), null);
 });

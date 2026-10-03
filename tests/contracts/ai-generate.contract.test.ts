@@ -405,9 +405,16 @@ describe('(5) auditoria e desfecho (nenhuma chamada paga invisível)', () => {
     expect(args).toMatch(/\bstatus\b/);
     expect(args).toMatch(/\bmetadata\b/);
     expect(args).toMatch(/\bdurationMs\b/);
-    for (const chave of ['purpose', 'provider_id', 'provider_name', 'model_substituted']) {
-      expect(fonte(), `metadata sem a chave ${chave}`).toContain(chave);
+    // IA-052: as chaves de `metadata` passaram a ser montadas pelo REGISTRADOR,
+    // num lugar só (`_shared/ai-usage.ts`, via `buildUsageMetadata`); o roteador
+    // entrega a rota como campo próprio. As chaves do aceite continuam sendo
+    // gravadas — `provider_id`/`provider_name`/`purpose` nascem no registrador
+    // (prova no insert, bloco (f) de `_shared/ai-usage.test.ts`) e
+    // `model_substituted` segue literal aqui.
+    for (const chave of ['providerId', 'providerName', 'purpose']) {
+      expect(args, `logAiUsage sem o campo ${chave}`).toContain(chave);
     }
+    expect(fonte(), 'metadata sem a chave model_substituted').toContain('model_substituted');
   });
 
   it('logAiUsage cobre TODOS os caminhos de retorno (logs >= retornos)', () => {
