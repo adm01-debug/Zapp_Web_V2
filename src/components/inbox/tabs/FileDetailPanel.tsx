@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { X, Image, File, Play, Download, Share2, Link2, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { X, Image, File, Play, Share2, Lock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { notifyDownloadBlocked } from '../media-gallery/mediaUtils';
+import { toast } from 'sonner';
 import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
-import { formatSize, TYPE_LABEL } from './fileDisplay';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
+import { formatSize, TYPE_LABEL } from './fileDisplay';
 
 interface FileDetailPanelProps {
   item: ContactMediaItem;
@@ -24,15 +23,6 @@ export function FileDetailPanel({ item, contactName, onClose, onForward, onDelet
   const { url: resolvedUrl, refresh } = useResolvedStorageUrl(item.signedUrl ? '' : item.url);
   const displayUrl = item.signedUrl ?? resolvedUrl;
   const size = formatSize(item.size);
-
-  const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(displayUrl || item.url);
-      toast.success('Link copiado');
-    } catch {
-      toast.error('Não foi possível copiar o link');
-    }
-  };
 
   const deleteMessage = async () => {
     if (!window.confirm('Apagar esta mensagem para você?')) return;
@@ -52,7 +42,7 @@ export function FileDetailPanel({ item, contactName, onClose, onForward, onDelet
 
       <div className="aspect-square rounded-lg bg-muted flex items-center justify-center overflow-hidden">
         {item.type === 'image' && !hasError && displayUrl ? (
-          <img src={displayUrl} alt={item.filename} className="w-full h-full object-cover" onError={() => { setHasError(true); void refresh(); }} />
+          <img src={displayUrl} alt={item.displayName} className="w-full h-full object-cover" onError={() => { setHasError(true); void refresh(); }} />
         ) : item.type === 'video' || item.type === 'audio' ? (
           <Play className="w-8 h-8 text-muted-foreground" />
         ) : item.type === 'document' ? (
@@ -63,25 +53,23 @@ export function FileDetailPanel({ item, contactName, onClose, onForward, onDelet
       </div>
 
       <div className="flex flex-col gap-0.5">
-        <p className="text-sm font-semibold truncate">{item.filename}</p>
-        <p className="text-xs text-muted-foreground">{TYPE_LABEL[item.type]}{size ? ` · ${size}` : ''}</p>
+        <p className="text-sm font-semibold truncate" title={item.filename}>{item.displayName}</p>
+        <p className="text-xs text-muted-foreground">{[TYPE_LABEL[item.type], size].filter(Boolean).join(' · ')}</p>
         <p className="text-xs text-muted-foreground">{format(new Date(item.created_at), "dd MMM yyyy 'às' HH:mm", { locale: ptBR })}</p>
-        <p className="text-xs text-muted-foreground">Enviado por {item.sender === 'agent' ? 'Você' : contactName}</p>
+        <p className="text-xs text-muted-foreground">Enviado por {item.senderLabel ?? (item.sender === 'agent' ? 'Atendente' : contactName)}</p>
       </div>
 
       {item.caption && (
         <p className="text-xs bg-muted/40 rounded-lg p-2">{item.caption}</p>
       )}
 
+      {/* Etapa 19: sem "Copiar link"; o download aparece bloqueado com o motivo à vista. */}
       <div className="flex flex-col gap-1.5">
-        <Button size="sm" className="h-9 bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => { void notifyDownloadBlocked(); }}>
-          <Download className="w-3.5 h-3.5 mr-1.5" />Baixar arquivo
+        <Button size="sm" variant="outline" className="h-9" disabled title="Bloqueado pela política de segurança">
+          <Lock className="w-3.5 h-3.5 mr-1.5" />Baixar · bloqueado pela política
         </Button>
-        <Button size="sm" variant="outline" className="h-9" onClick={onForward}>
+        <Button size="sm" variant="outline" className="h-9" disabled title="Disponível em breve">
           <Share2 className="w-3.5 h-3.5 mr-1.5" />Encaminhar
-        </Button>
-        <Button size="sm" variant="outline" className="h-9" onClick={copyLink}>
-          <Link2 className="w-3.5 h-3.5 mr-1.5" />Copiar link
         </Button>
         {item.sender === 'agent' && (
           <Button size="sm" variant="outline" className="h-9 text-destructive hover:text-destructive" onClick={deleteMessage}>
