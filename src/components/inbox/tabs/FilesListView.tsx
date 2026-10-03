@@ -3,7 +3,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
 import { formatMeta } from './fileDisplay';
-import { FileRowThumb } from './FileRowThumb';
+import { FileThumb } from './FileThumb';
 import { FileActionsMenu } from './FileActionsMenu';
 
 /**
@@ -75,7 +75,7 @@ export function FilesListView({
               className="shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               onClick={selectionMode ? () => onToggleSelection(item.id) : () => onPreview(item)}
             >
-              <FileRowThumb item={item} size="row" />
+              <FileThumb item={item} size="row" />
             </button>
 
             <div className="min-w-0 flex-1">

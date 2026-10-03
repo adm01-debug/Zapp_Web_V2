@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
 import type { FilesSort } from '@/hooks/chat/useFilesViewState';
 import { formatFileDate, formatSize, TYPE_LABEL } from './fileDisplay';
-import { FileRowThumb } from './FileRowThumb';
+import { FileThumb } from './FileThumb';
 import { FileActionsMenu } from './FileActionsMenu';
 
 /**
@@ -143,7 +143,7 @@ export function FilesTableView({
                       className="shrink-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       onClick={selectionMode ? () => onToggleSelection(item.id) : () => onPreview(item)}
                     >
-                      <FileRowThumb item={item} size="cell" />
+                      <FileThumb item={item} size="cell" />
                     </button>
                     <button
                       type="button"

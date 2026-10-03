@@ -1,10 +1,9 @@
-import { useState } from 'react';
-import { Eye, File, Image, Play, Share2 } from 'lucide-react';
+import { Eye, Share2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
-import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
 import { formatMeta } from './fileDisplay';
+import { FileThumb } from './FileThumb';
 import { FileActionsMenu } from './FileActionsMenu';
 
 interface FileCardProps {
@@ -36,11 +35,6 @@ export function FileCard({
   onForward,
   onDeleted,
 }: FileCardProps) {
-  const [hasError, setHasError] = useState(false);
-  // Etapa 10: a consulta já assina em lote, um request por bucket. O hook individual
-  // continua como fallback para item sem URL assinada (objeto público ou lote que falhou).
-  const { url: resolvedUrl, refresh } = useResolvedStorageUrl(item.signedUrl ? '' : item.url);
-  const displayUrl = item.signedUrl ?? resolvedUrl;
   const mostraRemetente = effectiveColumns <= 4;
   // Etapas 18/25: meta unica vinda do fileDisplay — nenhum renderer formata data ou tamanho.
   const meta = formatMeta(item);
@@ -66,29 +60,15 @@ export function FileCard({
           </span>
         )}
 
-        {/* Etapa 17: object-contain — os prints de planilha têm de continuar legíveis. */}
+        {/* Etapa 26: a previa (imagem, video, audio ou documento) vive no FileThumb; etapa 17:
+            object-contain no cartao para os prints de planilha continuarem legiveis. */}
         <button
           type="button"
           aria-label={`Visualizar ${item.displayName}`}
           className="block w-full aspect-[16/10] bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onClick={acao ?? onPreview}
         >
-          {item.type === 'image' && !hasError && displayUrl ? (
-            <img
-              src={displayUrl}
-              alt={item.displayName}
-              className="w-full h-full object-contain"
-              onError={() => { setHasError(true); void refresh(); }}
-            />
-          ) : item.type === 'video' || item.type === 'audio' ? (
-            <span className="w-full h-full flex items-center justify-center">
-              <span className="w-10 h-10 rounded-full bg-background/60 flex items-center justify-center"><Play className="w-5 h-5" /></span>
-            </span>
-          ) : item.type === 'document' ? (
-            <span className="w-full h-full flex items-center justify-center"><File className="w-8 h-8 text-muted-foreground" /></span>
-          ) : (
-            <span className="w-full h-full flex items-center justify-center"><Image className="w-8 h-8 text-muted-foreground" /></span>
-          )}
+          <FileThumb item={item} size="card" />
         </button>
       </div>
 
