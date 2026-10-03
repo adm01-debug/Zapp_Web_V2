@@ -306,9 +306,9 @@ export function EmailComposer({
       exit={{ opacity: 0, y: 20, scale: 0.95 }}
       className="fixed bottom-20 right-2 z-50 w-[520px] max-w-[calc(100vw-16px)] sm:bottom-4 sm:right-20 sm:max-w-[calc(100vw-96px)]"
     >
-      <Card className="border-cyan-300/15 bg-[#051522] text-slate-100 shadow-[0_24px_80px_rgba(0,0,0,.55)]">
+      <Card className="border-border bg-card text-card-foreground shadow-xl">
         {/* Header */}
-        <CardHeader className="flex flex-row items-center justify-between border-b border-cyan-300/10 bg-[#0a2136] p-3">
+        <CardHeader className="flex flex-row items-center justify-between border-b border-border bg-inbox-panel p-3">
           <div className="flex items-center gap-2">
             <Send className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium">{modeLabels[mode]}</span>
@@ -317,7 +317,7 @@ export function EmailComposer({
                 {activeAccount.email_address}
               </Badge>
             )}
-            {draftStatus !== 'idle' && <span className="text-3xs text-slate-400">{draftStatus === 'saving' ? 'Salvando…' : draftStatus === 'saved' ? 'Rascunho salvo' : 'Falha ao salvar rascunho'}</span>}
+            {draftStatus !== 'idle' && <span className={`text-3xs ${draftStatus === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}>{draftStatus === 'saving' ? 'Salvando…' : draftStatus === 'saved' ? 'Rascunho salvo' : 'Falha ao salvar rascunho'}</span>}
           </div>
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsMinimized(!isMinimized)} aria-label={isMinimized ? 'Expandir compositor' : 'Minimizar compositor'}>
@@ -336,7 +336,7 @@ export function EmailComposer({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <CardContent className="space-y-2 bg-[#061827] p-3">
+              <CardContent className="space-y-2 bg-card p-3">
                 {/* To */}
                 <div className="flex items-center gap-2">
                   <Label className="text-xs text-muted-foreground w-12 shrink-0">Para:</Label>
@@ -345,7 +345,7 @@ export function EmailComposer({
                     aria-label="Destinatários"
                     onChange={(e) => { setTo(e.target.value); markDraftDirty(); }}
                     placeholder="destinatario@email.com"
-                    className="h-8 border-cyan-300/10 bg-[#071a2a] text-sm"
+                    className="h-8 border-input bg-input text-sm"
                   />
                   <Button
                     variant="ghost"
@@ -368,11 +368,11 @@ export function EmailComposer({
                     >
                       <div className="flex items-center gap-2">
                         <Label className="text-xs text-muted-foreground w-12 shrink-0">Cc:</Label>
-                        <Input aria-label="Cópia" value={cc} onChange={(e) => { setCc(e.target.value); markDraftDirty(); }} className="h-8 border-cyan-300/10 bg-[#071a2a] text-sm" />
+                        <Input aria-label="Cópia" value={cc} onChange={(e) => { setCc(e.target.value); markDraftDirty(); }} className="h-8 border-input bg-input text-sm" />
                       </div>
                       <div className="flex items-center gap-2">
                         <Label className="text-xs text-muted-foreground w-12 shrink-0">Bcc:</Label>
-                        <Input aria-label="Cópia oculta" value={bcc} onChange={(e) => { setBcc(e.target.value); markDraftDirty(); }} className="h-8 border-cyan-300/10 bg-[#071a2a] text-sm" />
+                        <Input aria-label="Cópia oculta" value={bcc} onChange={(e) => { setBcc(e.target.value); markDraftDirty(); }} className="h-8 border-input bg-input text-sm" />
                       </div>
                     </motion.div>
                   )}
@@ -386,7 +386,7 @@ export function EmailComposer({
                     aria-label="Assunto"
                     onChange={(e) => { setSubject(e.target.value); markDraftDirty(); }}
                     placeholder="Assunto do email"
-                    className="h-8 border-cyan-300/10 bg-[#071a2a] text-sm"
+                    className="h-8 border-input bg-input text-sm"
                   />
                 </div>
 
@@ -396,7 +396,7 @@ export function EmailComposer({
                   onSubmit={() => void handleSend()}
                 />
 
-                <div className="flex items-center justify-end border-b border-cyan-300/10 pb-1">
+                <div className="flex items-center justify-end border-b border-border pb-1">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -417,16 +417,16 @@ export function EmailComposer({
                 </div>
 
                 {missingAttachmentNames.length > 0 && (
-                  <div role="status" className="rounded-lg border border-amber-400/25 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
+                  <div role="status" className="rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-[hsl(var(--warning-text))]">
                     O rascunho foi restaurado, mas o navegador não pode reabrir arquivos locais. Anexe novamente: {missingAttachmentNames.join(', ')}.
-                    <Button type="button" variant="ghost" size="sm" className="ml-2 h-6 px-2 text-amber-100" onClick={() => setMissingAttachmentNames([])}>Dispensar</Button>
+                    <Button type="button" variant="ghost" size="sm" className="ml-2 h-6 px-2 text-[hsl(var(--warning-text))]" onClick={() => setMissingAttachmentNames([])}>Dispensar</Button>
                   </div>
                 )}
 
                 {sendOutcomeUnknown && (
-                  <div role="alert" className="flex gap-2 rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
+                  <div role="alert" className="flex gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-[hsl(var(--warning-text))]">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                    <div><p className="font-medium">Resultado do envio não confirmado</p><p className="mt-0.5 text-amber-100/80">A conexão terminou sem uma resposta conclusiva. O email pode ter sido aceito pelo Gmail. Confira a pasta Enviados antes de tentar novamente para evitar duplicidade.</p></div>
+                    <div><p className="font-medium">Resultado do envio não confirmado</p><p className="mt-0.5 opacity-80">A conexão terminou sem uma resposta conclusiva. O email pode ter sido aceito pelo Gmail. Confira a pasta Enviados antes de tentar novamente para evitar duplicidade.</p></div>
                   </div>
                 )}
 
@@ -447,8 +447,8 @@ export function EmailComposer({
                 )}
 
                 {selectedForwardAttachments.length > 0 && (
-                  <div className="space-y-1 rounded-lg border border-blue-400/15 bg-blue-500/5 p-2" aria-label="Anexos da mensagem encaminhada">
-                    <p className="text-3xs font-medium text-blue-200">Anexos originais incluídos</p>
+                  <div className="space-y-1 rounded-lg border border-primary/20 bg-primary/5 p-2" aria-label="Anexos da mensagem encaminhada">
+                    <p className="text-3xs font-medium text-primary">Anexos originais incluídos</p>
                     <div className="flex flex-wrap gap-1">
                       {selectedForwardAttachments.map(attachment => (
                         <Badge key={attachment.id} variant="secondary" className="gap-1 text-3xs">
@@ -485,9 +485,9 @@ export function EmailComposer({
         </AnimatePresence>
       </Card>
       <AlertDialog open={discardConfirmationOpen} onOpenChange={setDiscardConfirmationOpen}>
-        <AlertDialogContent className="border-cyan-300/15 bg-[#061827] text-slate-100">
-          <AlertDialogHeader><AlertDialogTitle>Descartar este rascunho?</AlertDialogTitle><AlertDialogDescription className="text-slate-400">O rascunho remoto e os anexos desta composição serão removidos. Fechar pelo X mantém o rascunho.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel>Continuar editando</AlertDialogCancel><AlertDialogAction className="bg-red-600 hover:bg-red-500" onClick={() => void discardDraft()}>Descartar rascunho</AlertDialogAction></AlertDialogFooter>
+        <AlertDialogContent className="border-border bg-popover text-popover-foreground">
+          <AlertDialogHeader><AlertDialogTitle>Descartar este rascunho?</AlertDialogTitle><AlertDialogDescription className="text-muted-foreground">O rascunho remoto e os anexos desta composição serão removidos. Fechar pelo X mantém o rascunho.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogCancel>Continuar editando</AlertDialogCancel><AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => void discardDraft()}>Descartar rascunho</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </motion.div>

@@ -162,12 +162,12 @@ export function EmailChatReplyBar({
   const ModeIcon = modeIcon[mode];
 
   return (
-    <div className="space-y-2 border-t border-cyan-300/10 bg-[#061827]/95 p-3 backdrop-blur">
+    <div className="space-y-2 border-t border-border bg-inbox-panel p-3">
       {/* Mode selector + forward destination */}
       <div className="flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-7 shrink-0 gap-1 border-cyan-300/10 bg-[#092038] text-3xs text-slate-200">
+            <Button variant="outline" size="sm" className="h-7 shrink-0 gap-1 text-3xs">
               <ModeIcon className="w-3 h-3" />
               {modeLabel[mode]}
               <ChevronDown className="w-2.5 h-2.5" />
@@ -191,7 +191,7 @@ export function EmailChatReplyBar({
             value={to}
             onChange={(e) => setTo(e.target.value)}
             placeholder="email@destinatario.com"
-            className="h-7 flex-1 border-cyan-300/10 bg-[#071a2a] text-xs text-slate-100"
+            className="h-7 flex-1 border-input bg-input text-xs text-foreground"
           />
         )}
 
@@ -202,7 +202,7 @@ export function EmailChatReplyBar({
         )}
       </div>
 
-      {mode === 'new' && <Input value={newSubject} onChange={(event) => setNewSubject(event.target.value)} placeholder="Assunto do email" className="h-8 border-cyan-300/10 bg-[#071a2a] text-xs text-slate-100" />}
+      {mode === 'new' && <Input value={newSubject} onChange={(event) => setNewSubject(event.target.value)} placeholder="Assunto do email" className="h-8 border-input bg-input text-xs text-foreground" />}
 
       {/* Input area */}
       <div className="flex items-end gap-2">
@@ -214,7 +214,7 @@ export function EmailChatReplyBar({
             onKeyDown={handleKeyDown}
             placeholder={mode === 'forward' ? 'Adicione uma mensagem...' : 'Digite sua resposta...'}
             aria-describedby="email-reply-shortcut"
-            className="min-h-[52px] max-h-[200px] resize-none border-cyan-300/10 bg-[#071a2a] pr-10 text-sm text-slate-100 placeholder:text-slate-500"
+            className="min-h-[52px] max-h-[200px] resize-none border-input bg-input pr-10 text-sm text-foreground placeholder:text-muted-foreground"
             rows={1}
           />
           <Button
@@ -240,7 +240,7 @@ export function EmailChatReplyBar({
 
         <Button
           size="icon"
-          className="h-10 w-10 shrink-0 rounded-full bg-blue-600 shadow-[0_0_18px_rgba(37,99,235,.3)] hover:bg-blue-500"
+          className="h-10 w-10 shrink-0 rounded-full"
           onClick={handleSend}
           disabled={(!body.trim() && attachments.length === 0) || isSending || (!resolvedTo && !to.trim())}
           aria-label="Enviar"

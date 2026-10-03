@@ -43,18 +43,18 @@ export function EmailAttachmentPreviewDialog({ open, onOpenChange, attachment, c
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl border-cyan-300/15 bg-[#061827] text-slate-100">
+      <DialogContent className="max-w-4xl border-border bg-popover text-popover-foreground">
         <DialogHeader>
           <DialogTitle className="truncate">{attachment?.filename || 'Prévia do anexo'}</DialogTitle>
-          <DialogDescription className="text-slate-400">Prévia local criada a partir do conteúdo autenticado. HTML e SVG nunca são executados.</DialogDescription>
+          <DialogDescription className="text-muted-foreground">Prévia local criada a partir do conteúdo autenticado. HTML e SVG nunca são executados.</DialogDescription>
         </DialogHeader>
-        <div className="flex min-h-64 max-h-[70vh] items-center justify-center overflow-auto rounded-xl border border-cyan-300/10 bg-[#020b14] p-3">
+        <div className="flex min-h-64 max-h-[70vh] items-center justify-center overflow-auto rounded-xl border border-border bg-background p-3">
           {mimeType === 'text/plain' ? (
-            <pre className="h-full w-full whitespace-pre-wrap break-words text-sm text-slate-200">{text}</pre>
+            <pre className="h-full w-full whitespace-pre-wrap break-words text-sm text-foreground">{text}</pre>
           ) : bytes && (isSafeEmailAttachmentImage(mimeType) || mimeType === 'application/pdf') ? (
             <BinaryAttachmentPreview key={`${attachment?.id || attachment?.filename || 'attachment'}:${contentBase64?.length || 0}`} bytes={bytes} filename={attachment?.filename || ''} mimeType={mimeType} />
           ) : (
-            <p className="text-sm text-slate-400">Este tipo de arquivo não possui prévia segura. Use o download para inspecioná-lo em um aplicativo confiável.</p>
+            <p className="text-sm text-muted-foreground">Este tipo de arquivo não possui prévia segura. Use o download para inspecioná-lo em um aplicativo confiável.</p>
           )}
         </div>
       </DialogContent>

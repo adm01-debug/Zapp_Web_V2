@@ -115,21 +115,21 @@ export function EmailThreadList({
   return (
     <>
       {/* Toolbar */}
-      <div className="shrink-0 space-y-2 border-b border-cyan-300/10 bg-[#051725] p-3">
+      <div className="shrink-0 space-y-2 border-b border-border bg-inbox-panel p-3">
         <div className="flex items-center gap-2">
-          <Mail className="h-5 w-5 shrink-0 text-blue-400" />
-          <h2 className="flex-1 text-sm font-semibold text-slate-100">Conversas</h2>
+          <Mail className="h-5 w-5 shrink-0 text-primary" />
+          <h2 className="flex-1 text-sm font-semibold text-foreground">Conversas</h2>
           {unreadCount > 0 && (
             <Badge variant="default" className="text-3xs px-1.5 py-0">
               {unreadCount}
             </Badge>
           )}
-          <Button variant="default" size="sm" className="h-7 bg-blue-600 text-xs hover:bg-blue-500" onClick={onNewEmail}>
+          <Button variant="default" size="sm" className="h-7 text-xs" onClick={onNewEmail}>
             <Pencil className="w-3 h-3 mr-1" />
             Novo
           </Button>
           <Button
-            variant="outline" size="icon" className="h-7 w-7 border-cyan-300/10 bg-[#081c2d] text-slate-300"
+            variant="outline" size="icon" className="h-7 w-7"
             onClick={onSync}
             disabled={isSyncing}
             aria-label="Sincronizar conversas"
@@ -146,11 +146,11 @@ export function EmailThreadList({
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
               placeholder="Buscar..."
-              className="h-8 border-cyan-300/10 bg-[#071a2a] pl-8 text-sm text-slate-100 placeholder:text-slate-500"
+              className="h-8 border-input bg-input pl-8 text-sm text-foreground placeholder:text-muted-foreground"
             />
           </div>
           <Select value={filter} onValueChange={value => { setFilter(value); setPage(1); }}>
-            <SelectTrigger aria-label="Filtrar conversas" className="h-8 w-[112px] border-cyan-300/10 bg-[#071a2a] text-xs text-slate-200">
+            <SelectTrigger aria-label="Filtrar conversas" className="h-8 w-[112px] border-input bg-input text-xs text-foreground">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -163,7 +163,7 @@ export function EmailThreadList({
 
         <div className="flex flex-wrap items-center gap-1.5">
           <Select value={labelFilter} onValueChange={value => { setLabelFilter(value); setPage(1); }}>
-            <SelectTrigger aria-label="Pasta ou marcador" className="h-7 min-w-[120px] flex-1 border-cyan-300/10 bg-[#071a2a] text-3xs text-slate-200"><SelectValue placeholder="Pasta/marcador" /></SelectTrigger>
+            <SelectTrigger aria-label="Pasta ou marcador" className="h-7 min-w-[120px] flex-1 border-input bg-input text-3xs text-foreground"><SelectValue placeholder="Pasta/marcador" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os e-mails</SelectItem>
               {labels.filter(label => label.label_type === 'user' || ['INBOX', 'SENT', 'IMPORTANT', 'DRAFT', 'TRASH', 'SPAM'].includes(label.gmail_label_id)).map(label => (
@@ -171,23 +171,23 @@ export function EmailThreadList({
               ))}
             </SelectContent>
           </Select>
-          <Button type="button" variant={hasAttachmentFilter ? 'default' : 'outline'} size="sm" aria-pressed={hasAttachmentFilter} className="h-7 shrink-0 border-cyan-300/10 px-2 text-3xs" onClick={() => { setHasAttachmentFilter(current => !current); setPage(1); }}><Paperclip className="mr-1 h-3 w-3" />Com anexo</Button>
+          <Button type="button" variant={hasAttachmentFilter ? 'default' : 'outline'} size="sm" aria-pressed={hasAttachmentFilter} className="h-7 shrink-0 px-2 text-3xs" onClick={() => { setHasAttachmentFilter(current => !current); setPage(1); }}><Paperclip className="mr-1 h-3 w-3" />Com anexo</Button>
           <Select value={periodFilter} onValueChange={value => { setPeriodFilter(value); setPage(1); }}>
-            <SelectTrigger aria-label="Filtrar por período" className="h-7 w-[94px] shrink-0 border-cyan-300/10 bg-[#071a2a] text-3xs text-slate-200"><SelectValue /></SelectTrigger>
+            <SelectTrigger aria-label="Filtrar por período" className="h-7 w-[94px] shrink-0 border-input bg-input text-3xs text-foreground"><SelectValue /></SelectTrigger>
             <SelectContent><SelectItem value="all">Qualquer data</SelectItem><SelectItem value="today">Hoje</SelectItem><SelectItem value="7d">7 dias</SelectItem><SelectItem value="30d">30 dias</SelectItem></SelectContent>
           </Select>
-          {(filter !== 'all' || hasAttachmentFilter || labelFilter !== 'all' || periodFilter !== 'all' || searchQuery) && <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-3xs text-slate-400" onClick={() => { setSearchQuery(''); onClearGlobalSearch?.(); setFilter('all'); setHasAttachmentFilter(false); setLabelFilter('all'); setPeriodFilter('all'); setPage(1); }}><X className="mr-1 h-3 w-3" />Limpar</Button>}
+          {(filter !== 'all' || hasAttachmentFilter || labelFilter !== 'all' || periodFilter !== 'all' || searchQuery) && <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-3xs text-muted-foreground" onClick={() => { setSearchQuery(''); onClearGlobalSearch?.(); setFilter('all'); setHasAttachmentFilter(false); setLabelFilter('all'); setPeriodFilter('all'); setPage(1); }}><X className="mr-1 h-3 w-3" />Limpar</Button>}
         </div>
       </div>
 
       {/* Thread list */}
       <ScrollArea className="flex-1">
         {threadsError ? (
-          <div role="alert" className="flex flex-col items-center justify-center px-6 py-16 text-center text-slate-400">
-            <MailX className="mb-3 h-10 w-10 text-red-400/80" />
-            <p className="text-sm font-medium text-slate-200">{threadsErrorCopy.title}</p>
+          <div role="alert" className="flex flex-col items-center justify-center px-6 py-16 text-center text-muted-foreground">
+            <MailX className="mb-3 h-10 w-10 text-destructive/80" />
+            <p className="text-sm font-medium text-foreground">{threadsErrorCopy.title}</p>
             <p className="mt-1 text-xs">{threadsErrorCopy.description}</p>
-            <Button variant="outline" size="sm" className="mt-4 border-cyan-300/10 bg-[#071a2a]" onClick={onSync}>Tentar novamente</Button>
+            <Button variant="outline" size="sm" className="mt-4" onClick={onSync}>Tentar novamente</Button>
           </div>
         ) : threadsLoading ? (
           <div className="p-3 space-y-3">
@@ -246,7 +246,7 @@ export function EmailThreadList({
       </ScrollArea>
 
       {/* Footer */}
-      <div className="flex shrink-0 items-center gap-1 border-t border-cyan-300/10 bg-[#041421] p-2 text-3xs text-slate-400">
+      <div className="flex shrink-0 items-center gap-1 border-t border-border bg-inbox-panel p-2 text-3xs text-muted-foreground">
         <Mail className="w-3 h-3" />
         <span className="truncate">{activeAccountEmail}</span>
         <span className="ml-auto shrink-0">{filteredThreads.length === 0 ? 0 : (effectivePage - 1) * pageSize + 1}–{Math.min(effectivePage * pageSize, filteredThreads.length)} de {displayedTotal}</span>
@@ -276,8 +276,8 @@ function ThreadItem({ thread, isSelected, onClick }: { thread: EmailThread; isSe
       animate={{ opacity: 1 }}
       onClick={onClick}
       className={cn(
-        'w-full min-h-[72px] border-b border-cyan-300/5 p-3 text-left flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500',
-        isSelected ? 'bg-blue-600/20 shadow-[inset_3px_0_0_#3b82f6]' : 'hover:bg-cyan-300/5',
+        'w-full min-h-[72px] border-b border-border/50 p-3 text-left flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+        isSelected ? 'bg-primary/10 shadow-[inset_3px_0_0_hsl(var(--primary))]' : 'hover:bg-muted/50',
         thread.is_unread && 'font-medium'
       )}
     >
