@@ -33,6 +33,10 @@ on:
       - '.github/workflows/e2e-talkx.yml'
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
 permissions:
   contents: read
 
