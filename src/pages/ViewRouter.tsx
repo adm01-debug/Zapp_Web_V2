@@ -31,7 +31,7 @@ interface ViewRouterProps {
 const OWN_SCROLL_VIEWS = new Set(['settings']);
 
 // Dashboard, Talk X e Catálogo usam grade densa — gutter compacto em vez do padrão de 36px.
-const COMPACT_GUTTER_VIEWS = new Set(['dashboard', 'talkx', 'catalog']);
+const COMPACT_GUTTER_VIEWS = new Set(['dashboard', 'talkx', 'catalog', 'voip']);
 
 const FULL_SCREEN_VIEWS = new Set(
   [

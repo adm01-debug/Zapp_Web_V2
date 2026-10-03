@@ -4,7 +4,7 @@ set -e
 # Script para importar os blocos do Supabase Export no banco de destino.
 # Requer a variável de ambiente DESTINO_URL (formato postgresql://user:pass@host:port/dbname)
 
-if [ -z "$DESTINO_URL" ]; then
+if [[ -z "$DESTINO_URL" ]]; then
   echo "❌ Erro: Variável DESTINO_URL não definida."
   echo "Uso: DESTINO_URL=postgresql://user:pass@host:port/dbname bash supabase-export/import.sh"
   exit 1
@@ -29,7 +29,7 @@ BLOCKS=(
 
 for block in "${BLOCKS[@]}"; do
   file="$EXPORT_DIR/$block"
-  if [ -f "$file" ]; then
+  if [[ -f "$file" ]]; then
     echo "📦 Aplicando $block..."
     node scripts/db-audit/psql-safe.mjs -v ON_ERROR_STOP=1 -f "$file" > /dev/null
   else

@@ -132,7 +132,10 @@ const PRODUCT_FIELDS = `id, name, description, short_description, sku, sale_pric
 let catalogStatsCache: { data: unknown; expiresAt: number } | null = null;
 const CATALOG_STATS_TTL_MS = 60_000;
 
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+// CT-19: o contador NAO mora mais aqui. Ele e uma linha por (usuario, acao) na tabela
+// public.catalog_rate_limits, checada atomicamente pela funcao catalog_rate_limit_hit.
+// O Map em memoria por isolate nao limitava sob concorrencia (medido: 61, 120 e 300
+// chamadas paralelas em producao -> zero 429).
 // CT-77: exportado para o teste de rate limit derivar o limite do próprio
 // módulo em vez de fixar o número.
 // CT-19: RATE_LIMIT virou o TETO GLOBAL, usado como fallback quando a ação não
@@ -163,17 +166,30 @@ export const ACTION_RATE_LIMITS: Record<CatalogAction, number> = {
  * `action = null` (corpo inválido/malformado) cai no teto global como fallback:
  * preserva o comportamento antigo e não abre bypass a requisição inválida.
  */
-function checkRateLimit(userId: string, action: CatalogAction | null): boolean {
+async function checkRateLimit(
+  client: SupabaseClient,
+  userId: string,
+  action: CatalogAction | null,
+  log: Logger,
+): Promise<boolean> {
   const limit = action ? ACTION_RATE_LIMITS[action] : RATE_LIMIT;
-  const key = `${userId}:${action ?? "global"}`;
-  const now = Date.now();
-  const entry = rateLimitMap.get(key);
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(key, { count: 1, resetAt: now + RATE_WINDOW_MS });
+  const { data, error } = await client.rpc("catalog_rate_limit_hit", {
+    p_user: userId,
+    p_action: action ?? "global",
+    p_limit: limit,
+    p_window_ms: RATE_WINDOW_MS,
+  });
+  if (error) {
+    // CT-19 — falha ABERTA de proposito: se o contador compartilhado estiver
+    // indisponivel, o catalogo continua servindo (o limite e protecao, nao caminho
+    // critico). O erro fica registrado para nao passar em silencio.
+    log.error("Rate limit store unavailable", {
+      error: error.message,
+      action: action ?? "global",
+    });
     return true;
   }
-  entry.count++;
-  return entry.count <= limit;
+  return data === true;
 }
 
 interface ExternalDatabaseError {
@@ -265,7 +281,7 @@ export async function promogiftsCatalogHandler(
       bodyResponse = jsonRes({ error: "Internal catalog error", code: "CATALOG_INTERNAL_ERROR" }, 500, req);
     }
 
-    if (!checkRateLimit(userData.user.id, action)) {
+    if (!(await checkRateLimit(localClient, userData.user.id, action, log))) {
       return jsonRes({ error: "Too many requests. Try again in 1 minute." }, 429, req);
     }
 

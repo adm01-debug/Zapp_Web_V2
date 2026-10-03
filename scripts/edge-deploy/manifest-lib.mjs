@@ -241,7 +241,20 @@ export async function buildDeploymentManifest({ repoRoot, orphanAllowlist = [], 
 }
 
 export function serializeManifest(manifest) {
-  return `${JSON.stringify(manifest, null, 2)}\n`;
+  const formatted = JSON.stringify(manifest, null, 2);
+  const compactOrphanAllowlist = `[${(manifest.orphan_allowlist ?? []).map((name) => JSON.stringify(name)).join(', ')}]`;
+  const expandedOrphanAllowlist = JSON.stringify(manifest.orphan_allowlist ?? [], null, 2);
+  const indentedExpandedOrphanAllowlist = expandedOrphanAllowlist
+    .split('\n')
+    .map((line, index) => (index === 0 ? line : `  ${line}`))
+    .join('\n');
+
+  // Keep the generated file compliant with the repository Prettier policy while
+  // retaining stable, readable formatting for the substantially larger arrays.
+  return `${formatted.replace(
+    `"orphan_allowlist": ${indentedExpandedOrphanAllowlist}`,
+    `"orphan_allowlist": ${compactOrphanAllowlist}`
+  )}\n`;
 }
 
 export function verifyManifestDigest(manifest) {

@@ -1045,10 +1045,15 @@ describe('Security Gaps Audit', () => {
     expect(source).toMatch(/\bbootstrap:\s*RATE_LIMIT,/);
     // a cota é resolvida pela ação; sem ação o fallback é o teto global
     expect(source).toContain('const limit = action ? ACTION_RATE_LIMITS[action] : RATE_LIMIT;');
-    expect(source).toMatch(/checkRateLimit\(userData\.user\.id, action\)/);
+    // CT-19: o contador passou a ser COMPARTILHADO (função no banco, uma linha por
+    // usuario+acao), não mais um Map em memoria por isolate: era ele que fazia o teto
+    // valer "por isolate" e nao "por usuario" (421 chamadas paralelas em producao sem 429).
+    expect(source).toMatch(/await checkRateLimit\(localClient, userData\.user\.id, action, log\)/);
+    expect(source).toMatch(/rpc\("catalog_rate_limit_hit",\s*\{/);
+    expect(source).not.toContain('const rateLimitMap = new Map<string, { count: number; resetAt: number }>();');
     // a checagem vem DEPOIS do parse do corpo (a cota depende da ação)
     const parseIndex = source.indexOf('ActionSchema.safeParse');
-    const rateIndex = source.indexOf('checkRateLimit(userData.user.id, action)');
+    const rateIndex = source.indexOf('await checkRateLimit(localClient, userData.user.id, action, log)');
     expect(parseIndex).toBeGreaterThan(-1);
     expect(rateIndex).toBeGreaterThan(parseIndex);
     // resposta 429 quando estoura a cota

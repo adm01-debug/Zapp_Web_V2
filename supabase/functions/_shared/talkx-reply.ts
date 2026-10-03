@@ -65,6 +65,33 @@ export function __resetReplyWindowCache(): void {
 export const TALKX_OPT_OUT_RE =
   /^\s*(sair|stop|cancelar|descadastrar|remove|unsubscribe|parar|nao quero|n[ãa]o quero|optout|opt-out)\s*$/i;
 
+// deno-lint-ignore no-explicit-any
+export async function attributeMultiplixReply(
+  supabase: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+  phone: string,
+  messageId: string,
+  quotedExternalId: string | null = null,
+): Promise<void> {
+  try {
+    const { data, error } = await supabase.rpc('attribute_multiplix_item_reply', {
+      p_phone: phone,
+      p_message_id: messageId,
+      p_quoted_external_id: quotedExternalId,
+    });
+    if (error) {
+      console.warn('[F62] Falha ao atribuir resposta ao item Multiplix:', error.message);
+      return;
+    }
+    if (data?.attributed === true) {
+      console.warn(
+        `[F62] Resposta atribuida (${data.attribution}): phone=***${phone.slice(-4)} item=${data.item_id}`,
+      );
+    }
+  } catch (err) {
+    console.warn('[F62] Erro inesperado em attributeMultiplixReply:', err instanceof Error ? err.message : String(err));
+  }
+}
+
 /**
  * Atribui a mensagem messageId como resposta de contactId à
  * campanha mais recente que o atingiu nos últimos 72 h.

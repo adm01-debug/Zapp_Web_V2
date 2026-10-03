@@ -349,6 +349,22 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [ ] **E11** · C · G-37 · Corrigir o CLAUDE.md nos 5 pontos divergentes (contagem 14/17, `strict`, revisor do
   `producao-edge-functions`, cadência do guarda vivo, auto-merge) **no mesmo PR** de E02. Verificação: `grep -n
   "13 arquivos\|16 no total\|strict está\|auto-merge" CLAUDE.md` sem afirmações falsas.
+  - ⚠️ **Nota de execução (03/10/2026) — a etapa está bloqueada, e a medição corrige dois alvos dela.**
+    **(a) Bloqueio duro:** `CLAUDE.md` é **arquivo protegido** — a escrita exige aprovação humana e o prompt
+    expirou sem resposta nesta sessão ("silêncio não é consentimento"). O executor NÃO pode cumprir a E11; ela
+    precisa de aprovação explícita do Joaquim (ou de um PR aberto por ele). Isso também explica a frase "no mesmo
+    PR de E02": as duas travam no mesmo lugar.
+    **(b) A contagem está errada no `CLAUDE.md` e a etapa herda o número errado:** o arquivo diz "são 14 arquivos
+    … 17 no total"; medido, são **16** arquivos em `.github/workflows/` — os dois que a lista omite são
+    **`settings-guard.yml`** e **`talkx-status-regen.yml`** — e **19** no total com os 3 dinâmicos.
+    **(c) O ponto do `strict` já está consertado:** o parágrafo "Correção estrutural posterior de 2026-10-01" já diz
+    que `required_status_checks.strict` voltou a `true` **como política permanente**, com o `auto-update-pr-branch.yml`
+    vivo a cada push (o arquivo existe no repo). A etapa lista como divergente algo que o arquivo já conta certo.
+    **(d) O ponto real é o revisor:** o texto enquadra os quatro environments como "com aprovação humana
+    (`required_reviewers`)" e lista `producao-edge-functions` entre eles — esse environment **não tem revisor
+    obrigatório**. Quem lê o texto espera uma aprovação que não existe.
+    **(e) Cadência do guarda vivo:** o `db-live-guard.yml` tem `push` (linha 13) e `schedule` com
+    `cron: '13 6 * * *'` — diário. A afirmação "não roda em PR" está **correta**; o texto só não dá a cadência.
 - [ ] **E12** · C · G-42 · Corrigir os 3 cabeçalhos desatualizados (`ci.yml:5`, `types-sync.yml:82-86`,
   `db-migrate.yml:7`). Verificação: revisão de texto no PR.
 
@@ -697,6 +713,18 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   documentar em `e2e/fixtures/README.md` **e** criar `scripts/db-audit/e2e-fixtures.test.sh` que prova a presença
   deles no banco (rodado no `db-live-guard` agendado). Verificação: remover um fixture num Postgres descartável → teste
   ❌.
+  - ⚠️ **Nota de execução (03/10/2026) — o alvo desta etapa estava errado nos dois pontos, e a execução corrigiu.**
+    (1) **A documentação já existe**: os três fixtures estão em `e2e/README.md` (tabela na linha 134, com o aviso
+    "NUNCA apagar o segmento `621521f3-…`") e os IDs vivem nas constantes do código (`E2E_FIXTURE_CONTACT_ID`,
+    `E2E_TALKX_CONNECTION_ID`, `E2E_TALKX_SEGMENT_ID`). Criar um `e2e/fixtures/README.md` com os mesmos IDs faria a
+    verdade se bifurcar. **Não se cria documento novo** — a metade "documentar" está cumprida em `e2e/README.md`.
+    (2) **O caminho de execução não existe**: o `db-live-guard` **não roda `*.test.sh`** (como o plano supõe); ele roda
+    `psql-safe.mjs -X -v ON_ERROR_STOP=1 -f <check>.sql`. Um `.test.sh` ali seria igual aos 106 testes órfãos de
+    `scripts/db-audit/` que a E62 encontrou — existe no repositório, o CI nunca toca. O correto é
+    **`scripts/db-audit/check-e2e-fixtures.sql` + o passo no `db-live-guard.yml`** (sem o passo, o arquivo não vale
+    nada). Medição que só a varredura dá: a conexão de E2E vive em **`whatsapp_connections`**, não em
+    `talkx_connections`; e o check exige `status='connected'` **e** `instance_id` preenchido, que é o que o
+    `useCampaignEditor` filtra — linha existindo com status `disconnected` ainda quebra o spec do wizard.
 - [ ] **E86** · D ⚠️ · G-05 · Avaliar `supabase start` + seed mínimo em CI para a suíte logada (`gen-types.sh --local`
   já prevê). Custo: ~3 min de boot por run; ganho: E2E sem tocar produção nem fixtures permanentes. Decisão após E79
   mostrar o custo atual.
@@ -716,12 +744,21 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [ ] **E90** · B · G-23 · Notificação de falha na `main` por WhatsApp via N8N (webhook `workflow_run` →
   Evolution GO `PRINCIPAL` → número do Joaquim), só para `conclusion: failure` em `e2e-logado`, `db-live-guard`,
   `deploy-functions`, `types-sync`, com dedupe de 1 h por workflow. Verificação: forçar 1 falha → 1 mensagem.
-- [ ] **E91** · B · G-36 · `branch-hygiene-audit.yml`: além do Job Summary, atualizar o corpo da issue #378 (ou abrir
+- [x] **E91** · B · G-36 · `branch-hygiene-audit.yml`: além do Job Summary, atualizar o corpo da issue #378 (ou abrir
   `[branch-hygiene]`) com a tabela; listar também PRs abertas há > 7 dias sem push (hoje #1153, #1206 de 29/09).
   Verificação: issue atualizada na próxima segunda.
-- [ ] **E92** · C · G-38 · Corrigir `.github/ISSUE_TEMPLATE/config.yml` (URL do repo, remover telefone placeholder) e
+  **FEITO 2026-10-03** (PR do repo, ver `docs/audits/e91-branch-hygiene-issue-2026-10-03.md`): escolhida a opção
+  `[branch-hygiene]` (o upsert idempotente já é o padrão da casa em `[kpi-actions]`), então a #378 fica intacta como
+  registro. Corte passou de 14 dias por **criação** para 7 dias por **`updatedAt`** = "sem push", que é o que a etapa
+  pede. Executado de verdade: issue **#1810** criada, 2ª execução atualizou (não duplicou).
+- [x] **E92** · C · G-38 · Corrigir `.github/ISSUE_TEMPLATE/config.yml` (URL do repo, remover telefone placeholder) e
   o PR template (tirar "staging"; adicionar "Migration? → arquivo + ledger + catálogo" e "Edge? → disparar
   deploy-functions após merge"). Verificação: revisão.
+  **FEITO 2026-10-03** (PR do repo, ver `docs/audits/e92-templates-issue-pr-2026-10-03.md`): o link errado
+  não dava 404 — `adm01-debug/zapp-web` existe, é privado e tem `/docs` próprio, então levava em silêncio
+  para documentação de outro projeto. Telefone placeholder removido (bloco de WhatsApp sai inteiro).
+  "staging" não existe neste projeto: a caixa saiu. Invariantes presos em `scripts/ci/issue-templates.unit.mjs`
+  (5 casos, 5/5 derrubados por mutação).
 - [ ] **E93** · A · G-39 · Repo: `allow_merge_commit: false`, `allow_rebase_merge: false`,
   `squash_merge_commit_message: PR_BODY`, `use_squash_pr_title_as_default: true`. Verificação: `GET /repos`.
 - [ ] **E94** · A · G-40 · Apagar environments `copilot`, `Preview`, `Production` (sem regra, sem uso por workflow;
@@ -731,6 +768,14 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   protection, environments, secrets por escopo, apps, `allowed_actions`), e a regra: toda mudança nesses campos
   atualiza a tabela **e** o `github-settings-baseline.json` (E13) no mesmo PR. Verificação: `settings-guard` verde
   contra a tabela.
+  **PARCIAL 2026-10-03** (PR do repo, ver `docs/audits/e95-perimetro-github-2026-10-03.md`): o
+  `github-settings-baseline.json` da E13 **não existia** — foi criado nesta etapa, com o estado medido da API.
+  O `settings-guard` estava **quebrado desde a criação** (6 runs, 6 falhas, `403 Resource not accessible by
+  integration` — o `GITHUB_TOKEN` não tem o escopo `administration`): morria no primeiro GET sem comparar nada
+  **e sem abrir a issue**. Consertado para distinguir regressão de ponto cego. **Falta a tabela no `CLAUDE.md`**:
+  arquivo de instrução de agente exige aprovação do dono e o prompt expirou — texto pronto no relatório, decisão
+  `20261003-110826-2ff5`. Checkbox fica aberto até a tabela entrar. Achado colateral: `strict` está `false`,
+  contrariando a E15(b).
 - [ ] **E96** · C · G-42 · `docs/ci/README.md` (novo): 1 parágrafo por workflow (gatilho, o que prova, o que acontece
   quando falha, quem é avisado), gerado a partir de um bloco `# docs:` no topo de cada YAML por
   `scripts/ci/render-workflow-docs.mjs --check` (falha se divergir). Verificação: `--check` verde no CI.

@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { cfImagesSrcSet } from '@/lib/cfImages';
 import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
 import { documentBadge, documentFamily, formatDuration, type DocumentFamily } from './fileDisplay';
@@ -98,6 +99,8 @@ function ThumbImage({ item, size }: { item: ContactMediaItem; size: FileThumbSiz
   return (
     <img
       src={src}
+      srcSet={cfImagesSrcSet(src) ?? undefined}
+      sizes={size === 'card' ? '(max-width: 768px) 50vw, 320px' : '96px'}
       alt={size === 'card' ? item.displayName : ''}
       loading="lazy"
       decoding="async"

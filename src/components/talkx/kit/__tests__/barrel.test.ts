@@ -11,6 +11,10 @@ import * as talkxShared from '../../talkxShared';
  * cobertos pelo `tsc`; a lista aqui é só o que o JavaScript enxerga.
  */
 const EXPORTED_NAMES = [
+  'StateShell',
+  'TalkXCrmUnavailableState',
+  'TalkXFilteredEmptyState',
+  'WhatsAppLogo',
   'TalkXFilterBar',
   'TalkXNoData',
   'CAMPAIGN_STATUS',

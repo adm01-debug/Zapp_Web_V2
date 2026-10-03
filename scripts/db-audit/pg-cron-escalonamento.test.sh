@@ -20,7 +20,7 @@ ok()   { echo "  [OK]     $*"; }
 ruim() { echo "  [FALHOU] $*"; FALHAS=$((FALHAS+1)); }
 
 command -v docker >/dev/null || { echo "docker ausente"; exit 2; }
-[ -f "$MIG" ] || { echo "migration nao encontrada: $MIG"; exit 2; }
+[[ -f "$MIG" ]] || { echo "migration nao encontrada: $MIG"; exit 2; }
 
 docker rm -f "$NAME" >/dev/null 2>&1 || true
 docker run -d --name "$NAME" -e POSTGRES_PASSWORD=teste -e POSTGRES_DB=teste "$IMG" >/dev/null
@@ -79,11 +79,11 @@ multiplix-send-trigger 0-58/2 * * * *
 vatcuum-remover 1'
 DEPOIS=$(q -c "SELECT jobname||' '||schedule FROM cron.job WHERE jobname NOT IN ('talkx-scheduler-1min','tasks-notify-due','ai-jobs-tick-1min') ORDER BY jobname")
 CONFERIR=$(q -c "SELECT count(*) FROM cron.job WHERE schedule IN ('1-59/2 * * * *','0-58/2 * * * *','0-55/5 * * * *','2-57/5 * * * *','7-52/15 * * * *','7 * * * *','12 3 * * *','42 3 * * *','20 3 2 9 *')")
-[ "$CONFERIR" = "9" ] && ok "B. os 9 offsets declarados estao aplicados" || ruim "B. esperava 9 offsets aplicados, achei $CONFERIR"
+[[ "$CONFERIR" = "9" ]] && ok "B. os 9 offsets declarados estao aplicados" || ruim "B. esperava 9 offsets aplicados, achei $CONFERIR"
 for j in talkx-scheduler-1min tasks-notify-due ai-jobs-tick-1min; do
   A=$(printf '%s\n' "$ANTES" | grep -F "$j " | sed "s/^$j //")
   B=$(q -c "SELECT schedule FROM cron.job WHERE jobname='$j'")
-  [ "$A" = "$B" ] && ok "B. $j intocado ($B)" || ruim "B. $j mudou indevidamente: '$A' -> '$B'"
+  [[ "$A" = "$B" ]] && ok "B. $j intocado ($B)" || ruim "B. $j mudou indevidamente: '$A' -> '$B'"
 done
 
 # --------------------------------------------------- concorrencia (C)
@@ -101,13 +101,13 @@ medir "depois" || ruim "C. medicao DEPOIS nao produziu dados"
 S1=$(q -c "SELECT string_agg(jobname||' '||schedule, ',' ORDER BY jobname) FROM cron.job")
 aplica
 S2=$(q -c "SELECT string_agg(jobname||' '||schedule, ',' ORDER BY jobname) FROM cron.job")
-[ "$S1" = "$S2" ] && ok "D. idempotente: 2a aplicacao nao mudou nada" || ruim "D. 2a aplicacao alterou horarios"
-[ "$(q -c "SELECT count(*) FROM cron.job")" = "12" ] && ok "D. nao duplicou job (12)" || ruim "D. duplicou job"
+[[ "$S1" = "$S2" ]] && ok "D. idempotente: 2a aplicacao nao mudou nada" || ruim "D. 2a aplicacao alterou horarios"
+[[ "$(q -c "SELECT count(*) FROM cron.job")" = "12" ]] && ok "D. nao duplicou job (12)" || ruim "D. duplicou job"
 
 # ---------------------------------------------------------- rollback (E)
 q -c "SELECT public.apply_pg_cron_escalonamento(true)" >/dev/null
 VOLTOU=$(q -c "SELECT jobname||' '||schedule FROM cron.job ORDER BY jobname")
-if [ "$VOLTOU" = "$ANTES" ]; then ok "E. rollback devolveu TODOS os horarios originais"; else
+if [[ "$VOLTOU" = "$ANTES" ]]; then ok "E. rollback devolveu TODOS os horarios originais"; else
   ruim "E. rollback incompleto"; diff <(printf '%s\n' "$ANTES") <(printf '%s\n' "$VOLTOU") || true; fi
 
 # ---------------------------------------------------------- falha alto (F)
@@ -116,5 +116,5 @@ SAIDA=$(q -c "SELECT public.apply_pg_cron_escalonamento(false)" 2>&1 || true)
 printf '%s' "$SAIDA" | grep -q "esperado 1x em cron.job" && ok "F. job ausente aborta com erro claro (nao aplica meia escala)" || ruim "F. nao abortou: $SAIDA"
 
 echo
-if [ "$FALHAS" -eq 0 ]; then echo "RESULTADO: TODAS AS PROVAS PASSARAM"; exit 0; fi
+if [[ "$FALHAS" -eq 0 ]]; then echo "RESULTADO: TODAS AS PROVAS PASSARAM"; exit 0; fi
 echo "RESULTADO: $FALHAS PROVA(S) FALHARAM"; exit 1

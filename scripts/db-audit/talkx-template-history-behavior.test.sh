@@ -52,14 +52,14 @@ fi
 ready=false
 for _ in $(seq 1 90); do
   ready_markers="$(docker logs "$container_name" 2>&1 | grep -c 'database system is ready to accept connections' || true)"
-  if [ "$ready_markers" -ge 2 ] \
+  if [[ "$ready_markers" -ge 2 ]] \
     && docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then
     ready=true
     break
   fi
   sleep 1
 done
-[ "$ready" = true ] || fail "PostgreSQL descartavel ($postgres_image) nao ficou pronto"
+[[ "$ready" = true ]] || fail "PostgreSQL descartavel ($postgres_image) nao ficou pronto"
 
 psql_test -v precreate_runtime="$precreate_runtime" \
   -v invalid_prestate="$invalid_prestate" \
@@ -244,7 +244,7 @@ if [[ "$invalid_prestate" == true || "$invalid_live_prestate" == true \
   invalid_output="$(psql_test < "$repo_root/supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql" 2>&1)"
   invalid_status=$?
   set -e
-  [ "$invalid_status" -ne 0 ] || fail 'pre-estado irrecuperavel deveria abortar a migration'
+  [[ "$invalid_status" -ne 0 ]] || fail 'pre-estado irrecuperavel deveria abortar a migration'
   if [[ "$invalid_prestate" == true ]]; then
     grep -q 'talkx_template_history_irreconcilable_nulls' <<<"$invalid_output" \
       || fail 'migration nao retornou diagnostico explicito para historico irrecuperavel'
@@ -291,7 +291,7 @@ SELECT concat_ws('|',
 );
 SQL
 )"
-[ "$structure" = '17|1|t|f|f|f|f|t|f|t|1' ] || fail "contrato estrutural/ACL inesperado: $structure"
+[[ "$structure" = '17|1|t|f|f|f|f|t|f|t|1' ]] || fail "contrato estrutural/ACL inesperado: $structure"
 
 owner_result="$(psql_test -At <<'SQL'
 BEGIN;
@@ -324,7 +324,7 @@ grep -q 'Updated|New content|review|customer_name' <<<"$owner_result" \
   || fail 'update atomico nao persistiu o novo estado'
 rpc_timestamp="$(sed -n 's/^RPC|[^|]*|\([^|]*\)|1$/\1/p' <<<"$owner_result")"
 table_timestamp="$(sed -n 's/^TABLE|//p' <<<"$owner_result")"
-[ -n "$rpc_timestamp" ] && [ "$rpc_timestamp" = "$table_timestamp" ] \
+[[ -n "$rpc_timestamp" ]] && [ "$rpc_timestamp" = "$table_timestamp" ] \
   || fail 'RPC nao retornou o updated_at efetivamente persistido pelo trigger'
 
 expect_failure() {
@@ -335,7 +335,7 @@ expect_failure() {
   output="$(printf '%s\n' "$sql" | psql_test 2>&1)"
   local status=$?
   set -e
-  [ "$status" -ne 0 ] || fail "cenario deveria falhar: $expected"
+  [[ "$status" -ne 0 ]] || fail "cenario deveria falhar: $expected"
   grep -q "$expected" <<<"$output" || fail "erro esperado ausente: $expected"
 }
 
@@ -455,7 +455,7 @@ SQL
 grep -q '^1$' <<<"$counter_result" \
   || { printf '%s\n' "$counter_result" >&2; fail 'contador atomico nao retornou exatamente uma unidade'; }
 counter_row="$(grep '^1|' <<<"$counter_result")"
-[ "$counter_row" = "1|$counter_token_before" ] \
+[[ "$counter_row" = "1|$counter_token_before" ]] \
   || { printf '%s\n' "$counter_result" >&2; fail 'contador alterou o token de revisao do conteudo'; }
 
 # Mesmo com grant + policy permissivos reintroduzidos, o trigger invoker bloqueia
@@ -488,15 +488,15 @@ wait "$pid_a"; status_a=$?
 wait "$pid_b"; status_b=$?
 set -e
 
-if ! { [ "$status_a" -eq 0 ] && [ "$status_b" -ne 0 ]; } \
-  && ! { [ "$status_b" -eq 0 ] && [ "$status_a" -ne 0 ]; }; then
+if ! { [[ "$status_a" -eq 0 ]] && [ "$status_b" -ne 0 ]; } \
+  && ! { [[ "$status_b" -eq 0 ]] && [ "$status_a" -ne 0 ]; }; then
   fail "concorrencia deveria produzir um sucesso e uma falha: A=$status_a B=$status_b"
 fi
 grep -q 'talkx_template_stale_version' "$concurrency_dir"/*.err \
   || fail 'writer perdedor nao falhou por versao obsoleta'
 
 final_state="$(psql_test -Atqc "SELECT count(*) || '|' || max(version_number) || '|' || (SELECT count(*) FROM public.talkx_templates WHERE name IN ('WriterA','WriterB')) FROM public.talkx_template_versions WHERE template_id='30000000-0000-0000-0000-000000000001'")"
-[ "$final_state" = '2|2|1' ] || fail "invariante final de concorrencia inesperada: $final_state"
+[[ "$final_state" = '2|2|1' ]] || fail "invariante final de concorrencia inesperada: $final_state"
 
 # A imutabilidade do historico nao pode impedir o ON DELETE CASCADE autorizado
 # da tabela pai. Um template secundario recebe snapshot e depois e excluido pelo

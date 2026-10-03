@@ -53,25 +53,24 @@ const iconSizeMap = {
 
 export function CompanyLogo({ logoUrl, companyName, fallbackCompanyName, size = 'sm', className }: CompanyLogoProps) {
   const name = companyName || fallbackCompanyName;
-  
-  if (logoUrl) {
-    return (
-      <img
-        src={logoUrl}
-        alt={name || ''}
-        className={cn(
-          sizeMap[size],
-          'rounded object-contain bg-background border border-border/20 shrink-0',
-          className
-        )}
-        onError={(e) => {
-          // Hide broken images
-          (e.target as HTMLImageElement).style.display = 'none';
-        }}
-      />
-    );
-  }
+  if (logoUrl) return <CompanyLogoImage key={logoUrl} logoUrl={logoUrl} name={name} size={size} className={className} />;
+  return <CompanyLogoFallback name={name} size={size} className={className} />;
+}
 
+function CompanyLogoImage({ logoUrl, name, size, className }: Required<Pick<CompanyLogoProps, 'logoUrl' | 'size'>> & { name?: string | null; className?: string }) {
+  const [imageFailed, setImageFailed] = React.useState(false);
+  if (imageFailed) return <CompanyLogoFallback name={name} size={size} className={className} />;
+  return (
+    <img
+      src={logoUrl || ''}
+      alt={name || ''}
+      className={cn(sizeMap[size], 'rounded object-contain bg-background border border-border/20 shrink-0', className)}
+      onError={() => setImageFailed(true)}
+    />
+  );
+}
+
+function CompanyLogoFallback({ name, size, className }: { name?: string | null; size: NonNullable<CompanyLogoProps['size']>; className?: string }) {
   if (name) {
     const colors = getCompanyColor(name);
     return (

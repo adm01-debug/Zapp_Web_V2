@@ -79,6 +79,11 @@
  *    vendedor/data/telefone, variável sem valor/desconhecida e precedência A/B por hash FNV-1a).
  *    É arquivo de teste, não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3)
  *    seguem idênticos — só o total varrido sobe (200 → 201), medido pela varredura depois do merge.
+ *  - 203: lote 2 do lint-ratchet (03/10/2026) — `_shared/evolution-types.ts` (contrato tipado do
+ *    client admin da Evolution: substitui 34 `supabase: any` por uma interface com a superfície que
+ *    o código realmente usa — `from/rpc/storage/channel`).
+ *    É arquivo de tipos, não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3)
+ *    seguem idênticos — só o total varrido sobe (202 → 203), medido pela varredura depois do merge.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -153,8 +158,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('202 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(202);
+  it('203 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(203);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );

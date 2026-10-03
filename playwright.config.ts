@@ -1,7 +1,29 @@
 import { defineConfig, devices } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+
+// E87: quarentena formal. Schema em e2e/quarantine.json; a validacao da forma e a cobranca
+// do prazo vivem em scripts/ci/check-quarantine.mjs.
+// Um spec em quarentena NAO roda -- o comportamento real do Playwright e "did not run", que
+// e o efeito equivalente ao `fixme` pedido no plano, sem editar o spec para silencia-lo
+// (test.fixme() tocaria arquivos que nao sao da etapa e esconderia o motivo dentro do teste).
+// Caminho relativo à raiz, como o testDir abaixo: o Playwright roda a partir da raiz do repo.
+function specsEmQuarentena(): string[] {
+  try {
+    const cru = JSON.parse(readFileSync('e2e/quarantine.json', 'utf8')) as {
+      quarentena?: { spec?: string }[];
+    };
+    return (cru.quarentena ?? []).map((i) => i.spec).filter((s): s is string => Boolean(s));
+  } catch {
+    // Sem arquivo (ou com JSON invalido) nada e ignorado -- quem reclama disso e o
+    // verificador, nao o runner de teste.
+    return [];
+  }
+}
 
 export default defineConfig({
   testDir: './e2e',
+  // E87: specs em quarentena ficam fora da execucao.
+  testIgnore: specsEmQuarentena(),
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

@@ -9,6 +9,7 @@ import { PushNotificationToggle } from '@/components/notifications/PushNotificat
 import { ScreenProtectionToggle } from '@/components/notifications/ScreenProtectionToggle';
 import { SoundVolumeControl } from '@/components/notifications/SoundVolumeControl';
 import { MediaVolumeToggle } from './MediaVolumeToggle';
+import { AccessibilitySettings } from '@/components/theme/HighContrastToggle';
 import { SidebarNavItem } from './SidebarNavItem';
 import { SidebarNavGroup } from './SidebarNavGroup';
 import { SidebarUserPill } from './SidebarUserPill';
@@ -240,6 +241,15 @@ export const Sidebar = React.memo(function Sidebar({
                 {isDark ? <Sun className="w-[16px] h-[16px]" /> : <Moon className="w-[16px] h-[16px]" />}
               </button>
             </TooltipTrigger><TooltipContent side="right" sideOffset={8} className="text-xs">{isDark ? 'Modo claro' : 'Modo escuro'}</TooltipContent></Tooltip>
+          </div>
+          {/* Acessibilidade (alto contraste, nivel de contraste, movimento reduzido, texto grande)
+              em LINHA PROPRIA: o `AccessibilitySettings` e um botao de 36px, e um sexto controle
+              na linha de cima daria 6 × 36px + 5 gaps = 236px — estoura os 228px uteis da sidebar
+              (a conta dos 5 controles atuais esta no comentario do E28 acima). Antes desta
+              correcao o componente existia mas nao era renderizado em tela nenhuma: o usuario so
+              conseguia ligar o alto contraste por localStorage. */}
+          <div className={cn('flex items-center gap-1', collapsed ? 'flex-col' : 'flex-row')}>
+            <AccessibilitySettings />
           </div>
         </div>
       </div>

@@ -1,12 +1,13 @@
 // Message-specific handlers for evolution-webhook: incoming, outgoing, sticker, transcription
 import { evoFetch, extractBase64Media } from './evolution-send.ts';
-import { attributeTalkXReply, TALKX_OPT_OUT_RE } from "./talkx-reply.ts";
+import { attributeMultiplixReply, attributeTalkXReply, TALKX_OPT_OUT_RE } from "./talkx-reply.ts";
 
 import {
   isRecord, normalizePhone, resolveEventJid,
   getConnectionByInstance, getContactByPhone, fetchProfilePicFromApi, persistProfilePicture,
 } from "./evolution-helpers.ts";
 import { persistMediaToStorage, persistMediaViaApi, persistBase64Media, parseMessageContent } from "./evolution-media.ts";
+import type { EvolutionDbClient } from "./evolution-types.ts";
 
 // Resolve a mídia na ordem mais barata: base64 do próprio webhook (Evolution GO
 // com WEBHOOKFILES=true; v2 com webhookBase64) → URL direta (CDN/MinIO) →
@@ -25,7 +26,7 @@ function isWhatsAppCdnUrl(url: string | null | undefined): boolean {
 }
 
 async function persistIncomingMedia(
-  supabase: any, instance: string, data: Record<string, unknown>,
+  supabase: EvolutionDbClient, instance: string, data: Record<string, unknown>,
   messageType: string, msgId: string, parsedUrl: string | null,
   contactId?: string,
 ): Promise<string | null> {
@@ -48,7 +49,7 @@ const URL_REGEX = /https?:\/\/[^\s<>"'`]+/i;
 // Fire-and-forget OG enrichment for received messages.
 // deno-lint-ignore no-explicit-any
 async function enrichIncomingLinkPreview(
-  supabase: any, messageId: string, content: string | null | undefined,
+  supabase: EvolutionDbClient, messageId: string, content: string | null | undefined,
   supabaseUrl: string, supabaseServiceKey: string,
 ): Promise<void> {
   try {
@@ -76,7 +77,7 @@ async function enrichIncomingLinkPreview(
 
 // deno-lint-ignore no-explicit-any
 export async function handleOutgoingWhatsAppMessage(
-  supabase: any, instance: string, data: Record<string, unknown>,
+  supabase: EvolutionDbClient, instance: string, data: Record<string, unknown>,
   key: { remoteJid?: string; remoteJidAlt?: string; participant?: string; participantAlt?: string; fromMe: boolean; id: string },
 ) {
   const externalId = key.id;
@@ -171,7 +172,7 @@ export async function handleOutgoingWhatsAppMessage(
 
 // deno-lint-ignore no-explicit-any
 export async function handleIncomingMessage(
-  supabase: any, instance: string, data: Record<string, unknown>,
+  supabase: EvolutionDbClient, instance: string, data: Record<string, unknown>,
   key: { remoteJid?: string; remoteJidAlt?: string; participant?: string; participantAlt?: string; fromMe: boolean; id: string },
   supabaseUrl: string, supabaseServiceKey: string
 ) {
@@ -332,13 +333,50 @@ export async function handleIncomingMessage(
   if (tx.outcome === 'inserted' && !key.fromMe && tx.contact_id && tx.message_id) {
     if (!TALKX_OPT_OUT_RE.test((content ?? '').trim())) {
       void attributeTalkXReply(supabase, tx.contact_id, tx.message_id);
+      // F62: a MESMA resposta tambem fecha o item do Multiplix. A citacao (quando existe)
+      // e o unico jeito de saber QUAL envio gerou a resposta — sem ela a atribuicao e por
+      // janela + numero e a funcao grava `inferred` em vez de `linked`. Por isso a citacao
+      // e extraida aqui e passada adiante: a diferenca entre as duas e o que o operador ve.
+      // O vinculo e por TELEFONE: `multiplix_recipients` nao tem contact_id (guarda
+      // `destino_e164`). `phone` ja vem normalizado no escopo desta funcao (bestJid).
+      if (phone) {
+        void attributeMultiplixReply(
+          supabase,
+          phone,
+          tx.message_id,
+          extractQuotedExternalId(data),
+        );
+      }
     }
   }
 }
 
+/**
+ * F62: extrai o `external_id` da mensagem CITADA, quando o contato responde quotando.
+ *
+ * O `stanzaId` do `contextInfo` e o id da mensagem original — o mesmo que gravamos em
+ * `multiplix_delivery_items.external_id` no envio. O `contextInfo` nao fica no topo: ele
+ * vive DENTRO do tipo da mensagem (`extendedTextMessage`, `imageMessage`, `audioMessage`...),
+ * entao e preciso descer um nivel por tipo. Casa tambem `stanzaID` (grafia do Go).
+ * Devolve null quando nao ha citacao utilizavel — e ai a atribuicao cai em `inferred`.
+ */
+// deno-lint-ignore no-explicit-any
+function extractQuotedExternalId(data: any): string | null { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const message = isRecord(data?.message) ? data.message : null;
+  if (!message) return null;
+  for (const value of Object.values(message)) {
+    if (!isRecord(value)) continue;
+    const ctx = value.contextInfo;
+    if (!isRecord(ctx)) continue;
+    const stanza = ctx.stanzaId ?? ctx.stanzaID;
+    if (typeof stanza === 'string' && stanza.trim()) return stanza.trim();
+  }
+  return null;
+}
+
 // deno-lint-ignore no-explicit-any
 export async function handleStickerMedia(
-  supabase: any, instance: string, data: Record<string, unknown>,
+  supabase: EvolutionDbClient, instance: string, data: Record<string, unknown>,
   message: Record<string, unknown> | undefined, key: { id: string }
 ): Promise<string | null> {
   let mediaUrl: string | null = null;
@@ -422,7 +460,7 @@ export async function handleStickerMedia(
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleAudioTranscription(supabase: any, _contactId: string, messageId: string, mediaUrl: string, supabaseUrl: string, supabaseServiceKey: string) {
+export async function handleAudioTranscription(supabase: EvolutionDbClient, _contactId: string, messageId: string, mediaUrl: string, supabaseUrl: string, supabaseServiceKey: string) {
   const { data: globalSetting } = await supabase.from('global_settings')
     .select('value').eq('key', 'auto_transcription_enabled').maybeSingle();
   if (globalSetting?.value === 'false') return;
