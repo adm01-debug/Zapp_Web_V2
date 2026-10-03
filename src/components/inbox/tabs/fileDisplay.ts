@@ -30,3 +30,38 @@ export function formatMeta(item: ContactMediaItem): string {
 export function formatFileDate(createdAt: string): string {
   return formatSmartDate(createdAt);
 }
+
+/**
+ * Etapa 29: familia de documento pela extensao. A familia decide o icone do cartao; a
+ * extensao desconhecida cai em `generic` (sem Badge).
+ */
+export type DocumentFamily = 'pdf' | 'sheet' | 'doc' | 'ppt' | 'archive' | 'generic';
+
+const DOCUMENT_FAMILIES: Record<string, DocumentFamily> = {
+  pdf: 'pdf',
+  xls: 'sheet', xlsx: 'sheet', csv: 'sheet',
+  doc: 'doc', docx: 'doc',
+  ppt: 'ppt', pptx: 'ppt',
+  zip: 'archive', rar: 'archive',
+};
+
+export function documentFamily(extension: string | null): DocumentFamily {
+  if (!extension) return 'generic';
+  return DOCUMENT_FAMILIES[extension.toLowerCase()] ?? 'generic';
+}
+
+/** Etapa 29: extensao em MAIUSCULAS para o Badge do cartao; familia generica nao ganha Badge. */
+export function documentBadge(extension: string | null): string | null {
+  if (!extension || documentFamily(extension) === 'generic') return null;
+  return extension.toUpperCase();
+}
+
+/**
+ * Etapa 27: duracao que o proprio `<video>` entrega no `loadedmetadata`, em mm:ss.
+ * Nao existe duracao confiavel em `media_meta` (sem contrato no schema-catalog.json).
+ */
+export function formatDuration(seconds: number): string {
+  const total = Math.round(seconds);
+  const minutes = Math.floor(total / 60);
+  return `${minutes}:${String(total % 60).padStart(2, '0')}`;
+}

@@ -158,7 +158,16 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
 
       {previewItem && (
         <Suspense fallback={null}>
-          <MediaPreviewDialog item={previewItem} open={!!previewItem} onOpenChange={(open) => !open && setPreviewItem(null)} />
+          <MediaPreviewDialog
+            item={previewItem}
+            open={!!previewItem}
+            onOpenChange={(open) => !open && setPreviewItem(null)}
+            items={filtered}
+            onNavigate={(next) => {
+              const found = filtered.find((candidate) => candidate.id === next.id);
+              if (found) setPreviewItem(found);
+            }}
+          />
         </Suspense>
       )}
 
