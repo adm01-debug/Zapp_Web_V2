@@ -572,6 +572,14 @@ jobs:
           TALKX_EVENTS_CONTRACT_PG_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-events-contract.test.sh
 
+      # X021: escrita de links (UTM/created_by/rótulo único), leitura de cliques e
+      # conversões (admin/supervisor + dono), deduplicação de conversão, teto de valor
+      # e investimento por campanha — prova em PostgreSQL descartável.
+      - name: Provar escrita de links, leitura de cliques/conversões e investimento (X021)
+        env:
+          TALKX_LINKS_CONV_PG_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-links-conversions.test.sh
+
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e
       # current_database() devolve esse nome, quebrando a asserção.
