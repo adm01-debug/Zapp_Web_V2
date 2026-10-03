@@ -55,7 +55,7 @@ export function FilesLayoutPopover({
       <PopoverContent align="end" sideOffset={8} className="w-60 border-border p-4">
         <div className="space-y-4">
           <div>
-            <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="mb-2.5 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
               Visualização
             </p>
             <div className="flex items-center gap-0.5 rounded-xl border border-border/40 bg-muted/60 p-1">
@@ -88,7 +88,7 @@ export function FilesLayoutPopover({
             <>
               <Separator className="opacity-50" />
               <div>
-                <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <p className="mb-2.5 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Colunas
                 </p>
                 <FilesColumnSelector value={columns} options={columnOptions} onChange={onColumnsChange} />
