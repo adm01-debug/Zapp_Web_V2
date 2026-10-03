@@ -34,6 +34,18 @@ const NO_LOCK: ServerLoginLock = { isLocked: false, lockedUntil: null, attempts:
  */
 const AUTH_LOGIN_REGION = 'us-west-2';
 
+/**
+ * Teto de espera da invocacao. A edge faz ~5 round-trips ao banco/GoTrue e sem
+ * este limite um banco indisponivel deixa a promise pendurada para sempre: o
+ * usuario fica no spinner ("Entrando...") sem erro e sem resposta.
+ *
+ * 12s e ~100x o p50 medido (101ms com a regiao fixada) — nao corta login
+ * legitimo em rede ruim e ainda assim limita a espera. O resultado da expiracao
+ * entra no caminho de `unavailable`, entao a falha continua FECHADA (nunca cai
+ * no GoTrue direto) e o lockout segue sendo aplicado pela Edge.
+ */
+export const AUTH_LOGIN_TIMEOUT_MS = 12_000;
+
 function parseLock(body: Record<string, unknown>): ServerLoginLock {
   if (typeof body.isLocked !== 'boolean') return NO_LOCK;
   return {
@@ -53,6 +65,8 @@ function parseLock(body: Record<string, unknown>): ServerLoginLock {
  */
 export async function serverLogin(email: string, password: string): Promise<ServerLoginResult> {
   let response: Response;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), AUTH_LOGIN_TIMEOUT_MS);
   try {
     response = await fetch(
       `${SUPABASE_URL}/functions/v1/auth-login?forceFunctionRegion=${AUTH_LOGIN_REGION}`,
@@ -64,9 +78,20 @@ export async function serverLogin(email: string, password: string): Promise<Serv
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
       },
       body: JSON.stringify({ email, password, userAgent: navigator.userAgent }),
+      signal: controller.signal,
+
     });
   } catch (err) {
-    return { ok: false, unavailable: true, error: err instanceof Error ? err.message : String(err) };
+    const timedOut = controller.signal.aborted;
+    return {
+      ok: false,
+      unavailable: true,
+      error: timedOut
+        ? `auth-login: sem resposta em ${AUTH_LOGIN_TIMEOUT_MS}ms (timeout)`
+        : err instanceof Error ? err.message : String(err),
+    };
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   let body: Record<string, unknown> | null = null;
