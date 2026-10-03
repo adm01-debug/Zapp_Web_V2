@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { format, formatDuration, intervalToDuration } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { DialPad } from './DialPad';
+import { NewCallPanel } from './NewCallPanel';
 import { useCallSession } from '@/providers/CallSessionProvider';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useCalls } from '@/hooks/communication/useCalls';
@@ -213,7 +213,7 @@ export function TelefoniaView() {
       <CallsKpiGrid period={filtros.period} channel={filtros.channel} scope={filtros.scope} />
 
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-4 items-start">
+      <div className="grid grid-cols-1 gap-4 items-start xl:grid-cols-[minmax(0,1fr)_408px]">
         {/* Fase 4 (T43-T53): o historico agora vem da RPC `search_my_calls`, paginado no
             servidor (8 por pagina). Os filtros continuam sendo os da URL (T36), entao
             trocar busca, direcao, resultado, aba de canal, escopo ou pagina refaz a
@@ -260,7 +260,7 @@ export function TelefoniaView() {
           />
         </CallHistoryCard>
         {/* Painel lateral: discador ou detalhe da chamada selecionada */}
-        <div className="xl:sticky xl:top-4">
+        <div className="xl:sticky xl:top-4" data-testid="tel-side-panel">
           <Card className="border-secondary/30">
             <CardContent className="p-6">
               {selectedCall ? (
@@ -319,24 +319,7 @@ export function TelefoniaView() {
                   </div>
                 </div>
               ) : (
-                <DialPad
-                  sipStatus={sip.sipStatus}
-                  callStatus={sip.callStatus}
-                  callDuration={sip.callDuration}
-                  isMuted={sip.isMuted}
-                  currentNumber={sip.currentNumber}
-                  numeroInicial={sip.numeroPendente}
-                  key={`discador-${sip.numeroPendente ?? 'vazio'}`}
-                  callDirection={sip.callDirection}
-                  sipReason={sipReason}
-                  onConnect={sip.connectWithStoredCredentials}
-                  onDisconnect={sip.disconnect}
-                  onCall={sip.makeCall}
-                  onHangUp={sip.hangUp}
-                  onAcceptIncoming={sip.acceptIncomingCall}
-                  onToggleMute={sip.toggleMute}
-                  onDTMF={sip.sendDTMF}
-                />
+                <NewCallPanel />
               )}
             </CardContent>
           </Card>
