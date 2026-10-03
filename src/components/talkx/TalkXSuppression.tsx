@@ -18,7 +18,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { PrimaryButton, GhostButton, InitialsAvatar, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
-import { IconTile, RailCard, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBar, TalkXPagination, SUPPRESSION_ORIGIN, Th, Td, fmtInt, fmtDateTime, barsByDay } from './talkxShared';
+import { IconTile, RailCard, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, SUPPRESSION_ORIGIN, Th, Td, fmtInt, fmtDateTime, barsByDay } from './talkxShared';
+import { useTalkXFilterState } from './kit/useFilterState';
 
 interface BlacklistEntry {
   id: string;
@@ -37,9 +38,7 @@ const REASONS = ['Opt-out solicitado', 'Número inválido / bounce', 'Reclamaç�
 
 export function TalkXSuppression() {
   const qc = useQueryClient();
-  const [search, setSearch] = useState('');
-  const [filterOrigin, setFilterOrigin] = useState('all');
-  const [filterMotivo, setFilterMotivo] = useState('all');
+  const { values: filterValues, setValue: setFilterValue, query: search, setQuery: setSearch, hasActive, clear: clearFilters } = useTalkXFilterState('talkx.suppression.filters', { origin: 'all', motivo: 'all' });
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const [showAdd, setShowAdd] = useState(false);
@@ -82,11 +81,15 @@ export function TalkXSuppression() {
 
   const filtered = useMemo(() => {
     let r = blacklist;
-    if (filterOrigin !== 'all') r = r.filter((b) => b.origin === filterOrigin);
-    if (filterMotivo !== 'all') r = r.filter((b) => (b.reason ?? '').toLowerCase().includes(filterMotivo.toLowerCase()));
+    if (filterValues.origin !== 'all') r = r.filter((b) => b.origin === filterValues.origin);
+    if (filterValues.motivo !== 'all') r = r.filter((b) => (b.reason ?? '').toLowerCase().includes(filterValues.motivo.toLowerCase()));
     if (search.trim()) { const q = search.toLowerCase(); r = r.filter((b) => b.contacts?.name?.toLowerCase().includes(q) || b.contacts?.phone?.includes(q) || (b.reason ?? '').toLowerCase().includes(q)); }
     return r;
-  }, [blacklist, filterOrigin, filterMotivo, search]);
+  }, [blacklist, filterValues.origin, filterValues.motivo, search]);
+
+  const filterDefs = useMemo(() => [
+    { key: 'origin', label: 'Todas as origens', allLabel: 'Todas as origens', options: Object.entries(SUPPRESSION_ORIGIN).map(([v, m]) => ({ value: v, label: m.label })) },
+  ], []);
 
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
@@ -136,10 +139,11 @@ export function TalkXSuppression() {
           <DashboardKpiCard size="hero" index={3} label="Campanhas protegidas" value="—" delta={{ text: 'aplicação automática', tone: 'success' }} tile="green" icon={ShieldCheck} bars={null} barsColor="green" chart="none" />
         </div>
 
-        <FilterBar search={search} onSearch={setSearch} placeholder="Buscar por contato, telefone ou e-mail…" selects={[
-          { key: 'origin', value: filterOrigin, onChange: setFilterOrigin, label: 'Todas as origens', options: Object.entries(SUPPRESSION_ORIGIN).map(([v, m]) => ({ value: v, label: m.label })) },
-        ]}
-          right={<PrimaryButton icon={Plus} onClick={() => setShowAdd(true)}>Adicionar contato</PrimaryButton>}
+        <FilterBarV2
+          search={search} onSearch={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar por contato, telefone ou e-mail…"
+          filters={filterDefs} values={filterValues} onFilter={(k, v) => { setFilterValue(k as 'origin' | 'motivo', v); setPage(1); }}
+          hasActive={hasActive} onClear={() => { clearFilters(); setPage(1); }}
+          rightSlot={<PrimaryButton icon={Plus} onClick={() => setShowAdd(true)}>Adicionar contato</PrimaryButton>}
         />
 
         <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
