@@ -48,6 +48,18 @@ interface AiUsageEntry {
   modelRequested?: string | null;
   /** Se a execução foi atendida por um provedor de fallback. */
   fallbackUsed?: boolean | null;
+  /**
+   * IA-053 — consumo DESCONHECIDO (não medido).
+   *
+   * Existe para separar dois casos que hoje caem no mesmo número: "medi e deu
+   * zero" e "não consegui medir". A etapa é textual: o caminho de streaming não
+   * pode "receber custo zero por falta de dados". Quando isto é `true`, as
+   * colunas de token vão **NULL** (não 0) e o `metadata` marca
+   * `usage_unknown: true` — qualquer relatório que trate ausência como zero
+   * passa a ter como distinguir, e um número estimado pode ser gravado em
+   * `metadata.usage_estimate` sem se passar por medição.
+   */
+  usageUnknown?: boolean;
 }
 
 /** Extract token counts from OpenAI-compatible response */
@@ -138,6 +150,11 @@ function buildUsageMetadata(entry: AiUsageEntry): Record<string, unknown> {
   const rota: Record<string, unknown> = {
     fallback_used: entry.fallbackUsed === true,
   };
+  // IA-053 — consumo não medido é DECLARADO, não silenciado: quem lê a linha
+  // sabe que o número não existe (em vez de supor que foi zero).
+  if (entry.usageUnknown === true) {
+    rota.usage_unknown = true;
+  }
   const medidas: Record<string, unknown> = {
     provider_id: normalizeCorrelationId(entry.providerId),
     provider_type: textOrNull(entry.providerType),
@@ -244,8 +261,11 @@ export async function logAiUsage(entry: AiUsageEntry): Promise<void> {
       profile_id: profileId,
       function_name: entry.functionName,
       model: entry.model || null,
-      input_tokens: entry.inputTokens || 0,
-      output_tokens: entry.outputTokens || 0,
+      // IA-053 — TRI-ESTADO dos tokens: número medido (inclusive 0) ou NULL
+      // quando não houve medição. Antes, `|| 0` fazia "não medido" virar zero e
+      // o caminho de streaming entrava nos relatórios com custo zero.
+      input_tokens: entry.usageUnknown === true ? null : (entry.inputTokens ?? 0),
+      output_tokens: entry.usageUnknown === true ? null : (entry.outputTokens ?? 0),
       duration_ms: entry.durationMs || null,
       status: entry.status || 'success',
       error_message: entry.errorMessage || null,
@@ -262,4 +282,136 @@ export async function logAiUsage(entry: AiUsageEntry): Promise<void> {
     // Never throw — logging failures must not break the main flow
     console.warn(`[ai-usage] Failed to log: ${e instanceof Error ? e.message : String(e)}`);
   }
+}
+
+// ---------------------------------------------------------------------------
+// IA-053 — streaming: medir o que dá para medir e DECLARAR o que não deu
+// ---------------------------------------------------------------------------
+
+/** O que se conseguiu observar de um stream entregue ao cliente. */
+export interface StreamOutcome {
+  /** O stream acabou sozinho (o provedor mandou o fim). */
+  completed: boolean;
+  /** O cliente desligou no meio: a saída foi PARCIAL. */
+  cancelled: boolean;
+  /** Bytes e chunks que passaram: fato medido, o lastro de qualquer estimativa. */
+  bytes: number;
+  chunks: number;
+  /** Uso declarado pelo provedor no próprio stream — `null` quando ele não declara. */
+  usage: { inputTokens: number; outputTokens: number } | null;
+  /** Falha que interrompeu o stream, quando houve. */
+  error: string | null;
+}
+
+/** Quanto da cauda do stream é guardado para procurar o `usage` final. */
+const CAUDA_MAXIMA = 16_384;
+
+/**
+ * Extrai o `usage` de um stream SSE (formato OpenAI-compatible).
+ *
+ * O bloco de uso vem no ÚLTIMO chunk. Linha parcial (chunk cortado no meio),
+ * `[DONE]` e JSON inválido são IGNORADOS de propósito: um JSON incompleto não
+ * pode virar número — vira ausência declarada, que é o que a etapa exige.
+ */
+export function extrairUsageDoStream(
+  texto: string,
+): { inputTokens: number; outputTokens: number } | null {
+  let achado: { inputTokens: number; outputTokens: number } | null = null;
+  for (const linha of texto.split("\n")) {
+    const conteudo = linha.trim();
+    if (!conteudo.startsWith("data:")) continue;
+    const payload = conteudo.slice("data:".length).trim();
+    if (payload === "" || payload === "[DONE]") continue;
+    let objeto: unknown;
+    try {
+      objeto = JSON.parse(payload);
+    } catch {
+      continue;
+    }
+    const uso = (objeto as { usage?: unknown } | null)?.usage;
+    if (typeof uso !== "object" || uso === null) continue;
+    const bruto = uso as { prompt_tokens?: unknown; completion_tokens?: unknown };
+    achado = {
+      inputTokens: Number(bruto.prompt_tokens ?? 0),
+      outputTokens: Number(bruto.completion_tokens ?? 0),
+    };
+  }
+  return achado;
+}
+
+/**
+ * Embrulha o corpo de um stream para medir o que passa por ele, sem atrasar nem
+ * alterar um byte do que o cliente recebe.
+ *
+ * Por que embrulhar em vez de registrar antes de devolver: num stream o consumo
+ * só existe no FIM (o `usage` chega no último chunk) e o cancelamento só é
+ * observável quando o cliente desliga. Registrar antes seria registrar um chute;
+ * registrar depois do `return` nunca acontece — era exatamente o defeito: a
+ * chamada paga de streaming não gerava linha nenhuma em `ai_usage_logs`.
+ *
+ * `aoTerminar` é chamado EXATAMENTE UMA VEZ — no fim, no cancelamento ou no
+ * erro. O chamador deve entregar a promessa a `logAiUsageDetached` (que usa
+ * `EdgeRuntime.waitUntil`) para o registro não se perder quando a função
+ * encerrar.
+ */
+export function medirStream(
+  corpo: ReadableStream<Uint8Array> | null,
+  aoTerminar: (desfecho: StreamOutcome) => void | Promise<void>,
+): ReadableStream<Uint8Array> | null {
+  if (corpo === null) return null;
+
+  const leitor = corpo.getReader();
+  const decodificador = new TextDecoder();
+  let bytes = 0;
+  let chunks = 0;
+  let cauda = "";
+  let encerrado = false;
+
+  const encerrar = async (parcial: Partial<StreamOutcome>): Promise<void> => {
+    if (encerrado) return;
+    encerrado = true;
+    await aoTerminar({
+      completed: parcial.completed ?? false,
+      cancelled: parcial.cancelled ?? false,
+      bytes,
+      chunks,
+      usage: extrairUsageDoStream(cauda),
+      error: parcial.error ?? null,
+    });
+  };
+
+  return new ReadableStream<Uint8Array>({
+    async pull(controlador) {
+      try {
+        const { done, value } = await leitor.read();
+        if (done) {
+          controlador.close();
+          await encerrar({ completed: true });
+          return;
+        }
+        if (value) {
+          chunks += 1;
+          bytes += value.byteLength;
+          cauda = (cauda + decodificador.decode(value, { stream: true })).slice(-CAUDA_MAXIMA);
+          controlador.enqueue(value);
+        }
+      } catch (erro) {
+        const motivo = erro instanceof Error ? erro.message : String(erro);
+        try {
+          controlador.error(erro);
+        } catch {
+          // Controlador já fechado: o que importa aqui é o registro do desfecho.
+        }
+        await encerrar({ error: motivo });
+      }
+    },
+    async cancel(motivo) {
+      try {
+        await leitor.cancel(motivo);
+      } catch {
+        // Cancelar um stream já encerrado não é falha para quem cancela.
+      }
+      await encerrar({ cancelled: true });
+    },
+  });
 }

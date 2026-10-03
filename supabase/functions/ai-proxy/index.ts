@@ -19,7 +19,7 @@
  */
 import { handleCors, errorResponse, jsonResponse, Logger, requireEnv, requireAuth, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 import { z, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
-import { logAiUsageDetached, extractTokenUsage, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
+import { logAiUsageDetached, extractTokenUsage, extractUserIdFromRequest, medirStream } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { callLovableAI, callOpenAICompatible, callCustomWebhook, withRetry } from "../_shared/ai-providers.ts";
 import {
@@ -751,7 +751,49 @@ Deno.serve(async (req) => {
 
     if (streamRequested) {
       log.done(200, { provider: usedFallback && fallbackTo !== null ? fallbackTo.name : providerName, streaming: true });
-      return new Response(response.body, {
+      // IA-053 — o stream é CHAMADA PAGA e, até aqui, não deixava linha nenhuma:
+      // o `return` acontecia antes de qualquer registro. O consumo de um stream
+      // só é conhecível no FIM (ou no cancelamento), então o corpo é embrulhado —
+      // `medirStream` observa o que passou e chama o registrador UMA vez, sem
+      // atrasar nem alterar um byte do que o cliente recebe.
+      const corpoMedido = medirStream(response.body, (desfecho) =>
+        logAiUsageDetached({
+          functionName: 'ai-proxy', userId,
+          requestId,
+          // IA-052 — mesma rota efetiva do caminho não-streaming.
+          providerId: usedFallback && fallbackTo !== null ? fallbackTo.id : provider.id,
+          providerType: usedFallback ? null : providerType,
+          providerName: usedFallback && fallbackTo !== null ? fallbackTo.name : providerName,
+          purpose,
+          modality: 'text',
+          modelRequested: routing.model,
+          fallbackUsed: usedFallback,
+          model: modelUsed,
+          // Mediu? grava o número. Não mediu? NULL + `usage_unknown` — NUNCA zero
+          // por falta de dado: é literalmente o aceite desta etapa.
+          inputTokens: desfecho.usage?.inputTokens,
+          outputTokens: desfecho.usage?.outputTokens,
+          usageUnknown: desfecho.usage === null,
+          durationMs,
+          status: desfecho.error !== null
+            ? 'error'
+            : desfecho.cancelled
+              ? 'cancelled'
+              : usedFallback ? 'fallback' : 'success',
+          errorMessage: desfecho.error,
+          metadata: {
+            ...modelMetadata, model_used: modelUsed, model_resolved: routing.model,
+            ...fallbackMetadata,
+            // Fatos medidos do stream: lastro para quem for estimar o consumo.
+            streaming: true,
+            stream_completed: desfecho.completed,
+            stream_cancelled: desfecho.cancelled,
+            stream_bytes: desfecho.bytes,
+            stream_chunks: desfecho.chunks,
+          },
+        }),
+      );
+      return new Response(corpoMedido ?? response.body, {
         headers: { ...Object.fromEntries(response.headers), 'Content-Type': 'text/event-stream' },
       });
     }

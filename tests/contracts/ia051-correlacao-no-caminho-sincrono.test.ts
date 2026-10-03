@@ -100,7 +100,10 @@ describe('(IA-051) o id do clique chega ao log de consumo — caminho síncrono'
   it('o `ai-proxy` grava o `requestId` nas duas saídas de log (erro e sucesso)', () => {
     const fonte = ler('supabase/functions/ai-proxy/index.ts');
     const logs = blocos(fonte, 'logAiUsageDetached({', '});');
-    expect(logs, 'ai-proxy: esperava 2 chamadas de logAiUsageDetached').toHaveLength(2);
+    // O número de logs cresce com o projeto (a IA-053 acrescentou o do stream).
+    // Pinar a CONTAGEM transformava cada log novo numa falha falsa; o que a
+    // IA-051 exige de verdade é que TODO log de consumo do ai-proxy carregue o id.
+    expect(logs.length, 'ai-proxy: não achei os logs de consumo').toBeGreaterThanOrEqual(2);
     for (const bloco of logs) {
       expect(bloco, 'ai-proxy: log sem requestId (o gasto volta a ser órfão)').toContain('requestId');
     }

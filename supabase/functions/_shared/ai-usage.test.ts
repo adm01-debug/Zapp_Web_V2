@@ -32,10 +32,13 @@
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
 import {
   extractAiRequestId,
+  extrairUsageDoStream,
   logAiUsageDetached,
+  medirStream,
   normalizeAttempt,
   normalizeCorrelationId,
   normalizeModality,
+  type StreamOutcome,
 } from "./ai-usage.ts";
 
 type EdgeRuntimeType = { waitUntil?: (promise: Promise<unknown>) => void };
@@ -482,4 +485,195 @@ Deno.test("IA-052 normalizeModality: aceita a lista canônica e rejeita o resto"
   assertEquals(normalizeModality(42), null);
   assertEquals(normalizeModality(null), null);
   assertEquals(normalizeModality(undefined), null);
+});
+
+// ---------------------------------------------------------------------------
+// (g) IA-053 — streaming: medir o que passa e DECLARAR o que não deu
+// ---------------------------------------------------------------------------
+// Aceite da etapa: "O caminho de streaming não fica ausente dos relatórios nem
+// recebe custo zero por falta de dados." Antes desta correção, o `ai-proxy`
+// devolvia o corpo do provedor e NUNCA gravava linha: a chamada paga de
+// streaming era invisível. E o pior: os tokens eram gravados com `|| 0`, o que
+// fazia "não medido" entrar nos relatórios como consumo zero.
+const codificador = new TextEncoder();
+
+function streamDe(partes: string[]): ReadableStream<Uint8Array> {
+  return new ReadableStream<Uint8Array>({
+    start(controlador) {
+      for (const parte of partes) controlador.enqueue(codificador.encode(parte));
+      controlador.close();
+    },
+  });
+}
+
+async function consumir(corpo: ReadableStream<Uint8Array>): Promise<string> {
+  const leitor = corpo.getReader();
+  const decodificador = new TextDecoder();
+  let texto = "";
+  while (true) {
+    const { done, value } = await leitor.read();
+    if (done) break;
+    texto += decodificador.decode(value, { stream: true });
+  }
+  return texto;
+}
+
+/** Embrulha o medidor sem corrida: o teste espera o desfecho pelo `await`. */
+function medir(partes: string[]): {
+  corpo: ReadableStream<Uint8Array>;
+  desfecho: Promise<StreamOutcome>;
+  vezes: () => number;
+} {
+  let chamadas = 0;
+  let resolver: ((d: StreamOutcome) => void) | null = null;
+  const desfecho = new Promise<StreamOutcome>((r) => {
+    resolver = r;
+  });
+  const corpo = medirStream(streamDe(partes), (d) => {
+    chamadas += 1;
+    resolver?.(d);
+  });
+  assert(corpo !== null, "medirStream devolveu null para um corpo que existia");
+  return { corpo: corpo!, desfecho, vezes: () => chamadas };
+}
+
+Deno.test("IA-053 extrairUsageDoStream: só medição declarada conta; o resto é ausência", () => {
+  assertEquals(
+    extrairUsageDoStream(
+      'data: {"choices":[]}\n\ndata: {"usage":{"prompt_tokens":120,"completion_tokens":45}}\n\ndata: [DONE]\n\n',
+    ),
+    { inputTokens: 120, outputTokens: 45 },
+  );
+  assertEquals(
+    extrairUsageDoStream('data: {"choices":[{"delta":{"content":"oi"}}]}\n\ndata: [DONE]\n\n'),
+    null,
+    "sem bloco de uso, o consumo é DESCONHECIDO — não zero",
+  );
+  assertEquals(
+    extrairUsageDoStream('data: {"usage":{"prompt_tok'),
+    null,
+    "JSON cortado no meio do chunk não pode virar número",
+  );
+  assertEquals(
+    extrairUsageDoStream('data: {"usage":{"prompt_tokens":0,"completion_tokens":0}}'),
+    { inputTokens: 0, outputTokens: 0 },
+    "uso declarado com zeros é medição de zero (≠ ausência)",
+  );
+});
+
+Deno.test("IA-053 medirStream: entrega os bytes INTACTOS e mede o uso do último chunk", async () => {
+  const partes = [
+    'data: {"choices":[{"delta":{"content":"Olá"}}]}\n\n',
+    'data: {"choices":[{"delta":{"content":" mundo"}}]}\n\n',
+    'data: {"usage":{"prompt_tokens":120,"completion_tokens":45}}\n\n',
+    "data: [DONE]\n\n",
+  ];
+  const { corpo, desfecho, vezes } = medir(partes);
+
+  const recebido = await consumir(corpo);
+  assertEquals(recebido, partes.join(""), "o cliente recebeu bytes diferentes do original");
+
+  const d = await desfecho;
+  assertEquals(vezes(), 1, "o desfecho tem de ser registrado exatamente uma vez");
+  assertEquals(d.completed, true);
+  assertEquals(d.cancelled, false);
+  assertEquals(d.error, null);
+  assertEquals(d.usage, { inputTokens: 120, outputTokens: 45 });
+  assertEquals(d.chunks, 4);
+  assertEquals(d.bytes, codificador.encode(recebido).byteLength, "a contagem de bytes tem de bater");
+});
+
+Deno.test("IA-053 medirStream: cancelamento no meio é registrado como saída PARCIAL", async () => {
+  const { corpo, desfecho, vezes } = medir([
+    'data: {"choices":[{"delta":{"content":"a"}}]}\n\n',
+    'data: {"choices":[{"delta":{"content":"b"}}]}\n\n',
+  ]);
+
+  const leitor = corpo.getReader();
+  const primeiro = await leitor.read();
+  assertEquals(primeiro.done, false, "esperava o primeiro chunk antes de cancelar");
+  await leitor.cancel("cliente desligou");
+
+  const d = await desfecho;
+  assertEquals(d.cancelled, true, "o cancelamento tem de ficar visível no registro");
+  assertEquals(d.completed, false, "stream cancelado não pode ser contado como concluído");
+  assertEquals(d.usage, null, "sem uso declarado, o consumo é DESCONHECIDO");
+  assertEquals(vezes(), 1, "cancelar depois de encerrar não pode registrar duas vezes");
+});
+
+Deno.test("IA-053 medirStream: falha no meio do stream vira registro com erro", async () => {
+  let leituras = 0;
+  const quebrado = new ReadableStream<Uint8Array>({
+    pull(controlador) {
+      leituras += 1;
+      if (leituras === 1) {
+        controlador.enqueue(codificador.encode('data: {"choices":[]}\n\n'));
+        return;
+      }
+      controlador.error(new Error("conexao caiu"));
+    },
+  });
+
+  let resolver: ((d: StreamOutcome) => void) | null = null;
+  const desfecho = new Promise<StreamOutcome>((r) => {
+    resolver = r;
+  });
+  const medido = medirStream(quebrado, (d) => resolver?.(d));
+  assert(medido !== null);
+
+  const leitor = medido!.getReader();
+  await leitor.read();
+  let lancou = false;
+  try {
+    await leitor.read();
+  } catch {
+    lancou = true;
+  }
+  assert(lancou, "a falha do stream tem de chegar ao consumidor");
+
+  const d = await desfecho;
+  assertEquals(d.error, "conexao caiu");
+  assertEquals(d.completed, false);
+  assertEquals(d.cancelled, false);
+  assertEquals(d.usage, null);
+});
+
+Deno.test("IA-053 logAiUsage: consumo não medido grava NULL, e não zero", async () => {
+  const restaurarEnv = stubEnv();
+  const { capturas, restaurar } = stubFetch();
+
+  try {
+    await logAiUsageDetached({ ...ENTRADA, usageUnknown: true, status: "success" });
+
+    const linha = linhaEnviada(capturas);
+    assert(linha !== null, "nenhuma linha foi enviada ao PostgREST");
+    assertEquals(linha!.input_tokens, null, "consumo não medido virou 0: o relatório vai cobrar zero");
+    assertEquals(linha!.output_tokens, null, "consumo não medido virou 0");
+    assertEquals((linha!.metadata as Record<string, unknown>).usage_unknown, true);
+    assert(houveInsert(capturas), "a execução de streaming tem de ser registrada mesmo sem medição");
+  } finally {
+    restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-053 logAiUsage: consumo medido grava o número e NÃO marca unknown", async () => {
+  const restaurarEnv = stubEnv();
+  const { capturas, restaurar } = stubFetch();
+
+  try {
+    await logAiUsageDetached({ ...ENTRADA, inputTokens: 0, outputTokens: 45 });
+
+    const linha = linhaEnviada(capturas);
+    assert(linha !== null, "nenhuma linha foi enviada ao PostgREST");
+    assertEquals(linha!.input_tokens, 0, "zero medido é um número, não ausência");
+    assertEquals(linha!.output_tokens, 45);
+    assert(
+      !("usage_unknown" in ((linha!.metadata ?? {}) as Record<string, unknown>)),
+      "medição não pode ser marcada como desconhecida",
+    );
+  } finally {
+    restaurar();
+    restaurarEnv();
+  }
 });
