@@ -101,7 +101,20 @@ export async function handleTalkxSend(
         if (roleError || isPrivileged !== true) {
           return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
         }
-        actorId = user.id;
+        // X025: a transição grava `actor_id`, que é FK para `profiles.id` — logo
+        // o ator tem de ser o profiles.id do JWT, NÃO o auth.users.id. Perfil
+        // ausente/inativo ⇒ ator nulo (o evento sai sem autor, como no worker).
+        const { data: actorProfile, error: actorProfileError } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .maybeSingle();
+        if (actorProfileError) {
+          log.warn("Falha ao resolver o perfil do ator da transição", { correlationId, error: actorProfileError.message });
+        } else if (actorProfile && typeof (actorProfile as { id?: unknown }).id === "string") {
+          actorId = (actorProfile as { id: string }).id;
+        }
       }
     }
 
@@ -263,15 +276,33 @@ export async function handleTalkxSend(
 
     const campaignAction = action ?? "start";
 
+    // X025: status ATUAL da conexão para o evento `connection_failed`. O SELECT
+    // que valida o envio filtra por `status = 'connected'` e, numa queda, volta
+    // vazio — por isso a leitura do status é feita SEM esse filtro.
+    const readConnectionStatus = async (connectionId: unknown): Promise<string> => {
+      if (typeof connectionId !== "string") return "unknown";
+      const { data } = await supabase
+        .from("whatsapp_connections").select("status").eq("id", connectionId).maybeSingle();
+      const status = (data as { status?: unknown } | null)?.status;
+      return typeof status === "string" ? status : "unknown";
+    };
+
     // Pause/cancel share the same locked database transition used by start.
     // An update without this lock could resurrect a campaign cancelled by a
     // concurrent request between its read and write.
     if (campaignAction === "pause" || campaignAction === "cancel") {
+      // X025: o motivo vem do corpo e vira a mensagem do evento `paused`; o
+      // servidor não aceita motivo acima de 500 caracteres (mesmo teto do resto
+      // do motor).
+      const pauseReason = typeof reason === "string" ? reason : null;
+      if (pauseReason !== null && pauseReason.length > 500) {
+        return new Response(JSON.stringify({ error: "reason_too_long" }), { status: 400, headers });
+      }
       const { data, error } = await supabase.rpc("transition_talkx_campaign", {
         p_campaign_id: campaignId,
         p_action: campaignAction,
         p_actor_id: actorId,
-        p_pause_reason: reason ?? null,
+        p_pause_reason: pauseReason,
       });
       if (error) {
         return new Response(JSON.stringify({ error: error.message }), { status: 409, headers });
@@ -808,11 +839,15 @@ export async function handleTalkxSend(
               p_pause_reason: "connection_lost",
             });
           } catch { /* já pausada ou outro estado — ignora */ }
-          await supabase.from("talkx_campaign_events").insert({
-            campaign_id: campaignId,
-            event_type: "connection_failed",
-            message: "Falha de conexão",
-          }).catch(() => {});
+          // X025: grava 1 evento `connection_failed` com o status lido da conexão.
+          const connectionStatus = await readConnectionStatus(campaignRow.whatsapp_connection_id);
+          try {
+            await supabase.from("talkx_campaign_events").insert({
+              campaign_id: campaignId,
+              event_type: "connection_failed",
+              message: `Falha de conexão (status: ${connectionStatus})`,
+            });
+          } catch { /* timeline é best-effort */ }
           return new Response(JSON.stringify({ error: "WhatsApp connection lost: campaign paused" }), { status: 409, headers });
         }
 
@@ -888,6 +923,7 @@ export async function handleTalkxSend(
           // a campanha inteira).
           const customFieldsByContact = await loadCustomFieldsByContact(processRows);
 
+          const blacklistedBeforeBatch = state.blacklisted;
           let index = 0;
           for (; index < processRows.length; index++) {
             // Não começa destinatário novo se o tempo restante não cobre o
@@ -895,6 +931,19 @@ export async function handleTalkxSend(
             if (remainingBudgetMs() < minNeededMs()) break;
             const step = await runRecipient(state, processRows[index], customFieldsByContact);
             if (step === "stop") break;
+          }
+          // X025: ao FIM de cada lote, grava 1 evento AGREGADO quando houve
+          // pulados por supressão. Antes o contador só existia em memória e a
+          // timeline nunca registrava esses pulos.
+          const skippedBySuppression = state.blacklisted - blacklistedBeforeBatch;
+          if (skippedBySuppression > 0) {
+            try {
+              await supabase.from("talkx_campaign_events").insert({
+                campaign_id: campaignId,
+                event_type: "skipped_suppressed",
+                message: `${skippedBySuppression} destinatário(s) pulado(s) por supressão`,
+              });
+            } catch { /* timeline é best-effort */ }
           }
           if (index < processRows.length) {
             remaining = processRows.length - index;
@@ -1010,12 +1059,15 @@ export async function handleTalkxSend(
           p_pause_reason: "connection_lost",
         });
       } catch { /* já pausada ou outro estado — ignora */ }
-      // V19: evento connection_failed alimenta a timeline ("Falha de conexão").
-      await supabase.from("talkx_campaign_events").insert({
-        campaign_id: campaignId,
-        event_type: "connection_failed",
-        message: "Falha de conexão",
-      }).catch(() => {});
+      // X025: grava 1 evento connection_failed com o status lido da conexão.
+      const connectionStatus = await readConnectionStatus(campaign.whatsapp_connection_id);
+      try {
+        await supabase.from("talkx_campaign_events").insert({
+          campaign_id: campaignId,
+          event_type: "connection_failed",
+          message: `Falha de conexão (status: ${connectionStatus})`,
+        });
+      } catch { /* timeline é best-effort */ }
       return new Response(JSON.stringify({ error: "WhatsApp connection lost: campaign paused" }), { status: 409, headers });
     }
 

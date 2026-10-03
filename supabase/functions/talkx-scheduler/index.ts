@@ -270,18 +270,9 @@ export async function handleTalkxScheduler(
         results.push({ campaignId: campaign.id, name: campaign.name, success: accepted, action: isResume ? 'resume' : 'start', result });
         if (accepted) {
           log.info(`Campaign ${isResume ? 'resumed' : 'started'}: ${campaign.name} (${campaign.id})`);
-          if (isResume) {
-            // V03: rastro na trilha da campanha. Falha aqui não derruba a retomada
-            // -- o envio já foi aceito; o rastro é secundário e fica no log.
-            const { error: eventError } = await supabase.from("talkx_campaign_events").insert({
-              campaign_id: campaign.id,
-              event_type: "resumed_auto",
-              message: campaign.pauseReason === "connection_lost"
-                ? "Retomada automática: conexão do WhatsApp restabelecida"
-                : "Retomada automática: janela de envio aberta",
-            });
-            if (eventError) log.warn(`Falha ao registrar evento resumed_auto (${campaign.id})`, { error: eventError.message });
-          }
+          // X025: o evento 'resumed_auto' passou a ser gravado pela própria
+          // transição (transition_talkx_campaign, X024). O scheduler NÃO insere
+          // mais o evento — antes ele duplicava a linha na timeline.
         } else if (isResume) {
           log.warn(`Paused campaign was not resumed: ${campaign.name} (${campaign.id})`, { httpStatus: response.status });
         } else {

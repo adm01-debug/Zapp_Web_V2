@@ -397,11 +397,16 @@ export async function processRecipient(
         });
         if (pauseError) throw new Error(`talkx_campaign_auto_pause_failed: ${pauseError.message}`);
         if (autoPauseReason === "connection_lost") {
+          // X025: 1 evento com o status lido da conexão (antes a mensagem era
+          // fixa e não dizia em que estado a conexão estava).
+          const readStatus = typeof beforeSendConnection?.status === "string"
+            ? beforeSendConnection.status
+            : "unknown";
           try {
             await supabase.from("talkx_campaign_events").insert({
               campaign_id: campaignId,
               event_type: "connection_failed",
-              message: "Falha de conexão",
+              message: `Falha de conexão (status: ${readStatus})`,
             });
           } catch { /* evento de timeline e best-effort */ }
         }
