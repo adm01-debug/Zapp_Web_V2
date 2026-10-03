@@ -21,7 +21,9 @@ test.beforeEach(async ({ page }, testInfo) => {
   await page.addInitScript(() => { (window as Window & { __BOOT_DEADLINE_MS?: number }).__BOOT_DEADLINE_MS = 60000; });
   await mockEmailNavy(page, {
     includeExtreme: testInfo.title.includes('corpus extremo'),
-    crmContext: testInfo.title.includes('CRM completo') ? 'available' : testInfo.title.includes('escolha explícita CRM') ? 'ambiguous' : undefined,
+    crmContext: testInfo.title.includes('CRM completo') ? 'available'
+      : testInfo.title.includes('escolha explícita CRM') ? 'ambiguous'
+        : testInfo.title.includes('CRM sem permissão') ? 'permission_denied' : undefined,
   });
 });
 
@@ -218,14 +220,43 @@ test('escolha explícita CRM não vincula automaticamente e resolve a empresa se
   await expect(page.getByRole('button', { name: 'Vincular empresa ao contato' })).toBeVisible();
 });
 
+test('escolha explícita CRM envia o vínculo somente após confirmação e reflete a persistência', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/?view=email-chat');
+  await page.getByText('Preview deployment failed for departamento-pessoal-v3').first().click();
+  await page.getByRole('button', { name: 'Outra Empresa' }).click();
+  await expect(page.getByText('Outra Empresa', { exact: true })).toBeVisible();
+  const linkResponse = page.waitForResponse(response => {
+    if (!response.url().includes('/functions/v1/crm-integration')) return false;
+    const body = response.request().postDataJSON() as { action?: string; externalContactId?: string };
+    return body.action === 'linkEmailContactCompany' && body.externalContactId === 'crm-contact-other';
+  });
+  await page.getByRole('button', { name: 'Vincular empresa ao contato' }).click();
+  await linkResponse;
+  await expect(page.getByText('Empresa vinculada', { exact: true })).toBeVisible();
+});
+
 test('escolha explícita CRM funciona para conversa sem contato local e não oferece vínculo persistente', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/?view=email-chat');
   await page.getByText('Alerta sobre término da cotação').click();
   await expect(page.getByRole('region', { name: 'Escolher empresa CRM' })).toBeVisible();
   await page.getByRole('button', { name: 'Outra Empresa' }).click();
-  await expect(page.getByText('Empresa Exemplo', { exact: true })).toBeVisible();
+  await expect(page.getByText('Outra Empresa', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Vincular empresa ao contato' })).toHaveCount(0);
+});
+
+test('CRM desativado não simula empresa ausente', async ({ page }) => {
+  await page.goto('/?view=email-chat');
+  await page.getByText('Preview deployment failed for departamento-pessoal-v3').first().click();
+  await expect(page.getByText(/integração crm desativada/i)).toBeVisible();
+});
+
+test('CRM sem permissão informa a restrição sem expor dados da empresa', async ({ page }) => {
+  await page.goto('/?view=email-chat');
+  await page.getByText('Preview deployment failed for departamento-pessoal-v3').first().click();
+  await expect(page.getByText(/não tem permissão para consultar os dados empresariais/i)).toBeVisible();
+  await expect(page.getByText('Empresa Exemplo', { exact: true })).toHaveCount(0);
 });
 
 test('marcadores Gmail reais podem ser gerenciados sem envio externo real', async ({ page }) => {
