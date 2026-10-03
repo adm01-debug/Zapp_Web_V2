@@ -14,7 +14,7 @@ export function AIUsageDashboard() {
   const {
     logs, isLoading, refetch, timeFilter, setTimeFilter,
     logsPage, setLogsPage, logsTotal, profileMap, stats,
-    cobertura, filtros,
+    cobertura, filtros, custoTexto,
     userUsage, functionUsage, timelineData,
   } = useAIUsageDashboard();
 
@@ -116,6 +116,21 @@ export function AIUsageDashboard() {
           )}
           {cobertura.chamadas_sem_tokens > 0 && <> • {cobertura.chamadas_sem_tokens.toLocaleString()} sem medição de tokens</>}
           {filtros?.balde_segundos ? <> • baldes de {Math.round(filtros.balde_segundos / 60)}min</> : null}
+        </p>
+      )}
+
+      {/* Custo do período (IA-055): a tarifa aplicada é a VIGENTE no instante de
+          cada registro, resolvida no servidor. Sem tarifa cadastrada ou sem
+          moeda única, a tela diz isso — e não mostra zero, porque zero afirma
+          "mediu e deu zero". */}
+      {custoTexto && (
+        <p className="text-xs text-muted-foreground">
+          {custoTexto.medido
+            ? <>custo medido {custoTexto.medido}</>
+            : <>sem total de custo{custoTexto.variasMoedas ? ` (moedas ${custoTexto.variasMoedas} não são somadas)` : ' (nenhuma chamada com tarifa aplicável)'}</>}
+          {custoTexto.interno && <> • interno {custoTexto.interno}</>}
+          {custoTexto.reconciliado && <> • reconciliado {custoTexto.reconciliado}</>}
+          {custoTexto.semTarifa > 0 && <> • {custoTexto.semTarifa.toLocaleString()} chamadas sem tarifa aplicável</>}
         </p>
       )}
     </div>
