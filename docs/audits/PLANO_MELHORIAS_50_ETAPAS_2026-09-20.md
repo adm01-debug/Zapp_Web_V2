@@ -392,7 +392,12 @@ Maior chunk inicial restante. Medir quanto o entry realmente usa; candidatos: ad
 - [x] Meta: initial-js ≤ 300 KB **ou** justificativa técnica por escrito — ✅ 03/10, **pela segunda via**, com dois experimentos medidos: (1) separar `framer-motion` em chunk próprio → **338,1 KB** (piorou 0,3); (2) remover o agrupamento manual → **439,5 KB** (estoura o budget: o chunk manual é o que *segura* o initial). Chegar a ≤300 exige reescrever as animações de navegação/template sem `framer-motion` — muda comportamento, é trabalho próprio. **Estado atual: 337,8 KB** com margem de só 3,2 KB (achado registrado no relatório)
 
 ### E35 🟢 Prefetch das rotas quentes
-- [ ] `modulepreload`/prefetch para Inbox e Chat medido (sem regredir initial)
+- [x] `modulepreload`/prefetch para Inbox e Chat **medido, sem regredir initial** — ✅ 03/10.
+  Novo `HotRoutePrefetcher` (chunk próprio de 9,8 KB, fora do entry) pré-carrega em tempo ocioso
+  `ChatPanel` (184 KB), `RealtimeInboxView`, `TeamChatView`, `EmailChatInbox` e `DashboardView`;
+  respeita `saveData`/2g; 7 testes com prova de mutação. **JS inicial: 337,8 KB → 337,8 KB** (budget 341).
+  Ver `docs/audits/prefetch-views-quentes-2026-10-03.md`. A correlação com tempo de navegação não foi
+  medida (exige browser) — registrado no relatório.
 
 ### E36 🟢 Web-vitals reais × alvos do budget
 `performance-budget.json` tem seção `web-vitals` sem medição ligada.
