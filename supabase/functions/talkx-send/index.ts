@@ -353,23 +353,56 @@ export async function handleTalkxSend(
     // o mais antigo como canônico em vez de deixar o {{link}} sem substituição.
     // X020: a base da URL passa a vir de TALKX_LINK_BASE_URL (sem o secret,
     // mantém a URL atual do projeto). O secret nunca é interpolado no texto.
-    const loadTrackingUrlFor = async (): Promise<(recipientId: string) => string | undefined> => {
-      const { data: trackingLink } = await supabase
+    // X022: {{link:rotulo}} referencia um link pelo rótulo — vários por mensagem.
+    // Com o domínio próprio, a URL é /l/:slug (rewrite no vercel.json); sem ele,
+    // cai no caminho direto da edge (?s=...&r=...).
+    const loadTrackingLinks = async (): Promise<{
+      trackingUrlFor: (recipientId: string) => string | undefined;
+      linksByLabelFor: (recipientId: string) => Record<string, string>;
+    }> => {
+      const { data: links } = await supabase
         .from("talkx_links")
-        .select("slug")
+        .select("slug, label")
         .eq("campaign_id", campaignId)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
+        .order("created_at", { ascending: true });
       const configuredBase = (Deno.env.get("TALKX_LINK_BASE_URL") ?? "").trim().replace(/\/+$/, "");
-      const linkBase = configuredBase.length > 0
-        ? `${configuredBase}/functions/v1/talkx-link`
-        : `${supabaseUrl}/functions/v1/talkx-link`;
+      const urlFor = (slug: string, recipientId: string) =>
+        configuredBase.length > 0
+          ? `${configuredBase}/l/${encodeURIComponent(slug)}?r=${encodeURIComponent(recipientId)}`
+          : `${supabaseUrl}/functions/v1/talkx-link?s=${encodeURIComponent(slug)}&r=${encodeURIComponent(recipientId)}`;
+      const rows = (links ?? []) as { slug?: unknown; label?: unknown }[];
+      const oldestSlug = typeof rows[0]?.slug === "string" ? rows[0].slug : undefined;
+      const slugByLabel = new Map<string, string>();
+      for (const row of rows) {
+        if (typeof row.slug === "string" && typeof row.label === "string" && row.label.trim()) {
+          slugByLabel.set(row.label.trim().toLowerCase(), row.slug);
+        }
+      }
       const trackingUrlFor = (recipientId: string) =>
-        trackingLink?.slug
-          ? `${linkBase}?s=${encodeURIComponent(trackingLink.slug)}&r=${encodeURIComponent(recipientId)}`
-          : undefined;
-      return trackingUrlFor;
+        oldestSlug ? urlFor(oldestSlug, recipientId) : undefined;
+      const linksByLabelFor = (recipientId: string) => {
+        const out: Record<string, string> = {};
+        for (const [label, slug] of slugByLabel) out[label] = urlFor(slug, recipientId);
+        return out;
+      };
+      return { trackingUrlFor, linksByLabelFor };
+    };
+
+    // X022: rótulos de link cadastrados na campanha. {{link:rotulo}} com rótulo
+    // registrado é "known" no lançamento; rótulo não cadastrado vira "unknown" e
+    // bloqueia o lançamento (CAP-074) — nunca sai "[link:rotulo]" no cliente.
+    const loadLinkLabels = async (): Promise<Record<string, string>> => {
+      const { data } = await supabase
+        .from("talkx_links")
+        .select("label")
+        .eq("campaign_id", campaignId);
+      const out: Record<string, string> = {};
+      for (const row of (data ?? []) as { label?: unknown }[]) {
+        if (typeof row.label === "string" && row.label.trim() !== "") {
+          out[row.label.trim().toLowerCase()] = "https://talkx-link.example/__probe__";
+        }
+      }
+      return out;
     };
 
     // X020: nomes de campos customizados que EXISTEM no CRM (qualquer contato).
@@ -520,6 +553,7 @@ export async function handleTalkxSend(
       evolutionKey: string;
       supabaseUrl: string;
       trackingUrlFor: (recipientId: string) => string | undefined;
+      linksByLabelFor: (recipientId: string) => Record<string, string>;
       mediaForSend: () => Promise<string>;
     }
 
@@ -603,6 +637,7 @@ export async function handleTalkxSend(
         supabaseUrl: state.supabaseUrl,
         workerId: state.workerId,
         trackingUrlFor: state.trackingUrlFor,
+        linksByLabelFor: state.linksByLabelFor,
         customFieldsByContact,
         log,
         correlationId,
@@ -687,6 +722,7 @@ export async function handleTalkxSend(
       dayRemaining: number,
       businessHours: { start?: string; end?: string; days?: number[] } | null,
       trackingUrlFor: (recipientId: string) => string | undefined,
+      linksByLabelFor: (recipientId: string) => Record<string, string>,
     ): Promise<EngineState> => {
       // whatsapp-media e bucket privado: a GO so baixa via signed URL (TTL 300s). Uma
       // assinatura serve varios destinatarios; reassina depois de 240s porque campanhas
@@ -719,6 +755,7 @@ export async function handleTalkxSend(
         evolutionKey,
         supabaseUrl,
         trackingUrlFor,
+        linksByLabelFor,
         mediaForSend,
       };
     };
@@ -806,10 +843,10 @@ export async function handleTalkxSend(
           day_sent: sentTodayTotal,
         } = budget;
 
-        const trackingUrlFor = await loadTrackingUrlFor();
+        const { trackingUrlFor, linksByLabelFor } = await loadTrackingLinks();
         const state = await buildEngineState(
           campaignRow, workerId, initialInstanceId, instanceToken,
-          dailyLimit, sentTodayTotal, minuteLimit, minuteRemaining, dayRemaining, businessHours, trackingUrlFor,
+          dailyLimit, sentTodayTotal, minuteLimit, minuteRemaining, dayRemaining, businessHours, trackingUrlFor, linksByLabelFor,
         );
 
         const parsedBatchSize = Number.parseInt(Deno.env.get("TALKX_BATCH_SIZE") ?? "", 10);
@@ -929,6 +966,7 @@ export async function handleTalkxSend(
       const knownCustomFieldNames = await loadKnownCustomFieldNames();
       const presenceValues: Record<string, string> = {};
       for (const name of knownCustomFieldNames) presenceValues[name] = "x";
+      const linkLabels = await loadLinkLabels();
       const templateTexts = await loadCampaignTemplateTexts(campaign as Record<string, unknown>);
       const unknownVariableNames = new Set<string>();
       for (const templateText of templateTexts) {
@@ -941,6 +979,7 @@ export async function handleTalkxSend(
           presenceValues,
           probeTimeZone,
           "https://talkx-link.example/__probe__",
+          linkLabels,
         );
         for (const name of probe.unknown) unknownVariableNames.add(name);
       }
