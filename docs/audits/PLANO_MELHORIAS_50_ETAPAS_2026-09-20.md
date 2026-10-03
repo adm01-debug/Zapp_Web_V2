@@ -416,7 +416,15 @@ Maior chunk inicial restante. Medir quanto o entry realmente usa; candidatos: ad
 - [ ] Avatares/anexos do Inbox usando variantes CF quando a URL for `imagedelivery.net`
 
 ### E38 🟢 React 19.3: varredura de deprecações
-- [ ] Build/test sem warnings de API deprecada; hooks custom revisados para concurrent safety
+- [x] Build/test sem warnings de API deprecada; hooks custom revisados para concurrent safety — ✅ 03/10.
+  Varredura mecanica: ZERO ocorrencias em producao de ReactDOM.render/hydrate/findDOMNode/
+  unmountComponentAtNode/componentWill*/createFactory/propTypes/defaultProps; build sem warning
+  de deprecacao. **Achado real**: o `StrictMode` NUNCA esteve montado, embora o codigo tivesse
+  defesas escritas PARA ele (useSupabaseRealtime:94, VoIPPanel:71). Ligado no `main.tsx` (so dev)
+  e provado com 3 testes montando o hook de realtime sob StrictMode + prova de mutacao
+  (desligar o compartilhamento de canal derruba 2; ignorar `enabled` derruba 1).
+  Ver `docs/audits/react19-e38-2026-10-03.md`. Os 421 hooks nao foram revisados um a um —
+  o detector ficou ligado para pegar os proximos.
 
 ## F6 — Qualidade de código e testes (E39–E43)
 
