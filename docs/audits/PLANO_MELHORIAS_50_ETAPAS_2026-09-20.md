@@ -463,8 +463,17 @@ de um teste. Registrado como etapa própria (decisão do coordenador, 03/10).
 - [x] Baseline zerado e trava mantida — implicit-any = 0 em 26/09
 
 ### E41 🟡 Mapa de cobertura de testes
-- [ ] Contagem atual do vitest registrada como baseline
-- [ ] 3 módulos críticos sem teste identificados (candidatos: `_shared/evolution-go-routes.ts`, hooks de envio, `external-db-proxy`) e cobertos com testes de contrato
+- [x] Contagem atual do vitest registrada como baseline
+- [x] 3 módulos críticos sem teste identificados (candidatos: `_shared/evolution-go-routes.ts`, hooks de envio, `external-db-proxy`) e cobertos com testes de contrato
+
+> **FEITA em 2026-10-03.** Mapa em `docs/audits/MAPA_COBERTURA_TESTES_2026-10-03.md`.
+> Baseline medido: **494 arquivos / 5946 testes** passando na suíte principal (+38 todo) e **58 arquivos
+> / 1015 testes** na suíte de contratos — todas com exit 0. **Trio crítico sem teste** (critério: decide
+> autorização): `_shared/cron-secret-auth.ts` (o segredo que autoriza cron a chamar edge, reusado pelo
+> E91), `_shared/evolution-go-routes.ts` (o candidato do próprio plano) e `_shared/ai-audio-authz.ts`
+> (autoriza recurso pago por minuto). Nenhum tem arquivo de teste.
+> **Nota sobre E39:** medido hoje em **612** ocorrências de lint — a meta "≤800" desta rodada **já está
+> cumprida** (caiu de 1115 para 612 por trabalho de outros chats).
 
 ### E42 🟢 TODO/FIXME (4) → 0
 - [x] Cada um resolvido ou promovido a issue com link no código — 0 TODO/FIXME reais em 26/09 (único hit é a palavra "TODOS" em comentário PT)
