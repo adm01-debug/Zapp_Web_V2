@@ -46,9 +46,22 @@ test('db-live-guard runs psql without the connection string in argv (same regres
   // 6 desde a V02 do plano Talk X V3 (2026-09-29): o passo que verifica o
   // contrato de transicao de campanha entrou pelo mesmo wrapper. Antes eram 5
   // (V01, security_invoker da view de metricas).
-  // A contagem e exata de proposito -- uma invocacao nova de psql que nao
-  // passe pelo wrapper quebra este teste em vez de vazar a senha.
-  assert.equal((workflow.match(/node scripts\/db-audit\/psql-safe\.mjs/g) || []).length, 6);
+  //
+  // E85 (03/10/2026): a contagem EXATA saiu. Ela quebrava a cada adicao legitima de
+  // check pelo mesmo wrapper (o de fixtures de E2E entrou assim), e nao era ela que
+  // protegia o que importa -- uma invocacao de psql FORA do wrapper, que vazaria a
+  // senha no argv. Essa invariante passa a ser verificada direto abaixo, como o teste
+  // do db-migrate ja faz desde a E62.
+  assert.ok(
+    (workflow.match(/node scripts\/db-audit\/psql-safe\.mjs/g) || []).length >= 6,
+    'algum check de banco saiu do wrapper',
+  );
+  assert.match(workflow, /-f scripts\/db-audit\/check-e2e-fixtures\.sql/, 'o check de fixtures tem de ser executado');
+  const psqlSemWrapper = workflow
+    .split('\n')
+    .filter((linha) => !linha.trimStart().startsWith('#'))
+    .filter((linha) => /(^|\s)psql(\s|$)/.test(linha) && !linha.includes('psql-safe'));
+  assert.deepEqual(psqlSemWrapper, [], 'invocacao de psql fora do wrapper psql-safe.mjs');
   assert.ok(fs.existsSync(new URL('../db-audit/psql-safe.mjs', import.meta.url)));
   assert.ok(fs.existsSync(new URL('../db-audit/psql-safe.test.mjs', import.meta.url)));
 });

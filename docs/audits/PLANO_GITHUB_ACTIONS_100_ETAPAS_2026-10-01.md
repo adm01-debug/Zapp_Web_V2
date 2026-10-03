@@ -697,6 +697,18 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   documentar em `e2e/fixtures/README.md` **e** criar `scripts/db-audit/e2e-fixtures.test.sh` que prova a presença
   deles no banco (rodado no `db-live-guard` agendado). Verificação: remover um fixture num Postgres descartável → teste
   ❌.
+  - ⚠️ **Nota de execução (03/10/2026) — o alvo desta etapa estava errado nos dois pontos, e a execução corrigiu.**
+    (1) **A documentação já existe**: os três fixtures estão em `e2e/README.md` (tabela na linha 134, com o aviso
+    "NUNCA apagar o segmento `621521f3-…`") e os IDs vivem nas constantes do código (`E2E_FIXTURE_CONTACT_ID`,
+    `E2E_TALKX_CONNECTION_ID`, `E2E_TALKX_SEGMENT_ID`). Criar um `e2e/fixtures/README.md` com os mesmos IDs faria a
+    verdade se bifurcar. **Não se cria documento novo** — a metade "documentar" está cumprida em `e2e/README.md`.
+    (2) **O caminho de execução não existe**: o `db-live-guard` **não roda `*.test.sh`** (como o plano supõe); ele roda
+    `psql-safe.mjs -X -v ON_ERROR_STOP=1 -f <check>.sql`. Um `.test.sh` ali seria igual aos 106 testes órfãos de
+    `scripts/db-audit/` que a E62 encontrou — existe no repositório, o CI nunca toca. O correto é
+    **`scripts/db-audit/check-e2e-fixtures.sql` + o passo no `db-live-guard.yml`** (sem o passo, o arquivo não vale
+    nada). Medição que só a varredura dá: a conexão de E2E vive em **`whatsapp_connections`**, não em
+    `talkx_connections`; e o check exige `status='connected'` **e** `instance_id` preenchido, que é o que o
+    `useCampaignEditor` filtra — linha existindo com status `disconnected` ainda quebra o spec do wizard.
 - [ ] **E86** · D ⚠️ · G-05 · Avaliar `supabase start` + seed mínimo em CI para a suíte logada (`gen-types.sh --local`
   já prevê). Custo: ~3 min de boot por run; ganho: E2E sem tocar produção nem fixtures permanentes. Decisão após E79
   mostrar o custo atual.
