@@ -56,17 +56,37 @@ jobs:
           node-version: '24'
 
       - name: 🧄 Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version: '1.4.0'
+        run: |
+          BUN_VERSION="1.4.0"
+          bun_asset="bun-linux-x64.zip"
+          bun_sha256="2d03fb5fb83ac8b567aca0a281b2ce1a1a19d488f56c2968d88c3f25e92fe452"
+          bun_dir="$RUNNER_TEMP/bun"
+          mkdir -p "$bun_dir"
+          curl --proto '=https' --tlsv1.2 -sSL \
+            -o "$bun_dir/$bun_asset" \
+            "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${bun_asset}"
+          echo "${bun_sha256}  ${bun_dir}/${bun_asset}" | sha256sum --check --strict
+          unzip -q "$bun_dir/$bun_asset" -d "$bun_dir"
+          ln -sf "$bun_dir/bun-linux-x64/bun" "$bun_dir/bun-linux-x64/bunx"
+          echo "$bun_dir/bun-linux-x64" >> "$GITHUB_PATH"
 
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🦕 Setup Deno
-        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
-        with:
-          deno-version: '2.9.5'
+        run: |
+          DENO_VERSION="v2.9.5"
+          deno_asset="deno-x86_64-unknown-linux-gnu.zip"
+          deno_sha256="8b010a3b1a4a0188a67cdb8a7a27348b2a501af78aec7fc74f2ace167368d530"
+          deno_dir="$RUNNER_TEMP/deno"
+          mkdir -p "$deno_dir"
+          curl --proto '=https' --tlsv1.2 -sSL \
+            -o "$deno_dir/$deno_asset" \
+            "https://github.com/denoland/deno/releases/download/${DENO_VERSION}/${deno_asset}"
+          echo "${deno_sha256}  ${deno_dir}/${deno_asset}" | sha256sum --check --strict
+          unzip -q "$deno_dir/$deno_asset" -d "$deno_dir"
+          chmod +x "$deno_dir/deno"
+          echo "$deno_dir" >> "$GITHUB_PATH"
 
       - name: 🦕 Typecheck das Edge Functions (deno check)
         run: >-
@@ -200,9 +220,19 @@ jobs:
           persist-credentials: false
 
       - name: 🧄 Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version: '1.4.0'
+        run: |
+          BUN_VERSION="1.4.0"
+          bun_asset="bun-linux-x64.zip"
+          bun_sha256="2d03fb5fb83ac8b567aca0a281b2ce1a1a19d488f56c2968d88c3f25e92fe452"
+          bun_dir="$RUNNER_TEMP/bun"
+          mkdir -p "$bun_dir"
+          curl --proto '=https' --tlsv1.2 -sSL \
+            -o "$bun_dir/$bun_asset" \
+            "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${bun_asset}"
+          echo "${bun_sha256}  ${bun_dir}/${bun_asset}" | sha256sum --check --strict
+          unzip -q "$bun_dir/$bun_asset" -d "$bun_dir"
+          ln -sf "$bun_dir/bun-linux-x64/bun" "$bun_dir/bun-linux-x64/bunx"
+          echo "$bun_dir/bun-linux-x64" >> "$GITHUB_PATH"
 
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
@@ -246,9 +276,19 @@ jobs:
           persist-credentials: false
 
       - name: 🧄 Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version: '1.4.0'
+        run: |
+          BUN_VERSION="1.4.0"
+          bun_asset="bun-linux-x64.zip"
+          bun_sha256="2d03fb5fb83ac8b567aca0a281b2ce1a1a19d488f56c2968d88c3f25e92fe452"
+          bun_dir="$RUNNER_TEMP/bun"
+          mkdir -p "$bun_dir"
+          curl --proto '=https' --tlsv1.2 -sSL \
+            -o "$bun_dir/$bun_asset" \
+            "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${bun_asset}"
+          echo "${bun_sha256}  ${bun_dir}/${bun_asset}" | sha256sum --check --strict
+          unzip -q "$bun_dir/$bun_asset" -d "$bun_dir"
+          ln -sf "$bun_dir/bun-linux-x64/bun" "$bun_dir/bun-linux-x64/bunx"
+          echo "$bun_dir/bun-linux-x64" >> "$GITHUB_PATH"
 
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
@@ -301,9 +341,19 @@ jobs:
           fetch-depth: 0
 
       - name: 🧄 Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version: '1.4.0'
+        run: |
+          BUN_VERSION="1.4.0"
+          bun_asset="bun-linux-x64.zip"
+          bun_sha256="2d03fb5fb83ac8b567aca0a281b2ce1a1a19d488f56c2968d88c3f25e92fe452"
+          bun_dir="$RUNNER_TEMP/bun"
+          mkdir -p "$bun_dir"
+          curl --proto '=https' --tlsv1.2 -sSL \
+            -o "$bun_dir/$bun_asset" \
+            "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${bun_asset}"
+          echo "${bun_sha256}  ${bun_dir}/${bun_asset}" | sha256sum --check --strict
+          unzip -q "$bun_dir/$bun_asset" -d "$bun_dir"
+          ln -sf "$bun_dir/bun-linux-x64/bun" "$bun_dir/bun-linux-x64/bunx"
+          echo "$bun_dir/bun-linux-x64" >> "$GITHUB_PATH"
 
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
@@ -342,9 +392,19 @@ jobs:
           persist-credentials: false
 
       - name: 🧄 Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version: '1.4.0'
+        run: |
+          BUN_VERSION="1.4.0"
+          bun_asset="bun-linux-x64.zip"
+          bun_sha256="2d03fb5fb83ac8b567aca0a281b2ce1a1a19d488f56c2968d88c3f25e92fe452"
+          bun_dir="$RUNNER_TEMP/bun"
+          mkdir -p "$bun_dir"
+          curl --proto '=https' --tlsv1.2 -sSL \
+            -o "$bun_dir/$bun_asset" \
+            "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${bun_asset}"
+          echo "${bun_sha256}  ${bun_dir}/${bun_asset}" | sha256sum --check --strict
+          unzip -q "$bun_dir/$bun_asset" -d "$bun_dir"
+          ln -sf "$bun_dir/bun-linux-x64/bun" "$bun_dir/bun-linux-x64/bunx"
+          echo "$bun_dir/bun-linux-x64" >> "$GITHUB_PATH"
 
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
@@ -428,9 +488,19 @@ jobs:
 
       - name: 🧄 Setup Bun
         if: steps.paths.outputs.map_changed == 'true'
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version: '1.4.0'
+        run: |
+          BUN_VERSION="1.4.0"
+          bun_asset="bun-linux-x64.zip"
+          bun_sha256="2d03fb5fb83ac8b567aca0a281b2ce1a1a19d488f56c2968d88c3f25e92fe452"
+          bun_dir="$RUNNER_TEMP/bun"
+          mkdir -p "$bun_dir"
+          curl --proto '=https' --tlsv1.2 -sSL \
+            -o "$bun_dir/$bun_asset" \
+            "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${bun_asset}"
+          echo "${bun_sha256}  ${bun_dir}/${bun_asset}" | sha256sum --check --strict
+          unzip -q "$bun_dir/$bun_asset" -d "$bun_dir"
+          ln -sf "$bun_dir/bun-linux-x64/bun" "$bun_dir/bun-linux-x64/bunx"
+          echo "$bun_dir/bun-linux-x64" >> "$GITHUB_PATH"
 
       - name: 📚 Install dependencies
         if: steps.paths.outputs.map_changed == 'true'

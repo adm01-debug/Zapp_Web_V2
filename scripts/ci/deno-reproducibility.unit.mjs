@@ -5,7 +5,8 @@ import fs from 'node:fs';
 const read = name => fs.readFileSync(new URL(name, import.meta.url), 'utf8');
 test('Edge contract CI pins its runtime and isolated frozen lock', () => {
   const workflow = read('../../.github/workflows/ci.yml');
-  assert.match(workflow, /deno-version: '2\.9\.5'/);
+  assert.match(workflow, /DENO_VERSION="v2\.9\.5"/);
+  assert.match(workflow, /8b010a3b1a4a0188a67cdb8a7a27348b2a501af78aec7fc74f2ace167368d530/);
   assert.match(workflow, /deno test --config scripts\/ci\/deno\.json --frozen --allow-env/);
   // E49: lista hardcoded substituída por glob; verificar o glob em vez do path literal
   assert.match(workflow, /supabase\/functions\/\*\*\/\*\.test\.ts/);
