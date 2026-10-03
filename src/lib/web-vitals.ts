@@ -1,9 +1,14 @@
 /**
  * Web Vitals monitoring utility
  * Tracks Core Web Vitals (LCP, FID, CLS, INP, TTFB) and reports to console/analytics
+ *
+ * Os alvos vêm de `performance-budget.json` → seção `web-vitals` (E36). Antes
+ * havia aqui uma cópia dos limiares, que divergia do arquivo sem ninguém notar:
+ * o JSON não era lido por nenhum código. Fonte única agora.
  */
 
 import { getLogger } from '@/lib/logger';
+import performanceBudget from '../../performance-budget.json';
 
 const log = getLogger('WebVitals');
 
@@ -15,20 +20,31 @@ interface WebVitalMetric {
   id: string;
 }
 
-const thresholds = {
-  LCP: { good: 2500, poor: 4000 },
-  FID: { good: 100, poor: 300 },
-  CLS: { good: 0.1, poor: 0.25 },
-  INP: { good: 200, poor: 500 },
-  TTFB: { good: 800, poor: 1800 },
-};
+type VitalName = 'LCP' | 'FID' | 'CLS' | 'INP' | 'TTFB';
 
-function getRating(name: string, value: number): 'good' | 'needs-improvement' | 'poor' {
-  const t = thresholds[name as keyof typeof thresholds];
+interface VitalTarget {
+  /** Limite de "good" — acima disso a métrica pede atenção. */
+  target: number;
+  /** Limite de "poor" — acima disso é falha. */
+  poor: number;
+  unit: string;
+}
+
+/** Alvos de `performance-budget.json` (seção `web-vitals`). */
+const targets = performanceBudget['web-vitals'] as unknown as Record<VitalName, VitalTarget>;
+
+/** Classifica a métrica contra os alvos do budget. Exportado para teste. */
+export function getRating(name: string, value: number): 'good' | 'needs-improvement' | 'poor' {
+  const t = targets[name as VitalName];
   if (!t) return 'good';
-  if (value <= t.good) return 'good';
+  if (value <= t.target) return 'good';
   if (value <= t.poor) return 'needs-improvement';
   return 'poor';
+}
+
+/** Alvos para consulta externa (relatórios/testes). */
+export function getVitalTargets(): Record<VitalName, VitalTarget> {
+  return targets;
 }
 
 // One slot per metric name — at most 5 entries, no unbounded growth.
@@ -41,7 +57,11 @@ function onMetric(metric: WebVitalMetric) {
   const emoji = metric.rating === 'good' ? '🟢' : metric.rating === 'needs-improvement' ? '🟡' : '🔴';
   // CLS is dimensionless (0–1), not milliseconds.
   const unit = metric.name === 'CLS' ? '' : 'ms';
-  log.info(`${emoji} ${metric.name}: ${metric.value.toFixed(metric.name === 'CLS' ? 3 : 0)}${unit} (${metric.rating})`);
+  const alvo = targets[metric.name as VitalName];
+  const contraAlvo = alvo ? ` (alvo ${alvo.target}${alvo.unit === 'score' ? '' : alvo.unit})` : '';
+  log.info(
+    `${emoji} ${metric.name}: ${metric.value.toFixed(metric.name === 'CLS' ? 3 : 0)}${unit}${contraAlvo} — ${metric.rating}`,
+  );
 }
 
 export function initWebVitals() {

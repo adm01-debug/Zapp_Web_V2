@@ -402,6 +402,15 @@ Maior chunk inicial restante. Medir quanto o entry realmente usa; candidatos: ad
 ### E36 🟢 Web-vitals reais × alvos do budget
 `performance-budget.json` tem seção `web-vitals` sem medição ligada.
 - [ ] Vercel Analytics (já ativo) comparado aos alvos; alvos ajustados à realidade
+  **Parcial — 03/10.** A premissa "já ativo" é FALSA: `vercel metrics vercel.speed_insights.*`
+  respondeu **zero datapoints em 90 dias**, no projeto e em todo o time (`--all`), e o Web
+  Analytics também. Instrumentado agora: `@vercel/speed-insights` via módulo lazy
+  (`src/lib/speed-insights.ts`, chunk de 0,43 KB fora do initial) chamado no `main.tsx`.
+  Os alvos deixaram de ter cópia duplicada: `src/lib/web-vitals.ts` passou a LER a seção
+  `web-vitals` do `performance-budget.json` (fonte única, 4 testes com prova de mutação).
+  **Ajustar os alvos à realidade segue ABERTO**: não há um único datapoint de campo para
+  confrontar — a coleta começa neste deploy e leva alguns dias de tráfego. Ver
+  `docs/audits/web-vitals-e36-2026-10-03.md`.
 
 ### E37 🟢 srcSet CF Images fora do catálogo
 - [ ] Avatares/anexos do Inbox usando variantes CF quando a URL for `imagedelivery.net`
