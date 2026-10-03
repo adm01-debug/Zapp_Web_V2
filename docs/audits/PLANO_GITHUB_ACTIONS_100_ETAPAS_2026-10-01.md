@@ -416,6 +416,16 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [ ] **E28** · C · G-10 · `check-pr-workflow-secrets.mjs`: cobrir também `push` com `branches-ignore: main` ou
   `branches: ['**']` (qualquer gatilho que rode código de branch não protegida) — exceção só por lista explícita no
   próprio script com justificativa. Verificação: unit test com o `e2e-talkx-pr.yml` atual → violação; com E27 → OK.
+  > **Medido em 02/10:** o script **já cobria** todos os gatilhos que a E28 pede — sonda direta com
+  > `push: branches-ignore: [main]`, `branches: ['**']` (inline e lista de bloco) e `push:` vazio
+  > reprovam; só `branches: [main]` passa. A verificação da E28 também já existia: teste
+  > `push restrito a branches-ignore (irrestrito)` e o teste de repositório real. **Lacuna real
+  > encontrada e fechada:** faltavam como teste nomeado o caso `branches: ['**']`, o `branches-ignore`
+  > em lista de bloco, e a fixture do gatilho antigo do `e2e-talkx-pr.yml` que comprova a violação —
+  > suíte foi de 33 → **36 testes**. **E27 já estava feita** por outro chat (o gatilho do
+  > `e2e-talkx-pr.yml` hoje é `pull_request:`; o comentário no próprio arquivo registra a remoção de
+  > `E2E_TEST_EMAIL/PASSWORD`). **E23 já estava cumprida**: nenhum dos 16 workflows instala sem
+  > `--frozen-lockfile --ignore-scripts`.
 - [ ] **E29** · B · G-12 · `db-migrate.yml`: adotar o mesmo bloco de `endurecerDestinoTls` + `PGSSLMODE=verify-full`
   dos outros 3 workflows (passo "Provar identidade"), e trocar `supabase db push --db-url "$DESTINO_URL"` por leitura
   via `PGPASSFILE`/`SUPABASE_DB_URL` em `env:` do passo (não argv). Verificação: `ps` no runner durante o dry-run sem
