@@ -48,6 +48,24 @@ describe('FileThumb (etapa 26)', () => {
     expect(row.container.querySelector('img')?.className).toContain('object-cover');
   });
 
+  // E37 — o Inbox passa a aproveitar as variantes do CF Images quando a URL for do CF.
+  it('E37: imagem do CF Images recebe srcSet com as variantes; sem srcSet para as demais', () => {
+    const cf =
+      'https://imagedelivery.net/AbCdEf123/2f8a1c5e-9b3d-4a71-8c22-1e4f6a9b0c33/public';
+    setResolved({ url: cf });
+    const cfRender = render(<FileThumb item={base({ signedUrl: undefined })} size="card" />);
+    const cfImg = cfRender.container.querySelector('img');
+    expect(cfImg?.getAttribute('src')).toBe(cf);
+    expect(cfImg?.getAttribute('srcSet')).toContain('large 1200w');
+    expect(cfImg?.getAttribute('sizes')).toBeTruthy();
+    cfRender.unmount();
+
+    // Mídia do WhatsApp/Evolution e do Supabase Storage não é CF: segue sem srcSet, como antes.
+    setResolved({ url: 'https://evolution.exemplo.com/media/abc.jpg' });
+    const waRender = render(<FileThumb item={base({ signedUrl: undefined })} size="card" />);
+    expect(waRender.container.querySelector('img')?.getAttribute('srcSet')).toBeNull();
+  });
+
   it('erro: exatamente 1 refresh automático e depois placeholder estável', async () => {
     const refresh = vi.fn().mockResolvedValue(null);
     setResolved({ refresh, url: 'https://broken.test/x.png' });

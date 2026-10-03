@@ -413,7 +413,7 @@ Maior chunk inicial restante. Medir quanto o entry realmente usa; candidatos: ad
   `docs/audits/web-vitals-e36-2026-10-03.md`.
 
 ### E37 🟢 srcSet CF Images fora do catálogo
-- [ ] Avatares/anexos do Inbox usando variantes CF quando a URL for `imagedelivery.net`
+- [x] Avatares/anexos do Inbox usando variantes CF quando a URL for `imagedelivery.net` — ✅ 03/10: `cfImagesSrcSet` saiu de `catalogShared.tsx` (era privado, usado só pelo `ProductThumb`) para `src/lib/cfImages.ts` e passou a ser aplicado nos dois renderizadores de imagem do Inbox (`ThumbImage` em `FileThumb.tsx` e `MessageImage` em `ImagePreview.tsx`), com `srcSet`+`sizes` condicionais. **Medição de escopo:** hoje nenhuma superfície do Inbox produz URL de CF — o avatar está no Supabase Storage (`batch-fetch-avatars`) e os anexos vêm do WhatsApp/Evolution; o item é condicional e a mudança é inerte (`null` fora do CF). Prova: 4 testes do helper + caso de componente no `FileThumb` (17/17), mutação derruba só o alvo, e o catálogo segue 82/82 + 10/10.
 
 ### E38 🟢 React 19.3: varredura de deprecações
 - [x] Build/test sem warnings de API deprecada; hooks custom revisados para concurrent safety — ✅ 03/10.
