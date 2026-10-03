@@ -589,18 +589,28 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [ ] **E56** · C · G-04 · `collect-remote.mjs`: teste de regressão com o log real do run 36852598923 (ANSI + stderr +
   "No change found" + versão igual) e com o de 36583351162. Verificação: `node --test` verde; mutante que remove o
   strip de ANSI falha.
-- [ ] **E57** · B · G-28 · `deploy-functions.yml`: input `dry_run: boolean` que executa tudo até o "Deploy" exclusive
+- [x] **E57** · B · G-28 · `deploy-functions.yml`: input `dry_run: boolean` que executa tudo até o "Deploy" exclusive
   e publica o plano (função, digest local × remoto). Verificação: dispatch com `dry_run=true` não altera
   `edge-before.json` vs remoto.
-- [ ] **E58** · B · G-28 · Só reescrever secrets nas edges quando o input `rotate_secrets=true` **ou** quando o
+- [x] **E58** · B · G-28 · Só reescrever secrets nas edges quando o input `rotate_secrets=true` **ou** quando o
   `supabase secrets list` (digest) divergir; em rollback (`source_ref` preenchido) **nunca** reescrever. Verificação:
   deploy normal não chama `supabase secrets set`; log mostra "secrets inalterados".
-- [ ] **E59** · B · G-28 · `--max-time 30` no curl do catálogo (`:222`) e `set -euo pipefail` no topo de todo `run:`
+- [x] **E59** · B · G-28 · `--max-time 30` no curl do catálogo (`:222`) e `set -euo pipefail` no topo de todo `run:`
   multi-linha do workflow. Verificação: `actionlint` (E32) sem avisos de shell.
-- [ ] **E60** · B · G-28 · Tags `edge-deploy/*`: manter só as últimas 50 (passo pós-deploy que apaga as mais antigas
+- [x] **E60** · B · G-28 · Tags `edge-deploy/*`: manter só as últimas 50 (passo pós-deploy que apaga as mais antigas
   via API) **ou** trocar tag por **GitHub Deployment** (`POST /deployments` + status), que é o objeto certo para
   rastreabilidade e aparece em Environments. Recomendação: Deployment. Verificação: aba Deployments do
   `producao-edge-functions` lista o deploy com SHA e run.
+  - ✅ **Cumprida — evidência medida em 03/10/2026** (a marca estava atrasada no plano; o código está em `main` desde
+    a madrugada). As 4 foram entregues por este mesmo executor, uma por PR, e os estados abaixo vêm da API do
+    GitHub (`GET /repos/adm01-debug/Zapp_Web_V2/pulls/<n>`), não de anotação:
+    - **E57** → PR **#1773**, `closed`/merged, merge commit `1d7f9e3001d3e773d2edbba3d4ea24562ee33a7c`.
+    - **E58** → PR **#1768**, `closed`/merged, merge commit `82988a719a7afd0f3552a833ac405086ba2d31bc`.
+    - **E59** → PR **#1761**, `closed`/merged, merge commit `f0a1feb54fca4757b7712bb3283216e91f919a67`.
+    - **E60** → PR **#1775**, `closed`/merged, merge commit `1632c0305d517b48cc9cfc9a095533e7caf14467`.
+    Artefatos conferidos no repositório: `scripts/edge-deploy/deploy-plan.mjs` (dry run), `secrets-scope.mjs`
+    (só reescreve com `rotate_secrets` ou digest divergente), `set -euo pipefail` e `--max-time 30` no
+    `deploy-functions.yml`, e `deployment-record.mjs`/`register-deployment.mjs` (GitHub Deployment em vez de tag).
 - [ ] **E61** · B · G-28 · Rollback automático opcional: input `rollback_on_smoke_failure` (default false) que, se o
   smoke falhar, redispara o deploy da função com `source_ref` = SHA do último deploy ✅ (lido do Deployment de E60).
   Verificação: teste controlado com uma função de smoke propositalmente quebrada em branch de teste — ⚠️ só com
