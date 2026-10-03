@@ -64,19 +64,37 @@ Os dois **só quebram reconstrução a partir dos arquivos** — exatamente o qu
 `notify_due_reminders()` · `column "notified_at"` · `sync_contact_status_on_closure()` ·
 `relation "public.conversations"` · `column "conversation_id"`.
 
-### A inspecionar — 3
+### `cannot change return type` — 3 arquivos INSPECIONADOS: dois deles falharam em produção
 
-`20260925170000_add_reminders_pending_to_tab_counts.sql`,
-`20260928140200_tab_counts_tasks_own.sql` e
-`20260929370000_contacts_soft_delete_and_search_filters.sql` → `cannot change return type of existing
-function`. Pode ser ordem de aplicação ou divergência real; **sozinho, o erro não decide**.
+O erro sozinho não decide se é ordem de aplicação ou divergência real. Fui atrás do mecanismo e depois
+do banco. **Não é artefato de replay: duas dessas migrations falharam no banco canônico também.**
+
+| Arquivo | Mecanismo | Prova em produção |
+|---|---|---|
+| `20260925170000_add_reminders_pending_to_tab_counts.sql` | `add_get_conversation_tab_counts_rpc` (07/09) cria `get_conversation_tab_counts` com **3** colunas; este arquivo tenta `create or replace` **adicionando** `reminders_pending` — e `create or replace` **não muda tipo de retorno**. O `DROP FUNCTION` que evitaria isso está **comentado** no arquivo irmão. | `RETURNS TABLE(tasks_open integer, notes_total integer, files_total integer)` — **3 colunas, sem `reminders_pending`**. A coluna **nunca existiu em produção**. |
+| `20260928140200_tab_counts_tasks_own.sql` | Redefine a **mesma** função — na mesma situação. | Continua valendo a versão de 3 colunas. |
+| `20260929370000_contacts_soft_delete_and_search_filters.sql` | Declara `search_contacts` **sem** as 6 colunas de endereço que `search_contacts_returns_address` (14:00, anterior na ordem) adicionou → o `create or replace` tenta **encolher** o retorno. | `search_contacts` em produção **tem** `address`, `address_number`, `neighborhood`, `city`, `state`, `postal_code`. Produção ficou com a versão **com** endereço; a intenção deste arquivo **não aplicou**. As outras funções do mesmo arquivo (`delete_contact`, `delete_contacts`) aplicaram — **falha parcial**. |
+
+**Impacto dos dois primeiros: zero.** O app já sabe — `src/hooks/chat/useConversationTabCounts.ts`
+diz, em comentário, que o *"types.ts gerado ainda não reflete a **remoção** de reminders_pending"*, e
+não consome o campo. A dívida fica: migration que nunca aplicou, `types.ts` defasado e uma feature que
+existe no papel mas não no banco.
+
+**Impacto do terceiro: a medir.** Se os filtros de soft-delete pretendidos por esse arquivo chegaram
+por outro caminho é investigação própria — **não afirmo sem medir**.
+
 
 ## O que falta para o replay ficar cheio
 
-1. **Inspecionar os 3** `cannot change return type` comparando o corpo das funções entre as migrations.
+1. ~~Inspecionar os 3 `cannot change return type`~~ ✅ 03/10: inspecionados e com mecanismo
+   identificado (acima) — 2 provaram ter falhado em produção, com impacto zero; 1 teve falha parcial
+   e o impacto está a medir.
 2. **Reduzir as 5 de cascata** — cada uma depende de um objeto que outra migration não chegou a criar.
 3. **Decidir o destino dos 2 arquivos com SQL inválido** — não editar migration aplicada (regra 7);
    aqui cabe remover a versão duplicada ou consertar por versão nova.
+4. **Decidir o que fazer com as 3 migrations que falharam em produção**: marcar como superseded,
+   remover a duplicata, ou completar a intenção por versão nova. É decisão de banco, não de replay.
+
 
 ## Limites declarados
 
