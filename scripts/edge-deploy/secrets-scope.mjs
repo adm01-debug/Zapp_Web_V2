@@ -43,7 +43,7 @@ export function nomesDeSecretsParaEscopo(fn) {
   for (const escopo of escopos) {
     for (const nome of NOMES_POR_ESCOPO[escopo] ?? []) nomes.add(nome);
   }
-  return [...nomes].sort();
+  return [...nomes].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
 
 /**

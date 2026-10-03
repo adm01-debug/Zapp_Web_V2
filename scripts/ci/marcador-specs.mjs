@@ -31,12 +31,13 @@ export function nomesDeTestResults(dir) {
   return entradas
     .filter((e) => e.isDirectory())
     .map((e) => e.name)
-    .sort();
+    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
 
 /** Nomes validos: string, nao vazia, sem repeticao, ordenados. */
 function normalizar(nomes) {
-  return [...new Set((nomes ?? []).filter((n) => typeof n === 'string' && n.length > 0))].sort();
+  return [...new Set((nomes ?? []).filter((n) => typeof n === 'string' && n.length > 0))]
+    .sort((a, b) => a.localeCompare(b, 'pt-BR'));
 }
 
 /**
