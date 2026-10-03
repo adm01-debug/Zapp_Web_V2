@@ -1152,9 +1152,35 @@ jobs:
             console.error('Estado runtime inesperado; migration cancelada.');
             process.exit(1);
           }
-          if (process.env.APPLY === 'true'
-              && proof.runtime_sha256 !== process.env.CONFIRM_RUNTIME_SHA256) {
-            console.error('SHA-256 runtime mudou desde o dry-run; migration cancelada.');
+          // E64 / defeito F-11 ("confirm_runtime_sha256 nao amarra o arquivo",
+          // PLANO_..._2026-09-27.md:196): a confirmacao cobria so' o estado do
+          // schema, entao editar o .sql entre o dry-run e o apply passava -- o
+          // banco nao muda por causa de uma edicao de arquivo. Agora o
+          // confirm_runtime_sha256 e' o SHA-256 de runtime + arquivo + commit.
+          const { readdirSync } = await import('node:fs');
+          const { pathToFileURL } = await import('node:url');
+          const modHash = await import(pathToFileURL(`${process.cwd()}/scripts/db-audit/confirm-hash.mjs`).href);
+          const candidatos = readdirSync('supabase/migrations')
+            .filter((f) => f.startsWith(`${process.env.TARGET_VERSION}_`) && f.endsWith('.sql'));
+          if (candidatos.length !== 1) {
+            console.error(`Alvo ${process.env.TARGET_VERSION} mapeia para ${candidatos.length} arquivos; migration cancelada.`);
+            process.exit(1);
+          }
+          const arquivoAlvo = `supabase/migrations/${candidatos[0]}`;
+          const arquivoSha256 = modHash.sha256DeArquivo(arquivoAlvo);
+          const confirmacao = modHash.comporHashConfirmacao({
+            runtimeSha256: proof.runtime_sha256,
+            arquivoSha256,
+            commitSha: process.env.GITHUB_SHA,
+          });
+          console.log(modHash.descreverConfirmacao({
+            runtimeSha256: proof.runtime_sha256,
+            arquivoSha256,
+            commitSha: process.env.GITHUB_SHA,
+            arquivo: arquivoAlvo,
+          }));
+          if (process.env.APPLY === 'true' && confirmacao !== process.env.CONFIRM_RUNTIME_SHA256) {
+            console.error('Confirmacao recusada: runtime, arquivo ou commit mudaram desde o dry-run; migration cancelada.');
             process.exit(1);
           }
           NODE
@@ -1163,9 +1189,16 @@ jobs:
         if: steps.preflight.outputs.needs_apply == 'true'
         env:
           SUPABASE_DB_URL: ${{ env.DESTINO_URL }}
-        run: >-
-          supabase db push --include-all
-          --skip-vault --dry-run --yes
+          TARGET_VERSION: ${{ inputs.migration_version }}
+          APPLY_BUNDLE: ${{ steps.preflight.outputs.apply_bundle }}
+        run: |
+          set -euo pipefail
+          supabase db push --include-all --skip-vault --dry-run --yes 2>&1 | tee dry-run.out
+          if [ "$APPLY_BUNDLE" = "true" ]; then
+            node scripts/db-audit/dry-run-plan.mjs --arquivo dry-run.out --esperado "$TARGET_VERSION" --bundle
+          else
+            node scripts/db-audit/dry-run-plan.mjs --arquivo dry-run.out --esperado "$TARGET_VERSION"
+          fi
 
       - name: Aplicar alvo unico ou bundle ordenado autorizado
         if: inputs.apply == true && steps.preflight.outputs.needs_apply == 'true'
