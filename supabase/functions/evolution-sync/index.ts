@@ -5,6 +5,7 @@ import {
   syncContacts, syncMessages, syncAllMessages,
   setupWebhook, cleanupMock, fullSync,
 } from "../_shared/evolution-sync-actions.ts";
+import type { EvolutionDbClient } from "../_shared/evolution-types.ts";
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -48,7 +49,10 @@ serve(async (req) => {
     });
   }
 
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  // Cast unico: comparar o client real (generics profundos do supabase-js) com
+  // EvolutionDbClient aqui estoura o TS2589 do Deno ("instantiation is excessively
+  // deep"). O contrato segue checado nos handlers, que recebem EvolutionDbClient.
+  const supabase = createClient(supabaseUrl, supabaseServiceKey) as unknown as EvolutionDbClient;
 
   try {
     const body = await req.json().catch(() => ({}));
