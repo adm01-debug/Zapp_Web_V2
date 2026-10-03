@@ -349,6 +349,22 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [ ] **E11** · C · G-37 · Corrigir o CLAUDE.md nos 5 pontos divergentes (contagem 14/17, `strict`, revisor do
   `producao-edge-functions`, cadência do guarda vivo, auto-merge) **no mesmo PR** de E02. Verificação: `grep -n
   "13 arquivos\|16 no total\|strict está\|auto-merge" CLAUDE.md` sem afirmações falsas.
+  - ⚠️ **Nota de execução (03/10/2026) — a etapa está bloqueada, e a medição corrige dois alvos dela.**
+    **(a) Bloqueio duro:** `CLAUDE.md` é **arquivo protegido** — a escrita exige aprovação humana e o prompt
+    expirou sem resposta nesta sessão ("silêncio não é consentimento"). O executor NÃO pode cumprir a E11; ela
+    precisa de aprovação explícita do Joaquim (ou de um PR aberto por ele). Isso também explica a frase "no mesmo
+    PR de E02": as duas travam no mesmo lugar.
+    **(b) A contagem está errada no `CLAUDE.md` e a etapa herda o número errado:** o arquivo diz "são 14 arquivos
+    … 17 no total"; medido, são **16** arquivos em `.github/workflows/` — os dois que a lista omite são
+    **`settings-guard.yml`** e **`talkx-status-regen.yml`** — e **19** no total com os 3 dinâmicos.
+    **(c) O ponto do `strict` já está consertado:** o parágrafo "Correção estrutural posterior de 2026-10-01" já diz
+    que `required_status_checks.strict` voltou a `true` **como política permanente**, com o `auto-update-pr-branch.yml`
+    vivo a cada push (o arquivo existe no repo). A etapa lista como divergente algo que o arquivo já conta certo.
+    **(d) O ponto real é o revisor:** o texto enquadra os quatro environments como "com aprovação humana
+    (`required_reviewers`)" e lista `producao-edge-functions` entre eles — esse environment **não tem revisor
+    obrigatório**. Quem lê o texto espera uma aprovação que não existe.
+    **(e) Cadência do guarda vivo:** o `db-live-guard.yml` tem `push` (linha 13) e `schedule` com
+    `cron: '13 6 * * *'` — diário. A afirmação "não roda em PR" está **correta**; o texto só não dá a cadência.
 - [ ] **E12** · C · G-42 · Corrigir os 3 cabeçalhos desatualizados (`ci.yml:5`, `types-sync.yml:82-86`,
   `db-migrate.yml:7`). Verificação: revisão de texto no PR.
 
