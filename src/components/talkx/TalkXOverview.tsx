@@ -269,7 +269,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
                               <DropdownMenuItem onClick={() => onDuplicate(c)}><Copy className="w-4 h-4 mr-2" />Duplicar</DropdownMenuItem>
                               <DropdownMenuSeparator />
                               {(c.status === 'sending' || c.status === 'paused' || c.status === 'scheduled') && <DropdownMenuItem className="text-dash-red" onClick={() => setConfirm({ kind: 'cancel', c })}><Square className="w-4 h-4 mr-2" />Cancelar campanha</DropdownMenuItem>}
-                              {c.status === 'draft' && <DropdownMenuItem className="text-dash-red" onClick={() => setConfirm({ kind: 'delete', c })}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>}
+                              {(c.status === 'draft' || c.status === 'scheduled') && <DropdownMenuItem className="text-dash-red" onClick={() => setConfirm({ kind: 'delete', c })}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </Td>
