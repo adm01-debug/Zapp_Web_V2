@@ -81,7 +81,7 @@ interface FilesTableViewProps {
   onSelect: (item: ContactMediaItem) => void;
   onToggleSelection: (id: string) => void;
   onPreview: (item: ContactMediaItem) => void;
-  onDeleted: () => void;
+  onRequestDelete: (item: ContactMediaItem) => void;
 }
 
 export function FilesTableView({
@@ -95,7 +95,7 @@ export function FilesTableView({
   onSelect,
   onToggleSelection,
   onPreview,
-  onDeleted,
+  onRequestDelete,
 }: FilesTableViewProps) {
   const showSender = containerWidth === null || containerWidth >= 720;
   const showSize = containerWidth === null || containerWidth >= 720;
@@ -167,7 +167,7 @@ export function FilesTableView({
                     <button type="button" aria-label="Encaminhar" title="Disponível em breve" disabled className={`${ACTION_BUTTON} text-muted-foreground/50 cursor-not-allowed`}>
                       <Share2 className="w-3.5 h-3.5" />
                     </button>
-                    <FileActionsMenu item={item} onDeleted={onDeleted} />
+                    <FileActionsMenu item={item} onRequestDelete={onRequestDelete} />
                   </div>
                 </TableCell>
               </TableRow>

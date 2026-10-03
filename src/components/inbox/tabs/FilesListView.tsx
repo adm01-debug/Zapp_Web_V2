@@ -23,7 +23,7 @@ interface FilesListViewProps {
   onSelect: (item: ContactMediaItem) => void;
   onToggleSelection: (id: string) => void;
   onPreview: (item: ContactMediaItem) => void;
-  onDeleted: () => void;
+  onRequestDelete: (item: ContactMediaItem) => void;
 }
 
 const ACTION_BUTTON = 'w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
@@ -37,7 +37,7 @@ export function FilesListView({
   onSelect,
   onToggleSelection,
   onPreview,
-  onDeleted,
+  onRequestDelete,
 }: FilesListViewProps) {
   const isNarrow = containerWidth !== null && containerWidth < 640;
 
@@ -115,7 +115,7 @@ export function FilesListView({
                   <Share2 className="w-3.5 h-3.5" />
                 </button>
               )}
-              <FileActionsMenu item={item} onDeleted={onDeleted} />
+              <FileActionsMenu item={item} onRequestDelete={onRequestDelete} />
             </div>
           </div>
         );

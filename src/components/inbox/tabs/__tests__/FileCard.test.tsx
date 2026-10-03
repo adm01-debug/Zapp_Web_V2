@@ -45,7 +45,7 @@ function renderCard(item: ContactMediaItem = ITEM, overrides: Partial<React.Comp
     onToggleSelection: vi.fn(),
     onPreview: vi.fn(),
     onForward: vi.fn(),
-    onDeleted: vi.fn(),
+    onRequestDelete: vi.fn(),
     ...overrides,
   };
   return { ...render(<FileCard {...props} />), props };

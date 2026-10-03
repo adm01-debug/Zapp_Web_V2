@@ -25,7 +25,7 @@ function renderList(overrides: Partial<React.ComponentProps<typeof FilesListView
     onSelect: vi.fn(),
     onToggleSelection: vi.fn(),
     onPreview: vi.fn(),
-    onDeleted: vi.fn(),
+    onRequestDelete: vi.fn(),
     ...overrides,
   };
   return { ...render(<FilesListView {...props} />), props };

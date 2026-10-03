@@ -19,7 +19,7 @@ interface FileCardProps {
   onToggleSelection?: () => void;
   onPreview: () => void;
   onForward: () => void;
-  onDeleted: () => void;
+  onRequestDelete: (item: ContactMediaItem) => void;
 }
 
 export function FileCard({
@@ -33,7 +33,7 @@ export function FileCard({
   onToggleSelection,
   onPreview,
   onForward,
-  onDeleted,
+  onRequestDelete,
 }: FileCardProps) {
   const mostraRemetente = effectiveColumns <= 4;
   // Etapas 18/25: meta unica vinda do fileDisplay — nenhum renderer formata data ou tamanho.
@@ -114,7 +114,7 @@ export function FileCard({
         >
           <Share2 className="w-3.5 h-3.5" />
         </button>
-        <FileActionsMenu item={item} onDeleted={onDeleted} />
+        <FileActionsMenu item={item} onRequestDelete={onRequestDelete} />
       </div>
     </article>
   );

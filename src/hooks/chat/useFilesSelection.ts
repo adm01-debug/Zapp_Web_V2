@@ -19,6 +19,11 @@ export interface FilesSelection {
   toggle: (id: string) => void;
   selectAllVisible: () => void;
   clear: () => void;
+  /**
+   * Etapa 35: remove UM id da selecao sem mexer no resto (exclusao concluida). Nao zera o
+   * modo selecao; o operador decide sair. Diferente de `clear`, que limpa tudo.
+   */
+  remove: (id: string) => void;
 }
 
 export function useFilesSelection(
@@ -46,6 +51,14 @@ export function useFilesSelection(
     setSelectedIds(new Set());
   }, []);
   const clear = useCallback(() => setSelectedIds(new Set()), []);
+  const remove = useCallback((id: string) => {
+    setSelectedIds((previous) => {
+      if (!previous.has(id)) return previous;
+      const next = new Set(previous);
+      next.delete(id);
+      return next;
+    });
+  }, []);
   const toggle = useCallback((id: string) => {
     setSelectedIds((previous) => {
       const next = new Set(previous);
@@ -71,5 +84,6 @@ export function useFilesSelection(
     toggle,
     selectAllVisible,
     clear,
+    remove,
   };
 }
