@@ -13,7 +13,14 @@
 > desativado, 20/09), E43 (force-push/deleção bloqueados e "Contrato DB vivo" reclassificado
 > como design em 17/09 — ver CLAUDE.md), E44 (gate `check-triple-parity.mjs`, 20/09),
 > E45 (`branch-hygiene-audit.yml` semanal já existia); E42 (cron do CRM worker) e E44 (gate
-> `check-triple-parity.mjs`) estão implementados no PR #445, pendente de merge; E46 via PR #442. Não marcar mais checkboxes AQUI — o tracking vive no plano de 20/09.
+> `check-triple-parity.mjs`) estão implementados no PR #445, pendente de merge; E46 via PR #442.
+>
+> **Atualização 2026-10-03 (etapa E05 do plano de 20-09):** os checkboxes deste arquivo foram
+> **sincronizados com a realidade** — os que já estavam resolvidos ganharam `[x]` **com a evidência
+> e a data** da etapa-herdeira do plano vigente, e cada etapa herdada aponta para a sua herdeira
+> (`→ E{n}/20-09 <status>`). O que **não** tem prova segue **aberto**, com a pendência explicitada
+> no fim da etapa. Estado: **49 abertos / 50 fechados** (era 80/19). O tracking vivo continua no
+> `PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md`; este arquivo passa a ser o registro histórico já sincronizado.
 
 | Eixo | Estado em 2026-09-16 |
 |---|---|
@@ -156,13 +163,13 @@ for b in $(git for-each-ref --format='%(refname:short)' refs/heads/); do
   [ -z "$(git branch -r --contains $(git rev-parse $b))" ] && echo "ORFAO: $b"; done
 ```
 
-### E11 🟡 Podar branches remotos obsoletos (~53)
+### E11 🟡 Podar branches remotos obsoletos (~53) → E04/20-09 🟡
 ```sh
 gh api repos/adm01-debug/zapp-web-v2/branches --paginate --jq '.[].name' > /tmp/remote-branches.txt
 # para cada: gh pr list --state merged --search "head:<b>"  → merged = candidato a delete
 ```
-- [ ] Classificação: **merged** (apagar) / **PR aberto** (manter) / **incerto** (manter + issue)
-- [ ] Deleções apenas dos merged confirmados; lista final anexada aqui
+- [x] Classificação: **merged** (apagar) / **PR aberto** (manter) / **incerto** (manter + issue) — → E04/20-09 🟡 (2026-10-03; 0 remotos mergeados (delete_branch_on_merge desde 27/09); total 31, meta ≤25 segue aberta)
+- [x] Deleções apenas dos merged confirmados; lista final anexada aqui — → E04/20-09 🟡 (2026-10-03; 0 remotos mergeados (delete_branch_on_merge desde 27/09); total 31, meta ≤25 segue aberta)
 
 ### E12 🟢 Limpar worktrees voláteis em `/tmp`
 - [x] `git worktree list` auditado; `git worktree prune` — 22 worktrees `prunable` removidos (2026-09-16)
@@ -188,41 +195,42 @@ DESTINO_URL=postgres://x PSQL_BIN=<shim-que-imprime-o-ledger> node scripts/db-au
 - [ ] Exit 0 com ledger vivo
 - [ ] Divergências (se houver) listadas com `version` + diff exato
 
-### E15 🟢 Inventário das exceções `pinned-replay`
-- [ ] `migration-evidence.json` lido: quantidade, versions, motivo de cada exceção
-- [ ] Meta registrada: **zero novas exceções**; existentes aceitas como dívida permanente com dono
+### E15 🟢 Inventário das exceções `pinned-replay` → E25/20-09 ✅
+- [x] `migration-evidence.json` lido: quantidade, versions, motivo de cada exceção — → E25/20-09 ✅ (2026-10-03; 0 exceções pinned-replay necessárias em 26/09)
+- [x] Meta registrada: **zero novas exceções**; existentes aceitas como dívida permanente com dono — → E25/20-09 ✅ (2026-10-03; 0 exceções pinned-replay necessárias em 26/09)
 
 ### E16 🟢 Documentar `_foreign/` e `_superseded/`
 Subdiretórios dentro de `supabase/migrations/` — qualquer `ls` sem filtro `.sql` produz falso positivo (aconteceu na auditoria).
 - [ ] `README.md` em cada subdiretório: propósito, por que não entram no replay/ledger
 - [ ] Confirmado que `check-migration-drift.mjs` e o guard os ignoram explicitamente
 
-### E17 🟢 Resolver a projeção forward-only (2 relações)
-- [ ] As 2 relações nomeadas (saída detalhada do guard / `known-violations.json`)
-- [ ] Estado reconciliado: migration aplicada + catálogo regenerado, **ou** projeção justificada por PR aberto com número
+### E17 🟢 Resolver a projeção forward-only (2 relações) → E26/20-09 ✅
+- [x] As 2 relações nomeadas (saída detalhada do guard / `known-violations.json`) — → E26/20-09 ✅ (2026-10-03; projeção forward-only zerada (catalog.generated_at=2026-09-27))
+- [x] Estado reconciliado: migration aplicada + catálogo regenerado, **ou** projeção justificada por PR aberto com número — → E26/20-09 ✅ (2026-10-03; projeção forward-only zerada (catalog.generated_at=2026-09-27))
 
-### E18 🟢 Varredura anti-prosa no ledger (regra §1.7)
+### E18 🟢 Varredura anti-prosa no ledger (regra §1.7) → E23/20-09 ✅
 ```sql
 SELECT version, name, s
 FROM supabase_migrations.schema_migrations, unnest(statements) AS s
 WHERE s ~* '\.\.\.|\(add guard\)|resumo|^--' OR length(s) < 20
 ORDER BY version;
 ```
-- [ ] Suspeitos listados e cruzados com E15
-- [ ] Nenhum resumo em prosa fora da lista de exceções
+- [x] Suspeitos listados e cruzados com E15 — → E23/20-09 ✅ (2026-10-03; 0 statements-prosa reais; 7 violações corrigidas em 26/09)
+- [x] Nenhum resumo em prosa fora da lista de exceções — → E23/20-09 ✅ (2026-10-03; 0 statements-prosa reais; 7 violações corrigidas em 26/09)
 
 ### E19 🟢 Ritual anti-colisão como script
 Hoje o procedimento (`max(version)` + `INSERT … ON CONFLICT DO NOTHING RETURNING` + SELECT de conferência) é manual e já mascarou colisão uma vez — na verdade, mascarou de novo nesta mesma sessão (PR #432 vs #428) antes deste script existir.
 - [x] `scripts/db-audit/register-migration.mjs`: emite o bloco SQL transacional completo a partir do arquivo, com abort se `RETURNING` vier vazio (2026-09-16)
 - [x] Teste unitário simulando colisão (9 testes, incluindo o cenário exato do PR #432/#428); CLAUDE.md §1.2 aponta para o script (2026-09-16)
 
-### E20 🟢 Replay das 442 migrations em PG 17.6 efêmero
+### E20 🟢 Replay das 442 migrations em PG 17.6 efêmero → E24/20-09 🟢
 - [x] Replay via `supabase start` (stack completo, PG 17.6) até `20260906000001` (~300 arquivos limpos). Achado: migrations de validação de dados (ex. E31 LID backfill, `count(*) BETWEEN 400 AND 700`) falham por design contra banco vazio — não são bugs, são uma categoria estrutural (`data-validation`) distinta de `pinned-replay`. Replay não levado até o arquivo 442 (retorno decrescente vs. esforço de neutralizar cada backfill individualmente) — ver "Rodada 3" acima.
 - [ ] `catalog.sql` rodado no efêmero e diffado por conjuntos contra `schema-catalog.json` — não feito (replay parou antes do fim)
 
 ---
 
 ## FASE 3 — Integridade e segurança do schema (E21–E28)
+> **Pendência → E24/20-09 🟢**: replay integral ponta a ponta ainda pendente (parou em 20260906000001) (verificado 2026-10-03)
 
 ### E21 🔴 Constraints `NOT VALID` pendentes
 ```sql
@@ -232,7 +240,7 @@ FROM pg_constraint WHERE NOT convalidated ORDER BY 1,2;
 - [x] Inventário anexado (2026-09-16, ao vivo): único resultado é `realtime.messages.messages_payload_exclusive` — schema `realtime` é gerenciado pelo próprio Supabase, fora do controle deste repo
 - [x] N/A — zero constraints `NOT VALID` no schema `public`; nada para validar
 
-### E22 🔴 FKs sem índice no lado filho
+### E22 🔴 FKs sem índice no lado filho → E14/20-09 ✅
 ```sql
 SELECT c.conrelid::regclass AS tabela, c.conname, c.conkey,
        pg_relation_size(c.conrelid) AS bytes_filho
@@ -245,10 +253,10 @@ WHERE c.contype='f' AND c.connamespace='public'::regnamespace
       AND i.indkey::int2[] @> c.conkey)
 ORDER BY bytes_filho DESC;
 ```
-- [ ] Lista com tamanho da tabela filha
-- [ ] Índices criados via migration (`CREATE INDEX` simples — `CONCURRENTLY` falha no gateway, §1.5) onde há volume real; pequenas ficam documentadas
+- [x] Lista com tamanho da tabela filha — → E14/20-09 ✅ (2026-10-03; 0 FKs sem índice em 26/09; índices criados por migration)
+- [x] Índices criados via migration (`CREATE INDEX` simples — `CONCURRENTLY` falha no gateway, §1.5) onde há volume real; pequenas ficam documentadas — → E14/20-09 ✅ (2026-10-03; 0 FKs sem índice em 26/09; índices criados por migration)
 
-### E23 🔴 Índices duplicados e nunca usados
+### E23 🔴 Índices duplicados e nunca usados → E15/20-09 🔴
 ```sql
 -- duplicados exatos
 SELECT indrelid::regclass, array_agg(indexrelid::regclass), indkey, indclass, indpred
@@ -262,6 +270,7 @@ WHERE s.idx_scan=0 AND NOT i.indisunique AND NOT i.indisprimary ORDER BY bytes D
 ```
 - [ ] Duplicados exatos: `DROP INDEX` via migration
 - [ ] Nunca usados: lista de observação com data do `stats_reset`; **não dropar** antes de ≥ 30 dias de observação
+> **Pendência → E15/20-09 🔴**: planilha de classificação e remoção em lotes de ≤10 ainda pendentes (verificado 2026-10-03)
 
 ### E24 🔴 Matriz RLS completa (140 tabelas)
 ```sql
@@ -304,9 +313,9 @@ ORDER BY 1,2;
 - [x] Snapshot versionado em `scripts/db-audit/grants-baseline.{sql,json}` (2026-09-16) — gerador ainda não plugado no CI como guard diffável (isso é o E44, não feito nesta rodada)
 - [x] `EXECUTE` de `anon` revisado função por função: 9 funções com `anon EXECUTE` hoje, todas classificadas seguras (4 trigger functions, 2 com guard `service_role_required`, 3 `SECURITY INVOKER` com RLS restrito a `authenticated`) — os achados sensíveis reais (`talkx_benchmarks`, `record_talkx_link_click`, `set_conversation_status`, `get_last_message_dates`) já foram corrigidos nas rodadas anteriores (PRs #428/#433)
 
-### E27 🟡 Catalogar trigger functions e procedures (36 fora do guard)
-- [ ] `catalog.sql`: nova seção `trigger_functions` (`prokind IN ('f','p')` com retorno `trigger` ou `prokind='p'`), `format_version` 2 → 3
-- [ ] Catálogo regenerado; `check-catalog-fresh` e guard ajustados; CI verde
+### E27 🟡 Catalogar trigger functions e procedures (36 fora do guard) → E22/20-09 ✅
+- [x] `catalog.sql`: nova seção `trigger_functions` (`prokind IN ('f','p')` com retorno `trigger` ou `prokind='p'`), `format_version` 2 → 3 — → E22/20-09 ✅ (2026-10-03; 47 trigger functions no schema-catalog (27/09); usage-guard reporta a contagem)
+- [x] Catálogo regenerado; `check-catalog-fresh` e guard ajustados; CI verde — → E22/20-09 ✅ (2026-10-03; 47 trigger functions no schema-catalog (27/09); usage-guard reporta a contagem)
 
 ### E28 🟡 Sync dos tipos TypeScript
 Três branches de types-sync (`audit/types-sync-312`, `codex/types-sync-final`, `fix/types-sync-adapter-contract`) = fricção recorrente.
@@ -317,7 +326,7 @@ Três branches de types-sync (`audit/types-sync-312`, `codex/types-sync-final`, 
 
 ## FASE 4 — Performance e operação (E29–E35)
 
-### E29 🟢 Baseline de queries lentas
+### E29 🟢 Baseline de queries lentas → E19/20-09 ✅
 ```sql
 SELECT calls, round(total_exec_time::numeric,1) AS total_ms, round(mean_exec_time::numeric,2) AS mean_ms,
        rows, left(query,120) AS q
@@ -325,24 +334,24 @@ FROM pg_stat_statements WHERE dbid=(SELECT oid FROM pg_database WHERE datname=cu
 ORDER BY total_exec_time DESC LIMIT 20;
 -- repetir ORDER BY mean_exec_time DESC
 ```
-- [ ] Dois top-20 salvos e datados em `docs/audits/`
-- [ ] Top 3 com `EXPLAIN (ANALYZE, BUFFERS)` documentado
+- [x] Dois top-20 salvos e datados em `docs/audits/` — → E19/20-09 ✅ (2026-10-03; docs/audits/slow-queries-2026-09.md commitado + top-3 (26/09))
+- [x] Top 3 com `EXPLAIN (ANALYZE, BUFFERS)` documentado — → E19/20-09 ✅ (2026-10-03; docs/audits/slow-queries-2026-09.md commitado + top-3 (26/09))
 
-### E30 🔴 Bloat e autovacuum por tabela
+### E30 🔴 Bloat e autovacuum por tabela → E18/20-09 ✅
 ```sql
 SELECT relname, n_live_tup, n_dead_tup,
        round(100.0*n_dead_tup/nullif(n_live_tup+n_dead_tup,0),1) AS pct_dead,
        last_autovacuum, last_autoanalyze, pg_size_pretty(pg_total_relation_size(relid)) AS total
 FROM pg_stat_user_tables ORDER BY n_dead_tup DESC LIMIT 25;
 ```
-- [ ] Tabelas com `pct_dead` > 20% ou `last_autovacuum` antigo identificadas (mensagens/conversas são as candidatas naturais num chat)
-- [ ] `ALTER TABLE … SET (autovacuum_vacuum_scale_factor=…, autovacuum_analyze_scale_factor=…)` via migration onde justificado
+- [x] Tabelas com `pct_dead` > 20% ou `last_autovacuum` antigo identificadas (mensagens/conversas são as candidatas naturais num chat) — → E18/20-09 ✅ (2026-10-03; verificado ao vivo em 26/09 e revalidado por agente independente)
+- [x] `ALTER TABLE … SET (autovacuum_vacuum_scale_factor=…, autovacuum_analyze_scale_factor=…)` via migration onde justificado — → E18/20-09 ✅ (2026-10-03; verificado ao vivo em 26/09 e revalidado por agente independente)
 
 ### E31 🔴 Índices faltantes com carga comprovada
 - [ ] `db_missing_indexes` cruzado com E29 — só propor índice para query do baseline
 - [ ] Cada índice: `EXPLAIN` antes/depois em PG efêmero com amostra; criado via migration; **zero índice especulativo**
 
-### E32 🟢 Conexões, pooling e timeouts
+### E32 🟢 Conexões, pooling e timeouts → E20/20-09 ✅
 ```sql
 SELECT usename, application_name, state, count(*),
        max(now()-state_change) AS mais_antiga
@@ -350,15 +359,16 @@ FROM pg_stat_activity WHERE datname=current_database() GROUP BY 1,2,3 ORDER BY 4
 SELECT rolname, rolconfig FROM pg_roles WHERE rolname IN ('anon','authenticated','service_role','authenticator');
 SHOW max_connections;
 ```
-- [ ] Relatório de utilização vs limite do plano
-- [ ] `statement_timeout` e `idle_in_transaction_session_timeout` definidos por role de aplicação (via `ALTER ROLE … SET`, migration)
+- [x] Relatório de utilização vs limite do plano — → E20/20-09 ✅ (2026-10-03; docs/audits/edges-pooler-2026-09-29.md (transaction mode, Supavisor 6543/5432, timeouts))
+- [x] `statement_timeout` e `idle_in_transaction_session_timeout` definidos por role de aplicação (via `ALTER ROLE … SET`, migration) — → E20/20-09 ✅ (2026-10-03; docs/audits/edges-pooler-2026-09-29.md (transaction mode, Supavisor 6543/5432, timeouts))
 
-### E33 🟢 Backup e PITR verificados
+### E33 🟢 Backup e PITR verificados → E21/20-09 🟢
 Backup não restaurado = backup inexistente.
 - [ ] Retenção PITR confirmada no dashboard (`docs/BACKUP-RECOVERY-STRATEGY.md` atualizado)
 - [ ] Restore de prova em projeto/branch descartável; `count(*)` + `md5` de amostra de 5 tabelas conferidos contra produção
+> **Pendência → E21/20-09 🟢**: evidência de PITR e teste de restore real ainda pendentes (verificado 2026-10-03)
 
-### E34 🔴 Integridade referencial não declarada
+### E34 🔴 Integridade referencial não declarada → E17/20-09 ✅
 ```sql
 -- colunas *_id sem FK
 SELECT c.table_name, c.column_name FROM information_schema.columns c
@@ -368,8 +378,8 @@ WHERE c.table_schema='public' AND c.column_name ~ '_id$'
       AND c.column_name = ANY(SELECT attname FROM pg_attribute WHERE attrelid=k.conrelid AND attnum=ANY(k.conkey)))
 ORDER BY 1,2;
 ```
-- [ ] Lista de candidatas com contagem de órfãos (`LEFT JOIN … WHERE pai IS NULL`) por coluna
-- [ ] FKs adicionadas em duas etapas (`ADD … NOT VALID` → `VALIDATE`) ou exceção documentada; órfãos tratados antes do VALIDATE
+- [x] Lista de candidatas com contagem de órfãos (`LEFT JOIN … WHERE pai IS NULL`) por coluna — → E17/20-09 ✅ (2026-10-03; 13 FKs criadas; 0 órfãos ao vivo antes da migration)
+- [x] FKs adicionadas em duas etapas (`ADD … NOT VALID` → `VALIDATE`) ou exceção documentada; órfãos tratados antes do VALIDATE — → E17/20-09 ✅ (2026-10-03; 13 FKs criadas; 0 órfãos ao vivo antes da migration)
 
 ### E35 🟢 Alertas operacionais mínimos
 - [ ] Alertas: conexões > 80%, disco > 80%, falha de backup/PITR, taxa de erro das edges
@@ -384,41 +394,44 @@ CLI retornou 403 → hoje é impossível confirmar diretamente o que está no ar
 - [ ] `SUPABASE_ACCESS_TOKEN` com escopo correto configurado
 - [ ] `supabase functions list --project-ref tnnnlkbymytvtqngbbqh` funcionando
 
-### E37 🔴 Reconciliação implantado × manifesto
+### E37 🔴 Reconciliação implantado × manifesto → E27/20-09 🔴
 - [ ] Diff nome a nome + `verify_jwt` das 66 do `deployment-manifest.json` contra a listagem live
 - [ ] Zero implantadas fora do manifesto (ou em `legacy_unmanaged_functions` com justificativa); zero no manifesto sem deploy
+> **Pendência → E27/20-09 🔴**: paridade 3-vias LOCAL 69/69 (29/09) OK, mas a listagem live segue bloqueada (403) (verificado 2026-10-03)
 
-### E38 🔴 Revisar as 9 functions `verify_jwt=false`
+### E38 🔴 Revisar as 9 functions `verify_jwt=false` → E28/20-09 ✅
 ```sh
 jq -r '.functions[] | select(.verify_jwt==false) | .name' supabase/deployment-manifest.json
 ```
-- [ ] Tabela das 9: por que pública, auth alternativa (assinatura de webhook, secret de header), rate limit — verificados no código
-- [ ] Qualquer uma sem proteção compensatória → correção imediata
+- [x] Tabela das 9: por que pública, auth alternativa (assinatura de webhook, secret de header), rate limit — verificados no código — → E28/20-09 ✅ (2026-10-03; tabela das 10 com proteção compensatória em docs/audits/edges-secrets-2026-09-26.md)
+- [x] Qualquer uma sem proteção compensatória → correção imediata — → E28/20-09 ✅ (2026-10-03; tabela das 10 com proteção compensatória em docs/audits/edges-secrets-2026-09-26.md)
 
-### E39 🔴 Auditoria de secrets das edges
+### E39 🔴 Auditoria de secrets das edges → E29/20-09 ✅
 ```sh
 grep -rhoE "Deno\.env\.get\(['\"][A-Z0-9_]+['\"]\)" supabase/functions | sort -u
 ```
-- [ ] Inventário de secrets no projeto vs uso real no código
-- [ ] Órfãos removidos; rotação anotada para os que passaram por terceiros (`EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE_TOKEN`)
+- [x] Inventário de secrets no projeto vs uso real no código — → E29/20-09 ✅ (2026-10-03; inventário commitado e 0 órfãos; a rotação só está ANOTADA (rotação em si pendente, 👤))
+- [x] Órfãos removidos; rotação anotada para os que passaram por terceiros (`EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE_TOKEN`) — → E29/20-09 ✅ (2026-10-03; inventário commitado e 0 órfãos; a rotação só está ANOTADA (rotação em si pendente, 👤))
 
-### E40 🟢 Sanear os 5 MCPs que falham toda sessão
+### E40 🟢 Sanear os 5 MCPs que falham toda sessão → E44/20-09 🟡
 - [ ] Cada um: endpoint corrigido **ou** removido da configuração
 - [ ] Sessão nova conecta 100% dos MCPs configurados
+> **Pendência → E44/20-09 🟡**: docs/audits/mcps-status-2026-09-29.md pronto; remover CLOUDFLARE-MCP e verificar PORTAINER são ação 👤 (verificado 2026-10-03)
 
-### E41 🟢 Blindar contra o banco errado
+### E41 🟢 Blindar contra o banco errado → E46/20-09 ✅
 `MCP - SUPABASE LOVABLE CLOUD - ZAPP WEB V2` → `vpkmqeumtxhrwgawxdrl` (origem Lovable), nome quase idêntico ao oficial.
 - [ ] MCP renomeado com sufixo explícito (ex.: `… - ORIGEM LOVABLE - SOMENTE LEITURA`) ou removido se a migração de origem acabou
-- [ ] CLAUDE.md §1 lista `vpkmqeumtxhrwgawxdrl` em "bancos que NÃO são deste projeto"
+- [x] CLAUDE.md §1 lista `vpkmqeumtxhrwgawxdrl` em "bancos que NÃO são deste projeto" — → E46/20-09 ✅ (2026-10-03; guard de escrita única (27/09) para o CLAUDE.md §1, que lista vpkmqeumtxhrwgawxdrl (linha 21); MCP renomeado não é verificável do repo)
 
 ---
 
 ## FASE 6 — CI/CD e governança (E42–E46)
+> **Pendência → E46/20-09 ✅**: guard de escrita única (27/09) para o CLAUDE.md §1, que lista vpkmqeumtxhrwgawxdrl (linha 21); MCP renomeado não é verificável do repo (verificado 2026-10-03)
 
-### E42 🟡 Corrigir o cron do `CRM Sync Worker`
+### E42 🟡 Corrigir o cron do `CRM Sync Worker` → E02/20-09 ✅
 96 runs `skipped` a cada ~10 min no HEAD do main — cota de Actions e ruído nos checks.
-- [ ] Causa do skip identificada (condição `if:` / secret / ambiente)
-- [ ] Worker executa de fato **ou** schedule desligado/reduzido
+- [x] Causa do skip identificada (condição `if:` / secret / ambiente) — → E02/20-09 ✅ (2026-10-03; cron comentado no workflow com referência E02 (verificado 27/09))
+- [x] Worker executa de fato **ou** schedule desligado/reduzido — → E02/20-09 ✅ (2026-10-03; cron comentado no workflow com referência E02 (verificado 27/09))
 
 ### E43 🟡 Branch protection do `main`
 ```sh
@@ -427,14 +440,14 @@ gh api repos/adm01-debug/zapp-web-v2/branches/main/protection --jq '.required_st
 - [ ] Required checks incluem `Contrato DB vivo`, `Contrato DB offline`, guard e frescor de manifesto/catálogo
 - [ ] Force-push e delete bloqueados
 
-### E44 🟡 Gate automático de paridade tripla
+### E44 🟡 Gate automático de paridade tripla → E10/20-09 ✅
 Transformar a auditoria de 2026-09-16 em script: count + md5 dos prefixos (arquivos vs ledger), diff manifesto edge vs diretórios, guard, e diff do `grants-baseline.json` (E26).
-- [ ] `scripts/db-audit/check-triple-parity.mjs` + teste
-- [ ] Agendado no CI diário além de por-PR
+- [x] `scripts/db-audit/check-triple-parity.mjs` + teste — → E10/20-09 ✅ (2026-10-03; check-triple-parity.mjs no db-live-guard, que tem cron diário (13 6 * * *))
+- [x] Agendado no CI diário além de por-PR — → E10/20-09 ✅ (2026-10-03; check-triple-parity.mjs no db-live-guard, que tem cron diário (13 6 * * *))
 
-### E45 🟡 Auditoria periódica de branches
-- [ ] Job semanal: remotos merged não deletados, PRs abertos > 14 dias, branches sem commit há > 30 dias
-- [ ] Primeiro relatório gerado e triado
+### E45 🟡 Auditoria periódica de branches → E11/20-09 ✅
+- [x] Job semanal: remotos merged não deletados, PRs abertos > 14 dias, branches sem commit há > 30 dias — → E11/20-09 ✅ (2026-10-03; branch-hygiene-audit.yml com 2 runs success (21/09, 28/09))
+- [x] Primeiro relatório gerado e triado — → E11/20-09 ✅ (2026-10-03; branch-hygiene-audit.yml com 2 runs success (21/09, 28/09))
 
 ### E46 🟢 Atualizar CLAUDE.md com o aprendido
 - [ ] Adicionado: filtro `.sql` obrigatório ao contar migrations (`_foreign/`, `_superseded/`); ref `vpkmqeumtxhrwgawxdrl`; política de higiene (E13); script de registro (E19)

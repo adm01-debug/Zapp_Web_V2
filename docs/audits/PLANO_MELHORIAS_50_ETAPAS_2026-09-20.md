@@ -406,11 +406,36 @@ Maior chunk inicial restante. Medir quanto o entry realmente usa; candidatos: ad
 
 ## F6 — Qualidade de código e testes (E39–E43)
 
-### E39 🔴 Dívida de lint: 1115 → plano de redução com ratchet decrescente
-Hoje o ratchet só impede dívida **nova**. Reduzir o baseline por módulo (começar pelos
-mais tocados: `talkx/`, `inbox/`, `catalog/`).
-- [ ] Ratchet reduzido em ≥ 100 por PR temático, sem `eslint-disable` novo
-- [ ] Meta da rodada: baseline ≤ 800
+### E39 🟡 Dívida de lint: 1115 → **612** (a redução mecânica foi concluída)
+Hoje o ratchet só impede dívida **nova**. A rodada de 02–03/10 reduziu o baseline de
+**926 → 612** com correções **mecânicas** (sem mudança de comportamento), em 4 PRs:
+
+| PR | Lote | Baseline |
+|---|---|---|
+| #1752 | `no-explicit-any` em arquivos de **teste** — 178 ocorrências / 63 arquivos | 926 → 733 |
+| #1758 | `no-constant-condition` (28) + `no-console` (35 — override de config para o logger e as edges) | 733 → 670 |
+| #1760 | `ban-ts-comment`: os 49 `@ts-nocheck` que **não protegiam nada** (51 de 60) | 670 → 621 |
+| #1766 | `ban-ts-comment`: os 9 que escondiam **69 erros de tipo** | 621 → **612** |
+
+- [x] Ratchet reduzido em ≥ 100 por PR temático, sem `eslint-disable` novo — o #1752 entregou **178**; os lotes seguintes foram menores e **declararam a contagem real** em vez de inflá-la (a meta da rodada já havia sido cumprida). **Zero** `eslint-disable` novo nos quatro.
+- [x] Meta da rodada: baseline ≤ 800 — **612** em 03/10 (folga de 188). A diretiva `@ts-nocheck` está em **0 ocorrências** no repositório e `tsc -b --force` sai com **0 erros**.
+
+### E39-b 🔴 Etapas futuras: o que sobra exige MUDANÇA DE COMPORTAMENTO
+O que resta no baseline **não é correção mecânica** — muda código de produção ou o desenho
+de um teste. Registrado como etapa própria (decisão do coordenador, 03/10).
+
+| Regra | Ocorrências | Por que não é mecânico | Rascunho de abordagem |
+|---|---|---|---|
+| `react-hooks/*` (`set-state-in-effect` 91, `refs` 88, `exhaustive-deps` 26, `purity` 8, `preserve-manual-memoization` 6, `use-memo` 3, `incompatible-library` 2, `immutability` 2, `static-components` 1) | **227** | Alteram o **comportamento do componente** (ordem de render, dependências, memoização) | um PR por família de regra, cada um com teste de comportamento que prove o antes/depois |
+| `no-restricted-imports` | **132** | Componentes e pages importam `integrations/supabase/client` direto; tirar isso é **mover acesso a dados** para hooks/services — refatoração com risco de runtime | por módulo (`catalog/`, `inbox/`), movendo o acesso e cobrindo com teste antes de mudar |
+| `@typescript-eslint/no-explicit-any` (agora só em **produção**) | **131** | Tipar de verdade pode **revelar bug de tipo** e mudar assinatura; o gate de tipos passa a valer onde antes havia `any` — e o #1766 mostrou que tipo escondido esconde defeito | um arquivo por vez; cada `any` vira tipo real ou `unknown` + narrowing. É o par de produção do que o #1752 fez nos testes |
+| `react-refresh/only-export-components` | **96** | Mover exports altera HMR e pode quebrar imports | baixo risco, mas é refatoração da estrutura do módulo |
+| **Testes tautológicos** (achado do #1758, exposto pelo #1766) | — | Blocos que **reimplementam a regra e comparam com o próprio cálculo** (`const status = 'good'; expect(status).toBe('good')`) — não exercitam o código de produção e são **falso-positivo de cobertura**: passam mesmo se a regra real quebrar | ligar ao código real (ou remover a duplicação de regra). Com o typecheck ativo nesses arquivos desde o #1766, agora dá para atacar |
+
+**Onde está o volume:** `react-hooks/*` (227) + `no-restricted-imports` (132) + `any` de produção (131)
++ `react-refresh` (96) = **586 dos 612** restantes. Os 26 demais são avulsos (`no-unsafe-function-type` 13,
+`no-unused-expressions` 5, `no-constant-binary-expression` 2, `no-empty-object-type` 2, `prefer-const` 1,
+`no-this-alias` 1, `no-require-imports` 1, e um `(fatal)` pré-existente em `AISuggestions.tsx`).
 
 ### E40 🟡 implicit-any: 2 → 0
 - [x] Baseline zerado e trava mantida — implicit-any = 0 em 26/09
