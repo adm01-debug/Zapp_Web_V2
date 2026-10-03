@@ -792,10 +792,16 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [ ] **E97** · B · G-41 · `set -euo pipefail` como primeira linha de todo `run:` multi-linha (ou `defaults.run.shell:
   bash -euo pipefail {0}` por workflow) nos 8 workflows que não têm. Verificação: `actionlint`/`shellcheck` sem SC2086/
   SC2181.
-- [ ] **E98** · C · todos · `scripts/ci/workflow-contracts.unit.mjs`: um teste por invariante deste plano que pode
+- [x] **E98** · C · todos · `scripts/ci/workflow-contracts.unit.mjs`: um teste por invariante deste plano que pode
   regredir em YAML (sem `pull_request` com secret; `persist-credentials: false`; `cancel-in-progress` só em PR;
   `--ignore-scripts`; pgbouncer sem `continue-on-error`; `paths` do guarda vivo sem `functions/**`; TLS em todo workflow
   com `DESTINO_URL*`). Verificação: desfazer qualquer etapa → teste ❌.
+  **FEITO 2026-10-03** (PR do repo, ver `docs/audits/e98-workflow-contracts-2026-10-03.md`): 8 casos, leem os YAML
+  reais. Verificação cumprida por mutação — **7/7 desfeitas no YAML real, teste cai**. A 1ª rodada detectou só 4/7:
+  as 3 que escaparam eram **defeito do próprio teste** (condição que excluía `push: branches: [main]`, extrator que
+  só via `run: |`, regex que casava com o texto da mutação) — corrigidas. Achado não corrigido: `supabase-sync.yml`
+  usa `DESTINO_URL` sem `endurecerDestinoTls` (import manual legado, desarmado); exceção nomeada no teste, travada
+  pelo caso 7.
 - [ ] **E99** · C · G-37 · Fechar o plano de 27/09: marcar os 17 itens entregues como `[x]` com o PR, e os demais como
   "substituído por E-xx deste plano". Verificação: `grep -c '\[x\]'` ≥ 17 naquele arquivo.
 - [ ] **E100** · A · E70 · Após 7 dias de `🦕 Edge contracts` verde em todas as PRs, adicioná-lo aos required checks
