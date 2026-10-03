@@ -1,5 +1,7 @@
 # Plano de implementação Email NAVY em 100 etapas
 
+> **Decisão vigente — 03/10/2026:** a imagem de Email é referência de estrutura e conteúdo, **exceto as cores**, que devem seguir o tema global do ZAPP (correção #1793). Para o sidebar de contato/empresa e a integração Singu, seguir o [plano específico de 50 etapas](./PLANO_EMAIL_SIDEBAR_CONTATO_50_ETAPAS_2026-10-03.md). As orientações NAVY deste documento são históricas; os demais requisitos funcionais permanecem aplicáveis.
+
 > **Atualização de 02/10/2026:** este documento registrou o gate documental original. O usuário autorizou a implementação em solicitação posterior. O estado executado, os resultados reais, os critérios parciais e os bloqueios do backend canônico estão em [EMAIL_NAVY_IMPLEMENTATION_EVIDENCE_2026-10-02.md](./EMAIL_NAVY_IMPLEMENTATION_EVIDENCE_2026-10-02.md). As expressões “não autorizada” e “planejada” abaixo devem ser lidas como histórico do pedido original, não como o estado atual da branch de implementação.
 
 ## Escopo e autorização

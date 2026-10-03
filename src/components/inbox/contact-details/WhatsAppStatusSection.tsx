@@ -31,7 +31,7 @@ const getStatusLabel = (msg: WhatsAppStatusMessage) => {
 const getStatusTime = (msg: WhatsAppStatusMessage) => {
   const ts = msg.messageTimestamp;
   if (!ts) return null;
-  const date = new Date(typeof ts === 'string' ? parseInt(ts, 10) * 1000 : ts * 1000);
+  const date = new Date(typeof ts === 'string' ? Number.parseInt(ts, 10) * 1000 : ts * 1000);
   return formatRelativeTime(date);
 };
 

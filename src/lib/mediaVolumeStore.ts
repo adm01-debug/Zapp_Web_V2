@@ -44,7 +44,7 @@ let storageListenerAttached = false;
 /** Saneamento de leitura (E02/E03): inteiro fora de 0–100, `NaN`, `null` ou lixo → default. */
 export function sanitizeStoredVolume(raw: string | number | null | undefined): number {
   if (raw === null || raw === undefined) return DEFAULT_MEDIA_VOLUME_STATE.volume;
-  const parsed = typeof raw === 'number' ? raw : Number(String(raw).trim() || NaN);
+  const parsed = typeof raw === 'number' ? raw : Number(String(raw).trim() || Number.NaN);
   if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed < 0 || parsed > 100) {
     return DEFAULT_MEDIA_VOLUME_STATE.volume;
   }

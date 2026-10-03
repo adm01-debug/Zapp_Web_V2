@@ -201,7 +201,7 @@ export function RateLimitConfigPanel() {
                   <Input
                     type="number"
                     value={rule.max_requests}
-                    onChange={(e) => updateRule(rule.id, { max_requests: parseInt(e.target.value) || 1 })}
+                    onChange={(e) => updateRule(rule.id, { max_requests: Number.parseInt(e.target.value) || 1 })}
                     className="h-8 text-xs"
                   />
                 </div>
@@ -210,7 +210,7 @@ export function RateLimitConfigPanel() {
                   <Input
                     type="number"
                     value={rule.window_seconds}
-                    onChange={(e) => updateRule(rule.id, { window_seconds: parseInt(e.target.value) || 60 })}
+                    onChange={(e) => updateRule(rule.id, { window_seconds: Number.parseInt(e.target.value) || 60 })}
                     className="h-8 text-xs"
                   />
                 </div>

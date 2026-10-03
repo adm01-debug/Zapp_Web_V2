@@ -39,7 +39,7 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
     const { error } = await supabase.from('contact_purchases').insert({
       contact_id: contactId,
       title: title.trim(),
-      amount: amount ? parseFloat(amount) : null,
+      amount: amount ? Number.parseFloat(amount) : null,
       purchase_type: type,
       created_by: profileId,
     });

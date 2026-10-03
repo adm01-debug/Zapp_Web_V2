@@ -11,6 +11,7 @@ import * as talkxShared from '../../talkxShared';
  * cobertos pelo `tsc`; a lista aqui é só o que o JavaScript enxerga.
  */
 const EXPORTED_NAMES = [
+  'TalkXFilterBar',
   'TalkXNoData',
   'CAMPAIGN_STATUS',
   'RECIPIENT_STATUS',
@@ -43,7 +44,6 @@ const EXPORTED_NAMES = [
   'AlertCard',
   'WhatsAppBubble',
   'PhoneFrame',
-  'FilterBar',
   'FilterBarV2',
   'TalkXPagination',
   'RowActionsMenu',

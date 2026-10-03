@@ -39,7 +39,7 @@ const RESERVED_PLACEHOLDER_KEYS = new Set([
 ]);
 
 function greetingInTimezone(timeZone: string): string {
-  const hour = parseInt(
+  const hour = Number.parseInt(
     new Date().toLocaleString("pt-BR", { timeZone, hour: "numeric", hour12: false }),
     10,
   );

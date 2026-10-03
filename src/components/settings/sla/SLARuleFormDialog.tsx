@@ -235,7 +235,7 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
               id="sla-priority"
               type="number" min={0} max={100}
               value={form.priority}
-              onChange={e => setForm(f => ({ ...f, priority: parseInt(e.target.value) || 0 }))}
+              onChange={e => setForm(f => ({ ...f, priority: Number.parseInt(e.target.value) || 0 }))}
               className="mt-1"
             />
           </div>
