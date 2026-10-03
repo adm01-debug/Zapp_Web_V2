@@ -1,13 +1,16 @@
-import { useMemo, useState, lazy, Suspense } from 'react';
-import { Search, Paperclip } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react';
+import { Paperclip } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { cn } from '@/lib/utils';
-import { useContactMedia, type ContactMediaItem, type ContactMediaKind } from '@/hooks/chat/useContactMedia';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { useContactMedia, type ContactMediaItem } from '@/hooks/chat/useContactMedia';
 import { useQueryClient } from '@tanstack/react-query';
 import { contactMediaKey } from '@/hooks/chat/useContactMedia';
 import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
+import { useFilesViewState, type FilesTypeFilter } from '@/hooks/chat/useFilesViewState';
+import { useFilesContainerColumns } from '@/hooks/chat/useFilesContainerColumns';
+import { useFilesSelection } from '@/hooks/chat/useFilesSelection';
+import { FilesToolbar } from './FilesToolbar';
 import { FileCard } from './FileCard';
 import { FileDetailPanel } from './FileDetailPanel';
 import type { Message } from '@/types/chat';
@@ -17,10 +20,7 @@ const MediaPreviewDialog = lazy(() =>
 const ForwardMessageDialog = lazy(() =>
   import('../ForwardMessageDialog').then((m) => ({ default: m.ForwardMessageDialog })));
 
-type TypeFilter = 'all' | ContactMediaKind;
-type SortMode = 'recent' | 'old' | 'biggest';
-
-const CHIPS: { id: TypeFilter; label: string }[] = [
+const CHIPS: { id: FilesTypeFilter; label: string }[] = [
   { id: 'all', label: 'Todos' },
   { id: 'image', label: 'Imagens' },
   { id: 'video', label: 'Vídeos' },
@@ -35,29 +35,44 @@ interface FilesTabProps {
 
 export function FilesTab({ contactId, contactName }: FilesTabProps) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const view = useFilesViewState(user?.id, contactId);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const { available } = useFilesContainerColumns(gridRef, view.columns);
   const { data, isLoading } = useContactMedia(contactId);
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
-  const [search, setSearch] = useState('');
-  const [sort, setSort] = useState<SortMode>('recent');
+
   const [selected, setSelected] = useState<ContactMediaItem | null>(null);
   const [previewItem, setPreviewItem] = useState<ContactMediaItem | null>(null);
   const [forwardItem, setForwardItem] = useState<ContactMediaItem | null>(null);
 
   const items = useMemo(() => data?.items ?? [], [data]);
   const counts = data?.counts ?? { all: 0, image: 0, video: 0, audio: 0, document: 0 };
+  const hasMore = data?.hasMore ?? false;
 
   const filtered = useMemo(() => {
-    let list = typeFilter === 'all' ? items : items.filter((i) => i.type === typeFilter);
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
+    let list = view.typeFilter === 'all' ? items : items.filter((i) => i.type === view.typeFilter);
+    if (view.search.trim()) {
+      const q = view.search.trim().toLowerCase();
       list = list.filter((i) => i.filename.toLowerCase().includes(q) || (i.caption ?? '').toLowerCase().includes(q));
     }
     const sorted = [...list];
-    if (sort === 'recent') sorted.sort((a, b) => b.created_at.localeCompare(a.created_at));
-    else if (sort === 'old') sorted.sort((a, b) => a.created_at.localeCompare(b.created_at));
-    else sorted.sort((a, b) => (b.size ?? 0) - (a.size ?? 0));
+    if (view.sort === 'recent') sorted.sort((a, b) => b.created_at.localeCompare(a.created_at));
+    else if (view.sort === 'old') sorted.sort((a, b) => a.created_at.localeCompare(b.created_at));
+    else if (view.sort === 'biggest') sorted.sort((a, b) => (b.size ?? 0) - (a.size ?? 0));
+    else sorted.sort((a, b) => a.displayName.localeCompare(b.displayName, 'pt-BR'));
     return sorted;
-  }, [items, typeFilter, search, sort]);
+  }, [items, view.typeFilter, view.search, view.sort]);
+
+  const visibleIds = useMemo(() => filtered.map((item) => item.id), [filtered]);
+  const selection = useFilesSelection(visibleIds, contactId);
+
+  // Etapa 15: Esc dentro da aba sai do modo seleção (sem efeito destrutivo).
+  useEffect(() => {
+    if (!selection.selectionMode) return;
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') selection.exit(); };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [selection]);
 
   const handleDeleted = () => {
     setSelected(null);
@@ -70,48 +85,53 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
     : null;
 
   return (
-    <div className="flex flex-col gap-4" data-testid="files-tab">
-      <header>
-        <h2 className="text-xl font-bold text-foreground">Arquivos compartilhados</h2>
-        <p className="text-sm text-muted-foreground">Todos os arquivos, mídias e documentos desta conversa.</p>
+    <div className="flex flex-col gap-3" data-testid="files-tab">
+      {/* Etapa 14: título e chips na mesma linha, contagem honesta, sem subtítulo. */}
+      <header className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <h2 className="text-base font-semibold text-foreground">Arquivos</h2>
+        <div className="flex flex-wrap items-center gap-2">
+          {CHIPS.map((chip) => (
+            <button
+              key={chip.id}
+              type="button"
+              onClick={() => view.setTypeFilter(chip.id)}
+              aria-pressed={view.typeFilter === chip.id}
+              className={cn(
+                'h-8 px-3 rounded-lg text-[13px] font-medium border inline-flex items-center gap-1.5',
+                view.typeFilter === chip.id ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/40 border-border/60 text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {chip.label}
+              <span className={cn('tabular-nums h-4 min-w-4 px-1 rounded text-3xs font-bold flex items-center justify-center', view.typeFilter === chip.id ? 'bg-white/15' : 'bg-muted')}>
+                {counts[chip.id]}
+              </span>
+            </button>
+          ))}
+        </div>
+        <p className="ml-auto text-xs text-muted-foreground tabular-nums">
+          {hasMore
+            ? `${items.length} carregados · há mais antigos`
+            : `${counts.all} ${counts.all === 1 ? 'arquivo' : 'arquivos'}`}
+        </p>
       </header>
 
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Buscar arquivos..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-10 pl-9" />
-        </div>
-        <Select value={sort} onValueChange={(v) => setSort(v as SortMode)}>
-          <SelectTrigger className="h-10 w-[180px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="recent">Mais recentes</SelectItem>
-            <SelectItem value="old">Mais antigos</SelectItem>
-            <SelectItem value="biggest">Maiores</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex items-center gap-2 flex-wrap">
-        {CHIPS.map((chip) => (
-          <button
-            key={chip.id}
-            type="button"
-            onClick={() => setTypeFilter(chip.id)}
-            className={cn(
-              'h-8 px-3 rounded-lg text-[13px] font-medium border inline-flex items-center gap-1.5',
-              typeFilter === chip.id ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/40 border-border/60 text-muted-foreground hover:text-foreground'
-            )}
-          >
-            {chip.label}
-            <span className={cn('tabular-nums h-4 min-w-4 px-1 rounded text-3xs font-bold flex items-center justify-center', typeFilter === chip.id ? 'bg-white/15' : 'bg-muted')}>
-              {counts[chip.id]}
-            </span>
-          </button>
-        ))}
-      </div>
+      <FilesToolbar
+        search={view.search}
+        onSearchChange={view.setSearch}
+        sort={view.sort}
+        onSortChange={view.setSort}
+        viewMode={view.viewMode}
+        onViewModeChange={view.setViewMode}
+        columns={view.columns}
+        columnOptions={available}
+        onColumnsChange={view.setColumns}
+        selectionMode={selection.selectionMode}
+        selectedCount={selection.selectedCount}
+        onToggleSelectionMode={() => (selection.selectionMode ? selection.exit() : selection.enter())}
+      />
 
       <div className="flex gap-4 items-start">
-        <div className="flex-1 min-w-0">
+        <div ref={gridRef} className="flex-1 min-w-0">
           {isLoading ? (
             <div className="grid grid-cols-2 2xl:grid-cols-3 gap-3">
               {[...Array(6)].map((_, i) => <div key={i} className="aspect-[4/5] rounded-xl bg-muted/30 animate-pulse" />)}
@@ -126,7 +146,10 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
                   item={item}
                   contactName={contactName}
                   selected={selected?.id === item.id}
+                  selectionMode={selection.selectionMode}
+                  selectionChecked={selection.selectedIds.has(item.id)}
                   onSelect={() => setSelected(item)}
+                  onToggleSelection={() => selection.toggle(item.id)}
                   onPreview={() => setPreviewItem(item)}
                   onForward={() => setForwardItem(item)}
                   onDeleted={handleDeleted}

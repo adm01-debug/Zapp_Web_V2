@@ -3,6 +3,7 @@ import { Image, File, Play, Eye, Download, Share2, MoreVertical, Link2, Trash2 }
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { formatSmartDate } from '@/lib/formatters';
@@ -15,13 +16,28 @@ interface FileCardProps {
   item: ContactMediaItem;
   contactName: string;
   selected: boolean;
+  /** Etapa 15: no modo seleção o cartão alterna a seleção em vez de abrir os detalhes. */
+  selectionMode?: boolean;
+  selectionChecked?: boolean;
   onSelect: () => void;
+  onToggleSelection?: () => void;
   onPreview: () => void;
   onForward: () => void;
   onDeleted: () => void;
 }
 
-export function FileCard({ item, contactName, selected, onSelect, onPreview, onForward, onDeleted }: FileCardProps) {
+export function FileCard({
+  item,
+  contactName,
+  selected,
+  selectionMode = false,
+  selectionChecked = false,
+  onSelect,
+  onToggleSelection,
+  onPreview,
+  onForward,
+  onDeleted,
+}: FileCardProps) {
   const [hasError, setHasError] = useState(false);
   // Etapa 10: a consulta já assina em lote, um request por bucket. O hook individual
   // continua como fallback para item sem URL assinada (objeto público ou lote que falhou).
@@ -50,10 +66,20 @@ export function FileCard({ item, contactName, selected, onSelect, onPreview, onF
   return (
     <div
       data-testid="file-card"
-      className={cn('rounded-xl border bg-card overflow-hidden flex flex-col cursor-pointer transition-colors', selected ? 'border-border ring-2 ring-primary' : 'border-border hover:border-primary/40')}
-      onClick={onSelect}
+      className={cn('rounded-xl border bg-card overflow-hidden flex flex-col cursor-pointer transition-colors', selected || selectionChecked ? 'border-border ring-2 ring-primary' : 'border-border hover:border-primary/40')}
+      onClick={selectionMode ? onToggleSelection : onSelect}
     >
       <div className="aspect-[16/10] bg-muted relative">
+        {selectionMode && (
+          <span className="absolute left-2 top-2 z-10 rounded-md bg-background/80 p-0.5">
+            <Checkbox
+              checked={selectionChecked}
+              aria-label={`Selecionar ${item.displayName}`}
+              onCheckedChange={() => onToggleSelection?.()}
+              onClick={(event) => event.stopPropagation()}
+            />
+          </span>
+        )}
         {item.type === 'image' && !hasError && displayUrl ? (
           <img src={displayUrl} alt={item.filename} className="w-full h-full object-cover" onError={() => { setHasError(true); void refresh(); }} />
         ) : item.type === 'video' ? (

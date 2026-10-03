@@ -3,9 +3,10 @@ import { renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-const { mockFrom, createSignedUrls } = vi.hoisted(() => ({
+const { mockFrom, createSignedUrls, limitSpy } = vi.hoisted(() => ({
   mockFrom: vi.fn(),
   createSignedUrls: vi.fn(),
+  limitSpy: vi.fn(),
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -47,6 +48,9 @@ const rows = [
 
 const orMock = vi.fn();
 
+// A consulta pede uma linha a mais que a pagina (etapa 14) para saber se ha mais antigos.
+limitSpy.mockImplementation(() => Promise.resolve({ data: rows, error: null }));
+
 beforeEach(() => {
   vi.clearAllMocks();
   createSignedUrls.mockImplementation((paths: string[]) =>
@@ -61,7 +65,7 @@ beforeEach(() => {
         not: vi.fn().mockReturnValue({
           or: orMock.mockReturnValue({
             order: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
+              limit: (...args: unknown[]) => limitSpy(...args),
             }),
           }),
         }),
@@ -92,6 +96,24 @@ describe('useContactMedia', () => {
     const { result } = renderHook(() => useContactMedia('c1'), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.data!.counts).toEqual({ all: 5, image: 2, video: 1, audio: 1, document: 1 });
+  });
+
+  it('pede uma linha a mais que a página e sinaliza "há mais antigos" (etapa 14)', async () => {
+    const pagina = Array.from({ length: 201 }, (_, i) => ({ ...rows[0], id: `p${i}` }));
+    limitSpy.mockResolvedValueOnce({ data: pagina, error: null });
+
+    const { result } = renderHook(() => useContactMedia('c1'), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(limitSpy).toHaveBeenCalledWith(201);
+    expect(result.current.data!.items).toHaveLength(200);
+    expect(result.current.data!.hasMore).toBe(true);
+  });
+
+  it('sem sobra na consulta, hasMore é false (a contagem pode ser exata)', async () => {
+    const { result } = renderHook(() => useContactMedia('c1'), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.data!.hasMore).toBe(false);
   });
 
   it('usa caption com fallback para content (legenda gravada como conteudo)', async () => {

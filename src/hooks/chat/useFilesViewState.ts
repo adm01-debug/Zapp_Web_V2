@@ -133,6 +133,11 @@ function initialState(userId: string | null | undefined, contactId: string | nul
   };
 }
 
+/** Só para testes: zera a memória de sessão (que na vida real é por conversa, não global). */
+export function __resetFilesViewSession(): void {
+  sessionCache.clear();
+}
+
 export function useFilesViewState(
   userId: string | null | undefined,
   contactId: string | null | undefined,

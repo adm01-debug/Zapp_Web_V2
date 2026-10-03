@@ -43,6 +43,8 @@ export interface ContactMediaCounts {
 export const contactMediaKey = (contactId: string | null | undefined) => ['media-gallery', contactId] as const;
 
 const SIGNED_URL_TTL_SECONDS = 3600;
+/** Tamanho da página da galeria (etapa 14); a consulta pede um a mais para saber se há mais. */
+export const MEDIA_PAGE_SIZE = 200;
 const STORAGE_ORIGINS = [new URL(SUPABASE_URL).origin] as const;
 const TYPE_LABEL: Record<ContactMediaKind, string> = {
   image: 'Imagem', video: 'Vídeo', audio: 'Áudio', document: 'Documento',
@@ -156,7 +158,7 @@ async function signInBatch(
 export function useContactMedia(contactId: string | null | undefined) {
   return useQuery({
     queryKey: contactMediaKey(contactId),
-    queryFn: async (): Promise<{ items: ContactMediaItem[]; counts: ContactMediaCounts }> => {
+    queryFn: async (): Promise<{ items: ContactMediaItem[]; counts: ContactMediaCounts; hasMore: boolean }> => {
       const { data, error } = await supabase
         .from('messages')
         .select('id, media_url, message_type, media_type, media_mimetype, media_filename, media_size, media_meta, caption, content, sender, ptt, created_at')
@@ -166,10 +168,15 @@ export function useContactMedia(contactId: string | null | undefined) {
         // entao NULL conta como nao apagada - `.eq(false)` esconderia mensagens antigas.
         .or('is_deleted.is.null,is_deleted.eq.false')
         .order('created_at', { ascending: false })
-        .limit(200);
+        // Etapa 14: pede 1 a mais para saber se ha mais antigos sem mentir na contagem.
+        .limit(MEDIA_PAGE_SIZE + 1);
       if (error) throw error;
 
-      const items: ContactMediaItem[] = (data || [])
+      const rows = data || [];
+      const hasMore = rows.length > MEDIA_PAGE_SIZE;
+
+      const items: ContactMediaItem[] = rows
+        .slice(0, MEDIA_PAGE_SIZE)
         .filter((m) => m.media_url)
         .map((m) => {
           const url = m.media_url as string;
@@ -210,7 +217,7 @@ export function useContactMedia(contactId: string | null | undefined) {
         document: items.filter((i) => i.type === 'document').length,
       };
 
-      return { items, counts };
+      return { items, counts, hasMore };
     },
     enabled: !!contactId,
     staleTime: 5 * 60 * 1000,
