@@ -74,7 +74,7 @@ function ChannelBar({ label, value, max = 100 }: { label: string; value: number 
 export function SinguProfileDetailSheet({ open, onOpenChange, row, profile }: SinguProfileDetailSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[400px] sm:w-[400px] max-w-full sm:max-w-[400px] overflow-y-auto" data-testid="singu-detail-sheet">
+      <SheetContent side="right" className="w-full sm:w-[400px] max-w-full sm:max-w-[400px] overflow-y-auto" data-testid="singu-detail-sheet">
         <SheetHeader>
           <SheetTitle>{row?.label ?? 'Detalhe'}</SheetTitle>
           <SheetDescription>Detalhe do Perfil Singu deste contato</SheetDescription>

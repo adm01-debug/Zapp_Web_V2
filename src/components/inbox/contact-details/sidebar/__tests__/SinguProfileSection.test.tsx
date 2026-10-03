@@ -58,7 +58,7 @@ describe('SinguProfileSection (etapas 69–80)', () => {
   // aria-label da barra (Progress do Radix não expõe aria-valuenow ao
   // testing-library — o label propaga o valor já clampeado).
   const TILE_CASES: Array<{ name: string; valor: string; barra: string | null; etapa: number }> = [
-    { name: 'disc', valor: 'D Dominante (DI)', barra: 'DISC: 80%', etapa: 70 },
+    { name: 'disc', valor: 'D · Dominante (DI)', barra: 'DISC: 80%', etapa: 70 },
     { name: 'vak', valor: 'Visual', barra: 'VAK: 80%', etapa: 71 },
     { name: 'big_five', valor: 'Alta Extroversão', barra: 'Big Five: 70%', etapa: 72 },
     { name: 'mbti', valor: 'ENTJ – O Comandante', barra: 'MBTI: 40%', etapa: 73 },
@@ -120,8 +120,27 @@ describe('SinguProfileSection (etapas 69–80)', () => {
 
   it('perfil vazio → "Sem avaliação no Singu" (etapas 69/79)', () => {
     renderSection({ data: { found: true, singu_profile: null } });
-    expect(screen.getAllByText('Sem avaliação no Singu').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText('Não avaliado')).toHaveLength(6);
+    for (const kind of ['metaprograms', 'fears', 'decision', 'budget', 'influencers', 'rapport', 'objections']) {
+      expect(screen.getByTestId(`singu-row-${kind}`)).toBeDisabled();
+    }
+    expect(screen.getAllByText('Sem avaliação no Singu')).toHaveLength(1);
     expect(screen.getByTestId('singu-assessed-footer')).toHaveTextContent('Sem avaliação no Singu');
+  });
+
+  it('objetos apenas com defaults legados não habilitam decisão ou orçamento', () => {
+    renderSection({
+      data: {
+        found: true,
+        singu_profile: {
+          ...fullProfile,
+          decision: { speed: null, criteria: [], needs_approval: false, approver_name: null },
+          budget: { authority: null, decision_role: null, decision_power: 5 },
+        },
+      },
+    });
+    expect(screen.getByTestId('singu-row-decision')).toBeDisabled();
+    expect(screen.getByTestId('singu-row-budget')).toBeDisabled();
   });
 
   it('5 estados de status (etapa 79)', () => {

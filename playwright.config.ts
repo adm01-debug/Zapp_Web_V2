@@ -229,6 +229,13 @@ export default defineConfig({
       // para que a sonda do Playwright e o navegador exercitem o MESMO processo.
       command: `bun run dev -- --host 127.0.0.1 --port ${porta} --strictPort`,
       url,
+      env: {
+        ...process.env,
+        // O backend continua protegido pela flag runtime. O build E2E precisa
+        // conter o caminho da integração para que specs possam exercitá-lo
+        // com rotas locais determinísticas.
+        VITE_CRM_INTEGRATION_ENABLED: process.env.VITE_CRM_INTEGRATION_ENABLED ?? 'true',
+      },
       // Fora do CI o desenvolvedor costuma ja' ter o dev server no ar: reusar
       // a propria porta e' o comportamento util. O que nao pode acontecer e'
       // olhar para uma porta que nao e' a sua -- e isso o `url` acima resolve.

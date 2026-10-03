@@ -48,7 +48,7 @@ export function SidebarSection({ index, value, icon, title, subtitle, tone, chil
             </div>
             <div className="min-w-0">
               <div className="text-sm font-semibold text-foreground leading-tight">{title}</div>
-              <div className="text-3xs text-muted-foreground truncate">{subtitle}</div>
+              <div className="text-xs text-muted-foreground truncate">{subtitle}</div>
             </div>
           </div>
         </AccordionTrigger>

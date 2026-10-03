@@ -6,8 +6,8 @@ import {
 
 describe('singuLabels — dicionários', () => {
   it('valor conhecido devolve o rótulo pt-BR', () => {
-    expect(discLabel('D')).toBe('D Dominante');
-    expect(discLabel('D', 'DI')).toBe('D Dominante (DI)');
+    expect(discLabel('D')).toBe('D · Dominante');
+    expect(discLabel('D', 'DI')).toBe('D · Dominante (DI)');
     expect(discLabel('X')).toBe('X');
     expect(discLabel(null)).toBeNull();
     expect(labelOrRaw(VAK_LABELS, 'visual')).toBe('Visual');

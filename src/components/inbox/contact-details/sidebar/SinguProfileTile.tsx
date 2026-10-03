@@ -23,12 +23,12 @@ export function SinguProfileTile({ name, icon, label, value, bar }: SinguProfile
   return (
     <div data-testid={`singu-tile-${name}`} className="min-h-16 rounded-lg border border-border bg-card p-2 flex flex-col justify-between gap-1">
       <div className="flex items-center gap-1.5 min-w-0">
-        <span className={cn('w-5 h-5 flex items-center justify-center shrink-0 [&>svg]:w-4 [&>svg]:h-4', hasData ? 'text-foreground' : 'text-muted-foreground/40')}>
+        <span className={cn('w-5 h-5 flex items-center justify-center shrink-0 [&>svg]:w-5 [&>svg]:h-5', hasData ? 'text-foreground' : 'text-muted-foreground/40')}>
           {icon}
         </span>
         <span className="text-xs font-medium text-foreground truncate">{label}</span>
       </div>
-      <span className="text-3xs text-muted-foreground truncate" title={value ?? 'Não avaliado'}>
+      <span className="text-[11px] text-muted-foreground truncate" title={value ?? 'Não avaliado'}>
         {value ?? 'Não avaliado'}
       </span>
       {barValue !== null && (

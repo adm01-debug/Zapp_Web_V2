@@ -119,11 +119,11 @@ export const DECISION_CRITERIA_LABELS: Record<string, string> = {
   referral: 'Indicação',
 };
 
-/** Rótulo do DISC para o tile: "D Dominante" (+ blend quando houver). */
+/** Rótulo do DISC para o tile: "D · Dominante" (+ blend quando houver). */
 export function discLabel(value: string | null | undefined, blend?: string | null): string | null {
   if (!value) return null;
   const nome = DISC_LABELS[value]?.name;
-  const base = nome ? `${value} ${nome}` : value;
+  const base = nome ? `${value} · ${nome}` : value;
   return blend ? `${base} (${blend})` : base;
 }
 

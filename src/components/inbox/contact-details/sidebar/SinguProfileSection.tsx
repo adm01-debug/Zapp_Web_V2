@@ -97,23 +97,34 @@ function buildDetailRows(profile: SinguProfile | null): DetailRowSpec[] {
   const fearsPreview = truncate(fears?.main_fear) ?? truncate(fears?.motivation_primary);
   const rapportPreview = truncate(rapport?.notes) ?? (rapport?.preferred_triggers?.[0] ?? null);
 
+  const hasMetaprograms = !!metaprograms && Object.entries(metaprograms)
+    .some(([key, value]) => key === 'notes' ? !!String(value ?? '').trim() : typeof value === 'number');
+  const hasFears = !!fears && Object.values(fears).some((value) => !!value?.trim());
+  // Defaults legados (`false`, lista vazia e poder 5 isolados) não devem
+  // transformar uma ficha nunca avaliada em dado acionável.
+  const hasDecision = !!decision && (!!decision.speed?.trim()
+    || !!decision.criteria?.length || decision.needs_approval === true
+    || !!decision.approver_name?.trim());
+  const hasBudget = !!budget && (!!budget.authority?.trim()
+    || !!budget.decision_role?.trim()
+    || (typeof budget.decision_power === 'number' && budget.decision_power !== 5));
+  const hasRapport = !!rapport && Object.entries(rapport).some(([key, value]) => {
+    if (key === 'channel_scores') {
+      return !!value && Object.values(value).some((score) => typeof score === 'number');
+    }
+    if (Array.isArray(value)) return value.length > 0;
+    return typeof value === 'string' ? value.trim().length > 0 : false;
+  });
+
   return [
-    { kind: 'metaprograms', label: 'Metaprogramas', icon: <Brain />, preview: summarizeMetaprograms(metaprograms), hasData: metaprograms !== null },
-    { kind: 'fears', label: 'Medos & Motivação', icon: <Heart />, preview: fearsPreview, hasData: fears !== null },
-    { kind: 'decision', label: 'Estilo de decisão', icon: <Target />, preview: decisionPreview, hasData: decision !== null },
-    { kind: 'budget', label: 'Autoridade de orçamento', icon: <DollarSign />, preview: budget?.authority ? labelOrRaw(BUDGET_AUTHORITY_LABELS, budget.authority) : null, hasData: budget !== null },
+    { kind: 'metaprograms', label: 'Metaprogramas', icon: <Brain />, preview: summarizeMetaprograms(metaprograms), hasData: hasMetaprograms },
+    { kind: 'fears', label: 'Medos & Motivação', icon: <Heart />, preview: fearsPreview, hasData: hasFears },
+    { kind: 'decision', label: 'Estilo de decisão', icon: <Target />, preview: decisionPreview, hasData: hasDecision },
+    { kind: 'budget', label: 'Autoridade de orçamento', icon: <DollarSign />, preview: budget?.authority ? labelOrRaw(BUDGET_AUTHORITY_LABELS, budget.authority) : null, hasData: hasBudget },
     { kind: 'influencers', label: 'Influenciadores', icon: <Link2 />, preview: influencersPreview, hasData: influencers.length > 0 },
-    { kind: 'rapport', label: 'Rapport & gatilhos', icon: <MessageSquareQuote />, preview: rapportPreview, hasData: rapport !== null },
+    { kind: 'rapport', label: 'Rapport & gatilhos', icon: <MessageSquareQuote />, preview: rapportPreview, hasData: hasRapport },
     { kind: 'objections', label: 'Scripts de objeção', icon: <GitBranch />, preview: objectionsPreview, hasData: scripts.length > 0 },
   ];
-}
-
-function hasAnyProfile(profile: SinguProfile | null): boolean {
-  if (!profile) return false;
-  return !!(profile.disc?.primary || profile.vak?.primary || profile.big_five || profile.mbti?.type
-    || profile.enneagram?.type || profile.temperament?.primary || profile.metaprograms
-    || profile.fears_motivation || profile.decision || profile.budget
-    || profile.influencers.length > 0 || profile.rapport || profile.objection_scripts.length > 0);
 }
 
 /**
@@ -159,38 +170,32 @@ export function SinguProfileSection({ index, status, data, onBuscarCRM, onRetry 
       {status === 'not_found' && <SidebarEmpty cause="not-found" message="Contato não vinculado ao Singu" cta={{ label: 'Buscar no CRM', onClick: onBuscarCRM }} />}
       {status === 'ok' && (
         <>
-          {!hasAnyProfile(profile) ? (
-            <SidebarEmpty cause="empty" message="Sem avaliação no Singu" />
-          ) : (
-            <>
-              <div className="grid grid-cols-2 gap-2 mb-2">
-                <SinguProfileTile name="disc" icon={<UserRound />} label="DISC" value={discLabel(disc?.primary, disc?.blend)} bar={disc?.confidence} />
-                <SinguProfileTile name="vak" icon={<Eye />} label="VAK" value={vak.value} bar={vak.bar} />
-                <SinguProfileTile name="big_five" icon={<BarChart3 />} label="Big Five" value={bigFive.value} bar={bigFive.bar} />
-                <SinguProfileTile name="mbti" icon={<Brain />} label="MBTI" value={mbtiValue} bar={mbti ? mbtiIntensity(mbti) : null} />
-                <SinguProfileTile name="enneagram" icon={<Hexagon />} label="Eneagrama" value={enneagramLabel(ennea?.type, ennea?.wing)} bar={enneaBar} />
-                <SinguProfileTile name="temperament" icon={<Flame />} label="Temperamento" value={temperamentValue} bar={null} />
-              </div>
-              <div className="space-y-0.5">
-                {rows.map((row) => (
-                  <button
-                    key={row.kind} type="button"
-                    data-testid={`singu-row-${row.kind}`}
-                    disabled={!row.hasData}
-                    onClick={() => { setDetailRow(row); setDetailOpen(true); }}
-                    className="w-full grid grid-cols-[16px_minmax(0,1fr)_auto] items-center gap-2 min-h-7 rounded-md px-1 -mx-1 text-left hover:bg-muted/40 disabled:opacity-60 disabled:hover:bg-transparent"
-                  >
-                    <span className="w-4 h-4 flex items-center justify-center text-muted-foreground [&>svg]:w-4 [&>svg]:h-4">{row.icon}</span>
-                    <span className="text-xs min-w-0 truncate">
-                      <span className="text-muted-foreground">{row.label}</span>
-                      <span className="text-foreground"> — {row.preview ?? '—'}</span>
-                    </span>
-                    <ChevronRight className={`w-3.5 h-3.5 ${row.hasData ? 'text-muted-foreground' : 'text-muted-foreground/30'}`} />
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            <SinguProfileTile name="disc" icon={<UserRound />} label="DISC" value={discLabel(disc?.primary, disc?.blend)} bar={disc?.confidence} />
+            <SinguProfileTile name="vak" icon={<Eye />} label="VAK" value={vak.value} bar={vak.bar} />
+            <SinguProfileTile name="big_five" icon={<BarChart3 />} label="Big Five" value={bigFive.value} bar={bigFive.bar} />
+            <SinguProfileTile name="mbti" icon={<Brain />} label="MBTI" value={mbtiValue} bar={mbti ? mbtiIntensity(mbti) : null} />
+            <SinguProfileTile name="enneagram" icon={<Hexagon />} label="Eneagrama" value={enneagramLabel(ennea?.type, ennea?.wing)} bar={enneaBar} />
+            <SinguProfileTile name="temperament" icon={<Flame />} label="Temperamento" value={temperamentValue} bar={null} />
+          </div>
+          <div className="space-y-0.5">
+            {rows.map((row) => (
+              <button
+                key={row.kind} type="button"
+                data-testid={`singu-row-${row.kind}`}
+                disabled={!row.hasData}
+                onClick={() => { setDetailRow(row); setDetailOpen(true); }}
+                className="w-full grid grid-cols-[16px_minmax(0,1fr)_auto] items-center gap-2 min-h-7 rounded-md px-1 -mx-1 text-left hover:bg-muted/40 disabled:opacity-60 disabled:hover:bg-transparent"
+              >
+                <span className="w-4 h-4 flex items-center justify-center text-muted-foreground [&>svg]:w-4 [&>svg]:h-4">{row.icon}</span>
+                <span className="text-xs min-w-0 truncate">
+                  <span className="text-muted-foreground">{row.label}</span>
+                  <span className="text-foreground"> — {row.preview ?? '—'}</span>
+                </span>
+                <ChevronRight className={`w-3.5 h-3.5 ${row.hasData ? 'text-muted-foreground' : 'text-muted-foreground/30'}`} />
+              </button>
+            ))}
+          </div>
           <div className="mt-2 pt-2 border-t border-border/50 text-3xs text-muted-foreground text-center" data-testid="singu-assessed-footer">
             {assessed ? `Avaliado em ${assessed}` : 'Sem avaliação no Singu'}
           </div>
