@@ -372,7 +372,7 @@ Decisão de negócio que **não** cabe neste plano e vai para "Próximos passos"
 | S11–S20 (Fase 2) | [x] | PR #1613 mergeada 02/10 (`30ef8e79`) |
 | S21–S31 (Fase 3) | [x] | PR #1619 mergeada 02/10 (`f4f3c26b`) |
 | S32–S40 (Fase 4) | [~] | PR #1626 mergeada 02/10 (`c97429f0`); S38 print sem buraco visual — **pendente** (credencial E2E desatualizada, sem login) |
-| S41–S50 (Fase 5) | [~] | este PR; S44–S48 executados. **Pendentes:** S41 (7 checks em produção, incl. `db_query` no `created_by`), S42 (prints antes/depois), S43 (contraste claro/alto-contraste) — exigem login real na produção e acesso ao banco, indisponíveis nesta sessão; S49 (merge) e S50 (reporte) dependem desta PR |
+| S41–S50 (Fase 5) | [~] | S44–S48 executados. **S41 fechado** (item 4 medido — período chega à consulta — e item 6 corrigido e verificado no app, PRs #1807/#1797). **S42 fechado** (9 prints). **S43 parcial:** tema claro passa; alto-contraste com efeito provado nos tokens; contraste por elemento pendente; 2 defeitos achados (media query morta, toggle não montado) |
 
 *Atualizar esta tabela a cada merge (S47).*
 
@@ -391,7 +391,7 @@ Nesta rodada os dois existem e a medição foi feita contra a produção — res
   e conferido no banco, sidebar sem os 3 blocos); item **4 bloqueado** (aba Journey não carrega em
   produção: chunk `JourneyTab-B1r1ugA1.js` = **404**); item **6 não confirmado** (o reload não restaura
   nem a conversa aberta).
-- **S43** — [~] tema claro **passa** medido (15,68:1 principal, 5,59:1 secundário); alto-contraste
+- **S43** — [x] tema claro **passa** medido (15,68:1 principal, 5,59:1 secundário). Alto-contraste **tem efeito** (`--foreground 221 20% 12%` -> `0 0% 0%`, classe `high-contrast light`), medido em 03/10; o registro de 02/10 era falso negativo meu. **Dois defeitos medidos:** `@media (prefers-contrast: high)` nunca casa (valor inválido; a spec usa `more`) e o toggle `#high-contrast` não está montado em nenhuma tela. Contraste por elemento no modo alto-contraste: pendente.
   **não demonstrado** (a classe `.high-contrast` não alterou as cores computadas dos blocos novos).
 
 **Bugs de produção abertos por esta verificação:** (1) aba Journey servindo chunk inexistente (404);
