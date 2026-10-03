@@ -55,6 +55,14 @@ describe('TelefoniaView (T33)', () => {
     expect(alias.VoIPPanel).toBe(direto.TelefoniaView);
   });
 });
+vi.mock('@/hooks/calls/useCallChannels', () => ({
+  useCallChannels: () => ({
+    voip: { channel: 'voip', canDial: true, canReceive: true, canRecord: false, canReject: true, reason: null },
+    whatsapp: { channel: 'whatsapp', canDial: false, canReceive: true, canRecord: false, canReject: false, reason: null },
+    linhaWhatsApp: null, rotuloLinhaWhatsApp: '',
+  }),
+}));
+
 // T34: o PageHeader le o LayoutContext (breadcrumbs) e estoura sem o provider. Mockar
 // AQUI e o passo que faltou na primeira tentativa: sem isso, os 13 testes da view caiam.
 vi.mock('@/components/layout/PageHeader', () => ({
