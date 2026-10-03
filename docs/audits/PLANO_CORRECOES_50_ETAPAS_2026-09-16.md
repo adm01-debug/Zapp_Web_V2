@@ -19,7 +19,7 @@
 > **sincronizados com a realidade** — os que já estavam resolvidos ganharam `[x]` **com a evidência
 > e a data** da etapa-herdeira do plano vigente, e cada etapa herdada aponta para a sua herdeira
 > (`→ E{n}/20-09 <status>`). O que **não** tem prova segue **aberto**, com a pendência explicitada
-> no fim da etapa. Estado: **49 abertos / 50 fechados** (era 80/19). O tracking vivo continua no
+> no fim da etapa. Estado: **47 abertos / 52 fechados** (era 80/19 em 20/09; 49/50 na sincronização de 03/10, mais os 2 do E37 fechados pela E27). O tracking vivo continua no
 > `PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md`; este arquivo passa a ser o registro histórico já sincronizado.
 
 | Eixo | Estado em 2026-09-16 |
@@ -394,10 +394,9 @@ CLI retornou 403 → hoje é impossível confirmar diretamente o que está no ar
 - [ ] `SUPABASE_ACCESS_TOKEN` com escopo correto configurado
 - [ ] `supabase functions list --project-ref tnnnlkbymytvtqngbbqh` funcionando
 
-### E37 🔴 Reconciliação implantado × manifesto → E27/20-09 🔴
-- [ ] Diff nome a nome + `verify_jwt` das 66 do `deployment-manifest.json` contra a listagem live
-- [ ] Zero implantadas fora do manifesto (ou em `legacy_unmanaged_functions` com justificativa); zero no manifesto sem deploy
-> **Pendência → E27/20-09 🔴**: paridade 3-vias LOCAL 69/69 (29/09) OK, mas a listagem live segue bloqueada (403) (verificado 2026-10-03)
+### E37 🟢 Reconciliação implantado × manifesto → E27/20-09 🟢
+- [x] Diff nome a nome + `verify_jwt` do `deployment-manifest.json` contra a listagem live — → E27/20-09 ✅ (2026-10-03: 72 live = 70 no manifesto + 2 na `orphan_allowlist`; 0 divergência de `verify_jwt`)
+- [x] Zero implantadas fora do manifesto (ou em `legacy_unmanaged_functions` com justificativa); zero no manifesto sem deploy — → E27/20-09 ✅ (2026-10-03: as 2 fora — `sicoob-bridge`, `sicoob-bridge-reply` — estão na `orphan_allowlist`; nenhuma no manifesto sem deploy)
 
 ### E38 🔴 Revisar as 9 functions `verify_jwt=false` → E28/20-09 ✅
 ```sh
