@@ -19,17 +19,17 @@ vi.mock('@/hooks/communication/useSpeechToText', () => ({
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...rest }: any) => <div>{children}</div>,
-    span: ({ children, ...rest }: any) => <span>{children}</span>,
+    div: ({ children, ...rest }: { children?: import("react").ReactNode } & Record<string, unknown>) => <div>{children}</div>,
+    span: ({ children, ...rest }: { children?: import("react").ReactNode } & Record<string, unknown>) => <span>{children}</span>,
   },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
+  AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => <>{children}</>,
 }));
 
 // Mock tooltip
 vi.mock('@/components/ui/tooltip', () => ({
-  Tooltip: ({ children }: any) => <>{children}</>,
-  TooltipTrigger: ({ children }: any) => <>{children}</>,
-  TooltipContent: ({ children }: any) => <span>{children}</span>,
+  Tooltip: ({ children }: { children?: import("react").ReactNode }) => <>{children}</>,
+  TooltipTrigger: ({ children }: { children?: import("react").ReactNode }) => <>{children}</>,
+  TooltipContent: ({ children }: { children?: import("react").ReactNode }) => <span>{children}</span>,
 }));
 
 describe('VoiceDictationButton', () => {
@@ -40,7 +40,7 @@ describe('VoiceDictationButton', () => {
 
   it('returns null when not supported', async () => {
     const { useSpeechToText } = await import('@/hooks/communication/useSpeechToText');
-    (useSpeechToText as any).mockReturnValueOnce({
+    (useSpeechToText as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({
       isListening: false,
       isSupported: false,
       transcript: '',

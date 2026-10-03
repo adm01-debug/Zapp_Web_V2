@@ -6,7 +6,7 @@ const mockFrom = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: (...args: any[]) => mockFrom(...args),
+    from: (...args: unknown[]) => mockFrom(...args),
     auth: {
       onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
       getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
@@ -17,12 +17,12 @@ vi.mock('@/integrations/supabase/client', () => ({
 const mockUseAuth = vi.fn();
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => mockUseAuth(),
-  AuthProvider: ({ children }: any) => children,
+  AuthProvider: ({ children }: { children?: import("react").ReactNode }) => children,
 }));
 
 import { usePermissions } from '@/hooks/system/usePermissions';
 
-function makeSelectChain(data: any[] = [], error: any = null) {
+function makeSelectChain(data: unknown[] = [], error: unknown = null) {
   return {
     select: vi.fn().mockReturnValue({
       order: vi.fn().mockResolvedValue({ data, error }),

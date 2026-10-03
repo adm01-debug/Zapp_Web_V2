@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 const mockFrom = vi.fn();
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: (...args: any[]) => mockFrom(...args),
+    from: (...args: unknown[]) => mockFrom(...args),
     channel: vi.fn().mockReturnValue({
       on: vi.fn().mockReturnThis(),
       subscribe: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }),

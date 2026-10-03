@@ -13,9 +13,9 @@ const mockAuth = { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'use
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: (...args: any[]) => mockFrom(...args),
-    storage: { from: (...args: any[]) => mockStorage(...args) },
-    functions: { invoke: (...args: any[]) => mockFunctions.invoke(...args) },
+    from: (...args: unknown[]) => mockFrom(...args),
+    storage: { from: (...args: unknown[]) => mockStorage(...args) },
+    functions: { invoke: (...args: unknown[]) => mockFunctions.invoke(...args) },
     auth: { getUser: () => mockAuth.getUser() },
   },
 }));
@@ -36,7 +36,7 @@ import { toast } from 'sonner';
 // ═══════════════════════════════════════════════════════════
 
 let counter = 0;
-function makeSticker(overrides: Partial<any> = {}) {
+function makeSticker(overrides: Record<string, unknown> = {}) {
   counter++;
   return {
     id: overrides.id || `sticker-${counter}`,
@@ -51,7 +51,7 @@ function makeSticker(overrides: Partial<any> = {}) {
   };
 }
 
-function makeAudioMeme(overrides: Partial<any> = {}) {
+function makeAudioMeme(overrides: Record<string, unknown> = {}) {
   counter++;
   return {
     id: overrides.id || `audio-${counter}`,
@@ -67,7 +67,7 @@ function makeAudioMeme(overrides: Partial<any> = {}) {
   };
 }
 
-function makeEmoji(overrides: Partial<any> = {}) {
+function makeEmoji(overrides: Record<string, unknown> = {}) {
   counter++;
   return {
     id: overrides.id || `emoji-${counter}`,
@@ -82,8 +82,8 @@ function makeEmoji(overrides: Partial<any> = {}) {
   };
 }
 
-function setupSupabaseQuery(data: any[] = [], error: any = null) {
-  const chain: any = {
+function setupSupabaseQuery(data: unknown[] = [], error: unknown = null) {
+  const chain: Record<string, unknown> = {
     select: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockResolvedValue({ data, error }),
@@ -1365,7 +1365,7 @@ describe('MediaLibraryAdmin - Pure Logic', () => {
     });
 
     it('empty items returns empty', () => {
-      const cats = [...new Set(([] as any[]).map(i => i.category))].sort();
+      const cats = [...new Set(([] as unknown[]).map(i => i.category))].sort();
       expect(cats).toEqual([]);
     });
   });

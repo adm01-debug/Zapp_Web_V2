@@ -6,13 +6,13 @@ import { MiniChatPiP } from '@/components/mobile/MiniChatPiP';
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, className, style, onClick, ...rest }: any) => (
+    div: ({ children, className, style, onClick, ...rest }: { children?: import("react").ReactNode; className?: string; style?: import("react").CSSProperties; onClick?: () => void } & Record<string, unknown>) => (
       <div className={className} style={style} onClick={onClick} data-testid="pip-container">
         {children}
       </div>
     ),
   },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
+  AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => <>{children}</>,
 }));
 
 describe('MiniChatPiP', () => {

@@ -5,11 +5,11 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 vi.mock('@/integrations/supabase/client', () => {
-  function makeChainable(table: string): any {
-    const handler: ProxyHandler<any> = {
+  function makeChainable(table: string): unknown {
+    const handler: ProxyHandler<Record<string, unknown>> = {
       get(_, prop) {
         if (prop === 'then') {
-          return (resolve: any) => {
+          return (resolve: (v: unknown) => void) => {
             if (table === 'profiles') {
               return Promise.resolve({
                 data: [{ id: 'p1', name: 'Agent 1', is_active: true, role: 'agent' }],

@@ -29,7 +29,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 const mockUseAuth = vi.fn();
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => mockUseAuth(),
-  AuthProvider: ({ children }: any) => children,
+  AuthProvider: ({ children }: { children?: import("react").ReactNode }) => children,
 }));
 
 import { useUserRole } from '@/hooks/system/useUserRole';

@@ -37,9 +37,9 @@ function emitRealtimeEvent(tableSuffix: string, payload: MockRealtimePayload) {
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: (...args: any[]) => mockFrom(...args),
-    channel: (...args: any[]) => mockChannel(...args),
-    removeChannel: (...args: any[]) => mockRemoveChannel(...args),
+    from: (...args: unknown[]) => mockFrom(...args),
+    channel: (...args: unknown[]) => mockChannel(...args),
+    removeChannel: (...args: unknown[]) => mockRemoveChannel(...args),
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } } }),
     },
@@ -79,11 +79,11 @@ vi.mock('@/lib/logger', () => ({
 
 import { useRealtimeMessages } from '@/hooks/chat/useRealtimeMessages';
 
-let seededContacts: any[] = [];
-let recentMessages: any[] = [];
-let contactsById: Record<string, any> = {};
+let seededContacts: unknown[] = [];
+let recentMessages: unknown[] = [];
+let contactsById: Record<string, unknown> = {};
 
-function makeContact(overrides: Record<string, any> = {}) {
+function makeContact(overrides: Record<string, unknown> = {}) {
   return {
     id: 'contact-1',
     name: 'Contato',
@@ -107,7 +107,7 @@ function makeContact(overrides: Record<string, any> = {}) {
   };
 }
 
-function makeMessage(overrides: Record<string, any> = {}) {
+function makeMessage(overrides: Record<string, unknown> = {}) {
   return {
     id: 'message-1',
     contact_id: 'contact-1',
@@ -153,8 +153,7 @@ function makeContactsQuery() {
 
 function makeMessagesQuery() {
   // Supports .select().not().order().limit() — realtime.service.ts uses .not() to exclude null contact_id
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const chain: any = {
+  const chain: Record<string, unknown> = {
     not: vi.fn(() => chain),
     neq: vi.fn(() => chain),
     order: vi.fn(() => ({
@@ -270,7 +269,7 @@ describe('useRealtimeMessages', () => {
       expect(result.current.loading).toBe(false);
     }, { timeout: 10000 });
 
-    expect(result.current.conversations.map((c: any) => c.contact.id)).toContain(
+    expect(result.current.conversations.map((c) => c.contact.id)).toContain(
       hiddenActiveContact.id
     );
   });

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { ChatSearchBar } from '../ChatSearchBar';
 import { Message } from '@/types/chat';
@@ -29,10 +29,9 @@ const MESSAGES: Message[] = [
 ];
 
 describe('ChatSearchBar', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let onClose: any;
-  let onNavigateToMessage: any;
-  let onHighlightChange: any;
+  let onClose: Mock<() => void>;
+  let onNavigateToMessage: Mock<(messageId: string) => void>;
+  let onHighlightChange: Mock<(messageIds: Set<string>, activeId: string | null) => void>;
 
   beforeEach(() => {
     onClose = vi.fn();
@@ -273,8 +272,8 @@ describe('ChatSearchBar', () => {
 
   it('handles messages with null/undefined content gracefully', async () => {
     const msgs = [
-      makeMsg({ id: 'n1', content: undefined as any, type: 'text' }),
-      makeMsg({ id: 'n2', content: null as any, type: 'image' }),
+      makeMsg({ id: 'n1', content: undefined as unknown as string, type: 'text' }),
+      makeMsg({ id: 'n2', content: null as unknown as string, type: 'image' }),
       makeMsg({ id: 'n3', content: 'real content', type: 'text' }),
     ];
     renderBar(true, msgs);

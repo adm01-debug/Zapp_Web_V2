@@ -7,9 +7,9 @@ class MockSpeechRecognition {
   lang = '';
   continuous = false;
   interimResults = false;
-  onresult: ((event: any) => void) | null = null;
+  onresult: ((event: unknown) => void) | null = null;
   onend: (() => void) | null = null;
-  onerror: ((event: any) => void) | null = null;
+  onerror: ((event: unknown) => void) | null = null;
 
   start = vi.fn();
   stop = vi.fn(() => {
@@ -19,17 +19,17 @@ class MockSpeechRecognition {
 }
 
 describe('useSpeechToText', () => {
-  let originalSR: any;
+  let originalSR: unknown;
 
   beforeEach(() => {
-    originalSR = (window as any).SpeechRecognition;
-    (window as any).SpeechRecognition = MockSpeechRecognition;
+    originalSR = (window as unknown as Record<string, unknown>).SpeechRecognition;
+    (window as unknown as Record<string, unknown>).SpeechRecognition = MockSpeechRecognition;
     // Mock navigator.vibrate
     Object.defineProperty(navigator, 'vibrate', { value: vi.fn(), writable: true, configurable: true });
   });
 
   afterEach(() => {
-    (window as any).SpeechRecognition = originalSR;
+    (window as unknown as Record<string, unknown>).SpeechRecognition = originalSR;
     vi.restoreAllMocks();
   });
 
@@ -39,8 +39,8 @@ describe('useSpeechToText', () => {
   });
 
   it('returns unsupported when no SpeechRecognition', () => {
-    (window as any).SpeechRecognition = undefined;
-    (window as any).webkitSpeechRecognition = undefined;
+    (window as unknown as Record<string, unknown>).SpeechRecognition = undefined;
+    (window as unknown as Record<string, unknown>).webkitSpeechRecognition = undefined;
     const { result } = renderHook(() => useSpeechToText());
     expect(result.current.isSupported).toBe(false);
   });
@@ -108,8 +108,8 @@ describe('useSpeechToText', () => {
   });
 
   it('does not start when unsupported', () => {
-    (window as any).SpeechRecognition = undefined;
-    (window as any).webkitSpeechRecognition = undefined;
+    (window as unknown as Record<string, unknown>).SpeechRecognition = undefined;
+    (window as unknown as Record<string, unknown>).webkitSpeechRecognition = undefined;
     const { result } = renderHook(() => useSpeechToText());
 
     act(() => {

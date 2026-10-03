@@ -18,8 +18,8 @@ const mockSettings = {
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    functions: { invoke: (...args: any[]) => mockFunctionsInvoke(...args) },
-    from: (...args: any[]) => mockFrom(...args),
+    functions: { invoke: (...args: unknown[]) => mockFunctionsInvoke(...args) },
+    from: (...args: unknown[]) => mockFrom(...args),
   },
 }));
 
