@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import {
-  ArrowLeft, Star, Archive, Trash2, Loader2, Mail, PanelRightOpen, Reply, RotateCcw, Tags, X
+  ArrowDown, ArrowLeft, Star, Archive, Trash2, Loader2, Mail, PanelRightOpen, Reply, RotateCcw, Tags, X
 } from 'lucide-react';
 import { useGmail, type EmailAttachment, type EmailLabel, type EmailThread, type EmailMessage } from '@/hooks/integrations/useGmail';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { emailLoadErrorCopy } from '@/lib/emailErrorState';
 
 interface EmailChatThreadProps {
   accountId?: string;
@@ -50,6 +51,13 @@ function DateSeparator({ date }: { date: string }) {
   );
 }
 
+function preferredScrollBehavior(): ScrollBehavior {
+  if (typeof window === 'undefined') return 'auto';
+  const reduced = document.documentElement.classList.contains('reduced-motion')
+    || (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  return reduced ? 'auto' : 'smooth';
+}
+
 export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, showDetailsButton, labels = [], onContextDataChange }: EmailChatThreadProps) {
   const {
     threadMessages, messagesLoading, messagesError, threadAttachments, markAsRead,
@@ -64,8 +72,11 @@ export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, sh
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesAreaRef = useRef<HTMLDivElement>(null);
   const nearBottomRef = useRef(true);
+  const previousMessageCountRef = useRef(0);
+  const [hasNewMessagesBelow, setHasNewMessagesBelow] = useState(false);
   const [previewAttachment, setPreviewAttachment] = useState<(typeof threadAttachments)[number] | null>(null);
   const [previewContent, setPreviewContent] = useState<string | null>(null);
+  const messagesErrorCopy = useMemo(() => emailLoadErrorCopy(messagesError), [messagesError]);
 
   useEffect(() => {
     setSelectedThreadId(thread.id);
@@ -83,13 +94,26 @@ export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, sh
 
   // Preserve reading position when the user is inspecting an older message.
   useEffect(() => {
-    if (nearBottomRef.current) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const previousCount = previousMessageCountRef.current;
+    const receivedNewMessage = threadMessages.length > previousCount;
+    if (receivedNewMessage) {
+      if (previousCount === 0 || nearBottomRef.current) {
+        messagesEndRef.current?.scrollIntoView({ behavior: preferredScrollBehavior() });
+        setHasNewMessagesBelow(false);
+      } else {
+        setHasNewMessagesBelow(true);
+      }
+    }
+    previousMessageCountRef.current = threadMessages.length;
   }, [threadMessages.length]);
 
   useEffect(() => {
     const viewport = messagesAreaRef.current?.querySelector<HTMLElement>('[data-radix-scroll-area-viewport]');
     if (!viewport) return;
-    const update = () => { nearBottomRef.current = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 96; };
+    const update = () => {
+      nearBottomRef.current = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 96;
+      if (nearBottomRef.current) setHasNewMessagesBelow(false);
+    };
     viewport.addEventListener('scroll', update, { passive: true });
     return () => viewport.removeEventListener('scroll', update);
   }, [thread.id]);
@@ -181,7 +205,7 @@ export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, sh
 
   return (
     <TooltipProvider>
-      <div className="flex h-full flex-col text-slate-100">
+      <div className="relative flex h-full flex-col text-slate-100">
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-cyan-300/10 bg-[#061827]/90 p-3 backdrop-blur">
           <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onBack} aria-label="Voltar">
@@ -288,8 +312,8 @@ export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, sh
             ) : messagesError ? (
               <div role="alert" className="flex flex-col items-center justify-center py-16 text-center text-slate-400">
                 <Mail className="mb-3 h-10 w-10 text-red-400/80" />
-                <p className="text-sm font-medium text-slate-200">Não foi possível carregar as mensagens</p>
-                <p className="mt-1 text-xs">A conversa permanece selecionada. Tente sincronizar a conta novamente.</p>
+                <p className="text-sm font-medium text-slate-200">{messagesErrorCopy.title}</p>
+                <p className="mt-1 text-xs">{messagesErrorCopy.description}</p>
               </div>
             ) : threadMessages.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
@@ -321,6 +345,17 @@ export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, sh
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
+
+        {hasNewMessagesBelow && (
+          <Button
+            type="button"
+            size="sm"
+            className="absolute bottom-20 left-1/2 z-10 -translate-x-1/2 rounded-full bg-blue-600 shadow-lg hover:bg-blue-500"
+            onClick={() => { messagesEndRef.current?.scrollIntoView({ behavior: preferredScrollBehavior() }); setHasNewMessagesBelow(false); }}
+          >
+            <ArrowDown className="mr-1.5 h-4 w-4" />Novas mensagens
+          </Button>
+        )}
 
         {replyTargetId && replyTarget && replyTarget.id !== lastMessage?.id && (
           <div className="flex items-center gap-2 border-t border-blue-400/20 bg-blue-500/10 px-3 py-2 text-xs text-blue-100" role="status">

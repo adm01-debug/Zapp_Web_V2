@@ -13,18 +13,23 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import type { EmailAttachment, EmailMessage } from '@/hooks/integrations/useGmail';
+import { emailLoadErrorCopy } from '@/lib/emailErrorState';
 
 function matchesWideDetailsLayout(): boolean {
   return typeof window.matchMedia !== 'function' || window.matchMedia('(min-width: 1280px)').matches;
 }
 
-export function EmailChatInbox() {
+interface EmailChatInboxProps {
+  embedded?: boolean;
+}
+
+export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
   const [accountId, setAccountId] = useState<string>();
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(() => new URLSearchParams(window.location.search).get('emailThread'));
   const {
     accounts, accountsLoading, accountsError, refetchAccounts, activeAccount,
     threads, threadsLoading, threadsError, connectGmail, labels, syncInbox,
-    syncLabels, unreadCount, subscribeToThreads, requestedThread, downloadAttachment,
+    syncLabels, unreadCount, threadsTotalCount, subscribeToThreads, requestedThread, downloadAttachment,
   } = useGmail(accountId, selectedThreadId);
   const [showComposer, setShowComposer] = useState(false);
   const [composerTo, setComposerTo] = useState('');
@@ -39,6 +44,7 @@ export function EmailChatInbox() {
     () => threads.find(thread => thread.id === selectedThreadId) ?? requestedThread ?? null,
     [requestedThread, selectedThreadId, threads],
   );
+  const accountsErrorCopy = useMemo(() => emailLoadErrorCopy(accountsError), [accountsError]);
 
   useEffect(() => subscribeToThreads(), [subscribeToThreads]);
 
@@ -88,8 +94,8 @@ export function EmailChatInbox() {
     return (
       <section role="alert" className="flex h-full flex-col items-center justify-center bg-[#03111f] px-6 text-center text-slate-200">
         <Mail className="mb-4 h-12 w-12 text-red-400" />
-        <h2 className="text-lg font-semibold">Não foi possível carregar o Email</h2>
-        <p className="mt-2 max-w-md text-sm text-slate-400">Sua sessão foi preservada. Tente novamente antes de reconectar a conta.</p>
+        <h2 className="text-lg font-semibold">{accountsErrorCopy.title}</h2>
+        <p className="mt-2 max-w-md text-sm text-slate-400">{accountsErrorCopy.description}</p>
         <Button className="mt-5" variant="outline" onClick={() => void refetchAccounts()}><RefreshCw className="mr-2 h-4 w-4" />Tentar novamente</Button>
       </section>
     );
@@ -111,7 +117,7 @@ export function EmailChatInbox() {
 
   return (
     <section aria-label="Email" className="email-navy flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#03111f] text-slate-100">
-      <header className="shrink-0 border-b border-cyan-300/10 bg-[linear-gradient(110deg,#041522_0%,#06233a_55%,#061a2d_100%)] px-4 py-3 shadow-[0_10px_30px_rgba(0,0,0,.18)] md:px-5">
+      {!embedded && <header className="shrink-0 border-b border-cyan-300/10 bg-[linear-gradient(110deg,#041522_0%,#06233a_55%,#061a2d_100%)] px-4 py-3 shadow-[0_10px_30px_rgba(0,0,0,.18)] md:px-5">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 shadow-[0_0_24px_rgba(37,99,235,.35)]"><Mail className="h-6 w-6" /></div>
@@ -131,11 +137,13 @@ export function EmailChatInbox() {
           <Button onClick={() => { setComposerTo(''); setShowComposer(true); }} className="bg-blue-600 shadow-[0_0_18px_rgba(37,99,235,.25)] hover:bg-blue-500"><Plus className="mr-2 h-4 w-4" />Nova mensagem</Button>
         </div>
         <div className="mt-2 flex items-center gap-2 text-2xs text-emerald-300/90"><Wifi className="h-3 w-3" />{activeAccount.email_address}<span className="text-slate-600">•</span><span className="text-slate-400">{unreadCount} não {unreadCount === 1 ? 'lido' : 'lidos'}</span></div>
-      </header>
+      </header>}
+
+      {embedded && <div className="flex shrink-0 items-center gap-2 border-b border-cyan-300/10 bg-[#041522] px-3 py-2 text-xs text-slate-300"><Mail className="h-4 w-4 text-blue-400" /><span className="font-medium">Email</span><span className="truncate text-slate-500">{activeAccount.email_address}</span><Button size="sm" className="ml-auto h-7 bg-blue-600 px-2 text-xs hover:bg-blue-500" onClick={() => { setComposerTo(''); setShowComposer(true); }}><Plus className="mr-1 h-3.5 w-3.5" />Nova mensagem</Button></div>}
 
       <div className="flex min-h-0 flex-1">
         <aside className={cn('w-full shrink-0 border-r border-cyan-300/10 bg-[#041421] md:w-[330px] xl:w-[370px]', selectedThread ? 'hidden md:flex md:flex-col' : 'flex flex-col')}>
-          <EmailThreadList threads={threads} threadsLoading={threadsLoading} threadsError={threadsError} labels={labels} unreadCount={unreadCount} globalSearchQuery={globalSearchQuery} onClearGlobalSearch={() => setGlobalSearchQuery('')} selectedThreadId={selectedThread?.id || null} activeAccountEmail={activeAccount.email_address} onSelectThread={thread => navigateToThread(thread.id)} onNewEmail={() => { setComposerTo(''); setShowComposer(true); }} onSync={() => syncInbox.mutate({})} isSyncing={syncInbox.isPending} />
+          <EmailThreadList threads={threads} totalCount={threadsTotalCount} threadsLoading={threadsLoading} threadsError={threadsError} labels={labels} unreadCount={unreadCount} globalSearchQuery={globalSearchQuery} onClearGlobalSearch={() => setGlobalSearchQuery('')} selectedThreadId={selectedThread?.id || null} activeAccountEmail={activeAccount.email_address} onSelectThread={thread => navigateToThread(thread.id)} onNewEmail={() => { setComposerTo(''); setShowComposer(true); }} onSync={() => syncInbox.mutate({})} isSyncing={syncInbox.isPending} />
         </aside>
         <section aria-label="Conteúdo da conversa" className={cn('min-w-0 flex-1 flex-col bg-[radial-gradient(circle_at_45%_20%,#082641_0%,#03111f_50%,#020c16_100%)]', !selectedThread ? 'hidden md:flex' : 'flex')}>
           {selectedThread ? <EmailChatThread key={`${activeAccount.id}:${selectedThread.id}`} accountId={activeAccount.id} thread={selectedThread} labels={labels} onContextDataChange={setThreadContext} onBack={() => navigateToThread(null, true)} onToggleDetails={toggleDetails} showDetailsButton /> : (

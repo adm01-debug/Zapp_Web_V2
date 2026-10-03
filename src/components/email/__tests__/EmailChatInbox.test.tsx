@@ -24,7 +24,7 @@ vi.mock('@/hooks/integrations/useGmail', () => ({
     ...state,
     refetchAccounts: vi.fn(), connectGmail: { mutate: vi.fn(), isPending: false }, labels: [],
     threadsLoading: false, threadsError: null, syncInbox: { mutate: vi.fn(), isPending: false },
-    syncLabels: { mutate: vi.fn(), isPending: false }, unreadCount: state.threads.filter(thread => thread.is_unread).length,
+    syncLabels: { mutate: vi.fn(), isPending: false }, unreadCount: state.threads.filter(thread => thread.is_unread).length, threadsTotalCount: state.threads.length,
     downloadAttachment: { mutate: vi.fn(), isPending: false },
     subscribeToThreads: () => vi.fn(),
   }),
@@ -59,7 +59,14 @@ describe('EmailChatInbox', () => {
   it('mostra erro recuperável sem fingir inbox vazio', () => {
     state.accountsError = new Error('offline');
     render(<EmailChatInbox />);
-    expect(screen.getByRole('alert')).toHaveTextContent('Não foi possível carregar o Email');
+    expect(screen.getByRole('alert')).toHaveTextContent('Você está offline');
+  });
+
+  it('distingue falta de permissão de indisponibilidade genérica', () => {
+    state.accountsError = Object.assign(new Error('Forbidden'), { context: { status: 403 } });
+    render(<EmailChatInbox />);
+    expect(screen.getByRole('alert')).toHaveTextContent('Acesso ao Email não autorizado');
+    expect(screen.getByRole('alert')).toHaveTextContent('administrador');
   });
 
   it('mostra conexão somente quando nenhuma conta ativa existe', () => {
@@ -100,5 +107,11 @@ describe('EmailChatInbox', () => {
     expect(screen.queryByTestId('contact-panel')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Detalhes' }));
     expect(screen.getByRole('dialog')).toContainElement(screen.getByTestId('contact-panel'));
+  });
+
+  it('remove o cabeçalho autônomo quando incorporado em outro workspace', () => {
+    render(<EmailChatInbox embedded />);
+    expect(screen.queryByText('Comunicação profissional, organizada como uma conversa.')).not.toBeInTheDocument();
+    expect(screen.getByText('admin@example.com')).toBeInTheDocument();
   });
 });

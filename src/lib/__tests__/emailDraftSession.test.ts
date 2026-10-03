@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  clearEmailDraftSessions,
   emailDraftSessionKey,
   readEmailDraftSession,
   removeEmailDraftSession,
@@ -46,5 +47,18 @@ describe('emailDraftSession', () => {
     });
     expect(readEmailDraftSession(key)).toBeNull();
     expect(localStorage.getItem(key!)).toBeNull();
+  });
+
+  it('remove todas as composições de Email no logout sem apagar preferências alheias', () => {
+    const first = emailDraftSessionKey({ userId: 'u1', accountId: 'a', mode: 'new' })!;
+    const second = emailDraftSessionKey({ userId: 'u2', accountId: 'b', mode: 'reply', threadId: 't' })!;
+    localStorage.setItem(first, '{}');
+    localStorage.setItem(second, '{}');
+    localStorage.setItem('zapp-theme', 'dark');
+
+    expect(clearEmailDraftSessions()).toBe(2);
+    expect(localStorage.getItem(first)).toBeNull();
+    expect(localStorage.getItem(second)).toBeNull();
+    expect(localStorage.getItem('zapp-theme')).toBe('dark');
   });
 });

@@ -17,9 +17,9 @@ interface AxeViolationResult {
   }>;
 }
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page }, testInfo) => {
   await page.addInitScript(() => { (window as Window & { __BOOT_DEADLINE_MS?: number }).__BOOT_DEADLINE_MS = 60000; });
-  await mockEmailNavy(page);
+  await mockEmailNavy(page, { includeExtreme: testInfo.title.includes('corpus extremo') });
 });
 
 test('rota real renderiza lista, conversa e compositor NAVY sem chamadas externas mutáveis', async ({ page }) => {
@@ -172,6 +172,80 @@ test('reflow equivalente a zoom de 200% mantém ações essenciais acessíveis',
   await expect(page.getByRole('button', { name: 'Detalhes' })).toBeVisible();
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(2);
+});
+
+test('rascunho e referência de anexo permanecem isolados no ciclo conta A → B → A', async ({ page }) => {
+  await page.goto('/?view=email-chat');
+  await page.getByRole('button', { name: 'Nova mensagem' }).first().click();
+  await page.getByPlaceholder('destinatario@email.com').fill('cliente@example.com');
+  await page.getByPlaceholder('Assunto do email').fill('Rascunho exclusivo da conta A');
+  await page.getByRole('textbox', { name: 'Mensagem' }).fill('Conteúdo privado da conta A');
+  await page.locator('input[type="file"]').setInputFiles({ name: 'proposta-a.txt', mimeType: 'text/plain', buffer: Buffer.from('arquivo A') });
+  await expect(page.getByText('proposta-a.txt')).toBeVisible();
+
+  const account = page.getByRole('combobox', { name: 'Conta de email ativa' });
+  await account.click();
+  await page.getByRole('option', { name: 'financeiro@zapp.local' }).click();
+  await expect(page.getByPlaceholder('destinatario@email.com')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Nova mensagem' }).first().click();
+  await expect(page.getByPlaceholder('destinatario@email.com')).toHaveValue('');
+  await expect(page.getByPlaceholder('Assunto do email')).toHaveValue('');
+  await expect(page.getByText('proposta-a.txt')).toHaveCount(0);
+
+  await account.click();
+  await page.getByRole('option', { name: 'admin@zapp.local' }).click();
+  await expect(page.getByPlaceholder('destinatario@email.com')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Nova mensagem' }).first().click();
+  await expect(page.getByPlaceholder('destinatario@email.com')).toHaveValue('cliente@example.com');
+  await expect(page.getByPlaceholder('Assunto do email')).toHaveValue('Rascunho exclusivo da conta A');
+  await expect(page.getByRole('textbox', { name: 'Mensagem' })).toContainText('Conteúdo privado da conta A');
+  await expect(page.getByText('O rascunho foi restaurado,', { exact: false })).toContainText('proposta-a.txt');
+});
+
+test('corpus extremo com texto sem quebra e muitos anexos não cria overflow global', async ({ page }) => {
+  await page.goto('/?view=email-chat');
+  await page.getByRole('textbox', { name: 'Busca global do Email' }).fill('Corpus extremo');
+  await page.getByText('Corpus extremo', { exact: false }).first().click();
+  const extremeMessage = page.getByRole('article', { name: /Mensagem de REMETENTESEMQUEBRA/ });
+  await expect(extremeMessage).toBeVisible();
+  await expect(extremeMessage.getByRole('button', { name: /Baixar ARQUIVO_EXTREMAMENTE_LONGO/ })).toHaveCount(40);
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(2);
+});
+
+test('alto contraste e movimento reduzido mantêm o workspace acessível', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('highContrast', 'true');
+    localStorage.setItem('reducedMotion', 'true');
+  });
+  await page.goto('/?view=email-chat');
+  await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
+  await expect(page.locator('html')).toHaveClass(/high-contrast/);
+  await expect(page.locator('html')).toHaveClass(/reduced-motion/);
+  await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
+  const violations = await page.evaluate(async () => {
+    const axe = (window as unknown as Window & { axe: { run: (target: string) => Promise<AxeViolationResult> } }).axe;
+    return (await axe.run('.email-navy')).violations.map(item => item.id);
+  });
+  expect(violations).toEqual([]);
+});
+
+test('escopo NAVY não vaza ao alternar entre módulos', async ({ page }) => {
+  await page.goto('/?view=email-chat');
+  await expect(page.locator('.email-navy')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
+  await expect(page).toHaveURL(/view=dashboard/);
+  await expect(page.locator('.email-navy')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Email', exact: true }).click();
+  await expect(page.locator('.email-navy')).toHaveCount(1);
+});
+
+test('consumidor Omnichannel incorpora Email sem duplicar o cabeçalho autônomo', async ({ page }) => {
+  await page.goto('/?view=omni-inbox');
+  await page.getByRole('tab', { name: 'Email Chat' }).click();
+  await expect(page.locator('.email-navy')).toBeVisible();
+  await expect(page.getByText('Comunicação profissional, organizada como uma conversa.')).toHaveCount(0);
+  await expect(page.getByText('admin@zapp.local').first()).toBeVisible();
 });
 
 for (const viewport of [

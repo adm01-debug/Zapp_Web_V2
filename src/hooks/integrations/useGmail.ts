@@ -48,6 +48,10 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
   });
 
   const activeAccount = accountId ? accounts.find(a => a.id === accountId && a.is_active) : accounts.find(a => a.is_active);
+  const invalidateThreadData = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ['gmail-threads'] });
+    void queryClient.invalidateQueries({ queryKey: ['gmail-thread-counts'] });
+  }, [queryClient]);
 
   const connectGmail = useMutation({
     mutationFn: async () => {
@@ -68,7 +72,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
 
   const disconnectGmail = useMutation({
     mutationFn: async (accId: string) => callGmailFunction('gmail-oauth', { action: 'disconnect', account_id: accId }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-accounts'] }); queryClient.invalidateQueries({ queryKey: ['gmail-threads'] }); toast.success('Gmail desconectado'); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-accounts'] }); invalidateThreadData(); toast.success('Gmail desconectado'); },
   });
 
   const { data: threads = [], isLoading: threadsLoading, error: threadsError, refetch: refetchThreads } = useQuery({
@@ -99,6 +103,21 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
       }));
       const withAttachments = new Set(attachmentRows.flat().map(row => row.thread_id));
       return rows.map(row => ({ ...row, has_attachments: withAttachments.has(row.id) }));
+    },
+    enabled: !!activeAccount,
+  });
+
+  const { data: exactThreadCounts } = useQuery({
+    queryKey: ['gmail-thread-counts', activeAccount?.id],
+    queryFn: async () => {
+      if (!activeAccount) return { total: 0, unread: 0 };
+      const [totalResult, unreadResult] = await Promise.all([
+        supabase.from('email_threads').select('id', { count: 'exact', head: true }).eq('gmail_account_id', activeAccount.id),
+        supabase.from('email_threads').select('id', { count: 'exact', head: true }).eq('gmail_account_id', activeAccount.id).eq('is_unread', true),
+      ]);
+      if (totalResult.error) throw totalResult.error;
+      if (unreadResult.error) throw unreadResult.error;
+      return { total: totalResult.count ?? null, unread: unreadResult.count ?? null };
     },
     enabled: !!activeAccount,
   });
@@ -160,7 +179,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
       return callGmailFunction('gmail-sync', { action: 'sync-inbox', account_id: activeAccount.id, ...options });
     },
     retry: 1,
-    onSuccess: (data) => { queryClient.invalidateQueries({ queryKey: ['gmail-threads'] }); queryClient.invalidateQueries({ queryKey: ['gmail-labels'] }); toast.success(`${data.synced} emails sincronizados`); },
+    onSuccess: (data) => { invalidateThreadData(); queryClient.invalidateQueries({ queryKey: ['gmail-labels'] }); toast.success(`${data.synced} emails sincronizados`); },
     onError: (error: Error) => { toast.error(`Erro ao sincronizar: ${error.message}`); },
   });
 
@@ -178,7 +197,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
       if (!activeAccount) throw new Error('No active Gmail account');
       return callGmailFunction('gmail-send', { action: 'send', account_id: activeAccount.id, ...params });
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-threads'] }); toast.success('Email enviado com sucesso!'); },
+    onSuccess: () => { invalidateThreadData(); toast.success('Email enviado com sucesso!'); },
     onError: (error: Error) => { toast.error(`Erro ao enviar: ${error.message}`); },
   });
 
@@ -187,7 +206,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
       if (!activeAccount) throw new Error('No active Gmail account');
       return callGmailFunction('gmail-send', { action: 'reply', account_id: activeAccount.id, ...params });
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-threads'] }); queryClient.invalidateQueries({ queryKey: ['gmail-messages'] }); toast.success('Resposta enviada!'); },
+    onSuccess: () => { invalidateThreadData(); queryClient.invalidateQueries({ queryKey: ['gmail-messages'] }); toast.success('Resposta enviada!'); },
     onError: (error: Error) => { toast.error(`Erro ao responder: ${error.message}`); },
   });
 
@@ -197,7 +216,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
       return callGmailFunction('gmail-send', { action: 'mark-read', account_id: activeAccount.id, message_ids: messageIds });
     },
     retry: 1,
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-threads'] }); queryClient.invalidateQueries({ queryKey: ['gmail-messages'] }); },
+    onSuccess: () => { invalidateThreadData(); queryClient.invalidateQueries({ queryKey: ['gmail-messages'] }); },
   });
 
   const trashMessage = useMutation({
@@ -205,7 +224,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
       if (!activeAccount) throw new Error('No active Gmail account');
       return callGmailFunction('gmail-send', { action: 'trash', account_id: activeAccount.id, message_id: messageId });
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-threads'] }); toast.success('Email movido para lixeira'); },
+    onSuccess: () => { invalidateThreadData(); toast.success('Email movido para lixeira'); },
   });
 
   const trashThread = useMutation({
@@ -213,7 +232,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
       if (!activeAccount) throw new Error('No active Gmail account');
       return callGmailFunction('gmail-send', { action: 'trash-thread', account_id: activeAccount.id, thread_id: gmailThreadId });
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-threads'] }); toast.success('Thread movida para lixeira'); },
+    onSuccess: () => { invalidateThreadData(); toast.success('Thread movida para lixeira'); },
   });
 
   const modifyLabels = useMutation({
@@ -221,7 +240,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
       if (!activeAccount) throw new Error('No active Gmail account');
       return callGmailFunction('gmail-send', { action: 'modify-labels', account_id: activeAccount.id, ...params });
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-threads'] }); queryClient.invalidateQueries({ queryKey: ['gmail-messages'] }); },
+    onSuccess: () => { invalidateThreadData(); queryClient.invalidateQueries({ queryKey: ['gmail-messages'] }); },
   });
 
   const modifyThreadLabels = useMutation({
@@ -230,7 +249,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
       return callGmailFunction('gmail-send', { action: 'modify-thread-labels', account_id: activeAccount.id, ...params });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['gmail-threads'] });
+      invalidateThreadData();
       queryClient.invalidateQueries({ queryKey: ['gmail-messages'] });
     },
     onError: (error: Error) => toast.error(`Não foi possível atualizar a conversa: ${error.message}`),
@@ -280,11 +299,11 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
   const subscribeToThreads = useCallback(() => {
     if (!activeAccount) return () => {};
     const channel = supabase.channel('gmail-threads-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'email_threads', filter: `gmail_account_id=eq.${activeAccount.id}` }, () => { queryClient.invalidateQueries({ queryKey: ['gmail-threads'] }); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'email_threads', filter: `gmail_account_id=eq.${activeAccount.id}` }, invalidateThreadData)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'email_messages', filter: `gmail_account_id=eq.${activeAccount.id}` }, () => { queryClient.invalidateQueries({ queryKey: ['gmail-messages'] }); })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [activeAccount, queryClient]);
+  }, [activeAccount, invalidateThreadData, queryClient]);
 
   return {
     accounts, activeAccount, accountsLoading, accountsError, refetchAccounts, connectGmail, exchangeCode, disconnectGmail,
@@ -292,7 +311,8 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
     threadMessages, messagesLoading, messagesError, threadAttachments, labels,
     syncInbox, syncLabels, sendEmail, replyEmail, markAsRead, trashMessage, trashThread, modifyLabels, modifyThreadLabels, saveDraft, deleteDraft, downloadAttachment, getAttachmentContent,
     subscribeToThreads,
-    unreadCount: threads.filter(t => t.is_unread).length,
+    threadsTotalCount: exactThreadCounts?.total ?? threads.length,
+    unreadCount: exactThreadCounts?.unread ?? threads.filter(t => t.is_unread).length,
     starredCount: threads.filter(t => t.is_starred).length,
   };
 }

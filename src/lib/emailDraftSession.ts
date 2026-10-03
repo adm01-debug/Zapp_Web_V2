@@ -75,3 +75,19 @@ export function removeEmailDraftSession(key: string | null): void {
   if (!key) return;
   safeRemoveItem(key);
 }
+
+/** Remove every local Email composition so a later login cannot inherit it. */
+export function clearEmailDraftSessions(): number {
+  if (typeof localStorage === 'undefined') return 0;
+  try {
+    const keys: string[] = [];
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (key?.startsWith(`${DRAFT_STORAGE_PREFIX}:`)) keys.push(key);
+    }
+    keys.forEach(safeRemoveItem);
+    return keys.length;
+  } catch {
+    return 0;
+  }
+}
