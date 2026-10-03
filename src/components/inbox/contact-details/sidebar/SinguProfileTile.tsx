@@ -28,7 +28,7 @@ export function SinguProfileTile({ name, icon, label, value, bar }: SinguProfile
         </span>
         <span className="text-xs font-medium text-foreground truncate">{label}</span>
       </div>
-      <span className="text-[11px] text-muted-foreground truncate" title={value ?? 'Não avaliado'}>
+      <span className="text-2xs text-muted-foreground truncate" title={value ?? 'Não avaliado'}>
         {value ?? 'Não avaliado'}
       </span>
       {barValue !== null && (
