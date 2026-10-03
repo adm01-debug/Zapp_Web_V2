@@ -279,3 +279,69 @@ export function TalkXNoData({ hint }: { hint?: string } = {}) {
     </div>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* X047 — Boundary de consulta (prancha 17)                           */
+/* ------------------------------------------------------------------ */
+
+/** Subconjunto de estado de uma consulta (react-query ou compatível). */
+export interface TalkXQueryLike {
+  isLoading?: boolean;
+  isFetching?: boolean;
+  isError?: boolean;
+  error?: Error | null;
+}
+
+export interface TalkXQueryBoundaryProps {
+  /** Estado da consulta que alimenta o conteúdo. */
+  query: TalkXQueryLike;
+  /** Entidade no plural, ex.: 'campanhas' -> "Não foi possível carregar as campanhas". */
+  entity: string;
+  /** Dispara o refetch da consulta (botão "Tentar novamente" no erro). */
+  onRetry?: () => void;
+  /** Renderizado durante o carregamento inicial. */
+  skeleton: ReactNode;
+  /** Indica que o conteúdo resolvido está vazio. */
+  isEmpty: boolean;
+  /** Renderizado quando não há erro e o conteúdo está vazio. */
+  empty: ReactNode;
+  /** Conteúdo renderizado quando há dados. */
+  children: ReactNode;
+}
+
+/**
+ * Decide o que mostrar para uma consulta, nesta ordem:
+ * carregando -> erro -> vazio -> conteúdo.
+ *
+ * REGRA CRÍTICA: nunca mostra o vazio quando há erro — se a consulta falhou,
+ * mostra o erro (com retry), nunca "não há nada".
+ */
+export function TalkXQueryBoundary({
+  query, entity, onRetry, skeleton, isEmpty, empty, children,
+}: TalkXQueryBoundaryProps) {
+  // 1. Carregando (primeira carga) — nunca é erro/vazio enquanto carrega.
+  if (query.isLoading) {
+    return (
+      <div aria-busy="true" data-talkx-query="loading">
+        {skeleton}
+      </div>
+    );
+  }
+
+  // 2. Erro — tem precedência sobre o vazio. Nunca mostra o vazio com erro.
+  if (query.isError) {
+    return <TalkXErrorState entity={entity} error={query.error} onRetry={onRetry} />;
+  }
+
+  // 3. Vazio (apenas quando NÃO há erro nem carregamento).
+  if (isEmpty) {
+    return <div data-talkx-query="empty">{empty}</div>;
+  }
+
+  // 4. Conteúdo — marca aria-busy quando há refetch em andamento.
+  return (
+    <div aria-busy={query.isFetching ? 'true' : undefined} data-talkx-query="content">
+      {children}
+    </div>
+  );
+}

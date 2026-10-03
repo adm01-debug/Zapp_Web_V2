@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { useTalkXTemplates, type TalkXTemplate, type TemplateInput } from '@/hooks/integrations/useTalkXTemplates';
 import { IconTile, WhatsAppBubble, RailCard, RailAction, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, TEMPLATE_CATEGORIES, TEMPLATE_STATUS, VARIABLE_KEYS, personalizePreview, fmtInt, fmtDateTime } from './talkxShared';
 import { useTalkXFilterState } from './kit/useFilterState';
+import { TalkXQueryBoundary } from './kit/states';
 
 interface Props { onUseTemplate: (templateId: string) => void }
 
@@ -27,7 +28,7 @@ const MEDIA_ICONS = { image: Image, video: Video, document: FileText, audio: Mus
 type ViewMode = 'list' | 'edit';
 
 export function TalkXTemplates({ onUseTemplate }: Props) {
-  const { templates, isLoading, createTemplate, updateTemplate, deleteTemplate, duplicateTemplate } = useTalkXTemplates();
+  const { templates, isLoading, isError, error, refetch, createTemplate, updateTemplate, deleteTemplate, duplicateTemplate } = useTalkXTemplates();
   const { values: filterValues, setValue: setFilterValue, query: search, setQuery: setSearch, hasActive, clear: clearFilters } = useTalkXFilterState('talkx.templates.filters', { cat: 'all', st: 'all' });
   const [page, setPage] = useState(1);
   const [pageSize] = useState(8);

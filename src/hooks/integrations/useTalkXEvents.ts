@@ -50,7 +50,14 @@ export function useTalkXEvents(campaignId: string | null) {
     } catch { /* timeline é best-effort */ }
   };
 
-  return { events: query.data ?? [], isLoading: query.isLoading, logEvent, refetch: query.refetch };
+  return {
+    events: query.data ?? [],
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: (query.error as Error | null) ?? null,
+    logEvent,
+    refetch: query.refetch,
+  };
 }
 
 /** Logger sem estado de query — para usar fora do monitor (lista, wizard). */
