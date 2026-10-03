@@ -13,11 +13,16 @@ const h = vi.hoisted(() => ({
 }));
 
 const mockUseContactMedia = vi.fn();
+const mockUseContactMediaCounts = vi.fn();
 
 vi.mock('@/hooks/chat/useContactMedia', async () => {
   const actual = await vi.importActual<typeof import('@/hooks/chat/useContactMedia')>('@/hooks/chat/useContactMedia');
   return { ...actual, useContactMedia: (...args: unknown[]) => mockUseContactMedia(...args) };
 });
+
+vi.mock('@/hooks/chat/useContactMediaCounts', () => ({
+  useContactMediaCounts: (...args: unknown[]) => mockUseContactMediaCounts(...args),
+}));
 
 vi.mock('@/hooks/storage/useResolvedStorageUrl', () => ({
   useResolvedStorageUrl: (source: string) => ({ url: source, isLoading: false, error: null, refresh: vi.fn() }),
@@ -74,7 +79,17 @@ function renderTab(items: ContactMediaItem[]) {
     audio: 0,
     document: items.filter((i) => i.type === 'document').length,
   };
-  mockUseContactMedia.mockReturnValue({ data: { items, counts }, isLoading: false });
+  mockUseContactMedia.mockReturnValue({
+    items,
+    hasMore: false,
+    isLoading: false,
+    isFetchingNextPage: false,
+    isError: false,
+    error: null,
+    fetchNextPage: vi.fn().mockResolvedValue({ hasNextPage: false }),
+    refetch: vi.fn(),
+  });
+  mockUseContactMediaCounts.mockReturnValue({ counts, isLoading: false, isError: false, refetch: vi.fn() });
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>

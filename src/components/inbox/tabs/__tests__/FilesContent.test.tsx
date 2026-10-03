@@ -71,9 +71,70 @@ describe('FilesContent (etapa 25)', () => {
       unmount();
     });
   });
+});
 
-  it('empty state honesto quando não há arquivos', () => {
+describe('FilesContent — estados distintos (etapa 44)', () => {
+  it('1. carregando inicial: skeleton do modo, sem estado de vazio', () => {
+    const { container } = renderContent({ viewMode: 'grid', loading: true, items: [] });
+    expect(container.querySelectorAll('.animate-pulse').length).toBe(6);
+    expect(screen.queryByText('Nenhum arquivo nesta conversa')).not.toBeInTheDocument();
+  });
+
+  it('2. vazio real: nenhuma mídia na conversa', () => {
     renderContent({ items: [] });
-    expect(screen.getByText('Nenhum arquivo encontrado')).toBeInTheDocument();
+    expect(screen.getByText('Nenhum arquivo nesta conversa')).toBeInTheDocument();
+  });
+
+  it('3. busca sem resultado: cita o termo e oferece "Limpar busca"', () => {
+    const onClearSearch = vi.fn();
+    renderContent({ items: [], search: 'orçamento', onClearSearch });
+    expect(screen.getByText('Nada corresponde a "orçamento"')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Limpar busca/ }));
+    expect(onClearSearch).toHaveBeenCalledTimes(1);
+  });
+
+  it('3b. filtro sem resultado: oferece "Ver todos"', () => {
+    const onClearFilter = vi.fn();
+    renderContent({ items: [], typeFilter: 'video', onClearFilter });
+    expect(screen.getByText('Nenhum arquivo deste tipo')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Ver todos/ }));
+    expect(onClearFilter).toHaveBeenCalledTimes(1);
+  });
+
+  it('4. erro de consulta sem lista anterior: mensagem + "Tentar novamente"', () => {
+    const onRetry = vi.fn();
+    renderContent({ items: [], isError: true, onRetry });
+    expect(screen.getByTestId('files-query-error')).toBeInTheDocument();
+    expect(screen.getByText('Não foi possível carregar')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Tentar novamente/ }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('4b. erro com lista já carregada: preserva os itens e mostra a faixa', () => {
+    const { container } = renderContent({ isError: true, onRetry: vi.fn() });
+    expect(screen.getByTestId('files-query-error')).toBeInTheDocument();
+    expect(itemIds(container)).toEqual(['files-item-a', 'files-item-b', 'files-item-c']);
+  });
+
+  it('5. carregando mais: skeleton no fim e botão desabilitado', () => {
+    renderContent({ isFetchingNextPage: true, hasMore: true, onLoadMore: vi.fn() });
+    expect(screen.getByTestId('files-loading-more')).toBeInTheDocument();
+    expect(screen.getByTestId('files-load-more')).toBeDisabled();
+  });
+});
+
+describe('FilesContent — carregar mais (etapa 41)', () => {
+  it('sem próxima página, não há rodapé de paginação', () => {
+    renderContent({ hasMore: false });
+    expect(screen.queryByTestId('files-load-more')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('files-load-more-sentinel')).not.toBeInTheDocument();
+  });
+
+  it('com próxima página, expõe "Carregar mais" e o sentinela', () => {
+    const onLoadMore = vi.fn();
+    renderContent({ hasMore: true, onLoadMore });
+    expect(screen.getByTestId('files-load-more-sentinel')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('files-load-more'));
+    expect(onLoadMore).toHaveBeenCalledTimes(1);
   });
 });
