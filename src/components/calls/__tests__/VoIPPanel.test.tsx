@@ -293,6 +293,14 @@ describe('VoIPPanel', () => {
     expect(screen.getByText('Conectar SIP').closest('button')).toBeDisabled();
   });
 });
+vi.mock('@/hooks/calls/useTelefoniaFilters', () => ({
+  useTelefoniaFilters: () => ({
+    filtros: { period: '7d', channel: 'all', dir: 'all', result: 'all', q: '', page: 1, scope: 'mine', call: '' },
+    setFilter: () => {},
+    limpar: () => {},
+  }),
+}));
+
 // T34: o PageHeader le o LayoutContext (breadcrumbs) e estoura sem o provider. Mockar
 // AQUI e o passo que faltou na primeira tentativa: sem isso, os 13 testes da view caiam.
 vi.mock('@/components/layout/PageHeader', () => ({

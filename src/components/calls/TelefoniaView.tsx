@@ -22,6 +22,7 @@ import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolu
 import { claimLeadership } from '@/lib/calls/tabLeaderStore';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { TelefoniaTopActions } from './TelefoniaTopActions';
+import { useTelefoniaFilters } from '@/hooks/calls/useTelefoniaFilters';
 import type { PeriodoValue } from './periodos';
 
 const DIRECTION_OPTIONS: { value: 'all' | 'inbound' | 'outbound'; label: string }[] = [
@@ -47,8 +48,9 @@ const RESULT_OPTIONS: { value: 'all' | CallResultFilter; label: string }[] = [
 
 export function TelefoniaView() {
   const { profile } = useAuth();
-  // T35: estado do periodo; no T36 ele passa a viver na URL (useSearchParams).
-  const [period, setPeriod] = useState<PeriodoValue>('7d');
+  // T36: os filtros vivem na URL; o periodo da tela e o da URL.
+  const { filtros, setFilter } = useTelefoniaFilters();
+  const period = filtros.period as PeriodoValue;
   const sip = useCallSession();
   // T20: o motivo da linha VoIP (é o `line_in_use_other_tab` que importa aqui)
   // vem do `useSipClient` e é repassado pelo `CallSessionApi` — acesso direto,
@@ -170,7 +172,7 @@ export function TelefoniaView() {
         icon={<Phone className="w-6 h-6 text-primary" />}
         title="Telefonia"
         subtitle="Suas ligações por VoIP e WhatsApp"
-        topRight={<TelefoniaTopActions period={period} onPeriodChange={setPeriod} />}
+        topRight={<TelefoniaTopActions period={period} onPeriodChange={(v) => setFilter('period', v)} />}
       />
 
       {/* Stats */}

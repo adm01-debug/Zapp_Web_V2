@@ -55,6 +55,14 @@ describe('TelefoniaView (T33)', () => {
     expect(alias.VoIPPanel).toBe(direto.TelefoniaView);
   });
 });
+vi.mock('@/hooks/calls/useTelefoniaFilters', () => ({
+  useTelefoniaFilters: () => ({
+    filtros: { period: '7d', channel: 'all', dir: 'all', result: 'all', q: '', page: 1, scope: 'mine', call: '' },
+    setFilter: () => {},
+    limpar: () => {},
+  }),
+}));
+
 vi.mock('@/hooks/calls/useCallChannels', () => ({
   useCallChannels: () => ({
     voip: { channel: 'voip', canDial: true, canReceive: true, canRecord: false, canReject: true, reason: null },
