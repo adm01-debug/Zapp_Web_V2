@@ -272,3 +272,43 @@ Procedimento:
 | Versão | Data | Escopo |
 |---|---|---|
 | `talkx-v1.0.0` | 2026-09-27 | F0 (saneamento E01–E10) + F1 (design system E11–E20) concluídos. Templates: CRUD, toggle grade/lista (E41). E2E incluído no CI (E99). |
+| `talkx-v1.1.0` | 2026-10-03 | X023: preflight de paridade de deploy (`talkx-preflight.mjs`) + regras de operação (§10). |
+
+---
+
+## 10. Preflight de paridade de deploy (X023) — obrigatório antes do primeiro disparo
+
+**Regra 1 — sem preflight verde do dia, não se lança campanha real.** Antes de
+qualquer disparo real para cliente, rodar e guardar a evidência do dia:
+
+```bash
+# sem token (paridade local: fonte vs manifesto commitado + verify_jwt)
+node scripts/edge-deploy/talkx-preflight.mjs
+
+# com o token da Management API + o secrets list coletado (paridade remota + segredos)
+SUPABASE_ACCESS_TOKEN=… node scripts/edge-deploy/talkx-preflight.mjs \
+  --secrets-file <(supabase secrets list --project-ref tnnnlkbymytvtqngbbqh --output-format json)
+```
+
+O aceite é **`diverged: 0`** nas 5 funções (`talkx-send`, `talkx-scheduler`,
+`talkx-link`, `talkx-report`, `evolution-webhook`) e **`missing: 0`** nos segredos
+(`EVOLUTION_API_URL`, `EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE_TOKEN`,
+`RESEND_API_KEY`, `TALKX_LINK_IP_SALT`, `TALKX_LINK_BASE_URL`). A evidência sai em
+`docs/talkx/recovery/evidence/X023/preflight-<data>.json`.
+
+O preflight **não** prova equivalência fonte↔bundle (o `source_sha256` local e o
+`ezbr_sha256` remoto são objetos diferentes). O que ele mede: (a) o manifesto
+commitado está em dia com o fonte + `verify_jwt`; (b) as 5 funções estão no ar,
+`ACTIVE`, com `verify_jwt` correto e bundle digest válido; (c) os segredos
+exigidos existem no projeto. Para divergência → disparar `deploy-functions.yml`
+(§4) e repetir; para segredo ausente → `supabase secrets set` (o valor nunca é
+listado nem logado — só o nome).
+
+> A rastreabilidade do deploy é o **run id do `deploy-functions.yml`** (o GitHub
+> Deployment com `ref` = SHA publicado — a antiga tag `edge-deploy/*` saiu de cena
+> na E60); cite esse run id na evidência quando houver redeploy.
+
+**Regra 2 — enquanto CAP-066 não estiver no ar, campanha real não usa `{{link}}`.**
+A autenticação do POST de conversão (`talkx-link`, HMAC via `TALKX_CONVERT_SECRET`)
+precisa estar publicada e com o segredo configurado no site antes de qualquer
+mensagem real carregar `{{link}}`; até lá, usar `{{link:rotulo}}` só em teste.

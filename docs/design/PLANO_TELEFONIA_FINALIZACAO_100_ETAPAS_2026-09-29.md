@@ -135,13 +135,14 @@ Fecha a etapa quando: (1) existir **uma** linha com `provider_call_id` **não nu
 ## FASE 5 — Painel lateral: Nova ligação (T55–T61)
 *1 PR de front.*
 
-- [ ] **T55** — Layout `xl:grid-cols-[minmax(0,1fr)_408px]` (`aside sticky top-4`, `data-testid="tel-side-panel"`); abaixo de `xl` o painel vem depois do histórico. **Aceite:** painel 408 ±8 em 1672; sem overflow em 1366.
-- [ ] **T56** — `NewCallPanel.tsx`: segmentado VoIP/WhatsApp (`role="radiogroup"`, persistido em `localStorage['tel:new-call-channel']`, **independente** das abas do histórico; opção sem `canDial` → `disabled` + `Tooltip`). **Aceite:** trocar aba do histórico não muda o segmentado (teste).
-- [ ] **T57** — `ContactPicker.tsx`: `search_contacts` via `contact.service.ts` (limit 6, debounce 300 ms), lista navegável ↑↓/Enter, chip do contato selecionado, só dígitos → número direto; pré-preenchido pelo `openDialer`. **Aceite:** h 40 / chip 60 ±4; busca funciona.
-- [ ] **T58** — `Keypad.tsx` extraído de `DialPad.tsx` (`{ onKey, disabled, mode:'edit'|'dtmf' }`); `DialPad` compõe `Keypad` mantendo export/props; teclado físico sob `data-keypad-scope`. **Aceite:** `DialPad.test` (39) verde; 12 teclas 46 ±2.
-- [ ] **T59** — Display do número (`formatPhoneBR` ao vivo, `Delete`); `normalizeE164BR` inválido → CTA `disabled` + "Número incompleto". **Aceite:** 3 entradas testadas.
-- [ ] **T60** — CTA "Ligar via VoIP | WhatsApp": `canDial=false` → `disabled` + `describeReason`; `reconnecting` → "Reconectando…"; `dialing` → "Cancelar"; hint "Confira o número antes de ligar." **Aceite:** 4 estados em teste.
-- [ ] **T61** — Fechamento Fase 5: gates; `07-after.png`. **Aceite:** seção 11.
+- [x] **T55** — Layout `xl:grid-cols-[minmax(0,1fr)_408px]` (`aside sticky top-4`, `data-testid="tel-side-panel"`); abaixo de `xl` o painel vem depois do histórico. **Aceite:** painel 408 ±8 em 1672; sem overflow em 1366.
+- [x] **T56** — `NewCallPanel.tsx`: segmentado VoIP/WhatsApp (`role="radiogroup"`, persistido em `localStorage['tel:new-call-channel']`, **independente** das abas do histórico; opção sem `canDial` → `disabled` + `Tooltip`). **Aceite:** trocar aba do histórico não muda o segmentado (teste).
+- [x] **T57** — `ContactPicker.tsx`: `search_contacts` via `contact.service.ts` (limit 6, debounce 300 ms), lista navegável ↑↓/Enter, chip do contato selecionado, só dígitos → número direto; pré-preenchido pelo `openDialer`. **Aceite:** h 40 / chip 60 ±4; busca funciona.
+- [x] **T58** — `Keypad.tsx` extraído de `DialPad.tsx` (`{ onKey, disabled, mode:'edit'|'dtmf' }`); `DialPad` compõe `Keypad` mantendo export/props; teclado físico sob `data-keypad-scope`. **Aceite:** `DialPad.test` (39) verde; 12 teclas 46 ±2.
+- [x] **T59** — Display do número (`formatPhoneBR` ao vivo, `Delete`); `normalizeE164BR` inválido → CTA `disabled` + "Número incompleto". **Aceite:** 3 entradas testadas.
+- [x] **T60** — CTA "Ligar via VoIP | WhatsApp": `canDial=false` → `disabled` + `describeReason`; `reconnecting` → "Reconectando…"; `dialing` → "Cancelar"; hint "Confira o número antes de ligar." **Aceite:** 4 estados em teste.
+- [x] **T61** — Fechamento Fase 5: gates; `07-after.png`. **Aceite:** seção 11.
+  **FEITO.** Gates: `tsc` 0 · suíte **519 arquivos / 6086 testes** · contratos **61 arquivos / 1049 testes** · tipografia aprovada · `build` 0 · typecheck-ratchet **novas=0** · lint-ratchet **novas=0** · `db:guard` **novas=0**. **Prova visual medida** (Playwright, login pela UI): painel com **408 px exatos** em 1672 (aceite 408±8) e **zero overflow horizontal em 1366** (`scrollWidth` = viewport); "Número incompleto" aparece e o CTA trava com número curto; com número completo o CTA **segue travado porque a conta de QA não tem telefone configurado**, com o motivo do domínio na tela ("Telefone não configurado nesta conta") — é o T60, não defeito. `qa/tel/07-after.png` gravado (1672×1050, 4701 cores, 93% de pixels claros).
 
 ## FASE 6 — Chamada ativa e ligação selecionada (T62–T70)
 *1 PR de front.*
@@ -454,5 +455,55 @@ helper compartilhado. Nesta fase o `useMyCalls` virou o **5º** mock (`PageHeade
 estático, o `setFilter` virava espião, a URL nunca mudava e o teste **media a si mesmo** em vez da tela.
 Isso é dívida de harness, não do produto, e vale virar tarefa própria.
 
-**Bloqueio externo:** `06-after.png` não foi produzido (POST de autenticação do projeto sem resposta — a
-linha 58 já lista o T54 entre as etapas impedidas). Gates, testes e db:guard fecham a fase no lugar dele.
+**Bloqueio externo (REMOVIDO em 03/10):** o `06-after.png` chegou a ser declarado bloqueado porque o POST de
+autenticação não respondia. **Medido antes de manter a declaração**: `/auth/v1/health` responde **HTTP 200 em
+0,35 s** e o login real **HTTP 200 em 0,56 s com `access_token`** — o bloqueio não existia mais, e as duas
+medições anteriores que davam 401 eram **erro do medidor** (faltava o `apikey`; a resposta literal era
+`No API key found in request`). Com o caminho aberto o artefato **foi produzido**: Playwright headless contra o
+dev server da tarefa, login pela UI, `qa/tel/06-after.png` (1672×1050, 2738 cores distintas, 98% de pixels
+claros). **Lição:** declarar bloqueio sem medir enterra entrega — medir uma vez custa um `curl`.
+
+### 11.4 FASE 5 — Painel lateral: Nova ligação (T55–T61) — PR (a publicar)
+
+**Entrega:** o slot lateral deixa de ser um discador solto e passa a ser um painel de nova ligação de 408 px,
+com escolha de canal, busca de contato, teclado reusável e um CTA que **explica** por que não dá para ligar.
+
+| Etapa | O que ficou pronto |
+|---|---|
+| T55 | Grid `xl:grid-cols-[minmax(0,1fr)_408px]` (era 360), `aside sticky top-4` com `data-testid="tel-side-panel"` |
+| T56 | `NewCallPanel.tsx` — segmentado VoIP/WhatsApp em `role="radiogroup"`, canal em `localStorage['tel:new-call-channel']`, opção sem capacidade desabilitada com o motivo no tooltip |
+| T57 | `ContactPicker.tsx` — `search_contacts` (6 no máximo, debounce 300 ms), navegação por setas/Enter, chip do contato; número digitado direto continua valendo |
+| T58 | `Keypad.tsx` extraído (12 teclas de 46 px, sublabels, teclado físico sob `data-keypad-scope`, modos `edit`/`dtmf`); `DialPad` compõe mantendo export e props — **36 testes dele verdes** |
+| T59 | Display com formatação ao vivo, `Delete`, "Número incompleto" + CTA travado quando o E164 não fecha |
+| T60 | CTA "Ligar via VoIP \| WhatsApp" que vira **Cancelar** em chamada, avisa "Reconectando…" e mostra o motivo do domínio quando a capacidade nega |
+| T61 | Gates + prova visual medida (abaixo) |
+
+**Decisões do executor (o plano não previa):**
+
+1. **A discagem passa por `dispatchStartCall` com `autoDial: true`** — o mesmo caminho do clique-para-discar (T29)
+   e do "Ligar de volta" (T52), com **um** ponto de entrada para os dois canais. A API `dial(phone)` do provider
+   não carrega canal, e duplicar o caminho criaria dois jeitos de discar.
+2. **`source: 'other'`** — a união do contrato não tem `'telefonia'`, e ampliar contrato compartilhado não é
+   desta fase (registrado, não escondido).
+3. **O `DialPad` sai do slot lateral sem regressão**: a `ActiveCallBar` (encerrar + microfone) é montada
+   **globalmente no `App.tsx`**, então os controles de chamada em curso não dependiam do slot.
+4. **Número pendente e busca de contato ajustam estado sem efeito síncrono** (padrão do React para estado que
+   muda junto com a prop). O pre-commit da casa reprova `setState` em efeito e reprovou **duas vezes** nesta
+   fase — nos dois casos corrigi o **código**, nunca o baseline.
+
+**Prova visual medida (não é relato, é medição no navegador):** painel com **408 px exatos** em 1672; **zero
+overflow horizontal em 1366**; "Número incompleto" visível e CTA travado com número curto; com número completo
+o CTA permanece travado **porque a conta de QA não tem telefone configurado**, com o motivo
+`Telefone não configurado nesta conta` na tela. `qa/tel/07-after.png` gravado.
+
+**Achados fora do escopo (registrados, não corrigidos):**
+
+- `capacidadeVoip` testa `micReason !== null`, mas se algum caminho real entregar `micReason: undefined` a
+  comparação dá `true` e o canal cai no ramo de microfone com `reason` vazio — a tela diria "não disca" sem
+  dizer por quê. Foi por aqui que achei a causa de **2 testes vermelhos**: o mock do provider não espelhava o
+  app, que sempre passa o campo.
+- O `Tooltip` exige `TooltipProvider`: existe em `AppProviders` no app, mas **não** estava no harness de teste
+  da view — **12 provas** caíram por isso até o harness reproduzir a pilha real do app.
+- **`POST /functions/v1/get-sip-password` responde 401 e depois 503** no boot da tela (produção). É a função que
+  provisiona a senha SIP; sem ela nenhuma conta fica com linha configurada — e foi o que esta prova mostrou.
+  Alheio à Fase 5, mas é o bloqueio de verdade para ligar por VoIP.

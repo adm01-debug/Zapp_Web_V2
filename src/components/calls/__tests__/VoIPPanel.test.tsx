@@ -64,6 +64,7 @@ vi.mock('@/hooks/communication/useCalls', () => ({
 vi.mock('@/providers/CallSessionProvider', () => ({
   useCallSession: () => ({
     sipStatus: 'idle' as const,
+    micReason: null,
     callStatus: 'idle' as const,
     callDuration: 0,
     isMuted: false,
@@ -86,11 +87,14 @@ vi.mock('@/lib/calls/tabLeaderStore', () => ({
   claimLeadership: mockClaimLeadership,
 }));
 
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { VoIPPanel } from '../VoIPPanel';
 
 function renderWithProviders(ui: React.ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+  // O app monta esta pilha em AppProviders; o teste reproduz para o painel lateral
+  // (que usa Tooltip) nao estourar por falta de provider - nao e o componente que muda.
+  return render(<TooltipProvider><QueryClientProvider client={qc}>{ui}</QueryClientProvider></TooltipProvider>);
 }
 
 describe('VoIPPanel', () => {
@@ -111,7 +115,8 @@ describe('VoIPPanel', () => {
 
   it('shows history and the dialer side by side — no admin configuration tab', () => {
     renderWithProviders(<VoIPPanel />);
-    expect(screen.getByPlaceholderText('Digite o número')).toBeInTheDocument();
+    expect(screen.getByTestId('tel-new-call-panel')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Buscar contato ou digitar número')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Buscar por nome ou número')).toBeInTheDocument();
     expect(screen.queryByText('Configurações')).not.toBeInTheDocument();
     expect(screen.queryByText('Servidor SIP')).not.toBeInTheDocument();
@@ -206,11 +211,11 @@ describe('VoIPPanel', () => {
     expect(screen.getByDisplayValue('nota antiga')).toBeInTheDocument();
     // Prova do defeito: o metadado do provedor NÃO é a anotação do agente.
     expect(screen.queryByDisplayValue('metadado do provedor')).not.toBeInTheDocument();
-    expect(screen.queryByPlaceholderText('Digite o número')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('tel-new-call-panel')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByLabelText('Fechar detalhe'));
     expect(screen.queryByText('Detalhe da chamada')).not.toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Digite o número')).toBeInTheDocument();
+    expect(screen.getByTestId('tel-new-call-panel')).toBeInTheDocument();
   });
 
   it('saves an edited note through addCallNotes', async () => {
