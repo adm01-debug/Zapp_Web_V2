@@ -29,9 +29,16 @@
 
 - [ ] Testei localmente
 - [ ] Testes unitários passam
-- [ ] Testei no ambiente de staging
 - [ ] Testei em múltiplos navegadores
 - [ ] Testei em dispositivos móveis
+
+## 🗄️ Banco e Edge (se aplicável)
+
+<!-- Estes dois têm passo obrigatório DEPOIS do merge; marcar só o que se aplica -->
+
+- [ ] **Migration?** → arquivo versionado em `supabase/migrations/` + registro no ledger + catálogo de migrations atualizado
+- [ ] **Edge?** → disparar `deploy-functions` após o merge (a função não sobe sozinha)
+- [ ] Nenhum dos dois
 
 ## ✅ Checklist
 
