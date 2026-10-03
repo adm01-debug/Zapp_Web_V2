@@ -27,6 +27,18 @@ interface HighContrastContextType {
 
 const HighContrastContext = createContext<HighContrastContextType | null>(null);
 
+/** Le a preferencia de contraste do sistema com seguranca (jsdom/SSR nao tem `matchMedia`).
+ *  NAO e exportada de proposito: este arquivo exporta componentes e exportar uma funcao daqui
+ *  quebra o fast refresh (react-refresh/only-export-components, apontado pelo lint ratchet). */
+function preferenciaDoSistemaPorMaisContraste(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  try {
+    return window.matchMedia('(prefers-contrast: more)').matches;
+  } catch {
+    return false;
+  }
+}
+
 export function HighContrastProvider({ children }: { children: React.ReactNode }) {
   const [isHighContrast, setIsHighContrast] = useState(() => 
     localStorage.getItem('highContrast') === 'true'
@@ -41,10 +53,25 @@ export function HighContrastProvider({ children }: { children: React.ReactNode }
     localStorage.getItem('largeText') === 'true'
   );
 
+  /**
+   * O sistema operacional pede mais contraste? O CSS tem `@media (prefers-contrast: more)`, mas ela
+   * e INERTE aqui: o preset escreve as cores *inline* no `<html>` (`presets.ts` — `style.setProperty`)
+   * e variavel inline vence qualquer regra de folha de estilo. Medido em producao em 03/10:
+   * emulando `prefers-contrast: more`, o `matchMedia` casa mas `--border` nao muda de valor.
+   *
+   * Por isso a preferencia do sistema e lida em JS e vira a MESMA classe que o toggle usa —
+   * `.high-contrast`, cujo efeito e real porque o efeito logo abaixo reaplica a skin depois de mexer
+   * na classe, o que limpa as vars inline que a venceriam.
+   */
+  const [prefereMaisContrasteNoSistema, setPrefereMaisContrasteNoSistema] = useState(
+    preferenciaDoSistemaPorMaisContraste
+  );
+  const contrasteAtivo = isHighContrast || prefereMaisContrasteNoSistema;
+
   useEffect(() => {
     const root = document.documentElement;
     
-    if (isHighContrast) {
+    if (contrasteAtivo) {
       root.classList.add('high-contrast');
     } else {
       root.classList.remove('high-contrast');
@@ -59,7 +86,18 @@ export function HighContrastProvider({ children }: { children: React.ReactNode }
     applyThemePreset(cfg.preset, root.classList.contains('dark') ? 'dark' : 'light', {
       persistCache: false,
     });
-  }, [isHighContrast]);
+  }, [contrasteAtivo, isHighContrast]);
+
+  // Segue a preferencia do sistema enquanto a pagina estiver aberta: se o usuario ligar "mais
+  // contraste" no sistema operacional (ou desligar), a classe acompanha sem precisar recarregar.
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const consulta = window.matchMedia('(prefers-contrast: more)');
+    const aoMudar = () => setPrefereMaisContrasteNoSistema(consulta.matches);
+    aoMudar();
+    consulta.addEventListener('change', aoMudar);
+    return () => consulta.removeEventListener('change', aoMudar);
+  }, []);
 
   useEffect(() => {
     document.documentElement.style.setProperty('--contrast-multiplier', String(contrastLevel / 100));
