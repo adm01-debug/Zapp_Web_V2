@@ -143,6 +143,35 @@ function objectValue(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 }
 
+function normalizeEmail(value: unknown): string | null {
+  const email = nonEmptyText(value)?.toLowerCase() || null;
+  return email && email.includes('@') ? email : null;
+}
+
+export function externalParticipantEmail(
+  messages: Array<{ from_address: string | null; to_addresses: string[] | null; cc_addresses: string[] | null; direction: string | null }>,
+  accountEmail: string | null,
+): string | null {
+  const ownEmail = normalizeEmail(accountEmail);
+  for (const message of messages) {
+    const sender = normalizeEmail(message.from_address);
+    if (message.direction === 'inbound' && sender && sender !== ownEmail) return sender;
+  }
+  for (const message of messages) {
+    if (message.direction === 'outbound') {
+      const recipient = [...(message.to_addresses || []), ...(message.cc_addresses || [])]
+        .map(normalizeEmail)
+        .find((email): email is string => Boolean(email && email !== ownEmail));
+      if (recipient) return recipient;
+    }
+  }
+  return null;
+}
+
+export function escapeIlikeExact(value: string): string {
+  return value.replace(/[\\%_]/g, '\\$&');
+}
+
 export async function handleCRMIntegrationRequest(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
@@ -210,7 +239,12 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
   // This is deliberately a narrow, read-only projection. The generic `select`
   // action remains administrator-only; Email callers receive only the company
   // fields that their visible Gmail thread is allowed to expose.
-  const readEmailCompanyContext = async (companyId: string, linked: boolean) => {
+  const readEmailCompanyContext = async (
+    companyId: string,
+    linked: boolean,
+    resolution: 'stable_link' | 'phone' | 'email_exact',
+    participantEmail: string | null,
+  ) => {
     const [companyResult, socialResult, addressResult, customerResult, supplierResult, carrierResult] = await Promise.all([
       withTimeout(externalClient.from('companies').select('id,nome_crm,razao_social,nome_fantasia,website,ramo_atividade,logo_url,updated_at').eq('id', companyId).maybeSingle()),
       withTimeout(externalClient.from('company_social_media').select('plataforma,url,is_active').eq('company_id', companyId).eq('is_active', true).limit(20)),
@@ -257,7 +291,7 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
         aboutKnown: !customerResult.error,
         updatedAt: nonEmptyText(company.updated_at),
       },
-      source: { linked, consultedAt: new Date().toISOString() },
+      source: { linked, consultedAt: new Date().toISOString(), resolution, participantEmail },
     };
   };
 
@@ -327,28 +361,43 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
     let data: unknown;
 
     if (action === 'emailContactContext') {
-      if (isServiceRequest || isCronRequest || !isValidUUID(body.accountId) || !isValidUUID(body.threadId) || !isValidUUID(body.contactId)) {
+      if (isServiceRequest || isCronRequest || !isValidUUID(body.accountId) || !isValidUUID(body.threadId) ||
+        (body.contactId !== undefined && !isValidUUID(body.contactId))) {
         return errorResponse('Email contact context is invalid', 400, req);
       }
+      const requestedContactId = typeof body.contactId === 'string' ? body.contactId : null;
       const [threadResult, accountResult, contactResult] = await Promise.all([
         canonicalUser.from('email_threads').select('id,gmail_account_id,contact_id').eq('id', body.threadId).maybeSingle(),
-        canonicalUser.from('gmail_accounts').select('id').eq('id', body.accountId).maybeSingle(),
-        canonicalUser.from('contacts').select('id,phone').eq('id', body.contactId).maybeSingle(),
+        canonicalUser.from('gmail_accounts').select('id,email_address').eq('id', body.accountId).maybeSingle(),
+        requestedContactId
+          ? canonicalUser.from('contacts').select('id,phone').eq('id', requestedContactId).maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
       ]);
       const thread = threadResult.data;
       const account = accountResult.data;
       const contact = contactResult.data;
-      if (threadResult.error || accountResult.error || contactResult.error || !thread || !account || !contact ||
-        thread.gmail_account_id !== body.accountId || thread.contact_id !== body.contactId) {
+      if (threadResult.error || accountResult.error || contactResult.error || !thread || !account ||
+        thread.gmail_account_id !== body.accountId || (requestedContactId !== null && (!contact || thread.contact_id !== requestedContactId))) {
         return errorResponse('Email contact context is not visible', 404, req);
       }
-      const { data: stableLink, error: linkError } = await canonical.from('crm_contact_links')
-        .select('external_contact_id,normalized_phone').eq('zapp_contact_id', contact.id).maybeSingle();
-      if (linkError) throw new Error(`CRM_LINK_READ:${linkError.code || 'unknown'}`);
+
+      const { data: messages, error: messagesError } = await canonicalUser.from('email_messages')
+        .select('from_address,to_addresses,cc_addresses,direction')
+        .eq('gmail_account_id', body.accountId).eq('thread_id', body.threadId)
+        .order('internal_date', { ascending: false }).limit(100);
+      if (messagesError) throw new Error(`EMAIL_MESSAGES_READ:${messagesError.code || 'unknown'}`);
+      const participantEmail = externalParticipantEmail(messages || [], nonEmptyText(account.email_address));
+
+      const stableResult = contact
+        ? await canonical.from('crm_contact_links').select('external_contact_id,normalized_phone').eq('zapp_contact_id', contact.id).maybeSingle()
+        : { data: null, error: null };
+      const stableLink = stableResult.data;
+      if (stableResult.error) throw new Error(`CRM_LINK_READ:${stableResult.error.code || 'unknown'}`);
 
       let companyId: string | null = null;
-      const phone = normalizePhone(contact.phone);
-      if (phone) {
+      let resolution: 'stable_link' | 'phone' | 'email_exact' | 'none' = 'none';
+      const phone = contact ? normalizePhone(contact.phone) : null;
+      if (contact && phone) {
         if (stableLink?.normalized_phone && stableLink.normalized_phone !== phone) {
           return errorResponse('Contact CRM identity requires reverification', 409, req);
         }
@@ -359,7 +408,8 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
         }
         const lookupCompany = objectValue(objectValue(lookup.data)?.company);
         companyId = nonEmptyText(lookupCompany?.id);
-      } else if (stableLink?.external_contact_id) {
+        resolution = 'phone';
+      } else if (contact && stableLink?.external_contact_id) {
         // An e-mail-only contact is resolved only through a prior stable link.
         // Domain and display-name matching are intentionally never attempted.
         const externalContact = await withTimeout(externalClient.from('contacts').select('id,company_id').eq('id', stableLink.external_contact_id).maybeSingle());
@@ -369,13 +419,29 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
           return errorResponse('Contact CRM identity mismatch', 409, req);
         }
         companyId = nonEmptyText(external.company_id);
+        resolution = 'stable_link';
       }
 
-      if (!companyId) {
-        data = { status: 'not_linked', company: null, source: { linked: Boolean(stableLink), consultedAt: new Date().toISOString() } };
-      } else {
-        const context = await readEmailCompanyContext(companyId, Boolean(stableLink));
-        data = context || { status: 'not_linked', company: null, source: { linked: Boolean(stableLink), consultedAt: new Date().toISOString() } };
+      if (!companyId && !stableLink && participantEmail) {
+        const { data: candidates, error: candidateError } = await withTimeout(externalClient.from('contacts')
+          .select('id,company_id,email').ilike('email', escapeIlikeExact(participantEmail)).limit(3));
+        if (candidateError) throw new Error(`CRM_EMAIL_LOOKUP:${candidateError.code || 'unknown'}`);
+        const exactCandidates = (candidates || []).filter((row: unknown) => normalizeEmail(objectValue(row)?.email) === participantEmail);
+        if (exactCandidates.length > 1) {
+          data = { status: 'ambiguous', company: null, source: { linked: false, consultedAt: new Date().toISOString(), resolution: 'email_exact', participantEmail } };
+        } else if (exactCandidates.length === 1) {
+          companyId = nonEmptyText(objectValue(exactCandidates[0])?.company_id);
+          resolution = 'email_exact';
+        }
+      }
+
+      if (!data) {
+        if (!companyId) {
+          data = { status: 'not_linked', company: null, source: { linked: Boolean(stableLink), consultedAt: new Date().toISOString(), resolution, participantEmail } };
+        } else {
+          const context = await readEmailCompanyContext(companyId, Boolean(stableLink), resolution === 'none' ? 'email_exact' : resolution, participantEmail);
+          data = context || { status: 'not_linked', company: null, source: { linked: Boolean(stableLink), consultedAt: new Date().toISOString(), resolution, participantEmail } };
+        }
       }
     } else if (action === 'contactLookup') {
       if (isServiceRequest || isCronRequest || !isValidUUID(body.contactId) ||

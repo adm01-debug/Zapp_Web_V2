@@ -128,6 +128,28 @@ describe('EmailContactPanel', () => {
       render(<EmailContactPanel thread={BASE_THREAD} onClose={vi.fn()} />);
       expect(screen.getAllByText('alice@example.com').length).toBeGreaterThan(0);
     });
+
+    it('não troca o interlocutor pela própria conta após uma resposta enviada', () => {
+      const messages: EmailMessage[] = [
+        {
+          id: 'outbound', thread_id: 'thread1', gmail_message_id: 'g-outbound', gmail_account_id: 'acc1',
+          from_address: 'agent@example.com', from_name: 'Agente', to_addresses: ['alice@example.com'], cc_addresses: [], bcc_addresses: [],
+          reply_to_address: null, subject: 'Hello', body_text: '', body_html: '', snippet: '', label_ids: [], is_read: true,
+          is_starred: false, has_attachments: false, in_reply_to: null, references_header: null,
+          internal_date: '2026-09-06T11:00:00Z', direction: 'outbound', created_at: '2026-09-06T11:00:00Z',
+        },
+        {
+          id: 'inbound', thread_id: 'thread1', gmail_message_id: 'g-inbound', gmail_account_id: 'acc1',
+          from_address: 'alice@example.com', from_name: 'Alice', to_addresses: ['agent@example.com'], cc_addresses: [], bcc_addresses: [],
+          reply_to_address: null, subject: 'Hello', body_text: '', body_html: '', snippet: '', label_ids: [], is_read: true,
+          is_starred: false, has_attachments: false, in_reply_to: null, references_header: null,
+          internal_date: '2026-09-06T10:00:00Z', direction: 'inbound', created_at: '2026-09-06T10:00:00Z',
+        },
+      ];
+      render(<EmailContactPanel accountEmail="agent@example.com" thread={{ ...BASE_THREAD, contact: undefined, contact_id: null, last_from_name: 'Agente', last_from_address: 'agent@example.com' }} messages={messages} onClose={vi.fn()} />);
+      expect(screen.getAllByText('alice@example.com').length).toBeGreaterThan(0);
+      expect(screen.getByRole('heading', { name: 'Alice' })).toBeDefined();
+    });
   });
 
   describe('getInitials', () => {

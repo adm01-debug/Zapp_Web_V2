@@ -12,6 +12,7 @@ import { useEmailContactContext } from '@/hooks/crm/useEmailContactContext';
 import { CompanyLogo } from '@/components/contacts/CompanyLogo';
 import { formatEmailFileSize } from '@/lib/emailAttachments';
 import { companySocialLinks, normalizeExternalUrl } from '@/lib/emailCompanyLinks';
+import { resolveEmailConversationPerson } from '@/lib/emailContactIdentity';
 import { format, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -57,8 +58,12 @@ export function EmailContactPanel({
   onDownloadAttachment, onSelectRelated,
 }: EmailContactPanelProps) {
   const contact = thread.contact;
-  const displayName = contact?.name || contact?.email || thread.last_from_name || thread.last_from_address || 'Não vinculado ao CRM';
-  const displayEmail = contact?.email || thread.last_from_address || '';
+  const conversationPerson = useMemo(() => resolveEmailConversationPerson(messages, accountEmail), [accountEmail, messages]);
+  const fallbackEmail = !conversationPerson && thread.last_from_address?.trim().toLowerCase() !== accountEmail?.trim().toLowerCase()
+    ? thread.last_from_address : null;
+  const fallbackName = fallbackEmail ? thread.last_from_name : null;
+  const displayName = contact?.name || contact?.email || conversationPerson?.name || conversationPerson?.email || fallbackName || fallbackEmail || 'Participante externo não identificado';
+  const displayEmail = contact?.email || conversationPerson?.email || fallbackEmail || '';
   const participants = useMemo(() => uniqueParticipants(messages), [messages]);
   const [showAllParticipants, setShowAllParticipants] = useState(false);
   const [showAllAttachments, setShowAllAttachments] = useState(false);
@@ -67,6 +72,7 @@ export function EmailContactPanel({
   const companyContext = companyQuery.data;
   const company = companyContext?.company ?? null;
   const website = normalizeExternalUrl(company?.website);
+  const logoUrl = normalizeExternalUrl(company?.logoUrl);
   const socialLinks = companySocialLinks(company?.socials);
   const linkedin = socialLinks.find(link => link.platform === 'linkedin')?.url;
   const instagram = socialLinks.find(link => link.platform === 'instagram')?.url;
@@ -102,6 +108,7 @@ export function EmailContactPanel({
             error={companyQuery.error}
             linked={companyContext?.source.linked ?? false}
             consultedAt={companyContext?.source.consultedAt ?? null}
+            logoUrl={logoUrl}
             website={website}
             linkedin={linkedin}
             instagram={instagram}
@@ -136,7 +143,7 @@ export function EmailContactPanel({
                 {attachments.slice(0, showAllAttachments ? undefined : INITIAL_LIST_SIZE).map(attachment => (
                   <div key={attachment.id} className="flex items-center gap-2 rounded-lg border border-border bg-card p-2">
                     <FileText className="h-4 w-4 shrink-0 text-primary" />
-                    <div className="min-w-0 flex-1"><p className="truncate text-xs text-foreground">{attachment.filename || 'Anexo'}</p><p className="text-3xs text-muted-foreground">{formatEmailFileSize(attachment.size_bytes || 0)}</p></div>
+                    <div className="min-w-0 flex-1"><p className="truncate text-xs text-foreground">{attachment.filename || 'Anexo'}</p><p className="text-3xs text-muted-foreground">{formatEmailFileSize(attachment.size_bytes || 0)}{formatContextTimestamp(attachment.created_at ?? null, 'dd/MM/yyyy HH:mm') ? ` · ${formatContextTimestamp(attachment.created_at ?? null, 'dd/MM/yyyy HH:mm')}` : ''}</p></div>
                     <Button type="button" variant="ghost" size="icon" className="h-7 w-7" aria-label={`Baixar ${attachment.filename || 'anexo'}`} disabled={!attachment.gmail_message_id || !onDownloadAttachment} onClick={() => onDownloadAttachment?.(attachment)}><Download className="h-3.5 w-3.5" /></Button>
                   </div>
                 ))}
@@ -149,7 +156,7 @@ export function EmailContactPanel({
               <div className="space-y-2">
                 {relatedThreads.slice(0, showAllRelated ? undefined : INITIAL_LIST_SIZE).map(related => (
                   <button key={related.id} type="button" className="block w-full rounded-lg border border-border bg-card p-2 text-left hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`Abrir conversa relacionada: ${related.subject || 'sem assunto'}`} onClick={() => onSelectRelated?.(related)} disabled={!onSelectRelated}>
-                    <p className="truncate text-xs font-medium text-foreground">{related.subject || '(Sem assunto)'}</p><p className="mt-1 truncate text-3xs text-muted-foreground">{related.snippet}</p>
+                    <p className="truncate text-xs font-medium text-foreground">{related.subject || '(Sem assunto)'}</p><p className="mt-1 truncate text-3xs text-muted-foreground">{formatContextTimestamp(related.last_message_at, 'dd/MM/yyyy HH:mm') || 'Data indisponível'} · {related.status} · {related.snippet}</p>
                   </button>
                 ))}
                 {relatedThreads.length > INITIAL_LIST_SIZE && <ListToggle expanded={showAllRelated} remaining={relatedThreads.length - INITIAL_LIST_SIZE} onClick={() => setShowAllRelated(value => !value)} />}
@@ -186,7 +193,7 @@ function uniqueTags(threadTags: string[], contactTags: string[], gmailLabels: st
 }
 
 function CompanyContextSection({
-  company, status, isFetching, error, linked, consultedAt, website, linkedin, instagram, onRefresh,
+  company, status, isFetching, error, linked, consultedAt, logoUrl, website, linkedin, instagram, onRefresh,
 }: {
   company: NonNullable<ReturnType<typeof useEmailContactContext>['data']>['company'] | null;
   status: string;
@@ -194,20 +201,23 @@ function CompanyContextSection({
   error: Error | null;
   linked: boolean;
   consultedAt: string | null;
+  logoUrl: string | null;
   website: string | null;
   linkedin?: string;
   instagram?: string;
   onRefresh: () => void;
 }) {
-  if (status === 'disabled') return <div className="rounded-lg border border-border bg-card p-3 text-xs text-muted-foreground">Dados empresariais indisponíveis: integração CRM desativada ou contato não vinculado.</div>;
+  if (status === 'disabled') return <div className="rounded-lg border border-border bg-card p-3 text-xs text-muted-foreground">Dados empresariais indisponíveis: integração CRM desativada.</div>;
   if (status === 'loading' && isFetching) return <div className="flex items-center gap-2 rounded-lg border border-border bg-card p-3 text-xs text-muted-foreground"><RefreshCw className="h-3.5 w-3.5 animate-spin" />Buscando dados da empresa no Singu CRM…</div>;
+  if (status === 'permission_denied') return <div role="alert" className="rounded-lg border border-border bg-card p-3 text-xs text-muted-foreground">Você não tem permissão para consultar os dados empresariais desta conversa.</div>;
   if (error && !company) return <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">Não foi possível atualizar os dados empresariais. As informações da conversa continuam disponíveis.<Button variant="ghost" size="sm" className="ml-1 h-6 px-1 text-xs" onClick={onRefresh}>Tentar novamente</Button></div>;
+  if (status === 'ambiguous') return <div className="rounded-lg border border-border bg-card p-3 text-xs text-muted-foreground">Há mais de um contato CRM com este e-mail. Vincule a empresa pelo cadastro para exibir dados empresariais.</div>;
   if (!company) return <div className="rounded-lg border border-border bg-card p-3 text-xs text-muted-foreground">Nenhuma empresa vinculada ao Singu CRM para este contato.</div>;
   const relationshipLabels: Record<string, string> = { cliente: 'Cliente', fornecedor: 'Fornecedor', transportadora: 'Transportadora' };
   return (
     <section aria-label="Empresa vinculada" className="space-y-3 rounded-lg border border-border bg-card p-3">
       <div className="flex items-start gap-2.5">
-        <CompanyLogo logoUrl={company.logoUrl} companyName={company.name} size="md" className="h-9 w-9 text-xs" />
+        <CompanyLogo logoUrl={logoUrl} companyName={company.name} size="md" className="h-9 w-9 text-xs" />
         <div className="min-w-0 flex-1"><p className="text-3xs font-medium uppercase text-muted-foreground">Empresa vinculada</p><p className="truncate text-sm font-semibold text-foreground">{company.name}</p>{company.legalName && company.legalName !== company.name && <p className="truncate text-3xs text-muted-foreground">{company.legalName}</p>}</div>
         <Button type="button" variant="ghost" size="icon" className="h-7 w-7" aria-label="Atualizar dados da empresa" disabled={isFetching} onClick={onRefresh}><RefreshCw className={isFetching ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} /></Button>
       </div>
@@ -219,7 +229,7 @@ function CompanyContextSection({
         <CompanyLink href={instagram} icon={Instagram} label="Instagram" known={company.socialsKnown} />
       </div>
       <CompanyDescription company={company} website={website} />
-      <p className="text-3xs text-muted-foreground">{linked ? 'Vinculada ao Singu CRM.' : 'Dados consultados no Singu CRM.'}{formatContextTimestamp(company.updatedAt, 'dd/MM/yyyy') ? ` Atualizado no CRM em ${formatContextTimestamp(company.updatedAt, 'dd/MM/yyyy')}.` : formatContextTimestamp(consultedAt, 'dd/MM/yyyy HH:mm') ? ` Consultado em ${formatContextTimestamp(consultedAt, 'dd/MM/yyyy HH:mm')}.` : ''}</p>
+      <p className="text-3xs text-muted-foreground">{linked ? 'Vinculada ao Singu CRM.' : 'Dados consultados no Singu CRM.'}{formatContextTimestamp(company.updatedAt, 'dd/MM/yyyy') ? ` Atualizado no CRM em ${formatContextTimestamp(company.updatedAt, 'dd/MM/yyyy')}.` : ''}{formatContextTimestamp(consultedAt, 'dd/MM/yyyy HH:mm') ? ` Consultado em ${formatContextTimestamp(consultedAt, 'dd/MM/yyyy HH:mm')}.` : ''}</p>
     </section>
   );
 }

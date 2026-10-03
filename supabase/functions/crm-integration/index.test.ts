@@ -1,8 +1,20 @@
-import { handleCRMIntegrationRequest } from './index.ts';
+import { escapeIlikeExact, externalParticipantEmail, handleCRMIntegrationRequest } from './index.ts';
 
 function assertStatus(actual: number, expected: number) {
   if (actual !== expected) throw new Error(`expected HTTP ${expected}, got ${actual}`);
 }
+
+Deno.test('derives the external participant without treating the active Gmail account as the contact', () => {
+  const participant = externalParticipantEmail([
+    { from_address: 'agent@example.com', to_addresses: ['other@example.com'], cc_addresses: [], direction: 'outbound' },
+    { from_address: 'customer@example.com', to_addresses: ['agent@example.com'], cc_addresses: [], direction: 'inbound' },
+  ], 'agent@example.com');
+  if (participant !== 'customer@example.com') throw new Error(`expected customer@example.com, got ${participant}`);
+});
+
+Deno.test('escapes SQL pattern characters before exact insensitive email lookup', () => {
+  if (escapeIlikeExact('person_%@example.com') !== 'person\\_\\%@example.com') throw new Error('email wildcard was not escaped');
+});
 
 Deno.test('rejects anonymous request before consuming its body', async () => {
   Deno.env.set('SUPABASE_SERVICE_ROLE_KEY', 'test-service-key');
