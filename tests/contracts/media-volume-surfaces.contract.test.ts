@@ -23,7 +23,7 @@ describe('volume de mídia — toda superfície de conversa passa pelo controle 
     ['status/stories', 'src/components/inbox/contact-details/StoryViewer.tsx'],
     ['chat interno da equipe', 'src/components/team-chat/TeamChatPanel.tsx'],
     ['transcrições (autoplay)', 'src/components/transcriptions/TranscriptionContactGroup.tsx'],
-    ['gravação de chamada', 'src/components/calls/VoIPPanel.tsx'],
+    ['gravação de chamada', 'src/components/calls/TelefoniaView.tsx'],
   ];
 
   it.each(superfícies)('%s usa o controle único', (_nome, arquivo) => {

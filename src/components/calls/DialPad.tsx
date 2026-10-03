@@ -120,16 +120,6 @@ export function DialPad({
           {sipStatus === 'registered' ? <Wifi className="w-3 h-3 mr-1" /> : <WifiOff className="w-3 h-3 mr-1" />}
           {lineInUseOtherTab ? reasonLabel : statusLabel[sipStatus]}
         </Badge>
-        <Button
-          variant={isConnected ? 'destructive' : 'default'}
-          size="sm"
-          onClick={isConnected ? onDisconnect : onConnect}
-          disabled={sipStatus === 'connecting' || lineInUseOtherTab}
-          title={lineInUseOtherTab ? reasonLabel ?? undefined : undefined}
-        >
-          {sipStatus === 'connecting' && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
-          {isConnected ? 'Desconectar' : 'Conectar SIP'}
-        </Button>
       </div>
 
       {/* Active Call Display */}
