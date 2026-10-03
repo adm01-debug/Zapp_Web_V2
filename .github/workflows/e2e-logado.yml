@@ -42,6 +42,12 @@ jobs:
     name: 🎭 E2E logado (Playwright)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    # E83: as permissoes de escrita ficam no JOB, nunca no nivel do workflow -- o zizmor
+    # reprova `write` no topo (excessive-permissions, severidade alta) porque o escopo
+    # vale para todos os jobs. Foi o que reprovou o merge do #1784.
+    permissions:
+      contents: read # checkout e leitura do repo
+      issues: write # abrir/comentar o alerta em falha e fechar quando a suite volta
     steps:
       - name: ✋ Somente executa na main
         if: github.ref != 'refs/heads/main'
@@ -186,3 +192,75 @@ jobs:
             -H "Content-Type: application/json" \
             && echo "teardown catalog_send_events OK" \
             || echo "teardown catalog_send_events falhou - nao bloqueia CI"
+
+      # E83: alerta da suite logada, no mesmo mecanismo da E44 (db-live-guard.yml) -- um
+      # marcador invisivel identifica a CAUSA (o conjunto de testes que falhou) e o alerta
+      # so e repetido quando ela MUDA. Sem isso, uma suite quebrada por dias geraria um
+      # comentario por execucao e a issue viraria ruido que ninguem le.
+      - name: 🚨 Abrir/comentar a issue da suite logada
+        if: failure()
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          TITULO: "[e2e-logado] Suíte logada quebrada na main"
+        with:
+          script: |
+            const { marcadorDe, nomesDeTestResults, corpoDe } = await import(
+              `${process.env.GITHUB_WORKSPACE}/scripts/ci/marcador-specs.mjs`
+            );
+            const titulo = process.env.TITULO;
+            const nomes = nomesDeTestResults('test-results');
+            const marcador = marcadorDe(nomes);
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const { data: abertas } = await github.rest.issues.listForRepo({
+              owner, repo, state: 'open', per_page: 50,
+            });
+            const issue = abertas.find((i) => i.title === titulo);
+
+            if (!issue) {
+              await github.rest.issues.create({
+                owner, repo, title: titulo, body: `${corpoDe(nomes)}\n\n${marcador}`,
+              });
+              core.info(`issue aberta com ${nomes.length} teste(s) quebrado(s)`);
+              return;
+            }
+
+            // Mesma regra da E44: so comenta de novo quando a causa muda (o conjunto cresce
+            // ou troca). Conjunto igual -- inclusive um a menos -- nao gera comentario novo.
+            const { data: comentarios } = await github.rest.issues.listComments({
+              owner, repo, issue_number: issue.number, per_page: 100,
+            });
+            const ultimo = comentarios.at(-1)?.body ?? issue.body ?? '';
+            if (ultimo.includes(marcador)) {
+              core.info('mesma causa da ultima vez -- sem comentario novo');
+              return;
+            }
+            await github.rest.issues.createComment({
+              owner, repo, issue_number: issue.number,
+              body: `Falha nova, causa diferente:\n\n${corpoDe(nomes)}\n\n${marcador}`,
+            });
+            core.info('comentario novo: a causa mudou');
+
+      - name: ✅ Fechar a issue quando a suite volta
+        if: success()
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          TITULO: "[e2e-logado] Suíte logada quebrada na main"
+        with:
+          script: |
+            const titulo = process.env.TITULO;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const { data: abertas } = await github.rest.issues.listForRepo({
+              owner, repo, state: 'open', per_page: 50,
+            });
+            const issue = abertas.find((i) => i.title === titulo);
+            if (!issue) {
+              core.info('nenhuma issue aberta -- nada a fechar');
+              return;
+            }
+            await github.rest.issues.update({
+              owner, repo, issue_number: issue.number, state: 'closed',
+            });
+            core.info(`issue #${issue.number} fechada: a suite voltou a passar na main`);
