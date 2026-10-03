@@ -1,0 +1,160 @@
+{
+  "links_examined": 394,
+  "candidates": [
+    {
+      "source": "docs/INCIDENT-RUNBOOK.md",
+      "line": 331,
+      "target": "./ZAPP-ESPECIFICACAO-TECNICA-COMPLETA-V2.md",
+      "resolved_path": "docs/ZAPP-ESPECIFICACAO-TECNICA-COMPLETA-V2.md",
+      "exists": false,
+      "classification": "BROKEN_RELATIVE_LINK",
+      "reason": "Destino relativo não existe no baseline; conferir rename/caminho antes de corrigir."
+    },
+    {
+      "source": "docs/INCIDENT-RUNBOOK.md",
+      "line": 332,
+      "target": "./API-REFERENCE-COMPLETA.md",
+      "resolved_path": "docs/API-REFERENCE-COMPLETA.md",
+      "exists": false,
+      "classification": "BROKEN_RELATIVE_LINK",
+      "reason": "Destino relativo não existe no baseline; conferir rename/caminho antes de corrigir."
+    },
+    {
+      "source": "docs/README.md",
+      "line": 50,
+      "target": "./AUDITORIA_COMPLETA_ZAPP_WEB.md",
+      "resolved_path": "docs/AUDITORIA_COMPLETA_ZAPP_WEB.md",
+      "exists": false,
+      "classification": "BROKEN_RELATIVE_LINK",
+      "reason": "Destino relativo não existe no baseline; conferir rename/caminho antes de corrigir."
+    },
+    {
+      "source": "docs/README.md",
+      "line": 51,
+      "target": "./AUDIT_REPORT.md",
+      "resolved_path": "docs/AUDIT_REPORT.md",
+      "exists": false,
+      "classification": "BROKEN_RELATIVE_LINK",
+      "reason": "Destino relativo não existe no baseline; conferir rename/caminho antes de corrigir."
+    },
+    {
+      "source": "docs/audit_report.md",
+      "line": 77,
+      "target": "src/hooks/useUserRole.ts",
+      "resolved_path": "docs/src/hooks/useUserRole.ts",
+      "exists": false,
+      "classification": "BROKEN_RELATIVE_LINK",
+      "reason": "Destino relativo não existe no baseline; conferir rename/caminho antes de corrigir."
+    },
+    {
+      "source": "docs/audit_report.md",
+      "line": 78,
+      "target": "src/hooks/useRealtimeMessages.ts",
+      "resolved_path": "docs/src/hooks/useRealtimeMessages.ts",
+      "exists": false,
+      "classification": "BROKEN_RELATIVE_LINK",
+      "reason": "Destino relativo não existe no baseline; conferir rename/caminho antes de corrigir."
+    },
+    {
+      "source": "docs/audit_report.md",
+      "line": 79,
+      "target": "src/pages/SLADashboard.tsx",
+      "resolved_path": "docs/src/pages/SLADashboard.tsx",
+      "exists": false,
+      "classification": "BROKEN_RELATIVE_LINK",
+      "reason": "Destino relativo não existe no baseline; conferir rename/caminho antes de corrigir."
+    },
+    {
+      "source": "docs/audit_report.md",
+      "line": 80,
+      "target": "supabase/functions/ai-transcribe-audio/",
+      "resolved_path": "docs/supabase/functions/ai-transcribe-audio",
+      "exists": false,
+      "classification": "BROKEN_RELATIVE_LINK",
+      "reason": "Destino relativo não existe no baseline; conferir rename/caminho antes de corrigir."
+    },
+    {
+      "source": "docs/audits/vendor-ui-composicao-2026-10-03.md",
+      "line": 23,
+      "target": "@radix-ui|framer-motion|class-variance-authority|clsx|tailwind-merge",
+      "resolved_path": "docs/audits/@radix-ui|framer-motion|class-variance-authority|clsx|tailwind-merge",
+      "exists": false,
+      "classification": "LEXICAL_FALSE_POSITIVE",
+      "reason": "Sintaxe de medição ou comando, não um hyperlink autoral."
+    },
+    {
+      "source": "docs/design/PLANO_EMAIL_NAVY_100_ETAPAS_2026-10-02.md",
+      "line": 77,
+      "target": "../../src/components/talkx/talkxShared.tsx",
+      "resolved_path": "src/components/talkx/talkxShared.tsx",
+      "exists": false,
+      "classification": "BROKEN_RELATIVE_LINK",
+      "reason": "Destino relativo não existe no baseline; conferir rename/caminho antes de corrigir."
+    },
+    {
+      "source": "docs/design/REDESIGN_DASHBOARD_STATUS.md",
+      "line": 8,
+      "target": "alvo30±2",
+      "resolved_path": "docs/design/alvo30±2",
+      "exists": false,
+      "classification": "LEXICAL_FALSE_POSITIVE",
+      "reason": "Sintaxe de medição ou comando, não um hyperlink autoral."
+    },
+    {
+      "source": "docs/design/REDESIGN_DASHBOARD_STATUS.md",
+      "line": 9,
+      "target": "alvo95±4",
+      "resolved_path": "docs/design/alvo95±4",
+      "exists": false,
+      "classification": "LEXICAL_FALSE_POSITIVE",
+      "reason": "Sintaxe de medição ou comando, não um hyperlink autoral."
+    },
+    {
+      "source": "docs/design/REDESIGN_DASHBOARD_STATUS.md",
+      "line": 10,
+      "target": "alvo259±6,",
+      "resolved_path": "docs/design/alvo259±6,",
+      "exists": false,
+      "classification": "LEXICAL_FALSE_POSITIVE",
+      "reason": "Sintaxe de medição ou comando, não um hyperlink autoral."
+    },
+    {
+      "source": "docs/design/REDESIGN_DASHBOARD_STATUS.md",
+      "line": 10,
+      "target": "alvo",
+      "resolved_path": "docs/design/alvo",
+      "exists": false,
+      "classification": "LEXICAL_FALSE_POSITIVE",
+      "reason": "Sintaxe de medição ou comando, não um hyperlink autoral."
+    },
+    {
+      "source": "docs/design/REDESIGN_DASHBOARD_STATUS.md",
+      "line": 11,
+      "target": "alvo220±6",
+      "resolved_path": "docs/design/alvo220±6",
+      "exists": false,
+      "classification": "LEXICAL_FALSE_POSITIVE",
+      "reason": "Sintaxe de medição ou comando, não um hyperlink autoral."
+    },
+    {
+      "source": "docs/design/REDESIGN_DASHBOARD_STATUS.md",
+      "line": 11,
+      "target": "alvo",
+      "resolved_path": "docs/design/alvo",
+      "exists": false,
+      "classification": "LEXICAL_FALSE_POSITIVE",
+      "reason": "Sintaxe de medição ou comando, não um hyperlink autoral."
+    },
+    {
+      "source": "docs/design/REDESIGN_DASHBOARD_STATUS.md",
+      "line": 12,
+      "target": "alvo",
+      "resolved_path": "docs/design/alvo",
+      "exists": false,
+      "classification": "LEXICAL_FALSE_POSITIVE",
+      "reason": "Sintaxe de medição ou comando, não um hyperlink autoral."
+    }
+  ],
+  "broken": 9,
+  "lexical_false_positives": 8
+}

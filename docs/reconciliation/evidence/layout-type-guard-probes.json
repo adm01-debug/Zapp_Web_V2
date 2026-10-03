@@ -1,0 +1,31 @@
+{
+  "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "method": "Repository guard functions executed on local deterministic fixtures; no browser or network",
+  "fontFamily": {
+    "quotedDetected": [
+      "Arial"
+    ],
+    "unquotedSystemUiDetected": false,
+    "injectedHtmlFontFamilyDetected": false
+  },
+  "weights": {
+    "requested": 450,
+    "staticLoaded": [
+      300,
+      400,
+      500,
+      600,
+      700
+    ],
+    "orphanFindings": 0,
+    "note": "Known min/max heuristic in repository unit test; current real font uses a variable range"
+  },
+  "layout": {
+    "minHFullMatchesHFullRegex": true,
+    "hasExactHFullToken": false,
+    "aliasRootCount": 0,
+    "targetRoots": [
+      "w-full flex flex-col gap-4 min-w-0"
+    ]
+  }
+}

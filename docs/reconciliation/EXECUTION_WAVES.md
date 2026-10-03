@@ -1,48 +1,21 @@
-# Execution Waves pós-reconciliação
+# Ordem futura de correções — sem execução automática
 
-## P0 — estabilizar a plataforma antes de aumentar agentes
-1. #1862 db-live-guard.
-2. #1854 settings-guard.
-3. #1454/#1863 types-sync.
-4. PRs CI antigas abertas (#1610/#1439/#1430/#1206) — decidir merge/supersede/close.
-5. Revalidar issues #1265/#1266/#1267 e fechar se #1309/#1313/#1314 realmente resolveram.
+A auditoria encerrou sua missão documental. Esta sequência organiza as próximas escolhas técnicas a partir dos achados já individualizados; não autoriza implementação, banco, deploy, exclusão ou merge. Não substitui os IDs de origem por outro plano numerado de centenas de tarefas.
 
-Executor recomendado: Claude/Codex para diagnóstico; banco/segurança com revisão Claude. Não paralelizar migrations conflitantes.
+| Ordem | Frente | Entradas | Trabalho concreto a preparar | Aceite para encerrar a frente |
+| --- | --- | --- | --- | --- |
+| 0 | Evidência de banco e CI | Drift 779/781, tipos/catálogo/grants, bootstrap offline e observação 403 | Separar defeito de infraestrutura e drift real; validar snapshots e autoridades antes de alterações SQL. | Run identifica ambiente, commit, versões e resultado; contratos realmente executados; proposta específica revisável. |
+| 1 | Isolamento e contratos de execução | Team Chat TC-001 a TC-009; Multiplix MX01 a MX08; TRA-002 a TRA-006; webhooks IA/Gmail | Definir contratos únicos por consumidor, identidade e conexão; impedir sucesso silencioso, replay e isolamento incorreto. | Testes adversariais de identidade/RLS/idempotência e fluxo integrado em ambiente autorizado; nenhum mock apresentado como produção. |
+| 2 | Resultado funcional e cálculo | Telefonia: filtros/gravação/Bitrix; SQL Dashboard; sentimentos; Arquivos; Catálogo; Gmail | Corrigir o menor conjunto causal preservando entregas posteriores. | Contraexemplo atual falha antes e passa depois; integração e rótulo correspondem ao dado real. |
+| 3 | Aceite visual, operação e medição | Talk Me, Skins, Volume, layout, SalesView, Catálogo, IA e SIP | Executar somente aceites ainda válidos; respeitar reversões/dispensas decididas. | Matriz de estados real, medição após último patch, amostra declarada, chamada SIP e observação quando necessárias. |
+| 4 | Resíduos e integração seletiva | 84 candidatos AST, barrels, legados e branches divergentes | Reavaliar consumidores depois dos contratos; selecionar alterações por causa. | Prova de ausência de consumidor/efeito, dependência migrada, autorização específica e rollback; preservar histórico obrigatório. |
 
-## P1 — fechar módulos quase prontos
-- Tarefas: homologações 96/100; não reimplementar.
-- Contatos: item governado restante.
-- Catálogo: revalidar CTs que PRs posteriores fecharam.
-- Telefonia: recalcular T01–T100; executar apenas gaps reais.
-- Email NAVY e Arquivos: reconciliar evidence/PRs e fechar critérios restantes.
+## Decisões que antecedem mudanças
 
-Objetivo: converter muitos NEEDS_REVALIDATION em DONE_VERIFIED com pouco código novo.
+Team Chat precisa resolver a autoridade e os contratos divergentes F/TC. Banco Único precisa confirmar a arquitetura desejada frente ao Cloud canônico. UI da sidebar, PWA/push, instalação de políticas e certas capacidades de IA têm decisões próprias. A restauração de contraste revertido por decisão expressa exige nova decisão, sem reabrir automaticamente o fechamento anterior.
 
-## P2 — backlog real de produto
-- Talk X V4.
-- Multiplix.
-- IA após IA-058.
-- Team Chat, após auditoria HEAD e descarte seguro do histórico perigoso.
+## Como usar o ledger
 
-## P3 — dívida transversal
-- TODOs normalizados.
-- deprecated/legacy.
-- any/type escapes.
-- coverage gaps.
-- flaky E2E.
-- performance/index debt.
-- documentação drift.
+Selecione um achado em [FINDINGS.md](FINDINGS.md), siga suas chaves canônicas para o plano e leia implementação/testes/runtime/documentação/aceite. Agrupe os requisitos que compartilham uma causa; preserve referências históricas. Prepare a alteração mais delimitada, critérios e evidência antes de pedir uma aprovação final quando ela for necessária.
 
-## Routing sugerido
-- Codex: UI/UX, React/TS, refactors e implementação substancial.
-- Hermes/DeepSeek: tarefas mecânicas, testes, docs, low-risk fixes.
-- Devin: investigação longa/reprodução.
-- Claude Opus: arquitetura, decomposição, banco/segurança de alto risco e revisão.
-- Graphify: contexto estrutural/blast radius antes de mudanças.
-- Testes/guards: autoridade objetiva.
-
-## Paralelismo
-Começar com 4–6 workers, mas somente tarefas com worktrees e domínios de arquivos independentes. Banco/migrations têm lock lógico exclusivo.
-
-## Regra de entrada
-Nenhum worker recebe "execute plano X". Recebe somente item do MASTER_LEDGER já reconciliado, com evidência, paths, dependências, risco, aceite e gates.
+Não somar todos os PARTIAL/NOT_IMPLEMENTED de versões antigas. Não repetir uma migration arquivada para fechar checkbox. Não tomar PR merged como prova de publicação ou observação. As matrizes de [trabalho ativo](ACTIVE_WORK_REGISTRY_2026-10-03.md), [resíduos](RESIDUE_REGISTRY.md) e [riscos](OPEN_RISKS.md) delimitam as dependências.

@@ -1,30 +1,17 @@
-# Session Handoff — ponto de retomada
+# Encerramento e retomada futura
 
-## Regra
-Antes de continuar, sincronizar main e reconsultar PRs/issues abertos. O repo é altamente concorrente.
+**Missão concluída:** reconciliar documentalmente o ZAPP no baseline `2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6` e entregar o pacote na branch existente `docs/reconciliation-checkpoint-20261003`, draft PR#1869. O produto não foi declarado integralmente pronto.
 
-## Próxima sequência
-1. IA — reconstruir plan → PR → commit → current state por IA-NNN.
-2. Dashboard — reconstruir planos/redesigns → PRs → estado atual.
-3. Catálogo — terminar classificação dos itens ainda abertos/validated-fail/externos.
-4. Talk X — reconciliar X001–X200 contra STATUS e commits/PRs atuais.
-5. Multiplix — separar os 39 abertos em CODE / RUNTIME / EXTERNAL / PILOT / HUMAN / OBSERVATION.
-6. Telefonia — rebase T01–T100 contra PRs #1830/#1851/#1858/#1864 e posteriores.
-7. Classificar todas as branches remotas: ACTIVE_WORK, OPEN_PR, MERGED, SUPERSEDED, UNIQUE, AUTOMATION, SAFE_TO_DELETE.
-8. Auditar PRs e issues ainda abertos para evitar trabalho duplicado.
-9. Code Truth por módulo usando Graphify + busca + testes.
-10. Normalizar TODO/FIXME/deprecated/legacy/eslint-disable/ts-expect-error.
-11. Gerar PLAN_REGISTRY e depois MASTER_LEDGER.json.
-12. Só então produzir SAFE CLEANUP PLAN e Execution Waves.
+**Atualização posterior ao baseline:** o [adendo final](reports/git/FINAL_REMOTE_DELTA.md) examinou o avanço para `4e73c7767858f00c577c29efd8cc86f5bea117a9` (PR #1870, 03/10 às 22:50:32 UTC). Ele reconhece a integração e o deploy de Talk X X028, conserva o aceite real pendente e registra três riscos residuais, além da persistência do placar defasado. As contagens deste corpo continuam no baseline original.
 
-## Não fazer ainda
-- não excluir branches;
-- não apagar código;
-- não aplicar migration;
-- não atualizar banco;
-- não executar planos históricos diretamente;
-- não marcar candidato como morto só por grep;
-- não criar novo plano de centenas de etapas.
+Entrega: 5.166 registros em 62 fontes, 3.062 avaliações individuais, 2.104 registros históricos somente de linhagem e 104 registros de achados. A referência Dashboard50 não foi recuperada; as 100 etapas do documento externo Dashboard foram preservadas com SHA256.
 
-## Critério de sucesso da reconciliação
-Ser capaz de responder para qualquer item: de onde veio, qual plano o substituiu, qual PR/commit o implementou, quais arquivos atuais o materializam, quais testes/runtime o provam, o que ainda falta e qual agente/tipo de trabalho é apropriado.
+## Para uma missão posterior
+
+1. Ler o [relatório final](FINAL_RECONCILIATION_REPORT_2026-10-03.md) e selecionar uma frente concreta da [ordem de correções](EXECUTION_WAVES.md).
+2. Fixar novamente main/branch e revalidar somente as evidências afetadas pela mudança de baseline.
+3. Usar as chaves canônicas dos planos e os vínculos dos achados; não renumerar nem somar históricos.
+4. Manter separadas implementação, testes, runtime, documentação e aceite; respeitar decisões e cancelamentos.
+5. Solicitar nova autorização somente para ações fora do escopo já concedido, com resultado concreto revisável.
+
+Não retomar esta auditoria como se nada tivesse sido concluído. Não repetir as fases1–4 do inventário. Não executar migrations antigas, fundir a branch TeamChat inteira, fechar issues ou apagar candidatos com base somente neste documento. A validação e os hashes estão em `evidence/`; os relatórios especializados em `reports/`.

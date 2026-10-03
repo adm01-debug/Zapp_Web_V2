@@ -1,0 +1,147 @@
+{
+  "snapshot_utc": "2026-10-03T22:05:58.701315+00:00",
+  "main_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "total": 1828,
+  "open": 12,
+  "merged": 1676,
+  "closed_unmerged": 140,
+  "authors": {
+    "adm01-debug": 1619,
+    "github-actions[bot]": 82,
+    "devin-ai-integration[bot]": 19,
+    "dependabot[bot]": 107,
+    "ecc-tools[bot]": 1
+  },
+  "pages": [
+    {
+      "file": "pulls-page-001.raw.json",
+      "count": 100,
+      "first": 1869,
+      "last": 1767
+    },
+    {
+      "file": "pulls-page-002.raw.json",
+      "count": 100,
+      "first": 1766,
+      "last": 1666
+    },
+    {
+      "file": "pulls-page-003.raw.json",
+      "count": 100,
+      "first": 1664,
+      "last": 1565
+    },
+    {
+      "file": "pulls-page-004.raw.json",
+      "count": 100,
+      "first": 1564,
+      "last": 1465
+    },
+    {
+      "file": "pulls-page-005.raw.json",
+      "count": 100,
+      "first": 1464,
+      "last": 1363
+    },
+    {
+      "file": "pulls-page-006.raw.json",
+      "count": 100,
+      "first": 1362,
+      "last": 1259
+    },
+    {
+      "file": "pulls-page-007.raw.json",
+      "count": 100,
+      "first": 1258,
+      "last": 1157
+    },
+    {
+      "file": "pulls-page-008.raw.json",
+      "count": 100,
+      "first": 1156,
+      "last": 1057
+    },
+    {
+      "file": "pulls-page-009.raw.json",
+      "count": 100,
+      "first": 1056,
+      "last": 954
+    },
+    {
+      "file": "pulls-page-010.raw.json",
+      "count": 100,
+      "first": 953,
+      "last": 851
+    },
+    {
+      "file": "pulls-page-011.raw.json",
+      "count": 100,
+      "first": 850,
+      "last": 749
+    },
+    {
+      "file": "pulls-page-012.raw.json",
+      "count": 100,
+      "first": 748,
+      "last": 646
+    },
+    {
+      "file": "pulls-page-013.raw.json",
+      "count": 100,
+      "first": 645,
+      "last": 546
+    },
+    {
+      "file": "pulls-page-014.raw.json",
+      "count": 100,
+      "first": 545,
+      "last": 444
+    },
+    {
+      "file": "pulls-page-015.raw.json",
+      "count": 100,
+      "first": 443,
+      "last": 334
+    },
+    {
+      "file": "pulls-page-016.raw.json",
+      "count": 100,
+      "first": 333,
+      "last": 232
+    },
+    {
+      "file": "pulls-page-017.raw.json",
+      "count": 100,
+      "first": 231,
+      "last": 131
+    },
+    {
+      "file": "pulls-page-018.raw.json",
+      "count": 100,
+      "first": 130,
+      "last": 29
+    },
+    {
+      "file": "pulls-page-019.raw.json",
+      "count": 28,
+      "first": 28,
+      "last": 1
+    }
+  ],
+  "coverage": "All pull requests metadata and body, pages 1-19 at 100/page; last page 28 entries. Detailed source/patch/CI analysis is scoped to open and selected evidentiary PRs.",
+  "issues_total": 41,
+  "issues_open": 14,
+  "issues_closed": 27,
+  "combined_id_min": 1,
+  "combined_id_max": 1869,
+  "combined_unique_ids": 1869,
+  "combined_missing_ids": [],
+  "coverage_proof": "PRs and issues together cover every integer ID from1 through1869 exactly once;19PRpages18x100+28;issue search41,incomplete_results=false.",
+  "open_pr_changed_files_collected": 75,
+  "open_pr_conversation_comments_collected": 888,
+  "open_pr_reviews_collected": 67,
+  "open_pr_inline_comments_collected": 24,
+  "review_threads_collected": 20,
+  "review_threads_unresolved": 20,
+  "open_issues_comments_collected": 66
+}

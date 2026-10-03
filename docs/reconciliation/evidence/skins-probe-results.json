@@ -1,0 +1,2305 @@
+{
+  "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "executed_at": "2026-10-03T23:00:03.933Z",
+  "runtime": "v24.19.0",
+  "method": "Actual TypeScript source stripped with Node; in-memory storage/document; synchronous hook state harness; no React renderer, browser, DB, network, provider or deploy.",
+  "source_hashes": {
+    "src/components/settings/theme/presets.ts": "d2facb41ef44ac006051013085df365bb429a99f517b8349f443967ce767c0df",
+    "src/components/settings/theme/useThemePreset.ts": "fa8b1c981e9b8ac4e93442b5535905cd0b036ddbf689d48967cf0a41b230529f",
+    "src/styles/tokens.css": "ca19bfc1a5fd31d443e2763da0304e73bc25027cd894add5d0a32d015f805a28",
+    "index.html": "8a62d9ad8c361901b0d2e23520ce9843a8024293d1b0395b5f6037ba56585438"
+  },
+  "total": 299,
+  "passed": 297,
+  "failed": 2,
+  "outcomes": [
+    {
+      "id": "catalog.count",
+      "pass": true,
+      "actual": 19,
+      "expected": 19
+    },
+    {
+      "id": "catalog.unique_ids",
+      "pass": true,
+      "actual": 19,
+      "expected": 19
+    },
+    {
+      "id": "catalog.distinct_primaries",
+      "pass": true,
+      "actual": 19,
+      "expected": 19
+    },
+    {
+      "id": "catalog.categories",
+      "pass": true,
+      "actual": {
+        "classic": 10,
+        "gx": 9
+      },
+      "expected": {
+        "classic": 10,
+        "gx": 9
+      }
+    },
+    {
+      "id": "catalog.corporate_swatches",
+      "pass": true,
+      "actual": [
+        "hsl(221 83% 53%)",
+        "hsl(215 70% 55%)",
+        "hsl(230 78% 59%)",
+        "hsl(221 42% 68%)"
+      ],
+      "expected": 4
+    },
+    {
+      "id": "gx.gx-classic",
+      "pass": true,
+      "actual": {
+        "light": "347 96% 54%",
+        "dark": "347 96% 54%",
+        "category": "gx",
+        "radius": 10,
+        "font": null
+      },
+      "expected": {
+        "primary": "347 96% 54%",
+        "category": "gx",
+        "radius": 10,
+        "font": null
+      }
+    },
+    {
+      "id": "gx.gx-pink-addiction",
+      "pass": true,
+      "actual": {
+        "light": "330 95% 60%",
+        "dark": "330 95% 60%",
+        "category": "gx",
+        "radius": 10,
+        "font": null
+      },
+      "expected": {
+        "primary": "330 95% 60%",
+        "category": "gx",
+        "radius": 10,
+        "font": null
+      }
+    },
+    {
+      "id": "gx.gx-purple-haze",
+      "pass": true,
+      "actual": {
+        "light": "265 65% 50%",
+        "dark": "265 65% 50%",
+        "category": "gx",
+        "radius": 10,
+        "font": null
+      },
+      "expected": {
+        "primary": "265 65% 50%",
+        "category": "gx",
+        "radius": 10,
+        "font": null
+      }
+    },
+    {
+      "id": "gx.gx-rose-quartz",
+      "pass": true,
+      "actual": {
+        "light": "345 75% 68%",
+        "dark": "345 75% 68%",
+        "category": "gx",
+        "radius": 10,
+        "font": null
+      },
+      "expected": {
+        "primary": "345 75% 68%",
+        "category": "gx",
+        "radius": 10,
+        "font": null
+      }
+    },
+    {
+      "id": "gx.gx-ultraviolet",
+      "pass": true,
+      "actual": {
+        "light": "271 76% 53%",
+        "dark": "271 76% 53%",
+        "category": "gx",
+        "radius": 10,
+        "font": null
+      },
+      "expected": {
+        "primary": "271 76% 53%",
+        "category": "gx",
+        "radius": 10,
+        "font": null
+      }
+    },
+    {
+      "id": "gx.gx-hackerman",
+      "pass": true,
+      "actual": {
+        "light": "127 65% 46%",
+        "dark": "127 65% 46%",
+        "category": "gx",
+        "radius": 10,
+        "font": null
+      },
+      "expected": {
+        "primary": "127 65% 46%",
+        "category": "gx",
+        "radius": 10,
+        "font": null
+      }
+    },
+    {
+      "id": "gx.gx-frutti-di-mare",
+      "pass": true,
+      "actual": {
+        "light": "182 90% 42%",
+        "dark": "182 90% 42%",
+        "category": "gx",
+        "radius": 10,
+        "font": null
+      },
+      "expected": {
+        "primary": "182 90% 42%",
+        "category": "gx",
+        "radius": 10,
+        "font": null
+      }
+    },
+    {
+      "id": "gx.gx-cyberpunk",
+      "pass": true,
+      "actual": {
+        "light": "55 100% 51%",
+        "dark": "55 100% 51%",
+        "category": "gx",
+        "radius": 10,
+        "font": null
+      },
+      "expected": {
+        "primary": "55 100% 51%",
+        "category": "gx",
+        "radius": 10,
+        "font": null
+      }
+    },
+    {
+      "id": "gx.gx-razer",
+      "pass": true,
+      "actual": {
+        "light": "113 70% 51%",
+        "dark": "113 70% 51%",
+        "category": "gx",
+        "radius": 10,
+        "font": null
+      },
+      "expected": {
+        "primary": "113 70% 51%",
+        "category": "gx",
+        "radius": 10,
+        "font": null
+      }
+    },
+    {
+      "id": "keys.corporate.light",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.corporate.dark",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.purpure.light",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.purpure.dark",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.emerald.light",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.emerald.dark",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.sunset.light",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.sunset.dark",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.rose.light",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.rose.dark",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.minimal.light",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.minimal.dark",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.ocean.light",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.ocean.dark",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.amber.light",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.amber.dark",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.cyber.light",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.cyber.dark",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.diversity.light",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 76,
+        "extraKeys": [
+          "gradient-success"
+        ]
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.diversity.dark",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 76,
+        "extraKeys": [
+          "gradient-success"
+        ]
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.gx-classic.light",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.gx-classic.dark",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.gx-pink-addiction.light",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.gx-pink-addiction.dark",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.gx-purple-haze.light",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.gx-purple-haze.dark",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.gx-rose-quartz.light",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.gx-rose-quartz.dark",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.gx-ultraviolet.light",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.gx-ultraviolet.dark",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.gx-hackerman.light",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.gx-hackerman.dark",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.gx-frutti-di-mare.light",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.gx-frutti-di-mare.dark",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.gx-cyberpunk.light",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.gx-cyberpunk.dark",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.gx-razer.light",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "keys.gx-razer.dark",
+      "pass": true,
+      "actual": {
+        "requiredKeys": 75,
+        "actualKeys": 75,
+        "extraKeys": []
+      },
+      "expected": {
+        "requiredKeysPresent": true
+      }
+    },
+    {
+      "id": "tokens.light.background",
+      "pass": true,
+      "actual": "221 20% 97%",
+      "expected": "221 20% 97%"
+    },
+    {
+      "id": "tokens.dark.background",
+      "pass": true,
+      "actual": "240 6% 6%",
+      "expected": "240 6% 6%"
+    },
+    {
+      "id": "tokens.light.foreground",
+      "pass": true,
+      "actual": "221 20% 12%",
+      "expected": "221 20% 12%"
+    },
+    {
+      "id": "tokens.dark.foreground",
+      "pass": true,
+      "actual": "210 40% 98%",
+      "expected": "210 40% 98%"
+    },
+    {
+      "id": "tokens.light.card",
+      "pass": true,
+      "actual": "0 0% 100%",
+      "expected": "0 0% 100%"
+    },
+    {
+      "id": "tokens.dark.card",
+      "pass": true,
+      "actual": "240 5% 10%",
+      "expected": "240 5% 10%"
+    },
+    {
+      "id": "tokens.light.card-foreground",
+      "pass": true,
+      "actual": "221 20% 12%",
+      "expected": "221 20% 12%"
+    },
+    {
+      "id": "tokens.dark.card-foreground",
+      "pass": true,
+      "actual": "210 40% 98%",
+      "expected": "210 40% 98%"
+    },
+    {
+      "id": "tokens.light.card-elevated",
+      "pass": true,
+      "actual": "0 0% 100%",
+      "expected": "0 0% 100%"
+    },
+    {
+      "id": "tokens.dark.card-elevated",
+      "pass": true,
+      "actual": "240 5% 13%",
+      "expected": "240 5% 13%"
+    },
+    {
+      "id": "tokens.light.popover",
+      "pass": true,
+      "actual": "0 0% 100%",
+      "expected": "0 0% 100%"
+    },
+    {
+      "id": "tokens.dark.popover",
+      "pass": true,
+      "actual": "240 5% 10%",
+      "expected": "240 5% 10%"
+    },
+    {
+      "id": "tokens.light.popover-foreground",
+      "pass": true,
+      "actual": "221 20% 12%",
+      "expected": "221 20% 12%"
+    },
+    {
+      "id": "tokens.dark.popover-foreground",
+      "pass": true,
+      "actual": "210 40% 98%",
+      "expected": "210 40% 98%"
+    },
+    {
+      "id": "tokens.light.secondary",
+      "pass": true,
+      "actual": "215 70% 55%",
+      "expected": "215 70% 55%"
+    },
+    {
+      "id": "tokens.dark.secondary",
+      "pass": true,
+      "actual": "240 5% 16%",
+      "expected": "240 5% 16%"
+    },
+    {
+      "id": "tokens.light.secondary-foreground",
+      "pass": true,
+      "actual": "210 40% 92%",
+      "expected": "210 40% 92%"
+    },
+    {
+      "id": "tokens.dark.secondary-foreground",
+      "pass": true,
+      "actual": "0 0% 100%",
+      "expected": "0 0% 100%"
+    },
+    {
+      "id": "tokens.light.muted",
+      "pass": true,
+      "actual": "221 15% 92%",
+      "expected": "221 15% 92%"
+    },
+    {
+      "id": "tokens.dark.muted",
+      "pass": true,
+      "actual": "240 4% 18%",
+      "expected": "240 4% 18%"
+    },
+    {
+      "id": "tokens.light.muted-foreground",
+      "pass": true,
+      "actual": "221 10% 40%",
+      "expected": "221 10% 40%"
+    },
+    {
+      "id": "tokens.dark.muted-foreground",
+      "pass": true,
+      "actual": "215 20% 75%",
+      "expected": "215 20% 75%"
+    },
+    {
+      "id": "tokens.light.accent",
+      "pass": true,
+      "actual": "221 55% 95%",
+      "expected": "221 55% 95%"
+    },
+    {
+      "id": "tokens.dark.accent",
+      "pass": true,
+      "actual": "240 5% 16%",
+      "expected": "240 5% 16%"
+    },
+    {
+      "id": "tokens.light.accent-foreground",
+      "pass": true,
+      "actual": "221 83% 45%",
+      "expected": "221 83% 45%"
+    },
+    {
+      "id": "tokens.dark.accent-foreground",
+      "pass": true,
+      "actual": "210 40% 98%",
+      "expected": "210 40% 98%"
+    },
+    {
+      "id": "tokens.light.border",
+      "pass": true,
+      "actual": "221 15% 90%",
+      "expected": "221 15% 90%"
+    },
+    {
+      "id": "tokens.dark.border",
+      "pass": true,
+      "actual": "240 4% 18%",
+      "expected": "240 4% 18%"
+    },
+    {
+      "id": "tokens.light.input",
+      "pass": true,
+      "actual": "221 15% 93%",
+      "expected": "221 15% 93%"
+    },
+    {
+      "id": "tokens.dark.input",
+      "pass": true,
+      "actual": "240 5% 14%",
+      "expected": "240 5% 14%"
+    },
+    {
+      "id": "tokens.light.surface",
+      "pass": true,
+      "actual": "240 5% 9%",
+      "expected": "240 5% 9%"
+    },
+    {
+      "id": "tokens.dark.surface",
+      "pass": true,
+      "actual": "240 5% 9%",
+      "expected": "240 5% 9%"
+    },
+    {
+      "id": "tokens.light.surface-hover",
+      "pass": true,
+      "actual": "240 5% 12%",
+      "expected": "240 5% 12%"
+    },
+    {
+      "id": "tokens.dark.surface-hover",
+      "pass": true,
+      "actual": "240 5% 12%",
+      "expected": "240 5% 12%"
+    },
+    {
+      "id": "tokens.light.divider",
+      "pass": true,
+      "actual": "240 4% 20%",
+      "expected": "240 4% 20%"
+    },
+    {
+      "id": "tokens.dark.divider",
+      "pass": true,
+      "actual": "240 4% 20%",
+      "expected": "240 4% 20%"
+    },
+    {
+      "id": "tokens.light.sidebar-background",
+      "pass": true,
+      "actual": "0 0% 100%",
+      "expected": "0 0% 100%"
+    },
+    {
+      "id": "tokens.dark.sidebar-background",
+      "pass": true,
+      "actual": "240 6% 5%",
+      "expected": "240 6% 5%"
+    },
+    {
+      "id": "tokens.light.sidebar-foreground",
+      "pass": true,
+      "actual": "221 20% 12%",
+      "expected": "221 20% 12%"
+    },
+    {
+      "id": "tokens.dark.sidebar-foreground",
+      "pass": true,
+      "actual": "210 40% 98%",
+      "expected": "210 40% 98%"
+    },
+    {
+      "id": "tokens.light.sidebar-accent",
+      "pass": true,
+      "actual": "221 50% 96%",
+      "expected": "221 50% 96%"
+    },
+    {
+      "id": "tokens.dark.sidebar-accent",
+      "pass": true,
+      "actual": "240 5% 12%",
+      "expected": "240 5% 12%"
+    },
+    {
+      "id": "tokens.light.sidebar-accent-foreground",
+      "pass": true,
+      "actual": "221 83% 45%",
+      "expected": "221 83% 45%"
+    },
+    {
+      "id": "tokens.dark.sidebar-accent-foreground",
+      "pass": true,
+      "actual": "210 40% 98%",
+      "expected": "210 40% 98%"
+    },
+    {
+      "id": "tokens.light.sidebar-border",
+      "pass": true,
+      "actual": "221 15% 92%",
+      "expected": "221 15% 92%"
+    },
+    {
+      "id": "tokens.dark.sidebar-border",
+      "pass": true,
+      "actual": "240 4% 14%",
+      "expected": "240 4% 14%"
+    },
+    {
+      "id": "tokens.light.chat-bubble-received",
+      "pass": true,
+      "actual": "221 15% 95%",
+      "expected": "221 15% 95%"
+    },
+    {
+      "id": "tokens.dark.chat-bubble-received",
+      "pass": true,
+      "actual": "240 4% 18%",
+      "expected": "240 4% 18%"
+    },
+    {
+      "id": "tokens.light.chat-bubble-received-foreground",
+      "pass": true,
+      "actual": "221 20% 15%",
+      "expected": "221 20% 15%"
+    },
+    {
+      "id": "tokens.dark.chat-bubble-received-foreground",
+      "pass": true,
+      "actual": "0 0% 97%",
+      "expected": "0 0% 97%"
+    },
+    {
+      "id": "tokens.light.chat-header",
+      "pass": true,
+      "actual": "0 0% 100%",
+      "expected": "0 0% 100%"
+    },
+    {
+      "id": "tokens.dark.chat-header",
+      "pass": true,
+      "actual": "240 5% 10%",
+      "expected": "240 5% 10%"
+    },
+    {
+      "id": "tokens.light.chat-input-bg",
+      "pass": true,
+      "actual": "0 0% 100%",
+      "expected": "0 0% 100%"
+    },
+    {
+      "id": "tokens.dark.chat-input-bg",
+      "pass": true,
+      "actual": "240 5% 9%",
+      "expected": "240 5% 9%"
+    },
+    {
+      "id": "tokens.light.elevated",
+      "pass": true,
+      "actual": "0 0% 100%",
+      "expected": "0 0% 100%"
+    },
+    {
+      "id": "tokens.dark.elevated",
+      "pass": true,
+      "actual": "240 5% 12%",
+      "expected": "240 5% 12%"
+    },
+    {
+      "id": "tokens.light.elevated-hover",
+      "pass": true,
+      "actual": "221 20% 97%",
+      "expected": "221 20% 97%"
+    },
+    {
+      "id": "tokens.dark.elevated-hover",
+      "pass": true,
+      "actual": "240 5% 15%",
+      "expected": "240 5% 15%"
+    },
+    {
+      "id": "tokens.light.glass-bg",
+      "pass": true,
+      "actual": "0 0% 100% / 1",
+      "expected": "0 0% 100% / 1"
+    },
+    {
+      "id": "tokens.dark.glass-bg",
+      "pass": true,
+      "actual": "240 6% 8% / 0.85",
+      "expected": "240 6% 8% / 0.85"
+    },
+    {
+      "id": "tokens.light.glass-border",
+      "pass": true,
+      "actual": "221 15% 88% / 1",
+      "expected": "221 15% 88% / 1"
+    },
+    {
+      "id": "tokens.dark.glass-border",
+      "pass": true,
+      "actual": "221 30% 30% / 0.15",
+      "expected": "221 30% 30% / 0.15"
+    },
+    {
+      "id": "tokens.light.gradient-surface",
+      "pass": true,
+      "actual": "linear-gradient(180deg, hsl(221 20% 97%), hsl(221 15% 95%))",
+      "expected": "linear-gradient(180deg, hsl(221 20% 97%), hsl(221 15% 95%))"
+    },
+    {
+      "id": "tokens.dark.gradient-surface",
+      "pass": true,
+      "actual": "linear-gradient(180deg, hsl(240 5% 10%), hsl(240 6% 6%))",
+      "expected": "linear-gradient(180deg, hsl(240 5% 10%), hsl(240 6% 6%))"
+    },
+    {
+      "id": "tokens.light.gradient-divider",
+      "pass": true,
+      "actual": "linear-gradient(90deg, transparent, hsl(221 15% 88% / 0.5), transparent)",
+      "expected": "linear-gradient(90deg, transparent, hsl(221 15% 88% / 0.5), transparent)"
+    },
+    {
+      "id": "tokens.dark.gradient-divider",
+      "pass": true,
+      "actual": "linear-gradient(90deg, transparent, hsl(221 50% 40% / 0.15), transparent)",
+      "expected": "linear-gradient(90deg, transparent, hsl(221 50% 40% / 0.15), transparent)"
+    },
+    {
+      "id": "tokens.light.shadow-lg",
+      "pass": true,
+      "actual": "0 10px 15px -3px hsl(221 20% 12% / 0.08), 0 4px 6px -4px hsl(221 20% 12% / 0.05)",
+      "expected": "0 10px 15px -3px hsl(221 20% 12% / 0.08), 0 4px 6px -4px hsl(221 20% 12% / 0.05)"
+    },
+    {
+      "id": "tokens.dark.shadow-lg",
+      "pass": true,
+      "actual": "0 10px 15px -3px hsl(225 20% 2% / 0.7), 0 4px 6px -4px hsl(225 20% 2% / 0.5), 0 0 20px hsl(221 83% 53% / 0.04)",
+      "expected": "0 10px 15px -3px hsl(225 20% 2% / 0.7), 0 4px 6px -4px hsl(225 20% 2% / 0.5), 0 0 20px hsl(221 83% 53% / 0.04)"
+    },
+    {
+      "id": "tokens.light.shadow-xl",
+      "pass": true,
+      "actual": "0 20px 25px -5px hsl(221 20% 12% / 0.1), 0 8px 10px -6px hsl(221 20% 12% / 0.06)",
+      "expected": "0 20px 25px -5px hsl(221 20% 12% / 0.1), 0 8px 10px -6px hsl(221 20% 12% / 0.06)"
+    },
+    {
+      "id": "tokens.dark.shadow-xl",
+      "pass": true,
+      "actual": "0 20px 25px -5px hsl(225 20% 2% / 0.8), 0 8px 10px -6px hsl(225 20% 2% / 0.6), 0 0 30px hsl(221 83% 53% / 0.06)",
+      "expected": "0 20px 25px -5px hsl(225 20% 2% / 0.8), 0 8px 10px -6px hsl(225 20% 2% / 0.6), 0 0 30px hsl(221 83% 53% / 0.06)"
+    },
+    {
+      "id": "tokens.light.shadow-header",
+      "pass": true,
+      "actual": "0 1px 3px hsl(221 20% 12% / 0.06)",
+      "expected": "0 1px 3px hsl(221 20% 12% / 0.06)"
+    },
+    {
+      "id": "tokens.dark.shadow-header",
+      "pass": true,
+      "actual": "0 1px 3px hsl(225 20% 2% / 0.7), 0 0 20px hsl(221 83% 53% / 0.03), inset 0 1px 0 hsl(225 15% 18% / 0.3)",
+      "expected": "0 1px 3px hsl(225 20% 2% / 0.7), 0 0 20px hsl(221 83% 53% / 0.03), inset 0 1px 0 hsl(225 15% 18% / 0.3)"
+    },
+    {
+      "id": "tokens.light.primary",
+      "pass": true,
+      "actual": "221 83% 53%",
+      "expected": "221 83% 53%"
+    },
+    {
+      "id": "tokens.dark.primary",
+      "pass": true,
+      "actual": "221 83% 53%",
+      "expected": "221 83% 53%"
+    },
+    {
+      "id": "tokens.light.primary-foreground",
+      "pass": true,
+      "actual": "0 0% 100%",
+      "expected": "0 0% 100%"
+    },
+    {
+      "id": "tokens.dark.primary-foreground",
+      "pass": true,
+      "actual": "0 0% 100%",
+      "expected": "0 0% 100%"
+    },
+    {
+      "id": "tokens.light.primary-glow",
+      "pass": true,
+      "actual": "230 83% 63%",
+      "expected": "230 83% 63%"
+    },
+    {
+      "id": "tokens.dark.primary-glow",
+      "pass": true,
+      "actual": "230 83% 63%",
+      "expected": "230 83% 63%"
+    },
+    {
+      "id": "tokens.light.primary-hover",
+      "pass": true,
+      "actual": "221 83% 48%",
+      "expected": "221 83% 48%"
+    },
+    {
+      "id": "tokens.dark.primary-hover",
+      "pass": true,
+      "actual": "221 83% 48%",
+      "expected": "221 83% 48%"
+    },
+    {
+      "id": "tokens.light.primary-active",
+      "pass": true,
+      "actual": "221 83% 43%",
+      "expected": "221 83% 43%"
+    },
+    {
+      "id": "tokens.dark.primary-active",
+      "pass": true,
+      "actual": "221 83% 43%",
+      "expected": "221 83% 43%"
+    },
+    {
+      "id": "tokens.light.ring",
+      "pass": true,
+      "actual": "221 83% 53%",
+      "expected": "221 83% 53%"
+    },
+    {
+      "id": "tokens.dark.ring",
+      "pass": true,
+      "actual": "221 83% 53%",
+      "expected": "221 83% 53%"
+    },
+    {
+      "id": "tokens.light.sidebar-primary",
+      "pass": true,
+      "actual": "221 83% 53%",
+      "expected": "221 83% 53%"
+    },
+    {
+      "id": "tokens.dark.sidebar-primary",
+      "pass": true,
+      "actual": "221 83% 53%",
+      "expected": "221 83% 53%"
+    },
+    {
+      "id": "tokens.light.sidebar-primary-foreground",
+      "pass": true,
+      "actual": "0 0% 100%",
+      "expected": "0 0% 100%"
+    },
+    {
+      "id": "tokens.dark.sidebar-primary-foreground",
+      "pass": true,
+      "actual": "0 0% 100%",
+      "expected": "0 0% 100%"
+    },
+    {
+      "id": "tokens.light.sidebar-ring",
+      "pass": true,
+      "actual": "221 83% 53%",
+      "expected": "221 83% 53%"
+    },
+    {
+      "id": "tokens.dark.sidebar-ring",
+      "pass": true,
+      "actual": "221 83% 53%",
+      "expected": "221 83% 53%"
+    },
+    {
+      "id": "tokens.light.chat-bubble-sent",
+      "pass": true,
+      "actual": "221 83% 53%",
+      "expected": "221 83% 53%"
+    },
+    {
+      "id": "tokens.dark.chat-bubble-sent",
+      "pass": true,
+      "actual": "221 83% 53%",
+      "expected": "221 83% 53%"
+    },
+    {
+      "id": "tokens.light.chat-bubble-sent-foreground",
+      "pass": true,
+      "actual": "0 0% 100%",
+      "expected": "0 0% 100%"
+    },
+    {
+      "id": "tokens.dark.chat-bubble-sent-foreground",
+      "pass": true,
+      "actual": "0 0% 100%",
+      "expected": "0 0% 100%"
+    },
+    {
+      "id": "tokens.light.status-open",
+      "pass": true,
+      "actual": "221 83% 53%",
+      "expected": "221 83% 53%"
+    },
+    {
+      "id": "tokens.dark.status-open",
+      "pass": true,
+      "actual": "221 83% 53%",
+      "expected": "221 83% 53%"
+    },
+    {
+      "id": "tokens.light.chart-status-open",
+      "pass": true,
+      "actual": "221 83% 53%",
+      "expected": "221 83% 53%"
+    },
+    {
+      "id": "tokens.dark.chart-status-open",
+      "pass": true,
+      "actual": "221 83% 53%",
+      "expected": "221 83% 53%"
+    },
+    {
+      "id": "tokens.light.xp",
+      "pass": true,
+      "actual": "221 83% 53%",
+      "expected": "221 83% 53%"
+    },
+    {
+      "id": "tokens.dark.xp",
+      "pass": true,
+      "actual": "221 83% 53%",
+      "expected": "221 83% 53%"
+    },
+    {
+      "id": "tokens.light.xp-foreground",
+      "pass": true,
+      "actual": "0 0% 100%",
+      "expected": "0 0% 100%"
+    },
+    {
+      "id": "tokens.dark.xp-foreground",
+      "pass": true,
+      "actual": "0 0% 100%",
+      "expected": "0 0% 100%"
+    },
+    {
+      "id": "tokens.light.chart-1",
+      "pass": true,
+      "actual": "221 83% 53%",
+      "expected": "221 83% 53%"
+    },
+    {
+      "id": "tokens.dark.chart-1",
+      "pass": true,
+      "actual": "221 83% 53%",
+      "expected": "221 83% 53%"
+    },
+    {
+      "id": "tokens.light.border-strong",
+      "pass": true,
+      "actual": "221 83% 53% / 0.55",
+      "expected": "221 83% 53% / 0.55"
+    },
+    {
+      "id": "tokens.dark.border-strong",
+      "pass": true,
+      "actual": "221 83% 53% / 0.55",
+      "expected": "221 83% 53% / 0.55"
+    },
+    {
+      "id": "tokens.light.gradient-primary",
+      "pass": true,
+      "actual": "linear-gradient(135deg, hsl(221 83% 53%), hsl(230 83% 63%))",
+      "expected": "linear-gradient(135deg, hsl(221 83% 53%), hsl(230 83% 63%))"
+    },
+    {
+      "id": "tokens.dark.gradient-primary",
+      "pass": true,
+      "actual": "linear-gradient(135deg, hsl(221 83% 53%), hsl(230 83% 63%))",
+      "expected": "linear-gradient(135deg, hsl(221 83% 53%), hsl(230 83% 63%))"
+    },
+    {
+      "id": "tokens.light.gradient-secondary",
+      "pass": true,
+      "actual": "linear-gradient(135deg, hsl(215 70% 55%), hsl(215 70% 65%))",
+      "expected": "linear-gradient(135deg, hsl(215 70% 55%), hsl(215 70% 65%))"
+    },
+    {
+      "id": "tokens.dark.gradient-secondary",
+      "pass": true,
+      "actual": "linear-gradient(135deg, hsl(215 70% 55%), hsl(215 70% 65%))",
+      "expected": "linear-gradient(135deg, hsl(215 70% 55%), hsl(215 70% 65%))"
+    },
+    {
+      "id": "tokens.light.gradient-xp",
+      "pass": true,
+      "actual": "linear-gradient(90deg, hsl(221 83% 53%), hsl(230 83% 63%))",
+      "expected": "linear-gradient(90deg, hsl(221 83% 53%), hsl(230 83% 63%))"
+    },
+    {
+      "id": "tokens.dark.gradient-xp",
+      "pass": true,
+      "actual": "linear-gradient(90deg, hsl(221 83% 53%), hsl(230 83% 63%))",
+      "expected": "linear-gradient(90deg, hsl(221 83% 53%), hsl(230 83% 63%))"
+    },
+    {
+      "id": "tokens.light.gradient-vibrant",
+      "pass": true,
+      "actual": "linear-gradient(135deg, hsl(221 83% 53%), hsl(230 95% 62%), hsl(230 83% 63%))",
+      "expected": "linear-gradient(135deg, hsl(221 83% 53%), hsl(230 95% 62%), hsl(230 83% 63%))"
+    },
+    {
+      "id": "tokens.dark.gradient-vibrant",
+      "pass": true,
+      "actual": "linear-gradient(135deg, hsl(221 83% 53%), hsl(230 95% 62%), hsl(230 83% 63%))",
+      "expected": "linear-gradient(135deg, hsl(221 83% 53%), hsl(230 95% 62%), hsl(230 83% 63%))"
+    },
+    {
+      "id": "tokens.light.gradient-purple-green",
+      "pass": true,
+      "actual": "linear-gradient(135deg, hsl(221 83% 53%), hsl(160 70% 42%))",
+      "expected": "linear-gradient(135deg, hsl(221 83% 53%), hsl(160 70% 42%))"
+    },
+    {
+      "id": "tokens.dark.gradient-purple-green",
+      "pass": true,
+      "actual": "linear-gradient(135deg, hsl(221 83% 53%), hsl(155 80% 50%))",
+      "expected": "linear-gradient(135deg, hsl(221 83% 53%), hsl(155 80% 50%))"
+    },
+    {
+      "id": "tokens.light.shadow-glow-primary",
+      "pass": true,
+      "actual": "0 4px 14px hsl(221 83% 53% / 0.25)",
+      "expected": "0 4px 14px hsl(221 83% 53% / 0.25)"
+    },
+    {
+      "id": "tokens.dark.shadow-glow-primary",
+      "pass": true,
+      "actual": "0 0 30px hsl(221 83% 53% / 0.4), 0 0 60px hsl(221 83% 53% / 0.15)",
+      "expected": "0 0 30px hsl(221 83% 53% / 0.4), 0 0 60px hsl(221 83% 53% / 0.15)"
+    },
+    {
+      "id": "tokens.light.shadow-glow-secondary",
+      "pass": true,
+      "actual": "0 4px 14px hsl(215 70% 55% / 0.2)",
+      "expected": "0 4px 14px hsl(215 70% 55% / 0.2)"
+    },
+    {
+      "id": "tokens.dark.shadow-glow-secondary",
+      "pass": true,
+      "actual": "0 4px 24px hsl(215 70% 55% / 0.4)",
+      "expected": "0 4px 24px hsl(215 70% 55% / 0.4)"
+    },
+    {
+      "id": "tokens.light.shadow-glow-accent",
+      "pass": true,
+      "actual": "0 4px 14px hsl(230 83% 63% / 0.25)",
+      "expected": "0 4px 14px hsl(230 83% 63% / 0.25)"
+    },
+    {
+      "id": "tokens.dark.shadow-glow-accent",
+      "pass": true,
+      "actual": "0 4px 24px hsl(230 83% 63% / 0.4)",
+      "expected": "0 4px 24px hsl(230 83% 63% / 0.4)"
+    },
+    {
+      "id": "tokens.light.shadow-glow-purple",
+      "pass": true,
+      "actual": "0 4px 14px hsl(221 83% 53% / 0.3)",
+      "expected": "0 4px 14px hsl(221 83% 53% / 0.3)"
+    },
+    {
+      "id": "tokens.dark.shadow-glow-purple",
+      "pass": true,
+      "actual": "0 4px 24px hsl(221 83% 53% / 0.5)",
+      "expected": "0 4px 24px hsl(221 83% 53% / 0.5)"
+    },
+    {
+      "id": "tokens.light.kpi-tile-blue",
+      "pass": true,
+      "actual": "221 83% 53% / 0.13",
+      "expected": "221 83% 53% / 0.13"
+    },
+    {
+      "id": "tokens.dark.kpi-tile-blue",
+      "pass": true,
+      "actual": "221 83% 53% / 0.13",
+      "expected": "221 83% 53% / 0.13"
+    },
+    {
+      "id": "tokens.light.kpi-tile-blue-fg",
+      "pass": true,
+      "actual": "221 83% 72%",
+      "expected": "221 83% 72%"
+    },
+    {
+      "id": "tokens.dark.kpi-tile-blue-fg",
+      "pass": true,
+      "actual": "221 83% 72%",
+      "expected": "221 83% 72%"
+    },
+    {
+      "id": "tokens.light.primary-50",
+      "pass": true,
+      "actual": "221 100% 97%",
+      "expected": "221 100% 97%"
+    },
+    {
+      "id": "tokens.dark.primary-50",
+      "pass": true,
+      "actual": "221 60% 14%",
+      "expected": "221 60% 14%"
+    },
+    {
+      "id": "tokens.light.primary-100",
+      "pass": true,
+      "actual": "221 95% 93%",
+      "expected": "221 95% 93%"
+    },
+    {
+      "id": "tokens.dark.primary-100",
+      "pass": true,
+      "actual": "221 65% 18%",
+      "expected": "221 65% 18%"
+    },
+    {
+      "id": "tokens.light.primary-200",
+      "pass": true,
+      "actual": "221 92% 86%",
+      "expected": "221 92% 86%"
+    },
+    {
+      "id": "tokens.dark.primary-200",
+      "pass": true,
+      "actual": "221 70% 24%",
+      "expected": "221 70% 24%"
+    },
+    {
+      "id": "tokens.light.primary-300",
+      "pass": true,
+      "actual": "221 90% 76%",
+      "expected": "221 90% 76%"
+    },
+    {
+      "id": "tokens.dark.primary-300",
+      "pass": true,
+      "actual": "221 75% 32%",
+      "expected": "221 75% 32%"
+    },
+    {
+      "id": "tokens.light.primary-400",
+      "pass": true,
+      "actual": "221 87% 64%",
+      "expected": "221 87% 64%"
+    },
+    {
+      "id": "tokens.dark.primary-400",
+      "pass": true,
+      "actual": "221 80% 42%",
+      "expected": "221 80% 42%"
+    },
+    {
+      "id": "tokens.light.primary-500",
+      "pass": true,
+      "actual": "221 83% 53%",
+      "expected": "221 83% 53%"
+    },
+    {
+      "id": "tokens.dark.primary-500",
+      "pass": true,
+      "actual": "221 83% 53%",
+      "expected": "221 83% 53%"
+    },
+    {
+      "id": "tokens.light.primary-600",
+      "pass": true,
+      "actual": "221 83% 46%",
+      "expected": "221 83% 46%"
+    },
+    {
+      "id": "tokens.dark.primary-600",
+      "pass": true,
+      "actual": "221 87% 62%",
+      "expected": "221 87% 62%"
+    },
+    {
+      "id": "tokens.light.primary-700",
+      "pass": true,
+      "actual": "221 80% 38%",
+      "expected": "221 80% 38%"
+    },
+    {
+      "id": "tokens.dark.primary-700",
+      "pass": true,
+      "actual": "221 90% 72%",
+      "expected": "221 90% 72%"
+    },
+    {
+      "id": "tokens.light.primary-800",
+      "pass": true,
+      "actual": "221 75% 30%",
+      "expected": "221 75% 30%"
+    },
+    {
+      "id": "tokens.dark.primary-800",
+      "pass": true,
+      "actual": "221 92% 82%",
+      "expected": "221 92% 82%"
+    },
+    {
+      "id": "tokens.light.primary-900",
+      "pass": true,
+      "actual": "221 70% 22%",
+      "expected": "221 70% 22%"
+    },
+    {
+      "id": "tokens.dark.primary-900",
+      "pass": true,
+      "actual": "221 95% 90%",
+      "expected": "221 95% 90%"
+    },
+    {
+      "id": "tokens.light.primary-950",
+      "pass": true,
+      "actual": "221 65% 14%",
+      "expected": "221 65% 14%"
+    },
+    {
+      "id": "tokens.dark.primary-950",
+      "pass": true,
+      "actual": "221 100% 96%",
+      "expected": "221 100% 96%"
+    },
+    {
+      "id": "contrast.corporate.light.primary",
+      "pass": true,
+      "actual": 5.195932870733311,
+      "expected": 3
+    },
+    {
+      "id": "contrast.corporate.light.sidebar-primary",
+      "pass": true,
+      "actual": 5.195932870733311,
+      "expected": 3
+    },
+    {
+      "id": "contrast.corporate.dark.primary",
+      "pass": true,
+      "actual": 5.195932870733311,
+      "expected": 3
+    },
+    {
+      "id": "contrast.corporate.dark.sidebar-primary",
+      "pass": true,
+      "actual": 5.195932870733311,
+      "expected": 3
+    },
+    {
+      "id": "contrast.purpure.light.primary",
+      "pass": true,
+      "actual": 7.1387694889819056,
+      "expected": 3
+    },
+    {
+      "id": "contrast.purpure.light.sidebar-primary",
+      "pass": true,
+      "actual": 7.1387694889819056,
+      "expected": 3
+    },
+    {
+      "id": "contrast.purpure.dark.primary",
+      "pass": true,
+      "actual": 7.1387694889819056,
+      "expected": 3
+    },
+    {
+      "id": "contrast.purpure.dark.sidebar-primary",
+      "pass": true,
+      "actual": 7.1387694889819056,
+      "expected": 3
+    },
+    {
+      "id": "contrast.emerald.light.primary",
+      "pass": true,
+      "actual": 3.187059597295278,
+      "expected": 3
+    },
+    {
+      "id": "contrast.emerald.light.sidebar-primary",
+      "pass": true,
+      "actual": 3.187059597295278,
+      "expected": 3
+    },
+    {
+      "id": "contrast.emerald.dark.primary",
+      "pass": true,
+      "actual": 3.187059597295278,
+      "expected": 3
+    },
+    {
+      "id": "contrast.emerald.dark.sidebar-primary",
+      "pass": true,
+      "actual": 3.187059597295278,
+      "expected": 3
+    },
+    {
+      "id": "contrast.sunset.light.primary",
+      "pass": true,
+      "actual": 3.180569179805197,
+      "expected": 3
+    },
+    {
+      "id": "contrast.sunset.light.sidebar-primary",
+      "pass": true,
+      "actual": 3.180569179805197,
+      "expected": 3
+    },
+    {
+      "id": "contrast.sunset.dark.primary",
+      "pass": true,
+      "actual": 3.180569179805197,
+      "expected": 3
+    },
+    {
+      "id": "contrast.sunset.dark.sidebar-primary",
+      "pass": true,
+      "actual": 3.180569179805197,
+      "expected": 3
+    },
+    {
+      "id": "contrast.rose.light.primary",
+      "pass": true,
+      "actual": 4.662331413043641,
+      "expected": 3
+    },
+    {
+      "id": "contrast.rose.light.sidebar-primary",
+      "pass": true,
+      "actual": 4.662331413043641,
+      "expected": 3
+    },
+    {
+      "id": "contrast.rose.dark.primary",
+      "pass": true,
+      "actual": 4.662331413043641,
+      "expected": 3
+    },
+    {
+      "id": "contrast.rose.dark.sidebar-primary",
+      "pass": true,
+      "actual": 4.662331413043641,
+      "expected": 3
+    },
+    {
+      "id": "contrast.minimal.light.primary",
+      "pass": true,
+      "actual": 4.372870789418434,
+      "expected": 3
+    },
+    {
+      "id": "contrast.minimal.light.sidebar-primary",
+      "pass": true,
+      "actual": 4.372870789418434,
+      "expected": 3
+    },
+    {
+      "id": "contrast.minimal.dark.primary",
+      "pass": true,
+      "actual": 4.372870789418434,
+      "expected": 3
+    },
+    {
+      "id": "contrast.minimal.dark.sidebar-primary",
+      "pass": true,
+      "actual": 4.372870789418434,
+      "expected": 3
+    },
+    {
+      "id": "contrast.ocean.light.primary",
+      "pass": true,
+      "actual": 3.018256772326202,
+      "expected": 3
+    },
+    {
+      "id": "contrast.ocean.light.sidebar-primary",
+      "pass": true,
+      "actual": 3.018256772326202,
+      "expected": 3
+    },
+    {
+      "id": "contrast.ocean.dark.primary",
+      "pass": true,
+      "actual": 3.018256772326202,
+      "expected": 3
+    },
+    {
+      "id": "contrast.ocean.dark.sidebar-primary",
+      "pass": true,
+      "actual": 3.018256772326202,
+      "expected": 3
+    },
+    {
+      "id": "contrast.amber.light.primary",
+      "pass": true,
+      "actual": 3.002920512862631,
+      "expected": 3
+    },
+    {
+      "id": "contrast.amber.light.sidebar-primary",
+      "pass": true,
+      "actual": 3.002920512862631,
+      "expected": 3
+    },
+    {
+      "id": "contrast.amber.dark.primary",
+      "pass": true,
+      "actual": 3.002920512862631,
+      "expected": 3
+    },
+    {
+      "id": "contrast.amber.dark.sidebar-primary",
+      "pass": true,
+      "actual": 3.002920512862631,
+      "expected": 3
+    },
+    {
+      "id": "contrast.cyber.light.primary",
+      "pass": true,
+      "actual": 3.4904160958137456,
+      "expected": 3
+    },
+    {
+      "id": "contrast.cyber.light.sidebar-primary",
+      "pass": true,
+      "actual": 3.4904160958137456,
+      "expected": 3
+    },
+    {
+      "id": "contrast.cyber.dark.primary",
+      "pass": true,
+      "actual": 3.4904160958137456,
+      "expected": 3
+    },
+    {
+      "id": "contrast.cyber.dark.sidebar-primary",
+      "pass": true,
+      "actual": 3.4904160958137456,
+      "expected": 3
+    },
+    {
+      "id": "contrast.diversity.light.primary",
+      "pass": true,
+      "actual": 4.120498641682524,
+      "expected": 3
+    },
+    {
+      "id": "contrast.diversity.light.sidebar-primary",
+      "pass": true,
+      "actual": 4.120498641682524,
+      "expected": 3
+    },
+    {
+      "id": "contrast.diversity.dark.primary",
+      "pass": true,
+      "actual": 3.5348433014872813,
+      "expected": 3
+    },
+    {
+      "id": "contrast.diversity.dark.sidebar-primary",
+      "pass": true,
+      "actual": 3.5348433014872813,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-classic.light.primary",
+      "pass": true,
+      "actual": 3.951370571224543,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-classic.light.sidebar-primary",
+      "pass": true,
+      "actual": 3.951370571224543,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-classic.dark.primary",
+      "pass": true,
+      "actual": 3.951370571224543,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-classic.dark.sidebar-primary",
+      "pass": true,
+      "actual": 3.951370571224543,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-pink-addiction.light.primary",
+      "pass": true,
+      "actual": 3.449014179488432,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-pink-addiction.light.sidebar-primary",
+      "pass": true,
+      "actual": 3.449014179488432,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-pink-addiction.dark.primary",
+      "pass": true,
+      "actual": 3.449014179488432,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-pink-addiction.dark.sidebar-primary",
+      "pass": true,
+      "actual": 3.449014179488432,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-purple-haze.light.primary",
+      "pass": true,
+      "actual": 6.964422247509973,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-purple-haze.light.sidebar-primary",
+      "pass": true,
+      "actual": 6.964422247509973,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-purple-haze.dark.primary",
+      "pass": true,
+      "actual": 6.964422247509973,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-purple-haze.dark.sidebar-primary",
+      "pass": true,
+      "actual": 6.964422247509973,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-rose-quartz.light.primary",
+      "pass": true,
+      "actual": 6.184325313553101,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-rose-quartz.light.sidebar-primary",
+      "pass": true,
+      "actual": 6.184325313553101,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-rose-quartz.dark.primary",
+      "pass": true,
+      "actual": 6.184325313553101,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-rose-quartz.dark.sidebar-primary",
+      "pass": true,
+      "actual": 6.184325313553101,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-ultraviolet.light.primary",
+      "pass": true,
+      "actual": 5.922413100243456,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-ultraviolet.light.sidebar-primary",
+      "pass": true,
+      "actual": 5.922413100243456,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-ultraviolet.dark.primary",
+      "pass": true,
+      "actual": 5.922413100243456,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-ultraviolet.dark.sidebar-primary",
+      "pass": true,
+      "actual": 5.922413100243456,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-hackerman.light.primary",
+      "pass": true,
+      "actual": 7.54477888075499,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-hackerman.light.sidebar-primary",
+      "pass": true,
+      "actual": 7.54477888075499,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-hackerman.dark.primary",
+      "pass": true,
+      "actual": 7.54477888075499,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-hackerman.dark.sidebar-primary",
+      "pass": true,
+      "actual": 7.54477888075499,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-frutti-di-mare.light.primary",
+      "pass": true,
+      "actual": 8.432683404624221,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-frutti-di-mare.light.sidebar-primary",
+      "pass": true,
+      "actual": 8.432683404624221,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-frutti-di-mare.dark.primary",
+      "pass": true,
+      "actual": 8.432683404624221,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-frutti-di-mare.dark.sidebar-primary",
+      "pass": true,
+      "actual": 8.432683404624221,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-cyberpunk.light.primary",
+      "pass": true,
+      "actual": 14.55666740089676,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-cyberpunk.light.sidebar-primary",
+      "pass": true,
+      "actual": 14.55666740089676,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-cyberpunk.dark.primary",
+      "pass": true,
+      "actual": 14.55666740089676,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-cyberpunk.dark.sidebar-primary",
+      "pass": true,
+      "actual": 14.55666740089676,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-razer.light.primary",
+      "pass": true,
+      "actual": 9.586331831904749,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-razer.light.sidebar-primary",
+      "pass": true,
+      "actual": 9.586331831904749,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-razer.dark.primary",
+      "pass": true,
+      "actual": 9.586331831904749,
+      "expected": 3
+    },
+    {
+      "id": "contrast.gx-razer.dark.sidebar-primary",
+      "pass": true,
+      "actual": 9.586331831904749,
+      "expected": 3
+    },
+    {
+      "id": "storage.migrate.forest",
+      "pass": true,
+      "actual": {
+        "config": {
+          "preset": "emerald",
+          "borderRadius": 8
+        },
+        "saved": {
+          "v": 6,
+          "preset": "emerald",
+          "borderRadius": 8
+        }
+      },
+      "expected": {
+        "preset": "emerald",
+        "radius": 8,
+        "v": 6,
+        "oldCache": false
+      }
+    },
+    {
+      "id": "storage.migrate.teal",
+      "pass": true,
+      "actual": {
+        "config": {
+          "preset": "cyber",
+          "borderRadius": 8
+        },
+        "saved": {
+          "v": 6,
+          "preset": "cyber",
+          "borderRadius": 8
+        }
+      },
+      "expected": {
+        "preset": "cyber",
+        "radius": 8,
+        "v": 6,
+        "oldCache": false
+      }
+    },
+    {
+      "id": "storage.migrate.purple",
+      "pass": true,
+      "actual": {
+        "config": {
+          "preset": "purpure",
+          "borderRadius": 8
+        },
+        "saved": {
+          "v": 6,
+          "preset": "purpure",
+          "borderRadius": 8
+        }
+      },
+      "expected": {
+        "preset": "purpure",
+        "radius": 8,
+        "v": 6,
+        "oldCache": false
+      }
+    },
+    {
+      "id": "storage.migrate.default",
+      "pass": true,
+      "actual": {
+        "config": {
+          "preset": "corporate",
+          "borderRadius": 8
+        },
+        "saved": {
+          "v": 6,
+          "preset": "corporate",
+          "borderRadius": 8
+        }
+      },
+      "expected": {
+        "preset": "corporate",
+        "radius": 8,
+        "v": 6,
+        "oldCache": false
+      }
+    },
+    {
+      "id": "storage.radius.999",
+      "pass": true,
+      "actual": 20,
+      "expected": 20
+    },
+    {
+      "id": "storage.radius.-3",
+      "pass": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "id": "storage.radius.abc",
+      "pass": true,
+      "actual": 14,
+      "expected": 14
+    },
+    {
+      "id": "storage.radius.null",
+      "pass": true,
+      "actual": 14,
+      "expected": 14
+    },
+    {
+      "id": "storage.radius.8",
+      "pass": true,
+      "actual": 8,
+      "expected": 8
+    },
+    {
+      "id": "storage.invalid_json",
+      "pass": true,
+      "actual": {
+        "preset": "corporate",
+        "borderRadius": 14
+      },
+      "expected": {
+        "preset": "corporate",
+        "borderRadius": 14
+      }
+    },
+    {
+      "id": "storage.null_shape",
+      "pass": false,
+      "actual": {
+        "error": "Cannot read properties of null (reading 'v')"
+      },
+      "expected": {
+        "config": {
+          "preset": "corporate",
+          "borderRadius": 14
+        }
+      }
+    },
+    {
+      "id": "storage.merge_preserves_cache",
+      "pass": true,
+      "actual": {
+        "v": 6,
+        "preset": "gx-razer",
+        "borderRadius": 10,
+        "cacheMode": "dark",
+        "cssVarsCache": {
+          "primary": "old"
+        }
+      },
+      "expected": {
+        "cachePreserved": true
+      }
+    },
+    {
+      "id": "storage.quota_false",
+      "pass": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "id": "apply.no_cache_write",
+      "pass": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "id": "apply.gx_values",
+      "pass": true,
+      "actual": {
+        "background": "265 22% 8%",
+        "radius": "0.625rem"
+      },
+      "expected": {
+        "background": "265 22% 8%",
+        "radius": "0.625rem"
+      }
+    },
+    {
+      "id": "apply.high_contrast_priority",
+      "pass": true,
+      "actual": {
+        "inlineColorCount": 0,
+        "radius": "0.625rem",
+        "cachePreset": "gx-razer"
+      },
+      "expected": {
+        "inlineColorCount": 0,
+        "radius": "0.625rem",
+        "cachePreset": "gx-razer"
+      }
+    },
+    {
+      "id": "apply.radius_nan",
+      "pass": true,
+      "actual": "0.875rem",
+      "expected": "0.875rem"
+    },
+    {
+      "id": "apply.clear",
+      "pass": true,
+      "actual": {
+        "dataset": {
+          "presetId": "gx-classic"
+        },
+        "vars": {},
+        "cache": {
+          "v": 6,
+          "preset": "gx-razer",
+          "borderRadius": 10
+        }
+      },
+      "expected": {
+        "emptyOverrides": true
+      }
+    },
+    {
+      "id": "import.roundtrip",
+      "pass": true,
+      "actual": {
+        "preset": "gx-razer",
+        "borderRadius": 10
+      },
+      "expected": {
+        "preset": "gx-razer",
+        "borderRadius": 10
+      }
+    },
+    {
+      "id": "hook.quota_unsaved_indicator",
+      "pass": false,
+      "actual": {
+        "config": {
+          "preset": "gx-hackerman",
+          "borderRadius": 10
+        },
+        "hasUnsavedChanges": false,
+        "persisted": {
+          "v": 6,
+          "preset": "corporate",
+          "borderRadius": 14
+        },
+        "toasts": [
+          {
+            "kind": "success",
+            "args": [
+              "Tema \"Hackerman\" aplicado!"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "hasUnsavedChanges": true,
+        "errorToast": true,
+        "persistedPreset": "corporate"
+      }
+    },
+    {
+      "id": "boot.rejects_wrong_mode_cache",
+      "pass": true,
+      "actual": {
+        "--radius": "0.625rem"
+      },
+      "expected": {
+        "backgroundCacheAbsent": true
+      }
+    }
+  ],
+  "limits": [
+    "Static theme ratios cover two solid token pairs at threshold 3:1, not composed UI WCAG AA 4.5:1 or Diversity gradients.",
+    "The document mock proves setter/removal choices, not rendered pixels or actual high-contrast output.",
+    "The hook harness proves return-value/state bookkeeping without React batching, effects, or browser storage failure.",
+    "No historical authenticated Skins QA was rerun."
+  ],
+  "captured_expected_storage_errors": [
+    "[presets] falha ao gravar o tema no localStorage simulated quota exhausted",
+    "[presets] falha ao gravar o tema no localStorage simulated quota exhausted"
+  ]
+}

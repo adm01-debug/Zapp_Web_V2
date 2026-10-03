@@ -1,0 +1,16 @@
+{
+  "result": "PASS",
+  "baseline_main_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "task_records": 5166,
+  "plans": 62,
+  "findings": 104,
+  "checks": 6438,
+  "json_files_parsed": 123,
+  "gzip_json_files_parsed": 23,
+  "source_refs_checked": 62,
+  "source_ranges_checked": 5166,
+  "artifact_hashes_checked": 222,
+  "errors": [],
+  "broken_active_markdown_links": [],
+  "scope": "Package integrity only. Does not execute product code, tests, network calls or SQL."
+}
