@@ -286,6 +286,30 @@ qualquer banco onde a funcao ja exista — e neste banco ela existe desde
 supabase/migrations/20261002461230_f51c_multiplix_confirm_dispatch_contrato.sql
 ```
 
+### Caso concreto: `20261002701230_f62_*` foi superada — a substituta e a `f62b`
+
+`20261002701230_f62_resposta_correlacionada.sql` cria `attribute_multiplix_item_reply(...)` e o
+`CREATE FUNCTION` **passa sem reclamar** — mas a funcao quebra na **primeira chamada**:
+
+- `SELECT COALESCE(NULLIF(value, '')::numeric, 72) INTO v_window FROM public.talkx_settings ...`
+  → `talkx_settings.value` e **jsonb** (nao `text`), e `NULLIF(jsonb, '')` nao existe em Postgres.
+  O sintoma que chega ao log e so o `CONTEXT: PL/pgSQL function
+  attribute_multiplix_item_reply(text,text,text) line 31 at SQL statement`.
+
+O erro nao aparece na criacao da funcao, em `deno check`, nem em revisao de texto: so no primeiro
+contato que responder — isto e, em producao. Um erro irmao (`column item.replied_at does not
+exist`) apareceu so no harness de banco, porque o fixture nao carregava a f51.
+
+**Nao edite o arquivo antigo.** A versao que o substitui e:
+
+```
+supabase/migrations/20261003092707_f62b_leitura_janela_jsonb.sql
+```
+
+As duas ficam registradas como pendentes pos-merge e sao aplicadas **em ordem**; a `f62b` faz
+`CREATE OR REPLACE` sobre a **mesma assinatura** `(text, text, text)`, entao o estado final e a
+funcao corrigida e nenhum chamador (o edge `_shared/talkx-reply.ts`) precisa mudar.
+
 ### O hash da f51 no ledger diverge do arquivo — e a excecao registrada
 
 O `O_MIGRATIONS` do `db-live-guard.yml` fica **vermelho** por causa dessa migration, e nao por
