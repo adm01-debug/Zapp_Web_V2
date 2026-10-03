@@ -31,8 +31,8 @@ export interface FilesActions {
   onPreview: (item: ContactMediaItem) => void;
   onOpenDetails: (item: ContactMediaItem) => void;
   onForward: (item: ContactMediaItem) => void;
-  /** Disparado depois de uma exclusao concluida (o "Excluir mensagem" vive no renderer). */
-  onDeleted: () => void;
+  /** Etapa 35: pede a exclusao — quem abre o AlertDialog e chama o useFilesActions e o FilesTab. */
+  onRequestDelete: (item: ContactMediaItem) => void;
 }
 
 export interface FilesContentSelection {
@@ -135,7 +135,7 @@ export function FilesContent({
         onSelect={actions.onOpenDetails}
         onToggleSelection={selection.toggle}
         onPreview={actions.onPreview}
-        onDeleted={actions.onDeleted}
+        onRequestDelete={actions.onRequestDelete}
       />
     );
   }
@@ -153,7 +153,7 @@ export function FilesContent({
         onSelect={actions.onOpenDetails}
         onToggleSelection={selection.toggle}
         onPreview={actions.onPreview}
-        onDeleted={actions.onDeleted}
+        onRequestDelete={actions.onRequestDelete}
       />
     );
   }
@@ -173,7 +173,7 @@ export function FilesContent({
           onToggleSelection={() => selection.toggle(item.id)}
           onPreview={() => actions.onPreview(item)}
           onForward={() => actions.onForward(item)}
-          onDeleted={actions.onDeleted}
+          onRequestDelete={actions.onRequestDelete}
         />
       ))}
     </div>

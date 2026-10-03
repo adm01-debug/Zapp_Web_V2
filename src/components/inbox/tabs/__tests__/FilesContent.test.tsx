@@ -14,7 +14,7 @@ const ITEMS: ContactMediaItem[] = [
 ];
 
 function renderContent(overrides: Partial<React.ComponentProps<typeof FilesContent>> = {}) {
-  const actions = { onPreview: vi.fn(), onOpenDetails: vi.fn(), onForward: vi.fn(), onDeleted: vi.fn() };
+  const actions = { onPreview: vi.fn(), onOpenDetails: vi.fn(), onForward: vi.fn(), onRequestDelete: vi.fn() };
   const selection = { mode: false, selectedIds: new Set<string>(), toggle: vi.fn() };
   const props: React.ComponentProps<typeof FilesContent> = {
     items: ITEMS,

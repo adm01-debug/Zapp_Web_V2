@@ -28,7 +28,7 @@ function renderTable(overrides: Partial<React.ComponentProps<typeof FilesTableVi
     onSelect: vi.fn(),
     onToggleSelection: vi.fn(),
     onPreview: vi.fn(),
-    onDeleted: vi.fn(),
+    onRequestDelete: vi.fn(),
     ...overrides,
   };
   return { ...render(<FilesTableView {...props} />), props };

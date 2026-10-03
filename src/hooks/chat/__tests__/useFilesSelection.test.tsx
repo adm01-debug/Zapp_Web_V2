@@ -91,4 +91,20 @@ describe('useFilesSelection', () => {
     expect(dump).not.toContain('item-');
     expect(localStorage.length).toBe(0);
   });
+
+  it('remove tira so o id excluido, sem zerar o resto nem sair do modo selecao (etapa 35)', () => {
+    const { result } = renderHook(() => useFilesSelection(['a', 'b', 'c'], 'c1'));
+    act(() => result.current.enter());
+    act(() => result.current.selectAllVisible());
+    expect(result.current.selectedCount).toBe(3);
+
+    act(() => result.current.remove('b'));
+    expect(result.current.selectedCount).toBe(2);
+    expect(result.current.selectedIds.has('a')).toBe(true);
+    expect(result.current.selectedIds.has('b')).toBe(false);
+    expect(result.current.selectionMode).toBe(true);
+
+    act(() => result.current.remove('nao-existe'));
+    expect(result.current.selectedCount).toBe(2);
+  });
 });
