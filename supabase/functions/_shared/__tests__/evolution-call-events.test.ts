@@ -18,6 +18,7 @@ import {
   instanteDaChamada,
   normalizeEvolutionCallStatus,
 } from "../notification-events.ts";
+import type { EvolutionDbClient } from "../evolution-types.ts";
 
 const CONEXAO = { id: "conn-wa-1", instance_id: "instancia-anonimizada-01", status: "connected" };
 const CONTATO = { id: "contato-1", name: "Cliente", avatar_url: null, assigned_to: null };
@@ -53,7 +54,7 @@ function makeStubClient() {
       rpcCalls.push({ fn, args });
       return Promise.resolve({ data: null, error: null });
     },
-  };
+  } as unknown as EvolutionDbClient;
   return { client, rpcCalls };
 }
 

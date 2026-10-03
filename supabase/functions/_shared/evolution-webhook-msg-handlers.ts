@@ -4,9 +4,10 @@ import {
   isRecord, normalizePhone, resolveEventJid, toEventRecords, shouldUpdateStatus,
   getConnectionByInstance, getContactByPhone,
 } from "./evolution-helpers.ts";
+import type { EvolutionDbClient } from "./evolution-types.ts";
 
 // deno-lint-ignore no-explicit-any
-export async function handleSendMessage(supabase: any, instance: string, data: unknown, baseData: Record<string, unknown>) {
+export async function handleSendMessage(supabase: EvolutionDbClient, instance: string, data: unknown, baseData: Record<string, unknown>) {
   // Hoisted: mesmo instance em toda a chamada, evita refetch por entry e
   // permite escopar o dup-check abaixo por whatsapp_connection_id.
   const connection = await getConnectionByInstance(supabase, instance);
@@ -32,12 +33,12 @@ export async function handleSendMessage(supabase: any, instance: string, data: u
       .order('created_at', { ascending: false }).limit(1).maybeSingle();
 
     if (existingMessage?.id) {
-      if (shouldUpdateStatus(existingMessage.status, 'sent')) {
+      if (shouldUpdateStatus(existingMessage.status as string | null, 'sent')) {
         await supabase.from('messages')
           .update({ status: 'sent', external_id: externalId, status_updated_at: now })
           .eq('id', existingMessage.id);
       }
-      updatedMessageId = existingMessage.id;
+      updatedMessageId = existingMessage.id as string;
     }
 
     if (!updatedMessageId) {
@@ -67,7 +68,7 @@ export async function handleSendMessage(supabase: any, instance: string, data: u
             await supabase.from('messages')
               .update({ status: 'sent', external_id: externalId, status_updated_at: now })
               .eq('id', pendingMessage.id);
-            updatedMessageId = pendingMessage.id;
+            updatedMessageId = pendingMessage.id as string;
           }
         }
       }
@@ -78,7 +79,7 @@ export async function handleSendMessage(supabase: any, instance: string, data: u
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleMessagesUpdate(supabase: any, instance: string, data: unknown, baseData: Record<string, unknown>) {
+export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance: string, data: unknown, baseData: Record<string, unknown>) {
   const statusMap: Record<string, string> = {
     'DELIVERY_ACK': 'delivered', 'READ': 'read', 'PLAYED': 'read', 'SERVER_ACK': 'sent', 'ERROR': 'failed',
   };
@@ -106,7 +107,7 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
         .order('created_at', { ascending: false }).limit(1).maybeSingle();
 
       if (currentMessage?.id) {
-        if (shouldUpdateStatus(currentMessage.status, newStatus)) {
+        if (shouldUpdateStatus(currentMessage.status as string | null, newStatus)) {
           await supabase.from('messages').update({ status: newStatus, status_updated_at: now }).eq('id', currentMessage.id);
           console.warn(`Message ${key.id} status: ${currentMessage.status} -> ${newStatus}`);
         }
@@ -220,7 +221,7 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleMessagesDelete(supabase: any, instance: string, data: unknown, baseData: Record<string, unknown>) {
+export async function handleMessagesDelete(supabase: EvolutionDbClient, instance: string, data: unknown, baseData: Record<string, unknown>) {
   const connection = await getConnectionByInstance(supabase, instance);
   for (const entry of toEventRecords(data, ['messages', 'keys'])) {
     const keySource = isRecord(entry.key)
@@ -268,7 +269,7 @@ export async function handleMessagesDelete(supabase: any, instance: string, data
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleMessagesSet(supabase: any, instance: string, data: unknown) {
+export async function handleMessagesSet(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const messages = toEventRecords(data, ['messages']);
   if (messages.length === 0) return;
 
@@ -323,7 +324,7 @@ export async function handleMessagesSet(supabase: any, instance: string, data: u
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleMessagesEdited(supabase: any, data: unknown, baseData: Record<string, unknown>) {
+export async function handleMessagesEdited(supabase: EvolutionDbClient, data: unknown, baseData: Record<string, unknown>) {
   for (const entry of toEventRecords(data, ['messages'])) {
     const keySource = isRecord(entry.key) ? entry.key : isRecord(baseData.key) ? baseData.key : null;
     const key = keySource as { id?: string } | null;
