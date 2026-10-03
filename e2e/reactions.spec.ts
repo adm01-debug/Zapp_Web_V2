@@ -9,6 +9,14 @@ import {
 import { dispensarOnboarding } from './fixtures/onboarding';
 
 test.describe('Reactions flow', () => {
+  // Orcamento explicito (o padrao do projeto e 30 s): este fluxo e multi-etapa --
+  // no beforeEach vai goto + onboarding + fixture + cleanup + reload, e no corpo
+  // hover, espera da barra, normalizacao do estado e duas assercoes de 8 s. Com o
+  // teto global de 30 s o teste estourava por TEMPO em execucao lenta (repeat2
+  // medido em 03/10/2026), nao por ausencia de reacao: se a reacao nao aparecer,
+  // o toBeVisible de 8 s continua falhando normalmente.
+  test.setTimeout(60_000);
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await dispensarOnboarding(page);
@@ -84,7 +92,10 @@ test.describe('Reactions flow', () => {
     // depende de RLS e de o profile do caller estar certo.
     await ensureReactionAbsent(page, message, '👍');
     await message.hover();
-    await bar.waitFor({ timeout: 10_000 });
+    // 3 s basta: a barra ja foi confirmada acima com opacity 1; este waitFor so
+    // reconfirma que ela voltou depois de o mouse sair e voltar. Os 10 s de antes
+    // somavam ao orcamento do teste sem necessidade.
+    await bar.waitFor({ timeout: 3_000 });
 
     await message.locator('[data-testid="quick-reaction-emoji"][data-emoji="👍"]').click();
 
@@ -116,7 +127,10 @@ test.describe('Reactions flow', () => {
     // reacao sobrevivente de run anterior faz o clique remover em vez de adicionar).
     await ensureReactionAbsent(page, message, '👍');
     await message.hover();
-    await bar.waitFor({ timeout: 10_000 });
+    // 3 s basta: a barra ja foi confirmada acima com opacity 1; este waitFor so
+    // reconfirma que ela voltou depois de o mouse sair e voltar. Os 10 s de antes
+    // somavam ao orcamento do teste sem necessidade.
+    await bar.waitFor({ timeout: 3_000 });
 
     // Add the reaction
     await message.locator('[data-testid="quick-reaction-emoji"][data-emoji="👍"]').click();
