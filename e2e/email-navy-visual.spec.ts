@@ -19,7 +19,10 @@ interface AxeViolationResult {
 
 test.beforeEach(async ({ page }, testInfo) => {
   await page.addInitScript(() => { (window as Window & { __BOOT_DEADLINE_MS?: number }).__BOOT_DEADLINE_MS = 60000; });
-  await mockEmailNavy(page, { includeExtreme: testInfo.title.includes('corpus extremo') });
+  await mockEmailNavy(page, {
+    includeExtreme: testInfo.title.includes('corpus extremo'),
+    crmContext: testInfo.title.includes('CRM completo') ? 'available' : testInfo.title.includes('escolha explícita CRM') ? 'ambiguous' : undefined,
+  });
 });
 
 test('rota real renderiza lista, conversa e compositor com o tema do sistema sem chamadas externas mutáveis', async ({ page }) => {
@@ -186,6 +189,45 @@ test('painel contextual vira drawer intermediário e expõe dados reais', async 
   await expect(page.getByRole('button', { name: 'Detalhes' })).toBeFocused();
 });
 
+test('painel CRM completo preserva ações, acessibilidade e fechamento em 320 px', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto('/?view=email-chat');
+  await page.getByText('Preview deployment failed for departamento-pessoal-v3').first().click();
+  await page.getByRole('button', { name: 'Detalhes' }).click();
+  const drawer = page.getByRole('dialog');
+  await expect(drawer.getByText('Empresa Exemplo', { exact: true })).toBeVisible();
+  await expect(drawer.getByText('Cliente', { exact: true })).toBeVisible();
+  await expect(drawer.getByText('Fornecedor', { exact: true })).toBeVisible();
+  await expect(drawer.getByRole('link', { name: /abrir site da empresa/i })).toHaveAttribute('href', 'https://empresa.example.test/catalogo?origem=email#sobre');
+  await expect(drawer.getByRole('link', { name: /abrir linkedin da empresa/i })).toBeVisible();
+  await expect(drawer.getByRole('link', { name: /abrir instagram da empresa/i })).toBeVisible();
+  const close = await drawer.getByRole('button', { name: 'Fechar detalhes' }).boundingBox();
+  expect(close && close.x >= 0 && close.x + close.width <= 320).toBeTruthy();
+  await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
+  const violations = await page.evaluate(async () => (await (window as unknown as Window & { axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult> } }).axe.run('[role="dialog"]', {})).violations.map(violation => violation.id));
+  expect(violations).toEqual([]);
+});
+
+test('escolha explícita CRM não vincula automaticamente e resolve a empresa selecionada', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/?view=email-chat');
+  await page.getByText('Preview deployment failed for departamento-pessoal-v3').first().click();
+  await expect(page.getByRole('region', { name: 'Escolher empresa CRM' })).toBeVisible();
+  await page.getByRole('button', { name: 'Empresa Exemplo' }).click();
+  await expect(page.getByText('Empresa Exemplo', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Vincular empresa ao contato' })).toBeVisible();
+});
+
+test('escolha explícita CRM funciona para conversa sem contato local e não oferece vínculo persistente', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/?view=email-chat');
+  await page.getByText('Alerta sobre término da cotação').click();
+  await expect(page.getByRole('region', { name: 'Escolher empresa CRM' })).toBeVisible();
+  await page.getByRole('button', { name: 'Outra Empresa' }).click();
+  await expect(page.getByText('Empresa Exemplo', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Vincular empresa ao contato' })).toHaveCount(0);
+});
+
 test('marcadores Gmail reais podem ser gerenciados sem envio externo real', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await page.goto('/?view=email-chat');
@@ -264,7 +306,7 @@ test('corpus extremo com texto sem quebra e muitos anexos não cria overflow glo
   await page.getByText('Corpus extremo', { exact: false }).first().click();
   const extremeMessage = page.getByRole('article', { name: /Mensagem de REMETENTESEMQUEBRA/ });
   await expect(extremeMessage).toBeVisible();
-  await expect(extremeMessage.getByRole('button', { name: /Baixar ARQUIVO_EXTREMAMENTE_LONGO/ })).toHaveCount(40);
+  await expect(extremeMessage.getByRole('button', { name: /Baixar ARQUIVO_EXTREMAMENTE_LONGO/ })).toHaveCount(100);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(2);
 });
