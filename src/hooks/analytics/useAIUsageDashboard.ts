@@ -119,6 +119,31 @@ function getBucketSeconds(filter: TimeFilter): number {
   return filter === '1h' ? 300 : filter === '6h' ? 1800 : filter === '24h' ? 3600 : 21600;
 }
 
+/**
+ * Custo do periodo (IA-055): vem da tarifa VIGENTE no instante de cada registro.
+ * `custo_medido` nulo com `moedas` cheio significa "ha mais de uma moeda e a
+ * resposta se recusa a somar" — nao significa zero. `sem_tarifa` existe para o
+ * total ter denominador visivel: ausencia de tarifa nunca entra como zero.
+ */
+export interface CustosDoPeriodo {
+  moeda: string | null;
+  moedas: string[] | null;
+  custo_medido: number | null;
+  custo_interno: number | null;
+  custo_reconciliado: number | null;
+  chamadas: number;
+  chamadas_com_tarifa: number;
+  unidades_nao_aplicaveis: string[] | null;
+  sem_tarifa: {
+    modelo_sem_tarifa: number;
+    sem_quantidade_medida: number;
+    motivo_unidade_nao_medida: string;
+  } | null;
+  por_funcao: Array<{ funcao: string; chamadas: number; chamadas_com_tarifa: number; custo_medido: number | null }> | null;
+  escopo: string | null;
+  declaracao: string | null;
+}
+
 export function useAIUsageDashboard() {
   const [logsPage, setLogsPage] = useState(0);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('24h');
@@ -145,6 +170,27 @@ export function useAIUsageDashboard() {
       });
       if (error) throw error;
       return data as AiUsageSummary;
+    },
+    refetchInterval: 30_000,
+  });
+
+  // (1b) CUSTO: pela tarifa vigente no instante de cada registro, tambem no
+  // servidor — a vigencia e dado do banco, entao trazer tarifa para multiplicar
+  // aqui reintroduziria o defeito que a agregacao no servidor matou. Vem em
+  // consulta separada para nenhum numero novo entrar escondido em numero antigo.
+  const { data: custos, refetch: refetchCustos } = useQuery({
+    queryKey: ['ai-usage-cost', timeFilter],
+    queryFn: async () => {
+      const { data, error } = await (supabase.rpc as unknown as (
+        fn: string,
+        args: Record<string, unknown>,
+      ) => Promise<{ data: unknown; error: unknown }>)('ai_usage_cost_summary', {
+        p_since: since,
+        p_until: null,
+        p_top_functions: 50,
+      });
+      if (error) throw error;
+      return data as CustosDoPeriodo;
     },
     refetchInterval: 30_000,
   });
@@ -219,12 +265,35 @@ export function useAIUsageDashboard() {
     [resumo, timeFilter],
   );
 
-  const refetch = () => { void refetchResumo(); void refetchLogs(); };
+  // Custo ja formatado perto do dado (e nao na tela): moeda so aparece quando o
+  // servidor declarou uma; sem moeda unica, o numero sai sem simbolo — inventar
+  // "R$" onde o servidor se recusou a somar seria mentir na formatacao.
+  const custoTexto = useMemo(() => {
+    if (!custos) return null;
+    const dinheiro = (v: number | null) => v == null ? null
+      : custos.moeda
+        ? v.toLocaleString('pt-BR', { style: 'currency', currency: custos.moeda })
+        : v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 8 });
+    const semTarifa = (custos.sem_tarifa?.modelo_sem_tarifa ?? 0) + (custos.sem_tarifa?.sem_quantidade_medida ?? 0);
+    return {
+      medido: dinheiro(custos.custo_medido),
+      interno: dinheiro(custos.custo_interno),
+      reconciliado: dinheiro(custos.custo_reconciliado),
+      semTarifa,
+      variasMoedas: (custos.moedas?.length ?? 0) > 1 ? (custos.moedas ?? []).join(' + ') : null,
+    };
+  }, [custos]);
+
+  const refetch = () => { void refetchResumo(); void refetchLogs(); void refetchCustos(); };
 
   return {
     logs, isLoading, isLoadingLogs, refetch, timeFilter, setTimeFilter: trocarFiltro,
     logsPage, setLogsPage, logsTotal, logsTotalPaginas, pageSize: LOGS_PER_PAGE,
     profileMap, stats,
+    // Custo do periodo (IA-055), ja formatado: moeda, quebra interno/reconciliado
+    // e a contagem do que ficou sem tarifa aplicavel.
+    custos: custos ?? null,
+    custoTexto,
     // Declaracoes de escopo: sobre o que os numeros foram calculados.
     cobertura: resumo?.cobertura ?? null,
     filtros: resumo?.filtros ?? null,
