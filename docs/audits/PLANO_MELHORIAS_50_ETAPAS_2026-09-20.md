@@ -345,14 +345,14 @@ fecharam ou viraram 4.
 
 ## F4 — Edges e secrets (E27–E32)
 
-### E27 🔴 Reconciliação implantado × manifesto × diretórios (herda E37/16-09)
+### E27 🟢 Reconciliação implantado × manifesto × diretórios (herda E37/16-09)
 Nunca fechou: listagem live falhou com 403 em 16/09 e o formato do
 `deployment-manifest.json` precisa de auditoria (contagem por jq divergiu dos 67 dirs).
 ```sh
 supabase functions list --project-ref tnnnlkbymytvtqngbbqh   # exige access token válido
 ```
-- [x] Local: 69 dirs (excl. `_shared`) = `summary.function_count: 69` no manifesto = 69 no `deployment-manifest.json` — paridade 3-vias local confirmada (29/09)
-- [ ] Listagem live (CLI `supabase functions list`) bloqueada por 403 — token de acesso não disponível por MCP; conferência live pendente (👤 Joaquim)
+- [x] Local: 69 dirs (excl. `_shared`) = `summary.function_count: 69` = 69 no manifesto — paridade local confirmada em 29/09. **Atualizado em 03/10: 70 = 70** (uma function nova entrou no intervalo)
+- [x] **Listagem live obtida** via MCP (`list_edge_functions` — Management API, não usa o PostgREST) em 03/10, **sem CLI e sem token**: **72 live = 70 no manifesto + 2 na `orphan_allowlist`**; diretórios = manifesto = **70**; **0 divergência de `verify_jwt`** nas 70 casadas. Relatório: `docs/audits/edges-reconciliacao-2026-10-03.md`
 - [x] Paridade local/manifesto entra na checagem do gate E10 via `db-live-guard`
 
 ### E28 🔴 10 edges com `verify_jwt=false` (herda E38/16-09 — eram 9)
