@@ -72,6 +72,8 @@
  *    e testes do contrato MIME/sincronização do Gmail; não produzem vocabulário legado e, por
  *    isso, apenas elevam o total varrido de 197 para 200.
  *    De propósito NÃO usa o "regex antigo": o fatiamento das chamadas é por `indexOf`.
+ *  - 202: F60 gatilho (02/10/2026) — `_shared/__tests__/evolution-webhook-connection-risk.test.ts`
+ *    (prova Deno de que o webhook avisa a conexao em risco em motivo terminal).
  *  - 201: X020 (02/10/2026) — `talkx-send/x020-variavel-precedencia.test.ts` (prova Deno do
  *    retorno {text, missing, unknown} do personalize: fallback de variável com padrão, built-ins
  *    vendedor/data/telefone, variável sem valor/desconhecida e precedência A/B por hash FNV-1a).
@@ -151,8 +153,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('201 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(201);
+  it('202 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(202);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );
