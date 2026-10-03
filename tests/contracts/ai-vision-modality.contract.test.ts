@@ -282,8 +282,10 @@ describe('IA-033 — purpose segue obrigatória e logAiUsage cobre os desfechos'
 
     await gerar({ need: { modality: 'vision' } });
 
-    const entrada = logSpy.mock.calls[0][0] as { metadata?: Record<string, unknown> };
-    expect(entrada.metadata?.purpose).toBe('tagging');
+    const entrada = logSpy.mock.calls[0][0] as { purpose?: string | null };
+    // IA-052: a finalidade vai ao registrador como campo próprio, e é ele quem a
+    // deposita em `metadata.purpose` (prova no insert em `ai-usage.test.ts`).
+    expect(entrada.purpose).toBe('tagging');
   });
 
   it('finalidade inválida no caminho de visão → BAD_PURPOSE (400), sem chamar provedor', async () => {

@@ -727,12 +727,23 @@ Deno.serve(async (req) => {
         functionName: 'ai-proxy', userId,
         // IA-051 — id do clique (IA-048) no log de consumo.
         requestId,
+        // IA-052 — rota EFETIVA. Quando houve troca, quem atendeu foi o destino
+        // do fallback, não o provedor configurado: é isso que a etapa exige que
+        // o log diga. O tipo do destino não é medido neste caminho, então vai
+        // nulo em vez de herdar o tipo do provedor de origem (não inferir).
+        providerId: usedFallback && fallbackTo !== null ? fallbackTo.id : provider.id,
+        providerType: usedFallback ? null : providerType,
+        providerName: usedFallback && fallbackTo !== null ? fallbackTo.name : providerName,
+        purpose,
+        modality: 'text',
+        modelRequested: routing.model,
+        fallbackUsed: usedFallback,
         model: modelUsed,
         durationMs, status: 'error',
         errorMessage: "HTTP " + response.status,
         metadata: {
           ...modelMetadata, model_used: modelUsed, model_resolved: routing.model,
-          provider_id: provider.id, provider_type: providerType, ...fallbackMetadata,
+          ...fallbackMetadata,
         },
       });
       return errorResponse("Erro do provedor: " + response.status, 502, req);
@@ -752,12 +763,20 @@ Deno.serve(async (req) => {
       functionName: 'ai-proxy', userId,
       // IA-051 — id do clique (IA-048) no log de consumo.
       requestId,
+      // IA-052 — rota efetiva (mesma regra do log de erro: no fallback, quem
+      // atendeu é o destino). `modality` é texto: o ai-proxy só proxya chat.
+      providerId: usedFallback && fallbackTo !== null ? fallbackTo.id : provider.id,
+      providerType: usedFallback ? null : providerType,
+      providerName: usedFallback && fallbackTo !== null ? fallbackTo.name : providerName,
+      purpose,
+      modality: 'text',
+      modelRequested: routing.model,
+      fallbackUsed: usedFallback,
       model: model || modelUsed || null,
       inputTokens, outputTokens, durationMs,
       status: usedFallback ? 'fallback' : 'success',
       metadata: {
         ...modelMetadata, model_used: modelUsed, model_resolved: routing.model,
-        provider_id: provider.id, provider_type: providerType, use_for: purpose,
         ...fallbackMetadata,
       },
     });
