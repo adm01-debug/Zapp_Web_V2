@@ -176,3 +176,19 @@ test('nunca emite conteudo de resposta da API no log de progresso', async () => 
   assert.ok(!linhas.some((linha) => linha.includes(segredo)),
     'falha transitoria de API deve virar rotulo generico, sem corpo de resposta');
 });
+
+// E55 (auditoria de GitHub Actions, 2026-10-01): alem de nomear a funcao
+// faltante, a exaustao passa a rotular a ULTIMA causa observada como
+// `lastReason`, para o operador nao precisar reconstruir as amostras.
+test('E55: exaustao entrega lastReason com a ultima causa observada', async () => {
+  const faltando = rows[0].slug;
+  await assert.rejects(
+    simulate([rows.slice(1)], { maxAttempts: 3 }),
+    (err) => {
+      assert.match(err.message, /did not stabilize after 3 attempts/);
+      assert.match(err.message, /lastReason=/, 'a falha tem de rotular a ultima causa');
+      assert.ok(err.message.includes(faltando), 'lastReason nomeia a funcao que faltou');
+      return true;
+    },
+  );
+});

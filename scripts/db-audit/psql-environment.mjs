@@ -43,6 +43,10 @@ const TRANSPORT_FAILURE = new RegExp([
 ].join('|'), 'i');
 
 function isTransportFailure(error) {
+  // Sinal explicito do chamador que sabe que a falha foi de transporte mas NAO
+  // pode ecoar stderr (que pode conter a URI da conexao) -- ver psql-safe.mjs.
+  // Sem isto a politica de retry so' enxergava erros com texto classificado.
+  if (error?.transporte === true) return true;
   const partes = [error?.stderr, error?.stdout, error?.message]
     .map(value => (typeof value === 'string' ? value : ''))
     .join('\n');

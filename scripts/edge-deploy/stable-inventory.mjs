@@ -175,6 +175,9 @@ export async function collectStableAttestation({
     }
     if (attempt < maxAttempts) await sleep(intervalMs);
   }
-  const causa = lastCause ? `; ultima causa observada: ${lastCause}` : '';
+  // E55 (auditoria de 01/10/2026): a falha nomeia explicitamente a ULTIMA causa
+  // observada como `lastReason`, para o operador nao precisar abrir o passo e
+  // reconstruir as amostras; o passo do workflow tem teto proprio de 10 min.
+  const causa = lastCause ? `; lastReason=${lastCause}` : '; lastReason=nenhuma amostra valida observada';
   throw new Error(`Remote inventory did not stabilize after ${maxAttempts} attempts; deployment NOT attested${causa}`);
 }

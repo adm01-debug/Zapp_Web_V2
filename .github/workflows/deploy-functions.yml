@@ -311,6 +311,11 @@ jobs:
           node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/unchanged-from-log.mjs" "$EVIDENCE_DIR/deploy-output.log" "$EVIDENCE_DIR/unchanged-functions.json"
 
       - name: Capturar e validar manifesto remoto pos-deploy
+        # E55 (auditoria de 01/10/2026): teto proprio do passo. O job inteiro tem
+        # 100 min, mas a atestacao nao pode consumir esse orcamento: se a Management
+        # API nao estabilizar em 10 min, o passo falha com a ultima causa observada
+        # (lastReason) e o run NAO termina em success.
+        timeout-minutes: 10
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           PROJECT_REF: tnnnlkbymytvtqngbbqh
