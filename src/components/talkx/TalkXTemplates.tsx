@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { TalkXTemplateEditor } from './TalkXTemplateEditor';
 import {
   Plus, FileText, Star, Pencil, Trash2, Copy, Search, Image, Video, Music, X,
-  Check, Wand2, BookOpen, ChevronRight, BarChart3, Eye, EyeOff, LayoutGrid, List,
+  Check, Wand2, BookOpen, ChevronRight, BarChart3, Eye, EyeOff,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -17,7 +17,8 @@ import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCa
 import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import { useTalkXTemplates, type TalkXTemplate, type TemplateInput } from '@/hooks/integrations/useTalkXTemplates';
-import { IconTile, WhatsAppBubble, RailCard, RailAction, TalkXEmptyState, TalkXSkeletonRows, FilterBar, TalkXPagination, TEMPLATE_CATEGORIES, TEMPLATE_STATUS, VARIABLE_KEYS, personalizePreview, fmtInt, fmtDateTime } from './talkxShared';
+import { IconTile, WhatsAppBubble, RailCard, RailAction, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, TEMPLATE_CATEGORIES, TEMPLATE_STATUS, VARIABLE_KEYS, personalizePreview, fmtInt, fmtDateTime } from './talkxShared';
+import { useTalkXFilterState } from './kit/useFilterState';
 
 interface Props { onUseTemplate: (templateId: string) => void }
 
@@ -27,9 +28,7 @@ type ViewMode = 'list' | 'edit';
 
 export function TalkXTemplates({ onUseTemplate }: Props) {
   const { templates, isLoading, createTemplate, updateTemplate, deleteTemplate, duplicateTemplate } = useTalkXTemplates();
-  const [search, setSearch] = useState('');
-  const [filterCat, setFilterCat] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const { values: filterValues, setValue: setFilterValue, query: search, setQuery: setSearch, hasActive, clear: clearFilters } = useTalkXFilterState('talkx.templates.filters', { cat: 'all', st: 'all' });
   const [page, setPage] = useState(1);
   const [pageSize] = useState(8);
   const [mode, setMode] = useState<ViewMode>('list');
@@ -68,11 +67,16 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
 
   const filtered = useMemo(() => {
     let r = templates;
-    if (filterCat !== 'all') r = r.filter((t) => t.category === filterCat);
-    if (filterStatus !== 'all') r = r.filter((t) => t.status === filterStatus);
+    if (filterValues.cat !== 'all') r = r.filter((t) => t.category === filterValues.cat);
+    if (filterValues.st !== 'all') r = r.filter((t) => t.status === filterValues.st);
     if (search.trim()) { const q = search.toLowerCase(); r = r.filter((t) => t.name.toLowerCase().includes(q) || t.content.toLowerCase().includes(q) || t.tags.some((x) => x.includes(q))); }
     return r;
-  }, [templates, filterCat, filterStatus, search]);
+  }, [templates, filterValues.cat, filterValues.st, search]);
+
+  const filterDefs = useMemo(() => [
+    { key: 'cat', label: 'Todas as categorias', allLabel: 'Todas as categorias', options: TEMPLATE_CATEGORIES.map((c) => ({ value: c, label: c })) },
+    { key: 'st', label: 'Todos os status', allLabel: 'Todos os status', options: Object.entries(TEMPLATE_STATUS).map(([v, m]) => ({ value: v, label: m.label })) },
+  ], []);
 
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
@@ -107,18 +111,13 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
           <DashboardKpiCard size="hero" index={3} label="Templates com mídia" value={String(totals.withMedia)} delta={null} tile="violet" icon={Image} bars={null} barsColor="violet" chart="none" />
         </div>
 
-        <FilterBar search={search} onSearch={setSearch} placeholder="Buscar templates…" selects={[
-          { key: 'cat', value: filterCat, onChange: setFilterCat, label: 'Todas as categorias', options: TEMPLATE_CATEGORIES.map((c) => ({ value: c, label: c })) },
-          { key: 'st', value: filterStatus, onChange: setFilterStatus, label: 'Todos os status', options: Object.entries(TEMPLATE_STATUS).map(([v, m]) => ({ value: v, label: m.label })) },
-        ]} right={
-          <div className="flex items-center gap-2">
-            <div className="flex rounded-lg border border-border/70 overflow-hidden">
-              <button type="button" aria-label="Grade" aria-pressed={galleryMode === 'grid'} onClick={() => setGalleryMode('grid')} className={cn('h-8 w-8 flex items-center justify-center transition-colors', galleryMode === 'grid' ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground')}><LayoutGrid className="w-3.5 h-3.5" /></button>
-              <button type="button" aria-label="Lista" aria-pressed={galleryMode === 'list'} onClick={() => setGalleryMode('list')} className={cn('h-8 w-8 flex items-center justify-center transition-colors', galleryMode === 'list' ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground')}><List className="w-3.5 h-3.5" /></button>
-            </div>
-            <PrimaryButton icon={Plus} onClick={openNew}>Novo Template</PrimaryButton>
-          </div>
-        } />
+        <FilterBarV2
+          search={search} onSearch={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar templates…"
+          filters={filterDefs} values={filterValues} onFilter={(k, v) => { setFilterValue(k as 'cat' | 'st', v); setPage(1); }}
+          hasActive={hasActive} onClear={() => { clearFilters(); setPage(1); }}
+          view={galleryMode} onView={setGalleryMode}
+          rightSlot={<PrimaryButton icon={Plus} onClick={openNew}>Novo Template</PrimaryButton>}
+        />
 
         {galleryMode === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-3">
