@@ -1187,11 +1187,20 @@ jobs:
               SELECT count(*)
               FROM supabase_migrations.schema_migrations
               WHERE version = :'target_version'
-                AND name = :'target_name';
+                AND name = :'target_name'
+                # E65 (auditoria de 01/10/2026): o registro existe, mas precisa
+                # dizer O QUE foi aplicado. Sem estas duas linhas, uma version
+                # gravada com statements NULL ou vazio passava como valida.
+                AND statements IS NOT NULL
+                AND array_length(statements, 1) > 0;
           SQL
           )
           test "$LEDGER_COUNT" = "1"
-          echo "OK: ledger possui exatamente version=$TARGET_VERSION name=$TARGET_NAME."
+          echo "OK: ledger possui exatamente version=$TARGET_VERSION name=$TARGET_NAME com statements."
+          # E65: e os statements gravados tem de bater com o parse do arquivo local.
+          LANCAMENTO=$(ls supabase/migrations/"${TARGET_VERSION}"_*.sql | head -1)
+          test -n "$LANCAMENTO"
+          node scripts/db-audit/verify-ledger-statements.mjs "$LANCAMENTO"
 
       - name: Validar ledger completo do bundle de entrega atomica
         if: >-
