@@ -14,7 +14,7 @@ export function AbandonmentRate() {
   const loadData = useCallback(async () => {
     setLoading(true);
     const since = new Date();
-    since.setDate(since.getDate() - parseInt(period));
+    since.setDate(since.getDate() - Number.parseInt(period));
 
     // Get contacts that sent messages in the period
     const { data: contactMessages } = await supabase

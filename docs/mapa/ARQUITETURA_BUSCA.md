@@ -42,7 +42,7 @@ operador digita (≥ 3 caracteres, debounce 300 ms)
 Uma **sessão de busca** (`src/lib/mapboxSession.ts`) é um `session_token` (UUID v4) que:
 - é reaproveitado entre buscas seguidas, desde que não passem 2 min de inatividade (`SESSION_IDLE_MS`) e ainda não tenha havido `/retrieve`;
 - é encerrado (`endSearchSession()`) no `/retrieve`, ao limpar a busca (`clear()`) ou ao chegar a 50 `/suggest` (teto da Mapbox);
-- gera **exatamente 1** evento `searchbox_session` em `audit_logs` por sessão (nunca por `/suggest` — ver E35), sem PII (só contagem + `source`).
+- gera **exatamente 1** evento `searchbox_session` em `audit_logs` por sessão (nunca por `/suggest` — ver E35) **e só quando a sessão vira uso faturado** (E100: gravar na abertura contava intenção e inflava o freio de 450 e o alerta de 400), sem PII (só contagem + `source`).
 
 Billing da Mapbox: **1 sessão = até 50 `/suggest` + 1 `/retrieve`**, não 1 request avulso.
 
@@ -102,11 +102,43 @@ O autocomplete **não tem mais feature flag de runtime**: o item 4b removeu o ra
 
 | `action` | Quando é gravado | Contém termo digitado? |
 |---|---|---|
-| `searchbox_session` | 1x por sessão, na criação | Não — só contagem e `source` |
+| `searchbox_session` | 1x por sessão, no **primeiro request faturado** (E100) | Não — só contagem e `source` |
 | `searchbox_cost_guard` | 1x por transição para `/forward` por teto de custo | Não |
 | `client_error` | Falha classificada (rede/timeout/http/429) quando `/suggest` **e** `/forward` falham os dois | Não — só a causa, nunca o termo (revisão de privacidade, E39) |
 
 O termo digitado vai para a Mapbox (é o próprio autocomplete), mas nunca é persistido no nosso banco.
+
+## Onde os contratos do módulo REALMENTE rodam (E92, medido 2026-10-02)
+
+A etapa E92 pede "confirmar que os contratos de E76/E77 rodam no guard **vivo**". Medição direta nos
+workflows:
+
+```
+.github/workflows/db-live-guard.yml  -> 0 ocorrencias de "node --test"
+   passos: drift de migrations, ACL de mcp_exec, dead-letter de webhooks, security_invoker da view
+   do Talk X, contrato de transicao de campanha, catalogo, manifesto, frescor do types.ts,
+   paridade tripla (migrations, edges, grants), config runtime e veredito consolidado
+.github/workflows/db-guard.yml:196   -> node --test scripts/db-audit/*.test.mjs
+```
+
+**A resposta é NÃO — e o motivo importa.** Os contratos dos E76/E77 (`grants-baseline-module-rpcs.test.mjs`
+e os demais `.test.mjs` de `scripts/db-audit/`, 24 arquivos) rodam no guard **offline**
+(`node --test` dentro do `db-guard.yml`), que é o check obrigatório de PR **`Contrato DB offline`** — o
+mesmo que barra merge neste repositório. O guard **vivo** (`db-live-guard.yml`) roda contra o banco
+canônico e cobre o módulo por outro caminho: `Paridade tripla (migrations, edges, grants)`, o manifesto
+e o catálogo regenerados e comparados com o commitado.
+
+**Por que está assim, e por que está certo:** contrato que precisa de Postgres descartável com o
+esquema aplicado (o caso do E76/E77) não roda contra produção; o guard vivo existe para o que só
+produção pode responder (drift real, ACL efetiva, frescor de artefato gerado). Trocar o nome do guard
+não muda a cobertura: **o que barra merge é o offline**, e é ele que executa os contratos do módulo —
+verificado hoje, porque ele é justamente o check que aparece nos PRs deste módulo.
+
+**Ressalva honesta sobre "8 guards verdes":** o checklist do E92 fala em "8 guards verdes com os
+contratos novos". O que dá para afirmar com medição é o que está acima: os contratos rodam no guard
+offline e o guard vivo cobre o módulo por paridade de grants. Contar "8 guards" exigiria enumerar
+checks obrigatórios por nome de branch protection — não é algo que se leia do repositório, e eu não
+afirmo número que não medi.
 
 ## Testes automatizados que cobrem este módulo
 

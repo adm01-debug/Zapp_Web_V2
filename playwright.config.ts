@@ -96,7 +96,7 @@ export default defineConfig({
     },
     {
       // talkx.spec.ts on Chromium — cobertura focada do Talk X usada pelo
-      // workflow e2e-talkx-pr.yml (PR), espelhando firefox-talkx/webkit-talkx.
+      // workflow e2e-talkx.yml (PR), espelhando firefox-talkx/webkit-talkx.
       // Reusa o storageState gerado pelo projeto "setup".
       name: 'chromium-talkx',
       testMatch: /talkx\.spec\.ts/,
@@ -109,7 +109,7 @@ export default defineConfig({
     {
       // talkx-visual.spec.ts — régua visual (X004): captura 1672×941, tema
       // escuro, com a sessão falsa + fixture de X003 (mockTalkXVisual). Roda
-      // DESLOGADO (sem setup, sem secrets) no e2e-talkx-pr.yml — a sessão é
+      // DESLOGADO (sem setup, sem secrets) no e2e-talkx.yml — a sessão é
       // injetada no localStorage pelo próprio spec.
       name: 'chromium-talkx-visual',
       testMatch: /talkx-visual\.spec\.ts/,
@@ -140,6 +140,15 @@ export default defineConfig({
       use: {
         ...devices['Desktop Safari'],
         storageState: 'e2e/.auth/user.json',
+      },
+    },
+    {
+      name: 'chromium-email-navy',
+      testMatch: /email-navy-visual\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1672, height: 941 },
+        colorScheme: 'dark',
       },
     },
     {
@@ -207,13 +216,23 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    // The application development server intentionally defaults to port 8080.
-    // E2E owns an isolated port so Playwright's readiness probe and its browser
-    // always exercise the same process, including while a developer is running
-    // the app locally on the default port.
-    command: 'bun run dev -- --host 127.0.0.1 --port 5173 --strictPort',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: (() => {
+    // A porta vem do proprio ambiente quando PLAYWRIGHT_BASE_URL e' definida.
+    // Sem isso, a suite e' fixa em 5173 e, com `reuseExistingServer` fora do CI,
+    // ela ADOTA o dev server que estiver la -- inclusive o de outro chat, o que
+    // fazia o e2e de um workspace exercitar o codigo de outro (medido 02/10).
+    const alvo = process.env.PLAYWRIGHT_BASE_URL;
+    const url = alvo ?? 'http://127.0.0.1:5173';
+    const porta = new URL(url).port || '5173';
+    return {
+      // O app de desenvolvimento usa 8080 por padrao; o E2E tem porta propria
+      // para que a sonda do Playwright e o navegador exercitem o MESMO processo.
+      command: `bun run dev -- --host 127.0.0.1 --port ${porta} --strictPort`,
+      url,
+      // Fora do CI o desenvolvedor costuma ja' ter o dev server no ar: reusar
+      // a propria porta e' o comportamento util. O que nao pode acontecer e'
+      // olhar para uma porta que nao e' a sua -- e isso o `url` acima resolve.
+      reuseExistingServer: !process.env.CI,
+    };
+  })(),
 });

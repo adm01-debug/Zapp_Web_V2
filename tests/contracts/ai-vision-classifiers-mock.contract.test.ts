@@ -115,6 +115,20 @@ type LogEntry = {
   status?: string;
   errorMessage?: string | null;
   metadata?: Record<string, unknown>;
+  /**
+   * IA-052 — a rota efetiva é entregue ao registrador como CAMPO PRÓPRIO; é ele
+   * que monta as chaves de `metadata` (`provider_id`, `purpose`, `modality`, ...)
+   * num lugar só, para nenhum chamador ter de lembrar do formato. Este espião
+   * observa o contrato de ENTRADA; que as chaves chegam ao insert é provado no
+   * teste do registrador (`_shared/ai-usage.test.ts`), com o PostgREST espiado.
+   */
+  providerId?: string | null;
+  providerType?: string | null;
+  providerName?: string | null;
+  purpose?: string | null;
+  modality?: string | null;
+  modelRequested?: string | null;
+  fallbackUsed?: boolean | null;
 };
 
 /** Espião de auditoria: `logAiUsage` real é trocado para provar que é chamado. */
@@ -465,8 +479,8 @@ describe('(2) consumo: logAiUsage cobre sucesso, HTTP 500 e exceção', () => {
     expect(entrada.functionName).toBe('classify-emoji');
     expect(entrada.status).toBe('success');
     expect(entrada.model).toBe(MODELO_VISAO);
-    expect(entrada.metadata?.provider_id).toBe('openrouter-gemini');
-    expect(entrada.metadata?.purpose).toBe('tagging');
+    expect(entrada.providerId).toBe('openrouter-gemini');
+    expect(entrada.purpose).toBe('tagging');
   });
 
   it('ERRO HTTP 500 do provedor: consumo registrado como error', async () => {
@@ -480,7 +494,7 @@ describe('(2) consumo: logAiUsage cobre sucesso, HTTP 500 e exceção', () => {
     const entrada = logSpy.mock.calls[0][0] as LogEntry;
     expect(entrada.status).toBe('error');
     expect(entrada.errorMessage).toContain('HTTP 500');
-    expect(entrada.metadata?.provider_id).toBe('openrouter-gemini');
+    expect(entrada.providerId).toBe('openrouter-gemini');
   });
 
   it('fetch que LANÇA: consumo registrado como error (a falha de rede também é auditada)', async () => {

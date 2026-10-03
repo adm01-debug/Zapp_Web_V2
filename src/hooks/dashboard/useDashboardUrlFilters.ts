@@ -1,10 +1,17 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
-  format, startOfDay, endOfDay, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
-} from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import type { DashboardFiltersState } from '@/components/dashboard/DashboardFilters';
+  appDayEnd,
+  appDayEndOfLocalDate,
+  appDayKey,
+  appDayStart,
+  appDayStartOfLocalDate,
+  appMonthEnd,
+  appMonthStart,
+  appWeekEnd,
+  appWeekStart,
+} from '@/lib/localDay';
+import type { DashboardFiltersState } from '@/components/dashboard/dashboardFilterDefaults';
 
 /**
  * E35: persiste os filtros do dashboard (período/fila/agente) na URL
@@ -26,14 +33,14 @@ function rangeForPeriod(period: DashboardFiltersState['period']): { from: Date; 
   const now = new Date();
   switch (period) {
     case 'yesterday':
-      return { from: startOfDay(subDays(now, 1)), to: endOfDay(subDays(now, 1)) };
+      return { from: appDayStart(1, now), to: appDayEnd(1, now) };
     case 'week':
-      return { from: startOfWeek(now, { locale: ptBR }), to: endOfWeek(now, { locale: ptBR }) };
+      return { from: appWeekStart(now), to: appWeekEnd(now) };
     case 'month':
-      return { from: startOfMonth(now), to: endOfMonth(now) };
+      return { from: appMonthStart(now), to: appMonthEnd(now) };
     case 'today':
     default:
-      return { from: startOfDay(now), to: endOfDay(now) };
+      return { from: appDayStart(0, now), to: appDayEnd(0, now) };
   }
 }
 
@@ -65,7 +72,7 @@ export function useDashboardUrlFilters(): [DashboardFiltersState, (filters: Dash
       const from = fromParam ? parseDateOnlyLocal(fromParam) : null;
       const to = toParam ? parseDateOnlyLocal(toParam) : null;
       if (from && to && !Number.isNaN(from.getTime()) && !Number.isNaN(to.getTime())) {
-        return { period, dateRange: { from: startOfDay(from), to: endOfDay(to) }, queueId, agentId };
+        return { period, dateRange: { from: appDayStartOfLocalDate(from), to: appDayEndOfLocalDate(to) }, queueId, agentId };
       }
       // custom sem from/to válidos na URL (link incompleto/editado à mão) — cai para hoje.
       return { period: 'today', dateRange: rangeForPeriod('today'), queueId, agentId };
@@ -86,8 +93,8 @@ export function useDashboardUrlFilters(): [DashboardFiltersState, (filters: Dash
       else params.delete(PARAM_KEYS.agent);
 
       if (next.period === 'custom') {
-        params.set(PARAM_KEYS.from, format(next.dateRange.from, 'yyyy-MM-dd'));
-        params.set(PARAM_KEYS.to, format(next.dateRange.to, 'yyyy-MM-dd'));
+        params.set(PARAM_KEYS.from, appDayKey(next.dateRange.from));
+        params.set(PARAM_KEYS.to, appDayKey(next.dateRange.to));
       } else {
         params.delete(PARAM_KEYS.from);
         params.delete(PARAM_KEYS.to);

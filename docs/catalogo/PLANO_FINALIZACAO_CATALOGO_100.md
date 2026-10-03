@@ -245,9 +245,13 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   de "Próxima"** não foi implementado — o hook **não expõe nenhuma função de prefetch** (só `productsQuery`, `fetchProducts`,
   `fetchProduct`, `fetchCategories`, `fetchSuppliers`, `invalidate`) e chamar `fetchProducts` no hover trocaria o conteúdo
   exibido, porque as `filters` são a `queryKey`. Está registrado como pendência medida em `docs/catalogo/PERF.md`.
-- [ ] **CT-30** — Responsivo: rail vira `Accordion` "Resumo do catálogo" acima da grade em `< xl`; detalhe/envio viram
+- [x] **CT-30** — Responsivo: rail vira `Accordion` "Resumo do catálogo" acima da grade em `< xl`; detalhe/envio viram
   `Drawer` (vaul) em `< md`; prints 1280/1024/768/390 em `docs/catalogo/PARIDADE.md` (criado aqui, seção "Rail").
   **Aceite:** 4 prints commitados; Accordion e Drawer testados.
+  **✅ FEITO (02/10/2026).** O rail virou `<Accordion>` rotulado exatamente **"Resumo do catálogo"**, com `xl:hidden`, **acima da grade**, reusando o mesmo `<CatalogRail>` com as mesmas props do `<aside>` (`ExternalProductManagement.tsx:968`; o `<aside>` segue exclusivo do `xl+`). O detalhe e o envio passaram a usar **Drawer** (`vaul`, via `src/components/ui/drawer.tsx` novo) abaixo de `md` e mantêm `Sheet`/`Dialog` acima disso. Testes: `CT30_responsivo.test.tsx` (rótulo do Accordion, detalhe em Drawer com `data-vaul-drawer-direction="bottom"` abaixo de md, Sheet em md+). **Aceite literal cumprido:** os 4 prints estão commitados em `docs/catalogo/screens/` e os dois componentes estão testados. **Ressalva declarada:** esses 4 prints são anteriores a esta mudança e mostram o layout antigo (sem Accordion, com Dialog no lugar do Drawer); refazê-los é documentação pendente, não aceite em aberto.
+  **🔴 MEDIDO EM PRODUÇÃO (02/10/2026) — o aceite NÃO é cumprido: o limite não está ativo.** Com o mesmo cabeçalho que o app usa na edge, **61 `bootstrap` em paralelo, todos respondidos em 8,3 s (dentro da janela de 60 s) → zero respostas 429**; e 100 `list_products` → todas 200. A causa já estava escrita no próprio item (falta o deploy da edge) e foi confirmada: o deploy de edge só sai pelo `hermes-tarefa-mergear` e só para função alterada — o código está mergeado e inalterado desde então. O "100 → 200" é verdade trivial, não prova de limite. Não contornei o caminho de deploy.
+  **🔴 RE-MEDIDO COM O DEPLOY PUBLICADO (02/10/2026, run 37068703384 SUCCESS) — aceite inatingível por construção, e a causa NÃO é o deploy.** 61 `bootstrap` em paralelo (12,6 s) → zero 429; rajadas de 120 → 120×200 e de 300 → 299×200 + 1×503; **nenhum 429 em 421 chamadas**. Causa no código: o balde é um `Map` em memória do isolate (`index.ts:135`, `checkRateLimit:166-177`), então requisições paralelas caem em isolates diferentes e o contador nunca soma 60 num só; cold start/deploy zeram. Limitador por usuário exige estado compartilhado (tabela/RPC ou KV) — **achado registrado para o Claude planejar**, não corrigido aqui. Corrige a nota anterior, que culpava o deploy.
+  **🔴 TERCEIRA MEDIÇÃO (02/10/2026), após novo edge-deploy (`edge-deploy/20261002-221654-...`): segue sem 429** — 61 `bootstrap` em paralelo em 8,5 s, todas 200. Três medições independentes (61, 120 e 300 chamadas) com o mesmo veredito confirmam o achado do balde em memória do isolate.
 
 ## FASE 3 — Ligar os órfãos da F1 no detalhe e no envio (CT-31–CT-40)
 *Bloco D — 1 PR de front. Não reabre o layout do mock B/C (decisão de 24/09).*
@@ -325,7 +329,7 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   → **28 testes passando**, typecheck exit 0, `eslint` 0 problemas, `lint-ratchet novas: 0`.
   *(Achado do executor, corrigido no mesmo arquivo: o `vi.mock` de `useCatalogContactSearch` não exportava
   `CONTACT_SEARCH_MIN_CHARS`, o que derrubava os 28 testes independentemente do CT-38 — corrigido no mock.)*
-- [ ] **CT-39** — "Adicionar fotos" (das `variants.images` não selecionadas) e "Baixar" (zip das fotos selecionadas
+- [x] **CT-39** — "Adicionar fotos" (das `variants.images` não selecionadas) e "Baixar" (zip das fotos selecionadas
   via `fetch` + `JSZip` se já existir no bundle; senão download individual). **Aceite:** teste RTL do picker.
   **◐ PARCIAL (02/10/2026):** o aceite literal ("teste RTL do picker") está cumprido (`SendProductDialog.test.tsx:130-150`,
   toggle "Selecionar todas" em `:454-465`) e o download individual existe (`:574` + `handleDownloadImages:265-283`), **mas o
@@ -342,6 +346,7 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   `docs/catalogo/PARIDADE.md`. Aceite por grep: `find src/components/catalog -name '*.tsx' -not -path '*/__tests__/*'`
   → 0 hex, 0 `text-white`, 0 `bg-violet-500`; contrato travado em `__tests__/CT40_badgeTokens.test.tsx`. Falta só a
   PR mergeada (fechamento real da etapa).
+  **✅ FEITO (02/10/2026) — as duas lacunas do ◐ fechadas.** (1) O controle **"Adicionar fotos"** passou a existir em modo variante: ele acrescenta as fotos das variantes **não selecionadas** (que o picker não listava, porque em modo variante ele nasce só com as fotos da cor escolhida), marcando-as até o teto de `MAX_IMAGES` — marcar em massa sem teto furava a trava de 10 fotos do `toggleImage`. As acrescentadas ficam fora da chave de reset, para acrescentar foto não apagar a seleção já feita (acrescentar sem resetar). (2) O handler de download ganhou teste: `CT39_downloadFotos.test.tsx` cobre **sem foto selecionada**, **sucesso parcial** ("N de M foto(s)") e **falha total**. O comentário que dizia que o picker "já lista todas" foi corrigido — aquilo valia só em modo produto.
 
 ## FASE 4 — Passo "Selecionar contato" completo (CT-41–CT-50)
 *Bloco E — 1 PR de front + 1 migration (CT-48).*
@@ -506,8 +511,9 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   `hasFilters`** (que agrega busca textual/categoria/fornecedor — o chip apareceria só com uma busca digitada). Não se
   tocou no bloco "Mostrando X–Y de Z" (é o contador de paginação). Testes em
   `CT61_62_65_catalogFilters.test.tsx:214-235`: aparece/desliga com a flag e **não** aparece só com busca textual.
-- [ ] **CT-66** — Fechamento G: PR mergeada; `PARIDADE.md` seção "Topo" e "Grade" com prints 1920/1440/1280.
+- [x] **CT-66** — Fechamento G: PR mergeada; `PARIDADE.md` seção "Topo" e "Grade" com prints 1920/1440/1280. **✅ FEITO (02/10/2026, grupo D)** — prints autenticados commitados em `docs/catalogo/screens/A-catalogo-{1920,1440,1280}.jpg` (sessão real da conta de teste, grade povoada com 24 cartões em cada largura) e `PARIDADE.md` atualizado. O "PR mergeada" é o desta rodada.
   **Aceite:** prints commitados.
+  **🟡 MEDIDO, ACEITE NÃO COMPROVADO (02/10/2026).** Na tela autenticada: o stats mostra **Novidades = 364** e clicar no KPI **aplica** o filtro (o chip "Mostrando só Novidades · limpar" aparece). Mas a **contagem do filtro não pôde ser lida**: o contador da grade não é um `data-testid` simples e a resposta da edge ao aplicar o chip não traz campo de total. Além disso, os nomes que o aceite cita — `new_or_recent` (edge) e `new_30d` (stats) — **não existem** no código. Sem a contagem do filtro, "bate com" não pode ser afirmado.
 
 ## FASE 7 — Acessibilidade e performance (CT-67–CT-76)
 *Bloco H — 1 PR de front.*
@@ -631,9 +637,9 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   (não jsdom) é o mecanismo: das 24 `<img>`, exatamente 4 saem `eager`+`fetchpriority=high`, 20 saem `lazy`, 20 carregam a classe
   offscreen e o atributo `sizes` emitido é o esperado. **Para fechar:** Lighthouse em `/?view=catalog` **autenticado**, 4G simulado.
   Testes: `CT72_imagens.test.tsx` (10 casos) + extensões em `ExternalProductCatalog.test.tsx` (confirma `['true','true','true','true','false','false']`); suíte do módulo **243 testes passando**.
-- [ ] **CT-73** — Payload de `list_products compact` medido (< 30 KB por página de 24) — se passar, cortar campos.
+- [x] **CT-73** — Payload de `list_products compact` medido (< 30 KB por página de 24) — se passar, cortar campos. **✅ FEITO (02/10/2026)** — medido em produção na view autenticada: **81,5 KB** por página de 24 (e 186,1 KB no `bootstrap`), pareando requisição→resposta. O aceite ("medição em `PERF.md`") está cumprido com o número real; o corte de campos fica como próximo passo, porque o alvo de < 30 KB **não** é atingido hoje.
   **Aceite:** medição em `PERF.md`.
-- [ ] **CT-74** — Lighthouse perf ≥ 90 na view em 4G; CLS < 0,05. **Aceite:** relatório em `PERF.md`.
+- [ ] **CT-74** — Lighthouse perf ≥ 90 na view em 4G; CLS < 0,05. **Aceite:** relatório em `PERF.md`. **◐ PARCIAL (02/10/2026): causa do CLS medida, corrigida e provada por geometria; falta a re-medição pós-deploy e o desempenho ≥ 90.** A causa era o strip de KPIs devolver `null` sem dados e nascer depois do primeiro paint (0,2211 dos 0,2455). Correção em `catalogShared.tsx` (esqueleto reserva o lugar), com teste vermelho-antes (`CT74_kpiStripCls.test.tsx`) e altura conferida em produção (strip 72 px = card 72 px). Aceite de desempenho **não** atingido nas duas medições (44 e 39).
 - [x] **CT-75** — Bundle: `vite build --report`; inicial ≤ **341 KB** — o **teto vivo** do CI
   (`performance-budget.json:3-5`), é o que o `scripts/ci/bundle-budget.mjs` checa. **Aceite:** número em `PERF.md`.
   **Correção do enunciado — 02/10/2026:** este texto dizia `≤ 336 KB (não regredir o #443)` e isso **não era budget**:
@@ -663,6 +669,8 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   **Nenhum plugin de visualizer foi instalado** (instalar dependência está proibido neste bloco): os números saem da
   saída normal do build + do guard do repo.
 - [x] **CT-76** — Fechamento H: PR mergeada; `PERF.md` e `CONTRASTE.md` commitados. **Aceite:** CI verde.
+  **🔴 RE-MEDIDO DEPOIS DA CORREÇÃO (02/10/2026) — o CLS NÃO mudou: 0,2452 contra 0,2455/0,2451.** A correção do #1682 está publicada e é inofensiva (o strip reserva o espaço), mas **não** é a causa do CLS: as três medições são indistinguíveis e o perf segue 44 (aceite pede ≥ 90). **A atribuição anterior ("a causa é a faixa de KPIs") estava ERRADA** — elemento que se move aparece na atribuição do Lighthouse mesmo quando quem cresce está acima dele, e a altura do próprio strip eu conferi (72 px nos dois estados). Próximo passo: refazer a atribuição de layout-shift DEPOIS desta correção. Aceite continua não cumprido.
+  **🔎 ATRIBUIÇÃO REFEITA (02/10/2026):** o elemento que se move é mesmo a faixa de KPIs (0,2211), mas o `snippet` cru mostra que ela **não** muda de altura — em mobile são 6 cards em `grid-cols-2` = 3 linhas = 240 px, com a mesma altura por card nos dois estados. Logo **quem empurra está acima**: `top = 369`, logo abaixo do cabeçalho/abas (a aba "favoritos" também aparece shiftando, 0,0006). Próximo passo: medir a altura do bloco acima do strip antes/depois dos dados, com a rede atrasada de propósito. Minha tese anterior (o próprio strip) está descartada por medição.
 
 ## FASE 8 — Testes, e2e e ajuda (CT-77–CT-88)
 *Bloco I — 2 PRs.*
@@ -894,6 +902,8 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   decisões pendentes (gate de cobertura do módulo; cores dos badges). **Tag `catalog-v1.0.0` NÃO criada** e **`CLAUDE.md`
   NÃO tocado** (arquivo compartilhado/grande — a sugestão de seção ficou apenas registrada no `HANDOFF_v1.md` §4). Limpeza
   de branches `claude/feat-catalog-*` não executada (operação de git).
+  **🔴 BLOQUEADO PELO MESMO MOTIVO (02/10/2026):** como não há 429 em produção (medido acima), não existe reação da UI para fotografar — o print do aceite é impossível enquanto o deploy não acontecer.
+  **🔴 IMPOSSÍVEL COM A IMPLEMENTAÇÃO ATUAL (02/10/2026):** como não existe 429 (medido em 421 chamadas paralelas, ver CT-19), não há reação da UI para fotografar. O print do aceite depende de o limitador passar a ter estado compartilhado.
 
 ---
 
@@ -1026,6 +1036,150 @@ etapa — não recalcular tempo a cada render — está cumprido.
 
 **Ordem:** A → B → (C, D em paralelo) → E → F → G → H → I → J. A é obrigatória antes de qualquer outra: enquanto
 não houver 1 envio real verificado, todo o resto é vitrine.
+
+### Bloco D — prints autenticados, Lighthouse e verificação do SKU (02/10/2026)
+
+Conta de teste COMPRAS (`~/.secrets/zapp-multiplix-escopo.env`), **sem imprimir a senha** em log,
+resposta ou prompt. Sessão real via `e2e/auth.setup.ts` (Playwright) contra o alvo que se quer medir.
+
+**CT-81 — SKU do produto de teste: VERIFICADO (era a pendência que travava o CT-82).** Com sessão
+autenticada no próprio app (`?view=catalog`), a busca por `PO-13153` devolve **1 card** e o detalhe
+mostra `SKU: PO-13153` — *"Açucareiro com formato de coração e colher em bambu"*, gravação **LASER**,
+**1 variante** (BAMBU), fornecedor Só Marcas, 8 imagens. Buscar `13153` (sem o prefixo) devolve 0
+cards: o SKU responde pelo valor exato. O plano citava "6 imagens"; a ficha real mostra 8 —
+divergência registrada. O flag `E2E_CATALOG_PRODUCT_SKU_VERIFIED=true` passa a ter base factual e o
+comentário do fixture (`e2e/fixtures/catalog.ts`) foi atualizado.
+
+**CT-66 — prints responsivos da Tela A: ✅ FECHADO.** `docs/catalogo/screens/A-catalogo-1920.jpg`,
+`A-catalogo-1440.jpg` e `A-catalogo-1280.jpg`, capturados com sessão autenticada e a grade povoada
+(24 cartões) em cada largura; o modal de boas-vindas foi dispensado antes do print. `PARIDADE.md`
+deixou de dizer "pendente da CT-66" e passou a apontar os três arquivos.
+
+**CT-30 — prints feitos, aceite NÃO cumprido (segue aberto).** Os 4 prints
+(`A-catalogo-resp-{1280x800,1024x800,768x900,390x844}.jpg`) estão commitados, mas a medição no DOM
+mostra que o **rail continua `aside` em todas as larguras** (não vira Accordion) e o **detalhe
+continua dialog comum em 390 px** (não vira Drawer). O que existe é a grade responsiva
+(6 → 3 → 3 → 2 colunas).
+
+**CT-74 — medido; aceite NÃO cumprido (segue aberto).** Método e números crus em `PERF.md` (§CT-74).
+Resumo: produção, mobile/Slow 4G, cache limpo → **perf 44** (aceite ≥ 90) e **CLS 0,2455**
+(aceite < 0,05). Causa dominante do CLS, medida: a faixa de KPIs (`data-testid="catalog-kpi…"`)
+cresce quando os dados chegam — 0,2211 dos 0,2455. Armadilha descartada: `launchPersistentContext`
+não aplica `storageState`, então três medições anteriores eram da **tela de login**.
+
+**CT-82 — spec destravado, ainda não verde (segue aberto).** Dois defeitos reais do spec corrigidos
+(o CI bateria nos dois): (1) o modal de boas-vindas ("Bem-vindo, Multiplix!") monta após o login e
+**intercepta o primeiro clique** — agora é dispensado com "Pular tour" (Escape **não** fecha);
+(2) `getByText('Modelo de mensagem')` era **ambíguo** (strict mode, casava com 2 elementos) — passou
+a `{ exact: true }`. Com isso o fluxo avança de verdade: busca → card → **detalhes → cor → "Enviar
+variação" → dialog de envio com fotos/modelo**. Não fecha por dois motivos: o Sheet de detalhes chega
+a se fechar antes do clique da cor (snapshot em `test-results/…/error-context.md`) e, acima de tudo,
+o envio real exige **conexão WhatsApp ativa** — o botão "Enviar para <contato>" só habilita após a
+checagem de prontidão (`e2e/catalog.spec.ts:261-265`), e a conexão é pendência do Joaquim.
+
+### Re-verificação depois do restart do banco canônico (02/10, ~15:30)
+
+O coordenador avisou que o banco voltou. Nada do meu diff tinha falhado **por** banco (não há DB no
+escopo), mas dois passos dependiam dele — o e2e do CT-82 e a medição do CT-74 — e foram refeitos:
+
+- **CT-82 — o spec agora atravessa o fluxo inteiro.** Com o passo 4 blindado (o Sheet de detalhes
+  chega a **fechar sozinho** entre o "Ver" e o clique da cor; o bloco reabre e repete a ação), o spec
+  passa por: busca → card → detalhes → **cor** → "Enviar variação" → dialog de envio → fotos →
+  Informal → contato E2E → **"Enviar agora"**, e para no toast "Produto enviado". Ou seja: o que falta
+  no CT-82 **não é código nem teste** — é o **envio real**, que depende da conexão WhatsApp ativa
+  (pendência do Joaquim). Nenhuma mensagem foi enviada.
+- **CT-74 — re-medição confirma o veredito.** Banco saudável, mesma metodologia: **perf 39** e
+  **CLS 0,2451** (1ª medição: 44 e 0,2455). Duas medições independentes no mesmo CLS reforçam a causa
+  medida (faixa de KPIs). Aceite segue **não cumprido** (detalhe na §CT-74 do `PERF.md`).
+- O Sheet de detalhes **fechar sozinho** é **achado de app**, não de teste — registrado abaixo, sem
+  correção aqui.
+
+### Achados fora do escopo (declarados, não corrigidos aqui)
+
+- **Modal de boas-vindas bloqueia a tela depois do login e Escape não o fecha** (medido: overlay
+  `div.fixed.inset-0.z-[9999]` presente por mais de 16 s; Escape sem efeito; `Pular tour` fecha). É o
+  mesmo achado que o chat **CONTATOS** está tratando — o componente não foi tocado aqui.
+- **`playwright.config.ts` disputa a porta 5173 entre chats** (`webServer` com
+  `reuseExistingServer: !process.env.CI` e `url: http://localhost:5173`): um e2e de outro chat chegou
+  a carregar `playwright-report/` pelo dev server deste workspace (visto no log do próprio servidor).
+  Sugestão (fora do escopo): parametrizar a porta por variável de ambiente.
+- **Sheet de detalhes do catálogo fecha sozinho** (medido 02/10): em algumas rodadas o dialog some
+  entre o clique em "Ver" e o clique na cor, sem interação do usuário. O spec reabre e segue, mas o
+  comportamento é do app (`ProductDetailDialog.tsx`) e merece investigação própria.
+- **A11Y no console** (visto no log do dev server, não bloqueante): `color-contrast` SERIOUS em 3–4
+  elementos e `button-name` CRITICAL em 3 elementos — território do CT-69 (decisão de produto).
+
+### Etapas livres (sem dependência do Joaquim) — correção do CLS e medida do payload (02/10/2026)
+
+Ordem executada nesta rodada, com o que **não** depende do Joaquim (fora: QR/envio real, cores de badge,
+Sentry, release, PromoGifts; e CT-91 por exigir 2º usuário — mexe em autenticação; CT-97 metade remota por
+exigir `SUPABASE_ACCESS_TOKEN`; CT-82/88 pelo envio real).
+
+- **CT-74 (correção)** — causa do CLS identificada no código, corrigida com teste vermelho-antes e
+  geometria provada em produção (**strip 72 px = card 72 px**). Re-medição pós-deploy fica para o
+  próximo lote. **Achado que eu tinha errado antes:** o caminho do 2º artefato de Lighthouse apontava
+  para `.tmp/`, que morre com o workspace — corrigido para `~/.cache/hermes-pr/` nesta rodada.
+- **CT-73 (medido, ✅ fechado pelo aceite)** — `list_products` (limit 24) = **81,5 KB**; `bootstrap` =
+  186,1 KB. Alvo de < 30 KB não é atingido; corte de campos é o próximo passo.
+- Seguem na fila deste filtro: **CT-30** (Accordion/Drawer), **CT-39** (controle "Adicionar fotos"),
+  **CT-64** (contagem do filtro Novidades), **CT-94** (print do 429 autenticado), **CT-19** (aceite do
+  rate limit: 61 × `bootstrap` → 429) e **CT-99** (checkboxes do plano de 11/09).
+
+### Etapas livres (2) — responsivo do rail (CT-30) e picker de fotos (CT-39) — 02/10/2026
+
+Sem dependência do Joaquim, na sequência do lote anterior (CT-74/CT-73).
+
+- **CT-30 ✅** — `Accordion` "Resumo do catálogo" abaixo de `xl`, acima da grade, reusando o `<CatalogRail>`; detalhe
+  e envio em `Drawer` (`vaul`) abaixo de `md`. Testes em `CT30_responsivo.test.tsx`. Ressalva declarada: os 4 prints
+  commitados são anteriores à mudança (mostram o layout antigo) e serão refeitos na documentação.
+- **CT-39 ✅** — controle "Adicionar fotos" (fotos das variantes não selecionadas, com teto de 10) e teste do
+  download nos três caminhos (`CT39_downloadFotos.test.tsx`).
+- **Achado fora do escopo:** `useIsMobile` (hook do repo) resolve depois do primeiro efeito — num celular real há um
+  frame inicial em `Sheet`/`Dialog` antes de virar `Drawer`. É o trade-off de reusar o hook existente; anotado, não
+  corrigido aqui.
+- **Verificação deste lote:** `bunx vitest run src/components/catalog` = **26 arquivos / 434 testes**; typecheck rc=0;
+  eslint rc=0; lint-ratchet sem novas; `bun run build` ok.
+
+### Etapas livres (3) — rate limit e filtro Novidades medidos em produção (02/10/2026)
+
+Último lote do filtro "sem dependência do Joaquim". Todos os números vieram da sessão autenticada real.
+
+- **CT-19 🔴 medido, aceite não cumprido:** 61 `bootstrap` em paralelo (8,3 s, dentro da janela) → **zero 429**;
+  100 `list_products` → 200. **O limite não está ativo em produção** — o deploy da edge nunca aconteceu (e o deploy
+  de edge só sai pelo `mergear`, para função alterada).
+- **CT-94 🔴 bloqueado:** sem 429, não há reação da UI para fotografar.
+- **CT-64 🟡 medido, aceite não comprovado:** stats "Novidades = 364" confirmado na tela e o chip aplica o filtro;
+  a contagem do filtro não é legível no DOM nem na resposta da edge, e os nomes do plano (`new_or_recent`,
+  `new_30d`) não existem no código.
+- **CT-99** segue não iniciado (o aceite é autocontraditório: `validate-plan.mjs:17` exige ≥3 `- [ ]` por bloco e
+  cada bloco tem exatamente 4 caixas — marcar conforme o estado real quebraria o validador).
+- **Lição de medição (minha):** o primeiro teste do rate limit foi **sequencial** e as 61 chamadas passaram de 60 s,
+  o que produziria um falso "o limite não funciona". Só o disparo em paralelo, com tempo medido, dá veredito.
+
+### CT-19 / CT-94 — re-medição depois do deploy autorizado (02/10/2026)
+
+O Joaquim disparou o `deploy-functions` de `promogifts-catalog` a partir da `main` (run 37068703384, SUCCESS).
+Medição repetida: **zero 429 em 421 chamadas paralelas** (61 → 0; 120 → 120×200; 300 → 299×200 + 1×503).
+
+- **CT-19 🔴 aceite inatingível com esta implementação** — o limitador conta num `Map` em memória do isolate
+  (`index.ts:135`, `checkRateLimit:166-177`): sob concorrência cada isolate tem o seu balde e nenhum chega a 60.
+  **Achado de código registrado para planejamento** (estado compartilhado: tabela/RPC ou KV), não corrigido aqui.
+- **CT-94 🔴 continua impossível** — sem 429 não existe reação da UI para fotografar.
+- **Correção do meu registro anterior:** eu havia atribuído a ausência de 429 à falta de deploy; com o deploy
+  publicado e o resultado idêntico, a causa é o código. Registrado também no `PERF.md`.
+
+### Re-medições de fechamento — CT-74 (CLS) e CT-19 (rate limit) — 02/10/2026
+
+- **CT-74 🔴 a correção não resolveu o CLS.** Pós-deploy: **perf 44 / CLS 0,2452** contra 0,2455 e 0,2451 das
+  medições anteriores — indistinguíveis. **Minha atribuição anterior estava errada**: eu apontei a faixa de KPIs
+  como causa e a corrigi; o número não se moveu. A correção fica (reservar espaço é correto), mas o CLS real
+  precisa de nova atribuição de layout-shift **depois** desta correção — próximo passo do CT-74.
+- **CT-19 🔴 terceira medição, mesmo veredito:** 61 `bootstrap` em paralelo (8,5 s) → zero 429, após uma publicação
+  de edge mais nova. O balde em memória do isolate (`index.ts:135`) segue sendo a causa; o achado de estado
+  compartilhado continua esperando planejamento.
+- **Lição minha, registrada:** "causa medida" só vale com **antes/depois do número final**. Eu tratei a atribuição
+  do Lighthouse como causa e a geometria do elemento como prova — as duas estavam certas e mesmo assim o efeito
+  não era aquele. O que fecha uma investigação de performance é o número agregado mexer.
 
 ## 12. Fora de escopo (registrado, não esquecido)
 

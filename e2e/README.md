@@ -196,7 +196,7 @@ seja falha do run.
 
 O artefato é montado por `scripts/talkx/lado-a-lado.mjs --out <dir>`, que copia
 mock + captura para `<dir>/img/{mock,captura}` e gera `<dir>/index.html` lado a
-lado. No CI, `e2e-talkx-pr.yml` roda o spec, monta a régua e sobe o HTML como
+lado. No CI, `e2e-talkx.yml` roda o spec, monta a régua e sobe o HTML como
 artefato `regua-visual-talkx` (14 dias) — informativo, não bloqueia merge.
 
 ## Picker de localização (plano MAPA · E71)

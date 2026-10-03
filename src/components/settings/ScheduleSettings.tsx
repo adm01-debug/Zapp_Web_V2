@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -31,10 +31,10 @@ export function ScheduleSettings({ settings, updateSettings, toggleWorkDay }: Sc
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
       <Card className="border border-secondary/20 bg-card hover:border-secondary/30 transition-all">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <h2 className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2">
             <Clock className="w-5 h-5 text-whatsapp" />
             Horário de Atendimento
-          </CardTitle>
+          </h2>
           <CardDescription>Configure o horário de funcionamento do atendimento</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

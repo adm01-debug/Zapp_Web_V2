@@ -516,7 +516,10 @@ describe('useSipClient', () => {
 
   it('should not crash sendDTMF without active session', () => {
     const { result } = renderHook(() => useSipClient());
-    act(() => { result.current.sendDTMF('1'); });
+    // Sem sessão ativa o DTMF não tem por onde sair. O contrato do hook é não
+    // lançar: `sendDTMF` só repassa para o motor (useSipClient.ts:74), então o
+    // que este teste guarda é justamente o caminho sem sessão não explodir.
+    expect(() => act(() => { result.current.sendDTMF('1'); })).not.toThrow();
   });
 
   it('should reject a second makeCall while one is already in progress', async () => {
@@ -552,6 +555,63 @@ describe('useSipClient', () => {
     await act(async () => { vi.advanceTimersByTime(5000); });
 
     expect(result.current.callDuration).toBe(aosTresSegundos);
+    vi.useRealTimers();
+  });
+
+  it('cronômetro: Established repetido NÃO soma dois intervalos (não acelera)', async () => {
+    // Um `Established` reemitido (re-INVITE/reconexão) chamava `startTimer` de novo SEM limpar o
+    // intervalo anterior: dois intervalos vivos = cronômetro andando 2x por segundo, e o
+    // `stopTimer` do fim matando só um deles.
+    vi.useFakeTimers();
+    const { result } = await montarRegistrado();
+    await act(async () => { await result.current.makeCall('111'); await escoar(); });
+
+    await evento('Established');
+    await evento('Established');
+    expect(vi.getTimerCount()).toBe(1);
+
+    await act(async () => { vi.advanceTimersByTime(3000); });
+    expect(result.current.callDuration).toBe(3); // e não 6
+    vi.useRealTimers();
+  });
+
+  it('cronômetro: a 2ª chamada reinicia em 0 (não herda a duração da anterior)', async () => {
+    vi.useFakeTimers();
+    const { result } = await montarRegistrado();
+
+    await act(async () => { await result.current.makeCall('111'); await escoar(); });
+    await evento('Established');
+    await act(async () => { vi.advanceTimersByTime(5000); });
+    expect(result.current.callDuration).toBe(5);
+
+    await evento('Terminated');
+    await act(async () => { vi.advanceTimersByTime(2000); await escoar(); }); // `ended` volta a `idle`
+    expect(result.current.callStatus).toBe('idle');
+
+    await act(async () => { await result.current.makeCall('222'); await escoar(); });
+    await evento('Established');
+    // Sem o `setCallDuration(0)` do `startTimer`, a segunda ligação abriria mostrando 5.
+    expect(result.current.callDuration).toBe(0);
+
+    await act(async () => { vi.advanceTimersByTime(4000); });
+    expect(result.current.callDuration).toBe(4);
+    vi.useRealTimers();
+  });
+
+  it('cronômetro: encerrada a chamada não fica nenhum timer vivo (sem zumbi)', async () => {
+    // Cobre o `clearInterval` do `stopTimer`: sem ele o intervalo segue vivo depois de desligar e
+    // a duração continuaria subindo sozinha (a linha gravada no banco sairia errada).
+    vi.useFakeTimers();
+    const { result } = await montarRegistrado();
+    await act(async () => { await result.current.makeCall('111'); await escoar(); });
+    await evento('Established');
+    await act(async () => { vi.advanceTimersByTime(3000); });
+
+    await evento('Terminated');
+    await act(async () => { vi.advanceTimersByTime(2000); await escoar(); }); // o idle-reset já disparou
+
+    expect(result.current.callStatus).toBe('idle');
+    expect(vi.getTimerCount()).toBe(0);
     vi.useRealTimers();
   });
 

@@ -10,6 +10,8 @@ import {
   normalizeEvolutionCallVideo,
   normalizeEvolutionCallStatus,
   shouldNotifyIncomingCall,
+  direcaoDaChamada,
+  deveNotificarChamada,
 } from "./notification-events.ts";
 
 // Re-export message handlers for backward compatibility
@@ -82,6 +84,28 @@ export async function handleConnectionUpdate(supabase: any, instance: string, ba
       message: `A instância ${instance}${phone} perdeu conexão com o WhatsApp. Reconecte imediatamente para evitar perda de mensagens.`,
       source: 'evolution-webhook',
     });
+  }
+
+  // F60 (gatilho): motivo TERMINAL nao e soluço de rede — a instancia esta fora e nao volta
+  // sozinha. Pausa todos os dispatches ativos da conexao (a funcao decide; aqui so
+  // reportamos o sinal). O mapeamento e EXPLICITO: casar por nome parecido entre o
+  // vocabulario do Evolution e o da funcao seria o jeito de o gatilho nunca disparar.
+  if (status === 'disconnected' && TERMINAL_DISCONNECT_REASONS.has(disconnectReason)) {
+    const signalByReason: Record<string, string> = {
+      Banned: 'banned',
+      TempBanned: 'TemporaryBan',
+      connectFailure: 'ConnectFailure',
+    };
+    const { data: riskConn } = await supabase.from('whatsapp_connections')
+      .select('id').eq('instance_id', instance).maybeSingle();
+    if (riskConn?.id) {
+      const { error: riskError } = await supabase.rpc('register_multiplix_connection_failure', {
+        p_connection_id: riskConn.id,
+        p_signal: signalByReason[disconnectReason] ?? 'connection_lost',
+        p_error_class: 'permanent',
+      });
+      if (riskError) console.error(`multiplix_connection_risk_failed: ${riskError.message}`);
+    }
   }
 
   if (status === 'connected' && prevConn?.status !== 'connected') {
@@ -247,6 +271,9 @@ export async function handleCallEvent(supabase: any, instance: string, data: unk
   const from = callData.from as string;
   const isVideo = normalizeEvolutionCallVideo(callData.isVideo);
   const callStatus = typeof callData.status === 'string' ? callData.status : '';
+  // T25: direcao pelo payload (`fromMe`/`isOutgoing`). A RPC `record_incoming_call_event`
+  // ainda grava 'inbound' fixo; persistir a direcao depende do T26 (migration propria).
+  const direcao = direcaoDaChamada(callData);
   if (!from) return;
 
   const phone = from.replace('@s.whatsapp.net', '');
@@ -289,7 +316,9 @@ export async function handleCallEvent(supabase: any, instance: string, data: unk
     p_status: normalizedStatus,
     p_is_video: isVideo,
     p_provider_event_id: eventId,
-    p_should_notify: shouldNotifyIncomingCall(callStatus),
+    p_should_notify: deveNotificarChamada(callStatus, direcao),
+    // T26: a RPC passou a receber a direcao; sem ela gravava 'inbound' fixo.
+    p_direction: direcao,
   });
   if (persistError) throw new Error('Unable to persist incoming call event');
 }

@@ -400,3 +400,276 @@ ambiente** e o bloco não pede token nem deploya.
 - **Para fechar:** rodar `collect-remote.mjs` (com `SUPABASE_ACCESS_TOKEN` +
   `--snapshot` ou `--before`/`--git-sha`/`--run-id`/`--scope`) e anexar aqui a
   evidência de digest contra o deploy.
+
+## CT-74 — Lighthouse na view autenticada do catálogo (medido em 2026-10-02)
+
+**Aceite do plano:** *Lighthouse perf ≥ 90 na view em 4G; CLS < 0,05*.
+**Resultado medido: os dois critérios NÃO foram atingidos — perf 44 e CLS 0,2455.**
+O CT-74 **não pode ser marcado**.
+
+### Método (por que a medição é da view, e não da tela de login)
+
+O Lighthouse não tem sessão. Medir `?view=catalog` sem login faz o app redirecionar para
+`/auth` e o número vira o da tela de **login**. O caminho usado foi:
+
+1. Chrome headless com **perfil persistente** exposto por CDP (`--remote-debugging-port`);
+2. **login real da conta de teste (COMPRAS) dentro desse perfil**, até `#main-navigation`;
+3. confirmação de que a grade carregou (24 cartões) **antes** de medir;
+4. `Network.clearBrowserCache` (sessão preservada) para não medir cache aquecido;
+5. `lighthouse@12` anexado por `--port` (preset mobile = Slow 4G + CPU 4×) contra produção.
+
+> **Armadilha medida e descartada.** `launchPersistentContext` **não aplica `storageState`**.
+> As três primeiras rodadas (dev server, preview local e produção: perf 45, 71 e 69) mediram
+> `https://zapp-web-v2.vercel.app/auth` — a **tela de login** — e foram jogadas fora. Só a
+> rodada com login dentro do perfil mediu a view de verdade (`.finalDisplayedUrl` conferido).
+
+### Resultado — produção `https://zapp-web-v2.vercel.app/?view=catalog`
+
+```console
+URL MEDIDO: https://zapp-web-v2.vercel.app/?view=catalog
+PERF: 44      (aceite: >= 90)   -> NAO CUMPRIDO
+CLS:  0.2455  (aceite: < 0.05)  -> NAO CUMPRIDO
+FCP 3,4 s | LCP 7,3 s | TBT 460 ms | SI 4,3 s | TTI 7,3 s
+202 requisicoes | 906 KB transferidos | 4 requisicoes da edge do catalogo
+mobile (Slow 4G, CPU 4x) | lighthouse 12.8.2 | cache HTTP limpo
+```
+
+### Causas medidas (não supostas)
+
+- **CLS 0,2455 — 0,2211 vem de UM elemento:** a faixa de KPIs
+  (`data-testid="catalog-kpi…"`, classes `grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6`)
+  que **cresce quando os dados chegam** e empurra a grade para baixo. Os chips de categoria
+  somam outros 0,0222. Correção provável: reservar a altura da faixa (skeleton com a altura
+  final) e não inserir os chips depois do primeiro paint.
+- **1210 ms de JavaScript não usado** no carregamento inicial (candidato a corte por import
+  dinâmico — relacionado ao CT-75).
+- **LCP 7,3 s** aponta para um `<p class="text-[13px] text-foreground-secondary mt-0.5">`,
+  ou seja o LCP é **o conteúdo do catálogo chegando**, não o shell. Com 906 KB e 202
+  requisições em Slow 4G, o peso de rede domina.
+
+### O que fica aberto
+
+- **CT-74 continua aberto:** falta a correção (faixa de KPIs + peso de JS) e nova medição.
+  Corrigida a faixa, o CLS tende a entrar no aceite; o perf ≥ 90 exige mais que isso.
+- Artefato cru desta medição: `.tmp/lh-prod.json` (relatório completo do Lighthouse).
+
+### Re-medição depois do restart do banco canônico (02/10, ~15:30)
+
+Com o banco de volta, a medição foi **repetida com a mesma metodologia** (produção, mobile/Slow 4G,
+cache HTTP limpo, sessão COMPRAS dentro do perfil do Chrome):
+
+```console
+URL MEDIDO: https://zapp-web-v2.vercel.app/?view=catalog
+PERF: 39      (1a medicao: 44)
+CLS:  0.2451  (1a medicao: 0.2455)
+FCP 3,4 s | LCP 7,3 s | TBT 680 ms | SI 3,8 s | TTI 7,3 s
+203 requisicoes | 4 requisicoes da edge do catalogo
+```
+
+Leitura: duas medições independentes dão o **mesmo CLS (~0,245)** e perf na mesma faixa (39–44) —
+o veredito do aceite (≥ 90 e < 0,05) **não muda** com o banco saudável, e a causa dominante do CLS
+(a faixa de KPIs) fica confirmada. Artefatos crus (fora dos workspaces, que são apagados na limpeza):
+`~/.cache/hermes-pr/ct74-20261002-lh-prod.json` (1ª) e
+`~/.cache/hermes-pr/ct74-20261002-lh-prod-2.json` (2ª).
+
+## CT-73 — payload de `list_products compact` (medido em 2026-10-02)
+
+**Aceite do plano:** *payload de `list_products compact` medido (< 30 KB por página de 24) —
+se passar, cortar campos. Aceite: medição em `PERF.md`.*
+
+Método: sessão autenticada real em produção, medindo o corpo de cada resposta da edge
+`promogifts-catalog`, com a ação lida do **corpo da requisição** (o `action` vai na requisição,
+não na resposta).
+
+```console
+list_products | limit=24 | offset=0 | 81,5 KB
+bootstrap     | limit=null | offset=null | 186,1 KB
+```
+
+Leitura: o alvo de **< 30 KB por página de 24 NÃO é atingido** — a página de 24 produtos traz
+**81,5 KB** (2,7× o teto). O `bootstrap` (que não é o alvo deste item) traz 186,1 KB. O aceite
+do CT-73 é a **medição**, que está feita; o corte de campos fica como o próximo passo, com o
+número agora conhecido.
+
+## CT-74 — correção aplicada (2026-10-02): o strip de KPIs reserva o espaço
+
+**Causa medida:** o layout shift de 0,2211 (dos 0,2455 totais) vinha de
+`data-testid="catalog-kpi-strip"`. No código (`catalogShared.tsx`), o `CatalogKpiStrip` devolvia
+**`null`** quando não havia número em `stats` — o strip nascia **depois** do primeiro paint e
+empurrava a grade.
+
+**Correção:** sem dados (ou carregando), o esqueleto **ocupa o lugar** (mesma grade, elemento
+`data-testid="catalog-kpi-strip-placeholder"`, `aria-hidden`), em vez de o componente sumir.
+
+**Prova de que a altura casa:** medido em produção, na view autenticada —
+`alturaStrip = 72 px`, `alturaCardKpi = 72 px`, 6 KPIs. O esqueleto é `h-[72px]`, ou seja a
+troca de estado **não muda a altura** (que era o mecanismo do shift).
+
+**Teste:** `src/components/catalog/__tests__/CT74_kpiStripCls.test.tsx` (vermelho antes: o
+placeholder era `null`; verde depois). O caso antigo de `catalogShared.test.tsx`
+("sem stats, não renderiza nada") foi atualizado com o porquê, porque codificava o comportamento
+que causava o shift.
+
+**Pendente:** a re-medição do CLS em produção **depois do deploy** desta correção (o número
+esperado é CLS próximo de 0; o desempenho geral exige mais que isso — ver a medição acima).
+
+## CT-19 / CT-94 — rate limit medido em produção (2026-10-02): NÃO está ativo
+
+**Aceite do CT-19:** *61 chamadas de `bootstrap` em 1 min → 429; 100 de `list_products` → 200.*
+**Aceite do CT-94:** *rate limit testado em produção (61 × `bootstrap` → 429) e a UI de CT-59 reage. Aceite: print.*
+
+Método: sessão autenticada real, reusando o **mesmo cabeçalho** que o app manda para a edge
+(`https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/promogifts-catalog`), lido da requisição do
+próprio app. As 61 chamadas foram disparadas **em paralelo** — o primeiro teste, sequencial, levava
+mais que a janela de 60 s e o resultado seria artefato meu.
+
+```console
+CT-19 | 61 bootstrap em paralelo em 8290 ms: 429=0 | distintos=[200]
+CT-19 | list_products 1..100: distintos=[200]
+CT-94 | UI depois do 429: []
+```
+
+Leitura: **o limite não é aplicado em produção** — 61 chamadas dentro da janela e **nenhuma** resposta
+429. O "100 de `list_products` → 200" do aceite é verdade de forma trivial justamente porque não há
+limite: não é evidência de que o limite funcione. A UI também não reage (não há 429 para reagir), logo
+o print do CT-94 é impossível enquanto o deploy não acontecer.
+
+O próprio item já registrava a causa: *"falta o deploy da edge, que o próprio aceite exige"*. O deploy
+de edge só acontece pelo `hermes-tarefa-mergear` e só para função **alterada** — o código do CT-19
+está mergeado e inalterado desde então, então nunca foi publicado. **Não contornei esse caminho.**
+
+## CT-64 — filtro "Novidades" (2026-10-02): medido, aceite NÃO comprovado
+
+**Aceite do CT-64:** *contagem bate com `new_30d` do stats.*
+
+Medido na tela autenticada de produção:
+
+```console
+CT-64 | KPIs na tela: Produtos no total 7.746 | Categorias 27 | Fornecedores 4 | Em estoque 6.115 | Em destaque 2.147 | Novidades 364
+CT-64 | chip de estado: "Mostrando só Novidades · limpar"
+CT-64 | total da edge com o filtro aplicado: null
+```
+
+- O número do stats está confirmado na tela: **Novidades = 364**.
+- Clicar no KPI **aplica** o filtro (o chip de estado do CT-65 aparece com o texto exato).
+- A **contagem do filtro não pôde ser lida**: o contador da grade não é um `data-testid` simples (o
+  "7.746" vem do subtítulo, não do resultado filtrado) e a resposta da edge ao aplicar o chip não traz
+  nenhum campo de total (`total`, `count`, `total_count`, `totalCount`, `returned`).
+- Os nomes que o plano usa — `new_or_recent` na edge e `new_30d` no stats — **não existem** no código
+  (`rg` não acha nenhum dos dois em `supabase/functions/promogifts-catalog/index.ts` nem em
+  `src/hooks/integrations/useExternalCatalog.ts`). Ou seja: o aceite pede comparar duas coisas que o
+  código não nomeia assim.
+
+**Sem a contagem do filtro, o aceite ("bate com") não pode ser afirmado** — fica declarado como não
+comprovado, com tudo o que foi medido acima.
+
+## CT-19 / CT-94 — re-medição COM o deploy publicado (2026-10-02): a causa é o código
+
+O Joaquim autorizou e disparou o workflow `deploy-functions` para `promogifts-catalog` a partir da `main`
+(run **37068703384**, SUCCESS). Repeti a medição na mesma metodologia (sessão autenticada, mesmo cabeçalho
+do app, disparo em paralelo com tempo medido):
+
+```console
+CT-19 | 61 bootstrap em paralelo em 12617 ms: 429=0 | distintos=[200]
+CT-19 | list_products 1..100: distintos=[200]
+
+# rajadas maiores, para provar que não é questão de tamanho:
+rajada de 120 bootstrap em 15955 ms -> {"200":120}
+rajada de 300 bootstrap em 34313 ms -> {"200":299,"503":1}
+```
+
+**Nenhum 429 em 421 chamadas paralelas.** Então não era o deploy (minha conclusão anterior, que eu
+corrijo aqui). A causa está no código, e é de projeto:
+
+```ts
+// supabase/functions/promogifts-catalog/index.ts:135
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+// :166-177 — checkRateLimit(userId, action) lê e incrementa esse Map em memória
+```
+
+O balde vive na **memória do isolate**. Requisições paralelas são atendidas por **isolates diferentes**,
+cada um com o seu `Map` começando em zero — o contador do usuário nunca soma 60 em um único isolate. E
+cada cold start (ou deploy) zera tudo. Resultado medido: 421 chamadas paralelas, **zero** cortes, com o
+único não-200 sendo **um 503** no meio de 300 (o próprio limite de concorrência da plataforma).
+
+**O que o aceite do CT-19 exigia** (61 `bootstrap` → 429 e 100 `list_products` → 200) **não é alcançável
+com esta implementação**: o "100 → 200" é verdade trivial e o "61 → 429" nunca acontece porque o balde
+não é compartilhado. **O CT-94 cai junto**: sem 429 não existe reação da UI para fotografar.
+
+**Achado (não corrigido aqui, de propósito):** um limitador por usuário precisa de estado compartilhado
+(tabela/RPC no Postgres, ou KV) — em memória de isolate ele não limita nada sob concorrência. Fica
+registrado para o Claude planejar; mudar a edge por conta própria está fora do meu caminho.
+
+## CT-74 — re-medição pós-deploy da correção (2026-10-02): o CLS NÃO mudou
+
+A correção do #1682 (o strip de KPIs passou a reservar o espaço) já está publicada. Repeti a medição com a
+mesma metodologia (produção, mobile/Slow 4G, cache limpo, login dentro do perfil persistente):
+
+```console
+URL MEDIDO: https://zapp-web-v2.vercel.app/?view=catalog
+PERF: 44      CLS: 0.2452
+first-contentful-paint: 3.4 s | largest-contentful-paint: 7.8 s | total-blocking-time: 470 ms
+speed-index: 3.8 s | interactive: 7.8 s | cartoes=24 | requisicoes=202 | do catalogo(edge)=4
+```
+
+| medição | perf | CLS |
+|---|---|---|
+| 1ª (antes da correção) | 44 | 0,2455 |
+| 2ª (antes da correção) | 39 | 0,2451 |
+| **3ª (DEPOIS da correção)** | **44** | **0,2452** |
+
+**Leitura honesta: a correção não mudou o CLS.** Os três números são indistinguíveis dentro da variação entre
+execuções. Ou seja, a "causa medida" que eu atribuí à faixa de KPIs **não era a causa** — a correção em si é
+correta e inofensiva (reservar o espaço evita um salto quando não há dados), mas ela **não** é o que produz
+~0,245 de CLS.
+
+O que isso **não** diz: não sei ainda qual elemento produz o shift. A atribuição do Lighthouse apontava o
+`data-testid="catalog-kpi-strip"`, mas elemento que **se move** aparece na atribuição mesmo quando quem cresce
+está **acima** dele (cabeçalho, abas, barra de filtros, fonte) — e a altura do próprio strip eu conferi: 72 px
+no esqueleto e 72 px no estado carregado. **Investigar o CLS com a atribuição refeita depois da correção é o
+próximo passo** (não feito aqui).
+
+## CT-19 — terceira medição independente (2026-10-02, após novo edge-deploy)
+
+```console
+CT-19 | 61 bootstrap em paralelo em 8464 ms: 429=0 | distintos=[200]
+CT-19 | list_products 1..100: distintos=[200]
+```
+
+Uma publicação de edge mais nova apareceu no repositório
+(`edge-deploy/20261002-221654-7beb799c-37071463796`) e o resultado **não mudou**: segue **sem 429**. Agora são
+três medições independentes (61, 120 e 300 chamadas paralelas, em três momentos) com o mesmo veredito — o
+balde em memória do isolate não limita sob concorrência.
+
+## CT-74 — atribuição do CLS refeita depois da correção (2026-10-02): quem se move é o strip, quem empurra está acima
+
+Refiz a atribuição lendo o artefato cru da medição pós-correção (`audits["layout-shifts"]`), em vez de correr
+o Lighthouse de novo — o dado já estava lá.
+
+```console
+0.2211299987485109  div#radix-...-content-produtos > div.w-full > div.space-y-6 > div.grid
+0.0221630653540655  div.w-full > div.space-y-6 > div.flex > button.catalog-category-chip
+0.0018030944418027  (sem seletor)
+0.0006058630719204  div.h-full > div.w-full > div.inline-flex > button#radix-...-trigger-favoritos
+```
+
+O item maior não é "um grid qualquer": o próprio Lighthouse entrega o `snippet` e o retângulo.
+
+```json
+{"selector": "div#radix-_-content-produtos > div.w-full > div.space-y-6 > div.grid",
+ "snippet": "<div data-testid=\"catalog-kpi-strip\" class=\"grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3\">",
+ "boundingRect": {"top": 369, "bottom": 609, "left": 16, "right": 396, "width": 380, "height": 240}}
+```
+
+Leitura, agora com o dado certo:
+
+- **É a faixa de KPIs que se move** (0,2211, o mesmo valor de antes — coerente com a correção não ter mexido no CLS).
+- Mas ela **não muda de tamanho**: em mobile são 6 cards em `grid-cols-2` = 3 linhas = **240 px**, e a altura por
+  card é a mesma nos dois estados (o esqueleto é `h-[72px]`, e em 1440 px eu conferi 72 px = 72 px). O que a
+  medição de 1440 px mediu foi a altura de **uma linha**; em mobile o bloco tem 3 linhas.
+- Logo, **quem a empurra está acima dela**: o `top = 369` a coloca logo abaixo do cabeçalho/abas, e o próprio
+  relatório mostra a aba "favoritos" shiftando também (0,0006). O Lighthouse nomeia o elemento que **se move** —
+  não quem cresce.
+- **Próximo passo (não feito aqui):** medir a altura do bloco **acima** do strip (cabeçalho, subtítulo com a
+  contagem de produtos, abas) antes e depois de os dados chegarem — com a rede atrasada de propósito, para ter
+  o antes. É a medição que aponta o culpado; a minha tese anterior (o próprio strip) já está descartada.

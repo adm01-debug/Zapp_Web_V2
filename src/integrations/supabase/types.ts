@@ -467,46 +467,55 @@ export type Database = {
       }
       ai_usage_logs: {
         Row: {
+          attempt: number | null
           created_at: string
           duration_ms: number | null
           error_message: string | null
           function_name: string
           id: string
           input_tokens: number | null
+          job_id: string | null
           metadata: Json | null
           model: string | null
           output_tokens: number | null
           profile_id: string | null
+          request_id: string | null
           status: string
           total_tokens: number | null
           user_id: string | null
         }
         Insert: {
+          attempt?: number | null
           created_at?: string
           duration_ms?: number | null
           error_message?: string | null
           function_name: string
           id?: string
           input_tokens?: number | null
+          job_id?: string | null
           metadata?: Json | null
           model?: string | null
           output_tokens?: number | null
           profile_id?: string | null
+          request_id?: string | null
           status?: string
           total_tokens?: number | null
           user_id?: string | null
         }
         Update: {
+          attempt?: number | null
           created_at?: string
           duration_ms?: number | null
           error_message?: string | null
           function_name?: string
           id?: string
           input_tokens?: number | null
+          job_id?: string | null
           metadata?: Json | null
           model?: string | null
           output_tokens?: number | null
           profile_id?: string | null
+          request_id?: string | null
           status?: string
           total_tokens?: number | null
           user_id?: string | null
@@ -7196,6 +7205,65 @@ export type Database = {
           },
         ]
       }
+      talkx_campaign_segments: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          paused_at: string | null
+          position: number
+          segment_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          paused_at?: string | null
+          position: number
+          segment_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          paused_at?: string | null
+          position?: number
+          segment_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talkx_campaign_segments_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaign_metrics"
+            referencedColumns: ["campaign_id"]
+          },
+          {
+            foreignKeyName: "talkx_campaign_segments_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaign_metrics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_campaign_segments_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_campaign_segments_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_segments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       talkx_campaigns: {
         Row: {
           audience_filters: Json
@@ -7214,6 +7282,7 @@ export type Database = {
           id: string
           launched_at: string | null
           launched_by: string | null
+          max_per_minute: number | null
           media_type: string | null
           media_url: string | null
           message_template: string
@@ -7266,6 +7335,7 @@ export type Database = {
           id?: string
           launched_at?: string | null
           launched_by?: string | null
+          max_per_minute?: number | null
           media_type?: string | null
           media_url?: string | null
           message_template: string
@@ -7318,6 +7388,7 @@ export type Database = {
           id?: string
           launched_at?: string | null
           launched_by?: string | null
+          max_per_minute?: number | null
           media_type?: string | null
           media_url?: string | null
           message_template?: string
@@ -7618,6 +7689,45 @@ export type Database = {
           },
         ]
       }
+      talkx_optout_keywords: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          keyword: string
+          match_mode: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          keyword: string
+          match_mode?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          keyword?: string
+          match_mode?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talkx_optout_keywords_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_optout_keywords_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       talkx_recipients: {
         Row: {
           attempt_count: number
@@ -7645,6 +7755,7 @@ export type Database = {
           replied_at: string | null
           reply_message_id: string | null
           retry_after: string | null
+          segment_id: string | null
           sent_at: string | null
           status: string
           updated_at: string
@@ -7677,6 +7788,7 @@ export type Database = {
           replied_at?: string | null
           reply_message_id?: string | null
           retry_after?: string | null
+          segment_id?: string | null
           sent_at?: string | null
           status?: string
           updated_at?: string
@@ -7709,6 +7821,7 @@ export type Database = {
           replied_at?: string | null
           reply_message_id?: string | null
           retry_after?: string | null
+          segment_id?: string | null
           sent_at?: string | null
           status?: string
           updated_at?: string
@@ -9651,6 +9764,37 @@ export type Database = {
           },
         ]
       }
+      talkx_campaign_optouts: {
+        Row: {
+          auto_optout_count: number | null
+          campaign_id: string | null
+          last_optout_at: string | null
+          optout_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talkx_blacklist_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaign_metrics"
+            referencedColumns: ["campaign_id"]
+          },
+          {
+            foreignKeyName: "talkx_blacklist_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaign_metrics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_blacklist_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_connections_agent: {
         Row: {
           id: string | null
@@ -9837,6 +9981,10 @@ export type Database = {
       }
       ai_rate_limit_purge: { Args: { p_older_than: string }; Returns: number }
       ai_text_array: { Args: { p_value: Json }; Returns: string[] }
+      apply_pg_cron_escalonamento: {
+        Args: { p_reverter?: boolean }
+        Returns: number
+      }
       apply_zapp_cron_secrets_l5: { Args: never; Returns: undefined }
       calculate_level: { Args: { xp_amount: number }; Returns: number }
       can_delete_contacts: {
@@ -10199,6 +10347,10 @@ export type Database = {
       conversation_closure_day: {
         Args: { p_created_at: string }
         Returns: string
+      }
+      count_multiplix_dead_letters: {
+        Args: { p_dispatch_id?: string }
+        Returns: number
       }
       count_searchbox_sessions_this_month: { Args: never; Returns: number }
       create_department_invite: {
@@ -10692,6 +10844,14 @@ export type Database = {
         Args: { p_id: string; p_lease_seconds?: number; p_lease_token: string }
         Returns: boolean
       }
+      heartbeat_multiplix_item: {
+        Args: {
+          p_claim_token: string
+          p_item_id: string
+          p_lease_seconds?: number
+        }
+        Returns: boolean
+      }
       increment_agent_messages: {
         Args: { p_profile_id: string; p_type: string }
         Returns: Json
@@ -10763,6 +10923,35 @@ export type Database = {
         Returns: undefined
       }
       leave_team_group: { Args: { p_conversation_id: string }; Returns: Json }
+      list_multiplix_claimable_items: {
+        Args: { p_dispatch_id: string; p_limit?: number }
+        Returns: {
+          attempt_count: number
+          block_id: string
+          block_order: number
+          company_id: string
+          item_id: string
+          next_attempt_at: string
+          recipient_id: string
+        }[]
+      }
+      list_multiplix_dead_letters: {
+        Args: { p_dispatch_id?: string; p_limit?: number }
+        Returns: {
+          attempt_count: number
+          block_id: string
+          block_order: number
+          destino_mascarado: string
+          dispatch_id: string
+          dispatch_name: string
+          error_class: string
+          error_message: string
+          failed_at: string
+          item_id: string
+          next_attempt_at: string
+          recipient_id: string
+        }[]
+      }
       log_audit_event: {
         Args: {
           p_action: string
@@ -10871,6 +11060,7 @@ export type Database = {
       }
       notify_due_reminders: { Args: never; Returns: number }
       notify_due_tasks: { Args: never; Returns: number }
+      notify_searchbox_budget: { Args: never; Returns: number }
       persist_conversation_analysis: {
         Args: { p_analysis: Json; p_analyzed_at?: string; p_contact_id: string }
         Returns: Json
@@ -10937,24 +11127,46 @@ export type Database = {
           locked_until: string
         }[]
       }
-      record_incoming_call_event: {
-        Args: {
-          p_contact_id: string
-          p_is_video: boolean
-          p_provider_event_id?: string
-          p_should_notify?: boolean
-          p_status: string
-          p_whatsapp_connection_id: string
-        }
-        Returns: {
-          call_id: string
-          duplicate: boolean
-          notification_created: boolean
-          notification_id: string
-        }[]
-      }
+      record_incoming_call_event:
+        | {
+            Args: {
+              p_contact_id: string
+              p_is_video: boolean
+              p_provider_event_id?: string
+              p_should_notify?: boolean
+              p_status: string
+              p_whatsapp_connection_id: string
+            }
+            Returns: {
+              call_id: string
+              duplicate: boolean
+              notification_created: boolean
+              notification_id: string
+            }[]
+          }
+        | {
+            Args: {
+              p_contact_id: string
+              p_direction?: string
+              p_is_video: boolean
+              p_provider_event_id?: string
+              p_should_notify?: boolean
+              p_status: string
+              p_whatsapp_connection_id: string
+            }
+            Returns: {
+              call_id: string
+              duplicate: boolean
+              notification_created: boolean
+              notification_id: string
+            }[]
+          }
       record_multiplix_item_delivered: {
-        Args: { p_connection_id: string; p_external_id: string }
+        Args: {
+          p_connection_id: string
+          p_event?: string
+          p_external_id: string
+        }
         Returns: boolean
       }
       record_multiplix_item_sent: {
@@ -11330,6 +11542,16 @@ export type Database = {
           waiting_since: string
         }[]
       }
+      talkx_analytics_scope: {
+        Args: {
+          p_audience_source?: string
+          p_channel?: string
+          p_department_id?: string
+        }
+        Returns: {
+          campaign_id: string
+        }[]
+      }
       talkx_audience_query: {
         Args: {
           p_contact_ids?: string[]
@@ -11344,11 +11566,17 @@ export type Database = {
         }[]
       }
       talkx_benchmarks: { Args: never; Returns: Json }
+      talkx_campaign_pace: { Args: { p_campaign_id: string }; Returns: Json }
       talkx_campaign_report: { Args: { p_campaign: string }; Returns: Json }
+      talkx_connection_send_budget: {
+        Args: { p_connection_id: string }
+        Returns: Json
+      }
       talkx_increment_delivered: {
         Args: { p_campaign_id: string }
         Returns: undefined
       }
+      talkx_match_optout: { Args: { p_text: string }; Returns: string }
       talkx_next_recipients: {
         Args: { p_campaign_id: string; p_limit?: number }
         Returns: {
@@ -11364,8 +11592,16 @@ export type Database = {
           status: string
         }[]
       }
+      talkx_normalize_optout_text: { Args: { p_text: string }; Returns: string }
       talkx_overview_stats: {
-        Args: { p_from: string; p_to: string }
+        Args: {
+          p_audience_source?: string
+          p_channel?: string
+          p_department_id?: string
+          p_from: string
+          p_timezone?: string
+          p_to: string
+        }
         Returns: Json
       }
       talkx_recipient_is_suppressed: {
@@ -11382,9 +11618,26 @@ export type Database = {
         }
         Returns: Json
       }
+      talkx_resolve_speed_pace: {
+        Args: {
+          p_send_interval_max: number
+          p_send_interval_min: number
+          p_speed_profile: string
+          p_typing_delay_max: number
+          p_typing_delay_min: number
+        }
+        Returns: {
+          send_interval_max: number
+          send_interval_min: number
+          speed_profile: string
+          typing_delay_max: number
+          typing_delay_min: number
+        }[]
+      }
       talkx_segment_tags: { Args: { p_segment: string }; Returns: Json }
       talkx_suppress_contact: {
         Args: {
+          p_campaign_id?: string
           p_contact_id: string
           p_origin: string
           p_phone: string

@@ -159,10 +159,10 @@ export function VoIPPanel() {
   return (
     <div className="space-y-6 w-full min-w-0">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+        <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
           <Phone className="w-6 h-6 text-primary" />
           Telefonia
-        </h2>
+        </h1>
         <p className="text-sm text-muted-foreground mt-1">
           Suas ligações por VoIP e WhatsApp
         </p>
@@ -300,7 +300,7 @@ export function VoIPPanel() {
               {selectedCall ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-foreground">Detalhe da chamada</h3>
+                    <h2 className="text-sm font-semibold text-foreground">Detalhe da chamada</h2>
                     <Button variant="ghost" size="icon" className="w-7 h-7" onClick={resetSelection} aria-label="Fechar detalhe">
                       <X className="w-4 h-4" />
                     </Button>
@@ -359,6 +359,8 @@ export function VoIPPanel() {
                   callDuration={sip.callDuration}
                   isMuted={sip.isMuted}
                   currentNumber={sip.currentNumber}
+                  numeroInicial={sip.numeroPendente}
+                  key={`discador-${sip.numeroPendente ?? 'vazio'}`}
                   callDirection={sip.callDirection}
                   sipReason={sipReason}
                   onConnect={sip.connectWithStoredCredentials}

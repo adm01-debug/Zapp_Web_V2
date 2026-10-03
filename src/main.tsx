@@ -27,8 +27,10 @@ window.addEventListener('error', (event) => {
   reportClientError(event.error ?? event.message, { source: 'window.onerror' });
 });
 
-// Initialize Web Vitals monitoring
+// Initialize Web Vitals monitoring (alvos de performance-budget.json) + envio ao Speed Insights
 initWebVitals();
+// Speed Insights num módulo lazy: não entra no bundle inicial (a folga do orçamento é pequena).
+void import("./lib/speed-insights").then((m) => m.initSpeedInsights());
 
 const rootElement = document.getElementById("root");
 
@@ -40,8 +42,16 @@ if (!rootElement) {
 
 // ErrorBoundary wraps the entire app so any unhandled render error
 // shows a friendly UI instead of a blank screen.
+//
+// E38: StrictMode ligado. O código ja tinha defesas escritas PARA ele
+// (useSupabaseRealtime, VoIPPanel, team-chat citam o remount em comentario),
+// mas ele nunca foi montado — entao nenhuma dessas defesas era exercitada.
+// Em 19.3 o StrictMode monta/desmonta e re-renderiza duas vezes em dev,
+// expondo efeitos sem cleanup e impurezas de render. E so em desenvolvimento.
 ReactDOM.createRoot(rootElement).render(
-  <App />
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
 );
 
 // Accessibility auditing in development mode, deferred so it never blocks preview boot.
@@ -49,6 +59,13 @@ if (import.meta.env.DEV) {
   window.setTimeout(() => {
     import('@axe-core/react').then((axe) => {
       axe.default(React, ReactDOM, 1000, undefined, undefined, (results) => {
+        // O axe audita a cada ciclo de render. Sem esperar o app montar, ele mede
+        // arvores transitorias e reporta o que nao existe no estado final:
+        // landmark-one-main e page-has-heading-one "faltando", aria-hidden-focus em
+        // subarvores que o React remove na hidratacao e aria-input-field-name em
+        // campo que ganha nome depois. Medido em 02/10/2026: tres varreduras com
+        // axe no DOM assentado nao encontram nenhuma dessas regras.
+        if (!document.querySelector('main')) return;
         const violations = results?.violations;
         if (violations?.length) {
           log.warn(`[A11Y] ${violations.length} accessibility violation(s) detected`);

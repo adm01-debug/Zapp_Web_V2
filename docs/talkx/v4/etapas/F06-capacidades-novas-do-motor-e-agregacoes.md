@@ -69,6 +69,8 @@ X072…X188 (tela 07: banco, depois tela).
 - **Aceite:** novo `scripts/db-audit/talkx-campaign-segments.test.sh`: 3 segmentos com 10, 8 e 5 contatos e 4 repetidos → 19 destinatários, cada um com o `segment_id` do primeiro segmento que o contém; 11 segmentos → `22023`; campanha antiga com `segment_id` ganha 1 linha na tabela nova. `talkx-draft-save.test.sh` ajustado.
 - **V3:** V100 (item de backlog "multi-segmento")
 - **Negócio:** uma campanha pode usar vários segmentos e cada contato aparece com o segmento de origem.
+- **Entregue parcialmente em 02/10 (X057a):** a parte **estrutural** entrou — `talkx_campaign_segments` com a RLS espelhada de campanhas, `talkx_recipients.segment_id` + índice `(campaign_id, segment_id, status)`, backfill de 1 linha por campanha existente com segmento, e realtime das duas tabelas. A parte de **comportamento (X057b)** ficou para sessão com contexto dedicado: `save_talkx_campaign_draft` aceitando `segment_ids` e `snapshot_talkx_campaign_audience` resolvendo os segmentos em ordem. São duas RPCs `SECURITY DEFINER` que formam o **motor de audiência do disparo** — não cabem como continuação de contexto já gasto — e vão junto com o harness que prova os números deste aceite (19 destinatários / `22023`).
+- **Correção de base para quem pegar a X057b:** o corpo de `save_talkx_campaign_draft` **não** está em `M:20260912130000` — a última redefinição é `M:20261002551230_talkx_limits_ritmo.sql`. `snapshot_talkx_campaign_audience` está só em `M:20261002421230_talkx_audience_snapshot.sql:357` (o trecho que resolve o segmento único é o `:421`, hoje via `talkx_segments.rules`).
 
 ### X058 · Expor fila por segmento, ordem de envio e lista paginada de destinatários
 

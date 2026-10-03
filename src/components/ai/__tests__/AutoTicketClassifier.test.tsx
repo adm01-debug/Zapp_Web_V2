@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AutoTicketClassifier } from '../AutoTicketClassifier';
@@ -171,13 +170,18 @@ describe('AutoTicketClassifier', () => {
   // ===== EDGE CASES =====
   describe('Edge cases', () => {
     it('handles null contact', () => {
-      const contact = null;
+      const contact = null as { name?: string } | null;
       const name = contact?.name || 'Desconhecido';
       expect(name).toBe('Desconhecido');
     });
 
     it('handles zero confidence', () => {
-      const confidence = (0 || 0.7) * 100;
+      // Em variaveis de proposito: o teste prova que o valor 0 cai no default,
+      // entao a expressao precisa ser avaliada em runtime. Com literal direto ela
+      // vira constante e a regra no-constant-binary-expression acusa.
+      const raw = 0;
+      const fallback = 0.7;
+      const confidence = (raw || fallback) * 100;
       expect(confidence).toBe(70);
     });
 

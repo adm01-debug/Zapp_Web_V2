@@ -57,7 +57,7 @@ export function VolumeChart({ queueId, agentId }: VolumeChartProps = {}) {
     }
     const predictedByHour = new Map<number, number>();
     (demand.data ?? []).filter((p) => p.isPrediction).forEach((p) => {
-      const hour = parseInt(p.time.split(':')[0], 10);
+      const hour = Number.parseInt(p.time.split(':')[0], 10);
       if (!Number.isNaN(hour)) predictedByHour.set(hour, p.predicted);
     });
     return volumeQuery.data.todayByHour.map((count, h) => ({

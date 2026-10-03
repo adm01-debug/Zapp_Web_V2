@@ -21,7 +21,7 @@ export function usePhaseColors(phase: VoiceAgentPhase): PhaseColors {
     const readHue = () => {
       const raw = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
       const match = raw.match(/^(\d+)/);
-      if (match) setThemeHue(parseInt(match[1], 10));
+      if (match) setThemeHue(Number.parseInt(match[1], 10));
     };
     readHue();
     const observer = new MutationObserver(readHue);

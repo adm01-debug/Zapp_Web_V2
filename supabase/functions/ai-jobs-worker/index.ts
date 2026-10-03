@@ -169,6 +169,12 @@ async function handleAiGenerate(input: AiJobHandlerInput): Promise<AiJobHandlerR
     purpose: purpose as GenerateParams["purpose"],
     functionName: input.functionName,
     userId: input.userId,
+    // IA-051 — a execução nasceu na fila: o consumo fica ligado ao job e à
+    // tentativa (`ai_usage_logs.job_id` / `.attempt`). É esta ligação que
+    // permite reconciliar ação, tentativa e cobrança (IA-054) depois, sem
+    // precisar do conteúdo da conversa para saber de onde veio o gasto.
+    jobId: input.job.id,
+    attempt: input.job.attemptCount,
     messages,
     system,
   });

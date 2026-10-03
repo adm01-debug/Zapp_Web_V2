@@ -41,7 +41,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: types-sync-${{ github.ref }}
+  group: types-sync-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || 'push' }}
   cancel-in-progress: false
 
 env:
@@ -159,10 +159,15 @@ jobs:
           const url = process.env.DESTINO_URL;
 
           function psqlFile(file) {
+            // maxBuffer explicito: o dump de grants passou de 1 MB (medido:
+            // 1.039.627 bytes no run 37053521236) e o default do Node e 1 MB —
+            // sem isto o execFileSync morre com "spawnSync psql ENOBUFS" e o
+            // pipeline para de propor o PR de sync, deixando o drift do
+            // "Contrato DB vivo" sem fechar. 64 MB da folga para o banco crescer.
             return withPsqlEnvironment(url, (env) => execFileSync(
               PSQL_BIN,
               ['-X', '-v', 'ON_ERROR_STOP=1', '-At', '-f', file],
-              { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 60_000, env },
+              { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 60_000, env, maxBuffer: 64 * 1024 * 1024 },
             ));
           }
 

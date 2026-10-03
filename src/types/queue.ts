@@ -3,7 +3,7 @@ import type { Database } from '@/integrations/supabase/types';
 export type QueueRow = Database['public']['Tables']['queues']['Row'];
 export type QueueMemberRow = Database['public']['Tables']['queue_members']['Row'];
 
-export interface Queue extends QueueRow {}
+export type Queue = QueueRow;
 
 export interface QueueMember extends QueueMemberRow {
   profile?: {

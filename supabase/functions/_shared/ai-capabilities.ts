@@ -57,7 +57,7 @@ export interface AiCapabilities {
 }
 
 /** Lista canônica de modalidades — usada para validar o que o config declara. */
-const MODALITIES: readonly AiModality[] = ['text', 'vision', 'audio_stt', 'audio_tts', 'audio_sts'];
+export const MODALITIES: readonly AiModality[] = ['text', 'vision', 'audio_stt', 'audio_tts', 'audio_sts'];
 
 /** Lista canônica de features — usada para validar o que o config declara. */
 const FEATURES: readonly AiFeature[] = ['tools', 'json', 'streaming'];

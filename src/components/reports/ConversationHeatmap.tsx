@@ -44,7 +44,7 @@ export function ConversationHeatmap() {
   const loadData = useCallback(async () => {
     setLoading(true);
     const since = new Date();
-    since.setDate(since.getDate() - parseInt(period));
+    since.setDate(since.getDate() - Number.parseInt(period));
 
     const { data: messages } = await supabase
       .from('messages')

@@ -1,3 +1,4 @@
+import { dispensarOnboarding } from './fixtures/onboarding';
 import { test, expect, type Page } from '@playwright/test';
 import {
   E2E_CATALOG_FIXTURE_MARKER,
@@ -143,6 +144,7 @@ async function softDeleteMessagesSince(page: Page, sinceIso: string): Promise<nu
   return ((await res.json()) as MessageRow[]).length;
 }
 
+
 test.describe('Catálogo — envio de produto no chat (CT-82)', () => {
   test.describe.configure({ timeout: 150_000 });
 
@@ -211,9 +213,20 @@ test.describe('Catálogo — envio de produto no chat (CT-82)', () => {
 
     // 4) escolhe a cor no Sheet de detalhes (botão com aria-label `Cor <nome>`)
     const detailSheet = page.getByRole('dialog');
-    const cor = detailSheet.getByRole('button', { name: /^Cor / }).first();
-    await expect(cor).toBeVisible({ timeout: 20_000 });
-    await cor.click();
+    // O Sheet chega a FECHAR depois de abrir (medido em 02/10: em algumas rodadas o
+    // dialog some entre o "Ver" e o clique da cor). O bloco reabre o Sheet e clica na
+    // cor, repetindo a acao inteira ate valer — sem afrouxar nenhum assert.
+    await expect(async () => {
+      if ((await page.getByRole('dialog').count()) === 0) {
+        await ver.click({ timeout: 5_000 });
+        await expect(page.getByRole('dialog')).toHaveCount(1);
+      }
+      await page
+        .getByRole('dialog')
+        .getByRole('button', { name: /^Cor / })
+        .first()
+        .click({ timeout: 5_000 });
+    }).toPass({ timeout: 45_000 });
 
     // 5) aciona "Enviar variação (<cor>)" no rodapé do Sheet
     const enviarVariacao = detailSheet.getByRole('button', { name: /^Enviar variação \(/ });
@@ -223,7 +236,7 @@ test.describe('Catálogo — envio de produto no chat (CT-82)', () => {
     // O Sheet fecha e o SendProductDialog abre: espera sobrar 1 único dialog.
     await expect(page.getByRole('dialog')).toHaveCount(1);
     const sendDialog = page.getByRole('dialog');
-    await expect(sendDialog.getByText('Modelo de mensagem')).toBeVisible({ timeout: 20_000 });
+    await expect(sendDialog.getByText('Modelo de mensagem', { exact: true })).toBeVisible({ timeout: 20_000 });
 
     // 6) escolhe as fotos (garante todas marcadas) e confere a contagem
     const selecionarTodas = sendDialog.getByRole('button', {

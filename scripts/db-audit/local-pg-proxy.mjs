@@ -112,6 +112,15 @@ const iniLines = [
   'pool_mode = session',
   'max_client_conn = 10',
   'default_pool_size = 5',
+  // O default do pgbouncer e 15s. Com o banco de producao sob saturacao
+  // transitoria (rajadas de statement timeout), o handshake ate o banco
+  // demora e o pgbouncer desistia antes do cliente postgres-meta, que
+  // reportava "Error: timeout exceeded when trying to connect". 60s da
+  // folga para o handshake completar em vez de abortar. NAO substitui o
+  // retry do lado do gen-types.sh: o cliente postgres-meta tem timeout
+  // proprio (~15-20s, medido), entao este ajuste sozinho nao garante que
+  // uma tentativa sobreviva a saturacao — o retry e a rede de seguranca.
+  'server_connect_timeout = 60',
   'server_tls_sslmode = verify-full',
   `server_tls_ca_file = ${caPath}`,
   '',

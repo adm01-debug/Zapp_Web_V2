@@ -32,7 +32,7 @@ export function HighContrastProvider({ children }: { children: React.ReactNode }
     localStorage.getItem('highContrast') === 'true'
   );
   const [contrastLevel, setContrastLevel] = useState(() =>
-    parseInt(localStorage.getItem('contrastLevel') || '100')
+    Number.parseInt(localStorage.getItem('contrastLevel') || '100')
   );
   const [reducedMotion, setReducedMotion] = useState(() =>
     localStorage.getItem('reducedMotion') === 'true'

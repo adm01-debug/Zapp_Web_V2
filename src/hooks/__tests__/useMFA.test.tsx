@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
+import type { Mock } from 'vitest';
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -36,8 +37,8 @@ import { useMFA } from '@/hooks/auth/useMFA';
 describe('useMFA', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (supabase.auth.mfa.listFactors as any).mockResolvedValue({ data: { totp: [], phone: [] }, error: null });
-    (supabase.auth.mfa.getAuthenticatorAssuranceLevel as any).mockResolvedValue({
+    (supabase.auth.mfa.listFactors as unknown as Mock).mockResolvedValue({ data: { totp: [], phone: [] }, error: null });
+    (supabase.auth.mfa.getAuthenticatorAssuranceLevel as unknown as Mock).mockResolvedValue({
       data: { currentLevel: 'aal1', nextLevel: 'aal1', currentAuthenticationMethods: [] },
       error: null,
     });
@@ -50,7 +51,7 @@ describe('useMFA', () => {
   });
 
   it('enrollTOTP calls mfa.enroll', async () => {
-    (supabase.auth.mfa.enroll as any).mockResolvedValue({
+    (supabase.auth.mfa.enroll as unknown as Mock).mockResolvedValue({
       data: { id: 'f1', type: 'totp', totp: { qr_code: 'qr', secret: 'ABC', uri: 'otpauth://...' } },
       error: null,
     });
@@ -61,8 +62,8 @@ describe('useMFA', () => {
   });
 
   it('verifyTOTP calls challenge then verify', async () => {
-    (supabase.auth.mfa.challenge as any).mockResolvedValue({ data: { id: 'ch-1' }, error: null });
-    (supabase.auth.mfa.verify as any).mockResolvedValue({ data: {}, error: null });
+    (supabase.auth.mfa.challenge as unknown as Mock).mockResolvedValue({ data: { id: 'ch-1' }, error: null });
+    (supabase.auth.mfa.verify as unknown as Mock).mockResolvedValue({ data: {}, error: null });
 
     const { result } = renderHook(() => useMFA());
     await act(async () => { await result.current.verifyTOTP('f1', '123456'); });
@@ -71,14 +72,14 @@ describe('useMFA', () => {
   });
 
   it('unenroll calls mfa.unenroll', async () => {
-    (supabase.auth.mfa.unenroll as any).mockResolvedValue({ data: {}, error: null });
+    (supabase.auth.mfa.unenroll as unknown as Mock).mockResolvedValue({ data: {}, error: null });
     const { result } = renderHook(() => useMFA());
     await act(async () => { await result.current.unenroll('f1'); });
     expect(supabase.auth.mfa.unenroll).toHaveBeenCalledWith({ factorId: 'f1' });
   });
 
   it('fetchFactors retrieves TOTP factors', async () => {
-    (supabase.auth.mfa.listFactors as any).mockResolvedValue({
+    (supabase.auth.mfa.listFactors as unknown as Mock).mockResolvedValue({
       data: { totp: [{ id: 'f1', factor_type: 'totp', status: 'verified', created_at: '', updated_at: '' }], phone: [] },
       error: null,
     });

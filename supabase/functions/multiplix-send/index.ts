@@ -14,16 +14,20 @@ import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talk
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
 import {
-  getMediaEndpoint,
+  type MediaKind,
+  type MessageKind,
   newCorrelationId,
   normalizePhone,
   personalize,
+  prepareMedia,
+  providerErrorInfo,
   randomBetween,
+  send,
   sleep,
 } from "../_shared/messaging/index.ts";
 
 // F37/F43: as duplicatas locais (`getGreeting`, `personalizeMultiplix`,
-// `randomBetween`, `sleep`, `getMediaEndpoint`) foram removidas — todas vêm do
+// `randomBetween`, `sleep`, `prepareMedia`, `send`) foram removidas — todas vêm do
 // kernel compartilhado em ../_shared/messaging. O dialeto do Multiplix
 // ({{saudacao}}/{{empresa}}) é um SUBCONJUNTO dos built-ins que `personalize`
 // resolve: o nome da empresa entra por `contact.company`. A política de
@@ -41,6 +45,34 @@ function timingSafeStringEqual(a: string, b: string): boolean {
   for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
   return diff === 0;
 }
+
+/** F56: mapeia o tipo REAL detectado pelo prepareMedia para o kind do adaptador. */
+function kindForMedia(kind: MediaKind): MessageKind {
+  switch (kind) {
+    case "image":
+      return "image";
+    // No dispatch, media_type "audio" sempre significou nota de voz (o POST antigo ia para
+    // /message/sendWhatsAppAudio). Como ptt e o kind que liga a presenca "recording", o
+    // mapeamento preserva o que ja acontecia — e passa a avisar ao destinatario que gravamos.
+    case "audio":
+      return "ptt";
+    case "video":
+      return "video";
+    case "document":
+    default:
+      return "document";
+  }
+}
+
+/** F56: nome do arquivo do documento vem do bloco (F33: content.media.fileName). */
+function mediaFileNameFromBlock(content: Record<string, unknown> | null | undefined): string | undefined {
+  const media = content?.media;
+  if (!media || typeof media !== "object") return undefined;
+  const nome = (media as Record<string, unknown>).fileName;
+  return typeof nome === "string" && nome.trim() !== "" ? nome : undefined;
+}
+
+type PreparedForSend = { kind: MessageKind; url: string; fileName: string };
 
 export async function handleMultiplixSend(
   req: Request,
@@ -330,19 +362,45 @@ export async function handleMultiplixSend(
     // continua andando, com cada invocacao processando no maximo
     // MULTIPLIX_BATCH_SIZE (default 20).
     passLoop: {
-      const { data: recipients, error: recipientsError } = await supabase
-        .from("multiplix_recipients")
-        .select("*")
-        .eq("dispatch_id", dispatchId)
-        .in("status", ["pending", "sending"])
-        .or("retry_after.is.null,retry_after.lte." + new Date().toISOString())
-        .order("created_at")
-        .limit(batchSize);
-      if (recipientsError) throw new Error(`multiplix_recipients_lookup_failed: ${recipientsError.message}`);
-      if (!recipients || recipients.length === 0) break passLoop;
-      selectedTotal += recipients.length;
+      // F55 (02/10/2026): a escolha do que enviar agora e do BANCO, nao do worker.
+      // list_multiplix_claimable_items devolve os itens elegiveis ja na ordem de trabalho
+      // (e ja respeitando a ordem por bloco do F56: item do bloco k so quando o bloco k-1 do
+      // mesmo destinatario esta sent). Duplicar essa regra aqui seria o jeito mais facil de
+      // as duas versoes divergirem — e e justamente a que dois workers furariam.
+      const { data: claimable, error: claimableError } = await supabase.rpc("list_multiplix_claimable_items", {
+        p_dispatch_id: dispatchId,
+        p_limit: batchSize,
+      });
+      if (claimableError) throw new Error(`multiplix_claimable_lookup_failed: ${claimableError.message}`);
+      if (!claimable || claimable.length === 0) break passLoop;
+      selectedTotal += claimable.length;
 
-      for (const recipient of recipients) {
+      for (const item of claimable as Array<{
+        item_id: string;
+        recipient_id: string;
+        block_id: string;
+        block_order: number;
+        company_id: string;
+        attempt_count: number;
+      }>) {
+        // O item carrega so IDs. Destinatario (destino, nome da empresa) e bloco (conteudo)
+        // vem de uma leitura propria: a ordenacao ja foi decidida pelo banco, aqui e so o
+        // material do envio.
+        const { data: itemDetail, error: itemDetailError } = await supabase
+          .from("multiplix_delivery_items")
+          .select("id, recipient_id, block_id, attempt_count, status, " +
+            "recipient:multiplix_recipients!inner(id, destino_e164, company_name_snapshot, personalized_message), " +
+            "block:multiplix_blocks!inner(id, block_order, content)")
+          .eq("id", item.item_id)
+          .single();
+        if (itemDetailError) throw new Error(`multiplix_item_detail_failed: ${itemDetailError.message}`);
+        const recipient = (itemDetail as unknown as {
+          recipient: { id: string; destino_e164: string | null; company_name_snapshot: string | null; personalized_message: string | null };
+        }).recipient;
+        const block = (itemDetail as unknown as {
+          block: { id: string; block_order: number; content: Record<string, unknown> };
+        }).block;
+
         const { data: currentDispatch, error: currentDispatchError } = await supabase
           .from("multiplix_dispatches")
           .select("status, send_interval_min, send_interval_max, typing_delay_min, typing_delay_max, send_window_start, send_window_end, business_hours_only, speed_profile, schedule_timezone, message_template, media_url, media_type")
@@ -367,21 +425,21 @@ export async function handleMultiplixSend(
           break passLoop;
         }
 
-        const { data: claimRows, error: claimError } = await supabase.rpc("claim_multiplix_recipient", {
+        const { data: claimRows, error: claimError } = await supabase.rpc("claim_multiplix_item", {
           p_dispatch_id: dispatchId,
-          p_recipient_id: recipient.id,
+          p_item_id: item.item_id,
           p_worker: workerId,
           p_lease_seconds: 90,
         });
-        if (claimError) throw new Error(`multiplix_recipient_claim_failed: ${claimError.message}`);
+        if (claimError) throw new Error(`multiplix_item_claim_failed: ${claimError.message}`);
         const claim = Array.isArray(claimRows) ? claimRows[0] : null;
         if (!claim?.claim_token) continue;
 
         // F09: opt-out conferido assim que o destinatario e reivindicado. Quem
         // esta na lista negra vira 'skipped' com motivo (nao volta para a fila).
         if (await isRecipientSuppressed(recipient.destino_e164)) {
-          const { error: completionError } = await supabase.rpc("complete_multiplix_recipient", {
-            p_recipient_id: recipient.id,
+          const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+            p_item_id: item.item_id,
             p_claim_token: claim.claim_token,
             p_status: "skipped",
             p_error_message: "Contato na lista negra (opt-out)",
@@ -397,10 +455,10 @@ export async function handleMultiplixSend(
         // 14-15 digitos nu) — nos dois casos nao existe destino enderecavel:
         // classe `no_destination` do F39 (mesmo tratamento do destino ausente),
         // em vez de fazer o POST com string vazia.
-        const phone = normalizePhone(recipient.destino_e164);
+        const phone = normalizePhone(recipient.destino_e164 ?? undefined);
         if (!phone) {
-          const { error: completionError } = await supabase.rpc("complete_multiplix_recipient", {
-            p_recipient_id: recipient.id,
+          const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+            p_item_id: item.item_id,
             p_claim_token: claim.claim_token,
             p_status: "skipped",
             p_error_message: "Sem destino de WhatsApp",
@@ -411,7 +469,7 @@ export async function handleMultiplixSend(
           continue;
         }
 
-        let personalizedMsg: string = recipient.personalized_message;
+        let personalizedMsg: string = recipient.personalized_message ?? "";
         if (!personalizedMsg) {
           let calculatedMessage: string;
           try {
@@ -422,10 +480,10 @@ export async function handleMultiplixSend(
               { company: recipient.company_name_snapshot },
               {},
               typeof dispatch.schedule_timezone === "string" ? dispatch.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
-            );
+            ).text;
           } catch (e) {
-            const { error: completionError } = await supabase.rpc("complete_multiplix_recipient", {
-              p_recipient_id: recipient.id,
+            const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+              p_item_id: item.item_id,
               p_claim_token: claim.claim_token,
               p_status: "failed",
               p_error_message: e instanceof Error ? e.message : "Erro ao montar mensagem",
@@ -435,8 +493,8 @@ export async function handleMultiplixSend(
             processedCount++;
             continue;
           }
-          const { data: snapshotMessage, error: snapshotError } = await supabase.rpc("persist_multiplix_recipient_message_snapshot", {
-            p_recipient_id: recipient.id,
+          const { data: snapshotMessage, error: snapshotError } = await supabase.rpc("persist_multiplix_item_message_snapshot", {
+            p_item_id: item.item_id,
             p_claim_token: claim.claim_token,
             p_personalized_message: calculatedMessage,
           });
@@ -448,6 +506,24 @@ export async function handleMultiplixSend(
 
         let providerPostAttempted = false;
         let sendTimeout: ReturnType<typeof setTimeout> | undefined;
+        // F55: lease com heartbeat. O claim da 90 s e o POST tem timeout de 20 s, mas midia
+        // grande e PTT podem passar disso — e item com lease vencido volta para a fila (outro
+        // worker pega) ou o sweeper fecha como outcome_unknown. A RPC so renova para o dono
+        // vivo, entao o timer nao atrapalha quem legitimamente retomou o item.
+        let heartbeatTimer: ReturnType<typeof setInterval> | undefined;
+        const stopHeartbeat = () => {
+          if (heartbeatTimer !== undefined) {
+            clearInterval(heartbeatTimer);
+            heartbeatTimer = undefined;
+          }
+        };
+        heartbeatTimer = setInterval(() => {
+          void supabase.rpc("heartbeat_multiplix_item", {
+            p_item_id: item.item_id,
+            p_claim_token: claim.claim_token,
+            p_lease_seconds: 90,
+          });
+        }, 30_000);
         try {
           const typingDelay = randomBetween(dispatch.typing_delay_min, dispatch.typing_delay_max);
 
@@ -475,21 +551,24 @@ export async function handleMultiplixSend(
               // retoma); conexao caiu -> 'connection_lost' (exige operador).
               await pauseDispatch(beforeSendInstanceId ? "outside_window" : "connection_lost");
             }
-            const { data: released, error: releaseError } = await supabase.rpc("release_multiplix_recipient_claim", {
-              p_recipient_id: recipient.id,
+            const { data: released, error: releaseError } = await supabase.rpc("release_multiplix_item_claim", {
+              p_item_id: item.item_id,
               p_claim_token: claim.claim_token,
             });
             if (releaseError || released !== true) {
               throw new Error(`multiplix_recipient_claim_release_failed: ${releaseError?.message ?? "claim_not_owned"}`);
             }
+            // F55: esta saida devolve o item a fila (release), entao o timer perde a razao de
+            // existir agora — a RPC ja recusaria o token a partir daqui de qualquer forma.
+            stopHeartbeat();
             break passLoop;
           }
 
           // F09: ultima checagem antes do POST — entre o claim e este ponto o
           // contato pode ter entrado na lista negra (opt-out).
           if (await isRecipientSuppressed(recipient.destino_e164)) {
-            const { error: completionError } = await supabase.rpc("complete_multiplix_recipient", {
-              p_recipient_id: recipient.id,
+            const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+              p_item_id: item.item_id,
               p_claim_token: claim.claim_token,
               p_status: "skipped",
               p_error_message: "Contato na lista negra (opt-out)",
@@ -500,10 +579,9 @@ export async function handleMultiplixSend(
             continue;
           }
 
-          let sendResponse: Response;
           const markProviderDispatch = async () => {
-            const { error } = await supabase.rpc("mark_multiplix_recipient_dispatch_started", {
-              p_recipient_id: recipient.id,
+            const { error } = await supabase.rpc("mark_multiplix_item_dispatch_started", {
+              p_item_id: item.item_id,
               p_claim_token: claim.claim_token,
             });
             if (error) throw new Error(`multiplix_provider_dispatch_mark_failed: ${error.message}`);
@@ -512,71 +590,126 @@ export async function handleMultiplixSend(
           const abortCtrl = new AbortController();
           sendTimeout = setTimeout(() => abortCtrl.abort(), 20_000);
 
+          // F56: o envio passa pelo adaptador (send) em vez de um POST montado a mao. Ele
+          // acrescenta duas coisas que o POST cru nao fazia: PRESENCA (composing; recording
+          // para nota de voz) e o fileName do documento — sem ele o PDF chega sem nome.
+          // prepareMedia (F40) e quem decide o tipo REAL do arquivo: "document" no dispatch
+          // podia esconder um JPEG, e o nome do arquivo so existe no bloco (F33).
+          let prepared: PreparedForSend | null = null;
           if (recipientHasMedia) {
-            const mediaEndpoint = getMediaEndpoint(dispatch.media_type);
-            const mediaSource = await mediaForSend(dispatch.media_url);
-            await markProviderDispatch();
-            providerPostAttempted = true;
-            sendResponse = await evoFetch(evolutionUrl, evolutionKey,
-              `/message/${mediaEndpoint}/${beforeSendInstanceId}`,
-              dispatch.media_type === "audio"
-                ? { number: phone, audio: mediaSource, delay: 0 }
-                : { number: phone, mediatype: dispatch.media_type, media: mediaSource, caption: personalizedMsg, delay: 0 },
-              undefined, undefined, abortCtrl.signal,
-            );
-          } else {
-            await markProviderDispatch();
-            providerPostAttempted = true;
-            sendResponse = await evoFetch(evolutionUrl, evolutionKey,
-              `/message/sendText/${beforeSendInstanceId}`,
-              { number: phone, text: personalizedMsg, delay: 0 },
-              undefined, undefined, abortCtrl.signal,
-            );
+            const pronto = await prepareMedia(await mediaForSend(dispatch.media_url), {
+              fileName: mediaFileNameFromBlock(block.content),
+            });
+            if (!pronto.ok) {
+              throw new Error(`multiplix_media_rejected: ${pronto.reason}: ${pronto.detail}`);
+            }
+            prepared = {
+              kind: kindForMedia(pronto.media.kind),
+              // signedUrl e a URL que o envio DEVE usar (TTL amarrado ao envio), nao a original.
+              url: pronto.media.signedUrl,
+              fileName: pronto.media.fileName,
+            };
           }
+          await markProviderDispatch();
+          providerPostAttempted = true;
+          const envio = await send(
+            prepared
+              ? {
+                kind: prepared.kind,
+                to: phone,
+                instanceId: beforeSendInstanceId,
+                text: personalizedMsg,
+                mediaUrl: prepared.url,
+                fileName: prepared.fileName,
+              }
+              : { kind: "text", to: phone, instanceId: beforeSendInstanceId, text: personalizedMsg },
+            {
+              fetch: (u, o) => fetch(u, o),
+              evolutionUrl,
+              evolutionKey,
+              // O adaptador nao le env (roda tambem fora do Deno); a edge resolve e passa.
+              flavor: (Deno.env.get("EVOLUTION_API_FLAVOR") ?? "go") === "v2" ? "v2" : "go",
+              signal: abortCtrl.signal,
+            },
+          );
           clearTimeout(sendTimeout);
 
-          if (sendResponse.status >= 500) {
-            throw new Error(`multiplix_provider_outcome_unknown: HTTP ${sendResponse.status}`);
+          if (envio.status >= 500) {
+            throw new Error(`multiplix_provider_outcome_unknown: HTTP ${envio.status}`);
           }
-          let sendResult: Record<string, unknown>;
-          try {
-            sendResult = await sendResponse.json();
-          } catch {
-            throw new Error("multiplix_provider_outcome_unknown: invalid_response_body");
-          }
-
-          const providerMessageId = extractMessageId(sendResult);
-          if (sendResponse.ok && !sendResult.error && providerMessageId && providerMessageId.length <= 512) {
+          const sendResult: Record<string, unknown> = envio.body && typeof envio.body === "object"
+            ? envio.body as Record<string, unknown>
+            : {};
+          const providerMessageId = envio.messageId ?? extractMessageId(sendResult);
+          if (envio.ok && !sendResult.error && providerMessageId && providerMessageId.length <= 512) {
             sentCount++;
             if (dailyRoom !== null) dailyRoom -= 1;
-            const { error: completionError } = await supabase.rpc("record_multiplix_recipient_sent", {
-              p_recipient_id: recipient.id,
+            const { error: completionError } = await supabase.rpc("record_multiplix_item_sent", {
+              p_item_id: item.item_id,
               p_claim_token: claim.claim_token,
               p_external_id: providerMessageId,
             });
             if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
-          } else if (sendResponse.ok && !sendResult.error) {
+          } else if (envio.ok && !sendResult.error) {
             throw new Error("multiplix_provider_outcome_unknown: missing_provider_message_id");
           } else {
             failedCount++;
-            const { error: completionError } = await supabase.rpc("complete_multiplix_recipient", {
-              p_recipient_id: recipient.id,
+            // F61: o operador le TEXTO, nunca o JSON do provedor. `providerErrorInfo`
+            // traduz o par (status, corpo) pelo mapa do E095 e devolve o codigo ESTAVEL
+            // do erro — assim "Numero nao existe no WhatsApp" chega na tela em vez de
+            // {"status":400,"error":{"code":...}}. O corpo bruto nao entra no campo que
+            // a tela mostra; o codigo vai para a trilha de eventos (abaixo).
+            const providerError = providerErrorInfo(envio.status, envio.body);
+            const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+              p_item_id: item.item_id,
               p_claim_token: claim.claim_token,
               p_status: "failed",
-              p_error_message: String(sendResult?.message || sendResult?.error || "Erro ao enviar"),
+              p_error_message: providerError.operatorMessage,
             });
             if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
+            // F61 (segunda metade): o codigo CRU (classe + codigo estavel + status HTTP)
+            // vai para `multiplix_events`, que e onde quem depura olha. NAO grava o corpo
+            // do provedor: ele pode carregar telefone/conteudo de cliente, e diagnostico
+            // nao precisa disso — o par (classe, codigo) ja diz o que aconteceu.
+            await supabase.from("multiplix_events").insert({
+              dispatch_id: dispatchId,
+              item_id: item.item_id,
+              recipient_id: item.recipient_id ?? null,
+              kind: "item_failed",
+              payload: {
+                error_class: providerError.class,
+                error_code: providerError.code,
+                provider_status: envio.status,
+              },
+            });
+            // F60 (gatilho): um erro PERMANENTE nao e azar de um item — e sinal de que a
+            // CONEXAO esta em risco. Tres consecutivos, ou um banimento, pausam todos os
+            // dispatches dela (a funcao decide o limiar; o worker so reporta o sinal).
+            // `unknown` NAO conta: nao sabemos o que aconteceu, e pausar por duvida
+            // derrubaria disparo bom.
+            if (providerError.class === "permanent" && connection?.id) {
+              const { error: riskError } = await supabase.rpc("register_multiplix_connection_failure", {
+                p_connection_id: connection.id,
+                p_signal: null,
+                p_error_class: "permanent",
+              });
+              // Nao derruba o envio: o item ja foi concluido acima. A marcacao de risco e
+              // defesa em profundidade — falhar nela nao pode fazer o worker perder o item.
+              if (riskError) console.error(`multiplix_connection_risk_failed: ${riskError.message}`);
+            }
           }
+          stopHeartbeat();
         } catch (err) {
           clearTimeout(sendTimeout);
+          stopHeartbeat();
           if (!providerPostAttempted) {
             const backoffMs = [30_000, 120_000, 600_000];
-            const attemptSoFar = typeof recipient.attempt_count === "number" ? recipient.attempt_count : 0;
+            const attemptSoFar = typeof item.attempt_count === "number" ? item.attempt_count : 0;
             const delayMs = backoffMs[Math.min(attemptSoFar, backoffMs.length - 1)];
             const retryAfter = new Date(Date.now() + delayMs).toISOString();
             const reason = err instanceof Error ? err.message : "pre_dispatch_error";
-            const { data: schedResult } = await supabase.rpc("reschedule_multiplix_recipient", {
-              p_recipient_id: recipient.id,
+            const { data: schedResult } = await supabase.rpc("reschedule_multiplix_item", {
+              p_item_id: item.item_id,
               p_claim_token: claim.claim_token,
               p_retry_after: retryAfter,
               p_error_message: reason.slice(0, 500),
@@ -588,8 +721,8 @@ export async function handleMultiplixSend(
             continue;
           }
           const reason = err instanceof Error ? err.message : "request_failed";
-          const { error: quarantineError } = await supabase.rpc("complete_multiplix_recipient", {
-            p_recipient_id: recipient.id,
+          const { error: quarantineError } = await supabase.rpc("complete_multiplix_item", {
+            p_item_id: item.item_id,
             p_claim_token: claim.claim_token,
             p_status: "outcome_unknown",
             p_error_message: `Provider outcome unknown: ${reason}`.slice(0, 1000),

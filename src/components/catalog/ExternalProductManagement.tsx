@@ -64,6 +64,7 @@ const CatalogBulkSendDialog = lazy(() =>
 import { buildCatalogCsv, catalogExportFilename, triggerCsvDownload } from './catalogExport';
 import { CatalogFavoritesTab } from './CatalogFavoritesTab';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
   useCatalogSendHistory,
   buildSendHistoryCsv,
@@ -103,7 +104,7 @@ type PageSizeOption = typeof PAGE_SIZE_OPTIONS[number];
 
 function readPageParam(): number {
   try {
-    const p = parseInt(new URLSearchParams(window.location.search).get('page') ?? '1', 10);
+    const p = Number.parseInt(new URLSearchParams(window.location.search).get('page') ?? '1', 10);
     return isNaN(p) || p < 1 ? 0 : p - 1;
   } catch { return 0; }
 }
@@ -307,7 +308,7 @@ export const ExternalProductManagement: React.FC = () => {
   );
   const [page, setPageState] = useState(() => readPageParam());
   const [pageSize, setPageSizeState] = useState<PageSizeOption>(() => {
-    const stored = parseInt(sessionStorage.getItem('catalog.page_size') ?? '24', 10);
+    const stored = Number.parseInt(sessionStorage.getItem('catalog.page_size') ?? '24', 10);
     return (PAGE_SIZE_OPTIONS as readonly number[]).includes(stored) ? stored as PageSizeOption : 24;
   });
 
@@ -486,8 +487,8 @@ export const ExternalProductManagement: React.FC = () => {
     params.order_by = effectiveOrder;
     params.ascending = ascending;
     if (advFilters.isBestseller) params.is_bestseller = true;
-    if (advFilters.priceMin) params.price_min = parseFloat(advFilters.priceMin);
-    if (advFilters.priceMax) params.price_max = parseFloat(advFilters.priceMax);
+    if (advFilters.priceMin) params.price_min = Number.parseFloat(advFilters.priceMin);
+    if (advFilters.priceMax) params.price_max = Number.parseFloat(advFilters.priceMax);
     // E36-2 — o edge aceita 1 valor ou array (OR entre si); manda a
     // seleção completa direto, servidor filtra e pagina certo com 2+.
     if (advFilters.colors.length > 0) params.color = advFilters.colors;
@@ -744,16 +745,13 @@ export const ExternalProductManagement: React.FC = () => {
         initial={prefersReducedMotion ? false : { opacity: 0, y: -10 }}
         animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
       >
-        {statsLoading ? (
-          <div className="flex items-center gap-3.5">
-            <Skeleton className="w-14 h-14 rounded-2xl shrink-0" />
-            <div className="space-y-2 flex-1">
-              <Skeleton className="h-7 w-64" />
-              <Skeleton className="h-4 w-96" />
-            </div>
-          </div>
-        ) : (
-          <ModuleHeader
+        {/* CT-74: o header é SEMPRE o mesmo ModuleHeader. Antes havia um esqueleto
+            de altura diferente aqui; quando os stats chegavam, o header real
+            substituía o esqueleto e empurrava tudo abaixo. A faixa de KPIs, logo em
+            seguida, é quem aparecia na atribuição do Lighthouse (0,2211) apesar de
+            NÃO mudar de altura — ela só era empurrada. O subtitle já cai em
+            totalProducts enquanto os stats não chegam, então a troca não faz falta. */}
+        <ModuleHeader
             icon={Package}
             color="blue"
             title="Catálogo de Produtos"
@@ -778,7 +776,6 @@ export const ExternalProductManagement: React.FC = () => {
               </>
             )}
           />
-        )}
       </motion.div>
 
       {statsError ? (
@@ -959,6 +956,36 @@ export const ExternalProductManagement: React.FC = () => {
           </span>
         </div>
       )}
+
+      {/* CT-30 — abaixo de xl o rail vira um Accordion acima da grade; o
+          <aside> do rail continua exclusivo do xl+. Mesmo <CatalogRail/> e as
+          mesmas props nos dois lugares (nada duplicado). O Radix desmonta o
+          conteúdo recolhido, então o rail só entra no DOM quando aberto. */}
+      <Accordion
+        type="single"
+        collapsible
+        className="xl:hidden"
+        data-testid="catalog-rail-accordion"
+      >
+        <AccordionItem value="resumo" className="rounded-xl border border-border/60 bg-card px-4">
+          <AccordionTrigger className="text-sm font-semibold hover:no-underline">
+            Resumo do catálogo
+          </AccordionTrigger>
+          <AccordionContent className="px-0 pt-1">
+            <CatalogRail
+              stats={stats}
+              loading={statsLoading}
+              products={products}
+              onApplyFilter={handleKpiSelect}
+              recentSends={recentSends}
+              topSent={topSent}
+              onOpenProduct={handleOpenProductFromRail}
+              exportFilter={activeRailFilter}
+              onApplyLowStock={handleApplyLowStock}
+            />
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       <div ref={gridRef}>
         {loading ? (

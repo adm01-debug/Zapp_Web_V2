@@ -4,11 +4,22 @@ import {
   ensureFixtureConversationOpen,
   cleanupFixtureMessages,
   cleanupE2EReactions,
+  ensureReactionAbsent,
 } from './fixtures/e2e-contact';
+import { dispensarOnboarding } from './fixtures/onboarding';
 
 test.describe('Reactions flow', () => {
+  // Orcamento explicito (o padrao do projeto e 30 s): este fluxo e multi-etapa --
+  // no beforeEach vai goto + onboarding + fixture + cleanup + reload, e no corpo
+  // hover, espera da barra, normalizacao do estado e duas assercoes de 8 s. Com o
+  // teto global de 30 s o teste estourava por TEMPO em execucao lenta (repeat2
+  // medido em 03/10/2026), nao por ausencia de reacao: se a reacao nao aparecer,
+  // o toBeVisible de 8 s continua falhando normalmente.
+  test.setTimeout(60_000);
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    await dispensarOnboarding(page);
     // ensureFixtureConversationOpen valida o token do Supabase explicitamente
     // (lanca erro se nao encontrado). Chamar ANTES do cleanupE2EReactions garante
     // que o localStorage esta carregado quando o cleanup precisa do access_token.
@@ -75,6 +86,17 @@ test.describe('Reactions flow', () => {
     await bar.waitFor({ timeout: 10_000 });
     await expect(bar).toHaveCSS('opacity', '1', { timeout: 5_000 });
 
+    // Normaliza o estado pela UI ANTES de clicar: se uma reacao de run anterior
+    // sobreviveu na mensagem alvo, o clique abaixo REMOVERIA em vez de adicionar
+    // (root cause medido das falhas :53/:88). O cleanup por API nao garante isso:
+    // depende de RLS e de o profile do caller estar certo.
+    await ensureReactionAbsent(page, message, '👍');
+    await message.hover();
+    // 3 s basta: a barra ja foi confirmada acima com opacity 1; este waitFor so
+    // reconfirma que ela voltou depois de o mouse sair e voltar. Os 10 s de antes
+    // somavam ao orcamento do teste sem necessidade.
+    await bar.waitFor({ timeout: 3_000 });
+
     await message.locator('[data-testid="quick-reaction-emoji"][data-emoji="👍"]').click();
 
     // Reaction badge should appear below the message
@@ -100,6 +122,15 @@ test.describe('Reactions flow', () => {
     const bar = message.locator('[data-testid="quick-reaction-bar"][data-profile-ready="true"]');
     await bar.waitFor({ timeout: 10_000 });
     await expect(bar).toHaveCSS('opacity', '1', { timeout: 5_000 });
+
+    // Normaliza o estado pela UI antes de 'adicionar' (mesmo motivo do teste acima:
+    // reacao sobrevivente de run anterior faz o clique remover em vez de adicionar).
+    await ensureReactionAbsent(page, message, '👍');
+    await message.hover();
+    // 3 s basta: a barra ja foi confirmada acima com opacity 1; este waitFor so
+    // reconfirma que ela voltou depois de o mouse sair e voltar. Os 10 s de antes
+    // somavam ao orcamento do teste sem necessidade.
+    await bar.waitFor({ timeout: 3_000 });
 
     // Add the reaction
     await message.locator('[data-testid="quick-reaction-emoji"][data-emoji="👍"]').click();

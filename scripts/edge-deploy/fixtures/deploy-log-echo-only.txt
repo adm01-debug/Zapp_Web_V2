@@ -1,0 +1,2 @@
+const unchanged = [...log.matchAll(/No change found in Function: (\S+)/g)].map((m) => m[1]);
+[36;1m// sinalizando "No change found in[0m

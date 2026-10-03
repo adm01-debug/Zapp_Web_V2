@@ -11,7 +11,7 @@ Base da medição: `main` em `de64c092f` (02/10) — PRs desta rodada: #1589, #1
 
 | Item | Auditoria 29/09 | Fechamento 01/10 | Final 02/10 |
 |---|---|---|---|
-| Etapas marcadas | 61/100 | 62/100 (declarado) | **84/100** (medido por script) |
+| Etapas marcadas | 61/100 | 62/100 (declarado) | **84/100** (medido por script) → **90/100** (2, 3, 13, 16, 18, 58) → **97/100** (4, 5, 14, 17, 28, 39, 65) → **99/100** (11, 98) |
 | F0 Decisões | 0/6 | entregue | 2/6 — D1–D6 respondidas; 2–5 abertas |
 | F1 Banco (exclusão, Sicoob, grants) | 0/12 | entregue + DDL aplicada | 6/12 (`#1172` `41f66910`) |
 | F2 Tipografia/geometria | 6/10 | — | 9/10 — aberta 28 |
@@ -74,6 +74,19 @@ Base da medição: `main` em `de64c092f` (02/10) — PRs desta rodada: #1589, #1
    `completeOnboarding()` **só grava no `localStorage`** — então quem não tem essa linha recebe o modal
    bloqueante em **todo contexto novo**. As 3 contas de QA medidas têm `tem_user_settings = false`.
    É também a causa das comparações instáveis da etapa 90 (B7). Virou tarefa própria.
+   **RESOLVIDO no #1667** (`d8723e19`, mergeado 02/10 com deploy OK): a conclusão do tour passou a ser
+   gravada em `user_settings` (upsert com `ignoreDuplicates`) e o modal ganhou `Escape`, `role="dialog"`
+   e `aria-modal`. **Re-medido em produção depois do deploy**, com a conta QA COMPRAS: **zero camadas de
+   tela cheia** (varredura de todos os elementos `fixed`/`absolute` cobrindo ≥90% do viewport, com
+   `pointer-events != none`: lista vazia), o tour não abre mais, e o clique no toggle de Contatos
+   chega (`aria-checked` `false → true`).
+   **Lead falso descartado com medição:** o "modal de celebração da Multiplix" com o texto
+   `Multiplix! 🎉` **não existe** — esse texto é o título do próprio `WelcomeModal`
+   (`Bem-vindo{, ${nome}}! 🎉`), e o perfil daquela conta chama-se **`MultiplixCompras`**
+   (`profiles.name`, medido). O único overlay de celebração do repo é o `CelebrationOverlay`
+   (`Confetti.tsx:148+`, usado só pelo `GoalsDashboard`), que é **`pointer-events-none` e se desmonta
+   sozinho em 3,5 s**; e o `TourOverlay` (`z-[10000]`) **tem** tratador de `Escape`
+   (`TourOverlay.tsx:91`). Nenhum deles bloqueia clique nem ignora o Escape.
 2. **`types-sync` segue vermelho mesmo com o ledger reconciliado** — a causa não era o drift.
 3. **Exclusão das edges autorizada revelou-se desnecessária** (ver 97): a autorização **não** foi usada.
 4. **Branches da etapa 100 — resolvido.** Cinco das seis já tinham sido apagadas no merge
@@ -98,7 +111,7 @@ Base da medição: `main` em `de64c092f` (02/10) — PRs desta rodada: #1589, #1
 
 ## Conclusão
 
-O plano **não** está concluído: **84/100** etapas marcadas, com 16 abertas listadas acima. O que mudou
+O plano está **a uma etapa do fim**: **99/100** marcadas, com **1 aberta** — F9 **94** (6 linhas na seção "Contatos" do `CLAUDE.md`), que depende da **aprovação do Joaquim** no hook de arquivo protegido (decisão `20261002-161204-9789-plano-contatos-etapas-abertas`). A **11** foi fechada pela via do deploy, com o teste de invocação registrado como **inexecutável por falta de fonte local**; a **98** fechou com **4/4 evidências** em produção. O que mudou
 em relação ao fechamento de 01/10 é a qualidade da prova: sete etapas passaram a ter número cru em vez
 de declaração, uma foi **desmarcada** por falta de evidência, uma foi **reaberta** com 2 de 4
 evidências, e um bug de produção com causa-raiz identificada foi retirado do limbo do "B7" e virou

@@ -78,7 +78,7 @@ export function CampaignCreateDialog({ open, onOpenChange, createCampaign }: Cam
             <div>
               <Label>Tipo de mensagem</Label>
               <Select value={form.message_type} onValueChange={v => setForm(f => ({ ...f, message_type: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Tipo de mensagem"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="text">Texto</SelectItem>
                   <SelectItem value="image">Imagem</SelectItem>
@@ -90,7 +90,7 @@ export function CampaignCreateDialog({ open, onOpenChange, createCampaign }: Cam
             <div>
               <Label>Público-alvo</Label>
               <Select value={form.target_type} onValueChange={(v: string) => setForm(f => ({ ...f, target_type: v as TargetType }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Público-alvo"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os contatos</SelectItem>
                   <SelectItem value="tag">Por etiqueta</SelectItem>

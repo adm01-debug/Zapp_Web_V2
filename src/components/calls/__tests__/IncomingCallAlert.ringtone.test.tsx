@@ -92,6 +92,20 @@ vi.mock('@/providers/CallSessionProvider', () => ({
   useCallSession: () => ({ accept: mockAccept, reject: mockReject }),
 }));
 
+vi.mock('@/hooks/calls/useCallChannels', () => ({
+  useCallChannels: () => ({
+    voip: { channel: 'voip', canDial: true, canReceive: true, canRecord: false, canReject: true },
+    whatsapp: {
+      channel: 'whatsapp',
+      canDial: false,
+      canReceive: true,
+      canRecord: false,
+      canReject: false,
+      reason: 'whatsapp_no_outbound',
+    },
+  }),
+}));
+
 vi.mock('@/hooks/system/useNotificationSettings', () => ({
   useNotificationSettings: () => ({
     settings: { soundEnabled: true, soundVolume: 70 },

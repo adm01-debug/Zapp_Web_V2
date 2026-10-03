@@ -1,15 +1,14 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 vi.mock('@/integrations/supabase/client', () => {
-  function makeChainable(table: string): any {
-    const handler: ProxyHandler<any> = {
+  function makeChainable(table: string): unknown {
+    const handler: ProxyHandler<Record<string, unknown>> = {
       get(_, prop) {
         if (prop === 'then') {
-          return (resolve: any) => {
+          return (resolve: (v: unknown) => void) => {
             if (table === 'profiles') {
               return Promise.resolve({
                 data: [{ id: 'p1', name: 'Agent 1', is_active: true, role: 'agent' }],
@@ -56,7 +55,8 @@ vi.mock('@/integrations/supabase/client', () => {
   };
 });
 
-import { useDashboardData, DashboardFilters } from '@/hooks/analytics/useDashboardData';
+import { useDashboardData } from '@/hooks/analytics/useDashboardData';
+import type { DashboardFilters } from '@/hooks/dashboard/useDashboardStats';
 
 function createWrapper() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });

@@ -7,7 +7,10 @@ describe('cn (classnames utility)', () => {
   });
 
   it('handles conditional classes', () => {
-    expect(cn('base', false && 'hidden', 'visible')).toBe('base visible');
+    // Em variavel de proposito: o teste prova que valor falso nao entra na classe;
+    // com literal a expressao vira constante e a regra acusa.
+    const flag = false;
+    expect(cn('base', flag && 'hidden', 'visible')).toBe('base visible');
   });
 
   it('handles undefined and null', () => {

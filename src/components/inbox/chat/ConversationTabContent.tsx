@@ -118,7 +118,7 @@ export function ConversationTabContent({
 
       {activeTab === 'files' && (
         <Panel name="Arquivos">
-          <FilesTab contactId={contactId} contactName={conversation.contact.name} />
+          <FilesTab key={contactId} contactId={contactId} contactName={conversation.contact.name} />
         </Panel>
       )}
 

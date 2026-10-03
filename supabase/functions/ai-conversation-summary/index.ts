@@ -133,6 +133,8 @@ Foque em:
       functionName: 'ai-conversation-summary',
       purpose: 'summary',
       userId,
+      // IA-051 — o id do clique (IA-048) atravessa o pipeline até o log de consumo.
+      requestId,
       body: buildConversationModelBody({ systemPrompt, contactName, conversationText, tool: conversationTool }),
       log,
       req,

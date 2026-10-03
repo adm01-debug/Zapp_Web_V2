@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useMemo, lazy, Suspense } from 'react
 import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { usePullToRefresh } from '@/hooks/ui/usePullToRefresh';
 import { MiniChatPiP } from '@/components/mobile/MiniChatPiP';
+import { resolverAbaAtiva, type TabState } from '@/components/inbox/resolveActiveTab';
 import { NewMessageIndicator } from './NewMessageIndicator';
 import { InboxEmptyChat } from './InboxEmptyChat';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
@@ -112,18 +113,22 @@ export function RealtimeInboxView() {
   // Ao trocar de conversa o id deixa de bater e o valor derivado volta a 'chat'
   // sem efeito nem setState em cascata — manter 'Notas' aberto ao clicar noutro
   // contato seria desorientador.
-  const [tabState, setTabState] = useState<{ contactId: string | null; tab: ConversationTab }>(
+  const [tabState, setTabState] = useState<TabState>(
     // Etapa 73 — a aba persistida já chega normalizada ('reminders' → 'tasks').
-    () => ({ contactId: null, tab: inbox.conversationTab })
+    // `restaurada: true`: a preferência do localStorage vale como padrão da sessão,
+    // inclusive na primeira conversa aberta depois do reload. Sem isso ela ficava
+    // ancorada em `contactId: null` e morria no instante em que o usuário abria
+    // qualquer conversa — descartada exatamente quando importava (medido em
+    // produção em 03/10: item 6 do S41, persistia e não restaurava).
+    () => ({ contactId: null, tab: inbox.conversationTab, restaurada: true })
   );
-  const activeTab: ConversationTab =
-    tabState.contactId === inbox.selectedContactId ? tabState.tab : 'chat';
+  const activeTab: ConversationTab = resolverAbaAtiva(tabState, inbox.selectedContactId);
   // `setConversationTab` desestruturado: chamá-lo como `inbox.setConversationTab`
   // faria o exhaustive-deps exigir o objeto `inbox` inteiro (recriado a cada render).
   const { setConversationTab } = inbox;
   const setActiveTab = useCallback(
     (tab: ConversationTab) => {
-      setTabState({ contactId: inbox.selectedContactId, tab });
+      setTabState({ contactId: inbox.selectedContactId, tab, restaurada: false });
       setConversationTab(tab);
     },
     [inbox.selectedContactId, setConversationTab]

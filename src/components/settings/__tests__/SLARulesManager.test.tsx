@@ -13,30 +13,30 @@ vi.mock('@/integrations/supabase/client', () => ({
             is: () => ({
               is: () => ({
                 is: () => ({
-                  then: (r: unknown) => (r as Function)({ data: [], error: null }),
+                  then: (r: unknown) => (r as (arg: unknown) => unknown)({ data: [], error: null }),
                 }),
-                then: (r: unknown) => (r as Function)({ data: [], error: null }),
+                then: (r: unknown) => (r as (arg: unknown) => unknown)({ data: [], error: null }),
               }),
-              then: (r: unknown) => (r as Function)({ data: [], error: null }),
+              then: (r: unknown) => (r as (arg: unknown) => unknown)({ data: [], error: null }),
             }),
-            then: (r: unknown) => (r as Function)({ data: [], error: null }),
+            then: (r: unknown) => (r as (arg: unknown) => unknown)({ data: [], error: null }),
           }),
-          then: (r: unknown) => (r as Function)({ data: [], error: null }),
+          then: (r: unknown) => (r as (arg: unknown) => unknown)({ data: [], error: null }),
         }),
         not: () => ({
-          then: (r: unknown) => (r as Function)({ data: [], error: null }),
+          then: (r: unknown) => (r as (arg: unknown) => unknown)({ data: [], error: null }),
         }),
         eq: () => ({
-          then: (r: unknown) => (r as Function)({ data: [], error: null }),
+          then: (r: unknown) => (r as (arg: unknown) => unknown)({ data: [], error: null }),
         }),
-        then: (r: unknown) => (r as Function)({ data: [], error: null }),
+        then: (r: unknown) => (r as (arg: unknown) => unknown)({ data: [], error: null }),
       }),
-      insert: () => ({ then: (r: unknown) => (r as Function)({ error: null }) }),
+      insert: () => ({ then: (r: unknown) => (r as (arg: unknown) => unknown)({ error: null }) }),
       update: () => ({
-        eq: () => ({ then: (r: unknown) => (r as Function)({ error: null }) }),
+        eq: () => ({ then: (r: unknown) => (r as (arg: unknown) => unknown)({ error: null }) }),
       }),
       delete: () => ({
-        eq: () => ({ then: (r: unknown) => (r as Function)({ error: null }) }),
+        eq: () => ({ then: (r: unknown) => (r as (arg: unknown) => unknown)({ error: null }) }),
       }),
     }),
   },

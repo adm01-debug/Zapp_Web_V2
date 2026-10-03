@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   mockTalkXVisual,
@@ -23,7 +23,7 @@ declare global {
  * Captura cada uma das 17 telas do mock (docs/talkx/references/*.png) com a
  * sessão falsa + fixture de X003 (mockTalkXVisual), no viewport 1672×941 e tema
  * escuro (projeto `chromium-talkx-visual`). Roda DESLOGADO — sem setup e sem
- * secrets — por isso entra no workflow de PR (e2e-talkx-pr.yml).
+ * secrets — por isso entra no workflow de PR (e2e-talkx.yml).
  *
  * Contrato de crescimento (X003/X004): a régua só captura a tela cuja fixture
  * tem dados reais (hoje só a 01). Fixture vazia (`{}`) é PULADA, não falha — ela
@@ -140,7 +140,14 @@ for (const tela of TELAS) {
 
     await mockTalkXVisual(page, fixture!);
     await tela.abrir!(page);
-    await capturar(page, join(OUT, `captura-${tela.n}.png`));
+    const arquivo = join(OUT, `captura-${tela.n}.png`);
+    await capturar(page, arquivo);
+
+    // A régua não pode passar sem medir: se a captura não chegou ao disco (ou
+    // saiu vazia), a tela não conta como medida e o lado-a-lado mostraria
+    // buraco. Tamanho mínimo de 1 KB — um PNG 1672×941 real fica muito acima.
+    expect(existsSync(arquivo)).toBe(true);
+    expect(statSync(arquivo).size).toBeGreaterThan(1000);
   });
 }
 

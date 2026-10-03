@@ -61,7 +61,7 @@ export function ClientWalletView() {
                 </div>
                 <div className="space-y-2">
                   <Label>Prioridade</Label>
-                  <Input type="number" placeholder="0" value={w.newRule.priority} onChange={(e) => w.setNewRule({ ...w.newRule, priority: parseInt(e.target.value) || 0 })} />
+                  <Input type="number" placeholder="0" value={w.newRule.priority} onChange={(e) => w.setNewRule({ ...w.newRule, priority: Number.parseInt(e.target.value) || 0 })} />
                   <p className="text-xs text-muted-foreground">Maior prioridade = processada primeiro</p>
                 </div>
                 <div className="flex justify-end gap-2 pt-4">

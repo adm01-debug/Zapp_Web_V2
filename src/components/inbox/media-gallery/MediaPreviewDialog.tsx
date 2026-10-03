@@ -1,18 +1,37 @@
-import { useRef } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useCallback, useEffect, useRef } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Download, File } from 'lucide-react';
-import { MediaItem, notifyDownloadBlocked } from './mediaUtils';
+import { ChevronLeft, ChevronRight, File } from 'lucide-react';
+import type { MediaItem } from './mediaUtils';
 import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
 import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
 
+/** O documento ganha o nome legivel (o tecnico fica no `DialogDescription`, para o leitor de tela). */
+type PreviewItem = MediaItem & { displayName?: string };
+
 interface MediaPreviewDialogProps {
-  item: MediaItem | null;
+  item: PreviewItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Colecao filtrada atual (etapa 30): habilita Anterior/Proximo e as setas. Sem ela, o
+   * visualizador abre um item so — e o uso do chat continua intacto. */
+  items?: PreviewItem[];
+  onNavigate?: (item: PreviewItem) => void;
 }
 
-export function MediaPreviewDialog({ item, open, onOpenChange }: MediaPreviewDialogProps) {
+/** Extensao do nome tecnico para decidir o caminho de leitura do documento (etapa 29). */
+function documentExtension(filename: string): string {
+  const match = /\.([a-z0-9]{1,8})$/i.exec(filename.split(/[?#]/)[0]);
+  return match ? match[1].toLowerCase() : '';
+}
+
+export function MediaPreviewDialog({
+  item,
+  open,
+  onOpenChange,
+  items,
+  onNavigate,
+}: MediaPreviewDialogProps) {
   // O chamador (MediaGallery) so troca previewItem ao abrir outro item e nunca
   // o zera ao fechar, entao o conteudo continua disponivel durante a animacao de
   // saida do Dialog — nao ha por que guardar uma copia local aqui.
@@ -25,34 +44,94 @@ export function MediaPreviewDialog({ item, open, onOpenChange }: MediaPreviewDia
   useMediaElementVolume(videoRef);
   useMediaElementVolume(audioRef);
 
+  // Etapa 30: foco devolvido ao gatilho ao fechar. Capturado no `onOpenAutoFocus` do Radix
+  // (antes de o foco entrar no dialogo) e devolvido no `onCloseAutoFocus`; o Radix nem sempre
+  // alcanca quando o pai desmonta o dialogo.
+  const triggerRef = useRef<HTMLElement | null>(null);
+
+  const index = items && displayItem ? items.findIndex((candidate) => candidate.id === displayItem.id) : -1;
+  const hasPrev = items != null && index > 0;
+  const hasNext = items != null && index >= 0 && index < items.length - 1;
+
+  const navigate = useCallback((nextIndex: number) => {
+    if (items && nextIndex >= 0 && nextIndex < items.length) onNavigate?.(items[nextIndex]);
+  }, [items, onNavigate]);
+
+  useEffect(() => {
+    if (!open || !items || items.length < 2) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft' && hasPrev) navigate(index - 1);
+      else if (event.key === 'ArrowRight' && hasNext) navigate(index + 1);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [open, items, hasPrev, hasNext, navigate, index]);
+
+  const handleOpenChange = (next: boolean) => {
+    if (next) {
+      onOpenChange(true);
+      return;
+    }
+    const target = triggerRef.current;
+    onOpenChange(false);
+    target?.focus();
+  };
+
   if (!displayItem) return null;
 
+  const displayName = displayItem.displayName ?? displayItem.filename;
+  const isPdf = displayItem.type === 'document' && documentExtension(displayItem.filename) === 'pdf';
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby={undefined} className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className="max-w-4xl max-h-[80vh] p-0 overflow-hidden"
+        onOpenAutoFocus={() => {
+          triggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        }}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          triggerRef.current?.focus();
+        }}
+      >
         <DialogHeader className="p-4 border-b">
-          <DialogTitle className="flex items-center justify-between">
-            <span className="truncate">{displayItem.filename}</span>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" asChild>
-                <a href={resolvedUrl || undefined} target="_blank" rel="noopener noreferrer"><ExternalLink className="w-4 h-4" /></a>
+          <div className="flex items-center justify-between gap-3">
+            {/* Etapa 30: titulo = displayName; o nome tecnico vai para o DialogDescription. */}
+            <DialogTitle className="min-w-0 flex-1 truncate">{displayName}</DialogTitle>
+            <DialogDescription className="sr-only">{displayItem.filename}</DialogDescription>
+            <div className="flex shrink-0 items-center gap-1">
+              <Button variant="ghost" size="icon-sm" aria-label="Anterior" disabled={!hasPrev} onClick={() => navigate(index - 1)}>
+                <ChevronLeft className="w-4 h-4" />
               </Button>
-              <Button variant="ghost" size="icon" aria-label="Download" onClick={() => { void notifyDownloadBlocked(); }}><Download className="w-4 h-4" /></Button>
+              <Button variant="ghost" size="icon-sm" aria-label="Próximo" disabled={!hasNext} onClick={() => navigate(index + 1)}>
+                <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
-          </DialogTitle>
+          </div>
         </DialogHeader>
         <div className="flex items-center justify-center p-4 bg-background/90 min-h-[400px]">
           {isLoading && <span className="text-sm text-muted-foreground">Carregando mídia…</span>}
           {error && <Button variant="outline" onClick={() => { void refresh(); }}>Tentar novamente</Button>}
-          {displayItem.type === 'image' && resolvedUrl && <img src={resolvedUrl} alt={displayItem.filename} onError={() => { void refresh(); }} className="max-w-full max-h-[70vh] object-contain" />}
+          {displayItem.type === 'image' && resolvedUrl && <img src={resolvedUrl} alt={displayName} onError={() => { void refresh(); }} className="max-w-full max-h-[70vh] object-contain" />}
           {displayItem.type === 'video' && resolvedUrl && <video ref={videoRef} src={resolvedUrl} controls controlsList="nodownload" onError={() => { void refresh(); }} onContextMenu={(e) => e.preventDefault()} className="max-w-full max-h-[70vh]" />}
-          {displayItem.type === 'audio' && resolvedUrl && <div className="p-8"><audio ref={audioRef} src={resolvedUrl} controls onError={() => { void refresh(); }} className="w-full" /></div>}
+          {displayItem.type === 'audio' && resolvedUrl && <div className="p-8"><audio ref={audioRef} src={resolvedUrl} controls controlsList="nodownload" onError={() => { void refresh(); }} className="w-full" /></div>}
           {displayItem.type === 'document' && (
-            <div className="text-center p-8">
-              <File className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-foreground mb-4">{displayItem.filename}</p>
-              <Button onClick={() => { void notifyDownloadBlocked(); }}><Download className="w-4 h-4 mr-2" />Download</Button>
-            </div>
+            isPdf ? (
+              // Etapa 29 (D2a): PDF abre DENTRO do ZAPP no visualizador nativo do navegador.
+              resolvedUrl
+                ? <iframe src={`${resolvedUrl}#toolbar=0`} title={displayName} className="w-full h-[70vh] rounded-lg border border-border/60 bg-background" />
+                : null
+            ) : (
+              // Documento sem visualizador interno: icone + nome + "Abrir" (unico caminho de
+              // leitura de um orcamento em planilha), com `noopener` na URL assinada.
+              <div className="text-center p-8">
+                <File className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-foreground mb-4">{displayName}</p>
+                {resolvedUrl && (
+                  <Button onClick={() => window.open(resolvedUrl, '_blank', 'noopener,noreferrer')}>Abrir</Button>
+                )}
+              </div>
+            )
           )}
         </div>
       </DialogContent>

@@ -29,6 +29,9 @@ const ALLOWLIST = new Set([
   // --- .test.sh — prova em container descartável (docker); passo de YAML
   // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
   'scripts/db-audit/pg-cron-escalonamento.test.sh',
+  'scripts/db-audit/talkx-optout.test.sh',
+  'scripts/db-audit/talkx-overview-stats.test.sh',
+  'scripts/db-audit/talkx-campaign-segments.test.sh',
 ]);
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────

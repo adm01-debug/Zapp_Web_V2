@@ -66,6 +66,37 @@ OUTPUT="${1:-/tmp/types.generated.ts}"
 TMP="$(mktemp /tmp/types.XXXXXX.ts)"
 trap 'rm -f "$TMP" "${TMP}.normalized"' EXIT HUP INT TERM
 
+# Retry com backoff em volta do `supabase gen types`.
+#
+# Motivo (medido em 02/10/2026): o banco de producao passa por rajadas
+# transitorias de saturacao (varios `canceling statement due to statement
+# timeout` no mesmo minuto, queries de ~11s, `Connection reset by peer`).
+# Nessas janelas o handshake do pgbouncer ate o banco nao completa dentro do
+# timeout do cliente postgres-meta e a CLI morre com "Error: timeout exceeded
+# when trying to connect", com tudo saudavel. Prova: os 2 runs do db-live-guard
+# que falharam caem exatamente nos minutos com statement timeout registrado
+# (14:57 -> 1; 15:35 -> 4), enquanto o run que passou caiu em minuto limpo.
+# Um gate de conformidade nao pode ficar vermelho por saturacao de terceiros:
+# a tentativa extra custa segundos e evita o falso vermelho.
+retry_gen_types() {
+  _tentativa=1
+  _max=3
+  while [ "$_tentativa" -le "$_max" ]; do
+    if supabase gen types typescript "$@" > "$TMP"; then
+      return 0
+    fi
+    if [ "$_tentativa" -eq "$_max" ]; then
+      break
+    fi
+    _espera=$((_tentativa * ${GEN_TYPES_RETRY_DELAY_S:-10}))
+    echo "Aviso: 'supabase gen types' falhou na tentativa ${_tentativa}/${_max}; nova tentativa em ${_espera}s (banco possivelmente saturado)." >&2
+    sleep "$_espera"
+    _tentativa=$((_tentativa + 1))
+  done
+  echo "Erro: 'supabase gen types' falhou em ${_max} tentativas." >&2
+  return 1
+}
+
 if [ "$MODE" = local ]; then
   supabase gen types typescript \
     --local \
@@ -140,21 +171,19 @@ else
       exit 1
     fi
 
-    supabase gen types typescript \
+    retry_gen_types \
       --db-url "$PROXY_URL" \
       --network-id host \
-      --schema public \
-      > "$TMP"
+      --schema public
   else
     if [ "${CI:-}" = "true" ]; then
       echo "Erro: pgbouncer ausente em ambiente CI; a credencial DESTINO_URL nao pode ir direto no --db-url. Instale pgbouncer." >&2
       exit 1
     fi
     echo "Aviso: pgbouncer ausente; DESTINO_URL vai direto no --db-url (visivel via ps/proc a processos deste job). Instale pgbouncer para blindar a credencial." >&2
-    supabase gen types typescript \
+    retry_gen_types \
       --db-url "$DESTINO_URL" \
-      --schema public \
-      > "$TMP"
+      --schema public
   fi
 fi
 

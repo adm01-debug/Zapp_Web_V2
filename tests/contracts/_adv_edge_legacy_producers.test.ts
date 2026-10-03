@@ -51,6 +51,34 @@
  *    (ações de leitura `dispatch.list`/`recipients.list`) e `actions/__tests__/listing.test.ts`.
  *    Nenhum dos dois produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem
  *    idênticos — só o total varrido sobe, e o ratchet é atualizado de propósito.
+ *  - 195: X019 (02/10/2026) — `talkx-send/x019-connection-budget.test.ts` (prova Deno do envio
+ *    pela conexão escolhida e dos limites de ritmo por minuto/dia). É arquivo de teste, não
+ *    produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos —
+ *    só o total varrido sobe, e o ratchet é atualizado de propósito.
+ *  - 196: Bloco 06 (IA-051, 02/10/2026) — `ai-jobs-worker/index.test.ts` (guarda de origem da
+ *    correlação: o handler `ai.generate` tem de passar `jobId`/`attempt` do job arrendado e o
+ *    roteador `_shared/ai-generate.ts` tem de repassá-los ao registrador central). É arquivo de
+ *    teste, não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem
+ *    idênticos — só o total varrido sobe (195 → 196: os dois lados somam, o 195 acima é do X019,
+ *    que entrou na main no mesmo rebase) e o ratchet é atualizado de propósito. O valor certo
+ *    não é o de nenhum dos dois lados, é o que a varredura mede depois do merge.
+ *  - 197: Telefonia Fase 2 (02/10/2026) — `_shared/__tests__/evolution-call-events.test.ts`
+ *    (prova Deno dos eventos de chamada do webhook, com as fixtures offer/accept/reject/terminate).
+ *    É arquivo de teste, não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3)
+ *    seguem idênticos — só o total varrido sobe (196 → 197), medido pela varredura depois do merge,
+ *    que é a regra declarada neste arquivo.
+ *  - 200: Email NAVY (02/10/2026) — `_shared/gmail-mime.ts`,
+ *    `_shared/__tests__/gmail-mime.test.ts` e `gmail-sync/index.test.ts`. São implementação
+ *    e testes do contrato MIME/sincronização do Gmail; não produzem vocabulário legado e, por
+ *    isso, apenas elevam o total varrido de 197 para 200.
+ *    De propósito NÃO usa o "regex antigo": o fatiamento das chamadas é por `indexOf`.
+ *  - 202: F60 gatilho (02/10/2026) — `_shared/__tests__/evolution-webhook-connection-risk.test.ts`
+ *    (prova Deno de que o webhook avisa a conexao em risco em motivo terminal).
+ *  - 201: X020 (02/10/2026) — `talkx-send/x020-variavel-precedencia.test.ts` (prova Deno do
+ *    retorno {text, missing, unknown} do personalize: fallback de variável com padrão, built-ins
+ *    vendedor/data/telefone, variável sem valor/desconhecida e precedência A/B por hash FNV-1a).
+ *    É arquivo de teste, não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3)
+ *    seguem idênticos — só o total varrido sobe (200 → 201), medido pela varredura depois do merge.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -125,8 +153,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('190 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(192);
+  it('202 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(202);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );

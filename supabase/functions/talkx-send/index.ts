@@ -135,7 +135,7 @@ export async function handleTalkxSend(
       const dummyContact = { name: "Joao Silva", nickname: "Joao", company: "Empresa Teste" };
       let personalizedText: string;
       try {
-        personalizedText = personalize(templateContent, dummyContact);
+        personalizedText = personalize(templateContent, dummyContact).text;
       } catch (e) {
         return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Placeholder invalido" }), { status: 400, headers });
       }
@@ -320,9 +320,39 @@ export async function handleTalkxSend(
       return typeof count === "number" ? count : 0;
     };
 
+    // X019: orçamento por minuto/dia da conexão (Talk X + Multiplix), vindo da
+    // RPC da X018 — substitui a contagem só-diária da V20 por minuto + dia.
+    type ConnectionBudget = {
+      minute_limit: number;
+      minute_sent: number;
+      minute_remaining: number;
+      day_limit: number;
+      day_sent: number;
+      day_remaining: number;
+      next_day_at: string | null;
+    };
+    const loadConnectionBudget = async (whatsappConnectionId: string): Promise<ConnectionBudget> => {
+      const { data, error } = await supabase.rpc("talkx_connection_send_budget", {
+        p_connection_id: whatsappConnectionId,
+      });
+      if (error) throw new Error(`talkx_connection_budget_failed: ${error.message}`);
+      const b = (data ?? {}) as Record<string, unknown>;
+      return {
+        minute_limit: Number(b.minute_limit ?? 0),
+        minute_sent: Number(b.minute_sent ?? 0),
+        minute_remaining: Number(b.minute_remaining ?? 0),
+        day_limit: Number(b.day_limit ?? 0),
+        day_sent: Number(b.day_sent ?? 0),
+        day_remaining: Number(b.day_remaining ?? 0),
+        next_day_at: typeof b.next_day_at === "string" ? b.next_day_at : null,
+      };
+    };
+
     // E90: link rastreável referenciado por {{link}} no template. Uma campanha
     // pode ter mais de um link cadastrado; o placeholder é único, então usamos
     // o mais antigo como canônico em vez de deixar o {{link}} sem substituição.
+    // X020: a base da URL passa a vir de TALKX_LINK_BASE_URL (sem o secret,
+    // mantém a URL atual do projeto). O secret nunca é interpolado no texto.
     const loadTrackingUrlFor = async (): Promise<(recipientId: string) => string | undefined> => {
       const { data: trackingLink } = await supabase
         .from("talkx_links")
@@ -331,11 +361,62 @@ export async function handleTalkxSend(
         .order("created_at", { ascending: true })
         .limit(1)
         .maybeSingle();
+      const configuredBase = (Deno.env.get("TALKX_LINK_BASE_URL") ?? "").trim().replace(/\/+$/, "");
+      const linkBase = configuredBase.length > 0
+        ? `${configuredBase}/functions/v1/talkx-link`
+        : `${supabaseUrl}/functions/v1/talkx-link`;
       const trackingUrlFor = (recipientId: string) =>
         trackingLink?.slug
-          ? `${supabaseUrl}/functions/v1/talkx-link?s=${encodeURIComponent(trackingLink.slug)}&r=${encodeURIComponent(recipientId)}`
+          ? `${linkBase}?s=${encodeURIComponent(trackingLink.slug)}&r=${encodeURIComponent(recipientId)}`
           : undefined;
       return trackingUrlFor;
+    };
+
+    // X020: nomes de campos customizados que EXISTEM no CRM (qualquer contato).
+    // Um placeholder com um desses nomes não é "desconhecido". Best-effort: uma
+    // falha de leitura não pode impedir o lançamento (o pior caso é o próprio
+    // personalize marcar a chave e o destinatário virar skipped, nunca
+    // "{{xpto}}" vazando).
+    const loadKnownCustomFieldNames = async (): Promise<Set<string>> => {
+      const names = new Set<string>();
+      const PAGE = 1000;
+      for (let offset = 0; ; offset += PAGE) {
+        const { data, error } = await supabase
+          .from("contact_custom_fields")
+          .select("field_name")
+          .order("id", { ascending: true })
+          .range(offset, offset + PAGE - 1);
+        if (error) break;
+        for (const row of (data ?? []) as { field_name?: unknown }[]) {
+          if (typeof row.field_name === "string" && row.field_name.trim() !== "") {
+            names.add(row.field_name.toLowerCase());
+          }
+        }
+        if (!data || data.length < PAGE) break;
+      }
+      return names;
+    };
+
+    // X020: todos os textos que a campanha pode enviar (texto próprio, conteúdo
+    // do template e variantes) — a validação de variável desconhecida cobre
+    // qualquer um deles.
+    const loadCampaignTemplateTexts = async (campaignRow: Record<string, unknown>): Promise<string[]> => {
+      const texts: string[] = [];
+      if (typeof campaignRow.message_template === "string" && campaignRow.message_template.trim() !== "") {
+        texts.push(campaignRow.message_template);
+      }
+      if (campaignRow.template_id) {
+        const { data: templateRow } = await supabase
+          .from("talkx_templates").select("content").eq("id", campaignRow.template_id).maybeSingle();
+        const templateContent = (templateRow as { content?: unknown } | null)?.content;
+        if (typeof templateContent === "string") texts.push(templateContent);
+        const { data: variantRows } = await supabase
+          .from("talkx_template_variants").select("content").eq("template_id", campaignRow.template_id);
+        for (const v of (variantRows ?? []) as { content?: unknown }[]) {
+          if (typeof v.content === "string") texts.push(v.content);
+        }
+      }
+      return texts;
     };
 
     // Valor real de variável customizada (ex.: {{cargo}}) vem de
@@ -423,6 +504,9 @@ export async function handleTalkxSend(
       businessHours: { start?: string; end?: string; days?: number[] } | null;
       dailyLimit: number;
       sentTodayTotal: number;
+      minuteLimit: number;
+      minuteRemaining: number;
+      dayRemaining: number;
       sent: number;
       failed: number;
       blacklisted: number;
@@ -431,6 +515,7 @@ export async function handleTalkxSend(
       handled: number;
       workerId: string;
       initialInstanceId: string;
+      instanceToken: string | null;
       evolutionUrl: string;
       evolutionKey: string;
       supabaseUrl: string;
@@ -448,6 +533,19 @@ export async function handleTalkxSend(
         p_pause_reason: pauseReason,
       });
       if (error) throw new Error(`talkx_campaign_auto_pause_failed: ${error.message}`);
+    };
+
+    // X019: recarrega o orçamento por minuto/dia no meio do lote (a cada
+    // RELOAD_EVERY e quando o minuto esgota).
+    const refreshBudget = async (state: EngineState) => {
+      const connId = state.campaign.whatsapp_connection_id as string | undefined;
+      if (!connId) return;
+      const b = await loadConnectionBudget(connId);
+      state.minuteLimit = b.minute_limit;
+      state.minuteRemaining = b.minute_remaining;
+      state.dayRemaining = b.day_remaining;
+      state.dailyLimit = b.day_limit;
+      state.sentTodayTotal = b.day_sent;
     };
 
     // Processa UM destinatário sob o lease de campanha: relê o estado, checa
@@ -477,11 +575,19 @@ export async function handleTalkxSend(
         return "stop";
       }
 
-      // V20: limite diário por conexão — pausa com motivo diário (scheduler
-      // retoma no dia seguinte via AUTO_RESUME_REASONS).
-      if (state.dailyLimit > 0 && state.sentTodayTotal >= state.dailyLimit) {
+      // X019: orçamento por minuto/dia da conexão (RPC da X018). Dia esgotado →
+      // pausa com daily_limit (scheduler retoma quando day_remaining > 0).
+      if (state.dayRemaining <= 0) {
         await pauseCampaign("daily_limit");
         return "stop";
+      }
+      // Minuto esgotado: recarrega (pode ter virado) e, se continuar esgotado,
+      // aguarda a virada antes de tentar de novo; o laço externo encerra pelo
+      // orçamento de tempo quando não couber mais envio.
+      if (state.minuteRemaining <= 0) {
+        await refreshBudget(state);
+        if (state.minuteRemaining <= 0) await sleep(60_000);
+        return "next";
       }
 
       state.handled++;
@@ -491,6 +597,7 @@ export async function handleTalkxSend(
         campaign: state.campaign,
         businessHours: state.businessHours,
         initialInstanceId: state.initialInstanceId,
+        instanceToken: state.instanceToken,
         evolutionUrl: state.evolutionUrl,
         evolutionKey: state.evolutionKey,
         supabaseUrl: state.supabaseUrl,
@@ -511,6 +618,10 @@ export async function handleTalkxSend(
           return "next";
         case "skipped_no_phone":
           return "next";
+        case "skipped_missing_variable":
+          // X020: variável sem valor/desconhecida — nenhum POST saiu; o
+          // destinatário já está marcado skipped com missing_variable:<nome>.
+          return "next";
         case "message_failed":
           state.failed++;
           state.processed++;
@@ -528,6 +639,8 @@ export async function handleTalkxSend(
         case "sent":
           state.sent++;
           state.sentTodayTotal++;
+          state.minuteRemaining = Math.max(0, state.minuteRemaining - 1);
+          state.dayRemaining = Math.max(0, state.dayRemaining - 1);
           break;
         case "failed":
           state.failed++;
@@ -537,6 +650,7 @@ export async function handleTalkxSend(
       state.processed++;
       // E78: reler parametros de campanha a cada RELOAD_EVERY envios
       if (state.processed % RELOAD_EVERY === 0) {
+        await refreshBudget(state);
         const { data: fresh } = await supabase
           .from("talkx_campaigns")
           .select("send_interval_min, send_interval_max, typing_delay_min, typing_delay_max, send_window_start, send_window_end, business_hours_only, speed_profile, schedule_timezone")
@@ -565,8 +679,12 @@ export async function handleTalkxSend(
       campaign: Record<string, unknown>,
       workerId: string,
       initialInstanceId: string,
+      instanceToken: string | null,
       dailyLimit: number,
       sentTodayTotal: number,
+      minuteLimit: number,
+      minuteRemaining: number,
+      dayRemaining: number,
       businessHours: { start?: string; end?: string; days?: number[] } | null,
       trackingUrlFor: (recipientId: string) => string | undefined,
     ): Promise<EngineState> => {
@@ -585,6 +703,9 @@ export async function handleTalkxSend(
         businessHours,
         dailyLimit,
         sentTodayTotal,
+        minuteLimit,
+        minuteRemaining,
+        dayRemaining,
         sent: Number(campaign.sent_count ?? 0),
         failed: Number(campaign.failed_count ?? 0),
         blacklisted: 0,
@@ -593,6 +714,7 @@ export async function handleTalkxSend(
         handled: 0,
         workerId,
         initialInstanceId,
+        instanceToken,
         evolutionUrl,
         evolutionKey,
         supabaseUrl,
@@ -633,10 +755,7 @@ export async function handleTalkxSend(
       }
 
       try {
-        const { businessHours, dailyLimit } = await loadBusinessHoursAndDailyLimit();
-        const sentTodayTotal = dailyLimit > 0 && typeof campaignRow.whatsapp_connection_id === "string"
-          ? await countSentTodayForConnection(campaignRow.whatsapp_connection_id)
-          : 0;
+        const { businessHours } = await loadBusinessHoursAndDailyLimit();
 
         // Get WhatsApp connection instance
         const { data: connection } = await supabase
@@ -660,9 +779,37 @@ export async function handleTalkxSend(
           return new Response(JSON.stringify({ error: "WhatsApp connection lost: campaign paused" }), { status: 409, headers });
         }
 
+        // X019: token da instância, resolvido uma vez por invocação e passado a
+        // todos os evoFetch (presença, texto, mídia). Sem token cadastrado, usa o
+        // fallback global SÓ na instância padrão; senão pausa com connection_lost.
+        const { data: resolvedToken, error: tokenError } = await supabase.rpc("get_instance_token", {
+          p_instance_id: initialInstanceId,
+        });
+        if (tokenError) throw new Error(`talkx_instance_token_failed: ${tokenError.message}`);
+        let instanceToken = typeof resolvedToken === "string" && resolvedToken.length > 0 ? resolvedToken : null;
+        if (!instanceToken) {
+          if (initialInstanceId === Deno.env.get("EVOLUTION_INSTANCE_NAME")) {
+            instanceToken = Deno.env.get("EVOLUTION_INSTANCE_TOKEN") ?? null;
+          } else {
+            await pauseCampaign("connection_lost");
+            return new Response(JSON.stringify({ error: "WhatsApp connection instance token missing: campaign paused" }), { status: 409, headers });
+          }
+        }
+
+        // X019: orçamento por minuto/dia (Talk X + Multiplix) via RPC da X018.
+        const budget = await loadConnectionBudget(campaignRow.whatsapp_connection_id as string);
+        const {
+          minute_limit: minuteLimit,
+          minute_remaining: minuteRemaining,
+          day_remaining: dayRemaining,
+          day_limit: dailyLimit,
+          day_sent: sentTodayTotal,
+        } = budget;
+
         const trackingUrlFor = await loadTrackingUrlFor();
         const state = await buildEngineState(
-          campaignRow, workerId, initialInstanceId, dailyLimit, sentTodayTotal, businessHours, trackingUrlFor,
+          campaignRow, workerId, initialInstanceId, instanceToken,
+          dailyLimit, sentTodayTotal, minuteLimit, minuteRemaining, dayRemaining, businessHours, trackingUrlFor,
         );
 
         const parsedBatchSize = Number.parseInt(Deno.env.get("TALKX_BATCH_SIZE") ?? "", 10);
@@ -771,6 +918,39 @@ export async function handleTalkxSend(
       return new Response(JSON.stringify({ error: "Campaign not found" }), { status: 404, headers });
     }
     const campaign = initialCampaign;
+    // X020 — impede LANÇAR uma campanha com variável desconhecida: nome que não
+    // é nativo, nem campo customizado existente no CRM, nem link cadastrado.
+    // Roda ANTES de qualquer transição/kick: 422 com a lista, nenhum
+    // destinatário é tocado e nenhum POST sai.
+    {
+      const probeTimeZone = typeof campaign.schedule_timezone === "string"
+        ? campaign.schedule_timezone
+        : DEFAULT_SCHEDULE_TIMEZONE;
+      const knownCustomFieldNames = await loadKnownCustomFieldNames();
+      const presenceValues: Record<string, string> = {};
+      for (const name of knownCustomFieldNames) presenceValues[name] = "x";
+      const templateTexts = await loadCampaignTemplateTexts(campaign as Record<string, unknown>);
+      const unknownVariableNames = new Set<string>();
+      for (const templateText of templateTexts) {
+        // trackingUrl de prova: {{link}} é nativo/known — a validação de nome
+        // desconhecido não pode confundir "sem link cadastrado" (missing, por
+        // destinatário) com "nome inexistente" (erro de lançamento).
+        const probe = personalize(
+          templateText,
+          { name: "Joao Silva", nickname: "Joao", company: "Empresa Teste" },
+          presenceValues,
+          probeTimeZone,
+          "https://talkx-link.example/__probe__",
+        );
+        for (const name of probe.unknown) unknownVariableNames.add(name);
+      }
+      if (unknownVariableNames.size > 0) {
+        return new Response(
+          JSON.stringify({ error: "unknown_variables", variables: Array.from(unknownVariableNames) }),
+          { status: 422, headers },
+        );
+      }
+    }
     // V20: horário comercial + limite diário por conexão (talkx_settings)
     const { businessHours, dailyLimit } = await loadBusinessHoursAndDailyLimit();
     const sentTodayTotal = dailyLimit > 0
