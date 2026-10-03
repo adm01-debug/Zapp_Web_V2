@@ -135,7 +135,7 @@ export async function handleTalkxSend(
       const dummyContact = { name: "Joao Silva", nickname: "Joao", company: "Empresa Teste" };
       let personalizedText: string;
       try {
-        personalizedText = personalize(templateContent, dummyContact);
+        personalizedText = personalize(templateContent, dummyContact).text;
       } catch (e) {
         return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Placeholder invalido" }), { status: 400, headers });
       }
@@ -351,6 +351,8 @@ export async function handleTalkxSend(
     // E90: link rastreável referenciado por {{link}} no template. Uma campanha
     // pode ter mais de um link cadastrado; o placeholder é único, então usamos
     // o mais antigo como canônico em vez de deixar o {{link}} sem substituição.
+    // X020: a base da URL passa a vir de TALKX_LINK_BASE_URL (sem o secret,
+    // mantém a URL atual do projeto). O secret nunca é interpolado no texto.
     const loadTrackingUrlFor = async (): Promise<(recipientId: string) => string | undefined> => {
       const { data: trackingLink } = await supabase
         .from("talkx_links")
@@ -359,11 +361,62 @@ export async function handleTalkxSend(
         .order("created_at", { ascending: true })
         .limit(1)
         .maybeSingle();
+      const configuredBase = (Deno.env.get("TALKX_LINK_BASE_URL") ?? "").trim().replace(/\/+$/, "");
+      const linkBase = configuredBase.length > 0
+        ? `${configuredBase}/functions/v1/talkx-link`
+        : `${supabaseUrl}/functions/v1/talkx-link`;
       const trackingUrlFor = (recipientId: string) =>
         trackingLink?.slug
-          ? `${supabaseUrl}/functions/v1/talkx-link?s=${encodeURIComponent(trackingLink.slug)}&r=${encodeURIComponent(recipientId)}`
+          ? `${linkBase}?s=${encodeURIComponent(trackingLink.slug)}&r=${encodeURIComponent(recipientId)}`
           : undefined;
       return trackingUrlFor;
+    };
+
+    // X020: nomes de campos customizados que EXISTEM no CRM (qualquer contato).
+    // Um placeholder com um desses nomes não é "desconhecido". Best-effort: uma
+    // falha de leitura não pode impedir o lançamento (o pior caso é o próprio
+    // personalize marcar a chave e o destinatário virar skipped, nunca
+    // "{{xpto}}" vazando).
+    const loadKnownCustomFieldNames = async (): Promise<Set<string>> => {
+      const names = new Set<string>();
+      const PAGE = 1000;
+      for (let offset = 0; ; offset += PAGE) {
+        const { data, error } = await supabase
+          .from("contact_custom_fields")
+          .select("field_name")
+          .order("id", { ascending: true })
+          .range(offset, offset + PAGE - 1);
+        if (error) break;
+        for (const row of (data ?? []) as { field_name?: unknown }[]) {
+          if (typeof row.field_name === "string" && row.field_name.trim() !== "") {
+            names.add(row.field_name.toLowerCase());
+          }
+        }
+        if (!data || data.length < PAGE) break;
+      }
+      return names;
+    };
+
+    // X020: todos os textos que a campanha pode enviar (texto próprio, conteúdo
+    // do template e variantes) — a validação de variável desconhecida cobre
+    // qualquer um deles.
+    const loadCampaignTemplateTexts = async (campaignRow: Record<string, unknown>): Promise<string[]> => {
+      const texts: string[] = [];
+      if (typeof campaignRow.message_template === "string" && campaignRow.message_template.trim() !== "") {
+        texts.push(campaignRow.message_template);
+      }
+      if (campaignRow.template_id) {
+        const { data: templateRow } = await supabase
+          .from("talkx_templates").select("content").eq("id", campaignRow.template_id).maybeSingle();
+        const templateContent = (templateRow as { content?: unknown } | null)?.content;
+        if (typeof templateContent === "string") texts.push(templateContent);
+        const { data: variantRows } = await supabase
+          .from("talkx_template_variants").select("content").eq("template_id", campaignRow.template_id);
+        for (const v of (variantRows ?? []) as { content?: unknown }[]) {
+          if (typeof v.content === "string") texts.push(v.content);
+        }
+      }
+      return texts;
     };
 
     // Valor real de variável customizada (ex.: {{cargo}}) vem de
@@ -564,6 +617,10 @@ export async function handleTalkxSend(
           state.blacklisted++;
           return "next";
         case "skipped_no_phone":
+          return "next";
+        case "skipped_missing_variable":
+          // X020: variável sem valor/desconhecida — nenhum POST saiu; o
+          // destinatário já está marcado skipped com missing_variable:<nome>.
           return "next";
         case "message_failed":
           state.failed++;
@@ -861,6 +918,39 @@ export async function handleTalkxSend(
       return new Response(JSON.stringify({ error: "Campaign not found" }), { status: 404, headers });
     }
     const campaign = initialCampaign;
+    // X020 — impede LANÇAR uma campanha com variável desconhecida: nome que não
+    // é nativo, nem campo customizado existente no CRM, nem link cadastrado.
+    // Roda ANTES de qualquer transição/kick: 422 com a lista, nenhum
+    // destinatário é tocado e nenhum POST sai.
+    {
+      const probeTimeZone = typeof campaign.schedule_timezone === "string"
+        ? campaign.schedule_timezone
+        : DEFAULT_SCHEDULE_TIMEZONE;
+      const knownCustomFieldNames = await loadKnownCustomFieldNames();
+      const presenceValues: Record<string, string> = {};
+      for (const name of knownCustomFieldNames) presenceValues[name] = "x";
+      const templateTexts = await loadCampaignTemplateTexts(campaign as Record<string, unknown>);
+      const unknownVariableNames = new Set<string>();
+      for (const templateText of templateTexts) {
+        // trackingUrl de prova: {{link}} é nativo/known — a validação de nome
+        // desconhecido não pode confundir "sem link cadastrado" (missing, por
+        // destinatário) com "nome inexistente" (erro de lançamento).
+        const probe = personalize(
+          templateText,
+          { name: "Joao Silva", nickname: "Joao", company: "Empresa Teste" },
+          presenceValues,
+          probeTimeZone,
+          "https://talkx-link.example/__probe__",
+        );
+        for (const name of probe.unknown) unknownVariableNames.add(name);
+      }
+      if (unknownVariableNames.size > 0) {
+        return new Response(
+          JSON.stringify({ error: "unknown_variables", variables: Array.from(unknownVariableNames) }),
+          { status: 422, headers },
+        );
+      }
+    }
     // V20: horário comercial + limite diário por conexão (talkx_settings)
     const { businessHours, dailyLimit } = await loadBusinessHoursAndDailyLimit();
     const sentTodayTotal = dailyLimit > 0

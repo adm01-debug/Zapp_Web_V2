@@ -217,7 +217,7 @@ function workerText(
   companyName: string | null,
   variables: Record<string, string> = {},
 ): string {
-  return personalize(template, { company: companyName }, variables, TIMEZONE);
+  return personalize(template, { company: companyName }, variables, TIMEZONE).text;
 }
 
 // ---------------------------------------------------------------------------
@@ -404,7 +404,7 @@ Deno.test('F48 validate: rendered_text é exatamente o que o kernel produz (nada
   const response = await handleValidate(ctxFor({ dispatch_id: DISPATCH_ID, recipient_id: R.r1 }, tables));
   const { data } = await bodyOf(response) as { data: Record<string, unknown> };
   const blocks = data.blocks as Array<Record<string, unknown>>;
-  const expected = personalize('Ola {{empresa}}, {{cargo}}!', { company: 'Acme' }, {}, TIMEZONE);
+  const expected = personalize('Ola {{empresa}}, {{cargo}}!', { company: 'Acme' }, {}, TIMEZONE).text;
   assert(
     blocks[0].rendered_text === expected,
     `rendered_text divergiu do kernel: ${String(blocks[0].rendered_text)} != ${expected}`,
@@ -552,7 +552,7 @@ Deno.test('F50 estimate: mensagens, versoes de roteiro e consumo de voz sao do d
     const content = block.content as { voice?: { script?: string } };
     const script = String(content?.voice?.script ?? '');
     if (block.personalization_mode === 'same_audio') {
-      const finalScript = personalize(script, {}, {}, TIMEZONE); // 1 render para todos
+      const finalScript = personalize(script, {}, {}, TIMEZONE).text; // 1 render para todos
       expectedScriptVersions.add(finalScript);
       expectedCharacters += finalScript.length;
       expectedRenderings += 1;
@@ -563,7 +563,7 @@ Deno.test('F50 estimate: mensagens, versoes de roteiro e consumo de voz sao do d
           { company: r.company_name_snapshot as string },
           (r.variables_snapshot ?? {}) as Record<string, string>,
           TIMEZONE,
-        );
+        ).text;
         expectedScriptVersions.add(finalScript);
         expectedCharacters += finalScript.length;
         expectedRenderings += 1;

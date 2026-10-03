@@ -219,8 +219,8 @@
     },
     {
       "path": "supabase/functions/_shared/messaging/personalize.ts",
-      "bytes": 6767,
-      "sha256": "a9b8405982d5c0bc81d8a010e5a5f0f8081402350a8316729e521621167245e3"
+      "bytes": 9340,
+      "sha256": "cac308d848f91b9b6ec3746683210af8ab7de2ac15b21e3793a3a5ec5c663195"
     },
     {
       "path": "supabase/functions/_shared/messaging/phone.ts",
@@ -569,8 +569,8 @@
     },
     {
       "path": "supabase/functions/multiplix-dispatch/actions/inspect.ts",
-      "bytes": 40349,
-      "sha256": "f245a231e2070c42a26422e4894739e7cc0aa2185596a136086367aea6627ff0"
+      "bytes": 40359,
+      "sha256": "6827c454b7fa4ccdee1d94ae609216f71bddea79f05fbca30ce441879479f5d4"
     },
     {
       "path": "supabase/functions/multiplix-dispatch/actions/lifecycle.ts",
@@ -589,8 +589,8 @@
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "bytes": 39484,
-      "sha256": "75ce5b0f6be3b3075dbcf38554f068064a03c48be03d67cd5bdda6c89d86d49a"
+      "bytes": 39489,
+      "sha256": "b6a9feb2c8aaa91c3a84403059dedd0a0ed6930220d290e40655a6d3a12397c5"
     },
     {
       "path": "supabase/functions/promogifts-catalog/index.ts",
@@ -649,13 +649,13 @@
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
-      "bytes": 45091,
-      "sha256": "a8b25afd669377ba8ffbab8d2bd48c51b53534b93b04eb92941a1a5d8ab87b8a"
+      "bytes": 49642,
+      "sha256": "0e16c29e90ca414bea744cb8feda7ee6c3c822ec10e08f21e10647d595c46dd7"
     },
     {
       "path": "supabase/functions/talkx-send/process-recipient.ts",
-      "bytes": 24004,
-      "sha256": "be45fa07965e4280e8431ea9e7fb503cec7ea307000be6a6390d7f6eb536bd13"
+      "bytes": 27094,
+      "sha256": "844bfccb27e908c785acf67bbe432feeddeda902cf1bf8a7a2ef688bf652d721"
     },
     {
       "path": "supabase/functions/voice-agent/index.ts",
@@ -1436,7 +1436,7 @@
       "name": "multiplix-dispatch",
       "entrypoint": "supabase/functions/multiplix-dispatch/index.ts",
       "verify_jwt": true,
-      "source_sha256": "20dcc7300c1a261b9a9dca9ea7067656a6a61302de12ec246c6fe60ae079c855",
+      "source_sha256": "2cd9d49c3be56afb756296b2ee753a5089a3e7cb1fef73fac783fe8fc756d1f0",
       "source_files": [
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1470,7 +1470,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "3f9884497257a065572abd2218efac91eee7862705da66302051af44f572ff99",
+      "source_sha256": "436d1a0ef76cbe6610c16b6349c66475e9ae3eeebab96658e3113a834084c17d",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1633,7 +1633,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ab293a58fb41269c2058d155c152fdc6456f369a96b0f86f747a9e19c6d65697",
+      "source_sha256": "9bf1ee661b0bcdcee3c18af12a959b5d75ec2a9d69d116f487bbd60be16f3c4f",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/effect-reconcile.ts",
@@ -1743,5 +1743,5 @@
       ]
     }
   ],
-  "manifest_sha256": "7ec4184fe1faaff0c289ffd81f5689a74b23ffea8b86ec14ad15f849de5676ae"
+  "manifest_sha256": "2e44e2897d83c3eb6c74b2c8a038b0cf8b2aab743960ad96164ae2a6b77fb38b"
 }

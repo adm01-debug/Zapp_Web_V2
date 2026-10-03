@@ -30,11 +30,15 @@ test('Talk X {{link}} resolves to a real per-recipient tracking URL at the real 
   assert.match(sender, /from\("talkx_links"\)/);
   assert.match(sender, /order\("created_at", \{ ascending: true \}\)/);
   assert.match(sender, /const trackingUrlFor = \(recipientId: string\)/);
-  assert.match(sender, /functions\/v1\/talkx-link\?s=\$\{encodeURIComponent\(trackingLink\.slug\)\}&r=\$\{encodeURIComponent\(recipientId\)\}/);
-  const realCallIdx = recipientProcessor.indexOf('?? personalize(');
+  // X020: a base agora vem de TALKX_LINK_BASE_URL (ou supabaseUrl) — o path
+  // `functions/v1/talkx-link` e a query `s=slug&r=recipient` continuam iguais.
+  assert.match(sender, /TALKX_LINK_BASE_URL/);
+  assert.match(sender, /functions\/v1\/talkx-link/);
+  assert.match(sender, /\?s=\$\{encodeURIComponent\(trackingLink\.slug\)\}&r=\$\{encodeURIComponent\(recipientId\)\}/);
+  const realCallIdx = recipientProcessor.indexOf('const personalized = personalize(');
   const trackingArgIdx = recipientProcessor.indexOf('trackingUrlFor(recipient.id as string)');
   assert.ok(realCallIdx > -1 && trackingArgIdx > -1, 'o call site real de personalize() e o argumento trackingUrlFor devem existir');
-  assert.ok(trackingArgIdx > realCallIdx && trackingArgIdx - realCallIdx < 300, 'trackingUrlFor deve ser o argumento do call site real (nao do preview de teste)');
+  assert.ok(trackingArgIdx > realCallIdx && trackingArgIdx - realCallIdx < 600, 'trackingUrlFor deve ser o argumento do call site real (nao do preview de teste)');
 });
 
 test('Talk X personalize() resolves every placeholder in a single pass over the original template', () => {
@@ -50,7 +54,9 @@ test('Talk X personalize() resolves every placeholder in a single pass over the 
   // customizado) dentro do mesmo callback, nunca reescaneando o resultado.
   // F37 (Bloco D): o `personalize()` mudou de arquivo (foi para o kernel) — as provas estruturais
   // abaixo seguem a logica, nao o arquivo antigo. Tudo o que e do CALL SITE continua em `sender`.
-  const singlePassIdx = messagingPersonalize.indexOf('return template.replace(/\\{\\{([^}]+)\\}\\}/g');
+  // X020: o kernel agora retorna { text, missing, unknown } — o passe único
+  // vira `const text = template.replace(...)` (antes `return template.replace`).
+  const singlePassIdx = messagingPersonalize.indexOf('template.replace(/\\{\\{([^}]+)\\}\\}/g');
   assert.ok(singlePassIdx > -1, 'personalize() deve resolver tudo num unico regex.replace() sobre o template original');
   const saudacaoIdx = messagingPersonalize.indexOf('key === "saudacao"', singlePassIdx);
   const linkIdx = messagingPersonalize.indexOf('key === "link"', singlePassIdx);
