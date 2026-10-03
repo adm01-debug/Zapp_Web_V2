@@ -170,12 +170,12 @@ git for-each-ref --format='%(committerdate:short) %(refname:short)' refs/remotes
 - [x] Remotos mergeados: 0 (delete_branch_on_merge ativo desde 27/09)
 - [ ] Total de remotos: 31 (meta ≤ 25 ainda não atingida — branches ativas de sessões paralelas; auto-delete reduzirá naturalmente)
 
-### E05 🟡 Sincronizar o plano de 16/09 com a realidade
+### E05 🟢 Sincronizar o plano de 16/09 com a realidade
 80 checkboxes abertos lá, mas vários **já fecharam de fato** (E43 verificado em 17/09;
 `messages`/vacuum ok; E46 parcial via PR #442). Marcar com evidência+data o que fechou;
 o que este plano herda ganha nota "→ E{n}/20-09".
-- [ ] Plano 16/09 sem checkbox aberto que já esteja resolvido
-- [ ] Seções herdadas apontam para a etapa correspondente daqui
+- [x] Plano 16/09 sem checkbox aberto que já esteja resolvido — ✅ 03/10. **Concluído em duas rodadas**: no PR #1769 (31 checkboxes das 21 etapas herdadas, com prova e data) e no PR da E27 + este (o E37 pela listagem live da E27; E05-congelamento, E16, E43 e E46 provados ao vivo). Os que seguem abertos **não estão resolvidos** — são infra local (E01/E02/E04/E06/E08/E09/E10/E49: bundle, stashes, branches locais, worktrees), dependem de banco (E14/E20/E23/E31/E33/E48) ou de ação sua (E35/E36/E40/E44).
+- [x] Seções herdadas apontam para a etapa correspondente daqui — ✅ 03/10: as 21 etapas herdadas do 16/09 carregam `→ E{n}/20-09 <status>` no título
 
 ### E06 🟢 Graphify: estado oficial da automação
 `graphify update .` local é a via canônica (CLAUDE.md via PR #442). Falta o destino do
