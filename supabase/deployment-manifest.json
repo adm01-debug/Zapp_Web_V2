@@ -12,10 +12,7 @@
     "verify_jwt_true": 57,
     "verify_jwt_false": 13
   },
-  "orphan_allowlist": [
-    "sicoob-bridge",
-    "sicoob-bridge-reply"
-  ],
+  "orphan_allowlist": ["sicoob-bridge", "sicoob-bridge-reply"],
   "source_files": [
     {
       "path": "supabase/functions/_shared/ai-audio-authz.ts",
@@ -419,8 +416,8 @@
     },
     {
       "path": "supabase/functions/crm-integration/index.ts",
-      "bytes": 26101,
-      "sha256": "d4f5d62881a5efe398436d1a4663e152aab1c937110403ff26dd60435122e16e"
+      "bytes": 33009,
+      "sha256": "93515d1d1629feb00ad5366d967bc8c328f26a2f9264051266357ef12c62c644"
     },
     {
       "path": "supabase/functions/csp-report/index.ts",
@@ -1081,7 +1078,7 @@
       "name": "crm-integration",
       "entrypoint": "supabase/functions/crm-integration/index.ts",
       "verify_jwt": false,
-      "source_sha256": "65b8ded7146d548fc5a8de912c41b140bdcdf3b4a858282c8af3ad55a7943182",
+      "source_sha256": "71b3023e44457430703e6e9bf9ebd886bd7864c9bd7158e3060e1ba1d87cbd5c",
       "source_files": [
         "supabase/functions/_shared/ai-vocabulary.ts",
         "supabase/functions/_shared/crm-integration-contract.ts",
@@ -1743,5 +1740,5 @@
       ]
     }
   ],
-  "manifest_sha256": "810404a522e772fc468a775f4f80800b9883560837fdb27ae78a2b8842aaf12e"
+  "manifest_sha256": "24a37faa1dd7222d7206c46f55ddcf4ff9df0592c40beb54ad5de58d3cf6f049"
 }
