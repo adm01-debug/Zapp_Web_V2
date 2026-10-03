@@ -151,3 +151,14 @@ concorrência no mesmo IO e tende a piorar).
 
 **Origem:** diagnóstico de incidente de 02/10/2026 (só leitura). **Relacionados:**
 `docs/INCIDENT-RUNBOOK.md`, `docs/ops/runbook-pg-cron-capacidade.md`.
+
+---
+
+**AUTORIA FECHADA em 03/10/2026 — o "cliente `node` em loop" é a suíte de testes DESTE repositório.**
+O cliente Supabase do app tem a URL e a anon key de **produção** fixas no código; teste que monta
+componente sem mockar o cliente faz request real, recebe `401` por RLS (`catalog_send_events` só tem
+policy para `authenticated`) e **passa mesmo assim**. Medido: **408 requests a produção por execução**
+da suíte. Corrigido com guarda de rede em `src/test/setup.ts` (ver
+`docs/audits/incidente-testes-vazando-producao-2026-10-03.md`). Consequência para este runbook:
+o **passo 1** ("localizar a automação") e o **passo 5** (bloqueio na borda) **não se aplicam mais** a
+este incidente — a fonte é interna e foi cortada no repo.

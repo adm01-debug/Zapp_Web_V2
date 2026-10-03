@@ -93,16 +93,26 @@ describe('E38 — medição do alcance do StrictMode', () => {
     // Hook deliberadamente quebrado: intervalo sem cleanup. Em StrictMode o
     // React monta/desmonta/remonta; o timer fica vivo e escreve em estado de
     // componente desmontado. Se o medidor não acusar ISTO, ele não serve.
+    //
+    // O vazamento tem de existir DURANTE a medicação — é o objeto do teste.
+    // Mas o timer precisa morrer depois: deixá-lo vivo faz a run terminar com
+    // "Uncaught Exception: window is not defined" quando ele dispara já com o
+    // ambiente desmontado (a suite caía com exit=1 por causa disto).
+    const intervalos: Array<ReturnType<typeof setInterval>> = [];
     function useVazado() {
       const [, setN] = React.useState(0);
       React.useEffect(() => {
-        setInterval(() => setN((n) => n + 1), 5);
+        intervalos.push(setInterval(() => setN((n) => n + 1), 5));
         // sem return () => clearInterval(...) — de propósito
       }, []);
     }
 
-    const { erros } = await medirSobStrictMode('useVazado', useVazado);
-    expect(erros.length, 'o medidor NÃO detectou o vazamento — ele é inútil').toBeGreaterThan(0);
+    try {
+      const { erros } = await medirSobStrictMode('useVazado', useVazado);
+      expect(erros.length, 'o medidor NÃO detectou o vazamento — ele é inútil').toBeGreaterThan(0);
+    } finally {
+      for (const id of intervalos) clearInterval(id);
+    }
   });
 
 });
