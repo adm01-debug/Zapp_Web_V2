@@ -63,6 +63,8 @@ test.describe('Volume das mídias de conversa', () => {
     // (`VolumeTriggerButton.tsx:40-42`), e as runs do `e2e-logado` de 30/09 e 01/10
     // apareciam como *flaky* (1ª tentativa vermelha, retry verde).
     test.skip(browserName !== 'chromium', 'spec roda no project chromium-authenticated');
+    // E09: long-press via page.mouse.down() + timer é flaky em CI headless (timing de pointer events).
+    test.fixme(true, 'E09: pointer long-press flaky em CI; reativar quando throttle de input for estabilizado');
 
     const controle = page.getByRole('button', { name: new RegExp(`${LABEL_VOLUME}|${LABEL_MUDO}`) });
     await expect(controle).toBeVisible();
