@@ -32,7 +32,8 @@ function makeCallsQueryBuilder({
     limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
     order: vi.fn(() => builder),
     range: vi.fn(() => Promise.resolve(historyResult)),
-    then: (resolve, reject) => Promise.resolve(statsResult).then(resolve, reject),
+    then: (resolve: (value: unknown) => unknown, reject: (reason?: unknown) => unknown) =>
+      Promise.resolve(statsResult).then(resolve, reject),
   };
   return builder;
 }
