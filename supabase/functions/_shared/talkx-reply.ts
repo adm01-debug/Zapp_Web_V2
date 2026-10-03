@@ -8,29 +8,19 @@
  * O trigger trg_talkx_replied_count cuida de incrementar
  * talkx_campaigns.replied_count automaticamente.
  *
- * Não deve ser chamado para keywords de opt-out (verificar antes).
+ * Erros de atribuição não devem ser confundidos com opt-out: quem decide se a
+ * mensagem é um pedido de saída é o webhook (X030), que casa as palavras de
+ * `talkx_optout_keywords` e responde a botão/lista antes de chamar isto.
  */
 
 // X028: a janela (talkx_settings.reply_window_hours) é lida DENTRO da RPC
 // attribute_talkx_reply. O cálculo client-side que existia aqui e o cache de
 // 5 min viraram código morto com a troca e foram removidos.
 
-/**
- * Fonte unica das keywords de opt-out. Era duplicada verbatim entre o
- * handler de opt-out real (E57, que insere em talkx_blacklist) e o filtro
- * de atribuicao de resposta (E88) em evolution-webhook-messages.ts --
- * ambos precisam do MESMO criterio, senao uma mensagem podia contar como
- * "engajamento" (replied_count) sem entrar na blacklist, ou vice-versa.
- *
- * Limitacao conhecida (nao alterada aqui de proposito): so casa a mensagem
- * INTEIRA, nao uma frase que contenha a keyword -- "quero sair da lista,
- * por favor" nao e reconhecida. Ampliar o casamento e uma decisao de
- * produto/compliance (equilibrio entre falso negativo -- pessoa continua
- * recebendo -- e falso positivo -- "nao quero mais bolo" vira opt-out),
- * nao uma correcao tecnica de resposta unica.
- */
-export const TALKX_OPT_OUT_RE =
-  /^\s*(sair|stop|cancelar|descadastrar|remove|unsubscribe|parar|nao quero|n[ãa]o quero|optout|opt-out)\s*$/i;
+// X030: a lista fixa de palavras de opt-out que vivia aqui
+// (`TALKX_OPT_OUT_RE`) foi removida. A fonte unica agora e a tabela
+// `talkx_optout_keywords` (X029), lida pelo webhook com cache de 5 min e
+// casada pela MESMA normalizacao da RPC `talkx_match_optout`.
 
 // deno-lint-ignore no-explicit-any
 export async function attributeMultiplixReply(
