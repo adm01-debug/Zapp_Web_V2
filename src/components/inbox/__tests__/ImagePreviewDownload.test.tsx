@@ -20,6 +20,7 @@ vi.mock('sonner', () => ({
 
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
+  useReducedMotion: () => false,
   motion: {
     div: React.forwardRef(({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>, ref: React.Ref<HTMLDivElement>) =>
       React.createElement('div', { ...filterDomProps(props), ref }, children)),

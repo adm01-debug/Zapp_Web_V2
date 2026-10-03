@@ -1,4 +1,6 @@
+import { motion } from 'framer-motion';
 import { CallKpiCard } from './CallKpiCard';
+import { useMotionSeguro } from '@/hooks/useMotionSeguro';
 import { useCallsKpi, type CallsKpi } from '@/hooks/calls/useCallsKpi';
 import { formatarDuracao } from '@/lib/calls/formatoKpi';
 
@@ -27,6 +29,7 @@ const TILES: { chave: keyof CallsKpi; rotulo: string; dica: string; formato?: (v
  */
 export function CallsKpiGrid({ period, channel, scope }: CallsKpiGridProps) {
   const { data, isLoading, isError, refetch } = useCallsKpi({ period, channel, scope });
+  const m = useMotionSeguro();
 
   if (isError) {
     return (
@@ -47,14 +50,20 @@ export function CallsKpiGrid({ period, channel, scope }: CallsKpiGridProps) {
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3" data-testid="tel-kpi-grid">
-      {TILES.map((t) => (
-        <CallKpiCard
+      {TILES.map((t, i) => (
+        <motion.div
           key={t.chave}
-          rotulo={t.rotulo}
-          dica={t.dica}
-          carregando={isLoading}
-          valor={t.formato ? t.formato(data?.[t.chave] ?? 0) : (data?.[t.chave] ?? 0)}
-        />
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: m.duracao(150), delay: m.atraso(i) }}
+        >
+          <CallKpiCard
+            rotulo={t.rotulo}
+            dica={t.dica}
+            carregando={isLoading}
+            valor={t.formato ? t.formato(data?.[t.chave] ?? 0) : (data?.[t.chave] ?? 0)}
+          />
+        </motion.div>
       ))}
     </div>
   );

@@ -4,6 +4,8 @@ import { EmailThreadList } from '../EmailThreadList';
 import type { EmailThread } from '@/hooks/integrations/useGmail';
 
 vi.mock('framer-motion', () => ({
+  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  useReducedMotion: () => false,
   motion: new Proxy({}, {
     get: (_t: unknown, prop: string) => {
       if (prop === 'button' || prop === 'div') return ({ children, ...props }: Record<string, unknown>) => <button type="button" {...props}>{children as React.ReactNode}</button>;

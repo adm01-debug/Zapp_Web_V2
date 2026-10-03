@@ -12,6 +12,7 @@ const { mockAccept, mockReject, mockAnswerCall, mockMissCall, mockDismissCall } 
 }));
 
 vi.mock('framer-motion', () => ({
+  useReducedMotion: () => false,
   motion: {
     div: ({ children, ...rest }: { children?: unknown }) => <div {...rest}>{children as never}</div>,
   },

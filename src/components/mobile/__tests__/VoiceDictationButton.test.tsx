@@ -17,6 +17,7 @@ vi.mock('@/hooks/communication/useSpeechToText', () => ({
 
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
+  useReducedMotion: () => false,
   motion: {
     div: ({ children, ...rest }: { children?: import("react").ReactNode } & Record<string, unknown>) => <div>{children}</div>,
     span: ({ children, ...rest }: { children?: import("react").ReactNode } & Record<string, unknown>) => <span>{children}</span>,

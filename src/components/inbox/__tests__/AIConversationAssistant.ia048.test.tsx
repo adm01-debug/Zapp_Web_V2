@@ -51,6 +51,8 @@ vi.mock('@/components/inbox/ai-tools/VisionIcon', () => ({
   VisionIcon: () => <span data-testid="vision-icon" />,
 }));
 vi.mock('framer-motion', () => ({
+  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  useReducedMotion: () => false,
   motion: {
     div: ({ children, ...props }: Record<string, unknown> & { children?: ReactNode }) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

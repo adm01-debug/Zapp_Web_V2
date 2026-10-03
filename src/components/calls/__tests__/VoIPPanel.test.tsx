@@ -214,11 +214,11 @@ describe('VoIPPanel', () => {
 
     fireEvent.click(screen.getByText('Ana Paula'));
 
-    expect(screen.getByText('Detalhe da chamada')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Detalhe da chamada')).toBeInTheDocument());
     expect(screen.getByDisplayValue('nota antiga')).toBeInTheDocument();
     // Prova do defeito: o metadado do provedor NÃO é a anotação do agente.
     expect(screen.queryByDisplayValue('metadado do provedor')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('tel-new-call-panel')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByTestId('tel-new-call-panel')).not.toBeInTheDocument());
 
     fireEvent.click(screen.getByLabelText('Fechar detalhe'));
     expect(screen.queryByText('Detalhe da chamada')).not.toBeInTheDocument();

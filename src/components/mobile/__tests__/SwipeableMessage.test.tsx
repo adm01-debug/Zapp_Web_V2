@@ -4,6 +4,8 @@ import { SwipeableMessage } from '@/components/mobile/SwipeableMessage';
 
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
+  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  useReducedMotion: () => false,
   motion: {
     div: ({ children, className, style, onClick, ...rest }: { children?: import("react").ReactNode; className?: string; style?: import("react").CSSProperties; onClick?: () => void } & Record<string, unknown>) => (
       <div className={className} style={style}>{children}</div>

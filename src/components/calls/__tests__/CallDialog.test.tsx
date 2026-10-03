@@ -115,6 +115,7 @@ vi.mock('@/components/ui/avatar', () => ({
 }));
 
 vi.mock('framer-motion', () => ({
+  useReducedMotion: () => false,
   motion: {
     div: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
   },

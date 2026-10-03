@@ -4,6 +4,8 @@ import type { ComponentProps } from 'react';
 
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
+  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  useReducedMotion: () => false,
   motion: {
     div: ({ children, ...props }: ComponentProps<'div'>) => <div {...props}>{children}</div>,
     circle: (props: ComponentProps<'circle'>) => <circle {...props} />,

@@ -56,7 +56,7 @@ export function CallHistoryTable({ rows, selecionadaId, onSelecionar, onLimparSe
                   onLimparSelecao?.();
                 }
               }}
-              className={`h-[57px] cursor-pointer border-b border-border transition-colors hover:bg-muted/40 ${
+              className={`h-[57px] cursor-pointer border-b border-border transition-colors duration-[120ms] motion-reduce:transition-none hover:bg-muted/40 ${
                 selecionada ? 'border-l-2 border-l-primary bg-primary/5' : 'border-l-2 border-l-transparent'
               }`}
             >

@@ -8,6 +8,8 @@ import { sanitizeEmailHtml, buildBodyPreview } from '@/lib/emailHtml';
 // não pixels (honestidade de teste — o layout visual é validado na matriz manual).
 
 vi.mock('framer-motion', () => ({
+  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  useReducedMotion: () => false,
   motion: new Proxy({}, {
     get: (_t: unknown, prop: string) => {
       if (prop === 'div') return ({ children, ...props }: Record<string, unknown>) => <div {...props}>{children as React.ReactNode}</div>;

@@ -30,6 +30,7 @@ vi.mock('@/hooks/useSummaryTts', () => ({
 }));
 
 vi.mock('framer-motion', () => ({
+  useReducedMotion: () => false,
   motion: { div: ({ children, ...props }: { children?: import("react").ReactNode } & Record<string, unknown>) => <div {...props}>{children}</div> },
   AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => children,
 }));

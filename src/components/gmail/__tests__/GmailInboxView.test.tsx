@@ -14,6 +14,7 @@ function makeMotionEl(tag: string) {
   };
 }
 vi.mock('framer-motion', () => ({
+  useReducedMotion: () => false,
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   motion: new Proxy({}, { get: (_t, prop: string) => makeMotionEl(prop === 'button' ? 'button' : 'div') }),
 }));

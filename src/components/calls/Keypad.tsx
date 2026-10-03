@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useMotionSeguro } from '@/hooks/useMotionSeguro';
 
 const LINHAS = [
   ['1', '2', '3'],
@@ -38,6 +39,7 @@ interface KeypadProps {
  * campos da tela (busca de contato, anotacao).
  */
 export function Keypad({ onKey, disabled = false, mode, onBackspace }: KeypadProps) {
+  const m = useMotionSeguro();
   useEffect(() => {
     if (disabled) return;
     const aoTeclar = (e: KeyboardEvent) => {
@@ -71,7 +73,7 @@ export function Keypad({ onKey, disabled = false, mode, onBackspace }: KeypadPro
           <motion.button
             key={digito}
             type="button"
-            whileTap={{ scale: 0.92 }}
+            whileTap={m.anima ? { scale: 0.92 } : undefined}
             disabled={disabled}
             onClick={() => onKey(digito)}
             aria-label={digito}

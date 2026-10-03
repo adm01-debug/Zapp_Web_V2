@@ -35,6 +35,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 vi.mock('framer-motion', () => ({
+  useReducedMotion: () => false,
   motion: {
     div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
       const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;

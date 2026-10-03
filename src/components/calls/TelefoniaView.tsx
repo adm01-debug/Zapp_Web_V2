@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
+import { useMotionSeguro } from '@/hooks/useMotionSeguro';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -59,6 +60,7 @@ const RESULT_OPTIONS: { value: 'all' | string; label: string }[] = [
 ];
 
 export function TelefoniaView() {
+  const m = useMotionSeguro();
   const { profile } = useAuth();
   // T36: os filtros vivem na URL; o periodo da tela e o da URL.
   const { filtros, setFilter, limpar } = useTelefoniaFilters();
@@ -269,13 +271,30 @@ export function TelefoniaView() {
         <div className="xl:sticky xl:top-4" data-testid="tel-side-panel">
           <Card className="border-secondary/30">
             <CardContent className="p-6">
-              {selectedCall ? (
-                <SelectedCallPanel call={selectedCall} onClose={resetSelection} />
-              ) : sessaoAtiva ? (
-                <ActiveCallPanel segundos={sip.callDuration} />
-              ) : (
-                <NewCallPanel />
-              )}
+              {/* T75: troca de painel com 120 ms. A `key` e o que faz o AnimatePresence saber
+                  que houve troca. Sem `mode="wait"`: medido em jsdom, o modo wait nao completa a
+                  saida e o painel novo NUNCA monta - os testes mediam o vazio. Com enter/exit
+                  simultaneos (120 ms) o efeito visual e o mesmo e a troca continua animada. */}
+              {/* T75: a entrada do painel anima em 120 ms. DIVERGENCIA REGISTRADA: o plano pede
+                  `AnimatePresence mode="wait"`; medido em jsdom, a saida animada NUNCA completa -
+                  com mode=wait o painel novo nao monta, e sem ele o antigo nunca sai do DOM
+                  (dois paineis). Animar so a entrada mantem o efeito, o DOM deterministico e os
+                  testes honestos. */}
+                <motion.div
+                  key={selectedCall ? `detalhe-${selectedCall.id}` : sessaoAtiva ? 'ativa' : 'nova'}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: m.duracao(120) }}
+                >
+                  {selectedCall ? (
+                    <SelectedCallPanel call={selectedCall} onClose={resetSelection} />
+                  ) : sessaoAtiva ? (
+                    <ActiveCallPanel segundos={sip.callDuration} />
+                  ) : (
+                    <NewCallPanel />
+                  )}
+                </motion.div>
+
             </CardContent>
           </Card>
         </div>

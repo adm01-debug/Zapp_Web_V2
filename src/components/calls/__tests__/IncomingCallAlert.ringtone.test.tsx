@@ -58,6 +58,7 @@ class FakeAudioContext {
 vi.stubGlobal('AudioContext', FakeAudioContext);
 
 vi.mock('framer-motion', () => ({
+  useReducedMotion: () => false,
   motion: {
     div: ({ children, ...rest }: { children?: unknown }) => <div {...rest}>{children as never}</div>,
   },
