@@ -79,6 +79,9 @@
  *    vendedor/data/telefone, variável sem valor/desconhecida e precedência A/B por hash FNV-1a).
  *    É arquivo de teste, não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3)
  *    seguem idênticos — só o total varrido sobe (200 → 201), medido pela varredura depois do merge.
+ *  - 203: X022 (03/10/2026) — `talkx-link/index.test.ts` (prova Deno do GET com UTM/404 neutro e
+ *    do POST autenticado por HMAC — sem assinatura/errada/vencida, dedupe e valor inválido).
+ *    É arquivo de teste, não produz token legado: só o total varrido sobe (202 → 203).
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -153,8 +156,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('202 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(202);
+  it('203 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(203);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );
