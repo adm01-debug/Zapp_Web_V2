@@ -29,6 +29,9 @@ on:
     paths:
       - 'supabase/migrations/**'
       - 'scripts/db-audit/**'
+      # E18: negação evita que o merge do PR de sync (que só altera
+      # grants-baseline.json) dispare uma nova execução desnecessária.
+      - '!scripts/db-audit/grants-baseline.json'
       - '.github/workflows/types-sync.yml'
   schedule:
     # 05:49 em vez de 06:00: o minuto 0 concentra a fila de agendamentos do
@@ -57,9 +60,54 @@ env:
   SUPABASE_CLI_VERSION: '2.116.0'
 
 jobs:
+  # E17: debounce — se existe PR de sync cujo head tem < 20 min, pular o run
+  # para não forçar novo commit a cada push consecutivo na main.
+  preflight:
+    name: Debounce — verificar PR de sync recente
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions:
+      pull-requests: read
+    outputs:
+      skip: ${{ steps.check.outputs.skip }}
+    steps:
+      - id: check
+        name: Checar idade do head do PR de sync
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            // Debounce só se aplica a push — schedule/workflow_dispatch sempre rodam.
+            if (context.eventName !== 'push') {
+              core.setOutput('skip', 'false');
+              return;
+            }
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 20,
+            });
+            const syncPr = prs.find(pr => pr.labels.some(l => l.name === 'types-sync'));
+            if (!syncPr) {
+              core.setOutput('skip', 'false');
+              return;
+            }
+            const updatedAt = new Date(syncPr.updated_at);
+            const ageSec = Math.floor((Date.now() - updatedAt.getTime()) / 1000);
+            if (ageSec < 1200) {
+              core.info(`PR #${syncPr.number} atualizado há ${ageSec}s (<20min) — debounce ativo.`);
+              core.setOutput('skip', 'true');
+            } else {
+              core.info(`PR #${syncPr.number} atualizado há ${ageSec}s — prosseguindo.`);
+              core.setOutput('skip', 'false');
+            }
+
   sync:
     name: Propor sync de types + catalogo + manifesto + grants
-    if: github.ref == 'refs/heads/main'
+    needs: preflight
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      needs.preflight.outputs.skip != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:

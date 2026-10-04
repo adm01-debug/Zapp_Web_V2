@@ -18,7 +18,10 @@ test('types-sync includes the grants baseline in generation, drift and PR paths'
   assert.match(workflow, /GRANTS_STATUS=\$\?/);
   assert.match(workflow, /grants_changed=\$\{GRANTS_CHANGED\}/);
   assert.match(workflow, /cp \/tmp\/grants\.new\.json scripts\/db-audit\/grants-baseline\.json/);
-  assert.equal((workflow.match(/scripts\/db-audit\/grants-baseline\.json/g) || []).length, 3);
+  // 3 usos (geracao, drift, PR) + 1 negacao em on.push.paths (E18): o merge do proprio PR de
+  // sync so altera esse arquivo dentro de scripts/db-audit/** e nao deve redisparar o workflow.
+  assert.equal((workflow.match(/scripts\/db-audit\/grants-baseline\.json/g) || []).length, 4);
+  assert.match(workflow, /- '!scripts\/db-audit\/grants-baseline\.json'/);
   assert.match(workflow, /baseline de grants alterado/);
 });
 test('types-sync generates catalog/manifest/grants via psql without the connection string in argv', () => {
