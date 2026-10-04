@@ -163,10 +163,14 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [selection]);
 
-  // Etapa 38: os itens selecionados (dentro do recorte atual) alimentam o diálogo.
+  // Etapa 38 / OTH-001 (#51): os itens encaminhados vêm do estado canônico da seleção
+  // (`selection.selectedIds`) resolvido sobre a COLEÇÃO COMPLETA (`items`), nunca sobre o
+  // recorte filtrado (`filtered`). Trocar o filtro/busca depois de selecionar não pode
+  // omitir do encaminhamento os arquivos que continuam selecionados. A ordenação segue a
+  // preferência atual (`view.sort`) para o payload bater com o que o operador vê.
   const selectedItems = useMemo(
-    () => filtered.filter((item) => selection.selectedIds.has(item.id)),
-    [filtered, selection.selectedIds],
+    () => sortMediaItems(items.filter((item) => selection.selectedIds.has(item.id)), view.sort),
+    [items, selection.selectedIds, view.sort],
   );
 
   const forwardMediaItems = useMemo<ForwardMediaItem[]>(
