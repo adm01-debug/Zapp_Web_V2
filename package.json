@@ -135,5 +135,6 @@
   "engines": {
     "node": ">=24",
     "bun": ">=1.3"
-  }
+  },
+  "description": "teste de regressao v2"
 }
