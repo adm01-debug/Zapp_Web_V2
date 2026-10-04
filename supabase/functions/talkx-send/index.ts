@@ -20,6 +20,7 @@ import {
 import {
   processRecipient,
   type ProcessRecipientRow,
+  type ProcessResult,
 } from "./process-recipient.ts";
 
 // F43: as duplicatas locais (`randomBetween`, `sleep`, `getMediaEndpoint`) foram
@@ -563,6 +564,21 @@ export async function handleTalkxSend(
 
     // Estado mutável do motor (compartilhado entre start e continue): a campanha
     // relida a cada destinatário e os contadores que a resposta reporta.
+    // X033 — linha de log por destinatário, acumulada na passada e gravada em
+    // lote no fim dela (talkx_delivery_log). Só ids/códigos/métricas: nunca
+    // telefone nem texto de mensagem.
+    interface DeliveryLogEntry {
+      campaign_id: string;
+      recipient_id: string;
+      attempt: number;
+      stage: string;
+      outcome: string;
+      http_status: number | null;
+      error_code: string | null;
+      worker_id: string;
+      duration_ms: number;
+    }
+
     interface EngineState {
       campaign: Record<string, unknown>;
       businessHours: { start?: string; end?: string; days?: number[] } | null;
@@ -586,6 +602,7 @@ export async function handleTalkxSend(
       trackingUrlFor: (recipientId: string) => string | undefined;
       linksByLabelFor: (recipientId: string) => Record<string, string>;
       mediaForSend: () => Promise<string>;
+      deliveryLogs: DeliveryLogEntry[];
     }
 
     // E78: reler parametros a cada RELOAD_EVERY envios
@@ -611,6 +628,66 @@ export async function handleTalkxSend(
       state.dayRemaining = b.day_remaining;
       state.dailyLimit = b.day_limit;
       state.sentTodayTotal = b.day_sent;
+    };
+
+    // X033 — traduz o resultado do processamento de UM destinatário para a linha
+    // de log (etapa/resultado/código/status). Mapeamento TOTAL: toda variante de
+    // ProcessResult cai num valor aceito pelo CHECK de talkx_delivery_log.
+    const deliveryLogEntryFor = (
+      result: ProcessResult,
+      recipientId: string,
+      attempt: number,
+      workerId: string,
+      durationMs: number,
+    ): DeliveryLogEntry => {
+      let stage = "complete";
+      let outcome = "failed";
+      let errorCode: string | null = null;
+      let httpStatus: number | null = null;
+      switch (result.kind) {
+        case "no_claim": stage = "claim"; outcome = "no_claim"; break;
+        case "skipped_blacklisted": stage = "suppress_check"; outcome = "skipped"; errorCode = "blacklisted"; break;
+        case "skipped_no_phone": stage = "claim"; outcome = "skipped"; errorCode = "no_phone"; break;
+        case "skipped_missing_variable": outcome = "skipped"; errorCode = "missing_variable"; break;
+        case "message_failed": outcome = "failed"; errorCode = result.errorCode ?? "message_failed"; break;
+        case "sent": stage = "dispatch"; outcome = "sent"; break;
+        case "failed": stage = "dispatch"; outcome = "failed"; errorCode = result.errorCode ?? "provider_error"; httpStatus = result.httpStatus ?? null; break;
+        case "outcome_unknown": stage = "dispatch"; outcome = "outcome_unknown"; errorCode = result.errorCode ?? "provider_outcome_unknown"; break;
+        case "rescheduled": stage = "dispatch"; outcome = result.deadLettered ? "failed" : "rescheduled"; errorCode = result.errorCode ?? "pre_dispatch_error"; break;
+        case "stopped": outcome = "stopped"; errorCode = "campaign_stopped"; break;
+      }
+      return {
+        campaign_id: campaignId,
+        recipient_id: recipientId,
+        attempt,
+        stage,
+        outcome,
+        http_status: httpStatus,
+        error_code: errorCode,
+        worker_id: workerId,
+        duration_ms: durationMs,
+      };
+    };
+
+    // X033 — grava em LOTE, ao fim de cada passada, as linhas de log dos
+    // destinatários processados nela. Best-effort de propósito: o log nunca pode
+    // derrubar um lote. Sem telefone nem texto — só os campos de DeliveryLogEntry.
+    const flushDeliveryLogs = async (state: EngineState) => {
+      if (state.deliveryLogs.length === 0) return;
+      const batch = state.deliveryLogs.splice(0, state.deliveryLogs.length);
+      try {
+        const { error } = await supabase.from("talkx_delivery_log").insert(batch);
+        if (error) {
+          log.warn("Falha ao gravar talkx_delivery_log (best-effort)", {
+            correlationId, campaign_id: campaignId, count: batch.length, error: error.message,
+          });
+        }
+      } catch (err) {
+        log.warn("Exceção ao gravar talkx_delivery_log (best-effort)", {
+          correlationId, campaign_id: campaignId, count: batch.length,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
     };
 
     // Processa UM destinatário sob o lease de campanha: relê o estado, checa
@@ -656,6 +733,15 @@ export async function handleTalkxSend(
       }
 
       state.handled++;
+      // X033 — tentativa ordinal + logger filho com o contexto fixo do
+      // destinatário (campaign_id/recipient_id/attempt em toda entrada de log).
+      const recipientAttempt = (typeof recipient.attempt_count === "number" ? recipient.attempt_count : 0) + 1;
+      const recipientStartedAt = Date.now();
+      const recipientLog = log.child({
+        campaign_id: campaignId,
+        recipient_id: recipient.id,
+        attempt: recipientAttempt,
+      });
       const result = await processRecipient({
         supabase,
         campaignId,
@@ -670,11 +756,16 @@ export async function handleTalkxSend(
         trackingUrlFor: state.trackingUrlFor,
         linksByLabelFor: state.linksByLabelFor,
         customFieldsByContact,
-        log,
+        log: recipientLog,
         correlationId,
         isRecipientSuppressed,
         mediaForSend: state.mediaForSend,
       }, recipient);
+
+      // X033 — acumula a linha de log desta passada (gravada em lote no fim dela).
+      state.deliveryLogs.push(
+        deliveryLogEntryFor(result, recipient.id, recipientAttempt, state.workerId, Date.now() - recipientStartedAt),
+      );
 
       switch (result.kind) {
         case "no_claim":
@@ -788,6 +879,7 @@ export async function handleTalkxSend(
         trackingUrlFor,
         linksByLabelFor,
         mediaForSend,
+        deliveryLogs: [],
       };
     };
 
@@ -932,6 +1024,9 @@ export async function handleTalkxSend(
             const step = await runRecipient(state, processRows[index], customFieldsByContact);
             if (step === "stop") break;
           }
+          // X033: grava em lote, ao fim da passada, o log dos destinatários que
+          // ela processou (uma inserção por passada; best-effort).
+          await flushDeliveryLogs(state);
           // X025: ao FIM de cada lote, grava 1 evento AGREGADO quando houve
           // pulados por supressão. Antes o contador só existia em memória e a
           // timeline nunca registrava esses pulos.
@@ -963,7 +1058,7 @@ export async function handleTalkxSend(
           completed = completedData === true;
         }
 
-        log.done(200, { correlationId, campaignId, sent: state.sent, failed: state.failed, outcomeUnknown: state.outcomeUnknown });
+        log.done(200, { correlationId, campaign_id: campaignId, sent: state.sent, failed: state.failed, outcomeUnknown: state.outcomeUnknown });
 
         return new Response(
           JSON.stringify({
