@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, lazy, Suspense, useReducer, useCallback, useMemo, startTransition } from 'react';
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
+import { createStorageObjectId, removeStoredObjectBestEffort, sanitizeStorageFileName } from '@/lib/storage_object_upload';
 import { Conversation, Message } from '@/types/chat';
 import { FileUploaderRef } from './FileUploader';
 import { useTypingPresence } from '@/hooks/chat/useTypingPresence';
@@ -205,21 +206,31 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   };
 
   const handleScheduleMessage = async (message: string, scheduledAt: Date, attachment?: File) => {
+    let storagePath: string | undefined;
     try {
       let mediaUrl: string | undefined;
       let messageType = 'text';
       if (attachment) {
-        const fileName = `scheduled_${Date.now()}_${attachment.name}`;
-        const { error: uploadError } = await supabase.storage.from('whatsapp-media').upload(fileName, attachment);
+        // Path canônico do contrato de mídia: primeiro segmento = contact_id, depois
+        // um id opaco e o nome sanitizado. O SELECT do Storage autoriza pela pasta do
+        // contato, então o anexo agendado não pode ficar fora de `<contact_id>/...`.
+        const filePath = `${conversation.contact.id}/${createStorageObjectId()}-${sanitizeStorageFileName(attachment.name)}`;
+        const { error: uploadError } = await supabase.storage.from('whatsapp-media').upload(filePath, attachment);
         if (uploadError) throw uploadError;
-        const { data: locatorData } = supabase.storage.from('whatsapp-media').getPublicUrl(fileName);
+        storagePath = filePath;
+        const { data: locatorData } = supabase.storage.from('whatsapp-media').getPublicUrl(filePath);
         if (!locatorData?.publicUrl) throw new Error('Não foi possível criar a referência durável do anexo');
         mediaUrl = locatorData.publicUrl;
         messageType = attachment.type.startsWith('audio') ? 'audio' : attachment.type.startsWith('image') ? 'image' : attachment.type.startsWith('video') ? 'video' : 'document';
       }
       await scheduleMessage({ contactId: conversation.contact.id, content: message, scheduledAt, messageType, mediaUrl });
       closeDialog('scheduleDialog');
-    } catch (err) { log.error('Failed to schedule message:', err); }
+    } catch (err) {
+      // Falha de upload, de locator ou de persistência: remove o objeto órfão
+      // best-effort e não anuncia sucesso (nenhum closeDialog no caminho de erro).
+      if (storagePath) await removeStoredObjectBestEffort('whatsapp-media', storagePath);
+      log.error('Failed to schedule message:', err);
+    }
   };
 
   const handleDragEnter = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); dragCounterRef.current++; if (e.dataTransfer.types.includes('Files')) setIsDraggingOver(true); };
