@@ -32,6 +32,10 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
   'scripts/db-audit/talkx-campaign-segments.test.sh',
+  // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
+  // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
+  // junto de gen-types.test.sh; promover pelo dono do workflow.
+  'scripts/db-audit/replay-classify.test.sh',
 ]);
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────

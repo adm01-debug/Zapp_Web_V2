@@ -1,5 +1,55 @@
 # Replay local das migrations — E24 (2026-10-03)
 
+## 04/10/2026 — replay VERDE como gate (fecha o E24)
+
+O replay agora **distingue falha esperada de regressão nova** e termina com exit code:
+
+```
+aplicando 782 migrations
+RESULTADO: 763 ok, 19 falha(s) de 782
+CLASSIFICACAO: 19 esperada(s), 0 INESPERADA(s) de 19 falha(s)
+REPLAY=verde          # exit 0
+```
+
+**Verde aqui não é esconder número.** As 19 falhas continuam nomeadas e contadas; o que o gate
+acrescenta é a fronteira: **falha fora do allowlist derruba o replay (exit 1)**. Antes, o script
+terminava sempre com 0 e não servia de gate.
+
+### Como funciona
+
+- `scripts/db-audit/replay-known-failures.json` — allowlist das falhas **investigadas e medidas no
+  canônico**, cada uma com `categoria` e `motivo`. Mesmo idioma do `known-violations.json`.
+- `scripts/db-audit/replay-classify.py` — classifica o `replay-erros.tsv` contra o allowlist,
+  imprime as inesperadas e as **obsoletas**, e devolve 0 (verde) ou 1 (drift novo).
+- `scripts/db-audit/replay-classify.test.sh` — 4 casos, com mutação discriminante: falha fora do
+  allowlist tem de virar VERMELHO, e falha dentro não pode ser tratada como nova.
+
+Allowlist que só cresce deixa de proteger: por isso o classificador **avisa quando uma entrada
+passou a aplicar** e deve sair.
+
+### As 19 esperadas, por categoria
+
+| Categoria | Quantas | O que significa |
+|---|---|---|
+| `arquivo-superado` | 3 | arquivo nunca aplicou; a intenção chegou por outra migration (medido no canônico) |
+| `cascata-objeto-existe-no-canonico` | 4 | o objeto que falta no banco vazio existe em produção |
+| `ordem-idempotencia` | 4 | publicação/política já existente ou criada depois; inerte |
+| `ambiente` | 3 | assertiva que exige dados reais (LIDs, jobs do pg_cron) |
+| `abandono-formalizado` | 2 | `reminders_pending`, abandonado por decisão `20261003-121143` |
+| `nao-idempotente-inerte` | 2 | objeto já existe no canônico; efeito real nenhum |
+| `reparada-por-versao-nova` | 1 | cumprida por `20261003152707_cleanup_e2e_conversation_closures` |
+
+### Armadilha medida
+
+O primeiro allowlist que escrevi tinha uma chave **truncada** (`..._realtime_publicati.sql` em vez de
+`..._realtime_publication.sql`), porque copiei o nome de uma exibição que cortava em 62 caracteres.
+O efeito seria o pior possível num gate: **uma falha esperada reportada como inesperada em toda
+rodada**. Sempre compare as chaves com o `replay-erros.tsv` real antes de commitar — foi o que pegou.
+
+---
+
+
+
 Item do `PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md`: *"Replay integral das migrations — job (ou doc de
 execução local) com replay verde ponta a ponta"* e *"divergências viram exceção documentada ou fix"*.
 
