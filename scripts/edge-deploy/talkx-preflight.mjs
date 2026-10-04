@@ -13,6 +13,9 @@
 //     digest válido para as 5 funções. Isto NÃO prova equivalência fonte↔bundle
 //     (source_sha256 local e ezbr_sha256 remoto são objetos diferentes) — apenas
 //     que a função está no ar, ativa, com a configuração de autenticação correta.
+//   - VERDE (aceite): só quando as três medições ocorreram (local + remoto +
+//     secrets) e nenhuma divergiu. Sem token ou sem --secrets-file a evidência
+//     sai como "preflight incompleto", nunca "preflight verde", e o CLI sai ≠ 0.
 //   - SEGREDOS (com --secrets-file): confere a presença dos nomes exigidos no
 //     `supabase secrets list` (nunca os valores — ver secrets-scope.mjs).
 //
@@ -147,16 +150,33 @@ export function montarEvidencia({
   projectRef, gitSha, createdAt, paridade, remotoDivergidas, secretsExigidos, secretsFaltando,
 }) {
   const remotas = remotoDivergidas ?? null;
+  const remotoVerificado = remotoDivergidas !== null;
+  const secretsVerificado = secretsFaltando !== null;
   const divergedTotal = paridade.diverged + (remotas?.length ?? 0);
   const missing = secretsFaltando === null ? null : secretsFaltando.length;
-  const conclusao = divergedTotal === 0 && (missing === null || missing === 0)
-    ? 'preflight verde'
-    : 'divergências encontradas — disparar deploy-functions.yml / corrigir segredos antes do disparo real';
+  const naoVerificado = [];
+  if (!remotoVerificado) naoVerificado.push('remoto');
+  if (!secretsVerificado) naoVerificado.push('segredos');
+  // Verde só é legítimo quando as TRÊS medições aconteceram e nada divergiu:
+  // paridade local, inventário remoto e presença dos segredos. Sem remoto e/ou
+  // segredos medidos, "0 divergências" é ausência de MEDIÇÃO — nunca pode virar
+  // "preflight verde" (TX02).
+  const verde = divergedTotal === 0 && missing === 0 && remotoVerificado && secretsVerificado;
+  let conclusao;
+  if (divergedTotal > 0 || (missing ?? 0) > 0) {
+    conclusao = 'divergências encontradas — disparar deploy-functions.yml / corrigir segredos antes do disparo real';
+  } else if (!verde) {
+    conclusao = `preflight incompleto — não verificado: ${naoVerificado.join(' e ')} (sem preflight verde do dia)`;
+  } else {
+    conclusao = 'preflight verde';
+  }
   return {
-    schema_version: 1,
+    schema_version: 2,
     project_ref: projectRef,
     git_sha: gitSha ?? null,
     created_at: createdAt,
+    verificado: { local: true, remoto: remotoVerificado, secrets: secretsVerificado },
+    verde,
     funcoes_preflight: PREFLIGHT_FUNCTIONS,
     local: paridade.funcoes,
     divergidas: {
@@ -230,12 +250,13 @@ async function main() {
   await writeFile(saida, `${JSON.stringify(evidencia, null, 2)}\n`, 'utf8');
 
   console.log(`preflight: ${evidencia.divergidas.total} divergida(s) nas 5 funções, ` +
-    `${evidencia.secrets.missing === null ? 'segredos não verificados' : `${evidencia.secrets.missing} secreto(s) ausente(s)`}`);
+    `${evidencia.secrets.missing === null ? 'segredos não verificados' : `${evidencia.secrets.missing} secreto(s) ausente(s)`}, ` +
+    `remoto ${evidencia.verificado.remoto ? 'verificado' : 'não verificado'} — ${evidencia.conclusao}`);
   console.log(`evidência: ${saida}`);
   for (const d of evidencia.divergidas.local) console.log(`  DIVERGE ${d.funcao}: ${d.motivo ?? JSON.stringify(d)}`);
   if (remotoDivergidas) for (const d of remotoDivergidas) console.log(`  DIVERGE(remoto) ${d.funcao}: ${d.motivo}`);
 
-  if (evidencia.divergidas.total > 0 || (evidencia.secrets.missing ?? 0) > 0) {
+  if (!evidencia.verde) {
     process.exitCode = 1;
   }
 }

@@ -19,6 +19,7 @@ import {
   SECRETS_EXIGIDOS,
   QUERY_VAULT_E_JOB,
 } from './talkx-preflight.mjs';
+import { CANONICAL_PROJECT } from './stable-inventory.mjs';
 
 const A = 'a'.repeat(64);
 const B = 'b'.repeat(64);
@@ -150,4 +151,103 @@ test('X023: digest divergente → o CLI sai com código ≠ 0 (aceite)', async (
   assert.match(cli.stdout, /DIVERGE talkx-send/);
   const evidencia = JSON.parse(await readFile(saida, 'utf8'));
   assert.ok(evidencia.divergidas.total >= 1);
+});
+
+// ---------------------------------------------------------------------------
+// TX02 — "Preflight verde foi emitido sem conferir remoto nem secrets".
+// Antes do fix, montarEvidencia() dava conclusao: "preflight verde" com
+// remotoDivergidas=null e secretsFaltando=null (nada medido, só a paridade
+// local). Estes testes provam o vermelho do bug e travam o comportamento novo.
+// ---------------------------------------------------------------------------
+
+test('TX02: paridade local ok, mas SEM remoto e SEM secrets medidos → NUNCA "preflight verde"', () => {
+  const paridade = compararParidade({
+    manifestoCommitado: manifesto(todas()),
+    manifestoFresco: manifesto(todas()),
+  });
+  assert.equal(paridade.diverged, 0);
+  const evidencia = montarEvidencia({
+    projectRef: CANONICAL_PROJECT,
+    gitSha: null,
+    createdAt: '2026-10-04T00:00:00.000Z',
+    paridade,
+    remotoDivergidas: null,
+    secretsExigidos: SECRETS_EXIGIDOS,
+    secretsFaltando: null,
+  });
+  assert.equal(evidencia.verde, false);
+  assert.notEqual(evidencia.conclusao, 'preflight verde');
+  assert.match(evidencia.conclusao, /preflight incompleto/);
+  assert.match(evidencia.conclusao, /remoto/);
+  assert.match(evidencia.conclusao, /segredos/);
+  assert.deepEqual(evidencia.verificado, { local: true, remoto: false, secrets: false });
+});
+
+test('TX02: verde só quando remoto verificado E segredos medidos, ambos sem divergência', () => {
+  const paridade = compararParidade({
+    manifestoCommitado: manifesto(todas()),
+    manifestoFresco: manifesto(todas()),
+  });
+  const evidencia = montarEvidencia({
+    projectRef: CANONICAL_PROJECT,
+    gitSha: null,
+    createdAt: '2026-10-04T00:00:00.000Z',
+    paridade,
+    remotoDivergidas: [],
+    secretsExigidos: SECRETS_EXIGIDOS,
+    secretsFaltando: [],
+  });
+  assert.equal(evidencia.verde, true);
+  assert.equal(evidencia.conclusao, 'preflight verde');
+  assert.deepEqual(evidencia.verificado, { local: true, remoto: true, secrets: true });
+});
+
+test('TX02: remoto medido mas segredos não medidos → ainda não é verde', () => {
+  const paridade = compararParidade({
+    manifestoCommitado: manifesto(todas()),
+    manifestoFresco: manifesto(todas()),
+  });
+  const evidencia = montarEvidencia({
+    projectRef: CANONICAL_PROJECT,
+    gitSha: null,
+    createdAt: '2026-10-04T00:00:00.000Z',
+    paridade,
+    remotoDivergidas: [],
+    secretsExigidos: SECRETS_EXIGIDOS,
+    secretsFaltando: null,
+  });
+  assert.equal(evidencia.verde, false);
+  assert.notEqual(evidencia.conclusao, 'preflight verde');
+  assert.match(evidencia.conclusao, /segredos/);
+  assert.doesNotMatch(evidencia.conclusao, /remoto/); // remoto local: verificado
+});
+
+test('TX02: CLI local-only (sem token e sem --secrets-file) não emite verde — saída ≠ 0', async () => {
+  const repo = await mkdtemp(path.join(tmpdir(), 'talkx-preflight-tx02-'));
+  const funcs = path.join(repo, 'supabase', 'functions');
+  for (const nome of PREFLIGHT_FUNCTIONS) {
+    const dir = path.join(funcs, nome);
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, 'index.ts'), '// stub\n');
+  }
+  await writeFile(path.join(repo, 'supabase', 'config.toml'), `project_id = "${CANONICAL_PROJECT}"\n`);
+  // Manifesto commitado == fonte atual: paridade local limpa (diverged: 0).
+  const { buildDeploymentManifest } = await import('./manifest-lib.mjs');
+  const correto = await buildDeploymentManifest({ repoRoot: repo });
+  await writeFile(path.join(repo, 'supabase', 'deployment-manifest.json'), `${JSON.stringify(correto, null, 2)}\n`);
+
+  const saida = path.join(repo, 'out.json');
+  const env = { ...process.env };
+  delete env.SUPABASE_ACCESS_TOKEN; // garante que o ramo remoto não roda
+  const cli = spawnSync(process.execPath, [
+    path.join(process.cwd(), 'scripts/edge-deploy/talkx-preflight.mjs'),
+    '--repo-root', repo,
+    '--manifest', path.join(repo, 'supabase', 'deployment-manifest.json'),
+    '--output', saida,
+  ], { encoding: 'utf8', env });
+  const evidencia = JSON.parse(await readFile(saida, 'utf8'));
+  assert.equal(evidencia.divergidas.total, 0, 'paridade local deve estar limpa');
+  assert.equal(evidencia.verde, false, 'sem remoto/segredos não pode ser verde');
+  assert.notEqual(evidencia.conclusao, 'preflight verde');
+  assert.notEqual(cli.status, 0, `esperava saída ≠ 0 sem medição remota; stdout=${cli.stdout}`);
 });
