@@ -20,7 +20,10 @@ describe('volume de mídia — toda superfície de conversa passa pelo controle 
     ['vídeo no balão', 'src/components/inbox/MediaPreview.tsx'],
     ['vídeo em tela cheia', 'src/components/inbox/VideoFullscreen.tsx'],
     ['galeria de mídia', 'src/components/inbox/media-gallery/MediaPreviewDialog.tsx'],
-    ['status/stories', 'src/components/inbox/contact-details/StoryViewer.tsx'],
+    // status/stories saiu de cena com a remoção dos órfãos do accordion (PR F —
+    // o StoryViewer só era usado pela WhatsAppStatusSection morta). Se a
+    // superfície voltar, re-entra aqui no mesmo commit.
+
     ['chat interno da equipe', 'src/components/team-chat/TeamChatPanel.tsx'],
     ['transcrições (autoplay)', 'src/components/transcriptions/TranscriptionContactGroup.tsx'],
     ['gravação de chamada', 'src/components/calls/TelefoniaView.tsx'],
