@@ -640,6 +640,15 @@ jobs:
           TALKX_X032_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-lgpd.test.sh
 
+      # X033: log por destinatario (sem telefone/texto, expurgo de 30 dias), view de
+      # saude talkx_engine_health (security_invoker) e alertas com deduplicacao por
+      # tipo/campanha e fechamento automatico (stalled_campaign, cron_degraded).
+      # Harness RED→GREEN em PostgreSQL 17 descartável.
+      - name: Provar log por destinatario, saude do motor e alertas (X033)
+        env:
+          TALKX_X033_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-engine-health.test.sh
+
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e
       # current_database() devolve esse nome, quebrando a asserção.

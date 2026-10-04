@@ -104,6 +104,11 @@
  *    `talkx_optout`). É arquivo de teste, não produz token legado: o mapa INVENTARIO e a contagem de
  *    ocorrências (3) seguem idênticos — só o total varrido sobe (212 → 213), medido pela varredura
  *    depois do merge.
+ *  - 214: X033 (04/10/2026) — `talkx-send/x033-delivery-log.test.ts` (prova Deno do log por
+ *    destinatário: lote de 3 destinatários grava >= 3 linhas em `talkx_delivery_log` sem
+ *    telefone, e o `Logger.child` anexa campaign_id/recipient_id/attempt a toda entrada).
+ *    É arquivo de teste, não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3)
+ *    seguem idênticos — só o total varrido sobe (213 → 214), medido pela varredura depois do merge.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -178,8 +183,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('213 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(213);
+  it('214 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(214);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );

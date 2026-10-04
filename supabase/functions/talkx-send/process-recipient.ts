@@ -123,11 +123,11 @@ export type ProcessResult =
   | { kind: "skipped_blacklisted" }
   | { kind: "skipped_no_phone" }
   | { kind: "skipped_missing_variable" }
-  | { kind: "message_failed" }
+  | { kind: "message_failed"; errorCode?: string }
   | { kind: "sent" }
-  | { kind: "failed" }
-  | { kind: "outcome_unknown" }
-  | { kind: "rescheduled"; deadLettered: boolean }
+  | { kind: "failed"; httpStatus?: number; errorCode?: string }
+  | { kind: "outcome_unknown"; errorCode?: string }
+  | { kind: "rescheduled"; deadLettered: boolean; errorCode?: string }
   | { kind: "stopped" };
 
 /**
@@ -304,7 +304,7 @@ export async function processRecipient(
         p_error_message: e instanceof Error ? e.message : "Erro ao montar mensagem",
       });
       if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
-      return { kind: "message_failed" };
+      return { kind: "message_failed", errorCode: "message_render_failed" };
     }
     // X020 — POLÍTICA DE ERRO: variável conhecida SEM valor e sem padrão
     // (ou nome desconhecido para este contato) NÃO vira "[variavel]" enviado.
@@ -509,7 +509,7 @@ export async function processRecipient(
         p_error_message: String(sendResult?.message || sendResult?.error || "Erro ao enviar"),
       });
       if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
-      return { kind: "failed" };
+      return { kind: "failed", httpStatus: sendResponse.status, errorCode: "provider_error" };
     }
   } catch (err) {
     clearTimeout(sendTimeout);
@@ -531,7 +531,7 @@ export async function processRecipient(
       const deadLettered = schedResult?.action === 'dead_lettered';
       const interval = randomBetween(campaign.send_interval_min as number, campaign.send_interval_max as number);
       await sleep(interval);
-      return { kind: "rescheduled", deadLettered };
+      return { kind: "rescheduled", deadLettered, errorCode: "pre_dispatch_error" };
     }
     // A chamada ao provedor pode ter sido aceita quando a confirmação no
     // banco falhou. Ela nunca pode voltar automaticamente para `pending`:
@@ -561,7 +561,7 @@ export async function processRecipient(
       await enqueueRecipientReconciliation(supabase, recipient, providerMessageId, log, correlationId, campaignId);
       const interval = randomBetween(campaign.send_interval_min as number, campaign.send_interval_max as number);
       await sleep(interval);
-      return { kind: "outcome_unknown" };
+      return { kind: "outcome_unknown", errorCode: "provider_outcome_unknown" };
     }
     const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
       p_recipient_id: recipient.id,

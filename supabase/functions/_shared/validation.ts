@@ -26,11 +26,26 @@ export class Logger {
   private fn: string;
   private requestId: string;
   private startTime: number;
+  private bound: Record<string, unknown>;
 
-  constructor(functionName: string) {
+  constructor(functionName: string, bound: Record<string, unknown> = {}) {
     this.fn = functionName;
     this.requestId = crypto.randomUUID().slice(0, 8);
     this.startTime = Date.now();
+    this.bound = bound;
+  }
+
+  /**
+   * X033 — logger derivado com contexto FIXO anexado a toda entrada: aqui o motor
+   * de campanha amarra `campaign_id`/`recipient_id`/`attempt` a cada log do
+   * destinatário. Compartilha `fn`/`rid`/startTime do logger original, então a
+   * janela de tempo e o request id não se perdem no filho.
+   */
+  child(ctx: Record<string, unknown>): Logger {
+    const derived = new Logger(this.fn, { ...this.bound, ...ctx });
+    derived.requestId = this.requestId;
+    derived.startTime = this.startTime;
+    return derived;
   }
 
   private log(level: LogLevel, message: string, ctx?: Record<string, unknown>) {
@@ -40,6 +55,7 @@ export class Logger {
       rid: this.requestId,
       ms: Date.now() - this.startTime,
       msg: message,
+      ...this.bound,
       ...ctx,
     };
     const serialized = JSON.stringify(entry);
