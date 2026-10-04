@@ -28,8 +28,10 @@ on:
       - 'supabase/functions/talkx-*'
       - 'e2e/talkx.spec.ts'
       - 'e2e/talkx-visual.spec.ts'
+      - 'e2e/talkx-launch.spec.ts'
       - 'e2e/fixtures/talkx-demo.ts'
       - 'e2e/fixtures/talkx-demo/**'
+      - 'e2e/fixtures/talkx-launch/**'
       - 'scripts/talkx/lado-a-lado.mjs'
       # E84: `playwright.config.ts` saiu daqui. Ele é config global da suíte — foi
       # tocado em 20 dos últimos 60 commits, quase sempre por trabalho que não é do
@@ -78,6 +80,11 @@ jobs:
 
       - name: 🖼️ Régua visual Talk X (17 telas, deslogado)
         run: bun run test:e2e -- --project=chromium-talkx-visual
+        env:
+          CI: true
+
+      - name: 🚀 E2E de lançamento Talk X (provedor falso, deslogado)
+        run: bun run test:e2e -- --project=chromium-talkx-launch
         env:
           CI: true
 
