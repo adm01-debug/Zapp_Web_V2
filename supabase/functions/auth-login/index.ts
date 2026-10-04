@@ -12,8 +12,9 @@ import {
 
 // Login server-side (ADR-006): o lockout e decidido aqui, para qualquer cliente.
 // 1. conta travada -> 423 sem tocar no GoTrue;
-// 2. GoTrue recusa -> a falha e registrada (comprovada pelo proprio GoTrue) -> 401;
-// 3. GoTrue aceita -> tentativas zeradas -> 200 com a sessao; o front faz setSession.
+// 2. perfil inativo/inexistente -> 401 generico (indistinguivel de credencial invalida), sem tocar no GoTrue;
+// 3. GoTrue recusa -> a falha e registrada (comprovada pelo proprio GoTrue) -> 401;
+// 4. GoTrue aceita -> tentativas zeradas -> 200 com a sessao; o front faz setSession.
 // verify_jwt = false: ainda nao existe sessao. Rate limit por IP e por e-mail.
 
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@.]{2,63}$/;
@@ -34,7 +35,16 @@ function lockPayload(row: LockRow | null | undefined) {
   };
 }
 
-Deno.serve(async (req) => {
+type ProfileRow = { id: string; is_active: boolean | null };
+
+type AuthLoginDeps = {
+  /** Cliente service-role (RPC is_account_locked e consulta server-side do perfil). */
+  admin?: any;
+  /** Cliente anon (signInWithPassword). */
+  anon?: any;
+};
+
+export async function handleAuthLogin(req: Request, _injected?: AuthLoginDeps): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -64,10 +74,11 @@ Deno.serve(async (req) => {
     const emailRl = await enforceRateLimit(`auth-login-email:${email}`, 20, 60_000);
     if (!emailRl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
-    const supabaseUrl = requireEnv("SUPABASE_URL");
-    const admin = createClient(supabaseUrl, requireEnv("SUPABASE_SERVICE_ROLE_KEY"), {
-      auth: { persistSession: false },
-    });
+    const admin = _injected?.admin ?? createClient(
+      requireEnv("SUPABASE_URL"),
+      requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
+      { auth: { persistSession: false } },
+    );
 
     const { data: lockData, error: lockError } = await admin.rpc("is_account_locked", { check_email: email });
     if (lockError) {
@@ -80,9 +91,32 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Account locked", ...lockPayload(lockRow) }, 423, req);
     }
 
-    const anon = createClient(supabaseUrl, requireEnv("SUPABASE_ANON_KEY"), {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-    });
+    // R2-AUTH-004: resolve o perfil server-side (service role, sem RLS) e exige
+    // profiles.is_active = true ANTES de tocar no GoTrue. Perfil inativo ou conta
+    // sem perfil retorna o MESMO 401 generico de credencial invalida (sem enumeracao
+    // de conta e sem emitir token). Falha na consulta e fail-closed (500).
+    const { data: profile, error: profileError } = await admin
+      .from("profiles")
+      .select("id, is_active")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (profileError) {
+      log.error("profile lookup failed", { code: profileError?.code });
+      return errorResponse("Internal error", 500, req);
+    }
+
+    const row = profile as ProfileRow | null;
+    if (!row || row.is_active !== true) {
+      log.done(401, { reason: "inactive_or_missing_profile" });
+      return jsonResponse({ error: "Invalid login credentials" }, 401, req);
+    }
+
+    const anon = _injected?.anon ?? createClient(
+      requireEnv("SUPABASE_URL"),
+      requireEnv("SUPABASE_ANON_KEY"),
+      { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } },
+    );
     const { data: signIn, error: signInError } = await anon.auth.signInWithPassword({ email, password });
 
     if (signInError || !signIn.session) {
@@ -118,4 +152,8 @@ Deno.serve(async (req) => {
     log.error("unhandled", { err: String(err) });
     return errorResponse("Internal server error", 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve((req) => handleAuthLogin(req));
+}
