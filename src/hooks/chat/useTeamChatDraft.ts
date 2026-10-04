@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { uploadTeamMedia } from '@/hooks/team-chat/uploadTeamMedia';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { getLogger } from '@/lib/logger';
 import { toast } from 'sonner';
@@ -33,7 +33,7 @@ interface UseTeamChatDraftOptions {
   conversationId: string;
   text: string;
   setText: (text: string) => void;
-  onFileSent: (mediaUrl: string, mediaType: string, fileName: string) => void;
+  onFileSent: (mediaPath: string, mediaType: string, fileName: string) => void;
 }
 
 export function useTeamChatDraft({ conversationId, text, setText, onFileSent }: UseTeamChatDraftOptions) {
@@ -94,17 +94,16 @@ export function useTeamChatDraft({ conversationId, text, setText, onFileSent }: 
         setPasteUploading(true);
         try {
           const ext = file.type.split('/')[1] || 'png';
-          const path = `${profile.id}/${conversationId}/${Date.now()}_paste.${ext}`;
-          const { error: uploadError } = await supabase.storage
-            .from('team-chat-files')
-            .upload(path, file, { contentType: file.type });
-          if (uploadError) throw uploadError;
+          const locator = await uploadTeamMedia({
+            profileId: profile.id,
+            conversationId,
+            file,
+            extension: ext,
+            contentType: file.type,
+          });
+          if (!locator) return;
 
-          const { data: urlData } = supabase.storage
-            .from('team-chat-files')
-            .getPublicUrl(path);
-
-          onFileSent(urlData.publicUrl, 'image', `📋 Imagem colada`);
+          onFileSent(locator.mediaPath, 'image', `📋 Imagem colada`);
         } catch (err) {
           log.error('Paste image upload error:', err);
           toast.error('Erro ao enviar imagem colada');

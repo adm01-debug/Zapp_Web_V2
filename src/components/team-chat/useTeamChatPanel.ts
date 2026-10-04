@@ -9,6 +9,7 @@ import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
 import { useTeamMessageReactions } from '@/hooks/team-chat/useTeamMessageReactions';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
+import { uploadTeamMedia, TEAM_CHAT_FILES_BUCKET } from '@/hooks/team-chat/uploadTeamMedia';
 import { toast } from 'sonner';
 
 const log = getLogger('TeamChatPanel');
@@ -254,28 +255,36 @@ export function useTeamChatPanel(conversation: TeamConversation) {
 
   const handleAudioSend = useCallback(async (blob: Blob) => {
     if (!profile?.id) return;
-    const fileName = `audio-${Date.now()}.webm`;
-    const { data, error } = await supabase.storage.from('team-chat-files').upload(
-      `${conversation.id}/${fileName}`,
-      blob,
-      { contentType: 'audio/webm', upsert: false },
-    );
-    if (error) { toast.error('Erro ao enviar áudio'); return; }
-    await sendMutation.mutateAsync({
-      conversationId: conversation.id,
-      content: '🎤 Mensagem de áudio',
-      mediaPath: data?.path ?? undefined,
-      mediaBucket: 'team-chat-files',
-      mediaType: 'audio',
-    });
+    try {
+      const locator = await uploadTeamMedia({
+        profileId: profile.id,
+        conversationId: conversation.id,
+        file: blob,
+        extension: 'webm',
+        contentType: 'audio/webm',
+        upsert: false,
+      });
+      if (!locator) return;
+      await sendMutation.mutateAsync({
+        conversationId: conversation.id,
+        content: '🎤 Mensagem de áudio',
+        mediaPath: locator.mediaPath,
+        mediaBucket: locator.mediaBucket,
+        mediaType: 'audio',
+      });
+    } catch (err) {
+      log.error('Erro ao enviar áudio', err);
+      toast.error('Erro ao enviar áudio');
+    }
   }, [profile, conversation.id, sendMutation]);
 
-  const handleFileSent = useCallback(async (mediaUrl: string, mediaType: string, fileName: string) => {
+  const handleFileSent = useCallback(async (mediaPath: string, mediaType: string, fileName: string) => {
     if (!profile?.id) return;
     await sendMutation.mutateAsync({
       conversationId: conversation.id,
       content: fileName,
-      mediaUrl,
+      mediaBucket: TEAM_CHAT_FILES_BUCKET,
+      mediaPath,
       mediaType: (mediaType as TeamMessage['media_type']) ?? undefined,
     });
   }, [profile, conversation.id, sendMutation]);
