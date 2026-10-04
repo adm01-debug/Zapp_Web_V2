@@ -38,9 +38,11 @@ function lockPayload(row: LockRow | null | undefined) {
 type ProfileRow = { id: string; is_active: boolean | null };
 
 type AuthLoginDeps = {
-  /** Cliente service-role (RPC is_account_locked e consulta server-side do perfil). */
+  // Cliente service-role (RPC is_account_locked e consulta server-side do perfil).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   admin?: any;
-  /** Cliente anon (signInWithPassword). */
+  // Cliente anon (signInWithPassword).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   anon?: any;
 };
 
