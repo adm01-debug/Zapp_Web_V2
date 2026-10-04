@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { AlertCard, ModuleHeader, KpiCardSkeleton } from './talkxShared';
+import { TalkXQueryBoundary } from './kit/states';
 import { useTalkXSettings, useTalkXSettingUpdate } from '@/hooks/integrations/useTalkXSettings';
 import { Settings, Save, RotateCcw } from 'lucide-react';
 
@@ -15,13 +16,27 @@ function displayValue(v: unknown): string {
 const BOOL_KEYS = new Set(['ai_insights']);
 
 export function TalkXSettings() {
-  const { data: settings, isLoading, error } = useTalkXSettings();
+  const { data: settings, isLoading, error, refetch } = useTalkXSettings();
   const update = useTalkXSettingUpdate();
   const [edits, setEdits] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState<string | null>(null);
 
-  if (isLoading) return <div className="space-y-3"><KpiCardSkeleton /><KpiCardSkeleton /></div>;
-  if (error || !settings) return <AlertCard tone="danger">Erro ao carregar configurações: {error?.message}</AlertCard>;
+  // X047: erro e vazio deixam de ser decididos a mao aqui. O boundary decide na ordem
+  // carregando -> erro -> vazio -> conteudo, e o erro tem precedencia sobre o vazio.
+  if (isLoading || error || !settings) {
+    return (
+      <TalkXQueryBoundary
+        query={{ isLoading, isError: !!error, error: (error as Error) ?? null }}
+        entity="as configurações"
+        onRetry={() => refetch()}
+        skeleton={<div className="space-y-3"><KpiCardSkeleton /><KpiCardSkeleton /></div>}
+        isEmpty={false}
+        empty={<></>}
+      >
+        <></>
+      </TalkXQueryBoundary>
+    );
+  }
 
   function handleSave(key: string) {
     const raw = edits[key];
